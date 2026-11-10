@@ -1,7 +1,7 @@
 use clean_model_samus_motion::{Carry, DashIs, Rules, Spin, Vertical};
 use core::num::Wrapping;
 
-use clean_types::{Action, Block as Kind, Heading, Radius, Way, World};
+use clean_types::{Action, Block as Kind, Heading, Radius, Side, Way, World};
 use data::level::{BlockKind, Bts};
 
 use super::{X_RADIUS, clean_of, pose_id, write_back};
@@ -178,7 +178,7 @@ fn what_she_remembers_reads_from_the_games_words() {
     );
     assert!(
         skid.is_some_and(|(carry, way, vertical, _)| carry == Carry::CarriesOn
-            && way == Heading::Left
+            && way == Side::Left
             && vertical == (Vertical::Ground, Wrapping(0)))
     );
     let spent = read(

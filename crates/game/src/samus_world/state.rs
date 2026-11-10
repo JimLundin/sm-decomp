@@ -19,7 +19,7 @@ use clean_model_samus_motion::{
 };
 use core::num::Wrapping;
 
-use clean_types::{Action, Fixed, Heading, Pose, Position, Px, Radius, Turn, ZERO};
+use clean_types::{Action, Fixed, Pose, Position, Px, Radius, Side, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -39,16 +39,6 @@ const fn quantity(value: Exact) -> Fixed {
 /// The engine's quantity from the model's.
 const fn exact(value: Fixed) -> Exact {
     Exact(value.0)
-}
-
-/// The other side.
-const fn opposite(heading: Heading) -> Heading {
-    match heading {
-        Heading::Left => Heading::Right,
-        Heading::Right => Heading::Left,
-        Heading::Up => Heading::Down,
-        Heading::Down => Heading::Up,
-    }
 }
 
 /// Whether `pose` is one she is in the air in: a jump, a spin, a fall or a wall jump, the
@@ -73,11 +63,10 @@ const fn turning_in_the_air(pose: Pose) -> bool {
 pub fn clean_of(samus: &Samus) -> Option<Model> {
     let pose = map::key_of(samus.pose)?;
     let motion = &samus.motion;
-    let side = pose.facing.side();
     let (carry, way) = match motion.mode {
-        SpeedMode::Accelerating => (Carry::FollowsPad, side),
-        SpeedMode::Decelerating => (Carry::CarriesOn, side),
-        SpeedMode::TurningAround => (Carry::CarriesOn, opposite(side)),
+        SpeedMode::Accelerating => (Carry::FollowsPad, Side::of(pose.facing)),
+        SpeedMode::Decelerating => (Carry::CarriesOn, Side::of(pose.facing)),
+        SpeedMode::TurningAround => (Carry::CarriesOn, Side::of(pose.facing.back())),
     };
     // The word is a magnitude, downward with direction down and upward otherwise; a rise the
     // pull took past zero is then downward by what it took past. On the ground, direction down
@@ -161,7 +150,7 @@ pub fn write_back(model: &Model, rising: bool, samus: &mut Samus) {
         model.run.dash != ZERO && (motion.momentum || model.run.dash_is == DashIs::Hers);
     motion.mode = if model.run.carry == Carry::FollowsPad {
         SpeedMode::Accelerating
-    } else if model.run.way == model.pose.facing.side() {
+    } else if model.run.way == Side::of(model.pose.facing) {
         SpeedMode::Decelerating
     } else {
         SpeedMode::TurningAround
