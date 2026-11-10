@@ -15,7 +15,7 @@ values it shows from the domains that own them (§1.3), and draws pictures the i
 (§1.4): her energy and ammunition, her reserve
 tanks, the items she has on, her room's place on her map and where she is, and the frame count.
 
-**What it leaves to others** (each an input where it feeds us, §5 names who supplies each): what a
+**What it leaves to others** (each an input where it feeds us, §6 names who supplies each): what a
 shot does to the selection (the weapons cancel it); the energy, ammunition and items themselves
 (damage, pickups, the stations that refill her); the pictures of the HUD and of her map (the
 importer); when a sound request is heard (the sound
@@ -41,6 +41,7 @@ and its remainder.
 | the selected item | an item or none (§1.1) | its icon is highlighted; what she fires | `CyclingItems`, `SelectionHighlight`; output (the weapons) |
 | the one-shot item | the selected item or none: whether the selection is the one-shot item | its icon flashes; the weapons drop the selection after one shot of it | `OneShotFlash`, `CyclingItems`; output (the weapons) |
 | the explored cells | a set of her map's cells | the mini-map shows them, and so does the pause screen's map | `Exploring`, `MiniMapWindow`, `DiagonalPicture`; output (the pause screen, saves) |
+| the mini-map is off | `bool`: from when a boss turns it off until it is turned on | the mini-map stops changing, her cell's blink with it | `MiniMapStill` |
 
 Every cell keeps what it shows until a rule of this spec draws it. Nothing else carries from one
 frame to the next.
@@ -83,9 +84,9 @@ when Select cycles.
 | why no click | none, or she spin jumps, she wall jumps, the grapple beam is out, time is stopped | `SwitchClick` |
 | collected | an item whose pickup this frame draws its icon, or none | `IconsAppear` |
 | the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
-| the mini-map is off | `bool`: from when a boss turns it off until something turns it on (the next room, a load, the end of some fights) | `MiniMapStill` |
+| the mini-map turned on | `bool`: something turned the mini-map on since its last turn, and no boss encountered since: the next room, a load or a new game; or, during this frame before the mini-map's turn, Crocomire's fall into the acid or her arrival in Ceres | `MiniMapStill` |
 | a boss encountered | the boss she encounters: Kraid, Draygon, Crocomire, Phantoon, or Ridley in Norfair or in Ceres, on entering its room while it lives; a step of its own, outside a frame of play (supplied by the door and the load flow) | `BossBlanksTheMap` |
-| Mother Brain falls | `bool`: her first form falls this frame, her brain in the tank destroyed (supplied by her fight) | `BossBlanksTheMap`, `MiniMapStill` |
+| Mother Brain falls | `bool`: her first form falls this frame, her brain in the tank destroyed (supplied by her fight) | `BossBlanksTheMap` |
 | her position | x, y: whole pixels in her room, after this frame's moves and before a pose change places her | `Exploring`, `MiniMapStill` |
 | her room | its top-left cell on her map, and its size in 16 px blocks across and down | `Exploring`, `MiniMapStill` |
 | her map | each cell's picture with its flips; the cells it charts; whether she has collected it; its beyond pictures (`LastColumnsShift`) | `MiniMapWindow`, `DiagonalPicture` |
@@ -146,9 +147,9 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   C-R4, C-tanks-empty-row]
 - Drawing, the digits → `(energy mod 100) div 10` and `energy mod 10` [C-R1, C-R4, C-tanks-fourteen]
 - So a tank past her capacity, and every cell while her energy is the one last shown, keeps what
-  it shows (C-R5, C-R6).
+  it shows (C-R5, C-R6, C-energy-unchanged-stale).
 - checked: oracle (every harness case); constructed (their twins, C-tanks-fourteen,
-  C-tanks-empty-row).
+  C-tanks-empty-row, C-energy-unchanged-stale).
 
 ### AmmoCounts
 - kind: mechanic.
@@ -157,12 +158,13 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - params: the digits' cells (§1.2).
 - switch: none.
 - A count whose capacity isn't 0 and isn't the count last shown → the count last shown becomes
-  it, and its digits are drawn [C-R2, C-R7, C-R8, C-icon-drawn]
+  it, and its digits are drawn [C-R2, C-R7, C-R8, C-icon-drawn, C-ammo-unchanged-stale]
 - Missiles' digits → `n div 100`, `(n mod 100) div 10`, `n mod 10` [C-R2, C-R7]
 - Super missiles' and power bombs' digits → `n div 10`, `n mod 10` [C-R2, C-R8]
-- So with a capacity of 0 nothing is drawn and the count last shown stays (C-ammo-no-capacity).
+- So with a capacity of 0 nothing is drawn and the count last shown stays (C-ammo-no-capacity),
+  and a count that is the one last shown leaves its cells as they are (C-ammo-unchanged-stale).
 - checked: oracle (the harness cases R2, R7, R8); constructed (C-R2, C-R7, C-R8,
-  C-ammo-no-capacity).
+  C-ammo-no-capacity, C-ammo-unchanged-stale).
 
 ### AutoReserveSign
 - kind: mechanic.
@@ -170,11 +172,11 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   them and dim when they are empty.
 - params: the sign's pictures (§1.4).
 - switch: none.
-- Reserve tanks on `auto`, with energy in them → the sign, lit [C-R2, C-R6]
-- Reserve tanks on `auto`, empty → the sign, dim [C-R1, C-R3]
+- Reserve tanks on `auto`, with energy in them → the sign, lit [C-R2, C-R6, C-sign-lights]
+- Reserve tanks on `auto`, empty → the sign, dim [C-R1, C-R3, C-sign-dims]
 - So set to refill by hand, the sign's cells keep what they show (C-sign-manual, C-R5).
 - checked: oracle (the harness cases R1, R2, R3, R6); constructed (C-R1, C-R2, C-R3, C-R6,
-  C-sign-manual).
+  C-sign-manual, C-sign-lights, C-sign-dims).
 
 ### SelectionHighlight
 - kind: mechanic.
@@ -302,7 +304,7 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - Her cell is column `cx = (rx + x div 256) mod 64` and row `cy = ry + y div 256` of her map:
   `rx`, `ry` her room's top-left cell, `x`, `y` where she is.
 - The mini-map updates (`MiniMapStill`), her cell `(cx, cy)` on the map (§1.5) → it joins the
-  explored cells [C-R16, C-R17, C-mm-diagonal-228, C-mm-her-cell-outside]
+  explored cells [C-R16, C-R17, C-mm-diagonal-512-past, C-mm-her-cell-outside]
 - checked: oracle (the harness cases R16, R17); constructed (C-R16, C-R17,
   C-mm-her-cell-outside).
 
@@ -341,12 +343,13 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   they show, blink included.
 - params: none.
 - switch: none.
-- The mini-map doesn't run, or is off, or Mother Brain falls this frame, or `x div 16 ≥ w` or
-  `y div 16 ≥ h` (`w`, `h` her room's blocks, `x` and `y` read as 0 to 65,535) → it doesn't
-  update [C-R18, C-mm-off, C-mm-not-running, C-mm-boss, C-mm-outside, C-mm-outside-left]
+- The mini-map turned on → it isn't off, before this frame's update [C-mm-turned-on]
+- The mini-map doesn't run, or is off, or `x div 16 ≥ w` or `y div 16 ≥ h` (`w`, `h` her room's
+  blocks, `x` and `y` read as 0 to 65,535) → it doesn't update [C-R18, C-mm-off,
+  C-mm-not-running, C-mm-boss, C-mm-outside, C-mm-outside-left]
 - So a position left of or above the room (FFF8) reads as past it (C-mm-outside-left).
 - checked: oracle (the harness case R18, a recorded frame with the mini-map off); constructed
-  (the others).
+  (the others, C-mm-turned-on).
 
 ### BossBlanksTheMap
 - kind: mechanic.
@@ -369,16 +372,15 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 - switch: **Parameter** (each boss's screens; the reference rules hold the table).
 - A boss encountered, or Mother Brain falls → every cell of the window shows the map's blank
-  in the charted colours [C-mm-boss, C-mm-boss-across, C-mm-boss-alone]
+  in the charted colours, and the mini-map is off [C-mm-boss, C-mm-boss-across, C-mm-boss-alone]
 - The same, a screen `(sx, sy)` the boss names → the map's cell `((rx + sx) mod 64, ry + sy)`
   joins the explored cells [C-mm-boss, C-mm-boss-across, C-mm-boss-alone, C-mm-boss-draygon,
   C-mm-boss-phantoon, C-mm-boss-ridley, C-mm-boss-alone-none]
-- Mother Brain falls → the mini-map is off from then, the rest of this frame included: it
-  doesn't update (`MiniMapStill`), and the selection and the status bar go on as on any frame
-  [C-mm-boss]
-- A boss encountered → the window and the explored cells as above, and the mini-map is off
-  from then; nothing else changes: the mini-map doesn't update or blink, the selection stays,
-  and the status bar isn't drawn [C-mm-boss-alone, C-mm-boss-alone-none]
+- A boss encountered → the window, the explored cells and the mini-map's off as above; nothing
+  else changes: the mini-map doesn't update or blink, the selection stays, and the status bar
+  isn't drawn [C-mm-boss-alone, C-mm-boss-alone-none]
+- So Mother Brain's fall comes before the mini-map's turn and leaves it off: that frame's update
+  doesn't happen (`MiniMapStill`), and the frame goes on (C-mm-boss).
 - checked: constructed (no recorded row reaches these bosses).
 
 ### DiagonalPicture
@@ -389,8 +391,8 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - switch: none.
 - Her window cell shown explored, its picture's number `p` and the diagonal's `d` with
   `p mod 512 = d mod 512` → the cell over hers, `(cx, cy − 1)`, joins the explored cells, shown
-  from the next frame [C-mm-diagonal, C-mm-diagonal-228]
-- So a picture 512 past the diagonal counts as it (C-mm-diagonal-228): the number is read mod
+  from the next frame [C-mm-diagonal, C-mm-diagonal-512-past]
+- So a picture 512 past the diagonal counts as it (C-mm-diagonal-512-past): the number is read mod
   512.
 - So the picture in the cell over hers doesn't count (C-mm-diagonal-above-only).
 - checked: constructed (no recorded row passes such a room).
@@ -437,7 +439,8 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - In the status bar: the icon a pickup draws comes before the highlight and the flash, so a
   selected item's new icon is lit; the flash has the last word on the colours of the one-shot
   item.
-- In the mini-map: her cell is explored before the window reads the explored cells; the cell
+- In the mini-map: a turn-on comes before the update; her cell is explored before the window
+  reads the explored cells; the cell
   `DiagonalPicture` adds over hers is explored after, so it shows from the next frame; the blink
   comes last.
 - Where she is: after this frame's moves and before a pose change places her. On a frame whose
@@ -459,7 +462,15 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - **Doors:** the frame count's reset at a door.
 - **Doors and the load flow:** `a boss encountered`, on entering the room of Kraid,
   Draygon, Crocomire, Phantoon or Ridley (Ceres's or Norfair's) while it lives, outside a frame
-  of play.
+  of play; and `the mini-map turned on`, at each new room ahead of its boss, at a load and at a
+  new game.
+- **The bosses' domain (Crocomire's fight):** `the mini-map turned on` when Crocomire falls into
+  the acid, during a frame of play.
+- **Cinematics (Samus's arrival in Ceres):** `the mini-map turned on` when she arrives, during a
+  frame of play.
+- **Her control (samus-motion, the stations, cinematics and the intro):** `the mini-map runs`,
+  false while she is held at a station, drained, entering or leaving the gunship, or shown by the
+  game's opening.
 - **The bosses' domain (the fight with Mother Brain):** `Mother Brain falls`, when her first
   form falls, her brain in the tank destroyed, during a frame of play.
 - **The importer:** the HUD's pictures (§1.4) and her map's.

@@ -14,8 +14,7 @@
 # - step: "Frame" is one frame of play. "BossEvent" is the door or the load flow meeting a boss,
 #   on entering its room while it lives (spec `BossBlanksTheMap`): it has no `frame` key, and
 #   its only inputs are mini_map's room (its cell) and boss; its after is compared after the
-#   event alone. The mini-map stays off from then: that is the input `off` of the frames that
-#   follow, so the after doesn't list it.
+#   event alone.
 # - A cell is "PPP:c", then "h" and "v" for its flips as above: PPP its picture's number, c its
 #   colour set (spec §1.4). A HUD row is one string of its 32 cells, left to right, separated
 #   by spaces; hud is the three rows, top first. A map picture is a picture alone (its colour
@@ -26,8 +25,8 @@
 #   missiles, super_missiles, power_bombs, selection } (optional, each default 0 or "None": the
 #   values the HUD last showed, spec §1); selection (optional, default "None"); one_shot
 #   (optional, default false): whether the selected item is the one-shot item, never true with
-#   "None" selected; explored (optional, default none): the explored cells, [column, row] on her
-#   map.
+#   "None" selected; mini_map_off (optional, default false): the mini-map is off (spec §1);
+#   explored (optional, default none): the explored cells, [column, row] on her map.
 # - inputs (spec §1.3):
 #   - energy = [now, capacity]; reserve (optional, default 0): the energy in the reserve tanks;
 #     auto_reserve (optional, default false): the reserve tanks are set to refill on their own.
@@ -40,8 +39,9 @@
 #   - muted_by (optional, default none): "SpinJump", "WallJump", "Grapple" or "TimeStopped", why a
 #     switch makes no click (spec `SwitchClick`; listed alphabetically, the order means nothing).
 #   - collected (optional, default none): the item whose icon a pickup this frame draws.
-#   - mini_map (optional, default: the mini-map has nothing to do): runs (default true), off
-#     (default false), mother_brain_falls (default false, a "Frame" step only): her first form
+#   - mini_map (optional, default: the mini-map has nothing to do): runs (default true);
+#     turned_on (default false, a "Frame" step only): the mini-map is turned on (spec
+#     `MiniMapStill`); mother_brain_falls (default false, a "Frame" step only): her first form
 #     falls this frame (spec `BossBlanksTheMap`); position = [x, y], her position in the room in
 #     pixels; room = { cell = [column, row], her room's top-left cell on her map, the map's top
 #     row counted as 0; blocks = [across, down], the room's size in 16 px blocks }; map = {
@@ -53,8 +53,8 @@
 #     "RidleyInNorfair" or "RidleyInCeres", the boss whose room the step enters.
 # - after: compared at the end of the step: changed (optional, default none), the HUD's cells
 #   that differ from before, "row,column" = cell, rows and columns from 0, every other cell as
-#   before; shown, selection, one_shot and explored, as in before (a field left out is as
-#   before); and events (default none), in the order raised: "Switched:<item>" (spec
+#   before; shown, selection, one_shot, mini_map_off and explored, as in before (a field left
+#   out is as before); and events (default none), in the order raised: "Switched:<item>" (spec
 #   `Switching`) and "Click" (spec `SwitchClick`).
 # - Every vector holds RAM values and invented content only: no picture, map cell or room of the
 #   game. The frames the oracle recorded are the harness's cases; each has a twin here, named
@@ -69,20 +69,20 @@
 
 # The HUD's pictures: invented, in the importer's format.
 [pictures]
-blank = "1A0"
-digits = ["1B0", "1B1", "1B2", "1B3", "1B4", "1B5", "1B6", "1B7", "1B8", "1B9"]
-full_tank = "1C1"
-empty_tank = "1C0"
-reserve_sign = [["1D0", "1D1"], ["1D2", "1D3"], ["1D4h", "1D5"]]
-map_blank = "0F0"
-diagonal = "0A5"
+blank = "0B4"
+digits = ["097", "061", "0DB", "1F7", "1A1", "110", "070", "195", "055", "1AB"]
+full_tank = "0A1"
+empty_tank = "0A2"
+reserve_sign = [["182", "1A5"], ["18F", "0FF"], ["0A3h", "0CA"]]
+map_blank = "088"
+diagonal = "0E4"
 
 [pictures.icons]
-Missiles = [["1E0", "1E1", "1E0h"], ["1E2", "1E3", "1E2h"]]
-SuperMissiles = [["1E4", "1E4h"], ["1E5", "1E5h"]]
-PowerBombs = [["1E6", "1E7"], ["1E8v", "1E9"]]
-GrappleBeam = [["1EA", "1EAh"], ["1EB", "1EBh"]]
-XRayScope = [["1EC", "1ED"], ["1EE", "1EF"]]
+Missiles = [["082", "1F0", "082h"], ["0AC", "0E5", "0ACh"]]
+SuperMissiles = [["106", "106h"], ["0A8", "0A8h"]]
+PowerBombs = [["098", "09E"], ["074v", "18C"]]
+GrappleBeam = [["040", "040h"], ["063", "063h"]]
+XRayScope = [["0F5", "1C9"], ["13A", "013"]]
 
 
 # Twins of the recorded frames, the harness's cases R1 to R18.
@@ -96,9 +96,9 @@ entries = ["AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapWindow"]
 frame = 244
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 138:2v 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 13C:7 143:2hv 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B3:3 1B3:3 1D4:3h 1D5:3 1B0:3 1B1:3 1B7:3 1A0:3 1B0:3 1B7:3 1A0:3 1B0:3 1B2:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 0A7:2v 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0DF:7 1C8:2hv 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1F7:3 1F7:3 0A3:3h 0CA:3 097:3 061:3 195:3 0B4:3 097:3 195:3 0B4:3 097:3 0DB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 333, missiles = 17, super_missiles = 7, power_bombs = 2, selection = "None" }
 selection = "None"
@@ -114,15 +114,14 @@ power_bombs = [2, 10]
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1807, 105]
 room = { cell = [25, 20], blocks = [128, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "30,20" = "12Ev", "30,21" = "139hv", "31,20" = "135h", "32,20" = "13C", "33,19" = "138v", "33,20" = "143hv", "33,21" = "14E" }
+pictures = { "30,20" = "06Av", "30,21" = "1BAhv", "31,20" = "1DCh", "32,20" = "0DF", "33,19" = "0A7v", "33,20" = "1C8hv", "33,21" = "0C4" }
 charted = [[30, 20], [30, 21], [31, 20], [33, 20], [33, 21]]
 [vector.after]
-changed = { "2,7" = "1B8:3" }
+changed = { "2,7" = "055:3" }
 shown = { energy = 338, missiles = 17, super_missiles = 7, power_bombs = 2, selection = "None" }
 selection = "None"
 one_shot = false
@@ -137,9 +136,9 @@ entries = ["AmmoCounts", "AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapW
 frame = 149
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:7 1D1:7 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C0:5 1A0:3 1A0:3 1D2:7 1D3:7 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1EE:5 1EF:5 1A0:3 0F0:3 0F0:3 12A:7v 131:2h 138:2 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B8:3 1B5:3 1D4:7h 1D5:7 1B0:3 1B1:3 1B7:3 1A0:3 1B1:3 1B3:3 1A0:3 1B0:3 1B0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 127:2h 12E:2 135:2hv 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:7 1A5:7 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A2:5 0B4:3 0B4:3 18F:7 0FF:7 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 13A:5 013:5 0B4:3 088:3 088:3 075:7v 0FE:2h 0A7:2 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 055:3 110:3 0A3:7h 0CA:7 097:3 061:3 195:3 0B4:3 061:3 1F7:3 0B4:3 097:3 097:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1F1:2h 06A:2 1DC:2hv 088:3 088:3 0B4:3",
 ]
 shown = { energy = 485, missiles = 17, super_missiles = 13, power_bombs = 0, selection = "None" }
 selection = "None"
@@ -157,15 +156,14 @@ can_switch = true
 muted_by = "SpinJump"
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [95, 149]
 room = { cell = [24, 6], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "22,7" = "127h", "23,7" = "12E", "24,6" = "12Av", "24,7" = "135hv", "25,6" = "131h", "26,6" = "138" }
+pictures = { "22,7" = "1F1h", "23,7" = "06A", "24,6" = "075v", "24,7" = "1DChv", "25,6" = "0FEh", "26,6" = "0A7" }
 charted = [[22, 7], [23, 7], [24, 6], [26, 6]]
 [vector.after]
-changed = { "1,5" = "1C1:2", "2,6" = "1B0:3", "2,12" = "1B9:3", "2,15" = "1B5:3" }
+changed = { "1,5" = "0A1:2", "2,6" = "097:3", "2,12" = "1AB:3", "2,15" = "110:3" }
 shown = { energy = 505, missiles = 19, super_missiles = 15, power_bombs = 0, selection = "None" }
 selection = "None"
 one_shot = false
@@ -180,9 +178,9 @@ entries = ["AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapWindow"]
 frame = 29
 [vector.before]
 hud = [
-  "1A0:3 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:4 1EA:4h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 131:2hv 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:4 1EB:4h 1A0:3 1EE:5 1EF:5 1A0:3 0F0:3 127:2hv 12E:2v 0F0:3 13C:2 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B0:3 1B0:3 1D4:3h 1D5:3 1B0:3 1B2:3 1B9:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B7:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 132:2 0F0:3 0F0:3 147:2h 31E:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:4 040:4h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 0FE:2hv 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:4 063:4h 0B4:3 13A:5 013:5 0B4:3 088:3 1F1:2hv 06A:2v 088:3 0DF:2 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 097:3 0A3:3h 0CA:3 097:3 0DB:3 1AB:3 0B4:3 097:3 110:3 0B4:3 097:3 195:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 067:2 088:3 088:3 1DE:2h 0B4:3",
 ]
 shown = { energy = 1000, missiles = 29, super_missiles = 5, power_bombs = 7, selection = "GrappleBeam" }
 selection = "GrappleBeam"
@@ -199,15 +197,14 @@ equipped = ["GrappleBeam", "XRayScope"]
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [182, 141]
 room = { cell = [12, 14], blocks = [96, 64] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "10,14" = "120", "10,15" = "12Bh", "11,14" = "127hv", "11,15" = "132", "12,14" = "12Ev", "12,15" = "139hv", "13,14" = "135h", "13,15" = "140v", "14,13" = "131hv", "14,14" = "13C", "14,15" = "147h" }
+pictures = { "10,14" = "053", "10,15" = "0DCh", "11,14" = "1F1hv", "11,15" = "067", "12,14" = "06Av", "12,15" = "1BAhv", "13,14" = "1DCh", "13,15" = "0D4v", "14,13" = "0FEhv", "14,14" = "0DF", "14,15" = "1DEh" }
 charted = [[10, 14], [11, 15], [12, 14], [12, 15], [13, 14], [14, 13], [14, 15]]
 [vector.after]
-changed = { "0,3" = "1C0:5", "2,6" = "1B9:3", "2,7" = "1B9:3" }
+changed = { "0,3" = "0A2:5", "2,6" = "1AB:3", "2,7" = "1AB:3" }
 shown = { energy = 999, missiles = 29, super_missiles = 5, power_bombs = 7, selection = "GrappleBeam" }
 selection = "GrappleBeam"
 one_shot = false
@@ -222,9 +219,9 @@ entries = ["AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapWindow"]
 frame = 27
 [vector.before]
 hud = [
-  "1A0:3 1C0:5 1C0:5 1C0:5 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:5 1EA:5h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C0:5 1C0:5 1C0:5 1C0:5 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:5 1EB:5h 1A0:3 1EE:5 1EF:5 1A0:3 139:2hv 140:2v 147:2h 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B0:3 1B1:3 1D4:3h 1D5:3 1B0:3 1B3:3 1B2:3 1A0:3 1B1:3 1B0:3 1A0:3 1B1:3 1B0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 144:2 14B:2hv 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A2:5 0A2:5 0A2:5 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:5 040:5h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A2:5 0A2:5 0A2:5 0A2:5 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:5 063:5h 0B4:3 13A:5 013:5 0B4:3 1BA:2hv 0D4:2v 1DE:2h 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 061:3 0A3:3h 0CA:3 097:3 1F7:3 0DB:3 0B4:3 061:3 097:3 0B4:3 061:3 097:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 087:2 03F:2hv 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 301, missiles = 32, super_missiles = 10, power_bombs = 10, selection = "None" }
 selection = "None"
@@ -241,15 +238,14 @@ equipped = ["GrappleBeam", "XRayScope"]
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [84, 109]
 room = { cell = [34, 11], blocks = [112, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "32,10" = "12Ev", "32,11" = "139hv", "32,12" = "144", "33,10" = "135h", "33,11" = "140v", "33,12" = "14Bhv", "34,10" = "13C", "34,11" = "147h", "34,12" = "152v", "35,11" = "14E", "35,12" = "159h", "36,11" = "155hv", "36,12" = "100" }
+pictures = { "32,10" = "06Av", "32,11" = "1BAhv", "32,12" = "087", "33,10" = "1DCh", "33,11" = "0D4v", "33,12" = "03Fhv", "34,10" = "0DF", "34,11" = "1DEh", "34,12" = "0FAv", "35,11" = "0C4", "35,12" = "0A9h", "36,11" = "0DAhv", "36,12" = "11D" }
 charted = [[32, 10], [32, 12], [33, 11], [33, 12], [34, 10], [34, 11], [35, 12], [36, 11], [36, 12]]
 [vector.after]
-changed = { "2,7" = "1B0:3" }
+changed = { "2,7" = "097:3" }
 shown = { energy = 300, missiles = 32, super_missiles = 10, power_bombs = 10, selection = "None" }
 selection = "None"
 one_shot = false
@@ -264,9 +260,9 @@ entries = ["EnergyGauge", "HerBlink", "MiniMapWindow"]
 frame = 18
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 125:7hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 07F:7hv 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
@@ -282,12 +278,11 @@ power_bombs = [0, 0]
 can_switch = false
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1408, 3]
 room = { cell = [21, 13], blocks = [128, 48] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "24,12" = "10C", "24,13" = "117h", "24,14" = "122v", "26,12" = "11Av", "26,13" = "125hv", "26,14" = "130" }
+pictures = { "24,12" = "1BF", "24,13" = "0B9h", "24,14" = "044v", "26,12" = "184v", "26,13" = "07Fhv", "26,14" = "09D" }
 charted = [[24, 12], [24, 14], [26, 12], [26, 13]]
 [vector.after]
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
@@ -304,9 +299,9 @@ entries = ["AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapWindow"]
 frame = 18
 [vector.before]
 hud = [
-  "1A0:3 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:7 1D1:7 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:4 1EA:4h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1D2:7 1D3:7 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:4 1EB:4h 1A0:3 1EE:5 1EF:5 1A0:3 0F0:3 123:2h 12A:7 131:2hv 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B0:3 1B4:3 1D4:7h 1D5:7 1B0:3 1B1:3 1B2:3 1A0:3 1B0:3 1B4:3 1A0:3 1B0:3 1B4:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:7 1A5:7 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:4 040:4h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 18F:7 0FF:7 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:4 063:4h 0B4:3 13A:5 013:5 0B4:3 088:3 0AF:2h 075:7 0FE:2hv 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 1A1:3 0A3:7h 0CA:7 097:3 061:3 0DB:3 0B4:3 097:3 1A1:3 0B4:3 097:3 1A1:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 804, missiles = 12, super_missiles = 4, power_bombs = 4, selection = "GrappleBeam" }
 selection = "GrappleBeam"
@@ -323,12 +318,11 @@ equipped = ["GrappleBeam", "XRayScope"]
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [194, 395]
 room = { cell = [11, 22], blocks = [16, 48] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "9,23" = "11Cv", "10,23" = "123h", "11,22" = "11Fhv", "11,23" = "12A", "11,24" = "135h", "12,22" = "126v", "12,23" = "131hv", "12,24" = "13C", "13,22" = "12Dh", "13,23" = "138v" }
+pictures = { "9,23" = "07Av", "10,23" = "0AFh", "11,22" = "0B0hv", "11,23" = "075", "11,24" = "1DCh", "12,22" = "0D3v", "12,23" = "0FEhv", "12,24" = "0DF", "13,22" = "099h", "13,23" = "0A7v" }
 charted = [[9, 23], [10, 23], [11, 22], [11, 24], [12, 23], [12, 24], [13, 22], [13, 23]]
 [vector.after]
 shown = { energy = 804, missiles = 12, super_missiles = 4, power_bombs = 4, selection = "GrappleBeam" }
@@ -345,9 +339,9 @@ entries = ["AmmoCounts", "AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapW
 frame = 247
 [vector.before]
 hud = [
-  "1A0:3 1C0:5 1C0:5 1C0:5 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:4 1EA:4h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C0:5 1C0:5 1C0:5 1C0:5 1C0:5 1C0:5 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:4 1EB:4h 1A0:3 1EE:5 1EF:5 1A0:3 103:2h 10A:2 111:7hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B7:3 1B4:3 1D4:3h 1D5:3 1B0:3 1B3:3 1B2:3 1A0:3 1B1:3 1B0:3 1A0:3 1B1:3 1B0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A2:5 0A2:5 0A2:5 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:4 040:4h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A2:5 0A2:5 0A2:5 0A2:5 0A2:5 0A2:5 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:4 063:4h 0B4:3 13A:5 013:5 0B4:3 059:2h 0FB:2 062:7hv 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 195:3 1A1:3 0A3:3h 0CA:3 097:3 1F7:3 0DB:3 0B4:3 061:3 097:3 0B4:3 061:3 097:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 174, missiles = 32, super_missiles = 10, power_bombs = 10, selection = "GrappleBeam" }
 selection = "GrappleBeam"
@@ -365,15 +359,14 @@ can_switch = true
 muted_by = "Grapple"
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1732, 133]
 room = { cell = [34, 11], blocks = [112, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "38,11" = "103h", "38,12" = "10Ev", "39,11" = "10A", "39,12" = "115h", "40,11" = "111hv", "40,12" = "11C", "41,11" = "118v", "41,12" = "123hv", "42,11" = "11Fh", "42,12" = "12Av" }
+pictures = { "38,11" = "059h", "38,12" = "0ABv", "39,11" = "0FB", "39,12" = "181h", "40,11" = "062hv", "40,12" = "07A", "41,11" = "064v", "41,12" = "0AFhv", "42,11" = "0B0h", "42,12" = "075v" }
 charted = [[38, 12], [39, 11], [39, 12], [40, 11], [41, 12], [42, 11], [42, 12]]
 [vector.after]
-changed = { "2,12" = "1B4:3" }
+changed = { "2,12" = "1A1:3" }
 shown = { energy = 174, missiles = 34, super_missiles = 10, power_bombs = 10, selection = "GrappleBeam" }
 selection = "GrappleBeam"
 one_shot = false
@@ -388,9 +381,9 @@ entries = ["AmmoCounts", "AutoReserveSign", "EnergyGauge", "HerBlink", "MiniMapW
 frame = 201
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 138:2v 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 13C:2 143:2hv 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B3:3 1B3:3 1D4:3h 1D5:3 1B0:3 1B1:3 1B7:3 1A0:3 1B0:3 1B7:3 1A0:3 1B0:3 1B1:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 0A7:2v 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0DF:2 1C8:2hv 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1F7:3 1F7:3 0A3:3h 0CA:3 097:3 061:3 195:3 0B4:3 097:3 195:3 0B4:3 097:3 061:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 333, missiles = 17, super_missiles = 7, power_bombs = 1, selection = "None" }
 selection = "None"
@@ -406,15 +399,14 @@ power_bombs = [2, 10]
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1832, 116]
 room = { cell = [25, 20], blocks = [128, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "30,20" = "12Ev", "30,21" = "139hv", "31,20" = "135h", "32,20" = "13C", "33,19" = "138v", "33,20" = "143hv", "33,21" = "14E" }
+pictures = { "30,20" = "06Av", "30,21" = "1BAhv", "31,20" = "1DCh", "32,20" = "0DF", "33,19" = "0A7v", "33,20" = "1C8hv", "33,21" = "0C4" }
 charted = [[30, 20], [30, 21], [31, 20], [33, 20], [33, 21]]
 [vector.after]
-changed = { "2,18" = "1B2:3" }
+changed = { "2,18" = "0DB:3" }
 shown = { energy = 333, missiles = 17, super_missiles = 7, power_bombs = 2, selection = "None" }
 selection = "None"
 one_shot = false
@@ -429,9 +421,9 @@ entries = ["AutoReserveSign", "CyclingItems", "EnergyGauge", "HerBlink", "MiniMa
 frame = 218
 [vector.before]
 hud = [
-  "1A0:3 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:7 1D1:7 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:5 1EA:5h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1D2:7 1D3:7 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:5 1EB:5h 1A0:3 1EE:5 1EF:5 1A0:3 0F0:3 0F0:3 123:2h 12A:2 131:2hv 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B0:3 1B4:3 1D4:7h 1D5:7 1B0:3 1B1:3 1B2:3 1A0:3 1B0:3 1B4:3 1A0:3 1B0:3 1B4:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:7 1A5:7 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:5 040:5h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 18F:7 0FF:7 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:5 063:5h 0B4:3 13A:5 013:5 0B4:3 088:3 088:3 0AF:2h 075:2 0FE:2hv 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 1A1:3 0A3:7h 0CA:7 097:3 061:3 0DB:3 0B4:3 097:3 1A1:3 0B4:3 097:3 1A1:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 804, missiles = 12, super_missiles = 4, power_bombs = 4, selection = "None" }
 selection = "None"
@@ -449,15 +441,14 @@ select = "Pressed"
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [69, 144]
 room = { cell = [10, 23], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "9,23" = "11Cv", "10,23" = "123h", "11,22" = "11Fhv", "11,23" = "12A", "11,24" = "135h", "12,22" = "126v", "12,23" = "131hv", "12,24" = "13C" }
+pictures = { "9,23" = "07Av", "10,23" = "0AFh", "11,22" = "0B0hv", "11,23" = "075", "11,24" = "1DCh", "12,22" = "0D3v", "12,23" = "0FEhv", "12,24" = "0DF" }
 charted = [[9, 23], [10, 23], [11, 22], [11, 24], [12, 23], [12, 24]]
 [vector.after]
-changed = { "0,10" = "1E0:4", "0,11" = "1E1:4", "0,12" = "1E0:4h", "1,10" = "1E2:4", "1,11" = "1E3:4", "1,12" = "1E2:4h" }
+changed = { "0,10" = "082:4", "0,11" = "1F0:4", "0,12" = "082:4h", "1,10" = "0AC:4", "1,11" = "0E5:4", "1,12" = "0AC:4h" }
 shown = { energy = 804, missiles = 12, super_missiles = 4, power_bombs = 4, selection = "Missiles" }
 selection = "Missiles"
 one_shot = false
@@ -473,9 +464,9 @@ entries = ["AutoReserveSign", "CyclingItems", "EnergyGauge", "HerBlink", "MiniMa
 frame = 166
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:7 1D1:7 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C0:5 1A0:3 1A0:3 1D2:7 1D3:7 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1EE:5 1EF:5 1A0:3 11B:2h 122:2 129:7hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B8:3 1B5:3 1D4:7h 1D5:7 1B0:3 1B1:3 1B4:3 1A0:3 1B1:3 1B3:3 1A0:3 1B0:3 1B1:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:7 1A5:7 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A2:5 0B4:3 0B4:3 18F:7 0FF:7 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 13A:5 013:5 0B4:3 052:2h 044:2 084:7hv 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 055:3 110:3 0A3:7h 0CA:7 097:3 061:3 1A1:3 0B4:3 061:3 1F7:3 0B4:3 097:3 061:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 485, missiles = 14, super_missiles = 13, power_bombs = 1, selection = "None" }
 selection = "None"
@@ -494,15 +485,14 @@ can_switch = true
 muted_by = "SpinJump"
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [3051, 389]
 room = { cell = [25, 6], blocks = [192, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "34,7" = "11Bh", "35,7" = "122", "36,7" = "129hv", "37,7" = "130v" }
+pictures = { "34,7" = "052h", "35,7" = "044", "36,7" = "084hv", "37,7" = "09Dv" }
 charted = [[34, 7], [35, 7], [37, 7]]
 [vector.after]
-changed = { "0,10" = "1E0:4", "0,11" = "1E1:4", "0,12" = "1E0:4h", "1,10" = "1E2:4", "1,11" = "1E3:4", "1,12" = "1E2:4h" }
+changed = { "0,10" = "082:4", "0,11" = "1F0:4", "0,12" = "082:4h", "1,10" = "0AC:4", "1,11" = "0E5:4", "1,12" = "0AC:4h" }
 shown = { energy = 485, missiles = 14, super_missiles = 13, power_bombs = 1, selection = "Missiles" }
 selection = "Missiles"
 one_shot = false
@@ -518,9 +508,9 @@ entries = ["AutoReserveSign", "CyclingItems", "EnergyGauge", "HerBlink", "MiniMa
 frame = 221
 [vector.before]
 hud = [
-  "1A0:3 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:7 1D1:7 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:5 1EA:5h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1D2:7 1D3:7 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:5 1EB:5h 1A0:3 1EE:5 1EF:5 1A0:3 0F0:3 0F0:3 123:2h 12A:2 131:2hv 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B0:3 1B4:3 1D4:7h 1D5:7 1B0:3 1B1:3 1B2:3 1A0:3 1B0:3 1B4:3 1A0:3 1B0:3 1B4:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:7 1A5:7 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:5 040:5h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 18F:7 0FF:7 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:5 063:5h 0B4:3 13A:5 013:5 0B4:3 088:3 088:3 0AF:2h 075:2 0FE:2hv 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 1A1:3 0A3:7h 0CA:7 097:3 061:3 0DB:3 0B4:3 097:3 1A1:3 0B4:3 097:3 1A1:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 804, missiles = 12, super_missiles = 4, power_bombs = 4, selection = "Missiles" }
 selection = "Missiles"
@@ -538,15 +528,14 @@ select = "Pressed"
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [69, 144]
 room = { cell = [10, 23], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "9,23" = "11Cv", "10,23" = "123h", "11,22" = "11Fhv", "11,23" = "12A", "11,24" = "135h", "12,22" = "126v", "12,23" = "131hv", "12,24" = "13C" }
+pictures = { "9,23" = "07Av", "10,23" = "0AFh", "11,22" = "0B0hv", "11,23" = "075", "11,24" = "1DCh", "12,22" = "0D3v", "12,23" = "0FEhv", "12,24" = "0DF" }
 charted = [[9, 23], [10, 23], [11, 22], [11, 24], [12, 23], [12, 24]]
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 804, missiles = 12, super_missiles = 4, power_bombs = 4, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -562,9 +551,9 @@ entries = ["AutoReserveSign", "CyclingItems", "EnergyGauge", "HerBlink", "MiniMa
 frame = 108
 [vector.before]
 hud = [
-  "1A0:3 1C0:5 1C0:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:5 1EA:5h 1A0:3 1EC:5 1ED:5 1A0:3 0F0:3 156:2 15D:2hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C0:5 1C0:5 1C0:5 1C0:5 1C0:5 1C0:5 1C0:5 1D2:3 1D3:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:5 1EB:5h 1A0:3 1EE:5 1EF:5 1A0:3 0F0:3 101:2h 108:2 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B0:3 1B1:3 1D4:3h 1D5:3 1B0:3 1B2:3 1B0:3 1A0:3 1B0:3 1B1:3 1A0:3 1B0:3 1B7:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A2:5 0A2:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:5 040:5h 0B4:3 0F5:5 1C9:5 0B4:3 088:3 03D:2 05A:2hv 088:3 088:3 0B4:3",
+  "0B4:3 0A2:5 0A2:5 0A2:5 0A2:5 0A2:5 0A2:5 0A2:5 18F:3 0FF:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:5 063:5h 0B4:3 13A:5 013:5 0B4:3 088:3 043:2h 066:2 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 061:3 0A3:3h 0CA:3 097:3 0DB:3 097:3 0B4:3 097:3 061:3 0B4:3 097:3 195:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 1, missiles = 20, super_missiles = 1, power_bombs = 7, selection = "Missiles" }
 selection = "Missiles"
@@ -582,15 +571,14 @@ select = "Pressed"
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [356, 235]
 room = { cell = [13, 18], blocks = [64, 48] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "13,17" = "156", "13,18" = "101h", "13,19" = "10Cv", "14,17" = "15Dhv", "14,18" = "108", "14,19" = "113h", "15,17" = "104v", "15,18" = "10Fhv", "15,19" = "11A", "16,17" = "10Bh", "16,18" = "116v", "16,19" = "121hv" }
+pictures = { "13,17" = "03D", "13,18" = "043h", "13,19" = "1BFv", "14,17" = "05Ahv", "14,18" = "066", "14,19" = "189h", "15,17" = "1D6v", "15,18" = "03Ehv", "15,19" = "184", "16,17" = "051h", "16,18" = "057v", "16,19" = "11Ehv" }
 charted = [[13, 17], [13, 19], [14, 18], [14, 19], [15, 17], [15, 18], [16, 17], [16, 19]]
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 1, missiles = 20, super_missiles = 1, power_bombs = 7, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -606,9 +594,9 @@ entries = ["AutoReserveSign", "CancellingTheItem", "EnergyGauge", "HerBlink", "M
 frame = 25
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:4 1E4:4h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:4 1E5:4h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 111:2h 118:2 11F:2hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B7:3 1D4:3h 1D5:3 1B0:3 1B1:3 1B8:3 1A0:3 1B0:3 1B6:3 1A0:3 1B0:3 1B2:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:4 106:4h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:4 0A8:4h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 062:2h 064:2 0B0:2hv 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 195:3 0A3:3h 0CA:3 097:3 061:3 055:3 0B4:3 097:3 070:3 0B4:3 097:3 0DB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 397, missiles = 18, super_missiles = 6, power_bombs = 2, selection = "SuperMissiles" }
 selection = "SuperMissiles"
@@ -625,15 +613,14 @@ cancel = "Pressed"
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1278, 146]
 room = { cell = [27, 18], blocks = [96, 16] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "29,18" = "111h", "30,18" = "118", "31,18" = "11Fhv", "32,18" = "126v", "33,17" = "122", "33,18" = "12Dh", "33,19" = "138v" }
+pictures = { "29,18" = "062h", "30,18" = "064", "31,18" = "0B0hv", "32,18" = "0D3v", "33,17" = "044", "33,18" = "099h", "33,19" = "0A7v" }
 charted = [[29, 18], [30, 18], [32, 18], [33, 17], [33, 18]]
 [vector.after]
-changed = { "0,14" = "1E4:5", "0,15" = "1E4:5h", "1,14" = "1E5:5", "1,15" = "1E5:5h" }
+changed = { "0,14" = "106:5", "0,15" = "106:5h", "1,14" = "0A8:5", "1,15" = "0A8:5h" }
 shown = { energy = 397, missiles = 18, super_missiles = 6, power_bombs = 2, selection = "None" }
 selection = "None"
 one_shot = false
@@ -649,9 +636,9 @@ entries = ["AutoReserveSign", "CancellingTheItem", "EnergyGauge", "HerBlink", "M
 frame = 22
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 138:2v 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1D2:3 1D3:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 13C:7 143:2hv 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B7:3 1D4:3h 1D5:3 1B0:3 1B1:3 1B7:3 1A0:3 1B0:3 1B7:3 1A0:3 1B0:3 1B1:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 0A7:2v 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 18F:3 0FF:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0DF:7 1C8:2hv 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 195:3 0A3:3h 0CA:3 097:3 061:3 195:3 0B4:3 097:3 195:3 0B4:3 097:3 061:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 397, missiles = 17, super_missiles = 7, power_bombs = 1, selection = "Missiles" }
 selection = "Missiles"
@@ -668,15 +655,14 @@ cancel = "Pressed"
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [2002, 139]
 room = { cell = [25, 20], blocks = [128, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "30,20" = "12Ev", "30,21" = "139hv", "31,20" = "135h", "32,20" = "13C", "33,19" = "138v", "33,20" = "143hv", "33,21" = "14E" }
+pictures = { "30,20" = "06Av", "30,21" = "1BAhv", "31,20" = "1DCh", "32,20" = "0DF", "33,19" = "0A7v", "33,20" = "1C8hv", "33,21" = "0C4" }
 charted = [[30, 20], [30, 21], [31, 20], [33, 20], [33, 21]]
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h" }
 shown = { energy = 397, missiles = 17, super_missiles = 7, power_bombs = 1, selection = "None" }
 selection = "None"
 one_shot = false
@@ -692,9 +678,9 @@ entries = ["AutoReserveSign", "CyclingItems", "EnergyGauge", "HerBlink", "MiniMa
 frame = 214
 [vector.before]
 hud = [
-  "1A0:3 1C1:2 1C0:5 1C0:5 1A0:3 1A0:3 1A0:3 1A0:3 1D0:3 1D1:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1EA:5 1EA:5h 1A0:3 1EC:4 1ED:4 1A0:3 10A:2 111:2hv 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1D2:3 1D3:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1EB:5 1EB:5h 1A0:3 1EE:4 1EF:4 1A0:3 0F0:3 11C:2 123:7hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B6:3 1D4:3h 1D5:3 1B0:3 1B3:3 1B4:3 1A0:3 1B0:3 1B8:3 1A0:3 1B0:3 1B6:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 120:2v 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0A1:2 0A2:5 0A2:5 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:5 040:5h 0B4:3 0F5:4 1C9:4 0B4:3 0FB:2 062:2hv 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:5 063:5h 0B4:3 13A:4 013:4 0B4:3 088:3 07A:2 0AF:7hv 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 070:3 0A3:3h 0CA:3 097:3 1F7:3 1A1:3 0B4:3 097:3 055:3 0B4:3 097:3 070:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 053:2v 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 896, missiles = 34, super_missiles = 8, power_bombs = 6, selection = "XRayScope" }
 selection = "XRayScope"
@@ -713,15 +699,14 @@ can_switch = true
 muted_by = "TimeStopped"
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [275, 651]
 room = { cell = [20, 14], blocks = [96, 48] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "19,15" = "10A", "19,16" = "115h", "19,17" = "120v", "20,15" = "111hv", "20,16" = "11C", "21,15" = "118v", "21,16" = "123hv", "21,17" = "12E", "22,15" = "11Fh", "22,16" = "12Av", "22,17" = "135hv", "23,15" = "126", "23,16" = "131h", "23,17" = "13Cv" }
+pictures = { "19,15" = "0FB", "19,16" = "181h", "19,17" = "053v", "20,15" = "062hv", "20,16" = "07A", "21,15" = "064v", "21,16" = "0AFhv", "21,17" = "06A", "22,15" = "0B0h", "22,16" = "075v", "22,17" = "1DChv", "23,15" = "0D3", "23,16" = "0FEh", "23,17" = "0DFv" }
 charted = [[19, 16], [19, 17], [20, 15], [20, 16], [21, 15], [21, 17], [22, 16], [22, 17], [23, 15], [23, 16]]
 [vector.after]
-changed = { "0,23" = "1EC:5", "0,24" = "1ED:5", "1,23" = "1EE:5", "1,24" = "1EF:5" }
+changed = { "0,23" = "0F5:5", "0,24" = "1C9:5", "1,23" = "13A:5", "1,24" = "013:5" }
 shown = { energy = 896, missiles = 34, super_missiles = 8, power_bombs = 6, selection = "None" }
 selection = "None"
 one_shot = false
@@ -737,9 +722,9 @@ entries = ["EnergyGauge", "Exploring", "HerBlink", "MiniMapWindow"]
 frame = 187
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 130:2 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 09D:2 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
@@ -755,15 +740,14 @@ power_bombs = [0, 0]
 can_switch = false
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1408, 257]
 room = { cell = [21, 13], blocks = [128, 48] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "24,13" = "117h", "24,14" = "122v", "24,15" = "12Dhv", "25,15" = "134v", "26,13" = "125hv", "26,14" = "130", "26,15" = "13Bh", "27,15" = "142", "28,15" = "149hv" }
+pictures = { "24,13" = "0B9h", "24,14" = "044v", "24,15" = "099hv", "25,15" = "054v", "26,13" = "07Fhv", "26,14" = "09D", "26,15" = "185h", "27,15" = "0B2", "28,15" = "112hv" }
 charted = [[24, 14], [24, 15], [26, 13], [26, 15], [27, 15]]
 [vector.after]
-changed = { "0,28" = "125:2hv" }
+changed = { "0,28" = "07F:2hv" }
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
 one_shot = false
@@ -778,9 +762,9 @@ entries = ["EnergyGauge", "Exploring", "HerBlink", "MiniMapWindow"]
 frame = 184
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 13F:2hv 0F0:3 0F0:3 31E:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 14A:7 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 19C:2hv 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 079:7 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
@@ -796,15 +780,14 @@ power_bombs = [0, 0]
 can_switch = false
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [1152, 515]
 room = { cell = [23, 5], blocks = [144, 80] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "25,6" = "131h", "25,7" = "13Cv", "25,8" = "147hv", "26,6" = "138", "26,7" = "143h", "26,8" = "14Ev", "27,6" = "13Fhv", "27,7" = "14A", "27,8" = "155h", "28,6" = "146v", "28,7" = "151hv", "28,8" = "15C", "29,6" = "14Dh", "29,7" = "158v", "29,8" = "103hv" }
+pictures = { "25,6" = "0FEh", "25,7" = "0DFv", "25,8" = "1DEhv", "26,6" = "0A7", "26,7" = "1C8h", "26,8" = "0C4v", "27,6" = "19Chv", "27,7" = "079", "27,8" = "0DAh", "28,6" = "1D8v", "28,7" = "094hv", "28,8" = "198", "29,6" = "1ACh", "29,7" = "0C1v", "29,8" = "059hv" }
 charted = [[25, 7], [25, 8], [26, 6], [26, 7], [27, 6], [27, 8], [28, 7], [28, 8], [29, 6], [29, 7]]
 [vector.after]
-changed = { "1,28" = "14A:2" }
+changed = { "1,28" = "079:2" }
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
 one_shot = false
@@ -819,13 +802,14 @@ entries = ["EnergyGauge", "MiniMapStill"]
 frame = 18
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
-  "1A0:3 30B:3 30C:3 30D:3 332:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 31E:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
 one_shot = false
+mini_map_off = true
 explored = [[18, 21], [19, 21]]
 [vector.inputs]
 energy = [99, 99]
@@ -837,12 +821,11 @@ power_bombs = [0, 0]
 can_switch = true
 [vector.inputs.mini_map]
 runs = true
-off = true
 position = [48, 130]
 room = { cell = [20, 21], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "18,21" = "145hv", "19,21" = "14Cv", "20,21" = "153h" }
+pictures = { "18,21" = "1DBhv", "19,21" = "0D2v", "20,21" = "1DAh" }
 charted = [[18, 21], [20, 21]]
 [vector.after]
 shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
@@ -862,9 +845,9 @@ entries = ["CyclingItems", "SelectionHighlight", "SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B0:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 097:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -876,7 +859,7 @@ super_missiles = [0, 5]
 power_bombs = [5, 5]
 select = "Pressed"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,17" = "1E6:4", "0,18" = "1E7:4", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,17" = "1E8:4v", "1,18" = "1E9:4" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,17" = "098:4", "0,18" = "09E:4", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,17" = "074:4v", "1,18" = "18C:4" }
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 5, selection = "PowerBombs" }
 selection = "PowerBombs"
 one_shot = false
@@ -891,9 +874,9 @@ entries = ["CyclingItems", "SelectionHighlight", "SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:4 1E7:4 1A0:3 1A0:3 1A0:3 1A0:3 1EC:5 1ED:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:4v 1E9:4 1A0:3 1A0:3 1A0:3 1A0:3 1EE:5 1EF:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:4 09E:4 0B4:3 0B4:3 0B4:3 0B4:3 0F5:5 1C9:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:4v 18C:4 0B4:3 0B4:3 0B4:3 0B4:3 13A:5 013:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "PowerBombs" }
 selection = "PowerBombs"
@@ -906,7 +889,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 equipped = ["XRayScope"]
 [vector.after]
-changed = { "0,17" = "1E6:5", "0,18" = "1E7:5", "0,23" = "1EC:4", "0,24" = "1ED:4", "1,17" = "1E8:5v", "1,18" = "1E9:5", "1,23" = "1EE:4", "1,24" = "1EF:4" }
+changed = { "0,17" = "098:5", "0,18" = "09E:5", "0,23" = "0F5:4", "0,24" = "1C9:4", "1,17" = "074:5v", "1,18" = "18C:5", "1,23" = "13A:4", "1,24" = "013:4" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "XRayScope" }
 selection = "XRayScope"
 one_shot = false
@@ -921,9 +904,9 @@ entries = ["CyclingItems"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B0:3 1A0:3 1B0:3 1B0:3 1A0:3 1B0:3 1B0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 097:3 0B4:3 097:3 097:3 0B4:3 097:3 097:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
@@ -948,9 +931,9 @@ entries = ["OneShotItem", "CyclingItems", "SelectionHighlight", "OneShotFlash"]
 frame = 19
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -963,7 +946,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 cancel = "Held"
 [vector.after]
-changed = { "0,10" = "1E0:4", "0,11" = "1E1:4", "0,12" = "1E0:4h", "1,10" = "1E2:4", "1,11" = "1E3:4", "1,12" = "1E2:4h" }
+changed = { "0,10" = "082:4", "0,11" = "1F0:4", "0,12" = "082:4h", "1,10" = "0AC:4", "1,11" = "0E5:4", "1,12" = "0AC:4h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
@@ -977,9 +960,9 @@ entries = ["OneShotItem", "CyclingItems", "SelectionHighlight"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -991,7 +974,7 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 select = "Pressed"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -1005,9 +988,9 @@ entries = ["CancellingTheItem", "SelectionHighlight", "SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:4 1E4:4h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:4 1E5:4h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:4 106:4h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:4 0A8:4h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "SuperMissiles"
@@ -1020,7 +1003,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 cancel = "Pressed"
 [vector.after]
-changed = { "0,14" = "1E4:5", "0,15" = "1E4:5h", "1,14" = "1E5:5", "1,15" = "1E5:5h" }
+changed = { "0,14" = "106:5", "0,15" = "106:5h", "1,14" = "0A8:5", "1,15" = "0A8:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1034,9 +1017,9 @@ entries = ["CyclingItems"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1061,9 +1044,9 @@ entries = ["CancellingTheItem", "SelectionHighlight", "SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1075,7 +1058,7 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 shot_cancels = true
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1089,9 +1072,9 @@ entries = ["OneShotFlash"]
 frame = 53
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1114,9 +1097,9 @@ entries = ["OneShotFlash"]
 frame = 47
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1127,7 +1110,7 @@ missiles = [5, 5]
 super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
@@ -1141,9 +1124,9 @@ entries = ["IconsAppear", "AmmoCounts"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 [vector.inputs]
@@ -1153,7 +1136,7 @@ super_missiles = [0, 0]
 power_bombs = [0, 0]
 collected = "Missiles"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1167,9 +1150,9 @@ entries = ["IconsAppear", "AmmoCounts"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
 [vector.inputs]
@@ -1179,7 +1162,7 @@ super_missiles = [0, 0]
 power_bombs = [0, 0]
 collected = "Missiles"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 0, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1192,9 +1175,9 @@ entries = ["IconsAppear", "AmmoCounts"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1205,7 +1188,7 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 collected = "Missiles"
 [vector.after]
-changed = { "2,11" = "1B1:3", "2,12" = "1B0:3" }
+changed = { "2,11" = "061:3", "2,12" = "097:3" }
 shown = { energy = 299, missiles = 10, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = false
@@ -1218,9 +1201,9 @@ entries = ["IconsAppear"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 [vector.inputs]
@@ -1230,7 +1213,7 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 collected = "GrappleBeam"
 [vector.after]
-changed = { "0,20" = "1EA:5", "0,21" = "1EA:5h", "1,20" = "1EB:5", "1,21" = "1EB:5h" }
+changed = { "0,20" = "040:5", "0,21" = "040:5h", "1,20" = "063:5", "1,21" = "063:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1244,9 +1227,9 @@ entries = ["AmmoCounts"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 5, selection = "None" }
 [vector.inputs]
@@ -1267,9 +1250,9 @@ entries = ["EnergyGauge"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1C1:2 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0A1:2 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 1499, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 [vector.inputs]
@@ -1290,9 +1273,9 @@ entries = ["EnergyGauge"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 [vector.inputs]
@@ -1301,7 +1284,7 @@ missiles = [5, 5]
 super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.after]
-changed = { "1,1" = "1C0:5", "1,2" = "1C0:5" }
+changed = { "1,1" = "0A2:5", "1,2" = "0A2:5" }
 shown = { energy = 99, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1315,9 +1298,9 @@ entries = ["SelectionHighlight", "SwitchClick", "CyclingItems"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:4 1E7:4 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:4v 1E9:4 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:4 09E:4 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:4v 18C:4 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "PowerBombs" }
 selection = "PowerBombs"
@@ -1330,7 +1313,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 equipped = ["GrappleBeam"]
 [vector.after]
-changed = { "0,17" = "1E6:5", "0,18" = "1E7:5", "1,17" = "1E8:5v", "1,18" = "1E9:5" }
+changed = { "0,17" = "098:5", "0,18" = "09E:5", "1,17" = "074:5v", "1,18" = "18C:5" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "GrappleBeam" }
 selection = "GrappleBeam"
 one_shot = false
@@ -1345,9 +1328,9 @@ entries = ["SelectionHighlight", "CyclingItems", "SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1A0:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B0:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 0B4:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 097:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1359,7 +1342,7 @@ super_missiles = [0, 5]
 power_bombs = [5, 5]
 select = "Pressed"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,17" = "1A0:4", "0,18" = "1E7:4", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,17" = "1E8:4v", "1,18" = "1E9:4" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,17" = "0B4:4", "0,18" = "09E:4", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,17" = "074:4v", "1,18" = "18C:4" }
 shown = { energy = 299, missiles = 5, super_missiles = 0, power_bombs = 5, selection = "PowerBombs" }
 selection = "PowerBombs"
 one_shot = false
@@ -1373,9 +1356,9 @@ entries = ["SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1388,7 +1371,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 muted_by = "WallJump"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -1402,9 +1385,9 @@ entries = ["SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1417,7 +1400,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 muted_by = "TimeStopped"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -1431,9 +1414,9 @@ entries = ["SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1446,7 +1429,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 muted_by = "SpinJump"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -1460,9 +1443,9 @@ entries = ["SwitchClick"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -1475,7 +1458,7 @@ power_bombs = [5, 5]
 select = "Pressed"
 muted_by = "Grapple"
 [vector.after]
-changed = { "0,10" = "1E0:5", "0,11" = "1E1:5", "0,12" = "1E0:5h", "0,14" = "1E4:4", "0,15" = "1E4:4h", "1,10" = "1E2:5", "1,11" = "1E3:5", "1,12" = "1E2:5h", "1,14" = "1E5:4", "1,15" = "1E5:4h" }
+changed = { "0,10" = "082:5", "0,11" = "1F0:5", "0,12" = "082:5h", "0,14" = "106:4", "0,15" = "106:4h", "1,10" = "0AC:5", "1,11" = "0E5:5", "1,12" = "0AC:5h", "1,14" = "0A8:4", "1,15" = "0A8:4h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
 selection = "SuperMissiles"
 one_shot = false
@@ -1490,9 +1473,113 @@ entries = ["AutoReserveSign"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+auto_reserve = false
+reserve = 50
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+
+[[vector]]
+# Reserve tanks on auto with energy in them, the sign shown dim: it lights
+id = "C-sign-lights"
+source = "constructed"
+entries = ["AutoReserveSign"]
+frame = 8
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:3 1A5:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 18F:3 0FF:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0A3:3h 0CA:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+auto_reserve = true
+reserve = 50
+[vector.after]
+changed = { "0,8" = "182:7", "0,9" = "1A5:7", "1,8" = "18F:7", "1,9" = "0FF:7", "2,8" = "0A3:7h", "2,9" = "0CA:7" }
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+
+[[vector]]
+# Reserve tanks on auto and empty, the sign shown lit: it dims
+id = "C-sign-dims"
+source = "constructed"
+entries = ["AutoReserveSign"]
+frame = 8
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 182:7 1A5:7 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 18F:7 0FF:7 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0A3:7h 0CA:7 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+auto_reserve = true
+reserve = 0
+[vector.after]
+changed = { "0,8" = "182:3", "0,9" = "1A5:3", "1,8" = "18F:3", "1,9" = "0FF:3", "2,8" = "0A3:3h", "2,9" = "0CA:3" }
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+
+[[vector]]
+# Her energy is the energy last shown, its cells showing other digits and an
+# empty tank: nothing is drawn, they keep what they show
+id = "C-energy-unchanged-stale"
+source = "constructed"
+entries = ["EnergyGauge"]
+frame = 8
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A2:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1A1:3 195:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+auto_reserve = false
+reserve = 50
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+
+[[vector]]
+# The missiles' count is the one last shown, its cells showing other digits:
+# nothing is drawn, they keep what they show
+id = "C-ammo-unchanged-stale"
+source = "constructed"
+entries = ["AmmoCounts"]
+frame = 8
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 1F7:3 055:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 [vector.inputs]
@@ -1516,9 +1603,9 @@ entries = ["MiniMapStill"]
 frame = 16
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1531,12 +1618,11 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [256, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1551,9 +1637,9 @@ entries = ["MiniMapStill"]
 frame = 16
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1566,12 +1652,11 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [65528, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1586,9 +1671,9 @@ entries = ["MiniMapStill"]
 frame = 16
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1601,12 +1686,11 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = false
-off = false
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1621,13 +1705,14 @@ entries = ["MiniMapStill"]
 frame = 16
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
+mini_map_off = true
 explored = [[19, 10], [20, 10], [21, 9]]
 [vector.inputs]
 energy = [299, 299]
@@ -1636,16 +1721,54 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = true
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
+explored = [[19, 10], [20, 10], [21, 9]]
+
+[[vector]]
+# The mini-map is off and is turned on this frame: it updates, and it is no
+# longer off
+id = "C-mm-turned-on"
+source = "constructed"
+entries = ["MiniMapStill", "MiniMapWindow", "Exploring", "HerBlink"]
+frame = 16
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = true
+explored = [[19, 10], [20, 10], [21, 9]]
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+[vector.inputs.mini_map]
+runs = true
+turned_on = true
+position = [128, 128]
+room = { cell = [20, 10], blocks = [16, 32] }
+[vector.inputs.mini_map.map]
+collected = false
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
+[vector.after]
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "087:2v", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "1A4:2h", "1,28" = "0B2:7v", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = false
 explored = [[19, 10], [20, 10], [21, 9]]
 
 [[vector]]
@@ -1657,9 +1780,9 @@ entries = ["MiniMapWindow", "Exploring", "HerBlink"]
 frame = 0
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1672,15 +1795,14 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 charted = [[18, 9], [19, 9], [22, 11], [21, 10]]
 [vector.after]
-changed = { "0,26" = "175:3hv", "0,27" = "17A:3", "0,28" = "0F0:3", "0,29" = "144:2v", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "17D:2h", "1,28" = "142:7v", "1,29" = "147:3hv", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "14F:3h" }
+changed = { "0,26" = "1A8:3hv", "0,27" = "0F3:3", "0,28" = "088:3", "0,29" = "087:2v", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "1A4:2h", "1,28" = "0B2:7v", "1,29" = "1DE:3hv", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "0BC:3h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1694,9 +1816,9 @@ entries = ["MiniMapWindow", "Exploring", "HerBlink"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1709,22 +1831,21 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 charted = [[18, 9], [19, 9], [22, 11], [21, 10]]
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "144:2v", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "17D:2h", "1,28" = "142:2v", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "087:2v", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "1A4:2h", "1,28" = "0B2:2v", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
 explored = [[19, 10], [20, 10], [21, 9]]
 
 [[vector]]
-# Her cell's picture is the diagonal picture (0A5): the cell over hers is
+# Her cell's picture is the diagonal picture: the cell over hers is
 # explored too, shown on the next frame
 id = "C-mm-diagonal"
 source = "constructed"
@@ -1732,9 +1853,9 @@ entries = ["DiagonalPicture", "Exploring", "MiniMapWindow"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1747,30 +1868,29 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "0A5h", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0E4h", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "17D:2h", "1,28" = "0A5:2h", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "1A4:2h", "1,28" = "0E4:2h", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
 explored = [[19, 10], [20, 9], [20, 10]]
 
 [[vector]]
-# Picture 2A5, 512 past it, counts as the diagonal picture too
-id = "C-mm-diagonal-228"
+# A picture 512 past the diagonal's number counts as the diagonal picture too
+id = "C-mm-diagonal-512-past"
 source = "constructed"
 entries = ["DiagonalPicture"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1783,30 +1903,29 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "2A5", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "2E4", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "2A5:2", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "2E4:2", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
 explored = [[20, 9], [20, 10]]
 
 [[vector]]
-# Picture 0A5 in the cell over hers, not in hers: only hers is explored
+# The diagonal picture in the cell over hers, not in hers: only hers is explored
 id = "C-mm-diagonal-above-only"
 source = "constructed"
 entries = ["DiagonalPicture", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1819,14 +1938,13 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [20, 10], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "0A5", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "0E4", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "142:2v", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "0B2:2v", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1841,9 +1959,9 @@ entries = ["FirstColumnsShift", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1856,15 +1974,14 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [0, 10], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "0,8" = "158", "0,9" = "15Bh", "0,10" = "15Ev", "0,11" = "161hv", "0,12" = "164", "1,8" = "15Dh", "1,9" = "160v", "1,10" = "163hv", "1,11" = "166", "1,12" = "169h", "2,8" = "162v", "2,9" = "165hv", "2,10" = "168", "2,11" = "16Bh", "2,12" = "16Ev", "3,8" = "167hv", "3,9" = "16A", "3,10" = "16Dh", "3,11" = "170v", "3,12" = "173hv", "29,7" = "166", "29,8" = "169h", "29,9" = "16Cv", "29,10" = "16Fhv", "29,11" = "172", "30,7" = "16Bh", "30,8" = "16Ev", "30,9" = "171hv", "30,10" = "174", "30,11" = "177h", "31,7" = "170v", "31,8" = "173hv", "31,9" = "176", "31,10" = "179h", "31,11" = "17Cv", "32,7" = "175hv", "32,8" = "178", "32,9" = "17Bh", "32,10" = "17Ev", "32,11" = "141hv", "33,7" = "17A", "33,8" = "17Dh", "33,9" = "140v", "33,10" = "143hv", "33,11" = "146", "34,7" = "17Fh", "34,8" = "142v", "34,9" = "145hv", "34,10" = "148", "34,11" = "14Bh", "35,7" = "144v", "35,8" = "147hv", "35,9" = "14A", "35,10" = "14Dh", "35,11" = "150v" }
+pictures = { "0,8" = "0C1", "0,9" = "105h", "0,10" = "0BBv", "0,11" = "0EAhv", "0,12" = "0CC", "1,8" = "05Ah", "1,9" = "01Av", "1,10" = "107hv", "1,11" = "1FD", "1,12" = "18Dh", "2,8" = "1F4v", "2,9" = "0D1hv", "2,10" = "08B", "2,11" = "096h", "2,12" = "1CDv", "3,8" = "137hv", "3,9" = "0F1", "3,10" = "0BDh", "3,11" = "1AEv", "3,12" = "080hv", "29,7" = "1FD", "29,8" = "18Dh", "29,9" = "0D7v", "29,10" = "128hv", "29,11" = "1CF", "30,7" = "096h", "30,8" = "1CDv", "30,9" = "03Chv", "30,10" = "0B7", "30,11" = "02Fh", "31,7" = "1AEv", "31,8" = "080hv", "31,9" = "0E9", "31,10" = "1F8h", "31,11" = "1FFv", "32,7" = "1A8hv", "32,8" = "02E", "32,9" = "08Ah", "32,10" = "0EDv", "32,11" = "197hv", "33,7" = "0F3", "33,8" = "1A4h", "33,9" = "0D4v", "33,10" = "1C8hv", "33,11" = "1D8", "34,7" = "196h", "34,8" = "0B2v", "34,9" = "1DBhv", "34,10" = "0F2", "34,11" = "03Fh", "35,7" = "087v", "35,8" = "1DEhv", "35,9" = "079", "35,10" = "1ACh", "35,11" = "18Bv" }
 charted = [[33, 9], [31, 10]]
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "173:2hv", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "142:2v", "1,26" = "171:2hv", "1,27" = "0F0:3", "1,28" = "0F0:3", "1,29" = "140:2v", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "179:3h", "2,28" = "17E:2v", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "080:2hv", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "0B2:2v", "1,26" = "03C:2hv", "1,27" = "088:3", "1,28" = "088:3", "1,29" = "0D4:2v", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "1F8:3h", "2,28" = "0ED:2v", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1879,9 +1996,9 @@ entries = ["FirstColumnsShift", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1894,15 +2011,14 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [1, 10], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "0,8" = "158", "0,9" = "15Bh", "0,10" = "15Ev", "0,11" = "161hv", "0,12" = "164", "1,8" = "15Dh", "1,9" = "160v", "1,10" = "163hv", "1,11" = "166", "1,12" = "169h", "2,8" = "162v", "2,9" = "165hv", "2,10" = "168", "2,11" = "16Bh", "2,12" = "16Ev", "3,8" = "167hv", "3,9" = "16A", "3,10" = "16Dh", "3,11" = "170v", "3,12" = "173hv", "4,8" = "16C", "4,9" = "16Fh", "4,10" = "172v", "4,11" = "175hv", "4,12" = "178", "30,7" = "16Bh", "30,8" = "16Ev", "30,9" = "171hv", "30,10" = "174", "30,11" = "177h", "31,7" = "170v", "31,8" = "173hv", "31,9" = "176", "31,10" = "179h", "31,11" = "17Cv", "32,7" = "175hv", "32,8" = "178", "32,9" = "17Bh", "32,10" = "17Ev", "32,11" = "141hv", "33,7" = "17A", "33,8" = "17Dh", "33,9" = "140v", "33,10" = "143hv", "33,11" = "146", "34,7" = "17Fh", "34,8" = "142v", "34,9" = "145hv", "34,10" = "148", "34,11" = "14Bh", "35,7" = "144v", "35,8" = "147hv", "35,9" = "14A", "35,10" = "14Dh", "35,11" = "150v", "36,7" = "149hv", "36,8" = "14C", "36,9" = "14Fh", "36,10" = "152v", "36,11" = "155hv" }
+pictures = { "0,8" = "0C1", "0,9" = "105h", "0,10" = "0BBv", "0,11" = "0EAhv", "0,12" = "0CC", "1,8" = "05Ah", "1,9" = "01Av", "1,10" = "107hv", "1,11" = "1FD", "1,12" = "18Dh", "2,8" = "1F4v", "2,9" = "0D1hv", "2,10" = "08B", "2,11" = "096h", "2,12" = "1CDv", "3,8" = "137hv", "3,9" = "0F1", "3,10" = "0BDh", "3,11" = "1AEv", "3,12" = "080hv", "4,8" = "0D7", "4,9" = "128h", "4,10" = "1CFv", "4,11" = "1A8hv", "4,12" = "02E", "30,7" = "096h", "30,8" = "1CDv", "30,9" = "03Chv", "30,10" = "0B7", "30,11" = "02Fh", "31,7" = "1AEv", "31,8" = "080hv", "31,9" = "0E9", "31,10" = "1F8h", "31,11" = "1FFv", "32,7" = "1A8hv", "32,8" = "02E", "32,9" = "08Ah", "32,10" = "0EDv", "32,11" = "197hv", "33,7" = "0F3", "33,8" = "1A4h", "33,9" = "0D4v", "33,10" = "1C8hv", "33,11" = "1D8", "34,7" = "196h", "34,8" = "0B2v", "34,9" = "1DBhv", "34,10" = "0F2", "34,11" = "03Fh", "35,7" = "087v", "35,8" = "1DEhv", "35,9" = "079", "35,10" = "1ACh", "35,11" = "18Bv", "36,7" = "112hv", "36,8" = "0D2", "36,9" = "0BCh", "36,10" = "0FAv", "36,11" = "0DAhv" }
 charted = [[33, 9], [31, 10]]
 [vector.after]
-changed = { "0,26" = "173:2hv", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "142:2v", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "140:2v", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "179:3h", "2,27" = "17E:2v", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "14D:2h" }
+changed = { "0,26" = "080:2hv", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "0B2:2v", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "0D4:2v", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "1F8:3h", "2,27" = "0ED:2v", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "1AC:2h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1918,9 +2034,9 @@ entries = ["LastColumnsShift", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1933,16 +2049,15 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [62, 10], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "27,9" = "162", "27,10" = "165h", "27,11" = "168v", "27,12" = "16Bhv", "27,13" = "16E", "28,9" = "167h", "28,10" = "16Av", "28,11" = "16Dhv", "28,12" = "170", "28,13" = "173h", "29,9" = "16Cv", "29,10" = "16Fhv", "29,11" = "172", "29,12" = "175h", "29,13" = "178v", "30,9" = "171hv", "30,10" = "174", "30,11" = "177h", "30,12" = "17Av", "30,13" = "17Dhv", "31,9" = "176", "31,10" = "179h", "31,11" = "17Cv", "31,12" = "17Fhv", "31,13" = "142", "32,9" = "17Bh", "32,10" = "17Ev", "32,11" = "141hv", "32,12" = "144", "32,13" = "147h", "33,9" = "140v", "33,10" = "143hv", "33,11" = "146", "33,12" = "149h", "33,13" = "14Cv", "59,8" = "17Fhv", "59,9" = "142", "59,10" = "145h", "59,11" = "148v", "59,12" = "14Bhv", "60,8" = "144", "60,9" = "147h", "60,10" = "14Av", "60,11" = "14Dhv", "60,12" = "150", "61,8" = "149h", "61,9" = "14Cv", "61,10" = "14Fhv", "61,11" = "152", "61,12" = "155h", "62,8" = "14Ev", "62,9" = "151hv", "62,10" = "154", "62,11" = "157h", "62,12" = "15Av", "63,8" = "153hv", "63,9" = "156", "63,10" = "159h", "63,11" = "15Cv", "63,12" = "15Fhv" }
+pictures = { "27,9" = "1F4", "27,10" = "0D1h", "27,11" = "08Bv", "27,12" = "096hv", "27,13" = "1CD", "28,9" = "137h", "28,10" = "0F1v", "28,11" = "0BDhv", "28,12" = "1AE", "28,13" = "080h", "29,9" = "0D7v", "29,10" = "128hv", "29,11" = "1CF", "29,12" = "1A8h", "29,13" = "02Ev", "30,9" = "03Chv", "30,10" = "0B7", "30,11" = "02Fh", "30,12" = "0F3v", "30,13" = "1A4hv", "31,9" = "0E9", "31,10" = "1F8h", "31,11" = "1FFv", "31,12" = "196hv", "31,13" = "0B2", "32,9" = "08Ah", "32,10" = "0EDv", "32,11" = "197hv", "32,12" = "087", "32,13" = "1DEh", "33,9" = "0D4v", "33,10" = "1C8hv", "33,11" = "1D8", "33,12" = "112h", "33,13" = "0D2v", "59,8" = "196hv", "59,9" = "0B2", "59,10" = "1DBh", "59,11" = "0F2v", "59,12" = "03Fhv", "60,8" = "087", "60,9" = "1DEh", "60,10" = "079v", "60,11" = "1AChv", "60,12" = "18B", "61,8" = "112h", "61,9" = "0D2v", "61,10" = "0BChv", "61,11" = "0FA", "61,12" = "0DAh", "62,8" = "0C4v", "62,9" = "094hv", "62,10" = "1CB", "62,11" = "1C2h", "62,12" = "060v", "63,8" = "1DAhv", "63,9" = "03D", "63,10" = "0A9h", "63,11" = "198v", "63,12" = "190hv" }
 charted = [[30, 11], [32, 11]]
-beyond = { "0,9" = "199", "0,10" = "19A", "0,11" = "19B", "1,9" = "19D", "1,10" = "19E", "1,11" = "19F" }
+beyond = { "0,9" = "083", "0,10" = "0F7", "0,11" = "09F", "1,9" = "188", "1,10" = "095", "1,11" = "015" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "14C:2v", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "199:2", "1,26" = "14A:2v", "1,27" = "0F0:3", "1,28" = "154:3", "1,29" = "159:2h", "1,30" = "19A:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "157:2h", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "0D2:2v", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "083:2", "1,26" = "079:2v", "1,27" = "088:3", "1,28" = "1CB:3", "1,29" = "0A9:2h", "1,30" = "0F7:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "1C2:2h", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1958,9 +2073,9 @@ entries = ["LastColumnsShift", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -1973,16 +2088,15 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [63, 10], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "28,9" = "167h", "28,10" = "16Av", "28,11" = "16Dhv", "28,12" = "170", "28,13" = "173h", "29,9" = "16Cv", "29,10" = "16Fhv", "29,11" = "172", "29,12" = "175h", "29,13" = "178v", "30,9" = "171hv", "30,10" = "174", "30,11" = "177h", "30,12" = "17Av", "30,13" = "17Dhv", "31,9" = "176", "31,10" = "179h", "31,11" = "17Cv", "31,12" = "17Fhv", "31,13" = "142", "32,9" = "17Bh", "32,10" = "17Ev", "32,11" = "141hv", "32,12" = "144", "32,13" = "147h", "33,9" = "140v", "33,10" = "143hv", "33,11" = "146", "33,12" = "149h", "33,13" = "14Cv", "34,9" = "145hv", "34,10" = "148", "34,11" = "14Bh", "34,12" = "14Ev", "34,13" = "151hv", "60,8" = "144", "60,9" = "147h", "60,10" = "14Av", "60,11" = "14Dhv", "60,12" = "150", "61,8" = "149h", "61,9" = "14Cv", "61,10" = "14Fhv", "61,11" = "152", "61,12" = "155h", "62,8" = "14Ev", "62,9" = "151hv", "62,10" = "154", "62,11" = "157h", "62,12" = "15Av", "63,8" = "153hv", "63,9" = "156", "63,10" = "159h", "63,11" = "15Cv", "63,12" = "15Fhv" }
+pictures = { "28,9" = "137h", "28,10" = "0F1v", "28,11" = "0BDhv", "28,12" = "1AE", "28,13" = "080h", "29,9" = "0D7v", "29,10" = "128hv", "29,11" = "1CF", "29,12" = "1A8h", "29,13" = "02Ev", "30,9" = "03Chv", "30,10" = "0B7", "30,11" = "02Fh", "30,12" = "0F3v", "30,13" = "1A4hv", "31,9" = "0E9", "31,10" = "1F8h", "31,11" = "1FFv", "31,12" = "196hv", "31,13" = "0B2", "32,9" = "08Ah", "32,10" = "0EDv", "32,11" = "197hv", "32,12" = "087", "32,13" = "1DEh", "33,9" = "0D4v", "33,10" = "1C8hv", "33,11" = "1D8", "33,12" = "112h", "33,13" = "0D2v", "34,9" = "1DBhv", "34,10" = "0F2", "34,11" = "03Fh", "34,12" = "0C4v", "34,13" = "094hv", "60,8" = "087", "60,9" = "1DEh", "60,10" = "079v", "60,11" = "1AChv", "60,12" = "18B", "61,8" = "112h", "61,9" = "0D2v", "61,10" = "0BChv", "61,11" = "0FA", "61,12" = "0DAh", "62,8" = "0C4v", "62,9" = "094hv", "62,10" = "1CB", "62,11" = "1C2h", "62,12" = "060v", "63,8" = "1DAhv", "63,9" = "03D", "63,10" = "0A9h", "63,11" = "198v", "63,12" = "190hv" }
 charted = [[30, 11], [32, 11]]
-beyond = { "0,9" = "199", "0,10" = "19A", "0,11" = "19B", "1,9" = "19D", "1,10" = "19E", "1,11" = "19F" }
+beyond = { "0,9" = "083", "0,10" = "0F7", "0,11" = "09F", "1,9" = "188", "1,10" = "095", "1,11" = "015" }
 [vector.after]
-changed = { "0,26" = "14C:2v", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "199:2", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "154:3", "1,28" = "159:2h", "1,29" = "19A:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "157:2h", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "19F:2" }
+changed = { "0,26" = "0D2:2v", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "083:2", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "1CB:3", "1,28" = "0A9:2h", "1,29" = "0F7:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "1C2:2h", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "015:2" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -1998,9 +2112,9 @@ entries = ["BossBlanksTheMap", "MiniMapStill", "EnergyGauge"]
 frame = 0
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2013,18 +2127,18 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 mother_brain_falls = true
 position = [384, 128]
 room = { cell = [19, 9], blocks = [64, 16] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,8" = "16Dh", "17,9" = "170v", "17,10" = "173hv", "17,11" = "176", "17,12" = "179h", "18,8" = "172v", "18,9" = "175hv", "18,10" = "178", "18,11" = "17Bh", "18,12" = "17Ev", "19,8" = "177hv", "19,9" = "17A", "19,10" = "17Dh", "19,11" = "140v", "19,12" = "143hv", "20,8" = "17C", "20,9" = "17Fh", "20,10" = "142v", "20,11" = "145hv", "20,12" = "148", "21,8" = "141h", "21,9" = "144v", "21,10" = "147hv", "21,11" = "14A", "21,12" = "14Dh", "22,8" = "146v", "22,9" = "149hv", "22,10" = "14C", "22,11" = "14Fh", "22,12" = "152v", "23,8" = "14Bhv", "23,9" = "14E", "23,10" = "151h", "23,11" = "154v", "23,12" = "157hv" }
+pictures = { "17,8" = "0BDh", "17,9" = "1AEv", "17,10" = "080hv", "17,11" = "0E9", "17,12" = "1F8h", "18,8" = "1CFv", "18,9" = "1A8hv", "18,10" = "02E", "18,11" = "08Ah", "18,12" = "0EDv", "19,8" = "02Fhv", "19,9" = "0F3", "19,10" = "1A4h", "19,11" = "0D4v", "19,12" = "1C8hv", "20,8" = "1FF", "20,9" = "196h", "20,10" = "0B2v", "20,11" = "1DBhv", "20,12" = "0F2", "21,8" = "197h", "21,9" = "087v", "21,10" = "1DEhv", "21,11" = "079", "21,12" = "1ACh", "22,8" = "1D8v", "22,9" = "112hv", "22,10" = "0D2", "22,11" = "0BCh", "22,12" = "0FAv", "23,8" = "03Fhv", "23,9" = "0C4", "23,10" = "094h", "23,11" = "1CBv", "23,12" = "1C2hv" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,7" = "1B8:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "088:3", "1,29" = "088:3", "1,30" = "088:3", "2,7" = "055:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 298, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
+mini_map_off = true
 explored = [[19, 9], [20, 9], [21, 9], [22, 9]]
 
 [[vector]]
@@ -2036,9 +2150,9 @@ entries = ["BossBlanksTheMap"]
 step = "BossEvent"
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2048,10 +2162,11 @@ explored = []
 room = { cell = [60, 10] }
 boss = "Crocomire"
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "088:3", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
+mini_map_off = true
 explored = [[0, 10], [1, 10], [63, 10]]
 
 [[vector]]
@@ -2063,9 +2178,9 @@ entries = ["BossBlanksTheMap"]
 step = "BossEvent"
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 123:2 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 121:2h 124:7v 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0AF:2 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 11E:2h 042:7v 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -2075,10 +2190,11 @@ explored = [[20, 10], [20, 11], [21, 10]]
 room = { cell = [19, 9] }
 boss = "Kraid"
 [vector.after]
-changed = { "0,28" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3" }
+changed = { "0,28" = "088:3", "1,27" = "088:3", "1,28" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
+mini_map_off = true
 explored = [[19, 9], [19, 10], [20, 9], [20, 10], [20, 11], [21, 10]]
 
 [[vector]]
@@ -2089,9 +2205,9 @@ entries = ["BossBlanksTheMap"]
 step = "BossEvent"
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 123:2 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 121:2h 124:7v 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0AF:2 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 11E:2h 042:7v 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -2101,10 +2217,11 @@ explored = [[20, 10], [20, 11], [21, 10]]
 room = { cell = [19, 9] }
 boss = "RidleyInCeres"
 [vector.after]
-changed = { "0,28" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3" }
+changed = { "0,28" = "088:3", "1,27" = "088:3", "1,28" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
+mini_map_off = true
 explored = [[20, 10], [20, 11], [21, 10]]
 
 [[vector]]
@@ -2115,9 +2232,9 @@ entries = ["BossBlanksTheMap"]
 step = "BossEvent"
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 123:2 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 121:2h 124:7v 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0AF:2 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 11E:2h 042:7v 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -2127,10 +2244,11 @@ explored = [[41, 6]]
 room = { cell = [40, 5] }
 boss = "Draygon"
 [vector.after]
-changed = { "0,28" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3" }
+changed = { "0,28" = "088:3", "1,27" = "088:3", "1,28" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
+mini_map_off = true
 explored = [[40, 5], [40, 6], [41, 5], [41, 6]]
 
 [[vector]]
@@ -2141,9 +2259,9 @@ entries = ["BossBlanksTheMap"]
 step = "BossEvent"
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 123:2 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 121:2h 124:7v 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0AF:2 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 11E:2h 042:7v 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -2153,10 +2271,11 @@ explored = [[13, 15]]
 room = { cell = [12, 14] }
 boss = "Phantoon"
 [vector.after]
-changed = { "0,28" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3" }
+changed = { "0,28" = "088:3", "1,27" = "088:3", "1,28" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
+mini_map_off = true
 explored = [[12, 14], [13, 15]]
 
 [[vector]]
@@ -2167,9 +2286,9 @@ entries = ["BossBlanksTheMap"]
 step = "BossEvent"
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:4 1E1:4 1E0:4h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 123:2 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:4 1E3:4 1E2:4h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 121:2h 124:7v 0F0:3 0F0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 0F0:3 0F0:3 0F0:3 0F0:3 0F0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 0AF:2 088:3 088:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 11E:2h 042:7v 088:3 088:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3 088:3 088:3 088:3 088:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
@@ -2179,10 +2298,11 @@ explored = [[34, 21]]
 room = { cell = [33, 20] }
 boss = "RidleyInNorfair"
 [vector.after]
-changed = { "0,28" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3" }
+changed = { "0,28" = "088:3", "1,27" = "088:3", "1,28" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
 selection = "Missiles"
 one_shot = true
+mini_map_off = true
 explored = [[33, 20], [33, 21], [34, 21]]
 
 [[vector]]
@@ -2194,9 +2314,9 @@ entries = ["MiniMapWindow", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2209,14 +2329,13 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [31, 10], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "28,8" = "164", "28,9" = "167h", "28,10" = "16Av", "28,11" = "16Dhv", "28,12" = "170", "29,8" = "169h", "29,9" = "16Cv", "29,10" = "16Fhv", "29,11" = "172", "29,12" = "175h", "30,8" = "16Ev", "30,9" = "171hv", "30,10" = "174", "30,11" = "177h", "30,12" = "17Av", "31,8" = "173hv", "31,9" = "176", "31,10" = "179h", "31,11" = "17Cv", "31,12" = "17Fhv", "32,8" = "178", "32,9" = "17Bh", "32,10" = "17Ev", "32,11" = "141hv", "32,12" = "144", "33,8" = "17Dh", "33,9" = "140v", "33,10" = "143hv", "33,11" = "146", "33,12" = "149h", "34,8" = "142v", "34,9" = "145hv", "34,10" = "148", "34,11" = "14Bh", "34,12" = "14Ev" }
+pictures = { "28,8" = "0CC", "28,9" = "137h", "28,10" = "0F1v", "28,11" = "0BDhv", "28,12" = "1AE", "29,8" = "18Dh", "29,9" = "0D7v", "29,10" = "128hv", "29,11" = "1CF", "29,12" = "1A8h", "30,8" = "1CDv", "30,9" = "03Chv", "30,10" = "0B7", "30,11" = "02Fh", "30,12" = "0F3v", "31,8" = "080hv", "31,9" = "0E9", "31,10" = "1F8h", "31,11" = "1FFv", "31,12" = "196hv", "32,8" = "02E", "32,9" = "08Ah", "32,10" = "0EDv", "32,11" = "197hv", "32,12" = "087", "33,8" = "1A4h", "33,9" = "0D4v", "33,10" = "1C8hv", "33,11" = "1D8", "33,12" = "112h", "34,8" = "0B2v", "34,9" = "1DBhv", "34,10" = "0F2", "34,11" = "03Fh", "34,12" = "0C4v" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "171:2hv", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "179:2h", "1,29" = "17E:2v", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "146:2" }
+changed = { "0,26" = "088:3", "0,27" = "03C:2hv", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "1F8:2h", "1,29" = "0ED:2v", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "1D8:2" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -2231,9 +2350,9 @@ entries = ["MiniMapWindow", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2246,15 +2365,14 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [20, 31], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "17,29" = "16Cv", "17,30" = "16Fhv", "17,31" = "172", "18,29" = "171hv", "18,30" = "174", "18,31" = "177h", "19,29" = "176", "19,30" = "179h", "19,31" = "17Cv", "20,29" = "17Bh", "20,30" = "17Ev", "20,31" = "141hv", "21,29" = "140v", "21,30" = "143hv", "21,31" = "146", "22,29" = "145hv", "22,30" = "148", "22,31" = "14Bh", "23,29" = "14A", "23,30" = "14Dh", "23,31" = "150v" }
+pictures = { "17,29" = "0D7v", "17,30" = "128hv", "17,31" = "1CF", "18,29" = "03Chv", "18,30" = "0B7", "18,31" = "02Fh", "19,29" = "0E9", "19,30" = "1F8h", "19,31" = "1FFv", "20,29" = "08Ah", "20,30" = "0EDv", "20,31" = "197hv", "21,29" = "0D4v", "21,30" = "1C8hv", "21,31" = "1D8", "22,29" = "1DBhv", "22,30" = "0F2", "22,31" = "03Fh", "23,29" = "079", "23,30" = "1ACh", "23,31" = "18Bv" }
 charted = [[19, 31]]
 [vector.after]
-changed = { "0,26" = "174:2", "0,27" = "179:2h", "0,28" = "17E:2v", "0,29" = "143:2hv", "0,30" = "148:2", "1,26" = "177:2h", "1,27" = "17C:2v", "1,28" = "141:2hv", "1,29" = "146:2", "1,30" = "14B:2h", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "0B7:2", "0,27" = "1F8:2h", "0,28" = "0ED:2v", "0,29" = "1C8:2hv", "0,30" = "0F2:2", "1,26" = "02F:2h", "1,27" = "1FF:2v", "1,28" = "197:2hv", "1,29" = "1D8:2", "1,30" = "03F:2h", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -2269,9 +2387,9 @@ entries = ["FirstColumnsShift", "MiniMapWindow", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2284,15 +2402,14 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [0, 1], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "0,0" = "140", "0,1" = "143h", "0,2" = "146v", "0,3" = "149hv", "1,0" = "145h", "1,1" = "148v", "1,2" = "14Bhv", "1,3" = "14E", "2,0" = "14Av", "2,1" = "14Dhv", "2,2" = "150", "2,3" = "153h", "3,0" = "14Fhv", "3,1" = "152", "3,2" = "155h", "3,3" = "158v", "29,0" = "151h", "29,1" = "154v", "29,2" = "157hv", "30,0" = "156v", "30,1" = "159hv", "30,2" = "15C", "31,0" = "15Bhv", "31,1" = "15E", "31,2" = "161h", "32,0" = "160", "32,1" = "163h", "32,2" = "166v", "33,0" = "165h", "33,1" = "168v", "33,2" = "16Bhv", "34,0" = "16Av", "34,1" = "16Dhv", "34,2" = "170", "35,0" = "16Fhv", "35,1" = "172", "35,2" = "175h" }
+pictures = { "0,0" = "0D4", "0,1" = "1C8h", "0,2" = "1D8v", "0,3" = "112hv", "1,0" = "1DBh", "1,1" = "0F2v", "1,2" = "03Fhv", "1,3" = "0C4", "2,0" = "079v", "2,1" = "1AChv", "2,2" = "18B", "2,3" = "1DAh", "3,0" = "0BChv", "3,1" = "0FA", "3,2" = "0DAh", "3,3" = "0C1v", "29,0" = "094h", "29,1" = "1CBv", "29,2" = "1C2hv", "30,0" = "03Dv", "30,1" = "0A9hv", "30,2" = "198", "31,0" = "105hv", "31,1" = "0BB", "31,2" = "0EAh", "32,0" = "01A", "32,1" = "107h", "32,2" = "1FDv", "33,0" = "0D1h", "33,1" = "08Bv", "33,2" = "096hv", "34,0" = "0F1v", "34,1" = "0BDhv", "34,2" = "1AE", "35,0" = "128hv", "35,1" = "1CF", "35,2" = "1A8h" }
 charted = [[33, 0]]
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "0F0:3", "0,29" = "0F0:3", "0,30" = "0F0:3", "1,26" = "156:2v", "1,27" = "15B:2hv", "1,28" = "160:2", "1,29" = "165:2h", "1,30" = "16A:2v", "2,26" = "159:2hv", "2,27" = "15E:2", "2,28" = "163:2h", "2,29" = "168:2v", "2,30" = "16D:2hv" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "088:3", "0,29" = "088:3", "0,30" = "088:3", "1,26" = "03D:2v", "1,27" = "105:2hv", "1,28" = "01A:2", "1,29" = "0D1:2h", "1,30" = "0F1:2v", "2,26" = "0A9:2hv", "2,27" = "0BB:2", "2,28" = "107:2h", "2,29" = "08B:2v", "2,30" = "0BD:2hv" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -2307,9 +2424,9 @@ entries = ["LastColumnsShift", "MiniMapWindow", "Exploring"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2322,16 +2439,15 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 128]
 room = { cell = [62, 30], blocks = [16, 16] }
 [vector.inputs.mini_map.map]
 collected = true
-pictures = { "27,29" = "15E", "27,30" = "161h", "27,31" = "164v", "28,29" = "163h", "28,30" = "166v", "28,31" = "169hv", "29,29" = "168v", "29,30" = "16Bhv", "29,31" = "16E", "30,29" = "16Dhv", "30,30" = "170", "30,31" = "173h", "31,29" = "172", "31,30" = "175h", "31,31" = "178v", "32,29" = "177h", "32,30" = "17Av", "32,31" = "17Dhv", "33,29" = "17Cv", "33,30" = "17Fhv", "33,31" = "142", "59,28" = "17Bhv", "59,29" = "17E", "59,30" = "141h", "59,31" = "144v", "60,28" = "140", "60,29" = "143h", "60,30" = "146v", "60,31" = "149hv", "61,28" = "145h", "61,29" = "148v", "61,30" = "14Bhv", "61,31" = "14E", "62,28" = "14Av", "62,29" = "14Dhv", "62,30" = "150", "62,31" = "153h", "63,28" = "14Fhv", "63,29" = "152", "63,30" = "155h", "63,31" = "158v" }
+pictures = { "27,29" = "0BB", "27,30" = "0EAh", "27,31" = "0CCv", "28,29" = "107h", "28,30" = "1FDv", "28,31" = "18Dhv", "29,29" = "08Bv", "29,30" = "096hv", "29,31" = "1CD", "30,29" = "0BDhv", "30,30" = "1AE", "30,31" = "080h", "31,29" = "1CF", "31,30" = "1A8h", "31,31" = "02Ev", "32,29" = "02Fh", "32,30" = "0F3v", "32,31" = "1A4hv", "33,29" = "1FFv", "33,30" = "196hv", "33,31" = "0B2", "59,28" = "08Ahv", "59,29" = "0ED", "59,30" = "197h", "59,31" = "087v", "60,28" = "0D4", "60,29" = "1C8h", "60,30" = "1D8v", "60,31" = "112hv", "61,28" = "1DBh", "61,29" = "0F2v", "61,30" = "03Fhv", "61,31" = "0C4", "62,28" = "079v", "62,29" = "1AChv", "62,30" = "18B", "62,31" = "1DAh", "63,28" = "0BChv", "63,29" = "0FA", "63,30" = "0DAh", "63,31" = "0C1v" }
 charted = [[30, 31]]
-beyond = { "0,29" = "199", "0,30" = "19A", "0,31" = "19B", "1,29" = "19D", "1,30" = "19E", "1,31" = "19F" }
+beyond = { "0,29" = "083", "0,30" = "0F7", "0,31" = "09F", "1,29" = "188", "1,30" = "095", "1,31" = "015" }
 [vector.after]
-changed = { "0,26" = "143:2h", "0,27" = "148:2v", "0,28" = "14D:2hv", "0,29" = "152:2", "0,30" = "199:2", "1,26" = "146:2v", "1,27" = "14B:2hv", "1,28" = "150:2", "1,29" = "155:2h", "1,30" = "19A:2", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "1C8:2h", "0,27" = "0F2:2v", "0,28" = "1AC:2hv", "0,29" = "0FA:2", "0,30" = "083:2", "1,26" = "1D8:2v", "1,27" = "03F:2hv", "1,28" = "18B:2", "1,29" = "0DA:2h", "1,30" = "0F7:2", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false
@@ -2346,9 +2462,9 @@ entries = ["Exploring", "MiniMapWindow"]
 frame = 8
 [vector.before]
 hud = [
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E0:5 1E1:5 1E0:5h 1A0:3 1E4:5 1E4:5h 1A0:3 1E6:5 1E7:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1C1:2 1C1:2 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1E2:5 1E3:5 1E2:5h 1A0:3 1E5:5 1E5:5h 1A0:3 1E8:5v 1E9:5 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
-  "1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1B9:3 1B9:3 1A0:3 1A0:3 1B0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1B0:3 1B5:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3 1A0:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3",
 ]
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
@@ -2361,14 +2477,13 @@ super_missiles = [5, 5]
 power_bombs = [5, 5]
 [vector.inputs.mini_map]
 runs = true
-off = false
 position = [128, 384]
 room = { cell = [20, 31], blocks = [16, 32] }
 [vector.inputs.mini_map.map]
 collected = false
-pictures = { "17,29" = "16Cv", "17,30" = "16Fhv", "17,31" = "172", "18,29" = "171hv", "18,30" = "174", "18,31" = "177h", "19,29" = "176", "19,30" = "179h", "19,31" = "17Cv", "20,29" = "17Bh", "20,30" = "17Ev", "20,31" = "141hv", "21,29" = "140v", "21,30" = "143hv", "21,31" = "146", "22,29" = "145hv", "22,30" = "148", "22,31" = "14Bh", "23,29" = "14A", "23,30" = "14Dh", "23,31" = "150v" }
+pictures = { "17,29" = "0D7v", "17,30" = "128hv", "17,31" = "1CF", "18,29" = "03Chv", "18,30" = "0B7", "18,31" = "02Fh", "19,29" = "0E9", "19,30" = "1F8h", "19,31" = "1FFv", "20,29" = "08Ah", "20,30" = "0EDv", "20,31" = "197hv", "21,29" = "0D4v", "21,30" = "1C8hv", "21,31" = "1D8", "22,29" = "1DBhv", "22,30" = "0F2", "22,31" = "03Fh", "23,29" = "079", "23,30" = "1ACh", "23,31" = "18Bv" }
 [vector.after]
-changed = { "0,26" = "0F0:3", "0,27" = "0F0:3", "0,28" = "141:2hv", "0,29" = "146:2", "0,30" = "0F0:3", "1,26" = "0F0:3", "1,27" = "0F0:3", "1,28" = "0F0:3", "1,29" = "0F0:3", "1,30" = "0F0:3", "2,26" = "0F0:3", "2,27" = "0F0:3", "2,28" = "0F0:3", "2,29" = "0F0:3", "2,30" = "0F0:3" }
+changed = { "0,26" = "088:3", "0,27" = "088:3", "0,28" = "197:2hv", "0,29" = "1D8:2", "0,30" = "088:3", "1,26" = "088:3", "1,27" = "088:3", "1,28" = "088:3", "1,29" = "088:3", "1,30" = "088:3", "2,26" = "088:3", "2,27" = "088:3", "2,28" = "088:3", "2,29" = "088:3", "2,30" = "088:3" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
 selection = "None"
 one_shot = false

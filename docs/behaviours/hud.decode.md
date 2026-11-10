@@ -51,13 +51,14 @@ The two that differ are spec §1.5's choices, C-mm-first-columns-row-1 and C-mm-
 so `FirstColumnsShift` and `LastColumnsShift` rest on that cross-check.
 
 `vectors.py` picked the recorded frames (at most two per outcome tag, from different rows, from
-frames the model matches, outside the masks), which are now the harness cases (§The harness
-cases), and `cons.py` wrote the constructed vectors. Round 3's files are in
-`$TEMP/collab/hud-spec-r3`: `model.py` is the reference model over a picture set read from the
-vector file, `convert.py` and `build.py` wrote the current `scenarios/vectors/hud.toml` (the
-invented pictures, the twins, the named bosses), and `build.py` runs every vector through the
-model: 67 of 67 agree. `real_content.py` checks the file for the game's content (§The harness
-cases).
+frames the model matches, outside the masks), which are now the harness cases (§The harness cases),
+and `cons.py` wrote the constructed vectors. Round 3's files are in `$TEMP/collab/hud-spec-r3`:
+`model.py` is the reference model over a picture set read from the vector file, `convert.py` and
+`build.py` wrote the current `scenarios/vectors/hud.toml` (the invented pictures, the twins, the
+named bosses), and `migrate.py` (seed 7) then gave every picture a fresh number and made the
+mini-map's off a State (§Adversary 79's fixes), and `vecrun.py` runs the 72 vectors: 72 of 72 agree.
+`real_content.py` checks the file for the game's content (§The harness cases, §Adversary 79's
+fixes).
 
 **Row names.** The chain rows go by opaque ids, as in the camera's notes, and so does one row
 whose name is a lexicon match:
@@ -85,6 +86,7 @@ whose name is a lexicon match:
 | the values last shown | `0A06` energy, `0A08` missiles, `0A0A` super missiles, `0A0C` power bombs, `0A0E` the item | counts as is; the item as below |
 | the selected item | `09D2` (HUD item index) | 0 none, 1 missiles, 2 super missiles, 3 power bombs, 4 grapple, 5 x-ray |
 | the one-shot item | `0A04` (auto-cancel HUD item index) | the selection is the one-shot item when `0A04` = `09D2` ≠ 0; not when `0A04` = 0; any other value is a harness defect. The original keeps `0A04` 0 or equal to `09D2`: Select writes both (`$90:C50A`..`$90:C516`), item cancel and `$90:BF25`/`$90:C091` clear both, `$90:BF41`/`$90:C0A6` clear `09D2` only when `0A04` is 0 |
+| the mini-map is off | `05F7` of record N | ≠ 0. Set only by `$90:A7E2` (the bosses; the cached samus-ceres-push starts with it set), cleared only by the writers of `the mini-map turned on` (§Inputs): this domain's own memory, so State, read by the mini-map on later frames |
 | the explored cells | `$7E:07F7`..`08F6` (the current area's map tiles explored) | bit `7 − c mod 8` of byte `page × 80h + y × 4 + (c mod 32) div 8` is cell `(page × 32 + c mod 32, y)`; the map's row 0 is the bitmap's row 0 (rooms start at row 1: `07A3 + 1`) |
 
 **RAM shape** (fields decoded as one word copied as is): the HUD's cells, one word each. A cell is
@@ -116,9 +118,9 @@ the scratch `$12`..`$34`.
 | why no click | `0A1F` low byte, `0D32`, `0A78` at N+1 | 3 spin jumping, 14h wall jumping; `0D32` ≠ `$C4F0` the grapple beam is out; `0A78` ≠ 0 time stopped |
 | collected | the item PLM instructions | not in any cached record; a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` names it |
 | the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship). The title demos themselves are the demos' domain |
-| the mini-map is off | `05F7` at N+1 | ≠ 0. Set only by `$90:A7E2` (bosses; the cached samus-ceres-push starts with it set); cleared at `$80:C4AF`, `$82:8767`, `$82:E1C4`, `$88:82F3`, `$90:F233`, `$A4:90C4` |
+| the mini-map turned on | the stores of 0 to `05F7` | true when one is hit in frame N+1; the writers: `$80:C4AF` (a load at a station), `$82:8767` (a new game), `$82:E1C4` (a door's start, before the new room's enemies load at `$82:E4D4`, so a boss of that room turns it off after), `$88:82F3` (the new room's effects setup), `$90:F233` (the Ceres elevator, her arrival), `$A4:90C4` (Crocomire's skeleton flowing down the river). Only the last two can land in a compared pair; the others are a door's or a load's, skipped pairs |
 | a boss encountered | a call of `$90:A7E2` outside game state 8, with the boss `179C` (3 Kraid, 5 Ridley in Norfair, 6 Crocomire, 7 Phantoon, 8 Draygon; 1 Ridley in Ceres) | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain); boss id 1 isn't in it, so Ceres Ridley's screens are none |
-| Mother Brain falls | a call of `$90:A7E2` in frame N+1 with `179C` = Ah | Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event. On that frame the harness decodes `the mini-map is off` from `05F7` at N, since the fall's own write sets it at N+1 |
+| Mother Brain falls | a call of `$90:A7E2` in frame N+1 with `179C` = Ah | Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event |
 | the HUD's pictures | the importer (§The HUD's pictures) | by name; the clean model holds none |
 | her position | `0AF6`, `0AFA` of N+1 | pixels; masked on pose-change frames (§Harness) |
 | her room | `07A1`, `07A3` (room map X, Y); `07A5`, `07A7` (width, height in blocks) | cell `[07A1, 07A3 + 1]` |
@@ -249,8 +251,9 @@ the record pair with the importer's pictures and the area's map, and must match 
 every compared part (§The harness). Each has a constructed twin, named C-R and the case's number:
 its frame's RAM values (the counts, capacities, reserve, equipment, buttons and mutes, the
 selection, the frame count, her position, her room's size, the explored cells), with the scene moved
-four map rows down, the map's pictures invented (`twin_pic` in `convert.py`), the charted cells two
-in three of the pictured ones, the HUD's pictures the invented set and the before's window cells the
+four map rows down, the map's pictures invented (`twin_pic` in `convert.py`, then renumbered), the
+charted cells two in three of the pictured ones, the frame's cells (its label and border, which no
+rule draws) the blank, the HUD's pictures the invented set and the before's window cells the
 invented pictures under them, colours kept. Their after is the reference model's, and each twin
 takes the same outcome tags as its record (`checktw.py`).
 
@@ -290,9 +293,9 @@ What the spec and vectors now state, for the next implementer's shapes:
   Ceres (C-mm-boss-alone-none). A swap of two bosses' screens now fails, except Kraid's with
   Draygon's, which are equal. The vector test reads the name; its search by screens goes.
 - **S2, the frame's boss is Mother Brain's fall.** Two inputs: `a boss encountered`, a step of
-  its own (the other six bosses), and `Mother Brain falls`, a frame's `bool`, which also says the
-  mini-map is off for the rest of the frame (`MiniMapStill`). C-mm-boss is re-keyed as her fall
-  with `off` false (and her energy changed, so the status bar is seen drawn), C-mm-boss-across as
+  its own (the other six bosses), and `Mother Brain falls`, a frame's `bool`, which also turns the
+  mini-map off before its turn (`MiniMapStill`). C-mm-boss is re-keyed as her fall with the
+  mini-map on before (and her energy changed, so the status bar is seen drawn), C-mm-boss-across as
   Crocomire's room entered.
 - **S3, the one-shot item is the selected item or none.** §1 and the vectors' `one_shot` say so:
   a `bool` on the selection, never true with none selected. A record whose `0A04` is neither 0
@@ -315,6 +318,44 @@ user, the colour set's role).
 and the reference rules the spec's. `DiagonalPicture` is no longer one: its value is a picture,
 and pictures are content (§1.4), so the importer names it with the others and `Rules` drops it.
 Every other entry is a fixed rule.
+
+## Adversary 79's fixes
+
+- **F2, fresh numbers.** Round 3's first invention kept vanilla patterns: the twins' frame cells
+  were the vanilla label and border plus 300h, the constructed vectors' map pictures their
+  invented numbers plus 100h, the digits and icons vanilla plus one constant (digit d at 1B0h + d
+  against vanilla d − 1), and a vector's id named 228h. `migrate.py` now draws every picture
+  number afresh: one random bijection on the low nine bits (seed 7, bit 9 kept, so a picture 512
+  past the diagonal stays 512 past it), onto numbers that are neither a vanilla HUD picture, nor
+  one the area maps use, nor one the file used before. The twins' frame cells are the blank. The
+  vector is C-mm-diagonal-512-past. `real_content.py` (over `real_content_lib.py`) now also
+  checks:
+  - the named set for one constant offset shared by three or more pictures;
+  - every HUD cell outside the window for a named picture (so no frame picture survives in any
+    numbering);
+  - the map and HUD numbers for a constant offset that carries nine in ten of them onto vanilla
+    ones;
+  - a vector's map cells against the area maps in place under any offset;
+  - ids and comments for a vanilla number.
+
+  The vanilla HUD set is the named pictures and every picture the recorded HUD rows show (47).
+  Round 2's file: 11,949 hits; the gated round-3 file: 131 (4 named offsets, 126 frame cells, the
+  id); the current file: 0.
+- **F3, rules a vector now tells from their absence.** C-sign-lights and C-sign-dims start from
+  the other state of the sign; C-energy-unchanged-stale and C-ammo-unchanged-stale from digits and
+  a tank that the rule would redraw if it ignored the value last shown. `mutants.py` runs the
+  gate's mutants of `model.py`: `sign_never` is killed by C-sign-lights and C-sign-dims,
+  `energy_always` by C-energy-unchanged-stale, `ammo_always` by C-ammo-unchanged-stale; without
+  these four vectors none of the three is killed.
+- **F4.** BossBlanksTheMap's arm for Mother Brain's fall is a "So": her fall sets the mini-map's
+  off in the entry's first arm, and MiniMapStill does the rest.
+- **F5, the mini-map's off is State** (the root's ruling): BossBlanksTheMap sets it, MiniMapStill
+  reads it, and the input `the mini-map turned on` clears it before the frame's update (a new arm
+  of MiniMapStill, checked by C-mm-turned-on; `turned_on_ignored` is killed by it alone). The
+  vectors carry it as `mini_map_off` in before and after. §6 names the suppliers of `the mini-map
+  turned on` (doors and the load flow, Crocomire's fight, the Ceres arrival) and of `the mini-map
+  runs` (her control).
+- **F9.** The header points at §6.
 
 ## The harness (for the integrator)
 
@@ -483,8 +524,8 @@ as a wall; over an area's old code is a failure.
 - Area minimap (old 1,666): Exploring, MiniMapWindow, HerBlink, MiniMapStill, BossBlanksTheMap,
   DiagonalPicture, FirstColumnsShift, LastColumnsShift
 
-Round 3 adds one arm (`BossBlanksTheMap`: Mother Brain's fall leaves the mini-map off for the
-rest of the frame, a "So" at round 2) and one operator (`DiagonalPicture`'s modulus on both
-sides): 55.0 → 56.3 units, minimap 936 → 984.
+Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
+one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
+The arm the gated draft added for Mother Brain's fall is a "So" (adversary 79 F4).
 
 Budget: 36 × 56.3 units = 2,028 (status 756, selection 288, minimap 984)
