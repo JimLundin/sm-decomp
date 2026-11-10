@@ -10,5 +10,9 @@ description = "The samus-motion model, built from its behaviour spec"
 clean_types = { path = "../../clean_types" }
 enum-map = "=3.1.0"
 
+[dev-dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+toml = "=1.2.1"
+
 [lints]
 workspace = true
