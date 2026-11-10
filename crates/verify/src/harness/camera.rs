@@ -47,8 +47,6 @@ const ROOM_HEIGHT_SCROLLS: WramWord = wram("ROOM_HEIGHT_SCROLLS", 0x07AB);
 const KNOCKBACK_DIRECTION: WramWord = wram("KNOCKBACK_DIR", 0x0A52);
 /// Bank $90 log: time frozen (the x-ray scope, the reserve tanks' refill).
 const TIME_IS_FROZEN: WramWord = wram("TIME_IS_FROZEN", 0x0A78);
-/// Bank $90 log, `$90:94F7`: the grapple beam's slow scrolling.
-const SLOW_GRAPPLE_SCROLLING: WramWord = wram("SLOW_GRAPPLE_SCROLLING", 0x0CF8);
 /// Bank $90 log, `$90:9589`: the scrolling-finished hook, Spore Spawn's floor.
 const SCROLLING_FINISHED_HOOK: WramWord = wram("SCROLLING_FINISHED_HOOK", 0x07E9);
 /// Bank $90 log: the handler gameplay runs for Samus once a frame ($90:E722).
@@ -716,7 +714,9 @@ impl Domain for CameraDomain {
                 CAMERA,
             );
         }
-        if word(from, SLOW_GRAPPLE_SCROLLING)? != 0 || word(next, SLOW_GRAPPLE_SCROLLING)? != 0 {
+        if word(from, source::SLOW_GRAPPLE_SCROLLING)? != 0
+            || word(next, source::SLOW_GRAPPLE_SCROLLING)? != 0
+        {
             mask(
                 "another domain: the grapple beam's slow scrolling moves the view",
                 CAMERA,

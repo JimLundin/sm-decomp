@@ -1138,6 +1138,12 @@ pub const SAMUS_SLOPE_ADJUSTED: WramWord = WramWord {
     name: "SAMUS_SLOPE_ADJUSTED",
     offset: 0x0DBA,
 };
+/// Bank $90 log, `$90:94F2`: the grapple beam's slow scrolling. While it is on, the scroll
+/// doesn't work out the camera's speed down (`$90:96FF`), so the record's is a frame before's.
+pub const SLOW_GRAPPLE_SCROLLING: WramWord = WramWord {
+    name: "SLOW_GRAPPLE_SCROLLING",
+    offset: 0x0CF8,
+};
 /// Bank $90 log, `$90:EAB3`: the frames jump has stayed held since its press, which the pose
 /// input `$90:E926` reads.
 pub const SAMUS_JUMP_HELD_FRAMES: WramWord = WramWord {

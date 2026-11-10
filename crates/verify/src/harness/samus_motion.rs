@@ -224,12 +224,6 @@ const CAMERA_Y_SUBSPEED: WramWord = WramWord {
     name: "CAMERA_Y_SUBSPEED",
     offset: 0x0DA8,
 };
-/// Bank $90 log, `$90:94F2`: while the slow grapple scroll is on, the scroll doesn't work out
-/// the camera's speed down (`$90:96FF`), so the record's is a frame before's.
-const SLOW_GRAPPLE_SCROLLING: WramWord = WramWord {
-    name: "SLOW_GRAPPLE_SCROLLING_FLAG",
-    offset: 0x0CF8,
-};
 /// The extra pixel the camera's speed adds to her move.
 const ONE_PIXEL: u32 = 0x0001_0000;
 
@@ -1030,7 +1024,9 @@ impl Domain for SamusMotion {
                 Q::Placed.set(),
             );
         }
-        if word(from, SLOW_GRAPPLE_SCROLLING)? != 0 || word(next, SLOW_GRAPPLE_SCROLLING)? != 0 {
+        if word(from, source::SLOW_GRAPPLE_SCROLLING)? != 0
+            || word(next, source::SLOW_GRAPPLE_SCROLLING)? != 0
+        {
             mask(
                 "the slow grapple scroll: the scroll leaves the camera's speed down as it was ($90:94F2)",
                 Q::Placed.set(),
@@ -1202,7 +1198,83 @@ pub mod cases;
 
 #[cfg(test)]
 mod tests {
-    use super::{Domain, FieldSet, Quantity, SamusMotion};
+    use super::{Domain, FieldSet, Inputs, Quantity, SamusMotion};
+    use crate::source::{self, WramWord};
+    use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
+
+    /// A record of work RAM alone, every word 0 but `words`; no liquid in the room.
+    fn record(index: u64, words: &[(WramWord, u16)]) -> FrameRecord {
+        let mut wram = vec![0_u8; 0x2_0000];
+        let no_liquid = [(super::FX_Y_POS, 0xFFFF), (super::LAVA_ACID_Y_POS, 0xFFFF)];
+        for &(word, value) in no_liquid.iter().chain(words) {
+            let at = usize::from(word.offset);
+            if let Some(bytes) = wram.get_mut(at..at + 2) {
+                bytes.copy_from_slice(&value.to_le_bytes());
+            }
+        }
+        FrameRecord {
+            index,
+            video_frame: 0,
+            pad: Pad(0),
+            cut: Cut::NmiReturn(Nmi {
+                kind: NmiKind::Requested,
+                interrupted_pc: 0,
+                polled: true,
+            }),
+            joypad_reads: 0,
+            wait_entry: None,
+            overscan: false,
+            cpu: CpuRegisters::default(),
+            wram: wram.into_boxed_slice(),
+            vram: Box::default(),
+            cgram: Box::default(),
+            oam: Box::default(),
+            sram: Box::default(),
+            ppu: PpuRegisters::default(),
+            apu_log: Vec::new(),
+            picture: None,
+            spc: None,
+            bank_instructions: None,
+            writes: Vec::new(),
+            hits: Vec::new(),
+            legacy_ppu_digest: 0,
+        }
+    }
+
+    /// The fields the masks of the frame from `from` to `next` take.
+    fn masked(from: &FrameRecord, next: &FrameRecord) -> FieldSet {
+        let domain = SamusMotion {
+            content: game::Content::default(),
+        };
+        let inputs = Inputs {
+            controller: game::state::Controller::default(),
+            ride: game::state::room::ElevatorRide::default(),
+            completed: 0,
+            width: game::state::room::BlockColumns(0),
+            blocks: Vec::new(),
+            enemies: Vec::new(),
+        };
+        match domain.masks(from, next, &inputs) {
+            Ok(masks) => masks
+                .iter()
+                .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields)),
+            Err(skip) => panic!("masks: {skip}"),
+        }
+    }
+
+    #[test]
+    fn the_slow_grapple_scroll_masks_the_placement_alone() {
+        let on = [(source::SLOW_GRAPPLE_SCROLLING, 1)];
+        assert_eq!(masked(&record(0, &[]), &record(1, &[])), FieldSet::EMPTY);
+        assert_eq!(
+            masked(&record(0, &on), &record(1, &[])),
+            Quantity::Placed.set()
+        );
+        assert_eq!(
+            masked(&record(0, &[]), &record(1, &on)),
+            Quantity::Placed.set()
+        );
+    }
 
     #[test]
     fn a_quantity_names_the_declared_field_at_its_place() {

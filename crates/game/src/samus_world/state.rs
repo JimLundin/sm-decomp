@@ -8,6 +8,11 @@
 //! direction in the air, falling at 0 on the ground to direction down at 0, a spin carried on
 //! (its frame count) to the pose history, the seat to the slope flag, jump held through to its
 //! count and the pose input the frame before left.
+//!
+//! The original counts jump held through once each gameplay frame at the draw (`$90:EB35` →
+//! `$90:EAB3`), whatever her pose; the engine counts it only on frames the model runs, so a pose
+//! outside the domain leaves the count where it was (docs/LEGACY.md, "Jump held through outside
+//! her motion's poses").
 
 use clean_model_samus_motion::{
     Bounces, Carry, DashIs, FrameBefore, JumpHeld, Run, Samus as Model, Seat, Spin, Vertical,

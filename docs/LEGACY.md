@@ -117,6 +117,19 @@ original's bytes as data.
 
 ## The engine: memory a model keeps that the engine can't hold yet
 
+- **Jump held through outside her motion's poses** (the samus-motion domain,
+  `docs/behaviours/samus-motion.md` `Jumping`; `game::samus_world::state`; `$90:EB35` →
+  `$90:EAB3`): the original counts how long jump has stayed held (`0AF4`) once each gameplay
+  frame at the draw, whatever her pose. The engine counts it in the model's step, which runs only
+  in the domain's poses, so in another pose (the knockback's, a shinespark's, the grapple's, the
+  gunship's) the count stays where it was and a take-off from a landing after it can differ. On
+  record, the count moves in such a pose on 307 gameplay frames over 13 rows of the 44-row cache
+  (boss-kraid-defeated 31, boss-phantoon 8, chain-0059-A293 38, chain-0232-D5A7 16,
+  event-zebes-awake 51, samus-ceres-push 41, samus-grapple-release 2, samus-grapple-walljump 1,
+  samus-screw-attack 71, and the four shinespark rows 13, 13, 9 and 13). The lockstep rows
+  (area-brinstar, item-morph-ball) have none. The entry goes when the count is the draw's, run
+  every gameplay frame.
+
 - **The blocks' askers the engine doesn't have yet** (the blocks domain, `docs/behaviours/blocks.md`
   §1.3; `game::blocks_world`): her moves meet each reacting cell by its body and the touches reach
   the blocks after them, so a touch's answer (`AnswersToHerMotion`, `FullPlacesLetHerThrough`)
