@@ -478,8 +478,8 @@ fn the_camera_holds_its_floors_against_the_cache() {
 }
 
 /// The camera's harness cases (the decode notes' "The harness cases"), each over its row's
-/// records N and N+1 and the importer's room; a case whose row isn't cached is reported and not
-/// checked, and one skipped, masked other than as the case says, or differing fails.
+/// records N and N+1 and the importer's room; with `SM_CACHE` set, a case whose row isn't cached
+/// fails, as does one skipped, masked other than as the case says, or differing.
 #[test]
 fn the_cameras_harness_cases_hold_against_the_cache() {
     use std::io::Write as _;
@@ -497,7 +497,7 @@ fn the_cameras_harness_cases_hold_against_the_cache() {
     let mut failures = Vec::new();
     for case in &super::camera::cases::CASES {
         if !rows.iter().any(|row| row == case.row) {
-            let _ = writeln!(std::io::stdout(), "{}: {} not cached", case.id, case.row);
+            failures.push(format!("{}: {} not cached", case.id, case.row));
             continue;
         }
         let locked = parsed
