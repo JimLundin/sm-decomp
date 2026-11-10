@@ -32,10 +32,10 @@ How it is counted:
 | samus-motion | 8,060 | 7,133 | 1.13 | 12,724 | 3,721 | 1,343 | 18,000 | 258 |
 | camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
 | progress | 979 | 878 | 1.12 | - | 488 | 163 | 25,419 | 66 |
-| hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
+| hud | 3,057 | 2,028 | 1.51 | - | 1,074 | 510 | 20,613 | 72 |
 | blocks | 2,643 | 1,992 | 1.33 | - | 1,078 | 441 | 20,530 | 100 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 790 | - | - | - | 479 | 132 | - | - |
-| total | 17,438 | 13,574 | 1.28 | - | 7,478 | 2,906 | 103,465 | 566 |
+| total | 17,438 | 13,622 | 1.28 | - | 7,478 | 2,906 | 103,465 | 576 |
 
 ## Models
 
@@ -188,9 +188,9 @@ Spec [`docs/behaviours/hud.md`](behaviours/hud.md), k = 36. Old code -, at `3876
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | status | 7 | 21.0 | 756 | 1,254 | 629 | 0.83 |
 | selection | 4 | 8.0 | 288 | - | 212 | 0.74 |
-| minimap | 8 | 26.0 | 936 | 1,666 | 808 | 0.86 |
+| minimap | 8 | 27.3 | 984 | 1,666 | 808 | 0.82 |
 | shared (in no area) | | | | | 1,408 | |
-| total | 19 | 55.0 | 1,980 | - | 3,057 | 1.54 |
+| total | 19 | 56.3 | 2,028 | - | 3,057 | 1.51 |
 
 ### blocks
 
@@ -279,7 +279,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-motion | 258 | 51 |
 | camera | 80 | 0 |
 | progress | 66 | 0 |
-| hud | 62 | 0 |
+| hud | 72 | 0 |
 | blocks | 100 | 0 |
 
 ## Oracle coverage
