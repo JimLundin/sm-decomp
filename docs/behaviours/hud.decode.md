@@ -50,10 +50,14 @@ The two that differ are spec §1.5's choices, C-mm-first-columns-row-1 and C-mm-
 `mm_bytes.py` pads the bitmap with zeroes. No record reaches the map's first or last two columns,
 so `FirstColumnsShift` and `LastColumnsShift` rest on that cross-check.
 
-`vectors.py` picks the recorded vectors (at most two per outcome tag, from different rows, from
-frames the model matches, outside the masks), `cons.py` writes the constructed ones (their after
-from the model) and `vecrun.py` runs every vector of `scenarios/vectors/hud.toml` through the
-model: 60 of 60 agree.
+`vectors.py` picked the recorded frames (at most two per outcome tag, from different rows, from
+frames the model matches, outside the masks), which are now the harness cases (§The harness
+cases), and `cons.py` wrote the constructed vectors. Round 3's files are in
+`$TEMP/collab/hud-spec-r3`: `model.py` is the reference model over a picture set read from the
+vector file, `convert.py` and `build.py` wrote the current `scenarios/vectors/hud.toml` (the
+invented pictures, the twins, the named bosses), and `build.py` runs every vector through the
+model: 67 of 67 agree. `real_content.py` checks the file for the game's content (§The harness
+cases).
 
 **Row names.** The chain rows go by opaque ids, as in the camera's notes, and so does one row
 whose name is a lexicon match:
@@ -80,7 +84,7 @@ whose name is a lexicon match:
 | the HUD's cells | `$7E:C608`..`C6C7`, 3 rows of 32 words (BG3 tilemap rows 1 to 3; the top row, VRAM `$5800`, is uploaded only by the HUD's initialisation `$80:9A79` and isn't the domain's) | each word: picture bits 0-9, colour set bits 10-12, h-flip bit 14, v-flip bit 15; bit 13 (priority) is set in every word the HUD writes and in every recorded word: a word without it is a harness defect |
 | the values last shown | `0A06` energy, `0A08` missiles, `0A0A` super missiles, `0A0C` power bombs, `0A0E` the item | counts as is; the item as below |
 | the selected item | `09D2` (HUD item index) | 0 none, 1 missiles, 2 super missiles, 3 power bombs, 4 grapple, 5 x-ray |
-| the one-shot item | `0A04` (auto-cancel HUD item index) | as `09D2` |
+| the one-shot item | `0A04` (auto-cancel HUD item index) | the selection is the one-shot item when `0A04` = `09D2` ≠ 0; not when `0A04` = 0; any other value is a harness defect. The original keeps `0A04` 0 or equal to `09D2`: Select writes both (`$90:C50A`..`$90:C516`), item cancel and `$90:BF25`/`$90:C091` clear both, `$90:BF41`/`$90:C0A6` clear `09D2` only when `0A04` is 0 |
 | the explored cells | `$7E:07F7`..`08F6` (the current area's map tiles explored) | bit `7 − c mod 8` of byte `page × 80h + y × 4 + (c mod 32) div 8` is cell `(page × 32 + c mod 32, y)`; the map's row 0 is the bitmap's row 0 (rooms start at row 1: `07A3 + 1`) |
 
 **RAM shape** (fields decoded as one word copied as is): the HUD's cells, one word each. A cell is
@@ -113,7 +117,9 @@ the scratch `$12`..`$34`.
 | collected | the item PLM instructions | not in any cached record; a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` names it |
 | the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship). The title demos themselves are the demos' domain |
 | the mini-map is off | `05F7` at N+1 | ≠ 0. Set only by `$90:A7E2` (bosses; the cached samus-ceres-push starts with it set); cleared at `$80:C4AF`, `$82:8767`, `$82:E1C4`, `$88:82F3`, `$90:F233`, `$A4:90C4` |
-| a boss turns it off | a call of `$90:A7E2`, with the boss `179C` | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain) |
+| a boss encountered | a call of `$90:A7E2` outside game state 8, with the boss `179C` (3 Kraid, 5 Ridley in Norfair, 6 Crocomire, 7 Phantoon, 8 Draygon; 1 Ridley in Ceres) | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain); boss id 1 isn't in it, so Ceres Ridley's screens are none |
+| Mother Brain falls | a call of `$90:A7E2` in frame N+1 with `179C` = Ah | Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event. On that frame the harness decodes `the mini-map is off` from `05F7` at N, since the fall's own write sets it at N+1 |
+| the HUD's pictures | the importer (§The HUD's pictures) | by name; the clean model holds none |
 | her position | `0AF6`, `0AFA` of N+1 | pixels; masked on pose-change frames (§Harness) |
 | her room | `07A1`, `07A3` (room map X, Y); `07A5`, `07A7` (width, height in blocks) | cell `[07A1, 07A3 + 1]` |
 | her map | `079F` (area); the tilemap at the long pointer `$82:964A + area × 3` (800h words: the left page's 32 rows of 32 words, then the right page's); the charted bitmap at `$82:9717 + area × 2` (bank `$82`, 100h bytes, laid out as the explored bitmap); `0789` (current area's map collected) | a picture is a word's bits 0-9, 14 and 15 (its colour bits are replaced); a cell `(c, y)` is word `page × 400h + y × 20h + c mod 32` |
@@ -139,7 +145,7 @@ the scratch `$12`..`$34`.
 | HerBlink* | `$90:AB4A`..`$90:AB59` (`05B5` & 8 = 0: `C680` \|= 1C00h) |
 | MiniMapStill* | `$90:A91E`..`$90:A940` (`05F7`, the room's width and height in blocks); the new state handlers that call `$90:A91B` (§Inputs) |
 | BossBlanksTheMap | `$90:A7E2`..`$90:A839` and `$90:A8A6` |
-| DiagonalPicture | `$90:AAF2`..`$90:AB05` (`$12` = 3 is the third column; `C67C + X` & 1FFh = 28h), `$90:AB5F` |
+| DiagonalPicture | `$90:AAF2`..`$90:AB05` (`$12` = 3 is the third column; `C67C + X` & 1FFh = 28h), `$90:AB5F`; the picture 028 is the importer's (§The HUD's pictures) |
 | FirstColumnsShift | `$90:A991`..`$90:A99A` (the origin a byte back), `$90:A9F9`..`$90:AA29` with `$90:AB75` (the 8-bit `ADC #$7D`), `$90:AA6A` (no page correction on the left page) |
 | LastColumnsShift | `$90:AA0A`..`$90:AA25` (the 8-bit `SBC #$7C` lands on the left page's next row), `$90:AB3C` (the tile index's step past the right page: +7C0h bytes from a right-page row end leaves the map) |
 
@@ -204,6 +210,112 @@ routines (`$80:9B44`, `$90:A91B`) or of the switch (`$90:C4B5`), not a routine o
   into the window's drawing with stale `$12`/`$16`/`$22` ("broken" in the bank log). It is the load
   flow's, out of scope; the old engine starts from a checkpoint's HUD.
 
+## The HUD's pictures (the importer's)
+
+Spec §1.4 names the pictures and the vectors invent them (MODEL §1 decision 13): the importer
+reads the vanilla set from the ROM, and the harness hands it to the model. The vanilla set, with
+the colour sets the rules give each role:
+
+| Name | Vanilla pictures | Colours | Source |
+| --- | --- | --- | --- |
+| blank | `00F` | 3 | the whole word 2C0Fh the highlight tests (`$80:9CEA`) |
+| digit 0 to 9 | `009`, `000`, `001`, `002`, `003`, `004`, `005`, `006`, `007`, `008` | 3 | the digit tables `$80:9DBF`, `$80:9DD3` |
+| full tank, empty tank | `031`, `030` | 2, 5 | `$80:9BDC` (2831h), `$80:9BD3` (3430h) |
+| reserve sign, by rows | `033`, `046`; `047`, `048`; `033`, `046`, the bottom row flipped top to bottom | lit 7, dim 3 | `$80:998B` (lit), `$80:9997` (dim) |
+| missiles' icon, by rows | `04B`, `049`, `04B`; `04C`, `04A`, `04C`, the third column flipped left to right | plain or highlighted | `$80:99A3`..`$80:99C7` |
+| super missiles', power bombs', grapple beam's, x-ray scope's icons | `034`/`035`, `036`/`037`, `038`/`039`, `03A`/`03B` (top row, bottom row), the second column flipped left to right | plain or highlighted | `$80:99A3`..`$80:99C7` |
+| the map's blank | `01F` | charted (3) | the window's blank word 2C1Fh (`$90:AA43`..`$90:AB46`) |
+| the diagonal | `028` | | `$90:AAF2`..`$90:AB05` |
+
+Her map's pictures are the area tilemap's words (§Inputs, her map), bits 0-9 with the flips; the
+importer keeps their numbers, so the diagonal's test reads the same bits as the original's. The
+colour sets stay in the spec: they are the rules' roles (a highlight, a blink), not content; the
+palettes' colours are the palette importer's.
+
+## The harness cases
+
+The vectors hold RAM values and invented content only (MODEL §1 decision 13). Round 2's file carried
+the game's content in all 62 vectors: the HUD's vanilla pictures in every one, the pictures of a
+real area map around her in the 18 recorded ones, map picture numbers an area map uses in 38, and a
+vanilla room's place and size in 27 (the 18 recorded, and 9 constructed one-screen rooms at (20,
+10), which is a Norfair room's). `$TEMP/collab/hud-spec-r3/real_content.py` checks a vector file for
+each kind (the HUD's vanilla picture numbers; a map picture number any area map uses; three or more
+of a vector's map cells agreeing with an area map in place; a room cell and size equal to one of the
+261 rooms the doors reach from the landing site and from Ceres's start): round 2's file has 6,425
+hits, round 3's 0. The constructed vectors' rooms at (20, 10) are now a screen taller.
+
+So the 18 recorded vectors left the file. Each is a **harness case**: the integrator's harness runs
+the record pair with the importer's pictures and the area's map, and must match the record at N+1 in
+every compared part (§The harness). Each has a constructed twin, named C-R and the case's number:
+its frame's RAM values (the counts, capacities, reserve, equipment, buttons and mutes, the
+selection, the frame count, her position, her room's size, the explored cells), with the scene moved
+four map rows down, the map's pictures invented (`twin_pic` in `convert.py`), the charted cells two
+in three of the pictured ones, the HUD's pictures the invented set and the before's window cells the
+invented pictures under them, colours kept. Their after is the reference model's, and each twin
+takes the same outcome tags as its record (`checktw.py`).
+
+| Case | Row and record (N+1) | Entries | Twin |
+| --- | --- | --- | --- |
+| R1 | r05 228 | AutoReserveSign (dim), EnergyGauge, HerBlink (lit), MiniMapWindow (across the halves) | C-R1 |
+| R2 | r07 134 | AmmoCounts, AutoReserveSign (lit), EnergyGauge, HerBlink, MiniMapWindow | C-R2 |
+| R3 | r10 13 | AutoReserveSign, EnergyGauge (two rows of tanks, mixed), HerBlink (unlit), MiniMapWindow | C-R3 |
+| R4 | samus-grapple-release 11 | as R3 | C-R4 |
+| R5 | area-brinstar 1 | EnergyGauge (unchanged), HerBlink, MiniMapWindow | C-R5 |
+| R6 | area-maridia 2 | AutoReserveSign (lit), EnergyGauge, HerBlink, MiniMapWindow | C-R6 |
+| R7 | samus-grapple-release 231 | AmmoCounts (missiles), AutoReserveSign, EnergyGauge, HerBlink, MiniMapWindow | C-R7 |
+| R8 | r05 185 | AmmoCounts (power bombs), AutoReserveSign, EnergyGauge, HerBlink, MiniMapWindow (halves) | C-R8 |
+| R9 | area-maridia 393 | CyclingItems, SelectionHighlight (from none), SwitchClick, and the status bar | C-R9 |
+| R10 | r06 662 | the same, the click muted (spin jump) | C-R10 |
+| R11 | area-maridia 396 | CyclingItems, SelectionHighlight (moves), SwitchClick | C-R11 |
+| R12 | r09 92 | as R11 | C-R12 |
+| R13 | r04 265 | CancellingTheItem, SelectionHighlight (to none), SwitchClick, MiniMapWindow (halves) | C-R13 |
+| R14 | r05 6 | as R13 | C-R14 |
+| R15 | r11 269 | CyclingItems (wraps to none), SelectionHighlight, the click muted (time stopped) | C-R15 |
+| R16 | area-brinstar 170 | Exploring, MiniMapWindow, HerBlink | C-R16 |
+| R17 | r01 55 | as R16 | C-R17 |
+| R18 | samus-ceres-push 2 | MiniMapStill (off), EnergyGauge | C-R18 |
+
+Each case starts from record N's State (§State) and takes record N+1's inputs (§Inputs); none is
+in a mask. The harness already runs every record pair, so these are frames it must match by
+name: a named case that is skipped or masked is a harness defect.
+
+## Round 2's gate, the spec's side (adversary 57, S1-S4)
+
+What the spec and vectors now state, for the next implementer's shapes:
+
+- **S1, each boss's screens named by the boss.** `BossBlanksTheMap`'s table has a row per boss,
+  "any other" gone: the inputs name only these seven. Every boss has its own vector, by name:
+  Kraid (C-mm-boss-alone), Draygon (C-mm-boss-draygon), Crocomire (C-mm-boss-across), Phantoon
+  (C-mm-boss-phantoon), Mother Brain (C-mm-boss), Ridley in Norfair (C-mm-boss-ridley) and in
+  Ceres (C-mm-boss-alone-none). A swap of two bosses' screens now fails, except Kraid's with
+  Draygon's, which are equal. The vector test reads the name; its search by screens goes.
+- **S2, the frame's boss is Mother Brain's fall.** Two inputs: `a boss encountered`, a step of
+  its own (the other six bosses), and `Mother Brain falls`, a frame's `bool`, which also says the
+  mini-map is off for the rest of the frame (`MiniMapStill`). C-mm-boss is re-keyed as her fall
+  with `off` false (and her energy changed, so the status bar is seen drawn), C-mm-boss-across as
+  Crocomire's room entered.
+- **S3, the one-shot item is the selected item or none.** §1 and the vectors' `one_shot` say so:
+  a `bool` on the selection, never true with none selected. A record whose `0A04` is neither 0
+  nor `09D2` decodes as a defect (§State).
+- **S4, the points the spec backs.** The two blank tests are said once, as differing on purpose,
+  with a vector each way (C-highlight-tinted, C-icon-drawn-tinted); digit d's picture is the d-th
+  of §1.4's digits; the diagonal's test is stated as a modulus, `p mod 512 = d mod 512`; §1.4
+  names colour set 3's roles (the blank's, the digits', the dim sign's, the charted cells'); and
+  `OneShotFlash`'s summary gives the flash's order as its rules do (16 plain, then 16
+  highlighted: adversary 52's N3).
+
+What stays the implementer's: the keying of the bosses' screens (named fields, a total match),
+the form of the two boss inputs, the encoding of the one-shot mark, the picture set's type and
+how the model takes it, the step's name in place of `update_mini_map`, and the wording of the
+docs adversary 57 lists (`DIGITS`, the modulus, `Reading::read_from`'s row, `first_half` per
+user, the colour set's role).
+
+**The switches.** `OneShotFlash`, `HerBlink` and `BossBlanksTheMap` are `switch: **Parameter**`:
+`Rules` holds their values (the flash's and the blink's frames each way, each boss's screens),
+and the reference rules the spec's. `DiagonalPicture` is no longer one: its value is a picture,
+and pictures are content (§1.4), so the importer names it with the others and `Rules` drops it.
+Every other entry is a fixed rule.
+
 ## The harness (for the integrator)
 
 The HUD is downstream of everything it shows: nothing in another domain reads its cells, and only
@@ -217,7 +329,10 @@ the records, with the other domains' values decoded as inputs.
   word without its priority bit.
 - **Decoded from record N:** the State: the HUD's cells, the values last shown, `09D2`, `0A04`,
   the explored cells; the frame count and the pad (§Inputs).
-- **Decoded from record N+1:** every other input, at the HUD's turn.
+- **Decoded from record N+1:** every other input, at the HUD's turn; the HUD's pictures and
+  her map's from the importer (§The HUD's pictures).
+- **Named cases:** R1 to R18 (§The harness cases) are compared by name, so their skip or mask
+  fails the harness.
 - **Compared at N+1:** the HUD's 96 cells (picture, colour set, flips) and the values last shown;
   the selection and the one-shot item; the explored cells. The whole HUD tilemap is compared, not
   values: it is the output, and a stale cell is behaviour.
@@ -295,7 +410,7 @@ against the frozen 36. Neither cap binds: status 756 of a 877 cap, minimap 936 o
 ## Scan
 
 `tools/cleanroom/scan.sh docs/behaviours/hud.md scenarios/vectors/hud.toml`: 0 in every check
-(`SM_SCAN_DLL_DIR=$TEMP/sm-cleanroom-hud3`). The HUD added only multi-word player phrases to
+(`SM_SCAN_DLL_DIR=$TEMP/sm-cleanroom-hud3o`). The HUD added only multi-word player phrases to
 `tools/cleanroom/scan_allow.txt`: `x ray scope`, `ray scope`, `item select`, `item cancel`, `missile
 tank`, `pick up` and `mother brain` (the progress spec, landed first, holds `x ray scope`, `ray
 scope`, `missile tank` and `mother brain` too, so the HUD's own section keeps the other three). No
@@ -335,12 +450,10 @@ this round; none is a leak.
   of 0 tagged functions. This is the scan's blind spot, not a hidden shape: an engineer widens it to
   `pub(crate) fn`, or to every function whose doc names a `Spec:` entry.
 
-**BossBlanksTheMap's per-boss table is unchecked.** The harness covers the entry by vectors only,
-and the vector test picks each vector's boss by finding the boss whose screens in the model's own
-`Rules::reference()` equal the vector's blanked screens: swapping two bosses' screens in the model
-still passes all 62 vectors, and Draygon's can't be tested. The vectors check the blanking, not
-which boss blanks which screens. The observer names the boss in each of `scenarios/vectors/hud.toml`'s
-boss vectors, and the test then reads the name.
+**BossBlanksTheMap's per-boss table** was unchecked at round 2: the vector test picked each
+vector's boss by the screens it blanked, so a swap of two bosses' screens passed. Round 3's
+vectors name the boss (`boss` in a "BossEvent" step, `mother_brain_falls` in a frame), one vector
+per boss (§Round 2's gate), so the test reads the name.
 
 ## Budget
 
@@ -370,4 +483,8 @@ as a wall; over an area's old code is a failure.
 - Area minimap (old 1,666): Exploring, MiniMapWindow, HerBlink, MiniMapStill, BossBlanksTheMap,
   DiagonalPicture, FirstColumnsShift, LastColumnsShift
 
-Budget: 36 × 55.0 units = 1,980 (status 756, selection 288, minimap 936)
+Round 3 adds one arm (`BossBlanksTheMap`: Mother Brain's fall leaves the mini-map off for the
+rest of the frame, a "So" at round 2) and one operator (`DiagonalPicture`'s modulus on both
+sides): 55.0 → 56.3 units, minimap 936 → 984.
+
+Budget: 36 × 56.3 units = 2,028 (status 756, selection 288, minimap 984)
