@@ -72,7 +72,6 @@ const DOMAINS: &[Domain] = &[
             (
                 "motion",
                 &[
-                    "change.rs",
                     "jump_held.rs",
                     "moves.rs",
                     "run.rs",
@@ -82,7 +81,10 @@ const DOMAINS: &[Domain] = &[
                     "vertical.rs",
                 ],
             ),
-            ("pose fit", &["fit.rs"]),
+            // `change.rs` is the pose change: pose fit's taking of the chosen pose and the
+            // shrink's placement (`PoseFitAfterMoves`, `ShrinkingLowersHer`), which apply the
+            // chosen row's effects as part of that change, so the file counts with its entries.
+            ("pose fit", &["change.rs", "fit.rs"]),
             (
                 "pose chart",
                 &["chart.rs", "chart/table.rs", "rows.rs", "situation.rs"],

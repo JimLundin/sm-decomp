@@ -141,9 +141,10 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
 
 /// Whether a situation of the model names `pose`, the pose map's for one of hers.
 ///
-/// The map holds poses no situation names, and a frame in one gets no motion
-/// (`step::Unmoved::Unnamed`). The chart answers for every pose a situation names, whatever the
-/// frame, so an empty frame asks it.
+/// Every pose the map holds is named (its test pins it), so the step's
+/// `SamusFault::UnnamedPose` can't happen; the harness asks this to count such a frame as a
+/// defect. The chart answers for every pose a situation names, whatever the frame, so an empty
+/// frame asks it.
 #[must_use]
 pub fn named(pose: Pose) -> bool {
     let still = Moment {
