@@ -1,10 +1,10 @@
 //! Checks the catalogue against `docs/behaviours/camera.md`: one entry per spec entry, in the
-//! spec's order, each with its spec entry's summary and kind.
+//! spec's order, each with its spec entry's summary, kind and switch.
 
 #[cfg(test)]
 mod tests {
     use clean_model_camera::{BehaviourId, CATALOGUE};
-    use clean_types::Kind;
+    use clean_types::{Kind, Switch};
 
     const SPEC: &str = include_str!("../../../../docs/behaviours/camera.md");
 
@@ -82,6 +82,21 @@ mod tests {
                 Kind::Output => kind.starts_with("output"),
             };
             assert!(agrees, "{}'s kind is {kind}", entry.name);
+        }
+    }
+
+    /// The spec's `switch:` is `**Parameter**` or `**Toggle**` where the entry has one, and
+    /// `none` otherwise, which the catalogue holds as `Fixed`.
+    #[test]
+    fn each_entry_has_its_spec_entry_switch() {
+        for (entry, behaviour) in spec_entries().iter().zip(&CATALOGUE) {
+            let switch = entry.field("switch");
+            let agrees = match behaviour.switch {
+                Switch::Parameter => switch.starts_with("**Parameter**"),
+                Switch::Toggle => switch.starts_with("**Toggle**"),
+                Switch::Fixed => switch.starts_with("none"),
+            };
+            assert!(agrees, "{}'s switch is {switch}", entry.name);
         }
     }
 }

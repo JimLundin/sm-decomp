@@ -1,278 +1,247 @@
 //! Runs every vector of `scenarios/vectors/camera.toml` through the model, and checks that every
-//! catalogue entry checked by vectors has one, from the code and the vector file alone. A key the
-//! format doesn't give fails the test. The checks that read the spec are `tests/spec.rs`.
+//! catalogue entry checked by vectors has one, from the code and the vector file alone. The checks
+//! that read the spec are `tests/spec.rs`.
+//!
+//! The file is read with `toml` into the shape its header defines, declared once below. Every
+//! table of it refuses a key the shape doesn't give, and every name in it (a source, a spec entry,
+//! a screen's character, a facing, a reason for going backwards, a lead setting) is one the shape
+//! knows, so anything else fails the read. The shape is then turned into the model's own types.
 
 #[cfg(test)]
 mod tests {
-    use core::iter::Peekable;
     use core::num::Wrapping;
-    use core::str::Chars;
 
     use clean_model_camera::{
-        CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus, ScreenKind,
+        CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus,
     };
-    use clean_types::{Checked, Facing, Fixed, Pair, Parts, fixed};
+    use clean_types::{Checked, Facing, Fixed, Pair, Parts, ScreenKind, fixed};
+    use serde::Deserialize;
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/camera.toml");
 
-    /// A TOML value, as far as the vector file uses them.
-    #[derive(Debug)]
-    enum Value {
-        Str(String),
-        Int(u16),
-        Bool(bool),
-        Array(Vec<Self>),
-        Table(Table),
+    /// The file: its `[[vector]]` tables.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct VectorFile {
+        vector: Vec<Vector>,
     }
 
-    /// A table whose keys are taken as they are read; `done` fails on any left.
-    #[derive(Debug, Default)]
-    struct Table(Vec<(String, Value)>);
-
-    impl Table {
-        fn take(&mut self, key: &str) -> Option<Value> {
-            let at = self.0.iter().position(|(k, _)| k == key)?;
-            Some(self.0.remove(at).1)
-        }
-
-        fn need(&mut self, key: &str) -> Value {
-            self.take(key)
-                .unwrap_or_else(|| panic!("missing key {key}"))
-        }
-
-        fn done(self, what: &str) {
-            let keys: Vec<&String> = self.0.iter().map(|(k, _)| k).collect();
-            assert!(keys.is_empty(), "unknown keys in {what}: {keys:?}");
-        }
+    /// One frame of the camera, from its state at the frame's start to its state at the end.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Vector {
+        id: String,
+        source: Source,
+        entries: Vec<Entry>,
+        room: RoomShape,
+        #[serde(default)]
+        lead: Lead,
+        #[serde(default)]
+        time_stopped: bool,
+        before: State,
+        samus: SamusShape,
+        after: State,
     }
 
-    impl Value {
-        fn str(self) -> String {
-            let Self::Str(s) = self else {
-                panic!("not a string: {self:?}")
-            };
-            s
-        }
-
-        fn int(self) -> u16 {
-            let Self::Int(n) = self else {
-                panic!("not an integer: {self:?}")
-            };
-            n
-        }
-
-        fn bool(self) -> bool {
-            let Self::Bool(b) = self else {
-                panic!("not a bool: {self:?}")
-            };
-            b
-        }
-
-        fn array(self) -> Vec<Self> {
-            let Self::Array(a) = self else {
-                panic!("not an array: {self:?}")
-            };
-            a
-        }
-
-        fn table(self) -> Table {
-            let Self::Table(t) = self else {
-                panic!("not a table: {self:?}")
-            };
-            t
-        }
-
-        /// A `PPPP.SSSS` quantity.
-        fn fixed(self) -> Fixed {
-            let s = self.str();
-            let (p, sub) = s.split_once('.').expect("P.S");
-            fixed(
-                Wrapping(u16::from_str_radix(p, 16).expect("pixel part")),
-                u16::from_str_radix(sub, 16).expect("subpixel part"),
-            )
-        }
-
-        /// `[x, y]` of `P.S` quantities.
-        fn pair(self) -> Pair<Fixed> {
-            let mut a = self.array().into_iter();
-            let x = a.next().expect("x").fixed();
-            let y = a.next().expect("y").fixed();
-            assert!(a.next().is_none(), "a pair has two parts");
-            Pair { x, y }
-        }
-
-        /// A string of screens, one character a screen.
-        fn screens(self) -> Vec<ScreenKind> {
-            self.str().chars().map(screen).collect()
-        }
+    /// Where a vector comes from: every vector of the file is constructed.
+    #[derive(Deserialize)]
+    #[serde(rename_all = "lowercase")]
+    enum Source {
+        Constructed,
     }
 
-    fn screen(c: char) -> ScreenKind {
-        match c {
-            'C' => ScreenKind::Closed,
-            'O' => ScreenKind::Open,
-            'S' => ScreenKind::Short,
-            other => panic!("unknown screen {other}"),
-        }
-    }
+    /// A spec entry a vector exercises, by its name in the catalogue.
+    #[derive(Deserialize)]
+    #[serde(try_from = "String")]
+    struct Entry(String);
 
-    /// A reader of one line's `key = value`.
-    struct Reader<'a>(Peekable<Chars<'a>>);
+    impl TryFrom<String> for Entry {
+        type Error = String;
 
-    impl Reader<'_> {
-        fn skip(&mut self) {
-            while self.0.next_if(|c| c.is_whitespace()).is_some() {}
-        }
-
-        fn word(&mut self) -> String {
-            self.skip();
-            let mut w = String::new();
-            while let Some(c) = self.0.next_if(|c| c.is_alphanumeric() || *c == '_') {
-                w.push(c);
-            }
-            w
-        }
-
-        fn pair(&mut self) -> (String, Value) {
-            let key = self.word();
-            self.skip();
-            assert_eq!(self.0.next(), Some('='), "key {key} wants a value");
-            (key, self.value())
-        }
-
-        fn value(&mut self) -> Value {
-            self.skip();
-            match self.0.peek() {
-                Some('"') => {
-                    self.0.next();
-                    let s: String = self.0.by_ref().take_while(|c| *c != '"').collect();
-                    assert!(!s.contains('\\'), "no escapes expected");
-                    Value::Str(s)
-                }
-                Some('[') => Value::Array(self.list(']', Self::value)),
-                Some('{') => Value::Table(Table(self.list('}', Self::pair))),
-                _ => match self.word().as_str() {
-                    "true" => Value::Bool(true),
-                    "false" => Value::Bool(false),
-                    n => Value::Int(n.parse().unwrap_or_else(|_| panic!("bad value {n}"))),
-                },
-            }
-        }
-
-        fn list<T>(&mut self, close: char, item: fn(&mut Self) -> T) -> Vec<T> {
-            self.0.next();
-            let mut items = Vec::new();
-            loop {
-                self.skip();
-                if self.0.next_if_eq(&close).is_some() {
-                    return items;
-                }
-                items.push(item(self));
-                self.skip();
-                self.0.next_if_eq(&',');
+        fn try_from(name: String) -> Result<Self, String> {
+            if CATALOGUE.iter().any(|b| format!("{:?}", b.id) == name) {
+                Ok(Self(name))
+            } else {
+                Err(format!("a vector names {name}, no catalogue entry"))
             }
         }
     }
 
-    /// The file's `[[vector]]` tables.
-    fn vectors() -> Vec<Table> {
-        let mut tables: Vec<Table> = Vec::new();
-        for line in VECTORS.lines().map(str::trim) {
-            if line.is_empty() || line.starts_with('#') {
-                continue;
+    /// The room: its rows of screens, the run below them, and its aim heights.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct RoomShape {
+        screens: Vec<Screens>,
+        #[serde(default)]
+        below: Option<Screens>,
+        heights: [u16; 2],
+    }
+
+    /// A string of screens, one character a screen: "C" Closed, "O" Open, "S" Short.
+    #[derive(Deserialize)]
+    #[serde(try_from = "String")]
+    struct Screens(Vec<ScreenKind>);
+
+    impl TryFrom<String> for Screens {
+        type Error = String;
+
+        fn try_from(screens: String) -> Result<Self, String> {
+            screens
+                .chars()
+                .map(|c| match c {
+                    'C' => Ok(ScreenKind::Closed),
+                    'O' => Ok(ScreenKind::Open),
+                    'S' => Ok(ScreenKind::Short),
+                    other => Err(format!("unknown screen {other}")),
+                })
+                .collect::<Result<_, _>>()
+                .map(Self)
+        }
+    }
+
+    /// The lead setting; `Ahead` where a vector gives none.
+    #[derive(Deserialize, Default)]
+    enum Lead {
+        #[default]
+        Ahead,
+        KeepLeft,
+        KeepRight,
+        Near,
+    }
+
+    impl Lead {
+        const fn setting(self) -> LeadSetting {
+            match self {
+                Self::Ahead => LeadSetting::Ahead,
+                Self::KeepLeft => LeadSetting::KeepLeft,
+                Self::KeepRight => LeadSetting::KeepRight,
+                Self::Near => LeadSetting::Near,
             }
-            if line == "[[vector]]" {
-                tables.push(Table::default());
-                continue;
+        }
+    }
+
+    /// The camera at the frame's start or end: its view's top-left corner, and where it last saw
+    /// her.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct State {
+        camera: [Ps; 2],
+        seen: [Ps; 2],
+    }
+
+    impl State {
+        fn camera(&self) -> Camera {
+            Camera::new(pair(self.camera), pair(self.seen))
+        }
+    }
+
+    /// What the camera reads of her this frame.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct SamusShape {
+        position: [Ps; 2],
+        facing: FacingName,
+        #[serde(default)]
+        backwards: Option<Backwards>,
+        #[serde(default)]
+        rising: bool,
+        #[serde(default)]
+        placed: Option<Ps>,
+    }
+
+    impl SamusShape {
+        fn samus(&self) -> Samus {
+            Samus {
+                position: pair(self.position),
+                placed: self.placed.map(|p| p.0),
+                facing: self.facing.facing(),
+                backwards: self.backwards.is_some(),
+                rising: self.rising,
             }
-            let mut reader = Reader(line.chars().peekable());
-            let pair = reader.pair();
-            reader.skip();
-            assert!(reader.0.next().is_none(), "trailing text on {line}");
-            tables
-                .last_mut()
-                .expect("a key before any vector")
-                .0
-                .push(pair);
-        }
-        tables
-    }
-
-    fn facing(name: &str) -> Facing {
-        match name {
-            "Left" => Facing::Left,
-            "Right" => Facing::Right,
-            "Screen" => Facing::Screen,
-            other => panic!("unknown facing {other}"),
         }
     }
 
-    fn lead(name: &str) -> LeadSetting {
-        match name {
-            "Ahead" => LeadSetting::Ahead,
-            "KeepLeft" => LeadSetting::KeepLeft,
-            "KeepRight" => LeadSetting::KeepRight,
-            "Near" => LeadSetting::Near,
-            other => panic!("unknown lead {other}"),
+    /// Which way she faces.
+    #[derive(Deserialize, Clone, Copy)]
+    enum FacingName {
+        Left,
+        Right,
+        Screen,
+    }
+
+    impl FacingName {
+        const fn facing(self) -> Facing {
+            match self {
+                Self::Left => Facing::Left,
+                Self::Right => Facing::Right,
+                Self::Screen => Facing::Screen,
+            }
         }
     }
 
-    fn backwards(why: &str) -> bool {
-        assert!(
-            matches!(why, "Knockback" | "Moonwalk" | "Skid"),
-            "unknown backwards {why}"
-        );
-        true
+    /// Why she is going backwards; each reads the same, as the spec's input is the bool.
+    #[derive(Deserialize, Clone, Copy)]
+    enum Backwards {
+        Knockback,
+        Moonwalk,
+        Skid,
     }
 
-    /// A camera as `before` or `after` gives it: its view, and where it last saw her.
-    fn camera(value: Value, what: &str) -> Camera {
-        let mut t = value.table();
-        let position = t.need("camera").pair();
-        let seen = t.need("seen").pair();
-        t.done(what);
-        Camera::new(position, seen)
+    /// A `PPPP.SSSS` quantity: four hex digits of pixel part, four of subpixel part.
+    #[derive(Deserialize, Clone, Copy)]
+    #[serde(try_from = "String")]
+    struct Ps(Fixed);
+
+    impl TryFrom<String> for Ps {
+        type Error = String;
+
+        fn try_from(s: String) -> Result<Self, String> {
+            let part = |p: &str| {
+                (p.len() == 4 && p.chars().all(|c| c.is_ascii_hexdigit()))
+                    .then(|| u16::from_str_radix(p, 16).ok())
+                    .flatten()
+            };
+            s.split_once('.')
+                .and_then(|(p, sub)| Some(fixed(Wrapping(part(p)?), part(sub)?)))
+                .map(Self)
+                .ok_or_else(|| format!("not a P.S quantity: {s}"))
+        }
     }
 
-    /// A room as the vector gives it: its rows, each as wide as the first, then the run below
-    /// them continuing them.
-    fn room(value: Value) -> Room {
-        let mut t = value.table();
-        let rows: Vec<Vec<ScreenKind>> = t
-            .need("screens")
-            .array()
-            .into_iter()
-            .map(Value::screens)
-            .collect();
-        let width = rows.first().map_or(0, Vec::len);
-        assert!(rows.iter().all(|r| r.len() == width), "rows of one width");
-        let size = Pair {
-            x: width,
-            y: rows.len(),
-        };
-        let mut run: Vec<ScreenKind> = rows.into_iter().flatten().collect();
-        run.extend(t.take("below").map_or_else(Vec::new, Value::screens));
-        let mut h = t.need("heights").array().into_iter();
-        let heights = Heights {
-            level: Wrapping(h.next().expect("hn").int()),
-            rising: Wrapping(h.next().expect("hr").int()),
-        };
-        assert!(h.next().is_none(), "two heights");
-        t.done("room");
-        Room::new(run, size, heights).expect("a valid room")
+    /// `[x, y]` as a pair.
+    const fn pair([x, y]: [Ps; 2]) -> Pair<Fixed> {
+        Pair { x: x.0, y: y.0 }
     }
 
-    fn samus(value: Value) -> Samus {
-        let mut t = value.table();
-        let s = Samus {
-            position: t.need("position").pair(),
-            placed: t.take("placed").map(Value::fixed),
-            facing: facing(&t.need("facing").str()),
-            backwards: t.take("backwards").is_some_and(|v| backwards(&v.str())),
-            rising: t.take("rising").is_some_and(Value::bool),
-        };
-        t.done("samus");
-        s
+    impl RoomShape {
+        /// The room: its rows of screens, each as wide as the first, then the run below them
+        /// continuing them.
+        fn room(self) -> Room {
+            let width = self.screens.first().map_or(0, |row| row.0.len());
+            assert!(
+                self.screens.iter().all(|row| row.0.len() == width),
+                "rows of one width"
+            );
+            let size = Pair {
+                x: width,
+                y: self.screens.len(),
+            };
+            let below = self.below.map(|b| b.0).unwrap_or_default();
+            let run = self.screens.into_iter().flat_map(|row| row.0).chain(below);
+            let [level, rising] = self.heights;
+            let heights = Heights {
+                level: Wrapping(level),
+                rising: Wrapping(rising),
+            };
+            Room::new(run.collect(), size, heights).expect("a valid room")
+        }
+    }
+
+    /// The file's vectors; a key or a name the shape doesn't know fails the read.
+    fn vectors() -> Vec<Vector> {
+        toml::from_str::<VectorFile>(VECTORS)
+            .unwrap_or_else(|e| panic!("the vector file doesn't read: {e}"))
+            .vector
     }
 
     fn show(p: Pair<Fixed>) -> String {
@@ -280,32 +249,28 @@ mod tests {
         format!("[{}, {}]", part(p.x), part(p.y))
     }
 
-    /// Runs one vector; `Err` names what differs.
-    fn run(mut v: Table) -> (String, Vec<String>, Result<(), String>) {
-        let id = v.need("id").str();
-        v.need("source").str();
-        let entries = v
-            .need("entries")
-            .array()
-            .into_iter()
-            .map(Value::str)
-            .collect();
-        let room = room(v.need("room"));
-        let lead = v
-            .take("lead")
-            .map_or(LeadSetting::Ahead, |l| lead(&l.str()));
-        let time_stopped = v.take("time_stopped").is_some_and(Value::bool);
-        let before = camera(v.need("before"), "before");
-        let samus = samus(v.need("samus"));
-        let after = camera(v.need("after"), "after");
-        v.done(&id);
-        let frame = Frame {
-            samus,
-            room: &room,
+    /// Runs one vector: its id, and `Err` naming what differs.
+    fn run(v: Vector) -> (String, Result<(), String>) {
+        let Vector {
+            id,
+            source: Source::Constructed,
+            entries: _,
+            room,
             lead,
             time_stopped,
+            before,
+            samus,
+            after,
+        } = v;
+        let room = room.room();
+        let frame = Frame {
+            samus: samus.samus(),
+            room: &room,
+            lead: lead.setting(),
+            time_stopped,
         };
-        let got = before.step(&Rules::REFERENCE, &frame);
+        let got = before.camera().step(&Rules::REFERENCE, &frame);
+        let after = after.camera();
         let mut wrong = Vec::new();
         if got.position() != after.position() {
             wrong.push(format!(
@@ -326,7 +291,7 @@ mod tests {
         } else {
             Err(wrong.join("; "))
         };
-        (id, entries, result)
+        (id, result)
     }
 
     #[test]
@@ -335,7 +300,7 @@ mod tests {
         assert!(!results.is_empty(), "the file holds vectors");
         let failures: Vec<String> = results
             .iter()
-            .filter_map(|(id, _, r)| r.as_ref().err().map(|e| format!("{id}: {e}")))
+            .filter_map(|(id, r)| r.as_ref().err().map(|e| format!("{id}: {e}")))
             .collect();
         assert!(
             failures.is_empty(),
@@ -348,14 +313,12 @@ mod tests {
 
     #[test]
     fn every_entry_checked_by_vectors_has_one() {
-        let named: Vec<String> = vectors().into_iter().flat_map(|v| run(v).1).collect();
-        let ids: Vec<String> = CATALOGUE.iter().map(|b| format!("{:?}", b.id)).collect();
-        for name in &named {
-            assert!(
-                ids.contains(name),
-                "a vector names {name}, no catalogue entry"
-            );
-        }
+        // A name no catalogue entry has fails the read (`Entry`).
+        let named: Vec<String> = vectors()
+            .into_iter()
+            .flat_map(|v| v.entries)
+            .map(|entry| entry.0)
+            .collect();
         for b in &CATALOGUE {
             let id = format!("{:?}", b.id);
             let has = named.contains(&id);
@@ -366,9 +329,50 @@ mod tests {
         }
     }
 
+    /// A vector the shape reads, to change one key or name of at a time.
+    const ONE: &str = r#"
+[[vector]]
+id = "one"
+source = "constructed"
+entries = ["Settling"]
+room = { screens = ["O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0000.0000"], seen = ["0000.0000", "0000.0000"] }
+samus = { position = ["0000.0000", "0000.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "0000.0000"], seen = ["0000.0000", "0000.0000"] }
+"#;
+
+    #[test]
+    fn a_key_or_a_name_the_shape_doesnt_know_fails_the_read() {
+        let reads = |text: &str| toml::from_str::<VectorFile>(text).is_ok();
+        assert!(reads(ONE), "the vector reads as it stands");
+        let changes = [
+            // A key no table gives, in each table of the file.
+            ("[[vector]]", "extra = 1\n[[vector]]"),
+            ("id = \"one\"", "id = \"one\"\nextra = 1"),
+            ("heights = [104, 150]", "heights = [104, 150], extra = 1"),
+            ("before = { camera", "before = { extra = 1, camera"),
+            ("facing = \"Right\"", "facing = \"Right\", extra = 1"),
+            ("after = { camera", "after = { extra = 1, camera"),
+            // A name of each kind the shape doesn't know.
+            ("\"constructed\"", "\"recorded\""),
+            ("[\"Settling\"]", "[\"Unknown\"]"),
+            ("[\"O\"]", "[\"X\"]"),
+            ("\"Right\"", "\"Up\""),
+            (
+                "facing = \"Right\"",
+                "facing = \"Right\", backwards = \"Slide\"",
+            ),
+            ("source", "lead = \"Far\"\nsource"),
+            ("\"0000.0000\"", "\"0.0\""),
+        ];
+        for (from, to) in changes {
+            assert!(!reads(&ONE.replacen(from, to, 1)), "{to} reads");
+        }
+    }
+
     #[test]
     fn a_room_is_built_only_from_a_run_that_holds_it() {
-        use ScreenKind::Open;
+        use clean_types::ScreenKind::Open;
         let heights = Heights {
             level: Wrapping(112),
             rising: Wrapping(160),

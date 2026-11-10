@@ -1,37 +1,28 @@
 //! The room as the camera reads it (Spec: §1.3): its screens, run on as one strip, and its aim
 //! heights.
+//!
+//! A screen's kind is the shared `ScreenKind`, which the blocks' scroll cells write. The camera
+//! tells only two kinds from the rest: `Closed`, which the view may not show (Spec:
+//! ClosedScreens), and `Short`, where the view that can go no lower stops with its top on the
+//! screen's top edge (Spec: ShortScreens). Every other screen is open to it: the view may show all
+//! of it (Spec: §1.3, Screen kinds).
 
 use core::num::Wrapping;
 
-use clean_types::{Pair, Px};
+use clean_types::{Pair, Px, ScreenKind};
 
 /// Notation: a screen is 256 px square.
 pub(crate) const SCREEN: Px = Wrapping(256);
 
-/// The kind of a screen of the room (Spec: §1.3, Screen kinds). Listed alphabetically; the order
-/// means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ScreenKind {
-    /// The view may not show it; a view that would is pushed back to its edge (Spec:
-    /// ClosedScreens).
-    Closed,
-    /// The view may show all of it.
-    Open,
-    /// Like `Open`, but where the view can go no lower it stops with its top on the screen's top
-    /// edge (Spec: ShortScreens).
-    Short,
+/// Whether the view may not show a screen of this kind (Spec: ClosedScreens).
+pub(crate) const fn is_closed(kind: ScreenKind) -> bool {
+    matches!(kind, ScreenKind::Closed)
 }
 
-impl ScreenKind {
-    /// Whether the view may not show this screen.
-    pub(crate) const fn is_closed(self) -> bool {
-        matches!(self, Self::Closed)
-    }
-
-    /// Whether the view stops with its top on this screen's top edge where it can go no lower.
-    pub(crate) const fn is_short(self) -> bool {
-        matches!(self, Self::Short)
-    }
+/// Whether the view that can go no lower stops with its top on the top edge of a screen of this
+/// kind (Spec: ShortScreens).
+pub(crate) const fn is_short(kind: ScreenKind) -> bool {
+    matches!(kind, ScreenKind::Short)
 }
 
 /// The room's two aim heights: how far below the view's top edge it keeps her, in px (Spec:
@@ -69,7 +60,7 @@ pub struct Room {
     /// How many screens the room is across (the spec's w).
     width: usize,
     /// The near edges of its last column and its last row: across, the furthest right the view
-    /// goes, xr; down, yb less the rows (Spec: RoomEdges).
+    /// goes, xr; down, yb less the margin (Spec: RoomEdges).
     pub(crate) last: Pair<Px>,
     /// The run of screens: the room's rows, top first, each left to right, then the screens below
     /// the room continuing it (Spec: ScreensRunOn, BelowTheRoom).

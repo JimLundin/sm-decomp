@@ -6,7 +6,8 @@
 //! settles out of a closed screen instead, unless time is stopped. A frame whose aim is the
 //! view's own pixel neither moves nor settles.
 //!
-//! A caller builds a `Room` from its run of screens and its size across and down, places a
+//! A caller builds a `Room` from its run of screens, each the shared `clean_types::ScreenKind`,
+//! and its size across and down, places a
 //! `Camera` with `Camera::new`, and steps it once a frame with `Camera::step`, reading
 //! `Camera::position`. `Rules::REFERENCE` is the original's tuning; `CATALOGUE` names every
 //! behaviour.
@@ -30,7 +31,7 @@ mod rules;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use input::{Frame, LeadSetting, Samus};
-pub use room::{Heights, Room, RoomError, ScreenKind};
+pub use room::{Heights, Room, RoomError};
 pub use rules::{Leads, Rules};
 
 use axis::{Axis, Line};
@@ -88,8 +89,9 @@ impl Camera {
             ..self.seen
         };
         let aim = aim(rules, frame);
-        // Spec: §4. Across first, in the row its middle was in; then down, in the column the
-        // move across took it to.
+        // Spec: §4. Across first, in the row holding the point 128 px below its top edge before it
+        // moves down; then down, in the column holding the point 128 px right of its left edge
+        // after it moved across.
         let x = Line::new(frame, rules, Axis::Across, seen, self.position).follow(aim.x);
         let across = Pair { x, ..self.position };
         let y = Line::new(frame, rules, Axis::Down, seen, across).follow(aim.y);

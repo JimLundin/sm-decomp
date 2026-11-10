@@ -122,8 +122,8 @@ pub(crate) fn speed(rules: &Rules, her: Fixed, seen: Fixed) -> Fixed {
 /// (Spec: FollowingHer).
 ///
 /// None on a frame where the aim is the view's own pixel, its pixel part the camera's: the camera
-/// stays as it is, subpixel part included, and, as she moved, it doesn't settle either (R9, R13,
-/// R21, R23).
+/// stays as it is, subpixel part included, and, as she moved, it doesn't settle either
+/// (C-at-aim-across-rising, C-at-aim-down, C-at-aim-down-held-across, C-at-aim-across).
 pub(crate) fn chase(camera: Fixed, aim: Px, speed: Fixed) -> Option<Move> {
     let going = Going::towards(camera.pixel(), aim)?;
     let moved = going.by(camera, speed);

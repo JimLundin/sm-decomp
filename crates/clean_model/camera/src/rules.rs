@@ -41,10 +41,10 @@ pub struct Rules {
     pub near: Leads,
     /// How far a push moves the view beyond its speed (Spec: ClosedScreens).
     pub push: Px,
-    /// The rows: how many pixels down from a screen's top edge the view stops where it can go no
-    /// lower; across there are none. These are any screen's but a short one's, which has none
+    /// The margin on a screen that isn't short: how far under its screen's top edge the view's top
+    /// may stop where it can go no lower. A short screen has none, and across there is none
     /// (Spec: ShortScreens).
-    pub rows_not_short: Px,
+    pub margin: Px,
 }
 
 impl Rules {
@@ -79,6 +79,6 @@ impl Rules {
             left: Wrapping(80),
         },
         push: Wrapping(2),
-        rows_not_short: Wrapping(31),
+        margin: Wrapping(31),
     };
 }

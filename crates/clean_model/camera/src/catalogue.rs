@@ -12,9 +12,9 @@ use clean_types::{Checked, Kind, Switch};
 /// A spec entry's id, one variant per entry, named as the spec names it.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum BehaviourId {
-    /// The view moves towards its aim as fast as she moved plus a pixel.
+    /// The view moves towards its aim as fast as she moved plus an extra amount.
     FollowingHer,
-    /// Across, the view aims to show more of the way she travels.
+    /// Across, the view aims to keep her a set distance from its left edge.
     LeadingHer,
     /// Down, the view aims to keep her a set height below its top edge.
     AimingHeight,
@@ -26,7 +26,7 @@ pub enum BehaviourId {
     ClosedScreens,
     /// The view never shows past the room's edges.
     RoomEdges,
-    /// Where the view can go no lower, a short screen shows less of its bottom.
+    /// Where the view can go no lower, it stops on a short screen's top edge, or the margin lower.
     ShortScreens,
     /// On an axis she didn't move on, the view eases out of a closed screen.
     Settling,
@@ -61,16 +61,17 @@ pub struct Behaviour {
 pub const CATALOGUE: [Behaviour; 14] = [
     Behaviour {
         id: BehaviourId::FollowingHer,
-        summary: "when she moves, the view moves towards its aim as fast as she moved plus a \
-                  pixel, and never past the aim.",
+        summary: "when she moves, the view moves towards its aim as fast as she moved plus an \
+                  extra amount (a pixel in the reference profile), and never past the aim.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::LeadingHer,
-        summary: "across, the view aims to show more of the way she faces; going backwards, \
-                  more of the way she goes.",
+        summary: "across, the view aims to keep her a set distance from its left edge, by the \
+                  lead setting and the way she travels: she travels the way she faces, facing \
+                  the screen as facing right, or the other way while she goes backwards.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -94,7 +95,7 @@ pub const CATALOGUE: [Behaviour; 14] = [
     Behaviour {
         id: BehaviourId::CreepReadsRightward,
         summary: "a creep left or up inside a pixel reads as a move right or down of less than \
-                  a pixel, so the view eases 2 px that frame, not 3.",
+                  a pixel, so the view eases a pixel less that frame.",
         kind: Kind::Quirk,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -102,7 +103,8 @@ pub const CATALOGUE: [Behaviour; 14] = [
     Behaviour {
         id: BehaviourId::ClosedScreens,
         summary: "a closed screen is never shown: a view that goes into one is pushed back to \
-                  its edge, backing off 2 px a frame against her move.",
+                  its edge, backing off by the push each frame against her move (2 px in the \
+                  reference profile).",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -118,8 +120,8 @@ pub const CATALOGUE: [Behaviour; 14] = [
     Behaviour {
         id: BehaviourId::ShortScreens,
         summary: "where the view can go no lower, it stops with its top on a short screen's top \
-                  edge, or 31 px lower on any other screen, which shows 31 px more of that \
-                  screen's bottom.",
+                  edge, or the margin lower on any other screen (31 px in the reference \
+                  profile), which shows that much more of that screen's bottom.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -127,8 +129,8 @@ pub const CATALOGUE: [Behaviour; 14] = [
     Behaviour {
         id: BehaviourId::Settling,
         summary: "on an axis she didn't move on, the view, brought into the room, eases out of \
-                  a closed screen it partly shows at 3 px a frame, towards the open screen \
-                  beside it.",
+                  a closed screen it partly shows a few pixels a frame (3 in the reference \
+                  profile), towards the open screen beside it.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
