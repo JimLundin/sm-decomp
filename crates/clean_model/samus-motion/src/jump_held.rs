@@ -9,39 +9,41 @@ use clean_types::button::JUMP;
 use core::num::Wrapping;
 
 /// §1.2 landed or ended the frame before: what a frame leaves the next one, for that frame alone.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Before {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum FrameBefore {
     /// She landed from a straight jump, a fall, a spin or a wall jump, or the animation of a turn
     /// or of a landing ended and handed over its pose.
     LandedOrEnded,
     /// Anything else.
-    Nothing,
+    Other,
 }
 
 /// `Jumping` (§1.2): how long jump has stayed held since it was pressed, and what the frame
 /// before left.
 ///
-/// Only frames count it, so a caller starts one at `JumpHeld::NONE`.
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// State a caller gives and reads back: any count and either frame before, in any pose. Each
+/// frame starts from them and leaves them for the next.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct JumpHeld {
     /// The frames jump has stayed held since its press, 0 to 65,535; from 65,535 it goes to 0.
-    frames: Wrapping<u16>,
+    pub frames: Wrapping<u16>,
     /// What the frame before left.
-    before: Before,
+    pub before: FrameBefore,
 }
 
 impl JumpHeld {
     /// Jump not held, and nothing the frame before.
     pub const NONE: Self = Self {
         frames: Wrapping(0),
-        before: Before::Nothing,
+        before: FrameBefore::Other,
     };
 
     /// `Jumping`: whether jump counts as just pressed for the pad chart this frame: the frame
-    /// before, she landed or an animation ended, and the count is one that counts.
+    /// before, she landed or an animation ended, and the count is one that counts. It counts so
+    /// with jump let go on this frame too: only the frame's end sees it let go.
     #[must_use]
     pub(crate) fn presses(self, r: &Rules) -> bool {
-        self.before == Before::LandedOrEnded && counts(self.frames, r)
+        self.before == FrameBefore::LandedOrEnded && counts(self.frames, r)
     }
 
     /// `Jumping`: what she remembers at the end of the frame `moment` reads. A press the count
@@ -77,15 +79,15 @@ fn counts(frames: Wrapping<u16>, r: &Rules) -> bool {
 /// §1.2: what a frame leaves the next. She landed: `WhatHerMovesMet` chose a `Landing`, whatever
 /// pose fit then made of the change. Or the animation of a turn or of a landing ended and handed
 /// over its pose (`AnimationEnds`).
-fn left_by(moment: &Moment) -> Before {
+fn left_by(moment: &Moment) -> FrameBefore {
     let landed = moment
         .met()
         .is_some_and(|c| matches!(c.pose.action, Landing(_)));
     let ended =
         moment.frame.animation_ends && matches!(moment.pose.action, Turning(_) | Landing(_));
     if landed || ended {
-        Before::LandedOrEnded
+        FrameBefore::LandedOrEnded
     } else {
-        Before::Nothing
+        FrameBefore::Other
     }
 }

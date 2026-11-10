@@ -125,14 +125,14 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::Jumping,
-        summary: "Jumps, wall jumps, ball bounces and space jumps start her rising at their speeds, and jump held through a landing or a turn's end takes her off again",
+        summary: "Jumps, wall jumps, ball bounces and space jumps start her rising at their speeds, and jump held through a landing or a turn's end takes her off again, let go on the frame after too",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::FollowingTheGround,
-        summary: "On the ground she is pulled down onto the floor, keeps a vertical speed she brought, and walks off a ledge into a fall",
+        summary: "On the ground she is pulled down onto the floor, keeps a vertical speed she brought, and walks off a ledge into a fall, rising on by an upward speed she kept",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -160,7 +160,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::RisingAndFalling,
-        summary: "She rises and falls under gravity, settling at 5.1400 a frame, a let-go jump ends the rise, and each frame says whether she is rising",
+        summary: "She rises and falls under gravity, settling at 5.1400 a frame, a let-go jump ends the rise, and each frame says whether she is rising, an upward speed kept on the ground included",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -195,7 +195,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::PoseFollows,
-        summary: "Her pose changes at most once a frame: an animation's end, then what she met, then the pad",
+        summary: "Her pose changes at most once a frame: an animation's end, then what she met, then the pad; without the morph ball a change into the morph is refused",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -216,14 +216,14 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::WhatHerMovesMet,
-        summary: "A wall, the aim step's block, a kick, a floor, no floor or a ceiling chooses her pose over the pad",
+        summary: "A wall, the aim step's block, a kick, a floor, no floor (upright or crouched, into the upright fall) or a ceiling chooses her pose over the pad",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::AnimationEnds,
-        summary: "A pose that lasts as long as its animation hands over the next pose at its end",
+        summary: "A pose that lasts as long as its animation hands over the next pose at its end; the unmorph hands over the crouch, in the air too",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

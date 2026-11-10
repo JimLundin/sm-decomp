@@ -21,7 +21,7 @@ mod tick;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use chart::{Choice, Moment};
-pub use jump_held::JumpHeld;
+pub use jump_held::{FrameBefore, JumpHeld};
 pub use motion::{Carry, DashIs, Run};
 pub use rows::{Effect, Met};
 pub use rules::{Rules, SpeedCap};

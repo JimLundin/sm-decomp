@@ -3,12 +3,12 @@
 #![cfg(test)]
 
 use clean_model_samus_motion::{
-    Bounces, CATALOGUE, Carry, DashIs, Frame, JumpHeld, Met, Moment, Outcome, Rules, Run, Samus,
-    Seat, SpeedCap, Spin, Vertical, WallTest, classify,
+    Bounces, CATALOGUE, Carry, DashIs, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome, Rules,
+    Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest, classify,
 };
 use clean_types::{
-    Action, Aim, Block, Body, Buttons, Cell, Checked, Equipment, Facing, Fixed, Gun, Heading,
-    Hitbox, LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Px, Radius, Slope, SlopeFaces,
+    Action, Aim, Block, Body, Buttons, Cell, Checked, Facing, Fixed, Gun, Heading, Hitbox, Item,
+    LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Px, Radius, Set, Slope, SlopeFaces,
     Touch, Turn, Way, World, ZERO, button, fixed as quantity,
 };
 use core::num::Wrapping;
@@ -588,7 +588,7 @@ const VECTOR_KEYS: &[&str] = &[
     "source",
     "entries",
     "rules",
-    "equipment",
+    "items",
     "world",
     "before",
     "lead_in",
@@ -628,8 +628,26 @@ fn flag(table: Option<&Value>, k: &str) -> bool {
     table.and_then(|t| t.get(k)).is_some_and(Value::bool)
 }
 
-/// A vector's rules and equipment.
-fn settings(vector: &Value) -> (Rules, Equipment) {
+/// An item by the name the vectors give it, progress's own (the header's `items`).
+fn item(name: &str) -> Item {
+    match name {
+        "Bombs" => Item::Bombs,
+        "GrappleBeam" => Item::GrappleBeam,
+        "GravitySuit" => Item::GravitySuit,
+        "HiJumpBoots" => Item::HiJumpBoots,
+        "MorphBall" => Item::MorphBall,
+        "ScrewAttack" => Item::ScrewAttack,
+        "SpaceJump" => Item::SpaceJump,
+        "SpeedBooster" => Item::SpeedBooster,
+        "SpringBall" => Item::SpringBall,
+        "VariaSuit" => Item::VariaSuit,
+        "XRayScope" => Item::XRayScope,
+        other => panic!("item {other:?}"),
+    }
+}
+
+/// A vector's rules and the items switched on (none where `items` is missing).
+fn settings(vector: &Value) -> (Rules, Set<Item>) {
     let rules = match vector
         .get("rules")
         .and_then(|r| r.get("speed_cap"))
@@ -645,43 +663,32 @@ fn settings(vector: &Value) -> (Rules, Equipment) {
     if let Some(rules) = vector.get("rules") {
         known_keys(rules, "rules", &["speed_cap"]);
     }
-    let equipment = vector.get("equipment");
-    if let Some(e) = equipment {
-        known_keys(
-            e,
-            "equipment",
-            &[
-                "hi_jump",
-                "space_jump",
-                "spring_ball",
-                "screw_attack",
-                "other_suit",
-            ],
-        );
-    }
-    let equipment = Equipment {
-        hi_jump: flag(equipment, "hi_jump"),
-        space_jump: flag(equipment, "space_jump"),
-        spring_ball: flag(equipment, "spring_ball"),
-        screw_attack: flag(equipment, "screw_attack"),
-        other_suit: flag(equipment, "other_suit"),
-    };
-    (rules, equipment)
+    let listed = vector.get("items").map(Value::array).unwrap_or_default();
+    let items: Set<Item> = listed.iter().map(|i| (item(i.str()), true)).collect();
+    (rules, items)
 }
 
 /// Samus at a vector's start (spec §1.2): her motion follows the pad unless she is skidding,
-/// her dash is hers to keep, she remembers no spin, no seat and no jump held, an upward speed
-/// is a rise,
-/// and in a jump, a spin, a fall or a wall jump (a turn in a jump or a fall included) she is
-/// in the air: a vertical speed of 0 there means she has just started to fall. In any other
-/// pose she is on the ground, keeping any downward speed she has (`FollowingTheGround`), or,
-/// where `before.falling` says so, falling at 0 there.
+/// her dash is hers to keep, and she remembers no spin and no seat. In a jump (its take-off
+/// included), a spin, a fall or a wall jump (a turn in a jump or a fall included) she is in the
+/// air: an upward speed there is a rise, and a vertical speed of 0 means she has just started to
+/// fall. In any other pose she is on the ground, keeping any vertical speed she has, an upward
+/// one a rise she keeps (`FollowingTheGround`, `RisingAndFalling`), or, where `before.falling`
+/// says so, falling at 0 there. Jump held through is as `before` gives it, a count of 0 and
+/// nothing the frame before where it doesn't.
 fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
     known_keys(
         before,
         "before",
         &[
-            "position", "speed_x", "dash", "speed_y", "bounces", "falling",
+            "position",
+            "speed_x",
+            "dash",
+            "speed_y",
+            "bounces",
+            "falling",
+            "jump_held",
+            "landed_or_ended",
         ],
     );
     // A missing quantity is 0.
@@ -711,20 +718,28 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
     };
     let airborne = matches!(
         pose.action,
-        Action::Jumping
+        Action::TakingOff
+            | Action::Jumping
             | Action::Spinning
             | Action::Falling
             | Action::WallJumping
             | Action::Turning(Turn::Jump | Turn::Fall)
     );
-    let vertical = if speed_y.negative {
-        Vertical::Rising
-    } else if airborne {
-        Vertical::Falling
-    } else if flag(Some(before), "falling") {
-        Vertical::GroundFalling
-    } else {
-        Vertical::Ground
+    let vertical = match (airborne, speed_y.negative) {
+        (true, true) => Vertical::Rising,
+        (true, false) => Vertical::Falling,
+        (false, _) if flag(Some(before), "falling") => Vertical::GroundFalling,
+        (false, _) => Vertical::Ground,
+    };
+    let jump_held = JumpHeld {
+        frames: Wrapping(before.get("jump_held").map_or(0, |n| {
+            u16::try_from(n.int()).expect("jump_held, 0 to 65535")
+        })),
+        before: if flag(Some(before), "landed_or_ended") {
+            FrameBefore::LandedOrEnded
+        } else {
+            FrameBefore::Other
+        },
     };
     Samus {
         position,
@@ -748,9 +763,9 @@ fn start(before: &Value, pose: Pose, radius: Radius) -> Samus {
         bounces,
         pose,
         radius,
-        spin: Spin::OFF,
+        spin: Spin::Off,
         seat: Seat::Unseated,
-        jump_held: JumpHeld::NONE,
+        jump_held,
     }
 }
 
@@ -847,7 +862,7 @@ fn body_size(p: Pose, step: Step, end: Option<Sized>, known: &[Sized]) -> Radius
 fn run(vector: &Value) -> Vec<String> {
     let id = vector.get("id").expect("id").str();
     known_keys(vector, id, VECTOR_KEYS);
-    let (rules, equipment) = settings(vector);
+    let (rules, items) = settings(vector);
     let world = vector.get("world").expect("world");
     let room = room(world);
     let elevator_moving = flag(Some(world), "elevator_moving");
@@ -879,7 +894,7 @@ fn run(vector: &Value) -> Vec<String> {
         let frame = Frame {
             pad: step.pad,
             pressed: step.pressed,
-            equipment,
+            items,
             spin_turned_far: step.spin_turned_far,
             elevator_moving,
             parity,
@@ -938,7 +953,7 @@ fn run_pose_step(step: &Value) -> Option<String> {
     let frame = Frame {
         pad: held,
         pressed,
-        equipment: Equipment::default(),
+        items: Set::default(),
         spin_turned_far: false,
         elevator_moving: false,
         parity: Parity::Even,
@@ -1005,101 +1020,138 @@ fn listed_cells(value: &Value) -> String {
     cells.join("; ")
 }
 
-/// The listed `after` quantities that differ.
-fn compare(id: &str, after: &Value, samus: &Samus, outcome: &Outcome) -> Vec<String> {
-    let mut misses = Vec::new();
-    let mut check = |field: &str, expected: String, actual: String| {
-        if expected != actual {
-            misses.push(format!(
-                "{id}: {field} expected {expected}, actual {actual}"
-            ));
-        }
+/// A `P.S` quantity as the vectors write it.
+fn show(f: Fixed) -> String {
+    format!("{:04X}.{:04X}", f.pixel(), f.sub())
+}
+
+/// A signed `P.S` quantity as the vectors write it, 0 with a "+".
+fn show_signed(s: Signed) -> String {
+    let sign = if s.negative && s.size != ZERO {
+        '-'
+    } else {
+        '+'
     };
-    let show = |f: Fixed| format!("{:04X}.{:04X}", f.pixel(), f.sub());
-    let show_signed = |s: Signed| {
-        let sign = if s.negative && s.size != ZERO {
-            '-'
-        } else {
-            '+'
-        };
-        format!("{sign}{}", show(s.size))
-    };
-    for (field, value) in after.pairs() {
-        match field.as_str() {
-            "position" => {
-                let xy = value.array();
-                check(
+    format!("{sign}{}", show(s.size))
+}
+
+/// One compared field: its name, the expected value and the actual one, as text.
+type Compared = (&'static str, String, String);
+
+/// What she is at the frame's end, for one `after` key: each field it compares; none where the
+/// key isn't one of hers.
+fn hers(field: &str, value: &Value, samus: &Samus) -> Option<Vec<Compared>> {
+    let one = |name, expected, actual| Some(vec![(name, expected, actual)]);
+    match field {
+        "position" => {
+            let xy = value.array();
+            Some(vec![
+                (
                     "position.x",
                     show(fixed(xy[0].str())),
                     show(samus.position.x),
-                );
-                check(
+                ),
+                (
                     "position.y",
                     show(fixed(xy[1].str())),
                     show(samus.position.y),
-                );
+                ),
+            ])
+        }
+        "position_x" => one(
+            "position.x",
+            show(fixed(value.str())),
+            show(samus.position.x),
+        ),
+        "speed_x" => one(
+            "speed_x",
+            show_signed(signed(value.str())),
+            show_signed(speed_x(samus)),
+        ),
+        "speed_y" => one(
+            "speed_y",
+            show_signed(signed(value.str())),
+            show_signed(speed_y(samus)),
+        ),
+        "dash" => one("dash", show(fixed(value.str())), show(samus.run.dash)),
+        "bounces" => {
+            let actual = match samus.bounces {
+                Bounces::None => 0,
+                Bounces::Once => 1,
+                Bounces::Twice => 2,
+            };
+            one("bounces", value.int().to_string(), actual.to_string())
+        }
+        // The pose the frame ends in, its body size included.
+        "pose" => one(
+            "pose",
+            format!("{:?} {:?}", pose(value), radius(value)),
+            format!("{:?} {:?}", samus.pose, samus.radius),
+        ),
+        // Jump held through's two parts at the frame's end, as `before` gives them.
+        "jump_held" => one(
+            "jump_held",
+            value.int().to_string(),
+            samus.jump_held.frames.to_string(),
+        ),
+        "landed_or_ended" => one(
+            "landed_or_ended",
+            value.bool().to_string(),
+            (samus.jump_held.before == FrameBefore::LandedOrEnded).to_string(),
+        ),
+        _ => None,
+    }
+}
+
+/// The frame's outputs, for one `after` key: the field it compares; none where the key isn't
+/// one of them.
+fn outputs(field: &str, value: &Value, outcome: &Outcome) -> Option<Compared> {
+    match field {
+        // The y a placement put her at, or "none": no placement reported.
+        "placed" => {
+            let none = || "none".to_owned();
+            let expected = match value.str() {
+                "none" => none(),
+                y => show(fixed(y)),
+            };
+            Some(("placed", expected, outcome.placed.map_or_else(none, show)))
+        }
+        "rising" => Some((
+            "rising",
+            value.bool().to_string(),
+            outcome.rising.to_string(),
+        )),
+        "reached" => {
+            let actual: Vec<String> = outcome.reached.iter().copied().map(show_touch).collect();
+            Some(("reached", listed_touches(value), actual.join("; ")))
+        }
+        "inside" => {
+            let actual: Vec<String> = outcome.inside.iter().copied().map(show_cell).collect();
+            Some(("inside", listed_cells(value), actual.join("; ")))
+        }
+        "wall_test" => {
+            let actual = match outcome.wall_test {
+                WallTest::Kicked => "Kicked",
+                WallTest::Neither => "Neither",
+                WallTest::Readied => "Readied",
+            };
+            Some(("wall_test", value.str().to_owned(), actual.to_owned()))
+        }
+        _ => None,
+    }
+}
+
+/// The listed `after` quantities that differ. A key the format doesn't give fails the vector.
+fn compare(id: &str, after: &Value, samus: &Samus, outcome: &Outcome) -> Vec<String> {
+    let mut misses = Vec::new();
+    for (field, value) in after.pairs() {
+        let compared = hers(field, value, samus)
+            .or_else(|| outputs(field, value, outcome).map(|c| vec![c]))
+            .unwrap_or_else(|| panic!("{id}: after.{field} is not a key the format gives"));
+        for (name, expected, actual) in compared {
+            if expected != actual {
+                misses.push(format!("{id}: {name} expected {expected}, actual {actual}"));
             }
-            "position_x" => check(
-                "position.x",
-                show(fixed(value.str())),
-                show(samus.position.x),
-            ),
-            "speed_x" => check(
-                "speed_x",
-                show_signed(signed(value.str())),
-                show_signed(speed_x(samus)),
-            ),
-            "speed_y" => check(
-                "speed_y",
-                show_signed(signed(value.str())),
-                show_signed(speed_y(samus)),
-            ),
-            "dash" => check("dash", show(fixed(value.str())), show(samus.run.dash)),
-            // The y a placement put her at, or "none": no placement reported.
-            "placed" => {
-                let none = || "none".to_owned();
-                let expected = match value.str() {
-                    "none" => none(),
-                    y => show(fixed(y)),
-                };
-                check("placed", expected, outcome.placed.map_or_else(none, show));
-            }
-            "rising" => check(
-                "rising",
-                value.bool().to_string(),
-                outcome.rising.to_string(),
-            ),
-            "reached" => {
-                let actual: Vec<String> = outcome.reached.iter().copied().map(show_touch).collect();
-                check("reached", listed_touches(value), actual.join("; "));
-            }
-            "inside" => {
-                let actual: Vec<String> = outcome.inside.iter().copied().map(show_cell).collect();
-                check("inside", listed_cells(value), actual.join("; "));
-            }
-            "bounces" => {
-                let actual = match samus.bounces {
-                    Bounces::None => 0,
-                    Bounces::Once => 1,
-                    Bounces::Twice => 2,
-                };
-                check("bounces", value.int().to_string(), actual.to_string());
-            }
-            // The pose the frame ends in, its body size included.
-            "pose" => check(
-                "pose",
-                format!("{:?} {:?}", pose(value), radius(value)),
-                format!("{:?} {:?}", samus.pose, samus.radius),
-            ),
-            "wall_test" => {
-                let actual = match outcome.wall_test {
-                    WallTest::Kicked => "Kicked",
-                    WallTest::Neither => "Neither",
-                    WallTest::Readied => "Readied",
-                };
-                check("wall_test", value.str().to_owned(), actual.to_owned());
-            }
-            other => panic!("{id}: after.{other} is not a key the format gives"),
         }
     }
     misses

@@ -1,7 +1,7 @@
 //! The rows of `WhatHerMovesMet` and of `AnimationEnds` (§7), read in order, the first that
 //! fits. A next pose has its gun stowed and its legs together unless its cell says otherwise.
 
-use crate::rows::Effect::{self, LoseDash};
+use crate::rows::Effect::{self, LoseDash, OnTheGround};
 use crate::rows::Test::{Aimed, Airborne, Held, SpringBall};
 use crate::rows::{
     DOWN_TO_FORWARD, Doing, FALL, JUMP, Met, Next, ROW, Row, SPIN, STILL, Test, UP_AIM,
@@ -122,8 +122,11 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "no floor, upright on the ground",
-        needs: &[Test::Met(Met::NoFloor), Test::Body(&[Body::Upright])],
+        name: "no floor, upright or crouched on the ground",
+        needs: &[
+            Test::Met(Met::NoFloor),
+            Test::Body(&[Body::Upright, Body::Crouched]),
+        ],
         next: FALL,
         ..ROW
     },
@@ -269,18 +272,13 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Unmorphing, in the air",
-        needs: &[Test::Action(&[Action::Unmorphing]), Airborne],
-        next: FALL,
-        ..ROW
-    },
-    Row {
         name: "Unmorphing",
         needs: &[Test::Action(&[Action::Unmorphing])],
         next: Next {
             body: Some(Body::Crouched),
             ..STILL
         },
+        effects: &[OnTheGround],
         ..ROW
     },
 ];

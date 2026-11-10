@@ -2,7 +2,7 @@
 //! the rules and the cells reached that the frame's moves and looks share (`TouchedCells`).
 
 use crate::rules::Rules;
-use clean_types::{Buttons, Equipment, Parity, Pose, Radius, Touch, World};
+use clean_types::{Buttons, Item, Parity, Pose, Radius, Set, Touch, World};
 
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
 /// and feeds us (the header): an animation's end from its timing.
@@ -11,8 +11,11 @@ pub struct Frame<'a> {
     pub pad: Buttons,
     /// The buttons just pressed this frame.
     pub pressed: Buttons,
-    /// Her equipment.
-    pub equipment: Equipment,
+    /// §1.3: the items switched on, progress's own output (never the ones merely hers). Her
+    /// motion reads `HiJumpBoots`, `SpaceJump`, `MorphBall` and `SpringBall`, and her sprite
+    /// `ScrewAttack`, `VariaSuit` and `GravitySuit` (`HowSheIsDrawn`); the others change nothing
+    /// here.
+    pub items: Set<Item>,
     /// `WallJump`: the spin's sprite has turned far enough to kick off a wall.
     pub spin_turned_far: bool,
     /// `RidingTheElevator`: the elevator is moving.

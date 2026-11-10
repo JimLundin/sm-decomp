@@ -4,12 +4,13 @@
 use crate::collide::{Bounds, Moved, Stop};
 use crate::jump_held::JumpHeld;
 use crate::motion::Run;
-use clean_types::{Cell, Fixed, Pose, Position, Radius, Touch, ZERO};
+use clean_types::{Cell, Fixed, Parts, Pose, Position, Radius, Touch, ZERO};
 
 /// Her vertical motion's phase; her vertical speed itself is `Samus::vy`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Vertical {
-    /// On the ground, keeping the vertical speed she brought with her (`FollowingTheGround`).
+    /// On the ground, keeping the vertical speed she brought with her, downward or upward
+    /// (`FollowingTheGround`); an upward one is a rise she keeps there (`RisingAndFalling`).
     Ground,
     /// On the ground, falling at a vertical speed of 0 (§1.2): only a push beyond this spec
     /// hands her back so. As the ball, or while her body changes shape, it is a vertical motion
@@ -44,34 +45,30 @@ pub enum Bounces {
     Twice,
 }
 
-/// `WallJump` (§1.2 a spin carried on): how many frames she has been in this spin.
-///
-/// It counts up to the spin carried on, where it stays. Only a frame counts it, so a caller
-/// starts one at `Spin::OFF`, or, starting mid-play from an earlier frame, at
-/// `Spin::CARRIED_ON`, the value frames give a spin carried on.
+/// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each
+/// frame's start up to the spin carried on, where it stays.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Spin(u8);
+pub enum Spin {
+    /// Not spinning.
+    Off,
+    /// In the spin's first frame.
+    First,
+    /// In its second frame.
+    Second,
+    /// A spin carried on: in it two frames earlier (this its third frame or later), or one that
+    /// followed a wall jump. It can ready a wall jump.
+    CarriedOn,
+}
 
 impl Spin {
-    /// Not spinning.
-    pub const OFF: Self = Self(0);
-    /// A spin carried on: in it two frames earlier (this its third frame or later), or one that
-    /// followed a wall jump.
-    pub const CARRIED_ON: Self = Self(3);
-
-    /// `WallJump` (§1.2): whether the spin is carried on, which can ready a wall jump.
-    #[must_use]
-    pub const fn carried_on(self) -> bool {
-        self.0 >= Self::CARRIED_ON.0
-    }
-
     /// `WallJump`: the frame's start counts one frame more of a spin, up to the spin carried on,
     /// or none.
-    pub(crate) fn then(self, spinning: bool) -> Self {
-        if spinning {
-            Self(self.0.saturating_add(1).min(Self::CARRIED_ON.0))
-        } else {
-            Self::OFF
+    pub(crate) const fn then(self, spinning: bool) -> Self {
+        match (spinning, self) {
+            (false, _) => Self::Off,
+            (true, Self::Off) => Self::First,
+            (true, Self::First) => Self::Second,
+            (true, Self::Second | Self::CarriedOn) => Self::CarriedOn,
         }
     }
 }
@@ -138,8 +135,8 @@ pub struct Outcome {
     /// if any: pose fit moved her, or a change of shape started, a placement of 0 px included.
     /// The camera's scroll measures her vertical move from it.
     pub placed: Option<Fixed>,
-    /// §1, `RisingAndFalling`: she is rising at the frame's end, a rise at 0 and the frame whose
-    /// pull spends the rise included.
+    /// §1, `RisingAndFalling`: she is rising at the frame's end: a rise in the air (a rise at 0
+    /// and the frame whose pull spends it included), or an upward speed she keeps on the ground.
     pub rising: bool,
 }
 
@@ -182,6 +179,15 @@ impl Samus {
     pub(crate) fn rise(&mut self, v: Fixed) {
         self.vertical = Vertical::Rising;
         self.vy = -v;
+    }
+
+    /// §1, `RisingAndFalling`: whether she is rising (`Outcome::rising`).
+    pub(crate) fn rising(&self) -> bool {
+        match self.vertical {
+            Vertical::Rising => true,
+            Vertical::Ground => self.vy.negative(),
+            Vertical::GroundFalling | Vertical::Falling | Vertical::Moonfall => false,
+        }
     }
 
     /// `RisingAndFalling`, `FollowingTheGround`, `WallsAndCeilings`: she falls from rest.

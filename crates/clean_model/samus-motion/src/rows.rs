@@ -224,6 +224,10 @@ pub enum Effect {
     Launch,
     /// `WallJump` (§1.2): the change from a wall jump into a spin: the spin is carried on.
     SpinOn,
+    /// `AnimationEnds`: the unmorph's end hands over the crouch, a pose on the ground, in the
+    /// air too: she is on the ground from then on, her vertical speed kept
+    /// (`FollowingTheGround`).
+    OnTheGround,
 }
 
 /// A change of action's own effect, whatever brought the change.

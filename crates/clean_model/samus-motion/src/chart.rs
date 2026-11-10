@@ -17,14 +17,14 @@ use crate::rules::Lowers;
 use crate::tick::Frame;
 use clean_types::Action::Running;
 use clean_types::button::JUMP;
-use clean_types::{Buttons, Pose};
+use clean_types::{Buttons, Item, Pose};
 
 /// What the chart reads.
 ///
 /// Her situation and pose at the frame's start, whether her horizontal speed then isn't 0,
 /// whether she is off the ground once her moves are made, whether jump held through counts as a
-/// press, the frame (its pad held and just pressed, her equipment, an animation's end) and what
-/// her moves met.
+/// press, the frame (its pad held and just pressed, the items switched on, an animation's end)
+/// and what her moves met.
 pub struct Moment<'a> {
     /// Her situation.
     pub situation: &'static Situation,
@@ -53,6 +53,21 @@ pub struct Choice {
     pub steps: bool,
     /// `ShrinkingLowersHer`: the look down the pose starts with.
     pub lower: Option<Lowers>,
+}
+
+impl Choice {
+    /// `PoseFollows`, `PoseFitAfterMoves`: a pose she ends in instead of the one chosen (the pose
+    /// she had, where the change is refused, or crouched `Still`), which brings none of the
+    /// chosen pose's effects: no step, no lowering and no effect on her speeds and dash.
+    #[must_use]
+    pub const fn instead(pose: Pose) -> Self {
+        Self {
+            pose,
+            effects: &[],
+            steps: false,
+            lower: None,
+        }
+    }
 }
 
 /// `PadChart`: a row that needs a just-pressed button outranks one that doesn't; then the one that
@@ -110,7 +125,7 @@ impl Moment<'_> {
             Action(actions) => actions.contains(&p.action),
             Doing(doings) => doings.contains(&self.situation.doing),
             Airborne => self.airborne,
-            SpringBall => f.equipment.spring_ball,
+            SpringBall => f.items[Item::SpringBall],
             Moving => self.moving,
             Test::Met(met) => self.met == Some(met),
         }

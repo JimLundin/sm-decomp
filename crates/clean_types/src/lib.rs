@@ -363,25 +363,6 @@ impl Buttons {
     }
 }
 
-/// Her equipment (§1.3).
-#[derive(Clone, Copy, Default)]
-#[expect(
-    clippy::struct_excessive_bools,
-    reason = "each is an item she has or hasn't, read on its own (§1.3)"
-)]
-pub struct Equipment {
-    /// Hi-jump boots (`Jumping`).
-    pub hi_jump: bool,
-    /// Space jump (`Jumping`, `HowSheIsDrawn`).
-    pub space_jump: bool,
-    /// Spring ball (`AnimationEnds`).
-    pub spring_ball: bool,
-    /// Screw attack, seen only in the sprite (`HowSheIsDrawn`).
-    pub screw_attack: bool,
-    /// A suit other than the first, varia or gravity, seen only in the sprite (`HowSheIsDrawn`).
-    pub other_suit: bool,
-}
-
 /// A 16 px cell of the room: x its column, y its row.
 pub type Cell = Pair<u16>;
 

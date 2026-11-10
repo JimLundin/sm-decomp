@@ -11,7 +11,7 @@ use core::num::Wrapping;
 
 /// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
 /// as before the change).
-const fn crouched(facing: Facing) -> Pose {
+pub const fn crouched(facing: Facing) -> Pose {
     Pose {
         body: Body::Crouched,
         action: Still,
@@ -37,21 +37,38 @@ fn alone(rooms: Rooms, g: Px) -> Option<Px> {
     }
 }
 
-/// `PoseFitAfterMoves`: what pose fit made of the change.
-pub struct Fitted {
-    /// The pose she takes instead of the chosen one, which brings none of the chosen pose's
-    /// effects: the one she had where the change is refused, or crouched `Still`. `None` where
-    /// she takes the chosen pose.
-    pub instead: Option<Pose>,
-    /// Pose fit moved her: a push, or the crouch taken instead raising her (§1: it places her).
-    pub moved: bool,
+/// `PoseFitAfterMoves`: what pose fit made of the change, each case with what it did to her.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Fitted {
+    /// She takes the chosen pose where her moves left her: her body doesn't grow, or the looks
+    /// found nothing on either side and she grows about her centre.
+    Taken,
+    /// She takes the chosen pose, pushed away from what is on one side of her by these whole px,
+    /// read signed, downward positive: up from what is below her, down from what is above her.
+    Pushed(Px),
+    /// The change is refused: she keeps the pose she had.
+    Refused,
+    /// Something above her and something below her: she takes crouched `Still` instead, rising
+    /// by these whole px, her feet where they were (0 where her old body is already the crouch's
+    /// height).
+    Crouched {
+        /// How far she rose.
+        rise: Px,
+    },
 }
 
-/// `PoseFitAfterMoves`: she takes the chosen pose where her moves left her.
-const TAKEN: Fitted = Fitted {
-    instead: None,
-    moved: false,
-};
+impl Fitted {
+    /// §1, `PoseFitAfterMoves`: whether pose fit moved her, which places her: a push, or the
+    /// crouch taken instead raising her.
+    #[must_use]
+    pub fn moved(self) -> bool {
+        match self {
+            Self::Pushed(_) => true,
+            Self::Crouched { rise } => rise != Wrapping(0),
+            Self::Taken | Self::Refused => false,
+        }
+    }
+}
 
 impl Samus {
     /// `PoseFitAfterMoves`: when the chosen pose differs from hers, doesn't face the screen and
@@ -65,42 +82,31 @@ impl Samus {
     pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Fitted {
         let (old, new) = (self.radius, t.body(chosen));
         if chosen == self.pose || chosen.facing == Facing::Screen || new.y <= old.y {
-            return TAKEN;
+            return Fitted::Taken;
         }
         let g = new.y - old.y;
-        let refused = Fitted {
-            instead: Some(self.pose),
-            moved: false,
-        };
         let mut found: Rooms = (None, None);
         for (probe, far) in [(Enemies, new), (Blocks, old)] {
             let mut look = |by, r| self.look(t, by, r, probe);
             let here = (look(-g, old), look(g, old));
             if alone(here, g).is_some_and(|push| look(push, far).is_some()) {
-                return refused;
+                return Fitted::Refused;
             }
             found = (here.0.or(found.0), here.1.or(found.1));
         }
         if let Some(push) = alone(found, g) {
             self.position.y += px(push);
-            return Fitted {
-                instead: None,
-                moved: true,
-            };
+            return Fitted::Pushed(push);
         }
         let (Some(_), Some(_)) = found else {
-            return TAKEN;
+            return Fitted::Taken;
         };
         if old.y < t.rules.small_body_px {
-            return refused;
+            return Fitted::Refused;
         }
-        let crouch = crouched(self.pose.facing);
-        let rise = t.body(crouch).y.max(old.y) - old.y;
+        let rise = t.body(crouched(self.pose.facing)).y.max(old.y) - old.y;
         self.position.y -= px(rise);
-        Fitted {
-            instead: Some(crouch),
-            moved: rise != Wrapping(0),
-        }
+        Fitted::Crouched { rise }
     }
 
     /// `PoseFitAfterMoves`: one look by `by` whole px (read signed, downward positive) at size

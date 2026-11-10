@@ -6,6 +6,7 @@
 use crate::chart::{Choice, Moment};
 use crate::collide::Probe::{Blocks, Look, Move, Walk};
 use crate::collide::Stop;
+use crate::fit::{Fitted, crouched};
 use crate::motion::Carry::FollowsPad;
 use crate::motion::DashIs::ToLose;
 use crate::motion::Stride::{Both, DashThenHalt, Nothing};
@@ -13,7 +14,7 @@ use crate::rows::Doing::{
     self, Ball, Hop, Running, Shaping, Spinning, StraightJump, TakingOff, Turning,
 };
 use crate::rows::Effect::{
-    self, AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, Rise, SpinOn, TurnRound,
+    self, AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, OnTheGround, Rise, SpinOn, TurnRound,
 };
 use crate::rows::Met::{self, Ceiling, Floor, NoFloor, StepBlocked, Wall, WallKick};
 use crate::rows::Situation;
@@ -27,7 +28,7 @@ use clean_types::Action::{self, Still, WallJumping};
 use clean_types::Body::{SpringBall, Upright};
 use clean_types::Heading::{self, Left, Right};
 use clean_types::button::{JUMP, LEFT, SHOOT, SIDES};
-use clean_types::{Aim, Buttons, Equipment, Facing, Fixed, Parts, Pose, World, ZERO, px};
+use clean_types::{Aim, Buttons, Facing, Fixed, Item, Parts, Pose, Set, World, ZERO, px};
 
 /// `WhatHerMovesMet`: what a frame's moves met, and the near-wall test's outcome (`WallJump`).
 #[derive(Default)]
@@ -47,21 +48,31 @@ struct Walked {
     wall: Option<Met>,
 }
 
-/// No effects: a change refused, or crouched `Still` taken instead (`PoseFitAfterMoves`).
-const NONE: &[Effect] = &[];
-
 /// `HowSheIsDrawn`: the spin (and a wall jump's) drawn as the screw attack with screw attack,
-/// else as the space jump with space jump; facing the screen, the other suit's sprite with it.
-const fn drawn(pose: Pose, e: Equipment) -> Drawn {
+/// else as the space jump with space jump; facing the screen, the other suit's sprite with varia
+/// or gravity.
+fn drawn(pose: Pose, items: &Set<Item>) -> Drawn {
     let spin = matches!(pose.action, Action::Spinning | WallJumping);
-    if spin && e.screw_attack {
+    let suit = items[Item::VariaSuit] || items[Item::GravitySuit];
+    if spin && items[Item::ScrewAttack] {
         Drawn::ScrewAttack
-    } else if spin && e.space_jump {
+    } else if spin && items[Item::SpaceJump] {
         Drawn::SpaceJump
-    } else if matches!(pose.facing, Facing::Screen) && e.other_suit {
+    } else if pose.facing == Facing::Screen && suit {
         Drawn::OtherSuit
     } else {
         Drawn::Plain
+    }
+}
+
+/// `PoseFollows`: a change into `Morphing` without the morph ball is refused: she ends the
+/// frame in the pose she had, aim included, the pad's other rows don't step in, and none of the
+/// change's effects come, no lowering and no placement.
+fn refuse_morph(chosen: Choice, had: Pose, items: &Set<Item>) -> Choice {
+    if chosen.pose.action == Action::Morphing && !items[Item::MorphBall] {
+        Choice::instead(had)
+    } else {
+        chosen
     }
 }
 
@@ -79,7 +90,8 @@ const fn standing(p: Pose, pad: Buttons) -> Standing {
 impl Samus {
     /// `PoseFollows`: one frame, in the order it runs: her moves as the pose at its start says
     /// (`MovesAsShePosed`) and what they met; the pose chosen, the pad chart reading jump held
-    /// through as a press (`Jumping`); pose fit or the shrink (`PoseFitAfterMoves`); then the
+    /// through as a press (`Jumping`), a morph refused without the morph ball; pose fit or the
+    /// shrink (`PoseFitAfterMoves`); then the
     /// change's effects; at its end, what she remembers of jump held. `TouchedCells`: the cells
     /// she is inside come first, from where she starts.
     pub fn step(&mut self, frame: &Frame, world: &dyn World, rules: &Rules) -> Outcome {
@@ -105,7 +117,7 @@ impl Samus {
             frame,
             met: meeting.met,
         };
-        let chosen = moment.choose();
+        let chosen = refuse_morph(moment.choose(), start.pose, &frame.items);
         // `AimingAndShooting`, `WhatHerMovesMet`: the step, where the chosen pose brings it, and
         // a block in its way read of the running pose chosen.
         let blocked = chosen.steps && self.aim_step(&mut t);
@@ -120,12 +132,12 @@ impl Samus {
         Outcome {
             wall_test: meeting.wall_test,
             standing: standing(start.pose, frame.pad),
-            drawn: drawn(self.pose, frame.equipment),
+            drawn: drawn(self.pose, &frame.items),
             skidding: self.run.skids(self.pose.facing),
             reached: t.reached,
             inside,
             placed,
-            rising: self.vertical == Vertical::Rising,
+            rising: self.rising(),
         }
     }
 
@@ -225,7 +237,7 @@ impl Samus {
     /// wall jump; once the spin has turned far, pressing jump kicks her off.
     fn wall_test(&mut self, t: &mut Tick) -> WallTest {
         let f = t.frame;
-        if !self.spin.carried_on() || !f.pad.any(SIDES) {
+        if self.spin != Spin::CarriedOn || !f.pad.any(SIDES) {
             return Neither;
         }
         let wall = if f.pad.any(LEFT) { Right } else { Left };
@@ -250,7 +262,8 @@ impl Samus {
     /// speed, which then grows by the pull. On the ground (pulled, or the ball moving by its
     /// vertical speed) the floor stops her flush and never lands her, and finding no floor she
     /// walks off a ledge, moving the whole move, unless turning (`TurningRound`: she sinks
-    /// instead) or changing shape (no move). In the air a floor is a landing, and an upward move
+    /// instead) or changing shape (no move): she falls from rest, or, with an upward speed she
+    /// kept on the ground, rises on by it. In the air a floor is a landing, and an upward move
     /// stopped is a ceiling (`WallsAndCeilings`): the rise ends with no pull that frame.
     /// `SlopesCarry`: a move of more than 0 unseats her as it starts.
     fn drop(&mut self, doing: Doing, speed: Fixed, t: &mut Tick) -> Option<Met> {
@@ -283,7 +296,11 @@ impl Samus {
             self.vy = self.pulled(r);
         }
         if grounded && !floor && doing != Turning {
-            self.fall_from_rest();
+            if self.vy.negative() {
+                self.vertical = Vertical::Rising;
+            } else {
+                self.fall_from_rest();
+            }
             self.bounces = Bounces::None;
             return Some(NoFloor);
         }
@@ -297,10 +314,10 @@ impl Samus {
         if self.vertical == Vertical::Falling
             && doing == Spinning
             && f.pressed.any(JUMP)
-            && f.equipment.space_jump
+            && f.items[Item::SpaceJump]
             && r.space_jump.contains(&self.vy.to_8_8().0)
         {
-            self.rise(r.jump.of(f.equipment.hi_jump));
+            self.rise(r.jump.of(f.items[Item::HiJumpBoots]));
         }
     }
 
@@ -325,7 +342,7 @@ impl Samus {
     /// its value, to lose (§1.2).
     fn meet(&mut self, met: Option<Met>, doing: Doing, t: &Tick) {
         let (r, f) = (t.rules, t.frame);
-        let hi_jump = f.equipment.hi_jump;
+        let hi_jump = f.items[Item::HiJumpBoots];
         if met == Some(WallKick) {
             self.rise(r.wall_jump.of(hi_jump));
             self.run.stop();
@@ -368,7 +385,12 @@ impl Samus {
     /// placement, or none on any other frame.
     fn take(&mut self, chosen: Choice, start: &Self, moved: Self, t: &mut Tick) -> Option<Fixed> {
         let fitted = self.fit(t, chosen.pose);
-        let chosen = match fitted.instead {
+        let instead = match fitted {
+            Fitted::Taken | Fitted::Pushed(_) => None,
+            Fitted::Refused => Some(self.pose),
+            Fitted::Crouched { .. } => Some(crouched(self.pose.facing)),
+        };
+        let chosen = match instead {
             None => chosen,
             Some(pose) => {
                 *self = Self {
@@ -376,12 +398,7 @@ impl Samus {
                     seat: self.seat,
                     ..moved
                 };
-                Choice {
-                    pose,
-                    effects: NONE,
-                    lower: None,
-                    ..chosen
-                }
+                Choice::instead(pose)
             }
         };
         self.pose = chosen.pose;
@@ -389,7 +406,7 @@ impl Samus {
         if let Some(lowers) = chosen.lower {
             self.shrink(lowers, t);
         }
-        let placed = (fitted.moved || chosen.lower.is_some())
+        let placed = (fitted.moved() || chosen.lower.is_some())
             .then(|| self.position.y.with_sub(start.position.y.sub()));
         let entered = ENTERING
             .iter()
@@ -421,9 +438,11 @@ impl Samus {
     /// her horizontal speed 0 at the frame's start or after the frame's move, she follows the pad
     /// again, keeping the speed the move left her. `Moonfall`: a spin she enters when a turn
     /// ends, with jump not just pressed, starts with no rise: her vertical speed is 0 and she
-    /// drops under gravity.
+    /// drops under gravity. `AnimationEnds`: the unmorph's end hands over the crouch, a pose on
+    /// the ground, in the air too: from the next frame she is on the ground, her vertical speed
+    /// kept (`FollowingTheGround`).
     fn apply(&mut self, effect: Effect, start: &Self, t: &Tick) {
-        let jump = t.rules.jump.of(t.frame.equipment.hi_jump);
+        let jump = t.rules.jump.of(t.frame.items[Item::HiJumpBoots]);
         let pose = self.pose;
         match effect {
             Rise => self.rise(jump),
@@ -451,8 +470,9 @@ impl Samus {
                 self.vertical = Vertical::Moonfall;
             }
             Launch => self.run.launch(pose.facing),
-            SpinOn => self.spin = Spin::CARRIED_ON,
-            Lift | TurnRound => {}
+            SpinOn => self.spin = Spin::CarriedOn,
+            OnTheGround if !self.vertical.on_ground() => self.vertical = Vertical::Ground,
+            Lift | TurnRound | OnTheGround => {}
         }
     }
 }

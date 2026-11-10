@@ -15,8 +15,8 @@ use clean_types::Action::{
 };
 use clean_types::button::{DOWN, JUMP, LEFT, PAD, RIGHT, SHOOT, UP};
 use clean_types::{
-    Aim, Body, Buttons, Equipment, Facing, Gun, LandedFrom, Legs, Pair, Parity, Pose, Radius, Turn,
-    ZERO, px,
+    Aim, Body, Buttons, Facing, Gun, LandedFrom, Legs, Pair, Parity, Pose, Radius, Set, Turn, ZERO,
+    px,
 };
 use core::num::Wrapping;
 
@@ -237,7 +237,7 @@ fn tie(
     let frame = Frame {
         pad: Buttons(held),
         pressed: Buttons(pressed),
-        equipment: Equipment::default(),
+        items: Set::default(),
         spin_turned_far: false,
         elevator_moving: false,
         parity: Parity::Even,
