@@ -10,8 +10,9 @@ use crate::reactions::SoundRequest;
 pub struct Report {
     /// `AnswersToHerMotion`: one per touch, in the order of the touches.
     pub answers: Vec<Answer>,
-    /// `WhatTheScreenRedraws`: the cells whose look a step changed.
-    pub redrawn: Vec<Cell>,
+    /// `WhatTheScreenRedraws`: each cell a `Show` or a `Regrow` step wrote, in order, whether or
+    /// not its look changed; the screen redraws them.
+    pub written: Vec<Cell>,
     /// `Sounds`: the sounds the scripts asked for, each with its queue limit.
     pub sounds: Vec<SoundRequest>,
 }

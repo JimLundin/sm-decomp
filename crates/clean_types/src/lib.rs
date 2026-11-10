@@ -146,7 +146,7 @@ pub type Radius = Pair<Px>;
 
 /// A direction: the way a move goes (`TouchedCells`), or the way a speed points. Listed
 /// alphabetically, as the spec lists them; the order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Heading {
     /// Downward.
     Down,
@@ -368,7 +368,7 @@ pub type Cell = Pair<u16>;
 
 /// `TouchedCells`: the way a cell is reached: a move's direction, or a look (the near-wall test,
 /// pose fit's block looks, the shrink's look), which doesn't move her.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Way {
     /// A move, heading this way.
     Move(Heading),
@@ -377,7 +377,7 @@ pub enum Way {
 }
 
 /// `TouchedCells`: a cell a move or a look reached, and the way it did.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Touch {
     /// The cell, as the cell it stands for where it stands for another.
     pub cell: Cell,
@@ -515,6 +515,12 @@ impl<K: Enum> Members for Set<K> {
             .map(|_| Wrapping(1))
             .sum()
     }
+}
+
+/// The set of exactly `members`, named in any order: a reordered enum changes nothing.
+#[must_use]
+pub fn set_of<K: Enum>(members: impl IntoIterator<Item = K>) -> Set<K> {
+    members.into_iter().map(|member| (member, true)).collect()
 }
 
 /// A table keyed by the enum `K`, built from its rows, one row for each member, each naming its
@@ -683,9 +689,6 @@ pub struct StationId(pub u16);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Entrance(pub u16);
 
-/// A table with one entry for each member of the enum `K`, read and changed as `table[member]`.
-pub type Table<K, V> = EnumMap<K, V>;
-
 /// The last picture of a room's tileset: pictures are numbered `000` to `3FF` (blocks' notation).
 pub const LAST_PICTURE: u16 = 0x3FF;
 
@@ -735,11 +738,11 @@ pub struct Look {
 }
 
 impl Look {
-    /// The same picture, not flipped.
+    /// The look that shows `picture` as it is, not flipped.
     #[must_use]
-    pub const fn unflipped(self) -> Self {
+    pub const fn unflipped(picture: Picture) -> Self {
         Self {
-            picture: self.picture,
+            picture,
             flip: Flip::None,
         }
     }

@@ -1,26 +1,31 @@
 //! The spec's vectors (`scenarios/vectors/blocks.toml`) run through the model, and the catalogue
-//! checked against them. The file's shape is declared once below; every table refuses a key it
-//! doesn't name, and every name is read by a table of the names the format allows.
+//! checked against the spec and the vectors. The file's shape is declared once below; every table
+//! refuses a key it doesn't name, and every name is read by a table of the names the format
+//! allows.
 
 #![cfg(test)]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use clean_model_blocks::{
-    Answer, Becomes, Blocks, CATALOGUE, CellKind, Frames, Grid, Inside, Mark, PatternCell, Place,
-    Placement, Places, Reacting, Reaction, ReactionName, Reactions, Report, Request, Rules, Run,
-    Running, ScreenChange, ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
+    Answer, Becomes, CATALOGUE, CellKind, Frames, Grid, Inside, Mark, PatternCell, Place,
+    Placement, Places, ReactingBody, Reaction, ReactionName, Report, Request, Rules, Run, Running,
+    ScreenChange, ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
 };
 use clean_types::{
-    Cell, Checked, Family, Flip, Heading, HitBy, Look, MetAs, Motion, Pair, Picture, Point,
-    ScreenKind, Script, Set, Table, Touch, Way,
+    Cell, Checked, Family, Flip, Heading, HitBy, Kind, Look, MetAs, Motion, Pair, Picture, Point,
+    ScreenKind, Script, Set, Touch, Way,
 };
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer};
 
 /// The vector file.
 const VECTORS: &str = include_str!("../../../../scenarios/vectors/blocks.toml");
+
+/// The spec, whose entries the catalogue lists.
+const SPEC: &str = include_str!("../../../../docs/behaviours/blocks.md");
 
 /// A look's picture is written in hex.
 const HEX: u32 = 16;
@@ -98,7 +103,7 @@ struct Vector {
 struct Before {
     cells: Vec<CellRow>,
     places: Vec<PlaceRow>,
-    held: Option<Vec<usize>>,
+    other_parts: Option<Vec<usize>>,
     held_until_run: Option<Vec<usize>>,
     screens: Option<Vec<String>>,
 }
@@ -108,7 +113,7 @@ struct Before {
 struct After {
     cells: Vec<CellRow>,
     places: Vec<PlaceRow>,
-    held: Option<Vec<usize>>,
+    other_parts: Option<Vec<usize>>,
     held_until_run: Option<Vec<usize>>,
     screens: Option<Vec<String>>,
     answers: Option<Vec<String>>,
@@ -169,7 +174,7 @@ struct ChangeRow {
 struct FrameRow {
     she: Option<SheRow>,
     requests: Option<Vec<RequestRow>>,
-    paused: Option<bool>,
+    paused: Option<True>,
     placements: Option<Vec<PlacementRow>>,
 }
 
@@ -254,8 +259,15 @@ impl<'de> Deserialize<'de> for True {
     }
 }
 
+/// The vector file, refusing a duplicate vector id.
 fn parse() -> VectorFile {
-    toml::from_str(VECTORS).expect("the vector file reads as the format its header gives")
+    let file: VectorFile =
+        toml::from_str(VECTORS).expect("the vector file reads as the format its header gives");
+    let mut ids = BTreeSet::new();
+    for vector in &file.vector {
+        assert!(ids.insert(&vector.id), "duplicate vector id {}", vector.id);
+    }
+    file
 }
 
 // The names the format allows.
@@ -293,11 +305,11 @@ fn script(name: &str) -> Script {
 fn kind(name: &str) -> CellKind {
     match name {
         "Air" => CellKind::Air,
-        "Block" => CellKind::Block,
-        "ReactingAir" => CellKind::ReactingAir,
+        "Block" => CellKind::Reacting(ReactingBody::Block),
+        "ReactingAir" => CellKind::Reacting(ReactingBody::Air),
         "Solid" => CellKind::Solid,
-        "StandInAcross" => CellKind::StandInAcross,
-        "StandInDown" => CellKind::StandInDown,
+        "StandInAcross" => CellKind::StandIn(StandIn::Across),
+        "StandInDown" => CellKind::StandIn(StandIn::Down),
         other => panic!("unknown kind {other}"),
     }
 }
@@ -312,11 +324,19 @@ fn becomes(name: &str) -> Becomes {
     }
 }
 
-fn reacting(name: &str) -> Reacting {
+fn remembers(name: &str) -> ReactingBody {
     match name {
-        "Block" => Reacting::Block,
-        "ReactingAir" => Reacting::Air,
+        "Block" => ReactingBody::Block,
+        "ReactingAir" => ReactingBody::Air,
         other => panic!("unknown remembers {other}"),
+    }
+}
+
+fn inside(name: Option<&str>) -> Inside {
+    match name {
+        None => Inside::Passes,
+        Some("HoldsPlace") => Inside::HoldsPlace,
+        Some(other) => panic!("unknown inside {other}"),
     }
 }
 
@@ -387,6 +407,12 @@ fn stand_in(name: &str) -> StandIn {
     }
 }
 
+/// A picture's index in hex; a flip is refused.
+fn picture(text: &str) -> Picture {
+    let index = u16::from_str_radix(text, HEX).expect("a picture's index is hex, never flipped");
+    Picture::new(index).expect("a picture of the tileset")
+}
+
 fn look(text: &str) -> Look {
     let (index, flip) = text.split_once(':').unwrap_or((text, ""));
     let flip = match flip {
@@ -396,20 +422,25 @@ fn look(text: &str) -> Look {
         "xy" => Flip::Both,
         other => panic!("unknown flip {other}"),
     };
-    let index = u16::from_str_radix(index, HEX).expect("a look's picture is hex");
-    let picture = Picture::new(index).expect("a picture of the tileset");
-    Look { picture, flip }
+    Look {
+        picture: picture(index),
+        flip,
+    }
 }
 
 const fn cell((x, y): (u16, u16)) -> Cell {
     Pair { x, y }
 }
 
+/// Frames the spec allows, 1 to 32,767; any other count is refused.
 fn frames(count: u16) -> Frames {
-    Frames::new(count).expect("frames the spec allows")
+    Frames::new(count).expect("frames the spec allows, 1 to 32,767")
 }
 
 // The reactions.
+
+/// The room's reactions, by name.
+type Reactions = BTreeMap<String, Arc<Reaction>>;
 
 fn sound(row: &SoundRow) -> SoundRequest {
     SoundRequest {
@@ -448,25 +479,29 @@ fn reactions(file: &VectorFile) -> Reactions {
         .iter()
         .map(|(name, row)| {
             let mut reaction = Reaction {
+                name: ReactionName(name.clone()),
                 family: family(&row.family),
-                whole_look: row.look.as_deref().map(look),
+                whole_look: row.look.as_deref().map(picture),
                 first_wait: frames(row.first_wait),
-                scripts: Table::default(),
+                scripts: enum_map::EnumMap::default(),
             };
             reaction.scripts[Script::Broken] = steps(row.broken.as_ref());
             reaction.scripts[Script::Revealed] = steps(row.revealed.as_ref());
             reaction.scripts[Script::Touched] = steps(row.touched.as_ref());
-            (ReactionName(name.clone()), reaction)
+            (name.clone(), Arc::new(reaction))
         })
         .collect()
 }
 
 // The state.
 
-fn reaction_name(reactions: &Reactions, name: &str) -> ReactionName {
-    let name = ReactionName(name.to_owned());
-    assert!(reactions.contains_key(&name), "unknown reaction {}", name.0);
-    name
+/// The reaction a mark or a place names: one of the room's, as the room's loading guarantees.
+fn named(reactions: &Reactions, name: &str) -> Arc<Reaction> {
+    Arc::clone(
+        reactions
+            .get(name)
+            .unwrap_or_else(|| panic!("unknown reaction {name}")),
+    )
 }
 
 fn mark(reactions: &Reactions, row: &CellRow) -> Mark {
@@ -477,11 +512,12 @@ fn mark(reactions: &Reactions, row: &CellRow) -> Mark {
         row.reach,
     );
     match given {
-        (Some(name), None, None, None) => Mark::Reaction(reaction_name(reactions, name)),
+        (Some(name), None, None, None) => Mark::Reaction(named(reactions, name)),
         (None, Some("Scroll"), None, None) => Mark::Scroll,
         (None, Some("Nothing"), Some(family), None) => Mark::Nothing(met_as(family)),
         (None, Some("Inert"), None, None) => Mark::Inert,
-        (None, Some("Other"), family, None) => Mark::Other(family.map(met_as)),
+        (None, Some("Other"), None, None) => Mark::Other(None),
+        (None, Some("Other"), Some("Crumble"), None) => Mark::Other(Some(MetAs::Crumble)),
         (None, None, None, Some(reach)) => Mark::Reach(reach),
         (None, None, None, None) => Mark::Unmarked,
         _ => panic!("a cell's mark the format doesn't give at {:?}", row.at),
@@ -493,11 +529,7 @@ fn tile(reactions: &Reactions, row: &CellRow) -> Tile {
         kind: kind(&row.kind),
         mark: mark(reactions, row),
         look: look(&row.look),
-        inside: match row.inside.as_deref() {
-            None => Inside::Passes,
-            Some("Nothing") => Inside::HoldsPlace,
-            Some(other) => panic!("unknown inside {other}"),
-        },
+        inside: inside(row.inside.as_deref()),
     }
 }
 
@@ -513,9 +545,7 @@ fn plain() -> Tile {
 
 /// The room's cells, sized to reach every cell the vector lists.
 fn tiles(reactions: &Reactions, rows: &[CellRow], size: Pair<usize>) -> Grid<Tile> {
-    let mut grid = Grid {
-        rows: vec![vec![plain(); size.x]; size.y],
-    };
+    let mut grid = Grid::new(vec![vec![plain(); size.x]; size.y]).expect("rows of one length");
     for row in rows {
         *grid.get_mut(cell(row.at)).expect("in the room") = tile(reactions, row);
     }
@@ -541,14 +571,20 @@ fn changes(rows: &[ChangeRow]) -> Vec<ScreenChange> {
 }
 
 fn running(reactions: &Reactions, row: &RunningRow) -> Place {
-    Place::Running(Running {
-        reaction: reaction_name(reactions, &row.reaction),
-        script: script(&row.script),
-        cell: cell(row.cell),
-        next: row.next,
-        wait: frames(row.wait),
-        grows_back_as: row.remembers.as_deref().map(reacting),
-    })
+    let running = Running::new(
+        named(reactions, &row.reaction),
+        script(&row.script),
+        row.remembers.as_deref().map(remembers),
+        cell(row.cell),
+        row.next,
+        frames(row.wait),
+    );
+    Place::Running(running.unwrap_or_else(|| {
+        panic!(
+            "place {}: remembers is given exactly when the script has a Regrow step",
+            row.place
+        )
+    }))
 }
 
 fn scroll(row: &ScrollRow) -> Place {
@@ -566,7 +602,7 @@ fn scroll(row: &ScrollRow) -> Place {
 fn places(
     reactions: &Reactions,
     rows: &[PlaceRow],
-    held: Option<&Vec<usize>>,
+    other_parts: Option<&Vec<usize>>,
     held_until_run: Option<&Vec<usize>>,
 ) -> Places {
     let mut places = Places::default();
@@ -581,7 +617,7 @@ fn places(
             PlaceRow::Scroll(row) => put(row.place, scroll(row)),
         }
     }
-    for &number in held.into_iter().flatten() {
+    for &number in other_parts.into_iter().flatten() {
         put(number, Place::OtherPart);
     }
     for &number in held_until_run.into_iter().flatten() {
@@ -590,14 +626,14 @@ fn places(
     places
 }
 
+/// The room's screens, refusing rows of unequal length.
 fn screens(rows: Option<&Vec<String>>) -> Grid<ScreenKind> {
-    Grid {
-        rows: rows
-            .into_iter()
-            .flatten()
-            .map(|row| row.chars().map(screen_kind).collect())
-            .collect(),
-    }
+    let rows = rows
+        .into_iter()
+        .flatten()
+        .map(|row| row.chars().map(screen_kind).collect())
+        .collect();
+    Grid::new(rows).expect("screens rows of equal length")
 }
 
 fn before(reactions: &Reactions, vector: &Vector) -> State {
@@ -607,7 +643,7 @@ fn before(reactions: &Reactions, vector: &Vector) -> State {
         places: places(
             reactions,
             &side.places,
-            side.held.as_ref(),
+            side.other_parts.as_ref(),
             side.held_until_run.as_ref(),
         ),
         screens: screens(side.screens.as_ref()),
@@ -621,14 +657,14 @@ fn after(reactions: &Reactions, vector: &Vector) -> (State, Report) {
         places: places(
             reactions,
             &side.places,
-            side.held.as_ref(),
+            side.other_parts.as_ref(),
             side.held_until_run.as_ref(),
         ),
         screens: screens(side.screens.as_ref()),
     };
     let report = Report {
         answers: side.answers.iter().flatten().map(|a| answer(a)).collect(),
-        redrawn: side.redrawn.iter().flatten().map(|&at| cell(at)).collect(),
+        written: side.redrawn.iter().flatten().map(|&at| cell(at)).collect(),
         sounds: side.sounds.iter().flatten().map(sound).collect(),
     };
     (state, report)
@@ -679,26 +715,28 @@ fn moving(she: Option<&SheRow>) -> Set<Motion> {
     moving
 }
 
-/// Runs one vector's frame through the model's step; a vector without a frame is a frame with no
-/// placements and no requests, whose run isn't paused.
-fn run_frame(blocks: &Blocks, state: &mut State, frame: Option<&FrameRow>) -> Report {
+/// Runs one vector's frame through the model: the room's start first if it has placements, then
+/// the frame's step. A vector without a frame is a frame with no requests, whose run isn't
+/// paused.
+fn run_frame(rules: &Rules, state: &mut State, frame: Option<&FrameRow>) -> Report {
     let Some(frame) = frame else {
-        return blocks.step(state, &[], &[], Set::default(), Run::Runs);
+        return state
+            .step(rules, &[], Set::default(), Run::Runs)
+            .expect("no request");
     };
     let placements: Vec<Placement> = frame.placements.iter().flatten().map(placement).collect();
+    state
+        .start_room(&placements)
+        .expect("placements in the room");
     let requests: Vec<Request> = frame.requests.iter().flatten().map(request).collect();
-    let scripts = if frame.paused.unwrap_or(false) {
+    let run = if frame.paused.is_some() {
         Run::Paused
     } else {
         Run::Runs
     };
-    blocks.step(
-        state,
-        &placements,
-        &requests,
-        moving(frame.she.as_ref()),
-        scripts,
-    )
+    state
+        .step(rules, &requests, moving(frame.she.as_ref()), run)
+        .expect("requests in the room")
 }
 
 // The comparison.
@@ -717,21 +755,21 @@ fn differ_grid<T: PartialEq + Debug>(
     expected: &Grid<T>,
     out: &mut Vec<String>,
 ) {
-    if actual.rows.len() != expected.rows.len() {
-        differ(field, &actual.rows, &expected.rows, out);
+    if actual.rows().len() != expected.rows().len() {
+        differ(field, &actual.rows(), &expected.rows(), out);
         return;
     }
-    for (y, (got, want)) in actual.rows.iter().zip(&expected.rows).enumerate() {
+    for (y, (got, want)) in actual.rows().iter().zip(expected.rows()).enumerate() {
         for (x, (got, want)) in got.iter().zip(want).enumerate() {
             differ(&format!("{field} ({x}, {y})"), got, want, out);
         }
     }
 }
 
-fn check(blocks: &Blocks, vector: &Vector) -> Vec<String> {
-    let mut state = before(&blocks.reactions, vector);
-    let report = run_frame(blocks, &mut state, vector.frame.as_ref());
-    let (expected, expected_report) = after(&blocks.reactions, vector);
+fn check(rules: &Rules, reactions: &Reactions, vector: &Vector) -> Vec<String> {
+    let mut state = before(reactions, vector);
+    let report = run_frame(rules, &mut state, vector.frame.as_ref());
+    let (expected, expected_report) = after(reactions, vector);
     let mut out = Vec::new();
     differ_grid("cell", &state.tiles, &expected.tiles, &mut out);
     for (number, (got, want)) in state.places.0.iter().zip(&expected.places.0).enumerate() {
@@ -746,8 +784,8 @@ fn check(blocks: &Blocks, vector: &Vector) -> Vec<String> {
     );
     differ(
         "redrawn",
-        &report.redrawn,
-        &expected_report.redrawn,
+        &report.written,
+        &expected_report.written,
         &mut out,
     );
     differ("sounds", &report.sounds, &expected_report.sounds, &mut out);
@@ -763,10 +801,8 @@ fn known_entry(name: &str) -> bool {
 #[test]
 fn every_vector_passes() {
     let file = parse();
-    let blocks = Blocks {
-        rules: Rules::REFERENCE,
-        reactions: reactions(&file),
-    };
+    let rules = Rules::reference();
+    let reactions = reactions(&file);
     let mut failures = Vec::new();
     for vector in &file.vector {
         assert_eq!(
@@ -777,7 +813,7 @@ fn every_vector_passes() {
         for entry in &vector.entries {
             assert!(known_entry(entry), "{}: unknown entry {entry}", vector.id);
         }
-        let differences = check(&blocks, vector);
+        let differences = check(&rules, &reactions, vector);
         if !differences.is_empty() {
             failures.push(format!("{}\n{}", vector.id, differences.join("\n")));
         }
@@ -805,5 +841,76 @@ fn every_entry_checked_by_vectors_has_one() {
                 .any(|vector| vector.entries.contains(&name));
             assert!(checked, "{name} is checked by vectors but none names it");
         }
+    }
+}
+
+/// A spec entry as the spec states it: its name, kind and summary.
+struct SpecEntry {
+    name: String,
+    kind: String,
+    summary: String,
+}
+
+/// The spec's entries: each `### Name` heading that states a `- kind:`, with its `- summary:`,
+/// whose lines go on while they are indented.
+fn spec_entries() -> Vec<SpecEntry> {
+    let mut entries: Vec<SpecEntry> = Vec::new();
+    let mut in_summary = false;
+    for line in SPEC.lines() {
+        if let Some(name) = line.strip_prefix("### ") {
+            entries.push(SpecEntry {
+                name: name.trim().to_owned(),
+                kind: String::new(),
+                summary: String::new(),
+            });
+            in_summary = false;
+            continue;
+        }
+        let Some(entry) = entries.last_mut() else {
+            continue;
+        };
+        if let Some(kind) = line.strip_prefix("- kind: ") {
+            entry.kind = kind.trim_end_matches('.').to_owned();
+        }
+        if let Some(summary) = line.strip_prefix("- summary: ") {
+            entry.summary = summary.to_owned();
+            in_summary = true;
+        } else if in_summary && line.starts_with("  ") {
+            entry.summary = format!("{} {}", entry.summary, line.trim());
+        } else {
+            in_summary = false;
+        }
+    }
+    entries.retain(|entry| !entry.kind.is_empty());
+    entries
+}
+
+fn kind_name(kind: &Kind) -> &'static str {
+    match kind {
+        Kind::Mechanic => "mechanic",
+        Kind::Quirk => "quirk",
+        Kind::Timing => "timing",
+        Kind::Output => "output",
+        Kind::Encoding => "encoding",
+    }
+}
+
+#[test]
+fn the_catalogue_matches_the_spec_one_for_one() {
+    let entries = spec_entries();
+    let names: Vec<&str> = entries.iter().map(|entry| entry.name.as_str()).collect();
+    let catalogued: Vec<String> = CATALOGUE
+        .iter()
+        .map(|behaviour| format!("{:?}", behaviour.id))
+        .collect();
+    assert_eq!(catalogued, names, "the catalogue lists the spec's entries");
+    for (behaviour, entry) in CATALOGUE.iter().zip(&entries) {
+        assert_eq!(
+            kind_name(&behaviour.kind),
+            entry.kind,
+            "{}: kind",
+            entry.name
+        );
+        assert_eq!(behaviour.summary, entry.summary, "{}: summary", entry.name);
     }
 }

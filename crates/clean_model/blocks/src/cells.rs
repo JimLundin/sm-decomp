@@ -1,17 +1,38 @@
-//! The room's cells as this domain sees them: each cell's kind, mark and look (spec §1).
+//! The room's cells as this domain sees them: each cell's kind, mark and look (spec §1), and how
+//! a step writes a cell.
 
-use clean_types::{Cell, Look, MetAs, Pair};
+use std::sync::Arc;
 
-use crate::reactions::ReactionName;
+use clean_types::{Cell, Look, MetAs, Pair, Picture};
+use enum_map::Enum;
 
-/// A grid of the room, one value per cell or per screen, read by `(x, y)` from its top-left.
+use crate::reactions::{Becomes, PatternCell, Reaction};
+
+/// A grid of the room, one value per cell or per screen, read by `(x, y)` from its top-left;
+/// every row is as long as the others.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Grid<T> {
     /// The rows, top to bottom, each left to right.
-    pub rows: Vec<Vec<T>>,
+    rows: Vec<Vec<T>>,
 }
 
 impl<T> Grid<T> {
+    /// The grid of these rows, top to bottom, each left to right, if every row is as long as the
+    /// others.
+    #[must_use]
+    pub fn new(rows: Vec<Vec<T>>) -> Option<Self> {
+        let width = rows.first().map(Vec::len);
+        rows.iter()
+            .all(|row| Some(row.len()) == width)
+            .then_some(Self { rows })
+    }
+
+    /// The rows, top to bottom, each left to right.
+    #[must_use]
+    pub fn rows(&self) -> &[Vec<T>] {
+        &self.rows
+    }
+
     /// The value at `at`, if the grid reaches it.
     #[must_use]
     pub fn get(&self, at: Pair<u16>) -> Option<&T> {
@@ -38,34 +59,41 @@ pub struct Tile {
     pub mark: Mark,
     /// The picture it shows.
     pub look: Look,
-    /// What she meets when she is inside it.
+    /// The part of its mark that says what she meets when she is inside it.
     pub inside: Inside,
 }
 
-/// A cell's kind, as far as it concerns this domain (spec §1). Listed alphabetically.
+/// A cell's kind, as far as it concerns this domain (spec §1).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CellKind {
-    /// Nothing stops her or her shots.
+    /// `Air`: nothing stops her or her shots.
     Air,
-    /// A reacting block, solid by its body; its mark says how it reacts.
-    Block,
-    /// A reacting cell with an air body: she and her shots pass it.
-    ReactingAir,
-    /// A plain solid block.
+    /// `Solid`: a plain solid block.
     Solid,
-    /// A cell that stands for another along its row; its mark is how far.
-    StandInAcross,
-    /// A cell that stands for another along its column; its mark is how far.
-    StandInDown,
+    /// A reacting cell, `Block` or `ReactingAir` by its body; its mark says how it reacts.
+    Reacting(ReactingBody),
+    /// `StandInAcross` or `StandInDown`: a cell that stands for another along its row or its
+    /// column; its mark is how far.
+    StandIn(StandIn),
 }
 
-/// The two reacting kinds: what a reaction remembers its cell was, and grows it back as.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Reacting {
-    /// `Block`: solid to her.
-    Block,
-    /// `ReactingAir`: air to her.
+/// A reacting cell's body: whether she and her shots pass it. What a reaction grows back as is
+/// one of these. Listed alphabetically; the order means nothing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+pub enum ReactingBody {
+    /// `ReactingAir`: she and her shots pass it.
     Air,
+    /// `Block`: solid to her by its body.
+    Block,
+}
+
+/// The way a stand-in stands for another cell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StandIn {
+    /// Along its row.
+    Across,
+    /// Along its column.
+    Down,
 }
 
 /// How a touch of a cell meets her motion (spec §1.4, `AnswersToHerMotion`).
@@ -80,34 +108,25 @@ pub enum Answer {
 }
 
 impl CellKind {
-    /// The reacting kind this is, if it is one: only a reacting cell reacts to anything.
-    #[must_use]
-    pub const fn reacting(self) -> Option<Reacting> {
-        match self {
-            Self::Block => Some(Reacting::Block),
-            Self::ReactingAir => Some(Reacting::Air),
-            Self::Air | Self::Solid | Self::StandInAcross | Self::StandInDown => None,
-        }
-    }
-
-    /// `AnswersToHerMotion`: how she meets a cell of this kind by its body. A stand-in here stands
-    /// for no cell (her motion resolves the others), and one that names nothing is air.
+    /// `AnswersToHerMotion`: how she meets a cell of this kind by its body. Her motion follows a
+    /// stand-in to the cell it stands for, so one met here stands for none, and is air.
     #[must_use]
     pub const fn body(self) -> Answer {
         match self {
-            Self::Block | Self::Solid => Answer::Solid,
-            Self::Air | Self::ReactingAir | Self::StandInAcross | Self::StandInDown => Answer::Air,
+            Self::Solid | Self::Reacting(ReactingBody::Block) => Answer::Solid,
+            Self::Air | Self::Reacting(ReactingBody::Air) | Self::StandIn(_) => Answer::Air,
         }
     }
 }
 
-impl Reacting {
-    /// The cell kind it is.
+impl ReactingBody {
+    /// The plain cell of this body, which reacts to nothing: `Solid` for a block, `Air` for
+    /// reacting air.
     #[must_use]
-    pub const fn kind(self) -> CellKind {
+    pub const fn plain(self) -> CellKind {
         match self {
-            Self::Block => CellKind::Block,
-            Self::Air => CellKind::ReactingAir,
+            Self::Block => CellKind::Solid,
+            Self::Air => CellKind::Air,
         }
     }
 }
@@ -117,8 +136,8 @@ impl Reacting {
 pub enum Mark {
     /// No mark: a cell of a kind that doesn't read one.
     Unmarked,
-    /// An imported reaction, by its name.
-    Reaction(ReactionName),
+    /// One of the room's reactions, which the mark names.
+    Reaction(Arc<Reaction>),
     /// A scroll cell (`ScrollCells`).
     Scroll,
     /// A cell that reacts to nothing but holds a place, met as this family's blocks
@@ -138,9 +157,33 @@ pub enum Mark {
 pub enum Inside {
     /// Nothing but what its mark says.
     Passes,
-    /// Reacting air whose mark holds a place when she is inside it: each of her points inside it
-    /// holds one until the run.
+    /// Its mark holds a place when she is inside it: while it is reacting air, each of her points
+    /// inside it holds one until the run.
     HoldsPlace,
+}
+
+impl Tile {
+    /// `PatternCells`: a show's pattern cell writes this cell: it takes the pattern's kind and
+    /// look, and keeps its mark. `Itself` is its reacting kind as a block.
+    pub const fn show(&mut self, cell: &PatternCell) {
+        self.kind = match cell.becomes {
+            Becomes::Air => CellKind::Air,
+            Becomes::Itself => CellKind::Reacting(ReactingBody::Block),
+            Becomes::StandInAcross => CellKind::StandIn(StandIn::Across),
+            Becomes::StandInDown => CellKind::StandIn(StandIn::Down),
+        };
+        self.look = cell.look;
+    }
+
+    /// `Regrowing` (a quirk): the cell grows back as the reacting kind its reaction remembers,
+    /// with its reaction's whole look, not the look it had before its start, so a hidden block
+    /// shows itself once it has grown back.
+    pub const fn regrow(&mut self, body: ReactingBody, whole_look: Option<Picture>) {
+        self.kind = CellKind::Reacting(body);
+        if let Some(picture) = whole_look {
+            self.look = Look::unflipped(picture);
+        }
+    }
 }
 
 /// The cell `by` cells from `cell`, if it is in the room's range of cells.

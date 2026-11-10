@@ -1,14 +1,14 @@
 //! Reactions and their scripts: the imported assets (spec §2). What a script shows, for how long
 //! and with which sound is game content; the model only runs it.
 
-use std::collections::BTreeMap;
-
-use clean_types::{Family, Look, Pair, Script, Table};
+use clean_types::{Family, Look, Pair, Picture, Script};
+use enum_map::EnumMap;
 
 /// The most frames a wait or a show may last: 32,767 (spec §1, §2).
 pub const MOST_FRAMES: u16 = 0x7FFF;
 
-/// A count of frames, 0 to 32,767: a reaction's wait, a show's length, a first wait.
+/// A count of frames, 1 to 32,767: a reaction's wait, a show's length, a first wait. No frame ends
+/// with a wait of 0, so none is held.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Frames(u16);
 
@@ -16,10 +16,10 @@ impl Frames {
     /// One frame: what a `Regrow` step waits, and a `revealed` script's first wait.
     pub const ONE: Self = Self(1);
 
-    /// This many frames, if the spec allows it (0 to 32,767).
+    /// This many frames, if the spec allows it (1 to 32,767).
     #[must_use]
     pub const fn new(count: u16) -> Option<Self> {
-        if count <= MOST_FRAMES {
+        if count != 0 && count <= MOST_FRAMES {
             Some(Self(count))
         } else {
             None
@@ -32,10 +32,11 @@ impl Frames {
         self.0
     }
 
-    /// `TheScriptsRun`: a frame's countdown, one frame less, never below 0.
+    /// `TheScriptsRun`: a frame's countdown: the frames still to wait, or none when the wait has
+    /// run out.
     #[must_use]
-    pub const fn less_one(self) -> Self {
-        Self(self.0.saturating_sub(1))
+    pub const fn less_one(self) -> Option<Self> {
+        Self::new(self.0.saturating_sub(1))
     }
 }
 
@@ -43,21 +44,20 @@ impl Frames {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ReactionName(pub String);
 
-/// The imported reactions, by name.
-pub type Reactions = BTreeMap<ReactionName, Reaction>;
-
 /// A reaction: what a reacting cell does, as the game's content gives it (spec §2).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Reaction {
+    /// Its name, which the marks that name it give.
+    pub name: ReactionName,
     /// Which rules start it: the only part of a reaction the code decides on.
     pub family: Family,
-    /// The look it has when whole, which its start gives the cell and growing back restores; none
-    /// for the shot blocks that keep their own look.
-    pub whole_look: Option<Look>,
+    /// The picture it shows when whole, never flipped, which its start gives the cell and growing
+    /// back restores; none for the shot blocks that keep their own look.
+    pub whole_look: Option<Picture>,
     /// The frames from a start of its `broken` or `touched` script to its first step.
     pub first_wait: Frames,
     /// Its scripts; one it doesn't have is empty.
-    pub scripts: Table<Script, Vec<Step>>,
+    pub scripts: EnumMap<Script, Vec<Step>>,
 }
 
 impl Reaction {
@@ -69,6 +69,13 @@ impl Reaction {
             Script::Revealed => Frames::ONE,
             Script::Broken | Script::Touched => self.first_wait,
         }
+    }
+
+    /// `Regrowing`: whether `script` has a `Regrow` step, so that a reaction running it keeps
+    /// what it grows back as for as long as it runs.
+    #[must_use]
+    pub fn regrows(&self, script: Script) -> bool {
+        self.scripts[script].contains(&Step::Regrow)
     }
 }
 
