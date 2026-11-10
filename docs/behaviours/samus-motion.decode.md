@@ -27,6 +27,7 @@ name carries a room header's address:
 | r06 | chain-0097-ACF0 |
 | r07 | chain-0100-B07A |
 | r08 | chain-0106-AD5E |
+| r09 | chain-0314-DAE1 |
 
 **Frame selection for recorded vectors.** Record N is the State before, record N+1 after; the pad
 is record N's. Taken when: the frame counter `05B6` advances by one (no lag); `0A66` is 0; the
@@ -1289,6 +1290,88 @@ C-held-let-go, the five slope vectors and C-near-wall-item.
 56.0 → 58.0, pose fit and collision unchanged), so the budget is 7,092 → 7,133: motion's
 36 × 79.0 = 2,844 meets its cap, 2,813 (70% of 4,019), and the pose chart stays capped at 1,584.
 
+## Round 15's amendments (2026-11-10)
+
+From adversary 71's observer items (V1-V7, Q1). 257 vectors (248 − 2 + 11) and 51 pose steps.
+
+**V1, the wall jump with hi-jump.** `$90:9984` reads `09A2` bit 0100h for the kick's speed:
+4.A000 plain, 5.8000 with the boots. Record: samus-walljump-16 47 → 48 (`09A2` F32F, 81h → 83h,
+`0B2E`.`0B2C` 5.8000, `0B36` 1, y 044C.DFFF kept). C-walljump-hijump is WK1 (item-morph-ball 709-712,
+`09A2` 0) with the boots: no lead-in frame reads them (a spin's rise, jump let go, no jump start),
+so only the kick's speed changes, 4.A000 → 5.8000.
+
+**V2, the morph's end with and without the spring ball.** Instruction 9 (`$90:839A`) picks the
+ball by the speed magnitude (0 the ground ball, else the air ball) and by `09A2` bit 0002h (the
+spring ball's poses 79h/7Ah, 7Dh/7Eh, else 1Dh/41h, 31h/32h). Records: item-reserve-tank 564 →
+565 (37h → 1Dh, `09A2` 1004), r09 415 → 416 (38h → 7Ah, F32F, at rest, nothing moves) and r09
+17 → 18 (38h → 7Eh, F32F, falling: y + 1.DC00, speed 1.F800). The pose steps carry no items, so
+four constructed vectors carry the item instead of an `items` key on pose steps:
+C-morph-end-ball and C-morph-end-spring (at rest on a floor: the pull's 1 px stopped flush) and
+C-morph-end-ball-air and C-morph-end-spring-air. The air pair starts in a straight jump aimed
+Down, so the morph is in the air by every reading: a vector starting in `Morphing` with a speed
+is on the ground by spec §1.2, where the table's "on the ground" and the original's
+magnitude test differ (question 20). Worked by hand: falling at 1.0000 the jump moves 1 px and
+the pull makes 1.1C00; the morph lowers her 9 px (0101.0000 → 010A.0000, nothing in reach); the
+morph's frame moves 1.1C00 and the pull makes 1.3800.
+
+**V3, space jump's press without the item.** `$90:A46E` tests bit 0200h before the window;
+without it the spin goes on to its movement (`$90:A4D7`, `$90:9040`) with no jump.
+C-space-jump-no-item is SJ1 (samus-space-jump-chain 64) without it: the spin's row for forward
+and jump held keeps the pose, and the fall goes on: y 0478.1FFF + 2.A000 = 047A.BFFF, speed
+2.A000 + 0.1C00 = 2.BC00.
+
+**V4, the long window's low edge.** 32777 = 8009h: `CMP #9` leaves 8000h, negative, so `BPL`
+doesn't skip: a press. C-held-long-edge is C-held-long at 32777.
+
+**V5, the unmorph's end in the air through the crouch's frame.** The end hands over 27h/28h
+(movement type 5) with `0B36` and the speed kept; the crouch's handler `$90:A337` pulls her by
+`$90:923F` and the ground's landed result is "no change" (`$90:E676`), so a floor holds her and
+keeps the speed; no floor walks her off (`$90:E61B`, `$91:EFEF`: speed 0 unless `0B36` = 1).
+Record: boss-kraid-defeated 779 → 780 (3Dh → 27h, y + 1.8800, speed 1.A400) and 780 → 782 (`05B6`
+advances once over two records: 9F49, 9F4A, 9F4A; the crouch's frame walks off into 29h, y
+0169.ABFF → 016A.ABFF, speed 0). C-unmorph-air-end-off is that frame after C-unmorph-air-end
+(y 0102.F400 → 0103.F400). C-unmorph-air-end-floor moves the three frames to y 010D.4C00 over a
+floor at 120h: the ball's 9 px looks reach row 011D, the unmorph's move ends at 0110.4000 (bottom
+pixel 011F), and the crouch's 1 px is stopped flush at 0110.FFFF, the speed 1.A400 kept. A mutant
+that drops the end's "on the ground" fails both.
+
+**V6, R19, R22 and R26.** R22 (samus-walljump-22 32) and R26 (samus-walljump-28 32) are dropped:
+the three rows start from the same state, so their frames are byte-identical in every compared
+quantity. R19 stays.
+
+**V7, the take-off at a vector's start.** It counts as in the air, and spec §1.2 now lists it,
+with the turn in a jump or a fall that the vector test already treats so. The original: the
+take-off poses (4Bh, 4Ch, 55h-5Ah) are movement type 2, the straight jump's, and `$91:FBBB` sets
+`0B36` = 1 with the jump speed the frame she changes into one, so a take-off is always rising;
+the selection for lead-ins (`lead.pl`, above) already excluded a take-off at magnitude 0 as no
+plain start. J3 and W16 start in the take-off, rising at 4.E000.
+
+**Q1, the landing crouched instead.** Confirmed, and one rule corrected. `$91:F404` returns carry
+set when pose fit changed `0A1C` (`$91:FFA7` writes 27h/28h, or `$91:FE82` the old pose on a
+refusal), and `$91:EBEE` then skips the landing's command 5 (`$91:EFC4` → `$91:F010`): no
+`$91:F02A` (`0B4A`, `0B46`/`0B48`), no `$91:F1D3` (`0B2C`/`0B2E`, `0B36`, `0B20`), and no
+`$91:F1EC`, so `0A60` is not set to `$E926`. `$91:EC10` clears `0DC6` either way. So she is 27h
+(movement type 5, on the ground) with `0B36` = 2 and the speed her fall's pull left, 3.1C00: a
+downward speed kept on the ground, which `$90:A337`'s pull (`$90:923F`) neither reads nor grows.
+The spec said a landing pose fit refuses or crouches still leaves "landed the frame before"; it
+doesn't, and `Jumping` now says so (C-fit-land-tunnel-held: the count 3 → 4, `landed_or_ended`
+false). C-fit-land-tunnel-next starts where C-fit-land-tunnel ends (a start can't carry the
+landing pose's body size through a lead-in, so it is given as the start): crouched, she moves by
+her dash only and halts (x speed 0), the pull holds her at 0110.FFFF, and the speed stays 3.1C00.
+
+**The current model against the amended vectors.** 256 of 257 pass; C-fit-land-tunnel-held fails
+(`landed_or_ended` true): new behaviour, the corrected rule above. The round-14 gate's mutants,
+each one line in the clean crate, run against these vectors and reverted: M2b (the wall jump
+ignores hi-jump) fails C-walljump-hijump; M3 (the spring ball's item test false) fails
+C-morph-end-spring and C-morph-end-spring-air; M15 (space jump without the item) fails
+C-space-jump-no-item; M5 (long counts from 32,778) fails C-held-long-edge; M9 (the unmorph's end
+drops "on the ground") fails C-unmorph-air-end-off and C-unmorph-air-end-floor.
+
+**Units.** `tools spec-units` with these notes: 213.0 → 216.0 (motion 79.0 → 81.0: the press
+without space jump and the crouched landing's jump held through; pose chart 58.0 → 59.0: the
+floor under the unmorph's end), so the budget stays 7,133: motion's 36 × 81.0 = 2,916 and the
+pose chart's 2,124 are both over their caps (2,813 and 1,584).
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1358,7 +1441,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 213.0 units, capped at 70% of old = 7,133 (motion 2,813 capped, pose fit 588, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 216.0 units, capped at 70% of old = 7,133 (motion 2,813 capped, pose fit 588, pose chart 1,584 capped, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

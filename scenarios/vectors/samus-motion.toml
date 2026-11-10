@@ -427,36 +427,6 @@ jump_pressed = false
 after = { position = ["004F.9FFF", "0480.1BFF"], speed_x = "-0001.6000", dash = "0000.0000", speed_y = "-0005.C800" }
 
 [[vector]]
-id = "R22"
-source = "samus-walljump-22:32"
-entries = ["RisingAndFalling", "DriftInTheAir"]
-items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
-world = {}
-before = { position = ["0051.EFFF", "048B.FFFF"], speed_x = "-0000.3000", dash = "0000.0000", speed_y = "-0006.0000" }
-lead_in = [
-  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 21] }, pad = ["jump", "left"], jump_pressed = false },
-]
-pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
-pad = ["jump", "left"]
-jump_pressed = false
-after = { position = ["004F.9FFF", "0480.1BFF"], speed_x = "-0001.6000", dash = "0000.0000", speed_y = "-0005.C800" }
-
-[[vector]]
-id = "R26"
-source = "samus-walljump-28:32"
-entries = ["RisingAndFalling", "DriftInTheAir"]
-items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
-world = {}
-before = { position = ["0051.EFFF", "048B.FFFF"], speed_x = "-0000.3000", dash = "0000.0000", speed_y = "-0006.0000" }
-lead_in = [
-  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 21] }, pad = ["jump", "left"], jump_pressed = false },
-]
-pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
-pad = ["jump", "left"]
-jump_pressed = false
-after = { position = ["004F.9FFF", "0480.1BFF"], speed_x = "-0001.6000", dash = "0000.0000", speed_y = "-0005.C800" }
-
-[[vector]]
 id = "R30"
 source = "samus-walljump-28:63"
 entries = ["RisingAndFalling", "WallJump", "DriftInTheAir"]
@@ -531,6 +501,29 @@ pad = ["left", "jump"]
 jump_pressed = true
 spin_turned_far = true
 after = { position = ["0534.FFFF", "0299.27FF"], speed_x = "+0000.0000", dash = "0001.2000", speed_y = "-0004.A000", rising = true, wall_test = "Kicked" }
+
+# C-walljump-hijump: WK1 with the hi-jump boots switched on. Nothing in its lead-in reads them (a
+# spin's rise, jump let go, no jump start), so every frame is WK1's until the kick, which starts
+# the wall jump rising at the hi-jump's wall-jump speed, 5.8000, without moving her vertically
+# (as samus-walljump-16 47 to 48, hi-jump on: 5.8000 upward, y kept).
+[[vector]]
+id = "C-walljump-hijump"
+source = "constructed"
+entries = ["WallJump", "Jumping", "RisingAndFalling", "DriftInTheAir"]
+items = ["HiJumpBoots"]
+world = { solid_block = [1344, 640] }
+before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["left"], jump_pressed = false, pressed = ["left"] },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 12] }
+pad = ["left", "jump"]
+jump_pressed = true
+spin_turned_far = true
+after = { position = ["0534.FFFF", "0299.27FF"], speed_x = "+0000.0000", dash = "0001.2000", speed_y = "-0005.8000", rising = true, wall_test = "Kicked" }
 
 # JH1-JH4: jump held through a landing (spec `Jumping`, jump held through). Each starts on the
 # frame jump is pressed in the air, holds it through the landing, and checks the landing's next
@@ -690,6 +683,7 @@ after = { position = ["0733.8FFF", "009B.FFFF"], speed_x = "+0000.0000", dash = 
 #   and the frame's end, jump still held, makes it 1; nothing ended this frame.
 # - C-held-long: a count of 40000, past 32776: it presses as one of 1 to 8 does.
 # - C-held-edge: a count of 32776: no press, she stands; the count goes on to 32777.
+# - C-held-long-edge: a count of 32777, the long window's low edge: it presses, as C-held-long.
 # - C-held-wrap: a count of 65535 with nothing the frame before: the count goes round to 0.
 # - C-held-landed: PF2's landing (r02:179's numbers) with jump held at a count of 3: the landing
 #   outranks the pad and lands her as in PF2, and the frame's end reads the count 4 and the frame
@@ -730,6 +724,18 @@ jump_pressed = false
 after = { position = ["0100.0000", "010B.FFFF"], speed_y = "+0000.0000", rising = false, jump_held = 32777, landed_or_ended = false }
 
 [[vector]]
+id = "C-held-long-edge"
+source = "constructed"
+entries = ["Jumping", "PadChart", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], jump_held = 32777, landed_or_ended = true }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_y = "-0004.E000", rising = true, jump_held = 1, landed_or_ended = false }
+
+[[vector]]
 id = "C-held-wrap"
 source = "constructed"
 entries = ["Jumping"]
@@ -765,6 +771,21 @@ pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 1
 pad = ["jump", "right"]
 jump_pressed = true
 after = { position = ["0084.1FFF", "0472.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "-0005.E400", rising = true }
+
+# C-space-jump-no-item: SJ1 without the space jump. The same press inside the window does
+# nothing: the spin's row for forward and jump held keeps her spinning, and she falls on by 2.A000
+# (y 0478.1FFF to 047A.BFFF), the pull making it 2.BC00; her drift is SJ1's.
+[[vector]]
+id = "C-space-jump-no-item"
+source = "constructed"
+entries = ["Jumping", "RisingAndFalling", "DriftInTheAir"]
+items = ["HiJumpBoots"]
+world = {}
+before = { position = ["0082.BFFF", "0478.1FFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0002.A000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump", "right"]
+jump_pressed = true
+after = { position = ["0084.1FFF", "047A.BFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0002.BC00", rising = false }
 
 [[vector]]
 id = "R34"
@@ -2726,6 +2747,14 @@ after = { position = ["0100.0000", "0100.8000"], speed_y = "+0000.1C00", placed 
 #   reach); the unmorph's animation ends on the next frame (as boss-kraid-defeated 779's, falling
 #   at 1.8800): it moves her by her vertical speed under the pull, and hands over crouched Still,
 #   in the air as on the ground.
+# - C-unmorph-air-end-off: C-unmorph-air-end and the crouch's frame after it. The crouch is on the
+#   ground: the pull's 1 px finds no floor, so she walks off and falls from rest (y 0102.F400 to
+#   0103.F400, vertical speed 0), as boss-kraid-defeated 780-782 does (0169.ABFF to 016A.ABFF).
+# - C-unmorph-air-end-floor: the same three frames 2.B400 px lower, over a floor at 288. The
+#   unmorph's looks (9 px down at the ball's size, its bottom pixel 0114) and its moves (to
+#   0110.4000, the bottom pixel 011F) stop short of the floor; the crouch's pull of 1 px meets it,
+#   so she stops flush (0110.FFFF) and keeps her vertical speed, 1.A400: the floor holds her and
+#   doesn't land her.
 
 [[vector]]
 id = "C-ground-rise-kept"
@@ -2766,6 +2795,37 @@ jump_pressed = false
 animation_ends = true
 after = { position = ["0100.0000", "0102.F400"], speed_y = "+0001.A400", rising = false }
 
+[[vector]]
+id = "C-unmorph-air-end-off"
+source = "constructed"
+entries = ["AnimationEnds", "FollowingTheGround", "WhatHerMovesMet", "RisingAndFalling"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], speed_y = "+0001.6C00" }
+lead_in = [
+  { pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }, pad = ["up"], jump_pressed = false, pressed = ["up"] },
+  { pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }, pad = [], jump_pressed = false, animation_ends = true },
+]
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+next_pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0103.F400"], speed_y = "+0000.0000", rising = false }
+
+[[vector]]
+id = "C-unmorph-air-end-floor"
+source = "constructed"
+entries = ["AnimationEnds", "FollowingTheGround", "BlocksStopFlush", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010D.4C00"], speed_y = "+0001.6C00" }
+lead_in = [
+  { pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }, pad = ["up"], jump_pressed = false, pressed = ["up"] },
+  { pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }, pad = [], jump_pressed = false, animation_ends = true },
+]
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0110.FFFF"], speed_y = "+0001.A400", rising = false }
+
 # A spin lands in a tunnel: the landing's body grows 9 px, the looks find 8 px of room above and
 # none below, so she takes crouched Still instead and rises 4 px, her feet on the floor (the spin's
 # half-height 12 against the crouch's 16). The crouch taken instead skips the landing's effects:
@@ -2783,6 +2843,37 @@ next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [
 pad = ["right"]
 jump_pressed = false
 after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0003.1C00", placed = "0110.0000", pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
+
+# The landing crouched instead, on (spec `PoseFitAfterMoves`, `Jumping`):
+# - C-fit-land-tunnel-held: the same frame with jump held at a count of 3. The crouch taken
+#   instead is no landing for jump held through: the frame's end counts 4 and leaves nothing for
+#   the next frame (`landed_or_ended` false), where a landing pose fit took would leave it.
+# - C-fit-land-tunnel-next: the frame after C-fit-land-tunnel, starting where it ends, the pad let
+#   go. Crouched is a pose on the ground: she moves by her dash only (0) and halts, the pull's 1 px
+#   holds her flush on the floor, and she keeps the downward speed her fall reached, 3.1C00,
+#   without moving by it or growing it (spec `FollowingTheGround`).
+[[vector]]
+id = "C-fit-land-tunnel-held"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "Jumping", "Landing", "WhatHerMovesMet", "DriftInTheAir"]
+world = { floor_top = 288, ceiling_bottom = 256 }
+before = { position = ["0100.0000", "0112.0000"], speed_x = "+0001.6000", speed_y = "+0003.0000", jump_held = 3 }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = ["jump", "right"]
+jump_pressed = false
+after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", speed_y = "+0003.1C00", jump_held = 4, landed_or_ended = false, pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] } }
+
+[[vector]]
+id = "C-fit-land-tunnel-next"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "FollowingTheGround", "SpeedBuildsAndBrakes", "BlocksStopFlush"]
+world = { floor_top = 288, ceiling_bottom = 256 }
+before = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", speed_y = "+0003.1C00" }
+pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0003.1C00", rising = false, placed = "none" }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
@@ -3551,6 +3642,14 @@ after = { position = ["056C.DFFF", "009D.B7FF"], speed_x = "+0001.4000", dash = 
 #   though forward alone would have stood her up (she stands the next frame).
 # - C-morph-no-ball-air: SH3 without the morph ball: she stays in the straight jump aimed Down,
 #   her moves as in SH3 (the rise ends at the frame's start with jump let go), and no lowering.
+# The morph's end with and without the spring ball (spec `AnimationEnds`; the original as
+# item-reserve-tank 564-565 without it, and chain row r09 415-416 and 17-18 with it):
+# - C-morph-end-ball and C-morph-end-spring: the morph ends at rest on a floor (pulled 1 px, held
+#   flush): the ball at rest without the spring ball, the spring ball's with it.
+# - C-morph-end-ball-air and C-morph-end-spring-air: it ends in open air. The lead-in is a straight
+#   jump aimed Down, falling at 1.0000, that presses down: it falls 1 px (the pull makes 1.1C00) and
+#   the morph lowers her 9 px (0100.0000 to 010A.0000). The next frame the morph moves her by
+#   1.1C00 under the pull (1.3800) and ends: the falling ball, or the spring ball's.
 
 [[vector]]
 id = "NM1"
@@ -3577,6 +3676,68 @@ pad = ["run", "right", "down"]
 jump_pressed = false
 pressed = ["right", "down"]
 after = { position = ["056C.DFFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.1C00", placed = "none", rising = false, pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] } }
+
+[[vector]]
+id = "C-morph-end-ball"
+source = "constructed"
+entries = ["AnimationEnds", "PoseFollows", "FollowingTheGround"]
+items = ["MorphBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0119.FFFF"] }
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+animation_ends = true
+after = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-morph-end-spring"
+source = "constructed"
+entries = ["AnimationEnds", "PoseFollows", "FollowingTheGround"]
+items = ["MorphBall", "SpringBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0119.FFFF"] }
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+next_pose = { body = "SpringBall", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+animation_ends = true
+after = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-morph-end-ball-air"
+source = "constructed"
+entries = ["AnimationEnds", "PoseFollows", "ShrinkingLowersHer", "RisingAndFalling"]
+items = ["MorphBall"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], speed_y = "+0001.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }, pad = ["down"], jump_pressed = false, pressed = ["down"] },
+]
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+animation_ends = true
+after = { position = ["0100.0000", "010B.1C00"], speed_y = "+0001.3800", rising = false }
+
+[[vector]]
+id = "C-morph-end-spring-air"
+source = "constructed"
+entries = ["AnimationEnds", "PoseFollows", "ShrinkingLowersHer", "RisingAndFalling"]
+items = ["MorphBall", "SpringBall"]
+world = {}
+before = { position = ["0100.0000", "0100.0000"], speed_y = "+0001.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }, pad = ["down"], jump_pressed = false, pressed = ["down"] },
+]
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+next_pose = { body = "SpringBall", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+animation_ends = true
+after = { position = ["0100.0000", "010B.1C00"], speed_y = "+0001.3800", rising = false }
 
 # C-shrink-floor: SH3 with a floor 2 px under her feet (her bottom pixel 157, the floor's top 160).
 # The morph's look down of 9 px at the ball's size is 8 px or more, so its 8 px look comes first;

@@ -80,10 +80,14 @@ start may give.
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
 is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
-except in a jump, a spin, a fall or a wall jump, where it means she has just started to fall. On the
-ground a vertical speed other than 0, downward or upward, is one she keeps there, or that the ball
-moves by (`FollowingTheGround`): the speed itself shows it, so a start may have one. An upward
-one there is a rise she keeps (`RisingAndFalling`, C-ground-rise-kept).
+except in the air: in a jump (its take-off included), a spin, a fall or a wall jump, and in a turn
+in a jump or a fall, where it means she has just started to fall. Every other pose is on the
+ground. The take-off counts as in the air because the moment she changes into it she is rising
+(`Jumping`), so in scope it never starts at a vertical speed of 0, and its upward speed is a rise,
+not one kept on the ground (J3, W16). On the ground a vertical speed other than 0, downward or
+upward, is one she keeps there, or that the ball moves by (`FollowingTheGround`): the speed itself
+shows it, so a start may have one. An upward one there is a rise she keeps (`RisingAndFalling`,
+C-ground-rise-kept).
 
 **Falling at 0 on the ground.** The ball, or her body while it changes shape, can be on the ground
 and falling at a vertical speed of 0, which moves her unlike no vertical speed
@@ -371,17 +375,22 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - With space jump, falling in a spin, jump pressed, her fall speed read as 8.8 `v` (its pixel
   part's low byte and its subpixel's high byte) with `2.80 ≤ v < 5.00` → she jumps again, rising
   at the new speed that same frame [SJ1]
+- Without space jump, the same press → nothing: she falls on, and the pad chart's row for the
+  spin keeps her spinning [C-space-jump-no-item]
 - **Jump held through** (§1.2): a count of the frames jump has stayed held since its press.
 - At a frame's end, jump held and not just pressed → the count goes up by 1 [JH1, JH2, JH3, JH4]
 - At a frame's end, jump just pressed, or not held → the count is 0 [JH1, JH2, JH3, JH4]
 - The count goes from 65,535 to 0, and a count of 32,777 to 65,535 (jump held about 9 minutes or
-  more) acts as one of 1 to 8 does below; 32,776 doesn't [C-held-wrap, C-held-long, C-held-edge]
+  more) acts as one of 1 to 8 does below; 32,776 doesn't [C-held-wrap, C-held-long, C-held-edge,
+  C-held-long-edge]
 - The frame after one on which she landed from a straight jump, a fall, a spin or a wall jump
-  (`WhatHerMovesMet`'s rows into `Landing`, whatever pose fit makes of the change), or on which
-  the animation of a turn or of a landing ended and handed over its pose (`AnimationEnds`), with
-  the count at 1 to 8 → jump counts as just pressed for the pad chart that frame (`PadChart`), and
-  the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4, C-held-9, C-held-built,
-  C-held-landed]
+  (`WhatHerMovesMet`'s rows into `Landing`, where pose fit takes the change, pushing her or not),
+  or on which the animation of a turn or of a landing ended and handed over its pose
+  (`AnimationEnds`), with the count at 1 to 8 → jump counts as just pressed for the pad chart that
+  frame (`PadChart`), and the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4,
+  C-held-9, C-held-built, C-held-landed]
+- A landing that pose fit refuses or turns into the crouch (`PoseFitAfterMoves`) → it is no
+  landing here: the frame after it, jump held doesn't count as pressed [C-fit-land-tunnel-held]
 - Jump let go on that frame → it still counts as just pressed for the pad chart; only the frame's
   end sees it let go, and puts the count at 0 [C-held-let-go]
 - So JH3 with jump let go on the landing's next frame takes off all the same (C-held-let-go).
@@ -395,8 +404,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   with run held; SJ1, space jump's jump again with hi-jump; the crouch lift open: question 6;
   JH1-JH4, jump held through a landing from a straight jump and a fall, JH4 through two turns'
   ends); constructed (C-held-9, a count of 9; C-held-let-go, jump let go on the landing's next
-  frame; C-held-built, C-held-long, C-held-edge and C-held-wrap, counts a caller gives at the
-  start, and C-held-landed, the two parts read back after a landing).
+  frame; C-held-built, C-held-long, C-held-edge, C-held-long-edge and C-held-wrap, counts a
+  caller gives at the start, and C-held-landed, the two parts read back after a landing;
+  C-fit-land-tunnel-held, a landing crouched instead; C-walljump-hijump, the wall jump's speed
+  with hi-jump; C-space-jump-no-item, the press in the window without space jump).
 
 ### FollowingTheGround
 - kind: mechanic.
@@ -541,6 +552,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   stop of her speeds: her horizontal and vertical speeds stay as her moves left them), and the
   crouch has no take-off (no rise and no 10 px lift) [C-fit-land-tunnel, C-fit-tunnel,
   C-fit-ball-tunnel]
+- So a landing crouched instead leaves her crouched, a pose on the ground, with the downward speed
+  her fall reached: she keeps it there without moving by it (`FollowingTheGround`), so the next
+  frame the pull holds her on the floor and the speed stays (C-fit-land-tunnel-next). It is no
+  landing for jump held through either (`Jumping`, C-fit-land-tunnel-held).
 - The block looks reach cells as a vertical move of their distance would, reported with the way
   `Look` (`TouchedCells`). Solid enemies decide their looks and leave no cells. What a reacting
   cell does with a look is `TouchedCells`' (§11, question 17).
@@ -565,8 +580,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   ceiling crouches instead; C-fit-ball-tunnel, unmorphing there is refused; C-fit-step-ceiling and
   C-fit-step-floor, the 8 px look against a stepped block, and in C-fit-step-ceiling the cells of
   a 9 px far-side look and its 8 px look; C-fit-step-enemy, a stepped block above and a solid
-  enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds; C-fit-tunnel-aimed,
-  the crouch taken instead from a body already the crouch's height: no placement); original only
+  enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds,
+  C-fit-land-tunnel-next the frame after it, and C-fit-land-tunnel-held its jump held through;
+  C-fit-tunnel-aimed, the crouch taken instead from a body already the crouch's height: no
+  placement); original only
   (the looks' cells of the harness case W15 and of C-near-wall-item, a body growing 7 px in open
   air, which the record doesn't show; the second
   look's refusal, the mixed and same-side cases beyond C-fit-step-enemy, a look up passing a sloped
@@ -760,7 +777,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   `Readied` [RW1]
 - Once the spin has turned far, still in a spin carried on and holding away from a wall near her,
   pressing jump → she kicks off: she doesn't move vertically that frame, and starts the wall jump
-  rising at the wall-jump speed, x speed 0, following the pad; the frame reports `Kicked` [P8, WK1]
+  rising at the wall-jump speed, x speed 0, following the pad; the frame reports `Kicked` [P8, WK1,
+  C-walljump-hijump]
 - No test that frame, no wall found, or a wall near her once the spin has turned far without jump
   pressed → the frame reports `Neither` [C-near-wall-item]
 - The test finds a block wall, readying frames included → it writes her x subpixel as a stop
@@ -777,7 +795,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   readying frame writes her x subpixel 0 against the wall on her left, in the frame after the
   spin is reversed, and the frame reports the readying); harness (W15, item-morph-ball:817, the
   test's cells reached in the room); constructed (C-near-wall-item, the test's cells reached over
-  an invented room); original
+  an invented room; C-walljump-hijump, WK1's kick with hi-jump, at 5.8000); original
   only (no test without a spin carried on or without a
   side held: no vector checks a spin near a wall lacking either).
 
@@ -1150,7 +1168,8 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - switch: none.
 - Animation timing is out of scope (§10): a vector says on which frame it ends.
 - A pose that lasts only as long as its animation, its animation ending → its end hands over the
-  next pose and effect below, whatever the pad [P10, P11, P12, P19, P23, M1]
+  next pose and effect below, whatever the pad [P10, P11, P12, P19, P23, M1, C-morph-end-ball,
+  C-morph-end-spring, C-morph-end-ball-air, C-morph-end-spring-air]
 
 | Ending pose | Next pose | Effect |
 | --- | --- | --- |
@@ -1171,11 +1190,17 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   ground or in the air; with the spring ball, the spring ball's; gun stowed; dash 0; `Moonfall`.
 - The unmorph ending in the air → she is crouched in the air, a pose on the ground: her next frame
   is the crouch's, the ground's pull with her vertical speed kept, and, with no floor within the
-  pull, it walks her off a ledge (`FollowingTheGround`) [C-unmorph-air-end, C-ground-rise]
+  pull, it walks her off a ledge (`FollowingTheGround`) [C-unmorph-air-end, C-ground-rise,
+  C-unmorph-air-end-off, C-unmorph-air-end-floor]
+- With a floor within that pull → it holds her flush and she keeps her vertical speed, as on the
+  ground; the floor doesn't land her [C-unmorph-air-end-floor]
 - So an unmorph that ends in a fall has one crouched frame and then falls from rest (record only:
   boss-kraid-defeated 779-782), and one that ends in a rise keeps the rise (item-charge-beam 5-8,
   item-reserve-tank 519-521).
-- checked: oracle (P10, P11, P12, P19, P23, M1); constructed (C-unmorph-air-end).
+- checked: oracle (P10, P11, P12, P19, P23, M1); constructed (C-unmorph-air-end, and through the
+  crouch's frame after it, C-unmorph-air-end-off walking off and C-unmorph-air-end-floor held on
+  a floor; the morph's end with and without the spring ball, C-morph-end-ball and
+  C-morph-end-spring on a floor, C-morph-end-ball-air and C-morph-end-spring-air in the air).
 
 ### Out of the chart's scope
 - The spring ball's rows, the grapple, knockback, the boost after damage, x-ray, shinespark, the
