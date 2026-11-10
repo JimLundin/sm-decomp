@@ -219,8 +219,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | hud | bridge | 1 | 1,870 | 2,173 | 100 | 9 | 62 | 0 | 333 |
 | hud | harness | 1 | 3,160 | 3,403 | 518 | 135 | 196 | 22 | 584 |
 | blocks | bridge | 1 | 6,994 | 7,113 | 435 | 54 | 675 | 97 | 1,056 |
-| blocks | harness | 2 | 6,188 | 5,940 | 814 | 210 | 870 | 0 | 964 |
-| total | | | 37,872 | 40,251 | 4,119 | 1,796 | 3,026 | 190 | 6,595 |
+| blocks | harness | 2 | 6,305 | 6,048 | 833 | 210 | 885 | 0 | 988 |
+| total | | | 37,989 | 40,359 | 4,138 | 1,796 | 3,042 | 190 | 6,619 |
 
 ## Harness floors and vectors
 
