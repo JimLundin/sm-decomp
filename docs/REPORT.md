@@ -223,9 +223,9 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | progress | harness | 3 | 7,181 | 7,249 | 1,048 | 974 | 767 | 62 | 1,325 |
 | hud | bridge | 1 | 2,613 | 2,908 | 145 | 20 | 149 | 3 | 458 |
 | hud | harness | 2 | 4,413 | 4,712 | 717 | 422 | 288 | 23 | 833 |
-| blocks | bridge | 1 | 7,009 | 7,124 | 435 | 54 | 681 | 97 | 1,063 |
+| blocks | bridge | 1 | 7,009 | 7,124 | 439 | 54 | 681 | 97 | 1,064 |
 | blocks | harness | 2 | 6,270 | 6,015 | 833 | 210 | 881 | 0 | 985 |
-| total | | | 42,288 | 44,688 | 4,712 | 2,605 | 3,525 | 218 | 7,516 |
+| total | | | 42,288 | 44,688 | 4,716 | 2,605 | 3,525 | 218 | 7,517 |
 
 ## Harness floors and vectors
 
@@ -449,6 +449,6 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 44 | 5,078 | 30,471 | 32,819 | 9,889 | 794 | 2,339 | 720 | 6,962 |
-| bridges | 8 | 2,448 | 14,690 | 16,219 | 946 | 153 | 978 | 103 | 2,477 |
+| engine, not yet rebuilt | 44 | 5,047 | 30,279 | 32,679 | 9,889 | 794 | 2,290 | 720 | 6,940 |
+| bridges | 8 | 2,448 | 14,690 | 16,219 | 950 | 153 | 978 | 103 | 2,478 |
 | rebuilt models, shared types included | 59 | 2,944 | 17,664 | 22,149 | 8,286 | 11,918 | 923 | 81 | 7,674 |

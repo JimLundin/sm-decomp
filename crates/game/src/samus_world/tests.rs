@@ -56,8 +56,9 @@ const fn row(depth: clean_types::Px) -> u16 {
     depth.0
 }
 
-/// A stand-in chain that loops, which the original follows without end, is cut where the model
-/// meets it and refused; one that leads into a loop from outside it alike.
+/// A stand-in chain that loops, which a reaction's show can close as the room runs and the
+/// original follows without end, is cut where the model meets it and refused; one that leads into
+/// a loop from outside it alike.
 #[test]
 fn a_stand_in_chain_that_loops_is_refused() {
     let slopes = slopes();

@@ -6,10 +6,10 @@ use super::*;
 use crate::blocks_world::fixture::content;
 use crate::plm::spawn_population;
 use crate::state::CollectedItems;
-use crate::state::room::Bts;
 use crate::state::room::{
     Block, BlockColumns, BlockRows, PlmBody, ScrollPlm, ScrollStep, Tile, TileNumber,
 };
+use crate::state::room::{Bts, Offset};
 use crate::state::slots::Occupancy;
 
 /// The scroll PLM's slot: the first spawn takes the highest.
@@ -190,4 +190,18 @@ fn a_gameplay_pass_inside_the_trigger_changes_the_scroll_area() {
     let room = &session.state().room;
     assert_eq!(room.scroll_areas, [ScrollArea::Red, ScrollArea::Green]);
     assert!(!triggered(room));
+}
+
+/// A chain of stand-ins a reaction's show closed into a loop as the room ran, which the original
+/// follows without end, is a fault at the cell her point is in, not a hang.
+#[test]
+fn a_stand_in_chain_that_loops_is_a_fault() {
+    let mut room = room();
+    let at = |x: usize| 2 * 32 + x;
+    room.blocks[at(5)].kind = BlockKind::HorizontalExtension(Offset(1));
+    room.blocks[at(6)].kind = BlockKind::HorizontalExtension(Offset(-1));
+    assert_eq!(
+        handle(&mut room, &samus(5 * 16 + 8, 2 * 16 + 8)),
+        Err(BlocksFault::StandInLoop(BlockIndex(2 * 32 + 5)))
+    );
 }

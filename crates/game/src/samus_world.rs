@@ -7,8 +7,9 @@
 //!
 //! The model follows a cell that stands for another until it reaches one of another kind, and
 //! leaves a chain that loops to its world to refuse (`clean_types::World`). The original follows
-//! such a chain without end, so the world cuts it where it loops, and the step reports it as a
-//! `SamusFault`.
+//! such a chain without end. The room's loading refuses a room that starts with one
+//! (`data::level::Level::refuse_stand_in_loops`), but a reaction's show can close one as the room
+//! runs, so the world cuts a chain where it loops, and the step reports it as a `SamusFault`.
 
 use clean_types::{Block, Cell, Hitbox, Pair, Radius, Slope, SlopeFaces, Way, World};
 use core::cell::OnceCell;
@@ -31,8 +32,9 @@ const FAR_PAST: u8 = 17;
 /// Why her frame can't run through the model.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SamusFault {
-    /// The cells standing for others from this one name each other in a loop, which the
-    /// original's block reactions follow without end.
+    /// The cells standing for others from this one name each other in a loop, which a
+    /// reaction's show closed as the room ran, and which the original's block reactions follow
+    /// without end.
     StandInLoop(Cell),
     /// The pose map holds her pose, but no situation of the model names it: every pose the map
     /// holds is named, so this can't happen.

@@ -84,13 +84,21 @@ original's bytes as data.
   `SessionFault::Blocks` when a touch meets such a cell (`game::blocks_world`), as it stopped at
   the hang before.
 - **A stand-in chain that loops** (the samus-motion domain, `docs/behaviours/samus-motion.md`
-  `OtherBlockKinds`; `game::samus_world`): when her moves or looks meet an extension block whose
-  chain of extensions comes back on itself, the original follows the chain for ever and hangs. The
-  model follows a chain to its end and leaves a looping one to its world to refuse, so the engine's
-  world cuts the chain where she meets it and her Session stops with
-  `SessionFault::Samus(SamusFault::StandInLoop)` at the first such cell. None of the 44 cached rows
-  meets one; a custom room could. The entry goes when the room's loading refuses a room with a
-  looping chain, so a Session never meets one.
+  `OtherBlockKinds`; `data::level`, `game::samus_world`, `game::collision::inside`): when her
+  moves, her looks or her inside points meet an extension block whose chain of extensions comes
+  back on itself, the original follows the chain for ever and hangs. The importer refuses a room
+  state whose level has such a chain once its start has written its extensions' and scroll PLMs'
+  blocks (`LevelError::StandInLoop`), as the room loads. No room of the game has one: the walk of
+  the 261 rooms the doors reach (322 states) and of the unused and debug rooms loads every level
+  (`every_level_the_game_holds_loads`). One room needs its start's blocks for that: in `$8F:A011`
+  two rightwards extensions and a level extension loop until the scroll PLM placed after them
+  writes its cell. A custom room could still close a loop as it runs: a reaction's show can make a
+  cell a stand-in that reaches as its BTS says, and the importer doesn't check where the room's
+  reactions show, nor the blocks the items and the PLMs no model runs write. So each engine follow
+  stays bounded, and a Session that meets such a chain stops, with
+  `SessionFault::Samus(SamusFault::StandInLoop)` at the first cell her moves meet, or
+  `SessionFault::Blocks(BlocksFault::StandInLoop)` at her inside point's. None of the 44 cached
+  rows meets one.
 - **Reacting cells whose tables end before their mark** (the blocks domain,
   `docs/behaviours/blocks.md` §1's marks; the decode notes' importer's scan): each asker of a
   reacting cell (her touch, her inside points, a shot, a blast, the grapple) reads the cell's

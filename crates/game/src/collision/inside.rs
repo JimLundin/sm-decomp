@@ -12,8 +12,9 @@ use clean_types::Point;
 
 use super::Room;
 use crate::blocks_world::{self, BlocksFault, Reads};
-use crate::state::room::{BlockIndex, BlockKind, Offset, RoomScoped};
+use crate::state::room::{BlockIndex, BlockKind, RoomScoped};
 use crate::state::samus::Samus;
+use data::level::{StandInLoop, stand_in_end};
 
 /// The block lookup gives up from this position on, as it does for a negative one
 /// (`$94:9C27`, `$94:9C3D`).
@@ -29,41 +30,6 @@ fn block_at(room: Room<'_>, x: u16, y: u16) -> Option<u16> {
     Some(super::row_start(y >> 4, room.width).wrapping_add(x >> 4))
 }
 
-/// The block an inside reaction ends at from `index` and its kind: an extension with a
-/// nonzero offset moves to the block it points at and dispatches again.
-fn resolve(room: Room<'_>, index: u16) -> (u16, BlockKind) {
-    let mut current = index;
-    loop {
-        let kind = room.kind(current);
-        match kind {
-            // An offset of 0 acts like air.
-            BlockKind::HorizontalExtension(Offset(0))
-            | BlockKind::VerticalExtension(Offset(0))
-            | BlockKind::Air(_)
-            | BlockKind::Slope(_)
-            | BlockKind::SpikeAir(_)
-            | BlockKind::SpecialAir(_)
-            | BlockKind::ShootableAir(_)
-            | BlockKind::UnusedAir(_)
-            | BlockKind::BombableAir(_)
-            | BlockKind::Solid(_)
-            | BlockKind::Door(_)
-            | BlockKind::Spike(_)
-            | BlockKind::Special(_)
-            | BlockKind::Shootable(_)
-            | BlockKind::Grapple(_)
-            | BlockKind::Bombable(_) => return (current, kind),
-            BlockKind::HorizontalExtension(Offset(offset)) => {
-                current = current.wrapping_add_signed(i16::from(offset));
-            }
-            BlockKind::VerticalExtension(Offset(offset)) => {
-                let rows = i16::from(offset).cast_unsigned();
-                current = current.wrapping_add(rows.wrapping_mul(room.width.0));
-            }
-        }
-    }
-}
-
 /// The cell at `x`, `y` for `point`, its extensions followed (`$94:9B8E` and its repeats), if its
 /// inside reaction is the blocks': of the inside reaction pointers (`$94:9B40`), special air's
 /// alone spawns a PLM (`$94:9B16`).
@@ -74,17 +40,28 @@ fn resolve(room: Room<'_>, index: u16) -> (u16, BlockKind) {
 // table (`$94:98E3`), and spike air its own (`$94:98CC`). The State has no X speed table,
 // deceleration multiplier or extra displacement yet, which the handling zeroes first
 // (`$94:9B63`).
-fn point(room: &RoomScoped, at: Point, x: u16, y: u16) -> Option<(BlockIndex, Point)> {
+//
+// The room's loading refuses a chain that loops, but a reaction's show can close one as the room
+// runs, so the follow is bounded and such a chain is a fault.
+fn point(
+    room: &RoomScoped,
+    at: Point,
+    x: u16,
+    y: u16,
+) -> Result<Option<(BlockIndex, Point)>, BlocksFault> {
     let view = Room {
         blocks: &room.blocks,
         width: room.width,
         slopes: None,
     };
-    let index = block_at(view, x, y)?;
-    let (block, kind) = resolve(view, index);
+    let Some(index) = block_at(view, x, y) else {
+        return Ok(None);
+    };
+    let (block, kind) = stand_in_end(room.blocks.len(), room.width.0, |at| view.kind(at), index)
+        .map_err(|StandInLoop(block)| BlocksFault::StandInLoop(BlockIndex(block)))?;
     // Past the level she meets air (above), which the blocks are never asked of.
     let special = matches!(kind, BlockKind::SpecialAir(_));
-    (special && usize::from(block) < room.blocks.len()).then_some((BlockIndex(block), at))
+    Ok((special && usize::from(block) < room.blocks.len()).then_some((BlockIndex(block), at)))
 }
 
 /// Samus block inside handling (`$94:9B60`): her bottom's cell, her centre's if it is in
@@ -93,21 +70,22 @@ fn point(room: &RoomScoped, at: Point, x: u16, y: u16) -> Option<(BlockIndex, Po
 ///
 /// # Errors
 ///
-/// A [`BlocksFault`] where a cell is one the room's loading would refuse.
+/// A [`BlocksFault`] where a cell is one the room's loading would refuse, or a chain of stand-ins
+/// loops.
 pub fn handle(room: &mut RoomScoped, samus: &Samus, reads: Reads<'_>) -> Result<(), BlocksFault> {
     let x = samus.motion.position.x.pixel();
     let y = samus.motion.position.y.pixel();
     let bottom = y.wrapping_add(samus.y_radius).wrapping_sub(1);
     let mut points = Vec::new();
-    points.extend(point(room, Point::Bottom, x, bottom));
+    points.extend(point(room, Point::Bottom, x, bottom)?);
     if (y ^ bottom) & 0xfff0 != 0 {
-        points.extend(point(room, Point::Centre, x, y));
+        points.extend(point(room, Point::Centre, x, y)?);
     }
     let top = y.wrapping_sub(samus.y_radius);
     // `$94:9BE3`: the second test XORs her centre into the first's result, not her top.
     let rows = (top ^ bottom) & 0xfff0;
     if rows != 0 && (rows ^ y) & 0xfff0 != 0 {
-        points.extend(point(room, Point::Top, x, top));
+        points.extend(point(room, Point::Top, x, top)?);
     }
     blocks_world::inside(room, reads, &points)
 }

@@ -110,6 +110,10 @@ pub enum BlocksFault {
     Outside(Cell),
     /// The room's screens aren't whole rows of the screens it is across.
     Screens,
+    /// Her inside point's chain of stand-ins from this cell loops, which a reaction's show closed
+    /// as the room ran (its loading refuses a room that starts with one), and which the original
+    /// follows without end (LEGACY, "A stand-in chain that loops").
+    StandInLoop(BlockIndex),
 }
 
 impl From<OutsideTheRoom> for BlocksFault {
