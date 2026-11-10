@@ -14,7 +14,8 @@ You need your own unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.s
 ```sh
 cargo build --release -p app -p tools
 cargo test -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools \
-  -p oracle_record -p clean_types -p clean_model_samus_motion
+  -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_blocks \
+  -p clean_model_camera -p clean_model_hud -p clean_model_progress
 bash tools/lane/gate.sh   # fmt, clippy, crate rules and doc links
 ```
 

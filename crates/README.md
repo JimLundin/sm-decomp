@@ -11,13 +11,14 @@ The rebuild's crates, as planned in
 | `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `game`, `runtime` |
 | `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
 | `oracle_record` | `FrameRecord` and the types in it, the lsnes raw record decoder, the wait sites and the pad file reader, with no emulator: linking `oracle` needs the emulator archive. | none |
-| `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `game`, `runtime`, `oracle_record`, `canonical` (lockstep names differences with `Canonical::diff`) |
+| `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `game`, `runtime`, `oracle_record`, `canonical` (lockstep names differences with `Canonical::diff`), `clean_types` and the five clean models (the domain harnesses run them) |
 | `tools` | the command line over the above and the importers. No comparison logic of its own. | `verify`, `oracle`, `runtime` |
 | `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. | `canonical_derive` |
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
 | `clean_types` | the clean room's shared domain types (MODEL §5): `P.S` quantities, poses, cells, the `World` trait, the catalogue's kinds. No address or original name. | none |
 | `clean_model_samus_motion` | Samus moving through the world (`crates/clean_model/samus-motion`), built from its spec in the clean room, and its catalogue. | `clean_types` |
 | `clean_model_blocks` | the blocks that break and come back, and the scroll cells (`crates/clean_model/blocks`): the places reactions run in, their scripts, the starts by family and the room's stand-ins, built from its spec in the clean room, and its catalogue. | `clean_types` |
+| `clean_model_camera` | the camera following Samus (`crates/clean_model/camera`), built from its spec in the clean room, and its catalogue. | `clean_types` |
 | `clean_model_hud` | the HUD (`crates/clean_model/hud`): the status bar, the selected item and the mini-map, built from its spec in the clean room, and its catalogue. | `clean_types` |
 | `clean_model_progress` | what the game remembers of a run (`crates/clean_model/progress`): the reports that change it, the questions it answers and the room states it picks, built from its spec in the clean room, and its catalogue. | `clean_types` |
 
