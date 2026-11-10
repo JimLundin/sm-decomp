@@ -29,7 +29,8 @@
 //! - the sounds the scripts ask for have no sound queue to go to (U1).
 
 use core::ops::Range;
-use std::sync::{Arc, OnceLock};
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 
 use clean_model_blocks::{
     Becomes, CellKind, Frames, Grid, Inside, Mark, OutsideTheRoom, PatternCell, Place, Placement,
@@ -139,7 +140,41 @@ pub struct BlockContent {
     marks: Vec<Vec<Option<Mark>>>,
     /// By area, then BTS: whether she holds a place inside special air.
     inside: Vec<Vec<bool>>,
+    /// The last room's cells as imported, which the next call starts from.
+    imports: Imports,
 }
+
+/// A room's cells as a call last imported them, with the level they were imported from.
+#[derive(Debug)]
+struct ImportedRoom {
+    area: Area,
+    width: u16,
+    blocks: Vec<Block>,
+    /// Row by row, with no running reaction's covering.
+    tiles: Vec<Vec<Tile>>,
+}
+
+/// The cells the last call imported, kept so that the next imports only the cells whose blocks
+/// differ from the ones they came from. Every cell is compared, so whoever wrote a block since,
+/// the cell is imported again from what it is now: no writer is trusted to say what it wrote.
+#[derive(Debug, Default)]
+struct Imports(Mutex<Option<ImportedRoom>>);
+
+impl Clone for Imports {
+    /// A copy starts with nothing imported, which only costs its first call a full import.
+    fn clone(&self) -> Self {
+        Self::default()
+    }
+}
+
+impl PartialEq for Imports {
+    /// What is kept changes no call's result, so any two are alike.
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}
+
+impl Eq for Imports {}
 
 /// The model's look of a tile.
 fn look(tile: data::level::Tile) -> Option<Look> {
@@ -305,8 +340,7 @@ impl BlockContent {
         let mut content = Self {
             imported: reactions.clone(),
             reactions: held,
-            marks: Vec::new(),
-            inside: Vec::new(),
+            ..Self::default()
         };
         content.marks = AREAS
             .iter()
@@ -451,16 +485,76 @@ impl BlockContent {
         places: &Places,
     ) -> Result<Vec<Vec<Tile>>, u16> {
         let tables = self.area(area);
+        let mut rows = tables.rows(blocks, width)?;
+        self.cover(&mut rows, blocks, width, tables, places)?;
+        Ok(rows)
+    }
+
+    /// [`Self::tiles`], starting from the last call's import: only the cells whose blocks
+    /// differ from the ones they were imported from are imported again.
+    fn kept_tiles(
+        &self,
+        blocks: &[Block],
+        width: u16,
+        area: Area,
+        places: &Places,
+    ) -> Result<Vec<Vec<Tile>>, u16> {
+        let tables = self.area(area);
+        let mut kept = self
+            .imports
+            .0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let room = match kept.take() {
+            Some(mut room)
+                if room.area == area
+                    && room.width == width
+                    && room.blocks.len() == blocks.len() =>
+            {
+                let pairs = blocks.iter().zip(room.blocks.iter_mut());
+                for (index, (&block, was)) in (0_u16..).zip(pairs) {
+                    if block == *was {
+                        continue;
+                    }
+                    let at = Cell {
+                        x: index.checked_rem(width).unwrap_or(index),
+                        y: index.checked_div(width).unwrap_or(0),
+                    };
+                    let cell = room
+                        .tiles
+                        .get_mut(usize::from(at.y))
+                        .and_then(|row| row.get_mut(usize::from(at.x)));
+                    if let Some(cell) = cell {
+                        *cell = tables.tile(block, None).ok_or(index)?;
+                    }
+                    *was = block;
+                }
+                room
+            }
+            Some(_) | None => ImportedRoom {
+                area,
+                width,
+                blocks: blocks.to_vec(),
+                tiles: tables.rows(blocks, width)?,
+            },
+        };
+        let mut rows = room.tiles.clone();
+        *kept = Some(room);
+        drop(kept);
+        self.cover(&mut rows, blocks, width, tables, places)?;
+        Ok(rows)
+    }
+
+    /// Lay the coverings of the running reactions of `places` over `rows`.
+    fn cover(
+        &self,
+        rows: &mut [Vec<Tile>],
+        blocks: &[Block],
+        width: u16,
+        tables: AreaTables<'_>,
+        places: &Places,
+    ) -> Result<(), u16> {
         let index = |at: Cell| at.y.wrapping_mul(width).wrapping_add(at.x);
-        let mut rows = (0_u16..)
-            .zip(blocks.chunks_exact(usize::from(width.max(1))))
-            .map(|(y, row)| {
-                (0_u16..)
-                    .zip(row)
-                    .map(|(x, &block)| tables.tile(block, None).ok_or_else(|| index(Cell { x, y })))
-                    .collect::<Result<Vec<_>, _>>()
-            })
-            .collect::<Result<Vec<_>, _>>()?;
         // In reverse, so a reaction's own cell wins over another's covering of the same cell.
         for &(at, covering) in self.coverings(places).iter().rev() {
             let block = blocks.get(usize::from(index(at)));
@@ -473,7 +567,7 @@ impl BlockContent {
                     .ok_or_else(|| index(at))?;
             }
         }
-        Ok(rows)
+        Ok(())
     }
 }
 
@@ -487,6 +581,23 @@ struct AreaTables<'a> {
 }
 
 impl AreaTables<'_> {
+    /// The model's cells of the level `blocks`, `width` cells across, with no covering, row by
+    /// row: `Err` with the level index of the first cell the importer refuses.
+    fn rows(self, blocks: &[Block], width: u16) -> Result<Vec<Vec<Tile>>, u16> {
+        (0_u16..)
+            .zip(blocks.chunks_exact(usize::from(width.max(1))))
+            .map(|(y, row)| {
+                (0_u16..)
+                    .zip(row)
+                    .map(|(x, &block)| {
+                        self.tile(block, None)
+                            .ok_or_else(|| y.wrapping_mul(width).wrapping_add(x))
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
     /// A reacting cell's mark; `None` where the importer refuses it.
     fn reacting_mark(self, kind: BlockKind) -> Option<Mark> {
         self.marks.get(mark_entry(kind)?)?.clone()
@@ -698,7 +809,7 @@ fn state(
         }
     }
     let rows = content
-        .tiles(&room.blocks, room.width.0, room.area, &model)
+        .kept_tiles(&room.blocks, room.width.0, room.area, &model)
         .map_err(|at| BlocksFault::Refused(BlockIndex(at)))?;
     for (index, place_of) in model.0.iter_mut().enumerate() {
         if !places.contains(&index) {
@@ -794,11 +905,21 @@ fn place_fault(number: usize) -> BlocksFault {
 }
 
 /// One call's model: the State of the room as the call found it, stepped through the call.
+///
+/// A step writes only the cells it names: a request's or a placement's own, and those a show or
+/// a regrow writes, which its report lists (`WhatTheScreenRedraws`). The call keeps those cells
+/// as they were and writes back the ones that changed; the harness compares the model's whole
+/// room with the original's, so a write the model doesn't name is a mismatch there.
 struct Call<'a> {
     content: &'a BlockContent,
-    /// The State as built, which tells the cells and screens the call wrote.
-    built: State,
     state: State,
+    /// The cells a step may write, as the call found them; a cell a run wrote that isn't here
+    /// is written back whatever it was.
+    watched: BTreeMap<(u16, u16), Tile>,
+    /// The cells the call's runs wrote.
+    written: Vec<Cell>,
+    /// The screens as the call found them.
+    screens: Grid<ScreenKind>,
 }
 
 impl<'a> Call<'a> {
@@ -808,12 +929,25 @@ impl<'a> Call<'a> {
         reads: Reads<'a>,
         places: &Range<usize>,
     ) -> Result<Self, BlocksFault> {
-        let built = state(room, reads.content, reads.population, places)?;
+        let state = state(room, reads.content, reads.population, places)?;
         Ok(Self {
             content: reads.content,
-            state: built.clone(),
-            built,
+            watched: BTreeMap::new(),
+            written: Vec::new(),
+            screens: state.screens.clone(),
+            state,
         })
+    }
+
+    /// Keep `cells` as they are now, before a step that may write them.
+    fn watch(&mut self, cells: impl IntoIterator<Item = Cell>) {
+        for at in cells {
+            if let (Some(tile), std::collections::btree_map::Entry::Vacant(entry)) =
+                (self.state.tiles.get(at), self.watched.entry((at.x, at.y)))
+            {
+                entry.insert(tile.clone());
+            }
+        }
     }
 
     /// One step of the model: `step` changes the State, and each place it changes is written
@@ -882,6 +1016,7 @@ impl<'a> Call<'a> {
                 Some(_) => HoldBody::Held,
                 None => return Err(BlocksFault::Outside(at)),
             };
+        self.watch([at]);
         self.step(room, Phase::Request(block_index, hold), |state| {
             state.step(rules(), &[request], Set::default(), Run::Paused)
         })?;
@@ -891,25 +1026,21 @@ impl<'a> Call<'a> {
     /// Write the cells and the screens the call changed into `room`.
     fn write_back(&self, room: &mut RoomScoped) -> Result<(), BlocksFault> {
         let width = room.width.0;
-        let rows = self.state.tiles.rows().iter().zip(self.built.tiles.rows());
-        for (y, (after, before)) in (0_u16..).zip(rows) {
-            for (x, (after, before)) in (0_u16..).zip(after.iter().zip(before)) {
-                if after == before {
-                    continue;
-                }
-                let at = index(Cell { x, y }, width);
-                if let Some(cell) = room.blocks.get_mut(usize::from(at.0)) {
-                    *cell = block(*cell, after, at)?;
-                }
+        let watched = self.watched.keys().map(|&(x, y)| Cell { x, y });
+        for at in watched.chain(self.written.iter().copied()) {
+            let Some(after) = self.state.tiles.get(at) else {
+                continue;
+            };
+            if self.watched.get(&(at.x, at.y)) == Some(after) {
+                continue;
+            }
+            let index = index(at, width);
+            if let Some(cell) = room.blocks.get_mut(usize::from(index.0)) {
+                *cell = block(*cell, after, index)?;
             }
         }
         let across = screens_across(room);
-        let rows = self
-            .state
-            .screens
-            .rows()
-            .iter()
-            .zip(self.built.screens.rows());
+        let rows = self.state.screens.rows().iter().zip(self.screens.rows());
         for (y, (after, before)) in (0_u16..).zip(rows) {
             for (x, (&after, &before)) in (0_u16..).zip(after.iter().zip(before)) {
                 if after == before {
@@ -1100,9 +1231,17 @@ pub fn run(
         return Ok(());
     }
     let mut call = Call::new(room, reads, &places)?;
+    let covered: Vec<Cell> = reads
+        .content
+        .coverings(&call.state.places)
+        .into_iter()
+        .map(|(at, _)| at)
+        .collect();
+    call.watch(covered);
     let (_, report) = call.step(room, Phase::Run, |state| {
         state.step(rules(), &[], Set::default(), Run::Runs)
     })?;
+    call.written.extend(report.written.iter().copied());
     call.write_back(room)?;
     let width = room.width.0;
     for &at in &report.written {
@@ -1178,6 +1317,7 @@ pub fn start_room(
             PlmKind::Scroll(id) => Some(id),
             PlmKind::Extension(_) | PlmKind::Item(..) | PlmKind::Unmodelled(_) => None,
         };
+        call.watch(placement.cell());
         let (took, ()) = call.step(room, Phase::RoomStart(named), |state| {
             state.start_room(core::slice::from_ref(&placement))
         })?;

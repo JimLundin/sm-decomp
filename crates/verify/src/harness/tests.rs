@@ -326,7 +326,7 @@ fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
             Ok(report) => report,
             Err(error) => panic!("{row}: {error}"),
         };
-        let _ = write!(std::io::stdout(), "{row}: {report}");
+        let _ = write!(std::io::stdout(), "{row}: {report}{}", domain.row_notes());
         match floors.get(row.as_str()) {
             Some(&floor) if report.matched >= floor => {}
             Some(&floor) => failures.push(format!("{row}: {} < floor {floor}", report.matched)),

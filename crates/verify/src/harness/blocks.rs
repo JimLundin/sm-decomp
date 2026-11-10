@@ -402,6 +402,8 @@ pub struct BlocksDomain {
     lists: RefCell<BTreeMap<(u16, u16), Vec<ScreenChange>>>,
     /// The frame in hand, set in `world`.
     frame: RefCell<Frame>,
+    /// The row's masked cell-frames so far, by their writer.
+    masked: RefCell<BTreeMap<u16, u64>>,
 }
 
 /// The level's layer 1 sources.
@@ -452,6 +454,7 @@ impl BlocksDomain {
             rules: Rules::reference(),
             lists: RefCell::new(BTreeMap::new()),
             frame: RefCell::new(Frame::default()),
+            masked: RefCell::new(BTreeMap::new()),
         })
     }
 
@@ -1081,7 +1084,23 @@ impl Domain for BlocksDomain {
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
-        Ok(self.declared(&self.decode_record(next)?.state))
+        let declared = self.declared(&self.decode_record(next)?.state);
+        let mut masked = self.masked.borrow_mut();
+        for &Writer(plm) in declared.cells.masked.values() {
+            let count = masked.entry(plm).or_default();
+            *count = count.saturating_add(1);
+        }
+        Ok(declared)
+    }
+
+    fn row_notes(&self) -> String {
+        use fmt::Write as _;
+        let masked = core::mem::take(&mut *self.masked.borrow_mut());
+        let mut notes = String::new();
+        for (&plm, cells) in &masked {
+            let _ = writeln!(notes, "  masked {cells} cell-frames: {:?}", Writer(plm));
+        }
+        notes
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {

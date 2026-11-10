@@ -273,6 +273,13 @@ pub trait Domain {
     fn folds(&self, _from: &FrameRecord, _next: &FrameRecord) -> bool {
         false
     }
+
+    /// What the domain tells about the row it last ran beyond its report, such as how much its
+    /// masks hid, each line ending in a newline; nothing by default. Reading it starts the next
+    /// row's afresh.
+    fn row_notes(&self) -> String {
+        String::new()
+    }
 }
 
 /// A field's value at a frame where the model and the oracle disagree.

@@ -352,3 +352,23 @@ fn a_request_past_the_rooms_last_row_is_refused() {
     );
     assert_eq!(room, before);
 }
+
+/// The cells kept from one call to the next: a block another writer changes in between is
+/// imported again, so the next call meets it as it is now.
+#[test]
+fn a_block_written_between_calls_is_met_as_it_is_now() {
+    let content = content();
+    let population = population();
+    let mut room = loaded(&content);
+    pass(&mut room, &content);
+    room.blocks[usize::from(TARGET.0)].kind = SHOT;
+    hit(&mut room, reads(&content, &population), TARGET, HitBy::Beam).unwrap();
+    assert!(matches!(
+        room.plms.slots[38].occupancy,
+        Occupancy::Live(PlmBody::Reaction(_))
+    ));
+    room.blocks[usize::from(TARGET.0)].kind = BlockKind::Solid(Bts(0));
+    let before = room.plms.slots[37].occupancy;
+    hit(&mut room, reads(&content, &population), TARGET, HitBy::Beam).unwrap();
+    assert_eq!(room.plms.slots[37].occupancy, before);
+}
