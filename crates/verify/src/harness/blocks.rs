@@ -34,12 +34,12 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use clean_model_blocks::{
-    BehaviourId, CATALOGUE, CellKind, Frames, Grid, Mark, Place, Places, ReactingBody,
-    ReactionName, Request, Rules, Run, Running, ScreenChange, ScrollReaction, State, Step, Tile,
-    Touched,
+    BehaviourId, CATALOGUE, CellKind, Frames, Grid, Mark, Meeting, OtherMetAs, Place, Places,
+    ReactingBody, ReactionName, Request, Rules, Run, Running, ScreenChange, ScrollReaction, State,
+    Step, Tile, Touched,
 };
 use clean_types::{Cell, Family, Heading, HitBy, Look, Motion, Pair, Point, ScreenKind, Script};
-use clean_types::{Set, Touch, Way};
+use clean_types::{Set, Way};
 use data::blocks::{ReactionId, Reactions as Imported, Runs};
 use data::level::{Block, ScrollArea};
 use data::rom::{Lorom, RomAddress};
@@ -651,25 +651,21 @@ fn fresh(from: &Places, next: &Places) -> Vec<(usize, Running, Started)> {
 
 /// The request a start of `started` on `at` makes, for a hit or a touch the hits don't name:
 /// the bomb block's weapon by the step it starts from.
-fn stand_in(started: Started, at: Cell, next: usize) -> Request {
-    let hit = |by| Request::Hit { cell: at, by };
-    match started {
-        Started::Reveal => hit(HitBy::Bomb),
-        Started::Family(Family::Crumble) => Request::Touch(Touch {
-            cell: at,
-            way: Way::Move(Heading::Down),
-        }),
-        Started::Family(Family::Speed) | Started::BombTouched => Request::Touch(Touch {
-            cell: at,
-            way: Way::Move(Heading::Right),
-        }),
-        Started::BombHit if next == 1 => hit(HitBy::Bomb),
-        Started::BombHit | Started::Family(Family::PowerBomb | Family::Bomb) => {
-            hit(HitBy::PowerBomb)
+const fn stand_in(started: Started, at: Cell, next: usize) -> Request {
+    let meeting = match started {
+        Started::Reveal => Meeting::Hit(HitBy::Bomb),
+        Started::Family(Family::Crumble) => Meeting::Touch(Way::Move(Heading::Down)),
+        Started::Family(Family::Speed) | Started::BombTouched => {
+            Meeting::Touch(Way::Move(Heading::Right))
         }
-        Started::Family(Family::Shot) => hit(HitBy::Beam),
-        Started::Family(Family::SuperMissile) => hit(HitBy::SuperMissile),
-    }
+        Started::BombHit if next == 1 => Meeting::Hit(HitBy::Bomb),
+        Started::BombHit | Started::Family(Family::PowerBomb | Family::Bomb) => {
+            Meeting::Hit(HitBy::PowerBomb)
+        }
+        Started::Family(Family::Shot) => Meeting::Hit(HitBy::Beam),
+        Started::Family(Family::SuperMissile) => Meeting::Hit(HitBy::SuperMissile),
+    };
+    Request::Meets { cell: at, meeting }
 }
 
 /// The frame's requests, from its watched instruction hits and the starts record N+1 shows; a
@@ -707,13 +703,14 @@ fn requests(
             if let Some(place) = pending.iter().position(|(_, _, of)| *of == started) {
                 let (_, running, _) = pending.remove(place);
                 let cell = running.cell;
-                let request = match (started, branch) {
-                    (Started::BombHit, Some(by)) => Request::Hit { cell, by },
-                    (Started::BombHit, None) => Request::Hit {
+                let request = match started {
+                    Started::BombHit => Request::Meets {
                         cell,
-                        by: HitBy::Bomb,
+                        meeting: Meeting::Hit(branch.unwrap_or(HitBy::Bomb)),
                     },
-                    _ => stand_in(started, cell, running.next),
+                    Started::Family(_) | Started::BombTouched | Started::Reveal => {
+                        stand_in(started, cell, running.next)
+                    }
                 };
                 requests.push((request, Source::Heard));
             }
@@ -744,17 +741,12 @@ fn requests(
                 touched.first().copied()
             };
             if let Some((_, cell)) = pick {
-                let request = if centre {
-                    Request::Inside {
-                        cell,
-                        point: Point::Centre,
-                    }
+                let meeting = if centre {
+                    Meeting::Inside(Point::Centre)
                 } else {
-                    Request::Touch(Touch {
-                        cell,
-                        way: Way::Move(Heading::Down),
-                    })
+                    Meeting::Touch(Way::Move(Heading::Down))
                 };
+                let request = Request::Meets { cell, meeting };
                 requests.push((request, Source::Heard));
             }
         } else if pc == REFUSED {
@@ -788,8 +780,7 @@ const fn started(family: Family, script: Script) -> BehaviourId {
 /// The cells `requests` name.
 fn named(requests: &[(Request, Source)]) -> impl Iterator<Item = Cell> + '_ {
     requests.iter().filter_map(|(request, _)| match *request {
-        Request::Inside { cell, .. } | Request::Hit { cell, .. } => Some(cell),
-        Request::Touch(touch) => Some(touch.cell),
+        Request::Meets { cell, .. } => Some(cell),
         Request::OtherPart => None,
     })
 }
@@ -938,29 +929,35 @@ impl Domain for BlocksDomain {
         if before.0.iter().any(touched) {
             did.push(B::ScrollCells);
         }
-        if requests
-            .iter()
-            .any(|request| matches!(request, Request::Touch(_)))
-        {
+        if requests.iter().any(|request| {
+            matches!(
+                request,
+                Request::Meets {
+                    meeting: Meeting::Touch(_),
+                    ..
+                }
+            )
+        }) {
             did.push(B::AnswersToHerMotion);
-            if before.full() {
+            if !before.0.contains(&Place::Free) {
                 did.push(B::FullPlacesLetHerThrough);
             }
         }
         for request in &requests {
             let at = match *request {
-                Request::Inside { cell, .. } | Request::Hit { cell, .. } => Some(cell),
-                Request::Touch(touch) => Some(touch.cell),
+                Request::Meets { cell, .. } => Some(cell),
                 Request::OtherPart => None,
             };
             match at.and_then(|at| state.tiles.get(at)).map(|tile| &tile.mark) {
                 Some(Mark::Scroll) => did.push(B::ScrollCells),
-                Some(Mark::Nothing(_) | Mark::Other(Some(_))) => did.push(B::BlocksMarkedNothing),
+                Some(Mark::Nothing(_) | Mark::Other(OtherMetAs::Crumble)) => {
+                    did.push(B::BlocksMarkedNothing);
+                }
                 Some(
                     Mark::Unmarked
                     | Mark::Reaction(_)
                     | Mark::Inert
-                    | Mark::Other(None)
+                    | Mark::Other(OtherMetAs::NoFamily)
                     | Mark::Reach(_),
                 )
                 | None => {}

@@ -390,8 +390,17 @@ pub enum Mark {
     Nothing(MetAs),
     /// Reacts to nothing and holds no place.
     Inert,
-    /// Another part's cell; with the family a blast meets it as, if any.
-    Other(Option<MetAs>),
+    /// Another part's cell, with what a blast meets it as.
+    Other(OtherMetAs),
+}
+
+/// What a blast meets another part's cell as.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OtherMetAs {
+    /// No family's blocks: only its part answers it.
+    NoFamily,
+    /// Crumble blocks, as a station's access cells are.
+    Crumble,
 }
 
 /// Why the importer refuses a cell or a reaction.
@@ -923,9 +932,9 @@ impl Reactions {
                 } else if nybble == 0xb
                     && at(&self.tables.special_bombed).is_some_and(|plm| NOTHING.contains(&plm))
                 {
-                    Mark::Other(Some(MetAs::Crumble))
+                    Mark::Other(OtherMetAs::Crumble)
                 } else {
-                    Mark::Other(None)
+                    Mark::Other(OtherMetAs::NoFamily)
                 }
             }
             0x4 | 0xc => {
@@ -936,7 +945,7 @@ impl Reactions {
                     if plm.is_some_and(|plm| NOTHING.contains(&plm)) {
                         Mark::Nothing(MetAs::Shot)
                     } else {
-                        known(plm).unwrap_or(Mark::Other(None))
+                        known(plm).unwrap_or(Mark::Other(OtherMetAs::NoFamily))
                     }
                 }
             }
@@ -948,7 +957,7 @@ impl Reactions {
                     if plm.is_some_and(|plm| NOTHING.contains(&plm)) {
                         Mark::Nothing(MetAs::Bomb)
                     } else {
-                        known(plm).unwrap_or(Mark::Other(None))
+                        known(plm).unwrap_or(Mark::Other(OtherMetAs::NoFamily))
                     }
                 }
             }

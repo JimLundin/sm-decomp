@@ -33,9 +33,9 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 
 use clean_model_blocks::{
-    Becomes, CellKind, Frames, Grid, Inside, Mark, OutsideTheRoom, PatternCell, Place, Placement,
-    Places, ReactingBody, Reaction, ReactionName, Request, Rules, Run, Running, ScreenChange,
-    ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
+    Becomes, CellKind, Frames, Grid, Inside, Mark, Meeting, OtherMetAs, OutsideTheRoom,
+    PatternCell, Place, Placement, Places, ReactingBody, Reaction, ReactionName, Request, Rules,
+    Run, Running, ScreenChange, ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
 };
 use clean_types::{Cell, Family, Flip, HitBy, Look, MetAs, Pair, Picture, Point, ScreenKind};
 use clean_types::{Script, Set, Touch};
@@ -373,7 +373,7 @@ impl BlockContent {
             reactions: reactions.into_iter().map(imported).collect(),
             ..Self::default()
         };
-        let mut row = vec![Some(Mark::Other(None)); MARK_ROW];
+        let mut row = vec![Some(Mark::Other(OtherMetAs::NoFamily)); MARK_ROW];
         for &(kind, mark) in marks {
             if let Some(entry) = mark_entry(kind).and_then(|entry| row.get_mut(entry)) {
                 *entry = Some(content.mark(mark)?);
@@ -423,7 +423,10 @@ impl BlockContent {
             asset::Mark::Scroll => Mark::Scroll,
             asset::Mark::Nothing(met) => Mark::Nothing(met),
             asset::Mark::Inert => Mark::Inert,
-            asset::Mark::Other(met) => Mark::Other(met),
+            asset::Mark::Other(met) => Mark::Other(match met {
+                asset::OtherMetAs::NoFamily => OtherMetAs::NoFamily,
+                asset::OtherMetAs::Crumble => OtherMetAs::Crumble,
+            }),
         })
     }
 
@@ -886,16 +889,6 @@ fn reaction_place(running: &Running, content: &BlockContent) -> Option<ReactionP
     })
 }
 
-/// The cell `request` names, if it names one.
-const fn request_cell(request: Request) -> Option<Cell> {
-    match request {
-        Request::Inside { cell, .. }
-        | Request::Hit { cell, .. }
-        | Request::Touch(Touch { cell, .. }) => Some(cell),
-        Request::OtherPart => None,
-    }
-}
-
 /// The cell `placement` places, if it places one.
 const fn placement_cell(placement: &Placement) -> Option<Cell> {
     match placement {
@@ -1012,12 +1005,14 @@ impl<'a> Call<'a> {
         Ok((taken, stepped))
     }
 
-    /// One of the frame's requests, its run paused: the run is the PLM pass's. Its cell is one of
-    /// the room's, or the call stops.
-    fn request(&mut self, room: &mut RoomScoped, request: Request) -> Result<(), BlocksFault> {
-        let Some(at) = request_cell(request) else {
-            return Ok(());
-        };
+    /// One of the frame's requests, the cell `at` met by `meeting`, its run paused: the run is the
+    /// PLM pass's. Its cell is one of the room's, or the call stops.
+    fn request(
+        &mut self,
+        room: &mut RoomScoped,
+        at: Cell,
+        meeting: Meeting,
+    ) -> Result<(), BlocksFault> {
         let block_index = index(at, room.width.0);
         let hold =
             match self.state.tiles.get(at).map(|tile| &tile.mark) {
@@ -1036,6 +1031,7 @@ impl<'a> Call<'a> {
             };
         self.watch([at]);
         self.step(room, Phase::Request(block_index, hold), |state| {
+            let request = Request::Meets { cell: at, meeting };
             state.step(rules(), &[request], Set::default(), Run::Paused)
         })?;
         Ok(())
@@ -1160,15 +1156,16 @@ impl Change<'_> {
     }
 }
 
-/// The requests `asked`, in order, on one State of the room, then the cells written back.
+/// The cells `met`, each met its way, in order, on one State of the room, then the cells written
+/// back.
 fn requests(
     room: &mut RoomScoped,
     reads: Reads<'_>,
-    asked: impl IntoIterator<Item = Request>,
+    met: impl IntoIterator<Item = (Cell, Meeting)>,
 ) -> Result<(), BlocksFault> {
     let mut call = Call::new(room, reads, &(0..room.plms.slots.len()))?;
-    for request in asked {
-        call.request(room, request)?;
+    for (at, meeting) in met {
+        call.request(room, at, meeting)?;
     }
     call.write_back(room)
 }
@@ -1191,10 +1188,9 @@ pub fn inside(
     requests(
         room,
         reads,
-        points.iter().map(|&(block, point)| Request::Inside {
-            cell: cell(block, width),
-            point,
-        }),
+        points
+            .iter()
+            .map(|&(block, point)| (cell(block, width), Meeting::Inside(point))),
     )
 }
 
@@ -1210,7 +1206,7 @@ pub fn hit(
     by: HitBy,
 ) -> Result<(), BlocksFault> {
     let at = cell(block, room.width.0);
-    requests(room, reads, [Request::Hit { cell: at, by }])
+    requests(room, reads, [(at, Meeting::Hit(by))])
 }
 
 /// `AnswersToHerMotion`: the cells her moves or looks reached, in order, each stand-in already
@@ -1224,7 +1220,13 @@ pub fn touches(
     reads: Reads<'_>,
     touches: &[Touch],
 ) -> Result<(), BlocksFault> {
-    requests(room, reads, touches.iter().copied().map(Request::Touch))
+    requests(
+        room,
+        reads,
+        touches
+            .iter()
+            .map(|&Touch { cell, way }| (cell, Meeting::Touch(way))),
+    )
 }
 
 /// `TheScriptsRun`: the run of the places in `places`, from the highest down, the cells it
@@ -1336,14 +1338,18 @@ pub fn start_room(
             PlmKind::Extension(_) | PlmKind::Item(..) | PlmKind::Unmodelled { .. } => None,
         };
         call.watch(placement_cell(&placement));
+        let stand_in = match placement {
+            Placement::StandIn { cell, .. } => Some(cell),
+            Placement::Scroll { .. } | Placement::OtherPart => None,
+        };
         let (took, ()) = call.step(room, Phase::RoomStart(named), |state| {
-            state.start_room(core::slice::from_ref(&placement))
+            state.start_room([placement])
         })?;
-        if let (Placement::StandIn { cell: at, .. }, Some(slot)) = (
-            &placement,
+        if let (Some(at), Some(slot)) = (
+            stand_in,
             free.and_then(|free| room.plms.slots.get_mut(free)),
         ) {
-            fill(slot, index(*at, room.width.0), Occupancy::Free);
+            fill(slot, index(at, room.width.0), Occupancy::Free);
         }
         taken.push(took.first().copied());
     }
