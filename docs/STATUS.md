@@ -16,33 +16,33 @@ harness row falls below its floor.
 Each command needs the ROM (`rom/sm.smc`) and data from ci-data, decrypted as
 [ORACLE §7](ORACLE.md#7-data-the-rom-bundles-and-the-cipher) shows: `BUNDLE` is the relock bundle's
 `relock-v2-lsnes/` directory, `CACHE` the unpacked lockstep record cache (one directory per row).
-Build with `cargo build --release -p tools`; where Defender blocks fresh executables, run the
+Build with `cargo build --profile verify -p tools`; where Defender blocks fresh executables, run the
 tests through `tools/lane/run_tests.sh` instead (the ratchet has a test form).
 
 ```sh
 # Lockstep: one row's report, then its ratchet lines.
-target/release/tools lockstep scenarios/locks/lsnes.toml CACHE rom/sm.smc item-morph-ball
+target/verify/tools lockstep scenarios/locks/lsnes.toml CACHE rom/sm.smc item-morph-ball
 # The lockstep ratchet: exit 1 when an equal count falls or a group's count rises; prints the
 # lines to commit when counts improve.
-target/release/tools lockstep --check-ratchet scenarios/locks/lsnes.toml CACHE rom/sm.smc \
+target/verify/tools lockstep --check-ratchet scenarios/locks/lsnes.toml CACHE rom/sm.smc \
   scenarios/locks/lockstep.ratchet.txt
 # The same check as CI runs it, as a test.
-SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --release -p verify committed_ratchet_holds_against_the_cache
+SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify committed_ratchet_holds_against_the_cache
 # The free-run gate: fails when a listed pair isn't green; --update adds new green pairs.
-target/release/tools gate scenarios/locks/lsnes.toml BUNDLE rom/sm.smc \
+target/verify/tools gate scenarios/locks/lsnes.toml BUNDLE rom/sm.smc \
   scenarios/locks/lsnes.green.txt area-brinstar item-morph-ball
 # The free-run localiser: each field group's first differing frame in a free run.
-target/release/tools localise scenarios/locks/lsnes.toml BUNDLE CACHE rom/sm.smc item-morph-ball
+target/verify/tools localise scenarios/locks/lsnes.toml BUNDLE CACHE rom/sm.smc item-morph-ball
 # The domain harness (MODEL §4): the clock's model against every cached oracle frame.
-target/release/tools harness game-time scenarios/locks/lsnes.toml CACHE area-brinstar item-morph-ball
+target/verify/tools harness game-time scenarios/locks/lsnes.toml CACHE area-brinstar item-morph-ball
 # The harness as tests, each domain held to its floors over every row cached in CACHE.
-SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --release -p verify the_clock_holds_its_floors_against_the_cache
-SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --release -p verify samus_motion_holds_its_floors_against_the_cache
+SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify the_clock_holds_its_floors_against_the_cache
+SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify samus_motion_holds_its_floors_against_the_cache
 ```
 
 Commit a ratchet file only with the change that moved its numbers, and never edit a line by hand
-to make a check pass. Speed: `cargo run --release -p game --example empty_ticks` and
-`cargo run --release -p runtime --example compose_bench`, against ARCHITECTURE §12.
+to make a check pass. Speed: `cargo run --profile verify -p game --example empty_ticks` and
+`cargo run --profile verify -p runtime --example compose_bench`, against ARCHITECTURE §12.
 
 ## Making the record cache
 

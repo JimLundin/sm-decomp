@@ -36,9 +36,9 @@ jobs:
       - name: Test the rebuild's crates
         run: cargo test --locked -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_blocks -p clean_model_camera -p clean_model_hud -p clean_model_progress --no-fail-fast
       - name: "Report the empty Tick rate (B1 target: 50k Ticks/s)"
-        run: cargo run --locked --release -p game --example empty_ticks
+        run: cargo run --locked --profile verify -p game --example empty_ticks
       - name: "Report the compositor time per frame (A5 target: 0.3 ms)"
-        run: cargo run --locked --release -p runtime --example compose_bench
+        run: cargo run --locked --profile verify -p runtime --example compose_bench
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
         run: bash tools/check_crate_rules.sh

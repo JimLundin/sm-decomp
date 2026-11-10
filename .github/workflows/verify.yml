@@ -85,11 +85,11 @@ jobs:
             -in "$RUNNER_TEMP/relock.tar.gz.enc" | tar -xz -C "$RUNNER_TEMP/relock"
           rm "$RUNNER_TEMP/relock.tar.gz.enc"
       - name: Build tools
-        run: cargo build --locked --release -p tools
+        run: cargo build --locked --profile verify -p tools
       - name: "Free-run gate: slice-0 rows against the green ratchet"
         run: |
           # shellcheck disable=SC2086 # ROWS is a list of row ids.
-          target/release/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \
+          target/verify/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \
             rom/sm.smc scenarios/locks/lsnes.green.txt $ROWS
 
   # The lockstep ratchet (scenarios/locks/lockstep.ratchet.txt): each row's record cache
@@ -138,7 +138,7 @@ jobs:
           # A renamed test would filter to nothing and pass, so require its report.
           set -o pipefail
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --release committed_ratchet_holds_against_the_cache -- --nocapture \
+            cargo test --locked -p verify --profile verify committed_ratchet_holds_against_the_cache -- --nocapture \
             | tee "$RUNNER_TEMP/ratchet.txt"
           grep -q '^ratchet holds: ' "$RUNNER_TEMP/ratchet.txt"
       - name: "Harness floors: every domain over every cached row against floors.txt and coverage.txt"
@@ -146,7 +146,7 @@ jobs:
           # A renamed test would filter to nothing and pass, so require each domain's result.
           set -o pipefail
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --release floors_against_the_cache \
+            cargo test --locked -p verify --profile verify floors_against_the_cache \
             | tee "$RUNNER_TEMP/floors.txt"
           for test in the_clock_holds_its samus_motion_holds_its the_camera_holds_its \
             progress_holds_its the_hud_holds_its the_blocks_hold_their; do
@@ -159,7 +159,7 @@ jobs:
           # sets; a renamed test would filter to nothing and pass, so require each one's result.
           set -o pipefail
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --release -- \
+            cargo test --locked -p verify --profile verify -- \
               progress_harness_cases_hold_against_the_cache \
               progress_chooses_each_rows_standing_room_state \
               every_item_the_game_places_counts_a_hundred_percent \

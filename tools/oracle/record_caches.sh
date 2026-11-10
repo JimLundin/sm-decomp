@@ -20,7 +20,7 @@
 # hash is skipped. One line per row on stdout: `<row> cached|recorded|failed ...`; each row's
 # corpus output is kept in `<cache>/.logs/<row>.log`.
 #
-# ORACLE is the command that runs the oracle's command line, default `target/release/oracle`.
+# ORACLE is the command that runs the oracle's command line, default `target/verify/oracle`.
 # Where Defender blocks fresh executables (docs/ORACLE.md §8), it is the Python DLL runner, for
 # example ORACLE="python $TEMP/collab/run.py $TEMP/collab/oracle_cache.dll".
 set -euo pipefail
@@ -37,7 +37,7 @@ cache=$5
 jobs=${6:-8}
 here=$(cd "$(dirname "$0")/../.." && pwd)
 lock=$here/scenarios/lock.toml
-read -r -a oracle <<<"${ORACLE:-$here/target/release/oracle}"
+read -r -a oracle <<<"${ORACLE:-$here/target/verify/oracle}"
 
 for directory in "$bundle/pads" "$bundle/seeds"; do
   if [ ! -d "$directory" ]; then

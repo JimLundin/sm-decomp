@@ -13,11 +13,11 @@ case "$(uname -s)" in
     DIR="${SM_SCAN_DLL_DIR:-$TEMP/sm-cleanroom}"
     mkdir -p "$DIR"
     DLL="$DIR/cleanroom.dll"
-    "$R/cargo.exe" rustc -q --release -p tools --bin cleanroom -- \
+    "$R/cargo.exe" rustc -q --profile verify -p tools --bin cleanroom -- \
       -C link-arg=-shared -C link-arg=-o -C "link-arg=$(cygpath -m "$DLL" 2>/dev/null || echo "$DLL")" >&2
     exec "$PY" -I tools/lane/test_dll.py --run "$DLL" "$@"
     ;;
   *)
-    exec cargo run -q --release -p tools --bin cleanroom -- "$@"
+    exec cargo run -q --profile verify -p tools --bin cleanroom -- "$@"
     ;;
 esac

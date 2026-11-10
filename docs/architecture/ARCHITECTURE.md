@@ -479,8 +479,8 @@ Lockstep steps the engine one Tick from each decoded oracle cut and names the fi
 | free run against the lock, every stream including `video` | ≥ 1,000 Ticks/s on one CI core |
 | free run, picture off | ≥ 3,000 Ticks/s |
 | headless engine, no verification | ≥ 5,000 Ticks/s |
-| empty Ticks, the Session's fixed cost (`cargo run --release -p game --example empty_ticks`) | ≥ 50,000 Ticks/s |
-| compositor per frame on a busy screen (`cargo run --release -p runtime --example compose_bench`) | ≤ 0.3 ms, a third of the 1,000 Ticks/s budget |
+| empty Ticks, the Session's fixed cost (`cargo run --profile verify -p game --example empty_ticks`) | ≥ 50,000 Ticks/s |
+| compositor per frame on a busy screen (`cargo run --profile verify -p runtime --example compose_bench`) | ≤ 0.3 ms, a third of the 1,000 Ticks/s budget |
 
 Quality reports the last two. Digests fold at quiescent cuts only; VRAM's digest follows the Tick's
 uploads instead of rehashing 64 KiB; the compositor's fast path takes lines with no mid-line change

@@ -35,11 +35,21 @@ dbg_macro = "deny"
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
 
+# The shipped game: `cargo build --release -p app`. One code generation unit and whole-program
+# link-time optimisation, the slowest build and the fastest engine.
 [profile.release]
+lto = "fat"
+codegen-units = 1
+
+# The verifiers, their tests and the benchmarks: `--profile verify`, built into target/verify/.
+# Rebuilt on nearly every change, so it reuses unchanged code (incremental) and keeps the usual
+# partitioning; `lto = false` undoes what it would inherit from the shipped build.
+[profile.verify]
+inherits = "release"
 debug = "line-tables-only"
-# Reuse unchanged code during verification; retain the usual release partitioning.
 incremental = true
 codegen-units = 16
+lto = false
 
 # The registry crates whose build scripts the development machine can't run (Defender blocks a
 # freshly built executable): each is its published copy with the script's output baked in, by

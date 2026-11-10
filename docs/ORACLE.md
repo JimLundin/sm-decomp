@@ -387,7 +387,7 @@ are the `.lss` SHA-256, so only the `bundles` line changes.
 
 ## 6. Commands
 
-Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build --release -p oracle`
+Run from the worktree root; `oracle` is `crates/oracle`'s binary (`cargo build --profile verify -p oracle`
 with `LIBRARY_PATH` set). Where Defender blocks fresh executables, run the CLI as a DLL (Pitfalls).
 
 | Command | Does |
