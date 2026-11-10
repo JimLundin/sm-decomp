@@ -415,7 +415,7 @@ written = []
 sounds = []
 
 [[vector]]
-# two reactions show this frame: the higher place's cells are redrawn first
+# two reactions show this frame: the higher place's cells are written first
 id = "C-run-order"
 source = "constructed"
 entries = ["TheScriptsRun", "WhatTheScreenRedraws"]
@@ -441,7 +441,7 @@ written = [[5, 7], [4, 7]]
 sounds = []
 
 [[vector]]
-# a reaction with 5 frames to go has 4 left; nothing is redrawn
+# a reaction with 5 frames to go has 4 left; nothing is written
 id = "C-run-wait"
 source = "constructed"
 entries = ["TheScriptsRun", "WhatTheScreenRedraws"]

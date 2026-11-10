@@ -539,11 +539,36 @@ Unused, placed by no room: `$B65F`, `$B663` (x 0, y −2..1), `$B667` (x 0, y 0.
 `$B6AF`, `$B75B`, `$B75F` (x 0..12, y 0), `$B6F7` (x 0, y 0..1), `$B6FB` (x −1..0, y 0..1),
 `$D6E2`, `$D6E6` (x −3..0, y 0..3), `$D700` (x −2..0, y 0..3), `$D708` (x 0..1, y 0..1).
 
-The screens have other writers too: the room's door ASM (`$8F`, at a room change), the Wrecked
-Ship chozo (`$84:D646`, `$AA:E6F0`), Shaktool's room (`$84:B8B0`, `$B8DC`), Botwoon's wall
-crumbling (`$B79B`, its instruction `$84:AB51`), Tourian's entrance statue (`$88:DB8A`) and the
-bosses' AI (Crocomire `$A4`, Kraid `$A7`, Mother Brain and the baby metroid `$A9`, Botwoon `$B3`).
-None is this part's.
+**What the harness needs for them.** No cached row reaches any of the cases below, so today
+each would fail loudly, as a false mismatch, never hide one. For a row that reaches them:
+
+- **Mask forms beyond across × down from its own cell.** A writer's mask is a set of `(dx, dy)`
+  from its own cell, negative offsets included, and for some a list of cells rather than a
+  rectangle (`$B70B`, `$B6C3`, `$B6C7`, `$B6D7`, `$B6DB`, `$B6DF`, `$B6EB`, `$D6F8`, `$D6FC`).
+- **Room-absolute cells.** `$D6D6` writes the room's cell (4, 8), and `$D6F8`/`$D6FC` the room's
+  blocks B04h and B05h (block indices: the cell is `(i mod w, i div w)` with `w` = `$07A5`, the
+  room's width in blocks), wherever the PLM sits. Mask them by room position while the PLM is live.
+- **PLMs that move.** `$DB48`/`$DB56` (one row up, `$84:D7C3`/`$D7DA`) and `$BB30` (4 cells right,
+  `$84:BB25`) change their own cell: mask their reach from their cell at N and from their cell at
+  N+1.
+- **Writers never in a slot at a commit.** A setup that writes and frees its own slot in the same
+  call (PLM ID = 0) is never seen in the slots at N or N+1, so a mask keyed on the slots misses it.
+  `$D6F2` is one: it makes its cell air, sets the screens (below) and spawns `$D6F8` at (17h, 1Dh),
+  all in its setup; the other parts' collision setups may be others. Mask its cells on a frame
+  whose watched hits show its setup (`$84:D620`, added to `watch.txt`'s list), or skip that frame
+  by name
+  ("another part's setup that frees its slot"). The cells `$D6F8` then writes are masked as a
+  live PLM's.
+- **The screens' other writers.** The harness compares the screens, and these set them too: the
+  room's door ASM (`$8F`, at a room change, already skipped), the Wrecked Ship chozo (`$84:D646`
+  in `$D6F2`'s setup, `$AA:E6F0`), Shaktool's room (`$84:B8B0`, `$B8DC`, PLM `$B8EB`), Botwoon's
+  wall crumbling (`$B79B`, its instruction `$84:AB51`), Tourian's entrance statue (FX `$88:DB8A`)
+  and the bosses' AI (Crocomire `$A4`, Kraid `$A7`, Mother Brain and the baby metroid `$A9`,
+  Botwoon `$B3`). Mask the screens such a writer may set on a frame it runs, naming it (the PLM
+  by `$1C37,x`, the boss by its enemy ID, the FX by its type), or skip the frame by name. No
+  cached row's dumps hold `$B8EB` or `$B79B` (nor could they hold `$D6F2`), and the screens match
+  on every compared frame of the 44 rows, boss-kraid-defeated's and boss-phantoon's included, so
+  no row needs it today.
 
 ## The harness (for the integrator)
 
