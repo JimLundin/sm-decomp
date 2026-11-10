@@ -65,7 +65,7 @@
 # settings JSON members, `"apiKeyHelper": ..., "env": {...}`; default: the apiKeyHelper and the
 # ANTHROPIC_* lines of ~/.claude/settings.json), CLEANROOM_PY (the runner's interpreter, default
 # %LOCALAPPDATA%/sm-decomp-tools/python-3.13.7/python.exe), CLEANROOM_PRIVATE, CARGO_HOME,
-# RUSTUP_HOME.
+# RUSTUP_HOME, CLEANROOM_SETTLE_SECONDS (the settle period after the session's result, default 60).
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 . "$here/lib.sh"
@@ -281,6 +281,22 @@ echo "launch: $domain in $export_dir; lane record $lane"
 # 3. The session, its prompt the brief, its working directory the export.
 status=0
 (cd "$export_dir" && env -i "${envv[@]}" "${argv[@]}" <"$lane/brief.txt") >"$transcript" 2>"$lane/stderr.txt" || status=$?
+# The CLI's process can return while the session goes on writing the same stream: a session that
+# started background work ends its turn with a result event, and resumes when that work reports.
+# So the session has ended only once the stream's last event is a result and the stream has not
+# grown for three settle periods (a minute each by default). Until then nothing is checked: a check
+# of a part transcript would pass a session still at work.
+settled=0 last=-1
+until [ "$settled" -ge 3 ]; do
+  size=$(stat -c %s "$transcript")
+  if tail -n 1 "$transcript" | grep -q '"type":"result","duration_ms":' && [ "$size" -eq "$last" ]; then
+    settled=$((settled + 1))
+  else
+    settled=0
+  fi
+  last=$size
+  sleep "${CLEANROOM_SETTLE_SECONDS:-60}"
+done
 cp "$transcript" "$lane/transcript.jsonl"
 echo "launch: session exited $status; transcript $transcript ($(wc -l <"$transcript") events)"
 
