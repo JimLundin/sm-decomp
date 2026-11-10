@@ -1,0 +1,853 @@
+# Test vectors for docs/behaviours/samus-looks.md.
+#
+# Format
+# - [paces]: the run's paces (spec §1.4), invented: plain, a hold for each shown step of the
+#   running clip; boosted, five lists, one per boost stage 0 to 4.
+# - [clips.NAME]: an invented clip (spec §1.4): steps, in order from step 0, each "N" (a shown
+#   step held N frames), "rest", "again S", "breathe", "end", "end-unless-jump" or
+#   "branch X Y Z"; kick, fast_fall and rising (optional): the step each marks.
+# - Each [[vector]] is one frame, from the State before it to the State after it: id; source
+#   ("constructed", or "ROW:FRAME", the record the frame starts from); entries (the spec's
+#   behaviours it exercises); before; inputs; after.
+# - before and after: step, left (the time left), stage and laps (the laps left), each default 0
+#   in before; after states all four. after also holds end (default "None"; "End" or "EndUnlessJump": the end her clip reaches this
+#   frame, known from the frame's start), turned_far (default false) and
+#   sounds (default none), in the order asked: "PlainSpin", "SpaceJump", "ScrewAttack", "Boosting".
+# - inputs (spec §1.3): pose, "BODY ACTION FACING AIM", then "Drawn" for the gun drawn,
+#   "Striding" for the legs, and "ScrewAttack", "SpaceJump" or "OtherSuit" for the sprite
+#   (default the gun stowed, legs together, the plain sprite); an action with a turn or a landing
+#   is written "Turning(Ground)", "Landing(Jump)" and the like. clip: the clip of her pose.
+#   pose_after and clip_after (optional, default the same): the pose she ends the frame in and
+#   its clip. energy (default 99); items (default none): "SpeedBooster", "SpaceJump",
+#   "ScrewAttack"; submerged, run_held, handed_over, dashing, dash_began, dash_lost,
+#   standing_restarts, wall_jump_readied, heading_down (each default false; dashing is true
+#   whenever dash_began is); slowdown, start_slowdown, down_speed, sounds_waiting (each default 0).
+# - Every vector holds RAM values and invented content only: no clip or pace of the game. The
+#   constructed vectors (C) work each rule on the invented clips. The recorded vectors (R) are
+#   frames the oracle recorded on which no clip is read: the time runs down without the clip
+#   moving on, or a restart, a dash's beginning or its loss sets the State; they carry the
+#   record's step, time left, stage and laps, with an invented clip the frame never reads.
+#   Recorded frames that read a clip are the harness's
+#   cases.
+
+[paces]
+plain = [11, 4, 10, 7, 13]
+boosted = [[14, 11, 13, 12, 9], [10, 13, 9, 12, 6], [8, 12, 7, 10, 11], [7, 5, 4, 6, 9], [4, 7, 6, 5, 8]]
+
+[clips.stand]
+steps = ["7", "5", "breathe", "9", "6", "again 3"]
+
+[clips.run]
+steps = ["6", "8", "5", "9", "12", "again 0"]
+
+[clips.spin]
+steps = ["6", "9", "7", "5", "10", "again 1"]
+kick = 2
+
+[clips.tumble]
+steps = ["8", "6", "9", "11", "5", "13", "7", "again 0"]
+
+[clips.twirl]
+steps = ["5", "11", "6", "9", "8", "again 1"]
+kick = 1
+
+[clips.walljump]
+steps = ["8", "branch 2 5 8", "7", "6", "again 2", "9", "5", "again 5", "4", "13", "again 8"]
+kick = 4
+
+[clips.fall]
+steps = ["9", "6", "11", "8", "13", "again 0"]
+fast_fall = 2
+
+[clips.jump]
+steps = ["5", "8", "12", "6", "10", "again 2"]
+rising = 1
+
+[clips.turn]
+steps = ["7", "5", "9", "6", "end-unless-jump"]
+
+[clips.fold]
+steps = ["11", "9", "6", "13", "end"]
+
+[clips.aimed]
+steps = ["5", "13", "8", "11", "9", "again 1"]
+
+[clips.blink]
+steps = ["9", "rest", "6", "10", "7", "again 0"]
+
+[clips.ball]
+steps = ["7", "4", "9", "12", "6", "10", "8", "again 0"]
+
+[clips.stride]
+steps = ["13", "10", "4", "12", "7", "again 2"]
+
+[clips.pause]
+steps = ["12", "rest", "7", "13", "5", "again 0"]
+
+[clips.long]
+steps = ["9", "12", "7", "10", "13", "6", "11", "8", "14", "5", "4", "again 0"]
+
+# the time runs down by 1, the step stays
+[[vector]]
+id = "C-count"
+source = "constructed"
+entries = ["ClipPlays"]
+before = { step = 1, left = 5 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand" }
+after = { step = 1, left = 4, stage = 0, laps = 0 }
+
+# the last frame of step 2 runs out: step 3, held its 6
+[[vector]]
+id = "C-next"
+source = "constructed"
+entries = ["ClipPlays"]
+before = { step = 2, left = 1 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", heading_down = true }
+after = { step = 3, left = 6, stage = 0, laps = 0 }
+
+# on a rest with no time left, the clip moves on the next frame: step 2, held 6
+[[vector]]
+id = "C-after-rest"
+source = "constructed"
+entries = ["ClipPlays", "ClipControls"]
+before = { step = 1, left = 0 }
+inputs = { pose = "Upright Falling Right Forward", clip = "blink" }
+after = { step = 2, left = 6, stage = 0, laps = 0 }
+
+# a slowdown of 3 lengthens the next hold: 6 + 3
+[[vector]]
+id = "C-slow-show"
+source = "constructed"
+entries = ["ClipPlays"]
+before = { step = 2, left = 1 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", slowdown = 3, heading_down = true }
+after = { step = 3, left = 9, stage = 0, laps = 0 }
+
+# moving on to "again 1" goes on from step 1, held 9
+[[vector]]
+id = "C-again"
+source = "constructed"
+entries = ["ClipControls"]
+before = { step = 4, left = 1 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin" }
+after = { step = 1, left = 9, stage = 0, laps = 0 }
+
+# the same with a slowdown of 2: 9 + 2
+[[vector]]
+id = "C-slow-again"
+source = "constructed"
+entries = ["ClipControls"]
+before = { step = 4, left = 1 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", slowdown = 2 }
+after = { step = 1, left = 11, stage = 0, laps = 0 }
+
+# moving on to a rest: she rests on step 1 with 0 left, whatever the slowdown
+[[vector]]
+id = "C-rest"
+source = "constructed"
+entries = ["ClipControls"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright Falling Right Forward", clip = "blink", slowdown = 3 }
+after = { step = 1, left = 0, stage = 0, laps = 0 }
+
+# energy 30: back to step 0, held 7
+[[vector]]
+id = "C-breathe-loop"
+source = "constructed"
+entries = ["Breathing"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", energy = 30 }
+after = { step = 0, left = 7, stage = 0, laps = 0 }
+
+# energy 29, slowdown 1: on to step 3, held 9 + 1
+[[vector]]
+id = "C-breathe-on"
+source = "constructed"
+entries = ["Breathing"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", energy = 29, slowdown = 1 }
+after = { step = 3, left = 10, stage = 0, laps = 0 }
+
+# the crouch-down ends: ended, and the pose it hands over starts on step 0 of its clip, held 7
+[[vector]]
+id = "C-end"
+source = "constructed"
+entries = ["ClipEnds", "StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", handed_over = true }
+after = { step = 0, left = 7, stage = 0, laps = 0, end = "End" }
+
+# a turn reaches an end unless a jump; samus-motion takes the standing pose it hands over: step 0, held 7
+[[vector]]
+id = "C-end-unless-jump"
+source = "constructed"
+entries = ["ClipEnds", "StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Upright Turning(Ground) Left Forward", clip = "turn", pose_after = "Upright Still Left Forward", clip_after = "stand", handed_over = true }
+after = { step = 0, left = 7, stage = 0, laps = 0, end = "EndUnlessJump" }
+
+# a turn reaches an end unless a jump, and the pad's jump is taken (no hand-over): the jump starts on step 0
+[[vector]]
+id = "C-end-gives-way"
+source = "constructed"
+entries = ["ClipEnds", "StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Upright Turning(Ground) Left Forward", clip = "turn", pose_after = "Upright TakingOff Left Forward", clip_after = "jump", slowdown = 2, start_slowdown = 2 }
+after = { step = 0, left = 7, stage = 0, laps = 0, end = "EndUnlessJump" }
+
+# the step before the end with 4 left: no end this frame, 3 left
+[[vector]]
+id = "C-end-later"
+source = "constructed"
+entries = ["ClipEnds"]
+before = { step = 3, left = 4 }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold" }
+after = { step = 3, left = 3, stage = 0, laps = 0 }
+
+# no item: the spin's steps from 2, held 7, asking for PlainSpin
+[[vector]]
+id = "C-branch-spin"
+source = "constructed"
+entries = ["WallJumpBranch"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump" }
+after = { step = 2, left = 7, stage = 0, laps = 0, sounds = ["PlainSpin"] }
+
+# the space jump: its steps from 5, held 9, asking for SpaceJump
+[[vector]]
+id = "C-branch-space"
+source = "constructed"
+entries = ["WallJumpBranch"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", items = ["SpaceJump"] }
+after = { step = 5, left = 9, stage = 0, laps = 0, turned_far = true, sounds = ["SpaceJump"] }
+
+# the screw attack: its steps from 8, held 4, asking for ScrewAttack
+[[vector]]
+id = "C-branch-screw"
+source = "constructed"
+entries = ["WallJumpBranch"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", items = ["ScrewAttack"] }
+after = { step = 8, left = 4, stage = 0, laps = 0, turned_far = true, sounds = ["ScrewAttack"] }
+
+# both items: the screw attack's
+[[vector]]
+id = "C-branch-screw-and-space"
+source = "constructed"
+entries = ["WallJumpBranch"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", items = ["SpaceJump", "ScrewAttack"] }
+after = { step = 8, left = 4, stage = 0, laps = 0, turned_far = true, sounds = ["ScrewAttack"] }
+
+# submerged with the screw attack: the spin's, asking for PlainSpin; held 7 + 1 slowdown
+[[vector]]
+id = "C-branch-submerged"
+source = "constructed"
+entries = ["WallJumpBranch"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", items = ["ScrewAttack"], submerged = true, slowdown = 1 }
+after = { step = 2, left = 8, stage = 0, laps = 0, sounds = ["PlainSpin"] }
+
+# a clip ends under water: the next pose's first hold is 7 + 3 (the start's) + 3
+[[vector]]
+id = "C-slow-handover"
+source = "constructed"
+entries = ["HandOverSlowdown", "ClipEnds", "StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", slowdown = 3, start_slowdown = 3, handed_over = true }
+after = { step = 0, left = 13, stage = 0, laps = 0, end = "End" }
+
+# another pose that no end brought, under water: 5 + 3, once
+[[vector]]
+id = "C-slow-start"
+source = "constructed"
+entries = ["HandOverSlowdown", "StartingClip"]
+before = { step = 1, left = 4 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", slowdown = 3, start_slowdown = 3 }
+after = { step = 0, left = 8, stage = 0, laps = 0 }
+
+# under water with the gravity suit: the clip slows by 3, the start by 0, so the take-off holds 5
+[[vector]]
+id = "C-slow-gravity-start"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 1, left = 4 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", slowdown = 3, start_slowdown = 0 }
+after = { step = 0, left = 5, stage = 0, laps = 0 }
+
+# the same handed over by an end: 7 + 0 + 3
+[[vector]]
+id = "C-slow-gravity-handover"
+source = "constructed"
+entries = ["HandOverSlowdown", "StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", slowdown = 3, start_slowdown = 0, handed_over = true }
+after = { step = 0, left = 10, stage = 0, laps = 0, end = "End" }
+
+# at a surface: the pose she takes has its feet under it (3) while the one she leaves did not slow her (0): 5 + 3
+[[vector]]
+id = "C-slow-surface"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 1, left = 4 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump", slowdown = 0, start_slowdown = 3 }
+after = { step = 0, left = 8, stage = 0, laps = 0 }
+
+# standing to a take-off: the jump's clip from step 0, held 5
+[[vector]]
+id = "C-start"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 1, left = 4 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", pose_after = "Upright TakingOff Right Forward", clip_after = "jump" }
+after = { step = 0, left = 5, stage = 0, laps = 0 }
+
+# the old clip ran down without moving on, then she took another pose: step 0 of the new clip, held 9
+[[vector]]
+id = "C-start-after-count"
+source = "constructed"
+entries = ["StartingClip", "ClipPlays"]
+before = { step = 3, left = 6 }
+inputs = { pose = "Upright Jumping Right Forward Striding", clip = "jump", pose_after = "Upright Falling Right Forward", clip_after = "fall", heading_down = true }
+after = { step = 0, left = 9, stage = 0, laps = 0 }
+
+# running to running aimed up-forward: step 2 and the time left kept, after the time ran down
+[[vector]]
+id = "C-kept-run"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 2, left = 3 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", pose_after = "Upright Running Right UpForward", clip_after = "ball" }
+after = { step = 2, left = 2, stage = 0, laps = 0 }
+
+# the ball still to the ball rolling: kept, after the clip moved on
+[[vector]]
+id = "C-kept-ball"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Ball Still Right Forward", clip = "ball", pose_after = "Ball Rolling Left Forward", clip_after = "run" }
+after = { step = 2, left = 9, stage = 0, laps = 0 }
+
+# the spring ball rolling to its hop: kept
+[[vector]]
+id = "C-kept-spring"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 2, left = 2 }
+inputs = { pose = "SpringBall Rolling Right Forward", clip = "ball", pose_after = "SpringBall Jumping Right Forward", clip_after = "run" }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+
+# morphing to the ball still: not a row of the ball's, so step 0
+[[vector]]
+id = "C-not-kept-morph"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 2, left = 2 }
+inputs = { pose = "Ball Morphing Right Forward", clip = "ball", pose_after = "Ball Still Right Forward", clip_after = "run" }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+
+# a spin reversed: the new spin from step 1, held 9
+[[vector]]
+id = "C-spin-from-spin"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 2, left = 2 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", pose_after = "Upright Spinning Left Forward", clip_after = "spin" }
+after = { step = 1, left = 9, stage = 0, laps = 0 }
+
+# a wall jump to a spin: from step 1
+[[vector]]
+id = "C-spin-from-walljump"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 9, left = 1 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", pose_after = "Upright Spinning Right Forward ScrewAttack", clip_after = "spin" }
+after = { step = 1, left = 9, stage = 0, laps = 0 }
+
+# standing aimed up, from a fall aimed up: from step 1, held 13
+[[vector]]
+id = "C-stand-up-from-up"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 1, left = 6 }
+inputs = { pose = "Upright Falling Right Up", clip = "aimed", pose_after = "Upright Still Right Up", clip_after = "aimed" }
+after = { step = 1, left = 13, stage = 0, laps = 0 }
+
+# a landing aimed up, from a fall aimed up: from step 1
+[[vector]]
+id = "C-landing-up-from-up"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 1, left = 6 }
+inputs = { pose = "Upright Falling Right Up", clip = "aimed", pose_after = "Upright Landing(Jump) Right Up", clip_after = "aimed" }
+after = { step = 1, left = 13, stage = 0, laps = 0 }
+
+# standing aimed up, from a turn aimed up: the turn doesn't count as aimed up, so step 0, held 5
+[[vector]]
+id = "C-stand-up-from-turn"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 0, left = 2 }
+inputs = { pose = "Upright Turning(Ground) Left Up", clip = "turn", pose_after = "Upright Still Right Up", clip_after = "aimed" }
+after = { step = 0, left = 5, stage = 0, laps = 0 }
+
+# standing aimed up, from a fall aimed forward: step 0, held 5
+[[vector]]
+id = "C-stand-up-from-forward"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 0, left = 3 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", pose_after = "Upright Still Right Up", clip_after = "aimed" }
+after = { step = 0, left = 5, stage = 0, laps = 0 }
+
+# a jump aimed up from a take-off aimed up: from step 1
+[[vector]]
+id = "C-jump-up-from-takeoff"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 0, left = 3 }
+inputs = { pose = "Upright TakingOff Right Up", clip = "aimed", pose_after = "Upright Jumping Right Up", clip_after = "aimed" }
+after = { step = 1, left = 13, stage = 0, laps = 0 }
+
+# crouched still aimed up from crouching down aimed up: from step 1
+[[vector]]
+id = "C-crouch-up-from-crouching"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 0, left = 3 }
+inputs = { pose = "Crouched Crouching Right Up", clip = "aimed", pose_after = "Crouched Still Right Up", clip_after = "aimed" }
+after = { step = 1, left = 13, stage = 0, laps = 0 }
+
+# a jump aimed up from a turn in a jump aimed up: the turn is not a take-off, so step 0, held 5
+[[vector]]
+id = "C-jump-up-from-turn"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Upright Turning(Jump) Left Up", clip = "turn", pose_after = "Upright Jumping Right Up", clip_after = "aimed", handed_over = true }
+after = { step = 0, left = 5, stage = 0, laps = 0, end = "EndUnlessJump" }
+
+# crouched still aimed up from a crouched turn aimed up: not crouching down, so step 0, held 5
+[[vector]]
+id = "C-crouch-up-from-turn"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Crouched Turning(Ground) Left Up", clip = "turn", pose_after = "Crouched Still Right Up", clip_after = "aimed", handed_over = true }
+after = { step = 0, left = 5, stage = 0, laps = 0, end = "EndUnlessJump" }
+
+# in acid with the gravity suit: the clip slows by 2, the start by 0, so a hand-over holds 7 + 0 + 2
+[[vector]]
+id = "C-slow-acid-gravity"
+source = "constructed"
+entries = ["HandOverSlowdown", "StartingClip"]
+before = { step = 3, left = 1 }
+inputs = { pose = "Crouched Crouching Right Forward", clip = "fold", pose_after = "Crouched Still Right Forward", clip_after = "stand", slowdown = 2, start_slowdown = 0, handed_over = true }
+after = { step = 0, left = 9, stage = 0, laps = 0, end = "End" }
+
+# a spin whose sprite alone changes, to the screw attack's: another pose, from step 1 of its clip, held 11
+[[vector]]
+id = "C-spin-sprite-only"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 2, left = 3 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", pose_after = "Upright Spinning Right Forward ScrewAttack", clip_after = "twirl" }
+after = { step = 1, left = 11, stage = 0, laps = 0, turned_far = true }
+
+# facing the screen, the sprite alone changes to the other suit's: another pose, from step 0, held 5
+[[vector]]
+id = "C-suit-sprite-only"
+source = "constructed"
+entries = ["StartingClip"]
+before = { step = 3, left = 4 }
+inputs = { pose = "Upright Still Screen Forward", clip = "stand", pose_after = "Upright Still Screen Forward OtherSuit", clip_after = "aimed" }
+after = { step = 0, left = 5, stage = 0, laps = 0 }
+
+# holding shoot standing unaimed: step 0, 16 left, then the frame runs it down to 15; no slowdown on it
+[[vector]]
+id = "C-restart"
+source = "constructed"
+entries = ["StandingRestart"]
+before = { step = 4, left = 1 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand", standing_restarts = true, slowdown = 3 }
+after = { step = 0, left = 15, stage = 0, laps = 0 }
+
+# readied on step 0: the step before the kick, 1 left; the clip moves on to the kick step 2, held 7, and she has turned far
+[[vector]]
+id = "C-ready"
+source = "constructed"
+entries = ["WallJumpReady", "SpinTurnedFar"]
+before = { step = 0, left = 3 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin", wall_jump_readied = true }
+after = { step = 2, left = 7, stage = 0, laps = 0, turned_far = true }
+
+# readied in the wall jump, whose kick step is an again: it goes on from step 2, held 7; not turned far
+[[vector]]
+id = "C-ready-walljump"
+source = "constructed"
+entries = ["WallJumpReady"]
+before = { step = 2, left = 2 }
+inputs = { pose = "Upright WallJumping Right Forward", clip = "walljump", wall_jump_readied = true }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# past the kick step: turned far
+[[vector]]
+id = "C-far"
+source = "constructed"
+entries = ["SpinTurnedFar"]
+before = { step = 3, left = 4 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin" }
+after = { step = 3, left = 3, stage = 0, laps = 0, turned_far = true }
+
+# before the kick step: not turned far
+[[vector]]
+id = "C-not-far"
+source = "constructed"
+entries = ["SpinTurnedFar"]
+before = { step = 1, left = 2 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "spin" }
+after = { step = 1, left = 1, stage = 0, laps = 0 }
+
+# a clip with no kick step, on a high step: not turned far
+[[vector]]
+id = "C-far-no-kick"
+source = "constructed"
+entries = ["SpinTurnedFar"]
+before = { step = 4, left = 3 }
+inputs = { pose = "Upright Still Right Forward", clip = "stand" }
+after = { step = 4, left = 2, stage = 0, laps = 0 }
+
+# from a spin clip with no kick to one whose kick is step 1, starting on step 1: turned far, by the clip the frame ends on
+[[vector]]
+id = "C-far-new-clip"
+source = "constructed"
+entries = ["SpinTurnedFar", "StartingClip"]
+before = { step = 1, left = 3 }
+inputs = { pose = "Upright Spinning Right Forward", clip = "tumble", pose_after = "Upright Spinning Left Forward", clip_after = "twirl" }
+after = { step = 1, left = 11, stage = 0, laps = 0, turned_far = true }
+
+# falling at 5 px a frame on step 1: the fast fall step 2, 8 left, run down to 7
+[[vector]]
+id = "C-fast-fall"
+source = "constructed"
+entries = ["FastFall"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 5, heading_down = true }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# at 4 px a frame: the clip plays on, to step 2 with its own 11
+[[vector]]
+id = "C-fast-fall-slow"
+source = "constructed"
+entries = ["FastFall", "ClipPlays"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 4, heading_down = true }
+after = { step = 2, left = 11, stage = 0, laps = 0 }
+
+# on step 3, past the fast fall step: plays on
+[[vector]]
+id = "C-fast-fall-past"
+source = "constructed"
+entries = ["FastFall"]
+before = { step = 3, left = 3 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 7, heading_down = true }
+after = { step = 3, left = 2, stage = 0, laps = 0 }
+
+# on the fast fall step itself at 6 px a frame: plays on, 3 left become 2
+[[vector]]
+id = "C-fast-fall-on"
+source = "constructed"
+entries = ["FastFall"]
+before = { step = 2, left = 3 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 6, heading_down = true }
+after = { step = 2, left = 2, stage = 0, laps = 0 }
+
+# the fast fall with a slowdown of 2: still 8 left, run down to 7
+[[vector]]
+id = "C-fast-fall-liquid"
+source = "constructed"
+entries = ["FastFall"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 5, heading_down = true, slowdown = 2 }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# on the rising step with 3 left, rising: it counts down as usual, to 2
+[[vector]]
+id = "C-rising-early"
+source = "constructed"
+entries = ["RisingHold"]
+before = { step = 1, left = 3 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump" }
+after = { step = 1, left = 2, stage = 0, laps = 0 }
+
+# on the rising step with 1 left, rising: 4 left, run down to 3
+[[vector]]
+id = "C-rising"
+source = "constructed"
+entries = ["RisingHold"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump" }
+after = { step = 1, left = 3, stage = 0, laps = 0 }
+
+# the same heading down: the clip moves on to step 2, held 12
+[[vector]]
+id = "C-rising-down"
+source = "constructed"
+entries = ["RisingHold", "ClipPlays"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", heading_down = true }
+after = { step = 2, left = 12, stage = 0, laps = 0 }
+
+# dashing, no booster: step 2 held the plain pace's 10, not the clip's 5
+[[vector]]
+id = "C-pace-plain"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true }
+after = { step = 2, left = 10, stage = 0, laps = 0 }
+
+# dashing, the booster at stage 3: step 2 held stage 3's 4, plus slowdown 1
+[[vector]]
+id = "C-pace-boost"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 1, left = 1, stage = 3, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], slowdown = 1 }
+after = { step = 2, left = 5, stage = 3, laps = 1 }
+
+# dashing, run held, no booster, at the lap's end: step 0 held the plain pace's 11 + 2 slowdown
+[[vector]]
+id = "C-lap-plain"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 4, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, slowdown = 2 }
+after = { step = 0, left = 13, stage = 0, laps = 0 }
+
+# dashing, run let go, at the lap's end: the clip's again, step 0 held the clip's 6
+[[vector]]
+id = "C-lap-not-held"
+source = "constructed"
+entries = ["RunPace", "ClipControls"]
+before = { step = 4, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true }
+after = { step = 0, left = 6, stage = 0, laps = 0 }
+
+# dashing, run held, at the end of a lap whose again goes to step 2: the lap starts over at step 0, held the plain pace's 11
+[[vector]]
+id = "C-lap-again-mid"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 4, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "stride", dashing = true, run_held = true }
+after = { step = 0, left = 11, stage = 0, laps = 0 }
+
+# dashing, run held, moving on to a rest: that control ends the lap too, step 0 held the plain pace's 11
+[[vector]]
+id = "C-lap-at-rest"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "pause", dashing = true, run_held = true }
+after = { step = 0, left = 11, stage = 0, laps = 0 }
+
+# the dash lost at stage 2 as the clip moves on: step 2 held stage 2's 7, then stage 0 with 0 laps
+[[vector]]
+id = "C-dash-lost-moving-on"
+source = "constructed"
+entries = ["RunPace", "BoostStages"]
+before = { step = 1, left = 1, stage = 2, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_lost = true, run_held = true, items = ["SpeedBooster"] }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# not dashing: step 2 held the clip's 5
+[[vector]]
+id = "C-not-dashing"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", run_held = true }
+after = { step = 2, left = 5, stage = 0, laps = 0 }
+
+# dashing in a jump, not running: step 3 held the clip's own 6, not a pace's
+[[vector]]
+id = "C-dash-jump"
+source = "constructed"
+entries = ["RunPace"]
+before = { step = 2, left = 1, stage = 2, laps = 1 }
+inputs = { pose = "Upright Jumping Right Forward", clip = "jump", dashing = true, run_held = true, items = ["SpeedBooster"], heading_down = true }
+after = { step = 3, left = 6, stage = 2, laps = 1 }
+
+# a dash begins with the booster: stage 0 with its 1 lap; the step moves on at stage 0's pace, 11
+[[vector]]
+id = "C-began-booster"
+source = "constructed"
+entries = ["BoostStages"]
+before = { step = 0, left = 1, stage = 2, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_began = true, run_held = true, items = ["SpeedBooster"] }
+after = { step = 1, left = 11, stage = 0, laps = 1 }
+
+# a dash begins without it: stage 0, 0 laps
+[[vector]]
+id = "C-began-plain"
+source = "constructed"
+entries = ["BoostStages"]
+before = { step = 0, left = 3, stage = 0, laps = 0 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_began = true, run_held = true }
+after = { step = 0, left = 2, stage = 0, laps = 0 }
+
+# at stage 4 with 2 laps left, the lap's end: 1 lap left, and the clip's again: step 0 held the clip's 6
+[[vector]]
+id = "C-lap-count"
+source = "constructed"
+entries = ["BoostStages", "ClipControls"]
+before = { step = 4, left = 1, stage = 4, laps = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+after = { step = 0, left = 6, stage = 4, laps = 1 }
+
+# the same with run let go: the laps stay 2, and the clip's again
+[[vector]]
+id = "C-lap-not-held-booster"
+source = "constructed"
+entries = ["BoostStages", "ClipControls"]
+before = { step = 4, left = 1, stage = 4, laps = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, items = ["SpeedBooster"] }
+after = { step = 0, left = 6, stage = 4, laps = 2 }
+
+# stage 1, 1 lap left, the lap's end, slowdown 1: stage 2, its 1 lap, step 0 held stage 2's 8 + 1
+[[vector]]
+id = "C-stage-up"
+source = "constructed"
+entries = ["BoostStages"]
+before = { step = 4, left = 1, stage = 1, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], slowdown = 1 }
+after = { step = 0, left = 9, stage = 2, laps = 1 }
+
+# boosting, 1 lap left, the lap's end, slowdown 2: its 2 laps, step 0 held the boosting pace's 4 + 2
+[[vector]]
+id = "C-boosting-lap"
+source = "constructed"
+entries = ["BoostStages"]
+before = { step = 4, left = 1, stage = 4, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], slowdown = 2 }
+after = { step = 0, left = 6, stage = 4, laps = 2 }
+
+# the dash lost while boosting: stage 0, 0 laps
+[[vector]]
+id = "C-lost"
+source = "constructed"
+entries = ["BoostStages"]
+before = { step = 1, left = 4, stage = 4, laps = 2 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, dash_lost = true, items = ["SpeedBooster"] }
+after = { step = 1, left = 3, stage = 0, laps = 0 }
+
+# stage 1 with 1 lap left, run let go at the lap's end: no stage up, the laps stay 1, and the clip's again
+[[vector]]
+id = "C-stage-not-held"
+source = "constructed"
+entries = ["BoostStages", "ClipControls"]
+before = { step = 4, left = 1, stage = 1, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, items = ["SpeedBooster"] }
+after = { step = 0, left = 6, stage = 1, laps = 1 }
+
+# stage 3 to 4 with no sound waiting: Boosting; the lap at stage 0's pace, 14, and stage 0's 1 lap
+[[vector]]
+id = "C-boost-quirk-0"
+source = "constructed"
+entries = ["BoostingLap", "BoostStages"]
+before = { step = 4, left = 1, stage = 3, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+after = { step = 0, left = 14, stage = 4, laps = 1, sounds = ["Boosting"] }
+
+# with 2 waiting: stage 2's pace, 8, and its 1 lap
+[[vector]]
+id = "C-boost-quirk-2"
+source = "constructed"
+entries = ["BoostingLap"]
+before = { step = 4, left = 1, stage = 3, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], sounds_waiting = 2 }
+after = { step = 0, left = 8, stage = 4, laps = 1, sounds = ["Boosting"] }
+
+# with 4 waiting: stage 4's pace, 4, and its 2 laps
+[[vector]]
+id = "C-boost-quirk-4"
+source = "constructed"
+entries = ["BoostingLap"]
+before = { step = 4, left = 1, stage = 3, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], sounds_waiting = 4 }
+after = { step = 0, left = 4, stage = 4, laps = 2, sounds = ["Boosting"] }
+
+# the first boosting lap (stage 4, 1 lap left) moving on to step 1: the boosting pace's 7, not stage 0's 11
+[[vector]]
+id = "C-boosting-first-lap"
+source = "constructed"
+entries = ["BoostingLap", "RunPace"]
+before = { step = 0, left = 1, stage = 4, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"] }
+after = { step = 1, left = 7, stage = 4, laps = 1 }
+
+# with 6 waiting: stage 3's pace, 7, and its 1 lap
+[[vector]]
+id = "C-boost-quirk-6"
+source = "constructed"
+entries = ["BoostingLap"]
+before = { step = 4, left = 1, stage = 3, laps = 1 }
+inputs = { pose = "Upright Running Right Forward", clip = "run", dashing = true, run_held = true, items = ["SpeedBooster"], sounds_waiting = 6 }
+after = { step = 0, left = 7, stage = 4, laps = 1, sounds = ["Boosting"] }
+
+# facing the screen, 8 left becomes 7
+[[vector]]
+id = "R-count"
+source = "area-brinstar:5"
+entries = ["ClipPlays"]
+before = { step = 0, left = 8 }
+inputs = { pose = "Upright Still Screen Forward", clip = "long" }
+after = { step = 0, left = 7, stage = 0, laps = 0 }
+
+# standing left with 1 left, shoot held: step 0, 15 left (16 run down)
+[[vector]]
+id = "R-restart-a"
+source = "area-maridia:387"
+entries = ["StandingRestart"]
+before = { step = 0, left = 1 }
+inputs = { pose = "Upright Still Left Forward", clip = "long", standing_restarts = true, items = ["SpeedBooster", "ScrewAttack"] }
+after = { step = 0, left = 15, stage = 0, laps = 0 }
+
+# standing right with 7 left: step 0, 15 left
+[[vector]]
+id = "R-restart-b"
+source = "boss-phantoon:1052"
+entries = ["StandingRestart"]
+before = { step = 0, left = 7 }
+inputs = { pose = "Upright Still Right Forward", clip = "long", standing_restarts = true, items = ["SpeedBooster"] }
+after = { step = 0, left = 15, stage = 0, laps = 0 }
+
+# running left, a dash begins with the booster: stage 0 with 1 lap; 2 left run down to 1
+[[vector]]
+id = "R-began"
+source = "boss-phantoon:351"
+entries = ["BoostStages"]
+before = { step = 0, left = 2 }
+inputs = { pose = "Upright Running Left Forward", clip = "run", dashing = true, dash_began = true, run_held = true, items = ["SpeedBooster"] }
+after = { step = 0, left = 1, stage = 0, laps = 1 }
+
+# jumping left aimed down-forward, the dash lost while boosting: stage 0, 0 laps; 15 left become 14
+[[vector]]
+id = "R-lost-a"
+source = "chain-0100-B07A:3"
+entries = ["BoostStages"]
+before = { step = 1, left = 15, stage = 4, laps = 2 }
+inputs = { pose = "Upright Jumping Left DownForward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster"] }
+after = { step = 1, left = 14, stage = 0, laps = 0 }
+
+# falling left, the dash lost at stage 3: stage 0, 0 laps; 2 left become 1
+[[vector]]
+id = "R-lost-b"
+source = "chain-0314-DAE1:108"
+entries = ["BoostStages"]
+before = { step = 0, left = 2, stage = 3, laps = 1 }
+inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, down_speed = 1 }
+after = { step = 0, left = 1, stage = 0, laps = 0 }

@@ -580,6 +580,136 @@ fn progress_holds_its_floors_against_the_cache() {
     );
 }
 
+/// Her animation's timing over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as
+/// the clock's test reads them (the ROM for the importer's clips and paces).
+#[test]
+fn samus_looks_holds_its_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = match super::samus_looks::SamusLooks::load(&image) {
+        Ok(domain) => domain,
+        Err(error) => panic!("content: {error:?}"),
+    };
+    hold_floors(&domain, "samus-looks", &cache);
+}
+
+/// Samus-looks' harness cases (the decode notes' "The harness cases"), each the frame from its
+/// record to the next quiescent one over the importer's clips; with `SM_CACHE` set, a case whose
+/// row isn't cached fails, as does one skipped, differing, or not bringing its entry into play
+/// with its fields compared.
+#[test]
+fn samus_looks_harness_cases_hold_against_the_cache() {
+    use crate::cache::CutKind;
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image =
+        std::fs::read(&rom).unwrap_or_else(|error| panic!("SM_ROM {}: {error}", rom.display()));
+    let domain = super::samus_looks::SamusLooks::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
+    let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
+    let rows = cached_rows(&cache);
+    let mut failures = Vec::new();
+    for case in &super::samus_looks::cases::CASES {
+        let name = format!("{:?} {} {}", case.entry, case.row, case.record);
+        if !rows.iter().any(|row| row == case.row) {
+            failures.push(format!("{name}: not cached"));
+            continue;
+        }
+        let locked = parsed
+            .row(&crate::lock::RowId(case.row.to_owned()))
+            .unwrap_or_else(|| panic!("{}: not in the lock", case.row));
+        let opened =
+            crate::cache::Cache::open(&cache, locked).unwrap_or_else(|error| panic!("{error}"));
+        let pair = opened
+            .entries()
+            .iter()
+            .filter(|entry| entry.frame.0 >= case.record)
+            .map(|entry| {
+                opened
+                    .record(entry)
+                    .unwrap_or_else(|error| panic!("{name}: {error}"))
+            })
+            .filter(|record| CutKind::of(record.cut) == CutKind::Requested)
+            .take(2)
+            .map(Ok::<_, Infallible>);
+        let Ok(report) = run(&domain, pair);
+        let entry = report
+            .behaviours
+            .iter()
+            .find(|entry| entry.name == format!("{:?}", case.entry));
+        let compared = entry.is_some_and(|entry| entry.exercised == 1);
+        if report.compared == 1 && report.matched == 1 && compared {
+            let _ = writeln!(std::io::stdout(), "{name}: holds");
+        } else {
+            failures.push(format!("{name}: {report}"));
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "{}",
+        failures.join(
+            "
+"
+        )
+    );
+}
+
+/// The importer's clips over the ROM: every pose of hers has one, the model's pose names one
+/// original pose alone, and each `again` and `branch` goes to a shown step (spec §1.5). It needs
+/// only `SM_ROM`, and is skipped where it is unset.
+#[test]
+fn the_importer_gives_every_pose_of_hers_its_own_clip() {
+    use clean_model_samus_looks::ClipStep;
+    use std::io::Write as _;
+    let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
+        let _ = writeln!(std::io::stdout(), "skipped: SM_ROM unset");
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let clips = super::samus_looks::import::Clips::load(data::rom::Lorom::new(&image))
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    let poses = clips.poses();
+    assert_eq!(poses.len(), data::assets::samus::import::map::MAP.len());
+    for (at, imported) in poses.iter().enumerate() {
+        let twins: Vec<_> = poses
+            .iter()
+            .skip(at + 1)
+            .filter(|other| other.pose == imported.pose)
+            .map(|other| other.id)
+            .collect();
+        assert!(twins.is_empty(), "{:?} is drawn as {twins:?}", imported.id);
+        let shown = |step: clean_model_samus_looks::Step| {
+            matches!(imported.clip.at(step), Some(ClipStep::Show(_)))
+        };
+        for step in &imported.clip.steps {
+            let lands = match *step {
+                ClipStep::Again(to) => shown(to),
+                ClipStep::Branch(branch) => {
+                    shown(branch.spin) && shown(branch.space_jump) && shown(branch.screw_attack)
+                }
+                ClipStep::Show(_)
+                | ClipStep::Rest
+                | ClipStep::Breathe
+                | ClipStep::End
+                | ClipStep::EndUnlessJump => true,
+            };
+            assert!(lands, "{:?}: {step:?} lands on a control", imported.id);
+        }
+    }
+}
+
 /// The room state each cached row's first record holds against the model's choice over that
 /// record's progress: the loads before the rows, which hold the states other than the default
 /// the rows' own loads never reach. Beside it the null model, always the default state. A room

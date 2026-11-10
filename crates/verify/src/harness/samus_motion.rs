@@ -743,6 +743,19 @@ impl SamusMotion {
         let ran = self.ran(&mut hers.samus, &inputs, &level)?;
         Ok(ran.outcome.placed)
     }
+
+    /// What the near-wall test of her motion's frame from record `from` did (`Outcome::wall_test`,
+    /// the samus-motion spec's output to samus-looks' `WallJumpReady`).
+    ///
+    /// # Errors
+    ///
+    /// The reason her motion doesn't run in the frame, or the decode's failure.
+    pub fn wall_test(&self, from: &FrameRecord, interval: Interval) -> Result<WallTest, Skip> {
+        let (mut hers, inputs) = self.decode(from, interval)?;
+        let level = self.level(&inputs);
+        let ran = self.ran(&mut hers.samus, &inputs, &level)?;
+        Ok(ran.outcome.wall_test)
+    }
 }
 
 /// What the model reads besides her, from record N: the pad, the elevator, the frame count,

@@ -179,6 +179,19 @@ const DOMAINS: &[Domain] = &[
         ],
         apart: &[],
     },
+    // The inputs, the frame, the State, the rules and the catalogue are the domain's shared
+    // code. The clip's format (§1.4), its player and its start in a new pose are the clip's; her
+    // moves' writes and the run's pace and boost stages are the other two areas.
+    Domain {
+        name: "samus-looks",
+        bridge: "samus_looks_world",
+        areas: &[
+            ("clip", &["clip.rs", "player.rs", "starting.rs"]),
+            ("moves", &["moves.rs"]),
+            ("run", &["run.rs"]),
+        ],
+        apart: &[],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.
@@ -352,9 +365,12 @@ impl Measured {
             .sum()
     }
 
+    /// The old code: the notes' figure for the whole domain, else the sum of the areas'.
     fn old(&self) -> Option<u64> {
-        self.count.areas.iter().try_fold(0_u64, |sum, area| {
-            area.old.map(|old| sum.saturating_add(old))
+        self.count.old.or_else(|| {
+            self.count.areas.iter().try_fold(0_u64, |sum, area| {
+                area.old.map(|old| sum.saturating_add(old))
+            })
         })
     }
 }
@@ -765,7 +781,8 @@ How it is counted:
   it assigns the area: a file that holds more than one area's code has a row per function counted
   apart (`fn` and its name), measured with the rest of the model. Files in no area are the
   domain's shared code and count in its total only.
-- **Old code** is the sum of the Budget section's area `old` figures, at the commit its
+- **Old code** is the Budget section's figure for the whole domain where it gives one, else the
+  sum of its area `old` figures, at the commit its
   baseline or budget paragraph names last.
 - **Lines** are code lines: non-blank, non-comment, tests excluded (`tests` directories,
   `tests.rs` files and `#[cfg(test)]` items). A file holds **tables and types** when its type

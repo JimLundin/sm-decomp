@@ -147,3 +147,23 @@ blocks entry SpeedBlocks 0 0 0 0
 blocks entry SuperMissileBlocks 1 0 1 0
 blocks entry TheScriptsRun 595 0 596 0
 blocks entry WhatTheScreenRedraws 0 0 0 249
+samus-looks frames 24230 16210 0 471
+samus-looks field 16210 0 step
+samus-looks field 16210 0 left
+samus-looks field 16209 1 stage
+samus-looks field 16209 1 laps
+samus-looks entry BoostStages 254 4 254 0
+samus-looks entry BoostingLap 5 0 5 0
+samus-looks entry Breathing 30 0 30 0
+samus-looks entry ClipControls 459 0 459 0
+samus-looks entry ClipEnds 311 0 311 0
+samus-looks entry ClipPlays 16210 471 16210 0
+samus-looks entry FastFall 4 0 4 0
+samus-looks entry HandOverSlowdown 0 0 0 0
+samus-looks entry RisingHold 30 0 30 0
+samus-looks entry RunPace 1535 0 1535 0
+samus-looks entry SpinTurnedFar 0 0 0 2408
+samus-looks entry StandingRestart 25 2 25 0
+samus-looks entry StartingClip 3790 469 3790 0
+samus-looks entry WallJumpBranch 13 3 13 0
+samus-looks entry WallJumpReady 59 4 59 0

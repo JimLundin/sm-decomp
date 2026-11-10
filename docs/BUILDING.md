@@ -8,7 +8,7 @@ cargo build --release -p app             # the game, as it ships: target/release
 cargo build --profile verify -p tools     # the verifiers: target/verify/tools
 cargo test -p canonical -p canonical_derive -p data -p game -p runtime -p app -p verify -p tools \
   -p oracle_record -p clean_types -p clean_model_samus_motion -p clean_model_blocks \
-  -p clean_model_camera -p clean_model_hud -p clean_model_progress
+  -p clean_model_camera -p clean_model_hud -p clean_model_progress -p clean_model_samus_looks
 bash tools/lane/gate.sh   # fmt, clippy, crate rules, doc links and the report
 ```
 

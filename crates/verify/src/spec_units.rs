@@ -58,7 +58,9 @@
 //! move_budget.sh` moves them to the notes. An item names
 //! an entry (`SlopesCarry`) or any other heading, by its whole text or its leading number (`1.2`
 //! for "1.2 What she remembers"). `(old N)` is the area's old-code weighted score, shown for
-//! reference beside the budget. A heading no area names, holding units, is reported unassigned.
+//! reference beside the budget; a line `Old code (old N): ...` gives it for the whole domain
+//! instead, where the old code isn't split by area. A heading no area names, holding units, is
+//! reported unassigned.
 //!
 //! **Findings**, for the spec review: arms with an earlier arm's outcome, arms that cite no vector
 //! or one the file doesn't hold, original-only and record-only arms, cross-references, arms and
@@ -254,15 +256,12 @@ impl AreaDef {
         let (head, items) = text.strip_prefix("Area ")?.split_once(':')?;
         let (name, old) = match head.split_once('(') {
             Some((name, old)) => {
-                let digits: String = old
+                let figure = old
                     .trim_end()
                     .strip_suffix(')')?
                     .trim()
-                    .strip_prefix("old")?
-                    .chars()
-                    .filter(|c| *c != ',' && !c.is_whitespace())
-                    .collect();
-                (name, Some(digits.parse().ok()?))
+                    .strip_prefix("old")?;
+                (name, Some(old_figure(figure)?))
             }
             None => (head, None),
         };
@@ -367,7 +366,7 @@ fn split_blocks(spec: &str) -> Vec<Block> {
 /// Whether a line starts an `Area`, `Cells:` or `Budget:` line, which is a piece of its own even
 /// straight after a paragraph.
 fn starts_field(line: &str) -> bool {
-    ["Area ", "Cells:", "Budget:"]
+    ["Area ", "Cells:", "Budget:", "Old code "]
         .iter()
         .any(|field| line.starts_with(field))
 }
@@ -865,6 +864,9 @@ pub struct Count {
     pub k: Option<u64>,
     /// Whether the spec itself states k or an area, which belong in the decode notes.
     pub spec_states_budget: bool,
+    /// The old code's weighted score for the whole domain, where the notes give it whole
+    /// rather than by area: "Old code (old N): ...".
+    pub old: Option<u64>,
 }
 
 impl Count {
@@ -876,6 +878,7 @@ impl Count {
         let spec_states_budget = stated_k(&blocks).is_some() || !area_defs(&blocks).is_empty();
         let budget = split_blocks(budget.unwrap_or_default());
         let k = stated_k(&budget);
+        let old = stated_old(&budget);
         let defs = areas.map_or_else(|| area_defs(&budget), |file| area_defs(&split_blocks(file)));
         let entries: HashSet<&str> = blocks
             .iter()
@@ -954,6 +957,7 @@ impl Count {
             strays,
             k,
             spec_states_budget,
+            old,
         }
     }
 
@@ -1173,6 +1177,37 @@ fn stated_k(blocks: &[Block]) -> Option<u64> {
                     .then(|| rest.get(..digits)?.parse().ok())?
             })
         })
+}
+
+/// The old code's figure for the whole domain: a piece `Old code (old N): ...`, for old code
+/// the notes don't split by area.
+fn stated_old(blocks: &[Block]) -> Option<u64> {
+    blocks
+        .iter()
+        .flat_map(|block| &block.pieces)
+        .find_map(|piece| {
+            let (head, _) = piece
+                .text
+                .strip_prefix("Old code (old ")?
+                .split_once("):")?;
+            old_figure(head)
+        })
+}
+
+/// An old-code figure as the notes write it, `1,443` or `1,443.25`, in whole tokens: `size`
+/// gives quarters, and a fraction of a half or more rounds up.
+fn old_figure(text: &str) -> Option<u64> {
+    let digits: String = text
+        .chars()
+        .filter(|c| *c != ',' && !c.is_whitespace())
+        .collect();
+    let (whole, fraction) = digits.split_once('.').unwrap_or((&digits, ""));
+    let whole: u64 = whole.parse().ok()?;
+    if !fraction.chars().all(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    let up = fraction.chars().next().is_some_and(|tenths| tenths >= '5');
+    Some(whole.saturating_add(u64::from(up)))
 }
 
 /// A budget figure, or "-" when the notes state no k.
@@ -1649,6 +1684,24 @@ Cells: kept, gun drawn, `kept`
         assert_eq!(unassigned.tally.arms, 1);
         assert_eq!(count.unassigned, Some(2));
         assert_eq!(count.budget(), Some(64 + 56 + 24));
+    }
+
+    #[test]
+    fn the_old_code_can_be_given_for_the_whole_domain() {
+        assert_eq!(demo().old, None);
+        let whole = NOTES.replace(
+            "Area moving (old 1,000)",
+            "Old code (old 2,345): the old module, not split by area.
+
+Area moving",
+        );
+        let count = count_with(SPEC, budget_section(&whole));
+        assert_eq!(count.old, Some(2345));
+        assert_eq!(count.areas.first().and_then(|area| area.old), None);
+        let quarters = whole.replace("2,345)", "1,443.25)");
+        assert_eq!(count_with(SPEC, budget_section(&quarters)).old, Some(1443));
+        let half = whole.replace("2,345)", "1,443.5)");
+        assert_eq!(count_with(SPEC, budget_section(&half)).old, Some(1444));
     }
 
     #[test]

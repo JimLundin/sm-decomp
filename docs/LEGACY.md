@@ -37,6 +37,26 @@ original's bytes as data.
   of the 2,096 pointers at `$92:808D` are zero, and the original reads such a spritemap's count from
   `$92:0000`, low work RAM; an index past the table reads a pointer from what follows. The engine draws
   nothing for either. No pose and frame an animation reaches selects one.
+- **Samus's animation timing spec's defined domain** (the clean-room spec
+  `docs/behaviours/samus-looks.md` §1.5; the original's reads in
+  `docs/behaviours/samus-looks.decode.md`, "Findings behind the spec's choices"): stated
+  simplifications. The first happens in vanilla; the others are unreachable there.
+  - **Five sounds waiting** in library 3's queue as she starts boosting, the blue suit failing
+    (the bank log's note at `$90:852C`: "sometimes (mostly in heated rooms)"). The original indexes
+    the speed boost timer table `$91:B61F` and the delay table `$91:B5DE` at 0Ah, past both: the
+    laps come from `$91:B629` (pose 0's definition, 0000h), so 0, and the lap's first hold is a
+    byte of low RAM, read through a pointer made of `$91:B5E8`'s bytes, which can hold step 0 for a
+    long time (the note's own words: a timer of 0 "lasts 100h frames", "the apparent
+    sliding-on-one-leg pose"). The next lap end's word `DEC` turns 0400h into 03FFh: she boosts for
+    that one lap and then sits at stage 3 for 255 laps, the blue suit failing. The spec leaves 5
+    waiting outside its domain; the engine (once the domain lands) has no RAM image to read the hold
+    from.
+  - A clip that ends with no pose change, or a turn's end that gives way and the pad's jump not
+    taken (`ClipEnds`): the original's next frame moves on past the end byte into its operand and
+    the bytes after the list. Every vanilla end hands over a pose, and the pad's jump is taken.
+  - An `again`, a `branch` or a rest leading to another control, a delay list's last byte a delay
+    (the clip moving on past its list), and an ending clip with a mark, a running, standing or kept
+    pose (spec §1.5, `ended` from the frame's start): none in the game's lists.
 - **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
   original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
   outer edge"): stated simplifications, each unreachable in vanilla.
@@ -142,6 +162,15 @@ original's bytes as data.
   engine never starts them under the grapple, as for a beam. Not seen on record.
 
 ## The engine: memory a model keeps that the engine can't hold yet
+
+- **Samus's animation timing in the engine** (the samus-looks domain,
+  `docs/behaviours/samus-looks.md`; its model is checked in the harness but not yet wired,
+  `docs/behaviours/samus-looks.gaps.md`; `game::animation`): the engine's own animation keeps no
+  boost (the speed booster's stages, `BoostStages`, `BoostingLap`), so with the speed booster she
+  runs at the plain pace and never boosts; it has no slowdown (`animation::frame_buffer` is 0);
+  it holds no straight jump's rising step (`RisingHold`); and a new pose's clip starts at its
+  second step only from a spin or a wall jump, not when her arm was already up (`StartingClip`'s
+  aimed-up rows). Each goes when the model replaces the engine's animation (the gaps file).
 
 - **Jump held through outside her motion's poses** (the samus-motion domain,
   `docs/behaviours/samus-motion.md` `Jumping`; `game::samus_world::state`; `$90:EB35` →

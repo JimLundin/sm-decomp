@@ -12,6 +12,7 @@ clean_model_blocks = { path = "../clean_model/blocks" }
 clean_model_camera = { path = "../clean_model/camera" }
 clean_model_hud = { path = "../clean_model/hud" }
 clean_model_progress = { path = "../clean_model/progress" }
+clean_model_samus_looks = { path = "../clean_model/samus-looks" }
 clean_model_samus_motion = { path = "../clean_model/samus-motion" }
 clean_types = { path = "../clean_types" }
 data = { path = "../data" }

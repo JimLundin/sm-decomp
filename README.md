@@ -13,7 +13,7 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 ## Where it stands
 
-Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **6 are in progress** and **0 done**; 30 have not started. **36 rounds** have landed on 5 models; the plan estimates 147 rounds for the whole game.
+Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **37 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
 
 ### The models
 
@@ -26,6 +26,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 | progress | P1 (in progress) | in progress | 6 | 66 | 25,419 of 25,426 | 979 | 1,092 | 0.90 |
 | hud | H2 (in progress) | in progress | 3 | 72 | 20,614 of 25,426 | 2,978 | 2,028 | 1.47 |
 | blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,643 | 1,992 | 1.33 |
+| samus-looks | S5 (in progress) | in progress | 1 | 85 | 16,210 of 24,230 | 2,409 | 1,356 | 1.78 |
 
 ### The whole-game plan
 
@@ -34,7 +35,7 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 | Wave | Clean-room domains | Platform work | Started | Rounds planned |
 | --- | --- | --- | ---: | ---: |
 | 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3) | 2 of 2 | 2 |
-| 1 | **S2 Liquids, the speed booster, pushes** (in progress); S5 How Samus looks; **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); A1 Instruction lists as assets (3) | 4 of 5 | 15 |
+| 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); A1 Instruction lists as assets (3) | 5 of 5 | 15 |
 | 2 | R1 Doors and elevators; W1 Beams, missiles and bombs; W3 Items to pick up; S3 The shinespark and echoes; S6 The grapple beam; H3 Message boxes | R2 Room loading (4) | 0 of 6 | 20 |
 | 3 | C1 Fighting enemies; S4 Hurt and knockback, bomb jumps; H1 Energy, reserves and death; S7 The x-ray scope; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; F3 Game over | A2 Enemy and room importers (3); E3 The line program (3) | 0 of 8 | 23 |
 | 4 | C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B8 Ceres Ridley and the escape; B9 Ridley; B10 Mother Brain and the escape; F1 The pause screen | - | 0 of 12 | 71 |
@@ -48,7 +49,7 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 | --- | ---: | ---: | ---: | ---: |
 | not yet rebuilt | 44 | 5,054 | 30,326 | 6,941 |
 | bridges from the engine to the models | 8 | 2,457 | 14,743 | 2,480 |
-| rebuilt models, shared types included | 59 | 2,956 | 17,737 | 7,701 |
+| rebuilt models, shared types included | 70 | 3,359 | 20,153 | 8,576 |
 
 ### Verification
 

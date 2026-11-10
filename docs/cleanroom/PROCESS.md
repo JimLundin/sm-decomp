@@ -106,6 +106,11 @@ Each step names its owner, what it waits for, and its done-condition.
    - the old code it replaces is deleted;
    - `tools/lane/gate.sh` passes;
    - the free-run gate's green pairs and the lockstep ratchet hold.
+
+   Where the engine can run the model exactly only once another domain gives it inputs that
+   domain's model doesn't yet give, the round lands with the harness alone. The domain's gaps
+   file names the missing inputs, and LEGACY lists what the old code lacks. The engine wiring,
+   and the deletion of the old code, then land with the round that supplies those inputs.
 10. **Round gate** (adversary), after 8 and 9. It reads the leaks, the harness's honesty, the
     score against the budget and the blind review. Done on a verdict of MERGE. Findings go to
     the integrator (harness, adapter), or into the next round's queue (model shape, spec gaps).

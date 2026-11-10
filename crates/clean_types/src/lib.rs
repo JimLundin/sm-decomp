@@ -351,6 +351,71 @@ pub struct Pose {
     pub legs: Legs,
 }
 
+/// The sprite her pose is drawn in, as samus-motion's `HowSheIsDrawn` chooses it (samus-looks
+/// §1.2): each pose has a clip for each sprite. Its order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Sprite {
+    /// Her plain sprite.
+    Plain,
+    /// The screw attack's.
+    ScrewAttack,
+    /// The space jump's.
+    SpaceJump,
+    /// The other suit's.
+    OtherSuit,
+}
+
+/// The end her clip reaches this frame (samus-looks `ClipEnds`), which samus-motion's
+/// `AnimationEnds` reads; no end is `None` where it is held as an `Option`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum ClipEnd {
+    /// The clip ends: samus-motion hands over her next pose.
+    End,
+    /// The clip ends unless the pad asks for a jump, which then takes its place.
+    EndUnlessJump,
+}
+
+/// Her run's speed booster stage (samus-looks §1): 0 to 4, where 4 is boosting. The shinespark,
+/// the echoes, her glow, the blocks a boost breaks and the enemies she touches read it.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Enum)]
+pub enum BoostStage {
+    /// Stage 0: where every dash begins.
+    #[default]
+    Stage0,
+    /// Stage 1.
+    Stage1,
+    /// Stage 2.
+    Stage2,
+    /// Stage 3.
+    Stage3,
+    /// Stage 4: boosting.
+    Boosting,
+}
+
+impl BoostStage {
+    /// Every stage, numbered 0 to 4 by its place here.
+    pub const ALL: [Self; 5] = [
+        Self::Stage0,
+        Self::Stage1,
+        Self::Stage2,
+        Self::Stage3,
+        Self::Boosting,
+    ];
+}
+
+/// A sound her animation asks for (samus-looks §1.1), for the sound domain to play or not.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum AnimationSound {
+    /// A wall jump's plain spin.
+    PlainSpin,
+    /// A wall jump spun as the space jump.
+    SpaceJump,
+    /// A wall jump spun as the screw attack.
+    ScrewAttack,
+    /// She starts boosting.
+    Boosting,
+}
+
 /// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed, each a bit of
 /// `button`'s.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]

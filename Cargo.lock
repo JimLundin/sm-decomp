@@ -62,6 +62,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "clean_model_samus_looks"
+version = "0.1.0"
+dependencies = [
+ "clean_types",
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+]
+
+[[package]]
 name = "clean_model_samus_motion"
 version = "0.1.0"
 dependencies = [
@@ -334,6 +344,7 @@ dependencies = [
  "clean_model_camera",
  "clean_model_hud",
  "clean_model_progress",
+ "clean_model_samus_looks",
  "clean_model_samus_motion",
  "clean_types",
  "data",

@@ -32,6 +32,10 @@ rounds = 3
 name = "blocks"
 rounds = 4
 
+[[model]]
+name = "samus-looks"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -60,7 +64,7 @@ lanes = 3
 
 [[domain]]
 id = "S2"
-name = "Liquids, the speed booster, pushes"
+name = "Liquids and pushes"
 wave = 1
 rounds = 4
 model = "samus-motion"
@@ -71,6 +75,8 @@ id = "S5"
 name = "How Samus looks"
 wave = 1
 rounds = 3
+model = "samus-looks"
+status = "in-progress"
 
 [[domain]]
 id = "H2"
