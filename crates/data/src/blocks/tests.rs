@@ -62,7 +62,7 @@ fn a_list_reads_as_its_steps_its_go_to_followed() {
         },
         PatternCell {
             offset: Pair { x: 1, y: 0 },
-            becomes: Becomes::Itself,
+            becomes: Becomes::Block,
             look: Look {
                 picture: picture(0x13),
                 flip: Flip::None,

@@ -359,12 +359,12 @@ fn place_view(place: &Place) -> PlaceView {
         Place::HeldUntilRun => PlaceView::HeldUntilRun,
         Place::Scroll(scroll) => PlaceView::Scroll(scroll.cell, scroll.touched),
         Place::Running(running) => PlaceView::Running(
-            running.reaction().name.clone(),
-            running.script(),
+            running.reaction.name.clone(),
+            running.script,
             running.cell,
             running.next,
             running.wait,
-            running.grows_back_as(),
+            running.grows_back_as,
         ),
     }
 }
@@ -585,12 +585,14 @@ impl BlocksDomain {
             .ok_or(Skip::Place(slot, "a reaction the content doesn't hold"))?;
         let wait = Frames::new(read(source::PLM_INSTRUCTION_TIMER)?)
             .ok_or(Skip::Place(slot, "a wait of 0 or past the model's"))?;
-        Running::new(Arc::clone(reaction), script, grows_back_as, at, next, wait)
-            .map(Place::Running)
-            .ok_or(Skip::Place(
-                slot,
-                "what it grows back as against its script",
-            ))
+        Ok(Place::Running(Running {
+            reaction: Arc::clone(reaction),
+            script,
+            grows_back_as,
+            cell: at,
+            next,
+            wait,
+        }))
     }
 
     /// The blocks `record` holds.
@@ -693,15 +695,15 @@ fn fresh(from: &Places, next: &Places) -> Vec<(usize, Running, Started)> {
         };
         let is_new = match before {
             Place::Running(before) => {
-                before.reaction() != after.reaction()
+                before.reaction != after.reaction
                     || before.cell != after.cell
-                    || before.script() != after.script()
+                    || before.script != after.script
                     || before.next > after.next
             }
             Place::Free | Place::Scroll(_) | Place::OtherPart | Place::HeldUntilRun => true,
         };
         if is_new {
-            let started = Started::of(after.reaction().family, after.script());
+            let started = Started::of(after.reaction.family, after.script);
             starts.push((slot, after.clone(), started));
         }
     }
@@ -1032,26 +1034,22 @@ impl Domain for BlocksDomain {
         };
         for (was, now) in before.0.iter().zip(&state.places.0) {
             if let (Place::Free, Place::Running(running)) = (was, now) {
-                let family = running.reaction().family;
-                did.extend([
-                    B::Places,
-                    B::TheScriptsRun,
-                    started(family, running.script()),
-                ]);
+                let family = running.reaction.family;
+                did.extend([B::Places, B::TheScriptsRun, started(family, running.script)]);
             }
             let Place::Running(running) = was else {
                 continue;
             };
-            let reaction = running.reaction();
+            let reaction = &running.reaction;
             let end = match now {
-                Place::Running(after) if after.reaction() == running.reaction() => after.next,
+                Place::Running(after) if after.reaction == running.reaction => after.next,
                 Place::Free
                 | Place::Running(_)
                 | Place::Scroll(_)
                 | Place::OtherPart
                 | Place::HeldUntilRun => usize::MAX,
             };
-            let steps = &reaction.scripts[running.script()];
+            let steps = &reaction.scripts[running.script];
             let passed = steps
                 .get(running.next..end.min(steps.len()))
                 .unwrap_or_default();

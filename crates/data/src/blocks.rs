@@ -310,8 +310,8 @@ impl Sound {
 pub enum Becomes {
     /// Air.
     Air,
-    /// Its reacting kind as a block.
-    Itself,
+    /// A reacting block of the family, whatever the cell was.
+    Block,
     /// A stand-in along its row.
     StandInAcross,
     /// A stand-in along its column.
@@ -533,7 +533,7 @@ fn pattern(rom: Lorom<'_>, at: u16) -> Result<Vec<PatternCell>, Refused> {
             let block = word(rom, PLM_BANK, cursor)?;
             let becomes = match block >> TYPE_SHIFT {
                 0x0 => Becomes::Air,
-                0xb | 0xc | 0xf => Becomes::Itself,
+                0xb | 0xc | 0xf => Becomes::Block,
                 0x5 => Becomes::StandInAcross,
                 0xd => Becomes::StandInDown,
                 _ => return Err(Refused::Pattern(RomAddress::new(PLM_BANK, cursor))),

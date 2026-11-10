@@ -212,7 +212,7 @@ fn step(step: &asset::Step) -> Option<Step> {
                     offset: cell.offset,
                     becomes: match cell.becomes {
                         asset::Becomes::Air => Becomes::Air,
-                        asset::Becomes::Itself => Becomes::Itself,
+                        asset::Becomes::Block => Becomes::Block,
                         asset::Becomes::StandInAcross => Becomes::StandInAcross,
                         asset::Becomes::StandInDown => Becomes::StandInDown,
                     },
@@ -455,7 +455,7 @@ impl BlockContent {
             let Place::Running(running) = place else {
                 continue;
             };
-            let reaction = running.reaction();
+            let reaction = &running.reaction;
             own.push((running.cell, Covering::Own(reaction.family)));
             others.extend(self.covered(reaction).iter().filter_map(|offset| {
                 Some((
@@ -641,7 +641,7 @@ impl AreaTables<'_> {
             inside: if holds {
                 Inside::HoldsPlace
             } else {
-                Inside::Passes
+                Inside::HoldsNoPlace
             },
         })
     }
@@ -778,14 +778,14 @@ fn place(
         }),
         PlmBody::ScrollTouch | PlmBody::Held => Place::HeldUntilRun,
         PlmBody::Item { .. } | PlmBody::ItemCollision => Place::OtherPart,
-        PlmBody::Reaction(running) => Place::Running(Running::new(
-            Arc::clone(content.reaction(running.reaction)?),
-            script(running.script),
-            running.grows_back_as.map(reacting_body),
-            at,
-            usize::from(running.next),
-            Frames::new(slot.common.cursor.delay.0)?,
-        )?),
+        PlmBody::Reaction(running) => Place::Running(Running {
+            reaction: Arc::clone(content.reaction(running.reaction)?),
+            script: script(running.script),
+            grows_back_as: running.grows_back_as.map(reacting_body),
+            cell: at,
+            next: usize::from(running.next),
+            wait: Frames::new(slot.common.cursor.delay.0)?,
+        }),
     })
 }
 
@@ -879,11 +879,29 @@ fn block(was: Block, tile: &Tile, at: BlockIndex) -> Result<Block, BlocksFault> 
 /// The engine's reaction place of a running one.
 fn reaction_place(running: &Running, content: &BlockContent) -> Option<ReactionPlace> {
     Some(ReactionPlace {
-        reaction: content.id(running.reaction())?,
-        script: engine_script(running.script()),
+        reaction: content.id(&running.reaction)?,
+        script: engine_script(running.script),
         next: u16::try_from(running.next).ok()?,
-        grows_back_as: running.grows_back_as().map(grows_back_as),
+        grows_back_as: running.grows_back_as.map(grows_back_as),
     })
+}
+
+/// The cell `request` names, if it names one.
+const fn request_cell(request: Request) -> Option<Cell> {
+    match request {
+        Request::Inside { cell, .. }
+        | Request::Hit { cell, .. }
+        | Request::Touch(Touch { cell, .. }) => Some(cell),
+        Request::OtherPart => None,
+    }
+}
+
+/// The cell `placement` places, if it places one.
+const fn placement_cell(placement: &Placement) -> Option<Cell> {
+    match placement {
+        Placement::Scroll { cell, .. } | Placement::StandIn { cell, .. } => Some(*cell),
+        Placement::OtherPart => None,
+    }
 }
 
 /// A spawn into `slot` on `block` (`$84:84C5`): its timer 1, its body `occupancy`; a field the
@@ -997,7 +1015,7 @@ impl<'a> Call<'a> {
     /// One of the frame's requests, its run paused: the run is the PLM pass's. Its cell is one of
     /// the room's, or the call stops.
     fn request(&mut self, room: &mut RoomScoped, request: Request) -> Result<(), BlocksFault> {
-        let Some(at) = request.cell() else {
+        let Some(at) = request_cell(request) else {
             return Ok(());
         };
         let block_index = index(at, room.width.0);
@@ -1317,7 +1335,7 @@ pub fn start_room(
             PlmKind::Scroll(id) => Some(id),
             PlmKind::Extension(_) | PlmKind::Item(..) | PlmKind::Unmodelled(_) => None,
         };
-        call.watch(placement.cell());
+        call.watch(placement_cell(&placement));
         let (took, ()) = call.step(room, Phase::RoomStart(named), |state| {
             state.start_room(core::slice::from_ref(&placement))
         })?;
