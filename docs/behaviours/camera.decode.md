@@ -76,10 +76,15 @@ vectors' heights were the game's too. `$TEMP/collab/camera-spec-r5/` holds the c
   overlapping cell (6 or more, of two kinds, and 90% of the smaller grid); whose run below the room
   (3 or more, of two kinds) starts a real room's run under a relabelling; whose heights are a real
   pair or one moved by a constant (the same difference); or whose comment or id names an area, a
-  boss's room or a room's header. On the round 4 file it finds 861 hits: all 35 recorded vectors,
-  every constructed vector's heights, and C-wrap's room (a real 2×2 room under a relabelling).
-  Probes catch a real room relabelled, one shifted a column with an invented column and row added,
-  and heights moved by a constant. On the new file: 0.
+  boss's room or a room's header. On the round 4 file it finds 823 hits (80 heights, 712
+  placements, 25 rooms, 6 runs below). The room tests catch 18 of the recorded vectors (R1-R3,
+  R13-R22, R26-R28, R32, R33, R35) and C-wrap's room (a real 2×2 room under a relabelling); the
+  other 17 (R4-R12, R23-R25, R29-R31, R34) only by their heights, as their rooms are 1 to 3
+  screens, of one kind, or changed in RAM. Every vector's heights were the game's. Probes catch a
+  real room relabelled, shifted with an invented column and row, mirrored, transposed, or with 5
+  of 45 cells changed, and heights moved by a constant (adversary 85, F6). Its known limits: a
+  real run below the room with its first screen changed, and heights keeping one real value (as
+  112/150); the twins use neither. On the new file: 0.
 - `twins.py` builds each twin: the record's frame moved by whole screens on both axes, so every
   screen it reads, every edge and every row and column it reads by are where they were relative to
   the camera; its room cut to the screens round the camera, or padded by an invented column or row
@@ -89,7 +94,12 @@ vectors' heights were the game's too. `$TEMP/collab/camera-spec-r5/` holds the c
   90h/A0h, and her y moves by the change in the height she aims with (the not-rising height's
   change, or the rising one's while she rises), so the aim and the speeds are unchanged. A twin is
   kept only when the reference model's result is the record's, moved, and its branch tags are the
-  record's.
+  record's. Three twins were then made to keep a sensitivity their records had (adversary 85, F3):
+  the twins of R11 and R25 move by an even number of screens (`regen.py`, `EVEN`), so a mutant that
+  masks a position to a pair of screens (`& 0xFE00` for `& 0xFF00`, in the move down's floor and
+  the right push's edge) fails them as it fails R11 and R25; C-at-aim-across's second screen is
+  `O`, not a random `C`, so Ahead's right lead of 95 for 96 fails it as it fails R23.
+  `mutants.py` runs the three mutants: each fails a twin as it fails its record.
 - `build_file.py` writes the file: the constructed vectors on the invented heights the same way
   (their camera and results unchanged, her y and the seen y moved; C-wrap gains a third row,
   `SC`, which it doesn't read), then the twins, named and described in `names.toml`.
@@ -161,7 +171,11 @@ table, `$80:A575`, `$80:A5BE`, `$80:A5DA`, `$80:A61E`, `$80:A691`, `$80:A703`, `
 `$80:A802`, `$80:A823`, `$80:A870`, `$80:A903`, `$80:A97E` (each `AND #$00FF` then `BNE`: not
 red) and `$80:A76B`, `$80:A8C8` (`CMP #$0001`, `BEQ`: blue), test only 0 and 1, and no other bank
 reads the table for the camera (the Shitroid's `$A9:EFF4`.. and the Dachora room's `$8F:C1E6` are
-the room's own code, §5). So every other byte reads as green, at every read, and the spec states
+the room's own code, §5). The Dachora room's main code tests scroll Bh for exactly 2 (`CMP
+#$0002`), and `$A9:F159` sets blue with `ORA #$0100`, which on a green byte gives 3; the first byte
+is written only as 0, 1 or 2 in that room, and the second follows `$A9:EFF4`'s clear to red, so
+neither sees a byte of 3 or more in the game (for the blocks and enemies domains). So every other
+byte reads as green at the camera's reads, and the spec states
 it as `Open`. The run past a room's screens holds such bytes (`80`, `12` and `13` in the records),
 and so does room `$ADAD`'s bottom row (docs/LEGACY.md): its scroll pointer `$8F:ADDA` names four
 bytes for 4×2 screens, so the copy (`$82:EB28`, 32h bytes) takes the next room's header, `1F 02 1D
@@ -398,12 +412,15 @@ same frame moved into an invented room (§How the spec was made), and carries th
 - **Compared at N+1**, for every case: the camera's x and y, pixel and subpixel parts. Where it
   last saw her is reported, not counted (§The harness).
 - **The content the importer loads:** the room (its header in bank `$8F`) at the state the record
-  holds; its size `07A9`×`07AB` and its heights from the header; its screens from the state's
-  scroll pointer through `data::level::scroll_areas`: a table's 32h bytes (the room's `w × h`, then
-  the run after them, which the camera reads below the room), or preset scrolls (every screen green
-  but the bottom row, the pointer's low byte plus one). The harness compares the importer's screens
-  with the record's table `$7E:CD20` at N+1 and runs the model on the importer's, with these taken
-  from the record instead, by name:
+  holds; its size `07A9`×`07AB` and its heights from the header; its screens from the state's scroll
+  pointer through `data::level::scroll_areas`: a table's 32h bytes (the room's `w × h`, then the run
+  after them, which the camera reads below the room), or preset scrolls (every screen green but the
+  bottom row, the pointer's low byte plus one). Today's `scroll_areas` reads only the `w × h` bytes
+  and refuses a byte of 3 or more: the integrator extends it to return all 32h bytes, keeping such a
+  byte as `Unknown(u8)`, since seven table cases read the run after the screens (R3, R6, R11, R16,
+  R22, R31, R33) and must take it from the importer, not the record. The harness compares the
+  importer's screens with the record's table `$7E:CD20` at N+1 and runs the model on the importer's,
+  with these taken from the record instead, by name:
   - screens changed before the frame (the scroll cells, the room's own code): the cases list them;
   - for a preset room, the run after its screens, which is the last room's (`$82:EB3D`..`$82:EB67`
     fill `w × h` only; the engine keeps it as `RoomScoped::stale_scrolls`).

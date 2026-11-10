@@ -605,7 +605,7 @@ after = { camera = ["0100.0000", "0000.7C00"], seen = ["01A0.0000", "0052.63FF"]
 id = "C-at-aim-across"
 source = "constructed"
 entries = ["FollowingHer", "LeadingHer", "Settling", "ShortScreens", "Remembering"]
-room = { screens = ["SC"], heights = [104, 150] }
+room = { screens = ["SO"], heights = [104, 150] }
 before = { camera = ["0000.0000", "0000.3400"], seen = ["005D.FFFF", "00A3.FFFF"] }
 samus = { position = ["0060.FFFF", "00A3.FFFF"], facing = "Right" }
 after = { camera = ["0000.0000", "0000.3400"], seen = ["0060.FFFF", "00A3.FFFF"] }
@@ -614,10 +614,10 @@ after = { camera = ["0000.0000", "0000.3400"], seen = ["0060.FFFF", "00A3.FFFF"]
 id = "C-left-edge-keeps-subpixel"
 source = "constructed"
 entries = ["LeadingHer", "RoomEdges", "FollowingHer", "ClosedScreens", "AimingHeight", "Remembering"]
-room = { screens = ["OC", "SO", "OO"], heights = [104, 150] }
-before = { camera = ["0000.4000", "0200.5800"], seen = ["0022.CFFF", "0283.FFFF"] }
-samus = { position = ["002A.8FFF", "0287.BFFF"], facing = "Right" }
-after = { camera = ["0000.8000", "0205.1800"], seen = ["002A.8FFF", "0287.BFFF"] }
+room = { screens = ["CO", "OC", "OO", "OS"], heights = [104, 150] }
+before = { camera = ["0000.4000", "0300.5800"], seen = ["0022.CFFF", "0383.FFFF"] }
+samus = { position = ["002A.8FFF", "0387.BFFF"], facing = "Right" }
+after = { camera = ["0000.8000", "0305.1800"], seen = ["002A.8FFF", "0387.BFFF"] }
 [[vector]]
 # the move down passes the room's bottom, its last row not short: the view backs up to 31 px below the last row's top edge
 id = "C-down-to-bottom-31"
@@ -749,10 +749,10 @@ after = { camera = ["01B3.0000", "0000.5000"], seen = ["024F.4FFF", "009C.FFFF"]
 id = "C-right-to-closed-edge-down-to-bottom"
 source = "constructed"
 entries = ["LeadingHer", "FollowingHer", "ClosedScreens", "RoomEdges", "ShortScreens", "AimingHeight", "Remembering"]
-room = { screens = ["OCS"], heights = [104, 150] }
-before = { camera = ["01FF.4000", "0000.0400"], seen = ["026C.FFFF", "0095.D3FF"] }
-samus = { position = ["026D.1FFF", "0096.0BFF"], facing = "Right" }
-after = { camera = ["0200.6000", "0000.3C00"], seen = ["026D.1FFF", "0096.0BFF"] }
+room = { screens = ["SCOS"], heights = [104, 150] }
+before = { camera = ["02FF.4000", "0000.0400"], seen = ["036C.FFFF", "0095.D3FF"] }
+samus = { position = ["036D.1FFF", "0096.0BFF"], facing = "Right" }
+after = { camera = ["0300.6000", "0000.3C00"], seen = ["036D.1FFF", "0096.0BFF"] }
 [[vector]]
 # in a room with the other heights: across the view moves right and the room's right edge stops it; down its aim is above the room, and it stops on the top, its subpixel kept
 id = "C-corner-other-heights"

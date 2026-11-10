@@ -136,8 +136,8 @@ of the room is in a column past the row's last (`ScreensRunOn`).
 ### LeadingHer
 - kind: mechanic and parameter.
 - summary: across, the view aims to keep her a set distance from its left edge, by the lead
-  setting and the way she travels: she travels the way she faces, or the other way while she goes
-  backwards.
+  setting and the way she travels: she travels the way she faces, facing the screen as facing
+  right, or the other way while she goes backwards.
 - params: the lead, how far her x is from the view's left edge, by the lead setting: `Ahead` 96 when
   she faces right and 160 when she faces left (she is 96 px from the edge behind her); `KeepLeft`
   32 either way; `KeepRight` 224 either way; `Near` 64 when she faces right and 80 when she faces
@@ -219,7 +219,8 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - summary: a closed screen is never shown: a view that goes into one is pushed back to its edge,
   backing off by the push each frame against her move (2 px in the reference profile).
 - params: the push, 2 px beyond the speed.
-- switch: **Parameter**, the push (params).
+- switch: **Parameter**, the push (params). A push also moves by `v`, which holds
+  `FollowingHer`'s extra, so that Parameter changes it too.
 - `edge(p) = p − p mod 256`, the near edge of the screen holding `p`.
 - The push forward from `p` is `ahead(p) = p + v + 2` (`PushCarries`), the push back
   `back(p) = p − v − 2`.
@@ -300,9 +301,11 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - summary: on an axis she didn't move on, the view, brought into the room, eases out of a closed
   screen it partly shows a few pixels a frame (3 in the reference profile), towards the open screen
   beside it.
-- params: the ease, `ClosedScreens`' push (the speed's pixel part is 1 here, or 0 after a creep,
-  `CreepReadsRightward`).
-- switch: none (the ease is `ClosedScreens`' push).
+- params: the ease is the speed's pixel part, `FollowingHer`'s extra when she didn't move (0
+  after a creep, `CreepReadsRightward`), plus `ClosedScreens`' push: 3 px in the reference
+  profile, 2 after a creep.
+- switch: none of its own: the ease follows `FollowingHer`'s extra and `ClosedScreens`' push, the
+  two Parameters it is made of.
 - `c0` is the camera's pixel part as the frame found it, and `a` its ease forward, `ahead(c0)`;
   the rules below read `c` after the first.
 - Settling → it is first brought into the room: `c = min(max(c0, 0), cr)`, the `min` by
