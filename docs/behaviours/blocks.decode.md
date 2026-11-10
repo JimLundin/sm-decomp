@@ -480,10 +480,10 @@ content is the draw routine's, which the format names by what each cell becomes.
 During play only PLMs write the room's cells. Outside bank `$84` the level is written by the
 room's load (`$82:E7D3`, `$82:EA73`: a room change, which the harness skips) and the intro's
 cinematics (`$8B:AEB8`, `$8B:AF6C`: not game state 8); the enemies and bosses read it and spawn
-PLMs to change it. The table is every PLM of bank `$84` outside this part that writes a cell
-other than its own, with the cells it writes as `(dx, dy)` from its own cell (`$1C87,x`) at that
-frame, x rightward and y downward. `x a..b, y c..d` is the whole rectangle unless cells are
-listed. Every other PLM, the items' included, writes only its own cell, or none.
+PLMs to change it. The writers' table is every PLM of bank `$84` outside this part that writes
+a cell other than its own, with the cells it writes as `(dx, dy)` from its own cell (`$1C87,x`)
+at that frame, x rightward and y downward. Every other PLM, the items' included, writes only its
+own cell, or none.
 
 It comes from the draw instructions (`$84:924D`..`$AADE`), each noted in the bank log with the
 instruction lists and the PLMs that use it, read from the ROM (a PLM whose header names a list
@@ -494,10 +494,12 @@ cells by PLM; `mask_reach.py ROW...` reads the dumps.
 
 The table's single source is
 [`writers.toml`](../../crates/verify/src/harness/blocks/writers.toml), which the harness masks
-by: each writer's PLMs, its cells as points and boxes from its own cell, what the 44 cached rows
-do with it (`writes`, `live` or `no`, from `mask_reach.py`) and, for a writer left out, why.
+by: each writer's PLMs, its cells as points and boxes from its own cell (a box's ends both
+included), what the 44 cached rows do with it (`writes`, `live` or `no`, from `mask_reach.py`)
+and, for a writer left out, why. Its comments give each writer's account from the bank log.
 
-Unused, placed by no room: `$B65F`, `$B663` (x 0, y −2..1), `$B667` (x 0, y 0..3), `$B6AB`,
+Unused, placed by no room, and so not in the file (`x a..b, y c..d` is the box, both ends
+included): `$B65F`, `$B663` (x 0, y −2..1), `$B667` (x 0, y 0..3), `$B6AB`,
 `$B6AF`, `$B75B`, `$B75F` (x 0..12, y 0), `$B6F7` (x 0, y 0..1), `$B6FB` (x −1..0, y 0..1),
 `$D6E2`, `$D6E6` (x −3..0, y 0..3), `$D700` (x −2..0, y 0..3), `$D708` (x 0..1, y 0..1).
 
@@ -568,12 +570,12 @@ each would fail loudly, as a false mismatch, never hide one. For a row that reac
   and a slot another part's reaction takes or frees between N and N+1 is copied from N+1
   (unverified), so the free slot a start takes is chosen as the original chose it. The cells
   another part's PLM sits on or writes at N or N+1 are masked by position, each naming the PLM
-  (`$1C37,x`) that writes it, with the cells §The other parts' cell writers gives it (every other
-  PLM, an item's included, masks its own cell). The cached rows reach the doors' caps, Bomb
-  Torizo's door, the elevator platform and Phantoon's doors (the table's "writes" rows); the other
-  entries are for a row that reaches them. The order of a frame's starts among the other parts'
-  spawns isn't known from the record; one frame of the 786 (r06:538) has another part's slot
-  change beside this spec's reactions, and matches.
+  (`$1C37,x`) that writes it, with the cells `writers.toml` gives it (§The other parts' cell
+  writers; every other PLM, an item's included, masks its own cell). The cached rows reach the
+  doors' caps, Bomb Torizo's door, the elevator platform and Phantoon's doors (its `writes`
+  writers); the other writers are for a row that reaches them. The order of a frame's starts
+  among the other parts' spawns isn't known from the record; one frame of the 786 (r06:538) has
+  another part's slot change beside this spec's reactions, and matches.
 - **Null model:** nothing changes: 183 of the 786 (the scroll touches already in force); 431 on
   cells and screens.
 - **Per-behaviour attribution:** `model.py`'s tags name what each frame did; `gen.py`'s `ENTRIES`
