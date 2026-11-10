@@ -4,6 +4,7 @@
 use crate::collide::{Bounds, Moved, Stop};
 use crate::jump_held::JumpHeld;
 use crate::motion::Run;
+use crate::rules::Bounces;
 use clean_types::{Cell, Fixed, Parts, Pose, Position, Radius, Touch, ZERO};
 
 /// Her vertical motion's phase; her vertical speed itself is `Samus::vy`.
@@ -32,17 +33,6 @@ impl Vertical {
     pub const fn on_ground(self) -> bool {
         matches!(self, Self::Ground | Self::GroundFalling)
     }
-}
-
-/// `Landing`: how many times the ball has bounced since it last rested.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Bounces {
-    /// None.
-    None,
-    /// One.
-    Once,
-    /// Two.
-    Twice,
 }
 
 /// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each

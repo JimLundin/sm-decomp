@@ -28,6 +28,6 @@ pub use chart::Moment;
 pub use jump_held::{FrameBefore, JumpHeld};
 pub use motion::{Carry, DashIs, Run};
 pub use rows::Met;
-pub use rules::{Rules, SpeedCap};
-pub use samus::{Bounces, Drawn, Outcome, Samus, Seat, Spin, Standing, Vertical, WallTest};
+pub use rules::{Bounces, Rules, SpeedCap};
+pub use samus::{Drawn, Outcome, Samus, Seat, Spin, Standing, Vertical, WallTest};
 pub use tick::Frame;

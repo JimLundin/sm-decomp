@@ -20,10 +20,10 @@ use crate::rows::Effect::{
 };
 use crate::rows::Met::{self, Ceiling, Floor, NoFloor, Wall, WallKick};
 use crate::rows::Situation;
-use crate::rules::{Bounce, Lowers, Rules};
+use crate::rules::{Bounce, Bounces, Lowers, Rules};
 use crate::samus::Seat::{Seated, Unseated};
 use crate::samus::WallTest::{Kicked, Neither, Readied};
-use crate::samus::{Bounces, Drawn, Outcome, Samus, Spin, Standing, Vertical, WallTest};
+use crate::samus::{Drawn, Outcome, Samus, Spin, Standing, Vertical, WallTest};
 use crate::situation::{ENTERING, classify};
 use crate::tick::{Frame, Tick};
 use clean_types::Action;

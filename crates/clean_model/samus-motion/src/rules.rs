@@ -1,6 +1,5 @@
 //! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
 
-use crate::samus::Bounces;
 use Gait::{Falling, Moonwalking, Rolling, Running, SpinJump, StraightJump, Turning};
 use Lowers::{Crouch, Morph, Nothing};
 use clean_types::{Fixed, Item, Parts, Px, Set, ZERO, below};
@@ -91,6 +90,17 @@ impl Boots {
             self.plain
         }
     }
+}
+
+/// `Landing`: how many times the ball has bounced since it last rested.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Bounces {
+    /// None.
+    None,
+    /// One.
+    Once,
+    /// Two.
+    Twice,
 }
 
 /// `Landing`: one of the ball's bounces: the landing that makes it, the speed it rises at, and the
