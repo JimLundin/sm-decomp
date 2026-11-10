@@ -1,4 +1,4 @@
-use super::{Score, Size, of, sizes};
+use super::{Score, Size, functions, of, sizes};
 
 fn tokens(src: &str) -> usize {
     let size = of(src);
@@ -356,4 +356,44 @@ fn a_struct_literals_fields_are_argument_pairs() {
                fn h(s: S) { let S { x, y } = s; match s { S { x, y } => x } }";
     // The third literal pays a (or y) again; a destructuring pattern builds nothing.
     assert_eq!(clumps(&[src]), [8]);
+}
+
+#[test]
+fn a_sources_functions_and_the_rest_add_up_to_its_size() {
+    let srcs = [
+        "use a::b;\nimpl S {\n    pub(crate) const fn f(x: u8) -> u8 { if x > 0 { g(a, b) } else { 0 } }\n    \
+         fn h() { fn inner() {} g(a, b); }\n}\nfn k() { g(a, b); }\n",
+        "fn m() { g(a, b); }",
+    ];
+    let measured = functions(&srcs);
+    let names: Vec<Vec<&str>> = measured
+        .iter()
+        .map(|source| source.iter().map(|function| function.name).collect())
+        .collect();
+    // A function inside another's body is part of it.
+    assert_eq!(names, [vec!["f", "h", "k"], vec!["m"]]);
+    // The visibility and the qualifiers are the function's.
+    assert!(measured[0][0].text.starts_with("pub(crate) const fn f"));
+    assert!(measured[0][1].text.ends_with("g(a, b); }"));
+    let whole = sizes(&srcs);
+    for (source, size) in measured.iter().zip(&whole) {
+        let parts = source
+            .iter()
+            .fold(Size::default(), |sum, function| sum.add(function.size));
+        assert!(parts.score <= size.score);
+        assert!(parts.logic <= size.logic);
+    }
+    // `impl S { }` and the `use`, outside every function: the impl's three tokens, at one each.
+    let rest = |at: usize| {
+        whole[at].score.eighths()
+            - measured[at]
+                .iter()
+                .map(|function| function.size.score.eighths())
+                .sum::<usize>()
+    };
+    assert_eq!(rest(0), 3 * 8);
+    assert_eq!(rest(1), 0);
+    // The pair `(a, b)` recurs at a third site in `k` and a fourth in `m`: each pays there.
+    assert_eq!(measured[0][2].size.clumps.eighths(), 8);
+    assert_eq!(measured[1][0].size.clumps.eighths(), 8);
 }

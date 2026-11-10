@@ -30,6 +30,7 @@ mod quality;
 use std::fmt;
 use std::fmt::Write as _;
 use std::fs;
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 use quality::Context;
@@ -71,14 +72,15 @@ fn after_while(rest: &str, keep: impl Fn(char) -> bool) -> &str {
         .unwrap_or_default()
 }
 
-/// The source's tokens, in order.
-fn lex(src: &str) -> Vec<Token<'_>> {
+/// The source's tokens, in order, each with the byte range of its text.
+fn lex(src: &str) -> Vec<(Token<'_>, Range<usize>)> {
     let mut out = Vec::new();
     let mut rest = src;
     while let Some(c) = rest.chars().next() {
         let (lexeme, after) = next(rest, c);
         if let Lexeme::Token(token) = lexeme {
-            out.push(token);
+            let start = src.len().saturating_sub(rest.len());
+            out.push((token, start..src.len().saturating_sub(after.len())));
         }
         rest = after;
     }
@@ -451,16 +453,17 @@ fn ends_item(previous: Option<Token<'_>>) -> bool {
     )
 }
 
-/// The tokens without their `#[cfg(test)]` items.
-fn without_tests<'a>(tokens: &[Token<'a>]) -> Vec<Token<'a>> {
+/// The tokens without their `#[cfg(test)]` items, each with its text's byte range.
+fn without_tests<'a>(lexed: &[(Token<'a>, Range<usize>)]) -> Vec<(Token<'a>, Range<usize>)> {
+    let tokens: Vec<Token<'a>> = lexed.iter().map(|(token, _)| *token).collect();
     let mut out = Vec::with_capacity(tokens.len());
-    let mut rest = tokens;
-    while let Some((&token, tail)) = rest.split_first() {
+    let mut rest = tokens.as_slice();
+    while let Some((_, tail)) = rest.split_first() {
         if let Some(item) = rest.strip_prefix(&TEST_ATTRIBUTE[..]) {
             rest = after_item(item);
             continue;
         }
-        out.push(token);
+        out.extend(lexed.get(tokens.len().saturating_sub(rest.len())).cloned());
         rest = tail;
     }
     out
@@ -841,26 +844,143 @@ pub fn sources(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
     Ok(())
 }
 
+/// One measured source: its tokens, each with its text's byte range and its share of the size.
+/// A repeated argument pair's pay (Q2) is the share of the token that opens its call or literal.
+struct Measured<'a> {
+    tokens: Vec<Token<'a>>,
+    spans: Vec<Range<usize>>,
+    shares: Vec<Size>,
+}
+
+/// The sources measured together: a clump (Q2) recurs across them.
+fn measured<'a>(srcs: &[&'a str]) -> Vec<Measured<'a>> {
+    let (tokens, spans): (Vec<Vec<Token<'a>>>, Vec<Vec<Range<usize>>>) = srcs
+        .iter()
+        .map(|src| without_tests(&lex(src)).into_iter().unzip())
+        .unzip();
+    let quality = quality::of(&tokens);
+    tokens
+        .into_iter()
+        .zip(spans)
+        .zip(quality)
+        .map(|((tokens, spans), (contexts, repeated))| {
+            let mut classes = Vec::with_capacity(tokens.len());
+            classify(&tokens, &mut classes);
+            let mut shares: Vec<Size> = classes
+                .into_iter()
+                .zip(contexts)
+                .map(|(class, context)| Size::default().with(class, context))
+                .collect();
+            for pay in repeated {
+                if let Some(share) = shares.get_mut(pay.at) {
+                    *share = share.repeated(pay.tokens);
+                }
+            }
+            Measured {
+                tokens,
+                spans,
+                shares,
+            }
+        })
+        .collect()
+}
+
+/// The sum of some tokens' shares.
+fn total(shares: &[Size]) -> Size {
+    shares
+        .iter()
+        .fold(Size::default(), |sum, &share| sum.add(share))
+}
+
 /// The size of each source text, measured together: a clump (Q2) recurs across them.
 #[must_use]
 pub fn sizes(srcs: &[&str]) -> Vec<Size> {
-    let lexed: Vec<Vec<Token<'_>>> = srcs.iter().map(|src| without_tests(&lex(src))).collect();
-    let quality = quality::of(&lexed);
-    lexed
+    measured(srcs)
         .iter()
-        .zip(quality)
-        .map(|(tokens, (contexts, repeated))| {
-            let mut classes = Vec::with_capacity(tokens.len());
-            classify(tokens, &mut classes);
-            classes
+        .map(|source| total(&source.shares))
+        .collect()
+}
+
+/// A function of a source, with its size: from its `fn`, and the visibility and qualifiers
+/// before it, to the end of its body.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Function<'a> {
+    /// Its name.
+    pub name: &'a str,
+    /// Its size, measured with the rest of its source.
+    pub size: Size,
+    /// Its text, comments inside it included.
+    pub text: &'a str,
+}
+
+/// Each source's outermost functions, measured together as [`sizes`] measures the sources.
+///
+/// A function inside another's body is part of that one. What lies in no function is the rest of
+/// the source's size.
+#[must_use]
+pub fn functions<'a>(srcs: &[&'a str]) -> Vec<Vec<Function<'a>>> {
+    srcs.iter()
+        .zip(measured(srcs))
+        .map(|(src, source)| {
+            function_spans(&source.tokens)
                 .into_iter()
-                .zip(contexts)
-                .fold(Size::default(), |size, (class, context)| {
-                    size.with(class, context)
+                .filter_map(|(name, tokens)| {
+                    let first = source.spans.get(tokens.start)?.start;
+                    let last = source.spans.get(tokens.end.checked_sub(1)?)?.end;
+                    Some(Function {
+                        name,
+                        size: total(source.shares.get(tokens)?),
+                        text: src.get(first..last)?,
+                    })
                 })
-                .repeated(repeated)
+                .collect()
         })
         .collect()
+}
+
+/// The outermost functions of a source: each one's name and its tokens, from its qualifiers to
+/// its body's end or its `;`.
+fn function_spans<'a>(tokens: &[Token<'a>]) -> Vec<(&'a str, Range<usize>)> {
+    let mut out: Vec<(&'a str, Range<usize>)> = Vec::new();
+    for (at, pair) in tokens.windows(2).enumerate() {
+        let &[Token::Word("fn"), Token::Word(name)] = pair else {
+            continue;
+        };
+        if out.last().is_some_and(|(_, last)| at < last.end) {
+            continue;
+        }
+        let signature = tokens.get(at.saturating_add(1)..).unwrap_or_default();
+        let body = tokens.len().saturating_sub(signature_body(signature).len());
+        let end = if tokens.get(body) == Some(&Token::Open('{')) {
+            group_end(tokens, body)
+        } else {
+            body.saturating_add(1).min(tokens.len())
+        };
+        out.push((name, qualified_start(tokens, at)..end));
+    }
+    out
+}
+
+/// Where the function whose `fn` is at `at` starts: at its visibility (`pub`, `pub(crate)`) and
+/// its qualifiers (`const`, `async`, `unsafe`, `extern`), if it has them.
+fn qualified_start(tokens: &[Token<'_>], at: usize) -> usize {
+    let mut start = at;
+    loop {
+        start = match tokens.get(..start).unwrap_or_default() {
+            [
+                ..,
+                Token::Word("pub" | "const" | "async" | "unsafe" | "extern"),
+            ] => start.saturating_sub(1),
+            [
+                ..,
+                Token::Word("pub"),
+                Token::Open('('),
+                Token::Word(_),
+                Token::Close,
+            ] => start.saturating_sub(4),
+            _ => return start,
+        };
+    }
 }
 
 /// The size of one source text.

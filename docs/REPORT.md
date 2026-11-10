@@ -15,8 +15,10 @@ How it is counted:
   vectors, k and the areas from the Budget section of its decode notes, which the implementer
   never sees (MODEL §1 decision 10). **Fit** is score ÷ budget; the total's score includes the
   shared types. An area's model score is the model files the registry
-  (`verify::report::DOMAINS`) assigns it; files in no area are the domain's shared code and count
-  in its total only.
+  (`verify::report::DOMAINS`) assigns it, less the functions it counts apart, plus the functions
+  it assigns the area: a file that holds more than one area's code has a row per function counted
+  apart (`fn` and its name), measured with the rest of the model. Files in no area are the
+  domain's shared code and count in its total only.
 - **Old code** is the sum of the Budget section's area `old` figures, at the commit its
   baseline or budget paragraph names last.
 - **Lines** are code lines: non-blank, non-comment, tests excluded (`tests` directories,
@@ -44,7 +46,9 @@ How it is counted:
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean_model/samus-motion/src/catalogue.rs` | - | tables and types | 3 | 13 | 126 | 900 | 0 | 0 | 246 |
-| `crates/clean_model/samus-motion/src/change.rs` | pose fit | logic | 525 | 647 | 0 | 0 | 25 | 1 | 75 |
+| `crates/clean_model/samus-motion/src/change.rs` | pose fit | logic | 54 | 173 | 0 | 0 | 0 | 0 | 20 |
+| `crates/clean_model/samus-motion/src/change.rs` `fn change_pose` | pose chart | logic | 268 | 267 | 0 | 0 | 19 | 0 | 31 |
+| `crates/clean_model/samus-motion/src/change.rs` `fn apply` | motion | logic | 204 | 207 | 0 | 0 | 6 | 1 | 24 |
 | `crates/clean_model/samus-motion/src/chart/table.rs` | pose chart | tables and types | 3 | 91 | 22 | 1,249 | 0 | 0 | 282 |
 | `crates/clean_model/samus-motion/src/chart.rs` | pose chart | logic | 820 | 961 | 124 | 0 | 39 | 0 | 137 |
 | `crates/clean_model/samus-motion/src/collide.rs` | collision | logic | 2,184 | 2,367 | 191 | 23 | 141 | 1 | 298 |
@@ -153,9 +157,9 @@ Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 36. Ol
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| motion | 14 | 84.0 | 3,024 | 4,019 | 3,638 | 1.20 |
-| pose fit | 2 | 17.3 | 624 | 1,549 | 1,081 | 1.73 |
-| pose chart | 6 | 58.0 | 2,088 | 2,263 | 1,270 | 0.61 |
+| motion | 14 | 84.0 | 3,024 | 4,019 | 3,842 | 1.27 |
+| pose fit | 2 | 17.3 | 624 | 1,549 | 610 | 0.98 |
+| pose chart | 6 | 58.0 | 2,088 | 2,263 | 1,538 | 0.74 |
 | collision | 7 | 59.7 | 2,148 | 4,893 | 2,184 | 1.02 |
 | shared (in no area) | | | | | 302 | |
 | total | 29 | 219.0 | 7,884 | 12,724 | 8,475 | 1.07 |

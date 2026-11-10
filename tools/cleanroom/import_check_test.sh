@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # import_check_test.sh: import.sh refuses a patch that adds std::fs::read to a test, leaving the
-# branch where it was, and still imports a harmless one. Builds a throwaway export of the dummy
-# domain `import-test` and a throwaway worktree; run from a checkout of this repository.
+# branch where it was; imports a harmless one, which passes both clippy runs; and fails an import
+# whose clean_types change breaks another clean crate, naming that crate. Builds throwaway exports
+# of the dummy domain `import-test` and a throwaway worktree; run from a checkout of this
+# repository. The clippy runs build in CARGO_TARGET_DIR if set, else in the throwaway worktree.
 set -u
 # Its own git identity, so it runs where none is configured (CI runners).
 export GIT_AUTHOR_NAME=import-check GIT_AUTHOR_EMAIL=import-check@localhost
@@ -39,6 +41,11 @@ mkexport "$tmp/fine"
 implementer_commit "$tmp/fine" crates/clean_model/import-test/src/lib.rs \
   '//! Harmless.
 pub fn id(x: u8) -> u8 { x }'
+# clean_types emptied: it lints clean itself, but every model crate that uses it stops compiling,
+# and the export holds none of them.
+mkexport "$tmp/breaks"
+implementer_commit "$tmp/breaks" crates/clean_types/src/lib.rs \
+  '//! Emptied, so the crates that use a clean type no longer build.'
 
 before=$(git -C "$tmp/wt" rev-parse HEAD)
 if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/leaky" "$branch" 2>&1); then
@@ -51,5 +58,17 @@ fi
 
 out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/fine" "$branch" 2>&1) || fail "harmless import refused: $out"
 grep -q 'IMPORT OK' <<<"$out" || fail "harmless import did not finish: $out"
-[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: std::fs::read refused with the branch untouched, a harmless patch imported"
+grep -q 'import: workspace clippy clean' <<<"$out" || fail "harmless import ran no workspace clippy: $out"
+grep -q 'import: clean-room clippy clean' <<<"$out" || fail "harmless import ran no clean-room clippy: $out"
+
+if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/breaks" "$branch" 2>&1); then
+  fail "import accepted a clean_types change that breaks the other clean crates: $out"
+else
+  grep -q 'IMPORT CLIPPY FAIL (workspace):.*clean_model_blocks' <<<"$out" \
+    || fail "the workspace run did not name clean_model_blocks: $out"
+  grep -q 'IMPORT CLIPPY FAIL (clean-room):.*clean_model_blocks' <<<"$out" \
+    || fail "the clean-room run did not name clean_model_blocks: $out"
+  ! grep -q 'IMPORT OK' <<<"$out" || fail "the failing import said IMPORT OK: $out"
+fi
+[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: std::fs::read refused with the branch untouched, a harmless patch imported, a clean_types change that breaks another clean crate failed naming it"
 exit $bad

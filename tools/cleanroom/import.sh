@@ -10,6 +10,13 @@
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
 # `Role: integrator`), so the patches
 # apply as they were made. Wiring the crates into the workspace is the integrator's next commit.
+#
+# Once applied, every clean crate in the workspace is linted with both clippy configurations of
+# tools/lane/gate.sh: the workspace's lints, and tools/cleanroom/clippy.toml. An export holds one
+# domain's model and clean_types, so a change to clean_types can break a crate its implementer
+# never saw. If either run fails, the import fails naming the run and the crates, with the patches
+# left applied: the root commits a mechanical fix itself, or resets and sends the change back
+# (PROCESS, the import step). Override: CARGO (the cargo to run).
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
@@ -74,4 +81,40 @@ fi
 # Belt and braces: what landed is inside the writable paths.
 outside=$(git diff --name-only "$before" HEAD | while IFS= read -r p; do in_entries "$p" "${writable[@]}" || echo "$p"; done)
 [ -z "$outside" ] || die "applied changes outside the clean crates: $(echo $outside); inspect $before..HEAD"
-echo "IMPORT OK ${#commits[@]} commits onto $branch, $(git rev-parse --short "$before")..$(git rev-parse --short HEAD)"
+applied="$(git rev-parse --short "$before")..$(git rev-parse --short HEAD)"
+
+# The clean crates the workspace lists, by package name. A crate not wired in yet is the
+# integrator's to wire; gate.sh lints it from then on.
+packages=()
+while IFS= read -r dir; do
+  name=$(sed -n 's/^name = "\(.*\)"$/\1/p' "$dir/Cargo.toml" | head -1)
+  [ -n "$name" ] || die "no package name in $dir/Cargo.toml"
+  packages+=("$name")
+done < <(grep -o '"crates/clean_[^"]*"' Cargo.toml | tr -d '"')
+[ ${#packages[@]} -gt 0 ] || die "the workspace lists no clean crate"
+grep -q "\"crates/clean_model/$domain\"" Cargo.toml \
+  || echo "import: crates/clean_model/$domain is not in the workspace yet, so not linted"
+selected=()
+for p in "${packages[@]}"; do selected+=(-p "$p"); done
+
+cargo=${CARGO:-cargo}
+lint_failed=0
+clean_clippy() { # NAME [VAR=VALUE...]: one clippy run over the clean crates, naming those it fails
+  name=$1; shift
+  log=$(mktemp)
+  if env "$@" "$cargo" clippy --locked --keep-going "${selected[@]}" --all-targets --no-deps -- -D warnings >"$log" 2>&1; then
+    echo "import: $name clippy clean: ${packages[*]}"
+  else
+    failed=$(sed -n 's/^error: could not compile `\([^`]*\)`.*/\1/p' "$log" | sort -u | tr '\n' ' ')
+    echo "IMPORT CLIPPY FAIL ($name): ${failed:-no crate named}"
+    # The first findings, read with no pipe: under pipefail a reader that stops early (head)
+    # would end the script by SIGPIPE before the other run.
+    awk '/^(error|warning)|-->/ && shown++ < 20' "$log"
+    lint_failed=1
+  fi
+  rm -f "$log"
+}
+clean_clippy workspace
+clean_clippy clean-room "CLIPPY_CONF_DIR=$(git rev-parse --show-toplevel)/tools/cleanroom"
+[ "$lint_failed" -eq 0 ] || die "clippy fails after the import; the patches are applied ($applied): commit a mechanical fix as the root, or git reset --hard $(git rev-parse --short "$before") and send the change back"
+echo "IMPORT OK ${#commits[@]} commits onto $branch, $applied"

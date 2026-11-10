@@ -45,8 +45,17 @@ struct Param<'a> {
     tokens: Range<usize>,
 }
 
-/// For each source, its tokens' contexts and the tokens its repeated argument pairs pay again.
-pub fn of<'t, 'a>(sources: &'t [Vec<Token<'a>>]) -> Vec<(Vec<Context>, usize)> {
+/// A call or struct literal whose repeated argument pairs pay again (Q2).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Pay {
+    /// The index of the token that opens it.
+    pub at: usize,
+    /// The tokens it pays again.
+    pub tokens: usize,
+}
+
+/// For each source, its tokens' contexts and the calls and struct literals that pay again.
+pub fn of<'t, 'a>(sources: &'t [Vec<Token<'a>>]) -> Vec<(Vec<Context>, Vec<Pay>)> {
     let functions: Vec<Vec<Function<'a>>> = sources.iter().map(|t| functions(t)).collect();
     let structs: BTreeSet<&'a str> = sources.iter().flat_map(|t| structs(t)).collect();
     let clumps = type_clumps(functions.iter().flatten());
@@ -56,11 +65,15 @@ pub fn of<'t, 'a>(sources: &'t [Vec<Token<'a>>]) -> Vec<(Vec<Context>, usize)> {
         .zip(&functions)
         .map(|(tokens, functions)| {
             let mut contexts = vec![Context::default(); tokens.len()];
-            let mut repeated = 0usize;
+            let mut repeated = Vec::new();
             for body in outermost(functions) {
                 nest(tokens, body.clone(), &mut contexts);
-                for site in body.filter_map(|at| site(tokens, at, &structs)) {
-                    repeated = repeated.saturating_add(pay(site, &mut seen));
+                for (at, site) in body.filter_map(|at| site(tokens, at, &structs).map(|s| (at, s)))
+                {
+                    repeated.push(Pay {
+                        at,
+                        tokens: pay(site, &mut seen),
+                    });
                 }
             }
             for function in functions {

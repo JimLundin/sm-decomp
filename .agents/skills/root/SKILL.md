@@ -71,8 +71,12 @@ From a checkout of `main`:
 3. `bash tools/cleanroom/launch.sh C:/cleanroom/DOMAIN BRIEF TRANSCRIPT`, with the transcript
    under `~/.cleanroom/transcripts/`. Done on `LAUNCH OK` and `CANARY CLEAN`.
 4. Read the session's report: the last `result` event of the transcript.
-5. `bash tools/cleanroom/import.sh C:/cleanroom/DOMAIN lane/<domain>-rN`. Done when
-   `code_check.sh` passes.
+5. `bash tools/cleanroom/import.sh C:/cleanroom/DOMAIN lane/<domain>-rN`. Done on `IMPORT OK`:
+   `code_check.sh` passes and both clippy runs pass over every clean crate. On `IMPORT CLIPPY
+   FAIL`, commit a mechanical fix yourself, right after the import, as `[exact]` with
+   `Role: root` and the lint it answers, so the squashed commit records it under your role.
+   Send anything that changes an item's logic back to an implementer
+   ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7).
 
 The blind review uses the same launch, on a code-only copy: the model crate, its tests, the
 vector file and the [blind-reviewer](../blind-reviewer/SKILL.md) skill. Leave out the spec, the

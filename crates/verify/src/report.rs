@@ -68,9 +68,22 @@ struct Domain {
     /// The bridge's files under `crates/game/src`: those whose names start with it.
     bridge: &'static str,
     /// The Budget section's areas, each with the model files (under the model's `src`) that
-    /// hold it. A
-    /// model file in no area is the domain's shared code: it counts in the domain's total only.
+    /// hold it. A model file in no area is the domain's shared code: it counts in the domain's
+    /// total only.
     areas: &'static [(&'static str, &'static [&'static str])],
+    /// The functions that count in another area than their file's.
+    apart: &'static [Apart],
+}
+
+/// A function of a model file that counts in an area of its own; the file's other code counts
+/// where the file's area says. It is measured with the rest of the model, as its file is.
+struct Apart {
+    /// The file, under the model's `src`.
+    file: &'static str,
+    /// The function's name, which the file holds once.
+    function: &'static str,
+    /// The area that holds it.
+    area: &'static str,
 }
 
 /// The rebuilt domains, in the report's order. Adding one is one entry.
@@ -91,15 +104,30 @@ const DOMAINS: &[Domain] = &[
                     "vertical.rs",
                 ],
             ),
-            // `change.rs` is the pose change: pose fit's taking of the chosen pose and the
-            // shrink's placement (`PoseFitAfterMoves`, `ShrinkingLowersHer`), which apply the
-            // chosen row's effects as part of that change, so the file counts with its entries.
+            // `change.rs` is the pose change. Its shrink is pose fit's (`ShrinkingLowersHer`); its
+            // other two functions count apart, with their entries.
             ("pose fit", &["change.rs", "fit.rs"]),
             (
                 "pose chart",
                 &["chart.rs", "chart/table.rs", "rows.rs", "situation.rs"],
             ),
             ("collision", &["collide.rs"]),
+        ],
+        apart: &[
+            // `PoseFollows`: whether she takes the pose chosen, what her moves met, then the
+            // row's effects in order.
+            Apart {
+                file: "change.rs",
+                function: "change_pose",
+                area: "pose chart",
+            },
+            // One effect on her speeds, dash and position: `Jumping`, `TurningRound`,
+            // `Moonfall`, `WallJump`.
+            Apart {
+                file: "change.rs",
+                function: "apply",
+                area: "motion",
+            },
         ],
     },
     Domain {
@@ -109,6 +137,7 @@ const DOMAINS: &[Domain] = &[
             ("follow", &["follow.rs"]),
             ("limits", &["axis.rs", "room.rs"]),
         ],
+        apart: &[],
     },
     // The reports, the rules and the catalogue are the domain's shared code; the keyed tables
     // and sets are `clean_types`'. `progress.rs` holds what has happened with the whole progress.
@@ -122,6 +151,7 @@ const DOMAINS: &[Domain] = &[
             ("rooms", &["room_states.rs"]),
             ("percentage", &["percentage.rs"]),
         ],
+        apart: &[],
     },
     // The pictures and the places, which both the status bar and the mini-map read, are the
     // domain's shared code, with the grid, the inputs and the frame.
@@ -133,6 +163,7 @@ const DOMAINS: &[Domain] = &[
             ("selection", &["selection.rs", "item.rs"]),
             ("minimap", &["mini_map.rs", "map.rs"]),
         ],
+        apart: &[],
     },
     // The cells, the reactions' format, the inputs, the report and the catalogue are the
     // domain's shared code. The places and their run are the places' area, the scroll cells'
@@ -146,6 +177,7 @@ const DOMAINS: &[Domain] = &[
             ("scroll", &[]),
             ("breakables", &["rules.rs", "state.rs"]),
         ],
+        apart: &[],
     },
 ];
 
@@ -178,6 +210,19 @@ impl Measure {
             types: size.types,
             data: size.data,
             lines,
+        }
+    }
+
+    /// This less a part of it.
+    const fn minus(self, part: Self) -> Self {
+        Self {
+            score: self.score.saturating_sub(part.score),
+            depth: self.depth.saturating_sub(part.depth),
+            clumps: self.clumps.saturating_sub(part.clumps),
+            logic: self.logic.saturating_sub(part.logic),
+            types: self.types.saturating_sub(part.types),
+            data: self.data.saturating_sub(part.data),
+            lines: self.lines.saturating_sub(part.lines),
         }
     }
 
@@ -257,11 +302,21 @@ struct File {
     measure: Measure,
 }
 
+/// A part of a model: a file, less the functions of it counted apart, or one of those.
+struct Part {
+    /// The file, or the function's: its measure is the part's.
+    file: File,
+    /// The function, when the part is one counted apart.
+    function: Option<&'static str>,
+    /// The area that holds it.
+    area: Option<&'static str>,
+}
+
 /// A domain's measured parts.
 struct Measured {
     domain: &'static Domain,
-    /// The model's files, each with the area that holds it.
-    model: Vec<(File, Option<&'static str>)>,
+    /// The model's parts: its files, each less the functions counted apart, then those.
+    model: Vec<Part>,
     /// Whether its model depends on the shared types.
     uses_shared: bool,
     count: Count,
@@ -277,14 +332,14 @@ struct Measured {
 impl Measured {
     /// The model: the files the domain owns.
     fn model_total(&self) -> Measure {
-        self.model.iter().map(|(file, _)| file.measure).sum()
+        self.model.iter().map(|part| part.file.measure).sum()
     }
 
     fn area(&self, name: &str) -> Measure {
         self.model
             .iter()
-            .filter(|(_, area)| *area == Some(name))
-            .map(|(file, _)| file.measure)
+            .filter(|part| part.area == Some(name))
+            .map(|part| part.file.measure)
             .sum()
     }
 
@@ -292,8 +347,8 @@ impl Measured {
     fn unassigned(&self) -> Measure {
         self.model
             .iter()
-            .filter(|(_, area)| area.is_none())
-            .map(|(file, _)| file.measure)
+            .filter(|part| part.area.is_none())
+            .map(|part| part.file.measure)
             .sum()
     }
 
@@ -462,10 +517,62 @@ fn uses_shared_types(manifest: &str) -> bool {
         .any(|line| line.trim_start().starts_with("clean_types"))
 }
 
+/// The model's parts with the functions counted apart: each taken out of its file's part and
+/// placed after it, in its own area, measured with all the model's files as they are.
+fn with_apart(
+    domain: &Domain,
+    files: &[PathBuf],
+    parts: Vec<Part>,
+    in_model: impl Fn(&str) -> String,
+) -> Result<Vec<Part>, String> {
+    let texts = files
+        .iter()
+        .map(|file| read(file))
+        .collect::<Result<Vec<_>, _>>()?;
+    let srcs: Vec<&str> = texts.iter().map(String::as_str).collect();
+    let functions = size::functions(&srcs);
+    let mut parts: Vec<(Part, Vec<Part>)> =
+        parts.into_iter().map(|part| (part, Vec::new())).collect();
+    for apart in domain.apart {
+        let path = in_model(apart.file);
+        let at = parts
+            .iter()
+            .position(|(part, _)| part.file.path == path)
+            .ok_or_else(|| format!("{}: apart: no model file {}", domain.name, apart.file))?;
+        let named: Vec<&size::Function<'_>> = functions
+            .get(at)
+            .into_iter()
+            .flatten()
+            .filter(|function| function.name == apart.function)
+            .collect();
+        let (&[function], Some((part, taken))) = (named.as_slice(), parts.get_mut(at)) else {
+            return Err(format!(
+                "{}: apart: {} holds {} functions {}, not one",
+                domain.name,
+                apart.file,
+                named.len(),
+                apart.function
+            ));
+        };
+        let measure = Measure::of(function.size, lines::code_lines(function.text));
+        part.file.measure = part.file.measure.minus(measure);
+        taken.push(Part {
+            file: File { path, measure },
+            function: Some(apart.function),
+            area: Some(apart.area),
+        });
+    }
+    Ok(parts
+        .into_iter()
+        .flat_map(|(part, taken)| std::iter::once(part).chain(taken))
+        .collect())
+}
+
 fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, String> {
     let model_dir = root.join("crates/clean_model").join(domain.name);
     let model_src = model_dir.join("src");
-    let model = measure(root, &sources(std::slice::from_ref(&model_src))?)?;
+    let files = sources(std::slice::from_ref(&model_src))?;
+    let model = measure(root, &files)?;
     let in_model = |file: &str| relative(root, &model_src.join(file));
     for (area, files) in domain.areas {
         for file in *files {
@@ -479,15 +586,17 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
     }
     let model = model
         .into_iter()
-        .map(|file| {
-            let area = domain
+        .map(|file| Part {
+            area: domain
                 .areas
                 .iter()
                 .find(|(_, files)| files.iter().any(|name| in_model(name) == file.path))
-                .map(|(area, _)| *area);
-            (file, area)
+                .map(|(area, _)| *area),
+            function: None,
+            file,
         })
         .collect();
+    let model = with_apart(domain, &files, model, in_model)?;
     let behaviours = root.join("docs/behaviours");
     let spec = read(&behaviours.join(format!("{}.md", domain.name)))?;
     let notes = read(&behaviours.join(format!("{}.decode.md", domain.name)))?;
@@ -498,7 +607,8 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
             .join(format!("{}.toml", domain.name)),
     )?;
     let count = Count::of(&spec, &Vectors::parse(&toml), Some(budget), None);
-    for (area, _) in domain.areas {
+    let named = domain.areas.iter().map(|(area, _)| area);
+    for area in named.chain(domain.apart.iter().map(|apart| &apart.area)) {
         if !count.areas.iter().any(|stated| stated.name == *area) {
             return Err(format!(
                 "{}: the decode notes' Budget section states no area {area}",
@@ -582,7 +692,13 @@ impl Tree {
         let files = self
             .domains
             .iter()
-            .map(|domain| domain.model.len())
+            .map(|domain| {
+                domain
+                    .model
+                    .iter()
+                    .filter(|part| part.function.is_none())
+                    .count()
+            })
             .sum::<usize>()
             .saturating_add(self.shared_files.len());
         (measure, files)
@@ -645,8 +761,10 @@ How it is counted:
   vectors, k and the areas from the Budget section of its decode notes, which the implementer
   never sees (MODEL §1 decision 10). **Fit** is score ÷ budget; the total's score includes the
   shared types. An area's model score is the model files the registry
-  (`verify::report::DOMAINS`) assigns it; files in no area are the domain's shared code and count
-  in its total only.
+  (`verify::report::DOMAINS`) assigns it, less the functions it counts apart, plus the functions
+  it assigns the area: a file that holds more than one area's code has a row per function counted
+  apart (`fn` and its name), measured with the rest of the model. Files in no area are the
+  domain's shared code and count in its total only.
 - **Old code** is the sum of the Budget section's area `old` figures, at the commit its
   baseline or budget paragraph names last.
 - **Lines** are code lines: non-blank, non-comment, tests excluded (`tests` directories,
@@ -777,14 +895,18 @@ fn models(out: &mut String, domains: &[Measured], shared: Measure) {
     for domain in domains {
         let _ = write!(out, "\n### {}\n\n", domain.domain.name);
         measure_table(out, 3, &["File", "Area", "Holds"]);
-        for (file, area) in &domain.model {
+        for part in &domain.model {
+            let function = part
+                .function
+                .map(|name| format!(" `fn {name}`"))
+                .unwrap_or_default();
             let _ = writeln!(
                 out,
-                "| `{}` | {} | {} | {} |",
-                file.path,
-                area.unwrap_or("-"),
-                file.measure.holds().label(),
-                file.measure.cells()
+                "| `{}`{function} | {} | {} | {} |",
+                part.file.path,
+                part.area.unwrap_or("-"),
+                part.file.measure.holds().label(),
+                part.file.measure.cells()
             );
         }
         let _ = writeln!(out, "| total | | | {} |", domain.model_total().cells());
@@ -818,7 +940,7 @@ fn lines_section(out: &mut String, domains: &[Measured], shared: &[File]) {
     let mut rows: Vec<(String, Measure, usize, usize)> = domains
         .iter()
         .map(|domain| {
-            let files = || domain.model.iter().map(|(file, _)| file);
+            let files = || domain.model.iter().map(|part| &part.file);
             (
                 domain.domain.name.to_owned(),
                 domain.model_total(),

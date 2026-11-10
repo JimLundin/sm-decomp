@@ -82,10 +82,20 @@ Each step names its owner, what it waits for, and its done-condition.
    on the round's branch, then `launch.sh`. Done on `LAUNCH OK` with a clean canary check.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
-7. **Import** (root): `import.sh` runs `code_check.sh` and applies the commits to a lane branch.
-   Done when the import passes. A refusal goes back to the same implementer's export as a short
-   follow-up session: the brief quotes each finding (file, line, the rule it breaks) in the
-   coding standards' words, and the import runs again.
+7. **Import** (root): `import.sh` runs `code_check.sh`, applies the commits to a lane branch,
+   then runs both clippy configurations of `tools/lane/gate.sh` over every clean crate in the
+   workspace: an export holds one domain's model and `clean_types`, so a change to `clean_types`
+   can break a crate its implementer never saw. Done when the import passes. A refusal goes back
+   to the same implementer's export as a short follow-up session: the brief quotes each finding
+   (file, line, the rule it breaks) in the coding standards' words, and the import runs again.
+   A clippy failure names the crates and leaves the patches applied:
+   - a **mechanical** fix (a parameter by value instead of by reference, a derive, `assert_eq!`
+     for `assert!(a == b)`, an import path; no item's logic changed) is the root's own commit,
+     right after the import, titled `[exact]` with `Role: root` and the lint it answers. The
+     round's squashed commit lists it under the root, and the round gate checks it;
+   - anything else goes back to an implementer: this domain's when its `clean_types` change
+     wasn't needed, the broken crate's next round when it was;
+   - an integrator never edits a clean crate. A fix it finds it needs is a finding for the root.
 8. **Blind review** (blind reviewer, confined), after 7. The root makes a code-only copy (the
    model, its tests and the vector file) and launches the review. Done on its report. The root
    compares the review's "what the code does" with the spec: where the reviewer misread the

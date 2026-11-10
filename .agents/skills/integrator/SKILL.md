@@ -7,8 +7,10 @@ description: The sm-decomp integrator role. Wire an imported clean model into th
 
 The model arrives on an import branch, built from the spec alone. You make the engine run it and
 prove it matches the real game. This is step 9 of
-[the round](../../../docs/cleanroom/PROCESS.md#a-round). The clean crates are the implementer's:
-when the model needs a change, report it as a finding for the next round.
+[the round](../../../docs/cleanroom/PROCESS.md#a-round). The clean crates are the implementer's,
+and you never edit one, not even a mechanical fix that another crate forced: report it to the
+root, who makes mechanical fixes after the import and sends the rest to an implementer. When the
+model needs a change, report it as a finding for the next round.
 
 ## Steps
 
