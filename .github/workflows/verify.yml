@@ -146,10 +146,11 @@ jobs:
           # A renamed test would filter to nothing and pass, so require each domain's result.
           set -o pipefail
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --release holds_its_floors_against_the_cache \
+            cargo test --locked -p verify --release floors_against_the_cache \
             | tee "$RUNNER_TEMP/floors.txt"
-          for test in the_clock samus_motion the_camera progress the_hud; do
-            grep -q "^test harness::tests::${test}_holds_its_floors_against_the_cache \.\.\. ok$" \
+          for test in the_clock_holds_its samus_motion_holds_its the_camera_holds_its \
+            progress_holds_its the_hud_holds_its the_blocks_hold_their; do
+            grep -q "^test harness::tests::${test}_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"
           done
       - name: "Progress's ROM checks: the harness cases, the rows' standing room states and the full percentage"
