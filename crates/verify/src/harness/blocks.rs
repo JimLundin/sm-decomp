@@ -8,7 +8,8 @@
 //! room's cells, every place, the screens. The model's output is compared with record N+1 on
 //! each place, the screens and the cells within the frame's reach: the cells of this part's
 //! places at either record, those their reactions' patterns cover, and the cells the frame's
-//! requests name, chosen by position, never by value.
+//! requests name, chosen by position, never by value. Outside the reach the model's cells must
+//! be record N's, since nothing of this part writes there.
 //!
 //! The requests are heard from the frame's watched instruction hits, in the order the CPU ran
 //! them: each reaction's setup is matched, by family, to the place record N+1 shows a new
@@ -130,6 +131,7 @@ impl Started {
 const PLACES_FIELD: FieldSet = FieldSet::single(0);
 const CELLS: FieldSet = FieldSet::single(1);
 const SCREENS: FieldSet = FieldSet::single(2);
+const OUTSIDE: FieldSet = FieldSet::single(3);
 
 /// The declared fields a catalogue entry's output reaches. The answers to her motion, the
 /// redraws and the sounds are events no declared field holds: credited nothing.
@@ -137,7 +139,7 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
     use BehaviourId as B;
     match id {
         B::Places | B::BlocksMarkedNothing => PLACES_FIELD,
-        B::PatternCells => CELLS,
+        B::PatternCells => CELLS.union(OUTSIDE),
         B::ScrollCells => SCREENS.union(PLACES_FIELD),
         B::TheScriptsRun
         | B::Regrowing
@@ -148,7 +150,7 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         | B::ShotBlocks
         | B::SuperMissileBlocks
         | B::PowerBombBlocks
-        | B::BombsReveal => PLACES_FIELD.union(CELLS),
+        | B::BombsReveal => PLACES_FIELD.union(CELLS).union(OUTSIDE),
         B::AnswersToHerMotion
         | B::FullPlacesLetHerThrough
         | B::WhatTheScreenRedraws
@@ -246,12 +248,16 @@ struct CellView {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Cells(BTreeMap<(u16, u16), Option<CellView>>);
 
-/// The declared fields: every place, the cells within the frame's reach, the screens.
+/// The declared fields: every place, the cells within the frame's reach, the screens, and the
+/// cells outside the reach that differ from record N's.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Declared {
     places: Vec<PlaceView>,
     cells: Cells,
     screens: Vec<Vec<ScreenKind>>,
+    /// The model writes no cell outside the frame's reach, so the oracle's is always empty: a
+    /// stray write shows here on every frame it happens.
+    outside: Vec<(u16, u16)>,
 }
 
 fn place_view(place: &Place) -> PlaceView {
@@ -298,6 +304,9 @@ pub struct BlocksDomain {
     /// The cells compared on the frame in hand: chosen in `world` from both records' places and
     /// the requests, by position.
     reach: RefCell<BTreeSet<(u16, u16)>>,
+    /// Record N's cells on the frame in hand, which the model's cells outside the reach must
+    /// equal.
+    start: RefCell<Vec<Vec<Tile>>>,
 }
 
 /// The level's layer 1 sources.
@@ -355,6 +364,7 @@ impl BlocksDomain {
             content,
             lists: RefCell::new(BTreeMap::new()),
             reach: RefCell::new(BTreeSet::new()),
+            start: RefCell::new(Vec::new()),
         })
     }
 
@@ -571,10 +581,12 @@ impl BlocksDomain {
         })
     }
 
-    /// The fields of `state` over the frame's reach.
-    fn declared(&self, state: &State) -> Declared {
+    /// The fields of `state` over the frame's reach; `outside` the cells outside it that differ
+    /// from record N's, which only the model's projections compute.
+    fn declared(&self, state: &State, outside: Vec<(u16, u16)>) -> Declared {
         let reach = self.reach.borrow();
         Declared {
+            outside,
             places: state.places.0.iter().map(place_view).collect(),
             cells: Cells(
                 reach
@@ -788,8 +800,9 @@ impl Domain for BlocksDomain {
     type Skip = Skip;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("places", places),
-        domain_field!("cells", cells),
+        domain_field!("cells within the frame's reach", cells),
         domain_field!("screens", screens),
+        domain_field!("cells outside the frame's reach, as record N's", outside),
     ];
 
     fn behaviours(&self) -> Vec<Entry> {
@@ -850,6 +863,7 @@ impl Domain for BlocksDomain {
                 _ => None,
             })
             .collect();
+        *self.start.borrow_mut() = before.state.tiles.rows;
         let mut reach = before.reach;
         reach.extend(after.reach);
         reach.extend(named(&requests).map(|at| (at.x, at.y)));
@@ -992,11 +1006,22 @@ impl Domain for BlocksDomain {
     }
 
     fn fields(&self, state: &State) -> Declared {
-        self.declared(state)
+        let reach = self.reach.borrow();
+        let start = self.start.borrow();
+        let mut outside = Vec::new();
+        for (y, (rows, was)) in (0_u16..).zip(state.tiles.rows.iter().zip(start.iter())) {
+            for (x, (tile, was)) in (0_u16..).zip(rows.iter().zip(was)) {
+                if tile != was && !reach.contains(&(x, y)) {
+                    outside.push((x, y));
+                }
+            }
+        }
+        drop((reach, start));
+        self.declared(state, outside)
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
-        Ok(self.declared(&self.decode_record(next)?.state))
+        Ok(self.declared(&self.decode_record(next)?.state, Vec::new()))
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
@@ -1013,14 +1038,15 @@ impl Domain for BlocksDomain {
 
 #[cfg(test)]
 mod tests {
-    use super::{BlocksDomain, CELLS, Domain, FieldSet, PLACES_FIELD, SCREENS};
+    use super::{BlocksDomain, CELLS, Domain, FieldSet, OUTSIDE, PLACES_FIELD, SCREENS};
 
     #[test]
     fn the_field_sets_name_the_declared_fields_at_their_places() {
         for (set, name) in [
             (PLACES_FIELD, "places"),
-            (CELLS, "cells"),
+            (CELLS, "cells within the frame's reach"),
             (SCREENS, "screens"),
+            (OUTSIDE, "cells outside the frame's reach, as record N's"),
         ] {
             let place = BlocksDomain::FIELDS
                 .iter()

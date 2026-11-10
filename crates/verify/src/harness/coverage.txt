@@ -124,3 +124,26 @@ hud entry OneShotItem 85 81 86 4
 hud entry SelectionHighlight 123 0 124 0
 hud entry SwitchClick 0 0 0 124
 hud entry Switching 0 0 0 137
+blocks frames 21857 20530 85 19928
+blocks field 20615 0 places
+blocks field 20615 0 cells within the frame's reach
+blocks field 20615 0 screens
+blocks field 20615 0 cells outside the frame's reach, as record N's
+blocks entry AnswersToHerMotion 0 0 0 293
+blocks entry BlocksMarkedNothing 0 0 0 0
+blocks entry BombBlocks 5 0 5 0
+blocks entry BombsReveal 0 0 0 0
+blocks entry CrumbleBlocks 98 0 98 0
+blocks entry FullPlacesLetHerThrough 0 0 0 0
+blocks entry PatternCells 248 0 249 0
+blocks entry Places 108 0 108 0
+blocks entry PowerBombBlocks 2 0 2 0
+blocks entry Regrowing 27 0 27 0
+blocks entry RoomStart 0 0 0 0
+blocks entry ScrollCells 197 183 197 0
+blocks entry ShotBlocks 2 0 2 0
+blocks entry Sounds 0 0 0 106
+blocks entry SpeedBlocks 0 0 0 0
+blocks entry SuperMissileBlocks 1 0 1 0
+blocks entry TheScriptsRun 595 0 596 0
+blocks entry WhatTheScreenRedraws 0 0 0 249

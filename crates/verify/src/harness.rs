@@ -752,9 +752,11 @@ fn frame<D: Domain>(
     Ok(())
 }
 
-/// `domain` over `records`, a scenario's records in frame order. A record the domain folds
-/// into the frame before it ([`Domain::folds`]) isn't a frame's end: its hits go to the next
-/// record that is.
+/// `domain` over `records`, a scenario's records in frame order.
+///
+/// A record the domain folds into the frame before it ([`Domain::folds`]) isn't a frame's end:
+/// its hits go to the next record that is, and a row that ends on one counts its last frame
+/// skipped, mid-frame.
 ///
 /// # Errors
 ///
@@ -770,12 +772,15 @@ pub fn run<D: Domain, E>(
     };
     let mut from = first?;
     let mut folded = Vec::new();
+    let mut mid_frame = false;
     for record in records {
         let mut next = record?;
         if domain.folds(&from, &next) {
             folded.append(&mut next.hits);
+            mid_frame = true;
             continue;
         }
+        mid_frame = false;
         if !folded.is_empty() {
             folded.append(&mut next.hits);
             next.hits = core::mem::take(&mut folded);
@@ -785,6 +790,10 @@ pub fn run<D: Domain, E>(
             report.uncompared(domain.uncompared(&reason));
         }
         from = next;
+    }
+    if mid_frame {
+        report.frames = report.frames.saturating_add(1);
+        report.uncompared(Uncompared::Skip("the row ends mid-frame".to_owned()));
     }
     Ok(report)
 }

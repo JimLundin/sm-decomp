@@ -441,8 +441,13 @@ content is the draw routine's, which the format names by what each cell becomes.
 - **Reactions:** the game's, from the importer at test time (§The importer's mapping), never the
   vectors' invented ones. The harness cases (§The harness cases) are frames it must match.
 - **Compared at N+1:** each place (empty, another part's, or its reaction, script, cell, next step
-  and wait; what it grows back as where a `Regrow` is ahead), the cells' kinds and looks, the marks
-  of reacting cells and stand-ins, the screens.
+  and wait; what it grows back as where a `Regrow` is ahead), the screens, and the cells within the
+  frame's reach: their kinds and looks, and the marks of reacting cells and stand-ins. The reach is
+  chosen by position, never by value: this part's places' cells at N and N+1, every cell their
+  reactions' patterns cover, the scroll cells, and the requests' cells. Outside the reach the
+  model's cells must be record N's, since nothing of this part writes there: a stray write is a
+  mismatch on every frame it happens. The whole room, with each other part's writes masked by
+  name, is the next integration's.
 - **Masks (fields, not frames):** the other parts' slots are held: their contents aren't compared,
   and a slot another part's reaction takes or frees between N and N+1 is copied from N+1
   (unverified), so the free slot a start takes is chosen as the original chose it. The order of a
