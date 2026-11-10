@@ -105,6 +105,7 @@ hud field 20583 32 selected item
 hud field 20583 32 one-shot item
 hud field 19733 882 mini-map window
 hud field 19733 882 explored cells
+hud field 20615 0 mini-map off
 hud entry AmmoCounts 48 0 50 0
 hud entry AutoReserveSign 13818 13029 13820 0
 hud entry BossBlanksTheMap 0 0 0 0

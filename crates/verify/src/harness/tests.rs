@@ -16,7 +16,7 @@ use crate::lock::Frame;
 use crate::source::{self, WramWord};
 
 /// A record holding only work RAM: the game state and the clock.
-fn record(index: u64, game_state: u16, time: [u16; 4]) -> FrameRecord {
+pub(super) fn record(index: u64, game_state: u16, time: [u16; 4]) -> FrameRecord {
     let mut wram = vec![0_u8; 0x2_0000];
     let mut put = |word: WramWord, value: u16| {
         let at = usize::from(word.offset);

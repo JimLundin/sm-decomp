@@ -1,3 +1,5 @@
+use clean_types::Picture as Number;
+use data::hud::ItemIcons;
 use data::level::Block;
 use data::map::{BEYOND_WORDS, MAP_TILEMAP_WORDS};
 use data::room::MapPosition;
@@ -22,38 +24,74 @@ fn rom_map(area: Area) -> data::map::AreaMap {
     }
 }
 
-fn cell(column: i32, row: i32) -> MapCell {
-    MapCell::new(column, row).unwrap()
+/// The look of invented picture `number`, unflipped.
+fn look(number: u16) -> Look {
+    Look::unflipped(Number::new(number).unwrap())
 }
 
-fn picture_at(column: i32, row: i32) -> PicturePos {
-    PicturePos::new(column, row).unwrap()
+/// Invented HUD pictures: the blank 1E0h, digit d 1D0h + d, the rest from 1F0h on.
+fn invented() -> data::hud::HudPictures {
+    let icon = |first: u16| [[look(first); 2]; 2];
+    data::hud::HudPictures {
+        blank: look(0x1E0),
+        digits: core::array::from_fn(|d| look(0x1D0_u16.wrapping_add(u16::try_from(d).unwrap()))),
+        full_tank: look(0x1F0),
+        empty_tank: look(0x1F1),
+        reserve_sign: [[look(0x1F2); 2]; 3],
+        icons: ItemIcons {
+            missiles: [[look(0x1F3); 3]; 2],
+            super_missiles: icon(0x1F4),
+            power_bombs: icon(0x1F5),
+            grapple_beam: icon(0x1F6),
+            x_ray_scope: icon(0x1F7),
+        },
+        map_blank: look(0x1F8),
+        diagonal: look(0x1F9),
+    }
+}
+
+/// A HUD word of picture `number` in colours 3, above the background.
+const fn word_of(number: u16) -> u16 {
+    0x2C00 | number
+}
+
+fn at(column: i32, row: i32) -> Point {
+    Pair { x: column, y: row }
 }
 
 #[test]
 fn the_maps_import_pictures_charts_and_beyond() {
-    let maps = AreaMaps::import(&data::map::AreaMaps(vec![rom_map(Area::Brinstar)]));
-    let map = maps.of(Area::Brinstar);
+    let content = HudContent::import(
+        &data::map::AreaMaps(vec![rom_map(Area::Brinstar)]),
+        &invented(),
+    );
+    let map = content.map(Area::Brinstar, false);
     // Column 40 of row 3 is the right page's column 8: word 400h + 3 × 20h + 8.
     assert_eq!(
-        map.pictures.get(picture_at(40, 3)),
-        MapPicture {
-            picture: Picture::new(0x068),
-            flip: Flip::Both,
-        }
+        map.pictures.get(at(40, 3)),
+        Some(Picture::new(0x068, Flip::Both))
     );
     assert_eq!(
-        map.pictures.get(picture_at(5, 2)).picture,
-        Picture::new(0x045)
+        map.pictures.get(at(5, 2)),
+        Some(Picture::new(0x045, Flip::Both))
     );
-    assert!(map.charted.get(cell(40, 3)));
-    assert!(!map.charted.get(cell(40, 2)));
+    assert!(map.charted.contains(at(40, 3)));
+    assert!(!map.charted.contains(at(40, 2)));
     // Column 65 is the beyond pictures' column 1.
     assert_eq!(
-        map.pictures.get(picture_at(65, 2)).picture,
-        Picture::new(0x341)
+        map.pictures.get(at(65, 2)).map(|picture| picture.number),
+        Some(0x341)
     );
-    assert_eq!(maps.of(Area::Debug), &HerMap::default());
+    assert!(!map.collected);
+    assert!(content.map(Area::Brinstar, true).collected);
+    assert_eq!(
+        content.map(Area::Debug, false),
+        HudContent::default().map(Area::Debug, false)
+    );
+    assert_eq!(
+        content.pictures().digits[9],
+        Picture::new(0x1D9, Flip::None)
+    );
 }
 
 #[test]
@@ -63,7 +101,7 @@ fn the_explored_cells_round_trip() {
         *word = 0x9E37_79B9_7F4A_7C15_u64.rotate_left(u32::try_from(row).unwrap());
     }
     let set = explored(&cells);
-    assert!(set.get(cell(0, 0)));
+    assert!(set.contains(at(0, 0)));
     assert_eq!(engine_cells(&set), cells);
 }
 
@@ -75,13 +113,29 @@ fn every_tile_round_trips() {
     }
 }
 
+#[test]
+fn an_auto_cancel_item_is_the_selected_one() {
+    assert_eq!(
+        selection(Some(HudItem::GrappleBeam), Some(HudItem::GrappleBeam)),
+        Ok(Selection::OneShot(SelectableItem::GrappleBeam))
+    );
+    assert_eq!(
+        selection(Some(HudItem::GrappleBeam), Some(HudItem::Missiles)),
+        Err(HudFault::OneShotNotSelected)
+    );
+    assert_eq!(
+        selection(None, Some(HudItem::Missiles)),
+        Err(HudFault::OneShotNotSelected)
+    );
+}
+
 /// Samus in the middle of a room of one screen at map cell (13, 4), with 99 of 99 energy, the
 /// HUD's tilemap blank and its last energy 0.
 fn state() -> State {
     let mut state = State::default();
     state.room.width = BlockColumns(16);
     state.room.blocks = vec![Block::default(); 256];
-    state.samus.motion.position = Point {
+    state.samus.motion.position = Position {
         x: Fixed {
             pixels: 0x80,
             subpixels: 0,
@@ -97,13 +151,16 @@ fn state() -> State {
         max: 99,
     };
     state.hud.mini_map.room = MapPosition { x: 13, y: 4 };
-    state.hud.tilemap.cells = [TilemapEntry::from_word(0x2C0F); 96];
+    state.hud.tilemap.cells = [TilemapEntry::from_word(word_of(0x1E0)); 96];
     state
 }
 
 fn content() -> Content {
     Content {
-        area_maps: AreaMaps::import(&data::map::AreaMaps(vec![rom_map(Area::Crateria)])),
+        hud: HudContent::import(
+            &data::map::AreaMaps(vec![rom_map(Area::Crateria)]),
+            &invented(),
+        ),
         ..Content::default()
     }
 }
@@ -122,19 +179,34 @@ fn the_mini_map_turn_explores_her_cell_and_draws_only_the_window() {
     // 0 (colours 7).
     assert_eq!(word(&state, 1, 28), 0xFC00 | 0xAD);
     // The status bar is the HUD phase's: the energy isn't drawn yet.
-    assert_eq!(word(&state, 2, 6), 0x2C0F);
+    assert_eq!(word(&state, 2, 6), word_of(0x1E0));
     assert_eq!(state.hud.drawn.energy, 0);
     assert_eq!(state.video.batch.vram.len(), 0);
+    assert!(!state.hud.mini_map.disabled);
+}
+
+#[test]
+fn a_mini_map_a_boss_turned_off_stays_off_and_still() {
+    let mut state = state();
+    state.hud.mini_map.disabled = true;
+    mini_map_turn(&mut state, &content()).unwrap();
+    assert_eq!(state.hud.mini_map.explored, MapCells::default());
+    assert_eq!(word(&state, 1, 28), word_of(0x1E0));
+    assert!(state.hud.mini_map.disabled);
 }
 
 #[test]
 fn the_hud_turn_draws_the_status_bar_and_queues_the_upload() {
     let mut state = state();
     hud_turn(&mut state, &content()).unwrap();
-    assert_eq!((word(&state, 2, 6), word(&state, 2, 7)), (0x2C08, 0x2C08));
+    // 99: digit 9 twice, the invented 1D9h.
+    assert_eq!(
+        (word(&state, 2, 6), word(&state, 2, 7)),
+        (word_of(0x1D9), word_of(0x1D9))
+    );
     assert_eq!(state.hud.drawn.energy, 99);
     // The mini-map has had its turn: the window and the explored cells stay as they were.
-    assert_eq!(word(&state, 1, 28), 0x2C0F);
+    assert_eq!(word(&state, 1, 28), word_of(0x1E0));
     assert_eq!(state.hud.mini_map.explored, MapCells::default());
     assert_eq!(state.video.batch.vram.len(), 1);
 }

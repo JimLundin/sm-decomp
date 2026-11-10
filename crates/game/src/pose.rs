@@ -59,8 +59,8 @@ pub struct Content {
     pub room_plms: RoomPlms,
     /// The blocks' reactions and what each reacting cell's mark is.
     pub blocks: crate::blocks_world::BlockContent,
-    /// The area maps the mini-map draws.
-    pub area_maps: crate::hud_world::AreaMaps,
+    /// The area maps and the pictures the HUD draws with.
+    pub hud: crate::hud_world::HudContent,
     /// The tilesets' tile tables, which draw the level's blocks.
     pub tile_tables: data::tileset::TileTables,
     /// The message boxes' borders, letters and messages.

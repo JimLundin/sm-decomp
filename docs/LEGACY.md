@@ -39,17 +39,19 @@ original's bytes as data.
   nothing for either. No pose and frame an animation reaches selects one.
 - **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
   original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
-  outer edge"): two stated simplifications, both unreachable in vanilla.
+  outer edge"): stated simplifications, each unreachable in vanilla.
   - Missiles are defined up to 999 and super missiles and power bombs up to 99; past that the
     original draws its digit table's neighbours and the code at `$80:9DE7` as tiles. Vanilla
     capacities stop at 230, 50 and 50. The engine (`game::hud_world`) stops the Session with
     `HudFault::CountPastCells` there.
-  - A room whose top-left cell lies off the map (`HudFault::RoomOffMap`), and an area with no map
-    (the debug area, whose pointers name none: the engine shows a blank map that charts nothing),
-    where the original reads what lies past its tables.
+  - An area with no map (the debug area, whose pointers name none: the engine shows a blank map
+    that charts nothing), where the original reads what lies past its tables.
+  - An auto-cancel item other than the selected one stops the Session
+    (`HudFault::OneShotNotSelected`), and the harness counts a record holding one a defect. No
+    routine of the original writes one (`docs/behaviours/hud.decode.md`, "State").
   - A mini-map cell outside the 64 by 32 map (rows -1, 32 and 33, which the window reaches from her
     cell in row 31, in row 1 at columns 0-1, or in rows 30-31 at columns 62-63, and her own cell
-    below the map) is unexplored, uncharted and blank `01F`, and exploring it does nothing. The
+    below the map) is unexplored, uncharted and the map's blank, and exploring it does nothing. The
     original reads the right page's row 0 for the left page's row 32 and the left page's row 31
     for the right page's row -1, and the RAM around the explored and charted bitmaps and past the
     area's tilemap for the rest (the left page's row -1, the right page's row 32; `$90:A91B`,

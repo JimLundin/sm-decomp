@@ -141,6 +141,8 @@ pub enum ContentError {
     Rooms(data::room::RoomError),
     /// The area maps are outside the image.
     AreaMaps(AddressError),
+    /// The HUD's pictures are outside the image.
+    HudPictures(AddressError),
     /// The tile tables are outside the image or don't decompress.
     TileTables(TilesetError),
     /// The message boxes' tables are outside the image or name an unknown routine.
@@ -166,6 +168,7 @@ impl fmt::Display for ContentError {
             Self::SamusTiles(error) => write!(f, "Samus's tiles: {error:?}"),
             Self::Rooms(error) => write!(f, "the rooms: {error:?}"),
             Self::AreaMaps(error) => write!(f, "the area maps: {error:?}"),
+            Self::HudPictures(error) => write!(f, "the HUD's pictures: {error:?}"),
             Self::TileTables(error) => write!(f, "the tile tables: {error:?}"),
             Self::MessageBoxes(error) => write!(f, "the message boxes: {error:?}"),
             Self::Blocks(error) => write!(f, "the blocks' reactions: {error:?}"),
@@ -226,8 +229,9 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         face_block_glow: GlowColours::load(rom.lorom()).map_err(ContentError::Palettes)?,
         room_plms,
         blocks,
-        area_maps: game::hud_world::AreaMaps::import(
+        hud: game::hud_world::HudContent::import(
             &data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
+            &data::hud::HudPictures::load(rom.lorom()).map_err(ContentError::HudPictures)?,
         ),
         tile_tables: TileTables::load(rom.lorom()).map_err(ContentError::TileTables)?,
         message_boxes: data::message::MessageBoxes::load(rom.lorom())

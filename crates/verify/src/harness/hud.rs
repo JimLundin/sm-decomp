@@ -3,40 +3,46 @@
 //! It is checked frame by frame by the decode notes' harness note (`docs/behaviours/hud.decode.md`,
 //! "The harness"). The HUD is downstream of everything it shows and nothing of the same frame reads
 //! it back, so it is checked on its own: its State (the HUD's cells, the values last shown, the
-//! selection and the one-shot item, the explored cells) and the frame count and pad are decoded
-//! from record N, every other input from record N+1 at the HUD's turn, and the model's output is
-//! compared with record N+1: the whole tilemap, not values, since a stale cell is behaviour.
+//! selection and the one-shot item, the explored cells, whether the mini-map is off) and the frame
+//! count and pad are decoded from record N, every other input from record N+1 at the HUD's turn,
+//! and the model's output is compared with record N+1: the whole tilemap, not values, since a
+//! stale cell is behaviour. The HUD's pictures and her map's are the importer's.
 //!
-//! The records carry none of the instruction hits the notes name, so two interim masks stand in,
-//! each keyed as near its writer as the records allow and reported as masked, never passed:
+//! The inputs other domains' writers make are named by their instruction hits in frame N+1: Mother
+//! Brain's fall (`$90:A7E2` with her boss id) and the mini-map turned on (the six stores of 0 to
+//! `05F7`). A boss met on entering its room calls `$90:A7E2` in a door's or a load's frame, outside
+//! gameplay: that pair is the model's boss step, not a frame of play.
+//!
+//! Two interim masks stand in for writers the records don't yet decode, each keyed as near its
+//! writer as the records allow and reported as masked, never passed:
 //! - her position at the mini-map's turn: the pose change's placement (`$91:EB88`) runs after the
 //!   mini-map read her and can move her across a screen, so the window and the explored cells are
-//!   masked where her pose changed, the mini-map ran and wasn't off, and her position lies within
-//!   the placement's reach of a screen's edge. samus-motion's model, which the camera harness asks
+//!   masked where her pose changed, the mini-map read her, and her position lies within the
+//!   placement's reach of a screen's edge. samus-motion's model, which the camera harness asks
 //!   for the y the camera follows her from, doesn't report where her moves left her, so it can't
 //!   yet decode her position at the mini-map's turn;
 //! - the shot's cancel (the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`): the
 //!   selection and the one-shot item are masked where a count fell, and the status bar is
 //!   compared with the cancel false.
 //!
-//! The pickups' icons (`collected`) and a boss turning the mini-map off in a frame (Mother Brain's
-//! first form) have no hit either; no cached row reaches them, so both are none. The click and the
-//! switch aren't compared until the sound and the weapons' request streams exist, so their entries
-//! are credited nothing. Nothing answers from record N+1's HUD,
-//! so no field is unverified; the null model is the HUD left as record N has it.
+//! The pickups' icons (`collected`) are none. The click and the switch aren't compared until the
+//! sound and the weapons' request streams exist, so their entries are credited nothing. Nothing
+//! answers from record N+1's HUD, so no field is unverified; the null model is the HUD left as
+//! record N has it.
 
 use core::fmt;
 
 use clean_model_hud::{
-    Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, Event,
-    FrameCount, FrameInputs, HerMap, HudPos, HudState, MapCell, MapCellSet, MiniMapInputs, Mute,
-    Reserve, ReserveMode, Room, Rules, SelectButton, SelectableItem, Selection, Shown, Status,
-    Stock, Tile,
+    Ammo, Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, Event,
+    FrameCount, FrameInputs, HerMap, HudGrid, HudState, MapCellSet, MiniMapInputs, MiniMapPower,
+    Mute, Point, Reserve, ReserveMode, Room, RoomBoss, Rules, SelectButton, SelectableItem,
+    Selection, Shown, Status, Stock, Tile,
 };
 use clean_types::Pair;
 use data::map::{MAP_BIT_BYTES, MapCells};
 use data::room::Area;
-use game::hud_world::{self, AreaMaps};
+use enum_map::enum_map;
+use game::hud_world::{self, HudContent};
 use game::state::video::TilemapEntry;
 use oracle_record::FrameRecord;
 
@@ -64,6 +70,8 @@ const NEW_STATE_HANDLER: WramWord = wram("FRAME_HANDLER_BETA", 0x0A44);
 const GRAPPLE_FUNCTION: WramWord = wram("GRAPPLE_BEAM_FUNCTION", 0x0D32);
 /// Bank $90 log: time frozen (the x-ray scope, the reserve tanks' refill).
 const TIME_IS_FROZEN: WramWord = wram("TIME_IS_FROZEN", 0x0A78);
+/// Bank $A0 log: the boss id the room's boss enemy sets when it loads.
+const BOSS_ID: WramWord = wram("BOSS_ID", 0x179C);
 
 /// The normal current state handler, under which she can switch (`$90:E695`).
 const NORMAL_CURRENT: u16 = 0xE695;
@@ -91,21 +99,23 @@ const CHARTED: u8 = 3;
 /// The priority bit every HUD word holds.
 const PRIORITY: u16 = 0x2000;
 /// The mini-map's window: rows 0 to 2, columns 26 to 30 (spec §1.2).
-const WINDOW: core::ops::RangeInclusive<u8> = 26..=30;
-/// Her window tile, across then down, which the diagonal test reads.
-const HER_TILE: (i32, i32) = (28, 1);
+const WINDOW: core::ops::RangeInclusive<i32> = 26..=30;
+/// The HUD's cells across a row, and its rows.
+const HUD_COLUMNS: usize = 32;
+const HUD_ROWS: usize = 3;
+/// Her window tile, which the diagonal test reads.
+const HER_TILE: Point = Pair { x: 28, y: 1 };
 /// The HUD's item indices from 1, as the bank $90 log orders them: the harness's own table, so
 /// a model that ordered its items otherwise would fail rather than decode the records its way.
 const HUD_ITEMS: [SelectableItem; 5] = [
-    SelectableItem::Missiles,
-    SelectableItem::SuperMissiles,
-    SelectableItem::PowerBombs,
+    SelectableItem::Ammo(Ammo::Missiles),
+    SelectableItem::Ammo(Ammo::SuperMissiles),
+    SelectableItem::Ammo(Ammo::PowerBombs),
     SelectableItem::GrappleBeam,
     SelectableItem::XRayScope,
 ];
-/// A picture's number is read mod 200h by the diagonal test, against 28h.
+/// A picture's number is read mod 200h by the diagonal test.
 const DIAGONAL_READ: u16 = 0x1FF;
-const DIAGONAL: u16 = 0x028;
 /// A screen is 256 px, a block 16.
 const SCREEN_PX: u16 = 256;
 const BLOCK_PX: u16 = 16;
@@ -113,18 +123,40 @@ const BLOCK_PX: u16 = 16;
 /// take-off's lift and the aim step each move her by less than this, and never together by more.
 const PLACEMENT_REACH: u16 = 32;
 /// The columns from which the window reads by the first or the last columns' rule.
-const FIRST_COLUMNS_END: u16 = 1;
-const LAST_COLUMNS_START: u16 = 62;
+const FIRST_COLUMNS_END: i32 = 1;
+const LAST_COLUMNS_START: i32 = 62;
 /// The map's columns.
-const MAP_COLUMNS: u16 = 64;
+const MAP_COLUMNS: i32 = 64;
+
+/// Blanks the mini-map and turns it off (`$90:A7E2`), called by the bosses.
+const BOSS_BLANKS_THE_MAP: u32 = 0x90_A7E2;
+/// The stores of 0 to `05F7` that turn the mini-map on: a load at a station, the demos' load, a
+/// door's start, the new room's effects setup, a new game's or a load's Samus command 8, and
+/// Crocomire's skeleton flowing down the river.
+const TURNS_THE_MINI_MAP_ON: [u32; 6] = [
+    0x80_C4AF, 0x82_8767, 0x82_E1C4, 0x88_82F3, 0x90_F233, 0xA4_90C4,
+];
+/// Mother Brain's boss id, whose first form calls `$90:A7E2` during gameplay.
+const MOTHER_BRAIN: u16 = 0x0A;
+/// The boss ids of the bosses met on entering their rooms (`$90:A83A`; Ceres Ridley's id 1 isn't
+/// in that table).
+const ROOM_BOSSES: [(u16, RoomBoss); 6] = [
+    (0x01, RoomBoss::RidleyInCeres),
+    (0x03, RoomBoss::Kraid),
+    (0x05, RoomBoss::RidleyInNorfair),
+    (0x06, RoomBoss::Crocomire),
+    (0x07, RoomBoss::Phantoon),
+    (0x08, RoomBoss::Draygon),
+];
 
 /// The declared fields by their places in [`HudDomain`]'s `FIELDS`.
+const STATUS_BAR: FieldSet = FieldSet::single(0);
+const SHOWN: FieldSet = FieldSet::single(1);
 const SELECTED: FieldSet = FieldSet::single(2);
 const ONE_SHOT: FieldSet = FieldSet::single(3);
 const WINDOW_TILES: FieldSet = FieldSet::single(4);
 const EXPLORED: FieldSet = FieldSet::single(5);
-const STATUS_BAR: FieldSet = FieldSet::single(0);
-const SHOWN: FieldSet = FieldSet::single(1);
+const MINI_MAP_OFF: FieldSet = FieldSet::single(6);
 
 /// The declared fields a catalogue entry's output reaches. The click and the switch are events,
 /// which aren't compared until the sound and the weapons' request streams exist, so
@@ -139,10 +171,9 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         B::CancellingTheItem => SELECTED.union(ONE_SHOT),
         B::OneShotItem => ONE_SHOT,
         B::Exploring | B::DiagonalPicture => EXPLORED,
-        B::MiniMapWindow | B::HerBlink | B::BossBlanksTheMap => WINDOW_TILES,
-        B::MiniMapStill | B::FirstColumnsShift | B::LastColumnsShift => {
-            WINDOW_TILES.union(EXPLORED)
-        }
+        B::MiniMapWindow | B::HerBlink => WINDOW_TILES,
+        B::FirstColumnsShift | B::LastColumnsShift => WINDOW_TILES.union(EXPLORED),
+        B::MiniMapStill | B::BossBlanksTheMap => WINDOW_TILES.union(EXPLORED).union(MINI_MAP_OFF),
     }
 }
 
@@ -153,6 +184,17 @@ pub enum Skip {
     Unreadable(DecodeError),
     /// A HUD word without its priority bit, which every word the HUD writes holds: a defect.
     NoPriority(u16),
+    /// A one-shot item that is neither none nor the selected item, which the original never
+    /// holds: a defect.
+    OneShotNotSelected {
+        /// The selected item's index.
+        selected: u16,
+        /// The one-shot item's.
+        one_shot: u16,
+    },
+    /// A boss met on entering its room in a frame of play, which only a door or a load meets:
+    /// a defect.
+    BossInPlay(u16),
     /// The main loop runs another game state: the HUD runs only in gameplay (pause is its own
     /// domain).
     GameState(u16),
@@ -167,6 +209,11 @@ impl fmt::Display for Skip {
         match self {
             Self::Unreadable(error) => write!(f, "unreadable: {error:?}"),
             Self::NoPriority(word) => write!(f, "a HUD word without its priority bit: {word:#06X}"),
+            Self::OneShotNotSelected { selected, one_shot } => write!(
+                f,
+                "a one-shot item {one_shot} that is neither none nor the selected {selected}"
+            ),
+            Self::BossInPlay(id) => write!(f, "boss {id:#04X} met in a frame of play"),
             Self::GameState(code) => write!(f, "game state {code:#04X}, not gameplay"),
             Self::Frames(count) => write!(f, "{count} frames ran, not one"),
             Self::RoomChange => f.write_str("the room changed (the door's domain)"),
@@ -189,6 +236,11 @@ const fn unnamed(source: &'static str, value: u16) -> Skip {
     Skip::Unreadable(DecodeError::Unrepresentable { source, value })
 }
 
+/// Whether `record` ran the instruction at `pc` in its frame.
+fn ran(record: &FrameRecord, pc: u32) -> bool {
+    record.hits.iter().any(|hit| hit.pc == pc)
+}
+
 /// Whether `at`, her position on one axis, is within the pose change's reach of a screen's edge,
 /// so that where her moves left her, which the mini-map read, may lie in the next screen.
 const fn near_screen_edge(at: u16) -> bool {
@@ -196,14 +248,23 @@ const fn near_screen_edge(at: u16) -> bool {
     into < PLACEMENT_REACH || into >= SCREEN_PX - PLACEMENT_REACH
 }
 
-/// Whether the tile at `pos` is the mini-map's window's.
-fn in_window(pos: HudPos) -> bool {
-    WINDOW.contains(&pos.x())
+/// Whether the HUD cell at `point` is the mini-map's window's.
+fn in_window(point: Point) -> bool {
+    WINDOW.contains(&point.x)
+}
+
+/// The place `column` across and `row` down the HUD.
+fn place(column: usize, row: usize) -> Point {
+    let coordinate = |value: usize| i32::try_from(value).unwrap_or(i32::MAX);
+    Pair {
+        x: coordinate(column),
+        y: coordinate(row),
+    }
 }
 
 /// A HUD item index: 0 for none, then the HUD's items left to right.
-fn item(record: &FrameRecord, source: WramWord) -> Result<Option<SelectableItem>, Skip> {
-    match word(record, source)? {
+fn item(index: u16, source: WramWord) -> Result<Option<SelectableItem>, Skip> {
+    match index {
         0 => Ok(None),
         index => HUD_ITEMS
             .get(usize::from(index).wrapping_sub(1))
@@ -213,42 +274,77 @@ fn item(record: &FrameRecord, source: WramWord) -> Result<Option<SelectableItem>
     }
 }
 
+/// The selection `record` holds: the selected item, which is the one-shot item when the one-shot
+/// index equals it.
+fn selection(record: &FrameRecord) -> Result<Selection, Skip> {
+    let selected = word(record, source::HUD_ITEM_INDEX)?;
+    let one_shot = word(record, source::SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX)?;
+    match (item(selected, source::HUD_ITEM_INDEX)?, one_shot) {
+        (None, 0) => Ok(Selection::None),
+        (Some(item), 0) => Ok(Selection::Item(item)),
+        (Some(item), _) if one_shot == selected => Ok(Selection::OneShot(item)),
+        (None | Some(_), _) => Err(Skip::OneShotNotSelected { selected, one_shot }),
+    }
+}
+
+/// The tile of a HUD word.
+fn tile(bytes: [u8; 2]) -> Result<Tile, Skip> {
+    let raw = u16::from_le_bytes(bytes);
+    if raw & PRIORITY == 0 {
+        return Err(Skip::NoPriority(raw));
+    }
+    hud_world::tile(TilemapEntry::from_word(raw))
+        .map_err(|_| unnamed(source::HUD_TILEMAP.name, raw))
+}
+
+/// The HUD's cells `record` holds.
+fn grid(record: &FrameRecord) -> Result<HudGrid, Skip> {
+    let words = source::HUD_TILEMAP.read(&record.wram)?.as_chunks::<2>().0;
+    let first = words
+        .first()
+        .ok_or(Skip::Unreadable(DecodeError::WramTooShort {
+            source: source::HUD_TILEMAP.name,
+        }))?;
+    // Every cell is set from the record below.
+    let mut grid = HudGrid::filled(tile(*first)?);
+    for (row, cells) in words.chunks(HUD_COLUMNS).enumerate() {
+        for (column, &bytes) in cells.iter().enumerate() {
+            grid.set(place(column, row), tile(bytes)?);
+        }
+    }
+    Ok(grid)
+}
+
 /// The HUD's State `record` holds (the decode notes' State).
 fn hud(record: &FrameRecord) -> Result<HudState, Skip> {
-    let mut state = HudState {
-        shown: Shown {
-            energy: word(record, source::SAMUS_PREV_HEALTH)?,
-            ammo: [
-                word(record, source::SAMUS_PREV_MISSILES)?,
-                word(record, source::SAMUS_PREV_SUPER_MISSILES)?,
-                word(record, source::SAMUS_PREV_POWER_BOMBS)?,
-            ],
-            highlighted: item(record, source::SAMUS_PREV_HUD_ITEM_INDEX)?,
-        },
-        selection: Selection {
-            selected: item(record, source::HUD_ITEM_INDEX)?,
-            one_shot: item(record, source::SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX)?,
-        },
-        ..HudState::default()
-    };
-    let words = source::HUD_TILEMAP.read(&record.wram)?.as_chunks::<2>().0;
-    for (pos, &bytes) in HudPos::all().zip(words) {
-        let raw = u16::from_le_bytes(bytes);
-        if raw & PRIORITY == 0 {
-            return Err(Skip::NoPriority(raw));
-        }
-        let tile = hud_world::tile(TilemapEntry::from_word(raw))
-            .map_err(|_| unnamed(source::HUD_TILEMAP.name, raw))?;
-        state.grid.set(pos, tile);
-    }
     let bitmap: &[u8; MAP_BIT_BYTES] = source::MAP_TILES_EXPLORED
         .read(&record.wram)?
         .first_chunk()
         .ok_or(Skip::Unreadable(DecodeError::WramTooShort {
             source: source::MAP_TILES_EXPLORED.name,
         }))?;
-    state.explored = hud_world::explored(&MapCells::from_bitmap(bitmap));
-    Ok(state)
+    Ok(HudState {
+        grid: grid(record)?,
+        shown: Shown {
+            energy: word(record, source::SAMUS_PREV_HEALTH)?,
+            ammo: enum_map! {
+                Ammo::Missiles => word(record, source::SAMUS_PREV_MISSILES)?,
+                Ammo::SuperMissiles => word(record, source::SAMUS_PREV_SUPER_MISSILES)?,
+                Ammo::PowerBombs => word(record, source::SAMUS_PREV_POWER_BOMBS)?,
+            },
+            highlighted: item(
+                word(record, source::SAMUS_PREV_HUD_ITEM_INDEX)?,
+                source::SAMUS_PREV_HUD_ITEM_INDEX,
+            )?,
+        },
+        selection: selection(record)?,
+        explored: hud_world::explored(&MapCells::from_bitmap(bitmap)),
+        mini_map: if word(record, source::DEBUG_DISABLE_MINIMAP)? == 0 {
+            MiniMapPower::On
+        } else {
+            MiniMapPower::Off
+        },
+    })
 }
 
 /// The button with `binding` in `buttons`.
@@ -265,7 +361,7 @@ pub struct Pad {
 }
 
 /// Her map: its area, and whether she has collected it. The map itself is lent from the domain's
-/// maps when the model steps.
+/// content when the model steps.
 #[derive(Clone, Copy, Debug)]
 pub struct MapKey {
     area: Area,
@@ -281,16 +377,39 @@ pub struct Upstream {
     can_switch: bool,
     muted_by: Option<Mute>,
     runs: bool,
-    off: bool,
+    power: PowerChanges,
     position: Pair<u16>,
     room: Room,
     map: MapKey,
 }
 
-/// The frame's world and what the step reported, for the attribution.
+/// What turns the mini-map on or off in a frame, before its turn: other domains' writers.
+#[derive(Clone, Copy, Debug)]
+pub struct PowerChanges {
+    /// One of the stores of 0 to `05F7` ran.
+    turned_on: bool,
+    /// Mother Brain's first form fell.
+    mother_brain_falls: bool,
+}
+
+/// What a record pair is to the HUD.
+#[derive(Clone, Copy, Debug)]
+pub enum Turn {
+    /// A frame of play.
+    Frame(Upstream),
+    /// A door's or a load's frame in which a boss was met on entering its room.
+    BossMet {
+        /// The boss.
+        boss: RoomBoss,
+        /// Her room's top-left cell on her map.
+        room: Point,
+    },
+}
+
+/// The pair's turn and what the step reported, for the attribution.
 #[derive(Clone, Debug)]
 pub struct World {
-    upstream: Upstream,
+    turn: Turn,
     events: Vec<Event>,
     her_tile: Option<Tile>,
 }
@@ -313,14 +432,14 @@ fn status(next: &FrameRecord) -> Result<Status, Skip> {
         })
     };
     let missiles = stock(source::SAMUS_MISSILES, source::SAMUS_MAX_MISSILES)?;
-    let ammunition = Ammunition::new([
-        missiles,
-        stock(
+    let ammunition = Ammunition::new(enum_map! {
+        Ammo::Missiles => missiles,
+        Ammo::SuperMissiles => stock(
             source::SAMUS_SUPER_MISSILES,
             source::SAMUS_MAX_SUPER_MISSILES,
         )?,
-        stock(source::SAMUS_POWER_BOMBS, source::SAMUS_MAX_POWER_BOMBS)?,
-    ])
+        Ammo::PowerBombs => stock(source::SAMUS_POWER_BOMBS, source::SAMUS_MAX_POWER_BOMBS)?,
+    })
     .ok_or_else(|| unnamed("a count past its cells", missiles.count))?;
     let equipped = word(next, source::EQUIPPED_ITEMS)?;
     Ok(Status {
@@ -372,21 +491,25 @@ fn runs(next: &FrameRecord) -> Result<bool, Skip> {
     }
 }
 
+/// Her room's top-left cell on her map in `next`. Rooms start a row down: the map's row 0 is
+/// padding.
+fn room_cell(next: &FrameRecord) -> Result<Point, Skip> {
+    let coordinate = |source: WramWord| -> Result<i32, Skip> {
+        let value = word(next, source)?;
+        u8::try_from(value)
+            .map(i32::from)
+            .map_err(|_| unnamed(source.name, value))
+    };
+    Ok(Pair {
+        x: coordinate(source::ROOM_X_COORDINATE_ON_MAP)?,
+        y: coordinate(source::ROOM_Y_COORDINATE_ON_MAP)?.wrapping_add(1),
+    })
+}
+
 /// Her room on her map in `next`.
 fn room(next: &FrameRecord) -> Result<Room, Skip> {
-    let coordinate = |source: WramWord| -> Result<u8, Skip> {
-        let value = word(next, source)?;
-        u8::try_from(value).map_err(|_| unnamed(source.name, value))
-    };
-    let (x, y) = (
-        coordinate(source::ROOM_X_COORDINATE_ON_MAP)?,
-        coordinate(source::ROOM_Y_COORDINATE_ON_MAP)?,
-    );
-    // Rooms start a row down: the map's row 0 is padding.
-    let cell = MapCell::new(i32::from(x), i32::from(y).wrapping_add(1))
-        .ok_or_else(|| unnamed(source::ROOM_Y_COORDINATE_ON_MAP.name, u16::from(y)))?;
     Ok(Room {
-        cell,
+        cell: room_cell(next)?,
         blocks: Pair {
             x: word(next, source::ROOM_WIDTH_IN_BLOCKS)?,
             y: word(next, source::ROOM_HEIGHT_IN_BLOCKS)?,
@@ -394,8 +517,33 @@ fn room(next: &FrameRecord) -> Result<Room, Skip> {
     })
 }
 
-/// Every input but the pad, from `next` at the HUD's turn.
-fn upstream(next: &FrameRecord) -> Result<Upstream, Skip> {
+/// A boss that called `$90:A7E2` in a frame, by what the HUD does with it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum BossCalled {
+    /// Mother Brain's first form fell.
+    MotherBrain,
+    /// A boss met on entering its room.
+    InItsRoom(RoomBoss),
+}
+
+/// The boss that blanked the mini-map in `next`'s frame, or `None`.
+fn boss_called(next: &FrameRecord) -> Result<Option<BossCalled>, Skip> {
+    if !ran(next, BOSS_BLANKS_THE_MAP) {
+        return Ok(None);
+    }
+    match word(next, BOSS_ID)? {
+        MOTHER_BRAIN => Ok(Some(BossCalled::MotherBrain)),
+        id => ROOM_BOSSES
+            .iter()
+            .find(|&&(each, _)| each == id)
+            .map(|&(_, boss)| Some(BossCalled::InItsRoom(boss)))
+            .ok_or_else(|| unnamed(BOSS_ID.name, id)),
+    }
+}
+
+/// Every input but the pad, from `next` at the HUD's turn; Mother Brain falls when
+/// `mother_brain_falls`.
+fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Skip> {
     let index = word(next, source::AREA_INDEX)?;
     let area = u8::try_from(index)
         .ok()
@@ -409,7 +557,10 @@ fn upstream(next: &FrameRecord) -> Result<Upstream, Skip> {
             && !FACING_FORWARD.contains(&word(next, source::SAMUS_POSE)?),
         muted_by: muted_by(next)?,
         runs: runs(next)?,
-        off: word(next, source::DEBUG_DISABLE_MINIMAP)? != 0,
+        power: PowerChanges {
+            turned_on: TURNS_THE_MINI_MAP_ON.iter().any(|&pc| ran(next, pc)),
+            mother_brain_falls,
+        },
         position: Pair {
             x: word(next, source::SAMUS_X_POS)?,
             y: word(next, source::SAMUS_Y_POS)?,
@@ -444,42 +595,52 @@ impl Upstream {
         }
     }
 
-    /// The model's inputs over `map`. No cached row picks up an item with an icon or reaches
-    /// Mother Brain's first form, so neither is reported.
+    /// The model's inputs over `map`. No cached row picks up an item with an icon, so none is
+    /// reported.
     const fn model<'map>(&self, pad: Pad, map: &'map HerMap) -> FrameInputs<'map> {
         FrameInputs {
             frame: pad.frame,
             status: self.status,
             controls: self.controls(pad),
             collected: None,
-            boss: None,
+            mother_brain_falls: self.power.mother_brain_falls,
             mini_map: MiniMapInputs {
                 runs: self.runs,
-                off: self.off,
+                turned_on: self.power.turned_on,
                 position: self.position,
                 room: self.room,
                 map,
-                map_collected: self.map.collected,
             },
         }
     }
 
+    /// Whether the mini-map is off at its turn, `before` as record N holds it: turned on before
+    /// the turn, and off after Mother Brain's fall (spec: `MiniMapStill`, `BossBlanksTheMap`).
+    const fn off(&self, before: MiniMapPower) -> bool {
+        self.power.mother_brain_falls
+            || (matches!(before, MiniMapPower::Off) && !self.power.turned_on)
+    }
+
     /// Whether the mini-map updates (spec: `MiniMapStill`).
-    const fn updates(&self) -> bool {
+    const fn updates(&self, before: MiniMapPower) -> bool {
         self.runs
-            && !self.off
+            && !self.off(before)
             && self.position.x / BLOCK_PX < self.room.blocks.x
             && self.position.y / BLOCK_PX < self.room.blocks.y
     }
 
     /// Her cell's column on her map (spec: `Exploring`).
-    fn her_column(&self) -> u16 {
-        u16::from(self.room.cell.x()).wrapping_add(self.position.x / SCREEN_PX) % MAP_COLUMNS
+    fn her_column(&self) -> i32 {
+        self.room
+            .cell
+            .x
+            .wrapping_add(i32::from(self.position.x / SCREEN_PX))
+            .rem_euclid(MAP_COLUMNS)
     }
 }
 
 /// The declared fields: the status bar's tiles and the values last shown, the selection and the
-/// one-shot item, the window's tiles and the explored cells.
+/// one-shot item, the window's tiles, the explored cells and whether the mini-map is off.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Declared {
     status_bar: Vec<Tile>,
@@ -488,55 +649,61 @@ pub struct Declared {
     one_shot: Option<SelectableItem>,
     window: Vec<Tile>,
     explored: MapCellSet,
+    mini_map_off: bool,
 }
 
 impl From<&HudState> for Declared {
     fn from(state: &HudState) -> Self {
         let tiles = |window: bool| -> Vec<Tile> {
-            HudPos::all()
-                .filter(|&pos| in_window(pos) == window)
-                .map(|pos| state.grid.get(pos))
+            (0..HUD_ROWS)
+                .flat_map(|row| (0..HUD_COLUMNS).map(move |column| place(column, row)))
+                .filter(|&point| in_window(point) == window)
+                .filter_map(|point| state.grid.get(point))
                 .collect()
         };
         Self {
             status_bar: tiles(false),
             shown: state.shown,
-            selected: state.selection.selected,
-            one_shot: state.selection.one_shot,
+            selected: state.selection.item(),
+            one_shot: state.selection.one_shot(),
             window: tiles(true),
             explored: state.explored,
+            mini_map_off: state.mini_map == MiniMapPower::Off,
         }
     }
 }
 
-/// The HUD domain over the ROM's area maps and the spec's rules.
+/// The HUD domain over the importer's area maps and pictures, and the spec's rules.
 pub struct HudDomain {
-    maps: AreaMaps,
+    content: HudContent,
     rules: Rules,
 }
 
 impl HudDomain {
-    /// The domain over the ROM `image`'s area maps.
+    /// The domain over the ROM `image`'s area maps and HUD pictures.
     ///
     /// # Errors
     ///
-    /// [`ContentError::AreaMaps`] when the maps don't load.
+    /// [`ContentError::AreaMaps`] or [`ContentError::HudPictures`] when they don't load.
     pub fn load(image: &[u8]) -> Result<Self, ContentError> {
         let rom = data::rom::Lorom::new(image);
         let maps = data::map::AreaMaps::load(rom).map_err(ContentError::AreaMaps)?;
+        let pictures = data::hud::HudPictures::load(rom).map_err(ContentError::HudPictures)?;
         Ok(Self {
-            maps: AreaMaps::import(&maps),
+            content: HudContent::import(&maps, &pictures),
             rules: Rules::reference(),
         })
     }
 }
 
-/// Whether the main loop runs gameplay in `record`.
-fn gameplay(record: &FrameRecord) -> Result<(), Skip> {
-    match word(record, source::GAME_STATE)? {
-        MAIN_GAMEPLAY => Ok(()),
-        code => Err(Skip::GameState(code)),
-    }
+/// The game state the main loop runs in `record`.
+fn game_state(record: &FrameRecord) -> Result<u16, Skip> {
+    word(record, source::GAME_STATE)
+}
+
+/// Whether the main loop runs gameplay in both records of a pair.
+fn in_play(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
+    Ok(game_state(from)? == MAIN_GAMEPLAY && game_state(next)? == MAIN_GAMEPLAY)
 }
 
 impl Domain for HudDomain {
@@ -553,6 +720,7 @@ impl Domain for HudDomain {
         domain_field!("one-shot item", one_shot),
         domain_field!("mini-map window", window),
         domain_field!("explored cells", explored),
+        domain_field!("mini-map off", mini_map_off),
     ];
 
     fn behaviours(&self) -> Vec<Entry> {
@@ -565,13 +733,40 @@ impl Domain for HudDomain {
             .collect()
     }
 
+    /// Outside gameplay the HUD is decoded too, for the boss step a door or a load makes; a
+    /// record there that doesn't decode is skipped for its game state, not a defect.
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(HudState, Pad), Skip> {
-        gameplay(from)?;
-        Ok((hud(from)?, pad(from)?))
+        let state = game_state(from)?;
+        hud(from)
+            .and_then(|hud| Ok((hud, pad(from)?)))
+            .map_err(|skip| {
+                if state == MAIN_GAMEPLAY {
+                    skip
+                } else {
+                    Skip::GameState(state)
+                }
+            })
     }
 
     fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<World, Skip> {
-        gameplay(next)?;
+        let called = boss_called(next)?;
+        let world = |turn| World {
+            turn,
+            events: Vec::new(),
+            her_tile: None,
+        };
+        for record in [from, next] {
+            match (game_state(record)?, called) {
+                (MAIN_GAMEPLAY, _) => {}
+                (_, Some(BossCalled::InItsRoom(boss))) => {
+                    return Ok(world(Turn::BossMet {
+                        boss,
+                        room: room_cell(next)?,
+                    }));
+                }
+                (state, _) => return Err(Skip::GameState(state)),
+            }
+        }
         let frames = word(next, source::NMI_FRAME_COUNTER_WORD)?
             .wrapping_sub(word(from, source::NMI_FRAME_COUNTER_WORD)?);
         if frames != 1 {
@@ -580,22 +775,24 @@ impl Domain for HudDomain {
         if word(from, source::ROOM_PTR)? != word(next, source::ROOM_PTR)? {
             return Err(Skip::RoomChange);
         }
-        Ok(World {
-            upstream: upstream(next)?,
-            events: Vec::new(),
-            her_tile: None,
-        })
+        let mother_brain_falls = match called {
+            None => false,
+            Some(BossCalled::MotherBrain) => true,
+            Some(BossCalled::InItsRoom(_)) => return Err(Skip::BossInPlay(word(next, BOSS_ID)?)),
+        };
+        Ok(world(Turn::Frame(upstream(next, mother_brain_falls)?)))
     }
 
     fn masks(&self, from: &FrameRecord, next: &FrameRecord, _pad: &Pad) -> Result<Vec<Mask>, Skip> {
         let mut masks = Vec::new();
-        let read_her = runs(next)? && word(next, source::DEBUG_DISABLE_MINIMAP)? == 0;
-        let near_edge = [source::SAMUS_X_POS, source::SAMUS_Y_POS]
-            .into_iter()
-            .map(|axis| word(next, axis))
-            .try_fold(false, |near, at| {
-                Ok::<_, Skip>(near || near_screen_edge(at?))
-            })?;
+        if !in_play(from, next)? {
+            return Ok(masks);
+        }
+        let falls = boss_called(next)? == Some(BossCalled::MotherBrain);
+        let upstream = upstream(next, falls)?;
+        let read_her = upstream.runs && !upstream.off(hud(from)?.mini_map);
+        let near_edge =
+            near_screen_edge(upstream.position.x) || near_screen_edge(upstream.position.y);
         if read_her
             && near_edge
             && word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?
@@ -623,16 +820,28 @@ impl Domain for HudDomain {
     }
 
     fn step(&self, state: &mut HudState, pad: &Pad, world: &mut World) {
-        let upstream = &world.upstream;
-        let map = self.maps.of(upstream.map.area);
-        let outcome = state.clone().frame(&self.rules, &upstream.model(*pad, map));
-        *state = outcome.state;
-        world.her_tile = HudPos::new(HER_TILE.0, HER_TILE.1).map(|pos| state.grid.get(pos));
-        world.events = outcome.events;
+        let pictures = self.content.pictures();
+        match world.turn {
+            Turn::Frame(upstream) => {
+                let map = self.content.map(upstream.map.area, upstream.map.collected);
+                let outcome =
+                    state
+                        .clone()
+                        .frame(&self.rules, pictures, &upstream.model(*pad, map));
+                *state = outcome.state;
+                world.events = outcome.events;
+            }
+            Turn::BossMet { boss, room } => {
+                *state = state
+                    .clone()
+                    .boss_encountered(&self.rules, pictures, boss, room);
+            }
+        }
+        world.her_tile = state.grid.get(HER_TILE);
     }
 
     fn exercised(&self, state: &HudState, pad: &Pad, world: &World) -> Vec<usize> {
-        exercised(state, *pad, world)
+        exercised(state, *pad, world, self.content.pictures().diagonal.number)
     }
 
     fn fields(&self, state: &HudState) -> Declared {
@@ -645,7 +854,10 @@ impl Domain for HudDomain {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) | Skip::NoPriority(_) => Uncompared::Defect(skip.to_string()),
+            Skip::Unreadable(_)
+            | Skip::NoPriority(_)
+            | Skip::OneShotNotSelected { .. }
+            | Skip::BossInPlay(_) => Uncompared::Defect(skip.to_string()),
             Skip::GameState(_) | Skip::Frames(_) | Skip::RoomChange => {
                 Uncompared::Skip(skip.to_string())
             }
@@ -653,11 +865,26 @@ impl Domain for HudDomain {
     }
 }
 
+/// The places in the catalogue of the entries `ids` names, in its order.
+fn places(ids: impl IntoIterator<Item = BehaviourId>) -> Vec<usize> {
+    let mut places: Vec<usize> = ids
+        .into_iter()
+        .filter_map(|id| CATALOGUE.iter().position(|entry| entry.id == id))
+        .collect();
+    places.sort_unstable();
+    places.dedup();
+    places
+}
+
 /// The catalogue entries a frame brings into play, from the HUD as record N has it, the inputs,
-/// and what the step reported: the rule each part of the frame takes.
-fn exercised(state: &HudState, pad: Pad, world: &World) -> Vec<usize> {
+/// and what the step reported: the rule each part of the frame takes. `diagonal` is the
+/// diagonal's picture number.
+fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<usize> {
     use BehaviourId as B;
-    let upstream = &world.upstream;
+    let upstream = match world.turn {
+        Turn::Frame(upstream) => upstream,
+        Turn::BossMet { .. } => return places([B::BossBlanksTheMap]),
+    };
     let status = &upstream.status;
     let controls = upstream.controls(pad);
     let shown = &state.shown;
@@ -665,22 +892,20 @@ fn exercised(state: &HudState, pad: Pad, world: &World) -> Vec<usize> {
     if status.energy.now != shown.energy {
         entries.push(B::EnergyGauge);
     }
-    if status
-        .ammunition
-        .kinds()
-        .zip(shown.ammo)
-        .any(|((_, stock), shown)| stock.capacity != 0 && stock.count != shown)
-    {
+    if shown.ammo.iter().any(|(ammo, &shown)| {
+        let stock = status.ammunition.of(ammo);
+        stock.capacity != 0 && stock.count != shown
+    }) {
         entries.push(B::AmmoCounts);
     }
     if status.reserve.mode == ReserveMode::Auto {
         entries.push(B::AutoReserveSign);
     }
-    let switched = world
-        .events
-        .iter()
-        .any(|event| matches!(event, Event::Switched(_)));
-    let mut selection = state.selection;
+    let switched = world.events.iter().find_map(|event| match event {
+        Event::Switched(item) => Some(*item),
+        Event::Click => None,
+    });
+    let mut selected = state.selection.item();
     if controls.can_switch {
         if controls.cancel == CancelButton::Pressed {
             entries.push(B::CancellingTheItem);
@@ -688,25 +913,24 @@ fn exercised(state: &HudState, pad: Pad, world: &World) -> Vec<usize> {
             entries.push(B::CyclingItems);
             entries.push(B::OneShotItem);
         }
-        if switched {
+        if let Some(item) = switched {
             entries.push(B::Switching);
-            selection.selected = world
-                .events
-                .iter()
-                .find_map(|event| match event {
-                    Event::Switched(item) => Some(*item),
-                    Event::Click => None,
-                })
-                .flatten();
+            selected = item;
         }
     }
-    if selection.selected != shown.highlighted {
+    if selected != shown.highlighted {
         entries.extend([B::SelectionHighlight, B::SwitchClick]);
     }
-    if state.selection.one_shot.is_some() || selection.one_shot.is_some() {
+    if state.selection.one_shot().is_some() {
         entries.push(B::OneShotFlash);
     }
-    if upstream.updates() {
+    if upstream.power.mother_brain_falls {
+        entries.push(B::BossBlanksTheMap);
+    }
+    if upstream.power.turned_on {
+        entries.push(B::MiniMapStill);
+    }
+    if upstream.updates(state.mini_map) {
         entries.extend([B::Exploring, B::MiniMapWindow, B::HerBlink]);
         let column = upstream.her_column();
         if column <= FIRST_COLUMNS_END {
@@ -716,39 +940,16 @@ fn exercised(state: &HudState, pad: Pad, world: &World) -> Vec<usize> {
         }
         // The diagonal test reads her window tile as the explored branch drew it.
         if world.her_tile.is_some_and(|tile| {
-            (tile.picture.number() & DIAGONAL_READ) == DIAGONAL && tile.colours.number() != CHARTED
+            (tile.picture.number & DIAGONAL_READ) == (diagonal & DIAGONAL_READ)
+                && tile.colours.number() != CHARTED
         }) {
             entries.push(B::DiagonalPicture);
         }
     } else {
         entries.push(B::MiniMapStill);
     }
-    let mut places: Vec<usize> = entries
-        .into_iter()
-        .filter_map(|id| CATALOGUE.iter().position(|entry| entry.id == id))
-        .collect();
-    places.sort_unstable();
-    places.dedup();
-    places
+    places(entries)
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_field_sets_name_the_declared_fields_at_their_places() {
-        let place = |name| {
-            HudDomain::FIELDS
-                .iter()
-                .position(|field| field.name == name)
-                .map(FieldSet::single)
-        };
-        assert_eq!(place("status bar"), Some(STATUS_BAR));
-        assert_eq!(place("values last shown"), Some(SHOWN));
-        assert_eq!(place("selected item"), Some(SELECTED));
-        assert_eq!(place("one-shot item"), Some(ONE_SHOT));
-        assert_eq!(place("mini-map window"), Some(WINDOW_TILES));
-        assert_eq!(place("explored cells"), Some(EXPLORED));
-    }
-}
+mod tests;

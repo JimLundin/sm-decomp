@@ -55,7 +55,7 @@ fn content() -> Content {
         face_block_glow: data::enemy::face_block::GlowColours::default(),
         room_plms: crate::plm::RoomPlms::default(),
         blocks: crate::blocks_world::BlockContent::default(),
-        area_maps: crate::hud_world::AreaMaps::default(),
+        hud: crate::hud_world::HudContent::default(),
         tile_tables: data::tileset::TileTables::default(),
         message_boxes: data::message::MessageBoxes::default(),
     }
