@@ -12,7 +12,8 @@
 #   queue_limit }, { show = [[dx, dy, becomes, look], ...], frames (1 to 32,767) },
 #   { regrow = true },
 #   { end = true }; regrow and end are always true, and a reader refuses false. A pattern cell's
-#   becomes is "Air", "Itself", "StandInAcross" or "StandInDown". The names are the vectors'
+#   becomes is "Air", "Block" (a reacting block, whatever the cell was), "StandInAcross" or
+#   "StandInDown". The names are the vectors'
 #   own; the model reads them only as the marks that name them, and every reaction a cell or a
 #   place names is one of these tables (a reader refuses any other name, as the room's loading
 #   refuses a mark that names no reaction). The set covers every family, step, pattern cell,
@@ -58,8 +59,9 @@
 #   - a remembers missing from a running reaction whose script has a Regrow step, or given on
 #     one whose script has none.
 # - after: the same fields at the end of the frame, and answers (one per touch, in order: "Air",
-#   "Solid", or "Other" for a cell marked Other, which its part answers), redrawn (cells in order)
-#   and sounds ({ sound, queue_limit } in order).
+#   "Solid", or "Other" for a cell marked Other, which its part answers), written (each cell a
+#   step wrote, in order, whether or not its look changed; a start's own change is not one) and
+#   sounds ({ sound, queue_limit } in order).
 
 # The reactions the vectors use: invented, in the importer's format (spec §2).
 
@@ -108,7 +110,7 @@ broken = [
   { end = true },
 ]
 revealed = [
-  { show = [[0, 0, "Itself", "310"]], frames = 1 },
+  { show = [[0, 0, "Block", "310"]], frames = 1 },
   { end = true },
 ]
 
@@ -119,11 +121,11 @@ first_wait = 2
 broken = [
   { sound = "Crack", queue_limit = 2 },
   { show = [[0, 0, "Air", "321"], [1, 0, "Air", "321:x"]], frames = 4 },
-  { show = [[0, 0, "Itself", "320"], [1, 0, "StandInAcross", "320:x"]], frames = 6 },
+  { show = [[0, 0, "Block", "320"], [1, 0, "StandInAcross", "320:x"]], frames = 6 },
   { end = true },
 ]
 revealed = [
-  { show = [[0, 0, "Itself", "320"], [1, 0, "StandInAcross", "320:x"]], frames = 1 },
+  { show = [[0, 0, "Block", "320"], [1, 0, "StandInAcross", "320:x"]], frames = 1 },
   { end = true },
 ]
 
@@ -137,7 +139,7 @@ broken = [
   { end = true },
 ]
 revealed = [
-  { show = [[0, 0, "Itself", "370"], [0, 1, "StandInDown", "370:y"]], frames = 1 },
+  { show = [[0, 0, "Block", "370"], [0, 1, "StandInDown", "370:y"]], frames = 1 },
   { end = true },
 ]
 
@@ -174,7 +176,7 @@ broken = [
   { end = true },
 ]
 revealed = [
-  { show = [[0, 0, "Itself", "330"]], frames = 1 },
+  { show = [[0, 0, "Block", "330"]], frames = 1 },
   { end = true },
 ]
 
@@ -189,7 +191,7 @@ broken = [
   { end = true },
 ]
 revealed = [
-  { show = [[0, 0, "Itself", "360"]], frames = 1 },
+  { show = [[0, 0, "Block", "360"]], frames = 1 },
   { end = true },
 ]
 
@@ -218,7 +220,7 @@ places = [
 ]
 other_parts = [39, 38]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -250,7 +252,7 @@ places = [
 ]
 other_parts = [39]
 answers = ["Solid", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -275,7 +277,7 @@ places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -300,7 +302,7 @@ places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -325,7 +327,7 @@ places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -349,7 +351,7 @@ cells = [
 places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -380,7 +382,7 @@ places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 2, 1, 0]
 answers = ["Solid", "Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -409,7 +411,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [5, 7], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -435,7 +437,7 @@ places = [
   { place = 30, reaction = "crumble", script = "broken", cell = [5, 7], next = 3, wait = 2, remembers = "Block" },
   { place = 20, reaction = "crumble", script = "broken", cell = [4, 7], next = 3, wait = 2, remembers = "Block" },
 ]
-redrawn = [[5, 7], [4, 7]]
+written = [[5, 7], [4, 7]]
 sounds = []
 
 [[vector]]
@@ -457,7 +459,7 @@ cells = [
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -479,7 +481,7 @@ cells = [
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 2, wait = 5, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Crack", queue_limit = 2 }]
 
 [[vector]]
@@ -502,7 +504,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -526,7 +528,7 @@ cells = [
 places = [
   { place = 39, reaction = "crumble-wide", script = "broken", cell = [4, 7], next = 3, wait = 6 },
 ]
-redrawn = [[4, 7], [5, 7]]
+written = [[4, 7], [5, 7]]
 sounds = []
 
 [[vector]]
@@ -550,7 +552,7 @@ cells = [
 places = [
   { place = 39, reaction = "power-bomb", script = "broken", cell = [4, 7], next = 2, wait = 2 },
 ]
-redrawn = [[4, 7], [4, 8]]
+written = [[4, 7], [4, 8]]
 sounds = [{ sound = "Crack", queue_limit = 2 }]
 
 [[vector]]
@@ -572,7 +574,7 @@ cells = [
 places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 4, wait = 1, remembers = "ReactingAir" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -593,7 +595,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -618,7 +620,7 @@ places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -741,7 +743,7 @@ places = [
 ]
 screens = ["OOS", "OOO"]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -772,7 +774,7 @@ places = [
 ]
 screens = ["OOS", "OOO"]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -802,7 +804,7 @@ places = [
   { place = 38, scroll = [{ screen = [1, 0], becomes = "Closed" }], cell = [5, 7] },
 ]
 screens = ["OOS", "OOO"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -835,11 +837,11 @@ places = [
   { place = 38, scroll = [{ screen = [1, 0], becomes = "Closed" }], cell = [5, 7] },
 ]
 screens = ["OCC", "OOO"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
-# inside it at her centre and a move reaches it in the same frame: its screens change once
+# inside it at her centre and a move reaches it in the same frame: the second touch leaves it touched, so the run sets its screens as for one touch
 id = "C-scroll-twice"
 source = "constructed"
 entries = ["ScrollCells"]
@@ -869,7 +871,7 @@ places = [
 ]
 screens = ["OOS", "OOO"]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -903,7 +905,7 @@ places = [
 ]
 screens = ["OCS", "OOO"]
 answers = ["Air", "Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -936,7 +938,7 @@ places = [
 ]
 screens = ["OOS", "OOO"]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -965,7 +967,7 @@ places = [
 other_parts = [38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 screens = ["OCC", "OOO"]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -988,7 +990,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1011,7 +1013,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1034,7 +1036,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1058,7 +1060,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "ReactingAir" },
 ]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1084,7 +1086,7 @@ places = [
   { place = 39, reaction = "crumble-wide", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1111,7 +1113,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 7], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1136,7 +1138,7 @@ places = [
   { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
 ]
 answers = ["Air"]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Shatter", queue_limit = 5 }]
 
 [[vector]]
@@ -1161,7 +1163,7 @@ places = [
   { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
 ]
 answers = ["Air"]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Shatter", queue_limit = 5 }]
 
 [[vector]]
@@ -1184,7 +1186,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1209,7 +1211,7 @@ places = [
   { place = 39, reaction = "speed", script = "broken", cell = [4, 7], next = 2, wait = 2, remembers = "Block" },
 ]
 answers = ["Air"]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Shatter", queue_limit = 5 }]
 
 [[vector]]
@@ -1233,7 +1235,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1258,7 +1260,7 @@ places = [
   { place = 39, reaction = "bomb", script = "touched", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
 ]
 answers = ["Air"]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Shatter", queue_limit = 5 }]
 
 [[vector]]
@@ -1283,7 +1285,7 @@ places = [
   { place = 39, reaction = "bomb", script = "touched", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
 ]
 answers = ["Air"]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Shatter", queue_limit = 5 }]
 
 [[vector]]
@@ -1308,7 +1310,7 @@ places = [
   { place = 39, reaction = "bomb", script = "touched", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
 ]
 answers = ["Air"]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Shatter", queue_limit = 5 }]
 
 [[vector]]
@@ -1331,7 +1333,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1354,11 +1356,11 @@ cells = [
 places = [
 ]
 answers = ["Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
-# a bomb's blast reaches a bomb block: it turns solid with its whole look and its broken script runs from its second step, past its sound
+# a bomb's blast reaches a bomb block: its broken script starts past its leading sound, and its first wait of 1 runs the show this frame, so it ends the frame as air with the show's picture and no sound
 id = "C-bomb-by-bomb"
 source = "constructed"
 entries = ["BombBlocks", "Sounds"]
@@ -1377,7 +1379,7 @@ cells = [
 places = [
   { place = 39, reaction = "bomb", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -1400,7 +1402,7 @@ cells = [
 places = [
   { place = 39, reaction = "bomb", script = "broken", cell = [4, 7], next = 2, wait = 4, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Crack", queue_limit = 2 }]
 
 [[vector]]
@@ -1426,11 +1428,11 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
-# a missile breaks a shot block that grows back: it turns solid with its whole look and remembers itself
+# a missile breaks a shot block that grows back: it remembers it was a block, and its first wait of 1 runs the sound and the show this frame, so it ends the frame as air with the show's picture
 id = "C-shot-regrows"
 source = "constructed"
 entries = ["ShotBlocks", "Sounds"]
@@ -1449,7 +1451,7 @@ cells = [
 places = [
   { place = 39, reaction = "shot-back", script = "broken", cell = [4, 7], next = 2, wait = 6, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Pop", queue_limit = 4 }]
 
 [[vector]]
@@ -1472,7 +1474,7 @@ cells = [
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1495,7 +1497,7 @@ cells = [
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1518,7 +1520,7 @@ cells = [
 places = [
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1552,7 +1554,7 @@ cells = [
 places = [
 ]
 answers = ["Solid", "Solid", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1587,7 +1589,7 @@ places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 answers = ["Solid", "Solid", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1610,7 +1612,7 @@ cells = [
 places = [
   { place = 39, reaction = "super", script = "broken", cell = [4, 7], next = 2, wait = 3, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Pop", queue_limit = 4 }]
 
 [[vector]]
@@ -1633,7 +1635,7 @@ cells = [
 places = [
   { place = 39, reaction = "super", script = "broken", cell = [4, 7], next = 2, wait = 3, remembers = "ReactingAir" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Pop", queue_limit = 4 }]
 
 [[vector]]
@@ -1656,7 +1658,7 @@ cells = [
 places = [
   { place = 39, reaction = "super", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -1679,7 +1681,7 @@ cells = [
 places = [
   { place = 39, reaction = "super", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -1705,7 +1707,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1730,7 +1732,7 @@ cells = [
 places = [
   { place = 39, reaction = "power-bomb", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1755,7 +1757,7 @@ cells = [
 places = [
   { place = 39, reaction = "power-bomb", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7], [4, 8]]
+written = [[4, 7], [4, 8]]
 sounds = []
 
 [[vector]]
@@ -1780,7 +1782,7 @@ cells = [
 places = [
   { place = 39, reaction = "power-bomb", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7], [4, 8]]
+written = [[4, 7], [4, 8]]
 sounds = []
 
 [[vector]]
@@ -1804,7 +1806,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1827,7 +1829,7 @@ cells = [
 places = [
   { place = 39, reaction = "crumble", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -1852,7 +1854,7 @@ cells = [
 places = [
   { place = 39, reaction = "crumble-wide", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7], [5, 7]]
+written = [[4, 7], [5, 7]]
 sounds = []
 
 [[vector]]
@@ -1875,7 +1877,7 @@ cells = [
 places = [
   { place = 39, reaction = "speed", script = "revealed", cell = [4, 7], next = 1, wait = 1 },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -1896,7 +1898,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1921,7 +1923,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1943,7 +1945,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1965,7 +1967,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -1994,7 +1996,7 @@ places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Air", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2023,7 +2025,7 @@ places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Air", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2052,7 +2054,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2080,7 +2082,7 @@ cells = [
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2108,7 +2110,7 @@ cells = [
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2136,7 +2138,7 @@ cells = [
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2164,7 +2166,7 @@ cells = [
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2192,7 +2194,7 @@ cells = [
 places = [
   { place = 39, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2216,7 +2218,7 @@ cells = [
 places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2251,11 +2253,11 @@ places = [
 ]
 held_until_run = [39]
 answers = ["Air", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
-# her weapons' hits start before her touches: the shot block takes 39, the crumble she lands on 38
+# requests are answered in the order the frame gives them: the hit given first takes 39, the crumble touched after it 38 (the game gives her weapons' hits before her touches)
 id = "C-order-hit-then-touch"
 source = "constructed"
 entries = ["Places", "CrumbleBlocks", "ShotBlocks"]
@@ -2281,7 +2283,7 @@ places = [
   { place = 38, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2316,7 +2318,7 @@ places = [
   { place = 37, reaction = "crumble", script = "broken", cell = [4, 9], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2346,7 +2348,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2370,7 +2372,7 @@ cells = [
 places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2404,7 +2406,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Solid", "Air", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2427,7 +2429,7 @@ cells = [
 places = [
   { place = 39, reaction = "shot-back", script = "broken", cell = [4, 7], next = 2, wait = 6, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = [{ sound = "Pop", queue_limit = 4 }]
 
 [[vector]]
@@ -2462,7 +2464,7 @@ cells = [
 ]
 places = [
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2493,7 +2495,7 @@ cells = [
 places = [
   { place = 38, reaction = "shot", script = "broken", cell = [5, 7], next = 0, wait = 1 },
 ]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2525,7 +2527,7 @@ places = [
 held_until_run = [38, 37]
 screens = ["OCC", "OOO"]
 answers = ["Air", "Air"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2550,7 +2552,7 @@ places = [
   { place = 39, scroll = [{ screen = [1, 0], becomes = "Open" }, { screen = [2, 0], becomes = "Short" }], cell = [4, 7] },
 ]
 screens = ["OOS", "OOO"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2573,7 +2575,7 @@ cells = [
 places = [
   { place = 39, reaction = "bomb-quiet", script = "broken", cell = [4, 7], next = 1, wait = 2, remembers = "Block" },
 ]
-redrawn = [[4, 7]]
+written = [[4, 7]]
 sounds = []
 
 [[vector]]
@@ -2605,7 +2607,7 @@ places = [
 ]
 other_parts = [38]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2640,7 +2642,7 @@ places = [
   { place = 39, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Other", "Other", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2674,7 +2676,7 @@ places = [
   { place = 37, reaction = "crumble", script = "broken", cell = [4, 8], next = 0, wait = 2, remembers = "Block" },
 ]
 answers = ["Other", "Solid"]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2698,7 +2700,7 @@ cells = [
 places = [
 ]
 other_parts = [39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-redrawn = []
+written = []
 sounds = []
 
 [[vector]]
@@ -2728,5 +2730,5 @@ places = [
   { place = 38, reaction = "shot", script = "broken", cell = [4, 7], next = 0, wait = 1 },
 ]
 answers = ["Solid"]
-redrawn = []
+written = []
 sounds = []

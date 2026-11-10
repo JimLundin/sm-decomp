@@ -55,7 +55,7 @@ the quicksand she touches, the blocks the enemies break.
 **What the room's loading and the doors must export** (R1, R2): each frame, whether the run is
 paused (`TheScriptsRun`), as it is while a room starts and while she passes a door.
 
-**Not in this spec** (§8 names who supplies each): the other three parts; drawing a redrawn cell
+**Not in this spec** (§8 names who supplies each): the other three parts; drawing a written cell
 on the screen, which the tile encoder does only for cells in view (E2); the sound queue and what
 happens to a request it can't hold (audio, U1); the room's loading, which supplies its cells,
 marks and placements (R2), and decides when the run is paused (R1, R2).
@@ -139,7 +139,7 @@ both last to the next run that isn't paused, so a paused frame carries them to t
 | Output | Type | Read by |
 | --- | --- | --- |
 | each touch's answer | in order, one per touch: `Air`, `Solid`, or `Other` for a cell marked `Other`, which its part answers (`AnswersToHerMotion`, `BlocksMarkedNothing`) | samus-motion, in the same frame |
-| the cells redrawn | in order, each a cell `(x, y)` (`WhatTheScreenRedraws`) | output: the tile encoder (E2) |
+| the cells written | in order, each cell `(x, y)` a step wrote, whether or not its look changed (`WhatTheScreenRedraws`) | output: the tile encoder (E2) |
 | the sounds asked for | in order, each a sound (the script's) and its queue limit, a count (`Sounds`) | output: audio (U1) |
 | the screens | as in §1's table, after `ScrollCells` | the camera, in the same frame |
 
@@ -173,11 +173,11 @@ itself), what it becomes, and its look:
 | Becomes | The cell becomes |
 | --- | --- |
 | `Air` | air |
-| `Itself` | its reacting kind as a block: `Block`, its mark unchanged |
+| `Block` | a reacting block, `Block`, whatever it was (reacting air included), its mark unchanged |
 | `StandInAcross` | a stand-in along its row, reaching as its mark says |
 | `StandInDown` | a stand-in along its column, reaching as its mark says |
 
-- Cells: Air, Itself, StandInAcross, StandInDown.
+- Cells: Air, Block, StandInAcross, StandInDown.
 
 So a crumble block's `broken` script may be: a sound; air showing one picture for some frames,
 then another; grow back; end. A 2x1 block's patterns name both its cells, and its last show may
@@ -192,6 +192,12 @@ content, not its rules. What makes a reaction start, how its start changes the c
 answers her motion and how the steps run are rules: they are the arms below and the model's code.
 The family names the rules a reaction follows; it is the only part of a reaction the code
 decides on.
+
+**The rules' rows.** What her touches and each hit ask of a family's blocks, and of the cells
+marked `Nothing` met as each family, is one row of the rules per family. A caller may adjust a
+row, which makes an adjusted game; the reference rules hold the rows the entries of §5 state, and
+those are what the vectors check. So those entries' switch is `parameter`; every other entry's
+is `none`.
 
 ---
 
@@ -242,7 +248,7 @@ decides on.
   the requests start reactions and take places as on any frame [C-run-paused, C-scroll-paused,
   C-scroll-after-pause]
 - So a crumble block she lands on stays solid for those frames, then shows the crumble pictures as
-  air (C-place-highest, C-run-sound-then-show), and two reactions that show in one frame redraw
+  air (C-place-highest, C-run-sound-then-show), and two reactions that show in one frame write
   their cells highest place first (C-run-order).
 - checked: oracle (every running reaction of the 44 recorded rows, 603 frames, with the game's
   reactions: the harness cases r04:111, 113, 115, 159 and 160, r06:42 and 55, area-norfair:26,
@@ -256,9 +262,9 @@ decides on.
 - switch: none.
 - A pattern cell → the cell at the reaction's cell plus its offset takes the pattern's kind and look,
   and keeps its mark [C-pattern-1x2-air, C-pattern-2x1-regrow]
-- A pattern cell that becomes `Itself` → the cell becomes `Block`, its reacting kind, so a broken
-  block's own cell comes back as the block its mark names [C-pattern-2x1-regrow, C-pb-by-bomb,
-  C-reveal-crumble-2x1]
+- A pattern cell that becomes `Block` → the cell becomes `Block`, a reacting block, whatever it
+  was, so a broken block's own cell comes back as the block its mark names [C-pattern-2x1-regrow,
+  C-pb-by-bomb, C-reveal-crumble-2x1]
 - A pattern cell that becomes `StandInAcross` or `StandInDown` → the cell becomes that stand-in,
   reaching as its mark says [C-pattern-2x1-regrow, C-pb-by-bomb]
 - checked: oracle (a 1x2 shot block breaking: the harness cases area-norfair:25, 29 and 33);
@@ -313,10 +319,11 @@ decides on.
 - A touched scroll reaction, in the next run that isn't paused → each of its changes sets its
   screen's kind, in the order the changes are listed, and it is no longer touched [C-scroll-move,
   C-scroll-after-pause]
-- So a scroll cell touched twice before its run changes its screens once (C-scroll-twice,
-  C-scroll-paused); one touched on every frame she stays in it sets screens that already have
-  their kinds, which shows nothing; and of two scroll cells touched in one frame whose changes name
-  the same screen, the lower place's change stays (C-scroll-order).
+- So a second touch of a scroll cell before its run leaves it touched, and the run sets its
+  screens as for one touch (C-scroll-twice, C-scroll-paused); one touched on every frame she stays
+  in it sets screens that already have their kinds, which shows nothing; and of two scroll cells
+  touched in one frame whose changes name the same screen, the lower place's change stays
+  (C-scroll-order).
 - A scroll cell is air to her (`ReactingAir`), so she passes through it as she touches it.
 - A room never has a scroll cell without a scroll reaction on it: the room's loading refuses such a
   room (R2), so this domain never meets one.
@@ -336,7 +343,8 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a crumble block falls away a few frames after she lands on it.
 - params: the first wait (the reaction's).
-- switch: none.
+- switch: parameter (the row of the rules for crumble blocks: which of her touches start one, and
+  that no weapon does; the reference rules hold the row this entry states).
 - A crumble block reached by a move down → it starts: it becomes `Solid` (`Air` if it was air to
   her) with the whole look, remembering what it was, and its `broken` script waits its first wait
   [C-place-highest, C-crumble-air, C-crumble-2x1]
@@ -351,7 +359,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a speed block shatters as she dashes or shinesparks into it, and stops her otherwise.
 - params: none.
-- switch: none.
+- switch: parameter (the row of the rules for speed blocks: that her touches start one while she
+  dashes or shinesparks, and that no weapon does; the reference rules hold the row this entry
+  states).
 - A speed block reached while she is dashing or shinesparking, by any way → it starts: it
   becomes `Air` with the whole look, remembering what it was [C-speed-dash, C-speed-spark,
   C-speed-look]
@@ -363,7 +373,9 @@ names; "the whole look" is that reaction's (§2).
 - summary: a bomb block breaks under a bomb's or a power bomb's blast, or as she dashes,
   shinesparks or screw attacks into it.
 - params: none.
-- switch: none.
+- switch: parameter (the row of the rules for bomb blocks: that her touches start one while she
+  dashes, shinesparks or screw attacks, and which blasts start which script; the reference rules
+  hold the row this entry states).
 - A bomb block reached while she is dashing, shinesparking or screw attacking, by any way →
   its `touched` script starts: it becomes `Air` with the whole look, remembering what it was
   [C-bomb-screw, C-bomb-dash, C-bomb-spark]
@@ -387,7 +399,9 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a shot block breaks under any of her weapons and under the grapple.
 - params: none.
-- switch: none.
+- switch: parameter (the row of the rules for shot blocks: that every weapon and the grapple start
+  one, and that her touches meet it by its body; the reference rules hold the row this entry
+  states).
 - Any weapon or the grapple reaches a shot block → it starts: it becomes `Solid` (`Air` if it
   was air to her), with the whole look if its reaction has one and its own look otherwise, and one
   that grows back remembers what it was [C-shot-regrows, C-shot-blast, C-shot-air, C-shot-grapple]
@@ -400,7 +414,8 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a super missile breaks a super missile block; a bomb shows it for what it is.
 - params: none.
-- switch: none.
+- switch: parameter (the row of the rules for super missile blocks: that a super missile breaks one
+  and a bomb's blast reveals it; the reference rules hold the row this entry states).
 - A super missile reaches a super missile block → it starts: it becomes `Solid` (`Air` if it was
   air to her) with the whole look, remembering what it was [C-super-by-super, C-super-regrows]
 - A bomb's blast reaches it, a block or air to her → its `revealed` script starts, leaving the cell
@@ -415,7 +430,8 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a power bomb's blast breaks a power bomb block; a bomb shows it for what it is.
 - params: none.
-- switch: none.
+- switch: parameter (the row of the rules for power bomb blocks: that a power bomb's blast breaks
+  one and a bomb's blast reveals it; the reference rules hold the row this entry states).
 - A power bomb's blast reaches a power bomb block → it starts: it becomes `Solid` (`Air` if it was
   air to her) with the whole look, remembering what it was [C-pb-first-wait]
 - A bomb's blast reaches it, a block or air to her → its `revealed` script starts, leaving the cell
@@ -423,7 +439,7 @@ names; "the whole look" is that reaction's (§2).
 - Any other weapon or the grapple reaches it → it doesn't start [C-pb-by-super,
   C-grapple-others]
 - So a super missile or power bomb block that is air to her is a block once its revealed show puts
-  it back as `Itself` (C-super-air-by-bomb, C-pb-air-by-bomb).
+  it back as `Block` (C-super-air-by-bomb, C-pb-air-by-bomb).
 - checked: oracle (two power bomb blocks broken by one blast: the harness case r11:120);
   constructed.
 
@@ -431,14 +447,16 @@ names; "the whole look" is that reaction's (§2).
 - kind: mechanic.
 - summary: a bomb's blast shows a hidden crumble or speed block for what it is.
 - params: none.
-- switch: none.
+- switch: parameter (the bomb's blast in the rows of the rules for crumble and speed blocks: that it
+  reveals them where they are blocks to her, and that no other weapon does; the reference rules hold
+  the rows this entry states).
 - A bomb's blast reaches a crumble or speed block that is a block to her → its `revealed` script
   starts, leaving the cell as it is until the script's show [C-reveal-crumble, C-reveal-crumble-2x1,
   C-reveal-speed]
 - A power bomb's blast, a beam, a missile or the grapple reaches one, or a bomb reaches one that
   is air to her → its reaction doesn't start [C-reveal-power-bomb, C-reveal-air,
   C-reveal-speed-air, C-grapple-others]
-- So the revealed script shows the block's whole look as `Itself` for a frame and ends
+- So the revealed script shows the block's whole look as `Block` for a frame and ends
   (C-reveal-ends): the block is unchanged but for its look.
 - checked: constructed; on record with no vector, r11's frames 140 to 158, where the oracle saw a
   power bomb's blast meet crumble blocks ten times and start none.
@@ -468,7 +486,9 @@ names; "the whole look" is that reaction's (§2).
   `Inert` takes none; a cell marked `Other` is its part's, but for a blast on one met as crumble
   blocks.
 - params: none.
-- switch: none.
+- switch: parameter (the rows of the rules for the cells marked `Nothing`, one for each family they
+  are met as: which touches and hits take a place; the reference rules hold the rows this entry
+  states).
 - A touch of a cell marked `Nothing`, met as crumble or bomb blocks, by any way → `Air`, and the
   touch takes the highest free place until this frame's run [C-nothing-touch,
   C-nothing-bomb-touch]
@@ -520,11 +540,11 @@ names; "the whole look" is that reaction's (§2).
 - summary: the cells a step writes, in order, for the screen.
 - params: none.
 - switch: none.
-- A `Show` or a `Regrow` step → each cell it writes is reported redrawn, in the pattern's order,
+- A `Show` or a `Regrow` step → each cell it writes is reported written, in the pattern's order,
   whether or not its look changed [C-run-order, C-pattern-2x1-regrow, C-speed-dash]
-- So a start's own change is not redrawn: the screen shows the block's old look until the first
+- So a start's own change is not reported: the screen shows the block's old look until the first
   show (C-place-two), unless the cell scrolls into view first.
-- checked: constructed (the redraws reach the video only through the tile encoder, E2).
+- checked: constructed (the written cells reach the video only through the tile encoder, E2).
 
 ### Sounds
 - kind: output.
@@ -571,7 +591,7 @@ names; "the whole look" is that reaction's (§2).
 - **The grapple beam (S6):** which cells it reaches, and what holds it.
 - **The other parts:** their reactions, what she meets inside their cells, and their requests in
   the frame's order.
-- **The tile encoder (E2):** drawing redrawn cells that are in view, the queue that carries them,
+- **The tile encoder (E2):** drawing written cells that are in view, the queue that carries them,
   and drawing every cell's look as the view scrolls.
 - **Audio (U1):** the sound queue and its limits.
 - **Room loading (R2):** the cells, their marks and looks (the cells other parts' placements write
