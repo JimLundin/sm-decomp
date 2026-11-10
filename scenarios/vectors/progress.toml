@@ -75,16 +75,16 @@
 #   by the domain's harness.
 
 [[vector]]
-# a new file: before is left out, so a reader fills it with the header's start-of-game values;
-# after spells every one of them out (energy and its capacity 99, everything else none or 0), so
-# a start other than the header's fails here
+# a new file, and the gunship first lands: before is left out, so a reader fills it with the
+# header's start-of-game values; after spells every one of them out (energy and its capacity 99,
+# everything else none or 0, but the station), so a start other than the header's fails here
 id = "C-new-file"
 source = "constructed"
-entries = ["EventsHappen"]
+entries = ["StationsSavedAt"]
 area = "Crateria"
 before = {  }
-reports = [{ report = "Happened", event = "PlanetAwake" }]
-after = { items = [], equipped = [], beams = [], beams_equipped = [], capacity = { energy = 99, reserve = 0, missiles = 0, super_missiles = 0, power_bombs = 0 }, energy = 99, reserve_energy = 0, missiles = 0, super_missiles = 0, power_bombs = 0, reserve_mode = "None", events = ["PlanetAwake"], zebetites = 0, defeated = {  }, emptied = [], opened = [], maps = {  }, stations = {  }, items_placed = 0 }
+reports = [{ report = "Saved", station = 0 }]
+after = { items = [], equipped = [], beams = [], beams_equipped = [], capacity = { energy = 99, reserve = 0, missiles = 0, super_missiles = 0, power_bombs = 0 }, energy = 99, reserve_energy = 0, missiles = 0, super_missiles = 0, power_bombs = 0, reserve_mode = "None", events = [], zebetites = 0, defeated = {  }, emptied = [], opened = [], maps = {  }, stations = { Crateria = [0] }, items_placed = 0 }
 
 [[vector]]
 # an event happens and stays happened
@@ -157,8 +157,8 @@ reports = [{ report = "Defeated", boss = "Torizo" }]
 after = { defeated = { Norfair = ["Torizo"], Crateria = ["Torizo"] } }
 
 [[vector]]
-# an item: collected and switched on, its location emptied
-id = "C-two-items"
+# an item taken while another is hers: both hers and switched on, its location emptied
+id = "C-item-beside-another"
 source = "constructed"
 entries = ["TakingItems", "EmptiedLocations"]
 area = "Maridia"

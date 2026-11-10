@@ -229,6 +229,17 @@ behaviour.
   `0789` is nonzero, and it is nonzero whenever the area's byte is (the Tourian room sets it, and
   every arrival copies the byte). So `OnArrival` turns into `Downloaded` on leaving; a save in
   Tourian before leaving (Mother Brain's save station, room `$DE23`) writes 01h to the file.
+- **No frame takes two pickups.** Every pickup instruction (`$84:88B0` beams; `$84:88F3`,
+  `$891A`, `$8941` items; `$8968`, `$8986` energy and reserve tanks; `$89A9`, `$89D2`, `$89FB`
+  ammunition tanks) ends in `JSL $85:8080`, which doesn't return until the message box has gone
+  (about 6 s; it spins on `$85:8136`, wait for lag frame). A second item PLM touched in the same
+  frame runs its pickup in the same PLM pass, but only after the box closes, and the oracle
+  records one record per video frame, lag or not (ORACLE §2), so the two reports land hundreds
+  of records apart, whatever the content. This is why spec §7 can say no order within a frame
+  is visible, although `TakingBeams` reads the beams switched on that another `TakingBeams`
+  writes (Spazer then Plasma differs from Plasma then Spazer). No vector: a frame with two
+  pickups would be invented behaviour; the order across frames is C-spazer-taken's,
+  C-plasma-taken's and C-plasma-taken-spazer-off's.
 - **The gunship** marks Crateria's station 0 itself, not through the save station PLM: on its
   first landing (`$A2:A9A7`, then `$81:8000` saves; r01:610 is that landing, so R-gunship-save
   is not a save she chose) and when she saves in it (`$A2:AB2B`). To progress both are the same
@@ -316,18 +327,20 @@ instruction's amount, the door PLM's room argument, the item PLMs the room's sta
 | R-morph-ball | item-morph-ball 817 | `Taken(MorphBall)`, location 26 (the Morph Ball Room's item PLM) | `09A2`, `09A4`, `D873` bit 2; the rest unchanged | C-item-first |
 | R-bombs | samus-bomb-jump-vertical 55 | `Taken(Bombs)`, location 7 (Bomb Torizo's room's item PLM) | `09A3`, `09A5`, `D870` bit 7 | C-item-second |
 | R-missile-tank | s01 37 | `Taken(MissileTank)`, location 63, amount 5 (the room's item PLM and its instruction) | `09C8` 32h → 37h, `09C6` + 5, `D877` bit 7 | C-missile-tank-stocked, C-missile-not-full |
-| R-door-a | r04 280 | `DoorOpened`, door 51 (the room's door PLM); stood in today | `D8B6` bit 3 | C-door-between |
-| R-door-b | r06 519 | `DoorOpened`, door 85; stood in today | `D8BA` bit 5 | C-door-last |
+| R-door-a | r04 280 | `DoorOpened`, door 51 (the room's door PLM); heard | `D8B6` bit 3 | C-door-between |
+| R-door-b | r06 519 | `DoorOpened`, door 85; stood in (a super missile opens it) | `D8BA` bit 5 | C-door-last |
 | R-placed-two | area-norfair 200 | `ItemsPlaced(2)`: the room's state spawns two item PLMs | `D91A` 2Eh → 30h | C-placed-several |
 | R-placed-a | r06 757 | `ItemsPlaced(1)` | `D91A` 38h → 39h | C-placed-one |
 | R-placed-b | r08 567 | `ItemsPlaced(1)`, the room's one item (location 64) already taken | `D91A` 3Eh → 3Fh; `D878` unchanged | C-placed-taken |
 
-The three item cases and the three items-placed cases are heard today. The two door cases are
-stood in (the harness's `Source::Copied`; `coverage.txt` has `DoorsStayOpen 0 0 5 0`), so they
-don't count until the harness hears the door: the door PLM whose hit counter reaches its count
-at `$84:8A91`, found in record N-1's PLM slots, and its room argument (`$1DC7,x` in those
-slots) as the door id. Until then the spec's DoorsStayOpen is checked by its constructed
-vectors only.
+The three item cases, the three items-placed cases and R-door-a are heard. The harness hears a
+door at `$84:8A91` when record N holds exactly one door PLM not yet open whose hit counter
+(`$7E:DF0C,x`) is one short of its count, and takes its room argument (`$1DC7,x`) as the door
+id; `coverage.txt` has `DoorsStayOpen 2 0 5 0`: r04:280 (door 51) and boss-phantoon:1985 (door
+134, no case of its own) are matched. R-door-b stays stood in (`Source::Copied`) and doesn't
+count: a super missile raises the counter before the instruction counts, so its door, short by
+more than one, can't be told from one that stays shut. boss-kraid-defeated:1074 (two doors in
+a frame) is stood in too.
 
 **Room states.** Each case is the state a room holds at a record (the row's first, or the load
 on the frame `07B5` changes; §The harness), chosen from the room's state list as the importer

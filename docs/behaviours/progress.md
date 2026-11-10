@@ -70,9 +70,8 @@ hers: nothing in this domain keeps the beams switched on within hers.
 
 **The start of a run.** A new file (P2's) starts her with energy and its capacity at 99, every
 other capacity and count at 0, the reserve mode `NoTank`, no items or beams, hers or switched on,
-and no locations emptied, doors open, maps or stations (C-new-file). A new file doesn't clear the
-events, the bosses defeated or the items placed; it takes them from the slot, which the file
-select has already emptied (P2's), so none and 0.
+and no locations emptied, doors open, maps or stations, no events or bosses defeated, and no
+items placed (C-new-file).
 
 ### 1.2 What has happened, and what the places remember
 
@@ -198,7 +197,7 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - params: none.
 - switch: none.
 - She takes an item with a location id → the location is emptied: asked, yes [C-item-first,
-  C-item-second, C-missile-tank-stocked, C-two-items, C-asked-no-location]
+  C-item-second, C-missile-tank-stocked, C-item-beside-another, C-asked-no-location]
 - She takes an item placed without a location id → asked about, it reads as still in its
   place [C-no-location, C-asked-no-location]
 - So an item placed without an id appears each time its room loads, however often she takes it.
@@ -214,7 +213,8 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
   C-asked-doors]
 - A door placed without an id opened → asked about, it reads as closed [C-door-no-id,
   C-asked-doors]
-- checked: constructed; the harness's door frames (r04:280, r06:519) are stood in, not heard.
+- checked: oracle (the harness case r04:280); constructed; r06:519 is stood in (a super
+  missile opens it).
 
 ### MapsByArea
 - kind: mechanic.
@@ -271,7 +271,7 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - params: none.
 - switch: none.
 - She takes an `Item` → it is hers and switched on, even one she had and switched off
-  [C-item-first, C-item-second, C-two-items, C-item-switched-off]
+  [C-item-first, C-item-second, C-item-beside-another, C-item-switched-off]
 - checked: oracle (the harness cases item-morph-ball:817 and samus-bomb-jump-vertical:55);
   constructed.
 
@@ -281,7 +281,7 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
   taking one switches the other off.
 - params: the beam each switches off, a table of the game's data: `Spazer` switches off
   `Plasma`; `Plasma` switches off `Spazer`; the rest none; its cells are beams.
-- switch: none.
+- switch: **Parameter**, the beam each switches off (params).
 - She takes a `Beam` → it is hers and switched on [C-beam-other, C-spazer-taken, C-plasma-taken]
 - The beam taken switches another off → that one is switched off, hers still [C-spazer-taken,
   C-plasma-taken, C-plasma-taken-spazer-off]
@@ -354,7 +354,7 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - summary: the ending shows how much of the game's equipment she found, as a percentage.
 - params: the divisors, a table of the game's data: energy 100, reserve 100, missiles 5,
   super missiles 5, power bombs 5; its cells are numbers.
-- switch: none.
+- switch: **Parameter**, the divisors (params).
 - Asked → the sum over the divisors of each capacity ÷ its divisor, rounded down, plus the
   count of her items and beams, `Σ capacity ÷ divisor + items + beams` [C-percent-start,
   C-percent-many, C-percent-partial, C-percent-rainbow]
@@ -366,9 +366,12 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 
 ## 7. Order that matters
 
-- A frame's reports apply in the order they come. Each report carries its own area: her leaving
-  the one she leaves, every other report the new room's (§1.3). So none of this spec's rules reads
-  another's result within the frame, and no order within a frame is visible.
+- A frame's reports apply in the order they come. Only taking a beam reads what another report
+  writes (the beams switched on, `TakingBeams`), and no frame takes two of anything: each item,
+  beam or tank she takes holds the game in its message box for seconds before the next can be
+  taken. Her leaving names the area she leaves and every other report the new room's, so her
+  leaving and a map given on arrival concern two areas; every other pair changes different
+  quantities, or adds to the same count. So no order within a frame is visible.
 - A room's state is chosen with the room's own area, after it is known, so `Defeated` reads the
   new room's area.
 
