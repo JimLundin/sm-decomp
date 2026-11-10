@@ -33,9 +33,9 @@ How it is counted:
 | camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
 | progress | 1,027 | 878 | 1.17 | - | 459 | 171 | 25,417 | 65 |
 | hud | 3,057 | 1,980 | 1.54 | - | 1,074 | 510 | 20,613 | 62 |
-| blocks | 2,833 | 1,992 | 1.42 | - | 1,017 | 472 | 20,530 | 89 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 741 | - | - | - | 458 | 124 | - | - |
-| total | 17,327 | 13,574 | 1.28 | - | 7,187 | 2,888 | 103,463 | 544 |
+| blocks | 3,103 | 1,992 | 1.56 | - | 1,134 | 517 | 20,530 | 96 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 737 | - | - | - | 457 | 123 | - | - |
+| total | 17,594 | 13,574 | 1.30 | - | 7,303 | 2,932 | 103,463 | 551 |
 
 ## Models
 
@@ -111,24 +111,22 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean_model/blocks/src/catalogue.rs` | - | tables and types | 3 | 13 | 90 | 560 | 0 | 0 | 164 |
-| `crates/clean_model/blocks/src/cells.rs` | - | logic | 243 | 307 | 213 | 0 | 0 | 0 | 93 |
-| `crates/clean_model/blocks/src/frame.rs` | breakables | logic | 1,121 | 1,202 | 69 | 0 | 79 | 53 | 197 |
-| `crates/clean_model/blocks/src/lib.rs` | - | logic | 9 | 163 | 0 | 0 | 0 | 0 | 25 |
-| `crates/clean_model/blocks/src/places.rs` | places | logic | 247 | 284 | 182 | 1 | 22 | 0 | 80 |
-| `crates/clean_model/blocks/src/reactions.rs` | - | tables and types | 90 | 131 | 235 | 4 | 2 | 0 | 71 |
+| `crates/clean_model/blocks/src/catalogue.rs` | - | tables and types | 3 | 13 | 90 | 560 | 0 | 0 | 167 |
+| `crates/clean_model/blocks/src/cells.rs` | - | logic | 378 | 481 | 240 | 0 | 5 | 0 | 118 |
+| `crates/clean_model/blocks/src/inputs.rs` | - | tables and types | 92 | 132 | 134 | 0 | 0 | 0 | 56 |
+| `crates/clean_model/blocks/src/lib.rs` | - | logic | 8 | 154 | 0 | 0 | 0 | 0 | 21 |
+| `crates/clean_model/blocks/src/places.rs` | places | logic | 1,002 | 1,043 | 212 | 1 | 116 | 46 | 212 |
+| `crates/clean_model/blocks/src/reactions.rs` | - | tables and types | 116 | 162 | 233 | 4 | 2 | 0 | 75 |
 | `crates/clean_model/blocks/src/report.rs` | - | tables and types | 1 | 20 | 40 | 0 | 0 | 0 | 9 |
-| `crates/clean_model/blocks/src/room_start.rs` | places | logic | 261 | 295 | 68 | 0 | 31 | 0 | 69 |
-| `crates/clean_model/blocks/src/rules.rs` | breakables | tables and types | 209 | 289 | 356 | 480 | 2 | 0 | 190 |
-| `crates/clean_model/blocks/src/run.rs` | places | logic | 591 | 603 | 14 | 0 | 88 | 18 | 97 |
-| `crates/clean_model/blocks/src/state.rs` | scroll | logic | 60 | 96 | 32 | 0 | 3 | 0 | 22 |
-| total | | | 2,833 | 3,403 | 1,299 | 1,045 | 225 | 71 | 1,017 |
+| `crates/clean_model/blocks/src/rules.rs` | breakables | tables and types | 458 | 564 | 463 | 626 | 11 | 5 | 313 |
+| `crates/clean_model/blocks/src/state.rs` | breakables | logic | 1,047 | 1,082 | 32 | 0 | 147 | 13 | 163 |
+| total | | | 3,103 | 3,651 | 1,444 | 1,191 | 279 | 64 | 1,134 |
 
 ### Shared types
 
 | Crate | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 741 | 932 | 1,284 | 63 | 15 | 0 | 458 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 737 | 929 | 1,279 | 63 | 15 | 0 | 457 |
 
 ## Lines
 
@@ -138,9 +136,9 @@ How it is counted:
 | camera | 638 | 223 | 415 | 318 |
 | progress | 459 | 201 | 258 | 171 |
 | hud | 1,074 | 653 | 421 | 510 |
-| blocks | 1,017 | 434 | 583 | 472 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 458 | 458 | 0 | 124 |
-| total | 7,187 | 4,304 | 2,883 | 2,888 |
+| blocks | 1,134 | 620 | 514 | 517 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 457 | 457 | 0 | 123 |
+| total | 7,303 | 4,489 | 2,814 | 2,932 |
 
 ## Spec, budget and fit by area
 
@@ -200,11 +198,11 @@ Spec [`docs/behaviours/blocks.md`](behaviours/blocks.md), k = 36. Old code -, at
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| places | 7 | 22.3 | 804 | 1,252 | 1,098 | 1.37 |
-| scroll | 1 | 4.0 | 144 | 1,145 | 60 | 0.41 |
-| breakables | 10 | 29.0 | 1,044 | - | 1,330 | 1.27 |
-| shared (in no area) | | | | | 345 | |
-| total | 18 | 55.3 | 1,992 | - | 2,833 | 1.42 |
+| places | 7 | 22.3 | 804 | 1,252 | 1,002 | 1.25 |
+| scroll | 1 | 4.0 | 144 | 1,145 | 0 | 0.00 |
+| breakables | 10 | 29.0 | 1,044 | - | 1,505 | 1.44 |
+| shared (in no area) | | | | | 597 | |
+| total | 18 | 55.3 | 1,992 | - | 3,103 | 1.56 |
 
 ## Bridges and harnesses
 
@@ -220,9 +218,9 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | progress | harness | 1 | 5,230 | 5,336 | 756 | 463 | 499 | 42 | 878 |
 | hud | bridge | 1 | 1,870 | 2,173 | 100 | 9 | 62 | 0 | 333 |
 | hud | harness | 1 | 3,160 | 3,403 | 518 | 135 | 196 | 22 | 584 |
-| blocks | bridge | 1 | 6,732 | 6,673 | 357 | 50 | 685 | 135 | 1,031 |
-| blocks | harness | 1 | 6,065 | 5,740 | 577 | 204 | 891 | 0 | 873 |
-| total | | | 37,487 | 39,611 | 3,804 | 1,786 | 3,058 | 228 | 6,479 |
+| blocks | bridge | 1 | 6,908 | 7,011 | 435 | 54 | 675 | 97 | 1,042 |
+| blocks | harness | 1 | 5,941 | 5,682 | 663 | 382 | 841 | 0 | 932 |
+| total | | | 37,538 | 39,891 | 3,968 | 1,968 | 2,998 | 190 | 6,549 |
 
 ## Harness floors and vectors
 
@@ -282,7 +280,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | camera | 80 | 0 |
 | progress | 65 | 0 |
 | hud | 62 | 0 |
-| blocks | 89 | 0 |
+| blocks | 96 | 0 |
 
 ## Oracle coverage
 
@@ -337,9 +335,8 @@ Per declared field, the compared frames on which it was compared and those on wh
 | hud | mini-map window | 19,733 | 882 |
 | hud | explored cells | 19,733 | 882 |
 | blocks | places | 20,615 | 0 |
-| blocks | cells within the frame's reach | 20,615 | 0 |
+| blocks | cells | 20,615 | 0 |
 | blocks | screens | 20,615 | 0 |
-| blocks | cells outside the frame's reach, as record N's | 20,615 | 0 |
 
 Per catalogue entry, the frames that exercised it with every field its output reaches compared, those of them matched and verified, those of them on which the null model matched every such field too, and the frames that exercised it unchecked: one of its fields masked, or an output (an event) the harness doesn't compare. An entry the null model matches on as many frames as the model is only weakly checked by the rows, since doing nothing would pass them too; an entry no frame verifies is checked by its vectors only.
 
@@ -446,6 +443,6 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 44 | 5,055 | 30,327 | 32,696 | 9,881 | 794 | 2,318 | 720 | 6,953 |
-| bridges | 8 | 2,229 | 13,373 | 14,719 | 789 | 138 | 866 | 135 | 2,258 |
-| rebuilt models, shared types included | 56 | 2,888 | 17,327 | 21,391 | 7,725 | 11,270 | 884 | 105 | 7,187 |
+| engine, not yet rebuilt | 44 | 5,078 | 30,469 | 32,819 | 9,881 | 794 | 2,337 | 720 | 6,960 |
+| bridges | 8 | 2,258 | 13,548 | 15,057 | 867 | 142 | 855 | 97 | 2,269 |
+| rebuilt models, shared types included | 54 | 2,932 | 17,594 | 21,636 | 7,865 | 11,416 | 939 | 98 | 7,303 |

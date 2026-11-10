@@ -119,16 +119,17 @@ const DOMAINS: &[Domain] = &[
             ("minimap", &["mini_map.rs", "map.rs"]),
         ],
     },
-    // The cells, the reactions' format, the report and the catalogue are the domain's shared
-    // code. The run and the places are the places' area with the room's start; the scroll cells'
-    // touch and the holds until the run, the scroll's; the starts by family, the breakables'.
+    // The cells, the reactions' format, the inputs, the report and the catalogue are the
+    // domain's shared code. The places and their run are the places' area, the scroll cells'
+    // touch and run among them; the requests' path and the rules by family, with the room's
+    // start beside them in the State, the breakables'. The scroll's area has no file of its own.
     Domain {
         name: "blocks",
         bridge: "blocks_world",
         areas: &[
-            ("places", &["places.rs", "run.rs", "room_start.rs"]),
-            ("scroll", &["state.rs"]),
-            ("breakables", &["frame.rs", "rules.rs"]),
+            ("places", &["places.rs"]),
+            ("scroll", &[]),
+            ("breakables", &["rules.rs", "state.rs"]),
         ],
     },
 ];
