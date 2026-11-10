@@ -484,8 +484,9 @@ cells by PLM; `mask_reach.py ROW...` reads the dumps.
 **Rows** says what the 44 cached rows do with it. **Writes**: a cell of its reach other than its
 own changes while it is live, in the rows named (`mask_reach.py`). **Live**: a row holds it, but
 no other cell of its reach changes there. Blank: no row holds it. Only the "writes" PLMs need
-their reach for today's rows, and the integrator's table holds every one of them, with the same
-reach or a wider one (`$B78B` there is two across).
+their reach for today's rows. The harness reads its masks from this table
+(`crates/verify/src/harness/blocks/writers.rs`), every row in the forms it reads, and its tests
+hold that each "writes" row is one of them and each row it can't read is named below.
 
 | Part | PLMs | What | Cells written | Rows |
 | --- | --- | --- | --- | --- |

@@ -7,8 +7,9 @@
 //! State is decoded with the game's reactions, imported from the ROM (`data::blocks`): the
 //! room's cells, every place, the screens. The model's output is compared with record N+1 on
 //! each place, the screens and every cell of the room, as each differs from record N's. A cell
-//! another part's place sits on or draws at either record is masked, by position, never by
-//! value, and the mask names the PLM that writes it.
+//! another part's place sits on or writes at either record is masked, by position, never by
+//! value, and the mask names the PLM that writes it; the cells each PLM writes are the decode
+//! notes' table's (`writers`).
 //!
 //! The requests are heard from the frame's watched instruction hits, in the order the CPU ran
 //! them: each reaction's setup is matched, by family, to the place record N+1 shows a new
@@ -50,6 +51,9 @@ use super::{Domain, Entry, Field, FieldSet, Interval, Uncompared};
 use crate::decode::{DecodeError, LevelSources};
 use crate::domain_field;
 use crate::source::{self, WramWord};
+use writers::Writers;
+
+mod writers;
 
 /// A work RAM word the harness reads that `source` doesn't name.
 const fn wram(name: &'static str, offset: u16) -> WramWord {
@@ -102,74 +106,6 @@ const SCROLL_TOUCH: u32 = 0x84_B393;
 const SCROLL_TRIGGER: u32 = 0x84_B3AD;
 const CENTRE: u32 = 0x94_995E;
 const REFUSED: u32 = 0x84_84F9;
-
-/// How far another part's PLM draws from its own cell: a box this many cells across and down,
-/// its own cell at the top left.
-#[derive(Clone, Copy)]
-struct Reach {
-    across: u16,
-    down: u16,
-}
-
-/// A door's cap facing left or right: its cell and the three below.
-const COLUMN: Reach = Reach { across: 1, down: 4 };
-/// A door's cap facing up or down: its cell and the three to its right.
-const ROW: Reach = Reach { across: 4, down: 1 };
-
-/// The other parts' PLMs that draw past their own cell (bank $84 log), and how far; every other
-/// PLM draws its own cell only (an item's).
-const REACHES: [(u16, Reach); 28] = [
-    // The doors' caps: grey, yellow, green, red and blue, each facing left, right, up and down.
-    (0xC842, COLUMN),
-    (0xC848, COLUMN),
-    (0xC84E, ROW),
-    (0xC854, ROW),
-    (0xC85A, COLUMN),
-    (0xC860, COLUMN),
-    (0xC866, ROW),
-    (0xC86C, ROW),
-    (0xC872, COLUMN),
-    (0xC878, COLUMN),
-    (0xC87E, ROW),
-    (0xC884, ROW),
-    (0xC88A, COLUMN),
-    (0xC890, COLUMN),
-    (0xC896, ROW),
-    (0xC89C, ROW),
-    (0xC8A2, COLUMN),
-    (0xC8A8, COLUMN),
-    (0xC8AE, ROW),
-    (0xC8B4, ROW),
-    // A blue door closing, facing left, right, up and down.
-    (0xC8BA, COLUMN),
-    (0xC8BE, COLUMN),
-    (0xC8C2, ROW),
-    (0xC8C6, ROW),
-    // Bomb Torizo's grey door.
-    (0xBAF4, COLUMN),
-    // The elevator platform.
-    (0xB70B, Reach { across: 4, down: 2 }),
-    // Phantoon's door, drawn during the fight and restored after it.
-    (0xB781, Reach { across: 2, down: 4 }),
-    (0xB78B, Reach { across: 2, down: 4 }),
-];
-
-/// The cells another part's PLM `plm` on `at` draws, each with it as the writer.
-fn drawn(plm: u16, at: Cell) -> impl Iterator<Item = (Cell, Writer)> {
-    let reach = REACHES
-        .iter()
-        .find_map(|&(known, reach)| (known == plm).then_some(reach))
-        .unwrap_or(Reach { across: 1, down: 1 });
-    (0..reach.down).flat_map(move |dy| {
-        (0..reach.across).filter_map(move |dx| {
-            let cell = Cell {
-                x: at.x.checked_add(dx)?,
-                y: at.y.checked_add(dy)?,
-            };
-            Some((cell, Writer(plm)))
-        })
-    })
-}
 
 /// What a setup starts, as the record shows its place.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -398,6 +334,8 @@ pub struct BlocksDomain {
     image: Vec<u8>,
     content: BlockContent,
     rules: Rules,
+    /// The other parts' cell writers, from the decode notes' table.
+    writers: Writers,
     /// The scroll lists read, by argument and the room's screens across.
     lists: RefCell<BTreeMap<(u16, u16), Vec<ScreenChange>>>,
     /// The frame in hand, set in `world`.
@@ -452,6 +390,7 @@ impl BlocksDomain {
             image,
             content,
             rules: Rules::reference(),
+            writers: Writers::from_notes(),
             lists: RefCell::new(BTreeMap::new()),
             frame: RefCell::new(Frame::default()),
             masked: RefCell::new(BTreeMap::new()),
@@ -539,7 +478,7 @@ impl BlocksDomain {
                         self.running(record, slot, at, reaction, Script::Revealed)?
                     }
                     None => {
-                        others.extend(drawn(id, at));
+                        others.extend(self.writers.cells(id, at).map(|cell| (cell, Writer(id))));
                         Place::OtherPart
                     }
                 },
