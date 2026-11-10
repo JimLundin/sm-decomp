@@ -224,6 +224,12 @@ const CAMERA_Y_SUBSPEED: WramWord = WramWord {
     name: "CAMERA_Y_SUBSPEED",
     offset: 0x0DA8,
 };
+/// Bank $90 log, `$90:94F2`: while the slow grapple scroll is on, the scroll doesn't work out
+/// the camera's speed down (`$90:96FF`), so the record's is a frame before's.
+const SLOW_GRAPPLE_SCROLLING: WramWord = WramWord {
+    name: "SLOW_GRAPPLE_SCROLLING_FLAG",
+    offset: 0x0CF8,
+};
 /// The extra pixel the camera's speed adds to her move.
 const ONE_PIXEL: u32 = 0x0001_0000;
 
@@ -1024,6 +1030,12 @@ impl Domain for SamusMotion {
                 Q::Placed.set(),
             );
         }
+        if word(from, SLOW_GRAPPLE_SCROLLING)? != 0 || word(next, SLOW_GRAPPLE_SCROLLING)? != 0 {
+            mask(
+                "the slow grapple scroll: the scroll leaves the camera's speed down as it was ($90:94F2)",
+                Q::Placed.set(),
+            );
+        }
         if scrolled
             && fixed(&next.wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?
                 != fixed(
@@ -1033,7 +1045,7 @@ impl Domain for SamusMotion {
                 )?
         {
             mask(
-                "another domain moves her after the scroll: the camera's speed down is from the y it read",
+                "another domain moves her after the scroll (a phase the gameplay pass runs after it): the camera's speed down is from the y it read",
                 Q::Placed.set(),
             );
         }
@@ -1185,6 +1197,8 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
     })
     .collect()
 }
+
+pub mod cases;
 
 #[cfg(test)]
 mod tests {

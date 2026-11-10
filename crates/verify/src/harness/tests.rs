@@ -399,6 +399,66 @@ fn samus_motion_holds_its_floors_against_the_cache() {
     hold_floors(&domain, "samus-motion", &cache);
 }
 
+/// The samus-motion harness cases (the decode notes' "Room content: harness cases"), each over
+/// its row's records; a case whose row isn't cached is reported and not checked.
+#[test]
+fn samus_motions_harness_cases_hold_against_the_cache() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = match super::samus_motion::SamusMotion::load(&image) {
+        Ok(domain) => domain,
+        Err(error) => panic!("content: {error:?}"),
+    };
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
+    let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
+    let rows = cached_rows(&cache);
+    let mut failures = Vec::new();
+    for case in &super::samus_motion::cases::CASES {
+        if !rows.iter().any(|row| row == case.row) {
+            let _ = writeln!(std::io::stdout(), "{}: {} not cached", case.id, case.row);
+            continue;
+        }
+        let locked = parsed
+            .row(&crate::lock::RowId(case.row.to_owned()))
+            .unwrap_or_else(|| panic!("{}: not in the lock", case.row));
+        let opened =
+            crate::cache::Cache::open(&cache, locked).unwrap_or_else(|error| panic!("{error}"));
+        let records: Vec<_> = opened
+            .entries()
+            .iter()
+            .filter(|entry| {
+                (case.checked.saturating_sub(4)..=case.checked).contains(&entry.frame.0)
+            })
+            .map(|entry| {
+                opened
+                    .record(entry)
+                    .unwrap_or_else(|error| panic!("{}: {error}", case.row))
+            })
+            .collect();
+        match domain.case(case, &records) {
+            Ok(()) => {
+                let _ = writeln!(std::io::stdout(), "{}: holds", case.id);
+            }
+            Err(differences) => failures.push(format!("{}: {}", case.id, differences.join("; "))),
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "{}",
+        failures.join(
+            "
+"
+        )
+    );
+}
+
 /// The camera over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
 /// test reads them (the ROM for samus-motion's model, which supplies the placement).
 #[test]

@@ -23,16 +23,24 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
     `$94:9B40`). The blocks spec's vectors give `{ inside = [x, y], point }` requests in that
     shape.
 
-## Round 13 in the engine and the harness (integrator, 2026-11-09, lane/samus-r13)
+## Round 14 in the engine and the harness (integrator, 2026-11-10, lane/samus-r14)
 
-35. **The engine can't hold jump held through (the model's).** `JumpHeld` has private fields and
-    no constructor but `JumpHeld::NONE`, and shows neither its count nor what the frame before
-    left, so the bridge can't build it from the State (`0AF4` and the one-frame pose input
-    handler `$90:E926`) or write it back to the State, and the harness can't decode it from a
-    record. Both start every frame at `NONE`, so gap 32's four frames still differ (x, the
-    vertical speed, the vertical direction, `rising`), and `docs/LEGACY.md` lists it as "Jump held
-    through". Asked of the implementer: a `JumpHeld` built from the count (`u16`) and whether she
-    landed or an animation ended the frame before, and the two read back.
+Gap 35 is answered: `JumpHeld`'s count and frame before are public, so the State carries jump
+held through (`samus.jump_held`, its count from `0AF4` and the frame before from `0A60` =
+`$E926`), the bridge gives it to the model and writes it back, and the harness decodes it from
+record N. Gap 32's four frames match, and so do six more take-offs from a landing with jump held
+(boss-kraid-defeated 894, boss-phantoon 471, 563 and 647, chain-0100-B07A 223, samus-ceres-push
+123). With the round's other rules, item-reserve-tank 520 (a crouch keeping its rise on the
+ground, its speed mode) and chain-0013-92FD 490 (the morph refused without the morph ball, y)
+match too: 18,000 matched, from 17,988, and no field falls on any row.
+
+The six harness cases of the decode notes (S1, S2, SL1-SL3, W15) run in
+`verify::harness::samus_motion::cases` over the record's level and the ROM's slopes, and each
+holds. `placed` is masked under the slow grapple scroll (`0CF8` ≠ 0 at record N or N+1,
+`$90:94F2` skips the speed's update), on no frame of the cache; 318 of the frames the model ran
+placed her.
+
+## Round 13 in the engine and the harness (integrator, 2026-11-09, lane/samus-r13)
 
 Gap 33 is in: the harness defers a frame that starts with the knockback on, its time run out,
 under the normal handler (`Deferred::KnockbackEnds`): 13 frames over the 44-row cache

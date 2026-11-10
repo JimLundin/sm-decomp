@@ -8,7 +8,7 @@ game-time field 25426 0 hours
 game-time field 25426 0 minutes
 game-time field 25426 0 seconds
 game-time field 25426 0 frames
-samus-motion frames 25426 17988 0 6606
+samus-motion frames 25426 18000 0 6606
 samus-motion field 17068 1181 position.x
 samus-motion field 16629 1620 position.y
 samus-motion field 17829 420 base_speed
@@ -21,44 +21,44 @@ samus-motion field 18249 0 bounce
 samus-motion field 18198 51 rising
 samus-motion field 16447 1802 placed
 samus-motion entry Aiming 0 0 0 2735
-samus-motion entry AimingAndShooting 2806 485 2828 126
+samus-motion entry AimingAndShooting 2806 477 2820 126
 samus-motion entry AnimationEnds 0 0 0 346
-samus-motion entry BlocksStopFlush 10181 4859 10287 921
+samus-motion entry BlocksStopFlush 10192 4859 10287 921
 samus-motion entry Dash 3757 9 3789 817
-samus-motion entry DriftInTheAir 6115 1796 6204 242
-samus-motion entry FollowingTheGround 10311 9625 10396 1407
+samus-motion entry DriftInTheAir 6116 1796 6204 242
+samus-motion entry FollowingTheGround 10322 9625 10396 1407
 samus-motion entry HowSheIsDrawn 0 0 0 0
-samus-motion entry Jumping 206 3 212 33
-samus-motion entry Landing 150 0 150 5
+samus-motion entry Jumping 216 3 222 33
+samus-motion entry Landing 152 0 152 5
 samus-motion entry Moonfall 339 3 339 66
-samus-motion entry MovesAsShePosed 15984 5259 16162 2087
+samus-motion entry MovesAsShePosed 15996 5259 16162 2087
 samus-motion entry OtherBlockKinds 0 0 0 0
 samus-motion entry PadChart 0 0 0 18249
-samus-motion entry PoseFitAfterMoves 352 0 360 31
+samus-motion entry PoseFitAfterMoves 351 0 358 34
 samus-motion entry PoseFollows 0 0 0 18249
 samus-motion entry RidingTheElevator 0 0 0 906
-samus-motion entry RisingAndFalling 6115 55 6204 242
-samus-motion entry ShrinkingLowersHer 58 1 59 7
-samus-motion entry SlopesCarry 79 3 80 1
+samus-motion entry RisingAndFalling 6116 55 6204 242
+samus-motion entry ShrinkingLowersHer 58 0 58 6
+samus-motion entry SlopesCarry 80 3 80 1
 samus-motion entry SlopesSlowTheWalk 0 0 0 0
-samus-motion entry SolidEnemies 4387 2034 4412 489
-samus-motion entry SpeedBuildsAndBrakes 10753 5589 10837 966
+samus-motion entry SolidEnemies 4388 2034 4412 489
+samus-motion entry SpeedBuildsAndBrakes 10764 5589 10837 966
 samus-motion entry TouchedCells 0 0 0 17865
 samus-motion entry TurningRound 1179 17 1245 12
 samus-motion entry WallJump 234 0 253 2
-samus-motion entry WallsAndCeilings 1312 474 1347 128
-samus-motion entry WhatHerMovesMet 0 0 0 1864
+samus-motion entry WallsAndCeilings 1312 474 1346 128
+samus-motion entry WhatHerMovesMet 0 0 0 1874
 samus-motion entry WordwiseTopSpeed 0 0 0 0
 camera frames 25426 18903 0 7457
 camera field 18903 1712 position.x
 camera field 18684 1931 position.y
 camera field 0 20615 seen
-camera entry AimingHeight 6931 765 6931 611
-camera entry BelowTheRoom 3540 487 3540 88
+camera entry AimingHeight 6930 764 6930 614
+camera entry BelowTheRoom 3540 487 3540 91
 camera entry ClosedScreens 8886 3113 8886 1396
-camera entry CreepReadsRightward 384 300 384 7
+camera entry CreepReadsRightward 384 300 384 6
 camera entry DownwardLooksAhead 1 0 1 0
-camera entry FollowingHer 11976 641 11976 968
+camera entry FollowingHer 11975 640 11975 971
 camera entry LeadingHer 9173 482 9173 401
 camera entry PushCarries 0 0 0 0
 camera entry Remembering 18684 7349 18684 1931
