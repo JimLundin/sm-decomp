@@ -516,9 +516,11 @@ fn progress_holds_its_floors_against_the_cache() {
 
 /// The room state each cached row's first record holds against the model's choice over that
 /// record's progress: the loads before the rows, which hold the states other than the default
-/// the rows' own loads never reach. Beside it the null model, always the default state.
+/// the rows' own loads never reach. Beside it the null model, always the default state. A room
+/// case the decode notes name at a row's first record is checked here by its name.
 #[test]
 fn progress_chooses_each_rows_standing_room_state() {
+    use super::progress::cases::{Chosen, ROOMS};
     use std::io::Write as _;
     let Some((cache, rom)) = environment() else {
         return;
@@ -532,6 +534,7 @@ fn progress_chooses_each_rows_standing_room_state() {
     let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
     let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
     let (mut matched, mut defaults, mut differing) = (0, 0, Vec::new());
+    let mut cases_checked = Vec::new();
     let rows = cached_rows(&cache);
     for row in &rows {
         let locked = parsed
@@ -545,22 +548,31 @@ fn progress_chooses_each_rows_standing_room_state() {
         let record = opened
             .record(entry)
             .unwrap_or_else(|error| panic!("{row}: {error}"));
-        let super::progress::Standing {
-            held,
-            chosen,
-            states,
-        } = domain
+        let standing = domain
             .standing_state(&record)
             .unwrap_or_else(|error| panic!("{row}: {error}"));
-        if held == states.saturating_sub(1) {
+        if standing.held == standing.states.saturating_sub(1) {
             defaults += 1;
         }
-        if chosen == held {
+        if standing.chosen == standing.held {
             matched += 1;
         } else {
             differing.push(format!(
-                "{row}: holds state {held}, the model chose {chosen}"
+                "{row}: holds state {}, the model chose {}",
+                standing.held, standing.chosen
             ));
+        }
+        let named = ROOMS.iter().filter(|case| {
+            case.chosen == Chosen::BeforeTheRow && case.row == row && case.record == entry.frame.0
+        });
+        for case in named {
+            match super::progress::cases::standing_case(case, &record, standing) {
+                Ok(()) => {
+                    let _ = writeln!(std::io::stdout(), "{}: holds", case.id);
+                }
+                Err(failures) => differing.push(format!("{}: {}", case.id, failures.join("; "))),
+            }
+            cases_checked.push(case.id);
         }
     }
     let _ = writeln!(
@@ -568,13 +580,147 @@ fn progress_chooses_each_rows_standing_room_state() {
         "standing room states: {matched} of {} matched; null model (the default) {defaults}",
         rows.len()
     );
-    assert!(
-        differing.is_empty(),
-        "{}",
-        differing.join(
-            "
-"
-        )
+    let unchecked = ROOMS
+        .iter()
+        .filter(|case| case.chosen == Chosen::BeforeTheRow && !cases_checked.contains(&case.id));
+    for case in unchecked {
+        if rows.iter().any(|row| row == case.row) {
+            differing.push(format!(
+                "{}: record {} isn't its row's first",
+                case.id, case.record
+            ));
+        } else {
+            let _ = writeln!(std::io::stdout(), "{}: {} not cached", case.id, case.row);
+        }
+    }
+    assert!(differing.is_empty(), "{}", differing.join("\n"));
+}
+
+/// The progress harness cases (the decode notes' "The harness cases") a frame checks: the report
+/// cases and the room loaded in a frame, each over its row's records; a case whose row isn't
+/// cached is reported and not checked.
+#[test]
+fn progress_harness_cases_hold_against_the_cache() {
+    use super::progress::cases::{Chosen, Counted, REPORTS, ROOMS};
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = super::progress::ProgressDomain::new(image);
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
+    let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
+    let rows = cached_rows(&cache);
+    let frame = |row: &str, record: u64| {
+        let locked = parsed
+            .row(&crate::lock::RowId(row.to_owned()))
+            .unwrap_or_else(|| panic!("{row}: not in the lock"));
+        let opened =
+            crate::cache::Cache::open(&cache, locked).unwrap_or_else(|error| panic!("{error}"));
+        let mut pair = opened
+            .entries()
+            .iter()
+            .filter(|entry| (record.saturating_sub(1)..=record).contains(&entry.frame.0))
+            .map(|entry| {
+                opened
+                    .record(entry)
+                    .unwrap_or_else(|error| panic!("{row}: {error}"))
+            });
+        match (pair.next(), pair.next()) {
+            (Some(from), Some(next)) => (from, next),
+            _ => panic!("{row}: record {record} and the one before aren't both cached"),
+        }
+    };
+    let cached = |id: &str, row: &str| {
+        let is = rows.iter().any(|cached| cached == row);
+        if !is {
+            let _ = writeln!(std::io::stdout(), "{id}: {row} not cached");
+        }
+        is
+    };
+    let mut results = Vec::new();
+    for case in REPORTS.iter().filter(|case| cached(case.id, case.row)) {
+        let (from, next) = frame(case.row, case.record);
+        let verdict = match case.counted {
+            Counted::Heard => "holds",
+            Counted::StoodIn => "stood in, not counted",
+        };
+        results.push((case.id, verdict, domain.report_case(case, &from, &next)));
+    }
+    let loaded = ROOMS
+        .iter()
+        .filter(|case| case.chosen == Chosen::InTheFrame && cached(case.id, case.row));
+    for case in loaded {
+        let (from, next) = frame(case.row, case.record);
+        results.push((case.id, "holds", domain.loaded_case(case, &from, &next)));
+    }
+    let mut failures = Vec::new();
+    for (id, verdict, result) in results {
+        match result {
+            Ok(()) => {
+                let _ = writeln!(std::io::stdout(), "{id}: {verdict}");
+            }
+            Err(differences) => failures.push(format!("{id}: {}", differences.join("; "))),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+/// Every item the game places, taken once from a new file, counts 100 (the decode notes' "No
+/// record: the full percentage"). The walk is checked against the population the notes give.
+/// It needs only `SM_ROM`, and is skipped where it is unset.
+#[test]
+fn every_item_the_game_places_counts_a_hundred_percent() {
+    use clean_model_progress::{Pickup, Supply};
+    use core::num::Wrapping;
+    use std::collections::BTreeSet;
+    use std::io::Write as _;
+    let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
+        let _ = writeln!(std::io::stdout(), "skipped: SM_ROM unset");
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = super::progress::ProgressDomain::new(image);
+    let population = domain
+        .population()
+        .unwrap_or_else(|error| panic!("the walk: {error}"));
+    let mut tanks: BTreeMap<String, (usize, BTreeSet<u16>)> = BTreeMap::new();
+    let mut one_off = 0;
+    for pickup in population.items.values() {
+        match *pickup {
+            Pickup::Tank { supply, amount } => {
+                let (count, amounts) = tanks.entry(format!("{supply:?}")).or_default();
+                *count += 1;
+                amounts.insert(amount.0);
+            }
+            Pickup::Item(_) | Pickup::Beam(_) => one_off += 1,
+        }
+    }
+    let tank = |supply: Supply, count: usize, amount: u16| {
+        (format!("{supply:?}"), (count, BTreeSet::from([amount])))
+    };
+    let expected = BTreeMap::from([
+        tank(Supply::Energy, 14, 100),
+        tank(Supply::Reserve, 4, 100),
+        tank(Supply::Missiles, 46, 5),
+        tank(Supply::SuperMissiles, 10, 5),
+        tank(Supply::PowerBombs, 10, 5),
+    ]);
+    assert_eq!(population.rooms, 261, "rooms the doors reach");
+    assert_eq!(population.items.len(), 100, "locations");
+    assert_eq!(tanks, expected, "tanks by kind: count and amounts");
+    assert_eq!(one_off, 16, "one-off items and beams");
+    assert_eq!(
+        super::progress::percentage::of_everything(&population),
+        Wrapping(100),
+        "the item percentage"
     );
 }
 

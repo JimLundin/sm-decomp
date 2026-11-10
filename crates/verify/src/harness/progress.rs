@@ -1192,6 +1192,9 @@ impl Domain for ProgressDomain {
     }
 }
 
+pub mod cases;
+pub mod percentage;
+
 #[cfg(test)]
 mod tests {
     use super::field::{
