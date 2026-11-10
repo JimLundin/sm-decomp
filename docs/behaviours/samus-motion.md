@@ -375,8 +375,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - With space jump, falling in a spin, jump pressed, her fall speed read as 8.8 `v` (its pixel
   part's low byte and its subpixel's high byte) with `2.80 ≤ v < 5.00` → she jumps again, rising
   at the new speed that same frame [SJ1]
-- Without space jump, the same press → nothing: she falls on, and the pad chart's row for the
-  spin keeps her spinning [C-space-jump-no-item]
+- So without space jump the same press does nothing: she falls on, and the pad chart's row for
+  the spin keeps her spinning (C-space-jump-no-item).
 - **Jump held through** (§1.2): a count of the frames jump has stayed held since its press.
 - At a frame's end, jump held and not just pressed → the count goes up by 1 [JH1, JH2, JH3, JH4]
 - At a frame's end, jump just pressed, or not held → the count is 0 [JH1, JH2, JH3, JH4]
@@ -389,8 +389,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   (`AnimationEnds`), with the count at 1 to 8 → jump counts as just pressed for the pad chart that
   frame (`PadChart`), and the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4,
   C-held-9, C-held-built, C-held-landed]
-- A landing that pose fit refuses or turns into the crouch (`PoseFitAfterMoves`) → it is no
-  landing here: the frame after it, jump held doesn't count as pressed [C-fit-land-tunnel-held]
+- So a landing that pose fit refuses or turns into the crouch (`PoseFitAfterMoves`) is no
+  landing here: the frame after it, jump held doesn't count as pressed (C-fit-land-tunnel-held).
 - Jump let go on that frame → it still counts as just pressed for the pad chart; only the frame's
   end sees it let go, and puts the count at 0 [C-held-let-go]
 - So JH3 with jump let go on the landing's next frame takes off all the same (C-held-let-go).
@@ -549,9 +549,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - A refused change, or the crouch taken instead → the frame ends in the pose she had or in the
   crouch, and none of the chosen pose's effects on her speeds and dash come: not its pad chart
   row's (a rise, a halt, a brake, the dash joining her speed), not what her moves met (a landing's
-  stop of her speeds: her horizontal and vertical speeds stay as her moves left them), and the
-  crouch has no take-off (no rise and no 10 px lift) [C-fit-land-tunnel, C-fit-tunnel,
-  C-fit-ball-tunnel]
+  stop of her speeds: her horizontal and vertical speeds, and whether she carries on or skids,
+  stay as her moves left them), and the crouch has no take-off (no rise and no 10 px lift)
+  [C-fit-land-tunnel, C-fit-tunnel, C-fit-ball-tunnel, C-fit-land-tunnel-skid]
 - So a landing crouched instead leaves her crouched, a pose on the ground, with the downward speed
   her fall reached: she keeps it there without moving by it (`FollowingTheGround`), so the next
   frame the pull holds her on the floor and the speed stays (C-fit-land-tunnel-next). It is no
@@ -581,7 +581,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   C-fit-step-floor, the 8 px look against a stepped block, and in C-fit-step-ceiling the cells of
   a 9 px far-side look and its 8 px look; C-fit-step-enemy, a stepped block above and a solid
   enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds,
-  C-fit-land-tunnel-next the frame after it, and C-fit-land-tunnel-held its jump held through;
+  C-fit-land-tunnel-next the frame after it, C-fit-land-tunnel-held its jump held through, and
+  C-fit-land-tunnel-skid a skid kept through it;
   C-fit-tunnel-aimed, the crouch taken instead from a body already the crouch's height: no
   placement); original only
   (the looks' cells of the harness case W15 and of C-near-wall-item, a body growing 7 px in open
@@ -1192,8 +1193,8 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   is the crouch's, the ground's pull with her vertical speed kept, and, with no floor within the
   pull, it walks her off a ledge (`FollowingTheGround`) [C-unmorph-air-end, C-ground-rise,
   C-unmorph-air-end-off, C-unmorph-air-end-floor]
-- With a floor within that pull → it holds her flush and she keeps her vertical speed, as on the
-  ground; the floor doesn't land her [C-unmorph-air-end-floor]
+- So with a floor within that pull it holds her flush and she keeps her vertical speed, as on
+  the ground, where the floor never lands her (C-unmorph-air-end-floor).
 - So an unmorph that ends in a fall has one crouched frame and then falls from rest (record only:
   boss-kraid-defeated 779-782), and one that ends in a rise keeps the rise (item-charge-beam 5-8,
   item-reserve-tank 519-521).

@@ -1292,7 +1292,8 @@ C-held-let-go, the five slope vectors and C-near-wall-item.
 
 ## Round 15's amendments (2026-11-10)
 
-From adversary 71's observer items (V1-V7, Q1). 257 vectors (248 − 2 + 11) and 51 pose steps.
+From adversary 71's observer items (V1-V7, Q1), and adversary 73's O1 and O2. 258 vectors
+(248 − 2 + 12) and 51 pose steps.
 
 **V1, the wall jump with hi-jump.** `$90:9984` reads `09A2` bit 0100h for the kick's speed:
 4.A000 plain, 5.8000 with the boots. Record: samus-walljump-16 47 → 48 (`09A2` F32F, 81h → 83h,
@@ -1359,18 +1360,42 @@ false). C-fit-land-tunnel-next starts where C-fit-land-tunnel ends (a start can'
 landing pose's body size through a lead-in, so it is given as the start): crouched, she moves by
 her dash only and halts (x speed 0), the pull holds her at 0110.FFFF, and the speed stays 3.1C00.
 
-**The current model against the amended vectors.** 256 of 257 pass; C-fit-land-tunnel-held fails
-(`landed_or_ended` true): new behaviour, the corrected rule above. The round-14 gate's mutants,
+**O1, the skid through a landing crouched instead (adversary 73).** The skipped `$91:F02A`
+includes `$91:F02D STZ $0B4A`, so after a refused or crouched-instead landing `0B4A` keeps the
+jump's value: 2 carries on (a spin's drift, C-fit-land-tunnel), 1 skids (a spin reversed early,
+`$91:F624`). PoseFitAfterMoves' arm now names "whether she carries on or skids" with the speeds.
+C-fit-land-tunnel-skid, worked by hand: spinning right at 0.C000, left pressed, the step reaches
+1.6000 (the top speed: she carries on) and moves it, and the reversal leaves her skidding (`0B4A`
+1); falling from 0111.0000 at 2.0000 to 0113.0000 (2.1C00). The landing's frame: the skid brakes
+in the air, 1.6000 − 0.8000 = 0.E000, moved right (0101.6000 → 0102.4000); the fall's 2.1C00
+reaches row 120h, stopped flush at 0114.FFFF (2.3800); the landing's body (21) finds 2 px above
+and none below, so the crouch is taken instead, raised 4 px to 0110.FFFF. The skid is the step's
+output (§1.2, read by the camera after Samus's handler), and no compared quantity showed it, so
+the format gains `after.skidding`, compared only where given. The next frame can't show it:
+the crouch moves by the dash alone, `$90:8EA9` reads her facing for `0B4A` 0 and 2 alike, and the
+crouch then clears `0B4A`. That is also why C-fit-land-tunnel-next may start following the pad,
+where the real continuation still carries on; its comment says so. With a local reading of the new key, a
+mutant that resets her to following the pad when the crouch is taken instead fails
+C-fit-land-tunnel-skid (`skidding` false) and nothing else new.
+
+**O2, three arms that restated consequences (adversary 73).** Space jump's press without the
+item (SJ1's complement), the landing refused or crouched instead "is no landing here" (the
+complement of the corrected condition), and the floor under the unmorph's end (the ground's
+"the floor never lands her") are now "So" bullets citing their vectors.
+
+**The current model against the amended vectors.** 257 of 258 pass with the round's test reading
+the new key; C-fit-land-tunnel-held fails (`landed_or_ended` true): new behaviour, the corrected
+rule above. C-fit-land-tunnel-skid passes the model's own `skidding` output, but the current test
+has no `after.skidding` key, so it fails there on the format only. The round-14 gate's mutants,
 each one line in the clean crate, run against these vectors and reverted: M2b (the wall jump
 ignores hi-jump) fails C-walljump-hijump; M3 (the spring ball's item test false) fails
 C-morph-end-spring and C-morph-end-spring-air; M15 (space jump without the item) fails
 C-space-jump-no-item; M5 (long counts from 32,778) fails C-held-long-edge; M9 (the unmorph's end
 drops "on the ground") fails C-unmorph-air-end-off and C-unmorph-air-end-floor.
 
-**Units.** `tools spec-units` with these notes: 213.0 → 216.0 (motion 79.0 → 81.0: the press
-without space jump and the crouched landing's jump held through; pose chart 58.0 → 59.0: the
-floor under the unmorph's end), so the budget stays 7,133: motion's 36 × 81.0 = 2,916 and the
-pose chart's 2,124 are both over their caps (2,813 and 1,584).
+**Units.** `tools spec-units` with these notes: 213.0, unchanged (motion 79.0, pose chart
+58.0): every new rule is a consequence of an arm already counted, so the budget stays 7,133, with
+motion and the pose chart at their caps (2,813 and 1,584).
 
 ## Size baseline (tokens, 2026-11-07)
 
@@ -1441,7 +1466,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 216.0 units, capped at 70% of old = 7,133 (motion 2,813 capped, pose fit 588, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 213.0 units, capped at 70% of old = 7,133 (motion 2,813 capped, pose fit 588, pose chart 1,584 capped, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

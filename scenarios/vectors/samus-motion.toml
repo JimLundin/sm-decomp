@@ -101,6 +101,8 @@
 #   rising: whether she is rising at the frame's end, true or false (spec `RisingAndFalling`'s
 #   output); compared only where given. jump_held and landed_or_ended: jump held through's two
 #   parts at the frame's end, as before gives them (spec §1.2); compared only where given.
+#   skidding: whether she skids at the frame's end, true or false (spec §1.2's skidding, which
+#   the camera reads); compared only where given.
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
@@ -2851,7 +2853,16 @@ after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0001.6000", dash = 
 # - C-fit-land-tunnel-next: the frame after C-fit-land-tunnel, starting where it ends, the pad let
 #   go. Crouched is a pose on the ground: she moves by her dash only (0) and halts, the pull's 1 px
 #   holds her flush on the floor, and she keeps the downward speed her fall reached, 3.1C00,
-#   without moving by it or growing it (spec `FollowingTheGround`).
+#   without moving by it or growing it (spec `FollowingTheGround`). Its start follows the pad,
+#   where the frame after C-fit-land-tunnel itself still carries on (the landing that would have
+#   ended it didn't come); the crouch moves by her dash alone either way, and then halts, so this
+#   frame can't tell the two apart.
+# - C-fit-land-tunnel-skid: a spin reversed early (the lead-in: from 0.C000 right it reaches the
+#   top speed, 1.6000, and moves it, then faces left, skidding) lands in the tunnel. The skid
+#   brakes in the air to 0.E000, still rightward; the landing is crouched instead (from 0114.FFFF,
+#   raised 4 px to 0110.FFFF), and she is still skidding at the frame's end (`skidding`): her
+#   speed points against her facing and carries on, as her moves left it, where a landing would
+#   have stopped it and left her following the pad.
 [[vector]]
 id = "C-fit-land-tunnel-held"
 source = "constructed"
@@ -2874,6 +2885,21 @@ pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16]
 pad = []
 jump_pressed = false
 after = { position = ["0101.6000", "0110.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0003.1C00", rising = false, placed = "none" }
+
+[[vector]]
+id = "C-fit-land-tunnel-skid"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "TurningRound", "DriftInTheAir", "Landing", "WhatHerMovesMet"]
+world = { floor_top = 288, ceiling_bottom = 256 }
+before = { position = ["0100.0000", "0111.0000"], speed_x = "+0000.C000", speed_y = "+0002.0000" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["left"], jump_pressed = false, pressed = ["left"] },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5, 21], landed_from = "Spin" }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0102.4000", "0110.FFFF"], speed_x = "+0000.E000", dash = "0000.0000", speed_y = "+0002.3800", skidding = true, pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] } }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
