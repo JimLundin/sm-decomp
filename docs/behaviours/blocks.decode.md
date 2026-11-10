@@ -35,13 +35,17 @@ frames. The observer's tools, all in `$TEMP/collab/blocks-spec`:
   from different rows, from frames the model matches with the hits' inputs; `rec.toml`), all of
   them harness cases now; `cons.py` writes the vectors, all constructed, over `invented.py` (their
   after from the model), `assemble.py` writes `scenarios/vectors/blocks.toml` with the invented
-  reactions they use, and `vec.py` runs every vector through the model: 89 of 89 agree.
+  reactions they use, and `vec.py` runs every vector through the model: 96 of 96 agree. It also
+  refuses a reaction name no table holds, a flipped whole look, a wait outside 1 to 32,767, and a
+  `remembers` given for a script with no `Regrow`.
 - `cut.py` cuts the old code into the areas' files in `old/` for `tools size`.
 
 **Results** (`harness_hits.py`). Of the 20,615 frames that ran one frame of gameplay in one room
 (§The harness; 125 of them with the run paused), 786 are frames where a reaction of this part ran,
 the screens changed, or the hits show a start or a scroll touch; the model matches the decoded
-State on all 786, and on the 19,829 others. A null model (nothing changes) matches 183 of the 786
+State on all 786, and on the 19,829 others, with what a reaction grows back as compared for
+every running reaction whose script has a `Regrow` (after the step too: r04:159 and 160), and
+every decoded wait between 1 and 7FFFh. A null model (nothing changes) matches 183 of the 786
 (the scroll touches whose changes are already in force), and 431 on the cells and screens alone.
 Every start is decided by a hit: 111 starts on 116 frames (98 crumble, 3 shot, 4 power bomb, 1
 super missile and 5 bomb block starts, each bomb block's weapon from its branch: 3 power bombs, 2
@@ -148,8 +152,8 @@ Items (`$EED3`, `$EED7`..`$EFxx`) are W3's.
 | its reaction and script | `$1C37,x` (PLM ID) | `importer.BY_ID`: the ID's reaction and which script (`$D098`..`$D0B4` the bomb block's `touched`, `$D0B8`..`$D0D4` its `broken`, `$CFFC`..`$D024` and the lists `$C91C`/`$C922` `revealed`, the rest `broken`); the bombed special IDs name only the shape, so the reaction is the cell's mark |
 | its cell | `$1C87,x` (block index × 2) | ÷ 2, then `(i mod w, i div w)`, `w` = `$07A5` |
 | its next step | `$1D27,x` (instruction list pointer) | the index of the step whose instruction is at that address (`importer.script`, `at`); after a draw the pointer is past it, so it names the next step |
-| its wait | `$7E:DE1C,x` (instruction timer) | as is |
-| what it grows back as | `$1E17,x` (PLM respawn block) | bits 12-15 as a kind: `Block` or `ReactingAir`; the low bits are the whole look, which is the reaction's. Junk (the last occupant's) for the `$B3C1` shot blocks, which never read it |
+| its wait | `$7E:DE1C,x` (instruction timer) | as is: 1 to 7FFFh at every commit (a block spawn sets 1, `$84:8514`, and a setup its first wait; a show sets its frames, which the importer holds to 1..7FFFh; `$84:85E0` decrements before it tests, so a 0 would wait 65,536 frames). A 0 is a harness defect |
+| what it grows back as | `$1E17,x` (PLM respawn block) | bits 12-15 as a kind: `Block` or `ReactingAir`; the low bits are the whole look, which is the reaction's. Decoded for every running reaction whose script has a `Regrow`: the setup writes it at the start and only the draw block instruction reads it, so it holds for the reaction's whole life. Junk (the last occupant's) for the `$B3C1` shot blocks and the `revealed` scripts (`$84:CFA0`, `$CF60`, `$CF99` don't write it), which have no `Regrow` and never read it |
 | a scroll reaction | `$1C37,x` = `$B703`, `$1DC7,x` (room argument: its scroll change list in bank `$8F`) | the list: byte pairs (screen index, value) up to a byte with bit 7 set; screen `(n mod w, n div w)` with `w` = `$07A9`; value 0 `Closed`, 1 `Short`, 2 `Open` |
 | its touched | `$1E17,x` bit 15 (the trigger, set by `$84:B393`, which also moves `$1D27,x` past the sleep and sets the timer to 1) | set: touched. The scroll update (`$84:8B55`) clears it in the next pass, so only a paused frame leaves it set at a commit |
 | other parts' reactions | any other `$1C37,x` | held |
@@ -375,8 +379,37 @@ content is the draw routine's, which the format names by what each cell becomes.
   crumble touched in the same frame one place down. The game's rooms have none that holds a place
   (§The importer's scan); the plants and the quicksand there are parts 3's and 4's.
 - **The regrown look.** Every setup stores the respawn block as the block's type with a fixed tile
-  and no flips. r04's bridge (tile 16Ah) grows back as 0BCh (r04:110, 159): hidden crumble blocks show
-  themselves after one cycle.
+  and no flips (`ORA #$0058` and the like over `AND #$F000`, so bits 10 and 11 are clear). r04's
+  bridge (tile 16Ah) grows back as 0BCh (r04:110, 159): hidden crumble blocks show themselves after
+  one cycle. So the spec gives a reaction's whole look as a picture, with no flip, and its
+  `Regrow` restores it as one.
+- **The remembered kind.** `$1E17,x` is written once, by the setup, and read by the draw block
+  instruction (`$84:8B17`/`$8B05`) without being cleared, so a second `Regrow` in a script would
+  grow back the same kind. The spec states it as kept while the reaction runs, and the vectors and
+  the harness give it for every running reaction whose script has a `Regrow`, before and after the
+  step; no list of the game has two.
+- **A bomb on a super missile or power bomb block that is air to her.** The bombed reaction
+  pointers ask shootable air as they ask a shootable block (`$94:A032` type 4 → `$9E55`, `$9EA6`),
+  and the bomb branches (`$84:CF60`, `$CF99`) set the revealed list with no test of the block's
+  type. The lists draw `C057` and `C09F` (`$84:A4E7`, `$A4ED`), a shootable block, so the air
+  becomes a block at the show (C-super-air-by-bomb, C-pb-air-by-bomb). A speed block that is air
+  to her is special air, which the blast never asks (`$9D59`, C-reveal-speed-air).
+- **The shootable blocks and her touch.** Her touch never asks a shootable cell's PLM (solid by
+  body, `$94:8F49`), so the way, her motion and the full places change nothing
+  (C-shot-touch-look, C-shot-touch-full).
+- **Inside a cell that holds a place, as a block.** The inside reaction pointers (`$94:9B40`) ask
+  special air only; a `Show` of `Itself` can make such a cell a special block keeping its BTS, and
+  then she holds no place there (C-nothing-block-holds-none).
+- **A mark that names no reaction.** The importer types every reacting cell's PLM as a reaction,
+  `Nothing`, `Scroll`, `Inert` or `Other` (§The importer's mapping, cells), so the game's content
+  has none; the spec leaves one to the room's loading, which refuses it (R2), and the vector file's
+  reader refuses a reaction name with no table.
+- **Requests past the room's edge.** The spec says every request names a cell of the room, and
+  leaves what an asker meets past the edge to her motion and her weapons, whose domains own it; the
+  model's answer for a cell outside the room is then never asked.
+- **Another part's place.** The other parts' PLMs end by their own instructions; this part only
+  sees their slots held (the harness copies them from N+1). Reporting the place a start took and
+  freeing it is part 2's (the doors' caps), with the PLMs that need it.
 - **The crumble's first wait.** `$CE37` sets the timer to 4 at the spawn, before the frame's pass,
   so the first step runs on the third frame after the touch (r04:110 → 113).
 - **The look's touches.** The wall-jump test and the pose-change looks set the direction Fh, so the
@@ -411,7 +444,8 @@ content is the draw routine's, which the format names by what each cell becomes.
   sits there (§The importer's scan). The spec states patterns in cells, and the room's loading
   refuses such a room (`docs/LEGACY.md`, "Patterns past the room's edge").
 - **A `Show` of 0 frames** waits 65,536 frames (`$84:85E0` decrements first); the spec allows 1 to
-  32,767 and the importer refuses the rest.
+  32,767 and the importer refuses the rest. So no commit holds a wait of 0, and the spec's wait is
+  1 to 32,767.
 
 ## The harness (for the integrator)
 
@@ -441,7 +475,8 @@ content is the draw routine's, which the format names by what each cell becomes.
 - **Reactions:** the game's, from the importer at test time (§The importer's mapping), never the
   vectors' invented ones. The harness cases (§The harness cases) are frames it must match.
 - **Compared at N+1:** each place (empty, another part's, or its reaction, script, cell, next step
-  and wait; what it grows back as where a `Regrow` is ahead), the screens, and the cells within the
+  and wait; what it grows back as, for every running reaction whose script has a `Regrow`, before
+  and after it), the screens, and the cells within the
   frame's reach: their kinds and looks, and the marks of reacting cells and stand-ins. The reach is
   chosen by position, never by value: this part's places' cells at N and N+1, every cell their
   reactions' patterns cover, the scroll cells, and the requests' cells. Outside the reach the
