@@ -183,13 +183,6 @@ pub enum PlmError {
     Address(AddressError),
     /// The list runs past its bank's end.
     BankEnd(RomAddress),
-    /// A scroll change names an area that doesn't exist.
-    ScrollArea {
-        /// Where the change is.
-        at: RomAddress,
-        /// Its area byte.
-        value: u8,
-    },
     /// More scroll change lists than a [`ScrollChangesId`] counts.
     TooManyLists,
 }
@@ -208,11 +201,12 @@ fn take<const N: usize>(rom: Lorom<'_>, at: RomAddress) -> Result<([u8; N], RomA
     Ok((array, next))
 }
 
-/// The scroll change list at `at`: each screen and the area it takes, to its end.
+/// The scroll change list at `at`: each screen and the area it takes, to its end. The original
+/// writes whatever byte a change holds, so one that is no area stays [`ScrollArea::Unknown`].
 ///
 /// # Errors
 ///
-/// [`PlmError`] if the list is outside the image or a change names no area.
+/// [`PlmError`] if the list is outside the image.
 // The list's reader is `$84:8B68`.
 pub fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange>, PlmError> {
     let mut changes = Vec::new();
@@ -223,16 +217,10 @@ pub fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange
             return Ok(changes);
         }
         let ([value], next) = take::<1>(rom, after_screen)?;
-        let area = match ScrollArea::from(value) {
-            ScrollArea::Unknown(value) => {
-                return Err(PlmError::ScrollArea {
-                    at: after_screen,
-                    value,
-                });
-            }
-            area @ (ScrollArea::Red | ScrollArea::Blue | ScrollArea::Green) => area,
-        };
-        changes.push(ScrollChange { screen, area });
+        changes.push(ScrollChange {
+            screen,
+            area: ScrollArea::from(value),
+        });
         cursor = next;
     }
 }
@@ -241,7 +229,7 @@ pub fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange
 ///
 /// # Errors
 ///
-/// [`PlmError`] if the list is outside the image or a scroll change names no area.
+/// [`PlmError`] if the population or one of its scroll change lists is outside the image.
 pub fn population(rom: Lorom<'_>, at: RomAddress) -> Result<PlmPopulation, PlmError> {
     let mut decoded = PlmPopulation::default();
     let mut cursor = at;

@@ -230,6 +230,9 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - Across, the screens read are in the row holding `y + 128`, 128 px below the view's top edge
   (`y` the camera's pixel part down); down, in the column holding `x + 128`, 128 px right of its
   left edge.
+- So a view whose top is 80h px into its screen reads across in the row below it, and one 7Fh px
+  into it in its own row (C-read-point-across, C-read-point-across-7F); down, a view whose left
+  edge is 80h px into its screen reads in the next column (C-read-point-down).
 - Going right or down, the next screen `Closed`, and, down, `c` `exceeds` `edge(c) + margin`
   (`ShortScreens`; across there is no such test and `margin` is 0) → `c = max(edge(c) + margin,
   back(cm))` [C-down-short-closed-below, C-moonwalk-right-to-closed-edge,
@@ -249,11 +252,13 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   (C-down-within-margin, C-left-edge-keeps-subpixel).
 - checked: oracle (the stops on the edge: the harness cases r01:996, r02:7, r03:5, r03:210,
   r04:314, r05:66, item-morph-ball:709); constructed (their twins, the 2 px back-offs,
-  C-push-left-far).
+  C-push-left-far, the read point on either side of a screen's edge).
 
 ### RoomEdges
 - kind: mechanic.
-- summary: the view never shows past the room's left, top or right edge, nor below its bottom.
+- summary: a view in the room never shows past its left, top or right edge, nor below its bottom;
+  one another domain left outside it comes back, at once (at times to the far edge) or a few
+  pixels a frame.
 - params: none.
 - switch: none.
 - The camera's furthest right is the last screen's left edge, `xr = (w − 1) × 256`; its furthest
@@ -441,8 +446,8 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - **Layer 2 and the backgrounds:** they follow the camera at the room's rates; the background's
   domain reads the camera's position.
 - **Other placements:** the grapple's own slow camera; the grapple, the shinespark, a suit she
-  collects, cutscenes, some bosses and the gunship changing where the camera saw her; their frames
-  are masked in the harness until those domains come.
+  collects, cutscenes, some bosses and the gunship changing where the camera saw her; the harness
+  masks the frames and axes they act on until those domains come.
 - **The knockback (the damage domain):** while a knockback moves her, it supplies going backwards
   and `rising`.
 - **The enemies:** a boss changes the lead setting; Kraid's room keeps her on its first screen.

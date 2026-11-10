@@ -14,31 +14,24 @@ use clean_types::{Pair, Px, ScreenKind};
 /// Notation: a screen is 256 px square.
 pub(crate) const SCREEN: Px = Wrapping(256);
 
-/// Whether the view may not show a screen of this kind (Spec: ClosedScreens).
-pub(crate) const fn is_closed(kind: ScreenKind) -> bool {
-    matches!(kind, ScreenKind::Closed)
-}
-
-/// Whether the view that can go no lower stops with its top on the top edge of a screen of this
-/// kind (Spec: ShortScreens).
-pub(crate) const fn is_short(kind: ScreenKind) -> bool {
-    matches!(kind, ScreenKind::Short)
-}
-
 /// The room's two aim heights: how far below the view's top edge it keeps her, in px (Spec:
 /// AimingHeight).
 #[derive(Clone, Copy, Debug)]
 pub struct Heights {
-    /// While she isn't rising (the spec's hn).
-    pub level: Px,
-    /// While she rises (the spec's hr).
-    pub rising: Px,
+    /// The height while she isn't rising (the spec's hn).
+    pub while_not_rising: Px,
+    /// The height while she rises (the spec's hr).
+    pub while_rising: Px,
 }
 
 impl Heights {
-    /// The height the view keeps her at: the rising one while she rises, the level one otherwise.
+    /// The height the view keeps her at, by whether she is `rising`.
     pub(crate) const fn height(self, rising: bool) -> Px {
-        if rising { self.rising } else { self.level }
+        if rising {
+            self.while_rising
+        } else {
+            self.while_not_rising
+        }
     }
 }
 
@@ -59,8 +52,9 @@ pub enum RoomError {
 pub struct Room {
     /// How many screens the room is across (the spec's w).
     width: usize,
-    /// The near edges of its last column and its last row: across, the furthest right the view
-    /// goes, xr; down, yb less the margin (Spec: RoomEdges).
+    /// The near edges of its last column and its last row: across, xr, the furthest right the
+    /// view goes; down, the last row's top edge, to which the camera adds the margin of the
+    /// screen it reads, giving yb, the furthest down the view goes (Spec: RoomEdges).
     pub(crate) last: Pair<Px>,
     /// The run of screens: the room's rows, top first, each left to right, then the screens below
     /// the room continuing it (Spec: ScreensRunOn, BelowTheRoom).

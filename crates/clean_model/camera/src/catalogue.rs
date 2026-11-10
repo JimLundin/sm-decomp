@@ -24,7 +24,7 @@ pub enum BehaviourId {
     CreepReadsRightward,
     /// A closed screen is never shown.
     ClosedScreens,
-    /// The view never shows past the room's edges.
+    /// A view in the room never shows past its edges; one left outside it comes back.
     RoomEdges,
     /// Where the view can go no lower, it stops on a short screen's top edge, or the margin lower.
     ShortScreens,
@@ -111,8 +111,9 @@ pub const CATALOGUE: [Behaviour; 14] = [
     },
     Behaviour {
         id: BehaviourId::RoomEdges,
-        summary: "the view never shows past the room's left, top or right edge, nor below its \
-                  bottom.",
+        summary: "a view in the room never shows past its left, top or right edge, nor below its \
+                  bottom; one another domain left outside it comes back, at once (at times to \
+                  the far edge) or a few pixels a frame.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

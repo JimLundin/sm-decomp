@@ -18,7 +18,7 @@ rounds = 17
 
 [[model]]
 name = "camera"
-rounds = 5
+rounds = 6
 
 [[model]]
 name = "progress"

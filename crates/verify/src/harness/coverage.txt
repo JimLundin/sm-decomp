@@ -49,23 +49,23 @@ samus-motion entry WallJump 234 0 253 2
 samus-motion entry WallsAndCeilings 1397 474 1432 30
 samus-motion entry WhatHerMovesMet 0 0 0 1862
 samus-motion entry WordwiseTopSpeed 0 0 0 0
-camera frames 25426 18903 0 7457
-camera field 18903 1712 position.x
-camera field 18684 1931 position.y
+camera frames 25426 20513 0 8384
+camera field 20496 119 position.x
+camera field 20209 406 position.y
 camera field 0 20615 seen
-camera entry AimingHeight 6926 760 6926 614
-camera entry BelowTheRoom 3536 483 3536 91
-camera entry ClosedScreens 8886 3113 8886 1396
+camera entry AimingHeight 7327 778 7327 213
+camera entry BelowTheRoom 3559 501 3559 68
+camera entry ClosedScreens 10120 3817 10120 162
 camera entry CreepReadsRightward 384 300 384 6
 camera entry DownwardLooksAhead 1 0 1 0
-camera entry FollowingHer 11975 640 11975 971
-camera entry LeadingHer 9173 482 9173 401
+camera entry FollowingHer 12643 656 12643 303
+camera entry LeadingHer 9524 497 9524 50
 camera entry PushCarries 0 0 0 0
-camera entry Remembering 18684 7349 18684 1931
-camera entry RoomEdges 15936 7121 15936 1185
+camera entry Remembering 20192 8205 20192 423
+camera entry RoomEdges 16775 7694 16775 346
 camera entry ScreensRunOn 0 0 0 0
-camera entry Settling 14685 7340 14685 1762
-camera entry ShortScreens 17631 11776 17631 1735
+camera entry Settling 16154 8196 16154 293
+camera entry ShortScreens 18980 12742 18980 386
 camera entry TimeStopped 113 113 113 6
 progress frames 25426 25419 7 25399
 progress field 25426 0 items

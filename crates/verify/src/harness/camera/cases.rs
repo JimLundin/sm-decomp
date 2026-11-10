@@ -109,8 +109,8 @@ const R08: &str = "chain-0106-AD5E";
 const R11: &str = "chain-0232-D5A7";
 const MORPH_BALL: &str = "item-morph-ball";
 
-/// The decode notes' 35 cases. R13 and R14 lie under the gunship's mask (it ejects her as the
-/// game starts), R24 under the knockback's start and R35 under the shinespark's.
+/// The decode notes' 35 cases. R24's y lies under the knockback's start, which places her y
+/// where samus-motion's model doesn't; its rule is on x, which is compared.
 pub const CASES: [Case; 35] = [
     case("R1", (BRINSTAR, 72), 0x9E9F, Table, &[]),
     case("R2", (BRINSTAR, 74), 0x9E9F, Table, &[]),
@@ -124,8 +124,8 @@ pub const CASES: [Case; 35] = [
     case("R10", (NORFAIR, 55), 0xA9E5, AfterLastRoom, &[]),
     case("R11", (NORFAIR, 286), 0xAA41, Table, &[0, 2]),
     case("R12", (NORFAIR, 304), 0xAA41, Table, &[0, 2]),
-    case("R13", (R01, 418), 0x91F8, Table, &[]).masked(CAMERA),
-    case("R14", (R01, 419), 0x91F8, Table, &[]).masked(CAMERA),
+    case("R13", (R01, 418), 0x91F8, Table, &[]),
+    case("R14", (R01, 419), 0x91F8, Table, &[]),
     case("R15", (R01, 620), 0x91F8, Table, &[]),
     case("R16", (R01, 655), 0x91F8, Table, &[]),
     case("R17", (R01, 994), 0x91F8, Table, &[]),
@@ -152,7 +152,7 @@ pub const CASES: [Case; 35] = [
         AfterLastRoom,
         &[],
     ),
-    case("R35", ("samus-shinespark-left", 214), 0x91F8, Table, &[]).masked(CAMERA),
+    case("R35", ("samus-shinespark-left", 214), 0x91F8, Table, &[]),
 ];
 
 /// Why a case fails: each difference, or why its frame couldn't run.

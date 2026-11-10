@@ -3,8 +3,9 @@
 //! closed screen.
 //!
 //! The steps are written once, in `Line`. Each axis gives its values once, in `Line::new`, and
-//! each of the three places where the axes decide differently is one `match` on `Axis`. Every
-//! rule of the room sets the camera's pixel part only; its subpixel part is the follow's.
+//! says which coordinate of a screen its positions are, in `Line::screen`; each of the three
+//! decisions where the axes differ is one `match` on `Axis`. Every rule of the room sets the
+//! camera's pixel part only; its subpixel part is the follow's.
 
 use core::num::Wrapping;
 
@@ -12,7 +13,7 @@ use clean_types::{Fixed, Pair, Parts, Position, Px, ScreenKind, fixed};
 
 use crate::follow::{Going, Move, before, chase, exceeds, max_by_before, min_by_exceeds, speed};
 use crate::input::Frame;
-use crate::room::{SCREEN, is_closed, is_short};
+use crate::room::SCREEN;
 use crate::rules::Rules;
 
 /// Notation: the pixels within a screen, a position's low byte.
@@ -42,8 +43,8 @@ fn next_edge(p: Px) -> Px {
 /// - the point on the other axis whose screens it reads: across, 128 px below the view's top
 ///   edge, so the row holding y + 128; down, 128 px right of its left edge, so the column holding
 ///   x + 128;
-/// - its far bound: across, the near edge of the room's last column (xr); down, the top edge of
-///   its last row, which the margin then lowers (yb);
+/// - its far end: across, the near edge of the room's last column (xr); down, the top edge of
+///   its last row, to which the margin is added where it bounds the view (yb);
 /// - its margin: across none; down, `Rules::margin` on any screen but a short one;
 /// - where a move right or down reads its screens from: across, where the aim stopped it; down,
 ///   where the move took it (Spec: DownwardLooksAhead);
@@ -52,8 +53,9 @@ fn next_edge(p: Px) -> Px {
 /// - whether the floor, its screen's edge plus the margin, is tested: down only (Spec:
 ///   ClosedScreens, Settling).
 ///
-/// The first three are values, given in `Line::new`; the last three are decisions, each written
-/// once, in `Line::looks_from`, `Line::stop_past` and `Line::past_floor`.
+/// The first three are values, given in `Line::new` (`Line::screen` then places the read point
+/// on the other axis); the last three are decisions, each written once, in `Line::looks_from`,
+/// `Line::stop_past` and `Line::past_floor`.
 #[derive(Clone, Copy)]
 pub(crate) enum Axis {
     /// x, rightward.
@@ -76,8 +78,9 @@ pub(crate) struct Line<'a> {
     /// The point on the other axis, 128 px past the view's near edge there, whose row (across) or
     /// column (down) holds the screens this line reads.
     read_point: Px,
-    /// The far bound before the margin lowers it: the near edge of the room's last column across,
-    /// of its last row down (Spec: RoomEdges).
+    /// The near edge of the room's last column across (xr), of its last row down. Where it bounds
+    /// the view, in `limit_forward` and `settle`, the margin of the screen read is added to it,
+    /// so down the bound is yb (Spec: RoomEdges).
     far: Px,
     /// The margin: how far under its screen's top edge the view's top may stop where it can go no
     /// lower; across there is none. Down it is this on any screen but a short one, which has none
@@ -169,22 +172,23 @@ impl<'a> Line<'a> {
         }
     }
 
-    /// Where a move right or down that exceeds the far bound `far` stops, given `back`, the push
-    /// back from where the move took it (Spec: RoomEdges).
+    /// Where a move right or down that exceeds `bound`, the far end plus the margin (xr across,
+    /// yb down), stops, given `back`, the push back from where the move took it (Spec:
+    /// RoomEdges).
     ///
     /// A view inside the room gets past it by a move past the room's last column or row
     /// (C-right-onto-edge, C-down-to-bottom-31); a camera another domain left left of or above the
     /// room exceeds it at once, as `FFF3` exceeds every bound (C-edge-right-from-left,
     /// C-edge-down-from-above, C-edge-down-from-above-short).
-    const fn stop_past(&self, far: Px, back: Px) -> Px {
+    const fn stop_past(&self, bound: Px, back: Px) -> Px {
         match self.axis {
             // Across it stops on the room's right edge.
-            Axis::Across => far,
+            Axis::Across => bound,
             // Down it backs up as from a closed screen, the max by `before`: from inside or above
             // the room the push back is before the bound, so it stops on the bound; from a camera
             // left far enough below the room it is after it, so it backs up 2 px, or 1 when the
             // move carried a subpixel (C-edge-down-from-below).
-            Axis::Down => max_by_before(far, back),
+            Axis::Down => max_by_before(bound, back),
         }
     }
 
@@ -205,7 +209,7 @@ impl<'a> Line<'a> {
     /// The margin at the screen holding `p`: none on a short screen, the line's margin on any
     /// other (Spec: ShortScreens).
     fn margin_at(&self, p: Px) -> Px {
-        if is_short(self.screen(p)) {
+        if self.screen(p) == ScreenKind::Short {
             NO_MARGIN
         } else {
             self.margin
@@ -235,7 +239,7 @@ impl<'a> Line<'a> {
 
     /// Whether the screen after the one holding `p` is closed.
     fn next_closed(&self, p: Px) -> bool {
-        is_closed(self.screen(p + SCREEN))
+        self.screen(p + SCREEN) == ScreenKind::Closed
     }
 
     /// Where a move ends once the room limits it, measured from where the aim stopped it (Spec:
@@ -259,7 +263,7 @@ impl<'a> Line<'a> {
         // In a closed screen it is pushed forward from where the move took it, but no further
         // than the next screen's edge, the min as plain numbers: a camera that moved onto its aim
         // from 8000 away pushes to 8100, which by `before` would be kept (C-push-left-far).
-        if is_closed(self.screen(c)) {
+        if self.screen(c) == ScreenKind::Closed {
             return min_by_exceeds(next_edge(c), self.push_ahead(m.reached));
         }
         c
@@ -274,9 +278,9 @@ impl<'a> Line<'a> {
         let looked = self.looks_from(m);
         let margin = self.margin_at(looked);
         let back = self.push_back(m.reached);
-        let far = self.far + margin;
-        if exceeds(c, far) {
-            return self.stop_past(far, back);
+        let bound = self.far + margin;
+        if exceeds(c, bound) {
+            return self.stop_past(bound, back);
         }
         let floor = edge(c) + margin;
         if self.next_closed(looked) && self.past_floor(c, floor) {
@@ -301,7 +305,7 @@ impl<'a> Line<'a> {
         let margin = self.margin_at(found);
         let c = min_by_exceeds(max_by_before(found, ROOM_START), self.far + margin);
         let floor = edge(c) + margin;
-        if is_closed(self.screen(c)) {
+        if self.screen(c) == ScreenKind::Closed {
             self.ease_out(c, found)
         } else if self.next_closed(c) && self.past_floor(c, floor) {
             self.ease_back(floor, found)
@@ -316,13 +320,14 @@ impl<'a> Line<'a> {
     /// It eases forward by the push from where it was found. She didn't move, so the speed is the
     /// extra pixel and what she moved inside a pixel, its pixel part 1 (or 0 after a creep, Spec:
     /// CreepReadsRightward), and the push is that and 2 more: 3 px a frame, or 2. An ease that
-    /// reaches or passes the next screen's edge, as plain numbers, stops on it: from a camera
-    /// left of the room, `FFF0` eases to `FFF3`, which passes `0100` (C-settle-reach-from-left).
+    /// the next screen's edge doesn't exceed, one that is the edge or exceeds it, stops on it:
+    /// from a camera left of the room, `FFF0` eases to `FFF3`, which exceeds `0100`
+    /// (C-settle-reach-from-left).
     /// An ease whose next screen is closed too drops to the edge of the screen it is in.
     fn ease_out(&self, c: Px, found: Px) -> Px {
         let eased = self.push_ahead(found);
         let next = next_edge(c);
-        if eased >= next {
+        if !exceeds(next, eased) {
             next
         } else if self.next_closed(eased) {
             edge(eased)
@@ -338,7 +343,7 @@ impl<'a> Line<'a> {
     /// on to a closed screen (C-settle-back-far-right).
     fn ease_back(&self, floor: Px, found: Px) -> Px {
         let pushed = self.push_back(found);
-        if before(floor, pushed) && is_closed(self.screen(pushed)) {
+        if before(floor, pushed) && self.screen(pushed) == ScreenKind::Closed {
             next_edge(pushed)
         } else {
             max_by_before(floor, pushed)

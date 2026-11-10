@@ -172,6 +172,11 @@ original's bytes as data.
 - `data::level::ScrollArea::Unknown(u8)`: a scroll byte no area has, in the run past a room's screens
   (above) or in room $ADAD's bottom row, whose four-byte table runs into the next room's header. The
   camera tests only for red and blue, so it reads one as green; the byte goes back out unchanged.
+  A scroll change list keeps one too (`data::plm::scroll_changes`), but the blocks model holds
+  screens by kind, so `game::blocks_world`'s write-back compares and writes kinds: a change to a
+  byte no area has writes green, and a change to green over a screen holding one writes nothing,
+  where the original writes the list's byte (`$84:8B68`). Vanilla reaches neither: of the 367
+  changes in every room state's lists, none holds such a byte or changes a screen holding one.
 
 ## The oracle
 

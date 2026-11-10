@@ -185,8 +185,8 @@ unchanged wherever the table is observed; the bridge hands the camera `ScreenKin
 (`game::camera_world::screen`).
 
 **The shared screen kind.** The blocks domain's `clean_types::ScreenKind` (`Closed`, `Open`,
-`Short`) is the camera's: the scroll cells write it and the camera reads it. The camera model's own
-`ScreenKind` (`clean_model/camera/src/room.rs`) is a copy of it, and goes.
+`Short`) is the camera's: the scroll cells write it and the camera reads it. The camera model
+holds no kind of its own: it reads `clean_types::ScreenKind` (`clean_model/camera/src/axis.rs`).
 
 **Switches** (spec, each entry's switch). `Parameter` where `Rules` holds the values:
 `FollowingHer` (`extra`), `LeadingHer` (the four settings' leads), `ClosedScreens` (`push`),
@@ -330,9 +330,18 @@ be verified on its own from the records, with her motion's outputs decoded as in
   from the same words as her position, so comparing it proves nothing: report it, don't count it.
 - **Masks (fields, not frames):** where another domain moved the point the camera measures from
   between N and the scroll, or moved the camera after its turn, the axes it touches are
-  unverified, reported apart. Whole states (documented as such, not single writes): movement types
-  16h (grapple: `$9B:BB25`.. and `$9B:BE98`.., the ±12 px clamps; `$91:F3AA`, the release's clamp) and 1Bh
-  (shinespark: `$90:D1D6`..`$90:D2B9`), and `0CF8` ≠ 0 (slow grapple scrolling), both axes.
+  unverified, reported apart. Whole states (documented as such, not single writes): movement type
+  16h (grapple: `$9B:BB25`.. and `$9B:BE98`.., the ±12 px clamps; `$91:F3AA`, the release's clamp)
+  and `0CF8` ≠ 0 (slow grapple scrolling), both axes.
+  The shinespark (movement type 1Bh at N or N+1), by axis, only where its clamp acts. Her movement
+  runs it before the scroll, and it rewrites where the camera saw her only when it fires: across
+  (`$90:D1D6`..`$90:D1FE`), `0B10` becomes her x less Fh when `0AF6 − 0B10` is 10h or more
+  (`CMP #$0010 BMI`), or her x plus Fh when it is −10h or less (`CMP #$FFF1 BPL`); down
+  (`$90:D2A3`..`$90:D2B9`), `0B14` becomes her y plus Eh when `0AFA − 0B14 − FFF2h` is negative,
+  so when she rose by more than 14 px. Her position at the scroll is N+1's `0B10`/`0B14`, and where
+  the camera saw her before it N's, so: mask x where N+1's `0B10` less N's is 10h or more either
+  way, and y where N+1's `0B14` less N's, less FFF2h, is negative. The other axis, and every other
+  shinespark frame, is compared.
   Single writers of where the camera saw her, both axes unless named:
   - `$A0:B7A1`, the cap on scrolling speed (`$A0:B7C4` y, `$A0:B7E8` x), called by Draygon (which
     holds her in movement type 1Ah) and the yapping maw: mask while either holds her;
@@ -348,15 +357,32 @@ be verified on its own from the records, with her motion's outputs decoded as in
     placement masks cover);
     Ridley (`$A6:E501`); Mother Brain moving her towards the ceiling or floor (`$A9:BBFD`, y) and
     towards the wall (`$A9:BC3F`, x): mask Mother Brain's moves on both axes;
-  - the gunship, while its function (enemy $D07F's) isn't the idle one (`$A2:A9BD`): it sets her x
-    and where the camera saw her across (`$A2:A925` landing, `$A2:AA1D` as she enters) and moves
-    her y (`$A2:A8DC`, `$A2:AC2F`, lowering and raising her): mask x and y (integrator, lane/wire-cam:
-    an earlier version said y only);
+  - the gunship (enemy $D07F), by its function at N. The enemies run after the scroll
+    (`$82:8B65`), so a write to `0B10`/`0B14` there is what N+1 holds, not what the camera read.
+    Only three of its functions write them:
+    - `$A8D0` (landing, the brakes) sets her x and `0B10` on its last frame (`$A2:A922`,
+      `$A2:A925`): mask x where N's function is `$A8D0`;
+    - `$A9BD` (idle) on the frame she enters, where N+1's function is no longer `$A9BD`: it sets
+      her x and `0B10` (`$A2:AA1A`, `$A2:AA1D`, unless her x is 480h), turns her to face forward
+      and starts her entering (`$A2:AA20`, `$A2:AA27`): mask x and y (on the 44-row cache, x alone
+      gives the same counts);
+    - `$AC1B` (liftoff, firing the engines) moves her y 1 or 2 px each frame and `0B14` with it
+      (`$A2:AC2F`..`$A2:AC64`): mask y where N's function is `$AC1B`.
+    Its other functions (`$A80C`, `$A8D0`'s `$A2:A8DC`, `$A950` the eject at `$A2:A960`, `$AA5D`,
+    `$AB6E`, `$ACD7`, `$AD2D`) write only her y `0AFA`, which the camera doesn't read: her next
+    movement starts from it, and the scroll then writes `0B14` from it, so those frames are
+    compared, the eject that starts the game among them (R13, R14);
   - the suit pick-ups (`$91:D4E4`, `$91:D5BA`), which centre her on the view across (`$91:D57D`,
     `$91:D580`, `0B10`) and down (`$91:D58A`, `$91:D58D`), and pose change command 4 (`$91:F37C`):
     mask x and y;
   - Samus's appearance (`$90:E86A`, writes `0B14`; her appearance when a game loads, owned by the
     game-state domain): mask y;
+  - a hit's knockback starting (special prospective pose change command 1, `$91:ED4E`, which sets
+    the knockback's movement handler `$90:DF38` at `$91:EE1F` or `$91:EE40`): her pose changes and
+    fits her body, placing her y, which samus-motion's model doesn't give. Mask y where her movement
+    handler `0A58` is the knockback's at N+1 and not at N; x stays compared (the lead's turn is
+    `LeadingHer`). Masking only the frames samus-motion's model doesn't cover leaves 11 frames
+    differing (chain-0057-9FBA 257, 269, 281, 294 and 306 among them), so the mask is needed;
   - the cutscenes of bank `$8B` (`$8B:AEFB`..`$8B:AFC4`) and the door transitions of bank `$80`/`$82`
     (outside game state 8 or at a room change, so already skipped).
   Writers of the camera after its turn: `07E9` ≠ 0 (the scrolling-finished hook, layer 1 Y only:
@@ -377,6 +403,13 @@ be verified on its own from the records, with her motion's outputs decoded as in
   samus-motion's model on it. Taking N+1's `0B14` instead is wrong: it is her y at the scroll by
   construction, which differs from the placement when she moves on after it (samus-motion's PF1,
   the lift after the push).
+- **The narrowed gunship and shinespark masks, measured** on the 44-row cache (`cache-v2`), with
+  R13, R14 and R35 compared on both axes: 20,513 frames matched (18,903 under the whole-state
+  masks), 102 masked whole (1,712), none differing; x masked on 119, y on 406. chain-0012-91F8
+  goes from 422 matched to 1,031, and the four shinespark rows match every frame they compare
+  (418, 405, 393 and 418). Without the two narrowed masks 70 frames differ: one gunship frame
+  (chain-0012-91F8) and the 69 clamps of §How the spec was made (36 in samus-shinespark-up, 33 in
+  samus-shinespark-up-left), so they cover what they must.
 - **Null model:** the camera doesn't move (6,271 of 14,890 frames).
 - **The push's 2 px: vectors only** (adversary 49, O3). No recorded frame backs off short of an
   edge: over the 32 rows, `camera-r3/o3model.py` (`model.py` with a tag for the push down that
@@ -407,18 +440,19 @@ importer. Each case keeps its old vector's id, so the history reads; its constru
 same frame moved into an invented room (§How the spec was made), and carries the rule.
 
 - **The frame** is the pair record N, N+1 of the row: N+1 is the record named. Every case is a
-  frame the harness compares (one frame of gameplay in one room, nothing masked on either axis):
-  a case the harness skips or masks is a harness defect, not a pass.
+  frame the harness compares (one frame of gameplay in one room), on both axes but for R24: its y
+  lies under the knockback's start mask (§The harness), which it needs, and its rule
+  (C-knockback-left, the knockback turning the lead) is on x, which is compared. A case the harness
+  skips, or masks on an axis the table doesn't name, is a harness defect, not a pass.
 - **Compared at N+1**, for every case: the camera's x and y, pixel and subpixel parts. Where it
   last saw her is reported, not counted (§The harness).
 - **The content the importer loads:** the room (its header in bank `$8F`) at the state the record
   holds; its size `07A9`×`07AB` and its heights from the header; its screens from the state's scroll
   pointer through `data::level::scroll_areas`: a table's 32h bytes (the room's `w × h`, then the run
   after them, which the camera reads below the room), or preset scrolls (every screen green but the
-  bottom row, the pointer's low byte plus one). Today's `scroll_areas` reads only the `w × h` bytes
-  and refuses a byte of 3 or more: the integrator extends it to return all 32h bytes, keeping such a
-  byte as `Unknown(u8)`, since seven table cases read the run after the screens (R3, R6, R11, R16,
-  R22, R31, R33) and must take it from the importer, not the record. The harness compares the
+  bottom row, the pointer's low byte plus one). `scroll_areas` returns all 32h bytes, keeping a
+  byte no area has as `ScrollArea::Unknown`, since seven table cases read the run after the
+  screens (R3, R6, R11, R16, R22, R31, R33) and take it from the importer, not the record. The harness compares the
   importer's screens with the record's table `$7E:CD20` at N+1 and runs the model on the importer's,
   with these taken from the record instead, by name:
   - screens changed before the frame (the scroll cells, the room's own code): the cases list them;
@@ -451,7 +485,7 @@ same frame moved into an invented room (§How the spec was made), and carries th
 | R21 | r03 31 | `$96BA`: table `$8F:9729`, 3×9; heights 70h/A0h | C-at-aim-down-held-across |
 | R22 | r03 210 | `$96BA`: table `$8F:9729`, 3×9, and the run after it; heights 70h/A0h | C-moonwalk-right-to-closed-edge |
 | R23 | r04 19 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-at-aim-across |
-| R24 | r04 297 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-knockback-left |
+| R24 | r04 297 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h; y masked (the knockback's start), x compared | C-knockback-left |
 | R25 | r04 314 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-right-to-closed-edge-down-to-bottom |
 | R26 | r05 1 | `$A293`: table `$8F:A2BE`, 8×2; heights 90h/A0h | C-corner-other-heights |
 | R27 | r05 66 | `$A293`: table `$8F:A2BE`, 8×2; heights 90h/A0h | C-knockback-rising-down-closed |

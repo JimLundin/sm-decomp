@@ -72,6 +72,11 @@ const MOONWALKING: u8 = 0x10;
 const GRAPPLING: u8 = 0x16;
 const HELD_BY_DRAYGON: u8 = 0x1A;
 const SHINESPARKING: u8 = 0x1B;
+/// The shinespark's clamps of where the camera saw her, which fire only past these: across
+/// ($90:D1D6..$90:D1FE) when her x is 10h or more from it either way, down ($90:D2A3..$90:D2B9)
+/// when her y less it, less `FFF2h`, is negative, so when she rose by more than 14 px.
+const SPARK_CLAMP_ACROSS: u16 = 0x0010;
+const SPARK_CLAMP_RISE: u16 = 0xFFF2;
 /// The X acceleration mode of turning round: the skid.
 const TURNING_AROUND: u16 = 1;
 /// The vertical direction of the rise state.
@@ -142,11 +147,19 @@ const KRAID_PUSH: (u16, u16) = (0x0004, 0xFFF8);
 const KRAID_BOTTOM_LINT: u16 = 0xE3BF;
 const KRAID_ARM_TOUCHED: u16 = 0xB89B;
 
-/// The gunship's top, and its idle function, the one that only waits for her to enter: every
-/// other function holds her and moves her, across ($A2:A925, $A2:AA1D, where she enters) and
-/// down ($A2:A8DC landing, $A2:AC2F liftoff, lowering and raising her).
+/// The gunship's top, and the three of its functions that write where the camera saw her. The
+/// enemies run after the scroll ($82:8B65), so such a write is what record N+1 holds, not what
+/// the camera read. Its other functions write only her y ($0AFA), which the camera doesn't read.
 const GUNSHIP: u16 = 0xD07F;
+/// Landing, the brakes: on its last frame it sets her x and where the camera saw her across
+/// ($A2:A922, $A2:A925).
+const GUNSHIP_BRAKING: u16 = 0xA8D0;
+/// Idle: on the frame she enters, the one it hands over on, it sets her x and where the camera
+/// saw her across ($A2:AA1A, $A2:AA1D) and turns her to face forward ($A2:AA20).
 const GUNSHIP_IDLE: u16 = 0xA9BD;
+/// Liftoff, firing the engines: it moves her y and where the camera saw her down each frame
+/// ($A2:AC2F..$A2:AC64).
+const GUNSHIP_LIFTOFF: u16 = 0xAC1B;
 /// The Dachora room, whose main code scrolls the view right ($8F:C1E6) while its scroll Bh is
 /// green.
 const DACHORA_ROOM: u16 = 0x9CB3;
@@ -567,7 +580,8 @@ fn slots(record: &FrameRecord) -> Result<Vec<Slot>, Skip> {
 }
 
 /// The masks of the enemies that move her or the view in the frame from `from` to `next`,
-/// live at either record: a yapping maw holding her, the bosses, the gunship holding her.
+/// live at either record: a yapping maw holding her, the bosses, the gunship's writers of where
+/// the camera saw her.
 fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
     let (before, after) = (slots(from)?, slots(next)?);
     let mut masks = kraid(from, next, (&before, &after))?;
@@ -593,15 +607,56 @@ fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
             mask(writer.reason, writer.fields);
         }
     }
-    if before
-        .iter()
-        .chain(&after)
-        .any(|slot| slot.species == GUNSHIP && slot.function != GUNSHIP_IDLE)
-    {
-        mask(
-            "another domain: the gunship holds her and moves her",
+    let gunship = |slots: &[Slot]| {
+        slots
+            .iter()
+            .find(|slot| slot.species == GUNSHIP)
+            .map(|slot| slot.function)
+    };
+    match gunship(&before) {
+        Some(GUNSHIP_BRAKING) => mask(
+            "another domain: the gunship's brakes set her x and where the camera saw her ($A2:A925)",
+            X,
+        ),
+        Some(GUNSHIP_IDLE) if gunship(&after) != Some(GUNSHIP_IDLE) => mask(
+            "another domain: the gunship sets her x and where the camera saw her as she enters ($A2:AA1D), and turns her ($A2:AA20)",
             CAMERA,
-        );
+        ),
+        Some(GUNSHIP_LIFTOFF) => mask(
+            "another domain: the gunship's liftoff moves her y and where the camera saw her ($A2:AC2F..$A2:AC64)",
+            Y,
+        ),
+        _ => {}
+    }
+    Ok(masks)
+}
+
+/// The masks of the shinespark's clamps in the frame from `from` to `next`, by axis. Her
+/// movement runs them before the scroll, and they rewrite where the camera saw her only when
+/// they fire. Her position at the scroll is `next`'s previous position and where the camera saw
+/// her before it `from`'s, so the clamp test reads the two.
+fn shinespark(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
+    let moved = |source| Ok::<_, Skip>(word(next, source)?.wrapping_sub(word(from, source)?));
+    let mut masks = Vec::new();
+    if moved(source::SAMUS_PREV_X_POS)?
+        .cast_signed()
+        .unsigned_abs()
+        >= SPARK_CLAMP_ACROSS
+    {
+        masks.push(Mask {
+            reason: "another domain: the shinespark's clamp across moves where it saw her ($90:D1D6)",
+            fields: X,
+        });
+    }
+    if moved(source::SAMUS_PREV_Y_POS)?
+        .wrapping_sub(SPARK_CLAMP_RISE)
+        .cast_signed()
+        .is_negative()
+    {
+        masks.push(Mask {
+            reason: "another domain: the shinespark's clamp down moves where it saw her ($90:D2A3)",
+            fields: Y,
+        });
     }
     Ok(masks)
 }
@@ -694,20 +749,17 @@ impl Domain for CameraDomain {
         }];
         masks.extend(enemies(from, next)?);
         masks.extend(deferred(from, next, *placement)?);
-        let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         let movement = [
             byte(from, source::SAMUS_MOVEMENT_TYPE)?,
             byte(next, source::SAMUS_MOVEMENT_TYPE)?,
         ];
+        if movement.contains(&SHINESPARKING) {
+            masks.extend(shinespark(from, next)?);
+        }
+        let mut mask = |reason, fields| masks.push(Mask { reason, fields });
         if movement.contains(&GRAPPLING) {
             mask(
                 "another domain: the grapple beam's clamps move where it saw her",
-                CAMERA,
-            );
-        }
-        if movement.contains(&SHINESPARKING) {
-            mask(
-                "another domain: the shinespark's clamp moves where it saw her",
                 CAMERA,
             );
         }
@@ -908,9 +960,9 @@ struct DownMove {
 fn down_past_aim(camera: Fixed, seen: Fixed, upstream: &Upstream) -> Option<DownMove> {
     let samus = &upstream.samus;
     let height = if samus.rising {
-        upstream.heights.rising
+        upstream.heights.while_rising
     } else {
-        upstream.heights.level
+        upstream.heights.while_not_rising
     };
     let her = samus.position.y;
     let aim = her.pixel() - height;

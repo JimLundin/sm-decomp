@@ -228,10 +228,10 @@ mod tests {
             };
             let below = self.below.map(|b| b.0).unwrap_or_default();
             let run = self.screens.into_iter().flat_map(|row| row.0).chain(below);
-            let [level, rising] = self.heights;
+            let [while_not_rising, while_rising] = self.heights;
             let heights = Heights {
-                level: Wrapping(level),
-                rising: Wrapping(rising),
+                while_not_rising: Wrapping(while_not_rising),
+                while_rising: Wrapping(while_rising),
             };
             Room::new(run.collect(), size, heights).expect("a valid room")
         }
@@ -374,8 +374,8 @@ after = { camera = ["0000.0000", "0000.0000"], seen = ["0000.0000", "0000.0000"]
     fn a_room_is_built_only_from_a_run_that_holds_it() {
         use clean_types::ScreenKind::Open;
         let heights = Heights {
-            level: Wrapping(112),
-            rising: Wrapping(160),
+            while_not_rising: Wrapping(112),
+            while_rising: Wrapping(160),
         };
         let build =
             |run: Vec<ScreenKind>, x: usize, y: usize| Room::new(run, Pair { x, y }, heights).err();

@@ -80,8 +80,8 @@ pub fn room(
 #[must_use]
 pub const fn heights(scrollers: Scrollers) -> Heights {
     Heights {
-        level: Wrapping(scrollers.up),
-        rising: Wrapping(scrollers.down),
+        while_not_rising: Wrapping(scrollers.up),
+        while_rising: Wrapping(scrollers.down),
     }
 }
 

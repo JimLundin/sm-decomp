@@ -73,7 +73,7 @@ fn population_at(image: &[u8]) -> PlmPopulation {
 }
 
 #[test]
-fn an_unmodelled_plm_keeps_its_id_and_argument_and_an_unknown_area_is_an_error() {
+fn an_unmodelled_plm_keeps_its_id_and_argument_and_a_byte_no_area_has_is_kept() {
     let rom = image(&[0x48, 0xc8, 1, 2, 0x34, 0x12, 0, 0], &[]);
     let decoded = population_at(&rom);
     assert_eq!(
@@ -88,12 +88,16 @@ fn an_unmodelled_plm_keeps_its_id_and_argument_and_an_unknown_area_is_an_error()
         &[0x03, 0xb7, 0, 0, 0x00, 0x90, 0, 0],
         &[(0x9000, &[13, 3, 0x80])],
     );
+    let decoded = population_at(&rom);
     assert_eq!(
-        population(Lorom::new(&rom), AT),
-        Err(PlmError::ScrollArea {
-            at: RomAddress::new(0x8f, 0x9001),
-            value: 3
-        })
+        decoded.changes(ScrollChangesId(0)),
+        Some(
+            [ScrollChange {
+                screen: 13,
+                area: ScrollArea::Unknown(3)
+            }]
+            .as_slice()
+        )
     );
 }
 

@@ -38,7 +38,8 @@
 #   the last column, the back-offs short of a screen's edge, time stopped against a frame that would
 #   ease, the creep, the look ahead while going down, the run below the room, a camera left below
 #   the room going down, a camera outside the room or 8000 from what it compares with, a push that
-#   carries) come first, each worked from the spec's rules. The cases the game's frames show follow
+#   carries, the screens read 128 px past the view's near edge on either side of a screen's edge)
+#   come first, each worked from the spec's rules. The cases the game's frames show follow
 #   (from C-aim-above-top on): each is such a frame's positions, moved by whole screens into an
 #   invented room whose screens the frame reads are of the kinds it read, with her y moved by the
 #   change in the height she aims with; each gives its case in a comment.
@@ -481,6 +482,33 @@ room = { screens = ["OO", "OC"], heights = [104, 150], below = "O" }
 before = { camera = ["0100.0000", "0100.0000"], seen = ["0180.0000", "0188.0000"] }
 samus = { position = ["0180.0000", "0188.0000"], facing = "Right" }
 after = { camera = ["0103.0000", "0100.0000"], seen = ["0180.0000", "0188.0000"] }
+[[vector]]
+# the read point across: the view's top is 80h px into its screen, so the point 128 px below it lies at the top of the screens below, where the next screen is closed: the view backs 2 px from its move right; the row above's next screen is open
+id = "C-read-point-across"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["OO", "OC"], heights = [104, 150] }
+before = { camera = ["0010.0000", "0080.0000"], seen = ["0080.0000", "0100.0000"] }
+samus = { position = ["0082.0000", "0100.0000"], facing = "Right" }
+after = { camera = ["000E.0000", "0080.0000"], seen = ["0082.0000", "0100.0000"] }
+[[vector]]
+# the read point down: the view's left edge is 80h px into its screen, so the point 128 px right of it lies at the left of the next column, whose screen below is closed: the view backs 2 px from its move down; the column before it is open below
+id = "C-read-point-down"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "AimingHeight"]
+room = { screens = ["OO", "OC"], heights = [104, 150] }
+before = { camera = ["0080.0000", "0040.0000"], seen = ["0100.0000", "0100.0000"] }
+samus = { position = ["0100.0000", "0102.0000"], facing = "Right" }
+after = { camera = ["0080.0000", "003E.0000"], seen = ["0100.0000", "0102.0000"] }
+[[vector]]
+# the read point across, a pixel higher: the view's top is 7Fh px into its screen, so the point 128 px below it lies at the bottom of the top row, whose next screen is closed: the view backs 2 px; the row below's next screen is open
+id = "C-read-point-across-7F"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["OC", "OO"], heights = [104, 150] }
+before = { camera = ["0010.0000", "007F.0000"], seen = ["0080.0000", "0100.0000"] }
+samus = { position = ["0082.0000", "0100.0000"], facing = "Right" }
+after = { camera = ["000E.0000", "007F.0000"], seen = ["0082.0000", "0100.0000"] }
 [[vector]]
 # she moves down 2 px but her aim is above the room's top: the view moves up onto the aim and stops on the top, its subpixel 0; across she is still and the next screen is closed, so it holds on its screen's edge
 id = "C-aim-above-top"

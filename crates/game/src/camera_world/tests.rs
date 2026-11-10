@@ -64,8 +64,14 @@ fn the_room_runs_on_into_the_scroll_buffer() {
         run(&areas, &below),
         [open, short, closed, open, short, open, closed]
     );
-    let Heights { level, rising } = heights(SCROLLERS);
-    assert_eq!((level, rising), (Wrapping(0x70), Wrapping(0xA0)));
+    let Heights {
+        while_not_rising,
+        while_rising,
+    } = heights(SCROLLERS);
+    assert_eq!(
+        (while_not_rising, while_rising),
+        (Wrapping(0x70), Wrapping(0xA0))
+    );
 }
 
 #[test]
