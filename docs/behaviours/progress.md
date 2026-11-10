@@ -30,10 +30,9 @@ P2 builds the saved file from progress, and the file tells them apart.
 - They ask (§1.4): has an event happened; is a boss of any of these kinds defeated in this area;
   is this location emptied; is this door open; is the map known for this area; how many
   zebetites; which state a room loads; the item percentage.
-- They read what she has as it is now (§1.1). Samus's motion reads the hi-jump boots and the
-  space jump switched on (samus-motion §1.3, equipment), and, seen only in her sprite, the screw
-  attack, the spring ball and a suit other than the first: all from the items switched on, never
-  from the ones that are merely hers.
+- They read what she has as it is now (§1.1). Samus's motion reads the items switched on, never
+  the ones merely hers; which of them change her motion or only her sprite is its table of the
+  items she reads ([samus-motion §1.3](samus-motion.md#13-what-she-reads-from-the-world-and-the-player-inputs)).
 
 **Not in this spec** (§8 names who supplies each): saving and loading the file and its layout;
 the explored map cells; the equipment screen's switches; the HUD's icons; the message boxes; the

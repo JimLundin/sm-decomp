@@ -117,7 +117,7 @@ below, means with it switched on:
 | `MorphBall` | without it, a change into `Morphing` is refused (`PoseFollows`) |
 | `SpringBall` | the ball's hop (`PadChart`) and which ball a morph ends in (`AnimationEnds`) |
 | `ScrewAttack`, `VariaSuit`, `GravitySuit` | only her sprite (`HowSheIsDrawn`); `GravitySuit` also in liquids, out of scope (§10) |
-| `SpeedBooster` | the booster's dash, out of scope (§10): no vector switches it on |
+| `SpeedBooster` | its dash cap and higher jump, out of scope (§10): the recorded vectors that switch it on come from frames neither shows on |
 | `Bombs`, `GrappleBeam`, `XRayScope` | none of her motion: what they do is other domains' (§10) |
 
 ---
@@ -166,7 +166,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Facing the screen → she is drawn in her first suit, or in the other suit's sprite with varia or
   gravity [original only]
 - How far her animation has run is out of scope (§10).
-- checked: original only (no vector switches on the items seen only in the sprite).
+- checked: original only (the sprite isn't compared: the recorded vectors switch these items on
+  as their records do, and compare none of it).
 
 ---
 
@@ -408,15 +409,16 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   C-slope-roll-carry-next, C-slope-run-off) [R2, R61, R144, W11]
 - So 0.C000 pulls her 1.C000: with no floor in reach she moves all of it, her y subpixel included
   (02A9.0000 becomes 02AA.C000, W11); on a floor the flush stop hides the subpixel part.
-- Walking off a ledge (the pull finds no floor), unless she is turning or her body is changing
-  shape → she moves the whole pull, subpixel part included, and falls from rest from there:
-  vertical speed 0, falling, bounces 0 [P6, C-slope-run-off]
+- Walking off a ledge (the pull finds no floor) with no upward vertical speed, unless she is
+  turning or her body is changing shape → she moves the whole pull, subpixel part included, and
+  falls from rest from there: vertical speed 0, falling, bounces 0 [P6, C-slope-run-off]
 - Walking off so with an upward vertical speed, one she keeps on the ground → she keeps that speed
   instead and rises on from there, as in the air (`RisingAndFalling`); bounces 0 [C-ground-rise]
 - So a rise that a change of shape carries into a pose on the ground (the unmorph's end in the air,
   `AnimationEnds`) lasts: she keeps it there and doesn't move by it, and walking off she rises on
   in the fall's pose until the pull spends it (record only: item-charge-beam 7-16, the crouch
-  rising at 2.4000 walks off and rises on in the fall).
+  rising at 2.4000 walks off and rises on in the fall; item-reserve-tank 520-521, the crouch
+  rising at 2.2400 pulled 1.0000 into the fall, as C-ground-rise).
 - On the ground (standing, running, crouched, turning on the ground, moonwalking, against the
   wall) → her vertical speed is kept as it is, whatever it is, and so is falling at 0 (§1.2):
   she doesn't move by it (the pull above is her only vertical move), the pull of
@@ -652,7 +654,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   upward speed (E2, R91, C-ceiling, R32, MT1).
 - On the ground she has an upward speed only from a rise that a change of shape carried into a
   pose on the ground (`FollowingTheGround`): the original holds it so outside any push, and the
-  camera, which reads `rising`, aims as for a rise (record only: item-charge-beam 7).
+  camera, which reads `rising`, aims as for a rise (record only: item-charge-beam 7,
+  item-reserve-tank 520).
 - So `rising` is not the sign of her vertical speed: at a rise at 0 the speed is 0 (C-rise-at-0,
   C-bounce-second), and on the frame that spends the rise it points down (E1: +0.0C00, rising)
   where the next frame's +0.1C00 is a fall (E2).
@@ -1167,10 +1170,11 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - Cells: aim kept; the new facing; aimed `Forward`, striding; on the ground; in the air; on the
   ground or in the air; with the spring ball, the spring ball's; gun stowed; dash 0; `Moonfall`.
 - The unmorph ending in the air → she is crouched in the air, a pose on the ground: her next frame
-  is the crouch's, the ground's pull with her vertical speed kept, and it walks her off a ledge
-  (`FollowingTheGround`) [C-unmorph-air-end, C-ground-rise]
+  is the crouch's, the ground's pull with her vertical speed kept, and, with no floor within the
+  pull, it walks her off a ledge (`FollowingTheGround`) [C-unmorph-air-end, C-ground-rise]
 - So an unmorph that ends in a fall has one crouched frame and then falls from rest (record only:
-  boss-kraid-defeated 779-782), and one that ends in a rise keeps the rise (item-charge-beam 5-8).
+  boss-kraid-defeated 779-782), and one that ends in a rise keeps the rise (item-charge-beam 5-8,
+  item-reserve-tank 519-521).
 - checked: oracle (P10, P11, P12, P19, P23, M1); constructed (C-unmorph-air-end).
 
 ### Out of the chart's scope

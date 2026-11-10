@@ -1197,15 +1197,21 @@ the landing's row "jump pressed" names no held button, so it takes off as JH3 do
 defer only the frame that ends it (C3 above); nothing to change.
 
 **V5, an upward motion on the ground outside a push.** Yes. Over the 44-row cache, `0B36` = 1 in
-a movement type on the ground (0, 1, 4, 5, Eh, Fh, 10h, 11h, 15h) under the normal handler
-`$A337` holds on 16 frames, beside the bomb jump's 26 (`$E032`) and 4 under handlers not hers
-(`$E725`, `$E8AA`): 15 in the transition type Fh while morphing in a rise (chain-0043-9AD9
-294-299, item-reserve-tank 101-106) or unmorphing in one (item-charge-beam 2, 3 and 5), where
-her rise goes on (`$90:A61C` moves her by it), and one in the crouch,
-item-charge-beam 7. There the unmorph's end hands over the crouch 28h in the air (instruction Dh,
+a movement type on the ground (0, 1, 4, 5, Eh, Fh, 10h, 11h, 15h) holds on 26 frames under the
+normal handler `$A337`, beside the bomb jump's 27 (`$E032`), and under no other handler. 24 are in
+the transition type Fh while morphing in a rise (chain-0043-9AD9 294-299, item-reserve-tank
+101-106) or unmorphing in one (item-charge-beam 1-6, item-reserve-tank 514-519), where her rise
+goes on (`$90:A61C` moves her by it; jump let go doesn't end it, chain-0043-9AD9 295-299 with
+`8B` = 0100h). 2 are in the crouch: item-charge-beam 7 and item-reserve-tank 520 (a record's WRAM is read where its length is followed, 128 KiB on, by the
+VRAM's: the length's bytes also occur at byte 16 of some headers). At
+item-reserve-tank 520 → 521 the crouch rising at 2.2400 is pulled 1.0000 from 005B.EFFF to
+005C.EFFF, keeps the speed, and falls in 2Ah: C-ground-rise exactly. At item-charge-beam 7 the unmorph's end hands over the crouch 28h in the air (instruction Dh,
 above), still rising at 2.4000; the crouch's handler `$90:A573` pulls her 2.C000 (`$90:923F`),
 finds no floor, and `$91:EFEF` keeps the speed and the direction because `0B36` = 1; 8 is the fall
-2Ah rising at 2.4000, and the rise runs under the pull to 16. So `rising` is `0B36` = 1 at the
+2Ah rising at 2.4000, and the rise runs under the pull to 16. A recorded vector for the rise
+during a change of shape (chain-0043-9AD9 297, y, the speed and `rising` alone) isn't added: the
+format compares y only with x, and her x there, still against a horizontal speed of 0.C000 during
+the morph, rests on a wall the record doesn't show. So `rising` is `0B36` = 1 at the
 frame's end on the ground too, and the spec now says so (`RisingAndFalling`, `FollowingTheGround`,
 `AnimationEnds`, `WhatHerMovesMet`'s crouched row). terrain-quicksand 196 is the push's, as
 adversary 61 found. The constructed vectors C-ground-rise-kept and C-ground-rise, worked by hand:
@@ -1224,8 +1230,18 @@ jump `$90:A46E`; morph ball `$91:F7CE`; spring ball `$91:E83D`, `$91:E86A`, `$91
 instruction 9's mask; screw attack `$90:8445`, `$91:D9F7`, `$91:DA0B`, `$91:F459` (sprite and
 palette); varia `$91:D629`, gravity `$91:D551`, `$91:DE6A`.. (palette) and `$90:8198`, `$90:9741`,
 `$90:98C2`, `$90:9BD4`, `$90:9C24`, `$90:9C5B`, `$90:E9D9` (liquids, out of scope); speed booster
-`$90:9789`, `$90:84FF`, `$90:8558` (the booster, out of scope). Bombs, grapple and x-ray aren't
-read in her motion. The format's `items` lists them by progress's `Item` names. The morph ball's
+`$90:9789`, `$90:84FF`, `$90:8558`, `$91:E644`, and `$90:9919`, `$90:99A6` (every jump and wall jump
+starts half the dash faster: the booster's higher jump, out of scope); also gravity in liquids
+`$90:994F`, `$90:99DC`, `$90:9A2F`, `$91:F68A`, `$91:F6EB`, the screw attack's spin pose and sprite
+`$91:F6B2`, `$91:F713`, `$91:E7A8`, `$91:E7B7`, `$91:E894`, and varia `$91:E741`, `$91:E757`. Bombs,
+grapple and x-ray aren't read in her motion.
+
+**The recorded vectors' items (adversary 69, finding 2).** Each recorded vector lists every item
+`09A2` holds at the record of its first frame's start (equal, in every one, to its checked
+frame's start), the items §1.3 says change nothing it compares included. All 158 were read from
+cache-v2 (r01-r08 are its chain rows); 105 changed, 103 of them in an item motion reads
+(`MorphBall` 103, `HiJumpBoots` 63, `SpringBall` 44, `SpaceJump` 31). The round-13 model under
+the local reading below gives the same 10 failures as before (it has no morph ball input yet). The format's `items` lists them by progress's `Item` names. The morph ball's
 rule is new to the spec (`PoseFollows`): NM1 is r02:490 (record 489, crouched 28h, `8F` 0600h,
 `09A2` 0; record 490 the same pose, x and y, `0A2E` 7), and C-morph-no-ball-air is SH3 without the
 morph ball, worked by hand: its moves as SH3's, then the pose restored, so y 0094.B7FF, the rise
