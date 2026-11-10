@@ -132,7 +132,7 @@ below, means with it switched on:
 | --- | --- |
 | body | `Upright`, `Crouched`, `Ball`, `SpringBall` |
 | action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Landing` (the moment she touches down from a jump, a fall or a spin, before she stands still), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
-| facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed) |
+| facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed, the way her speed points included: C-screen-skid) |
 | aim | the arm's direction: `Forward`, `Up`, `UpForward`, `DownForward`, `Down`; it changes only the sprite, except for `AimingAndShooting` |
 | turn | for `Turning` only, the turn she is in: `Fall` (in a fall), `Ground` (on the ground, upright or crouched), `Jump` (in a take-off or a straight jump), `MoonwalkJump` (the moonwalk's jump, still on the ground). The player sees it as what she was doing when she turned; `AnimationEnds` hands over a pose by it, and the pad chart reads `MoonwalkJump` as a turn on the ground |
 | landed from | for `Landing` only, what she touched down from: `Jump` (a straight jump or a fall, upright), `Spin` (a spin or a wall jump). The two look different, and one lasts longer than the other; both move her as standing still |
@@ -212,7 +212,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - While her body changes shape, or as the ball at rest on the ground following the pad with a
   vertical motion (a vertical speed, or falling at 0: §1.2, `FollowingTheGround`) → she moves by
   her dash only and keeps both speeds [R48, R89, R128, R129, BG1, BG2]
-- Facing the screen → she doesn't move at all and keeps her speeds [C-elevator]
+- Facing the screen → she doesn't move at all and keeps her speeds [C-elevator, C-screen-skid]
 - The ball at rest on the ground, following the pad, with no vertical motion → it moves by its
   dash only and halts after that move [R43]
 - The ball at rest, braking or skidding → it rolls like running, with its own speeds, and keeps
@@ -220,7 +220,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - checked: oracle (the running, ground and turning vectors; samus-mockball,
   samus-bomb-jump-vertical; BG2, the ball at rest falling at 0); original only (braking below
   zero: R98 and R123 start `Still` following the pad, so they halt as standing does; left and
-  right both held).
+  right both held); constructed (C-screen-skid, facing the screen she keeps her speed).
 
 ### Dash
 - kind: mechanic.
@@ -390,7 +390,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   frame (`PadChart`), and the count is 0 before that frame's end adds to it [JH1, JH2, JH3, JH4,
   C-held-9, C-held-built, C-held-landed]
 - So a landing that pose fit refuses or turns into the crouch (`PoseFitAfterMoves`) is no
-  landing here: the frame after it, jump held doesn't count as pressed (C-fit-land-tunnel-held).
+  landing here: the frame after it, jump held doesn't count as pressed (C-fit-land-tunnel-held,
+  C-fit-land-refused).
 - Jump let go on that frame → it still counts as just pressed for the pad chart; only the frame's
   end sees it let go, and puts the count at 0 [C-held-let-go]
 - So JH3 with jump let go on the landing's next frame takes off all the same (C-held-let-go).
@@ -406,7 +407,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   ends); constructed (C-held-9, a count of 9; C-held-let-go, jump let go on the landing's next
   frame; C-held-built, C-held-long, C-held-edge, C-held-long-edge and C-held-wrap, counts a
   caller gives at the start, and C-held-landed, the two parts read back after a landing;
-  C-fit-land-tunnel-held, a landing crouched instead; C-walljump-hijump, the wall jump's speed
+  C-fit-land-tunnel-held, a landing crouched instead, and C-fit-land-refused, a landing
+  refused; C-walljump-hijump, the wall jump's speed
   with hi-jump; C-space-jump-no-item, the press in the window without space jump).
 
 ### FollowingTheGround
@@ -534,11 +536,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - So on a floor with nothing above, her feet stay where they were: a body that grows by n px
   raises her centre by n px.
 - A block and a solid enemy on the same side → the enemy's far-side look comes first and can
-  refuse the change; then the push is by the block's room, as if the enemy were not there
-  [original only]
+  refuse the change; then the block's far-side look and push follow, by the block's room, as if
+  the enemy were not there [C-fit-land-refused]
 - That far-side look stopped, or something above her and something below her (blocks or solid
   enemies, in any mix) with her old body under 8 px half-height (the ball) → the change is
-  refused [C-fit-ball-tunnel]
+  refused [C-fit-ball-tunnel, C-fit-land-refused]
 - Something above her and something below her, her old body 8 px half-height or more → she takes
   crouched `Still` instead, aim `Forward`, facing as before the change; with an old body shorter
   than the crouch she rises by the difference, her feet staying where they were, and there is no
@@ -551,7 +553,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   row's (a rise, a halt, a brake, the dash joining her speed), not what her moves met (a landing's
   stop of her speeds: her horizontal and vertical speeds, and whether she carries on or skids,
   stay as her moves left them), and the crouch has no take-off (no rise and no 10 px lift)
-  [C-fit-land-tunnel, C-fit-tunnel, C-fit-ball-tunnel, C-fit-land-tunnel-skid]
+  [C-fit-land-tunnel, C-fit-tunnel, C-fit-ball-tunnel, C-fit-land-tunnel-skid, C-fit-land-refused]
+- So a landing refused leaves her in the pose she landed from, still falling at the speed her
+  fall reached (C-fit-land-refused).
 - So a landing crouched instead leaves her crouched, a pose on the ground, with the downward speed
   her fall reached: she keeps it there without moving by it (`FollowingTheGround`), so the next
   frame the pull holds her on the floor and the speed stays (C-fit-land-tunnel-next). It is no
@@ -582,17 +586,18 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   a 9 px far-side look and its 8 px look; C-fit-step-enemy, a stepped block above and a solid
   enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds,
   C-fit-land-tunnel-next the frame after it, C-fit-land-tunnel-held its jump held through, and
-  C-fit-land-tunnel-skid a skid kept through it;
+  C-fit-land-tunnel-skid a skid kept through it; C-fit-land-refused, a spin landing on a solid
+  enemy refused by the block's far-side look, block and enemy on the same side;
   C-fit-tunnel-aimed, the crouch taken instead from a body already the crouch's height: no
   placement); original only
   (the looks' cells of the harness case W15 and of C-near-wall-item, a body growing 7 px in open
-  air, which the record doesn't show; the second
-  look's refusal, the mixed and same-side cases beyond C-fit-step-enemy, a look up passing a sloped
+  air, which the record doesn't show; the enemy's far-side look's refusal, the mixed and
+  same-side cases beyond C-fit-step-enemy and C-fit-land-refused, a look up passing a sloped
   ceiling, the seat, and the cells' reactions); the placement: how far the records' screen may
   move up or down the next frame (PF1, PF2, PF3, U1, W13 after a push, W11 on a frame without
   one); constructed for the cases no record has: C-fit-ceiling (a push down), C-fit-land-tunnel
   (the crouch taken instead, rising 4 px), C-fit-tunnel-aimed (the crouch taken instead, no rise:
-  none), C-fit-step-enemy (a refusal: none).
+  none), C-fit-step-enemy and C-fit-land-refused (a refusal: none).
 
 ### ShrinkingLowersHer
 - kind: mechanic.
@@ -811,7 +816,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Falling onto a floor upright, or the ball landing after bounce 2 at any speed, or with no
   bounce yet at `vy < 3.0000` → she lands: vertical speed 0, bounces 0, horizontal speed 0,
   following the pad; the dash keeps its value [PF2, PF3, W13, C-enemy-down, C-slope-land,
-  C-bounce-third]
+  C-bounce-third, C-bounce-under]
 - Only a move by her vertical speed lands her, in the air or while her body changes shape. On the
   ground the floor under her never lands her, whatever vertical speed she keeps or the ball moves
   by (`FollowingTheGround`).
@@ -841,8 +846,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   meets the floor, TL2 the next frame on it, its vertical speed still growing, TL3 a turn in a
   jump, TL4 the ground turn sinking; r02:37-38 and r07:263-264, where the turn's end hands over a
   fall or a jump and the next frame lands her); constructed (C-bounce, C-bounce-pulled, bounce 1
-  read after the pull; C-bounce-second, bounce 2 at under 3 px; C-bounce-third,
-  the landing after it; BG1, the ball on the ground held by the floor).
+  read after the pull; C-bounce-under, no bounce at 2 px after the pull; C-bounce-second, bounce
+  2 at under 3 px; C-bounce-third, the landing after it; BG1, the ball on the ground held by the
+  floor).
 
 ---
 
@@ -1088,10 +1094,13 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   → she follows the pad again, keeping the speed the move left her: running at 0 with nothing
   held, the frame's run gains its step (0.3000) and she stands with it, following the pad, not
   carrying on [AS3, AS4]
+- So standing still facing the screen with nothing held ends a skid too, and her speed, kept,
+  then points rightward along her facing (§2, C-screen-skid).
 - checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, L1, L2, U1, and R133 and
   R141 of `TurningRound`; R102 for left and right both held in a spin; AS1 to AS4 for the
   let-go effect, AS4 the run at 0 that stands following the pad); constructed (C-chart-a to
-  C-chart-j); original only (the other rows with left and right both held).
+  C-chart-j; C-screen-skid, a skid ended facing the screen); original only (the other rows with
+  left and right both held).
 
 ### Aiming
 - kind: mechanic.

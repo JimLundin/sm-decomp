@@ -1397,6 +1397,67 @@ drops "on the ground") fails C-unmorph-air-end-off and C-unmorph-air-end-floor.
 58.0): every new rule is a consequence of an arm already counted, so the budget stays 7,133, with
 motion and the pose chart at their caps (2,813 and 1,584).
 
+## Round 16's amendments (2026-11-10)
+
+From adversary 78's observer items (V1-V3) and its finding I3. 261 vectors (258 + 3) and 51
+pose steps.
+
+**V1, a landing pose fit refuses.** `$91:FDAE` refuses in three places: an enemy one-side handler's
+re-look at the new radius (`$91:FE9E`, `$91:FEDF`) hitting, a block one-side handler's re-look at
+the old radius (`$91:FF20`, `$91:FF49`) hitting, and `$91:FFA7` with `0B00` < 8. A landing's growth
+is from the spin or wall jump (radius 0Ch), or a straight jump or a fall (13h), to 15h; a ball's
+landing keeps its radius, so `$91:FFA7` never refuses one. With blocks alone the block re-look can't
+hit: a landing leaves her flush (the floor's room `0A3C` 0), so `$91:FF49` re-looks up by g again,
+the same rows `$94:96AB` tested first. A floor room of r ≥ 2 makes the re-look `$94:96E3` alone for
+9 − r < 8 px at row top − (9 − r), which neither the 8 px look (row top − 8) nor the 9 px look
+tested; but with block-aligned floor faces that row is always F − 33 for a floor at F, in the same 8
+px quarter as top − 8, so the first look hits it too. A sloped floor breaks the alignment: the down
+look through `$94:86FE` stops on the last air row, anywhere in the block. So C-fit-land-refused: a
+spin (radius 0Ch) falling at 3.0000 from 0101.0000, x 0108, meets a solid enemy (centre 108h,117h,
+radius 8,8) 2 px below (`$A0:A8F0`, gap 2: stopped by 2 px, subpixel 0 kept) at 0103.0000. The
+landing's radius 15h gives g = 9. Enemy looks: up none; down touching (room 0, `0AFC` = 0), flags 2;
+`$91:FEDF` re-looks up 9 at radius 15h, `|0FA − 117h|` = 1Dh, not under 15h + 8: clear. Block looks:
+up 8 (top EFh, block (100h,E0h), air) and 9 (EEh, air): none; down 8 (bottom 116h, the slope at
+(100h,110h), its top row 1 at the centre column 8) stops with room 2 and writes no subpixel; flags
+2. `$91:FF49`: `$12` = 2 − 9 = −7, `$94:96E3` up 7 at radius 0Ch: top F0h, the stepped block
+(100h,F0h)'s upper half, solid (`$94:8DBD`, both halves for her span 103h-10Ch), carry set, `0AFC` =
+0. `$91:FE82` puts `0A20` back, `$91:F404` returns carry set, and `$91:EBEE` skips command 5:
+`0B2E`.`0B2C` stays 3.1C00 (the fall's pull), `0B36` 2, and no `$91:F1EC`, so no `$E926` and no
+landing for jump held through. The spec's same-side arm, "original only" before, now names the
+block's re-look and cites the vector. A second solid enemy above her at the new radius would refuse
+a landing on an enemy through `$91:FEDF` too; the vector format holds one enemy, so the slope
+carries it. The round-15 model passes it; the gate's mutant R4 (a refused change keeps what she met)
+fails it alone (speed_y 0).
+
+**V2, under bounce 1's threshold.** C-bounce-under: the ball at 0118.0000 falling at 2.D400
+meets the floor at 120h, stops flush at 0119.FFFF, and the pull makes 2.F000. `$91:EA15` (not
+bouncing) reads `0B2E` = 2, under 3, and goes to `$91:EA2D`: the ball's rest pose, then the
+landing's command (`0B20` 0, speeds 0). The model passes it;
+mutant B1 (bounce 1 from 2 px) fails it alone (bounces 1, speed −1.0000, pose kept).
+
+**V3, facing the screen counts as right.** Observable, in the skid. Pose 00h/9Bh with `0E18` = 0:
+`$90:A383` returns before any move (speeds kept), and `$91:804D` runs `$91:81A9`; with nothing
+held (`8B` = 0) it goes to `$91:82D9`, whose `$91:8304` gives movement type 0 command 2, and the
+pose is kept. `$91:EBEE` runs command 2, `$91:ECD0`: `0B4A` = 0. So a skid facing the screen
+(`0B4A` 1, decoded leftward) ends with the speed kept, and `0B4A` 0 with facing word 0 decodes
+rightward. C-screen-skid: −1.0000 facing the screen, nothing held → +1.0000, not skidding. The
+chart's "standing still, nothing held: a skid ends" already said so; the spec now says it where
+facing the screen is described. The model passes it; mutant S1 (`Side::of(Screen)` is Left)
+fails it alone (speed_x −1.0000). The facing-forward handler skips her move, not the pose
+input, so the skid's end comes as on any standing frame.
+
+**I3, the stepped block's quarters.** The format header now allows exactly two characters per
+string, each `#` or `.`, and no other character.
+
+**The current model against the amended vectors.** All 261 vectors, the 51 pose steps and the
+catalogue test pass. The gate's three survivors, each one line and reverted: R4 fails
+C-fit-land-refused, B1 fails C-bounce-under, S1 fails C-screen-skid, and each fails nothing
+else.
+
+**Units.** `tools spec-units` with these notes: 213.0 → 214.0 (pose fit 16.3 → 17.3): the
+same-side arm was original only and is now checked. The budget is 7,169, with pose fit 624;
+motion and the pose chart stay at their caps (2,813 and 1,584).
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1466,7 +1527,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 213.0 units, capped at 70% of old = 7,133 (motion 2,813 capped, pose fit 588, pose chart 1,584 capped, collision 2,148)
+Budget: 36 × 214.0 units, capped at 70% of old = 7,169 (motion 2,813 capped, pose fit 624, pose chart 1,584 capped, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

@@ -34,8 +34,8 @@
 #     when given, is the shape's and never applies to her moves.
 #   - solid_block: [x, y], the top-left corner of one solid 16 px block.
 #   - stepped: one stepped block: block = [x, y], its top-left corner; quarters = two strings, its
-#     upper 8 px row of quarters then its lower one, each two characters from the left: "#" a solid
-#     8 px quarter, "." air.
+#     upper 8 px row of quarters then its lower one, each exactly two characters from the left,
+#     and each character "#" (a solid 8 px quarter) or "." (air); no other character is allowed.
 #   - enemy: one solid enemy: centre = [x, y] in px; radius = [x, y], its half-width and half-height
 #     in px (its box is centre - radius to centre + radius, measured as her body's box is, spec §8).
 #   - elevator_moving: true when she stands on an elevator that is moving (spec §1.3).
@@ -2164,6 +2164,22 @@ pad = []
 jump_pressed = false
 after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000" }
 
+# C-screen-skid: facing the screen counts as right (spec §2). She starts skidding, a leftward
+# speed facing the screen, with nothing held. She doesn't move and keeps her speed, and standing
+# still's last chart row ends the skid: her speed follows the pad again and points along her
+# facing, so rightward.
+
+[[vector]]
+id = "C-screen-skid"
+source = "constructed"
+entries = ["SpeedBuildsAndBrakes", "PadChart"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "-0001.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false }
+
 [[vector]]
 id = "C-enemy-ahead"
 source = "constructed"
@@ -2900,6 +2916,33 @@ next_pose = { body = "Upright", action = "Landing", facing = "Left", radius = [5
 pad = ["left"]
 jump_pressed = false
 after = { position = ["0102.4000", "0110.FFFF"], speed_x = "+0000.E000", dash = "0000.0000", speed_y = "+0002.3800", skidding = true, pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16] } }
+
+# C-fit-land-refused: a landing that pose fit refuses. A spin falling at 3.0000 meets a solid enemy
+# 2 px below her (her bottom side 269, its top side 271) and stops on it at 0103.0000, the pull
+# growing her speed to 3.1C00. The landing's body grows 9 px. The enemy looks find it below (room
+# 0), and its far-side look up at her new size finds nothing. The block looks at her old size: up,
+# the 8 px look's row 239 and the 9 px look's row 238 are air; down, the 8 px look meets the
+# sloped floor under the enemy (its top row 1 at her centre column, the last air row 272) and
+# finds 2 px of room. Block and enemy are on the same side, so the block's far-side look runs: up
+# 9 - 2 = 7 px, a look under 8 px alone, whose row 240 is the stepped block's solid upper half.
+# Her head is inside that half's lowest row, so the look is stopped where it starts (her y
+# subpixel written 0), and the change is refused. She stays spinning, with her speeds as her move
+# left them: a landing would have stopped her vertical speed. No placement, and no landing for
+# jump held through. With block faces alone a landing is never refused: she lands flush on a
+# floor, so the far-side look is the first look again; a floor she isn't flush with, here the
+# slope under an enemy, gives it a shorter look and another row.
+
+[[vector]]
+id = "C-fit-land-refused"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "Landing", "WhatHerMovesMet", "SolidEnemies", "SlopesCarry", "Jumping"]
+world = { slope_floor = { block = [256, 272], surface = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, stepped = { block = [256, 240], quarters = ["##", ".."] }, enemy = { centre = [264, 279], radius = [8, 8] } }
+before = { position = ["0108.0000", "0101.0000"], speed_y = "+0003.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "0103.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0003.1C00", placed = "none", jump_held = 0, landed_or_ended = false, pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] } }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
@@ -4274,6 +4317,21 @@ source = "constructed"
 entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir"]
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000", bounces = 2 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "+0000.0000", bounces = 0, speed_x = "+0000.0000" }
+
+# C-bounce-under: C-bounce's twin under bounce 1's 3 px. It meets the floor at 2.D400,
+# which the pull takes to 2.F000: 2 px, so the ball lands and rests.
+
+[[vector]]
+id = "C-bounce-under"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], speed_y = "+0002.D400" }
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
 pad = []
