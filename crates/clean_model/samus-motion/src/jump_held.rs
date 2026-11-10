@@ -2,12 +2,12 @@
 //! turn or of a landing, counts as a press for the pad chart the next frame, so she takes off
 //! again without pressing it.
 
-use crate::chart::Moment;
 use crate::rows::Met;
 use crate::rules::Rules;
+use crate::tick::Frame;
 use clean_types::Action::{Landing, Turning};
-use clean_types::Pose;
 use clean_types::button::JUMP;
+use clean_types::{Buttons, Pose};
 use core::num::Wrapping;
 
 /// §1.2 landed or ended the frame before: what a frame leaves the next one, for that frame alone.
@@ -43,20 +43,26 @@ impl JumpHeld {
     /// `Jumping`: whether jump counts as just pressed for the pad chart this frame: the frame
     /// before, she landed or an animation ended, and the count is one that counts. It counts so
     /// with jump let go on this frame too: only the frame's end sees it let go.
-    #[must_use]
-    pub(crate) fn presses(self, r: &Rules) -> bool {
+    fn presses(self, r: &Rules) -> bool {
         self.before == FrameBefore::LandedOrEnded && counts(self.frames, r)
     }
 
-    /// `Jumping`: what she remembers at the end of the frame `moment` reads, which she started in
-    /// pose `was` and ends in pose `now`. A press the count made this frame
-    /// (`Moment::jump_held_through`) puts it back to 0 first; then jump held and not just pressed
-    /// counts one frame more, and jump just pressed or not held puts it at 0. The press this
-    /// reads is the pad's own.
-    #[must_use]
-    pub(crate) fn then(self, moment: &Moment, was: Pose, now: Pose) -> Self {
-        let f = moment.frame;
-        let held = if moment.jump_held_through {
+    /// `PadChart`, `Jumping`: the buttons the pad chart reads as just pressed this frame: the
+    /// pad's (`pressed`), and jump where jump held through counts as a press.
+    pub(crate) fn pressed(self, pressed: Buttons, r: &Rules) -> Buttons {
+        if self.presses(r) {
+            Buttons(pressed.0 | JUMP.0)
+        } else {
+            pressed
+        }
+    }
+
+    /// `Jumping`: what she remembers at the end of frame `f`, which leaves the next `before`. A
+    /// press the count made this frame puts it back to 0 first; then jump held and not just
+    /// pressed counts one frame more, and jump just pressed or not held puts it at 0. The press
+    /// this reads is the pad's own.
+    pub(crate) fn then(self, r: &Rules, f: &Frame, before: FrameBefore) -> Self {
+        let held = if self.presses(r) {
             Wrapping(0)
         } else {
             self.frames
@@ -66,10 +72,7 @@ impl JumpHeld {
         } else {
             Wrapping(0)
         };
-        Self {
-            frames,
-            before: left_by(moment, was, now),
-        }
+        Self { frames, before }
     }
 }
 
@@ -79,17 +82,20 @@ fn counts(frames: Wrapping<u16>, r: &Rules) -> bool {
     r.held_through.contains(&frames.0) || r.held_long.contains(&frames.0)
 }
 
-/// §1.2: what a frame leaves the next, from the pose she started it in (`was`) and the one she
-/// ends it in (`now`). She landed: her moves met a floor and she ends in `Landing`, the pose
-/// `WhatHerMovesMet` chose and pose fit took; a landing pose fit refuses or turns into the crouch
-/// is none (`PoseFitAfterMoves`). Or the animation of a turn or of a landing ended and handed over
-/// its pose (`AnimationEnds`).
-fn left_by(moment: &Moment, was: Pose, now: Pose) -> FrameBefore {
-    let landed = moment.met == Some(Met::Floor) && matches!(now.action, Landing(_));
-    let ended = moment.frame.animation_ends && matches!(was.action, Turning(_) | Landing(_));
-    if landed || ended {
-        FrameBefore::LandedOrEnded
-    } else {
-        FrameBefore::Other
+impl FrameBefore {
+    /// §1.2: what a frame leaves the next, from what her moves met, whether her animation
+    /// ended, the pose she started it in (`was`) and the one she ends it in (`now`). She landed:
+    /// her moves met a floor and she ends in `Landing`, the pose `WhatHerMovesMet` chose and pose
+    /// fit took; a landing pose fit refuses or turns into the crouch is none
+    /// (`PoseFitAfterMoves`). Or the animation of a turn or of a landing ended and handed over
+    /// its pose (`AnimationEnds`).
+    pub(crate) fn left(met: Option<Met>, animation_ends: bool, was: Pose, now: Pose) -> Self {
+        let landed = met == Some(Met::Floor) && matches!(now.action, Landing(_));
+        let ended = animation_ends && matches!(was.action, Turning(_) | Landing(_));
+        if landed || ended {
+            Self::LandedOrEnded
+        } else {
+            Self::Other
+        }
     }
 }

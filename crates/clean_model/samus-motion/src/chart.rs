@@ -14,26 +14,28 @@ use crate::rows::Test::{
 };
 use crate::rows::{Effect, Met, Row, Situation, Test, seen};
 use crate::rules::Lowers;
-use crate::situation::classify;
-use crate::tick::Frame;
+use crate::situation::{UnknownPose, classify};
 use clean_types::Action::Running;
-use clean_types::button::JUMP;
-use clean_types::{Buttons, Item, Pose, Side};
+use clean_types::{Buttons, Fixed, Pose, Side, ZERO};
 
 /// What the chart reads of a frame besides her pose.
 ///
-/// The frame (its pad held and just pressed, the items switched on, an animation's end), whether
-/// her horizontal speed at its start isn't 0, whether she is off the ground once her moves are
-/// made, whether jump held through counts as a press, and what her moves met.
-pub struct Moment<'a> {
-    /// Her horizontal speed at the frame's start isn't 0.
-    pub moving: bool,
+/// The pad, the spring ball, an animation's end, her horizontal speed at the frame's start,
+/// whether she is off the ground once her moves are made, and what they met.
+pub struct Moment {
+    /// The buttons held.
+    pub pad: Buttons,
+    /// The buttons the chart reads as just pressed: the pad's, and jump where jump held through
+    /// counts as a press (`Jumping`).
+    pub pressed: Buttons,
+    /// The spring ball is switched on.
+    pub spring_ball: bool,
+    /// `AnimationEnds`: her pose's animation ends this frame.
+    pub animation_ends: bool,
+    /// Her horizontal speed at the frame's start.
+    pub speed: Fixed,
     /// Off the ground once her moves are made.
     pub airborne: bool,
-    /// `Jumping`, jump held through: jump counts as just pressed for the pad chart this frame.
-    pub jump_held_through: bool,
-    /// The frame.
-    pub frame: &'a Frame<'a>,
     /// What her moves met.
     pub met: Option<Met>,
 }
@@ -77,13 +79,17 @@ fn rank(row: &Row) -> (bool, usize) {
     )
 }
 
-impl Moment<'_> {
+impl Moment {
     /// `PoseFollows`: the pose she takes from `pose`, hers at the frame's start, at this moment:
     /// an animation's end hands over its pose, else what her moves met chooses, else the pad
-    /// chart's. What the pose then does, pose fit and its effects, is the step's.
-    #[must_use]
-    pub fn next_pose(&self, pose: Pose) -> Pose {
-        self.choose(pose, classify(pose)).pose
+    /// chart's. What the pose then does, pose fit and its effects, is the step's. A pose no
+    /// situation names has no next pose: it is reported.
+    ///
+    /// # Errors
+    ///
+    /// `UnknownPose`, where no situation names `pose`.
+    pub fn next_pose(&self, pose: Pose) -> Result<Pose, UnknownPose> {
+        Ok(self.choose(pose, classify(pose)?).pose)
     }
 
     /// `PoseFollows`: the choice from `pose` in its `situation`, with its effects.
@@ -95,13 +101,30 @@ impl Moment<'_> {
         }
         .choose()
     }
+
+    /// `WhatHerMovesMet`, `AimingAndShooting`: the aim change's step blocked, the pose chosen
+    /// goes against the wall where `STEP_BLOCKED` fits it (a running pose), with none of its
+    /// row's effects; else the pose chosen stands.
+    pub(crate) fn step_blocked(&self, chosen: Choice, situation: &'static Situation) -> Choice {
+        let reading = Reading {
+            moment: self,
+            pose: chosen.pose,
+            situation,
+        };
+        let row = &table::STEP_BLOCKED;
+        if reading.fits(row.needs) {
+            reading.choice(row)
+        } else {
+            chosen
+        }
+    }
 }
 
 /// `PadChart`: the chart read at a moment for one pose, hers at the frame's start, and the
 /// situation it puts her in.
 struct Reading<'a> {
     /// The moment.
-    moment: &'a Moment<'a>,
+    moment: &'a Moment,
     /// Her pose.
     pose: Pose,
     /// Her situation.
@@ -127,24 +150,13 @@ impl Reading<'_> {
             .unwrap_or_else(|| rank(a) > rank(b))
     }
 
-    /// `PadChart`, `Jumping` (jump held through): the buttons the chart reads as just pressed:
-    /// the pad's, and jump where jump held through counts as a press.
-    const fn pressed(&self) -> Buttons {
-        let pad = self.moment.frame.pressed;
-        if self.moment.jump_held_through {
-            Buttons(pad.0 | JUMP.0)
-        } else {
-            pad
-        }
-    }
-
     /// `PadChart`, `Aiming`, `WhatHerMovesMet`, `AnimationEnds`: whether one test of a row
     /// passes; forward and back are by her facing at the frame's start.
     fn passes(&self, test: &Test) -> bool {
         let (p, m) = (self.pose, self.moment);
         match *test {
-            Held(b) => seen(m.frame.pad, p.facing).any(b),
-            Pressed(b) => seen(self.pressed(), p.facing).any(b),
+            Held(b) => seen(m.pad, p.facing).any(b),
+            Pressed(b) => seen(m.pressed, p.facing).any(b),
             Not(t) => !self.passes(t),
             Aimed(aims) => aims.contains(&p.aim),
             Gun(gun) => p.gun == gun,
@@ -153,8 +165,8 @@ impl Reading<'_> {
             Action(actions) => actions.contains(&p.action),
             Doing(doings) => doings.contains(&self.situation.doing),
             Airborne => m.airborne,
-            SpringBall => m.frame.items[Item::SpringBall],
-            Moving => m.moving,
+            SpringBall => m.spring_ball,
+            Moving => m.speed != ZERO,
             Test::Met(met) => m.met == Some(met),
         }
     }
@@ -202,7 +214,7 @@ impl Reading<'_> {
             .unwrap_or_else(|| self.pad_chart());
         let by_moves = self.choice(by_moves);
         self.first(table::ANIMATION_ENDS)
-            .filter(|_| self.moment.frame.animation_ends)
+            .filter(|_| self.moment.animation_ends)
             .map_or(by_moves, |r| Choice {
                 steps: by_moves.steps,
                 ..self.choice(r)

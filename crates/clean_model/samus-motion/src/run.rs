@@ -1,12 +1,14 @@
-//! Her horizontal motion as a value of its own (§1.2 carrying on, her dash).
+//! Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash).
 //!
 //! How her speed builds, brakes and halts as her situation moves her (`SpeedBuildsAndBrakes`,
-//! `Dash`, `DriftInTheAir`, `Jumping`, `TurningRound`). Samus holds one; her moves read it.
+//! `Dash`, `DriftInTheAir`, `Jumping`, `TurningRound`), and what a turn, a landing, a wall's
+//! kick or the pad chart's let-go rows do to it. Samus holds one; her moves read it.
 
 use crate::rows::Drift::{self, Air, BallAir, Ground, Spin, WallJump};
 use crate::rows::{FORWARD, Moves, seen};
 use crate::rules::{Gait, Limits, Rules};
 use crate::tick::Tick;
+use crate::vertical::Contact;
 use Carry::{CarriesOn, FollowsPad};
 use DashIs::{Hers, ToLose};
 use Stride::{Both, Dash, DashThenHalt, Nothing};
@@ -70,7 +72,7 @@ impl Run {
     }
 
     /// `Landing`, `WallJump`, `DriftInTheAir`: horizontal speed 0, following the pad.
-    pub(crate) const fn stop(&mut self) {
+    const fn stop(&mut self) {
         self.speed = ZERO;
         self.carry = FollowsPad;
     }
@@ -83,10 +85,52 @@ impl Run {
 
     /// `TurningRound`, `PadChart`'s "as running": the dash joins her speed (dash 0) and she
     /// carries on.
-    pub(crate) fn join_dash(&mut self) {
+    fn join_dash(&mut self) {
         self.speed += self.dash;
         self.dash = ZERO;
         self.carry = CarriesOn;
+    }
+
+    /// `TurningRound`: her dash joins her speed and she travels against her new facing
+    /// (`facing`), a skid.
+    pub(crate) fn turn_round(&mut self, facing: Facing) {
+        self.way = Side::of(facing.back());
+        self.join_dash();
+    }
+
+    /// `PadChart`: she follows the pad again, a skid ending along her new facing (`facing`).
+    pub(crate) const fn end_skid(&mut self, facing: Facing) {
+        self.carry = FollowsPad;
+        self.way = Side::of(facing);
+    }
+
+    /// `PadChart`'s "as running": her horizontal speed 0 at the frame's start (`start`) or
+    /// after the frame's move, she follows the pad again, keeping the speed the move left her;
+    /// else the dash joins her speed and she carries on, braking.
+    pub(crate) fn as_running(&mut self, start: Fixed) {
+        if start == ZERO || self.speed == ZERO {
+            self.carry = FollowsPad;
+        } else {
+            self.join_dash();
+        }
+    }
+
+    /// `Dash`: the change takes her dash (dash 0).
+    pub(crate) const fn clear_dash(&mut self) {
+        self.dash = ZERO;
+    }
+
+    /// `Landing`, `WallJump`: what her moves' contact does to her run: a wall's kick stops
+    /// it, following the pad; a landing too, the dash keeping its value to lose (§1.2).
+    pub(crate) const fn meet(&mut self, contact: Contact) {
+        match contact {
+            Contact::WallKick => self.stop(),
+            Contact::Land => {
+                self.stop();
+                self.dash_is = ToLose;
+            }
+            Contact::Hop | Contact::Bounce(_) | Contact::Settle => {}
+        }
     }
 
     /// `Jumping`: starting a straight jump or a fall with a dash she carries on along her
@@ -207,7 +251,7 @@ impl Run {
     }
 
     /// `Dash` (§1.2): a dash she is to lose is gone the next frame she moves.
-    pub(crate) fn lose_dash(&mut self) {
+    fn lose_dash(&mut self) {
         if self.dash_is == ToLose {
             self.dash = ZERO;
         }

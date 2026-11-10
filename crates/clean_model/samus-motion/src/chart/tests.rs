@@ -6,28 +6,35 @@
 //! rows of a situation or a table share an identity.
 
 use super::{Moment, Reading, table};
-use crate::rows::{BACK, FORWARD, Row, RowId};
+use crate::rows::{BACK, FORWARD, Row, RowId, Situation, Test};
 use crate::rules::Rules;
-use crate::situation::{ACTIONS, CLASSES, STANDING, classify};
-use crate::tick::Frame;
-use clean_types::Action::{
-    self, AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling,
-    Running, Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
-};
-use clean_types::button::{DOWN, JUMP, LEFT, PAD, RIGHT, SHOOT, UP};
-use clean_types::{
-    Aim, Body, Buttons, Facing, Gun, LandedFrom, Legs, Pair, Parity, Pose, Radius, Set, Turn, ZERO,
-    px,
-};
+use crate::situation::{CLASSES, UnknownPose, classify};
+use clean_types::Action::{Crouching, Morphing, Rolling, StandingUp, Unmorphing};
+use clean_types::button::{DOWN, PAD, SIDES, UP};
+use clean_types::{Aim, Body, Buttons, Facing, Fixed, Gun, Legs, Pose, ZERO, px};
 use core::num::Wrapping;
+use core::ptr;
+
+/// Every situation the classes give, each once.
+fn situations() -> Vec<&'static Situation> {
+    let mut all: Vec<&'static Situation> = Vec::new();
+    for class in CLASSES {
+        if !all.iter().any(|s| ptr::eq(*s, class.is)) {
+            all.push(class.is);
+        }
+    }
+    all
+}
 
 /// Every row of the chart: each situation's pad chart rows and its last row, and the rows of
-/// `WhatHerMovesMet` and `AnimationEnds`.
+/// `WhatHerMovesMet` and `AnimationEnds`, the blocked step's included.
 fn every_row() -> Vec<&'static Row> {
-    let situations = CLASSES.iter().map(|c| c.is).chain([&STANDING]);
-    let pad = situations.flat_map(|s| s.rows.iter().chain([&s.last]));
+    let pad = situations()
+        .into_iter()
+        .flat_map(|s| s.rows.iter().chain([&s.last]));
     pad.chain(table::MOVES_MET)
         .chain(table::ANIMATION_ENDS)
+        .chain([&table::STEP_BLOCKED])
         .collect()
 }
 
@@ -67,121 +74,121 @@ fn forward_and_back_are_apart_from_the_pad() {
     assert_ne!(BACK.0, 0, "back is empty");
 }
 
-/// The action after `a` in `ACTIONS`, by a match on `Action` with no wildcard: an action added to
-/// the type doesn't compile here until it is given its place, and then `every_action_is_listed`
-/// fails until `ACTIONS` holds it.
-const fn after(a: Action) -> Option<Action> {
-    match a {
-        AgainstWall => Some(Crouching),
-        Crouching => Some(Falling),
-        Falling => Some(Jumping),
-        Jumping => Some(Landing(LandedFrom::Jump)),
-        Landing(LandedFrom::Jump) => Some(Landing(LandedFrom::Spin)),
-        Landing(LandedFrom::Spin) => Some(Moonwalking),
-        Moonwalking => Some(Morphing),
-        Morphing => Some(Rolling),
-        Rolling => Some(Running),
-        Running => Some(Spinning),
-        Spinning => Some(StandingUp),
-        StandingUp => Some(Still),
-        Still => Some(TakingOff),
-        TakingOff => Some(Turning(Turn::Fall)),
-        Turning(Turn::Fall) => Some(Turning(Turn::Ground)),
-        Turning(Turn::Ground) => Some(Turning(Turn::Jump)),
-        Turning(Turn::Jump) => Some(Turning(Turn::MoonwalkJump)),
-        Turning(Turn::MoonwalkJump) => Some(Unmorphing),
-        Unmorphing => Some(WallJumping),
-        WallJumping => None,
+/// A moment with this pad, her horizontal speed at the frame's start and whether she is off
+/// the ground, and nothing else: no spring ball, no animation's end, nothing her moves met.
+const fn moment(pad: Buttons, pressed: Buttons, speed: Fixed, airborne: bool) -> Moment {
+    Moment {
+        pad,
+        pressed,
+        spring_ball: false,
+        animation_ends: false,
+        speed,
+        airborne,
+        met: None,
     }
 }
 
-/// `MovesAsShePosed`: the classes' list of every action holds each action of `Action` once, so
-/// a class of any action (`situation`'s `ANY`) can't miss one.
+/// `MovesAsShePosed`: a pose no situation names (upright `Rolling`) is reported, by the
+/// situations and by the chart, never given a situation's motion.
 #[test]
-fn every_action_is_listed() {
-    let every: Vec<Action> = core::iter::successors(Some(AgainstWall), |a| after(*a))
-        .take(ACTIONS.len().saturating_add(1))
-        .collect();
-    assert_eq!(every, ACTIONS, "ACTIONS isn't every action, each once");
+fn a_pose_no_situation_names_is_reported() {
+    let pose = Pose {
+        body: Body::Upright,
+        action: Rolling,
+        facing: Facing::Right,
+        aim: Aim::Forward,
+        gun: Gun::Stowed,
+        legs: Legs::Together,
+    };
+    assert_eq!(classify(pose).err(), Some(UnknownPose(pose)));
+    let still = moment(Buttons(0), Buttons(0), ZERO, false);
+    assert_eq!(still.next_pose(pose), Err(UnknownPose(pose)));
 }
 
-/// Every aim.
-const AIMS: [Aim; 5] = [
-    Aim::Forward,
-    Aim::Up,
-    Aim::UpForward,
-    Aim::DownForward,
-    Aim::Down,
-];
-
-/// Every body and action, each pose part the rows read, both sides of the ground.
-fn situations() -> Vec<(Pose, bool)> {
-    let upright = [
-        Still,
-        Landing(LandedFrom::Jump),
-        Landing(LandedFrom::Spin),
-        Running,
-        TakingOff,
-        Jumping,
-        Spinning,
-        Falling,
-        Turning(Turn::Ground),
-        Turning(Turn::MoonwalkJump),
-        Turning(Turn::Jump),
-        Turning(Turn::Fall),
-        Moonwalking,
-        WallJumping,
-        AgainstWall,
-    ]
-    .map(|a| (Body::Upright, a));
-    let other = [
-        (Body::Crouched, Still),
-        (Body::Crouched, Turning(Turn::Ground)),
-        (Body::Crouched, Crouching),
-        (Body::Crouched, Unmorphing),
-        (Body::Upright, StandingUp),
-        (Body::Ball, Morphing),
-        (Body::Ball, Still),
-        (Body::Ball, Rolling),
-        (Body::Ball, Falling),
-        (Body::SpringBall, Still),
-        (Body::SpringBall, Rolling),
-        (Body::SpringBall, Falling),
-        (Body::SpringBall, Jumping),
-    ];
-    upright
-        .into_iter()
-        .chain(other)
-        .flat_map(|(body, action)| {
-            [Facing::Left, Facing::Right].map(|facing| Pose {
+/// The poses that put her in situation `s`: those of its classes that no earlier class takes,
+/// facing either side, with either gun (the rows read no legs, so they are together).
+fn poses(s: &'static Situation) -> Vec<Pose> {
+    let mut poses: Vec<Pose> = Vec::new();
+    for class in CLASSES.iter().filter(|c| ptr::eq(c.is, s)) {
+        let parts = class
+            .body
+            .iter()
+            .flat_map(|&body| class.action.iter().map(move |&action| (body, action)));
+        let aimed = parts.flat_map(|(body, action)| {
+            class.aim.iter().map(move |&aim| Pose {
                 body,
                 action,
-                facing,
-                aim: Aim::Forward,
+                facing: Facing::Left,
+                aim,
                 gun: Gun::Stowed,
                 legs: Legs::Together,
             })
-        })
-        .flat_map(|p| AIMS.map(|aim| Pose { aim, ..p }))
+        });
+        poses.extend(aimed);
+    }
+    poses
+        .into_iter()
+        .flat_map(|p| [Facing::Left, Facing::Right].map(|facing| Pose { facing, ..p }))
         .flat_map(|p| [Gun::Drawn, Gun::Stowed].map(|gun| Pose { gun, ..p }))
-        .flat_map(|p| [Legs::Striding, Legs::Together].map(|legs| Pose { legs, ..p }))
-        .flat_map(|p| [false, true].map(|airborne| (p, airborne)))
+        .filter(|p| classify(*p).is_ok_and(|c| ptr::eq(c, s)))
         .collect()
 }
 
-/// Every pad the chart can meet: the buttons held, with at most one of up and down (§7: no
-/// record holds both; left and right may be held together), and those just pressed among the
-/// ones a row names pressed (down, jump, up, left, right, shoot) that are held.
-fn pads() -> Vec<(u16, u16)> {
-    let up_down = UP.0 | DOWN.0;
-    let pressable = Buttons(DOWN.0 | JUMP.0 | UP.0 | LEFT.0 | RIGHT.0 | SHOOT.0);
-    (0..=PAD.0)
-        .filter(|held| held & !PAD.0 == 0 && held & up_down != up_down)
-        .flat_map(|held| {
-            (0..=pressable.0)
-                .filter(move |pressed| pressed & !(held & pressable.0) == 0)
-                .map(move |pressed| (held, pressed))
+/// A row test's buttons as pad bits: forward and back as left and right.
+const fn pad_bits(b: Buttons) -> u16 {
+    let sides = if b.any(Buttons(FORWARD.0 | BACK.0)) {
+        SIDES.0
+    } else {
+        0
+    };
+    b.0 & PAD.0 | sides
+}
+
+/// The buttons these tests name, held and just pressed, as pad bits.
+fn named(tests: &[Test]) -> (u16, u16) {
+    tests
+        .iter()
+        .fold((0, 0), |(held, pressed), test| match *test {
+            Test::Held(b) => (held | pad_bits(b), pressed),
+            Test::Pressed(b) => (held, pressed | pad_bits(b)),
+            Test::Not(inner) => {
+                let (h, p) = named(core::slice::from_ref(inner));
+                (held | h, pressed | p)
+            }
+            Test::Aimed(_)
+            | Test::Gun(_)
+            | Test::Faces(_)
+            | Test::Body(_)
+            | Test::Action(_)
+            | Test::Doing(_)
+            | Test::Airborne
+            | Test::SpringBall
+            | Test::Moving
+            | Test::Met(_) => (held, pressed),
         })
+}
+
+/// Every set of the bits of `of`.
+fn subsets(of: u16) -> impl Iterator<Item = u16> {
+    (0..=of).filter(move |b| b & !of == 0)
+}
+
+/// The pads situation `s` can tell apart: every set of the buttons its rows and its beats
+/// clauses' conditions name, held with at most one of up and down (§7: no record holds both;
+/// left and right may be held together), and of those it names just pressed, every set of the
+/// ones held.
+fn pads(s: &Situation) -> Vec<(Buttons, Buttons)> {
+    let tests = s.rows.iter().chain([&s.last]).flat_map(|r| {
+        let conditions = r.beats_unless.iter().flat_map(|c| c.unless.iter().copied());
+        core::iter::once(r.needs).chain(conditions)
+    });
+    let (held, pressed) = tests
+        .map(named)
+        .fold((0, 0), |(h, p), (th, tp)| (h | th, p | tp));
+    let up_down = UP.0 | DOWN.0;
+    subsets(held | pressed)
+        .filter(|h| h & up_down != up_down)
+        .flat_map(|h| subsets(pressed & h).map(move |p| (Buttons(h), Buttons(p))))
         .collect()
 }
 
@@ -226,10 +233,7 @@ fn shared<'a>(rows: impl Iterator<Item = &'a Row>) -> Vec<RowId> {
 fn beats_clauses_name_rows_of_their_situation_and_go_one_way() {
     let problems: Vec<String> = situations()
         .into_iter()
-        .flat_map(|(pose, _)| {
-            let rows = classify(pose).rows;
-            rows.iter().filter_map(|a| misnamed(rows, a))
-        })
+        .flat_map(|s| s.rows.iter().filter_map(|a| misnamed(s.rows, a)))
         .collect();
     assert!(problems.is_empty(), "{problems:?}");
 }
@@ -238,8 +242,7 @@ fn beats_clauses_name_rows_of_their_situation_and_go_one_way() {
 /// within its table, so a beats clause names one row.
 #[test]
 fn no_two_rows_share_an_identity() {
-    let situations = CLASSES.iter().map(|c| c.is).chain([&STANDING]);
-    for s in situations {
+    for s in situations() {
         let twice = shared(s.rows.iter().chain([&s.last]));
         assert!(twice.is_empty(), "rows of one situation share {twice:?}");
     }
@@ -249,48 +252,29 @@ fn no_two_rows_share_an_identity() {
     }
 }
 
-/// The rows left tied for a pose (with whether she is in the air), one pad and start speed, with
-/// a line naming them.
+/// A horizontal speed at the frame's start that isn't 0.
+const MOVING: Fixed = Wrapping(0x1_0000);
+
+/// Whether she is off the ground, and her horizontal speed at the frame's start: the parts of
+/// her motion the rows read.
+const MOTIONS: [(bool, Fixed); 4] = [(false, ZERO), (false, MOVING), (true, ZERO), (true, MOVING)];
+
+/// The rows left tied in situation `s` for a pose, her motion and one pad, with a line naming
+/// them. Jump held through only adds jump to the presses, which `pads` already gives with jump
+/// held.
 fn tie(
-    (pose, airborne): (Pose, bool),
-    (held, pressed): (u16, u16),
-    moving: bool,
+    s: &'static Situation,
+    pose: Pose,
+    (airborne, speed): (bool, Fixed),
+    (held, pressed): (Buttons, Buttons),
 ) -> Option<(Vec<RowId>, String)> {
-    let situation = classify(pose);
-    let body = |_: Pose| -> Radius {
-        Pair {
-            x: Wrapping(0),
-            y: Wrapping(0),
-        }
-    };
-    let frame = Frame {
-        pad: Buttons(held),
-        pressed: Buttons(pressed),
-        items: Set::default(),
-        spin_turned_far: false,
-        elevator_moving: false,
-        parity: Parity::Even,
-        animation_ends: false,
-        body: &body,
-    };
-    // Jump held through only adds jump to the presses, which `pads` already gives with jump held.
-    let moment = Moment {
-        moving,
-        airborne,
-        jump_held_through: false,
-        frame: &frame,
-        met: None,
-    };
+    let moment = moment(held, pressed, speed, airborne);
     let reading = Reading {
         moment: &moment,
         pose,
-        situation,
+        situation: s,
     };
-    let fit: Vec<&Row> = situation
-        .rows
-        .iter()
-        .filter(|r| reading.fits(r.needs))
-        .collect();
+    let fit: Vec<&Row> = s.rows.iter().filter(|r| reading.fits(r.needs)).collect();
     let won = unbeaten(&reading, &fit);
     let mutual = fit.iter().find(|a| {
         fit.iter()
@@ -300,26 +284,34 @@ fn tie(
         mutual.map_or_else(|| won.iter().map(|r| r.id).collect(), |a| vec![a.id]);
     (won.len() > 1 || mutual.is_some()).then(|| {
         let line = format!(
-            "{:?} rows {tied:?} are left, e.g. {pose:?} airborne {airborne} held {held:09b} pressed {pressed:07b}",
-            pose.action
+            "{:?} rows {tied:?} are left, e.g. {pose:?} airborne {airborne} speed {speed:?} \
+             held {:09b} pressed {:09b}",
+            pose.action, held.0, pressed.0
         );
         (tied, line)
     })
 }
 
+/// Every tie in situation `s`, over its own poses, the motions the rows read and its own pads.
+fn ties(s: &'static Situation) -> Vec<(Vec<RowId>, String)> {
+    let pads = pads(s);
+    let cases = poses(s)
+        .into_iter()
+        .flat_map(|pose| MOTIONS.map(|motion| (pose, motion)));
+    let mut found: Vec<(Vec<RowId>, String)> = Vec::new();
+    for (pose, motion) in cases {
+        found.extend(pads.iter().filter_map(|&pad| tie(s, pose, motion, pad)));
+    }
+    found
+}
+
 #[test]
 fn every_tie_is_decided() {
-    let (situations, pads) = (situations(), pads());
     let mut failures: Vec<(Vec<RowId>, String)> = Vec::new();
-    let cases = situations
-        .iter()
-        .flat_map(|s| pads.iter().map(move |p| (s, p)));
-    for (&situation, &pad) in cases {
-        for moving in [false, true] {
-            // One line per situation's rows left tied, with a first pad that ties them.
-            let found =
-                tie(situation, pad, moving).filter(|t| !failures.iter().any(|f| f.0 == t.0));
-            failures.extend(found);
+    // One line per situation's rows left tied, with a first case that ties them.
+    for found in situations().into_iter().flat_map(ties) {
+        if !failures.iter().any(|f| f.0 == found.0) {
+            failures.push(found);
         }
     }
     assert!(

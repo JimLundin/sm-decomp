@@ -3,37 +3,10 @@
 
 use crate::collide::{Bounds, Moved, Stop};
 use crate::jump_held::JumpHeld;
-use crate::motion::Run;
-use crate::rules::Bounces;
-use clean_types::{Cell, Fixed, Parts, Pose, Position, Radius, Touch, ZERO};
-
-/// Her vertical motion's phase; her vertical speed itself is `Samus::vy`.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Vertical {
-    /// On the ground, keeping the vertical speed she brought with her, downward or upward
-    /// (`FollowingTheGround`); an upward one is a rise she keeps there (`RisingAndFalling`).
-    Ground,
-    /// On the ground, falling at a vertical speed of 0 (§1.2): only a push beyond this spec
-    /// hands her back so. As the ball, or while her body changes shape, it is a vertical motion
-    /// she moves by; in any other pose on the ground she keeps it and moves as with none, and
-    /// only leaving the ground ends it (`FollowingTheGround`).
-    GroundFalling,
-    /// Rising (`RisingAndFalling`); at the start of a frame after the pull took her upward
-    /// speed past zero, the rise ends.
-    Rising,
-    /// Falling.
-    Falling,
-    /// `Moonfall`: falling with no falling limit and no jump, until she lands.
-    Moonfall,
-}
-
-impl Vertical {
-    /// `FollowingTheGround`: whether she is on the ground, falling at 0 there included.
-    #[must_use]
-    pub const fn on_ground(self) -> bool {
-        matches!(self, Self::Ground | Self::GroundFalling)
-    }
-}
+use crate::run::Run;
+use crate::vertical::Vertical;
+use clean_types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
+use clean_types::{Radius, Set, Touch, button::SHOOT};
 
 /// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each
 /// frame's start up to the spin carried on, where it stays.
@@ -86,16 +59,34 @@ pub enum WallTest {
     Kicked,
 }
 
-/// `AimingAndShooting`: the standing animation.
-pub enum Standing {
+/// `AimingAndShooting`: what the standing animation does this frame.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum StandingAnimation {
     /// It plays on.
-    Plays,
+    PlaysOn,
     /// It restarts.
     Restarts,
 }
 
-/// `HowSheIsDrawn`: what her sprite shows beyond her pose's parts.
-pub enum Drawn {
+impl StandingAnimation {
+    /// `AimingAndShooting`: standing, unaimed and not landing (upright `Still`, aim `Forward`,
+    /// her pose at the frame's start), holding shoot restarts the standing animation.
+    pub(crate) const fn of(p: Pose, pad: Buttons) -> Self {
+        let unaimed = matches!(
+            (p.body, p.action, p.aim),
+            (Body::Upright, Action::Still, Aim::Forward)
+        );
+        if unaimed && pad.any(SHOOT) {
+            Self::Restarts
+        } else {
+            Self::PlaysOn
+        }
+    }
+}
+
+/// `HowSheIsDrawn`: which sprite shows her, beyond her pose's parts.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Sprite {
     /// Plain, in her first suit.
     Plain,
     /// The spin drawn as the screw attack.
@@ -106,14 +97,33 @@ pub enum Drawn {
     OtherSuit,
 }
 
+impl Sprite {
+    /// `HowSheIsDrawn`: the spin (and a wall jump's) drawn as the screw attack with screw
+    /// attack, else as the space jump with space jump; facing the screen, the other suit's
+    /// sprite with varia or gravity; else plain.
+    pub(crate) fn of(pose: Pose, items: &Set<Item>) -> Self {
+        let spin = matches!(pose.action, Action::Spinning | Action::WallJumping);
+        let suit = items[Item::VariaSuit] || items[Item::GravitySuit];
+        if spin && items[Item::ScrewAttack] {
+            Self::ScrewAttack
+        } else if spin && items[Item::SpaceJump] {
+            Self::SpaceJump
+        } else if pose.facing == Facing::Screen && suit {
+            Self::OtherSuit
+        } else {
+            Self::Plain
+        }
+    }
+}
+
 /// What a frame shows beyond her quantities: its outputs, for the caller to act on.
 pub struct Outcome {
     /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
-    /// `AimingAndShooting`: the standing animation.
-    pub standing: Standing,
-    /// `HowSheIsDrawn`: what her sprite shows beyond her pose.
-    pub drawn: Drawn,
+    /// `AimingAndShooting`: what the standing animation does.
+    pub standing_animation: StandingAnimation,
+    /// `HowSheIsDrawn`: which sprite shows her.
+    pub sprite: Sprite,
     /// §1.2, `TurningRound`: she skids, moving against her facing, a skid at speed 0 included
     /// (the camera leads her backwards while she does).
     pub skidding: bool,
@@ -137,12 +147,8 @@ pub struct Samus {
     pub position: Position,
     /// Her horizontal motion: speed, the way it points, carrying on, her dash.
     pub run: Run,
-    /// Her vertical speed, signed, downward positive.
-    pub vy: Fixed,
-    /// Her vertical motion's phase.
+    /// Her vertical motion: speed, its phase, the ball's bounces.
     pub vertical: Vertical,
-    /// The ball's bounces.
-    pub bounces: Bounces,
     /// Her pose.
     pub pose: Pose,
     /// Her body's half-width and half-height.
@@ -165,42 +171,9 @@ impl Samus {
         }
     }
 
-    /// `RisingAndFalling`, `Jumping`, `WallJump`: she starts rising at this speed.
-    pub(crate) fn rise(&mut self, v: Fixed) {
-        self.vertical = Vertical::Rising;
-        self.vy = -v;
-    }
-
-    /// §1, `RisingAndFalling`: whether she is rising (`Outcome::rising`).
-    pub(crate) fn rising(&self) -> bool {
-        match self.vertical {
-            Vertical::Rising => true,
-            Vertical::Ground => self.vy.negative(),
-            Vertical::GroundFalling | Vertical::Falling | Vertical::Moonfall => false,
-        }
-    }
-
-    /// `RisingAndFalling`, `FollowingTheGround`, `WallsAndCeilings`: she falls from rest.
-    pub(crate) const fn fall_from_rest(&mut self) {
-        self.vertical = Vertical::Falling;
-        self.vy = ZERO;
-    }
-
-    /// `Landing`: her vertical motion stops on the floor: on the ground, vertical speed 0.
-    pub(crate) const fn settle(&mut self) {
-        self.vertical = Vertical::Ground;
-        self.vy = ZERO;
-    }
-
-    /// `FollowingTheGround` (§1.2): a vertical motion, on the ground: a vertical speed other
-    /// than 0, or falling at 0.
-    pub(crate) fn vertical_motion(&self) -> bool {
-        self.vy != ZERO || self.vertical == Vertical::GroundFalling
-    }
-
-    /// `SlopesCarry`: a downward move or look that a stepped block stops seats her, and either
-    /// leaves her where it got to (a look where it wrote to her).
-    pub(crate) fn reach(&mut self, moved: &Moved) {
+    /// She ends a move or a look where it left her (a look where it wrote to her);
+    /// `SlopesCarry`: a downward one that a stepped block stopped seats her.
+    pub(crate) fn end_at(&mut self, moved: &Moved) {
         self.position = moved.to;
         if moved.stop == Some(Stop::Seats) {
             self.seat = Seat::Seated;

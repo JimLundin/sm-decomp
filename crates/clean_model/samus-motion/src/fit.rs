@@ -5,8 +5,8 @@ use crate::collide::{Bounds, Probe};
 use crate::samus::Samus;
 use crate::tick::Tick;
 use Probe::{Blocks, Enemies};
-use clean_types::Action::Still;
-use clean_types::{Aim, Body, Facing, Gun, Legs, Pose, Px, Radius, px};
+use clean_types::Action::{Morphing, Still};
+use clean_types::{Aim, Body, Facing, Gun, Item, Legs, Pose, Px, Radius, px};
 use core::num::Wrapping;
 
 /// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
@@ -43,10 +43,10 @@ pub enum Fitted {
     /// She takes the chosen pose where her moves left her: her body doesn't grow, or the looks
     /// found nothing on either side and she grows about her centre.
     Taken,
-    /// She takes the chosen pose, pushed away from what is on one side of her by these whole px,
-    /// read signed, downward positive: up from what is below her, down from what is above her.
-    Pushed(Px),
-    /// The change is refused: she keeps the pose she had.
+    /// She takes the chosen pose, pushed away from what is on one side of her: up from what is
+    /// below her, down from what is above her.
+    Pushed,
+    /// The change is refused: she keeps the pose she had, aim included.
     Refused,
     /// Something above her and something below her: she takes crouched `Still` instead, rising
     /// by these whole px, her feet where they were (0 where her old body is already the crouch's
@@ -63,7 +63,7 @@ impl Fitted {
     #[must_use]
     pub fn moved(self) -> bool {
         match self {
-            Self::Pushed(_) => true,
+            Self::Pushed => true,
             Self::Crouched { rise } => rise != Wrapping(0),
             Self::Taken | Self::Refused => false,
         }
@@ -79,7 +79,14 @@ impl Samus {
     /// an enemy's on the same side), keeping the subpixel her looks left; with something on both,
     /// a ball's change is refused, and any other body takes crouched `Still` instead, rising by
     /// the crouch's growth over her old body, her feet where they were.
+    ///
+    /// `PoseFollows`: a change into `Morphing` without the morph ball is refused as pose fit
+    /// refuses one, before any look.
     pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Fitted {
+        let into_morph = chosen.action == Morphing && self.pose.action != Morphing;
+        if into_morph && !t.frame.items[Item::MorphBall] {
+            return Fitted::Refused;
+        }
         let (old, new) = (self.radius, t.body(chosen));
         if chosen == self.pose || chosen.facing == Facing::Screen || new.y <= old.y {
             return Fitted::Taken;
@@ -96,7 +103,7 @@ impl Samus {
         }
         if let Some(push) = alone(found, g) {
             self.position.y += px(push);
-            return Fitted::Pushed(push);
+            return Fitted::Pushed;
         }
         let (Some(_), Some(_)) = found else {
             return Fitted::Taken;
@@ -122,7 +129,7 @@ impl Samus {
             px(by),
             probe,
         );
-        self.reach(&seen);
+        self.end_at(&seen);
         seen.stop.map(|_| seen.gone)
     }
 }

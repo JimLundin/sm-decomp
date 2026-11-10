@@ -8,8 +8,8 @@
 #![cfg(test)]
 
 use clean_model_samus_motion::{
-    Bounces, CATALOGUE, Carry, DashIs, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome, Rules,
-    Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, DashIs, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome, Phase,
+    Rules, Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
 };
 use clean_types::{
     Action, Aim, Block, Body, Buttons, Cell, Checked, Facing, Fixed, Gun, Heading, Hitbox, Item,
@@ -239,8 +239,34 @@ struct SlopeTable {
 struct SteppedTable {
     /// Its top-left corner.
     block: [u16; 2],
-    /// Its upper row of quarters then its lower, "#" solid, "." air.
-    quarters: [String; 2],
+    /// Its upper row of quarters then its lower.
+    quarters: [QuarterRow; 2],
+}
+
+/// A stepped block's row of two 8 px quarters, from the left, as the header writes it: each
+/// character "#" (solid) or "." (air), and no other.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+#[serde(try_from = "String")]
+struct QuarterRow([bool; 2]);
+
+impl TryFrom<String> for QuarterRow {
+    type Error = String;
+
+    fn try_from(text: String) -> Result<Self, String> {
+        let quarter = |c: char| match c {
+            '#' => Ok(true),
+            '.' => Ok(false),
+            other => Err(format!("{text:?}: {other:?} is neither \"#\" nor \".\"")),
+        };
+        let solid = text
+            .chars()
+            .map(quarter)
+            .collect::<Result<Vec<bool>, String>>()?;
+        match solid[..] {
+            [left, right] => Ok(Self([left, right])),
+            _ => Err(format!("{text:?} is no row of two quarters")),
+        }
+    }
 }
 
 /// A solid enemy.
@@ -945,16 +971,11 @@ fn slope(table: &SlopeTable, faces: SlopeFaces) -> ((u16, u16), Block) {
     )
 }
 
-/// A stepped block: its corner and its quarters, upper row then lower, "#" solid.
+/// A stepped block: its corner and its quarters, upper row then lower.
 fn stepped(table: &SteppedTable) -> ((u16, u16), Block) {
-    let row = |text: &String| {
-        let solid: Vec<bool> = text.chars().map(|c| c == '#').collect();
-        assert_eq!(solid.len(), 2, "a row of stepped quarters");
-        [solid[0], solid[1]]
-    };
     (
         corner(table.block),
-        Block::Stepped(table.quarters.each_ref().map(row)),
+        Block::Stepped(table.quarters.map(|row| row.0)),
     )
 }
 
@@ -1047,11 +1068,11 @@ fn start(before: &Before, (pose, radius): SizedPose) -> Samus {
             | Action::WallJumping
             | Action::Turning(Turn::Jump | Turn::Fall)
     );
-    let vertical = match (airborne, speed_y.negative) {
-        (true, true) => Vertical::Rising,
-        (true, false) => Vertical::Falling,
-        (false, _) if before.falling => Vertical::GroundFalling,
-        (false, _) => Vertical::Ground,
+    let phase = match (airborne, speed_y.negative) {
+        (true, true) => Phase::Rising,
+        (true, false) => Phase::Falling,
+        (false, _) if before.falling => Phase::GroundFalling,
+        (false, _) => Phase::Ground,
     };
     let jump_held = JumpHeld {
         frames: Wrapping(before.jump_held),
@@ -1074,9 +1095,11 @@ fn start(before: &Before, (pose, radius): SizedPose) -> Samus {
             dash,
             dash_is: DashIs::Hers,
         },
-        vy: speed_y.value(),
-        vertical,
-        bounces,
+        vertical: Vertical {
+            speed: speed_y.value(),
+            phase,
+            bounces,
+        },
         pose,
         radius,
         spin: Spin::Off,
@@ -1202,7 +1225,13 @@ fn run(vector: &Vector) -> Vec<String> {
             body: &body,
         };
         parity = other(parity);
-        outcome = Some(samus.step(&frame, &room, &rules));
+        match samus.step(&frame, &room, &rules) {
+            Ok(frame_outcome) => outcome = Some(frame_outcome),
+            Err(unknown) => {
+                misses.push(format!("{name}: frame {n} starts in {unknown:?}"));
+                return misses;
+            }
+        }
         // The first pose that differs; the later ones follow from it. The checked frame's
         // after.pose, where given, is the pose it ends in instead of next_pose.
         let checked = n.wrapping_add(1) == frames.len();
@@ -1255,31 +1284,19 @@ fn run_pose_step(step: &PoseStep) -> Option<String> {
                 start.action,
                 Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
             ));
-    // A step gives no speed either: her horizontal speed at the frame's start is 0.
-    let body = |_: Pose| Pair {
-        x: Wrapping(0),
-        y: Wrapping(0),
-    };
-    let frame = Frame {
+    // A step gives no speed either: her horizontal speed at the frame's start is 0. It switches
+    // no item on, and has no lead-in, so nothing makes jump held through a press.
+    let moment = Moment {
         pad: held,
         pressed,
-        items: Set::default(),
-        spin_turned_far: false,
-        elevator_moving: false,
-        parity: Parity::Even,
+        spring_ball: false,
         animation_ends,
-        body: &body,
-    };
-    // A step has no lead-in, so nothing makes jump held through a press.
-    let moment = Moment {
-        moving: false,
+        speed: ZERO,
         airborne,
-        jump_held_through: false,
-        frame: &frame,
         met,
     };
     let chosen = moment.next_pose(start);
-    let expected = step.after.pose.pose();
+    let expected = Ok(step.after.pose.pose());
     (chosen != expected).then(|| {
         format!(
             "{id} ({}): pose expected {expected:?}, actual {chosen:?}",
@@ -1324,8 +1341,8 @@ const fn speed_x(samus: &Samus) -> Signed {
 /// Her vertical speed as the player reads it, downward positive.
 fn speed_y(samus: &Samus) -> Signed {
     Signed {
-        negative: samus.vy.negative(),
-        size: samus.vy.size(),
+        negative: samus.vertical.speed.negative(),
+        size: samus.vertical.speed.size(),
     }
 }
 
@@ -1369,7 +1386,7 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
         (
             "bounces",
             after.bounces.map(|b| b.to_string()),
-            bounces(samus.bounces).to_string(),
+            bounces(samus.vertical.bounces).to_string(),
         ),
         (
             "pose",
@@ -1465,6 +1482,18 @@ fn every_pose_step() {
         steps.len(),
         misses.join("\n")
     );
+}
+
+/// The header allows only "#" and "." in a stepped block's quarters, two to a row: the reader
+/// refuses any other.
+#[test]
+fn stepped_quarters_are_hash_or_dot() {
+    let read = |text: &str| QuarterRow::try_from(text.to_owned());
+    assert_eq!(read("#."), Ok(QuarterRow([true, false])));
+    assert_eq!(read(".#"), Ok(QuarterRow([false, true])));
+    for refused in ["#x", "# ", "X.", "o#", "##.", "#", ""] {
+        assert!(read(refused).is_err(), "{refused:?} read as quarters");
+    }
 }
 
 #[test]

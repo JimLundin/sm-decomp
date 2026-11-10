@@ -208,17 +208,8 @@ pub enum Facing {
     Screen,
 }
 
-/// §2 facing: forward is the side she faces, back the other side.
+/// §2 facing: forward is the side she faces (`Side::of`), back the other side.
 impl Facing {
-    /// `SpeedBuildsAndBrakes`: the side she faces, as a heading, the way she moves at speed 0.
-    #[must_use]
-    pub const fn side(self) -> Heading {
-        if matches!(self, Self::Left) {
-            Heading::Left
-        } else {
-            Heading::Right
-        }
-    }
     /// `PadChart`, `TurningRound`: the other side, back, as she faces.
     #[must_use]
     pub const fn back(self) -> Self {
@@ -434,7 +425,9 @@ pub enum Block {
     /// A stepped block: its 8 px quarters, upper row then lower, each left then right, `true`
     /// where solid.
     Stepped([[bool; 2]; 2]),
-    /// A cell that stands for the cell it names; one that names nothing is air.
+    /// A cell that stands for the cell it names; one that names nothing is air. A chain of them
+    /// ends at a cell of another kind or one naming nothing: a world whose chain loops is the
+    /// caller's to refuse.
     StandsFor(Option<Cell>),
 }
 
@@ -481,7 +474,7 @@ pub struct Hitbox {
 
 /// The room as Samus meets it.
 pub trait World {
-    /// The kind of a 16 px cell.
+    /// The kind of a 16 px cell. Cells that stand for others never name each other in a loop.
     fn block(&self, cell: Cell) -> Block;
     /// `OtherBlockKinds`: whether an answered cell lets her through on this touch, a move's or a
     /// look's; the answer may change from one touch to the next.

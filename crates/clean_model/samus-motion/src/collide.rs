@@ -307,12 +307,18 @@ impl Axis {
 
 impl Tick<'_> {
     /// `OtherBlockKinds`: a cell's kind and the cell it is reported as. One that stands for
-    /// another is that cell's kind, the chain followed to its end; one that names nothing is
-    /// air.
-    fn resolve(&self, at: Cell) -> (Block, Cell) {
-        let block = self.world.block(at);
-        if let StandsFor(names) = block {
-            return names.map_or((Air, at), |next| self.resolve(next));
+    /// another is that cell's kind, the chain followed to its end, one cell after another; one
+    /// that names nothing is air. A chain that loops never ends: the world's to refuse
+    /// (`World::block`).
+    fn resolve(&self, cell: Cell) -> (Block, Cell) {
+        let mut at = cell;
+        let mut block = self.world.block(at);
+        while let StandsFor(names) = block {
+            let Some(next) = names else {
+                return (Air, at);
+            };
+            at = next;
+            block = self.world.block(at);
         }
         (block, at)
     }

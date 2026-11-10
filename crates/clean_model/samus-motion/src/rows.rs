@@ -102,13 +102,34 @@ pub enum Moves {
     Dash,
 }
 
-/// A state of the pose chart: what she is doing, how she moves, and its pad chart's rows, the
-/// last of them apart (`PadChart`: it covers nothing else fitting).
+/// `Landing`, `FollowingTheGround`: what a floor does to her in her situation: one her
+/// vertical speed meets, and the ground pull finding none.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Footing {
+    /// A floor lands her (`Landing`); the ground pull finding none walks her off a ledge.
+    Lands,
+    /// While her body changes shape: a floor stops only her vertical motion, and the ground
+    /// pull finding none doesn't move her. With a vertical motion on the ground she moves by
+    /// it as in the air.
+    Settles,
+    /// Turning: a floor stops only the move, her vertical speed kept and growing by the pull,
+    /// and the ground pull finding none sinks her by it.
+    Holds,
+    /// The ball: a floor bounces it, hops the spring ball with jump held, or brings it to rest;
+    /// on the ground, with a vertical motion it moves by it, held flush by a floor and walking
+    /// off a ledge where there is none.
+    Bounces,
+}
+
+/// A state of the pose chart: what she is doing, how she moves, what a floor does to her, and
+/// its pad chart's rows, the last of them apart (`PadChart`: it covers nothing else fitting).
 pub struct Situation {
     /// What she is doing.
     pub doing: Doing,
     /// How she moves.
     pub moves: Moves,
+    /// What a floor does to her.
+    pub footing: Footing,
     /// Its pad chart rows but the last.
     pub rows: &'static [Row],
     /// Its last row.
@@ -440,6 +461,9 @@ pub enum RowId {
     NoFloorBall,
     /// `WhatHerMovesMet`: a ceiling, rising.
     Ceiling,
+    /// `WhatHerMovesMet`: a block or solid enemy in the way of the aim change's step, a running
+    /// pose chosen.
+    StepBlocked,
     /// `AnimationEnds`: `TakingOff`.
     TakingOffEnds,
     /// `AnimationEnds`: crouched `Turning`.
@@ -479,12 +503,12 @@ pub const UP_DOWN: Buttons = Buttons(button::UP.0 | button::DOWN.0);
 /// `PadChart`: up, down or an aim button.
 pub const UDA: Buttons = Buttons(UP_DOWN.0 | AIM.0);
 
-/// A row's defaults: the last row's identity; it needs nothing, keeps her pose, does nothing and
-/// beats nothing.
-pub const ROW: Row = Row {
+/// A row that changes nothing, every row's defaults: the last row's identity; it needs
+/// nothing, keeps her pose, does nothing and beats nothing.
+pub const NO_CHANGE: Row = Row {
     id: RowId::AnythingElse,
     needs: &[],
-    next: KEPT,
+    next: KEEP_POSE,
     effects: &[],
     beats: &[],
     beats_unless: &[],
@@ -492,7 +516,7 @@ pub const ROW: Row = Row {
 };
 
 /// "kept": her pose stays as it is.
-pub const KEPT: Next = Next {
+pub const KEEP_POSE: Next = Next {
     body: None,
     action: None,
     facing: NextFacing::Kept,
@@ -504,7 +528,7 @@ pub const KEPT: Next = Next {
 
 /// Upright `Still`, aim `Forward`, the gun stowed and the legs together (`PadChart`: a next pose
 /// has its gun stowed and its legs together unless its cell says otherwise).
-pub const STILL: Next = Next {
+pub const TO_STILL: Next = Next {
     body: Some(Body::Upright),
     action: Some(Action::Still),
     facing: NextFacing::Kept,
@@ -515,59 +539,59 @@ pub const STILL: Next = Next {
 };
 
 /// `ShrinkingLowersHer`: standing up or unmorphing lowers her 0 px.
-pub const GROWS: Option<Lowers> = Some(Lowers::Nothing);
+pub const LOWERS_NOTHING: Option<Lowers> = Some(Lowers::Nothing);
 /// `Running`, `Forward`.
-pub const RUN: Next = Next {
+pub const TO_RUNNING: Next = Next {
     action: Some(Action::Running),
-    ..STILL
+    ..TO_STILL
 };
 /// `Jumping`, `Forward`.
-pub const JUMP: Next = Next {
+pub const TO_JUMPING: Next = Next {
     action: Some(Action::Jumping),
-    ..STILL
+    ..TO_STILL
 };
 /// `Falling`, `Forward`.
-pub const FALL: Next = Next {
+pub const TO_FALLING: Next = Next {
     action: Some(Action::Falling),
-    ..STILL
+    ..TO_STILL
 };
 /// `Spinning`.
-pub const SPIN: Next = Next {
+pub const TO_SPINNING: Next = Next {
     action: Some(Action::Spinning),
-    ..STILL
+    ..TO_STILL
 };
 /// Upright `TakingOff`, `Forward`.
-pub const TAKE_OFF: Next = Next {
+pub const TO_TAKING_OFF: Next = Next {
     action: Some(Action::TakingOff),
-    ..STILL
+    ..TO_STILL
 };
 /// `Moonwalking`, `Forward`.
-pub const MOONWALK: Next = Next {
+pub const TO_MOONWALKING: Next = Next {
     action: Some(Action::Moonwalking),
-    ..STILL
+    ..TO_STILL
 };
 /// Crouched `Crouching`, `Forward`: she is lowered by the crouch's distance, 5 px in vanilla
 /// (`ShrinkingLowersHer`).
-pub const CROUCH: Next = Next {
+pub const TO_CROUCHING: Next = Next {
     body: Some(Body::Crouched),
     action: Some(Action::Crouching),
     lower: Some(Lowers::Crouch),
-    ..STILL
+    ..TO_STILL
 };
 /// Ball `Morphing`: she is lowered by the morph's distance, 9 px in vanilla
 /// (`ShrinkingLowersHer`).
-pub const MORPH: Next = Next {
+pub const TO_MORPHING: Next = Next {
     body: Some(Body::Ball),
     action: Some(Action::Morphing),
     lower: Some(Lowers::Morph),
-    ..STILL
+    ..TO_STILL
 };
 /// `Turning` on the ground: facing back, with the aim she had (§2).
-pub const TURN: Next = Next {
+pub const TO_TURNING: Next = Next {
     action: Some(Action::Turning(clean_types::Turn::Ground)),
     facing: NextFacing::Back,
     aim: &[],
-    ..STILL
+    ..TO_STILL
 };
 
 /// `Aiming`: `Forward`.
