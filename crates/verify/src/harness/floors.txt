@@ -198,7 +198,7 @@ hud chain-0232-D5A7 632
 hud chain-0234-D51E 152
 hud chain-0314-DAE1 450
 hud event-zebes-awake 179
-hud item-charge-beam 478
+hud item-charge-beam 479
 hud item-energy-tank 239
 hud item-morph-ball 1028
 hud item-plasma-beam 145

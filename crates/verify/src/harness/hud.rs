@@ -8,24 +8,22 @@
 //! and the model's output is compared with record N+1: the whole tilemap, not values, since a
 //! stale cell is behaviour. The HUD's pictures and her map's are the importer's.
 //!
-//! The inputs other domains' writers make are named by their instruction hits in frame N+1: Mother
+//! The inputs other domains' writers make are named by their instruction hits in frame N+1: the
+//! shot's cancel (the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`), the item
+//! whose pickup draws its icon (`$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E`, `$80:9A3E`), Mother
 //! Brain's fall (`$90:A7E2` with her boss id) and the mini-map turned on (the six stores of 0 to
 //! `05F7`). A boss met on entering its room calls `$90:A7E2` in a door's or a load's frame, outside
 //! gameplay: that pair is the model's boss step, not a frame of play.
 //!
-//! Two interim masks stand in for writers the records don't yet decode, each keyed as near its
-//! writer as the records allow and reported as masked, never passed:
-//! - her position at the mini-map's turn: the pose change's placement (`$91:EB88`) runs after the
+//! One interim mask stands in for a writer the records don't yet decode, keyed as near it as the
+//! records allow and reported as masked, never passed: her position at the mini-map's turn: the pose change's placement (`$91:EB88`) runs after the
 //!   mini-map read her and can move her across a screen, so the window and the explored cells are
 //!   masked where her pose changed, the mini-map read her, and her position lies within the
 //!   placement's reach of a screen's edge. samus-motion's model, which the camera harness asks
 //!   for the y the camera follows her from, doesn't report where her moves left her, so it can't
-//!   yet decode her position at the mini-map's turn;
-//! - the shot's cancel (the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`): the
-//!   selection and the one-shot item are masked where a count fell, and the status bar is
-//!   compared with the cancel false.
+//!   yet decode her position at the mini-map's turn.
 //!
-//! The pickups' icons (`collected`) are none. The click and the switch aren't compared until the
+//! The click and the switch aren't compared until the
 //! sound and the weapons' request streams exist, so their entries are credited nothing. Nothing
 //! answers from record N+1's HUD, so no field is unverified; the null model is the HUD left as
 //! record N has it.
@@ -137,6 +135,18 @@ const BOSS_BLANKS_THE_MAP: u32 = 0x90_A7E2;
 /// Crocomire's skeleton flowing down the river.
 const TURNS_THE_MINI_MAP_ON: [u32; 6] = [
     0x80_C4AF, 0x82_8767, 0x82_E1C4, 0x88_82F3, 0x90_F233, 0xA4_90C4,
+];
+/// The weapons' stores that cancel the selection after a shot: `$90:BF25` and `$90:C091` clear
+/// the selected and the one-shot item, `$90:BF41` and `$90:C0A6` the selected item when there is
+/// no one-shot item.
+const SHOT_CANCELS: [u32; 4] = [0x90_BF25, 0x90_BF41, 0x90_C091, 0x90_C0A6];
+/// The entries that draw a picked-up item's icon, by its item.
+const PICKUPS: [(u32, SelectableItem); 5] = [
+    (0x80_99CF, SelectableItem::Ammo(Ammo::Missiles)),
+    (0x80_9A0E, SelectableItem::Ammo(Ammo::SuperMissiles)),
+    (0x80_9A1E, SelectableItem::Ammo(Ammo::PowerBombs)),
+    (0x80_9A2E, SelectableItem::GrappleBeam),
+    (0x80_9A3E, SelectableItem::XRayScope),
 ];
 /// Mother Brain's boss id, whose first form calls `$90:A7E2` during gameplay.
 const MOTHER_BRAIN: u16 = 0x0A;
@@ -379,6 +389,8 @@ pub struct Upstream {
     can_switch: bool,
     muted_by: Option<Mute>,
     runs: bool,
+    shot_cancels: bool,
+    collected: Option<SelectableItem>,
     power: PowerChanges,
     position: Pair<u16>,
     room: Room,
@@ -559,6 +571,13 @@ fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Sk
             && !FACING_FORWARD.contains(&word(next, source::SAMUS_POSE)?),
         muted_by: muted_by(next)?,
         runs: runs(next)?,
+        shot_cancels: SHOT_CANCELS.iter().any(|&pc| ran(next, pc)),
+        collected: next.hits.iter().find_map(|hit| {
+            PICKUPS
+                .iter()
+                .find(|&&(pc, _)| pc == hit.pc)
+                .map(|&(_, item)| item)
+        }),
         power: PowerChanges {
             turned_on: TURNS_THE_MINI_MAP_ON.iter().any(|&pc| ran(next, pc)),
             mother_brain_falls,
@@ -576,7 +595,7 @@ fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Sk
 }
 
 impl Upstream {
-    /// The buttons under the bindings, with the cancel by a shot false (the interim mask).
+    /// The buttons under the bindings, and the shot's cancel.
     const fn controls(&self, pad: Pad) -> Controls {
         Controls {
             select: if has(pad.pressed, self.select) {
@@ -592,19 +611,18 @@ impl Upstream {
                 CancelButton::NotPressed
             },
             can_switch: self.can_switch,
-            shot_cancels: false,
+            shot_cancels: self.shot_cancels,
             muted_by: self.muted_by,
         }
     }
 
-    /// The model's inputs over `map`. No cached row picks up an item with an icon, so none is
-    /// reported.
+    /// The model's inputs over `map`.
     const fn model<'map>(&self, pad: Pad, map: &'map HerMap) -> FrameInputs<'map> {
         FrameInputs {
             frame: pad.frame,
             status: self.status,
             controls: self.controls(pad),
-            collected: None,
+            collected: self.collected,
             mother_brain_falls: self.power.mother_brain_falls,
             mini_map: MiniMapInputs {
                 runs: self.runs,
@@ -804,20 +822,6 @@ impl Domain for HudDomain {
                 fields: WINDOW_TILES.union(EXPLORED),
             });
         }
-        let mut fell = false;
-        for count in [
-            source::SAMUS_MISSILES,
-            source::SAMUS_SUPER_MISSILES,
-            source::SAMUS_POWER_BOMBS,
-        ] {
-            fell |= word(next, count)? < word(from, count)?;
-        }
-        if fell {
-            masks.push(Mask {
-                reason: "interim: a count fell, so the weapons may have cancelled the selection ($90:BF25, $90:BF41, $90:C091, $90:C0A6); no hit recorded",
-                fields: SELECTED.union(ONE_SHOT),
-            });
-        }
         Ok(masks)
     }
 
@@ -919,6 +923,14 @@ fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<us
             entries.push(B::Switching);
             selected = item;
         }
+    }
+    // Each of the weapons' four stores clears the selected item.
+    if controls.shot_cancels {
+        entries.push(B::CancellingTheItem);
+        selected = None;
+    }
+    if upstream.collected.is_some() {
+        entries.push(B::IconsAppear);
     }
     if selected != shown.highlighted {
         entries.extend([B::SelectionHighlight, B::SwitchClick]);
