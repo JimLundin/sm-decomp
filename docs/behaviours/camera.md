@@ -107,24 +107,31 @@ of the room is in a column past the row's last (`ScreensRunOn`).
     another domain left outside it (§5), or `8000` or more from what it is compared with
     (C-edge-right-from-left, C-edge-down-from-above, C-settle-reach-from-left, C-push-left-far).
 - She moved on an axis, its aim's pixel part isn't the camera's, and the aim isn't `before` the
-  camera → it moves right or down by its speed, carrying through the subpixels, `c + speed` [R4,
-  R8, R16, R19, R22, C-lead-near-right]
+  camera → it moves right or down by its speed, carrying through the subpixels, `c + speed`
+  [C-right-onto-edge, C-rise-into-corner, C-down-into-last-row-moving-left,
+  C-down-short-closed-below, C-moonwalk-right-to-closed-edge, C-lead-near-right]
 - She moved on an axis, and its aim's pixel part is `before` the camera's → it moves left or up by
-  its speed, `c − speed` [R5, R14, R17, R18, R32, C-aim-half-way]
+  its speed, `c − speed` [C-left-past-edge, C-up-to-aim, C-skid-rising-down-to-bottom,
+  C-rise-up-to-closed-edge, C-rise-up-to-closed-edge-moving-left, C-aim-half-way]
 - So an aim exactly `8000` from the camera is `before` it, and the camera moves left or up
   (C-aim-half-way).
-- Her pixel part is not `before` the one where it last saw her → its speed is `(s − e) + 1.0000`,
-  on the whole `P.S` mod 2^32 [R2, R4, R12, R18, R19]
-- Her pixel part is `before` it → its speed is `(e − s) + 1.0000` [R1, R5, R16, R17, R31]
+- Her pixel part is not `before` the one where it last saw her → its speed is `(s − e) + 1.0000`, on
+  the whole `P.S` mod 2^32 [C-down-within-margin, C-right-onto-edge, C-down-to-bottom-31,
+  C-rise-up-to-closed-edge, C-down-short-closed-below]
+- Her pixel part is `before` it → its speed is `(e − s) + 1.0000` [C-aim-above-top,
+  C-left-past-edge, C-down-into-last-row-moving-left, C-skid-rising-down-to-bottom,
+  C-moonwalk-left-to-aim]
 - The move would take its pixel part beyond the aim's (going right or down, the aim `before` it;
   going left or up, it `before` the aim) → it stops on the aim, its subpixel part 0
-  [R4, R5, R10, R14, R17, C-lead-near-right]
+  [C-right-onto-edge, C-left-past-edge, C-aim-above-top-right-edge, C-up-to-aim,
+  C-skid-rising-down-to-bottom, C-lead-near-right]
 - So with the aim's pixel part the camera's, it stays as it is, subpixel included, and doesn't
-  settle (R9, R13, R21, R23). When she didn't move on an axis, it settles instead (`Settling`).
+  settle (C-at-aim-across-rising, C-at-aim-down, C-at-aim-down-held-across, C-at-aim-across). When
+  she didn't move on an axis, it settles instead (`Settling`).
 - So a creep left or up inside a pixel gives a speed under 1 px (`CreepReadsRightward`).
 - Every other rule in this spec sets the camera's pixel part only: its subpixel part changes only
   by this move and this stop.
-- checked: oracle (every recorded vector); constructed (C-lead-*, C-push-*, C-aim-half-way).
+- checked: oracle (every harness case); constructed (every vector).
 
 ### LeadingHer
 - kind: mechanic and parameter.
@@ -136,29 +143,38 @@ of the room is in a column past the row's last (`ScreensRunOn`).
   32 either way; `KeepRight` 224 either way; `Near` 64 when she faces right and 80 when she faces
   left. `lr` is the setting's lead when she faces right, `ll` when she faces left.
 - switch: **Parameter**, the leads of each setting (params); the setting itself is an input.
-- She faces right or the screen, going forwards, or she faces left, going backwards → the
-  aim across is `sx − lr` [R11, R18, R22, R27, R31, C-lead-near-right, C-lead-keep-right,
-  C-facing-screen]
-- She faces left, going forwards, or she faces right or the screen, going backwards → the aim
-  across is `sx − ll` [R4, R16, R17, R20, R24, C-lead-near-left, C-lead-keep-left]
-- So a skid (R17, R20), a moonwalk (R22, R31) and a knockback (R24, R27) turn the lead round: the
-  view looks the way she travels, not the way she faces.
-- checked: oracle (`Ahead`, every recorded vector that moves across); constructed (`Near`,
-  `KeepLeft`, `KeepRight`, facing the screen).
+- She faces right or the screen, going forwards, or she faces left, going backwards → the aim across
+  is `sx − lr` [C-left-edge-keeps-subpixel, C-rise-up-to-closed-edge,
+  C-moonwalk-right-to-closed-edge, C-knockback-rising-down-closed, C-moonwalk-left-to-aim,
+  C-lead-near-right, C-lead-keep-right, C-facing-screen]
+- She faces left, going forwards, or she faces right or the screen, going backwards → the aim across
+  is `sx − ll` [C-right-onto-edge, C-down-into-last-row-moving-left, C-skid-rising-down-to-bottom,
+  C-skid-left-to-closed-edge, C-knockback-left, C-lead-near-left, C-lead-keep-left]
+- So a skid (C-skid-rising-down-to-bottom, C-skid-left-to-closed-edge), a moonwalk
+  (C-moonwalk-right-to-closed-edge, C-moonwalk-left-to-aim) and a knockback (C-knockback-left,
+  C-knockback-rising-down-closed) turn the lead round: the view looks the way she travels, not the
+  way she faces.
+- checked: oracle (`Ahead`, every harness case that moves across); constructed (`Near`,
+  `KeepLeft`, `KeepRight`, facing the screen, and `Ahead` in the vectors that move across).
 
 ### AimingHeight
 - kind: mechanic and parameter.
 - summary: down, the view aims to keep her a set height below its top edge, and lower while she
   rises, so it shows more above her.
 - params: the room's two heights, `hn` while she isn't rising and `hr` while she rises: 112 and
-  160, or 144 and 160, in the recorded rooms.
+  160, or 144 and 160, in the game's recorded rooms; the vectors use heights of their own.
 - switch: none (the heights are the room's, an input).
-- Rising, a rise at 0 and the frame that spends it included → the aim down is `sy − hr` [R8,
-  R17, R18, R27, R32, R35, C-push-up-back, C-rise-at-0, C-rise-spent]
-- Not rising → the aim down is `sy − hn` [R1, R3, R12, R26, R29, C-unplaced, C-not-rising]
-- So a rise at 0 aims as a rise (R35, C-rise-at-0 against C-not-rising), and so does the frame
-  that spends it, though her speed points down by then (C-rise-spent).
-- checked: oracle (both heights of both kinds of room, R26 and R29 at 144; R35 a rise at 0).
+- Rising, a rise at 0 and the frame that spends it included → the aim down is `sy − hr`
+  [C-rise-into-corner, C-skid-rising-down-to-bottom, C-rise-up-to-closed-edge,
+  C-knockback-rising-down-closed, C-rise-up-to-closed-edge-moving-left, C-rise-at-0-to-aim,
+  C-push-up-back, C-rise-at-0, C-rise-spent]
+- Not rising → the aim down is `sy − hn` [C-aim-above-top, C-down-into-last-row,
+  C-down-to-bottom-31, C-corner-other-heights, C-up-other-heights, C-unplaced, C-not-rising]
+- So a rise at 0 aims as a rise (C-rise-at-0-to-aim, C-rise-at-0 against C-not-rising), and so does
+  the frame that spends it, though her speed points down by then (C-rise-spent).
+- checked: oracle (both heights of both kinds of room: the harness cases r05:1 and r08:656 at
+  144; samus-shinespark-left:214 a rise at 0); constructed (both heights of two invented kinds of
+  room, C-corner-other-heights and C-up-other-heights the second; C-rise-at-0-to-aim).
 
 ### Remembering
 - kind: mechanic.
@@ -167,15 +183,16 @@ of the room is in a column past the row's last (`ScreensRunOn`).
 - params: none.
 - switch: none.
 - Each frame, after both axes → where it last saw her becomes her position, subpixels included
-  [R1, R6, R17, R30, C-placed]
+  [C-aim-above-top, C-hold-creep, C-skid-rising-down-to-bottom, C-stopped-hold-other-heights,
+  C-placed]
 - A placement put her at a y this frame, before it follows → the pixel part of where it last saw
   her down becomes that y's, its subpixel part kept [C-placed, C-placed-pixel]
 - So with nothing placing her, where it last saw her stays as it was until after both axes, and
   the move pose fit or a change of shape made isn't followed: from the placed y she didn't move
   (C-placed); the same frame unplaced scrolls (C-unplaced). The kept subpixel can make her
   creep inside a pixel (C-placed-pixel eases 2 px).
-- checked: oracle (every recorded vector's `after.seen`); constructed (C-placed, C-placed-pixel,
-  C-unplaced).
+- checked: oracle (every harness case's seen position); constructed (every vector's `after.seen`;
+  C-placed, C-placed-pixel, C-unplaced).
 
 ### CreepReadsRightward
 - kind: quirk.
@@ -214,18 +231,23 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   left edge.
 - Going right or down, the next screen `Closed`, and, down, `c` `exceeds` `edge(c) + margin`
   (`ShortScreens`; across there is no such test and `margin` is 0) → `c = max(edge(c) + margin,
-  back(cm))` [R19, R22, R25, R27, C-push-right-back, C-push-down-back]
-- Going left or up, the camera's screen `Closed` → `c = min(edge(c) + 256, ahead(cm))`, the
-  `min` by `exceeds` [R18, R20, R32, C-push-left-back, C-push-up-back, C-push-left-far]
+  back(cm))` [C-down-short-closed-below, C-moonwalk-right-to-closed-edge,
+  C-right-to-closed-edge-down-to-bottom, C-knockback-rising-down-closed, C-push-right-back,
+  C-push-down-back]
+- Going left or up, the camera's screen `Closed` → `c = min(edge(c) + 256, ahead(cm))`, the `min` by
+  `exceeds` [C-rise-up-to-closed-edge, C-skid-left-to-closed-edge,
+  C-rise-up-to-closed-edge-moving-left, C-push-left-back, C-push-up-back, C-push-left-far]
 - So in C-push-left-far the camera moves left from `80FE` onto its aim at `00FF`, and `ahead(cm)`
   is `8100`: `before` would keep `8100`, but it `exceeds` the edge, so the view stops on `0100`.
 - The `exceeds` going down can't differ from `before`: `RoomEdges` lets only a `c` from 0 to `yb`
   reach it.
-- So the view stops on the screen's edge (R22, R18) or, short of it, backs 2 px from where it was
-  before its move, or 1 when the move carried a subpixel (C-push-right-back): it moves against her
-  until it is out.
-- So going down, a top within `margin` of its screen's edge stays where the move put it (R2, R11).
-- checked: oracle (the stops on the edge, R18-R32); constructed (the 2 px back-offs,
+- So the view stops on the screen's edge (C-moonwalk-right-to-closed-edge, C-rise-up-to-closed-edge)
+  or, short of it, backs 2 px from where it was before its move, or 1 when the move carried a
+  subpixel (C-push-right-back): it moves against her until it is out.
+- So going down, a top within `margin` of its screen's edge stays where the move put it
+  (C-down-within-margin, C-left-edge-keeps-subpixel).
+- checked: oracle (the stops on the edge: the harness cases r01:996, r02:7, r03:5, r03:210,
+  r04:314, r05:66, item-morph-ball:709); constructed (their twins, the 2 px back-offs,
   C-push-left-far).
 
 ### RoomEdges
@@ -236,14 +258,16 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - The camera's furthest right is the last screen's left edge, `xr = (w − 1) × 256`; its furthest
   down is `yb = (h − 1) × 256 + margin` (`ShortScreens`).
 - Going right, `c` `exceeds` `xr` → it stops on `xr`, and no closed screen moves it that frame
-  [R4, R8, R19, R26, C-edge-right-from-left]
-- Going left or up `before` 0 → it stops on 0 on that axis, and no closed screen moves it that
-  frame [R1, R5, R8, R10, R11]
-- Going down, `c` `exceeds` `yb` → it backs up as from a closed screen, `max(yb, back(cm))`,
-  and no closed screen moves it that frame [R12, R17, R25, C-edge-down-from-above,
-  C-edge-down-from-below]
+  [C-right-onto-edge, C-rise-into-corner, C-down-short-closed-below, C-corner-other-heights,
+  C-edge-right-from-left]
+- Going left or up `before` 0 → it stops on 0 on that axis, and no closed screen moves it that frame
+  [C-aim-above-top, C-left-past-edge, C-rise-into-corner, C-aim-above-top-right-edge,
+  C-left-edge-keeps-subpixel]
+- Going down, `c` `exceeds` `yb` → it backs up as from a closed screen, `max(yb, back(cm))`, and no
+  closed screen moves it that frame [C-down-to-bottom-31, C-skid-rising-down-to-bottom,
+  C-right-to-closed-edge-down-to-bottom, C-edge-down-from-above, C-edge-down-from-below]
 - So a camera in the room stops on `yb`: its move ends at most `v + 1` px past it, so `back(cm)`
-  is `before` `yb` (R12).
+  is `before` `yb` (C-down-to-bottom-31).
 - So does one above the room, since `back(cm)` is `before` `yb` there too
   (C-edge-down-from-above: from `FFF0`, `back(cm)` is `FFEE`).
 - A camera another domain left below the room, far enough that `back(cm)` is after `yb`, backs up
@@ -262,13 +286,14 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   of that screen's bottom.
 - params: the margin on a screen that isn't short, 31 px.
 - switch: **Parameter**, the margin (params).
-- The screen it reads `Short` → `margin = 0` [R17, R19, R25, C-ease-up-short]
-- Any other kind → `margin = 31` [R12, C-push-down-back, C-ease-up]
+- The screen it reads `Short` → `margin = 0` [C-skid-rising-down-to-bottom,
+  C-down-short-closed-below, C-right-to-closed-edge-down-to-bottom, C-ease-up-short]
+- Any other kind → `margin = 31` [C-down-to-bottom-31, C-push-down-back, C-ease-up]
 - The screen it reads is the camera's screen down: going down, the one its move took its top to
   (`DownwardLooksAhead`); settling, the one its top is in before it settles
   (C-settle-up-from-below-short).
-- checked: oracle (R12 at 31, the others at 0); constructed (C-ease-up, C-ease-up-short,
-  C-settle-up-from-below-short).
+- checked: oracle (the harness case area-norfair:304 at 31; r01:994, r02:7 and r04:314 at 0);
+  constructed (C-ease-up, C-ease-up-short, C-settle-up-from-below-short).
 
 ### Settling
 - kind: mechanic.
@@ -296,8 +321,9 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   C-settle-back-right-of-room]
 - As that, and the `max` is `back(c0)`, which is in a `Closed` screen → it goes on to the next
   screen's edge from there, `c = edge(back(c0)) + 256` [C-settle-back-far-right]
-- So with the next screen closed and the camera on its screen's edge, or down within `margin` of
-  it, it holds (R1, R2, R4, R12, R21, R23).
+- So with the next screen closed and the camera on its screen's edge, or down within `margin` of it,
+  it holds (C-aim-above-top, C-down-within-margin, C-right-onto-edge, C-down-to-bottom-31,
+  C-at-aim-down-held-across, C-at-aim-across).
 - So from a camera right of the room, brought to its right edge, the ease back is measured from
   where the frame found it: from `0150` it eases to `014D` (C-settle-back-right-of-room); from
   `0250` the ease lands in the column after the last, which runs on to a closed screen, and it goes
@@ -315,9 +341,9 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - params: none.
 - switch: none.
 - Time stopped, on an axis she didn't move on → settling is skipped: the camera keeps its position
-  there [C-stopped, R7, R30]
-- checked: oracle (R7, R30, where settling would have held anyway); constructed (C-stopped, against
-  C-ease-right).
+  there [C-stopped, C-stopped-hold, C-stopped-hold-other-heights]
+- checked: oracle (the harness cases area-maridia:419 and r08:714, where settling would have held
+  anyway); constructed (C-stopped, against C-ease-right; C-stopped-hold).
 
 ### DownwardLooksAhead
 - kind: quirk.
@@ -332,7 +358,9 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   it 2 px short of the crossing, and it backs up 2 px from where it was: the view rises as she
   falls.
 - checked: constructed (C-ahead, C-below-closed, C-below-short-row); no recorded frame decides
-  it: R3 and R16 cross into the room's last row, but either read stops the view on its aim there.
+  it: two harness cases cross into the room's last row (area-brinstar:414 and r01:655, their twins
+  C-down-into-last-row and C-down-into-last-row-moving-left), but either read stops the view on its
+  aim there.
 
 ### ScreensRunOn
 - kind: quirk.
@@ -355,22 +383,22 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
   the room's last screen.
 - params: none.
 - switch: none.
-- A screen below the room's last row → its kind is the run's, `below`, which goes on from the
-  room's last screen as one strip (`ScreensRunOn`): its first `w` screens are the row below the
-  last, left to right, the next `w` the row below that, so only its end can fall short of a row;
-  past its end, `Closed` [R3, R16, C-below-closed, C-below-open, C-below-short-row,
-  C-below-second-row]
+- A screen below the room's last row → its kind is the run's, `below`, which goes on from the room's
+  last screen as one strip (`ScreensRunOn`): its first `w` screens are the row below the last, left
+  to right, the next `w` the row below that, so only its end can fall short of a row; past its end,
+  `Closed` [C-down-into-last-row, C-down-into-last-row-moving-left, C-below-closed, C-below-open,
+  C-below-short-row, C-below-second-row]
 - So in C-below-short-row the run holds one screen, under the left column: the screen under the
   right column is past its end, `Closed`, and the view backs up 2 px.
 - So, from inside the room, only a move down that crosses into the last row or past it reads them
   to effect (`DownwardLooksAhead`); a view on the room's bottom reads the screen under it but holds
-  whatever it is. R3 and R16 would back up if the screen below were closed (C-below-closed against
-  C-below-open).
+  whatever it is. C-down-into-last-row and C-down-into-last-row-moving-left would back up if the
+  screen below were closed (C-below-closed against C-below-open).
 - So a move whose top crosses into the row below the room reads the screen under it from the
   run's second `w`: in C-below-second-row it is open and the view stops on its aim; were it
   closed, the view would back up.
-- checked: oracle (R3, R16); constructed (C-below-closed, C-below-open, C-below-short-row,
-  C-below-second-row).
+- checked: oracle (the harness cases area-brinstar:414 and r01:655); constructed (their twins,
+  C-below-closed, C-below-open, C-below-short-row, C-below-second-row).
 
 ### PushCarries
 - kind: quirk.

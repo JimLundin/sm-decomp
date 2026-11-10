@@ -63,6 +63,39 @@ recorded rise at 0 (`0B36` = 1 with `0B2C`/`0B2E` = 0 at the scroll): all 7 such
 shinespark frames (movement type 1Bh), and in samus-shinespark-left 214 the clamp didn't fire
 (the model matches with the previous position as record N left it) and the down scroller decides.
 
+**Invented content** (round 5, MODEL §1 decision 13). The 35 recorded vectors carried the
+game's rooms: their screens, the run below them, their sizes and heights. They left the vector
+file and are harness cases (§The harness cases), each with a constructed twin; the constructed
+vectors' heights were the game's too. `$TEMP/collab/camera-spec-r5/` holds the conversion:
+- `rooms.py` walks the ROM's rooms by their doors from the Landing Site and Ceres (261 rooms, 322
+  states) and gives each state's screens as the camera reads them, the run after them, its size
+  and its heights (the up and down scrollers: 70h/A0h, 90h/A0h, A0h/A0h and 0/0 in the game).
+- `real_rooms.py` is the checker. It hits a vector whose screens, under any relabelling of the
+  three kinds (a constant offset of the kinds), match a real room state of the same size on 90% of
+  cells; whose screens match a real room's at any shift, partly outside it allowed, on every
+  overlapping cell (6 or more, of two kinds, and 90% of the smaller grid); whose run below the room
+  (3 or more, of two kinds) starts a real room's run under a relabelling; whose heights are a real
+  pair or one moved by a constant (the same difference); or whose comment or id names an area, a
+  boss's room or a room's header. On the round 4 file it finds 861 hits: all 35 recorded vectors,
+  every constructed vector's heights, and C-wrap's room (a real 2×2 room under a relabelling).
+  Probes catch a real room relabelled, one shifted a column with an invented column and row added,
+  and heights moved by a constant. On the new file: 0.
+- `twins.py` builds each twin: the record's frame moved by whole screens on both axes, so every
+  screen it reads, every edge and every row and column it reads by are where they were relative to
+  the camera; its room cut to the screens round the camera, or padded by an invented column or row
+  where the cut leaves the record's size; the screens the frame reads keep the kind it read (the
+  model's reads, matched one by one); every other screen drawn at random until the checker finds
+  nothing. The heights are invented, 104/150 for the rooms of 70h/A0h and 128/150 for those of
+  90h/A0h, and her y moves by the change in the height she aims with (the not-rising height's
+  change, or the rising one's while she rises), so the aim and the speeds are unchanged. A twin is
+  kept only when the reference model's result is the record's, moved, and its branch tags are the
+  record's.
+- `build_file.py` writes the file: the constructed vectors on the invented heights the same way
+  (their camera and results unchanged, her y and the seen y moved; C-wrap gains a third row,
+  `SC`, which it doesn't read), then the twins, named and described in `names.toml`.
+- `vecrun.py` (round 4's) agrees with 80 of 80; the camera model at main agrees with 80 of 80
+  (`run_tests.sh clean_model_camera`).
+
 **The dump's screen table** (camera round 3). `camera-spec/dump` wrote each of the table's 50
 bytes in decimal with no separator, and `model.py` read it a digit a screen. Inside the room the
 table holds only 0, 1 and 2, so the rooms' screens were right, but a byte past the room of 10 or
@@ -71,10 +104,10 @@ more (the bytes the loading copies from after the room's own, `$82:EB28`) became
 `camera-r3/model.py` reads it: the per-frame counts are unchanged (14,704 of 14,890, null 6,271),
 since the screens each frame reads past the room happen to read the same. Two recorded vectors'
 `below` were wrong past those screens and are now the true run, cut by `camera-r3/belowrun.py` to
-the shortest that gives the recorded result: R3 (area-brinstar 414, table bytes past the room `12
-01 80 12 00 80 ..`, the frame reads column 5, `80`, Open) "OSOOCO", was "SOSSOOSO"; R16 (r01 655,
-`13 01 80 01 00`, column 3, `01`, Short) "OSOS", was "SOSSOOSC", whose last three screens lay past
-the 50-byte table and came from the misread digits.
+the shortest that gives the recorded result (now the harness cases): R3 (area-brinstar 414, table
+bytes past the room `12 01 80 12 00 80 ..`, the frame reads column 5, `80`, Open) "OSOOCO", was
+"SOSSOOSO"; R16 (r01 655, `13 01 80 01 00`, column 3, `01`, Short) "OSOS", was "SOSSOOSC", whose
+last three screens lay past the 50-byte table and came from the misread digits.
 
 **Row names.** As in samus-motion's decode notes, the chain rows go by opaque ids, because a chain
 row's name carries a room header's address:
@@ -230,9 +263,9 @@ vectors test's TOML `Value`, a false positive; the root accepts both.
   the next row's first open, the original eases past the room's right edge, 3 px a frame (C-wrap).
   No record reaches it; the spec now states the wrap (`ScreensRunOn`).
 - **Below the room.** A move down's reads use `0915` after the speed's add (`DownwardLooksAhead`),
-  so a move that crosses into the room's last row reads the row below it, from the leftovers. In
-  2 rows (R3, R16) the leftovers decide: read as red, 5 frames would differ from the record. The
-  model reading them as the table holds matches all.
+  so a move that crosses into the room's last row reads the row below it, from the leftovers. In 2
+  rows (the harness cases R3 and R16) the leftovers decide: read as red, 5 frames would differ from
+  the record. The model reading them as the table holds matches all.
 - **Past the run** (adversary 51, F2; spec open question 1). `$TEMP/collab/adv51/past50.py` logs
   every table read at index 32h or more over `out3`: 409, all indices 50 and 51 (`$7E:CD52`,
   `$7E:CD53`), in samus-shinespark-left, -right, -up and -up-left, all in Landing Site (w 9, h 5,
@@ -337,11 +370,11 @@ be verified on its own from the records, with her motion's outputs decoded as in
   edge (the `*-red-back`, `*-red-step` and `*-red-both` tags, 0 each); every push the records
   reach ends on the edge. The push's figure (`ClosedScreens`, `PushCarries`, the settles' ease) is
   checked by the constructed vectors alone (C-push-*, C-ease-*, C-ahead, C-wrap).
-- **The reads down from where the move took it: vectors only** (adversary 53, F2). No recorded
-  frame decides `DownwardLooksAhead`: reading the screens from where the aim stopped the move
-  leaves every row's output the same. In R3 and R16 the move crosses into the last row past its
-  aim, but the view stops on its aim under either read. It is checked by C-ahead,
-  C-below-closed and C-below-short-row, and the bank log (`$80:A8A6`..`$80:A8D4`).
+- **The reads down from where the move took it: vectors only** (adversary 53, F2). No recorded frame
+  decides `DownwardLooksAhead`: reading the screens from where the aim stopped the move leaves every
+  row's output the same. In the harness cases R3 and R16 the move crosses into the last row past its
+  aim, but the view stops on its aim under either read. It is checked by C-ahead, C-below-closed and
+  C-below-short-row, and the bank log (`$80:A8A6`..`$80:A8D4`).
 - **k out of sample:** the old code scores 2,273.5 over this spec's 47.0 units, 48.4 a unit
   (samus-motion's 65.8); its own 0.55 would give k = 26.6 against the frozen 36, so the 70% cap
   binds in both areas (limits at 31.3 units). The old code lacks the knockback's
@@ -350,6 +383,75 @@ be verified on its own from the records, with her motion's outputs decoded as in
   from the records; report the first differing frame per axis. Re-seed at a room change.
 - **Per-behaviour attribution:** `model.py`'s tags name the branch each frame takes; the entries
   each tag exercises are in `gen.py`'s `entries_of`.
+
+## The harness cases
+
+The vectors hold RAM observations and invented content only (MODEL §1 decision 13). The 35
+recorded vectors carried the game's rooms, so they left the vector file and are **harness cases**:
+the harness must compare each named frame and match it, with the room's content loaded through the
+importer. Each case keeps its old vector's id, so the history reads; its constructed twin is the
+same frame moved into an invented room (§How the spec was made), and carries the rule.
+
+- **The frame** is the pair record N, N+1 of the row: N+1 is the record named. Every case is a
+  frame the harness compares (one frame of gameplay in one room, nothing masked on either axis):
+  a case the harness skips or masks is a harness defect, not a pass.
+- **Compared at N+1**, for every case: the camera's x and y, pixel and subpixel parts. Where it
+  last saw her is reported, not counted (§The harness).
+- **The content the importer loads:** the room (its header in bank `$8F`) at the state the record
+  holds; its size `07A9`×`07AB` and its heights from the header; its screens from the state's
+  scroll pointer through `data::level::scroll_areas`: a table's 32h bytes (the room's `w × h`, then
+  the run after them, which the camera reads below the room), or preset scrolls (every screen green
+  but the bottom row, the pointer's low byte plus one). The harness compares the importer's screens
+  with the record's table `$7E:CD20` at N+1 and runs the model on the importer's, with these taken
+  from the record instead, by name:
+  - screens changed before the frame (the scroll cells, the room's own code): the cases list them;
+  - for a preset room, the run after its screens, which is the last room's (`$82:EB3D`..`$82:EB67`
+    fill `w × h` only; the engine keeps it as `RoomScoped::stale_scrolls`).
+  Any other difference is a harness defect.
+
+| Case | Row and record N+1 | Room and the content the importer loads | Twin |
+| --- | --- | --- | --- |
+| R1 | area-brinstar 72 | `$9E9F`: table `$8F:9EED`, 8×3; heights 70h/A0h | C-aim-above-top |
+| R2 | area-brinstar 74 | `$9E9F`: table `$8F:9EED`, 8×3; heights 70h/A0h | C-down-within-margin |
+| R3 | area-brinstar 414 | `$9E9F`: table `$8F:9EED`, 8×3, and the run after it; heights 70h/A0h | C-down-into-last-row |
+| R4 | area-maridia 6 | `$CEFB`: table `$8F:CF49`, 1×3; changed before the frame, from the record: screens 0, 1, 2 red, blue, red; heights 70h/A0h | C-right-onto-edge |
+| R5 | area-maridia 7 | `$CEFB`: table `$8F:CF49`, 1×3; changed before the frame, from the record: screens 0, 1, 2 red, blue, red; heights 70h/A0h | C-left-past-edge |
+| R6 | area-maridia 208 | `$CF54`: table `$8F:CF7F`, 1×1, and the run after it; heights 70h/A0h | C-hold-creep |
+| R7 | area-maridia 419 | `$CF54`: table `$8F:CF7F`, 1×1; heights 70h/A0h | C-stopped-hold |
+| R8 | area-norfair 17 | `$A9E5`: preset, 1×1, the bottom row blue; heights 70h/A0h | C-rise-into-corner |
+| R9 | area-norfair 18 | `$A9E5`: preset, 1×1, the bottom row blue; heights 70h/A0h | C-at-aim-across-rising |
+| R10 | area-norfair 55 | `$A9E5`: preset, 1×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-aim-above-top-right-edge |
+| R11 | area-norfair 286 | `$AA41`: table `$8F:AA6C`, 2×2, and the run after it; changed before the frame, from the record: screens 0, 2 green, green; heights 70h/A0h | C-left-edge-keeps-subpixel |
+| R12 | area-norfair 304 | `$AA41`: table `$8F:AA6C`, 2×2; changed before the frame, from the record: screens 0, 2 green, green; heights 70h/A0h | C-down-to-bottom-31 |
+| R13 | r01 418 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-at-aim-down |
+| R14 | r01 419 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-up-to-aim |
+| R15 | r01 620 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-settle-open-creep |
+| R16 | r01 655 | `$91F8`: table `$8F:9283`, 9×5, and the run after it; heights 70h/A0h | C-down-into-last-row-moving-left |
+| R17 | r01 994 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-skid-rising-down-to-bottom |
+| R18 | r01 996 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-rise-up-to-closed-edge |
+| R19 | r02 7 | `$92FD`: table `$8F:9370`, 5×5; heights 70h/A0h | C-down-short-closed-below |
+| R20 | r03 5 | `$96BA`: table `$8F:9729`, 3×9; heights 70h/A0h | C-skid-left-to-closed-edge |
+| R21 | r03 31 | `$96BA`: table `$8F:9729`, 3×9; heights 70h/A0h | C-at-aim-down-held-across |
+| R22 | r03 210 | `$96BA`: table `$8F:9729`, 3×9, and the run after it; heights 70h/A0h | C-moonwalk-right-to-closed-edge |
+| R23 | r04 19 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-at-aim-across |
+| R24 | r04 297 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-knockback-left |
+| R25 | r04 314 | `$9FBA`: preset, 6×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-right-to-closed-edge-down-to-bottom |
+| R26 | r05 1 | `$A293`: table `$8F:A2BE`, 8×2; heights 90h/A0h | C-corner-other-heights |
+| R27 | r05 66 | `$A293`: table `$8F:A2BE`, 8×2; heights 90h/A0h | C-knockback-rising-down-closed |
+| R28 | r06 662 | `$ACF0`: preset, 12×2, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-rise-up-free |
+| R29 | r08 656 | `$ACB3`: table `$8F:ACE8`, 2×4; heights 90h/A0h | C-up-other-heights |
+| R30 | r08 714 | `$ACB3`: table `$8F:ACE8`, 2×4; heights 90h/A0h | C-stopped-hold-other-heights |
+| R31 | r11 475 | `$D5A7`: table `$8F:D5DA`, 6×3, and the run after it; heights 90h/A0h | C-moonwalk-left-to-aim |
+| R32 | item-morph-ball 709 | `$9E9F`: table `$8F:9EED`, 8×3; heights 70h/A0h | C-rise-up-to-closed-edge-moving-left |
+| R33 | item-morph-ball 1228 | `$9E9F`: table `$8F:9EED`, 8×3, and the run after it; heights 70h/A0h | C-right-free-creep-up |
+| R34 | samus-bomb-jump-vertical 1030 | `$9804`: preset, 1×1, the bottom row blue; the run after it is the last room's, from the record; heights 70h/A0h | C-hold-creep-up |
+| R35 | samus-shinespark-left 214 | `$91F8`: table `$8F:9283`, 9×5; heights 70h/A0h | C-rise-at-0-to-aim |
+
+The importer's screens equal the record's on every case but those listed: R4 and R5 (Glass Tunnel
+`$CEFB`, its table all green; red, blue and red in RAM) and R11 and R12 (`$AA41`, screens 0 and 2
+red in the table, green in RAM). The cases cover every outcome the recorded frames reach, at most
+two each from different rows (§How the spec was made, `gen.py`); the other recorded frames stay
+checked by the harness's frame counts and floors as before.
 
 ## Size baseline (tokens, 2026-11-08)
 
