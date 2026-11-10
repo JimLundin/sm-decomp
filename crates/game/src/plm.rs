@@ -177,15 +177,14 @@ pub fn spawn_population(
     content: &BlockContent,
     population: &PlmPopulation,
 ) -> Result<(), BlocksFault> {
-    for entry in &population.entries {
-        let taken = blocks_world::start_room(
-            room,
-            Reads {
-                content,
-                population,
-            },
-            entry,
-        )?;
+    let taken = blocks_world::start_room(
+        room,
+        Reads {
+            content,
+            population,
+        },
+    )?;
+    for (entry, taken) in population.entries.iter().zip(taken) {
         if let (Some(index), PlmKind::Item(item, bit)) = (taken, entry.kind) {
             // `$84:8495`: the row times the room's width in blocks, plus the column.
             let block = BlockIndex(

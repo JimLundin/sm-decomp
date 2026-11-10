@@ -354,8 +354,9 @@ pub struct Reaction {
     pub name: &'static str,
     /// Which rules start it.
     pub family: Family,
-    /// The look it has when whole; none for the shot blocks that keep their own.
-    pub whole_look: Option<Look>,
+    /// The picture it has when whole, never flipped; none for the shot blocks that keep their
+    /// own look.
+    pub whole_look: Option<Picture>,
     /// The frames from its start to its first step.
     pub first_wait: u16,
     /// What it does when it breaks.
@@ -415,6 +416,15 @@ pub enum Refused {
     Loop(RomAddress),
     /// A show of 0 frames, or more than 32,767.
     ShowFrames(RomAddress),
+    /// A whole look with a flip, which the spec's whole look (a picture) can't hold.
+    FlippedWholeLook(RomAddress),
+    /// A reacting cell of this type and BTS whose mark names a reaction this part doesn't hold.
+    NoReaction {
+        /// The block type.
+        kind: u8,
+        /// The BTS.
+        bts: u8,
+    },
     /// A bomb block's `broken` script that doesn't begin with a sound, which a bomb's start
     /// skips three bytes of (LEGACY).
     BombWithoutSound(&'static str),
@@ -499,6 +509,13 @@ fn look(word: u16) -> Option<Look> {
         picture: Picture::new(word & PICTURE)?,
         flip,
     })
+}
+
+/// The whole look of a setup's respawn word: its picture, which no setup flips.
+fn whole_look(word: u16) -> Option<Picture> {
+    look(word)
+        .filter(|look| look.flip == Flip::None)
+        .map(|look| look.picture)
 }
 
 /// The draw instruction at `at` (`$84:861E`): rows and columns of cells, each a block word
@@ -755,8 +772,8 @@ impl Reactions {
                 .push((entry.plm, Runs::Script(id, Script::Broken)));
             let whole_look = match entry.setup.whole_look {
                 Some(at) => Some(
-                    look(word(rom, PLM_BANK, at)?)
-                        .ok_or_else(|| Refused::Pattern(RomAddress::new(PLM_BANK, at)))?,
+                    whole_look(word(rom, PLM_BANK, at)?)
+                        .ok_or_else(|| Refused::FlippedWholeLook(RomAddress::new(PLM_BANK, at)))?,
                 ),
                 None => None,
             };
@@ -854,7 +871,9 @@ impl Reactions {
     ///
     /// # Errors
     ///
-    /// [`Refused::PastTable`] for a cell an asker of which reads past its table's end.
+    /// [`Refused::PastTable`] for a cell an asker of which reads past its table's end, and
+    /// [`Refused::NoReaction`] for a mark that names a reaction this part doesn't hold, which the
+    /// room's loading refuses (spec §8).
     pub fn mark(&self, kind: BlockKind, area: Area) -> Result<Option<Mark>, Refused> {
         let (nybble, bts) = (kind.nybble(), kind.bts());
         if past_table(nybble, bts) {
@@ -874,7 +893,25 @@ impl Reactions {
                 Runs::Script(_, Script::Revealed) | Runs::RevealedOfMark | Runs::Hold => None,
             })
         };
-        Ok(Some(match nybble {
+        let mark = self.typed(nybble, bts, at, known);
+        match mark {
+            Some(Mark::Reaction(id)) if self.get(id).is_none() => {
+                Err(Refused::NoReaction { kind: nybble, bts })
+            }
+            Some(_) | None => Ok(mark),
+        }
+    }
+
+    /// The mark of a cell of type `nybble` and BTS `bts` by its tables (`at` reads one of them
+    /// by the cell's area and BTS), `known` the mark of a PLM that runs a reaction's script.
+    fn typed(
+        &self,
+        nybble: u8,
+        bts: u8,
+        at: impl Fn(&[[Option<u16>; 256]]) -> Option<u16>,
+        known: impl Fn(Option<u16>) -> Option<Mark>,
+    ) -> Option<Mark> {
+        Some(match nybble {
             0x3 | 0xb => {
                 let plm = at(&self.tables.special);
                 if plm == Some(SCROLL_TOUCH) {
@@ -915,8 +952,8 @@ impl Reactions {
                     }
                 }
             }
-            _ => return Ok(None),
-        }))
+            _ => return None,
+        })
     }
 
     /// Whether she holds a place when she is inside a cell of `kind` in `area`: special air

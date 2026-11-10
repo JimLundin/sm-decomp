@@ -254,8 +254,8 @@ impl PlmSources {
     }
 
     /// The reaction in slot `index`, running `script` of `reaction`: its next step, and what its
-    /// cell grows back as while a `Regrow` step is ahead (the respawn block is the last
-    /// occupant's otherwise).
+    /// cell grows back as if the script has a `Regrow` step (its setup writes the respawn block,
+    /// which holds for the reaction's whole life; it is the last occupant's otherwise).
     fn reaction(
         &self,
         wram: &[u8],
@@ -276,9 +276,7 @@ impl PlmSources {
         let steps = reactions
             .get(reaction)
             .map_or(&[][..], |imported| imported.script(script));
-        let regrows = steps
-            .get(next..)
-            .is_some_and(|ahead| ahead.contains(&Step::Regrow));
+        let regrows = steps.contains(&Step::Regrow);
         let grows_back_as = if regrows {
             let respawn = word(self.variable)?;
             Some(match respawn >> RESPAWN_TYPE {

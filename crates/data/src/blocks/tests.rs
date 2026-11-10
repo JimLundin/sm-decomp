@@ -168,3 +168,11 @@ fn the_games_reactions_import_with_their_marks() {
         Ok(Some(Mark::Scroll))
     );
 }
+
+/// A whole look is a picture, never flipped: a respawn word with a flip has none.
+#[test]
+fn a_flipped_whole_look_is_refused() {
+    assert_eq!(whole_look(0x8058), Picture::new(0x58));
+    assert_eq!(whole_look(0x8458), None);
+    assert_eq!(whole_look(0x8858), None);
+}

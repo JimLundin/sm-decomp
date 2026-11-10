@@ -292,7 +292,7 @@ pub struct ReactionPlace {
     pub script: ReactionScript,
     /// The index of its next step in the script.
     pub next: u16,
-    /// What its cell grows back as, while a `Regrow` step is still ahead.
+    /// What its cell grows back as, for as long as it runs, if its script has a `Regrow` step.
     pub grows_back_as: Option<GrowsBackAs>,
 }
 

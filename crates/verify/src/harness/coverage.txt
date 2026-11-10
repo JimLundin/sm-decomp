@@ -126,9 +126,8 @@ hud entry SwitchClick 0 0 0 124
 hud entry Switching 0 0 0 137
 blocks frames 21857 20530 85 19928
 blocks field 20615 0 places
-blocks field 20615 0 cells within the frame's reach
+blocks field 20615 0 cells
 blocks field 20615 0 screens
-blocks field 20615 0 cells outside the frame's reach, as record N's
 blocks entry AnswersToHerMotion 0 0 0 293
 blocks entry BlocksMarkedNothing 0 0 0 0
 blocks entry BombBlocks 5 0 5 0

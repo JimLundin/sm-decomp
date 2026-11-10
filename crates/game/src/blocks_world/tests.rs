@@ -151,7 +151,7 @@ fn touching_the_scroll_cell_changes_its_screen_in_the_next_run() {
         cell: TRIGGER_CELL,
         way: Way::Move(Heading::Down),
     };
-    touch(&mut room, reads(&content, &population), down).unwrap();
+    touches(&mut room, reads(&content, &population), &[down]).unwrap();
     let hold = &room.plms.slots[38];
     assert_eq!(hold.occupancy, Occupancy::Live(PlmBody::ScrollTouch));
     assert_eq!(hold.common.block, BlockIndex(0));
@@ -214,7 +214,7 @@ fn a_scroll_cell_with_no_scroll_reaction_is_refused() {
         way: Way::Move(Heading::Down),
     };
     assert_eq!(
-        touch(&mut room, reads(&content, &population), down),
+        touches(&mut room, reads(&content, &population), &[down]),
         Err(BlocksFault::NoScrollReaction(BlockIndex(7)))
     );
 }
@@ -234,7 +234,7 @@ fn with_every_place_taken_a_touch_takes_none() {
         cell: TRIGGER_CELL,
         way: Way::Move(Heading::Down),
     };
-    touch(&mut room, reads(&content, &population), down).unwrap();
+    touches(&mut room, reads(&content, &population), &[down]).unwrap();
     assert_eq!(room, before);
 }
 
@@ -309,7 +309,7 @@ fn a_crumble_block_grows_back_as_the_block_it_was() {
         cell: Cell { x: 10, y: 4 },
         way: Way::Move(Heading::Down),
     };
-    touch(&mut room, reads(&content, &population), down).unwrap();
+    touches(&mut room, reads(&content, &population), &[down]).unwrap();
     let block = room.blocks[usize::from(TARGET.0)];
     assert_eq!(block.kind, BlockKind::Solid(Bts(1)));
     assert_eq!(block.tile.number, TileNumber(0x20));
@@ -331,4 +331,24 @@ fn a_crumble_block_grows_back_as_the_block_it_was() {
         [solid, solid, air, air, (CRUMBLE, 0x20), (CRUMBLE, 0x20)]
     );
     assert_eq!(room.plms.slots[38].occupancy, Occupancy::Free);
+}
+
+/// Every request names a cell of the room: one past its last row stops the call, and the room
+/// is left as it was.
+#[test]
+fn a_request_past_the_rooms_last_row_is_refused() {
+    let content = content();
+    let population = population();
+    let mut room = loaded(&content);
+    let before = room.clone();
+    let past = Cell { x: 3, y: 16 };
+    let down = Touch {
+        cell: past,
+        way: Way::Move(Heading::Down),
+    };
+    assert_eq!(
+        touches(&mut room, reads(&content, &population), &[down]),
+        Err(BlocksFault::Outside(past))
+    );
+    assert_eq!(room, before);
 }

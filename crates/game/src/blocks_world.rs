@@ -2,16 +2,20 @@
 //!
 //! The engine keeps the room's cells as the game keeps them, in `RoomScoped::blocks` (each cell's
 //! type, BTS and tile), and the reactions' places in its PLM slots beside the items'. Each call
-//! builds the model's State from those, steps it, and writes back what it changed
-//! (`docs/behaviours/blocks.decode.md`, "State"):
-//! - the room's start: its scroll cells and stand-ins ([`start_room`]);
-//! - each request, in the frame's order: the cells she is inside ([`inside`]), her beam's hits
-//!   ([`hit`]) and her moves' touches ([`touch`]);
+//! builds the model's State of the whole room from those once, steps it through the call's
+//! requests in order, and writes back what it changed (`docs/behaviours/blocks.decode.md`,
+//! "State"):
+//! - the room's start: its scroll cells and stand-ins, beside the items' placements
+//!   ([`start_room`]);
+//! - the frame's requests, where the engine asks them: the cells she is inside ([`inside`]), her
+//!   beam's hits ([`hit`]) and her moves' touches ([`touches`]);
 //! - the run, in the PLM pass, between the items' places ([`run`]).
 //!
-//! A call hands the model the rows of cells it can reach, a request's own row and the rows a
-//! running reaction's patterns cover; the other rows are empty, which the model reads as past the
-//! room, and which no request or pattern of the call reaches.
+//! The State isn't held from one call to the next: the engine's other parts read and write the
+//! cells and the PLM slots between the calls (her moves, the items' touches, the items' turns in
+//! the pass), so the engine's room stays the one copy. A call of requests therefore steps the
+//! model with the run paused, and the PLM pass steps it with the run on the places between two
+//! items'.
 //!
 //! Where an asker doesn't exist in the engine yet, the model is asked nothing:
 //! - her moves meet each cell by its body (`samus_world`), and the touches reach the blocks after
@@ -22,21 +26,21 @@
 //!   bombs', power bombs' and the grapple's hits join with their domains (W1, S6);
 //! - the run is never paused: the engine has no room loading or door transition that pauses it
 //!   (R1, R2);
-//! - the sounds the scripts ask for have no sound queue to go to (U1);
-//! - another part's start is an item's, which `plm` keeps in its own places.
+//! - the sounds the scripts ask for have no sound queue to go to (U1).
 
 use core::ops::Range;
+use std::sync::{Arc, OnceLock};
 
 use clean_model_blocks::{
-    Becomes, Blocks, CellKind, Frames, Grid, Inside, Mark, PatternCell, Place, Placement, Reaction,
-    ReactionName, Reactions, Request, Rules, Run, Running, ScreenChange, ScrollReaction,
-    SoundRequest, StandIn, State, Step, Tile, Touched,
+    Becomes, CellKind, Frames, Grid, Inside, Mark, OutsideTheRoom, PatternCell, Place, Placement,
+    Places, ReactingBody, Reaction, ReactionName, Request, Rules, Run, Running, ScreenChange,
+    ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
 };
 use clean_types::{Cell, Family, Flip, HitBy, Look, MetAs, Pair, Picture, Point, ScreenKind};
 use clean_types::{Script, Set, Touch};
 use data::blocks::{self as asset, ReactionId, SCROLL_CELL};
 use data::level::{Block, BlockKind, Bts, Offset, ScrollArea, TileNumber};
-use data::plm::{Extension, PlmPopulation, ScrollChangesId};
+use data::plm::{Extension, PlmEntry, PlmKind, PlmPopulation, ScrollChangesId};
 use data::room::Area;
 use enum_map::EnumMap;
 
@@ -68,6 +72,12 @@ const AREAS: [Area; 8] = [
     Area::Debug,
 ];
 
+/// The game's rules, built once.
+fn rules() -> &'static Rules {
+    static RULES: OnceLock<Rules> = OnceLock::new();
+    RULES.get_or_init(Rules::reference)
+}
+
 /// What a call reads besides the room: the blocks' content and the room's PLM population, whose
 /// scroll cells' change lists the scroll reactions name.
 #[derive(Clone, Copy, Debug)]
@@ -82,8 +92,9 @@ pub struct Reads<'a> {
 /// isn't defined on.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BlocksFault {
-    /// A reacting cell some asker of which reads past its table's end: the importer refuses it
-    /// (LEGACY, "Reacting cells whose tables end before their mark").
+    /// A reacting cell some asker of which reads past its table's end, or whose mark names no
+    /// reaction: the importer refuses it (LEGACY, "Reacting cells whose tables end before their
+    /// mark"; spec §8).
     Refused(BlockIndex),
     /// A scroll cell with no scroll reaction on it, where the original hangs (LEGACY, "A scroll
     /// cell with no scroll reaction").
@@ -94,77 +105,38 @@ pub enum BlocksFault {
     /// A cell the model made a reacting kind whose block type nothing names: its mark is no
     /// family's and the cell had none.
     Class(BlockIndex),
+    /// A request or a placement past the room's last row, which every asker keeps inside it.
+    Outside(Cell),
+    /// The room's screens aren't whole rows of the screens it is across.
+    Screens,
 }
 
-/// The model, its rules the game's and its reactions the content's.
-struct Model(Blocks);
-
-impl Model {
-    const fn new(reactions: Reactions) -> Self {
-        Self(Blocks {
-            rules: Rules::REFERENCE,
-            reactions,
-        })
+impl From<OutsideTheRoom> for BlocksFault {
+    fn from(OutsideTheRoom(cell): OutsideTheRoom) -> Self {
+        Self::Outside(cell)
     }
-}
-
-impl Clone for Model {
-    fn clone(&self) -> Self {
-        Self::new(self.0.reactions.clone())
-    }
-}
-
-impl core::fmt::Debug for Model {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_tuple("Model").field(&self.0.reactions).finish()
-    }
-}
-
-impl PartialEq for Model {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.reactions == other.0.reactions
-    }
-}
-
-impl Eq for Model {}
-
-impl Default for Model {
-    fn default() -> Self {
-        Self::new(Reactions::new())
-    }
-}
-
-/// A reacting cell's mark as the content types it, or the importer's refusal.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Typed {
-    Mark(asset::Mark),
-    Refused,
 }
 
 /// An imported reaction as the engine keeps it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Imported {
-    /// The model's name for it.
-    name: ReactionName,
-    /// Its family, which names the block type of its cells.
-    family: Family,
-    /// The rows its patterns cover, from its cell's.
-    rows: Vec<i16>,
+    /// The model's reaction.
+    reaction: Arc<Reaction>,
     /// The cells its patterns cover other than its own.
     others: Vec<Pair<i16>>,
 }
 
-/// The blocks' content: the model over the imported reactions, and what each reacting cell's
-/// mark is, by its area, block type and BTS.
+/// The blocks' content: the imported reactions, and what each reacting cell's mark is, by its
+/// area, block type and BTS.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct BlockContent {
     /// The reactions as the importer gave them.
     imported: asset::Reactions,
-    model: Model,
     /// By [`ReactionId`].
     reactions: Vec<Imported>,
-    /// By area, then the reacting types' order (`REACTING`, blocks then air), then BTS.
-    marks: Vec<Vec<Typed>>,
+    /// By area, then the reacting types' order (`REACTING`, blocks then air), then BTS; `None`
+    /// where the importer refuses the cell.
+    marks: Vec<Vec<Option<Mark>>>,
     /// By area, then BTS: whether she holds a place inside special air.
     inside: Vec<Vec<bool>>,
 }
@@ -191,7 +163,7 @@ const fn tile(look: Look) -> data::level::Tile {
     }
 }
 
-/// The model's step of an imported one.
+/// The model's step of an imported one; `None` for a wait the model can't hold.
 fn step(step: &asset::Step) -> Option<Step> {
     Some(match step {
         asset::Step::Sound(sound) => Step::Sound(SoundRequest {
@@ -219,9 +191,28 @@ fn step(step: &asset::Step) -> Option<Step> {
     })
 }
 
-/// The cells a reaction's patterns cover, past its own.
-fn covered(reaction: &Reaction) -> Vec<Pair<i16>> {
-    let mut cells: Vec<Pair<i16>> = reaction
+/// The model's reaction of an imported one; `None` for a wait the model can't hold.
+fn convert(reaction: &asset::Reaction) -> Option<Reaction> {
+    let mut scripts: EnumMap<Script, Vec<Step>> = EnumMap::default();
+    for (script, steps) in &mut scripts {
+        *steps = reaction
+            .script(script)
+            .iter()
+            .map(step)
+            .collect::<Option<_>>()?;
+    }
+    Some(Reaction {
+        name: ReactionName(reaction.name.to_owned()),
+        family: reaction.family,
+        whole_look: reaction.whole_look,
+        first_wait: Frames::new(reaction.first_wait)?,
+        scripts,
+    })
+}
+
+/// The reaction as the engine keeps it, with the cells its patterns cover past its own.
+fn imported(reaction: Reaction) -> Imported {
+    let mut others: Vec<Pair<i16>> = reaction
         .scripts
         .values()
         .flatten()
@@ -232,9 +223,12 @@ fn covered(reaction: &Reaction) -> Vec<Pair<i16>> {
         .flatten()
         .filter(|&offset| offset != Pair { x: 0, y: 0 })
         .collect();
-    cells.sort_unstable_by_key(|offset| (offset.y, offset.x));
-    cells.dedup();
-    cells
+    others.sort_unstable_by_key(|offset| (offset.y, offset.x));
+    others.dedup();
+    Imported {
+        reaction: Arc::new(reaction),
+        others,
+    }
 }
 
 /// The model's script of the engine's.
@@ -255,58 +249,77 @@ const fn engine_script(script: Script) -> ReactionScript {
     }
 }
 
-/// The place of a reacting type in `REACTING`'s order, blocks first.
-fn class_place(nybble: u8) -> Option<usize> {
+/// The model's body of what the engine's cell grows back as.
+const fn reacting_body(grows: GrowsBackAs) -> ReactingBody {
+    match grows {
+        GrowsBackAs::Block => ReactingBody::Block,
+        GrowsBackAs::Air => ReactingBody::Air,
+    }
+}
+
+/// What the engine's cell grows back as, of the model's body.
+const fn grows_back_as(body: ReactingBody) -> GrowsBackAs {
+    match body {
+        ReactingBody::Block => GrowsBackAs::Block,
+        ReactingBody::Air => GrowsBackAs::Air,
+    }
+}
+
+/// A mark table row's entry for a cell of `kind`: its type's place in `REACTING`'s order,
+/// blocks first, then its BTS.
+fn mark_entry(kind: BlockKind) -> Option<usize> {
+    let nybble = kind.nybble();
     let blocks = REACTING.iter().position(|&(block, _)| block == nybble);
     let air = REACTING.iter().position(|&(_, air)| air == nybble);
-    blocks.or_else(|| air.map(|place| place.wrapping_add(REACTING.len())))
+    let place = blocks.or_else(|| air.map(|place| place.wrapping_add(REACTING.len())))?;
+    Some(
+        place
+            .wrapping_mul(BTS_VALUES)
+            .wrapping_add(usize::from(kind.bts())),
+    )
+}
+
+/// Every reacting kind, in a mark table row's order.
+fn reacting_kinds() -> impl Iterator<Item = BlockKind> {
+    let blocks = REACTING.iter().map(|&(block, _)| block);
+    let air = REACTING.iter().map(|&(_, air)| air);
+    blocks
+        .chain(air)
+        .flat_map(|nybble| (0..=u8::MAX).map(move |bts| BlockKind::new(nybble, bts)))
 }
 
 impl BlockContent {
-    /// The content of the imported `reactions` and their mark tables.
+    /// The content of the imported `reactions` and their mark tables. A cell the importer
+    /// refuses, its tables ending before its mark or its mark naming no reaction this part
+    /// holds, is kept as refused, and a call that meets it stops.
     ///
     /// # Errors
     ///
     /// The id of a reaction whose shows wait longer than the model's frames, which the importer
     /// refuses first.
     pub fn import(reactions: &asset::Reactions) -> Result<Self, ReactionId> {
-        let mut model = Reactions::new();
-        let mut imported = Vec::new();
+        let mut held = Vec::new();
         for (reaction, index) in reactions.all().iter().zip(0_u16..) {
-            let id = ReactionId(index);
-            let converted = convert(reaction).ok_or(id)?;
-            let others = covered(&converted);
-            let mut rows: Vec<i16> = others.iter().map(|offset| offset.y).collect();
-            rows.push(0);
-            rows.sort_unstable();
-            rows.dedup();
-            let name = ReactionName(reaction.name.to_owned());
-            imported.push(Imported {
-                name: name.clone(),
-                family: reaction.family,
-                rows,
-                others,
-            });
-            model.insert(name, converted);
+            held.push(imported(convert(reaction).ok_or(ReactionId(index))?));
         }
-        let marks = AREAS
+        let mut content = Self {
+            imported: reactions.clone(),
+            reactions: held,
+            marks: Vec::new(),
+            inside: Vec::new(),
+        };
+        content.marks = AREAS
             .iter()
             .map(|&area| {
-                let blocks = REACTING.iter().map(|&(block, _)| block);
-                let air = REACTING.iter().map(|&(_, air)| air);
-                blocks
-                    .chain(air)
-                    .flat_map(|nybble| (0..=u8::MAX).map(move |bts| (nybble, bts)))
-                    .map(
-                        |(nybble, bts)| match reactions.mark(BlockKind::new(nybble, bts), area) {
-                            Ok(Some(mark)) => Typed::Mark(mark),
-                            Ok(None) | Err(_) => Typed::Refused,
-                        },
-                    )
+                reacting_kinds()
+                    .map(|kind| match reactions.mark(kind, area) {
+                        Ok(Some(mark)) => content.mark(mark),
+                        Ok(None) | Err(_) => None,
+                    })
                     .collect()
             })
             .collect();
-        let inside = AREAS
+        content.inside = AREAS
             .iter()
             .map(|&area| {
                 (0..=u8::MAX)
@@ -314,55 +327,27 @@ impl BlockContent {
                     .collect()
             })
             .collect();
-        Ok(Self {
-            imported: reactions.clone(),
-            model: Model::new(model),
-            reactions: imported,
-            marks,
-            inside,
-        })
+        Ok(content)
     }
 
-    /// Content of invented reactions, each with its family, and the marks of the cells listed,
-    /// in every area; another reacting cell is another part's.
+    /// Content of invented reactions, by their ids' order, and the marks of the cells listed in
+    /// every area; another reacting cell is another part's. `None` where a listed mark names no
+    /// reaction listed.
     #[must_use]
-    pub fn invented(reactions: Vec<(&str, Reaction)>, marks: &[(BlockKind, asset::Mark)]) -> Self {
-        let mut model = Reactions::new();
-        let mut imported = Vec::new();
-        for (name, reaction) in reactions {
-            let others = covered(&reaction);
-            let mut rows: Vec<i16> = others.iter().map(|offset| offset.y).collect();
-            rows.push(0);
-            rows.sort_unstable();
-            rows.dedup();
-            let name = ReactionName(name.to_owned());
-            imported.push(Imported {
-                name: name.clone(),
-                family: reaction.family,
-                rows,
-                others,
-            });
-            model.insert(name, reaction);
-        }
-        let mut row = vec![Typed::Mark(asset::Mark::Other(None)); MARK_ROW];
+    pub fn invented(reactions: Vec<Reaction>, marks: &[(BlockKind, asset::Mark)]) -> Option<Self> {
+        let mut content = Self {
+            reactions: reactions.into_iter().map(imported).collect(),
+            ..Self::default()
+        };
+        let mut row = vec![Some(Mark::Other(None)); MARK_ROW];
         for &(kind, mark) in marks {
-            if let Some(entry) = class_place(kind.nybble()).and_then(|place| {
-                row.get_mut(
-                    place
-                        .wrapping_mul(BTS_VALUES)
-                        .wrapping_add(usize::from(kind.bts())),
-                )
-            }) {
-                *entry = Typed::Mark(mark);
+            if let Some(entry) = mark_entry(kind).and_then(|entry| row.get_mut(entry)) {
+                *entry = Some(content.mark(mark)?);
             }
         }
-        Self {
-            imported: asset::Reactions::default(),
-            model: Model::new(model),
-            reactions: imported,
-            marks: vec![row; AREAS.len()],
-            inside: vec![vec![false; BTS_VALUES]; AREAS.len()],
-        }
+        content.marks = vec![row; AREAS.len()];
+        content.inside = vec![vec![false; BTS_VALUES]; AREAS.len()];
+        Some(content)
     }
 
     /// The reactions as the importer gave them, which a record decoder reads places by.
@@ -371,99 +356,164 @@ impl BlockContent {
         &self.imported
     }
 
-    /// The model, over the content's reactions with the game's rules.
-    #[must_use]
-    pub const fn blocks(&self) -> &Blocks {
-        &self.model.0
-    }
-
     /// The reaction `id` names.
-    fn reaction(&self, id: ReactionId) -> Option<&Imported> {
-        self.reactions.get(usize::from(id.0))
+    #[must_use]
+    pub fn reaction(&self, id: ReactionId) -> Option<&Arc<Reaction>> {
+        self.reactions
+            .get(usize::from(id.0))
+            .map(|held| &held.reaction)
     }
 
-    /// The model's name of the reaction `id`, and its family.
+    /// The id of `reaction`, if it is one of the content's.
     #[must_use]
-    pub fn named(&self, id: ReactionId) -> Option<(&ReactionName, Family)> {
-        self.reaction(id)
-            .map(|reaction| (&reaction.name, reaction.family))
-    }
-
-    /// The cells the patterns of reaction `id` cover other than its own, from its cell.
-    #[must_use]
-    pub fn covered(&self, id: ReactionId) -> &[Pair<i16>] {
-        self.reaction(id)
-            .map_or(&[][..], |reaction| reaction.others.as_slice())
-    }
-
-    /// The id of the reaction the model names `name`.
-    #[must_use]
-    pub fn id(&self, name: &ReactionName) -> Option<ReactionId> {
+    pub fn id(&self, reaction: &Arc<Reaction>) -> Option<ReactionId> {
         self.reactions
             .iter()
-            .position(|reaction| reaction.name == *name)
+            .position(|held| Arc::ptr_eq(&held.reaction, reaction))
             .and_then(|index| u16::try_from(index).ok())
             .map(ReactionId)
     }
 
-    /// The typed mark of a reacting cell of `kind` in `area`; `None` for another kind.
-    fn typed(&self, kind: BlockKind, area: Area) -> Option<Typed> {
-        let place = class_place(kind.nybble())?;
-        let row = AREAS.iter().position(|&known| known == area)?;
-        self.marks
-            .get(row)?
-            .get(
-                place
-                    .wrapping_mul(BTS_VALUES)
-                    .wrapping_add(usize::from(kind.bts())),
-            )
-            .copied()
+    /// The cells the patterns of `reaction` cover other than its own, from its cell.
+    fn covered(&self, reaction: &Arc<Reaction>) -> &[Pair<i16>] {
+        self.reactions
+            .iter()
+            .find(|held| Arc::ptr_eq(&held.reaction, reaction))
+            .map_or(&[][..], |held| held.others.as_slice())
     }
 
-    /// The model's mark of an imported one.
-    fn mark(&self, mark: asset::Mark) -> Mark {
-        match mark {
-            asset::Mark::Reaction(id) => self.reaction(id).map_or(Mark::Other(None), |reaction| {
-                Mark::Reaction(reaction.name.clone())
-            }),
+    /// The model's mark of an imported one; `None` for a reaction the content doesn't hold.
+    fn mark(&self, mark: asset::Mark) -> Option<Mark> {
+        Some(match mark {
+            asset::Mark::Reaction(id) => Mark::Reaction(Arc::clone(self.reaction(id)?)),
             asset::Mark::Scroll => Mark::Scroll,
             asset::Mark::Nothing(met) => Mark::Nothing(met),
             asset::Mark::Inert => Mark::Inert,
             asset::Mark::Other(met) => Mark::Other(met),
-        }
+        })
     }
 
-    /// Whether she holds a place inside special air with `bts` in `area`.
-    fn holds_inside(&self, bts: u8, area: Area) -> bool {
-        AREAS
-            .iter()
-            .position(|&known| known == area)
-            .and_then(|row| self.inside.get(row))
-            .and_then(|row| row.get(usize::from(bts)))
-            .copied()
-            .unwrap_or(false)
+    /// The mark tables of `area`; none for an area they have no row for.
+    fn area(&self, area: Area) -> AreaTables<'_> {
+        fn pick<T>(rows: &[Vec<T>], row: Option<usize>) -> &[T] {
+            row.and_then(|row| rows.get(row)).map_or(&[], Vec::as_slice)
+        }
+        let row = AREAS.iter().position(|&known| known == area);
+        AreaTables {
+            marks: pick(&self.marks, row),
+            inside: pick(&self.inside, row),
+        }
     }
 
     /// The model's tile of a cell of `block` in `area`, `covering` naming the reaction running on
     /// an air or solid cell: `None` for a cell the importer refuses.
     #[must_use]
     pub fn tile(&self, block: Block, area: Area, covering: Option<Covering>) -> Option<Tile> {
+        self.area(area).tile(block, covering)
+    }
+
+    /// What runs on the air and solid cells under the running reactions of `places`: each one's
+    /// own cell, then the other cells its patterns cover.
+    fn coverings(&self, places: &Places) -> Vec<(Cell, Covering)> {
+        let mut own = Vec::new();
+        let mut others = Vec::new();
+        for place in &places.0 {
+            let Place::Running(running) = place else {
+                continue;
+            };
+            let reaction = running.reaction();
+            own.push((running.cell, Covering::Own(reaction.family)));
+            others.extend(self.covered(reaction).iter().filter_map(|offset| {
+                Some((
+                    Cell {
+                        x: running.cell.x.checked_add_signed(offset.x)?,
+                        y: running.cell.y.checked_add_signed(offset.y)?,
+                    },
+                    Covering::Other,
+                ))
+            }));
+        }
+        own.extend(others);
+        own
+    }
+
+    /// The model's cells of the level `blocks`, `width` cells across, in `area`, under the
+    /// running reactions of `places`, row by row.
+    ///
+    /// # Errors
+    ///
+    /// The level index of the first cell the importer refuses.
+    pub fn tiles(
+        &self,
+        blocks: &[Block],
+        width: u16,
+        area: Area,
+        places: &Places,
+    ) -> Result<Vec<Vec<Tile>>, u16> {
+        let tables = self.area(area);
+        let index = |at: Cell| at.y.wrapping_mul(width).wrapping_add(at.x);
+        let mut rows = (0_u16..)
+            .zip(blocks.chunks_exact(usize::from(width.max(1))))
+            .map(|(y, row)| {
+                (0_u16..)
+                    .zip(row)
+                    .map(|(x, &block)| tables.tile(block, None).ok_or_else(|| index(Cell { x, y })))
+                    .collect::<Result<Vec<_>, _>>()
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        // In reverse, so a reaction's own cell wins over another's covering of the same cell.
+        for &(at, covering) in self.coverings(places).iter().rev() {
+            let block = blocks.get(usize::from(index(at)));
+            let cell = rows
+                .get_mut(usize::from(at.y))
+                .and_then(|row| row.get_mut(usize::from(at.x)));
+            if let (Some(&block), Some(cell)) = (block, cell) {
+                *cell = tables
+                    .tile(block, Some(covering))
+                    .ok_or_else(|| index(at))?;
+            }
+        }
+        Ok(rows)
+    }
+}
+
+/// The content's mark tables for one area.
+#[derive(Clone, Copy)]
+struct AreaTables<'a> {
+    /// By the reacting types' order, then BTS.
+    marks: &'a [Option<Mark>],
+    /// By BTS: whether she holds a place inside special air.
+    inside: &'a [bool],
+}
+
+impl AreaTables<'_> {
+    /// A reacting cell's mark; `None` where the importer refuses it.
+    fn reacting_mark(self, kind: BlockKind) -> Option<Mark> {
+        self.marks.get(mark_entry(kind)?)?.clone()
+    }
+
+    /// The model's tile of a cell of `block`, `covering` naming the reaction running on an air or
+    /// solid cell: `None` for a cell the importer refuses.
+    fn tile(self, block: Block, covering: Option<Covering>) -> Option<Tile> {
         let kind = block.kind;
         let (cell, mark) = match kind {
-            BlockKind::Air(_) => (CellKind::Air, self.covering_mark(kind, area, covering)?),
-            BlockKind::Solid(_) => (CellKind::Solid, self.covering_mark(kind, area, covering)?),
-            BlockKind::HorizontalExtension(Offset(by)) => {
-                (CellKind::StandInAcross, Mark::Reach(i16::from(by)))
-            }
+            BlockKind::Air(_) => (CellKind::Air, self.covering_mark(kind, covering)?),
+            BlockKind::Solid(_) => (CellKind::Solid, self.covering_mark(kind, covering)?),
+            BlockKind::HorizontalExtension(Offset(by)) => (
+                CellKind::StandIn(StandIn::Across),
+                Mark::Reach(i16::from(by)),
+            ),
             BlockKind::VerticalExtension(Offset(by)) => {
-                (CellKind::StandInDown, Mark::Reach(i16::from(by)))
+                (CellKind::StandIn(StandIn::Down), Mark::Reach(i16::from(by)))
             }
-            BlockKind::Special(_) | BlockKind::Shootable(_) | BlockKind::Bombable(_) => {
-                (CellKind::Block, self.reacting_mark(kind, area)?)
-            }
-            BlockKind::SpecialAir(_) | BlockKind::ShootableAir(_) | BlockKind::BombableAir(_) => {
-                (CellKind::ReactingAir, self.reacting_mark(kind, area)?)
-            }
+            BlockKind::Special(_) | BlockKind::Shootable(_) | BlockKind::Bombable(_) => (
+                CellKind::Reacting(ReactingBody::Block),
+                self.reacting_mark(kind)?,
+            ),
+            BlockKind::SpecialAir(_) | BlockKind::ShootableAir(_) | BlockKind::BombableAir(_) => (
+                CellKind::Reacting(ReactingBody::Air),
+                self.reacting_mark(kind)?,
+            ),
             // The other domains' kinds, by how they meet her: none reacts here.
             BlockKind::Slope(_)
             | BlockKind::Door(_)
@@ -471,63 +521,32 @@ impl BlockContent {
             | BlockKind::Grapple(_) => (CellKind::Solid, Mark::Unmarked),
             BlockKind::SpikeAir(_) | BlockKind::UnusedAir(_) => (CellKind::Air, Mark::Unmarked),
         };
-        let holds = matches!(kind, BlockKind::SpecialAir(Bts(bts)) if self.holds_inside(bts, area));
-        let inside = if holds {
-            Inside::HoldsPlace
-        } else {
-            Inside::Passes
-        };
+        let holds = matches!(kind, BlockKind::SpecialAir(Bts(bts))
+            if self.inside.get(usize::from(bts)) == Some(&true));
         Some(Tile {
             kind: cell,
             mark,
             look: look(block.tile)?,
-            inside,
+            inside: if holds {
+                Inside::HoldsPlace
+            } else {
+                Inside::Passes
+            },
         })
-    }
-
-    /// A reacting cell's mark; `None` where the importer refuses it.
-    fn reacting_mark(&self, kind: BlockKind, area: Area) -> Option<Mark> {
-        match self.typed(kind, area)? {
-            Typed::Mark(mark) => Some(self.mark(mark)),
-            Typed::Refused => None,
-        }
     }
 
     /// The mark of an air or solid cell: none, unless a reaction runs on it, whose own cell's mark
     /// is its BTS as the reaction's family's block reads it, and whose other cells' a reach.
-    fn covering_mark(
-        &self,
-        kind: BlockKind,
-        area: Area,
-        covering: Option<Covering>,
-    ) -> Option<Mark> {
+    fn covering_mark(self, kind: BlockKind, covering: Option<Covering>) -> Option<Mark> {
         Some(match covering {
             None => Mark::Unmarked,
             Some(Covering::Own(family)) => {
                 let (block, _) = asset::Reactions::class(family);
-                self.reacting_mark(BlockKind::new(block, kind.bts()), area)?
+                self.reacting_mark(BlockKind::new(block, kind.bts()))?
             }
             Some(Covering::Other) => Mark::Reach(i16::from(i8::from_le_bytes([kind.bts()]))),
         })
     }
-}
-
-/// The model's reaction of an imported one; `None` for a wait the model can't hold.
-fn convert(reaction: &asset::Reaction) -> Option<Reaction> {
-    let mut scripts: EnumMap<Script, Vec<Step>> = EnumMap::default();
-    for (script, steps) in &mut scripts {
-        *steps = reaction
-            .script(script)
-            .iter()
-            .map(step)
-            .collect::<Option<_>>()?;
-    }
-    Some(Reaction {
-        family: reaction.family,
-        whole_look: reaction.whole_look,
-        first_wait: Frames::new(reaction.first_wait)?,
-        scripts,
-    })
 }
 
 /// What runs on an air or solid cell, which names its mark: a reaction of this family on the
@@ -541,10 +560,10 @@ pub enum Covering {
     Other,
 }
 
-/// What a call is, for what its places' changes write back.
+/// What a step is, for what its places' changes write back.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Phase {
-    /// The room's start, with the change list a scroll cell placed names.
+    /// One placement of the room's start, with the change list a scroll cell placed names.
     RoomStart(Option<ScrollChangesId>),
     /// A request on a cell: a hold it takes is a scroll cell's touch or a cell marked
     /// `Nothing`'s.
@@ -560,13 +579,6 @@ enum HoldBody {
     ScrollTouch,
     /// A PLM that only deletes itself, on the cell.
     Held,
-}
-
-/// The model's State over the rows a call reaches, with what was built.
-struct View {
-    state: State,
-    before: State,
-    rows: Vec<u16>,
 }
 
 /// The cell at level index `index` of a room `width` cells across.
@@ -605,6 +617,31 @@ const fn screens_across(room: &RoomScoped) -> u16 {
     room.width.0 / SCREEN_CELLS
 }
 
+/// The screens the scroll change list `id` changes, each at its place in a room `across`
+/// screens wide.
+fn changes(
+    population: &PlmPopulation,
+    id: ScrollChangesId,
+    across: u16,
+) -> Option<Vec<ScreenChange>> {
+    Some(
+        population
+            .changes(id)?
+            .iter()
+            .map(|change| {
+                let screen = u16::from(change.screen);
+                ScreenChange {
+                    screen: Pair {
+                        x: screen.checked_rem(across).unwrap_or(screen),
+                        y: screen.checked_div(across).unwrap_or(0),
+                    },
+                    becomes: screen_kind(change.area),
+                }
+            })
+            .collect(),
+    )
+}
+
 /// The model's place of an engine slot; `None` where the model isn't defined on it.
 fn place(
     slot: &Slot<PlmCommon, PlmBody>,
@@ -630,185 +667,63 @@ fn place(
         }),
         PlmBody::ScrollTouch | PlmBody::Held => Place::HeldUntilRun,
         PlmBody::Item { .. } | PlmBody::ItemCollision => Place::OtherPart,
-        PlmBody::Reaction(running) => Place::Running(Running {
-            reaction: content.reaction(running.reaction)?.name.clone(),
-            script: script(running.script),
-            cell: at,
-            next: usize::from(running.next),
-            wait: Frames::new(slot.common.cursor.delay.0)?,
-            grows_back_as: running.grows_back_as.map(|kind| match kind {
-                GrowsBackAs::Block => clean_model_blocks::Reacting::Block,
-                GrowsBackAs::Air => clean_model_blocks::Reacting::Air,
-            }),
-        }),
+        PlmBody::Reaction(running) => Place::Running(Running::new(
+            Arc::clone(content.reaction(running.reaction)?),
+            script(running.script),
+            running.grows_back_as.map(reacting_body),
+            at,
+            usize::from(running.next),
+            Frames::new(slot.common.cursor.delay.0)?,
+        )?),
     })
 }
 
-/// The screens a scroll PLM's change list `id` changes, each at its place in a room `across`
-/// screens wide.
-fn changes(
-    population: &PlmPopulation,
-    id: ScrollChangesId,
-    across: u16,
-) -> Option<Vec<ScreenChange>> {
-    Some(
-        population
-            .changes(id)?
-            .iter()
-            .map(|change| {
-                let screen = u16::from(change.screen);
-                ScreenChange {
-                    screen: Pair {
-                        x: screen.checked_rem(across).unwrap_or(screen),
-                        y: screen.checked_div(across).unwrap_or(0),
-                    },
-                    becomes: screen_kind(change.area),
-                }
-            })
-            .collect(),
-    )
-}
-
-/// The rows `cells` and the running reactions in `places` reach.
-fn reached_rows(
+/// The model's State of the whole of `room`, the places outside `places` another part's.
+fn state(
     room: &RoomScoped,
     content: &BlockContent,
-    places: Range<usize>,
-    cells: &[Cell],
-) -> Vec<u16> {
-    let width = room.width.0;
-    let mut rows: Vec<u16> = cells.iter().map(|cell| cell.y).collect();
-    for slot in room.plms.slots.get(places).into_iter().flatten() {
-        if let Occupancy::Live(PlmBody::Reaction(running)) = slot.occupancy
-            && let Some(reaction) = content.reaction(running.reaction)
-        {
-            let at = cell(slot.common.block, width);
-            rows.extend(
-                reaction
-                    .rows
-                    .iter()
-                    .filter_map(|&dy| at.y.checked_add_signed(dy)),
-            );
+    population: &PlmPopulation,
+    places: &Range<usize>,
+) -> Result<State, BlocksFault> {
+    // Every running reaction names the marks of the cells it covers, a place outside `places`
+    // too; the model sees those as another part's.
+    let mut model = Places::default();
+    for ((index, slot), place_of) in room.plms.slots.iter().enumerate().zip(&mut model.0) {
+        let running = matches!(slot.occupancy, Occupancy::Live(PlmBody::Reaction(_)));
+        if places.contains(&index) || running {
+            *place_of = place(slot, content, population, room)
+                .ok_or_else(|| BlocksFault::Place(u8::try_from(index).unwrap_or(u8::MAX)))?;
+        } else {
+            *place_of = Place::OtherPart;
         }
     }
-    rows.sort_unstable();
-    rows.dedup();
-    rows
-}
-
-/// What runs on each air or solid cell of the room: each running reaction's own cell, then the
-/// other cells its patterns cover.
-fn coverings(room: &RoomScoped, content: &BlockContent) -> Vec<(Cell, Covering)> {
-    let width = room.width.0;
-    let running = room
-        .plms
-        .slots
-        .iter()
-        .filter_map(|slot| match slot.occupancy {
-            Occupancy::Live(PlmBody::Reaction(running)) => Some((
-                cell(slot.common.block, width),
-                content.reaction(running.reaction)?,
-            )),
-            Occupancy::Live(_) | Occupancy::Free | Occupancy::Deleting(_) => None,
-        });
-    let mut own = Vec::new();
-    let mut others = Vec::new();
-    for (at, reaction) in running {
-        own.push((at, Covering::Own(reaction.family)));
-        others.extend(reaction.others.iter().filter_map(|offset| {
-            Some((
-                Cell {
-                    x: at.x.checked_add_signed(offset.x)?,
-                    y: at.y.checked_add_signed(offset.y)?,
-                },
-                Covering::Other,
-            ))
-        }));
-    }
-    own.extend(others);
-    own
-}
-
-/// The model's State of `room` over `rows`, the places outside `places` another part's.
-fn view(
-    room: &RoomScoped,
-    content: &BlockContent,
-    population: &PlmPopulation,
-    rows: Vec<u16>,
-    places: Range<usize>,
-) -> Result<View, BlocksFault> {
-    let width = room.width.0;
-    let height = u16::try_from(
-        room.blocks
-            .len()
-            .checked_div(usize::from(width))
-            .unwrap_or(0),
-    )
-    .unwrap_or(u16::MAX);
-    let coverings = if rows.is_empty() {
-        Vec::new()
-    } else {
-        coverings(room, content)
-    };
-    let mut grid: Vec<Vec<Tile>> = vec![Vec::new(); usize::from(height)];
-    for &y in &rows {
-        let Some(row) = grid.get_mut(usize::from(y)) else {
-            continue;
-        };
-        for x in 0..width {
-            let at = Cell { x, y };
-            let block_index = index(at, width);
-            let Some(&block) = room.blocks.get(usize::from(block_index.0)) else {
-                continue;
-            };
-            let covering = coverings
-                .iter()
-                .find_map(|&(covered, covering)| (covered == at).then_some(covering));
-            let tile = content
-                .tile(block, room.area, covering)
-                .ok_or(BlocksFault::Refused(block_index))?;
-            row.push(tile);
+    let rows = content
+        .tiles(&room.blocks, room.width.0, room.area, &model)
+        .map_err(|at| BlocksFault::Refused(BlockIndex(at)))?;
+    for (index, place_of) in model.0.iter_mut().enumerate() {
+        if !places.contains(&index) {
+            *place_of = Place::OtherPart;
         }
     }
     let across = usize::from(screens_across(room));
-    let screens = Grid {
-        rows: room
-            .scroll_areas
-            .chunks(across.max(1))
-            .filter(|_| across != 0)
-            .map(|row| row.iter().map(|&area| screen_kind(area)).collect())
-            .collect(),
-    };
-    let mut model = clean_model_blocks::Places::default();
-    for ((index, slot), place_of) in room.plms.slots.iter().enumerate().zip(&mut model.0) {
-        *place_of = if places.contains(&index) {
-            place(slot, content, population, room)
-                .ok_or_else(|| BlocksFault::Place(u8::try_from(index).unwrap_or(u8::MAX)))?
-        } else {
-            Place::OtherPart
-        };
-    }
-    let state = State {
-        tiles: Grid { rows: grid },
+    let screens = room
+        .scroll_areas
+        .chunks(across.max(1))
+        .filter(|_| across != 0)
+        .map(|row| row.iter().map(|&area| screen_kind(area)).collect())
+        .collect();
+    Ok(State {
+        // Rows of the level's width, each as long as the others.
+        tiles: Grid::new(rows).ok_or(BlocksFault::Screens)?,
         places: model,
-        screens,
-    };
-    Ok(View {
-        before: state.clone(),
-        state,
-        rows,
+        screens: Grid::new(screens).ok_or(BlocksFault::Screens)?,
     })
 }
 
 /// The engine's block of the model's `tile`, from what the cell was.
-fn block(
-    was: Block,
-    tile: &Tile,
-    content: &BlockContent,
-    at: BlockIndex,
-) -> Result<Block, BlocksFault> {
+fn block(was: Block, tile: &Tile, at: BlockIndex) -> Result<Block, BlocksFault> {
     let bts = match tile.mark {
-        Mark::Scroll if tile.kind == CellKind::ReactingAir => SCROLL_CELL.bts(),
+        Mark::Scroll if tile.kind == CellKind::Reacting(ReactingBody::Air) => SCROLL_CELL.bts(),
         Mark::Reach(reach) => {
             let [byte] = i8::try_from(reach).unwrap_or(0).to_le_bytes();
             byte
@@ -820,13 +735,9 @@ fn block(
         | Mark::Inert
         | Mark::Other(_) => was.kind.bts(),
     };
-    let reacting = |as_block: bool| -> Result<u8, BlocksFault> {
-        let pick = |(block, air): (u8, u8)| if as_block { block } else { air };
+    let reacting = |body: ReactingBody| -> Result<u8, BlocksFault> {
         let named = match &tile.mark {
-            Mark::Reaction(name) => content
-                .id(name)
-                .and_then(|id| content.reaction(id))
-                .map(|reaction| asset::Reactions::class(reaction.family)),
+            Mark::Reaction(reaction) => Some(asset::Reactions::class(reaction.family)),
             Mark::Nothing(met) => Some(asset::Reactions::met_class(*met)),
             Mark::Scroll => Some(asset::Reactions::met_class(MetAs::Crumble)),
             Mark::Unmarked | Mark::Inert | Mark::Other(_) | Mark::Reach(_) => None,
@@ -835,15 +746,18 @@ fn block(
             .iter()
             .copied()
             .find(|&(block, air)| was.kind.nybble() == block || was.kind.nybble() == air);
-        named.or(kept).map(pick).ok_or(BlocksFault::Class(at))
+        let (block, air) = named.or(kept).ok_or(BlocksFault::Class(at))?;
+        Ok(match body {
+            ReactingBody::Block => block,
+            ReactingBody::Air => air,
+        })
     };
     let nybble = match tile.kind {
         CellKind::Air => 0x0,
         CellKind::Solid => 0x8,
-        CellKind::StandInAcross => 0x5,
-        CellKind::StandInDown => 0xd,
-        CellKind::Block => reacting(true)?,
-        CellKind::ReactingAir => reacting(false)?,
+        CellKind::StandIn(StandIn::Across) => 0x5,
+        CellKind::StandIn(StandIn::Down) => 0xd,
+        CellKind::Reacting(body) => reacting(body)?,
     };
     Ok(Block {
         kind: BlockKind::new(nybble, bts),
@@ -854,13 +768,10 @@ fn block(
 /// The engine's reaction place of a running one.
 fn reaction_place(running: &Running, content: &BlockContent) -> Option<ReactionPlace> {
     Some(ReactionPlace {
-        reaction: content.id(&running.reaction)?,
-        script: engine_script(running.script),
+        reaction: content.id(running.reaction())?,
+        script: engine_script(running.script()),
         next: u16::try_from(running.next).ok()?,
-        grows_back_as: running.grows_back_as.map(|kind| match kind {
-            clean_model_blocks::Reacting::Block => GrowsBackAs::Block,
-            clean_model_blocks::Reacting::Air => GrowsBackAs::Air,
-        }),
+        grows_back_as: running.grows_back_as().map(grows_back_as),
     })
 }
 
@@ -877,95 +788,140 @@ const fn fill(
     slot.occupancy = occupancy;
 }
 
-/// Write the view's changes back into `room`: its cells, screens and places, as `phase` makes
-/// them. Returns the places another part's placement took.
-fn write_back(
-    room: &mut RoomScoped,
-    view: &View,
-    content: &BlockContent,
-    phase: Phase,
-) -> Result<Vec<usize>, BlocksFault> {
-    write_cells(room, view, content)?;
-    write_screens(room, view);
-    let width = room.width.0;
-    let mut taken = Vec::new();
-    let places = view.state.places.0.iter().zip(&view.before.places.0);
-    for (number, ((after, before), slot)) in places.zip(room.plms.slots.iter_mut()).enumerate() {
-        let fault = BlocksFault::Place(u8::try_from(number).unwrap_or(u8::MAX));
-        if phase == Phase::Run && !matches!(before, Place::Free | Place::OtherPart) {
-            // The pass counts every live place's timer down, and a sleeping scroll reaction's
-            // wraps (`$84:85E0`); a place still running waits its reaction's wait.
-            slot.common.cursor.delay = match after {
-                Place::Running(running) => Timer(running.wait.count()),
-                Place::Free | Place::Scroll(_) | Place::OtherPart | Place::HeldUntilRun => {
-                    Timer(slot.common.cursor.delay.0.wrapping_sub(1))
-                }
-            };
-        }
-        if after == before {
-            continue;
-        }
-        if matches!((before, after), (Place::Free, Place::OtherPart)) {
-            taken.push(number);
-            continue;
-        }
+/// The fault of place `number`.
+fn place_fault(number: usize) -> BlocksFault {
+    BlocksFault::Place(u8::try_from(number).unwrap_or(u8::MAX))
+}
+
+/// One call's model: the State of the room as the call found it, stepped through the call.
+struct Call<'a> {
+    content: &'a BlockContent,
+    /// The State as built, which tells the cells and screens the call wrote.
+    built: State,
+    state: State,
+}
+
+impl<'a> Call<'a> {
+    /// The call's State of `room`, the places outside `places` another part's.
+    fn new(
+        room: &RoomScoped,
+        reads: Reads<'a>,
+        places: &Range<usize>,
+    ) -> Result<Self, BlocksFault> {
+        let built = state(room, reads.content, reads.population, places)?;
+        Ok(Self {
+            content: reads.content,
+            state: built.clone(),
+            built,
+        })
+    }
+
+    /// One step of the model: `step` changes the State, and each place it changes is written
+    /// into `room`'s slot as `phase` makes it. Returns the places another part's start took, and
+    /// what the step returns.
+    fn step<T>(
+        &mut self,
+        room: &mut RoomScoped,
+        phase: Phase,
+        step: impl FnOnce(&mut State) -> Result<T, OutsideTheRoom>,
+    ) -> Result<(Vec<usize>, T), BlocksFault> {
+        let before = self.state.places.clone();
+        let stepped = step(&mut self.state)?;
         let change = Change {
-            content,
-            width,
+            content: self.content,
+            width: room.width.0,
             phase,
         };
-        change.place(slot, before, after).ok_or(fault)?;
+        let mut taken = Vec::new();
+        let places = self.state.places.0.iter().zip(&before.0);
+        for (number, ((after, before), slot)) in places.zip(room.plms.slots.iter_mut()).enumerate()
+        {
+            if phase == Phase::Run && !matches!(before, Place::Free | Place::OtherPart) {
+                // The pass counts every live place's timer down, and a sleeping scroll reaction's
+                // wraps (`$84:85E0`); a place still running waits its reaction's wait.
+                slot.common.cursor.delay = match after {
+                    Place::Running(running) => Timer(running.wait.count()),
+                    Place::Free | Place::Scroll(_) | Place::OtherPart | Place::HeldUntilRun => {
+                        Timer(slot.common.cursor.delay.0.wrapping_sub(1))
+                    }
+                };
+            }
+            if after == before {
+                continue;
+            }
+            if matches!((before, after), (Place::Free, Place::OtherPart)) {
+                taken.push(number);
+                continue;
+            }
+            change
+                .place(slot, before, after)
+                .ok_or_else(|| place_fault(number))?;
+        }
+        Ok((taken, stepped))
     }
-    Ok(taken)
-}
 
-/// The cells the model changed, written back with their types and BTS.
-fn write_cells(
-    room: &mut RoomScoped,
-    view: &View,
-    content: &BlockContent,
-) -> Result<(), BlocksFault> {
-    let width = room.width.0;
-    for &y in &view.rows {
-        let (Some(after), Some(before)) = (
-            view.state.tiles.rows.get(usize::from(y)),
-            view.before.tiles.rows.get(usize::from(y)),
-        ) else {
-            continue;
+    /// One of the frame's requests, its run paused: the run is the PLM pass's. Its cell is one of
+    /// the room's, or the call stops.
+    fn request(&mut self, room: &mut RoomScoped, request: Request) -> Result<(), BlocksFault> {
+        let Some(at) = request.cell() else {
+            return Ok(());
         };
-        for (x, (after, before)) in (0_u16..).zip(after.iter().zip(before)) {
-            if after == before {
-                continue;
-            }
-            let at = index(Cell { x, y }, width);
-            let Some(cell) = room.blocks.get_mut(usize::from(at.0)) else {
-                continue;
+        let block_index = index(at, room.width.0);
+        let hold =
+            match self.state.tiles.get(at).map(|tile| &tile.mark) {
+                Some(Mark::Scroll) => {
+                    let placed =
+                        self.state.places.0.iter().any(
+                            |place| matches!(place, Place::Scroll(scroll) if scroll.cell == at),
+                        );
+                    if !placed {
+                        return Err(BlocksFault::NoScrollReaction(block_index));
+                    }
+                    HoldBody::ScrollTouch
+                }
+                Some(_) => HoldBody::Held,
+                None => return Err(BlocksFault::Outside(at)),
             };
-            *cell = block(*cell, after, content, at)?;
-        }
+        self.step(room, Phase::Request(block_index, hold), |state| {
+            state.step(rules(), &[request], Set::default(), Run::Paused)
+        })?;
+        Ok(())
     }
-    Ok(())
-}
 
-/// The screens the model changed, written back as scroll areas.
-fn write_screens(room: &mut RoomScoped, view: &View) {
-    let across = screens_across(room);
-    let rows = view
-        .state
-        .screens
-        .rows
-        .iter()
-        .zip(&view.before.screens.rows);
-    for (y, (after, before)) in (0_u16..).zip(rows) {
-        for (x, (&after, &before)) in (0_u16..).zip(after.iter().zip(before)) {
-            if after == before {
-                continue;
-            }
-            let at = usize::from(y.wrapping_mul(across).wrapping_add(x));
-            if let Some(area) = room.scroll_areas.get_mut(at) {
-                *area = scroll_area(after);
+    /// Write the cells and the screens the call changed into `room`.
+    fn write_back(&self, room: &mut RoomScoped) -> Result<(), BlocksFault> {
+        let width = room.width.0;
+        let rows = self.state.tiles.rows().iter().zip(self.built.tiles.rows());
+        for (y, (after, before)) in (0_u16..).zip(rows) {
+            for (x, (after, before)) in (0_u16..).zip(after.iter().zip(before)) {
+                if after == before {
+                    continue;
+                }
+                let at = index(Cell { x, y }, width);
+                if let Some(cell) = room.blocks.get_mut(usize::from(at.0)) {
+                    *cell = block(*cell, after, at)?;
+                }
             }
         }
+        let across = screens_across(room);
+        let rows = self
+            .state
+            .screens
+            .rows()
+            .iter()
+            .zip(self.built.screens.rows());
+        for (y, (after, before)) in (0_u16..).zip(rows) {
+            for (x, (&after, &before)) in (0_u16..).zip(after.iter().zip(before)) {
+                if after == before {
+                    continue;
+                }
+                let at = usize::from(y.wrapping_mul(across).wrapping_add(x));
+                if let Some(area) = room.scroll_areas.get_mut(at) {
+                    *area = scroll_area(after);
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -978,8 +934,8 @@ struct Change<'a> {
 }
 
 impl Change<'_> {
-    /// Write the place's change from `before` to `after` into `slot`; `None` for a change no call
-    /// of this phase makes.
+    /// Write the place's change from `before` to `after` into `slot`; `None` for a change no
+    /// step of this phase makes.
     fn place(
         self,
         slot: &mut Slot<PlmCommon, PlmBody>,
@@ -1055,42 +1011,17 @@ impl Change<'_> {
     }
 }
 
-/// One request on `cell`, in the frame's order.
-fn request(
+/// The requests `asked`, in order, on one State of the room, then the cells written back.
+fn requests(
     room: &mut RoomScoped,
-    content: &BlockContent,
-    population: &PlmPopulation,
-    at: Cell,
-    request: Request,
+    reads: Reads<'_>,
+    asked: impl IntoIterator<Item = Request>,
 ) -> Result<(), BlocksFault> {
-    let width = room.width.0;
-    let block_index = index(at, width);
-    let rows = vec![at.y];
-    let mut view = view(room, content, population, rows, 0..room.plms.slots.len())?;
-    let hold = match view.state.tiles.get(at).map(|tile| &tile.mark) {
-        Some(Mark::Scroll) => {
-            let placed = view
-                .state
-                .places
-                .0
-                .iter()
-                .any(|place| matches!(place, Place::Scroll(scroll) if scroll.cell == at));
-            if !placed {
-                return Err(BlocksFault::NoScrollReaction(block_index));
-            }
-            HoldBody::ScrollTouch
-        }
-        _ => HoldBody::Held,
-    };
-    content.blocks().step(
-        &mut view.state,
-        &[],
-        &[request],
-        Set::default(),
-        Run::Paused,
-    );
-    write_back(room, &view, content, Phase::Request(block_index, hold))?;
-    Ok(())
+    let mut call = Call::new(room, reads, &(0..room.plms.slots.len()))?;
+    for request in asked {
+        call.request(room, request)?;
+    }
+    call.write_back(room)
 }
 
 /// `ScrollCells`, `BlocksMarkedNothing`: the cells she is inside, bottom first, each with its
@@ -1104,22 +1035,18 @@ pub fn inside(
     reads: Reads<'_>,
     points: &[(BlockIndex, Point)],
 ) -> Result<(), BlocksFault> {
-    let Reads {
-        content,
-        population,
-    } = reads;
-    let width = room.width.0;
-    for &(block, point) in points {
-        let at = cell(block, width);
-        request(
-            room,
-            content,
-            population,
-            at,
-            Request::Inside { cell: at, point },
-        )?;
+    if points.is_empty() {
+        return Ok(());
     }
-    Ok(())
+    let width = room.width.0;
+    requests(
+        room,
+        reads,
+        points.iter().map(|&(block, point)| Request::Inside {
+            cell: cell(block, width),
+            point,
+        }),
+    )
 }
 
 /// Spec §5: a weapon `by` reaches the cell at `block`.
@@ -1133,29 +1060,26 @@ pub fn hit(
     block: BlockIndex,
     by: HitBy,
 ) -> Result<(), BlocksFault> {
-    let Reads {
-        content,
-        population,
-    } = reads;
     let at = cell(block, room.width.0);
-    request(room, content, population, at, Request::Hit { cell: at, by })
+    requests(room, reads, [Request::Hit { cell: at, by }])
 }
 
-/// `AnswersToHerMotion`: a cell her move or look reached, its stand-in already followed.
+/// `AnswersToHerMotion`: the cells her moves or looks reached, in order, each stand-in already
+/// followed.
 ///
 /// # Errors
 ///
-/// A [`BlocksFault`] where the cell is one the room's loading would refuse.
-pub fn touch(room: &mut RoomScoped, reads: Reads<'_>, touch: Touch) -> Result<(), BlocksFault> {
-    let Reads {
-        content,
-        population,
-    } = reads;
-    request(room, content, population, touch.cell, Request::Touch(touch))
+/// A [`BlocksFault`] where a cell is one the room's loading would refuse.
+pub fn touches(
+    room: &mut RoomScoped,
+    reads: Reads<'_>,
+    touches: &[Touch],
+) -> Result<(), BlocksFault> {
+    requests(room, reads, touches.iter().copied().map(Request::Touch))
 }
 
-/// `TheScriptsRun`: the run of the places in `places`, from the highest down, its redraws queued
-/// in `drawing`.
+/// `TheScriptsRun`: the run of the places in `places`, from the highest down, the cells it
+/// writes queued in `drawing`.
 ///
 /// # Errors
 ///
@@ -1166,18 +1090,22 @@ pub fn run(
     reads: Reads<'_>,
     places: Range<usize>,
 ) -> Result<(), BlocksFault> {
-    let Reads {
-        content,
-        population,
-    } = reads;
-    let rows = reached_rows(room, content, places.clone(), &[]);
-    let mut view = view(room, content, population, rows, places)?;
-    let report = content
-        .blocks()
-        .step(&mut view.state, &[], &[], Set::default(), Run::Runs);
-    write_back(room, &view, content, Phase::Run)?;
+    let free = room
+        .plms
+        .slots
+        .get(places.clone())
+        .is_none_or(|slots| slots.iter().all(|slot| slot.occupancy == Occupancy::Free));
+    if free {
+        // Free places hold nothing to run.
+        return Ok(());
+    }
+    let mut call = Call::new(room, reads, &places)?;
+    let (_, report) = call.step(room, Phase::Run, |state| {
+        state.step(rules(), &[], Set::default(), Run::Runs)
+    })?;
+    call.write_back(room)?;
     let width = room.width.0;
-    for &at in &report.redrawn {
+    for &at in &report.written {
         let block = index(at, width);
         if let Some(cell) = room.blocks.get(usize::from(block.0)) {
             drawing.block(room, block, cell.tile);
@@ -1186,35 +1114,19 @@ pub fn run(
     Ok(())
 }
 
-/// `RoomStart`: the room's placements in its order, the scroll cells and stand-ins the model's,
-/// and the places another part's placement takes returned in order for its part to fill.
-///
-/// A stand-in's place is free again at once, but the spawn leaves its cell and timer in the
-/// slot, as every spawn does.
-///
-/// # Errors
-///
-/// A [`BlocksFault`] where a placement's cell is one the room's loading would refuse.
-pub fn start_room(
-    room: &mut RoomScoped,
-    reads: Reads<'_>,
-    placement: &data::plm::PlmEntry,
-) -> Result<Option<usize>, BlocksFault> {
-    let Reads {
-        content,
-        population,
-    } = reads;
-    let width = room.width.0;
+/// The model's placement of a population entry, in a room `across` screens wide; `None` for one
+/// of a part no model runs yet.
+fn placement(entry: PlmEntry, population: &PlmPopulation, across: u16) -> Option<Placement> {
     let at = Cell {
-        x: u16::from(placement.x),
-        y: u16::from(placement.y),
+        x: u16::from(entry.x),
+        y: u16::from(entry.y),
     };
-    let model = match placement.kind {
-        data::plm::PlmKind::Scroll(id) => {
-            let changes = changes(population, id, screens_across(room)).unwrap_or_default();
-            Placement::Scroll { cell: at, changes }
-        }
-        data::plm::PlmKind::Extension(extension) => {
+    Some(match entry.kind {
+        PlmKind::Scroll(id) => Placement::Scroll {
+            cell: at,
+            changes: changes(population, id, across).unwrap_or_default(),
+        },
+        PlmKind::Extension(extension) => {
             let (way, reach) = match extension {
                 Extension::Right => (StandIn::Across, -1),
                 Extension::Left => (StandIn::Across, 1),
@@ -1227,43 +1139,67 @@ pub fn start_room(
                 reach,
             }
         }
-        data::plm::PlmKind::Item(..) => Placement::OtherPart,
+        PlmKind::Item(..) => Placement::OtherPart,
         // open: the PLMs no slice 0 room state that loads places; each joins with its part.
-        data::plm::PlmKind::Unmodelled(_) => return Ok(None),
-    };
-    let free = room
-        .plms
-        .slots
-        .iter()
-        .rposition(|slot| matches!(slot.occupancy, Occupancy::Free));
-    let mut view = view(
-        room,
-        content,
-        population,
-        vec![at.y],
-        0..room.plms.slots.len(),
-    )?;
-    view.state.start_room(core::slice::from_ref(&model));
-    let named = match placement.kind {
-        data::plm::PlmKind::Scroll(id) => Some(id),
-        data::plm::PlmKind::Extension(_)
-        | data::plm::PlmKind::Item(..)
-        | data::plm::PlmKind::Unmodelled(_) => None,
-    };
-    let taken = write_back(room, &view, content, Phase::RoomStart(named))?;
-    if let (Placement::StandIn { .. }, Some(slot)) =
-        (&model, free.and_then(|free| room.plms.slots.get_mut(free)))
-    {
-        fill(slot, index(at, width), Occupancy::Free);
+        PlmKind::Unmodelled(_) => return None,
+    })
+}
+
+/// `RoomStart`: the room's population in its order on one State of the room.
+///
+/// The scroll cells and stand-ins are the model's. Returns, for each entry in order, the place
+/// another part's placement took, for its part to fill.
+///
+/// A stand-in's place is free again at once, but the spawn leaves its cell and timer in the
+/// slot, as every spawn does.
+///
+/// # Errors
+///
+/// A [`BlocksFault`] where a placement's cell is one the room's loading would refuse.
+pub fn start_room(
+    room: &mut RoomScoped,
+    reads: Reads<'_>,
+) -> Result<Vec<Option<usize>>, BlocksFault> {
+    let mut call = Call::new(room, reads, &(0..room.plms.slots.len()))?;
+    let across = screens_across(room);
+    let mut taken = Vec::new();
+    for entry in &reads.population.entries {
+        let Some(placement) = placement(*entry, reads.population, across) else {
+            taken.push(None);
+            continue;
+        };
+        let free = call
+            .state
+            .places
+            .0
+            .iter()
+            .rposition(|place| *place == Place::Free);
+        let named = match entry.kind {
+            PlmKind::Scroll(id) => Some(id),
+            PlmKind::Extension(_) | PlmKind::Item(..) | PlmKind::Unmodelled(_) => None,
+        };
+        let (took, ()) = call.step(room, Phase::RoomStart(named), |state| {
+            state.start_room(core::slice::from_ref(&placement))
+        })?;
+        if let (Placement::StandIn { cell: at, .. }, Some(slot)) = (
+            &placement,
+            free.and_then(|free| room.plms.slots.get_mut(free)),
+        ) {
+            fill(slot, index(*at, room.width.0), Occupancy::Free);
+        }
+        taken.push(took.first().copied());
     }
-    Ok(taken.first().copied())
+    call.write_back(room)?;
+    Ok(taken)
 }
 
 /// Invented content for the engine's tests: a scroll cell's mark, a shot reaction that keeps its
 /// look and a crumble reaction that grows back.
 #[cfg(test)]
 pub(crate) mod fixture {
-    use super::{Becomes, BlockContent, Frames, PatternCell, Reaction, SoundRequest, Step};
+    use super::{
+        Becomes, BlockContent, Frames, PatternCell, Reaction, ReactionName, SoundRequest, Step,
+    };
     use clean_types::{Family, Flip, Look, Pair, Picture, Script};
     use data::blocks::{Mark, ReactionId, SCROLL_CELL};
     use data::level::{BlockKind, PlmChoice};
@@ -1294,12 +1230,19 @@ pub(crate) mod fixture {
         }
     }
 
-    fn reaction(family: Family, whole_look: Option<u16>, wait: u16, broken: Vec<Step>) -> Reaction {
+    fn reaction(
+        name: &str,
+        family: Family,
+        whole_look: Option<u16>,
+        wait: u16,
+        broken: Vec<Step>,
+    ) -> Reaction {
         let mut scripts: EnumMap<Script, Vec<Step>> = EnumMap::default();
         scripts[Script::Broken] = broken;
         Reaction {
+            name: ReactionName(name.to_owned()),
             family,
-            whole_look: whole_look.map(look),
+            whole_look: whole_look.map(|index| Picture::new(index).unwrap()),
             first_wait: Frames::new(wait).unwrap(),
             scripts,
         }
@@ -1314,23 +1257,19 @@ pub(crate) mod fixture {
         });
         BlockContent::invented(
             vec![
-                (
+                reaction(
                     "shot",
-                    reaction(
-                        Family::Shot,
-                        None,
-                        1,
-                        vec![sound, show(0x12, 2), show(0x13, 1), Step::End],
-                    ),
+                    Family::Shot,
+                    None,
+                    1,
+                    vec![sound, show(0x12, 2), show(0x13, 1), Step::End],
                 ),
-                (
+                reaction(
                     "crumble",
-                    reaction(
-                        Family::Crumble,
-                        Some(0x20),
-                        3,
-                        vec![show(0x21, 2), Step::Regrow, Step::End],
-                    ),
+                    Family::Crumble,
+                    Some(0x20),
+                    3,
+                    vec![show(0x21, 2), Step::Regrow, Step::End],
                 ),
             ],
             &[
@@ -1339,6 +1278,7 @@ pub(crate) mod fixture {
                 (CRUMBLE, Mark::Reaction(ReactionId(1))),
             ],
         )
+        .unwrap()
     }
 }
 

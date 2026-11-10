@@ -6,10 +6,9 @@
 //! cell changes already in the next commit's work RAM and its hits carried to it. Record N's
 //! State is decoded with the game's reactions, imported from the ROM (`data::blocks`): the
 //! room's cells, every place, the screens. The model's output is compared with record N+1 on
-//! each place, the screens and the cells within the frame's reach: the cells of this part's
-//! places at either record, those their reactions' patterns cover, and the cells the frame's
-//! requests name, chosen by position, never by value. Outside the reach the model's cells must
-//! be record N's, since nothing of this part writes there.
+//! each place, the screens and every cell of the room, as each differs from record N's. A cell
+//! another part's place sits on or draws at either record is masked, by position, never by
+//! value, and the mask names the PLM that writes it.
 //!
 //! The requests are heard from the frame's watched instruction hits, in the order the CPU ran
 //! them: each reaction's setup is matched, by family, to the place record N+1 shows a new
@@ -30,11 +29,13 @@
 
 use core::cell::RefCell;
 use core::fmt;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
+use std::sync::Arc;
 
 use clean_model_blocks::{
-    BehaviourId, CATALOGUE, CellKind, Frames, Grid, Mark, Place, Places, Reacting, ReactionName,
-    Request, Run, Running, ScreenChange, ScrollReaction, State, Step, Tile, Touched,
+    BehaviourId, CATALOGUE, CellKind, Frames, Grid, Mark, Place, Places, ReactingBody,
+    ReactionName, Request, Rules, Run, Running, ScreenChange, ScrollReaction, State, Step, Tile,
+    Touched,
 };
 use clean_types::{Cell, Family, Heading, HitBy, Look, Motion, Pair, Point, ScreenKind, Script};
 use clean_types::{Set, Touch, Way};
@@ -42,7 +43,7 @@ use data::blocks::{ReactionId, Reactions as Imported, Runs};
 use data::level::{Block, ScrollArea};
 use data::rom::{Lorom, RomAddress};
 use data::room::Area;
-use game::blocks_world::{BlockContent, Covering};
+use game::blocks_world::BlockContent;
 use oracle_record::FrameRecord;
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Uncompared};
@@ -102,6 +103,74 @@ const SCROLL_TRIGGER: u32 = 0x84_B3AD;
 const CENTRE: u32 = 0x94_995E;
 const REFUSED: u32 = 0x84_84F9;
 
+/// How far another part's PLM draws from its own cell: a box this many cells across and down,
+/// its own cell at the top left.
+#[derive(Clone, Copy)]
+struct Reach {
+    across: u16,
+    down: u16,
+}
+
+/// A door's cap facing left or right: its cell and the three below.
+const COLUMN: Reach = Reach { across: 1, down: 4 };
+/// A door's cap facing up or down: its cell and the three to its right.
+const ROW: Reach = Reach { across: 4, down: 1 };
+
+/// The other parts' PLMs that draw past their own cell (bank $84 log), and how far; every other
+/// PLM draws its own cell only (an item's).
+const REACHES: [(u16, Reach); 28] = [
+    // The doors' caps: grey, yellow, green, red and blue, each facing left, right, up and down.
+    (0xC842, COLUMN),
+    (0xC848, COLUMN),
+    (0xC84E, ROW),
+    (0xC854, ROW),
+    (0xC85A, COLUMN),
+    (0xC860, COLUMN),
+    (0xC866, ROW),
+    (0xC86C, ROW),
+    (0xC872, COLUMN),
+    (0xC878, COLUMN),
+    (0xC87E, ROW),
+    (0xC884, ROW),
+    (0xC88A, COLUMN),
+    (0xC890, COLUMN),
+    (0xC896, ROW),
+    (0xC89C, ROW),
+    (0xC8A2, COLUMN),
+    (0xC8A8, COLUMN),
+    (0xC8AE, ROW),
+    (0xC8B4, ROW),
+    // A blue door closing, facing left, right, up and down.
+    (0xC8BA, COLUMN),
+    (0xC8BE, COLUMN),
+    (0xC8C2, ROW),
+    (0xC8C6, ROW),
+    // Bomb Torizo's grey door.
+    (0xBAF4, COLUMN),
+    // The elevator platform.
+    (0xB70B, Reach { across: 4, down: 2 }),
+    // Phantoon's door, drawn during the fight and restored after it.
+    (0xB781, Reach { across: 2, down: 4 }),
+    (0xB78B, Reach { across: 2, down: 4 }),
+];
+
+/// The cells another part's PLM `plm` on `at` draws, each with it as the writer.
+fn drawn(plm: u16, at: Cell) -> impl Iterator<Item = (Cell, Writer)> {
+    let reach = REACHES
+        .iter()
+        .find_map(|&(known, reach)| (known == plm).then_some(reach))
+        .unwrap_or(Reach { across: 1, down: 1 });
+    (0..reach.down).flat_map(move |dy| {
+        (0..reach.across).filter_map(move |dx| {
+            let cell = Cell {
+                x: at.x.checked_add(dx)?,
+                y: at.y.checked_add(dy)?,
+            };
+            Some((cell, Writer(plm)))
+        })
+    })
+}
+
 /// What a setup starts, as the record shows its place.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Started {
@@ -131,7 +200,6 @@ impl Started {
 const PLACES_FIELD: FieldSet = FieldSet::single(0);
 const CELLS: FieldSet = FieldSet::single(1);
 const SCREENS: FieldSet = FieldSet::single(2);
-const OUTSIDE: FieldSet = FieldSet::single(3);
 
 /// The declared fields a catalogue entry's output reaches. The answers to her motion, the
 /// redraws and the sounds are events no declared field holds: credited nothing.
@@ -139,7 +207,7 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
     use BehaviourId as B;
     match id {
         B::Places | B::BlocksMarkedNothing => PLACES_FIELD,
-        B::PatternCells => CELLS.union(OUTSIDE),
+        B::PatternCells => CELLS,
         B::ScrollCells => SCREENS.union(PLACES_FIELD),
         B::TheScriptsRun
         | B::Regrowing
@@ -150,7 +218,7 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         | B::ShotBlocks
         | B::SuperMissileBlocks
         | B::PowerBombBlocks
-        | B::BombsReveal => PLACES_FIELD.union(CELLS).union(OUTSIDE),
+        | B::BombsReveal => PLACES_FIELD.union(CELLS),
         B::AnswersToHerMotion
         | B::FullPlacesLetHerThrough
         | B::WhatTheScreenRedraws
@@ -175,6 +243,8 @@ pub enum Skip {
     Place(u16, &'static str),
     /// A scroll PLM's change list isn't in the ROM.
     ScrollList(u16),
+    /// A request the hits name past the room's edge, which the spec rules out.
+    Outside(Cell),
 }
 
 impl fmt::Display for Skip {
@@ -187,6 +257,7 @@ impl fmt::Display for Skip {
             Self::Refused(cell) => write!(f, "a cell the importer refuses at {cell:?}"),
             Self::Place(slot, what) => write!(f, "place {slot}: {what}"),
             Self::ScrollList(argument) => write!(f, "scroll list {argument:#06X}"),
+            Self::Outside(cell) => write!(f, "a request past the room's edge at {cell:?}"),
         }
     }
 }
@@ -233,7 +304,14 @@ enum PlaceView {
     OtherPart,
     HeldUntilRun,
     Scroll(Cell, Touched),
-    Running(ReactionName, Script, Cell, usize, Frames, Option<Reacting>),
+    Running(
+        ReactionName,
+        Script,
+        Cell,
+        usize,
+        Frames,
+        Option<ReactingBody>,
+    ),
 }
 
 /// A cell as it is compared: its mark where its kind reads one.
@@ -244,20 +322,34 @@ struct CellView {
     mark: Option<Mark>,
 }
 
-/// The cells of the frame's reach, by cell.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Cells(BTreeMap<(u16, u16), Option<CellView>>);
+/// The PLM that writes a masked cell: another part's, in a place it holds at record N or N+1,
+/// which sits on the cell or draws it. Its id is the PLM's header (`$1C37,x`).
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct Writer(u16);
 
-/// The declared fields: every place, the cells within the frame's reach, the screens, and the
-/// cells outside the reach that differ from record N's.
+impl fmt::Debug for Writer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "another part's PLM {:04X}", self.0)
+    }
+}
+
+/// The room's cells as the frame leaves them.
+///
+/// Each cell that differs from record N's, and the cells masked as another part's, each with its
+/// writer. Two of these agree exactly when the room's unmasked cells do, since both are taken
+/// against the same record N.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Cells {
+    changed: BTreeMap<(u16, u16), CellView>,
+    masked: BTreeMap<(u16, u16), Writer>,
+}
+
+/// The declared fields: every place, every cell of the room, and the screens.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Declared {
     places: Vec<PlaceView>,
     cells: Cells,
     screens: Vec<Vec<ScreenKind>>,
-    /// The model writes no cell outside the frame's reach, so the oracle's is always empty: a
-    /// stray write shows here on every frame it happens.
-    outside: Vec<(u16, u16)>,
 }
 
 fn place_view(place: &Place) -> PlaceView {
@@ -267,21 +359,18 @@ fn place_view(place: &Place) -> PlaceView {
         Place::HeldUntilRun => PlaceView::HeldUntilRun,
         Place::Scroll(scroll) => PlaceView::Scroll(scroll.cell, scroll.touched),
         Place::Running(running) => PlaceView::Running(
-            running.reaction.clone(),
-            running.script,
+            running.reaction().name.clone(),
+            running.script(),
             running.cell,
             running.next,
             running.wait,
-            running.grows_back_as,
+            running.grows_back_as(),
         ),
     }
 }
 
 fn cell_view(tile: &Tile) -> CellView {
-    let marked = matches!(
-        tile.kind,
-        CellKind::Block | CellKind::ReactingAir | CellKind::StandInAcross | CellKind::StandInDown
-    );
+    let marked = matches!(tile.kind, CellKind::Reacting(_) | CellKind::StandIn(_));
     CellView {
         kind: tile.kind,
         look: tile.look,
@@ -289,24 +378,30 @@ fn cell_view(tile: &Tile) -> CellView {
     }
 }
 
-/// A record's blocks: its State, and its places' cells and the cells their patterns cover.
+/// A record's blocks: its State, and the cells another part's places sit on or draw, each with
+/// its PLM.
 struct Decoded {
     state: State,
-    reach: BTreeSet<(u16, u16)>,
+    others: Vec<(Cell, Writer)>,
+}
+
+/// The frame in hand: record N's cells, which the cells are compared as changes from, and the
+/// masked cells.
+#[derive(Default)]
+struct Frame {
+    start: Vec<Vec<CellView>>,
+    masked: BTreeMap<(u16, u16), Writer>,
 }
 
 /// The blocks domain over the ROM, which holds the reactions and the scroll lists.
 pub struct BlocksDomain {
     image: Vec<u8>,
     content: BlockContent,
+    rules: Rules,
     /// The scroll lists read, by argument and the room's screens across.
     lists: RefCell<BTreeMap<(u16, u16), Vec<ScreenChange>>>,
-    /// The cells compared on the frame in hand: chosen in `world` from both records' places and
-    /// the requests, by position.
-    reach: RefCell<BTreeSet<(u16, u16)>>,
-    /// Record N's cells on the frame in hand, which the model's cells outside the reach must
-    /// equal.
-    start: RefCell<Vec<Vec<Tile>>>,
+    /// The frame in hand, set in `world`.
+    frame: RefCell<Frame>,
 }
 
 /// The level's layer 1 sources.
@@ -340,14 +435,6 @@ fn cell(index: u16, width: u16) -> Cell {
     }
 }
 
-/// `cell` moved by `by`.
-fn moved(cell: Cell, by: Pair<i16>) -> Option<Cell> {
-    Some(Cell {
-        x: cell.x.checked_add_signed(by.x)?,
-        y: cell.y.checked_add_signed(by.y)?,
-    })
-}
-
 impl BlocksDomain {
     /// The domain over the ROM `image`.
     ///
@@ -362,9 +449,9 @@ impl BlocksDomain {
         Ok(Self {
             image,
             content,
+            rules: Rules::reference(),
             lists: RefCell::new(BTreeMap::new()),
-            reach: RefCell::new(BTreeSet::new()),
-            start: RefCell::new(Vec::new()),
+            frame: RefCell::new(Frame::default()),
         })
     }
 
@@ -397,12 +484,19 @@ impl BlocksDomain {
         Ok(changes)
     }
 
-    /// The places `record` holds, each with its cell's level index where it sits on one.
-    fn places(&self, record: &FrameRecord, blocks: &[Block], area: Area) -> Result<Places, Skip> {
+    /// The places `record` holds, and the cells another part's places sit on or draw, each with
+    /// its PLM.
+    fn places(
+        &self,
+        record: &FrameRecord,
+        blocks: &[Block],
+        area: Area,
+    ) -> Result<(Places, Vec<(Cell, Writer)>), Skip> {
         let width = word(record, source::ROOM_WIDTH_IN_BLOCKS)?;
         let across = width / SCREEN_CELLS;
         let imported = self.content.imported();
         let mut places = Places::default();
+        let mut others = Vec::new();
         for (slot, place) in (0..PLACES).zip(places.0.iter_mut()) {
             let read = |array: source::WramArray| -> Result<u16, Skip> {
                 Ok(array.word(slot)?.read(&record.wram)?)
@@ -432,20 +526,23 @@ impl BlocksDomain {
                             .copied()
                             .ok_or(Skip::Place(slot, "a reveal past the level"))?;
                         let mark = self.content.tile(block, area, None).map(|tile| tile.mark);
-                        let Some(Mark::Reaction(name)) = mark else {
+                        let Some(Mark::Reaction(reaction)) = mark else {
                             return Err(Skip::Place(slot, "a reveal on a cell of no reaction"));
                         };
                         let reaction = self
                             .content
-                            .id(&name)
+                            .id(&reaction)
                             .ok_or(Skip::Place(slot, "a reveal's reaction"))?;
                         self.running(record, slot, at, reaction, Script::Revealed)?
                     }
-                    None => Place::OtherPart,
+                    None => {
+                        others.extend(drawn(id, at));
+                        Place::OtherPart
+                    }
                 },
             };
         }
-        Ok(places)
+        Ok((places, others))
     }
 
     /// The reaction running `script` of `reaction` in slot `slot`, on `at`.
@@ -465,58 +562,32 @@ impl BlocksDomain {
         let next = imported
             .step_at(reaction, script, pointer)
             .ok_or(Skip::Place(slot, "a list pointer at no step"))?;
-        let regrows = imported
-            .get(reaction)
-            .and_then(|imported| imported.script(script).get(next..))
-            .is_some_and(|ahead| ahead.contains(&data::blocks::Step::Regrow));
+        let regrows = imported.get(reaction).is_some_and(|imported| {
+            imported
+                .script(script)
+                .contains(&data::blocks::Step::Regrow)
+        });
         let grows_back_as = if regrows {
             Some(match read(source::PLM_VARIABLE)? >> TYPE_SHIFT {
-                0xB | 0xC | 0xF => Reacting::Block,
-                0x3 | 0x4 | 0x7 => Reacting::Air,
+                0xB | 0xC | 0xF => ReactingBody::Block,
+                0x3 | 0x4 | 0x7 => ReactingBody::Air,
                 _ => return Err(Skip::Place(slot, "a respawn block of no reacting kind")),
             })
         } else {
             None
         };
-        let (name, _) = self
+        let reaction = self
             .content
-            .named(reaction)
+            .reaction(reaction)
             .ok_or(Skip::Place(slot, "a reaction the content doesn't hold"))?;
-        Ok(Place::Running(Running {
-            reaction: name.clone(),
-            script,
-            cell: at,
-            next,
-            wait: Frames::new(read(source::PLM_INSTRUCTION_TIMER)?)
-                .ok_or(Skip::Place(slot, "a wait past the model's"))?,
-            grows_back_as,
-        }))
-    }
-
-    /// The cells the running reactions of `places` sit on and cover, each with what covers it.
-    fn coverings(&self, places: &Places) -> Vec<(Cell, Covering)> {
-        let mut own = Vec::new();
-        let mut others = Vec::new();
-        for place in &places.0 {
-            let Place::Running(running) = place else {
-                continue;
-            };
-            let Some(id) = self.content.id(&running.reaction) else {
-                continue;
-            };
-            if let Some((_, family)) = self.content.named(id) {
-                own.push((running.cell, Covering::Own(family)));
-            }
-            others.extend(
-                self.content
-                    .covered(id)
-                    .iter()
-                    .filter_map(|&by| moved(running.cell, by))
-                    .map(|at| (at, Covering::Other)),
-            );
-        }
-        own.extend(others);
-        own
+        let wait = Frames::new(read(source::PLM_INSTRUCTION_TIMER)?)
+            .ok_or(Skip::Place(slot, "a wait of 0 or past the model's"))?;
+        Running::new(Arc::clone(reaction), script, grows_back_as, at, next, wait)
+            .map(Place::Running)
+            .ok_or(Skip::Place(
+                slot,
+                "what it grows back as against its script",
+            ))
     }
 
     /// The blocks `record` holds.
@@ -524,34 +595,13 @@ impl BlocksDomain {
         let width = word(record, source::ROOM_WIDTH_IN_BLOCKS)?;
         let height = word(record, source::ROOM_HEIGHT_IN_BLOCKS)?;
         let area = area(record)?;
-        let blocks = LEVEL.layer1(&record.wram)?;
-        let places = self.places(record, &blocks, area)?;
-        let coverings = self.coverings(&places);
-        let mut reach = BTreeSet::new();
-        for (at, _) in &coverings {
-            reach.insert((at.x, at.y));
-        }
-        for place in &places.0 {
-            if let Place::Scroll(scroll) = place {
-                reach.insert((scroll.cell.x, scroll.cell.y));
-            }
-        }
-        let mut rows = Vec::new();
-        for (y, row) in (0..height).zip(blocks.chunks(usize::from(width.max(1)))) {
-            let mut tiles = Vec::new();
-            for (x, &block) in (0..width).zip(row) {
-                let at = Cell { x, y };
-                let covering = coverings
-                    .iter()
-                    .find_map(|&(covered, covering)| (covered == at).then_some(covering));
-                let tile = self
-                    .content
-                    .tile(block, area, covering)
-                    .ok_or(Skip::Refused(at))?;
-                tiles.push(tile);
-            }
-            rows.push(tiles);
-        }
+        let mut blocks = LEVEL.layer1(&record.wram)?;
+        blocks.truncate(usize::from(width).saturating_mul(usize::from(height)));
+        let (places, others) = self.places(record, &blocks, area)?;
+        let rows = self
+            .content
+            .tiles(&blocks, width, area, &places)
+            .map_err(|at| Skip::Refused(cell(at, width)))?;
         let across = usize::from(width / SCREEN_CELLS);
         let down = usize::from(height / SCREEN_CELLS);
         let scrolls = source::SCROLLS.read(&record.wram)?;
@@ -571,30 +621,42 @@ impl BlocksDomain {
                     .collect::<Result<Vec<_>, _>>()
             })
             .collect::<Result<Vec<_>, _>>()?;
+        let uneven = || {
+            Skip::Unreadable(DecodeError::Unrepresentable {
+                source: source::ROOM_WIDTH_IN_BLOCKS.name,
+                value: width,
+            })
+        };
         Ok(Decoded {
             state: State {
-                tiles: Grid { rows },
+                tiles: Grid::new(rows).ok_or_else(uneven)?,
                 places,
-                screens: Grid { rows: screens },
+                screens: Grid::new(screens).ok_or_else(uneven)?,
             },
-            reach,
+            others,
         })
     }
 
-    /// The fields of `state` over the frame's reach; `outside` the cells outside it that differ
-    /// from record N's, which only the model's projections compute.
-    fn declared(&self, state: &State, outside: Vec<(u16, u16)>) -> Declared {
-        let reach = self.reach.borrow();
+    /// The fields of `state`: its cells as they differ from the frame's record N, the masked
+    /// ones apart.
+    fn declared(&self, state: &State) -> Declared {
+        let frame = self.frame.borrow();
+        let mut changed = BTreeMap::new();
+        for (y, (rows, start)) in (0_u16..).zip(state.tiles.rows().iter().zip(&frame.start)) {
+            for (x, (tile, start)) in (0_u16..).zip(rows.iter().zip(start)) {
+                let view = cell_view(tile);
+                if view != *start && !frame.masked.contains_key(&(x, y)) {
+                    changed.insert((x, y), view);
+                }
+            }
+        }
         Declared {
-            outside,
             places: state.places.0.iter().map(place_view).collect(),
-            cells: Cells(
-                reach
-                    .iter()
-                    .map(|&(x, y)| ((x, y), state.tiles.get(Cell { x, y }).map(cell_view)))
-                    .collect(),
-            ),
-            screens: state.screens.rows.clone(),
+            cells: Cells {
+                changed,
+                masked: frame.masked.clone(),
+            },
+            screens: state.screens.rows().to_vec(),
         }
     }
 }
@@ -620,7 +682,7 @@ fn moving(record: &FrameRecord) -> Result<Set<Motion>, Skip> {
 
 /// The starts record N+1 shows: each place of this part's that holds a reaction record N's
 /// doesn't, or one gone back in its script, highest place first.
-fn fresh(from: &Places, next: &Places, content: &BlockContent) -> Vec<(usize, Running, Started)> {
+fn fresh(from: &Places, next: &Places) -> Vec<(usize, Running, Started)> {
     let mut starts = Vec::new();
     for (slot, (before, after)) in from.0.iter().zip(&next.0).enumerate().rev() {
         let Place::Running(after) = after else {
@@ -628,19 +690,16 @@ fn fresh(from: &Places, next: &Places, content: &BlockContent) -> Vec<(usize, Ru
         };
         let is_new = match before {
             Place::Running(before) => {
-                before.reaction != after.reaction
+                before.reaction() != after.reaction()
                     || before.cell != after.cell
-                    || before.script != after.script
+                    || before.script() != after.script()
                     || before.next > after.next
             }
             Place::Free | Place::Scroll(_) | Place::OtherPart | Place::HeldUntilRun => true,
         };
-        let family = content
-            .id(&after.reaction)
-            .and_then(|id| content.named(id))
-            .map(|(_, family)| family);
-        if let (true, Some(family)) = (is_new, family) {
-            starts.push((slot, after.clone(), Started::of(family, after.script)));
+        if is_new {
+            let started = Started::of(after.reaction().family, after.script());
+            starts.push((slot, after.clone(), started));
         }
     }
     starts
@@ -800,9 +859,8 @@ impl Domain for BlocksDomain {
     type Skip = Skip;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("places", places),
-        domain_field!("cells within the frame's reach", cells),
+        domain_field!("cells", cells),
         domain_field!("screens", screens),
-        domain_field!("cells outside the frame's reach, as record N's", outside),
     ];
 
     fn behaviours(&self) -> Vec<Entry> {
@@ -843,12 +901,15 @@ impl Domain for BlocksDomain {
         }
         let before = self.decode_record(from)?;
         let after = self.decode_record(next)?;
-        let starts = fresh(&before.state.places, &after.state.places, &self.content);
+        let starts = fresh(&before.state.places, &after.state.places);
         let her = Cell {
             x: word(from, source::SAMUS_X_POS)? >> CELL_SHIFT,
             y: word(from, source::SAMUS_Y_POS)? >> CELL_SHIFT,
         };
         let requests = requests(next, &before.state.places, starts, her);
+        if let Some(past) = named(&requests).find(|&at| before.state.tiles.get(at).is_none()) {
+            return Err(Skip::Outside(past));
+        }
         let copied = before
             .state
             .places
@@ -863,11 +924,20 @@ impl Domain for BlocksDomain {
                 _ => None,
             })
             .collect();
-        *self.start.borrow_mut() = before.state.tiles.rows;
-        let mut reach = before.reach;
-        reach.extend(after.reach);
-        reach.extend(named(&requests).map(|at| (at.x, at.y)));
-        *self.reach.borrow_mut() = reach;
+        let start = before
+            .state
+            .tiles
+            .rows()
+            .iter()
+            .map(|row| row.iter().map(cell_view).collect())
+            .collect();
+        let masked = before
+            .others
+            .into_iter()
+            .chain(after.others)
+            .map(|(at, writer)| ((at.x, at.y), writer))
+            .collect();
+        *self.frame.borrow_mut() = Frame { start, masked };
         let run = if word(next, PLMS_ENABLED)? & PLMS_RUN == 0 {
             Run::Paused
         } else {
@@ -952,32 +1022,33 @@ impl Domain for BlocksDomain {
                 | None => {}
             }
         }
-        let blocks = self.content.blocks();
-        let report = blocks.step(state, &[], &requests, upstream.moving, upstream.run);
+        // `world` holds every request to the room's cells, so the model refuses none.
+        let Ok(report) = state.step(&self.rules, &requests, upstream.moving, upstream.run) else {
+            upstream.did = did;
+            return;
+        };
         for (was, now) in before.0.iter().zip(&state.places.0) {
-            if let (Place::Free, Place::Running(running)) = (was, now)
-                && let Some((_, family)) = self
-                    .content
-                    .id(&running.reaction)
-                    .and_then(|id| self.content.named(id))
-            {
-                did.extend([B::Places, B::TheScriptsRun, started(family, running.script)]);
+            if let (Place::Free, Place::Running(running)) = (was, now) {
+                let family = running.reaction().family;
+                did.extend([
+                    B::Places,
+                    B::TheScriptsRun,
+                    started(family, running.script()),
+                ]);
             }
             let Place::Running(running) = was else {
                 continue;
             };
-            let Some(reaction) = blocks.reactions.get(&running.reaction) else {
-                continue;
-            };
+            let reaction = running.reaction();
             let end = match now {
-                Place::Running(after) if after.reaction == running.reaction => after.next,
+                Place::Running(after) if after.reaction() == running.reaction() => after.next,
                 Place::Free
                 | Place::Running(_)
                 | Place::Scroll(_)
                 | Place::OtherPart
                 | Place::HeldUntilRun => usize::MAX,
             };
-            let steps = &reaction.scripts[running.script];
+            let steps = &reaction.scripts[running.script()];
             let passed = steps
                 .get(running.next..end.min(steps.len()))
                 .unwrap_or_default();
@@ -985,7 +1056,7 @@ impl Domain for BlocksDomain {
                 did.push(B::Regrowing);
             }
         }
-        if !report.redrawn.is_empty() {
+        if !report.written.is_empty() {
             did.extend([B::PatternCells, B::WhatTheScreenRedraws]);
         }
         if !report.sounds.is_empty() {
@@ -1006,22 +1077,11 @@ impl Domain for BlocksDomain {
     }
 
     fn fields(&self, state: &State) -> Declared {
-        let reach = self.reach.borrow();
-        let start = self.start.borrow();
-        let mut outside = Vec::new();
-        for (y, (rows, was)) in (0_u16..).zip(state.tiles.rows.iter().zip(start.iter())) {
-            for (x, (tile, was)) in (0_u16..).zip(rows.iter().zip(was)) {
-                if tile != was && !reach.contains(&(x, y)) {
-                    outside.push((x, y));
-                }
-            }
-        }
-        drop((reach, start));
-        self.declared(state, outside)
+        self.declared(state)
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
-        Ok(self.declared(&self.decode_record(next)?.state, Vec::new()))
+        Ok(self.declared(&self.decode_record(next)?.state))
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
@@ -1029,24 +1089,25 @@ impl Domain for BlocksDomain {
             Skip::NotGameplay | Skip::Frames(_) | Skip::RoomChanged => {
                 Uncompared::Skip(skip.to_string())
             }
-            Skip::Unreadable(_) | Skip::Refused(_) | Skip::Place(..) | Skip::ScrollList(_) => {
-                Uncompared::Defect(skip.to_string())
-            }
+            Skip::Unreadable(_)
+            | Skip::Refused(_)
+            | Skip::Place(..)
+            | Skip::ScrollList(_)
+            | Skip::Outside(_) => Uncompared::Defect(skip.to_string()),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{BlocksDomain, CELLS, Domain, FieldSet, OUTSIDE, PLACES_FIELD, SCREENS};
+    use super::{BlocksDomain, CELLS, Domain, FieldSet, PLACES_FIELD, SCREENS};
 
     #[test]
     fn the_field_sets_name_the_declared_fields_at_their_places() {
         for (set, name) in [
             (PLACES_FIELD, "places"),
-            (CELLS, "cells within the frame's reach"),
+            (CELLS, "cells"),
             (SCREENS, "screens"),
-            (OUTSIDE, "cells outside the frame's reach, as record N's"),
         ] {
             let place = BlocksDomain::FIELDS
                 .iter()

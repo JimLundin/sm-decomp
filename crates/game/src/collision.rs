@@ -82,13 +82,21 @@ impl Touches {
     /// [`Fault`] where an item's touch finds no item on its block, or a cell is one the room's
     /// loading would refuse.
     pub fn apply(self, room: &mut RoomScoped, reads: Reads<'_>) -> Result<(), Fault> {
-        self.0.into_iter().try_for_each(|touch| match touch {
-            Touch::Blocks { cell, way } => {
-                blocks_world::touch(room, reads, clean_types::Touch { cell, way })
-                    .map_err(Fault::Blocks)
+        let blocks = |touch: &Touch| match *touch {
+            Touch::Blocks { cell, way } => Some(clean_types::Touch { cell, way }),
+            Touch::Item(_) => None,
+        };
+        // Each run of the blocks' touches between two items' goes to the model at once.
+        let both = |one: &Touch, next: &Touch| blocks(one).is_some() && blocks(next).is_some();
+        for touches in self.0.chunk_by(both) {
+            if let [Touch::Item(block)] = *touches {
+                plm::touch_item_block(room, block).map_err(Fault::Item)?;
+            } else {
+                let cells: Vec<clean_types::Touch> = touches.iter().filter_map(blocks).collect();
+                blocks_world::touches(room, reads, &cells).map_err(Fault::Blocks)?;
             }
-            Touch::Item(block) => plm::touch_item_block(room, block).map_err(Fault::Item),
-        })
+        }
+        Ok(())
     }
 }
 

@@ -476,16 +476,17 @@ content is the draw routine's, which the format names by what each cell becomes.
   vectors' invented ones. The harness cases (§The harness cases) are frames it must match.
 - **Compared at N+1:** each place (empty, another part's, or its reaction, script, cell, next step
   and wait; what it grows back as, for every running reaction whose script has a `Regrow`, before
-  and after it), the screens, and the cells within the
-  frame's reach: their kinds and looks, and the marks of reacting cells and stand-ins. The reach is
-  chosen by position, never by value: this part's places' cells at N and N+1, every cell their
-  reactions' patterns cover, the scroll cells, and the requests' cells. Outside the reach the
-  model's cells must be record N's, since nothing of this part writes there: a stray write is a
-  mismatch on every frame it happens. The whole room, with each other part's writes masked by
-  name, is the next integration's.
+  and after it), the screens, and every cell of the room: its kind and look, and the mark of a
+  reacting cell or a stand-in, given as the cells that differ from N's, so a stray write anywhere
+  is a mismatch on every frame it happens.
 - **Masks (fields, not frames):** the other parts' slots are held: their contents aren't compared,
   and a slot another part's reaction takes or frees between N and N+1 is copied from N+1
-  (unverified), so the free slot a start takes is chosen as the original chose it. The order of a
+  (unverified), so the free slot a start takes is chosen as the original chose it. The cells
+  another part's PLM sits on or draws at N or N+1 are masked by position, each naming the PLM
+  (`$1C37,x`) that writes it: an item's own cell; a door's cap, its cell and the three below it
+  facing left or right (`$C842`.., `$BAF4`), or to its right facing up or down; the elevator
+  platform (`$B70B`) four across and two down; Phantoon's door (`$B781`, `$B78B`) two across and
+  four down. The order of a
   frame's starts among the other parts' spawns isn't known from the record; one frame of the 786
   (r06:538) has another part's slot change beside this spec's reactions, and matches.
 - **Null model:** nothing changes: 183 of the 786 (the scroll touches already in force); 431 on

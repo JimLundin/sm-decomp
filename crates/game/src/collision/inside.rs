@@ -64,7 +64,9 @@ fn resolve(room: Room<'_>, index: u16) -> (u16, BlockKind) {
     }
 }
 
-/// The cell at `x`, `y` for `point`, its extensions followed (`$94:9B8E` and its repeats).
+/// The cell at `x`, `y` for `point`, its extensions followed (`$94:9B8E` and its repeats), if its
+/// inside reaction is the blocks': of the inside reaction pointers (`$94:9B40`), special air's
+/// alone spawns a PLM (`$94:9B16`).
 // open: past the level the original reads the level's length word and whatever follows as the
 // block; slice 0 keeps Samus inside her room. Special air with bit 7 spawns the area's PLM
 // (`$94:9B29`), which the blocks model holds a place for where it holds only that, and BTS 8 to
@@ -79,8 +81,10 @@ fn point(room: &RoomScoped, at: Point, x: u16, y: u16) -> Option<(BlockIndex, Po
         slopes: None,
     };
     let index = block_at(view, x, y)?;
-    let (block, _) = resolve(view, index);
-    Some((BlockIndex(block), at))
+    let (block, kind) = resolve(view, index);
+    // Past the level she meets air (above), which the blocks are never asked of.
+    let special = matches!(kind, BlockKind::SpecialAir(_));
+    (special && usize::from(block) < room.blocks.len()).then_some((BlockIndex(block), at))
 }
 
 /// Samus block inside handling (`$94:9B60`): her bottom's cell, her centre's if it is in
