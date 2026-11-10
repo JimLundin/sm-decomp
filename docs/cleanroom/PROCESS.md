@@ -116,7 +116,8 @@ Each step names its owner, what it waits for, and its done-condition.
     README's status (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
     it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
     the branch's tree on `origin/main`, its subject the root's, its body each part under its role
-    (spec, model, integration), every `Role:` and `Co-Authored-By:` line kept. The import's
+    (spec, model, integration) with its own body indented under it, every `Role:` and
+    `Co-Authored-By:` line kept once, at the end. The import's
     checks ran on the branch's own commits at step 7; the round's branch keeps them. The squashed
     commit lands through `land.sh`, a fast-forward.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.

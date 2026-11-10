@@ -6,9 +6,11 @@
 #
 # The message is SUBJECT, then each of LANE's commits since HEAD, oldest first, under its role
 # from its `Role:` line: spec (observer), gate (adversary), model (implementer), integration
-# (integrator), engineering (engineer), root, and other for a commit with none. Its trailers are
-# every Role and every Co-Authored-By line the commits carry, each once, so the clean room's
-# provenance stays in main's history. import.sh checks each implementer commit on the lane
+# (integrator), engineering (engineer), root, and other for a commit with none, each commit's
+# body indented under its line. A lane of one commit has its body as the message's own body,
+# above the list. The bodies lose their Role and Co-Authored-By lines: the message's trailers are
+# every such line the commits carry, each once, at its end, so the clean room's provenance stays
+# in main's history. import.sh checks each implementer commit on the lane
 # branch before this runs; the lane branch keeps every original commit.
 # Prints "SQUASHED <hash> <n> commits from <lane>"; exit 1 on a refusal, nothing changed.
 set -euo pipefail
@@ -54,8 +56,18 @@ listed() {
   return 1
 }
 
+# The body of commit $1 without its Role and Co-Authored-By lines, which the squashed message
+# gathers at its end: no leading or trailing blank line, and no two blank lines in a row where a
+# trailer paragraph stood between two paragraphs.
+explanation() {
+  git log -1 --format=%b "$1" | awk '
+    tolower($0) ~ /^(role|co-authored-by):/ { next }
+    /^[[:space:]]*$/ { if (n > 0) blank = 1; next }
+    { if (blank) print ""; print; blank = 0; n++ }'
+}
+
 declare -A parts=()
-roles=() trailers=()
+roles=() trailers=() lead=
 for c in "${commits[@]}"; do
   # A commit made with `-m "Role: x" -m "Co-Authored-By: ..."` holds its role in a paragraph of
   # its own, which git's trailer parser doesn't see, so both are read as lines of the message.
@@ -63,6 +75,14 @@ for c in "${commits[@]}"; do
   role=$(printf '%s\n' "$body" | sed -n 's/^Role:[[:space:]]*\([^[:space:]]*\).*$/\1/p' | head -n 1)
   role=${role:-none}
   line="- ${c:0:9} $(git log -1 --format=%s "$c")"
+  # Each commit's explanation sits under its list line, indented so a round's list stays
+  # readable; a lane of one commit carries it unindented, as the squashed message's own body.
+  why=$(explanation "$c")
+  if [ ${#commits[@]} -eq 1 ]; then
+    lead=$why
+  elif [ -n "$why" ]; then
+    line+=$'\n'$(printf '%s\n' "$why" | sed 's/^./  &/')
+  fi
   if [ -z "${parts[$role]+set}" ]; then
     parts[$role]=$line
     roles+=("$role")
@@ -83,10 +103,13 @@ for role in "${roles[@]}"; do
 done
 
 message=$subject$'\n'
+if [ -n "$lead" ]; then message+=$'\n'"$lead"$'\n'; fi
 for role in "${ordered[@]}"; do
   message+=$'\n'"$(heading "$role"):"$'\n'"${parts[$role]}"$'\n'
 done
-message+=$'\n'"Squashed from $lane at ${tip:0:9}: ${#commits[@]} commits on ${base:0:9}."$'\n\n'
+count="${#commits[@]} commits"
+if [ ${#commits[@]} -eq 1 ]; then count="1 commit"; fi
+message+=$'\n'"Squashed from $lane at ${tip:0:9}: $count on ${base:0:9}."$'\n\n'
 # Each commit's first role in the round's order, then any other Role line, then every
 # Co-Authored-By line.
 written=()
