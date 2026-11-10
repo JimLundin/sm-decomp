@@ -670,6 +670,45 @@ fn progress_harness_cases_hold_against_the_cache() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
+/// Every level the game holds loads through the importer, refused where a chain of stand-ins
+/// loops: each state's of the rooms the doors reach, and of the two no door reaches, the unused
+/// room and the debug room. It needs only `SM_ROM`, and is skipped where it is unset.
+#[test]
+fn every_level_the_game_holds_loads() {
+    use data::rom::Lorom;
+    use data::room::{RoomKey, levels};
+    use std::io::Write as _;
+    /// The rooms no door reaches (bank $8F).
+    const UNREACHED: [u16; 2] = [0xB3E1, 0xE82C];
+    let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
+        let _ = writeln!(std::io::stdout(), "skipped: SM_ROM unset");
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let reached = super::progress::ProgressDomain::new(image.clone())
+        .population()
+        .unwrap_or_else(|error| panic!("the walk: {error}"))
+        .rooms;
+    let states = |keys: &[RoomKey]| -> usize {
+        keys.iter()
+            .map(|&key| match levels(Lorom::new(&image), key) {
+                Ok(levels) => levels.len(),
+                Err(error) => panic!("room {key:?}: {error:?}"),
+            })
+            .sum()
+    };
+    assert_eq!(reached.len(), 261, "rooms the doors reach");
+    assert_eq!(states(&reached), 322, "their states");
+    assert_eq!(
+        states(&UNREACHED.map(RoomKey::from_room_pointer)),
+        2,
+        "the unreached rooms' states"
+    );
+}
+
 /// Every item the game places, taken once from a new file, counts 100 (the decode notes' "No
 /// record: the full percentage"). The walk is checked against the population the notes give.
 /// It needs only `SM_ROM`, and is skipped where it is unset.
@@ -713,7 +752,7 @@ fn every_item_the_game_places_counts_a_hundred_percent() {
         tank(Supply::SuperMissiles, 10, 5),
         tank(Supply::PowerBombs, 10, 5),
     ]);
-    assert_eq!(population.rooms, 261, "rooms the doors reach");
+    assert_eq!(population.rooms.len(), 261, "rooms the doors reach");
     assert_eq!(population.items.len(), 100, "locations");
     assert_eq!(tanks, expected, "tanks by kind: count and amounts");
     assert_eq!(one_off, 16, "one-off items and beams");

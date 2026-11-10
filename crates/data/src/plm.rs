@@ -9,7 +9,8 @@
 
 use canonical::Canonical;
 
-use crate::level::ScrollArea;
+use crate::blocks::SCROLL_CELL;
+use crate::level::{BlockKind, Offset, ScrollArea};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// Populations and scroll changes.
@@ -124,7 +125,38 @@ pub struct PlmPopulation {
     pub scroll_changes: Vec<(RomAddress, Vec<ScrollChange>)>,
 }
 
+impl From<Extension> for BlockKind {
+    /// The block an extension's setup writes on its own block.
+    fn from(extension: Extension) -> Self {
+        match extension {
+            Extension::Right => Self::HorizontalExtension(Offset(-1)),
+            Extension::Left => Self::HorizontalExtension(Offset(1)),
+            Extension::Down => Self::VerticalExtension(Offset(-1)),
+            Extension::Up => Self::VerticalExtension(Offset(1)),
+        }
+    }
+}
+
 impl PlmPopulation {
+    /// The blocks its scroll PLMs and extensions write over the level as the room starts, in
+    /// order, in a room `width` blocks across: each one's block index and the block it becomes.
+    /// A scroll PLM's block ends a chain of stand-ins its extensions start, which the level's own
+    /// block there may not.
+    // open: the items and the PLMs no model runs write their blocks too, each with its part.
+    pub fn placed_blocks(&self, width: u16) -> impl Iterator<Item = (u16, BlockKind)> + '_ {
+        self.entries.iter().filter_map(move |entry| {
+            let kind = match entry.kind {
+                PlmKind::Extension(extension) => BlockKind::from(extension),
+                PlmKind::Scroll(_) => SCROLL_CELL,
+                PlmKind::Item(..) | PlmKind::Unmodelled { .. } => return None,
+            };
+            let index = u16::from(entry.y)
+                .wrapping_mul(width)
+                .wrapping_add(u16::from(entry.x));
+            Some((index, kind))
+        })
+    }
+
     /// The changes `id` names.
     #[must_use]
     pub fn changes(&self, id: ScrollChangesId) -> Option<&[ScrollChange]> {

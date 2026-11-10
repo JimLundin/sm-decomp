@@ -158,3 +158,100 @@ fn a_pointer_below_8000_generates_the_areas() {
         })
     );
 }
+
+/// An invented level four blocks across and three down, all air but `blocks`, each a block's
+/// index and its kind.
+fn stand_ins(blocks: &[(u16, BlockKind)]) -> Level {
+    let mut layer1 = vec![Block::default(); 12];
+    for &(index, kind) in blocks {
+        if let Some(block) = layer1.get_mut(usize::from(index)) {
+            block.kind = kind;
+        }
+    }
+    Level {
+        layer1,
+        layer2: None,
+    }
+}
+
+const ACROSS: u16 = 4;
+
+const fn right(by: i8) -> BlockKind {
+    BlockKind::HorizontalExtension(Offset(by))
+}
+
+const fn down(by: i8) -> BlockKind {
+    BlockKind::VerticalExtension(Offset(by))
+}
+
+#[test]
+fn a_level_whose_stand_ins_end_loads() {
+    let level = stand_ins(&[
+        (1, right(1)),
+        (2, down(1)),
+        (6, BlockKind::Solid(Bts(0))),
+        (5, right(-1)),
+        (4, down(-1)),
+        // Off the level's start, where a chain meets air.
+        (8, right(-9)),
+        (11, down(1)),
+    ]);
+    assert_eq!(level.refuse_stand_in_loops(ACROSS, []), Ok(()));
+    let kind = |index: u16| {
+        level
+            .layer1
+            .get(usize::from(index))
+            .map_or_else(BlockKind::default, |block| block.kind)
+    };
+    assert_eq!(
+        stand_in_end(12, ACROSS, kind, 1),
+        Ok((6, BlockKind::Solid(Bts(0))))
+    );
+    assert_eq!(
+        stand_in_end(12, ACROSS, kind, 8),
+        Ok((u16::MAX, BlockKind::default()))
+    );
+}
+
+#[test]
+fn a_level_whose_stand_ins_loop_is_refused() {
+    let along = stand_ins(&[(8, right(1)), (9, right(-1))]);
+    assert_eq!(
+        along.refuse_stand_in_loops(ACROSS, []),
+        Err(LevelError::StandInLoop(StandInLoop(8)))
+    );
+    let through = stand_ins(&[(1, right(2)), (3, down(1)), (7, right(-2)), (5, down(-1))]);
+    assert_eq!(
+        through.refuse_stand_in_loops(ACROSS, []),
+        Err(LevelError::StandInLoop(StandInLoop(1)))
+    );
+    let kind = |index: u16| {
+        through
+            .layer1
+            .get(usize::from(index))
+            .map_or_else(BlockKind::default, |block| block.kind)
+    };
+    assert_eq!(stand_in_end(12, ACROSS, kind, 1), Err(StandInLoop(1)));
+}
+
+#[test]
+fn a_loop_the_rooms_start_closes_is_refused() {
+    let level = stand_ins(&[(5, right(1)), (6, BlockKind::Solid(Bts(0xff)))]);
+    assert_eq!(level.refuse_stand_in_loops(ACROSS, []), Ok(()));
+    assert_eq!(
+        level.refuse_stand_in_loops(ACROSS, [(6, right(-1))]),
+        Err(LevelError::StandInLoop(StandInLoop(5)))
+    );
+    // Extensions placed back towards a stand-in that names them close a loop, unless a later
+    // placement writes a block that stands for none over that stand-in.
+    let placed = [(9, right(-1)), (10, right(-1))];
+    let level = stand_ins(&[(8, right(2))]);
+    assert_eq!(
+        level.refuse_stand_in_loops(ACROSS, placed),
+        Err(LevelError::StandInLoop(StandInLoop(8)))
+    );
+    let ended = placed
+        .into_iter()
+        .chain([(8, BlockKind::SpecialAir(Bts(0)))]);
+    assert_eq!(level.refuse_stand_in_loops(ACROSS, ended), Ok(()));
+}

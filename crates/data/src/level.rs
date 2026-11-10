@@ -259,6 +259,34 @@ impl BlockKind {
         }
     }
 
+    /// The block a block of this kind at `index` stands for, in a level `width` blocks across:
+    /// an extension's, its offset along its row or its column. Any other kind stands for none,
+    /// and so does an extension of offset 0, which acts as air.
+    #[must_use]
+    pub fn stands_for(self, index: u16, width: u16) -> Option<u16> {
+        match self {
+            Self::HorizontalExtension(Offset(by)) => {
+                (by != 0).then(|| index.wrapping_add_signed(i16::from(by)))
+            }
+            Self::VerticalExtension(Offset(by)) => (by != 0)
+                .then(|| index.wrapping_add(i16::from(by).cast_unsigned().wrapping_mul(width))),
+            Self::Air(_)
+            | Self::Slope(_)
+            | Self::SpikeAir(_)
+            | Self::SpecialAir(_)
+            | Self::ShootableAir(_)
+            | Self::UnusedAir(_)
+            | Self::BombableAir(_)
+            | Self::Solid(_)
+            | Self::Door(_)
+            | Self::Spike(_)
+            | Self::Special(_)
+            | Self::Shootable(_)
+            | Self::Grapple(_)
+            | Self::Bombable(_) => None,
+        }
+    }
+
     /// The BTS, as the original stores it.
     #[must_use]
     pub fn bts(self) -> u8 {
@@ -361,6 +389,40 @@ pub enum LevelError {
         /// The data's length.
         len: usize,
     },
+    /// A chain of stand-ins loops once the room's start has placed its own: the original
+    /// follows such a chain without end.
+    StandInLoop(StandInLoop),
+}
+
+/// A chain of stand-ins that comes back on itself, through this block.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct StandInLoop(pub u16);
+
+/// The block the chain of stand-ins from `index` ends at, and its kind, in a level of `len`
+/// blocks `width` across whose kind at an index `kind` gives, air past the level.
+///
+/// A loaded room holds no chain that loops ([`Level::refuse_stand_in_loops`]), but a reaction's
+/// show can make a block a stand-in as the room runs, so the follow is bounded: a chain still on
+/// a stand-in one block past as many as the level holds has met a block twice.
+///
+/// # Errors
+///
+/// [`StandInLoop`] at `index` when the chain from it loops.
+pub fn stand_in_end(
+    len: usize,
+    width: u16,
+    kind: impl Fn(u16) -> BlockKind,
+    index: u16,
+) -> Result<(u16, BlockKind), StandInLoop> {
+    let mut at = index;
+    for _ in 0..=len {
+        let here = kind(at);
+        match here.stands_for(at, width) {
+            Some(next) => at = next,
+            None => return Ok((at, here)),
+        }
+    }
+    Err(StandInLoop(index))
 }
 
 impl Level {
@@ -406,6 +468,51 @@ impl Level {
             .map(|(word, &bts)| Block::new(word, bts))
             .collect();
         Ok(Self { layer1, layer2 })
+    }
+
+    /// The level, `width` blocks across, if no chain of its stand-ins loops once the room's start
+    /// has written `placed` (a block's index and the stand-in it becomes) over it.
+    ///
+    /// The original follows a looping chain without end wherever her moves, her inside points or
+    /// a reaction meet it, so the room is refused here, once, as it loads.
+    ///
+    /// # Errors
+    ///
+    /// [`LevelError::StandInLoop`] at a block of the first chain that loops.
+    pub fn refuse_stand_in_loops(
+        &self,
+        width: u16,
+        placed: impl IntoIterator<Item = (u16, BlockKind)>,
+    ) -> Result<(), LevelError> {
+        let mut kinds: Vec<BlockKind> = self.layer1.iter().map(|block| block.kind).collect();
+        for (index, kind) in placed {
+            if let Some(slot) = kinds.get_mut(usize::from(index)) {
+                *slot = kind;
+            }
+        }
+        // The chain each block was first met on, named by its first block, so each block is
+        // walked once.
+        let mut met: Vec<Option<u16>> = vec![None; kinds.len()];
+        for (start, _) in (0..=u16::MAX).zip(&kinds) {
+            let mut at = start;
+            // Past the level a chain meets air, and ends.
+            while let (Some(seen), Some(&kind)) =
+                (met.get_mut(usize::from(at)), kinds.get(usize::from(at)))
+            {
+                match *seen {
+                    Some(chain) if chain == start => {
+                        return Err(LevelError::StandInLoop(StandInLoop(at)));
+                    }
+                    Some(_) => break,
+                    None => *seen = Some(start),
+                }
+                match kind.stands_for(at, width) {
+                    Some(next) => at = next,
+                    None => break,
+                }
+            }
+        }
+        Ok(())
     }
 }
 

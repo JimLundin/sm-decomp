@@ -30,8 +30,8 @@ const ROOM_BANK: u8 = 0x8F;
 
 /// Every item the game places, by its location.
 pub struct Population {
-    /// The rooms the walk reached.
-    pub rooms: usize,
+    /// The rooms the walk reached, in the order it reached them.
+    pub rooms: Vec<RoomKey>,
     /// Each location's item.
     pub items: BTreeMap<LocationId, Pickup>,
 }
@@ -52,6 +52,7 @@ impl ProgressDomain {
     pub fn population(&self) -> Result<Population, String> {
         let image = Lorom::new(&self.image);
         let mut seen = BTreeSet::new();
+        let mut rooms = Vec::new();
         let mut items = BTreeMap::new();
         let mut todo = Vec::from(STARTS);
         while let Some(pointer) = todo.pop() {
@@ -61,6 +62,7 @@ impl ProgressDomain {
             let room = populations(image, RoomKey::from_room_pointer(pointer))
                 .map_err(|error| format!("room {pointer:#06X}: {error:?}"))?;
             seen.insert(pointer);
+            rooms.push(RoomKey::from_room_pointer(pointer));
             for plms in &room.plms {
                 for entry in &plms.entries {
                     let plm = entry.kind.id();
@@ -92,10 +94,7 @@ impl ProgressDomain {
                 .filter(|&into| into != 0);
             todo.extend(doors);
         }
-        Ok(Population {
-            rooms: seen.len(),
-            items,
-        })
+        Ok(Population { rooms, items })
     }
 }
 

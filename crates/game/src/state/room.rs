@@ -907,7 +907,7 @@ impl RoomScoped {
             level_tail: level_tail(&state.layers),
             area: header.area,
             tileset: TilesetId(state.tileset),
-            width: BlockColumns(u16::from(header.size.width).wrapping_mul(16)),
+            width: BlockColumns(header.size.blocks_across()),
             height: BlockRows(u16::from(header.size.height).wrapping_mul(16)),
             scroll_areas: state.scroll_areas.clone(),
             camera: Camera {

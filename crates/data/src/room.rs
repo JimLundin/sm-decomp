@@ -178,6 +178,12 @@ pub struct Screens {
 }
 
 impl Screens {
+    /// Blocks across: 16 per screen.
+    #[must_use]
+    pub fn blocks_across(self) -> u16 {
+        u16::from(self.width).wrapping_mul(16)
+    }
+
     /// Blocks in the room: 256 per screen.
     #[must_use]
     pub fn blocks(self) -> usize {
@@ -581,6 +587,30 @@ pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
     })
 }
 
+/// The level data at `at` of a room of `size`, decompressed and decoded, refused where a chain of
+/// stand-ins loops once the room's start has placed those of `plms`.
+fn level(
+    rom: Lorom<'_>,
+    at: RomAddress,
+    size: Screens,
+    plms: &PlmPopulation,
+) -> Result<(LevelData, Level), RoomError> {
+    let level = decompress(rom.from(at)?)
+        .map(|decoded| LevelData {
+            at,
+            bytes: decoded.bytes,
+        })
+        .map_err(|error| RoomError::LevelData { at, error })?;
+    let width = size.blocks_across();
+    let layers = Level::decode(&level.bytes)
+        .and_then(|layers| {
+            layers.refuse_stand_in_loops(width, plms.placed_blocks(width))?;
+            Ok(layers)
+        })
+        .map_err(|error| RoomError::Level { at, error })?;
+    Ok((level, layers))
+}
+
 /// A room's door list and each state's PLM population.
 ///
 /// They are what a walk of the rooms by their doors needs, read without the states' levels and
@@ -603,25 +633,70 @@ const STATE_PLM_POPULATION: usize = 20;
 /// [`RoomError`] if a record is outside the image, names an unknown condition, or a population
 /// doesn't decode.
 pub fn populations(rom: Lorom<'_>, key: RoomKey) -> Result<Populations, RoomError> {
+    let headers = state_headers(rom, key)?;
+    let plms = headers
+        .states
+        .into_iter()
+        .map(|state| state_population(rom, state))
+        .collect::<Result<_, _>>()?;
+    Ok(Populations {
+        doors: headers.doors,
+        plms,
+    })
+}
+
+/// Each state's level of the room whose header is at `key`, the default last, decoded and
+/// refused as the room's loading refuses it, without the scroll tables `populations` also skips.
+///
+/// # Errors
+///
+/// [`RoomError`] if a record is outside the image, names an unknown condition, a population
+/// doesn't decode, or a level doesn't decompress, decode, or end its stand-in chains.
+pub fn levels(rom: Lorom<'_>, key: RoomKey) -> Result<Vec<Level>, RoomError> {
+    let headers = state_headers(rom, key)?;
+    headers
+        .states
+        .into_iter()
+        .map(|state| {
+            let plms = state_population(rom, state)?;
+            let at = RomAddress::from_long(Reader { rom, at: state }.take()?);
+            let (_, layers) = level(rom, at, headers.size, &plms)?;
+            Ok(layers)
+        })
+        .collect()
+}
+
+/// A room header's size, its door list and where its state headers are, the default last.
+struct StateHeaders {
+    size: Screens,
+    doors: RomAddress,
+    states: Vec<RomAddress>,
+}
+
+/// The size, door list and state headers of the room whose header is at `key`.
+fn state_headers(rom: Lorom<'_>, key: RoomKey) -> Result<StateHeaders, RoomError> {
     let mut reader = Reader { rom, at: key.0 };
-    let _: [u8; 9] = reader.take()?;
+    let [_, _, _, _, width, height, _, _, _] = reader.take()?;
     let doors = reader.pointer(ROOM_BANK)?;
     let mut states = Vec::new();
     while condition(&mut reader)?.is_some() {
         states.push(reader.pointer(ROOM_BANK)?);
     }
     states.push(reader.at);
-    let plms = states
-        .into_iter()
-        .map(|state| {
-            let at = state
-                .advance(STATE_PLM_POPULATION)
-                .ok_or(RoomError::BankEnd(state))?;
-            let list = Reader { rom, at }.pointer(ROOM_BANK)?;
-            population(rom, list).map_err(|error| RoomError::Plm { state, error })
-        })
-        .collect::<Result<_, _>>()?;
-    Ok(Populations { doors, plms })
+    Ok(StateHeaders {
+        size: Screens { width, height },
+        doors,
+        states,
+    })
+}
+
+/// The PLM population of the state header at `state`.
+fn state_population(rom: Lorom<'_>, state: RomAddress) -> Result<PlmPopulation, RoomError> {
+    let at = state
+        .advance(STATE_PLM_POPULATION)
+        .ok_or(RoomError::BankEnd(state))?;
+    let list = Reader { rom, at }.pointer(ROOM_BANK)?;
+    population(rom, list).map_err(|error| RoomError::Plm { state, error })
 }
 
 /// The next state condition, or `None` at the default condition that ends the list.
@@ -667,23 +742,11 @@ fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, Roo
     let library_background = reader.pointer(ROOM_BANK)?;
     let setup_code = reader.pointer(ROOM_BANK)?;
     let level_at = RomAddress::from_long([level_low, level_high, level_bank]);
-    let level = decompress(rom.from(level_at)?)
-        .map(|decoded| LevelData {
-            at: level_at,
-            bytes: decoded.bytes,
-        })
-        .map_err(|error| RoomError::LevelData {
-            at: level_at,
-            error,
-        })?;
-    let layers = Level::decode(&level.bytes).map_err(|error| RoomError::Level {
-        at: level_at,
-        error,
-    })?;
-    let scroll_areas =
-        scroll_areas(rom, scroll, size).map_err(|error| RoomError::Scroll { state: at, error })?;
     let plms =
         population(rom, plm_population).map_err(|error| RoomError::Plm { state: at, error })?;
+    let (level, layers) = level(rom, level_at, size, &plms)?;
+    let scroll_areas =
+        scroll_areas(rom, scroll, size).map_err(|error| RoomError::Scroll { state: at, error })?;
     Ok(RoomState {
         at,
         level,
