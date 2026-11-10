@@ -152,3 +152,19 @@ jobs:
             grep -q "^test harness::tests::${test}_holds_its_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"
           done
+      - name: "Progress's ROM checks: the harness cases, the rows' standing room states and the full percentage"
+        run: |
+          # Each test skips and passes only with both SM_CACHE and SM_ROM unset, which this step
+          # sets; a renamed test would filter to nothing and pass, so require each one's result.
+          set -o pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --release -- \
+              progress_harness_cases_hold_against_the_cache \
+              progress_chooses_each_rows_standing_room_state \
+              every_item_the_game_places_counts_a_hundred_percent \
+            | tee "$RUNNER_TEMP/progress.txt"
+          for test in progress_harness_cases_hold_against_the_cache \
+            progress_chooses_each_rows_standing_room_state \
+            every_item_the_game_places_counts_a_hundred_percent; do
+            grep -q "^test harness::tests::${test} \.\.\. ok$" "$RUNNER_TEMP/progress.txt"
+          done
