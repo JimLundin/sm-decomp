@@ -196,6 +196,12 @@ impl Samus {
         self.vy = ZERO;
     }
 
+    /// `Landing`: her vertical motion stops on the floor: on the ground, vertical speed 0.
+    pub(crate) const fn settle(&mut self) {
+        self.vertical = Vertical::Ground;
+        self.vy = ZERO;
+    }
+
     /// `FollowingTheGround` (§1.2): a vertical motion, on the ground: a vertical speed other
     /// than 0, or falling at 0.
     pub(crate) fn vertical_motion(&self) -> bool {

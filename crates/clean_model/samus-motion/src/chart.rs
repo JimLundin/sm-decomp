@@ -12,24 +12,20 @@ mod tests;
 use crate::rows::Test::{
     Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
 };
-use crate::rows::{Effect, Met, Row, Side, Situation, Test, seen};
+use crate::rows::{Effect, Met, Row, Situation, Test, seen};
 use crate::rules::Lowers;
+use crate::situation::classify;
 use crate::tick::Frame;
 use clean_types::Action::Running;
 use clean_types::button::JUMP;
-use clean_types::{Buttons, Item, Pose};
+use clean_types::{Buttons, Item, Pose, Side};
 
-/// What the chart reads.
+/// What the chart reads of a frame besides her pose.
 ///
-/// Her situation and pose at the frame's start, whether her horizontal speed then isn't 0,
-/// whether she is off the ground once her moves are made, whether jump held through counts as a
-/// press, the frame (its pad held and just pressed, the items switched on, an animation's end)
-/// and what her moves met.
+/// The frame (its pad held and just pressed, the items switched on, an animation's end), whether
+/// her horizontal speed at its start isn't 0, whether she is off the ground once her moves are
+/// made, whether jump held through counts as a press, and what her moves met.
 pub struct Moment<'a> {
-    /// Her situation.
-    pub situation: &'static Situation,
-    /// Her pose.
-    pub pose: Pose,
     /// Her horizontal speed at the frame's start isn't 0.
     pub moving: bool,
     /// Off the ground once her moves are made.
@@ -56,9 +52,10 @@ pub struct Choice {
 }
 
 impl Choice {
-    /// `PoseFollows`, `PoseFitAfterMoves`: a pose she ends in instead of the one chosen (the pose
-    /// she had, where the change is refused, or crouched `Still`), which brings none of the
-    /// chosen pose's effects: no step, no lowering and no effect on her speeds and dash.
+    /// `PoseFollows`, `PoseFitAfterMoves`, `AimingAndShooting`: a pose she ends in instead of the
+    /// one chosen (the pose she had, where the change is refused; crouched `Still`; against the
+    /// wall, where the aim change's step is blocked), which brings none of the chosen pose's
+    /// effects: no step, no lowering and no effect on her speeds and dash.
     #[must_use]
     pub const fn instead(pose: Pose) -> Self {
         Self {
@@ -81,13 +78,44 @@ fn rank(row: &Row) -> (bool, usize) {
 }
 
 impl Moment<'_> {
+    /// `PoseFollows`: the pose she takes from `pose`, hers at the frame's start, at this moment:
+    /// an animation's end hands over its pose, else what her moves met chooses, else the pad
+    /// chart's. What the pose then does, pose fit and its effects, is the step's.
+    #[must_use]
+    pub fn next_pose(&self, pose: Pose) -> Pose {
+        self.choose(pose, classify(pose)).pose
+    }
+
+    /// `PoseFollows`: the choice from `pose` in its `situation`, with its effects.
+    pub(crate) fn choose(&self, pose: Pose, situation: &'static Situation) -> Choice {
+        Reading {
+            moment: self,
+            pose,
+            situation,
+        }
+        .choose()
+    }
+}
+
+/// `PadChart`: the chart read at a moment for one pose, hers at the frame's start, and the
+/// situation it puts her in.
+struct Reading<'a> {
+    /// The moment.
+    moment: &'a Moment<'a>,
+    /// Her pose.
+    pose: Pose,
+    /// Her situation.
+    situation: &'static Situation,
+}
+
+impl Reading<'_> {
     /// `PadChart`: what row `a`'s beats clauses say of row `b`: that `a` beats it, or, under a
     /// clause's condition, that `b` beats `a`; nothing where they don't name it.
     fn says(&self, a: &Row, b: &Row) -> Option<bool> {
-        if a.beats.contains(&b.name) {
+        if a.beats.contains(&b.id) {
             return Some(true);
         }
-        let clause = a.beats_unless.iter().find(|c| c.row == b.name)?;
+        let clause = a.beats_unless.iter().find(|c| c.row == b.id)?;
         Some(!clause.unless.iter().any(|tests| self.fits(tests)))
     }
 
@@ -102,8 +130,8 @@ impl Moment<'_> {
     /// `PadChart`, `Jumping` (jump held through): the buttons the chart reads as just pressed:
     /// the pad's, and jump where jump held through counts as a press.
     const fn pressed(&self) -> Buttons {
-        let pad = self.frame.pressed;
-        if self.jump_held_through {
+        let pad = self.moment.frame.pressed;
+        if self.moment.jump_held_through {
             Buttons(pad.0 | JUMP.0)
         } else {
             pad
@@ -113,21 +141,21 @@ impl Moment<'_> {
     /// `PadChart`, `Aiming`, `WhatHerMovesMet`, `AnimationEnds`: whether one test of a row
     /// passes; forward and back are by her facing at the frame's start.
     fn passes(&self, test: &Test) -> bool {
-        let (p, f) = (self.pose, self.frame);
+        let (p, m) = (self.pose, self.moment);
         match *test {
-            Held(b) => seen(f.pad, p.facing).any(b),
+            Held(b) => seen(m.frame.pad, p.facing).any(b),
             Pressed(b) => seen(self.pressed(), p.facing).any(b),
             Not(t) => !self.passes(t),
             Aimed(aims) => aims.contains(&p.aim),
             Gun(gun) => p.gun == gun,
-            Faces(side) => p.facing.side() == side,
+            Faces(side) => Side::of(p.facing) == side,
             Body(bodies) => bodies.contains(&p.body),
             Action(actions) => actions.contains(&p.action),
             Doing(doings) => doings.contains(&self.situation.doing),
-            Airborne => self.airborne,
-            SpringBall => f.items[Item::SpringBall],
-            Moving => self.moving,
-            Test::Met(met) => self.met == Some(met),
+            Airborne => m.airborne,
+            SpringBall => m.frame.items[Item::SpringBall],
+            Moving => m.moving,
+            Test::Met(met) => m.met == Some(met),
         }
     }
 
@@ -140,26 +168,13 @@ impl Moment<'_> {
     /// `AimingAndShooting`: a running pose other than hers, or her running pose a row counts as
     /// chosen, brings the step.
     fn choice(&self, row: &Row) -> Choice {
-        let (p, n) = (self.pose, row.next);
-        let facing = match n.facing {
-            Side::Kept => p.facing,
-            Side::Back => p.facing.back(),
-            Side::To(side) => side,
-        };
-        let aim = n.aim.iter().find(|a| self.fits(a.when));
-        let pose = Pose {
-            body: n.body.unwrap_or(p.body),
-            action: n.action.unwrap_or(p.action),
-            facing,
-            aim: aim.map_or(p.aim, |a| a.aim),
-            gun: n.gun.unwrap_or(p.gun),
-            legs: n.legs.unwrap_or(p.legs),
-        };
+        let aim = row.next.aim.iter().find(|a| self.fits(a.when));
+        let pose = row.next.pose_from(self.pose, aim.map(|a| a.aim));
         Choice {
             pose,
             effects: row.effects,
-            steps: pose.action == Running && (pose != p || row.steps),
-            lower: n.lower,
+            steps: pose.action == Running && (pose != self.pose || row.steps),
+            lower: row.next.lower,
         }
     }
 
@@ -178,20 +193,16 @@ impl Moment<'_> {
         rows.iter().find(|r| self.fits(r.needs))
     }
 
-    /// `WhatHerMovesMet`: the pose what her moves met chooses, if anything.
-    #[must_use]
-    pub fn met(&self) -> Option<Choice> {
-        self.first(table::MOVES_MET).map(|r| self.choice(r))
-    }
-
     /// `PoseFollows`: an animation ending hands over its pose (`AnimationEnds`), else what her
     /// moves met chooses (`WhatHerMovesMet`), else the pad chart (`PadChart`). The aim change's
     /// step follows from the second and third alone (`AimingAndShooting`).
-    #[must_use]
-    pub fn choose(&self) -> Choice {
-        let by_moves = self.met().unwrap_or_else(|| self.choice(self.pad_chart()));
+    fn choose(&self) -> Choice {
+        let by_moves = self
+            .first(table::MOVES_MET)
+            .unwrap_or_else(|| self.pad_chart());
+        let by_moves = self.choice(by_moves);
         self.first(table::ANIMATION_ENDS)
-            .filter(|_| self.frame.animation_ends)
+            .filter(|_| self.moment.frame.animation_ends)
             .map_or(by_moves, |r| Choice {
                 steps: by_moves.steps,
                 ..self.choice(r)

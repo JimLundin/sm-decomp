@@ -166,6 +166,37 @@ impl Heading {
     }
 }
 
+/// One of her two sides along x: the way she faces, or the way her horizontal speed points. Listed
+/// alphabetically; the order means nothing.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Side {
+    /// Leftward.
+    Left,
+    /// Rightward.
+    Right,
+}
+
+impl Side {
+    /// §2 facing: the side she faces; facing the screen counts as `Right`.
+    #[must_use]
+    pub const fn of(facing: Facing) -> Self {
+        if matches!(facing, Facing::Left) {
+            Self::Left
+        } else {
+            Self::Right
+        }
+    }
+
+    /// `BlocksStopFlush`: the way a horizontal move to this side goes.
+    #[must_use]
+    pub const fn heading(self) -> Heading {
+        match self {
+            Self::Left => Heading::Left,
+            Self::Right => Heading::Right,
+        }
+    }
+}
+
 /// Which way she faces (§2).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Facing {
@@ -463,13 +494,15 @@ pub trait World {
 pub enum Kind {
     /// A deliberate game rule.
     Mechanic,
-    /// Unintended behaviour the model reproduces.
+    /// Unintended behaviour the game has and the model reproduces.
     Quirk,
-    /// Slowdown and loading time.
+    /// When a rule acts: the order of the steps within a frame and which state each step reads,
+    /// slowdown and loading time.
     Timing,
-    /// What a frame reports beyond her quantities, for the caller to act on.
+    /// Something the step reports for the caller to show or act on (which sprite, which cells she
+    /// reached), not a rule of her motion.
     Output,
-    /// An output quirk.
+    /// A quirk of an output: what is reported departs from what the game means to show.
     Encoding,
 }
 

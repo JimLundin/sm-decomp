@@ -6,7 +6,7 @@
 
 use crate::rules::{Gait, Lowers};
 use clean_types::button::{self, LEFT, PAD, RIGHT};
-use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Heading, Legs, Pose};
+use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Legs, Pose, Side};
 
 /// `PadChart`: forward held, the side she faces (§2): the first set above the pad's own buttons,
 /// so never on the pad. Only `seen` makes it.
@@ -142,7 +142,7 @@ pub enum Test {
     /// Her gun so.
     Gun(Gun),
     /// Facing this side (the screen counts as right).
-    Faces(Heading),
+    Faces(Side),
     /// Her body one of these.
     Body(&'static [Body]),
     /// Her action one of these.
@@ -169,7 +169,7 @@ pub struct Aiming {
 
 /// The way a next pose faces.
 #[derive(Clone, Copy)]
-pub enum Side {
+pub enum NextFacing {
     /// As she faced.
     Kept,
     /// Back.
@@ -186,7 +186,7 @@ pub struct Next {
     /// The action.
     pub action: Option<Action>,
     /// The facing.
-    pub facing: Side,
+    pub facing: NextFacing,
     /// The first aim whose tests pass; where none does, the aim is kept.
     pub aim: &'static [Aiming],
     /// The gun.
@@ -197,6 +197,27 @@ pub struct Next {
     /// rules' crouch or morph distance) and is lowered by the room it finds; standing up and
     /// unmorphing lower her 0 px.
     pub lower: Option<Lowers>,
+}
+
+impl Next {
+    /// The pose it leads to from `p`, aimed `aim` where its aim rule (`Aiming`) gave one, else
+    /// with her aim kept.
+    #[must_use]
+    pub fn pose_from(self, p: Pose, aim: Option<Aim>) -> Pose {
+        let facing = match self.facing {
+            NextFacing::Kept => p.facing,
+            NextFacing::Back => p.facing.back(),
+            NextFacing::To(side) => side,
+        };
+        Pose {
+            body: self.body.unwrap_or(p.body),
+            action: self.action.unwrap_or(p.action),
+            facing,
+            aim: aim.unwrap_or(p.aim),
+            gun: self.gun.unwrap_or(p.gun),
+            legs: self.legs.unwrap_or(p.legs),
+        }
+    }
 }
 
 /// What a change does to her speeds, dash and position, in order.
@@ -265,31 +286,190 @@ impl Entering {
     }
 }
 
-/// `PadChart`: a beats clause with a condition it doesn't apply under: the row it beats, by
-/// name, unless one of these sets of tests all pass, where that row beats it instead.
+/// `PadChart`: a beats clause with a condition it doesn't apply under: the row it beats, unless
+/// one of these sets of tests all pass, where that row beats it instead.
 pub struct Beat {
     /// The row it beats.
-    pub row: &'static str,
+    pub row: RowId,
     /// Where any of these holds (every test of it passing), the other row beats it.
     pub unless: &'static [&'static [Test]],
 }
 
 /// A move of the state machine: a row of one of §7's tables.
 pub struct Row {
-    /// Its Pad cell, which a beats clause names.
-    pub name: &'static str,
+    /// Who it is among its situation's rows or its table's, which a beats clause names.
+    pub id: RowId,
     /// What it needs, all of it.
     pub needs: &'static [Test],
     /// The pose it leads to.
     pub next: Next,
     /// What it does.
     pub effects: &'static [Effect],
-    /// `PadChart`: the rows of its situation it beats, by name.
-    pub beats: &'static [&'static str],
+    /// `PadChart`: the rows of its situation it beats.
+    pub beats: &'static [RowId],
     /// `PadChart`: the rows of its situation it beats, but for a condition.
     pub beats_unless: &'static [Beat],
     /// `AimingAndShooting`: its kept running pose counts as chosen, bringing the step.
     pub steps: bool,
+}
+
+/// A row's identity: its first cell in §7's tables, the Pad cell for the pad chart's rows. It is
+/// one row's alone within its situation or its table (the chart's test holds it), so a beats
+/// clause names the rows it beats by it.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum RowId {
+    /// "down pressed".
+    DownPressed,
+    /// "jump pressed".
+    JumpPressed,
+    /// "up pressed".
+    UpPressed,
+    /// "back pressed".
+    BackPressed,
+    /// "shoot pressed".
+    ShootPressed,
+    /// "back, shoot and an aim button held".
+    BackShootAndAnAimButtonHeld,
+    /// "back and both aim buttons held".
+    BackAndBothAimButtonsHeld,
+    /// "back and shoot held".
+    BackAndShootHeld,
+    /// "back and an aim button held".
+    BackAndAnAimButtonHeld,
+    /// "forward and an aim button held".
+    ForwardAndAnAimButtonHeld,
+    /// "forward with up or down held".
+    ForwardWithUpOrDownHeld,
+    /// "forward with up, down or an aim button held".
+    ForwardWithUpDownOrAnAimButtonHeld,
+    /// "forward and shoot held".
+    ForwardAndShootHeld,
+    /// "forward and jump held".
+    ForwardAndJumpHeld,
+    /// "both aim buttons held".
+    BothAimButtonsHeld,
+    /// "forward held".
+    ForwardHeld,
+    /// "back held".
+    BackHeld,
+    /// "up held".
+    UpHeld,
+    /// "aim up or aim down held".
+    AimUpOrAimDownHeld,
+    /// "up, down or an aim button held".
+    UpDownOrAnAimButtonHeld,
+    /// "shoot held".
+    ShootHeld,
+    /// "shoot with up, down or an aim button held".
+    ShootWithUpDownOrAnAimButtonHeld,
+    /// "jump held".
+    JumpHeld,
+    /// "gun stowed: jump held".
+    GunStowedJumpHeld,
+    /// "jump and forward held".
+    JumpAndForwardHeld,
+    /// "jump with up, down or an aim button held".
+    JumpWithUpDownOrAnAimButtonHeld,
+    /// "jump and back held".
+    JumpAndBackHeld,
+    /// "aiming `Down`: down pressed".
+    AimingDownDownPressed,
+    /// "aiming `Down`, she faces `Right`: forward, jump and shoot held".
+    AimingDownFacingRightForwardJumpAndShootHeld,
+    /// "aiming `Down`: jump held, and no other button a row names".
+    AimingDownJumpHeldAlone,
+    /// "jump pressed, with the spring ball, on the ground".
+    JumpPressedWithTheSpringBall,
+    /// "without the spring ball jump pressed".
+    JumpPressedWithoutTheSpringBall,
+    /// "left or right held": right held.
+    RightHeld,
+    /// "left or right held": left held.
+    LeftHeld,
+    /// "off the ground, with the spring ball".
+    OffTheGroundWithTheSpringBall,
+    /// "aimed `Up` or `DownForward`: forward held and jump pressed".
+    AimedUpOrDownForwardForwardHeldAndJumpPressed,
+    /// "aimed `Forward`: forward and jump held".
+    AimedForwardForwardAndJumpHeld,
+    /// "any button held".
+    AnyButtonHeld,
+    /// "nothing held".
+    NothingHeld,
+    /// "the way she walks, shoot and an aim button held".
+    WalksShootAndAnAimButtonHeld,
+    /// "the way she walks and shoot held".
+    WalksAndShootHeld,
+    /// "the way she looks held".
+    LooksHeld,
+    /// "the way she walks held".
+    WalksHeld,
+    /// "anything else, or nothing held".
+    AnythingElse,
+    /// Running's "anything else, or nothing held", her horizontal speed at the frame's start not
+    /// 0.
+    AnythingElseMoving,
+    /// Running's "anything else, or nothing held", her horizontal speed at the frame's start 0.
+    AnythingElseAtRest,
+    /// A ball's "anything else, or nothing held: on the ground".
+    AnythingElseOnTheGround,
+    /// A ball's "in the air, without the spring ball".
+    InTheAirWithoutTheSpringBall,
+    /// A changing body's "anything, or nothing held".
+    AnythingOrNothingHeld,
+    /// `WhatHerMovesMet`: a wall stop, running aimed `Up`.
+    WallStopAimedUp,
+    /// `WhatHerMovesMet`: a wall stop, running.
+    WallStop,
+    /// `WhatHerMovesMet`: a wall near her as she presses jump, spinning.
+    WallKick,
+    /// `WhatHerMovesMet`: a floor, upright in a straight jump or falling, aimed `Forward` with
+    /// shoot held: she lands firing.
+    FloorFiring,
+    /// `WhatHerMovesMet`: a floor, upright in a straight jump or falling.
+    FloorFromAJump,
+    /// `WhatHerMovesMet`: a floor, spinning or wall jumping.
+    FloorFromASpin,
+    /// `WhatHerMovesMet`: a floor, a ball bouncing.
+    FloorBouncing,
+    /// `WhatHerMovesMet`: a floor, a ball coming to rest.
+    FloorComingToRest,
+    /// `WhatHerMovesMet`: no floor, upright or crouched on the ground.
+    NoFloorUprightOrCrouched,
+    /// `WhatHerMovesMet`: no floor, a ball.
+    NoFloorBall,
+    /// `WhatHerMovesMet`: a ceiling, rising.
+    Ceiling,
+    /// `AnimationEnds`: `TakingOff`.
+    TakingOffEnds,
+    /// `AnimationEnds`: crouched `Turning`.
+    CrouchedTurnEnds,
+    /// `AnimationEnds`: `Turning` on the ground.
+    GroundTurnEnds,
+    /// `AnimationEnds`: `Turning` in a jump, aimed `Forward`.
+    JumpTurnEndsAimedForward,
+    /// `AnimationEnds`: `Turning` in a jump.
+    JumpTurnEnds,
+    /// `AnimationEnds`: `Turning` in a fall.
+    FallTurnEnds,
+    /// `AnimationEnds`: `Turning` from the moonwalk's jump.
+    MoonwalkJumpTurnEnds,
+    /// `AnimationEnds`: `Crouching`.
+    CrouchingEnds,
+    /// `AnimationEnds`: `StandingUp`.
+    StandingUpEnds,
+    /// `AnimationEnds`: `Morphing`, with the spring ball, in the air.
+    MorphingEndsSpringBallInTheAir,
+    /// `AnimationEnds`: `Morphing`, with the spring ball.
+    MorphingEndsSpringBall,
+    /// `AnimationEnds`: `Morphing`, in the air.
+    MorphingEndsInTheAir,
+    /// `AnimationEnds`: `Morphing`.
+    MorphingEnds,
+    /// `AnimationEnds`: `Landing`.
+    LandingEnds,
+    /// `AnimationEnds`: `Unmorphing`.
+    UnmorphingEnds,
 }
 
 /// `PadChart`: an aim button, aim up or aim down.
@@ -299,9 +479,10 @@ pub const UP_DOWN: Buttons = Buttons(button::UP.0 | button::DOWN.0);
 /// `PadChart`: up, down or an aim button.
 pub const UDA: Buttons = Buttons(UP_DOWN.0 | AIM.0);
 
-/// A row's defaults: it needs nothing, keeps her pose, does nothing and beats nothing.
+/// A row's defaults: the last row's identity; it needs nothing, keeps her pose, does nothing and
+/// beats nothing.
 pub const ROW: Row = Row {
-    name: "",
+    id: RowId::AnythingElse,
     needs: &[],
     next: KEPT,
     effects: &[],
@@ -314,7 +495,7 @@ pub const ROW: Row = Row {
 pub const KEPT: Next = Next {
     body: None,
     action: None,
-    facing: Side::Kept,
+    facing: NextFacing::Kept,
     aim: &[],
     gun: None,
     legs: None,
@@ -326,7 +507,7 @@ pub const KEPT: Next = Next {
 pub const STILL: Next = Next {
     body: Some(Body::Upright),
     action: Some(Action::Still),
-    facing: Side::Kept,
+    facing: NextFacing::Kept,
     aim: FORWARD_AIM,
     gun: Some(Gun::Stowed),
     legs: Some(Legs::Together),
@@ -384,7 +565,7 @@ pub const MORPH: Next = Next {
 /// `Turning` on the ground: facing back, with the aim she had (§2).
 pub const TURN: Next = Next {
     action: Some(Action::Turning(clean_types::Turn::Ground)),
-    facing: Side::Back,
+    facing: NextFacing::Back,
     aim: &[],
     ..STILL
 };
@@ -416,13 +597,12 @@ pub const DOWN_TO_FORWARD: &[Aiming] = &[Aiming {
     aim: Aim::Forward,
 }];
 
-/// `WhatHerMovesMet`: what this frame's moves met.
-#[derive(Clone, Copy, PartialEq, Eq)]
+/// `WhatHerMovesMet`: what this frame's moves met, before the aim change's step (a block in its
+/// way puts the running pose chosen against the wall, `chart::table::STEP_BLOCKED`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).
     Wall,
-    /// A block or solid enemy in the way of the aim change's step (`AimingAndShooting`).
-    StepBlocked,
     /// A wall near her as she presses jump (`WallJump`'s kick).
     WallKick,
     /// A floor (`Landing`).

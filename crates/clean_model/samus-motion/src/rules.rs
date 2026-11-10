@@ -1,8 +1,9 @@
 //! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
 
+use crate::samus::Bounces;
 use Gait::{Falling, Moonwalking, Rolling, Running, SpinJump, StraightJump, Turning};
 use Lowers::{Crouch, Morph, Nothing};
-use clean_types::{Fixed, Parts, Px, ZERO, below};
+use clean_types::{Fixed, Item, Parts, Px, Set, ZERO, below};
 use core::num::Wrapping;
 use core::ops::{Range, RangeInclusive};
 
@@ -81,11 +82,31 @@ pub struct Boots {
 }
 
 impl Boots {
-    /// `Jumping`: the speed for her equipment.
+    /// `Jumping`: the speed the items switched on give: the hi-jump's with the hi-jump boots.
     #[must_use]
-    pub const fn of(self, hi_jump: bool) -> Fixed {
-        if hi_jump { self.hi_jump } else { self.plain }
+    pub fn of(self, items: &Set<Item>) -> Fixed {
+        if items[Item::HiJumpBoots] {
+            self.hi_jump
+        } else {
+            self.plain
+        }
     }
+}
+
+/// `Landing`: one of the ball's bounces: the landing that makes it, the speed it rises at, and the
+/// bounce that comes after it.
+#[derive(Clone, Copy)]
+pub struct Bounce {
+    /// The bounces she has had when the landing that makes it comes.
+    pub at: Bounces,
+    /// The slowest landing that makes it: the pixel part of her vertical speed after that frame's
+    /// pull.
+    pub from_px: Px,
+    /// How much slower than the bounce speed (`Rules::bounce`) it rises, so that an adjusted
+    /// bounce speed moves it too.
+    pub slower: Fixed,
+    /// The bounces she has had after it: the next landing makes the bounce at them, if any.
+    pub then: Bounces,
 }
 
 /// The values the model reads.
@@ -107,6 +128,9 @@ pub struct Rules {
     /// `Jumping`: a ball bounce. An adjusted one is never below its vanilla value, 1.0000: the
     /// rise after bounce 1 is it less 1 px (`Landing`).
     pub bounce: Fixed,
+    /// `Landing`: the ball's bounces, the first and the second; after the second it comes to
+    /// rest.
+    pub bounces: [Bounce; 2],
     /// `Jumping`: the crouch lift.
     pub crouch_lift: Fixed,
     /// `Jumping`: the space jump's fall speeds, read as 8.8.
@@ -121,10 +145,6 @@ pub struct Rules {
     pub gravity: Fixed,
     /// `RisingAndFalling`: the pixel part at which a fall stops growing.
     pub fall_settle_px: Px,
-    /// `Landing`: the slowest landing that bounces the ball, in px.
-    pub bounce_from_px: Px,
-    /// `Landing`: the second bounce is the bounce speed less this.
-    pub second_bounce_less: Fixed,
     /// `FollowingTheGround` and `SlopesCarry`: the pull beyond her speed, and on a slope.
     pub ground_pull: Fixed,
     /// `WallJump`: the near-wall test's reach.
@@ -191,14 +211,26 @@ impl Rules {
             hi_jump: Wrapping(0x5_8000),
         },
         bounce: Wrapping(0x1_0000),
+        bounces: [
+            Bounce {
+                at: Bounces::None,
+                from_px: Wrapping(3),
+                slower: Wrapping(0),
+                then: Bounces::Once,
+            },
+            Bounce {
+                at: Bounces::Once,
+                from_px: Wrapping(0),
+                slower: Wrapping(0x1_0000),
+                then: Bounces::Twice,
+            },
+        ],
         crouch_lift: Wrapping(0xA_0000),
         space_jump: 0x280..0x500,
         held_through: 1..=8,
         held_long: 32_777..=65_535,
         gravity: Wrapping(0x1C00),
         fall_settle_px: Wrapping(5),
-        bounce_from_px: Wrapping(3),
-        second_bounce_less: Wrapping(0x1_0000),
         ground_pull: Wrapping(0x1_0000),
         wall_reach: Wrapping(0x8_0000),
         move_limit_px: Wrapping(15),
@@ -253,19 +285,21 @@ mod tests {
     use super::Rules;
     use clean_types::{Parts, fixed};
 
-    /// The reference rules agree with each other. `Landing`: the ball's bounce speed is at least
-    /// what a bounce after the first takes off, its bounce speed less the second bounce's cut,
-    /// so that cut never wraps below zero. `WallJump`, `BlocksStopFlush`: the near-wall test's
-    /// reach is within the longest horizontal move, so the move limit never cuts the test short.
+    /// The reference rules agree with each other. `Landing`: no bounce is slower than the bounce
+    /// speed itself, so its speed never wraps below zero. `WallJump`, `BlocksStopFlush`: the
+    /// near-wall test's reach is within the longest horizontal move, so the move limit never cuts
+    /// the test short.
     #[test]
     fn the_reference_rules_agree() {
         let r = Rules::REFERENCE;
-        let after_the_first = r.bounce - r.second_bounce_less;
-        assert!(
-            after_the_first <= r.bounce,
-            "a bounce after the first takes off at {after_the_first:?}, above the bounce speed {:?}",
-            r.bounce
-        );
+        for bounce in r.bounces {
+            assert!(
+                bounce.slower <= r.bounce,
+                "a bounce rises {:?} slower than the bounce speed {:?}",
+                bounce.slower,
+                r.bounce
+            );
+        }
         let limit = fixed(r.move_limit_px, r.wall_reach.sub());
         assert!(
             r.wall_reach <= limit,

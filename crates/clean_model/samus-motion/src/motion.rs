@@ -11,7 +11,7 @@ use Carry::{CarriesOn, FollowsPad};
 use DashIs::{Hers, ToLose};
 use Stride::{Both, Dash, DashThenHalt, Nothing};
 use clean_types::button::{RUN, SIDES};
-use clean_types::{Facing, Fixed, Heading, Parts, ZERO, below};
+use clean_types::{Facing, Fixed, Parts, Side, ZERO, below};
 
 /// §1.2 carrying on: how her horizontal motion goes.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -51,8 +51,8 @@ pub enum Stride {
 pub struct Run {
     /// Her horizontal speed's size.
     pub speed: Fixed,
-    /// The way it points, left or right.
-    pub way: Heading,
+    /// The side it points to.
+    pub way: Side,
     /// §1.2 carrying on.
     pub carry: Carry,
     /// Her dash.
@@ -78,7 +78,7 @@ impl Run {
     /// `TurningRound` (§1.2 skidding): she carries on against her facing, at any speed, 0
     /// included.
     pub(crate) fn skids(&self, facing: Facing) -> bool {
-        self.carry == CarriesOn && self.way != facing.side()
+        self.carry == CarriesOn && self.way != Side::of(facing)
     }
 
     /// `TurningRound`, `PadChart`'s "as running": the dash joins her speed (dash 0) and she
@@ -94,16 +94,16 @@ impl Run {
     pub(crate) fn launch(&mut self, facing: Facing) {
         self.carry = FollowsPad;
         if self.dash != ZERO {
-            self.way = facing.side();
+            self.way = Side::of(facing);
             self.carry = CarriesOn;
         }
     }
 
-    /// `SpeedBuildsAndBrakes`: the way she moves, the way her speed points, her facing when it
-    /// is 0 (§1).
-    pub(crate) fn heading(&self, facing: Facing) -> Heading {
+    /// `SpeedBuildsAndBrakes`: the side she moves to: the way her speed points, her facing's when
+    /// it is 0 (§1).
+    pub(crate) fn moving(&self, facing: Facing) -> Side {
         if self.speed == ZERO {
-            facing.side()
+            Side::of(facing)
         } else {
             self.way
         }
@@ -149,7 +149,7 @@ impl Run {
         } else {
             self.lose_dash();
         }
-        let (ahead, carries) = (facing.side(), self.carry == CarriesOn);
+        let (ahead, carries) = (Side::of(facing), self.carry == CarriesOn);
         if carries && (drift == Ground || self.way != ahead && drift != WallJump) {
             self.brake(r);
             return Both;
@@ -176,7 +176,7 @@ impl Run {
     /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her
     /// facing. Returns whether she took the top speed: the step was cut to it, so a step that
     /// lands exactly on it hasn't reached it (`DriftInTheAir`).
-    fn build(&mut self, limits: Limits, ahead: Heading, r: &Rules) -> bool {
+    fn build(&mut self, limits: Limits, ahead: Side, r: &Rules) -> bool {
         let sum = self.speed + limits.step;
         self.speed = r.cap(sum, limits.top);
         self.way = ahead;

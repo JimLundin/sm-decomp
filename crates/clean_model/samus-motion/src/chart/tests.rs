@@ -2,10 +2,11 @@
 //! situation both fit, the one that loses to the other by rank or by a beats clause drops out;
 //! at most one fitting row may be left, beaten by no other (with none, the last row decides), so
 //! the chart never meets a tie and needs no rule for one. No two fitting rows beat each other,
-//! and every beats clause, with a condition or not, names a row of its own situation.
+//! every beats clause, with a condition or not, names a row of its own situation, and no two
+//! rows of a situation or a table share an identity.
 
-use super::{Moment, table};
-use crate::rows::{BACK, FORWARD, Row};
+use super::{Moment, Reading, table};
+use crate::rows::{BACK, FORWARD, Row, RowId};
 use crate::rules::Rules;
 use crate::situation::{ACTIONS, CLASSES, STANDING, classify};
 use crate::tick::Frame;
@@ -48,7 +49,7 @@ fn a_crouch_and_a_morph_lower_her_by_their_distances() {
             Some(StandingUp | Unmorphing) => Some(ZERO),
             Some(_) | None => None,
         };
-        assert_eq!(lowered, expected, "the row {:?}", row.name);
+        assert_eq!(lowered, expected, "the row {:?}", row.id);
     }
     let vanilla = Rules::REFERENCE;
     assert_eq!(vanilla.crouch_lowers, px(Wrapping(5)), "the crouch's 5 px");
@@ -185,10 +186,10 @@ fn pads() -> Vec<(u16, u16)> {
 }
 
 /// The fitting rows that no other fitting row beats.
-fn unbeaten<'a>(moment: &Moment, fit: &[&'a Row]) -> Vec<&'a Row> {
+fn unbeaten<'a>(reading: &Reading, fit: &[&'a Row]) -> Vec<&'a Row> {
     fit.iter()
         .copied()
-        .filter(|a| !fit.iter().any(|b| moment.beats(b, a)))
+        .filter(|a| !fit.iter().any(|b| reading.beats(b, a)))
         .collect()
 }
 
@@ -199,13 +200,26 @@ fn misnamed(rows: &[Row], a: &Row) -> Option<String> {
         .beats
         .iter()
         .chain(conditional)
-        .find(|n| !rows.iter().any(|b| b.name == **n));
+        .find(|id| !rows.iter().any(|b| b.id == **id));
     let mutual = rows
         .iter()
-        .find(|b| a.beats.contains(&b.name) && b.beats.contains(&a.name));
+        .find(|b| a.beats.contains(&b.id) && b.beats.contains(&a.id));
     unknown
-        .map(|n| format!("{:?} beats {n:?}, not a row of its situation", a.name))
-        .or_else(|| mutual.map(|b| format!("{:?} and {:?} beat each other", a.name, b.name)))
+        .map(|id| format!("{:?} beats {id:?}, not a row of its situation", a.id))
+        .or_else(|| mutual.map(|b| format!("{:?} and {:?} beat each other", a.id, b.id)))
+}
+
+/// The identities that more than one of these rows has.
+fn shared<'a>(rows: impl Iterator<Item = &'a Row>) -> Vec<RowId> {
+    let ids: Vec<RowId> = rows.map(|r| r.id).collect();
+    let mut twice: Vec<RowId> = ids
+        .iter()
+        .enumerate()
+        .filter(|&(n, id)| ids[..n].contains(id))
+        .map(|(_, id)| *id)
+        .collect();
+    twice.dedup();
+    twice
 }
 
 #[test]
@@ -220,13 +234,28 @@ fn beats_clauses_name_rows_of_their_situation_and_go_one_way() {
     assert!(problems.is_empty(), "{problems:?}");
 }
 
+/// `PadChart`: a row's identity is its own within its situation, its last row included, and
+/// within its table, so a beats clause names one row.
+#[test]
+fn no_two_rows_share_an_identity() {
+    let situations = CLASSES.iter().map(|c| c.is).chain([&STANDING]);
+    for s in situations {
+        let twice = shared(s.rows.iter().chain([&s.last]));
+        assert!(twice.is_empty(), "rows of one situation share {twice:?}");
+    }
+    for rows in [table::MOVES_MET, table::ANIMATION_ENDS] {
+        let twice = shared(rows.iter());
+        assert!(twice.is_empty(), "rows of one table share {twice:?}");
+    }
+}
+
 /// The rows left tied for a pose (with whether she is in the air), one pad and start speed, with
 /// a line naming them.
 fn tie(
     (pose, airborne): (Pose, bool),
     (held, pressed): (u16, u16),
     moving: bool,
-) -> Option<(Vec<&'static str>, String)> {
+) -> Option<(Vec<RowId>, String)> {
     let situation = classify(pose);
     let body = |_: Pose| -> Radius {
         Pair {
@@ -246,25 +275,29 @@ fn tie(
     };
     // Jump held through only adds jump to the presses, which `pads` already gives with jump held.
     let moment = Moment {
-        situation,
-        pose,
         moving,
         airborne,
         jump_held_through: false,
         frame: &frame,
         met: None,
     };
+    let reading = Reading {
+        moment: &moment,
+        pose,
+        situation,
+    };
     let fit: Vec<&Row> = situation
         .rows
         .iter()
-        .filter(|r| moment.fits(r.needs))
+        .filter(|r| reading.fits(r.needs))
         .collect();
-    let won = unbeaten(&moment, &fit);
-    let mutual = fit
-        .iter()
-        .find(|a| fit.iter().any(|b| moment.beats(a, b) && moment.beats(b, a)));
-    let tied: Vec<&str> =
-        mutual.map_or_else(|| won.iter().map(|r| r.name).collect(), |a| vec![a.name]);
+    let won = unbeaten(&reading, &fit);
+    let mutual = fit.iter().find(|a| {
+        fit.iter()
+            .any(|b| reading.beats(a, b) && reading.beats(b, a))
+    });
+    let tied: Vec<RowId> =
+        mutual.map_or_else(|| won.iter().map(|r| r.id).collect(), |a| vec![a.id]);
     (won.len() > 1 || mutual.is_some()).then(|| {
         let line = format!(
             "{:?} rows {tied:?} are left, e.g. {pose:?} airborne {airborne} held {held:09b} pressed {pressed:07b}",
@@ -277,7 +310,7 @@ fn tie(
 #[test]
 fn every_tie_is_decided() {
     let (situations, pads) = (situations(), pads());
-    let mut failures: Vec<(Vec<&str>, String)> = Vec::new();
+    let mut failures: Vec<(Vec<RowId>, String)> = Vec::new();
     let cases = situations
         .iter()
         .flat_map(|s| pads.iter().map(move |p| (s, p)));

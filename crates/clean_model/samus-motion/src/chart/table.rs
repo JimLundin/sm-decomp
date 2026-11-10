@@ -4,7 +4,7 @@
 use crate::rows::Effect::{self, LoseDash, OnTheGround};
 use crate::rows::Test::{Aimed, Airborne, Held, SpringBall};
 use crate::rows::{
-    DOWN_TO_FORWARD, Doing, FALL, JUMP, Met, Next, ROW, Row, SPIN, STILL, Test, UP_AIM,
+    DOWN_TO_FORWARD, Doing, FALL, JUMP, Met, Next, ROW, Row, RowId, SPIN, STILL, Test, UP_AIM,
 };
 use clean_types::button::SHOOT;
 use clean_types::{Action, Aim, Body, Gun, LandedFrom, Legs, Turn};
@@ -12,11 +12,11 @@ use clean_types::{Action, Aim, Body, Gun, LandedFrom, Legs, Turn};
 /// `WhatHerMovesMet`: what her moves met chooses her pose over the pad, the first row that fits.
 ///
 /// A floor met while turning or while her body changes shape has no row: the turn's own rows
-/// apply, and a changing body's pad has no say. The aim change's step blocked is read of the
-/// running pose chosen, which it puts against the wall (`AimingAndShooting`).
+/// apply, and a changing body's pad has no say. The aim change's step comes after the pose is
+/// chosen, so its row is `STEP_BLOCKED`, apart.
 pub const MOVES_MET: &[Row] = &[
     Row {
-        name: "a wall stop, running aimed Up",
+        id: RowId::WallStopAimedUp,
         needs: &[
             Test::Met(Met::Wall),
             Test::Doing(&[Doing::Running]),
@@ -29,7 +29,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a wall stop, running",
+        id: RowId::WallStop,
         needs: &[Test::Met(Met::Wall), Test::Doing(&[Doing::Running])],
         next: Next {
             action: Some(Action::AgainstWall),
@@ -39,20 +39,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a block or solid enemy in the way of the aim change's step",
-        needs: &[
-            Test::Met(Met::StepBlocked),
-            Test::Action(&[Action::Running]),
-        ],
-        next: Next {
-            action: Some(Action::AgainstWall),
-            aim: &[],
-            ..STILL
-        },
-        ..ROW
-    },
-    Row {
-        name: "a wall near her as she presses jump, spinning",
+        id: RowId::WallKick,
         needs: &[Test::Met(Met::WallKick), Test::Doing(&[Doing::Spinning])],
         next: Next {
             action: Some(Action::WallJumping),
@@ -61,7 +48,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a floor, upright in a straight jump or falling, aimed Forward with shoot held",
+        id: RowId::FloorFiring,
         needs: &[
             Test::Met(Met::Floor),
             Test::Doing(&[Doing::StraightJump, Doing::Falling]),
@@ -76,7 +63,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a floor, upright in a straight jump or falling",
+        id: RowId::FloorFromAJump,
         needs: &[
             Test::Met(Met::Floor),
             Test::Doing(&[Doing::StraightJump, Doing::Falling]),
@@ -89,7 +76,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a floor, spinning or wall jumping",
+        id: RowId::FloorFromASpin,
         needs: &[
             Test::Met(Met::Floor),
             Test::Doing(&[Doing::Spinning, Doing::WallJumping]),
@@ -101,7 +88,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a floor, a ball bouncing",
+        id: RowId::FloorBouncing,
         needs: &[
             Test::Met(Met::Floor),
             Test::Doing(&[Doing::Ball, Doing::Hop]),
@@ -110,7 +97,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a floor, a ball coming to rest",
+        id: RowId::FloorComingToRest,
         needs: &[
             Test::Met(Met::Floor),
             Test::Doing(&[Doing::Ball, Doing::Hop]),
@@ -122,7 +109,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "no floor, upright or crouched on the ground",
+        id: RowId::NoFloorUprightOrCrouched,
         needs: &[
             Test::Met(Met::NoFloor),
             Test::Body(&[Body::Upright, Body::Crouched]),
@@ -131,7 +118,7 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "no floor, a ball",
+        id: RowId::NoFloorBall,
         needs: &[
             Test::Met(Met::NoFloor),
             Test::Body(&[Body::Ball, Body::SpringBall]),
@@ -140,24 +127,34 @@ pub const MOVES_MET: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "a ceiling, rising",
+        id: RowId::Ceiling,
         needs: &[Test::Met(Met::Ceiling)],
         ..ROW
     },
 ];
+
+/// `WhatHerMovesMet`, `AimingAndShooting`: a block or solid enemy in the way of the aim change's
+/// step, a running pose chosen: `AgainstWall`, facing kept, with the aim of the running pose
+/// chosen. The step comes after the pose is chosen, so this row is read of that pose, apart from
+/// `MOVES_MET`.
+pub const STEP_BLOCKED: Next = Next {
+    action: Some(Action::AgainstWall),
+    aim: &[],
+    ..STILL
+};
 
 /// `AnimationEnds`: the pose an ending animation hands over, whatever the pad.
 ///
 /// The first row that fits. A turn already faces its new way.
 pub const ANIMATION_ENDS: &[Row] = &[
     Row {
-        name: "TakingOff",
+        id: RowId::TakingOffEnds,
         needs: &[Test::Action(&[Action::TakingOff])],
         next: Next { aim: &[], ..JUMP },
         ..ROW
     },
     Row {
-        name: "crouched Turning",
+        id: RowId::CrouchedTurnEnds,
         needs: &[
             Test::Body(&[Body::Crouched]),
             Test::Action(&[Action::Turning(Turn::Ground)]),
@@ -171,14 +168,14 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Turning on the ground",
+        id: RowId::GroundTurnEnds,
         needs: &[Test::Action(&[Action::Turning(Turn::Ground)])],
         next: Next { aim: &[], ..STILL },
         effects: &[LoseDash],
         ..ROW
     },
     Row {
-        name: "Turning in a jump, aimed Forward",
+        id: RowId::JumpTurnEndsAimedForward,
         needs: &[
             Test::Action(&[Action::Turning(Turn::Jump)]),
             Aimed(&[Aim::Forward]),
@@ -191,28 +188,28 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Turning in a jump",
+        id: RowId::JumpTurnEnds,
         needs: &[Test::Action(&[Action::Turning(Turn::Jump)])],
         next: Next { aim: &[], ..JUMP },
         effects: &[LoseDash],
         ..ROW
     },
     Row {
-        name: "Turning in a fall",
+        id: RowId::FallTurnEnds,
         needs: &[Test::Action(&[Action::Turning(Turn::Fall)])],
         next: Next { aim: &[], ..FALL },
         effects: &[LoseDash],
         ..ROW
     },
     Row {
-        name: "Turning from the moonwalk's jump",
+        id: RowId::MoonwalkJumpTurnEnds,
         needs: &[Test::Action(&[Action::Turning(Turn::MoonwalkJump)])],
         next: SPIN,
         effects: &[Effect::Moonfall],
         ..ROW
     },
     Row {
-        name: "Crouching",
+        id: RowId::CrouchingEnds,
         needs: &[Test::Action(&[Action::Crouching])],
         next: Next {
             body: Some(Body::Crouched),
@@ -221,13 +218,13 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "StandingUp",
+        id: RowId::StandingUpEnds,
         needs: &[Test::Action(&[Action::StandingUp])],
         next: STILL,
         ..ROW
     },
     Row {
-        name: "Morphing, with the spring ball, in the air",
+        id: RowId::MorphingEndsSpringBallInTheAir,
         needs: &[Test::Action(&[Action::Morphing]), SpringBall, Airborne],
         next: Next {
             body: Some(Body::SpringBall),
@@ -236,7 +233,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Morphing, with the spring ball",
+        id: RowId::MorphingEndsSpringBall,
         needs: &[Test::Action(&[Action::Morphing]), SpringBall],
         next: Next {
             body: Some(Body::SpringBall),
@@ -245,7 +242,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Morphing, in the air",
+        id: RowId::MorphingEndsInTheAir,
         needs: &[Test::Action(&[Action::Morphing]), Airborne],
         next: Next {
             body: Some(Body::Ball),
@@ -254,7 +251,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Morphing",
+        id: RowId::MorphingEnds,
         needs: &[Test::Action(&[Action::Morphing])],
         next: Next {
             body: Some(Body::Ball),
@@ -263,7 +260,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Landing",
+        id: RowId::LandingEnds,
         needs: &[Test::Action(&[
             Action::Landing(LandedFrom::Jump),
             Action::Landing(LandedFrom::Spin),
@@ -272,7 +269,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
         ..ROW
     },
     Row {
-        name: "Unmorphing",
+        id: RowId::UnmorphingEnds,
         needs: &[Test::Action(&[Action::Unmorphing])],
         next: Next {
             body: Some(Body::Crouched),
