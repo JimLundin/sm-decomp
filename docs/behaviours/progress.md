@@ -70,9 +70,9 @@ hers: nothing in this domain keeps the beams switched on within hers.
 
 **The start of a run.** A new file (P2's) starts her with energy and its capacity at 99, every
 other capacity and count at 0, the reserve mode `NoTank`, no items or beams, hers or switched on,
-and no locations emptied, doors open, maps or stations. A new file doesn't clear the events, the
-bosses defeated or the items placed; it takes them from the slot, which the file select has
-already emptied (P2's), so none and 0.
+and no locations emptied, doors open, maps or stations (C-new-file). A new file doesn't clear the
+events, the bosses defeated or the items placed; it takes them from the slot, which the file
+select has already emptied (P2's), so none and 0.
 
 ### 1.2 What has happened, and what the places remember
 
@@ -164,8 +164,8 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - An event reported → it has happened from then on: asked, yes [C-event, C-event-again,
   C-state-event]
 - So an event never stops having happened; one that happens again changes nothing (C-event-again).
-- checked: constructed (no recorded frame makes an event happen; the harness's room loads read
-  events, its cases samus-mockball:0 and area-maridia:0).
+- checked: constructed (no recorded frame makes an event happen; the room states the harness
+  checks at rows' first records read events, its cases samus-mockball:0 and area-maridia:0).
 
 ### ZebetitesCounted
 - kind: mechanic.
@@ -214,7 +214,7 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
   C-asked-doors]
 - A door placed without an id opened → asked about, it reads as closed [C-door-no-id,
   C-asked-doors]
-- checked: oracle (the harness cases r04:280 and r06:519); constructed (no id).
+- checked: constructed; the harness's door frames (r04:280, r06:519) are stood in, not heard.
 
 ### MapsByArea
 - kind: mechanic.
@@ -358,10 +358,9 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - Asked → the sum over the divisors of each capacity ÷ its divisor, rounded down, plus the
   count of her items and beams, `Σ capacity ÷ divisor + items + beams` [C-percent-start,
   C-percent-many, C-percent-partial, C-percent-rainbow]
-- So the 99 energy she starts with counts 0 (C-percent-start), and every item, beam and tank the
-  game places counts 100.
-- checked: constructed (no recorded row reaches the ending); the harness, over every item the
-  game places, for the 100.
+- So the 99 energy she starts with counts 0 (C-percent-start).
+- checked: constructed (no recorded row reaches the ending); the harness, that every item, beam
+  and tank the game places counts 100.
 
 ---
 
