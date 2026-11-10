@@ -11,6 +11,7 @@ pub mod compression;
 pub mod digest;
 pub mod dma;
 pub mod enemy;
+pub mod hud;
 pub mod id;
 pub mod level;
 pub mod map;
