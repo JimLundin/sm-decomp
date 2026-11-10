@@ -60,6 +60,7 @@ name = "clean_model_samus_motion"
 version = "0.1.0"
 dependencies = [
  "clean_types",
+ "enum-map",
 ]
 
 [[package]]
