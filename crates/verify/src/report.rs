@@ -11,11 +11,15 @@
 //! and per catalogue entry; and the engine code not yet rebuilt, `crates/game`
 //! without the bridges.
 //!
-//! The report is generated, never edited: [`check`] fails when the committed file differs from
-//! what the tree generates. Everything in it is sorted or in registry order, with paths relative
-//! to the repository root and no timestamp, so one tree gives one report.
+//! The same measures, with the whole-game plan and the verification state, give the README's
+//! status ([`status`]), written between its markers.
+//!
+//! The report and the status are generated, never edited: [`check`] fails when either committed
+//! text differs from what the tree generates. Everything in them is sorted or in registry order,
+//! with paths relative to the repository root and no timestamp, so one tree gives one report.
 
 pub mod lines;
+mod status;
 
 #[cfg(test)]
 mod tests;
@@ -34,6 +38,12 @@ pub const USAGE: &str = "tools report [--write | --check]";
 pub const PATH: &str = "docs/REPORT.md";
 /// The one command that regenerates the committed report, from the repository root.
 pub const COMMAND: &str = "cargo run -p tools --bin tools -- report --write";
+/// The README, from the repository root, whose status the report's command writes too.
+pub const README: &str = "README.md";
+/// The line before the README's status.
+const STATUS_BEGIN: &str = "<!-- status:begin -->";
+/// The line after the README's status.
+const STATUS_END: &str = "<!-- status:end -->";
 /// The old engine's density in weighted tokens per code line, which turns a score into lines:
 /// about 5.5 to 7, measured on samus-motion's old code at `c7f927ab6` and the camera's at
 /// `cfa5b8144`.
@@ -517,6 +527,78 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
     })
 }
 
+/// What the tree holds, measured once for the report and the README's status.
+struct Tree {
+    /// The shared types' files.
+    shared_files: Vec<File>,
+    /// The rebuilt domains, in registry order.
+    domains: Vec<Measured>,
+    /// The engine code not yet rebuilt, and its file count.
+    remaining: (Measure, usize),
+    floors: BTreeMap<(String, String), usize>,
+    coverage: BTreeMap<String, Coverage>,
+}
+
+impl Tree {
+    /// The tree at `root`, measured.
+    ///
+    /// # Errors
+    ///
+    /// The path and the error when a file can't be read, or a registry entry that names an area
+    /// the decode notes' Budget section doesn't state or a file the model doesn't hold.
+    fn measure(root: &Path) -> Result<Self, String> {
+        let shared_files = measure(root, &sources(&[root.join(SHARED_TYPES)])?)?;
+        let domains = DOMAINS
+            .iter()
+            .map(|domain| measure_domain(root, domain))
+            .collect::<Result<Vec<_>, _>>()?;
+        let bridges: Vec<&str> = domains
+            .iter()
+            .flat_map(|domain| &domain.bridge)
+            .map(|file| file.path.as_str())
+            .collect();
+        let engine: Vec<PathBuf> = sources(&[root.join(ENGINE)])?
+            .into_iter()
+            .filter(|file| !bridges.contains(&relative(root, file).as_str()))
+            .collect();
+        let remaining = (total(&measure(root, &engine)?), engine.len());
+        Ok(Self {
+            shared_files,
+            domains,
+            remaining,
+            floors: floors(&read(&root.join(FLOORS))?)?,
+            coverage: coverage(&read(&root.join(COVERAGE))?)?,
+        })
+    }
+
+    /// The rebuilt models with the shared types: their measure and their file count.
+    fn models(&self) -> (Measure, usize) {
+        let measure = self
+            .domains
+            .iter()
+            .map(Measured::model_total)
+            .sum::<Measure>()
+            .plus(total(&self.shared_files));
+        let files = self
+            .domains
+            .iter()
+            .map(|domain| domain.model.len())
+            .sum::<usize>()
+            .saturating_add(self.shared_files.len());
+        (measure, files)
+    }
+
+    /// The bridges: their measure and their file count.
+    fn bridges(&self) -> (Measure, usize) {
+        let files: Vec<&File> = self
+            .domains
+            .iter()
+            .flat_map(|domain| &domain.bridge)
+            .collect();
+        (files.iter().map(|file| file.measure).sum(), files.len())
+    }
+}
+
 /// The report for the tree at `root`.
 ///
 /// # Errors
@@ -524,36 +606,23 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
 /// The path and the error when a file can't be read, or a registry entry that names an area the
 /// decode notes' Budget section doesn't state or a file the model doesn't hold.
 pub fn generate(root: &Path) -> Result<String, String> {
-    let shared_files = measure(root, &sources(&[root.join(SHARED_TYPES)])?)?;
-    let shared = total(&shared_files);
-    let domains = DOMAINS
-        .iter()
-        .map(|domain| measure_domain(root, domain))
-        .collect::<Result<Vec<_>, _>>()?;
-    let bridges: Vec<&str> = domains
-        .iter()
-        .flat_map(|domain| &domain.bridge)
-        .map(|file| file.path.as_str())
-        .collect();
-    let engine: Vec<PathBuf> = sources(&[root.join(ENGINE)])?
-        .into_iter()
-        .filter(|file| !bridges.contains(&relative(root, file).as_str()))
-        .collect();
-    let remaining = total(&measure(root, &engine)?);
-    let floors = floors(&read(&root.join(FLOORS))?)?;
-    let coverage = coverage(&read(&root.join(COVERAGE))?)?;
+    Ok(report(&Tree::measure(root)?))
+}
 
+fn report(tree: &Tree) -> String {
+    let domains = &tree.domains;
+    let shared = total(&tree.shared_files);
     let mut out = String::new();
     header(&mut out);
-    summary(&mut out, &domains, shared, &floors);
-    models(&mut out, &domains, shared);
-    lines_section(&mut out, &domains, &shared_files);
-    areas(&mut out, &domains);
-    bridge_and_harness(&mut out, &domains);
-    floors_section(&mut out, &domains, &floors);
-    coverage_section(&mut out, &domains, &coverage);
-    engine_section(&mut out, &domains, &shared_files, remaining, engine.len());
-    Ok(out)
+    summary(&mut out, domains, shared, &tree.floors);
+    models(&mut out, domains, shared);
+    lines_section(&mut out, domains, &tree.shared_files);
+    areas(&mut out, domains);
+    bridge_and_harness(&mut out, domains);
+    floors_section(&mut out, domains, &tree.floors);
+    coverage_section(&mut out, domains, &tree.coverage);
+    engine_section(&mut out, tree);
+    out
 }
 
 fn header(out: &mut String) {
@@ -1104,33 +1173,18 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
     }
 }
 
-fn engine_section(
-    out: &mut String,
-    domains: &[Measured],
-    shared: &[File],
-    remaining: Measure,
-    files: usize,
-) {
+fn engine_section(out: &mut String, tree: &Tree) {
     out.push_str(
         "\n## Engine not yet rebuilt\n\nThe engine's code, every non-test source of `crates/game` without the bridges: \
          what the rebuilt domains have yet to replace, beside what they hold.\n\n",
     );
     measure_table(out, 1, &["Part", "Files", "Logic-equivalent lines"]);
-    let models = domains
-        .iter()
-        .map(Measured::model_total)
-        .sum::<Measure>()
-        .plus(total(shared));
-    let model_files = domains
-        .iter()
-        .map(|domain| domain.model.len())
-        .sum::<usize>()
-        .saturating_add(shared.len());
-    let bridges: Vec<&File> = domains.iter().flat_map(|domain| &domain.bridge).collect();
-    let bridge: Measure = bridges.iter().map(|file| file.measure).sum();
+    let (remaining, files) = tree.remaining;
+    let (bridge, bridges) = tree.bridges();
+    let (models, model_files) = tree.models();
     for (part, count, measure) in [
         ("engine, not yet rebuilt", files, remaining),
-        ("bridges", bridges.len(), bridge),
+        ("bridges", bridges, bridge),
         ("rebuilt models, shared types included", model_files, models),
     ] {
         let _ = writeln!(
@@ -1142,15 +1196,25 @@ fn engine_section(
     }
 }
 
-/// The committed report's staleness: an error naming the command that regenerates it when the
-/// committed file differs from what the tree at `root` generates.
+/// The report and the README's status for the tree at `root`, measured once.
+fn pages(root: &Path) -> Result<(String, String), String> {
+    let tree = Tree::measure(root)?;
+    Ok((report(&tree), status::status(root, &tree)?))
+}
+
+/// The committed report's and the README status's staleness: an error naming the command that
+/// regenerates them when either differs from what the tree at `root` generates.
 ///
 /// # Errors
 ///
-/// The regeneration command when the report is stale or missing, or why it can't be generated.
+/// The regeneration command when the report or the README's status is stale or missing, or why
+/// they can't be generated.
 pub fn check(root: &Path) -> Result<(), String> {
+    let (report, status) = pages(root)?;
     let committed = fs::read_to_string(root.join(PATH)).unwrap_or_default();
-    current(&committed, &generate(root)?)
+    current(&committed, &report)?;
+    let readme = fs::read_to_string(root.join(README)).unwrap_or_default();
+    status_current(&readme, &status)
 }
 
 /// Whether the committed report is the fresh one; a checkout's CRLF line endings don't count.
@@ -1164,8 +1228,36 @@ fn current(committed: &str, fresh: &str) -> Result<(), String> {
     }
 }
 
+/// Whether the README's status, between its markers, is the fresh one; CRLF doesn't count.
+fn status_current(readme: &str, fresh: &str) -> Result<(), String> {
+    let readme = readme.replace("\r\n", "\n");
+    if status_section(&readme) == Some(fresh) {
+        Ok(())
+    } else {
+        Err(format!(
+            "{README}'s status is stale: regenerate it with `{COMMAND}` from the repository root"
+        ))
+    }
+}
+
+/// The text between the README's status markers.
+fn status_section(readme: &str) -> Option<&str> {
+    let (_, after) = readme.split_once(STATUS_BEGIN)?;
+    let (section, _) = after.split_once(STATUS_END)?;
+    Some(section)
+}
+
+/// `readme` with `status` between its markers, and the text around them kept.
+fn with_status(readme: &str, status: &str) -> Result<String, String> {
+    let readme = readme.replace("\r\n", "\n");
+    let missing = || format!("{README}: no `{STATUS_BEGIN}` line before a `{STATUS_END}` line");
+    let (before, after) = readme.split_once(STATUS_BEGIN).ok_or_else(missing)?;
+    let (_, rest) = after.split_once(STATUS_END).ok_or_else(missing)?;
+    Ok(format!("{before}{STATUS_BEGIN}{status}{STATUS_END}{rest}"))
+}
+
 /// Prints the report for the tree in the current directory; with `--write`, writes it to
-/// [`PATH`]; with `--check`, fails when the committed one is stale.
+/// [`PATH`] and the status into [`README`]; with `--check`, fails when either is stale.
 ///
 /// # Errors
 ///
@@ -1176,11 +1268,15 @@ pub fn run(args: &[String]) -> Result<String, String> {
     match args {
         [] => generate(root),
         [flag] if flag == "--write" => {
-            let report = generate(root)?;
+            let (report, status) = pages(root)?;
             fs::write(root.join(PATH), report).map_err(|e| format!("{PATH}: {e}"))?;
-            Ok(format!("wrote {PATH}\n"))
+            let readme = with_status(&read(&root.join(README))?, &status)?;
+            fs::write(root.join(README), readme).map_err(|e| format!("{README}: {e}"))?;
+            Ok(format!("wrote {PATH} and {README}'s status\n"))
         }
-        [flag] if flag == "--check" => check(root).map(|()| format!("{PATH} is current\n")),
+        [flag] if flag == "--check" => {
+            check(root).map(|()| format!("{PATH} and {README}'s status are current\n"))
+        }
         _ => Err(USAGE.to_owned()),
     }
 }

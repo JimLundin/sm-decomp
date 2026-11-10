@@ -1,0 +1,330 @@
+# The whole-game plan of domains.md (§3 the domains, §4 the waves) as data, for the status that
+# `verify::report` writes into README.md. The root changes it in the commit that lands a round:
+# the model's `rounds` by one, and a domain's `status` when its work starts or its queue empties.
+#
+# [[model]]: a clean-room model crate, `crates/clean_model/<name>`, with the rounds landed on
+# main. Every model of `verify::report::DOMAINS` has one, and only those.
+#
+# [[domain]]: a clean-room domain of the plan. `rounds` is the plan's estimate of its rounds;
+# `model` the model crate that holds it, once one does; `status` is "not-started" (the default),
+# "in-progress" or "done", and a domain past "not-started" names its model.
+#
+# [[platform]]: platform work outside the clean room (hardware formats, assets, timing, tools),
+# in lanes, not rounds.
+
+[[model]]
+name = "samus-motion"
+rounds = 16
+
+[[model]]
+name = "camera"
+rounds = 5
+
+[[model]]
+name = "progress"
+rounds = 6
+
+[[model]]
+name = "hud"
+rounds = 3
+
+[[model]]
+name = "blocks"
+rounds = 4
+
+# Wave 0
+
+[[domain]]
+id = "S1"
+name = "Samus's motion: follow-ups"
+wave = 0
+rounds = 1
+model = "samus-motion"
+status = "in-progress"
+
+[[domain]]
+id = "CAM"
+name = "The camera"
+wave = 0
+rounds = 1
+model = "camera"
+status = "in-progress"
+
+[[platform]]
+id = "V1"
+name = "Tooling: domain free run, RNG per consumer, cache tier"
+wave = 0
+lanes = 3
+
+# Wave 1
+
+[[domain]]
+id = "S2"
+name = "Liquids, the speed booster, pushes"
+wave = 1
+rounds = 4
+model = "samus-motion"
+status = "in-progress"
+
+[[domain]]
+id = "S5"
+name = "How Samus looks"
+wave = 1
+rounds = 3
+
+[[domain]]
+id = "H2"
+name = "The HUD and the mini-map"
+wave = 1
+rounds = 2
+model = "hud"
+status = "in-progress"
+
+[[domain]]
+id = "W2"
+name = "Blocks that react"
+wave = 1
+rounds = 5
+model = "blocks"
+status = "in-progress"
+
+[[domain]]
+id = "P1"
+name = "Progress"
+wave = 1
+rounds = 1
+model = "progress"
+status = "in-progress"
+
+[[platform]]
+id = "E1"
+name = "Sprite drawing"
+wave = 1
+lanes = 2
+
+[[platform]]
+id = "E2"
+name = "Tile writes"
+wave = 1
+lanes = 3
+
+[[platform]]
+id = "A1"
+name = "Instruction lists as assets"
+wave = 1
+lanes = 3
+
+# Wave 2
+
+[[domain]]
+id = "R1"
+name = "Doors and elevators"
+wave = 2
+rounds = 6
+
+[[domain]]
+id = "W1"
+name = "Beams, missiles and bombs"
+wave = 2
+rounds = 5
+
+[[domain]]
+id = "W3"
+name = "Items to pick up"
+wave = 2
+rounds = 2
+
+[[domain]]
+id = "S3"
+name = "The shinespark and echoes"
+wave = 2
+rounds = 2
+model = "samus-motion"
+
+[[domain]]
+id = "S6"
+name = "The grapple beam"
+wave = 2
+rounds = 3
+
+[[domain]]
+id = "H3"
+name = "Message boxes"
+wave = 2
+rounds = 2
+
+[[platform]]
+id = "R2"
+name = "Room loading"
+wave = 2
+lanes = 4
+
+# Wave 3
+
+[[domain]]
+id = "C1"
+name = "Fighting enemies"
+wave = 3
+rounds = 6
+
+[[domain]]
+id = "S4"
+name = "Hurt and knockback, bomb jumps"
+wave = 3
+rounds = 2
+model = "samus-motion"
+
+[[domain]]
+id = "H1"
+name = "Energy, reserves and death"
+wave = 3
+rounds = 2
+
+[[domain]]
+id = "S7"
+name = "The x-ray scope"
+wave = 3
+rounds = 2
+
+[[domain]]
+id = "R3"
+name = "Liquids and room weather"
+wave = 3
+rounds = 4
+
+[[domain]]
+id = "R4"
+name = "Room ambience"
+wave = 3
+rounds = 3
+
+[[domain]]
+id = "P2"
+name = "Saving, loading and stations"
+wave = 3
+rounds = 3
+
+[[domain]]
+id = "F3"
+name = "Game over"
+wave = 3
+rounds = 1
+
+[[platform]]
+id = "A2"
+name = "Enemy and room importers"
+wave = 3
+lanes = 3
+
+[[platform]]
+id = "E3"
+name = "The line program"
+wave = 3
+lanes = 3
+
+# Wave 4. domains.md estimates the enemy families at 25-30 rounds; B0, the phase tables, is
+# designed within B1 and B2.
+
+[[domain]]
+id = "C2-C11"
+name = "Enemy families"
+wave = 4
+rounds = 27
+
+[[domain]]
+id = "B1"
+name = "Spore Spawn"
+wave = 4
+rounds = 2
+
+[[domain]]
+id = "B2"
+name = "Bomb Torizo, Golden Torizo"
+wave = 4
+rounds = 3
+
+[[domain]]
+id = "B3"
+name = "Botwoon"
+wave = 4
+rounds = 2
+
+[[domain]]
+id = "B4"
+name = "Crocomire"
+wave = 4
+rounds = 4
+
+[[domain]]
+id = "B5"
+name = "Kraid"
+wave = 4
+rounds = 4
+
+[[domain]]
+id = "B6"
+name = "Phantoon"
+wave = 4
+rounds = 4
+
+[[domain]]
+id = "B7"
+name = "Draygon"
+wave = 4
+rounds = 3
+
+[[domain]]
+id = "B8"
+name = "Ceres Ridley and the escape"
+wave = 4
+rounds = 4
+
+[[domain]]
+id = "B9"
+name = "Ridley"
+wave = 4
+rounds = 5
+
+[[domain]]
+id = "B10"
+name = "Mother Brain and the escape"
+wave = 4
+rounds = 8
+
+[[domain]]
+id = "F1"
+name = "The pause screen"
+wave = 4
+rounds = 5
+
+# Wave 5
+
+[[domain]]
+id = "F2"
+name = "Title, intro, file select, options"
+wave = 5
+rounds = 8
+
+[[domain]]
+id = "F4"
+name = "Cinematics and credits"
+wave = 5
+rounds = 5
+
+[[domain]]
+id = "U1"
+name = "Audio, the CPU side"
+wave = 5
+rounds = 3
+
+[[platform]]
+id = "E4"
+name = "Mode 7 and mid-line writes"
+wave = 5
+lanes = 2
+
+[[platform]]
+id = "T1"
+name = "Slowdown and loading time"
+wave = 5
+lanes = 6

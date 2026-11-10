@@ -1,7 +1,8 @@
 # Status: how to measure it
 
-The numbers live in committed ratchet and floor files, never in a document. Read them, or rerun
-the checks below.
+The numbers live in committed ratchet and floor files, never in a hand-written document; the
+README's status is generated from them ([BUILDING](BUILDING.md#the-status-and-the-report)).
+Read them, or rerun the checks below.
 
 | File | Holds | Checked by |
 | --- | --- | --- |

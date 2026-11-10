@@ -25,6 +25,9 @@ is wrong, not what code to write.
 
 - One coherent change per commit. Its title says what is true afterwards and ends with its kind:
   `[exact]` (behaviour unchanged) or `(behaviour: <what>)`.
+- In a round, end each commit's message with `Role: <your role>`: a round lands on `main` as one
+  commit (`tools/lane/squash.sh`), whose body lists your commits under that role. Your branch
+  keeps them.
 - Idiomatic Rust per AGENTS.md. Fix clippy findings; add no `allow`s.
 - A difference from the original is fixed, or listed in `docs/LEGACY.md` in the same commit.
 - UTF-8 and LF. Data goes in `.toml` or `.rs`, never JSON.
@@ -92,8 +95,12 @@ background jobs and send the path. Say "I couldn't" plainly, with the reason.
 ## Land (root only)
 
 1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
-2. `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for you to resolve
-   by hand, reading every hunk, then `git cherry-pick --continue`.
+2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
+   `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`. It lands as one commit
+   with the branch's tree, each part listed under its role and every `Role:` and
+   `Co-Authored-By:` line kept; it refuses a branch that doesn't hold `HEAD`.
+   Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for
+   you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
 3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
    each lane's commits, evidence and ratchet deltas.
 4. In the background: `bash tools/lane/watch.sh <pr>`. Exit 0 landed (via `land.sh`, fast-forward

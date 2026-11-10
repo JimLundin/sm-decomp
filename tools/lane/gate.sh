@@ -24,7 +24,7 @@ if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/carg
 fi
 CARGO="$R/cargo" bash tools/check_crate_rules.sh >/dev/null 2>&1 || fail "CRATE RULES FAIL"
 sh tools/check_doc_links.sh >/dev/null 2>&1 || fail "DOC LINKS FAIL"
-CARGO="$R/cargo" SM_RUST_BIN="$R" bash tools/check_report.sh >/dev/null 2>&1 || fail "REPORT STALE: run cargo run -p tools --bin tools -- report --write"
+CARGO="$R/cargo" SM_RUST_BIN="$R" bash tools/check_report.sh >/dev/null 2>&1 || fail "REPORT OR README STATUS STALE: run cargo run -p tools --bin tools -- report --write"
 if [ "$ok" -eq 1 ]; then
   echo "GATE OK $(git rev-parse --short HEAD) $(git branch --show-current)"
 else

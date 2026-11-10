@@ -55,7 +55,7 @@ score, budget, ratio or target goes with it.
 Each step names its owner, what it waits for, and its done-condition.
 
 ```
-1 spec ─ 2 brief ─ 3 spec gate ─ 4 land spec ─ 5 launch ─ 6 implement ─ 7 import ─┬─ 8 blind review ─┬─ 10 round gate ─ 11 land ─ 12 queue
+1 spec ─ 2 brief ─ 3 spec gate ─ 4 hold spec ─ 5 launch ─ 6 implement ─ 7 import ─┬─ 8 blind review ─┬─ 10 round gate ─ 11 land ─ 12 queue
                                                                                   └─ 9 integrate ────┘
 ```
 
@@ -74,12 +74,12 @@ Each step names its owner, what it waits for, and its done-condition.
 3. **Spec gate** (adversary), after 1 and 2: it gates the spec and the brief together. Done on a
    verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer
    for the spec, the root for the brief), then a re-gate of the delta.
-4. **Land the spec** (root), through `tools/lane/land.sh`, when it is a new domain's first spec.
-   An amended spec changes what the landed model must do, so the model's own vector test fails
-   on it until the round implements it. An amendment therefore stays on its branch, the round
-   exports from that branch's commit, and the spec lands with the round (step 11).
-5. **Export and launch** (root): `canary.sh plant`, `export.sh` (with `-c COMMIT` for an
-   amendment's branch), then `launch.sh`. Done on `LAUNCH OK` with a clean canary check.
+4. **Hold the spec** (root). A round lands as one commit (step 11), so the spec stays on the
+   round's branch, a new domain's first spec as much as an amendment, and the round exports from
+   that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
+   model must do, so the model's own vector test fails on it until the round implements it.
+5. **Export and launch** (root): `canary.sh plant`, `export.sh -c COMMIT` with the spec's commit
+   on the round's branch, then `launch.sh`. Done on `LAUNCH OK` with a clean canary check.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh` and applies the commits to a lane branch.
@@ -99,8 +99,16 @@ Each step names its owner, what it waits for, and its done-condition.
 10. **Round gate** (adversary), after 8 and 9. It reads the leaks, the harness's honesty, the
     score against the budget and the blind review. Done on a verdict of MERGE. Findings go to
     the integrator (harness, adapter), or into the next round's queue (model shape, spec gaps).
-11. **Land** (root), through `land.sh`: the spec amendment, the import and the integration
-    together. `docs/REPORT.md` is regenerated in the same change.
+11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
+    together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
+    in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
+    domain's `status` when its work starts or ends), and regenerates `docs/REPORT.md` and the
+    README's status (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
+    it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
+    the branch's tree on `origin/main`, its subject the root's, its body each part under its role
+    (spec, model, integration), every `Role:` and `Co-Authored-By:` line kept. The import's
+    checks ran on the branch's own commits at step 7; the round's branch keeps them. The squashed
+    commit lands through `land.sh`, a fast-forward.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     The domain is done when the queue holds nothing that changes behaviour or shape enough to
     be worth a round.

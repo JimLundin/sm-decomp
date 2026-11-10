@@ -23,7 +23,7 @@
 //! `tools size PATH...`: code volume in logical tokens, per file and in total (`verify::size`).
 //!
 //! `tools report [--write | --check]`: the rebuild's size and progress report, `docs/REPORT.md`
-//! (`verify::report`), printed, written, or checked against the committed one.
+//! (`verify::report`), printed, or written or checked with the README's status.
 
 mod gate;
 mod localise;

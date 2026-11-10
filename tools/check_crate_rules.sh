@@ -108,6 +108,7 @@ fi
 out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/score_scan_test.sh 2>&1) || fail "$out"
+out=$(bash tools/lane/squash_test.sh 2>&1) || fail "$out"
 
 # What an export of each specced domain would carry, and the blind reviewer's skill, mention no
 # score or budget (MODEL §1 decision 10); export.sh checks the export itself too.

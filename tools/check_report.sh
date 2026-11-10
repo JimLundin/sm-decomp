@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# check_report.sh: docs/REPORT.md is what `tools report` generates for this tree (verify::report).
-# A stale report fails with the one command that regenerates it. On Windows, where Defender
+# check_report.sh: docs/REPORT.md, and README.md's status between its markers, are what `tools report`
+# generates for this tree (verify::report).
+# A stale report or status fails with the one command that regenerates both. On Windows, where Defender
 # blocks the tools executable, the same check runs as verify's lib test through
 # tools/lane/run_tests.sh. Override: CARGO (the cargo to run).
 set -euo pipefail

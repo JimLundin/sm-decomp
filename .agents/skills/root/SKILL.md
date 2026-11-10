@@ -80,6 +80,12 @@ design notes and `CLEANROOM.md`. Its brief is one line: load that skill.
 
 ## Landing
 
+A round lands as **one commit** on `main` (Jim, 2026-11-10), its spec, model and integration
+together; nothing of a round lands before it ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round),
+steps 4 and 11). Before the squash, on the round's branch: add one to the model's `rounds` in
+`docs/architecture/domains.toml`, move a plan domain's `status` if its work started or ended, and
+regenerate REPORT and the README's status. Then squash it with `tools/lane/squash.sh SUBJECT
+BRANCH`: you write the subject, which says what is true after the round and ends with its kind.
 Land one change at a time, by fast-forward through `bash tools/lane/land.sh <pr>`, after the PR's
 CI is green: Quality, content, free-run-gate and lockstep-ratchet. The
 [lane](../lane/SKILL.md#land-root-only) skill gives the steps.

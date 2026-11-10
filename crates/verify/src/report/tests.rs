@@ -1,9 +1,11 @@
+use std::collections::BTreeSet;
 use std::path::Path;
 
 use super::lines::code_lines;
+use super::status::Plan;
 use super::{
     Coverage, EntryCoverage, baseline, check, coverage, current, fit, floors, generate, grouped,
-    tables,
+    status_current, tables, with_status,
 };
 
 /// The repository root, from this crate's manifest.
@@ -23,6 +25,31 @@ fn a_changed_report_is_stale() {
     assert_eq!(current(&fresh.replace('\n', "\r\n"), fresh), Ok(()));
     assert!(current("# Rebuild report\n\n| a | 2 |\n", fresh).is_err());
     assert!(current("", fresh).is_err());
+}
+
+#[test]
+fn a_changed_status_is_stale() {
+    let fresh = "\n| rounds | 1 |\n";
+    let readme = "# Title\n\n<!-- status:begin -->\n| rounds | 1 |\n<!-- status:end -->\n\nMore.\n";
+    assert_eq!(status_current(readme, fresh), Ok(()));
+    assert_eq!(status_current(&readme.replace('\n', "\r\n"), fresh), Ok(()));
+    // The text around the markers is the README's own.
+    assert_eq!(
+        status_current(&readme.replace("More.", "Other."), fresh),
+        Ok(())
+    );
+    assert!(status_current(&readme.replace("| 1 |", "| 2 |"), fresh).is_err());
+    assert!(status_current("# Title\n", fresh).is_err());
+}
+
+#[test]
+fn the_status_goes_between_the_markers() {
+    let readme = "# Title\n<!-- status:begin -->\nold\n<!-- status:end -->\nMore.\n";
+    assert_eq!(
+        with_status(readme, "\nnew\n").as_deref(),
+        Ok("# Title\n<!-- status:begin -->\nnew\n<!-- status:end -->\nMore.\n")
+    );
+    assert!(with_status("# Title\n<!-- status:end -->\n", "\nnew\n").is_err());
 }
 
 #[test]
@@ -110,4 +137,28 @@ fn coverage_parses() {
     assert!(coverage("camera entry Follow x 0 4 0\n").is_err());
     assert!(coverage("camera entry Follow 3 4 2\n").is_err());
     assert!(coverage("camera field 9 1\n").is_err());
+}
+
+#[test]
+fn the_plan_agrees_with_the_rebuilt_domains() {
+    let rebuilt = BTreeSet::from(["camera"]);
+    let plan = |domain: &str| {
+        format!("platform = []\n[[model]]\nname = \"camera\"\nrounds = 5\n[[domain]]\n{domain}")
+    };
+    let parse = |domain: &str| Plan::parse(&plan(domain), &rebuilt).map(|_| ());
+    let named = "id = \"CAM\"\nname = \"The camera\"\nwave = 0\nrounds = 1\n";
+    assert_eq!(parse(named), Ok(()));
+    assert_eq!(
+        parse(&format!(
+            "{named}model = \"camera\"\nstatus = \"in-progress\"\n"
+        )),
+        Ok(())
+    );
+    // A started domain names its model, and a named model is one the report rebuilds.
+    assert!(parse(&format!("{named}status = \"in-progress\"\n")).is_err());
+    assert!(parse(&format!("{named}model = \"hud\"\n")).is_err());
+    assert!(parse(&format!("{named}status = \"started\"\n")).is_err());
+    // Every rebuilt domain is a model of the plan, once.
+    let others = BTreeSet::from(["camera", "hud"]);
+    assert!(Plan::parse(&plan(named), &others).is_err());
 }

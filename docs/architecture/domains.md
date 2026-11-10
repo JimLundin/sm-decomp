@@ -297,3 +297,6 @@ and review, not implementation, set the pace.
 11. **Recordings missing.** The pause screen, the attract demos and the intro have no lock row;
     the 100% chains may cover pausing (check before recording). Rare boss phases need segment
     rows.
+
+The plan's domains, their waves, their progress and the rounds landed are data in
+[domains.toml](domains.toml), from which `verify::report` writes the README's status.
