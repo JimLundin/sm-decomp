@@ -1298,7 +1298,7 @@ fn placement(entry: PlmEntry, population: &PlmPopulation, across: u16) -> Option
         }
         PlmKind::Item(..) => Placement::OtherPart,
         // open: the PLMs no slice 0 room state that loads places; each joins with its part.
-        PlmKind::Unmodelled(_) => return None,
+        PlmKind::Unmodelled(..) => return None,
     })
 }
 
@@ -1333,7 +1333,7 @@ pub fn start_room(
             .rposition(|place| *place == Place::Free);
         let named = match entry.kind {
             PlmKind::Scroll(id) => Some(id),
-            PlmKind::Extension(_) | PlmKind::Item(..) | PlmKind::Unmodelled(_) => None,
+            PlmKind::Extension(_) | PlmKind::Item(..) | PlmKind::Unmodelled(..) => None,
         };
         call.watch(placement_cell(&placement));
         let (took, ()) = call.step(room, Phase::RoomStart(named), |state| {

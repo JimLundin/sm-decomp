@@ -127,6 +127,33 @@ fn a_header_and_its_states_decode() {
 }
 
 #[test]
+fn a_rooms_populations_are_its_door_list_and_each_states_plms() {
+    let mut image = synthetic();
+    // The conditional state's population: one Morph Ball item at location 26; the default's
+    // (`$8F:867E`) is empty.
+    put(
+        &mut image,
+        room_bank(0x8100 + 20),
+        &0x8700_u16.to_le_bytes(),
+    );
+    put(
+        &mut image,
+        room_bank(0x8700),
+        &[0x23, 0xef, 0x05, 0x06, 0x1a, 0x00, 0x00, 0x00],
+    );
+    let populations = populations(Lorom::new(&image), SYNTHETIC).unwrap();
+    let room = decode(Lorom::new(&image), SYNTHETIC).unwrap();
+    assert_eq!(populations.doors, room.doors);
+    let decoded: Vec<PlmPopulation> = room.states().map(|(_, state)| state.plms.clone()).collect();
+    assert_eq!(populations.plms, decoded);
+    assert_eq!(
+        populations.plms[0].entries[0].kind,
+        crate::plm::PlmKind::Item(crate::plm::ItemPlm::MorphBall, 26)
+    );
+    assert_eq!(populations.plms[1].entries, []);
+}
+
+#[test]
 fn a_state_index_counts_the_conditional_states_then_the_default() {
     let image = synthetic();
     let room = decode(Lorom::new(&image), SYNTHETIC).unwrap();

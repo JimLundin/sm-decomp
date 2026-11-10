@@ -581,6 +581,49 @@ pub fn decode(rom: Lorom<'_>, key: RoomKey) -> Result<Room, RoomError> {
     })
 }
 
+/// A room's door list and each state's PLM population.
+///
+/// They are what a walk of the rooms by their doors needs, read without the states' levels and
+/// scroll tables (a few rooms' scroll tables run past what the importer decodes yet).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Populations {
+    /// The door list.
+    pub doors: RomAddress,
+    /// Each state's PLM population, in the list's order, the default last.
+    pub plms: Vec<PlmPopulation>,
+}
+
+/// Where a state header's PLM population pointer is, from the header's start.
+const STATE_PLM_POPULATION: usize = 20;
+
+/// The door list and the states' PLM populations of the room whose header is at `key`.
+///
+/// # Errors
+///
+/// [`RoomError`] if a record is outside the image, names an unknown condition, or a population
+/// doesn't decode.
+pub fn populations(rom: Lorom<'_>, key: RoomKey) -> Result<Populations, RoomError> {
+    let mut reader = Reader { rom, at: key.0 };
+    let _: [u8; 9] = reader.take()?;
+    let doors = reader.pointer(ROOM_BANK)?;
+    let mut states = Vec::new();
+    while condition(&mut reader)?.is_some() {
+        states.push(reader.pointer(ROOM_BANK)?);
+    }
+    states.push(reader.at);
+    let plms = states
+        .into_iter()
+        .map(|state| {
+            let at = state
+                .advance(STATE_PLM_POPULATION)
+                .ok_or(RoomError::BankEnd(state))?;
+            let list = Reader { rom, at }.pointer(ROOM_BANK)?;
+            population(rom, list).map_err(|error| RoomError::Plm { state, error })
+        })
+        .collect::<Result<_, _>>()?;
+    Ok(Populations { doors, plms })
+}
+
 /// The next state condition, or `None` at the default condition that ends the list.
 fn condition(reader: &mut Reader<'_>) -> Result<Option<Condition>, RoomError> {
     let at = reader.at;

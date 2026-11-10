@@ -73,10 +73,10 @@ fn population_at(image: &[u8]) -> PlmPopulation {
 }
 
 #[test]
-fn an_unmodelled_plm_keeps_its_id_and_an_unknown_area_is_an_error() {
-    let rom = image(&[0x48, 0xc8, 1, 2, 0, 0, 0, 0], &[]);
+fn an_unmodelled_plm_keeps_its_id_and_argument_and_an_unknown_area_is_an_error() {
+    let rom = image(&[0x48, 0xc8, 1, 2, 0x34, 0x12, 0, 0], &[]);
     let decoded = population_at(&rom);
-    assert_eq!(decoded.entries[0].kind, PlmKind::Unmodelled(0xc848));
+    assert_eq!(decoded.entries[0].kind, PlmKind::Unmodelled(0xc848, 0x1234));
     assert_eq!(decoded.entries[0].kind.id(), 0xc848);
     let rom = image(
         &[0x03, 0xb7, 0, 0, 0x00, 0x90, 0, 0],

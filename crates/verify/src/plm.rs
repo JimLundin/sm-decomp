@@ -108,7 +108,7 @@ fn known(population: &PlmPopulation, reactions: &Reactions, id: u16) -> Option<K
             .and_then(|kind| match kind {
                 PlmKind::Scroll(_) => Some(Known::Scroll),
                 PlmKind::Item(item, _) => Some(Known::Item(item)),
-                PlmKind::Extension(_) | PlmKind::Unmodelled(_) => None,
+                PlmKind::Extension(_) | PlmKind::Unmodelled(..) => None,
             }),
     }
 }
