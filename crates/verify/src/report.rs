@@ -487,7 +487,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
             .join("scenarios/vectors")
             .join(format!("{}.toml", domain.name)),
     )?;
-    let count = Count::of(&spec, &Vectors::parse(&toml), Some(budget), None, &[]);
+    let count = Count::of(&spec, &Vectors::parse(&toml), Some(budget), None);
     for (area, _) in domain.areas {
         if !count.areas.iter().any(|stated| stated.name == *area) {
             return Err(format!(

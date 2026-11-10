@@ -29,13 +29,13 @@ How it is counted:
 
 | Domain | Model score | Budget | Fit | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | 8,390 | 7,169 | 1.17 | 12,724 | 3,882 | 1,398 | 18,000 | 262 |
-| camera | 1,909 | 1,591 | 1.20 | 2,274 | 638 | 318 | 18,903 | 80 |
-| progress | 979 | 878 | 1.12 | - | 488 | 163 | 25,419 | 66 |
+| samus-motion | 8,390 | 7,704 | 1.09 | 12,724 | 3,882 | 1,398 | 18,000 | 262 |
+| camera | 1,909 | 1,692 | 1.13 | 2,274 | 638 | 318 | 18,903 | 80 |
+| progress | 979 | 1,092 | 0.90 | - | 488 | 163 | 25,419 | 66 |
 | hud | 2,978 | 2,028 | 1.47 | - | 1,117 | 496 | 20,614 | 72 |
 | blocks | 2,643 | 1,992 | 1.33 | - | 1,078 | 441 | 20,530 | 100 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks) | 765 | - | - | - | 471 | 128 | - | - |
-| total | 17,664 | 13,658 | 1.29 | - | 7,674 | 2,944 | 103,466 | 580 |
+| total | 17,664 | 14,508 | 1.22 | - | 7,674 | 2,944 | 103,466 | 580 |
 
 ## Models
 
@@ -153,12 +153,12 @@ Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 36. Ol
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| motion | 14 | 79.0 | 2,813 | 4,019 | 3,631 | 1.29 |
+| motion | 14 | 79.0 | 2,844 | 4,019 | 3,631 | 1.28 |
 | pose fit | 2 | 17.3 | 624 | 1,549 | 1,063 | 1.70 |
-| pose chart | 6 | 58.0 | 1,584 | 2,263 | 1,290 | 0.81 |
+| pose chart | 6 | 58.0 | 2,088 | 2,263 | 1,290 | 0.62 |
 | collision | 7 | 59.7 | 2,148 | 4,893 | 2,184 | 1.02 |
 | shared (in no area) | | | | | 223 | |
-| total | 29 | 214.0 | 7,169 | 12,724 | 8,390 | 1.17 |
+| total | 29 | 214.0 | 7,704 | 12,724 | 8,390 | 1.09 |
 
 ### camera
 
@@ -166,10 +166,10 @@ Spec [`docs/behaviours/camera.md`](behaviours/camera.md), k = 36. Old code 2,274
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| follow | 5 | 15.7 | 500 | 715 | 395 | 0.79 |
-| limits | 9 | 31.3 | 1,091 | 1,559 | 1,217 | 1.12 |
+| follow | 5 | 15.7 | 564 | 715 | 395 | 0.70 |
+| limits | 9 | 31.3 | 1,128 | 1,559 | 1,217 | 1.08 |
 | shared (in no area) | | | | | 297 | |
-| total | 14 | 47.0 | 1,591 | 2,274 | 1,909 | 1.20 |
+| total | 14 | 47.0 | 1,692 | 2,274 | 1,909 | 1.13 |
 
 ### progress
 
@@ -179,11 +179,11 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 36. Old code -
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | happened | 3 | 3.3 | 120 | - | 1 | 0.01 |
 | places | 6 | 10.3 | 372 | - | 98 | 0.26 |
-| equipment | 3 | 7.7 | 177 | 254 | 290 | 1.64 |
-| rooms | 1 | 7.0 | 137 | 197 | 180 | 1.31 |
+| equipment | 3 | 7.7 | 276 | 254 | 290 | 1.05 |
+| rooms | 1 | 7.0 | 252 | 197 | 180 | 0.71 |
 | percentage | 1 | 2.0 | 72 | - | 80 | 1.11 |
 | shared (in no area) | | | | | 331 | |
-| total | 14 | 30.3 | 878 | - | 979 | 1.12 |
+| total | 14 | 30.3 | 1,092 | - | 979 | 0.90 |
 
 ### hud
 

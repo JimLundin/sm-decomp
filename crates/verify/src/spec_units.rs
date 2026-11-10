@@ -1,9 +1,8 @@
 //! Spec units and the size budget they set, for `tools spec-units` (MODEL §1 decision 7, §5's
 //! "Rules are arms").
 //!
-//! A domain's budget is k weighted tokens per spec unit, per area, each area capped at 70% of
-//! its old code where that figure is given. The spec holds the rules and the counter counts its
-//! units; the budget is the evaluation's, so the spec never states it (MODEL §1 decision 10). k,
+//! A domain's budget is k weighted tokens per spec unit, per area; the old code doesn't bound it
+//! (Jim, 2026-11-10). The spec holds the rules and the counter counts its units; the budget is the evaluation's, so the spec never states it (MODEL §1 decision 10). k,
 //! the areas and their old code are in the `## Budget` section of the domain's decode notes
 //! (`docs/behaviours/<domain>.decode.md`), k as "k = N weighted tokens per spec unit" (MODEL §1
 //! decision 7: computed once, then frozen). A spec whose notes state no k still has its units
@@ -58,9 +57,8 @@
 //! notes' areas. A spec that still states k or an area is a finding: `tools/cleanroom/
 //! move_budget.sh` moves them to the notes. An item names
 //! an entry (`SlopesCarry`) or any other heading, by its whole text or its leading number (`1.2`
-//! for "1.2 What she remembers"). `(old N)` is the area's old-code weighted score, which sets the
-//! cap; `--baseline AREA=N` overrides it. A heading no area names, holding units, is reported
-//! unassigned.
+//! for "1.2 What she remembers"). `(old N)` is the area's old-code weighted score, shown for
+//! reference beside the budget. A heading no area names, holding units, is reported unassigned.
 //!
 //! **Findings**, for the spec review: arms with an earlier arm's outcome, arms that cite no vector
 //! or one the file doesn't hold, original-only and record-only arms, cross-references, arms and
@@ -85,10 +83,9 @@ use std::fmt::{self, Write as _};
 use std::fs;
 
 /// The command line `run` takes.
-pub const USAGE: &str = "tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--baseline AREA=TOKENS]... [--against OLD_SPEC]";
+pub const USAGE: &str =
+    "tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--against OLD_SPEC]";
 
-/// The cap on an area's budget, in tenths of its old code.
-const CAP_TENTHS: u64 = 7;
 /// Words an outcome may hold beside entry names and still be only a cross-reference.
 const REFERENCE_WORDS: &[&str] = &[
     "and", "as", "by", "follows", "in", "like", "of", "or", "per", "rule", "rules", "s", "see",
@@ -840,28 +837,10 @@ pub struct AreaCount {
 }
 
 impl AreaCount {
-    /// k × its units, before the cap, if the notes state k.
-    #[must_use]
-    pub fn uncapped(&self) -> Option<u64> {
-        self.k.map(|k| self.tally.units().budget(k))
-    }
-
-    /// 70% of its old code, if given.
-    #[must_use]
-    pub fn cap(&self) -> Option<u64> {
-        self.old.map(|old| old.saturating_mul(CAP_TENTHS) / 10)
-    }
-
-    /// Its budget: k × its units, capped, if the notes state k.
+    /// Its budget: k × its units, if the notes state k.
     #[must_use]
     pub fn budget(&self) -> Option<u64> {
-        let uncapped = self.uncapped()?;
-        Some(self.cap().map_or(uncapped, |cap| cap.min(uncapped)))
-    }
-
-    /// Whether the cap binds.
-    fn capped(&self) -> bool {
-        self.budget() < self.uncapped()
+        self.k.map(|k| self.tally.units().budget(k))
     }
 }
 
@@ -890,33 +869,14 @@ pub struct Count {
 
 impl Count {
     /// Counts `spec` against `vectors`. k and the areas come from `budget`, the decode notes'
-    /// Budget section ([`budget_section`]); areas from `areas` instead when given; `baselines`
-    /// override their old-code figures.
+    /// Budget section ([`budget_section`]); areas from `areas` instead when given.
     #[must_use]
-    pub fn of(
-        spec: &str,
-        vectors: &Vectors,
-        budget: Option<&str>,
-        areas: Option<&str>,
-        baselines: &[(String, u64)],
-    ) -> Self {
+    pub fn of(spec: &str, vectors: &Vectors, budget: Option<&str>, areas: Option<&str>) -> Self {
         let blocks = split_blocks(spec);
         let spec_states_budget = stated_k(&blocks).is_some() || !area_defs(&blocks).is_empty();
         let budget = split_blocks(budget.unwrap_or_default());
         let k = stated_k(&budget);
-        let mut defs =
-            areas.map_or_else(|| area_defs(&budget), |file| area_defs(&split_blocks(file)));
-        for (name, old) in baselines {
-            if let Some(def) = defs.iter_mut().find(|def| def.name == *name) {
-                def.old = Some(*old);
-            } else {
-                defs.push(AreaDef {
-                    name: name.clone(),
-                    old: Some(*old),
-                    items: Vec::new(),
-                });
-            }
-        }
+        let defs = areas.map_or_else(|| area_defs(&budget), |file| area_defs(&split_blocks(file)));
         let entries: HashSet<&str> = blocks
             .iter()
             .filter(|block| block.entry)
@@ -1032,19 +992,14 @@ impl Count {
                 self.total().units()
             );
         };
-        let capped = self.areas.iter().any(AreaCount::capped);
         let split: Vec<String> = self
             .areas
             .iter()
-            .map(|area| {
-                let cap = if area.capped() { " capped" } else { "" };
-                format!("{} {}{cap}", area.name, or_dash(area.budget()))
-            })
+            .map(|area| format!("{} {}", area.name, or_dash(area.budget())))
             .collect();
         format!(
-            "Budget: {k} × {} units{} = {} ({})",
+            "Budget: {k} × {} units = {} ({})",
             self.total().units(),
-            if capped { ", capped at 70% of old" } else { "" },
             thousands(budget),
             split.join(", ")
         )
@@ -1054,39 +1009,35 @@ impl Count {
     /// heading.
     #[must_use]
     pub fn report(&self) -> String {
-        let mut out = String::from(
-            "area                 entries  arms cells   ops   units    k×U    cap budget\n",
-        );
+        let mut out =
+            String::from("area                 entries  arms cells   ops   units budget    old\n");
         for area in &self.areas {
-            let cap = area.cap().map_or_else(|| String::from("-"), thousands);
             let _ = writeln!(
                 out,
-                "{:<20} {:>7} {:>5} {:>5} {:>5} {:>7} {:>6} {:>6} {:>6}",
+                "{:<20} {:>7} {:>5} {:>5} {:>5} {:>7} {:>6} {:>6}",
                 area.name,
                 area.entries,
                 area.tally.arms,
                 area.tally.cells,
                 area.tally.ops,
                 area.tally.units().to_string(),
-                or_dash(area.uncapped()),
-                cap,
-                or_dash(area.budget())
+                or_dash(area.budget()),
+                or_dash(area.old)
             );
         }
         let total = self.total();
         let entries = self.areas.iter().map(|area| area.entries).sum::<usize>();
         let _ = writeln!(
             out,
-            "{:<20} {:>7} {:>5} {:>5} {:>5} {:>7} {:>6} {:>6} {:>6}\n\n{}\n",
+            "{:<20} {:>7} {:>5} {:>5} {:>5} {:>7} {:>6} {:>6}\n\n{}\n",
             "total",
             entries,
             total.arms,
             total.cells,
             total.ops,
             total.units().to_string(),
-            or_dash(self.k.map(|k| total.units().budget(k))),
-            "",
             or_dash(self.budget()),
+            "",
             self.budget_line()
         );
         out.push_str(&self.findings());
@@ -1484,12 +1435,11 @@ fn thousands(n: u64) -> String {
     out
 }
 
-/// `--notes FILE`, `--areas FILE`, `--baseline AREA=N` (repeatable) and `--against OLD_SPEC`.
+/// `--notes FILE`, `--areas FILE` and `--against OLD_SPEC`.
 #[derive(Default)]
 struct Options {
     notes: Option<String>,
     areas: Option<String>,
-    baselines: Vec<(String, u64)>,
     against: Option<String>,
 }
 
@@ -1501,14 +1451,6 @@ fn options(args: &[String]) -> Result<Options, String> {
             "--notes" => options.notes = Some(read(value)?),
             "--areas" => options.areas = Some(read(value)?),
             "--against" => options.against = Some(read(value)?),
-            "--baseline" => {
-                let (name, old) = value.rsplit_once('=').ok_or_else(|| USAGE.to_owned())?;
-                let old = old
-                    .replace(',', "")
-                    .parse()
-                    .map_err(|e| format!("{value}: {e}"))?;
-                options.baselines.push((name.to_owned(), old));
-            }
             _ => return Err(USAGE.to_owned()),
         }
         rest = tail;
@@ -1563,27 +1505,15 @@ pub fn run(args: &[String]) -> Result<String, String> {
         None => sibling_notes(spec)?,
     };
     let budget = notes.as_deref().map(budget_section);
-    let count = Count::of(
-        &read(spec)?,
-        &vectors,
-        budget,
-        options.areas.as_deref(),
-        &options.baselines,
-    );
+    let count = Count::of(&read(spec)?, &vectors, budget, options.areas.as_deref());
     let mut out = format!(
-        "spec units: {spec}, {} vectors (k = {}, cap 70% of old)\n\n{}",
+        "spec units: {spec}, {} vectors (k = {})\n\n{}",
         vectors.len(),
         or_dash(count.k),
         count.report()
     );
     if let Some(old) = options.against {
-        let before = Count::of(
-            &old,
-            &vectors,
-            budget,
-            options.areas.as_deref(),
-            &options.baselines,
-        );
+        let before = Count::of(&old, &vectors, budget, options.areas.as_deref());
         let (was, now) = (before.total().units(), count.total().units());
         let units = delta(was.thirds(), now.thirds(), |thirds| Units { thirds });
         let _ = writeln!(
@@ -1686,7 +1616,7 @@ Cells: kept, gun drawn, `kept`
 
     /// `spec` counted with `budget` as its notes' Budget section.
     fn count_with(spec: &str, budget: &str) -> Count {
-        Count::of(spec, &Vectors::parse(VECTORS), Some(budget), None, &[])
+        Count::of(spec, &Vectors::parse(VECTORS), Some(budget), None)
     }
 
     fn demo() -> Count {
@@ -1710,8 +1640,9 @@ Cells: kept, gun drawn, `kept`
         // `1.2 Memory` is no entry: its arm counts 0 and fails the spec.
         assert!(count.fails());
         assert_eq!(moving.tally.units().thirds(), 8);
-        assert_eq!(moving.uncapped(), Some(64));
-        assert_eq!(moving.cap(), Some(700));
+        // Its old code is shown for reference and doesn't bound the budget.
+        assert_eq!(moving.old, Some(1000));
+        assert_eq!(moving.budget(), Some(64));
         assert_eq!(moving.entries, 1);
         assert_eq!((falling.tally.arms, falling.tally.ops), (2, 1));
         assert_eq!(falling.budget(), Some(56));
@@ -2026,20 +1957,17 @@ Cells: kept, gun drawn, `kept`
     }
 
     #[test]
-    fn an_areas_file_replaces_the_notes_areas_and_baselines_cap() {
+    fn an_areas_file_replaces_the_notes_areas_and_old_code_doesnt_bound_the_budget() {
         let spec = "### A\n- a → b [V1]\n### B\n- c → d [V1]\n";
         let budget = "k = 24 weighted tokens per spec unit\nArea one: A\n";
         let vectors = Vectors::parse(VECTORS);
         let areas = "- Area left (old 20): A, B\n";
-        let baselines = [(String::from("left"), 30)];
-        let count = Count::of(spec, &vectors, Some(budget), Some(areas), &baselines);
+        let count = Count::of(spec, &vectors, Some(budget), Some(areas));
         let names: Vec<_> = count.areas.iter().map(|area| area.name.as_str()).collect();
         assert_eq!(names, ["left"]);
-        assert_eq!(count.budget(), Some(21));
-        assert_eq!(
-            count.budget_line(),
-            "Budget: 24 × 2.0 units, capped at 70% of old = 21 (left 21 capped)"
-        );
+        assert_eq!(count.areas.first().and_then(|area| area.old), Some(20));
+        assert_eq!(count.budget(), Some(48));
+        assert_eq!(count.budget_line(), "Budget: 24 × 2.0 units = 48 (left 48)");
     }
 
     #[test]

@@ -92,8 +92,9 @@ The first route is the definition. The second only corroborates it, because it c
 code being judged, but it shows the bar is achievable: it asks every area to be as dense as round 7's
 best two already are.
 
-The 70 % cap per area keeps the "significant saving" rule against an inflated spec. It doesn't bind
-in samus-motion. Over the old code stays a strict failure.
+The 70 % cap per area was to keep the "significant saving" rule against an inflated spec. Jim
+dropped it (2026-11-10, MODEL §1 decision 7): it gave new behaviour no budget, so the budget is
+k × units in every area, with the old code beside it. Over the old code stays a strict failure.
 
 **Circularity.** Fitting k, or any weight, on round 7 makes the budget describe round 7. Fitting on
 the old code inherits its port's verbosity: old collision runs at 54.7 per unit against motion's
@@ -154,13 +155,13 @@ and the minimality review catches that (§6).
    k, the areas and the baseline are in the `## Budget` section of the decode notes, not the
    spec's header: the implementer is not told them.
 
-**The tool** is `tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--baseline AREA=N]
-[--against OLD]` ([`verify::spec_units`](../../crates/verify/src/spec_units.rs), whose module note
+**The tool** is `tools spec-units SPEC VECTORS [--notes FILE] [--areas FILE] [--against OLD]` ([`verify::spec_units`](../../crates/verify/src/spec_units.rs), whose module note
 states every rule it applies). It counts the units from the spec and reads the rest from the
 Budget section of the decode notes (`--notes`, by default the spec's sibling `D.decode.md`).
 Areas are lines there, one per area, as a paragraph or a bullet:
 `Area motion (old 3,818): SpeedBuildsAndBrakes, Dash, …, 1.2, 9`. An item names an entry or any
-other heading, by its text or its leading number; `(old N)` sets the 70 % cap. k is the domain's
+other heading, by its text or its leading number; `(old N)` is the area's old code, shown beside
+its budget for reference. k is the domain's
 own, read from the section's "k = N weighted tokens per spec unit" (Jim, 2026-11-07); notes that
 state none leave the units counted and no budget, and a spec that still states k or an area is a
 finding. A spec commit shows
@@ -228,8 +229,8 @@ guards:
 4. **The budget freezes at the export.** The implementer's round is judged against the spec in its
    export. Arms added later count only with a `gaps.md` entry and a vector. That stops units being
    added after the observer sees that a model is over.
-5. **Per-area caps against the old code** (70 %), and over the old code a strict failure. However
-   much the spec is inflated, the budget can't pass these.
+5. **Over the old code is a strict failure**, shown by area beside the budget. The per-area cap
+   at 70 % of the old code is dropped (MODEL §1 decision 7).
 6. **k is frozen.** Nobody chooses a ratio per domain. The only lever left is units, and guards 1-4
    cover units. Every spec commit shows its Δbudget to the spec reviewer.
 
