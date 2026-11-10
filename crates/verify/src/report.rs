@@ -72,11 +72,14 @@ const DOMAINS: &[Domain] = &[
             (
                 "motion",
                 &[
+                    "change.rs",
                     "jump_held.rs",
-                    "motion.rs",
+                    "moves.rs",
+                    "run.rs",
                     "samus.rs",
                     "step.rs",
                     "tick.rs",
+                    "vertical.rs",
                 ],
             ),
             ("pose fit", &["fit.rs"]),

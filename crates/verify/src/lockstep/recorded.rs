@@ -51,7 +51,7 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
         content,
     }
     .frame(&sized);
-    let outcome = model.step(&frame, &world, &Rules::REFERENCE);
+    let outcome = model.step(&frame, &world, &Rules::REFERENCE).ok()?;
     write_back(&model, outcome.rising, &mut samus);
     Some(State {
         samus,

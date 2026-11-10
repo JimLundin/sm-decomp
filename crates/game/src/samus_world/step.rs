@@ -3,13 +3,17 @@
 //! Her frame is stepped by the model over the engine's world; the cells her moves and looks
 //! reached become the engine's touches, and the engine's animation and pose change read the
 //! rest.
+//!
+//! The model answers `UnknownPose` for a pose no situation names. Every pose the pose map holds
+//! is one a situation names (`state::named`, pinned by its test), so the frame refuses it as a
+//! fault that can't happen, rather than invent a motion for it.
 
 use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, WallTest};
 use clean_types::{Action, Parts, Pose};
 
-use super::SamusWorld;
 use super::frame::{FrameSource, body};
 use super::state::{clean_of, dress, pose_id, write_back};
+use super::{SamusFault, SamusWorld};
 use crate::collision::{Surroundings, Touches};
 use crate::pose::{Content, PoseRequests};
 use crate::session;
@@ -70,8 +74,19 @@ pub struct Ran {
 
 /// Her frame through the model over `world`, written back to the engine's motion; `None`,
 /// moving her not at all, when her pose is outside it.
-pub fn run(samus: &mut Samus, reads: Reads<'_>, world: &SamusWorld, rules: &Rules) -> Option<Ran> {
-    let mut after = clean_of(samus)?;
+///
+/// # Errors
+///
+/// A [`SamusFault`]: a pose no situation names, or a stand-in chain her moves met that loops.
+pub fn run(
+    samus: &mut Samus,
+    reads: Reads<'_>,
+    world: &SamusWorld,
+    rules: &Rules,
+) -> Result<Option<Ran>, SamusFault> {
+    let Some(mut after) = clean_of(samus) else {
+        return Ok(None);
+    };
     let before = after;
     let worn = dress(samus);
     let sized = |pose| body(reads.content, worn, pose);
@@ -84,21 +99,32 @@ pub fn run(samus: &mut Samus, reads: Reads<'_>, world: &SamusWorld, rules: &Rule
         content: reads.content,
     }
     .frame(&sized);
-    let outcome = after.step(&frame, world, rules);
+    let outcome = after
+        .step(&frame, world, rules)
+        .map_err(|_| SamusFault::UnnamedPose(samus.pose))?;
+    world.refused()?;
     let (animation_ends, elevator_moving) = (frame.animation_ends, frame.elevator_moving);
     write_back(&after, outcome.rising, samus);
-    Some(Ran {
+    Ok(Some(Ran {
         before,
         after,
         outcome,
         animation_ends,
         elevator_moving,
-    })
+    }))
 }
 
 /// The Tick's frame through the model; `None`, moving her not at all, when her pose is outside
 /// it.
-pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Option<Stepped> {
+///
+/// # Errors
+///
+/// A [`SamusFault`] the frame met.
+pub fn step(
+    samus: &mut Samus,
+    inputs: Inputs<'_>,
+    touches: &mut Touches,
+) -> Result<Option<Stepped>, SamusFault> {
     let world = SamusWorld::new(inputs.surroundings.room, inputs.surroundings.enemies);
     let rules = Rules {
         speed_cap: match inputs.speed_cap {
@@ -107,7 +133,9 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
         },
         ..Rules::REFERENCE
     };
-    let ran = run(samus, inputs.reads, &world, &rules)?;
+    let Some(ran) = run(samus, inputs.reads, &world, &rules)? else {
+        return Ok(None);
+    };
     touches.extend(
         world
             .touches(&ran.outcome.reached)
@@ -116,10 +144,10 @@ pub fn step(samus: &mut Samus, inputs: Inputs<'_>, touches: &mut Touches) -> Opt
             .copied(),
     );
     settle(samus, &ran);
-    Some(Stepped {
+    Ok(Some(Stepped {
         pose: ran.after.pose,
         armed: ran.outcome.wall_test == WallTest::Readied,
-    })
+    }))
 }
 
 /// The words the pose change leaves that the model doesn't hold.

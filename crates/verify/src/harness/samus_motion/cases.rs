@@ -176,7 +176,7 @@ impl SamusMotion {
             let level = self.level(&inputs);
             let ran = self
                 .ran(&mut hers.samus, &inputs, &level)
-                .ok_or_else(|| vec![format!("frame {index}: her pose isn't the model's")])?;
+                .map_err(|skip| vec![format!("frame {index}: {skip}")])?;
             settle(&mut hers.samus, &ran);
             hers.rising = ran.outcome.rising;
             if index.saturating_add(1) == case.checked {

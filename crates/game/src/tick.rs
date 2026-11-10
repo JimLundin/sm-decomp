@@ -503,7 +503,8 @@ fn gameplay_phase(
                 surroundings,
                 speed_cap: rules.switches.speed_cap,
             };
-            let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches);
+            let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches)
+                .map_err(SessionFault::Samus)?;
             animation::after_motion(&mut state.samus, stepped.is_some_and(|s| s.armed));
             hud_world::mini_map_turn(state, content).map_err(SessionFault::Hud)?;
             animation::animate(&mut state.samus, &state.controller, pass.requests, content);

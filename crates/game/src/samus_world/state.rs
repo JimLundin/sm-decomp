@@ -15,11 +15,12 @@
 //! her motion's poses").
 
 use clean_model_samus_motion::{
-    Bounces, Carry, DashIs, FrameBefore, JumpHeld, Run, Samus as Model, Seat, Spin, Vertical,
+    Bounces, Carry, DashIs, FrameBefore, JumpHeld, Moment, Phase, Run, Samus as Model, Seat, Spin,
+    Vertical,
 };
 use core::num::Wrapping;
 
-use clean_types::{Action, Fixed, Pose, Position, Px, Radius, Side, Turn, ZERO};
+use clean_types::{Action, Buttons, Fixed, Pose, Position, Px, Radius, Side, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -72,15 +73,15 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
     // pull took past zero is then downward by what it took past. On the ground, direction down
     // at 0 is falling at 0, as a bomb jump's or a knockback's end leaves her (BG2).
     let magnitude = quantity(motion.vertical_speed);
-    let (vertical, vy) = match motion.vertical {
-        VerticalMotion::None if in_the_air(pose) => (Vertical::Moonfall, -magnitude),
-        VerticalMotion::None => (Vertical::Ground, -magnitude),
-        VerticalMotion::Up => (Vertical::Rising, -magnitude),
+    let (phase, speed) = match motion.vertical {
+        VerticalMotion::None if in_the_air(pose) => (Phase::Moonfall, -magnitude),
+        VerticalMotion::None => (Phase::Ground, -magnitude),
+        VerticalMotion::Up => (Phase::Rising, -magnitude),
         VerticalMotion::Down if in_the_air(pose) || turning_in_the_air(pose) => {
-            (Vertical::Falling, magnitude)
+            (Phase::Falling, magnitude)
         }
-        VerticalMotion::Down if magnitude == ZERO => (Vertical::GroundFalling, ZERO),
-        VerticalMotion::Down => (Vertical::Ground, magnitude),
+        VerticalMotion::Down if magnitude == ZERO => (Phase::GroundFalling, ZERO),
+        VerticalMotion::Down => (Phase::Ground, magnitude),
     };
     // The game's spin is carried on when the pose before the last spin pose was a spin or a
     // wall jump; the model's First and Second both mean it isn't yet.
@@ -104,12 +105,14 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
                 DashIs::ToLose
             },
         },
-        vy,
-        vertical,
-        bounces: match motion.bounce {
-            Bounce::None => Bounces::None,
-            Bounce::First => Bounces::Once,
-            Bounce::Second => Bounces::Twice,
+        vertical: Vertical {
+            speed,
+            phase,
+            bounces: match motion.bounce {
+                Bounce::None => Bounces::None,
+                Bounce::First => Bounces::Once,
+                Bounce::Second => Bounces::Twice,
+            },
         },
         pose,
         radius: Radius {
@@ -136,6 +139,25 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
     })
 }
 
+/// Whether a situation of the model names `pose`, the pose map's for one of hers.
+///
+/// The map holds poses no situation names, and a frame in one gets no motion
+/// (`step::Unmoved::Unnamed`). The chart answers for every pose a situation names, whatever the
+/// frame, so an empty frame asks it.
+#[must_use]
+pub fn named(pose: Pose) -> bool {
+    let still = Moment {
+        pad: Buttons::default(),
+        pressed: Buttons::default(),
+        spring_ball: false,
+        animation_ends: false,
+        speed: ZERO,
+        airborne: false,
+        met: None,
+    };
+    still.next_pose(pose).is_ok()
+}
+
 /// The engine's motion after the model's step, `rising` its `Outcome::rising`: the quantities
 /// as the game keeps them.
 pub fn write_back(model: &Model, rising: bool, samus: &mut Samus) {
@@ -160,18 +182,22 @@ pub fn write_back(model: &Model, rising: bool, samus: &mut Samus) {
     // ground the game leaves her direction as it was: a speed she keeps with no direction stays
     // so (a turn in a moonfall, chain-0232-D5A7 38 -> 44); another is downward, and none is no
     // direction. Falling at 0 on the ground is downward.
-    let vy = model.vy;
+    let Vertical {
+        speed,
+        phase,
+        bounces,
+    } = model.vertical;
     let kept = motion.vertical;
-    (motion.vertical, motion.vertical_speed) = match model.vertical {
-        _ if rising => (VerticalMotion::Up, exact(-vy)),
-        Vertical::Moonfall => (VerticalMotion::None, exact(-vy)),
-        Vertical::Ground if vy == ZERO => (VerticalMotion::None, Exact(0)),
-        Vertical::Ground if kept == VerticalMotion::None => (VerticalMotion::None, exact(-vy)),
-        Vertical::Rising | Vertical::Falling | Vertical::GroundFalling | Vertical::Ground => {
-            (VerticalMotion::Down, exact(vy))
+    (motion.vertical, motion.vertical_speed) = match phase {
+        _ if rising => (VerticalMotion::Up, exact(-speed)),
+        Phase::Moonfall => (VerticalMotion::None, exact(-speed)),
+        Phase::Ground if speed == ZERO => (VerticalMotion::None, Exact(0)),
+        Phase::Ground if kept == VerticalMotion::None => (VerticalMotion::None, exact(-speed)),
+        Phase::Rising | Phase::Falling | Phase::GroundFalling | Phase::Ground => {
+            (VerticalMotion::Down, exact(speed))
         }
     };
-    motion.bounce = match model.bounces {
+    motion.bounce = match bounces {
         Bounces::None => Bounce::None,
         Bounces::Once => Bounce::First,
         Bounces::Twice => Bounce::Second,

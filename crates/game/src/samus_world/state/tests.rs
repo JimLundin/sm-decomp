@@ -1,10 +1,10 @@
-use clean_model_samus_motion::{Carry, DashIs, Rules, Spin, Vertical};
+use clean_model_samus_motion::{Carry, DashIs, Phase, Rules, Spin};
 use core::num::Wrapping;
 
 use clean_types::{Action, Block as Kind, Heading, Radius, Side, Way, World};
 use data::level::{BlockKind, Bts};
 
-use super::{X_RADIUS, clean_of, pose_id, write_back};
+use super::{X_RADIUS, clean_of, named, pose_id, write_back};
 use crate::collision::Room;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::model::num::Fixed;
@@ -18,6 +18,7 @@ use crate::state::samus::{
 };
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
+use data::assets::samus::import::map;
 
 /// Running right (pose 9), facing right.
 const RUNNING_RIGHT: PoseId = PoseId(0x09);
@@ -165,7 +166,7 @@ fn what_she_remembers_reads_from_the_games_words() {
             (
                 model.run.carry,
                 model.run.way,
-                (model.vertical, model.vy),
+                (model.vertical.phase, model.vertical.speed),
                 model.run.dash_is,
             )
         })
@@ -179,7 +180,7 @@ fn what_she_remembers_reads_from_the_games_words() {
     assert!(
         skid.is_some_and(|(carry, way, vertical, _)| carry == Carry::CarriesOn
             && way == Side::Left
-            && vertical == (Vertical::Ground, Wrapping(0)))
+            && vertical == (Phase::Ground, Wrapping(0)))
     );
     let spent = read(
         SPIN_RIGHT,
@@ -187,9 +188,7 @@ fn what_she_remembers_reads_from_the_games_words() {
         VerticalMotion::Up,
         0xFFFF_E400,
     );
-    assert!(
-        spent.is_some_and(|(.., vertical, _)| vertical == (Vertical::Rising, Wrapping(0x1C00)))
-    );
+    assert!(spent.is_some_and(|(.., vertical, _)| vertical == (Phase::Rising, Wrapping(0x1C00))));
     let moonfall = read(
         SPIN_RIGHT,
         SpeedMode::Accelerating,
@@ -198,7 +197,7 @@ fn what_she_remembers_reads_from_the_games_words() {
     );
     assert!(
         moonfall.is_some_and(|(.., vertical, dash)| dash == DashIs::ToLose
-            && vertical == (Vertical::Moonfall, Wrapping(0x1_3800)))
+            && vertical == (Phase::Moonfall, Wrapping(0x1_3800)))
     );
     // Running with a downward speed, she keeps it on the ground.
     let kept = read(
@@ -207,12 +206,12 @@ fn what_she_remembers_reads_from_the_games_words() {
         VerticalMotion::Down,
         0xE000,
     );
-    assert!(kept.is_some_and(|(.., vertical, _)| vertical == (Vertical::Ground, Wrapping(0xE000))));
+    assert!(kept.is_some_and(|(.., vertical, _)| vertical == (Phase::Ground, Wrapping(0xE000))));
     // Downward at 0 on the ground, as a bomb jump's end leaves the ball, is falling at 0 (BG2).
     let handed_back = read(BALL_RIGHT, SpeedMode::Accelerating, VerticalMotion::Down, 0);
     assert!(
         handed_back
-            .is_some_and(|(.., vertical, _)| vertical == (Vertical::GroundFalling, Wrapping(0)))
+            .is_some_and(|(.., vertical, _)| vertical == (Phase::GroundFalling, Wrapping(0)))
     );
     // A pose outside her domain has no model.
     assert!(clean_of(&samus(PoseId(0xD3), Motion::default())).is_none());
@@ -306,11 +305,13 @@ fn a_frame_on_the_floor_runs_her_right() {
         panic!("running is hers");
     };
     let start = model;
-    let outcome = model.step(&frame, &world, &Rules::REFERENCE);
+    let Ok(outcome) = model.step(&frame, &world, &Rules::REFERENCE) else {
+        panic!("running is a situation's");
+    };
     write_back(&model, outcome.rising, &mut engine);
     // Her moves met nothing but the floor the pull holds her to: she stays on the ground, and
     // no sideways move reached a block that isn't air.
-    assert!(start.vertical == Vertical::Ground && model.vertical == Vertical::Ground);
+    assert!(start.vertical.phase == Phase::Ground && model.vertical.phase == Phase::Ground);
     assert!(outcome.reached.iter().all(|touch| {
         !matches!(touch.way, Way::Move(Heading::Left | Heading::Right))
             || matches!(world.block(touch.cell), Kind::Air)
@@ -320,4 +321,11 @@ fn a_frame_on_the_floor_runs_her_right() {
     assert_eq!(engine.motion.position.x, Fixed::new(0x21, 0x3000));
     assert_eq!(engine.motion.position.y, Fixed::new(0x30 - 0x15, 0xFFFF));
     assert_eq!(engine.motion.vertical, VerticalMotion::None);
+}
+
+/// Every pose the pose map holds is one a situation of the model names, so the model's
+/// `UnknownPose` is a fault the adapter can't meet.
+#[test]
+fn every_pose_of_the_map_is_named() {
+    assert!(map::MAP.iter().all(|entry| named(entry.key)));
 }

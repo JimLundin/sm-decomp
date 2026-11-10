@@ -3,7 +3,7 @@ use core::num::Wrapping;
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, Offset, PlmChoice, Slope};
 
-use super::SamusWorld;
+use super::{SamusFault, SamusWorld};
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::collision::{Room, Touch};
 use crate::state::room::{Block as LevelBlock, BlockColumns, BlockIndex};
@@ -56,6 +56,28 @@ const fn row(depth: clean_types::Px) -> u16 {
     depth.0
 }
 
+/// A stand-in chain that loops, which the original follows without end, is cut where the model
+/// meets it and refused; one that leads into a loop from outside it alike.
+#[test]
+fn a_stand_in_chain_that_loops_is_refused() {
+    let slopes = slopes();
+    let blocks = level(&[
+        ((0, 2), BlockKind::HorizontalExtension(Offset(1))),
+        ((1, 2), BlockKind::HorizontalExtension(Offset(-1))),
+        ((2, 2), BlockKind::VerticalExtension(Offset(-2))),
+        ((2, 0), BlockKind::HorizontalExtension(Offset(-2))),
+        ((0, 0), BlockKind::VerticalExtension(Offset(2))),
+    ]);
+    let world = world(&blocks, &slopes);
+    assert_eq!(world.refused(), Ok(()));
+    // (2, 2) leads to (2, 0), then (0, 0), then into the loop of (0, 2) and (1, 2).
+    assert!(matches!(world.block(at(2, 2)), Block::StandsFor(None)));
+    assert_eq!(world.refused(), Err(SamusFault::StandInLoop(at(2, 2))));
+    // The first cell refused is the one reported.
+    assert!(matches!(world.block(at(0, 2)), Block::StandsFor(None)));
+    assert_eq!(world.refused(), Err(SamusFault::StandInLoop(at(2, 2))));
+}
+
 #[test]
 fn each_kind_meets_her_as_its_block_kind_says() {
     let slopes = slopes();
@@ -87,6 +109,8 @@ fn each_kind_meets_her_as_its_block_kind_says() {
     assert!(matches!(world.block(at(3, 3)), Block::Air));
     // Past the level: air.
     assert!(matches!(world.block(at(0, 9)), Block::Air));
+    // Chains that end are no fault.
+    assert_eq!(world.refused(), Ok(()));
     let down = |cell| clean_types::Touch {
         cell,
         way: Way::Move(Heading::Down),

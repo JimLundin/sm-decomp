@@ -164,6 +164,9 @@ pub enum SessionFault {
     Blocks(crate::blocks_world::BlocksFault),
     /// A projectile reached a block whose reaction isn't modelled.
     Projectile(crate::projectile::ProjectileFault),
+    /// Her motion met cells that stand for each other in a loop, where the original's never
+    /// ends, or a pose the motion model names no situation for.
+    Samus(crate::samus_world::SamusFault),
     /// The room's scroll areas aren't a room the camera can read: a short last row, or more
     /// than 256 screens across or down.
     Room(clean_model_camera::RoomError),

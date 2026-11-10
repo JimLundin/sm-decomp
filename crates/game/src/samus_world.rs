@@ -4,8 +4,14 @@
 //! Each block kind is named once, here, as `OtherBlockKinds` says it meets her motion. The
 //! reactions a reached cell then starts (the blocks', an item's) aren't the world's: the model
 //! reports the cells it reached and the caller applies them.
+//!
+//! The model follows a cell that stands for another until it reaches one of another kind, and
+//! leaves a chain that loops to its world to refuse (`clean_types::World`). The original follows
+//! such a chain without end, so the world cuts it where it loops, and the step reports it as a
+//! `SamusFault`.
 
 use clean_types::{Block, Cell, Hitbox, Pair, Radius, Slope, SlopeFaces, Way, World};
+use core::cell::OnceCell;
 use core::num::Wrapping;
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, Offset, PlmChoice};
@@ -13,6 +19,7 @@ use data::level::{BlockKind, Offset, PlmChoice};
 use crate::collision::solid_enemy::{Obstacle, SolidEnemies, obstacles};
 use crate::collision::{Room, Touch, Touches};
 use crate::state::room::BlockIndex;
+use crate::state::samus::PoseId;
 
 /// An item's drawn block: a special block whose reaction lets her through.
 const ITEM_BLOCK: PlmChoice = PlmChoice::Common(0x45);
@@ -21,10 +28,23 @@ const ITEM_BLOCK: PlmChoice = PlmChoice::Common(0x45);
 /// there.
 const FAR_PAST: u8 = 17;
 
+/// Why her frame can't run through the model.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SamusFault {
+    /// The cells standing for others from this one name each other in a loop, which the
+    /// original's block reactions follow without end.
+    StandInLoop(Cell),
+    /// The pose map holds her pose, but no situation of the model names it: every pose the map
+    /// holds is named, so this can't happen.
+    UnnamedPose(PoseId),
+}
+
 /// The room and the frame's solid enemies.
 pub struct SamusWorld<'a> {
     room: Room<'a>,
     enemies: Vec<Hitbox>,
+    /// The first cell whose stand-in chain looped, if any.
+    looped: OnceCell<Cell>,
 }
 
 impl<'a> SamusWorld<'a> {
@@ -54,7 +74,51 @@ impl<'a> SamusWorld<'a> {
                 },
             })
             .collect();
-        Self { room, enemies }
+        Self {
+            room,
+            enemies,
+            looped: OnceCell::new(),
+        }
+    }
+
+    /// The fault a frame's moves met, if any: a stand-in chain that loops.
+    ///
+    /// # Errors
+    ///
+    /// [`SamusFault::StandInLoop`], at the first cell whose chain looped.
+    pub fn refused(&self) -> Result<(), SamusFault> {
+        self.looped
+            .get()
+            .map_or(Ok(()), |&cell| Err(SamusFault::StandInLoop(cell)))
+    }
+
+    /// The cell a stand-in at `cell` names, `by` blocks along its row or column (`rows`), as
+    /// the model meets it: a chain from it that loops is cut here, naming nothing, and
+    /// refused.
+    fn stand_in(&self, cell: Cell, by: i8, rows: bool) -> Block {
+        if self.loops(cell) {
+            self.looped.get_or_init(|| cell);
+            return Block::StandsFor(None);
+        }
+        Block::StandsFor(self.extended(cell, by, rows))
+    }
+
+    /// Whether the chain of stand-ins from `cell` loops: one longer than the level has cells
+    /// visits a cell twice.
+    fn loops(&self, cell: Cell) -> bool {
+        let mut at = Some(cell);
+        for _ in 0..=self.room.blocks.len() {
+            at = match at.map(|cell| (cell, self.kind(cell))) {
+                Some((cell, BlockKind::HorizontalExtension(Offset(by)))) => {
+                    self.extended(cell, by, false)
+                }
+                Some((cell, BlockKind::VerticalExtension(Offset(by)))) => {
+                    self.extended(cell, by, true)
+                }
+                Some(_) | None => return false,
+            };
+        }
+        true
     }
 
     /// The level data index of `cell`: the row times the width, each by its low byte as the
@@ -195,12 +259,8 @@ impl World for SamusWorld<'_> {
             | BlockKind::Shootable(_)
             | BlockKind::Grapple(_) => Block::Solid,
             BlockKind::Bombable(_) | BlockKind::Special(_) => Block::Answered,
-            BlockKind::HorizontalExtension(Offset(by)) => {
-                Block::StandsFor(self.extended(cell, by, false))
-            }
-            BlockKind::VerticalExtension(Offset(by)) => {
-                Block::StandsFor(self.extended(cell, by, true))
-            }
+            BlockKind::HorizontalExtension(Offset(by)) => self.stand_in(cell, by, false),
+            BlockKind::VerticalExtension(Offset(by)) => self.stand_in(cell, by, true),
             BlockKind::Slope(shape) => self
                 .room
                 .slopes

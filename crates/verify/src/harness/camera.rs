@@ -381,7 +381,7 @@ pub enum Placement {
     /// motion, the message box): nothing places her.
     NoMotion,
     /// Her motion runs, but samus-motion's model doesn't cover the frame (a pose outside its
-    /// domain, a deferred movement): its placement is that model's to come.
+    /// domain, a deferred movement, a frame its adapter refuses): its placement is that model's to come.
     Uncovered,
 }
 
@@ -399,9 +399,12 @@ impl TryFrom<Result<Option<Fixed>, Motion>> for Placement {
                 | Motion::Waiting(_)
                 | Motion::NotRunning(_),
             ) => Self::NoMotion,
-            Err(Motion::Pose(_) | Motion::MovementHandler(_) | Motion::Deferred(_)) => {
-                Self::Uncovered
-            }
+            Err(
+                Motion::Pose(_)
+                | Motion::Fault(_)
+                | Motion::MovementHandler(_)
+                | Motion::Deferred(_),
+            ) => Self::Uncovered,
         })
     }
 }

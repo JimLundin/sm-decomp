@@ -14,7 +14,8 @@
 use core::fmt;
 
 use clean_model_samus_motion::{
-    BehaviourId, CATALOGUE, Rules as Reference, Samus as Model, Seat, Standing, Vertical, WallTest,
+    BehaviourId, CATALOGUE, Phase, Rules as Reference, Samus as Model, Seat, StandingAnimation,
+    WallTest,
 };
 use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World, ZERO};
 use game::Content;
@@ -22,9 +23,9 @@ use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
 use game::model::num::Fixed;
 use game::pose::{self, PoseRequests};
-use game::samus_world::SamusWorld;
-use game::samus_world::state::clean_of;
+use game::samus_world::state::{clean_of, named};
 use game::samus_world::step::{Ran, Reads, run, settle};
+use game::samus_world::{SamusFault, SamusWorld};
 use game::state::Controller;
 use game::state::room::{Block, BlockColumns, BlockKind, ElevatorRide};
 use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMotion};
@@ -66,6 +67,9 @@ pub enum Skip {
     Waiting(&'static str),
     /// Her pose at the frame's start is outside the model's domain.
     Pose(u16),
+    /// The adapter refuses the frame: a pose no situation of the model names, or a stand-in
+    /// chain that loops (a harness defect: the original ran the frame).
+    Fault(SamusFault),
     /// Samus's per-frame handler at the frame's start runs no motion: she is locked (the
     /// gunship, a station, a cutscene) or time is frozen (the x-ray scope).
     NotRunning(u16),
@@ -118,6 +122,7 @@ impl fmt::Display for Skip {
             Self::NotAtFrameEnd => write!(f, "record N isn't at the main loop's frame end (lag)"),
             Self::Waiting(at) => write!(f, "the main thread waits in {at}: motion doesn't run"),
             Self::Pose(code) => write!(f, "pose {code:#04X} isn't in the domain"),
+            Self::Fault(fault) => write!(f, "the adapter refuses the frame: {fault:?}"),
             Self::NotRunning(code) => {
                 write!(
                     f,
@@ -749,9 +754,10 @@ impl SamusMotion {
         SamusWorld::of(room, inputs.enemies.iter().copied())
     }
 
-    /// Her frame through the model over `level`, as the engine's Tick runs it; `None` when her
-    /// pose is outside it.
-    fn ran(&self, samus: &mut Samus, inputs: &Inputs, level: &SamusWorld) -> Option<Ran> {
+    /// Her frame through the model over `level`, as the engine's Tick runs it; the skip when her
+    /// pose is outside it or the adapter refuses the frame.
+    fn ran(&self, samus: &mut Samus, inputs: &Inputs, level: &SamusWorld) -> Result<Ran, Skip> {
+        let pose = samus.pose.0;
         let content = &self.content;
         // Her current state handler sets her radius and reads the pad's pose request before
         // the movement handler, except while the elevator carries her.
@@ -769,6 +775,8 @@ impl SamusMotion {
             content,
         };
         run(samus, reads, level, &Reference::REFERENCE)
+            .map_err(Skip::Fault)?
+            .ok_or(Skip::Pose(pose))
     }
 
     /// The y her motion's frame from record `from` placed her at, if any (`Outcome::placed`,
@@ -785,9 +793,7 @@ impl SamusMotion {
     ) -> Result<Option<clean_types::Fixed>, Skip> {
         let (mut hers, inputs) = self.decode(from, interval)?;
         let level = self.level(&inputs);
-        let ran = self
-            .ran(&mut hers.samus, &inputs, &level)
-            .ok_or(Skip::Pose(hers.samus.pose.0))?;
+        let ran = self.ran(&mut hers.samus, &inputs, &level)?;
         Ok(ran.outcome.placed)
     }
 }
@@ -918,8 +924,11 @@ impl Domain for SamusMotion {
         runs_after(from)?;
         motion_runs(from)?;
         let samus = Rules::ORIGINAL.samus(&from.wram)?;
-        if clean_of(&samus).is_none() {
+        let Some(model) = clean_of(&samus) else {
             return Err(Skip::Pose(samus.pose.0));
+        };
+        if !named(model.pose) {
+            return Err(Skip::Fault(SamusFault::UnnamedPose(samus.pose)));
         }
         let hers = Hers {
             samus,
@@ -1060,7 +1069,7 @@ impl Domain for SamusMotion {
 
     fn step(&self, hers: &mut Hers, inputs: &Inputs, world: &mut Exercised) {
         let level = self.level(inputs);
-        if let Some(ran) = self.ran(&mut hers.samus, inputs, &level) {
+        if let Ok(ran) = self.ran(&mut hers.samus, inputs, &level) {
             settle(&mut hers.samus, &ran);
             hers.rising = ran.outcome.rising;
             world.0 = exercised(&ran, &level);
@@ -1095,7 +1104,7 @@ impl Domain for SamusMotion {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) => Uncompared::Defect(skip.to_string()),
+            Skip::Unreadable(_) | Skip::Fault(_) => Uncompared::Defect(skip.to_string()),
             Skip::GameState(_)
             | Skip::NotAtFrameEnd
             | Skip::Waiting(_)
@@ -1124,9 +1133,9 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
         outcome,
         ..
     } = ran;
-    let airborne = before.vertical != Vertical::Ground;
-    let landed = airborne && after.vertical == Vertical::Ground;
-    let walked_off = !airborne && after.vertical != Vertical::Ground;
+    let airborne = before.vertical.phase != Phase::Ground;
+    let landed = airborne && after.vertical.phase == Phase::Ground;
+    let walked_off = !airborne && after.vertical.phase != Phase::Ground;
     let met = |ways: &[Heading]| {
         outcome.reached.iter().any(|touch| {
             matches!(touch.way, Way::Move(heading) if ways.contains(&heading))
@@ -1138,7 +1147,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
     let changed = after.pose != before.pose;
     let aimed = after.pose.aim != before.pose.aim;
     let stepped = changed && matches!(after.pose.action, Action::Running | Action::AgainstWall);
-    let moonfall = |samus: &Model| samus.vertical == Vertical::Moonfall;
+    let moonfall = |samus: &Model| samus.vertical.phase == Phase::Moonfall;
     [
         (B::MovesAsShePosed, true),
         (B::PoseFollows, true),
@@ -1160,7 +1169,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
         (B::Aiming, aimed),
         (
             B::AimingAndShooting,
-            aimed || stepped || matches!(outcome.standing, Standing::Restarts),
+            aimed || stepped || matches!(outcome.standing_animation, StandingAnimation::Restarts),
         ),
         (
             B::WallJump,
