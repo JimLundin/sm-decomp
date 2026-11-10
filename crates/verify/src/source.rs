@@ -1138,6 +1138,19 @@ pub const SAMUS_SLOPE_ADJUSTED: WramWord = WramWord {
     name: "SAMUS_SLOPE_ADJUSTED",
     offset: 0x0DBA,
 };
+/// Bank $90 log, `$90:EAB3`: the frames jump has stayed held since its press, which the pose
+/// input `$90:E926` reads.
+pub const SAMUS_JUMP_HELD_FRAMES: WramWord = WramWord {
+    name: "SAMUS_JUMP_HELD_FRAMES",
+    offset: 0x0AF4,
+};
+/// Bank $90 log, `$90:E913`: Samus's pose input handler, a bank $90 routine pointer; `$E926`
+/// for the one frame after a landing (`$91:F1EC`) or a turn's or a landing's animation end
+/// (`$90:8370`).
+pub const SAMUS_POSE_INPUT_HANDLER: WramWord = WramWord {
+    name: "SAMUS_POSE_INPUT_HANDLER",
+    offset: 0x0A60,
+};
 /// Bank $92 log, `$92:8000`: the Samus top and bottom half tile transfer flags, a byte each;
 /// the main loop clears them (`$82:8948`), `$80:9376` reads them.
 pub const NMI_COPY_SAMUS_HALVES: WramWord = WramWord {

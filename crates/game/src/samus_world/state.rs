@@ -6,19 +6,22 @@
 //! words: carrying on and skidding to the speed mode, a dash to lose to the momentum flag clear,
 //! her signed vertical speed to a magnitude and a direction, the moonfall to no vertical
 //! direction in the air, falling at 0 on the ground to direction down at 0, a spin carried on
-//! (its frame count) to the pose history, the seat to the slope flag.
+//! (its frame count) to the pose history, the seat to the slope flag, jump held through to its
+//! count and the pose input the frame before left.
 
 use clean_model_samus_motion::{
-    Bounces, Carry, DashIs, JumpHeld, Run, Samus as Model, Seat, Spin, Vertical,
+    Bounces, Carry, DashIs, FrameBefore, JumpHeld, Run, Samus as Model, Seat, Spin, Vertical,
 };
 use core::num::Wrapping;
 
-use clean_types::{Action, Fixed, Heading, Parts, Pose, Position, Px, Radius, Turn, ZERO};
+use clean_types::{Action, Fixed, Heading, Pose, Position, Px, Radius, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
 use crate::model::num::Fixed as Exact;
-use crate::state::samus::{Bounce, Item, MovementType, PoseId, Samus, SpeedMode, VerticalMotion};
+use crate::state::samus::{
+    self, Bounce, Item, MovementType, PoseId, Samus, SpeedMode, VerticalMotion,
+};
 
 /// Her body's half-width, the same in every pose.
 pub const X_RADIUS: Px = Wrapping(5);
@@ -120,23 +123,28 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
             y: Wrapping(samus.y_radius),
         },
         spin: if pose.action == Action::Spinning && carried {
-            Spin::CARRIED_ON
+            Spin::CarriedOn
         } else {
-            Spin::OFF
+            Spin::Off
         },
         seat: if samus.slope_adjusted {
             Seat::Seated
         } else {
             Seat::Unseated
         },
-        // The model's count can't be built from the engine's words: it starts every frame
-        // unheld, so jump held through a landing never presses (docs/LEGACY.md).
-        jump_held: JumpHeld::NONE,
+        jump_held: JumpHeld {
+            frames: Wrapping(samus.jump_held.frames),
+            before: match samus.jump_held.before {
+                samus::FrameBefore::LandedOrEnded => FrameBefore::LandedOrEnded,
+                samus::FrameBefore::Other => FrameBefore::Other,
+            },
+        },
     })
 }
 
-/// The engine's motion after the model's step: the quantities as the game keeps them.
-pub fn write_back(model: &Model, samus: &mut Samus) {
+/// The engine's motion after the model's step, `rising` its `Outcome::rising`: the quantities
+/// as the game keeps them.
+pub fn write_back(model: &Model, rising: bool, samus: &mut Samus) {
     let motion = &mut samus.motion;
     motion.position.x = exact(model.position.x);
     motion.position.y = exact(model.position.y);
@@ -153,18 +161,19 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
     } else {
         SpeedMode::TurningAround
     };
-    // On the ground the game leaves her vertical direction as it was: a speed she keeps with no
-    // direction stays so (a turn in a moonfall, chain-0232-D5A7 38 -> 44); another is downward
-    // or upward by its sign, and none is no direction. Falling at 0 on the ground is downward.
+    // Her vertical direction is up exactly when the model says she is rising, a rise she keeps
+    // on the ground included, so the camera reads the model's rising in it. Otherwise on the
+    // ground the game leaves her direction as it was: a speed she keeps with no direction stays
+    // so (a turn in a moonfall, chain-0232-D5A7 38 -> 44); another is downward, and none is no
+    // direction. Falling at 0 on the ground is downward.
     let vy = model.vy;
     let kept = motion.vertical;
     (motion.vertical, motion.vertical_speed) = match model.vertical {
+        _ if rising => (VerticalMotion::Up, exact(-vy)),
         Vertical::Moonfall => (VerticalMotion::None, exact(-vy)),
         Vertical::Ground if vy == ZERO => (VerticalMotion::None, Exact(0)),
         Vertical::Ground if kept == VerticalMotion::None => (VerticalMotion::None, exact(-vy)),
-        Vertical::Rising => (VerticalMotion::Up, exact(-vy)),
-        Vertical::Ground if vy.negative() => (VerticalMotion::Up, exact(-vy)),
-        Vertical::Falling | Vertical::GroundFalling | Vertical::Ground => {
+        Vertical::Rising | Vertical::Falling | Vertical::GroundFalling | Vertical::Ground => {
             (VerticalMotion::Down, exact(vy))
         }
     };
@@ -174,6 +183,13 @@ pub fn write_back(model: &Model, samus: &mut Samus) {
         Bounces::Twice => Bounce::Second,
     };
     samus.slope_adjusted = model.seat == Seat::Seated;
+    samus.jump_held = samus::JumpHeld {
+        frames: model.jump_held.frames.0,
+        before: match model.jump_held.before {
+            FrameBefore::LandedOrEnded => samus::FrameBefore::LandedOrEnded,
+            FrameBefore::Other => samus::FrameBefore::Other,
+        },
+    };
 }
 
 /// What her sprite shows that her pose doesn't decide, from her equipment; never in a liquid,

@@ -148,7 +148,8 @@ fn the_games_words_come_back_as_they_went() {
                 slope_adjusted: !seated,
                 ..before
             };
-            write_back(&model, &mut after);
+            // Rising is what the frame's start shows: the direction up.
+            write_back(&model, vertical == VerticalMotion::Up, &mut after);
             assert_eq!(after, before, "{pose:?} {mode:?} {vertical:?} {speed:#x}");
         }
     }
@@ -221,13 +222,13 @@ fn what_she_remembers_reads_from_the_games_words() {
 #[test]
 fn a_spin_is_carried_on_by_the_pose_history() {
     let mut spinning = samus(SPIN_RIGHT, Motion::default());
-    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::OFF));
+    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::Off));
     spinning.last_different = PoseRecord {
         pose: SPIN_RIGHT,
         movement: MovementType::SpinJumping,
         ..PoseRecord::default()
     };
-    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::CARRIED_ON));
+    assert!(clean_of(&spinning).is_some_and(|model| model.spin == Spin::CarriedOn));
 }
 
 /// The engine's pose for the model's: hers while it shows it, else her dress's.
@@ -306,7 +307,7 @@ fn a_frame_on_the_floor_runs_her_right() {
     };
     let start = model;
     let outcome = model.step(&frame, &world, &Rules::REFERENCE);
-    write_back(&model, &mut engine);
+    write_back(&model, outcome.rising, &mut engine);
     // Her moves met nothing but the floor the pull holds her to: she stays on the ground, and
     // no sideways move reached a block that isn't air.
     assert!(start.vertical == Vertical::Ground && model.vertical == Vertical::Ground);

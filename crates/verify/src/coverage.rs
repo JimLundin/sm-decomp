@@ -496,6 +496,8 @@ pub const FIELDS: &[Field] = &[
     wram("samus.drawing", source::SAMUS_DRAW_HANDLER),
     wram("samus.y_radius", source::SAMUS_Y_RADIUS),
     wram("samus.slope_adjusted", source::SAMUS_SLOPE_ADJUSTED),
+    wram("samus.jump_held.frames", source::SAMUS_JUMP_HELD_FRAMES),
+    wram("samus.jump_held.before", source::SAMUS_POSE_INPUT_HANDLER),
     Field {
         path: "room.room",
         status: Status::Decoded(Source::WramPointer(source::ROOM_PTR)),
@@ -974,6 +976,8 @@ mod tests {
             rules.palette_cycle.timer,
             rules.y_radius,
             rules.slope_adjusted,
+            rules.jump_held[0],
+            rules.jump_held[1],
             rules.elevator.status,
             rules.elevator.armed,
             rules.elevator.direction,

@@ -109,9 +109,9 @@ fn her_motion_reads_the_items_switched_on() {
     equipment.collected.insert(Item::HiJumpBoots);
     equipment.collected.insert(Item::GravitySuit);
     equipment.equipped.insert(Item::GravitySuit);
-    let motion = super::equipment(&equipment);
-    assert!(!motion.hi_jump);
-    assert!(motion.other_suit);
+    let on = super::switched_on(&equipment);
+    assert!(!on[Piece::HiJumpBoots]);
+    assert!(on[Piece::GravitySuit]);
 }
 
 #[test]

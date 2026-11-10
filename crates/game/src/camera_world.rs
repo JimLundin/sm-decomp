@@ -109,8 +109,9 @@ pub const fn lead(distance: CameraDistance) -> LeadSetting {
 ///   step and the scroll, and the State shows the placement there as the game's does.
 /// - Going backwards is a skid (turning round, her speed mode) or a moonwalk (her movement
 ///   type). The engine has no knockback yet (the damage domain), so none turns the lead.
-/// - Rising is her rise state, the vertical direction up, which holds from the rise's start
-///   through the frame that spends it.
+/// - Rising is samus-motion's `Outcome::rising`, which her motion's write-back keeps as the
+///   vertical direction up (`samus_world::state::write_back`): from the rise's start through the
+///   frame that spends it, and a rise she keeps on the ground.
 /// - Her facing is her pose's; facing the screen, or a facing the pose table doesn't name,
 ///   leads as facing the screen does, since only facing left changes the lead.
 #[must_use]

@@ -147,17 +147,10 @@ fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
     equipment.reserve_mode = engine_mode(inventory.reserve_mode);
 }
 
-/// What her motion and her sprite read: the items switched on, never the ones merely hers.
+/// What her motion reads: the items switched on, never the ones merely hers.
 #[must_use]
-pub fn equipment(equipment: &Equipment) -> clean_types::Equipment {
-    let on = pieces(equipment.equipped);
-    clean_types::Equipment {
-        hi_jump: on[Piece::HiJumpBoots],
-        space_jump: on[Piece::SpaceJump],
-        spring_ball: on[Piece::SpringBall],
-        screw_attack: on[Piece::ScrewAttack],
-        other_suit: on[Piece::VariaSuit] || on[Piece::GravitySuit],
-    }
+pub fn switched_on(equipment: &Equipment) -> Set<Piece> {
+    pieces(equipment.equipped)
 }
 
 /// The place a room argument names: none with bit 15 set.

@@ -54,8 +54,8 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     assert!(free.iter().all(|&set| !pad.any(set)));
     let pressed = frame.pressed;
     assert!(pressed.any(JUMP) && !pressed.any(clean_types::Buttons(RUN.0 | RIGHT.0 | AIM_UP.0)));
-    assert!(frame.equipment.hi_jump);
-    assert!(!frame.equipment.space_jump);
+    assert!(frame.items[clean_types::Item::HiJumpBoots]);
+    assert!(!frame.items[clean_types::Item::SpaceJump]);
     assert!(frame.elevator_moving);
     assert!(frame.parity == Parity::Odd);
     // A pose the empty pose table doesn't hold has no half-height.

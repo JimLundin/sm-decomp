@@ -21,8 +21,9 @@ use game::state::room::{
 };
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
-    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, MovementType, NewPoseFrame,
-    PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
+    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, FrameBefore, JumpHeld,
+    MovementType, NewPoseFrame, PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor,
+    VisorShade, VisorTimer,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::samus::{SpeedMode, VerticalMotion};
@@ -375,6 +376,8 @@ fn put_ride(wram: &mut [u8]) {
     put(wram, 0x0A5C, 0xEC14); // SAMUS_DRAW_HANDLER: using elevator
     put(wram, 0x0B00, 0x0015); // SAMUS_Y_RADIUS: the standing radius she called the ride with
     put(wram, 0x0DBA, 0x0001); // SAMUS_SLOPE_ADJUSTED: a square slope stopped her last step
+    put(wram, 0x0AF4, 0x0003); // SAMUS_JUMP_HELD_FRAMES: jump held 3 frames
+    put(wram, 0x0A60, 0xE926); // SAMUS_POSE_INPUT_HANDLER: she landed the frame before
     put(wram, 0x0E18, 0x0003); // ELEVATOR_STATUS: entering the room
     put(wram, 0x0E16, 0x0080); // ELEVATOR_FLAGS: armed
     put(wram, 0x0799, 0x8000); // ELEVATOR_DIRECTION: up
@@ -509,6 +512,11 @@ fn decodes_the_animation(state: &State) -> bool {
             }
         && state.samus.y_radius == 0x15
         && state.samus.slope_adjusted
+        && state.samus.jump_held
+            == JumpHeld {
+                frames: 3,
+                before: FrameBefore::LandedOrEnded,
+            }
 }
 
 /// Samus's visor cycle and the room's layer blending, as the synthetic record sets them.
@@ -687,7 +695,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 80] = [
+const WORD_RULES: [(&str, WordRule); 82] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -733,6 +741,8 @@ const WORD_RULES: [(&str, WordRule); 80] = [
     ("samus_tiles.bottom", |rules| &mut rules.samus_tiles.bottom),
     ("y_radius", |rules| &mut rules.y_radius),
     ("slope_adjusted", |rules| &mut rules.slope_adjusted),
+    ("jump_held.frames", |rules| &mut rules.jump_held[0]),
+    ("jump_held.input", |rules| &mut rules.jump_held[1]),
     ("elevator.status", |rules| &mut rules.elevator.status),
     ("elevator.armed", |rules| &mut rules.elevator.armed),
     ("elevator.direction", |rules| &mut rules.elevator.direction),

@@ -76,7 +76,7 @@ impl FrameSource<'_> {
         Frame {
             pad: pad(controls(self.controller.held)),
             pressed: pad(controls(self.controller.pressed)),
-            equipment: progress_world::equipment(&samus.equipment),
+            items: progress_world::switched_on(&samus.equipment),
             spin_turned_far: animation::spin_turned_far(samus),
             elevator_moving: self.ride.status != ElevatorStatus::Inactive,
             parity: match ScanOrder::of(self.completed) {

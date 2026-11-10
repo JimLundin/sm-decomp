@@ -86,7 +86,7 @@ pub fn run(samus: &mut Samus, reads: Reads<'_>, world: &SamusWorld, rules: &Rule
     .frame(&sized);
     let outcome = after.step(&frame, world, rules);
     let (animation_ends, elevator_moving) = (frame.animation_ends, frame.elevator_moving);
-    write_back(&after, samus);
+    write_back(&after, outcome.rising, samus);
     Some(Ran {
         before,
         after,

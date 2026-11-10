@@ -421,6 +421,30 @@ pub enum DrawingHandler {
     Hidden,
 }
 
+/// Jump held through (samus-motion `Jumping`): how long jump has stayed held since its press,
+/// and what the frame before left her pose input.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct JumpHeld {
+    /// The frames jump has stayed held since its press (`$0AF4`), counted at the frame's draw
+    /// (`$90:EAB3`) and wrapping from 65,535 to 0.
+    pub frames: u16,
+    /// What the frame before left her pose input (`$0A60`).
+    pub before: FrameBefore,
+}
+
+/// What the frame before left her pose input, as jump held through reads it.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FrameBefore {
+    /// She landed, or a turn's or a landing's animation ended: the pose input that may count
+    /// jump held through as a press (`$90:E926`, installed by `$91:F1EC` and `$90:8370`), for
+    /// one frame.
+    LandedOrEnded,
+    /// Any other pose input: the normal one (`$90:E913`), or one the engine doesn't run (the
+    /// demo's). None of them reads the count.
+    #[default]
+    Other,
+}
+
 /// Samus.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Samus {
@@ -467,4 +491,6 @@ pub struct Samus {
     // open: the slope alignment after a horizontal move (`$94:87F4`) sets it too; it joins
     // with the horizontal slope detection flag (`$0A46`).
     pub slope_adjusted: bool,
+    /// Jump held through.
+    pub jump_held: JumpHeld,
 }

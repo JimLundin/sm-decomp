@@ -29,9 +29,9 @@ use game::state::room::{
     SpritePalette, StaleScroll,
 };
 use game::state::samus::{
-    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing, Fixed, Gauge,
-    Item, Items, NewPoseFrame, Point, PoseId, PoseRecord, ReserveMode, Samus, SuperSpecial,
-    SuperSpecialCommand, Visor, VisorShade, VisorTimer,
+    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing, Fixed,
+    FrameBefore, Gauge, Item, Items, JumpHeld, NewPoseFrame, Point, PoseId, PoseRecord,
+    ReserveMode, Samus, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
@@ -437,6 +437,8 @@ pub struct Rules<'t> {
     pub y_radius: WramWord,
     /// `samus.slope_adjusted`.
     pub slope_adjusted: WramWord,
+    /// `samus.jump_held`: its count and the pose input handler.
+    pub jump_held: [WramWord; 2],
     /// `elevator`.
     pub elevator: ElevatorSources,
     /// `room.drawing.hook`.
@@ -1102,6 +1104,10 @@ impl Rules<'_> {
         drawing: source::SAMUS_DRAW_HANDLER,
         y_radius: source::SAMUS_Y_RADIUS,
         slope_adjusted: source::SAMUS_SLOPE_ADJUSTED,
+        jump_held: [
+            source::SAMUS_JUMP_HELD_FRAMES,
+            source::SAMUS_POSE_INPUT_HANDLER,
+        ],
         elevator: ElevatorSources {
             status: source::ELEVATOR_STATUS,
             armed: source::ELEVATOR_FLAGS,
@@ -1339,6 +1345,7 @@ impl Rules<'_> {
             drawing: drawing_handler(self.drawing, wram)?,
             y_radius: self.y_radius.read(wram)?,
             slope_adjusted: flag_word(self.slope_adjusted, wram)?,
+            jump_held: jump_held(self.jump_held, wram)?,
             ..Samus::default()
         })
     }
@@ -2170,6 +2177,22 @@ fn drawing_handler(source: WramWord, wram: &[u8]) -> Result<DrawingHandler, Deco
                 value,
             });
         }
+    })
+}
+
+/// Bank $90 log: the pose input handler the frame after a landing or an animation's end.
+const JUMP_HELD_THROUGH_INPUT: u16 = 0xE926;
+
+/// Jump held through: the count, and whether the pose input handler is the one a landing or an
+/// animation's end installs; every other handler is the same to jump held through.
+fn jump_held([frames, input]: [WramWord; 2], wram: &[u8]) -> Result<JumpHeld, DecodeError> {
+    Ok(JumpHeld {
+        frames: frames.read(wram)?,
+        before: if input.read(wram)? == JUMP_HELD_THROUGH_INPUT {
+            FrameBefore::LandedOrEnded
+        } else {
+            FrameBefore::Other
+        },
     })
 }
 

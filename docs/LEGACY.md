@@ -64,13 +64,6 @@ original's bytes as data.
   them, which an earlier room or the boot left. The engine draws zero words. Vanilla rooms stay within
   their tables.
 
-- **Jump held through's signed window** (the samus-motion domain, `docs/behaviours/samus-motion.md`
-  `Jumping`, jump held through; `$90:E92E`, `$90:EAB3`): the original tests the count of frames
-  jump has stayed held with a signed compare against 9, so counts 8009h-FFFFh (32,777 to 65,535
-  frames, about 9 to 18 minutes of holding jump) make a press as 1 to 8 do, and the count wraps
-  from 65,535 to 0. The spec states it as original only: no record or vector holds jump that long,
-  so nothing checks the engine there.
-
 - **Emptied item places past the engine's bits** (`game::progress_world`'s `store_emptied`,
   `$84:8899`): the engine keeps the 512 bits of `$7E:D870`. A room argument past them makes the
   original set a bit in the work RAM that follows; the engine drops the place, so its item would
@@ -123,18 +116,6 @@ original's bytes as data.
   engine never starts them under the grapple, as for a beam. Not seen on record.
 
 ## The engine: memory a model keeps that the engine can't hold yet
-
-- **Jump held through** (the samus-motion domain, `docs/behaviours/samus-motion.md` `Jumping`,
-  jump held through; `game::samus_world::state`'s `clean_of`; the decode notes' Jumping row,
-  `0AF4` and `$90:E926`): the original remembers how many frames jump has stayed held and, for one
-  frame, that she landed or a turn's or a landing's animation ended, and a count of 1 to 8 then is
-  a press, so she takes off again from the landing. The model keeps both in `JumpHeld`, but builds
-  one only as `JumpHeld::NONE` and shows neither part, so the engine can't decode it from the
-  original's words or carry it in its State: it starts each frame at `NONE` and never takes off
-  again without a press. The harness does the same, so the frames gap 32 names differ there
-  (chain-0059-A293 107 → 108 and 174 → 175, samus-screw-attack 174 → 175 and 606 → 607: x, the
-  vertical speed, the vertical direction and `rising`). The entry goes when the model can build
-  its memory from the count and the frame before.
 
 - **The blocks' askers the engine doesn't have yet** (the blocks domain, `docs/behaviours/blocks.md`
   §1.3; `game::blocks_world`): her moves meet each reacting cell by its body and the touches reach
