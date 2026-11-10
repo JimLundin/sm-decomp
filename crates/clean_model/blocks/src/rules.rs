@@ -1,10 +1,9 @@
 //! The rules (spec §5, `BlocksMarkedNothing`): for each family, and for each family a cell marked
 //! `Nothing` is met as, what her touches and the hits ask of its cells. A family's act is a start
-//! of its reaction; a `Nothing` mark's is a place held until the run. `Rules::reference` is the
-//! game's.
+//! of its reaction; a `Nothing` mark's is a place held until the run. Every row is a constant,
+//! naming its member; `Rules::reference` is the game's, keyed from those rows.
 
-use clean_types::{Family, Heading, HitBy, Look, Members, MetAs, Motion, Script, Set, Way};
-use clean_types::{by_member, set_of};
+use clean_types::{Family, Heading, HitBy, Look, MetAs, Motion, Script, Set, Way, by_member};
 use enum_map::EnumMap;
 
 use crate::cells::{CellKind, ReactingBody, Tile};
@@ -21,13 +20,13 @@ pub struct Rules {
 
 /// One row of the rules: what her touches and the hits ask of the cells it is for, each answered
 /// by the row's act, `A`.
-pub struct Row<K, A> {
+pub struct Row<K, A: 'static> {
     /// The member of the table it is for.
     pub member: K,
     /// What her touches do.
     pub touch: TouchRule<A>,
     /// The hits that act, each with the bodies it acts on; any other hit does nothing.
-    pub hits: Vec<HitRule<A>>,
+    pub hits: &'static [HitRule<A>],
 }
 
 /// What her touches do to a row's cells.
@@ -49,7 +48,7 @@ pub enum Starter {
     /// A touch that reaches it this way, however she moves.
     Way(Way),
     /// A touch by any way while she moves in one of these ways.
-    Moving(Set<Motion>),
+    Moving(&'static [Motion]),
     /// Every touch.
     Any,
 }
@@ -57,11 +56,21 @@ pub enum Starter {
 /// The hits that act on a row's cells.
 pub struct HitRule<A> {
     /// What reaches the cell.
-    pub by: Set<HitBy>,
-    /// The bodies it acts on: a block, reacting air or either.
-    pub on: Set<ReactingBody>,
+    pub by: &'static [HitBy],
+    /// The bodies it acts on.
+    pub on: Bodies,
     /// What it does.
     pub act: A,
+}
+
+/// The bodies of reacting cells a hit acts on.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Bodies {
+    /// A block and reacting air alike.
+    Either,
+    /// A block only, not reacting air (`BombsReveal`, `BlocksMarkedNothing` met as crumble
+    /// blocks).
+    BlockOnly,
 }
 
 /// What a row makes of a request.
@@ -167,17 +176,17 @@ impl Rules {
         Self {
             families: by_member(
                 [
-                    bomb_blocks(),
-                    crumble_blocks(),
-                    power_bomb_blocks(),
-                    shot_blocks(),
-                    speed_blocks(),
-                    super_missile_blocks(),
+                    BOMB_BLOCKS,
+                    CRUMBLE_BLOCKS,
+                    POWER_BOMB_BLOCKS,
+                    SHOT_BLOCKS,
+                    SPEED_BLOCKS,
+                    SUPER_MISSILE_BLOCKS,
                 ],
                 |row| row.member,
             ),
             marked_nothing: by_member(
-                [nothing_as_bomb(), nothing_as_crumble(), nothing_as_shot()],
+                [NOTHING_AS_BOMB, NOTHING_AS_CRUMBLE, NOTHING_AS_SHOT],
                 |row| row.member,
             ),
         }
@@ -194,141 +203,157 @@ const EVERY_HIT: &[HitBy] = &[
     HitBy::SuperMissile,
 ];
 
-impl<A> HitRule<A> {
-    /// The hits `by` act on a block and on reacting air alike.
-    fn on_either(by: &[HitBy], act: A) -> Self {
-        Self {
-            by: set_of(by.iter().copied()),
-            on: set_of([ReactingBody::Air, ReactingBody::Block]),
-            act,
-        }
-    }
+/// A blast: a bomb's or a power bomb's.
+const BLASTS: &[HitBy] = &[HitBy::Bomb, HitBy::PowerBomb];
 
-    /// The hits `by` act on a block only, not on reacting air.
-    fn on_block(by: &[HitBy], act: A) -> Self {
-        Self {
-            by: set_of(by.iter().copied()),
-            on: set_of([ReactingBody::Block]),
-            act,
-        }
-    }
-}
+/// `SpeedBlocks`: dashing or shinesparking.
+const AT_SPEED: &[Motion] = &[Motion::Dashing, Motion::Shinesparking];
+
+/// `BombBlocks`: dashing, shinesparking or screw attacking.
+const AT_SPEED_OR_SCREWING: &[Motion] = &[
+    Motion::Dashing,
+    Motion::Shinesparking,
+    Motion::ScrewAttacking,
+];
 
 /// `BombBlocks`: her touch while dashing, shinesparking or screw attacking bursts it; a bomb's
 /// blast breaks it past its sound, a power bomb's from its first step.
-fn bomb_blocks() -> Row<Family, Start> {
-    Row {
-        member: Family::Bomb,
-        touch: TouchRule::Reacts {
-            when: Starter::Moving(set_of([
-                Motion::Dashing,
-                Motion::Shinesparking,
-                Motion::ScrewAttacking,
-            ])),
-            act: BURSTS,
+const BOMB_BLOCKS: Row<Family, Start> = Row {
+    member: Family::Bomb,
+    touch: TouchRule::Reacts {
+        when: Starter::Moving(AT_SPEED_OR_SCREWING),
+        act: BURSTS,
+    },
+    hits: &[
+        HitRule {
+            by: &[HitBy::Bomb],
+            on: Bodies::Either,
+            act: BREAKS_QUIETLY,
         },
-        hits: vec![
-            HitRule::on_either(&[HitBy::Bomb], BREAKS_QUIETLY),
-            HitRule::on_either(&[HitBy::PowerBomb], BREAKS),
-        ],
-    }
-}
+        HitRule {
+            by: &[HitBy::PowerBomb],
+            on: Bodies::Either,
+            act: BREAKS,
+        },
+    ],
+};
 
 /// `CrumbleBlocks`: a move down breaks it; `BombsReveal`: a bomb's blast on one that is a block
 /// to her reveals it.
-fn crumble_blocks() -> Row<Family, Start> {
-    Row {
-        member: Family::Crumble,
-        touch: TouchRule::Reacts {
-            when: Starter::Way(Way::Move(Heading::Down)),
-            act: BREAKS,
-        },
-        hits: vec![HitRule::on_block(&[HitBy::Bomb], REVEALS)],
-    }
-}
+const CRUMBLE_BLOCKS: Row<Family, Start> = Row {
+    member: Family::Crumble,
+    touch: TouchRule::Reacts {
+        when: Starter::Way(Way::Move(Heading::Down)),
+        act: BREAKS,
+    },
+    hits: &[HitRule {
+        by: &[HitBy::Bomb],
+        on: Bodies::BlockOnly,
+        act: REVEALS,
+    }],
+};
 
 /// `PowerBombBlocks`: a power bomb's blast breaks it, a bomb's reveals it.
-fn power_bomb_blocks() -> Row<Family, Start> {
-    Row {
-        member: Family::PowerBomb,
-        touch: TouchRule::ByBody,
-        hits: vec![
-            HitRule::on_either(&[HitBy::PowerBomb], BREAKS),
-            HitRule::on_either(&[HitBy::Bomb], REVEALS),
-        ],
-    }
-}
+const POWER_BOMB_BLOCKS: Row<Family, Start> = Row {
+    member: Family::PowerBomb,
+    touch: TouchRule::ByBody,
+    hits: &[
+        HitRule {
+            by: &[HitBy::PowerBomb],
+            on: Bodies::Either,
+            act: BREAKS,
+        },
+        HitRule {
+            by: &[HitBy::Bomb],
+            on: Bodies::Either,
+            act: REVEALS,
+        },
+    ],
+};
 
 /// `ShotBlocks`: any weapon or the grapple breaks it.
-fn shot_blocks() -> Row<Family, Start> {
-    Row {
-        member: Family::Shot,
-        touch: TouchRule::ByBody,
-        hits: vec![HitRule::on_either(EVERY_HIT, BREAKS)],
-    }
-}
+const SHOT_BLOCKS: Row<Family, Start> = Row {
+    member: Family::Shot,
+    touch: TouchRule::ByBody,
+    hits: &[HitRule {
+        by: EVERY_HIT,
+        on: Bodies::Either,
+        act: BREAKS,
+    }],
+};
 
 /// `SpeedBlocks`: her touch while dashing or shinesparking shatters it; `BombsReveal`: a bomb's
 /// blast on one that is a block to her reveals it.
-fn speed_blocks() -> Row<Family, Start> {
-    Row {
-        member: Family::Speed,
-        touch: TouchRule::Reacts {
-            when: Starter::Moving(set_of([Motion::Dashing, Motion::Shinesparking])),
-            act: SHATTERS,
-        },
-        hits: vec![HitRule::on_block(&[HitBy::Bomb], REVEALS)],
-    }
-}
+const SPEED_BLOCKS: Row<Family, Start> = Row {
+    member: Family::Speed,
+    touch: TouchRule::Reacts {
+        when: Starter::Moving(AT_SPEED),
+        act: SHATTERS,
+    },
+    hits: &[HitRule {
+        by: &[HitBy::Bomb],
+        on: Bodies::BlockOnly,
+        act: REVEALS,
+    }],
+};
 
 /// `SuperMissileBlocks`: a super missile breaks it, a bomb's blast reveals it.
-fn super_missile_blocks() -> Row<Family, Start> {
-    Row {
-        member: Family::SuperMissile,
-        touch: TouchRule::ByBody,
-        hits: vec![
-            HitRule::on_either(&[HitBy::SuperMissile], BREAKS),
-            HitRule::on_either(&[HitBy::Bomb], REVEALS),
-        ],
-    }
-}
+const SUPER_MISSILE_BLOCKS: Row<Family, Start> = Row {
+    member: Family::SuperMissile,
+    touch: TouchRule::ByBody,
+    hits: &[
+        HitRule {
+            by: &[HitBy::SuperMissile],
+            on: Bodies::Either,
+            act: BREAKS,
+        },
+        HitRule {
+            by: &[HitBy::Bomb],
+            on: Bodies::Either,
+            act: REVEALS,
+        },
+    ],
+};
 
 /// `BlocksMarkedNothing`, met as bomb blocks: every touch and every hit holds a place.
-fn nothing_as_bomb() -> Row<MetAs, HoldUntilRun> {
-    Row {
-        member: MetAs::Bomb,
-        touch: TouchRule::Reacts {
-            when: Starter::Any,
-            act: HoldUntilRun,
-        },
-        hits: vec![HitRule::on_either(EVERY_HIT, HoldUntilRun)],
-    }
-}
+const NOTHING_AS_BOMB: Row<MetAs, HoldUntilRun> = Row {
+    member: MetAs::Bomb,
+    touch: TouchRule::Reacts {
+        when: Starter::Any,
+        act: HoldUntilRun,
+    },
+    hits: &[HitRule {
+        by: EVERY_HIT,
+        on: Bodies::Either,
+        act: HoldUntilRun,
+    }],
+};
 
-/// Met as crumble blocks: every touch holds a place; a bomb's or a power bomb's blast holds one
-/// on a block, and nothing on reacting air.
-fn nothing_as_crumble() -> Row<MetAs, HoldUntilRun> {
-    Row {
-        member: MetAs::Crumble,
-        touch: TouchRule::Reacts {
-            when: Starter::Any,
-            act: HoldUntilRun,
-        },
-        hits: vec![HitRule::on_block(
-            &[HitBy::Bomb, HitBy::PowerBomb],
-            HoldUntilRun,
-        )],
-    }
-}
+/// `BlocksMarkedNothing`, met as crumble blocks: every touch holds a place; a blast holds one on
+/// a block, and nothing on reacting air.
+const NOTHING_AS_CRUMBLE: Row<MetAs, HoldUntilRun> = Row {
+    member: MetAs::Crumble,
+    touch: TouchRule::Reacts {
+        when: Starter::Any,
+        act: HoldUntilRun,
+    },
+    hits: &[HitRule {
+        by: BLASTS,
+        on: Bodies::BlockOnly,
+        act: HoldUntilRun,
+    }],
+};
 
-/// Met as shot blocks: she meets it by its body; every hit holds a place.
-fn nothing_as_shot() -> Row<MetAs, HoldUntilRun> {
-    Row {
-        member: MetAs::Shot,
-        touch: TouchRule::ByBody,
-        hits: vec![HitRule::on_either(EVERY_HIT, HoldUntilRun)],
-    }
-}
+/// `BlocksMarkedNothing`, met as shot blocks: she meets it by its body; every hit holds a place.
+const NOTHING_AS_SHOT: Row<MetAs, HoldUntilRun> = Row {
+    member: MetAs::Shot,
+    touch: TouchRule::ByBody,
+    hits: &[HitRule {
+        by: EVERY_HIT,
+        on: Bodies::Either,
+        act: HoldUntilRun,
+    }],
+};
 
 impl<K, A: Copy> Row<K, A> {
     /// What this row makes of `meets` on a cell of this body, as she moves, with every place
@@ -346,7 +371,7 @@ impl<K, A: Copy> Row<K, A> {
             Meets::Hit(by) => self
                 .hits
                 .iter()
-                .find(|hit| hit.by[by] && hit.on[body])
+                .find(|hit| hit.by.contains(&by) && hit.on.holds(body))
                 .map_or(Response::Ignored, |hit| Response::Act(hit.act)),
         }
     }
@@ -370,9 +395,20 @@ impl Starter {
     pub fn starts(&self, way: Way, moving: Set<Motion>) -> bool {
         match self {
             Self::Way(starting) => *starting == way,
-            Self::Moving(motions) => motions.intersects(&moving),
+            Self::Moving(motions) => motions.iter().any(|&motion| moving[motion]),
             Self::Any => true,
         }
+    }
+}
+
+impl Bodies {
+    /// Whether a hit acts on a cell of this body.
+    #[must_use]
+    pub const fn holds(self, body: ReactingBody) -> bool {
+        matches!(
+            (self, body),
+            (Self::Either, _) | (Self::BlockOnly, ReactingBody::Block)
+        )
     }
 }
 

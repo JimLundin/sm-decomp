@@ -30,7 +30,7 @@ pub use reactions::{
 };
 pub use report::Report;
 pub use rules::{
-    Change, FirstStep, HitRule, HoldUntilRun, Meets, Response, Row, Rules, Start, Starter,
+    Bodies, Change, FirstStep, HitRule, HoldUntilRun, Meets, Response, Row, Rules, Start, Starter,
     TouchRule,
 };
 pub use state::State;

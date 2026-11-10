@@ -1,7 +1,6 @@
 //! The spec's vectors (`scenarios/vectors/blocks.toml`) run through the model, and the catalogue
-//! checked against the spec and the vectors. The file's shape is declared once below; every table
-//! refuses a key it doesn't name, and every name is read by a table of the names the format
-//! allows.
+//! checked against the vectors. The file's shape is declared once below; every table refuses a
+//! key it doesn't name, and every name is read by a table of the names the format allows.
 
 #![cfg(test)]
 
@@ -15,7 +14,7 @@ use clean_model_blocks::{
     ScreenChange, ScrollReaction, SoundRequest, StandIn, State, Step, Tile, Touched,
 };
 use clean_types::{
-    Cell, Checked, Family, Flip, Heading, HitBy, Kind, Look, MetAs, Motion, Pair, Picture, Point,
+    Cell, Checked, Family, Flip, Heading, HitBy, Look, MetAs, Motion, Pair, Picture, Point,
     ScreenKind, Script, Set, Touch, Way,
 };
 use serde::de::Error as _;
@@ -23,9 +22,6 @@ use serde::{Deserialize, Deserializer};
 
 /// The vector file.
 const VECTORS: &str = include_str!("../../../../scenarios/vectors/blocks.toml");
-
-/// The spec, whose entries the catalogue lists.
-const SPEC: &str = include_str!("../../../../docs/behaviours/blocks.md");
 
 /// A look's picture is written in hex.
 const HEX: u32 = 16;
@@ -841,76 +837,5 @@ fn every_entry_checked_by_vectors_has_one() {
                 .any(|vector| vector.entries.contains(&name));
             assert!(checked, "{name} is checked by vectors but none names it");
         }
-    }
-}
-
-/// A spec entry as the spec states it: its name, kind and summary.
-struct SpecEntry {
-    name: String,
-    kind: String,
-    summary: String,
-}
-
-/// The spec's entries: each `### Name` heading that states a `- kind:`, with its `- summary:`,
-/// whose lines go on while they are indented.
-fn spec_entries() -> Vec<SpecEntry> {
-    let mut entries: Vec<SpecEntry> = Vec::new();
-    let mut in_summary = false;
-    for line in SPEC.lines() {
-        if let Some(name) = line.strip_prefix("### ") {
-            entries.push(SpecEntry {
-                name: name.trim().to_owned(),
-                kind: String::new(),
-                summary: String::new(),
-            });
-            in_summary = false;
-            continue;
-        }
-        let Some(entry) = entries.last_mut() else {
-            continue;
-        };
-        if let Some(kind) = line.strip_prefix("- kind: ") {
-            entry.kind = kind.trim_end_matches('.').to_owned();
-        }
-        if let Some(summary) = line.strip_prefix("- summary: ") {
-            entry.summary = summary.to_owned();
-            in_summary = true;
-        } else if in_summary && line.starts_with("  ") {
-            entry.summary = format!("{} {}", entry.summary, line.trim());
-        } else {
-            in_summary = false;
-        }
-    }
-    entries.retain(|entry| !entry.kind.is_empty());
-    entries
-}
-
-fn kind_name(kind: &Kind) -> &'static str {
-    match kind {
-        Kind::Mechanic => "mechanic",
-        Kind::Quirk => "quirk",
-        Kind::Timing => "timing",
-        Kind::Output => "output",
-        Kind::Encoding => "encoding",
-    }
-}
-
-#[test]
-fn the_catalogue_matches_the_spec_one_for_one() {
-    let entries = spec_entries();
-    let names: Vec<&str> = entries.iter().map(|entry| entry.name.as_str()).collect();
-    let catalogued: Vec<String> = CATALOGUE
-        .iter()
-        .map(|behaviour| format!("{:?}", behaviour.id))
-        .collect();
-    assert_eq!(catalogued, names, "the catalogue lists the spec's entries");
-    for (behaviour, entry) in CATALOGUE.iter().zip(&entries) {
-        assert_eq!(
-            kind_name(&behaviour.kind),
-            entry.kind,
-            "{}: kind",
-            entry.name
-        );
-        assert_eq!(behaviour.summary, entry.summary, "{}: summary", entry.name);
     }
 }

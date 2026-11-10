@@ -517,12 +517,6 @@ impl<K: Enum> Members for Set<K> {
     }
 }
 
-/// The set of exactly `members`, named in any order: a reordered enum changes nothing.
-#[must_use]
-pub fn set_of<K: Enum>(members: impl IntoIterator<Item = K>) -> Set<K> {
-    members.into_iter().map(|member| (member, true)).collect()
-}
-
 /// A table keyed by the enum `K`, built from its rows, one row for each member, each naming its
 /// member (read by `member`), in any order: a reordered enum changes nothing.
 #[must_use]
