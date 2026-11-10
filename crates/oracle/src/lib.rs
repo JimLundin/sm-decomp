@@ -12,7 +12,6 @@ pub mod cache;
 pub mod cli;
 pub mod corpus;
 pub mod cross;
-pub mod diagnose;
 pub use oracle_record::game;
 pub use oracle_record::inputs;
 pub mod ladder;
