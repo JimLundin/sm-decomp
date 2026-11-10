@@ -70,7 +70,10 @@
 #   landed_from (`Landing` only: "Jump" or "Spin"); and legs (optional, default "Together":
 #   "Striding" or "Together"). These lists of values are alphabetical; their order means nothing.
 #   A recorded pose gives the aim, gun and turn the record shows. next_pose: the pose chosen
-#   during it, when it changes; its radius is her body's size after the change.
+#   during it, when it changes; its radius is her body at the frame's end: the chosen pose's own
+#   where its body grows (pose fit) or a change of shape lowers her, and otherwise, as a record
+#   shows it, still the body she started the frame in, the new body holding from the next frame
+#   (spec §1.3, body size; J1's spin start gives 21 px).
 # - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
 #   The lead-in's frames alternate back from it.
 # - pad: the buttons held; jump_pressed: jump just pressed this frame; pressed (optional, default
@@ -2962,11 +2965,18 @@ pad = []
 jump_pressed = false
 after = { position = ["0108.0000", "00FC.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "00FC.0000", jump_held = 0, landed_or_ended = true }
 
-# Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
+# Pose-chart steps (spec section 7): one frame each, from a record or constructed. The next pose is
+# the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",
 #   default "Stowed"; and turn, `Turning` only, as a vector's pose gives it); pad: the
 #   buttons held;
 #   jump_pressed: jump just pressed; pressed: the other buttons just pressed this frame.
+# - items (optional, default none): the items switched on, as a vector gives them. speed_x
+#   (optional, default "+0000.0000"): her horizontal speed at the frame's start, signed as a
+#   vector's. in_the_air (optional): true when she is in the air once the frame's moves are made,
+#   false when she is on the ground; by default she is in the air in `Jumping`, `Spinning`,
+#   `Falling` and `WallJumping` and after "no_floor", and on the ground after "floor" and in every
+#   other pose (a take-off and a turn are on the ground).
 # - met: what this frame's moves met, listed alphabetically: "animation_end" (the animation of her pose
 #   ends this frame), "floor" (a landing), "no_floor" (walking off a ledge), "nothing", "wall" (a
 #   wall stop) or "wall_kick" (the wall-jump kick).
@@ -4457,3 +4467,434 @@ pose = { body = "Crouched", action = "Crouching", facing = "Right", radius = [5,
 pad = ["down"]
 jump_pressed = false
 after = { position = ["0435.0000", "00B0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00" }
+
+# The speed booster (spec `Dash`, `Jumping`; MODEL §1 decision 13: RAM observations and invented
+# rooms). MB1-MB4, SB1, SB2, WB1 and R8J are recorded; the C-booster vectors are constructed, each
+# from an existing vector or record with the speed booster switched on, worked by hand.
+
+[[vector]]
+id = "MB1"
+source = "samus-mockball:27"
+entries = ["Dash", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1232 }
+before = { position = ["00C7.7FFF", "04BB.FFFF"], speed_x = "+0002.C000", dash = "0004.0000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["00CE.4FFF", "04BB.FFFF"], speed_x = "+0002.C000", dash = "0004.1000", speed_y = "+0000.E000" }
+
+[[vector]]
+id = "SB1"
+source = "samus-shinespark-right:74"
+entries = ["Dash", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1216 }
+before = { position = ["024B.3FFF", "04AB.FFFF"], speed_x = "+0002.C000", dash = "0006.F000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0254.FFFF", "04AB.FFFF"], speed_x = "+0002.C000", dash = "0007.0000", speed_y = "+0000.E000" }
+
+[[vector]]
+id = "SB2"
+source = "samus-shinespark-right:75"
+entries = ["Dash", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1216 }
+before = { position = ["0254.FFFF", "04AB.FFFF"], speed_x = "+0002.C000", dash = "0007.0000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["025E.BFFF", "04AB.FFFF"], speed_x = "+0002.C000", dash = "0007.0000", speed_y = "+0000.E000" }
+
+[[vector]]
+id = "MB2"
+source = "samus-mockball:42"
+entries = ["Jumping", "Dash", "MovesAsShePosed", "RisingAndFalling"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1232 }
+before = { position = ["0134.3FFF", "04BB.FFFF"], speed_x = "+0002.C000", dash = "0004.F000", speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
+pad = ["run", "right", "jump"]
+jump_pressed = true
+after = { position = ["013B.FFFF", "04BB.FFFF"], speed_x = "+0002.C000", dash = "0005.0000", speed_y = "-0008.0000", rising = true }
+
+[[vector]]
+id = "WB1"
+source = "item-wave-beam:7"
+entries = ["Jumping", "Dash", "MovesAsShePosed"]
+items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"]
+world = { floor_top = 160 }
+before = { position = ["004D.CFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0002.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
+pad = ["run", "right", "jump"]
+jump_pressed = true
+after = { position = ["0052.9FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0002.1000", speed_y = "-0007.1000", rising = true }
+
+[[vector]]
+id = "R8J"
+source = "r08:187"
+entries = ["Jumping", "Dash", "MovesAsShePosed", "PadChart"]
+items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"]
+world = { floor_top = 416 }
+before = { position = ["005A.1C00", "018B.FFFF"], speed_x = "-0002.C000", dash = "0000.F000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], gun = "Drawn" }
+next_pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 21] }
+pad = ["left", "shoot", "jump"]
+jump_pressed = true
+after = { position = ["0056.6C00", "018B.FFFF"], speed_x = "-0002.C000", dash = "0000.F000", speed_y = "-0006.F000", rising = true }
+
+[[vector]]
+id = "MB3"
+source = "samus-mockball:101"
+entries = ["SpeedBuildsAndBrakes", "Dash", "FollowingTheGround"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1232 }
+before = { position = ["02C6.5FFF", "04C9.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["02CE.9FFF", "04C9.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "MB4"
+source = "samus-mockball:110"
+entries = ["Dash", "PadChart", "SpeedBuildsAndBrakes"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1232 }
+before = { position = ["0310.9FFF", "04C9.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "SpringBall", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0318.DFFF", "04C9.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+
+# C-booster-dash: C-dashcap-b with the speed booster: under its cap of 7.0000 the dash grows on.
+
+[[vector]]
+id = "C-booster-dash"
+source = "constructed"
+entries = ["Dash"]
+items = ["SpeedBooster"]
+world = { floor_top = 288 }
+before = { position = ["0105.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0003.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["010B.9000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0003.1000" }
+
+# C-booster-dashcap-a and -b: the cap's part-by-part test at 7.0000, as C-dashcap-a and -b at
+# 2.0000: 7.F000 has a subpixel part below 0, so it grows to 8.0000, which then snaps to 7.0000.
+
+[[vector]]
+id = "C-booster-dashcap-a"
+source = "constructed"
+entries = ["Dash", "WordwiseTopSpeed"]
+items = ["SpeedBooster"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0007.F000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["010A.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0008.0000" }
+
+[[vector]]
+id = "C-booster-dashcap-b"
+source = "constructed"
+entries = ["Dash"]
+items = ["SpeedBooster"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0008.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0109.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0007.0000" }
+
+# C-booster-carry: J1 with the speed booster. The dash grows to 1.7000; the spin starts at
+# 4.E000 + 0 px (half of 1, rounded down) with 0.7000 added to the subpixel part: E000 + 7000
+# carries out of the subpixel part, and the carry is lost, so she rises at 4.5000, slower than
+# without the booster.
+
+[[vector]]
+id = "C-booster-carry"
+source = "constructed"
+entries = ["Jumping", "Dash", "MovesAsShePosed"]
+items = ["SpeedBooster"]
+world = { floor_top = 160 }
+before = { position = ["0086.4FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.6000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
+pad = ["run", "jump", "right"]
+jump_pressed = true
+after = { position = ["008A.7FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.7000", speed_y = "-0004.5000", rising = true }
+
+# C-booster-walljump: WK1 with the speed booster. The dash, 1.2000, carried through the spin,
+# adds 0 px and 0.2000 to the wall jump's 4.A000.
+
+[[vector]]
+id = "C-booster-walljump"
+source = "constructed"
+entries = ["WallJump", "Jumping", "RisingAndFalling"]
+items = ["SpeedBooster"]
+world = { solid_block = [1344, 640] }
+before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800" }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["left"], jump_pressed = false, pressed = ["left"] },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 12] }
+pad = ["left", "jump"]
+jump_pressed = true
+spin_turned_far = true
+after = { position = ["0534.FFFF", "0299.27FF"], speed_x = "+0000.0000", dash = "0001.2000", speed_y = "-0004.C000", rising = true, wall_test = "Kicked" }
+
+# C-booster-space-jump: SJ1 with a dash of 3.4000 carried into the spin. She moves her speed and
+# dash, 1.6000 + 3.4000; space jump's jump again starts at 6.0000 (hi-jump) + 1 px (half of 3) +
+# 0.4000, 7.4000, and she rises by it that frame; the pull then makes 7.2400.
+
+[[vector]]
+id = "C-booster-space-jump"
+source = "constructed"
+entries = ["Jumping", "RisingAndFalling", "DriftInTheAir"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = {}
+before = { position = ["0082.BFFF", "0478.1FFF"], speed_x = "+0001.6000", dash = "0003.4000", speed_y = "+0002.A000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+pad = ["jump", "right"]
+jump_pressed = true
+after = { position = ["0087.5FFF", "0470.DFFF"], speed_x = "+0001.6000", dash = "0003.4000", speed_y = "-0007.2400", rising = true }
+
+# C-spring-hop and C-booster-hop: the spring ball rolling on a floor with a dash of 5.0000 (the
+# mockball's) hops. It rolls its speed and dash (3.4000 + 5.0000), the pull holds it flush, and it
+# rises at the jump speed: 4.E000, and with the speed booster 4.E000 + 2 px (half of 5) = 6.E000.
+
+[[vector]]
+id = "C-spring-hop"
+source = "constructed"
+entries = ["Jumping", "PadChart", "MovesAsShePosed"]
+items = ["MorphBall", "SpringBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000" }
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
+pad = ["right", "jump"]
+jump_pressed = true
+after = { position = ["0108.4000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "-0004.E000", rising = true }
+
+[[vector]]
+id = "C-booster-hop"
+source = "constructed"
+entries = ["Jumping", "PadChart", "MovesAsShePosed"]
+items = ["MorphBall", "SpeedBooster", "SpringBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000" }
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
+pad = ["right", "jump"]
+jump_pressed = true
+after = { position = ["0108.4000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "-0006.E000", rising = true }
+
+# C-spring-land-held and C-booster-spring-land: the spring ball on its hop falls at 2.0000 onto a
+# floor with jump held and right held, and a dash of 3.0000. It builds 0.C000 and moves its speed
+# and dash, 3.C000; the fall stops flush, its bottom edge on the floor's top row less 1; with jump
+# held it hops again at the jump speed instead of a bounce, bounces 0: 4.E000, and with the speed
+# booster 4.E000 + 1 px = 5.E000.
+
+[[vector]]
+id = "C-spring-land-held"
+source = "constructed"
+entries = ["Landing", "Jumping", "BlocksStopFlush"]
+items = ["MorphBall", "SpringBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000" }
+pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
+pad = ["right", "jump"]
+jump_pressed = false
+after = { position = ["0103.C000", "0119.FFFF"], speed_x = "+0000.C000", dash = "0003.0000", speed_y = "-0004.E000", bounces = 0, rising = true }
+
+[[vector]]
+id = "C-booster-spring-land"
+source = "constructed"
+entries = ["Landing", "Jumping", "BlocksStopFlush"]
+items = ["MorphBall", "SpeedBooster", "SpringBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000" }
+pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
+pad = ["right", "jump"]
+jump_pressed = false
+after = { position = ["0103.C000", "0119.FFFF"], speed_x = "+0000.C000", dash = "0003.0000", speed_y = "-0005.E000", bounces = 0, rising = true }
+
+# C-unmorph-land-run and C-morph-land-run (adversary 84, V4): a change of shape landing keeps her
+# horizontal speed and dash; only her vertical motion stops. C-unmorph-land-run is r04:332's frame
+# (the unmorph falling at 2.3000 lands flush with its speed 1.0000 and dash 0.2000 kept), started
+# following the pad, as a start must be; C-morph-land-run is samus-mockball:71's (the morph falling
+# at 2.8400 lands with 1.4000 and the booster's dash 5.0000 kept), the same.
+
+[[vector]]
+id = "C-unmorph-land-run"
+source = "constructed"
+entries = ["Landing", "SpeedBuildsAndBrakes", "WhatHerMovesMet"]
+items = ["Bombs", "MorphBall"]
+world = { floor_top = 192 }
+before = { position = ["0580.BFFF", "00B0.FFFF"], speed_x = "+0001.0000", dash = "0000.2000", speed_y = "+0002.3000" }
+pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { position = ["0580.DFFF", "00B0.FFFF"], speed_x = "+0001.0000", dash = "0000.2000", speed_y = "+0000.0000", bounces = 0, rising = false }
+
+[[vector]]
+id = "C-morph-land-run"
+source = "constructed"
+entries = ["Landing", "SpeedBuildsAndBrakes", "WhatHerMovesMet"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = { floor_top = 1216 }
+before = { position = ["01EC.DFFF", "04B9.C3FF"], speed_x = "+0001.4000", dash = "0005.0000", speed_y = "+0002.8400" }
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["01F1.DFFF", "04B9.FFFF"], speed_x = "+0001.4000", dash = "0005.0000", speed_y = "+0000.0000", bounces = 0, rising = false }
+
+# C-fallcap-past (blind review point 8): the fall stops growing only at a pixel part of exactly 5. A
+# speed of 6.0000, which no fall growing from below reaches, grows on.
+
+[[vector]]
+id = "C-fallcap-past"
+source = "constructed"
+entries = ["RisingAndFalling"]
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_y = "+0006.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0086.0000"], speed_y = "+0006.1C00" }
+
+# Pose-chart steps that read her horizontal speed, where she is and the items (blind review point
+# 9b): the rows a step at speed 0, as given from the action alone, never reached.
+
+[[pose_step]]
+id = "PS-run-kept"
+source = "samus-grapple-walljump:1"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "DownForward" }
+pad = []
+jump_pressed = false
+pressed = []
+speed_x = "+0002.C000"
+met = "nothing"
+after = { pose = { body = "Upright", action = "Running", facing = "Right", aim = "DownForward" } }
+
+[[pose_step]]
+id = "PS-run-stops"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Running", facing = "Right", aim = "DownForward" }
+pad = []
+jump_pressed = false
+pressed = []
+speed_x = "+0000.0000"
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "PS-ball-rolls"
+source = "samus-mockball:76"
+entries = ["PadChart"]
+items = ["MorphBall", "SpringBall"]
+pose = { body = "SpringBall", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["right"]
+jump_pressed = false
+pressed = []
+speed_x = "+0001.4000"
+in_the_air = false
+met = "nothing"
+after = { pose = { body = "SpringBall", action = "Rolling", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "PS-ball-rests"
+source = "samus-mockball:110"
+entries = ["PadChart"]
+items = ["MorphBall", "SpringBall"]
+pose = { body = "SpringBall", action = "Rolling", facing = "Right", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+speed_x = "+0003.4000"
+in_the_air = false
+met = "nothing"
+after = { pose = { body = "SpringBall", action = "Still", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "PS-ball-air-kept"
+source = "constructed"
+entries = ["PadChart"]
+items = ["MorphBall"]
+pose = { body = "Ball", action = "Falling", facing = "Right", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+speed_x = "+0001.0000"
+in_the_air = true
+met = "nothing"
+after = { pose = { body = "Ball", action = "Falling", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "PS-spring-air-kept"
+source = "constructed"
+entries = ["PadChart"]
+items = ["MorphBall", "SpringBall"]
+pose = { body = "SpringBall", action = "Falling", facing = "Right", aim = "Forward" }
+pad = []
+jump_pressed = false
+pressed = []
+speed_x = "+0001.0000"
+in_the_air = true
+met = "nothing"
+after = { pose = { body = "SpringBall", action = "Falling", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "PS-spring-hop"
+source = "constructed"
+entries = ["PadChart"]
+items = ["MorphBall", "SpringBall"]
+pose = { body = "SpringBall", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["jump"]
+jump_pressed = true
+pressed = []
+in_the_air = false
+met = "nothing"
+after = { pose = { body = "SpringBall", action = "Jumping", facing = "Right", aim = "Forward" } }
+
+[[pose_step]]
+id = "PS-ball-unmorphs"
+source = "constructed"
+entries = ["PadChart"]
+items = ["MorphBall"]
+pose = { body = "Ball", action = "Still", facing = "Right", aim = "Forward" }
+pad = ["jump"]
+jump_pressed = true
+pressed = []
+in_the_air = false
+met = "nothing"
+after = { pose = { body = "Crouched", action = "Unmorphing", facing = "Right", aim = "Forward" } }
+
+# C-booster-bounce (adversary 86, O2): C-bounce with the speed booster and a dash of 3.0000, right
+# held. The ball builds 0.C000 and moves its speed and dash, 3.C000; its fall stops flush, and the
+# pull makes 3.5C00, so it bounces at the bounce speed, 1.0000: a bounce is no jump, and gains no
+# share of the dash.
+
+[[vector]]
+id = "C-booster-bounce"
+source = "constructed"
+entries = ["Landing", "Jumping", "BlocksStopFlush"]
+items = ["MorphBall", "SpeedBooster"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0117.0000"], dash = "0003.0000", speed_y = "+0003.4000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["0103.C000", "0119.FFFF"], speed_x = "+0000.C000", dash = "0003.0000", speed_y = "-0001.0000", bounces = 1 }

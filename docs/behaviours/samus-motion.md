@@ -11,15 +11,24 @@ ceilings stop her. Written behaviour first, from the oracle's records over time.
 the world. It covers her speeds and position, how her pose follows from input and the world where
 that changes her speeds, and her collision with blocks, slopes and solid enemies.
 
-**Not in this spec yet** (each an input where it feeds us; §10): animation timing, liquids, the
-speed booster's extra speed, knockback, bomb jumps, grapple, shinespark, pushes from the room
-(Ceres, conveyors, quicksand), and what a cell she reaches then does (`TouchedCells` says which
-she reaches; `OtherBlockKinds` how each kind meets her motion).
+**Not in this spec yet** (each an input where it feeds us; §10): animation timing, liquids,
+knockback, bomb jumps, grapple, the shinespark (and what the speed booster starts there), pushes
+from the room (Ceres, conveyors, quicksand), and what a cell she reaches then does
+(`TouchedCells` says which she reaches; `OtherBlockKinds` how each kind meets her motion). The
+speed booster's part in her motion is in: her dash's cap (`Dash`) and the faster start of her jumps
+(`Jumping`).
 
 **Notation.** A quantity written `P.S` is a pixel part and a subpixel part, each 16 bits, in hex:
 `2.C000` is 2.75 px. A signed one has a sign in front: `-4.E000` is 4.875 px a frame upward or
 leftward. Positions are her body's centre; x grows rightward, y grows downward. A frame reads the
 pad the player holds when it starts.
+
+**Switches.** Each entry's `switch` says how it may be changed: `none`, it is fixed, the numbers it
+names included; `parameter`, the numbers its `params` give may be set to other values (the values
+given are the vanilla game's, the ones the vectors check); a **Toggle**, a named rule of its own
+that may stand in for it (`WordwiseTopSpeed`'s `Exact`). Where `params` name a table, as
+`SpeedBuildsAndBrakes`' do, its numbers are parameters too; the rows of a table whose `params` read
+"none (the table is data)", the pose chart's, are fixed.
 
 ---
 
@@ -31,7 +40,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | --- | --- | --- | --- |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
-| dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball) | `Dash`, `TurningRound`, `Jumping` |
+| dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
 | vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
 | the y a placement put her at, if any | y: `P.S`, or none | the screen scrolls after her vertical move as measured from where pose fit or a change of shape placed her this frame (`PoseFitAfterMoves`, `ShrinkingLowersHer`), a placement of 0 px included, so the scroll doesn't chase those placements; with none, it measures from where it last saw her. The camera reads only its pixel part and keeps its own subpixel; the subpixel given is hers at the frame's start (`PoseFitAfterMoves`) | output (the camera's domain reads its pixel part; each frame works it out, so it isn't State) |
@@ -80,8 +89,9 @@ start may give.
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
 is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
-except in the air: in a jump (its take-off included), a spin, a fall or a wall jump, and in a turn
-in a jump or a fall, where it means she has just started to fall. Every other pose is on the
+except in the air: in a jump (its take-off included, and the spring ball's hop, which is in the
+air from the frame it starts until a landing rests it), a spin, a fall or a wall jump, and in a
+turn in a jump or a fall, where it means she has just started to fall. Every other pose is on the
 ground. The take-off counts as in the air because the moment she changes into it she is rising
 (`Jumping`), so in scope it never starts at a vertical speed of 0, and its upward speed is a rise,
 not one kept on the ground (J3, W16). On the ground a vertical speed other than 0, downward or
@@ -109,7 +119,7 @@ or falling at 0.
 | spin turned far | `bool`: the spin's sprite has turned far enough to kick off a wall | `WallJump` |
 | elevator moving | `bool` | `RidingTheElevator` |
 | frame parity | `Even` or `Odd`: the game's frame count, alternating every frame | `BlocksStopFlush` |
-| body size | each pose's half-width and half-height in px (`radius`): the game's data, for any pose, the one the step chooses included | §8, `PoseFitAfterMoves` |
+| body size | each pose's half-width and half-height in px (`radius`): the game's data, for any pose, the one the step chooses included. A frame's moves use the body of the pose she starts it in; the chosen pose's body is read within the frame only where it grows (`PoseFitAfterMoves`) or a change of shape lowers her (`ShrinkingLowersHer`), and otherwise first holds on the next frame, so a record's body at a frame's end can still be the body she started it in (J1's spin start shows 21 px) | §8, `PoseFitAfterMoves` |
 
 **The items she reads**, of progress's `Item`s, and what each changes. "With" an item, here and
 below, means with it switched on:
@@ -121,7 +131,7 @@ below, means with it switched on:
 | `MorphBall` | without it, a change into `Morphing` is refused (`PoseFollows`) |
 | `SpringBall` | the ball's hop (`PadChart`) and which ball a morph ends in (`AnimationEnds`) |
 | `ScrewAttack`, `VariaSuit`, `GravitySuit` | only her sprite (`HowSheIsDrawn`); `GravitySuit` also in liquids, out of scope (§10) |
-| `SpeedBooster` | its dash cap and higher jump, out of scope (§10): the recorded vectors that switch it on come from frames neither shows on |
+| `SpeedBooster` | her dash's cap (`Dash`) and the speed every jump and wall jump starts at (`Jumping`); what else it does starts the shinespark and is out of scope (§10) |
 | `Bombs`, `GrappleBeam`, `XRayScope` | none of her motion: what they do is other domains' (§10) |
 
 ---
@@ -134,7 +144,7 @@ below, means with it switched on:
 | action | `AgainstWall` (pressed to the wall she ran into), `Crouching`, `Falling`, `Jumping` (a straight jump, or the spring ball's hop), `Landing` (the moment she touches down from a jump, a fall or a spin, before she stands still), `Moonwalking`, `Morphing`, `Rolling`, `Running`, `Spinning`, `StandingUp`, `Still`, `TakingOff`, `Turning` (on the ground or in the air), `Unmorphing`, `WallJumping` |
 | facing | `Left`, `Right`, `Screen` (facing the player; counts as `Right` wherever a side is needed, the way her speed points included: C-screen-skid) |
 | aim | the arm's direction: `Forward`, `Up`, `UpForward`, `DownForward`, `Down`; it changes only the sprite, except for `AimingAndShooting` |
-| turn | for `Turning` only, the turn she is in: `Fall` (in a fall), `Ground` (on the ground, upright or crouched), `Jump` (in a take-off or a straight jump), `MoonwalkJump` (the moonwalk's jump, still on the ground). The player sees it as what she was doing when she turned; `AnimationEnds` hands over a pose by it, and the pad chart reads `MoonwalkJump` as a turn on the ground |
+| turn | for `Turning` only, the turn she is in: `Fall` (in a fall), `Ground` (on the ground, upright or crouched), `Jump` (in a take-off or a straight jump), `MoonwalkJump` (the moonwalk's jump, still on the ground). The player sees it as what she was doing when she turned; `AnimationEnds` hands over a pose by it, and the pad chart reads `MoonwalkJump` as a turn on the ground. `Fall`, `Jump` and `MoonwalkJump` are upright: crouched she turns only from the crouch, on the ground (`PadChart`), so a crouched turn is always `Ground`; how a crouched turn aimed up, down or up-forward moves her with a vertical speed she keeps on the ground is open (§11, question 22) |
 | landed from | for `Landing` only, what she touched down from: `Jump` (a straight jump or a fall, upright), `Spin` (a spin or a wall jump). The two look different, and one lasts longer than the other; both move her as standing still |
 | gun | `Drawn` (her gun held out in front, a sprite of its own), `Stowed`; only upright `Running`, `Jumping` and `Falling` aimed `Forward`, and `Landing` from `Jump` aimed `Forward` (drawn firing), show it `Drawn`; every other pose has it `Stowed`. It changes only the sprite and the pad chart's rows (`PadChart` says what draws and stows it) |
 | legs | `Striding` (drawn moving forward), `Together`; only an upright `Jumping` aimed `Forward` with the gun `Stowed` can be `Striding`, every other pose has them `Together`. It changes only the sprite (`PadChart` and `AnimationEnds` say which) |
@@ -178,12 +188,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 ## 3. On the ground
 
 ### SpeedBuildsAndBrakes
-- kind: mechanic and parameter.
+- kind: mechanic.
 - summary: how her horizontal speed builds towards a top speed, brakes and halts, by what she is
   doing.
 - params: the speed-up step and the top speed for each activity (the table); the brake, 0.8000 a
   frame.
-- switch: none (the top speed's test is `WordwiseTopSpeed`'s).
+- switch: parameter (the top speed's test is `WordwiseTopSpeed`'s).
 
 | She is | Speeds up by | Top speed |
 | --- | --- | --- |
@@ -224,14 +234,31 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 
 ### Dash
 - kind: mechanic.
-- summary: the extra speed she builds running with run held, and its cap.
-- params: the gain, 0.1000 a frame; the cap, 2.0000.
-- switch: none.
-- Running with run held, the dash before the step has `below(pixel, 2) or below(subpixel, 0)`
+- summary: the extra speed she builds running with run held, and its cap, higher with the speed
+  booster.
+- params: the gain, 0.1000 a frame; the cap, 2.0000, and 7.0000 with the speed booster.
+- switch: parameter.
+- With the speed booster → the cap `c.s` is 7.0000; without it, 2.0000 [MB1, SB1, SB2, WB1,
+  C-booster-dash, C-booster-dashcap-a, C-booster-dashcap-b, C-dashcap-b]
+- Running with run held, the dash before the step has `below(pixel, c) or below(subpixel, s)`
   (`below` as `WordwiseTopSpeed` gives it) → it grows, `dash + 0.1000` [R2, R61, R97, R144,
-  C-dashcap-a]
-- Running with run held, neither part below → it becomes 2.0000 [C-dashcap-b]
-- So 2.F000 grows to 3.0000 and then snaps to 2.0000 (invisible in vanilla).
+  C-dashcap-a, MB1, SB1, C-booster-dash, C-booster-dashcap-a]
+- Running with run held, neither part below → it becomes the cap [C-dashcap-b, SB2,
+  C-booster-dashcap-b]
+- So without the booster 2.F000 grows to 3.0000 and then snaps to 2.0000, and with it 7.F000 grows
+  to 8.0000 and then snaps to 7.0000 (both invisible in vanilla: growing from below, the dash
+  meets its cap exactly). With the booster 3.0000 grows on (C-booster-dash), and without it
+  snaps to 2.0000 (C-dashcap-b).
+- **Building speed.** From a standstill with run held her speed reaches its top, 2.C000, within 15
+  frames, and the dash grows 0.1000 a frame: 2.0000 after 32 frames, and with the booster 7.0000
+  after 112. A frame's move is her speed and her dash together, `speed + dash`: 4.C000 at most
+  without the booster and 9.C000 with it (SB2), well inside the 15 px a move may go
+  (`BlocksStopFlush`). Her top speed itself is the same with the booster or without.
+- **What ends the dash** is the same with the booster or without: a halt (standing, crouched,
+  against the wall, a wall stop, the ball letting go: MB4), a pose change that halts her, a turn
+  or a spin reversed (the dash joins her speed), the end of a turn, and the dash she is to lose
+  (below). It carries through jumps and spins and into the ball (MB3, the mockball: the ball
+  rolls 3.4000 and the booster's 5.0000, 8.4000 a frame).
 - No other moving activity gains dash, taking off included (`Jumping`; W16, R95, R133).
 - A pose change halted her but left the dash's value on her (a dash she is to lose, §1.2) → the
   next frame she moves, the dash is gone (0) before that move [W16]
@@ -239,9 +266,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   wall (`SpeedBuildsAndBrakes`), a wall stop (`WallsAndCeilings`), a turn's end
   (`AnimationEnds`), the falling ball letting go (`DriftInTheAir`) and a spin reversed
   (`TurningRound`) each take it (0).
-- checked: oracle (running vectors with run held; samus-mockball for the carry; W16 for a dash
-  lost); original only
-  (C-dashcap-a, C-dashcap-b).
+- checked: oracle (running vectors with run held; W16 for a dash lost; the speed booster: MB1
+  samus-mockball:27, the dash growing past 2.0000; SB1 and SB2, samus-shinespark-right:74-75,
+  growing to 7.0000 and held there; WB1 item-wave-beam:7, 2.0000 growing to 2.1000; MB3 and MB4,
+  samus-mockball:101 and 110, the ball rolling with the booster's dash, then letting go);
+  constructed (C-dashcap-a and C-dashcap-b, the cap's part-by-part test without the booster, and
+  C-booster-dash, C-booster-dashcap-a and C-booster-dashcap-b, with it).
 
 ### TurningRound
 - kind: mechanic.
@@ -298,7 +328,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: quirk and output.
 - summary: changing into another running pose steps her 1 px forward.
 - params: the step, 1 px.
-- switch: none.
+- switch: parameter.
 - A frame whose pose is chosen, by the pad chart and not replaced by what her moves met
   (`PoseFollows` items 2 and 3), as a running pose other than the one she is in (running with
   another aim, but also from standing, from a landing, or from any pose whose pad chart row leads
@@ -338,7 +368,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: mechanic.
 - summary: facing the screen on a moving elevator, she goes down with it.
 - params: the descent, 1 px a frame.
-- switch: none.
+- switch: parameter.
 - Facing the screen on a moving elevator → she moves down 1 px a frame, and nothing else of hers
   changes, her speeds and dash included [C-elevator]
 - A solid or stepped block stops that move as any downward move (`BlocksStopFlush`); a sloped
@@ -350,14 +380,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 ## 4. Leaving the ground
 
 ### Jumping
-- kind: mechanic and parameter.
+- kind: mechanic.
 - summary: how she takes off, starts a spin or a hop, jumps again with space jump, and takes off
   again with jump held through a landing.
 - params: jump 4.E000 upward (hi-jump 6.0000); wall jump 4.A000 (hi-jump 5.8000); ball bounce
   1.0000, and an adjusted one at least 1.0000 (the rise after bounce 1 is it less 1 px,
   `Landing`); the crouch lift 10 px; space jump's window, 2.80 to 5.00; jump held through, a
-  count of 1 to 8 frames (and 32,777 to 65,535).
-- switch: none.
+  count of 1 to 8 frames (and 32,777 to 65,535); with the speed booster, a jump or a wall jump
+  starts faster by half the dash's pixel part and all of its subpixel part (the share's arithmetic,
+  the half and the carry lost, is fixed: only whether it applies, by the item, and the speeds it
+  adds to are the game's to set).
+- switch: parameter.
 - The first poses of a straight jump (taking off) → she doesn't steer: she moves by her dash only
   and follows the pad; she gains no dash (`Dash`); she doesn't move vertically and the pull
   doesn't act [J3, W16]
@@ -368,7 +401,23 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The frame she changes into a take-off from a crouch without aim → she is also lifted, `y − 10`
   (`PoseFitAfterMoves` says when) [PF1]
 - Starting a spin jump, or the spring ball's hop from the ground → she rises at the jump speed
-  [J1]
+  [J1, C-spring-hop]
+- **The speed booster's higher jump.** With the speed booster, a rise that starts at the jump
+  speed or the wall-jump speed (a take-off, a spin start, the spring ball's hop from the ground
+  and again on landing with jump held, space jump's jump again, a wall jump's kick) → it starts
+  faster by her dash as the frame's moves left it, `d.e`: from the speed `p.s` it would have, the
+  pixel part is `p + ⌊d ÷ 2⌋` and the subpixel part `(s + e) mod 2^16`, the carry out of the
+  subpixel part lost [MB2, WB1, R8J, C-booster-carry, C-booster-walljump, C-booster-space-jump,
+  C-booster-hop, C-booster-spring-land]
+- So it gains half the dash's pixel part, rounded down, and all of its subpixel part: a dash of
+  5.0000 adds 2 px (MB2: 6.0000 with hi-jump becomes 8.0000), 0.F000 adds 0.F000 (R8J: 6.F000),
+  2.1000 adds 1.1000 (WB1: the dash grown that frame, 7.1000). Where the subpixel parts carry, the
+  carry is lost: J1's spin start, its dash 1.7000, rises at 4.5000 with the booster, slower than
+  4.E000 without (C-booster-carry). Without a dash, or without the booster, the speed is the
+  plain one (SJ1 has the booster and no dash).
+- A take-off comes from standing, a landing, a crouch or a turn, which leave her no dash (they
+  halt her, or the dash joined her speed), so in vanilla it gains nothing. The ball's bounces
+  count as no jump: each rises at the bounce speed, with the booster too (C-booster-bounce).
 - Starting a straight jump or a fall with a dash → she carries on along her facing, so a running
   jump keeps its drift [original only]
 - Starting a straight jump or a fall without a dash → she follows the pad [W16, J3]
@@ -402,20 +451,25 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The press counts only where a row names jump pressed: the fall's rows don't, and a landing
   outranks the pad (`PoseFollows`; JH4). The other rules that read a press see the pad as it is.
 - checked: oracle (J1, J2, J3, and the take-off and spin vectors; W16, a take-off from a crouch
-  with run held; SJ1, space jump's jump again with hi-jump; the crouch lift open: question 6;
+  with run held; SJ1, space jump's jump again with hi-jump; the speed booster: MB2,
+  samus-mockball:42, WB1, item-wave-beam:7, and R8J, r08:187, spin starts with a dash; the crouch
+  lift open: question 6;
   JH1-JH4, jump held through a landing from a straight jump and a fall, JH4 through two turns'
   ends); constructed (C-held-9, a count of 9; C-held-let-go, jump let go on the landing's next
   frame; C-held-built, C-held-long, C-held-edge, C-held-long-edge and C-held-wrap, counts a
   caller gives at the start, and C-held-landed, the two parts read back after a landing;
   C-fit-land-tunnel-held, a landing crouched instead, and C-fit-land-refused, a landing
   refused; C-walljump-hijump, the wall jump's speed
-  with hi-jump; C-space-jump-no-item, the press in the window without space jump).
+  with hi-jump; C-space-jump-no-item, the press in the window without space jump; C-spring-hop,
+  the spring ball's hop; the speed booster: C-booster-carry, the carry lost, C-booster-walljump,
+  C-booster-space-jump, C-booster-hop and C-booster-spring-land, each kind of rise with a dash, and
+  C-booster-bounce, a bounce with one).
 
 ### FollowingTheGround
 - kind: mechanic.
 - summary: on the ground she is pulled down onto the floor after each horizontal move.
 - params: the extra 1 px.
-- switch: none.
+- switch: parameter.
 - On the ground, after her horizontal move → she is pulled down by that frame's speed plus 1 px,
   `|speed| + dash + 1`, subpixel part included (1 px on a slope, `SlopesCarry`), and the floor
   stops her flush (§8; a sloped floor as `SlopesCarry` says, C-slope-roll-carry,
@@ -485,8 +539,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: timing and mechanic.
 - summary: when her new pose is taller, she is pushed clear of what is above or below her, or the
   change is refused or becomes a crouch.
-- params: the 8 px look.
-- switch: none.
+- params: the 8 px look; the old body's half-height under which she can't take the crouch
+  instead, 8 px (the ball's).
+- switch: parameter.
 - A frame ends in this order: her moves (horizontal, the ground pull or her vertical move, then
   the aim change's step), then what they met (a landing, a fall, a ceiling, a wall), then the pose
   change. Within the pose change, pose fit's push comes first, then the new pose's speeds (a
@@ -604,7 +659,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: mechanic.
 - summary: the frame she starts to crouch or morph, she is lowered.
 - params: the crouch's 5 px; the morph's 9 px.
-- switch: none.
+- switch: parameter.
 - The frame she starts to crouch (`Crouching`, aimed or not) or to morph (`Morphing`) → after her
   moves, as the pose change's effect, she looks down the pose's own distance (crouch 5 px, morph
   9 px) at her new size, a block look as pose fit's are (`PoseFitAfterMoves`, the 8 px rule
@@ -653,12 +708,17 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: mechanic.
 - summary: gravity, the fall's limit, and when a rise ends.
 - params: the pull, 0.1C00 a frame; the fall's limit, pixel part 5.
-- switch: none.
+- switch: parameter.
 - Each frame in the air → she moves vertically by her vertical speed, then it grows downward,
   `vy + 0.1C00` (rising, the pull takes 0.1C00 off her upward speed) [R7, R53, R70, R92, R109,
   R3]
-- Falling, her speed's pixel part `= 5` → it stops growing [C-fallcap-b]
-- So it settles at 5.1400 (4.F800 + 0.1C00, C-fallcap-a); a speed set above that keeps its value.
+- Falling, her speed's pixel part exactly 5, `= 5` → it stops growing [C-fallcap-b,
+  C-fallcap-past]
+- So it settles at 5.1400 (4.F800 + 0.1C00, C-fallcap-a), and a speed of 5.1400 to 5.FFFF keeps
+  its value. The test is for 5 alone, not 5 or more: a fall growing from below can't pass 5
+  without stopping there, since the pull is under a pixel, but a downward speed of 6 px or more,
+  which only a start or a push beyond this spec gives her, grows on (C-fallcap-past: 6.0000 grows
+  to 6.1C00).
 - Rising, at the start of a frame after her upward speed was spent (the pull took it past zero, so
   that it points downward by even a subpixel), or, in a normal or spin jump or the spring ball's
   hop, at the start of any frame with jump not held → the rise ends: vertical speed 0, falling,
@@ -692,9 +752,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - checked: oracle (every air vector; E1 for the speed past zero; `rising`: J2 a take-off, WK1 a
   wall jump's kick, R4 the rise after it, SJ1 space jump's jump again, E1 the frame that spends
   the rise, R91 the rise ended by jump let go, R32 a fall, MT1 the moonfall); constructed (C-fallcap-a,
-  C-fallcap-b, E2, E3; `rising`: C-rise-spent and C-rise-at-0, the camera's cases, E3 and
-  C-bounce-second at 0, E2 the rise's end, C-ceiling a ceiling, C-ground-rise-kept and
-  C-ground-rise an upward speed on the ground).
+  C-fallcap-b, C-fallcap-past, E2, E3; `rising`: C-rise-spent and C-rise-at-0, the camera's
+  cases, E3 and C-bounce-second at 0, E2 the rise's end, C-ceiling a ceiling, C-ground-rise-kept
+  and C-ground-rise an upward speed on the ground).
 
 ### DriftInTheAir
 - kind: mechanic.
@@ -759,7 +819,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: mechanic and output.
 - summary: a spin near a wall readies, then kicks off it.
 - params: the near-wall test's 8 px.
-- switch: none.
+- switch: parameter.
 - Readying is not a part of her pose (§2): the pose stays the spin it was. Only the spin's
   animation shows it, skipping ahead to the point where the spin has turned far enough, so the
   input "spin turned far" (§1.3) holds from the next frame. How far an animation has run is out of
@@ -810,7 +870,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - kind: mechanic.
 - summary: what touching down does to her speeds, by what she is doing, and the ball's bounces.
 - params: the bounce's 3 px threshold; the bounce speed (`Jumping`).
-- switch: none.
+- switch: parameter.
 - The ball's bounce reads her vertical speed after that frame's pull (`RisingAndFalling`), not
   the speed her move used: a fall that met the floor at 2.F000 has 3.0C00 when it lands. Only
   its pixel part counts: 3 px or more.
@@ -822,7 +882,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   ground the floor under her never lands her, whatever vertical speed she keeps or the ball moves
   by (`FollowingTheGround`).
 - Landing while her body changes shape → only her vertical motion stops (vertical speed 0); both
-  speeds, and whether she carries on, are kept [LB1, LB2]
+  speeds, and whether she carries on, are kept [LB1, LB2, C-unmorph-land-run, C-morph-land-run]
+- So a change of shape lands without the halt of `Landing`'s first row: in r04:332 the unmorph
+  lands moving by its dash, 0.2000, with its speed 1.0000 kept (C-unmorph-land-run), and in
+  samus-mockball:71 the morph lands with 1.4000 and the booster's dash 5.0000 kept
+  (C-morph-land-run).
 - Landing while turning (any `Turning`: in a jump, in a fall, or on the ground as she sinks over a
   drop), or the ball on the ground meeting the floor by its vertical speed → only her vertical
   motion stops: the floor stops her move flush (`BlocksStopFlush`), her vertical speed is left as
@@ -842,14 +906,15 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   2 rises at exactly 0, so it rises by 0 for one frame before the rise ends
   (`RisingAndFalling`), and the landing after it brings her to rest at any speed.
 - The spring ball landing with jump held → it hops again at the jump speed instead, bounces 0
-  [original only]
+  [C-spring-land-held, C-booster-spring-land]
 - checked: oracle (r06 for the changing body, LB1, LB2; TL1-TL4 for a turn: TL1 a turn in a fall
   meets the floor, TL2 the next frame on it, its vertical speed still growing, TL3 a turn in a
   jump, TL4 the ground turn sinking; r02:37-38 and r07:263-264, where the turn's end hands over a
   fall or a jump and the next frame lands her); constructed (C-bounce, C-bounce-pulled, bounce 1
   read after the pull; C-bounce-under, no bounce at 2 px after the pull; C-bounce-second, bounce
   2 at under 3 px; C-bounce-third, the landing after it; BG1, the ball on the ground held by the
-  floor).
+  floor; C-unmorph-land-run and C-morph-land-run, a change of shape landing with a speed and a
+  dash; C-spring-land-held and C-booster-spring-land, the spring ball landing with jump held).
 
 ---
 
@@ -1233,7 +1298,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - kind: mechanic.
 - summary: a move into a solid block stops her flush against its face.
 - params: the horizontal move's limit, 15 px.
-- switch: none.
+- switch: parameter.
 - Her leading edge at the target, on the move's axis (x and `rx`, or y and `ry`): `x + d + rx − 1`
   moving right or down, `x + d − rx` moving left or up, `x + d` being the pixel part of her
   position plus the whole move, subpixels added, so a subpixel part that carries into a pixel
@@ -1287,7 +1352,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 - kind: quirk.
 - summary: how solid enemies stop her, judged by the gap between the boxes.
 - params: the reach's 1 px.
-- switch: none.
+- switch: none (the 1 px is the pixel a move's subpixel part reaches into, which the boxes' whole
+  pixels then measure, not a distance a game could set apart from them).
 - Her box and an enemy's are each centre ± half-size.
 - Moving left or up with the move's end subpixel not 0, or moving right or down with her start's
   subpixel or the move's not 0 → her reach is her box at the move's end pushed 1 px further on;
@@ -1581,8 +1647,15 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 ## 10. Out of scope, and what remains
 
 - **Slopes:** the corners of steep blocks.
-- **Liquids and the speed booster:** other speeds and gravity in water and lava; the booster's dash
-  cap of 7 and its higher jump.
+- **Liquids:** other speeds and gravity in water and lava, and lava or acid ending a dash built with
+  the speed booster.
+- **The speed booster beyond her motion.** Its dash cap and higher jump are in (`Dash`, `Jumping`).
+  The rest begins with the shinespark, whose own spec it is: after a while running at full speed she
+  starts to glow, which her run's animation decides, and the glow is what a crouch stores as the
+  shinespark's charge, what enemies and the blocks only speed breaks react to, and what the echoes
+  follow. How she looks while she builds speed and glows (her run's animation pace, the glow's
+  palette) is how Samus looks. Neither changes her speeds or position. The booster switched on or
+  off mid-run (by the pause screen) is an item switched mid-pose, out of scope here.
 - **Pushes:** room pushes, quicksand, knockback, bomb jumps, grapple, shinespark.
 - **Her outputs under a push.** Where a push moves her in a frame, pose fit and the shrink still
   place her as `PoseFitAfterMoves` and `ShrinkingLowersHer` say, and the placement is
@@ -1682,3 +1755,13 @@ acts on her motion as below. These rules are Samus's; other actors get their own
     and "in the air" give the same pose except at a vertical speed of 0 in the air (the morph
     ending on a rise at 0 or on a fall's first frame from rest), where the original's ball is
     `Still` and then walks off. No record or vector has one; open.
+21. A change of shape started from the ball while it bounces (unmorphing on a bounce's rise): the
+    original ends her vertical motion there (no vertical speed, not falling) and her bounces,
+    which would then move her as a change of shape with no vertical motion does
+    (`FollowingTheGround`). No record or vector has one; open.
+22. A crouched turn aimed up, down or up-forward, on the ground with a vertical speed she keeps
+    there (`FollowingTheGround`; crouching from a run keeps +1.3400 in samus-shinespark-left
+    176-189, and an upward one is C-ground-rise-kept's): the original moves it as a turn in a jump,
+    by that speed under the pull, where the unaimed crouched turn keeps the speed without moving by
+    it, as the spec says of every pose on the ground. The records have the aimed crouched turns only
+    with no vertical motion, where the two move alike; open until the oracle shows one.

@@ -20,8 +20,10 @@ use clean_types::{Buttons, Fixed, Pose, Side, ZERO};
 
 /// What the chart reads of a frame besides her pose.
 ///
-/// The pad, the spring ball, an animation's end, her horizontal speed at the frame's start,
-/// whether she is off the ground once her moves are made, and what they met.
+/// The buttons held and those just pressed, the spring ball, an animation's end, her horizontal
+/// speed at the frame's start, whether she is off the ground once her moves are made, and what
+/// they met.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Moment {
     /// The buttons held.
     pub pad: Buttons,
@@ -41,7 +43,7 @@ pub struct Moment {
 }
 
 /// A chosen pose, the change's effects, and whether it brings the aim change's step.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Choice {
     /// The pose.
     pub pose: Pose,
@@ -65,6 +67,18 @@ impl Choice {
             effects: &[],
             steps: false,
             lower: None,
+        }
+    }
+
+    /// `WhatHerMovesMet`, `AimingAndShooting`: the choice once a block or solid enemy blocked the
+    /// aim change's step. A running pose chosen goes against the wall (`table::STEP_BLOCKED`),
+    /// with none of its row's effects; any other (an animation's end handed one over) stands.
+    #[must_use]
+    pub fn blocked(self) -> Self {
+        if self.pose.action == Running {
+            Self::instead(table::STEP_BLOCKED.pose_from(self.pose, None))
+        } else {
+            self
         }
     }
 }
@@ -100,23 +114,6 @@ impl Moment {
             situation,
         }
         .choose()
-    }
-
-    /// `WhatHerMovesMet`, `AimingAndShooting`: the aim change's step blocked, the pose chosen
-    /// goes against the wall where `STEP_BLOCKED` fits it (a running pose), with none of its
-    /// row's effects; else the pose chosen stands.
-    pub(crate) fn step_blocked(&self, chosen: Choice, situation: &'static Situation) -> Choice {
-        let reading = Reading {
-            moment: self,
-            pose: chosen.pose,
-            situation,
-        };
-        let row = &table::STEP_BLOCKED;
-        if reading.fits(row.needs) {
-            reading.choice(row)
-        } else {
-            chosen
-        }
     }
 }
 
@@ -205,9 +202,11 @@ impl Reading<'_> {
         rows.iter().find(|r| self.fits(r.needs))
     }
 
-    /// `PoseFollows`: an animation ending hands over its pose (`AnimationEnds`), else what her
-    /// moves met chooses (`WhatHerMovesMet`), else the pad chart (`PadChart`). The aim change's
-    /// step follows from the second and third alone (`AimingAndShooting`).
+    /// `PoseFollows`: the reading's choice, the first that applies. An animation ending this
+    /// frame hands over its row's pose and effects (`AnimationEnds`); else what her moves met
+    /// chooses (`WhatHerMovesMet`); else the pad chart's row (`PadChart`). Whether the aim
+    /// change's step comes is always the second's or third's, even where an animation's end
+    /// hands over the pose: the end neither brings nor cancels it (`AimingAndShooting`).
     fn choose(&self) -> Choice {
         let by_moves = self
             .first(table::MOVES_MET)

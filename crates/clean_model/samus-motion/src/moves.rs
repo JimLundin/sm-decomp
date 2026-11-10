@@ -2,8 +2,8 @@
 //! the near-wall test, then the ground pull or her vertical move, and after the pose is chosen
 //! the aim change's step; and what they met (`WhatHerMovesMet`).
 
-use crate::chart::{Choice, Moment};
-use crate::collide::Probe::{Look, Move, Walk};
+use crate::chart::Choice;
+use crate::collide::Probe::{Move, NearWall, Walk};
 use crate::collide::Stop;
 use crate::rows::Doing::{Running, TakingOff};
 use crate::rows::Met::{self, Wall, WallKick};
@@ -13,7 +13,7 @@ use crate::samus::Seat::{Seated, Unseated};
 use crate::samus::WallTest::{Kicked, Neither, Readied};
 use crate::samus::{Samus, Spin, WallTest};
 use crate::tick::Tick;
-use crate::vertical::{Course, MoveEnd};
+use crate::vertical::Course;
 use clean_types::button::{JUMP, LEFT, SIDES};
 use clean_types::{Facing, Fixed, Side, ZERO};
 
@@ -44,13 +44,13 @@ impl Samus {
     pub(crate) fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
             if t.frame.elevator_moving {
-                self.position = t.vmove(self.bounds(), t.rules.elevator, Move).to;
+                self.position = t.vmove(self.bounds(t), t.rules.elevator, Move).to;
             }
             return Meeting::default();
         }
         let walk = self.walk(s, t);
         let wall_test = self.wall_test(t);
-        self.vertical.space_jump(s.doing, t);
+        self.vertical.space_jump(s.doing, self.run.dash, t);
         let met = if wall_test == Kicked {
             Some(WallKick)
         } else if s.doing == TakingOff {
@@ -78,7 +78,7 @@ impl Samus {
         }
         let by = if stride == Both { pull } else { self.run.dash };
         let stop = self.hmove(self.run.moving(facing), by, t);
-        if let Some(y) = t.seat(self.bounds()) {
+        if let Some(y) = t.slope_checks(self.bounds(t)) {
             self.position.y = y;
             self.seat = Seated;
         }
@@ -99,7 +99,7 @@ impl Samus {
         } else {
             Move
         };
-        let moved = t.go(self.bounds().axis(way.heading(), d, probe));
+        let moved = t.go(self.bounds(t).axis(way.heading(), d, probe));
         self.position = moved.to;
         moved.stop
     }
@@ -108,14 +108,8 @@ impl Samus {
     /// her facing at the frame's start, after her moves: a horizontal move with no `SlopesCarry`
     /// checks after it. A solid enemy within its reach stops it with no move at all, one she
     /// touches still clearing her y subpixel. `WhatHerMovesMet`: something in its way puts the
-    /// running pose chosen against the wall (`Moment::step_blocked`).
-    pub(crate) fn step_forward(
-        &mut self,
-        chosen: Choice,
-        moment: &Moment,
-        s: &'static Situation,
-        t: &mut Tick,
-    ) -> Choice {
+    /// running pose chosen against the wall (`Choice::blocked`).
+    pub(crate) fn step_forward(&mut self, chosen: Choice, t: &mut Tick) -> Choice {
         if !chosen.steps {
             return chosen;
         }
@@ -125,7 +119,7 @@ impl Samus {
             self.position.x = x;
         }
         if stop.is_some() {
-            moment.step_blocked(chosen, s)
+            chosen.blocked()
         } else {
             chosen
         }
@@ -146,9 +140,13 @@ impl Samus {
         } else {
             Side::Left
         };
-        let seen = t.go(self.bounds().axis(wall.heading(), t.rules.wall_reach, Look));
-        self.position = seen.to;
-        if seen.stop.is_none() {
+        let towards_wall = self
+            .bounds(t)
+            .axis(wall.heading(), t.rules.wall_reach, NearWall);
+        let look = t.go(towards_wall);
+        // What stopped the look writes her x subpixel, or her y subpixel against an enemy.
+        self.take_result(&look);
+        if look.stop.is_none() {
             Neither
         } else if !f.spin_turned_far {
             Readied
@@ -163,28 +161,25 @@ impl Samus {
     /// motion and her situation's footing say, and what it met (`Vertical::end_move`). Pulled,
     /// she moves down by `pull` (the frame's horizontal speed and dash) plus 1 px
     /// (`SlopesCarry`: 1 px seated); else by her vertical speed. `SlopesCarry`: a move of more
-    /// than 0 unseats her as it starts.
+    /// than 0 unseats her as it starts. While her body changes shape, a pull that finds no floor
+    /// leaves her where she is, meeting nothing.
     fn move_vertically(&mut self, footing: Footing, pull: Fixed, t: &mut Tick) -> Option<Met> {
         let r = t.rules;
         let course = self.vertical.course(footing);
         let by = match course {
             Course::Pulled if self.seat == Seated => r.ground_pull,
             Course::Pulled => pull + r.ground_pull,
-            Course::OnTheGround | Course::InTheAir => self.vertical.speed,
+            Course::BallMovesByIt | Course::InTheAir => self.vertical.speed,
         };
-        let moved = t.vmove(self.bounds(), by, Move);
+        let moved = t.vmove(self.bounds(t), by, Move);
         if by != ZERO {
             self.seat = Unseated;
         }
-        match self
-            .vertical
-            .end_move(course, by, moved.stop.is_some(), footing, r)
-        {
-            MoveEnd::Stays => None,
-            MoveEnd::Moved(met) => {
-                self.end_at(&moved);
-                met
-            }
+        let stopped = moved.stop.is_some();
+        if course == Course::Pulled && footing == Footing::Settles && !stopped {
+            return None;
         }
+        self.take_result(&moved);
+        self.vertical.end_move(course, by, stopped, footing, r)
     }
 }

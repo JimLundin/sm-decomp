@@ -46,7 +46,7 @@ game-time samus-walljump-22 163
 game-time samus-walljump-28 169
 game-time terrain-quicksand 450
 samus-motion area-brinstar 476
-samus-motion area-maridia 252
+samus-motion area-maridia 251
 samus-motion area-norfair 208
 samus-motion boss-kraid-defeated 1014
 samus-motion boss-phantoon 1901

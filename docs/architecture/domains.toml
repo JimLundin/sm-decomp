@@ -14,7 +14,7 @@
 
 [[model]]
 name = "samus-motion"
-rounds = 16
+rounds = 17
 
 [[model]]
 name = "camera"

@@ -32,7 +32,7 @@ pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use chart::Moment;
 pub use jump_held::{FrameBefore, JumpHeld};
 pub use rows::Met;
-pub use rules::{Bounces, Rules, SpeedCap};
+pub use rules::{Bounces, Rules, SpeedCap, WithItem};
 pub use run::{Carry, DashIs, Run};
 pub use samus::{Outcome, Samus, Seat, Spin, Sprite, StandingAnimation, WallTest};
 pub use situation::UnknownPose;

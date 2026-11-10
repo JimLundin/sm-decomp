@@ -2,11 +2,12 @@
 
 use Gait::{Falling, Moonwalking, Rolling, Running, SpinJump, StraightJump, Turning};
 use Lowers::{Crouch, Morph, Nothing};
-use clean_types::{Fixed, Item, Parts, Px, Set, ZERO, below};
+use clean_types::{Fixed, Item, Parts, Px, Set, ZERO, fixed, part_below};
 use core::num::Wrapping;
 use core::ops::{Range, RangeInclusive};
 
 /// `WordwiseTopSpeed`: how the top speed is tested.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SpeedCap {
     /// Vanilla: part by part, on the speed's size.
     Wordwise,
@@ -15,7 +16,7 @@ pub enum SpeedCap {
 }
 
 /// `SpeedBuildsAndBrakes`: what she is doing, as its table's "She is" names it.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Gait {
     /// Running.
     Running,
@@ -34,7 +35,7 @@ pub enum Gait {
 }
 
 /// One row of `SpeedBuildsAndBrakes`'s table: what she speeds up by a frame, and her top speed.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Limits {
     /// What she speeds up by a frame.
     pub step: Fixed,
@@ -43,6 +44,7 @@ pub struct Limits {
 }
 
 /// `SpeedBuildsAndBrakes`'s table: a row for each thing she can be doing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Speeds {
     /// Running.
     pub running: Limits,
@@ -71,29 +73,32 @@ pub enum Lowers {
     Nothing,
 }
 
-/// `Jumping`: a rise speed without and with hi-jump.
-#[derive(Clone, Copy)]
-pub struct Boots {
-    /// Without hi-jump.
-    pub plain: Fixed,
-    /// With hi-jump.
-    pub hi_jump: Fixed,
+/// A value that an item switched on changes (§1.3): `Jumping`'s rise speeds with the hi-jump
+/// boots, `Dash`'s cap with the speed booster.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WithItem {
+    /// The item.
+    pub item: Item,
+    /// The value without it.
+    pub without: Fixed,
+    /// The value with it.
+    pub with: Fixed,
 }
 
-impl Boots {
-    /// `Jumping`: the speed the items switched on give: the hi-jump's with the hi-jump boots.
+impl WithItem {
+    /// The value the items switched on give.
     #[must_use]
     pub fn of(self, items: &Set<Item>) -> Fixed {
-        if items[Item::HiJumpBoots] {
-            self.hi_jump
+        if items[self.item] {
+            self.with
         } else {
-            self.plain
+            self.without
         }
     }
 }
 
 /// `Landing`: how many times the ball has bounced since it last rested.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Bounces {
     /// None.
     None,
@@ -105,7 +110,7 @@ pub enum Bounces {
 
 /// `Landing`: one of the ball's bounces: the landing that makes it, the speed it rises at, and the
 /// bounce that comes after it.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Bounce {
     /// The bounces she has had when the landing that makes it comes.
     pub at: Bounces,
@@ -120,6 +125,7 @@ pub struct Bounce {
 }
 
 /// The values the model reads.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rules {
     /// `WordwiseTopSpeed`.
     pub speed_cap: SpeedCap,
@@ -129,12 +135,16 @@ pub struct Rules {
     pub brake: Fixed,
     /// `Dash`: gained a frame.
     pub dash_step: Fixed,
-    /// `Dash`: its cap.
-    pub dash_cap: Fixed,
-    /// `Jumping`: a jump.
-    pub jump: Boots,
-    /// `Jumping`: a wall jump.
-    pub wall_jump: Boots,
+    /// `Dash`: its cap, higher with the speed booster.
+    pub dash_cap: WithItem,
+    /// `Jumping`: a jump, faster with the hi-jump boots.
+    pub jump: WithItem,
+    /// `Jumping`: a wall jump, faster with the hi-jump boots.
+    pub wall_jump: WithItem,
+    /// `Jumping`: with the speed booster, a rise at the jump or wall-jump speed starts faster by
+    /// part of her dash (`Rules::rise_speed`). Only whether it applies is the game's to set; how
+    /// much it adds is fixed.
+    pub booster_lifts_jumps: bool,
     /// `Jumping`: a ball bounce. An adjusted one is never below its vanilla value, 1.0000: the
     /// rise after bounce 1 is it less 1 px (`Landing`).
     pub bounce: Fixed,
@@ -165,8 +175,9 @@ pub struct Rules {
     pub aim_step: Fixed,
     /// `RidingTheElevator`: the descent a frame.
     pub elevator: Fixed,
-    /// `PoseFitAfterMoves`: a block look this long or longer is stopped as this long a look is.
-    pub look: Fixed,
+    /// `PoseFitAfterMoves`: the long look, 8 px: a block look this long or longer is stopped by
+    /// whatever a look of this length would stop.
+    pub long_look: Fixed,
     /// `PoseFitAfterMoves`: an old body under this half-height can't crouch instead.
     pub small_body_px: Px,
     /// `ShrinkingLowersHer`: the crouch's own distance.
@@ -211,15 +222,22 @@ impl Rules {
         },
         brake: Wrapping(0x8000),
         dash_step: Wrapping(0x1000),
-        dash_cap: Wrapping(0x2_0000),
-        jump: Boots {
-            plain: Wrapping(0x4_E000),
-            hi_jump: Wrapping(0x6_0000),
+        dash_cap: WithItem {
+            item: Item::SpeedBooster,
+            without: Wrapping(0x2_0000),
+            with: Wrapping(0x7_0000),
         },
-        wall_jump: Boots {
-            plain: Wrapping(0x4_A000),
-            hi_jump: Wrapping(0x5_8000),
+        jump: WithItem {
+            item: Item::HiJumpBoots,
+            without: Wrapping(0x4_E000),
+            with: Wrapping(0x6_0000),
         },
+        wall_jump: WithItem {
+            item: Item::HiJumpBoots,
+            without: Wrapping(0x4_A000),
+            with: Wrapping(0x5_8000),
+        },
+        booster_lifts_jumps: true,
         bounce: Wrapping(0x1_0000),
         bounces: [
             Bounce {
@@ -246,7 +264,7 @@ impl Rules {
         move_limit_px: Wrapping(15),
         aim_step: Wrapping(0x1_0000),
         elevator: Wrapping(0x1_0000),
-        look: Wrapping(0x8_0000),
+        long_look: Wrapping(0x8_0000),
         small_body_px: Wrapping(8),
         crouch_lowers: Wrapping(0x5_0000),
         morph_lowers: Wrapping(0x9_0000),
@@ -283,10 +301,25 @@ impl Rules {
     pub fn cap(&self, speed: Fixed, top: Fixed) -> Fixed {
         let ((p, s), (tp, ts)) = (speed.words(), top.words());
         let keep = match self.speed_cap {
-            SpeedCap::Wordwise => below(p, tp) || p == tp && (s == ts || below(s, ts)),
+            SpeedCap::Wordwise => part_below(p, tp) || p == tp && (s == ts || part_below(s, ts)),
             SpeedCap::Exact => speed <= top,
         };
         if keep { speed } else { top }
+    }
+
+    /// `Jumping`: the speed a rise at the jump or wall-jump speed (`base`) starts at, with the
+    /// items switched on and her dash as the frame's moves left it. With the speed booster it is
+    /// faster by part of the dash `d.e`: from the speed `p.s` the items give, the pixel part is
+    /// `p + ⌊d ÷ 2⌋` and the subpixel part `(s + e) mod 2^16`, the carry out of the subpixel part
+    /// lost (so a dash of 1.7000 makes 4.E000 a slower 4.5000).
+    #[must_use]
+    pub fn rise_speed(&self, base: WithItem, items: &Set<Item>, dash: Fixed) -> Fixed {
+        let speed = base.of(items);
+        if !(self.booster_lifts_jumps && items[Item::SpeedBooster]) {
+            return speed;
+        }
+        let ((p, s), (d, e)) = (speed.words(), dash.words());
+        fixed(Wrapping(p) + Wrapping(d >> 1), s.wrapping_add(e))
     }
 }
 

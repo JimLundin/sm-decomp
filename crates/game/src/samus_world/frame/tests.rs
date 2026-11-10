@@ -1,7 +1,7 @@
 use clean_types::Parity;
 use clean_types::button::{AIM_DOWN, AIM_UP, DOWN, JUMP, LEFT, RIGHT, RUN, SHOOT, UP};
 use data::assets::samus::import::map;
-use data::assets::samus::key::{Dress, SpinSprite, Suit};
+use data::pose::Poses;
 
 use super::{FrameSource, body};
 use crate::pose::{Content, PoseRequests};
@@ -41,11 +41,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         requests: PoseRequests::default(),
         content: &content,
     };
-    let plain = Dress {
-        spin: SpinSprite::Plain,
-        suit: Suit::First,
-    };
-    let sized = |pose| body(&content, plain, pose);
+    let sized = |pose| body(&content, &samus, pose);
     let frame = source.frame(&sized);
     let pad = frame.pad;
     let held = [JUMP, RUN, RIGHT, AIM_UP];
@@ -57,7 +53,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     assert!(frame.items[clean_types::Item::HiJumpBoots]);
     assert!(!frame.items[clean_types::Item::SpaceJump]);
     assert!(frame.elevator_moving);
-    assert!(frame.parity == Parity::Odd);
+    assert_eq!(frame.parity, Parity::Odd);
     // A pose the empty pose table doesn't hold has no half-height.
     let standing = map::key_of(PoseId(0x01)).map(frame.body);
     assert!(standing.is_some_and(|radius| (radius.x.0, radius.y.0) == (5, 0)));
@@ -69,6 +65,35 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         ..source
     }
     .frame(&sized);
-    assert!(still.parity == Parity::Even);
+    assert_eq!(still.parity, Parity::Even);
     assert!(!still.elevator_moving);
+}
+
+/// §1.3 body size: the pose she is in has her radius word, not the table's; a pose she isn't in
+/// has the table's for the pose her dress shows it by.
+#[test]
+fn the_pose_she_is_in_has_her_radius_word() {
+    // An invented table in which each pose's half-height is its number.
+    let bytes: Vec<u8> = (0..=0x9B_u8)
+        .flat_map(|number| [0, 0, 0xFF, 0, 0, 0, number, 0])
+        .collect();
+    let Ok(poses) = Poses::decode(&bytes) else {
+        panic!("the invented table decodes");
+    };
+    let content = Content {
+        poses,
+        ..Content::default()
+    };
+    let mut samus = Samus {
+        pose: PoseId(0x00),
+        y_radius: 0x15,
+        ..Samus::default()
+    };
+    samus.equipment.equipped.insert(Item::VariaSuit);
+    let Some(forward) = map::key_of(PoseId(0x00)) else {
+        panic!("pose 00h faces the screen");
+    };
+    assert_eq!(body(&content, &samus, forward).y.0, 0x15);
+    samus.pose = PoseId(0x01);
+    assert_eq!(body(&content, &samus, forward).y.0, 0x9B);
 }

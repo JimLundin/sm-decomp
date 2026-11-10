@@ -23,6 +23,33 @@ The previous spec's gaps and answers are in git history (`1dc3a12`).
     `$94:9B40`). The blocks spec's vectors give `{ inside = [x, y], point }` requests in that
     shape.
 
+## Round 17 in the engine and the harness (integrator, 2026-11-10, lane/samus-r17)
+
+The model grows the dash under the speed booster's cap and gives a booster rise its share of the
+dash, so gap 31's two masks are gone: the booster's own (x and the dash running with run held at
+a dash of 2.0 or more, the vertical speed of a rise started with a dash, and y for a space jump),
+on 798 frames, and the sloped floor's (y), on 300 of them. Every one of those frames is now
+compared on every field. 797 of them match, the shinespark rows' and samus-mockball's included,
+and chain-0163-A890 24's base speed (5.4000, the turn that takes a dash of 2.8000 into it) now
+matches too. Fields compared across the cache: x 17,068 → 17,835, y 16,629 → 16,929, the dash
+17,062 → 17,829, the vertical speed 17,806 → 17,829, the placement 16,447 → 16,747.
+
+The one frame that falls is area-maridia 22 → 23 (x: model 0015.0000, game 0014.4FFF), and it is
+not the booster's: she runs left into a door at a dash of 5.3000, and the game moves her on as
+its transition starts (record 23 is game state 9). The adapter answers every door solid (gap 8),
+so the model stops her flush, as on area-norfair 119 → 120 at walking speed. The booster's mask
+hid it; area-maridia's floor is 251, from 252, and the cache's total 17,999.
+
+37. **On the elevator her moves use the radius the pose before left (§1.3 body size).** The
+    current state handler sets her radius from her pose as each frame starts (`$90:EC22`), but not
+    while the elevator carries her (`$90:E713`, from `$91:E44D`), so the frame's moves use the
+    radius word the pose before set. On 906 frames of the cache she is in pose 00h on a ride with
+    the standing pose's radius, 3 px shorter than pose 00h's. The adapter gives the model, for the
+    pose she starts the frame in, her radius word as the engine keeps it (the pose table's, or the
+    one the ride kept), and the table's for any other pose. A run with the table's for her own pose
+    too matched the same frames, since y is the elevator's there. Asked: whether §1.3's body of the
+    pose she starts in should say that the elevator's ride keeps the one before.
+
 ## Round 14 in the engine and the harness (integrator, 2026-11-10, lane/samus-r14)
 
 Gap 35 is answered: `JumpHeld`'s count and frame before are public, so the State carries jump

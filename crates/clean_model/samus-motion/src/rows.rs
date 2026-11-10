@@ -242,13 +242,13 @@ impl Next {
 }
 
 /// What a change does to her speeds, dash and position, in order.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Effect {
     /// `Jumping`'s take-off, spin start or the spring ball's hop: she rises at the jump speed
     /// (taking off, the take-off's poses' own moves follow the pad).
     Rise,
-    /// `Jumping`'s take-off from a crouch without aim: she is also lifted.
-    Lift,
+    /// `Jumping`'s take-off from a crouch: she is also lifted, if she was crouched without aim.
+    LiftIfUnaimed,
     /// `TurningRound`.
     TurnRound,
     /// She follows the pad again: a skid ends, along her new facing.
@@ -267,9 +267,8 @@ pub enum Effect {
     /// `WallJump` (§1.2): the change from a wall jump into a spin: the spin is carried on.
     SpinOn,
     /// `AnimationEnds`: the unmorph's end hands over the crouch, a pose on the ground, in the
-    /// air too: she is on the ground from then on, her vertical speed kept
-    /// (`FollowingTheGround`).
-    OnTheGround,
+    /// air too: she comes to the ground there, her vertical speed kept (`FollowingTheGround`).
+    ComesToTheGround,
 }
 
 /// A change of action's own effect, whatever brought the change.
@@ -461,9 +460,6 @@ pub enum RowId {
     NoFloorBall,
     /// `WhatHerMovesMet`: a ceiling, rising.
     Ceiling,
-    /// `WhatHerMovesMet`: a block or solid enemy in the way of the aim change's step, a running
-    /// pose chosen.
-    StepBlocked,
     /// `AnimationEnds`: `TakingOff`.
     TakingOffEnds,
     /// `AnimationEnds`: crouched `Turning`.
@@ -622,7 +618,7 @@ pub const DOWN_TO_FORWARD: &[Aiming] = &[Aiming {
 }];
 
 /// `WhatHerMovesMet`: what this frame's moves met, before the aim change's step (a block in its
-/// way puts the running pose chosen against the wall, `chart::table::STEP_BLOCKED`).
+/// way puts the running pose chosen against the wall, `Choice::blocked`).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).

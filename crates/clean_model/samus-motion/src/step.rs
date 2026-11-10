@@ -41,7 +41,7 @@ impl Samus {
             rules,
             reached: Vec::new(),
         };
-        let inside = t.inside(self.bounds());
+        let inside = t.inside(self.bounds(&t));
         let start = *self;
         self.spin = self.spin.then(situation.doing == Spinning);
         self.vertical.end_rise(situation.doing, frame.pad);
@@ -60,7 +60,7 @@ impl Samus {
             met: meeting.met,
         };
         let chosen = moment.choose(start.pose, situation);
-        let chosen = self.step_forward(chosen, &moment, situation, &mut t);
+        let chosen = self.step_forward(chosen, &mut t);
         let placed = self.change_pose(chosen, contact, &start, &mut t);
         let left = FrameBefore::left(meeting.met, frame.animation_ends, start.pose, self.pose);
         self.jump_held = start.jump_held.then(rules, frame, left);

@@ -3,8 +3,8 @@
 //!
 //! How the pull grows her speed and when a rise ends (`RisingAndFalling`, `Moonfall`), how her
 //! vertical move goes and what its end meets (`FollowingTheGround`), and what a floor or a wall's
-//! kick does to it (`Landing`, `WallJump`, `Jumping`). Samus holds one; her moves read it. Her
-//! vertical speed, its phase and the bounces change in one place, `Vertical::set`.
+//! kick does to it (`Landing`, `WallJump`, `Jumping`). Samus holds one; her moves read it. Each
+//! change names only the parts of it that it changes.
 
 use crate::rows::Doing::{self, Hop, Spinning, StraightJump};
 use crate::rows::Footing;
@@ -16,7 +16,7 @@ use clean_types::button::JUMP;
 use clean_types::{Buttons, Fixed, Item, Parts, ZERO};
 
 /// Her vertical motion's phase.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Phase {
     /// On the ground, keeping the vertical speed she brought with her, downward or upward
     /// (`FollowingTheGround`); an upward one is a rise she keeps there (`RisingAndFalling`).
@@ -36,7 +36,7 @@ pub enum Phase {
 }
 
 /// Her vertical motion: her vertical speed, its phase, and the ball's bounces.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Vertical {
     /// Her vertical speed, signed, downward positive.
     pub speed: Fixed,
@@ -47,7 +47,7 @@ pub struct Vertical {
 }
 
 /// `FollowingTheGround`, `RisingAndFalling`, `Moonfall`: how her vertical move goes this frame.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Course {
     /// The ground pull: on the ground, with no vertical motion she moves by (a turn in the
     /// moonfall too), she is pulled down by that frame's speed plus 1 px, 1 px seated on a slope.
@@ -55,26 +55,17 @@ pub enum Course {
     Pulled,
     /// The ball on the ground with a vertical motion: it moves by its vertical speed under the
     /// pull; the floor stops it flush and never lands it, and finding none it walks off a ledge.
-    OnTheGround,
+    BallMovesByIt,
     /// In the air, or while her body changes shape with a vertical motion: she moves by her
     /// vertical speed under the pull; a floor meets her as her situation's footing says, and a
     /// block above ends the rise.
     InTheAir,
 }
 
-/// What the end of her vertical move leaves her.
-pub enum MoveEnd {
-    /// `FollowingTheGround`: she stays where she was: the ground pull found no floor while her
-    /// body changes shape.
-    Stays,
-    /// She ends where the move left her, having met this, if anything.
-    Moved(Option<Met>),
-}
-
 /// `Landing`, `WallJump`: what her moves' contact with a floor or a wall does to her motion,
 /// once the change it comes with is taken (`PoseFitAfterMoves`: a change refused, or the crouch
 /// taken instead, brings none of it). The pose it chooses is the chart's (`WhatHerMovesMet`).
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Contact {
     /// `WallJump`'s kick off a wall: she rises at the wall-jump speed, x speed 0, following the
     /// pad; it ends a moonfall.
@@ -101,15 +92,6 @@ impl Contact {
 }
 
 impl Vertical {
-    /// The one place her vertical motion changes: its phase, its speed and the bounces.
-    const fn set(&mut self, phase: Phase, speed: Fixed, bounces: Bounces) {
-        *self = Self {
-            speed,
-            phase,
-            bounces,
-        };
-    }
-
     /// `FollowingTheGround`: whether she is on the ground, falling at 0 there included.
     #[must_use]
     pub const fn on_ground(self) -> bool {
@@ -133,18 +115,27 @@ impl Vertical {
     }
 
     /// `RisingAndFalling`, `Jumping`, `WallJump`: she starts rising at this speed.
-    pub(crate) fn rise(&mut self, v: Fixed) {
-        self.set(Rising, -v, self.bounces);
+    fn rise(&mut self, v: Fixed) {
+        *self = Self {
+            phase: Rising,
+            speed: -v,
+            ..*self
+        };
     }
 
-    /// `Jumping`: she starts rising at the jump speed her items give.
-    pub(crate) fn jump(&mut self, t: &Tick) {
-        self.rise(t.rules.jump.of(&t.frame.items));
+    /// `Jumping`: she starts rising at the jump speed, as her items and her dash (`dash`, as the
+    /// frame's moves left it) make it (`Rules::rise_speed`).
+    pub(crate) fn jump(&mut self, dash: Fixed, t: &Tick) {
+        self.rise(t.rules.rise_speed(t.rules.jump, &t.frame.items, dash));
     }
 
     /// `RisingAndFalling`, `WallsAndCeilings`: she falls from rest.
     const fn fall_from_rest(&mut self) {
-        self.set(Falling, ZERO, self.bounces);
+        *self = Self {
+            phase: Falling,
+            speed: ZERO,
+            ..*self
+        };
     }
 
     /// `RisingAndFalling`: at a frame's start the rise ends, falling from rest, once the pull
@@ -160,8 +151,8 @@ impl Vertical {
 
     /// `Jumping`: with space jump, pressing jump while falling in a spin with her fall speed in
     /// the window (read as 8.8) jumps again, rising that same frame; not in a moonfall
-    /// (`Moonfall`).
-    pub(crate) fn space_jump(&mut self, doing: Doing, t: &Tick) {
+    /// (`Moonfall`). `dash`: hers after the frame's horizontal move.
+    pub(crate) fn space_jump(&mut self, doing: Doing, dash: Fixed, t: &Tick) {
         let (r, f) = (t.rules, t.frame);
         if self.phase == Falling
             && doing == Spinning
@@ -169,17 +160,21 @@ impl Vertical {
             && f.items[Item::SpaceJump]
             && r.space_jump.contains(&self.speed.to_8_8().0)
         {
-            self.jump(t);
+            self.jump(dash, t);
         }
     }
 
     /// `Moonfall`: a spin she enters when a turn ends starts with no rise, her vertical speed 0
     /// and the moonfall begun; with jump just pressed it is a jump instead.
-    pub(crate) fn enter_spin_from_a_turn(&mut self, t: &Tick) {
+    pub(crate) fn enter_spin_from_a_turn(&mut self, dash: Fixed, t: &Tick) {
         if t.frame.pressed.any(JUMP) {
-            self.jump(t);
+            self.jump(dash, t);
         } else {
-            self.set(Moonfall, ZERO, self.bounces);
+            *self = Self {
+                phase: Moonfall,
+                speed: ZERO,
+                ..*self
+            };
         }
     }
 
@@ -187,7 +182,7 @@ impl Vertical {
     /// air too: she is on the ground from then on, her vertical speed kept.
     pub(crate) const fn come_to_the_ground(&mut self) {
         if !self.on_ground() {
-            self.set(Ground, self.speed, self.bounces);
+            self.phase = Ground;
         }
     }
 
@@ -202,40 +197,45 @@ impl Vertical {
         if ground && !moves_by_it || self.phase == Moonfall && footing == Footing::Holds {
             Course::Pulled
         } else if ground && footing == Footing::Bounces {
-            Course::OnTheGround
+            Course::BallMovesByIt
         } else {
             Course::InTheAir
         }
     }
 
-    /// `RisingAndFalling`: the pull grows her vertical speed, which stops growing at pixel part
-    /// 5; `Moonfall`: with no limit.
-    fn pull(&mut self, r: &Rules) {
-        let capped = self.phase != Moonfall && self.speed.pixel() == r.fall_settle_px;
-        let speed = if capped {
-            self.speed
-        } else {
-            self.speed + r.gravity
-        };
-        self.set(self.phase, speed, self.bounces);
+    /// `RisingAndFalling`: the pull grows her vertical speed, which stops growing at a pixel part
+    /// of exactly 5 (a speed of 6 px or more grows on); `Moonfall`: with no limit.
+    fn grow(&mut self, r: &Rules) {
+        if self.phase == Moonfall || self.speed.pixel() != r.fall_settle_px {
+            self.speed += r.gravity;
+        }
     }
 
     /// `FollowingTheGround`: walking off a ledge, she falls from rest, or with an upward speed she
     /// kept on the ground rises on by it; bounces 0.
     fn walk_off(&mut self) {
-        if self.speed.negative() {
-            self.set(Rising, self.speed, Bounces::None);
+        *self = if self.speed.negative() {
+            Self {
+                phase: Rising,
+                bounces: Bounces::None,
+                ..*self
+            }
         } else {
-            self.set(Falling, ZERO, Bounces::None);
-        }
+            Self {
+                phase: Falling,
+                speed: ZERO,
+                bounces: Bounces::None,
+            }
+        };
     }
 
-    /// The one decision of what her vertical move by `by` met, stopped or not, as its course
-    /// and her situation's footing say. An upward move stopped is a ceiling (`WallsAndCeilings`):
-    /// the rise ends with no pull that frame. Moving by her speed, the pull then grows it
-    /// (`RisingAndFalling`). In the air a floor is met (`Landing`); on the ground the floor stops
-    /// her flush and never lands her, and finding none she walks off a ledge
-    /// (`FollowingTheGround`), unless turning (she sinks) or changing shape (she stays).
+    /// What her vertical move by `by` met, stopped or not, as its course and her situation's
+    /// footing say. An upward move stopped is a ceiling (`WallsAndCeilings`): the rise ends with
+    /// no pull that frame. Moving by her speed, the pull then grows it (`RisingAndFalling`). In
+    /// the air a floor is met (`Landing`); on the ground the floor stops her flush and never lands
+    /// her, and finding none she walks off a ledge (`FollowingTheGround`), unless turning, where
+    /// she sinks by the pull. (Changing shape, she stays where she is instead: the move's own
+    /// case, `Samus::move_vertically`, before it ends.)
     pub(crate) fn end_move(
         &mut self,
         course: Course,
@@ -243,25 +243,22 @@ impl Vertical {
         stopped: bool,
         footing: Footing,
         r: &Rules,
-    ) -> MoveEnd {
+    ) -> Option<Met> {
         if stopped && by.negative() {
             self.fall_from_rest();
-            return MoveEnd::Moved(Some(Ceiling));
+            return Some(Ceiling);
         }
         if course != Course::Pulled {
-            self.pull(r);
+            self.grow(r);
         }
         match (course, stopped) {
-            (Course::InTheAir, true) => MoveEnd::Moved(Some(Floor)),
-            (Course::Pulled, false) if footing == Footing::Settles => MoveEnd::Stays,
-            (Course::Pulled, false) if footing == Footing::Holds => MoveEnd::Moved(None),
-            (Course::Pulled | Course::OnTheGround, false) => {
+            (Course::InTheAir, true) => Some(Floor),
+            (Course::Pulled, false) if footing == Footing::Holds => None,
+            (Course::Pulled | Course::BallMovesByIt, false) => {
                 self.walk_off();
-                MoveEnd::Moved(Some(NoFloor))
+                Some(NoFloor)
             }
-            (Course::Pulled | Course::OnTheGround, true) | (Course::InTheAir, false) => {
-                MoveEnd::Moved(None)
-            }
+            (Course::Pulled | Course::BallMovesByIt, true) | (Course::InTheAir, false) => None,
         }
     }
 
@@ -296,16 +293,38 @@ impl Vertical {
             .copied()
     }
 
-    /// `Landing`, `WallJump`: what her moves' contact does to her vertical motion; a bounce rises
-    /// at the bounce speed less its own cut.
-    pub(crate) fn meet(&mut self, contact: Contact, t: &Tick) {
-        let (r, items) = (t.rules, &t.frame.items);
+    /// `Landing`, `WallJump`: what her moves' contact does to her vertical motion. The kick and
+    /// the spring ball's hop rise as `Jumping` makes the wall-jump and jump speeds, with her
+    /// `dash`; a bounce rises at the bounce speed less its own cut, with no share of the dash.
+    pub(crate) fn meet(&mut self, contact: Contact, dash: Fixed, t: &Tick) {
+        let r = t.rules;
         match contact {
-            Contact::WallKick => self.rise(r.wall_jump.of(items)),
-            Contact::Hop => self.set(Rising, -r.jump.of(items), Bounces::None),
-            Contact::Bounce(b) => self.set(Rising, -(r.bounce - b.slower), b.then),
-            Contact::Settle => self.set(Ground, ZERO, self.bounces),
-            Contact::Land => self.set(Ground, ZERO, Bounces::None),
+            Contact::WallKick => self.rise(r.rise_speed(r.wall_jump, &t.frame.items, dash)),
+            Contact::Hop => {
+                self.jump(dash, t);
+                self.bounces = Bounces::None;
+            }
+            Contact::Bounce(b) => {
+                *self = Self {
+                    phase: Rising,
+                    speed: -(r.bounce - b.slower),
+                    bounces: b.then,
+                };
+            }
+            Contact::Settle => {
+                *self = Self {
+                    phase: Ground,
+                    speed: ZERO,
+                    ..*self
+                };
+            }
+            Contact::Land => {
+                *self = Self {
+                    phase: Ground,
+                    speed: ZERO,
+                    bounces: Bounces::None,
+                };
+            }
         }
     }
 }

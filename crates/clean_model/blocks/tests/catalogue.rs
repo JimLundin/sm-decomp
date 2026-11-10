@@ -71,7 +71,7 @@ fn spec_entries() -> Vec<SpecEntry> {
 }
 
 /// A kind as the spec writes it.
-const fn kind_name(kind: &Kind) -> &'static str {
+const fn kind_name(kind: Kind) -> &'static str {
     match kind {
         Kind::Mechanic => "mechanic",
         Kind::Quirk => "quirk",
@@ -82,7 +82,7 @@ const fn kind_name(kind: &Kind) -> &'static str {
 }
 
 /// A switch as the spec writes it: `none` for an entry that is always on.
-const fn switch_name(switch: &Switch) -> &'static str {
+const fn switch_name(switch: Switch) -> &'static str {
     match switch {
         Switch::Fixed => "none",
         Switch::Toggle => "toggle",
@@ -107,14 +107,14 @@ fn the_catalogue_matches_the_spec_one_for_one() {
             entry.name
         );
         assert_eq!(
-            kind_name(&behaviour.kind),
+            kind_name(behaviour.kind),
             entry.kind,
             "{}: kind",
             entry.name
         );
         let switch = entry.switch.split_whitespace().next().unwrap_or_default();
         assert_eq!(
-            switch_name(&behaviour.switch),
+            switch_name(behaviour.switch),
             switch,
             "{}: switch",
             entry.name

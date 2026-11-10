@@ -20,7 +20,7 @@ use clean_model_samus_motion::{
 };
 use core::num::Wrapping;
 
-use clean_types::{Action, Buttons, Fixed, Pose, Position, Px, Radius, Side, Turn, ZERO};
+use clean_types::{Action, Buttons, Fixed, Pose, Position, Px, Side, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -115,10 +115,6 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
             },
         },
         pose,
-        radius: Radius {
-            x: X_RADIUS,
-            y: Wrapping(samus.y_radius),
-        },
         spin: if pose.action == Action::Spinning && carried {
             Spin::CarriedOn
         } else {

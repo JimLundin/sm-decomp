@@ -87,7 +87,7 @@ impl Samus {
         if into_morph && !t.frame.items[Item::MorphBall] {
             return Fitted::Refused;
         }
-        let (old, new) = (self.radius, t.body(chosen));
+        let (old, new) = (t.body(self.pose), t.body(chosen));
         if chosen == self.pose || chosen.facing == Facing::Screen || new.y <= old.y {
             return Fitted::Taken;
         }
@@ -117,11 +117,11 @@ impl Samus {
     }
 
     /// `PoseFitAfterMoves`: one look by `by` whole px (read signed, downward positive) at size
-    /// `r`. It doesn't move her, but what stops it writes her subpixel as a stop would, and a
+    /// `r`. It doesn't move her, but what stops it writes her y subpixel as a stop would, and a
     /// stepped block below seats her (`SlopesCarry`). Returns the room it found where something
     /// stopped it: how far it got, in whole px.
     fn look(&mut self, t: &mut Tick, by: Px, r: Radius, probe: Probe) -> Option<Px> {
-        let seen = t.vmove(
+        let look = t.vmove(
             Bounds {
                 at: self.position,
                 r,
@@ -129,7 +129,8 @@ impl Samus {
             px(by),
             probe,
         );
-        self.end_at(&seen);
-        seen.stop.map(|_| seen.gone)
+        // What stopped the look writes her y subpixel (FFFF down, 0 up or against an enemy).
+        self.take_result(&look);
+        look.stop.map(|_| look.gone)
     }
 }

@@ -13,10 +13,10 @@ use Carry::{CarriesOn, FollowsPad};
 use DashIs::{Hers, ToLose};
 use Stride::{Both, Dash, DashThenHalt, Nothing};
 use clean_types::button::{RUN, SIDES};
-use clean_types::{Facing, Fixed, Parts, Side, ZERO, below};
+use clean_types::{Facing, Fixed, Parts, Side, ZERO, part_below};
 
 /// §1.2 carrying on: how her horizontal motion goes.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Carry {
     /// It follows the pad.
     FollowsPad,
@@ -26,7 +26,7 @@ pub enum Carry {
 }
 
 /// §1.2 her dash.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DashIs {
     /// Hers to keep.
     Hers,
@@ -35,7 +35,7 @@ pub enum DashIs {
 }
 
 /// `SpeedBuildsAndBrakes`: what a frame's horizontal move is made of.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Stride {
     /// No move.
     Nothing,
@@ -49,7 +49,7 @@ pub enum Stride {
 
 /// Her horizontal motion: her speed's size and the way it points, whether it carries on, and
 /// her dash, added the way she moves.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Run {
     /// Her horizontal speed's size.
     pub speed: Fixed,
@@ -113,11 +113,6 @@ impl Run {
         } else {
             self.join_dash();
         }
-    }
-
-    /// `Dash`: the change takes her dash (dash 0).
-    pub(crate) const fn clear_dash(&mut self) {
-        self.dash = ZERO;
     }
 
     /// `Landing`, `WallJump`: what her moves' contact does to her run: a wall's kick stops
@@ -189,7 +184,7 @@ impl Run {
     fn drift(&mut self, gait: Gait, drift: Drift, facing: Facing, t: &Tick) -> Stride {
         let (r, pad) = (t.rules, t.frame.pad);
         if gait == Gait::Running && pad.any(RUN) {
-            self.grow_dash(r);
+            self.grow_dash(r.dash_cap.of(&t.frame.items), r);
         } else {
             self.lose_dash();
         }
@@ -239,13 +234,14 @@ impl Run {
     }
 
     /// `Dash`: grows if, before the step, its pixel part is below the cap's or its subpixel part
-    /// is below the cap's; else it becomes the cap.
-    fn grow_dash(&mut self, r: &Rules) {
-        let ((p, s), (cp, cs)) = (self.dash.words(), r.dash_cap.words());
-        self.dash = if below(p, cp) || below(s, cs) {
+    /// is below the cap's (`part_below`); else it becomes the cap. The cap is the items' (higher
+    /// with the speed booster).
+    fn grow_dash(&mut self, cap: Fixed, r: &Rules) {
+        let ((p, s), (cp, cs)) = (self.dash.words(), cap.words());
+        self.dash = if part_below(p, cp) || part_below(s, cs) {
             self.dash + r.dash_step
         } else {
-            r.dash_cap
+            cap
         };
         self.dash_is = Hers;
     }

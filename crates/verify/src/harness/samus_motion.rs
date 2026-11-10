@@ -27,7 +27,7 @@ use game::samus_world::state::{clean_of, named};
 use game::samus_world::step::{Ran, Reads, run, settle};
 use game::samus_world::{SamusFault, SamusWorld};
 use game::state::Controller;
-use game::state::room::{Block, BlockColumns, BlockKind, ElevatorRide};
+use game::state::room::{Block, BlockColumns, ElevatorRide};
 use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMotion};
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
@@ -41,15 +41,11 @@ use crate::source::{self, WramByte, WramWord};
 /// The game state the main loop runs gameplay in.
 const MAIN_GAMEPLAY: u16 = 8;
 
-/// A block is 16 px.
-const BLOCK_SHIFT: u16 = 4;
-
 /// The vertical direction up (`0B36`): she is rising.
 const UP: u16 = 1;
 
-/// The equipment bits the masks read.
+/// The equipment bit the liquid mask reads.
 const GRAVITY_SUIT: u16 = 0x0020;
-const SPEED_BOOSTER: u16 = 0x2000;
 
 /// Why a frame isn't one Samus's motion is compared on: her motion doesn't run in it, or the
 /// harness couldn't decode it (`Unreadable`: a harness defect).
@@ -179,10 +175,8 @@ const LIQUID_PHYSICS_OFF: u16 = 0x0004;
 /// Bank $91 log: the knockback's movement handler, which the knockback's start sets
 /// ($91:EE1F, $91:EE40), morphed or not.
 const KNOCKBACK: u16 = 0xDF38;
-/// The running movement type, the only one whose dash the speed booster grows.
+/// The running movement type, which the running let-go row leaves.
 const RUNNING: u8 = 0x01;
-/// The spin jump's movement type, whose falling spin the space jump restarts.
-const SPIN_JUMPING: u8 = 0x03;
 /// The standing movement type, which the running let-go row stands her in.
 const STANDING: u8 = 0x00;
 /// The pad's left and right (`JOYPAD1_LASTKEYS`), which no binding moves.
@@ -340,43 +334,6 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
     })
 }
 
-/// The fields the speed booster writes in the frame from `from` to `next`, with it equipped.
-/// Its dash grows past 2.0 only while she runs with run held ($90:9789): from a dash of 2.0 or
-/// more there, the dash and x are its. A dash of any size elsewhere is only a value, which the
-/// domain's moves carry. A rise she starts with a dash gets half the dash added to its speed
-/// ($90:9919, $90:99A9): the vertical speed of that frame. A jump or a wall jump starts after
-/// the frame's movement ($91:EB88), so she doesn't move by the boosted speed until the next
-/// frame, which starts from the speed record N+1 holds: y stays the domain's. The space jump
-/// starts inside the falling spin's movement ($90:A4C4) and moves her by the boosted speed in
-/// the same frame ($90:A50F), so a rise from a falling spin that is still a spin takes y too. A
-/// wall jump kicked from a falling spin (a wall jump's movement type next) starts after the
-/// movement, which didn't move her by it ($90:9D35 skips $90:90E2).
-fn boosted(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
-    if word(from, source::EQUIPPED_ITEMS)? & SPEED_BOOSTER == 0 {
-        return Ok(FieldSet::EMPTY);
-    }
-    let (before, after) = (state(from)?, state(next)?);
-    let mut fields = FieldSet::EMPTY;
-    let run_held = word(from, source::JOYPAD1_LASTKEYS)? & word(from, source::BINDING_RUN)? != 0;
-    if byte(from, source::SAMUS_MOVEMENT_TYPE)? == RUNNING
-        && run_held
-        && before.extra_run.pixel() >= 2
-    {
-        fields = fields.union(Quantity::ExtraRun.set().union(Quantity::X.set()));
-    }
-    if rise_starts(&before, &after) && (before.extra_run.0 != 0 || after.extra_run.0 != 0) {
-        fields = fields.union(Quantity::VerticalSpeed.set());
-        let movement = |record| byte(record, source::SAMUS_MOVEMENT_TYPE);
-        if movement(from)? == SPIN_JUMPING
-            && movement(next)? == SPIN_JUMPING
-            && before.vertical == VerticalMotion::Down
-        {
-            fields = fields.union(Quantity::Y.set());
-        }
-    }
-    Ok(fields)
-}
-
 /// Whether the running let-go row stands her (`PadChart`, AS3 and AS4): running with neither
 /// side held in `from`, standing in `next`. Whether she carries on or follows the pad is then
 /// in her speed mode word alone, which standing halts either way, so no later frame shows it
@@ -386,46 +343,6 @@ fn let_go_stands(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
     Ok(movement(from)? == RUNNING
         && word(from, source::JOYPAD1_LASTKEYS)? & SIDES == 0
         && movement(next)? == STANDING)
-}
-
-/// Whether a sloped floor block (not a ceiling's) lies under her path from `from` to `next`:
-/// in a column her centre covers between the two records' x, inclusive, and in her bottom's
-/// row at `from` or either neighbour. The model's x lies between the two, since its capped dash
-/// falls short of the game's the same way, so this covers every x either reaches (gap 31).
-fn sloped_floor_under(
-    from: &FrameRecord,
-    next: &FrameRecord,
-    inputs: &Inputs,
-) -> Result<bool, Skip> {
-    let (start, end) = (
-        word(from, source::SAMUS_X_POS)? >> BLOCK_SHIFT,
-        word(next, source::SAMUS_X_POS)? >> BLOCK_SHIFT,
-    );
-    let columns = start.min(end)..=start.max(end);
-    let bottom = word(from, source::SAMUS_Y_POS)?
-        .wrapping_add(radius(from)?)
-        .wrapping_sub(1)
-        >> BLOCK_SHIFT;
-    let width = usize::from(inputs.width.0);
-    let near = |centre: u16| centre.saturating_sub(1)..=centre.saturating_add(1);
-    Ok(near(bottom).any(|row| {
-        columns.clone().any(|column| {
-            usize::from(row)
-                .checked_mul(width)
-                .and_then(|row_start| row_start.checked_add(usize::from(column)))
-                .and_then(|index| inputs.blocks.get(index))
-                .is_some_and(|block| matches!(block.kind, BlockKind::Slope(slope) if !slope.y_flip))
-        })
-    }))
-}
-
-/// Whether a jump, a spin's jump or a wall jump's kick starts a rise from `before` to `after`:
-/// she rises after it and didn't before, or rises faster than before, which the pull never
-/// does.
-fn rise_starts(before: &Motion, after: &Motion) -> bool {
-    after.vertical == VerticalMotion::Up
-        && (before.vertical != VerticalMotion::Up
-            || after.vertical_speed.0 > before.vertical_speed.0)
 }
 
 fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
@@ -620,7 +537,7 @@ fn follows(fields: FieldSet) -> FieldSet {
 /// The declared fields a catalogue entry's output reaches. Her pose, what she is drawn as, the
 /// standing animation and the cells she touched aren't declared fields, so an entry whose output
 /// is only those (the pose's choice, its chart, its aim, an animation's end) is credited nothing.
-fn shown_by(id: &BehaviourId) -> FieldSet {
+fn shown_by(id: BehaviourId) -> FieldSet {
     use BehaviourId as B;
     use Quantity as Q;
     let horizontal = [Q::X, Q::BaseSpeed, Q::ExtraRun, Q::Momentum, Q::Mode];
@@ -941,7 +858,7 @@ impl Domain for SamusMotion {
         &self,
         from: &FrameRecord,
         next: &FrameRecord,
-        inputs: &Inputs,
+        _inputs: &Inputs,
     ) -> Result<Vec<Mask>, Skip> {
         use Quantity as Q;
         let mut masks = Vec::new();
@@ -961,33 +878,12 @@ impl Domain for SamusMotion {
         if submerged(from, radius(from)?)? {
             mask("deferred: liquid physics (submerged)", FieldSet::ALL);
         }
-        let boost = boosted(from, next)?;
-        if boost != FieldSet::EMPTY {
-            mask(
-                "deferred: the speed booster (its dash past 2.0 running with run held, or a boosted rise's speed)",
-                boost,
-            );
-        }
         // The windup's start runs in the frame's pose change, after the motion, and writes the
         // shinespark's own speeds ($90:CFFA): dash 8.0, base speed 0, vertical speed 0, rising.
         if word(next, SAMUS_MOVEMENT_HANDLER)? == SHINESPARK_WINDUP {
             mask(
                 "deferred: the shinespark's start sets her dash, base and vertical speeds",
                 Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
-            );
-        }
-        // The speed booster's dash moves her further (x, above); on a sloped floor the
-        // surface's height at her centre column, which the walk and the ground pull end on,
-        // follows that x. Following the ground down (the horizontal move not adjusted by the
-        // slope) the pull is |speed| + dash + 1, so the dash reaches y through the pull too;
-        // where the slope adjusted the move the pull is 1.0 ($90:924C, $90:925E) and the dash
-        // reaches y through x alone. Either way y is the booster's there (gap 31: with the
-        // dash's cap lifted, each such frame of the five rows that still differs has x a pixel
-        // off, the booster's own growth of the dash).
-        if boost.contains(Q::X.index()) && sloped_floor_under(from, next, inputs)? {
-            mask(
-                "deferred: the speed booster on a sloped floor (its dash sets x, where the slope's surface leaves her, and the pull)",
-                Q::Y.set(),
             );
         }
         if let_go_stands(from, next)? {
@@ -1081,7 +977,7 @@ impl Domain for SamusMotion {
             .iter()
             .map(|entry| Entry {
                 name: format!("{:?}", entry.id),
-                fields: shown_by(&entry.id),
+                fields: shown_by(entry.id),
             })
             .collect()
     }
@@ -1178,7 +1074,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
         (B::Moonfall, moonfall(before) || moonfall(after)),
         (
             B::PoseFitAfterMoves,
-            changed && after.radius.y > before.radius.y,
+            changed && ran.body_after.y > ran.body_before.y,
         ),
         (
             B::ShrinkingLowersHer,

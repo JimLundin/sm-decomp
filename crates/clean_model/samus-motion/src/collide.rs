@@ -5,7 +5,7 @@
 //! frame's moves share their room, rules and cells in `Tick`, whose collision methods these are.
 
 use crate::tick::Tick;
-use Probe::{Blocks, Enemies, Look, Move, Walk};
+use Probe::{Blocks, Enemies, Move, NearWall, Walk};
 use Stop::{Enemy, Flat, Seats};
 use clean_types::Block::{self, Air, Answered, Solid, StandsFor, Stepped};
 use clean_types::Heading::{self, Down, Right, Up};
@@ -38,7 +38,7 @@ const FLUSH: u16 = u16::MAX;
 const FAR_PAST: Px = Wrapping(17);
 
 /// `BlocksStopFlush`: a body's box, her centre and half-sizes.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Bounds {
     /// Her centre.
     pub at: Position,
@@ -47,7 +47,7 @@ pub struct Bounds {
 }
 
 /// What stopped a move.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Stop {
     /// `BlocksStopFlush`'s solid block, a stepped block met any way but downward, or
     /// `SlopesCarry`'s sloped surface.
@@ -60,15 +60,15 @@ pub enum Stop {
 }
 
 /// What a move or a look is tested against, and the way its cells are reported (`TouchedCells`).
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Probe {
     /// `SlopesSlowTheWalk`: a horizontal move made with her vertical speed exactly 0, which a
     /// sloped floor at her leading edge shortens; else as a move.
     Walk,
     /// A move: solid enemies first, then blocks; its cells with its direction.
     Move,
-    /// The near-wall test (`WallJump`): as a move, its cells with the way `Look`.
-    Look,
+    /// The near-wall test (`WallJump`), a look: tested as a move, its cells with the way `Look`.
+    NearWall,
     /// Pose fit's enemy look: solid enemies alone, reaching no cells.
     Enemies,
     /// Pose fit's and the shrink's block look: blocks alone, its cells with the way `Look`.
@@ -96,8 +96,10 @@ const fn cell(p: Px) -> u16 {
     p.0 >> CELL_BITS
 }
 
-/// `BlocksStopFlush`: whether a pixel difference, read signed, is below zero.
-const fn behind(p: Px) -> bool {
+/// Whether a pixel difference, read signed, is below zero: a stop behind where she starts
+/// (`BlocksStopFlush`), an edge short of a slope's air row (`SlopesCarry`), boxes already
+/// overlapping (`SolidEnemies`).
+const fn below_zero(p: Px) -> bool {
     p.0.cast_signed() < 0
 }
 
@@ -125,11 +127,11 @@ fn past(s: Slope, h: Heading, at: Pair<Px>) -> Option<Px> {
     let row = (if floor { at.y } else { !at.y }) & IN_CELL;
     let depth = s.depth.get(usize::from((at.x & IN_CELL).0));
     let past = row + ONE - depth.copied().unwrap_or(FAR_PAST);
-    (!behind(past) && floor == (h == Down)).then_some(past)
+    (!below_zero(past) && floor == (h == Down)).then_some(past)
 }
 
-/// `BlocksStopFlush`: one pixel on along a move heading `h`: +1 or −1.
-fn step(h: Heading) -> Px {
+/// `BlocksStopFlush`: one pixel on along a move heading `h`, as a signed pixel: +1 or −1.
+fn onward(h: Heading) -> Px {
     if grows(h) { ONE } else { -ONE }
 }
 
@@ -191,7 +193,7 @@ impl Axis {
 
     /// `BlocksStopFlush`: how far pixel `p` lies ahead of where she starts, along the move.
     fn ahead(&self, p: Px) -> Px {
-        (p - self.from.pixel()) * step(self.heading)
+        (p - self.from.pixel()) * onward(self.heading)
     }
 
     /// `BlocksStopFlush`: her leading edge at the target.
@@ -204,9 +206,9 @@ impl Axis {
     /// her pixel where it was (`PoseFitAfterMoves`, `WallJump`). Her position is rebuilt from
     /// her part along the axis and her part across it.
     fn put(&self, by: Px, sub: u16, stop: Option<Stop>) -> Moved {
-        let gone = if behind(by) { NONE } else { by };
+        let gone = if below_zero(by) { NONE } else { by };
         let moved = if self.way == Way::Look { NONE } else { gone };
-        let along = fixed(self.from.pixel() + moved * step(self.heading), sub);
+        let along = fixed(self.from.pixel() + moved * onward(self.heading), sub);
         Moved {
             to: Pair::from_along(self.heading, along, self.across),
             stop,
@@ -241,9 +243,9 @@ impl Axis {
         } else {
             self.to().sub()
         } != 0;
-        let reach = self.to().pixel() + if push { step(self.heading) } else { NONE };
+        let reach = self.to().pixel() + if push { onward(self.heading) } else { NONE };
         let near = |a: Px, b: Px, sum: Px| (a - b).0.cast_signed().unsigned_abs() < sum.0;
-        let reached = !behind(gap)
+        let reached = !below_zero(gap)
             && near(reach, ea, self.ra + era)
             && near(self.across.pixel(), ec, self.rc + erc);
         let mut moved = self.put(gap, self.from.sub(), Some(Enemy));
@@ -357,7 +359,11 @@ impl Tick<'_> {
 
     /// `TouchedCells`: the cells she is inside, from her box at the frame's start: her centre
     /// column at her bottom edge's row; at her centre's row, when it differs; at her top edge's
-    /// row, when it differs from her bottom edge's and the three rows' exclusive-or is not 0.
+    /// row, when it differs from her bottom edge's and the three rows' numbers combined by
+    /// exclusive-or are not 0. The exclusive-or is the spec's own test, not a test that the rows
+    /// differ: it is 0 for some three different rows (1, 2 and 3), which skips the top's cell;
+    /// and where her top and centre share a row it is her bottom's row, not 0 (but at row 0), so
+    /// that shared row's cell is reported twice.
     pub fn inside(&self, b: Bounds) -> Vec<Cell> {
         let (x, y) = (cell(b.at.x.pixel()), b.at.y.pixel());
         let (top, bottom) = extent(y, b.r.y);
@@ -417,19 +423,19 @@ impl Tick<'_> {
             _ if a.dist == ZERO => None,
             Enemies => self.enemies(&a),
             Blocks => self.blocks(&a),
-            Walk | Move | Look => self.enemies(&a).or_else(|| self.blocks(&a)),
+            Walk | Move | NearWall => self.enemies(&a).or_else(|| self.blocks(&a)),
         };
         stopped.unwrap_or_else(|| a.put(a.ahead(a.to().pixel()), a.to().sub(), None))
     }
 
     /// `BlocksStopFlush`, `PoseFitAfterMoves`, `ShrinkingLowersHer`: a vertical move or look by
-    /// `by`, signed, downward positive. A block look of 8 px or more is stopped by whatever a
-    /// look of 8 px the same way would stop; only when nothing stops that is it the look of its
-    /// own distance.
+    /// `by`, signed, downward positive. A block look as long as the long look (8 px) or longer
+    /// is stopped by whatever the long look the same way would stop; only when nothing stops
+    /// that is it the look of its own distance.
     pub fn vmove(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
-        let (heading, eight) = (if by.negative() { Up } else { Down }, self.rules.look);
-        let first =
-            (probe == Blocks && by.size() >= eight).then(|| self.go(b.axis(heading, eight, probe)));
+        let (heading, long_look) = (if by.negative() { Up } else { Down }, self.rules.long_look);
+        let first = (probe == Blocks && by.size() >= long_look)
+            .then(|| self.go(b.axis(heading, long_look, probe)));
         first
             .filter(|m| m.stop.is_some())
             .unwrap_or_else(|| self.go(b.axis(heading, by.size(), probe)))
@@ -456,7 +462,7 @@ impl Tick<'_> {
     /// lifts her by whole pixels onto its last air row; then a sloped ceiling at her top edge's
     /// row, with that edge in its solid part or on the first air row under it, pushes her down
     /// onto that row. Either seats her: returns her y then, if she is seated.
-    pub fn seat(&self, mut b: Bounds) -> Option<Fixed> {
+    pub fn slope_checks(&self, mut b: Bounds) -> Option<Fixed> {
         let lift = self.sloped(b, Down).filter(|p| *p != NONE);
         b.at.y -= px(lift.unwrap_or(NONE));
         let push = self.sloped(b, Up);

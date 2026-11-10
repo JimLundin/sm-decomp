@@ -12,9 +12,9 @@ pub struct Frame<'a> {
     /// The buttons just pressed this frame.
     pub pressed: Buttons,
     /// §1.3: the items switched on, progress's own output (never the ones merely hers). Her
-    /// motion reads `HiJumpBoots`, `SpaceJump`, `MorphBall` and `SpringBall`, and her sprite
-    /// `ScrewAttack`, `VariaSuit` and `GravitySuit` (`HowSheIsDrawn`); the others change nothing
-    /// here.
+    /// motion reads `HiJumpBoots`, `SpaceJump`, `MorphBall`, `SpringBall` and `SpeedBooster`, and
+    /// her sprite `ScrewAttack`, `VariaSuit` and `GravitySuit` (`HowSheIsDrawn`); the others
+    /// change nothing here.
     pub items: Set<Item>,
     /// `WallJump`: the spin's sprite has turned far enough to kick off a wall.
     pub spin_turned_far: bool,
@@ -24,7 +24,9 @@ pub struct Frame<'a> {
     pub parity: Parity,
     /// `AnimationEnds`: her pose's animation ends this frame.
     pub animation_ends: bool,
-    /// §1.3 body size: each pose's half-width and half-height, the game's data.
+    /// §1.3 body size: each pose's half-width and half-height, the game's data. The frame's
+    /// moves use the body of the pose she starts it in; the chosen pose's is read only where pose
+    /// fit sees it grow or a change of shape lowers her.
     pub body: &'a dyn Fn(Pose) -> Radius,
 }
 
@@ -42,7 +44,7 @@ pub struct Tick<'a> {
 }
 
 impl Tick<'_> {
-    /// `PoseFitAfterMoves`: a pose's half-width and half-height (§1.3 body size).
+    /// §1.3 body size: a pose's half-width and half-height.
     pub fn body(&self, pose: Pose) -> Radius {
         (self.frame.body)(pose)
     }

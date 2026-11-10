@@ -106,11 +106,11 @@ and `scan.sh --mirror` agrees.
 | Entry | Source |
 | --- | --- |
 | SpeedBuildsAndBrakes | `$90:9BD1` and its table (the speeds by situation), `$90:9A7E` (speed-up), `$90:9B1F` (braking), the standing, crouching, transition, ran-into-wall and facing-forward handlers' tail stops in `$90:A337`'s table, `$90:A521` (the ball) |
-| Dash | `$90:973E`, `$90:97D5` (the cap), `$91:DE53` (losing it), `$90:E5CE` (the wall stop's share) |
+| Dash | `$90:973E`, `$90:97D5` (the cap), `$90:9789` (the booster's cap, `$90:9F0D`), `$91:DE53` (losing it), `$90:E5CE` (the wall stop's share) |
 | TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep), `$91:81A9` with `$91:82D9`, `$91:8304` and `$91:ECD0` (letting go: the failed transition lookup's stop command clears `0B4A` after the move) |
 | AimingAndShooting | `$91:EADE` (the step: any prospective pose `0A28` of the running movement type, her own included), `$91:82E4` (the failed lookup's decelerate command keeps her pose as the prospective pose, so a running pose braking steps every frame), `$91:81E4` (a found row naming her own pose sets no prospective pose: no step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
 | RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
-| Jumping | `$90:98BC` (the speed table), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump); jump held through: the count `0AF4` (`$90:EAB3`, from `$90:EB35`'s draw once a gameplay frame: `INC` with jump held now and in `0DFE`, else `STZ`), the one-frame pose input handler `$90:E926` (count 1 to 8: jump ORed into `8F` for `$91:8000` alone, `STZ 0AF4` at `$90:E93A`), installed by `$91:F1EC` (landed, downward result grounded: `$90:E676` gives it for movement types 2, 3, 6 and 14h, and Ah and 19h out of scope) and by animation delay instruction 8 `$90:8370` (the turns, A4h-A7h and E0h-E7h, BFh-C4h; not when `0A28` is 4Bh, 4Ch, 19h or 1Ah) |
+| Jumping | `$90:98BC` (the speed table; `$90:9919` and `$90:99A6`, the booster's share of the dash), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump); jump held through: the count `0AF4` (`$90:EAB3`, from `$90:EB35`'s draw once a gameplay frame: `INC` with jump held now and in `0DFE`, else `STZ`), the one-frame pose input handler `$90:E926` (count 1 to 8: jump ORed into `8F` for `$91:8000` alone, `STZ 0AF4` at `$90:E93A`), installed by `$91:F1EC` (landed, downward result grounded: `$90:E676` gives it for movement types 2, 3, 6 and 14h, and Ah and 19h out of scope) and by animation delay instruction 8 `$90:8370` (the turns, A4h-A7h and E0h-E7h, BFh-C4h; not when `0A28` is 4Bh, 4Ch, 19h or 1Ah) |
 | FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing); the ball on the ground: `$90:A521` (morph ball) and `$90:A69F` (spring ball) call `$90:92B8`, the clone of `$92C7`, on both branches (`A549`/`A569`, `A6C7`/`A6E7`): with `0B36` ≠ 0 it runs `$90:90C4` and `$90:90E2` (moves by the speed, then the pull grows it) and returns carry set, which skips `$90:923F` (no ground pull) and, at rest, the halt at `A551`-`A561`; `$90:E676` gives 04 for movement types 4 and 11h, so `$91:E931` returns and the floor doesn't land it (BG1), `$91:EFEF` (walking off: speed 0, unless `0B36` = 1: `$91:EFEF` then keeps the speed and the direction, item-charge-beam 7 → 8 keeps 2.4000 up), `$90:98BC` (a jump sets it) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
 | RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0); `rising` is `0B36` = 1 at the frame's end, which the ground handlers keep as they keep the speed (`$90:923F` writes neither), so a crouch the unmorph's end hands over in a rise holds it (item-charge-beam 7) |
@@ -1034,7 +1034,7 @@ but the scroll (`$90:95A0`, run after the Samus handler in `$82:8B8A`) reads `0B
 camera's input. chain-0232-D5A7 17 → 18 (4Ah → BFh) and samus-input-poses 118 → 119 (49h → C0h)
 show `0B4A` = 1 the same.
 
-**Gap 31, the speed booster on a sloped floor (harness mask).** With `0B42` ≥ 2.0 running with
+**Gap 31, the speed booster on a sloped floor (a harness mask until round 17, when the model took the booster and the mask went).** With `0B42` ≥ 2.0 running with
 run held, `$90:9789` grows the dash past the model's cap, so x is masked already; on a slope the
 surface row at her centre column (`$94:95A1`, `$94:87DB`) and the pull `$90:923F` (`0DBC`.`0DBE` +
 1) both follow it, so y is the booster's there too. A local run with `dash_cap` 10.0000 and x
@@ -1232,7 +1232,7 @@ instruction 9's mask; screw attack `$90:8445`, `$91:D9F7`, `$91:DA0B`, `$91:F459
 palette); varia `$91:D629`, gravity `$91:D551`, `$91:DE6A`.. (palette) and `$90:8198`, `$90:9741`,
 `$90:98C2`, `$90:9BD4`, `$90:9C24`, `$90:9C5B`, `$90:E9D9` (liquids, out of scope); speed booster
 `$90:9789`, `$90:84FF`, `$90:8558`, `$91:E644`, and `$90:9919`, `$90:99A6` (every jump and wall jump
-starts half the dash faster: the booster's higher jump, out of scope); also gravity in liquids
+starts half the dash faster: the booster's higher jump, `Jumping`); also gravity in liquids
 `$90:994F`, `$90:99DC`, `$90:9A2F`, `$91:F68A`, `$91:F6EB`, the screw attack's spin pose and sprite
 `$91:F6B2`, `$91:F713`, `$91:E7A8`, `$91:E7B7`, `$91:E894`, and varia `$91:E741`, `$91:E757`. Bombs,
 grapple and x-ray aren't read in her motion.
@@ -1471,6 +1471,175 @@ else.
 same-side arm was original only and is now checked. The budget is 7,169, with pose fit 624;
 motion and the pose chart stay at their caps (2,813 and 1,584).
 
+## Round 17's amendments (2026-11-10): the speed booster
+
+Domain S2's first part (docs/architecture/domains.md), and adversary 84's observer items (V4, V5,
+blind points 2, 8, 9b and 16, and R-B1's recount). 284 vectors (262 + 22) and 59 pose steps (51 +
+8).
+
+**What the booster changes in her motion, and where.** The readers of `09A2` bit 2000h in banks
+`$90`/`$91` are `$90:9789` (the dash's cap), `$90:84FF` and `$90:8558` (animation delays: her looks
+and the boost counter), `$91:E644` (the pause screen's equipment change: an item switched mid-pose),
+and `$90:9919` and `$90:99A6` (the jump and wall-jump speeds). Of the readers of the boost counter
+`0B3E`/`0B3F` (speed boosting is counter 4): `$90:81C9` (lava cancels it and zeroes the dash:
+liquids), `$90:87C5` and `$90:EEE7` (echoes), `$90:A413` and `$90:EE64` (footsteps and their dust),
+`$90:F596` (the echo sound), `$91:D9EA` (contact damage `0A6E`), `$91:F7B0` (the crouch's shine: the
+shinespark's charge) and `$90:D00F`/`$90:D306` (the spark itself). None of them moves her. So the
+motion is the cap and the jumps; the counter, which `$90:852C` advances as the running animation
+reaches its delay instructions, is the shinespark's and her looks'.
+
+- **The cap.** `$90:9789`: with the booster, `0B42` compared with `$90:9F0D` (7) and `0B44` with
+  `$90:9F13` (0), each `BMI` (the `below` of `WordwiseTopSpeed`), else `0B42`.`0B44` = 7.0000;
+  without it `$90:97C7`..`$90:97F1` the same with `$90:9F19` (2). The gain is `$90:9F01`/`$90:9F07`
+  (0.1000) either way, `$90:97F3`. Records: samus-shinespark-right 73 → 74 (6.F000 → 7.0000), 74 →
+  75 (7.0000 kept, SB1, SB2), the same in the other three shinespark rows; samus-mockball 0-41
+  (2.6000 → 4.F000, MB1 at 26 → 27, on the flat floor at 1232 between the slopes of 10-23 and
+  91-94). The run's base speed stays capped at 2.C000 (`$90:9BD1`'s table has no booster column):
+  the move is 9.C000 at the cap (shinespark-right 74 → 75: 0254.FFFF → 025E.BFFF).
+- **The jumps.** `$90:9919` and `$90:99A6`, after the speed from the table: `LSR` of `0B42` added to
+  `0B2E`, and `0B44` added to `0B2C` with its own `CLC`, so the subpixel's carry never reaches the
+  pixel part. The callers of `$90:98BC`: `$91:FC94` (take-off, after the crouch lift), `$91:FCA9`
+  (spin start, not from a spin or a wall jump), `$91:FC3D` (the spring ball's hop from the ground),
+  `$91:F268` (the spring ball landing with jump held), `$90:A4C4` (space jump), `$91:8124`
+  (knockback's end, out of scope); of `$90:9949`, `$91:FC13` (the kick). The dash read is the one
+  the frame's movement handler left: the pose transition runs after `$90:973E`. Records:
+  samus-mockball 41 → 42 (MB2: 4.F000 grows to 5.0000, 6.0000 + 2 = 8.0000), item-wave-beam 6 → 7
+  (WB1: 2.0000 grows to 2.1000, without the booster it would stay 2.0000; 7.1000), r08 186 → 187
+  (R8J: no run held, 0.F000 kept, 6.F000), r08 227 → 228 (1.2000, 6.2000), and every other rise
+  below. No record has a wall jump with a dash (all nine kicks with the booster have `0B42` = 0) or
+  a jump without hi-jump and the booster, so the carry's loss and the wall jump are constructed.
+- **What ends the dash** with the booster is `$91:DE53` (cancel speed boosting: `0B3C` = 0, a dash
+  to lose) and the zeroing writes the spec already has, from the same callers (`$90:A3D0`..
+  `$90:A7BB`, the halts; `$90:E5E9`, the wall stop; `$91:EC76`/`$91:EC8E`/`$91:ECD3`, the change's
+  speed effects; `$91:EFA5`, `$91:F66F`, `$91:FA45`, the turns); none tests the booster. MB4 is
+  samus-mockball 109 → 110 (the spring ball let go: 5.0000 gone with the halt).
+- **The wall-jump kick keeps the dash.** `$91:F2D3` zeroes the base speed and `0B4A` only;
+  `$91:FA76` writes the dust. So a dash carried through the spin (WK1's 1.2000) is there at the kick
+  and, with the booster, adds to it.
+
+**Per frame over the records** (`$TEMP/collab/samus-spec-r17/perframe.py`, cache-v2, area-maridia
+left out): running at a frame's start and after it with run held, the dash at N+1 from the dash at N
+by the cap the items give agrees on 2,628 of 2,680 frames, against 2,119 for the cap without the
+booster. The 52 misses are frames the movement handler doesn't grow it on: 27 on which she doesn't
+move at all (the game skipped her that frame, as chain-0314-DAE1 275 → 276), 7 whose pose change the
+same frame zeroes it (a halt or a turn), 13 in terrain-quicksand's sand (`$90:9766`) and 5 in
+chain-0234-D51E 70-74, under water. A rise starting at the jump or wall-jump speed, its speed at N+1
+from the items and the dash: 188 of 189, against 166 for the plain speed; the miss is
+samus-ceres-push 989 (a push).
+
+**The vectors.** Recorded: MB1, SB1, SB2, MB2, WB1, R8J, MB3 (samus-mockball 100 → 101, the spring
+ball rolling 3.4000 + 5.0000) and MB4, each on a flat floor the record shows her flush on. MB3 and
+MB4 start rolling, following the pad (`0B4A` 0); the mockball's first rolling frames (75-77) still
+carry on from the spin and have no plain start within reach. Constructed, each worked by hand from
+the cited vector: C-booster-dash, C-booster-dashcap-a and -b (C-dashcap-a and -b at 7.0000),
+C-booster-carry (J1: E000 + 7000 carries, 4.5000), C-booster-walljump (WK1: 4.A000 + 0.2000),
+C-booster-space-jump (SJ1 with 3.4000: 6.0000 + 1 + 0.4000), C-spring-hop and C-booster-hop,
+C-booster-bounce (C-bounce with a dash), C-spring-land-held and C-booster-spring-land (`$91:F25E`:
+jump held, `0B20` = 0 and the jump, carry set so no landing command: the speed and dash stay).
+
+**Harness.** Gap 31's mask (x where `0B42` ≥ 2.0 with the booster, and y on the slope frames that
+follow it) is the old cap's: with the round's model the harness can compare x and y there again. The
+frame selection's "0B42 below 2.0" (How the spec was made) is no longer needed for the booster; it
+remains a fact of the earlier vectors.
+
+**V4, a change of shape landing with a run.** `$90:A640`: a landing (`0DC6` = 0401h) in the
+transition poses zeroes `0B2C`/`0B2E`, `0B36` and `0B20`, and nothing else: `0B46`.`0B48`, `0B4A`
+and the dash stay. r04 331 → 332: unmorph 3Dh falling at 2.3000, `0B4A` 2, base 1.0000, dash 0.2000;
+x + 0.2000 (`$90:9348`, the dash alone), y flush at 00B0.FFFF, `0B36` 0, base 1.0000. samus-mockball
+70 → 71: morph 37h at 2.8400, base 1.4000, dash 5.0000; x + 5.0000, y 04B9.FFFF. Both start carrying
+on (`0B4A` 2), which a vector's start can't give, so C-unmorph-land-run and C-morph-land-run start
+following the pad with the same quantities; the change of shape moves by the dash alone either way.
+Adversary 84's mutant M1 (`Settles` as `Land`) gives speed_x 0 on both. The bounces: `$91:ED11`
+zeroes `0B20` (and the vertical speed and direction) when a change of shape starts, so they are
+always 0 when one lands, and `$90:A640` zeroes them again; the vectors compare bounces 0. What
+`$91:ED11` does to a bounce's rise is the spec's question 21.
+
+**V5, the implementer's two refusals.**
+- A crouched turn other than `Ground`: the crouched turning poses are 43h/44h (movement type 0Eh,
+  the ground turn) and 97h-9Ah and A2h/A3h (aimed up, down and up-forward: movement type 17h, the
+  turn in a jump, `$91:B629`). The pose map names all six ground turns, and the transition table
+  reaches them only from the crouched poses, on the ground. The turns in a jump or a fall (2Fh/30h,
+  87h/88h, 8Fh-96h, 9Eh-A1h) and the moonwalk's are upright. So as a name a crouched turn is always
+  `Ground`, which §2 says, and a crouched `Fall`, `Jump` or `MoonwalkJump` turn is not a pose.
+- But the aimed ones move as a jump turn (adversary 86, O1): `$90:A790` runs `$90:92B8`, which at a
+  Y direction other than none moves her by her vertical speed with its calculations (`$90:90C4`,
+  `$90:90E2`), and only at none pulls her by `$90:923F`; the ground turn's `$90:A67C` runs
+  `$90:923F` alone, keeping the speed. In cache-v2 the aimed ones come up on 94 frames
+  (boss-phantoon 64, samus-ceres-push 30), every one with `0B36` = 0; of the unaimed, only 43h has a
+  kept speed (samus-shinespark-left and -up-left 184-189, +1.3400, kept). With no vertical motion
+  the two handlers move her alike, so the records can't show the difference, and I had no oracle run
+  from a constructed start: the spec's question 22, not a rule.
+- The spring ball's hop on the ground: the hop (7Fh/80h, movement type 12h) is entered only by
+  `$91:FC18` with the jump's rise, and leaves for 79h/7Ah (at rest) or the falling 7Dh/7Eh by a
+  landing (`$91:F25E` and `$91:F27F`..`$91:F2C0`); a bounce keeps it in the air. So it is never on
+  the ground at a frame's start; §1.2 now says the hop is in the air from its start to its rest, and
+  a start at a vertical speed of 0 there has just started to fall.
+
+**Blind 2, the body's first frame.** `$90:EC22` sets `0B00` from the pose at the start of each frame
+(`$90:E6B0`, before the pose input); within the frame only `$91:FDAE` (pose fit, a body that grows)
+and `$91:ECF1` (the shrink's look) write the new pose's radius. So a change with neither (J1's spin
+start, 21 → 12) ends the frame with the old radius, and the new one holds from the next frame
+(samus-mockball 42: 21, 43: 12). The spec's §1.3 says so, and the vector format's next_pose radius
+is the record's at the frame's end.
+
+**Blind 8, the fall's limit at exactly 5.** `$90:910C`: `CMP #$0005`, `BEQ` past the add, so only a
+pixel part of 5 stops it. A speed set at 6 px or more grows on (C-fallcap-past). The pull, 0.1C00,
+is under a pixel, so a fall that grows from below always passes through 5.
+
+**Blind 9b, the pose steps' speed, place and items.** The pose-step format gains `items`, `speed_x`
+and `in_the_air`; their defaults are what the steps meant before (no items, speed 0, in the air in
+the airborne poses). The new steps: PS-run-kept (samus-grapple-walljump 0 → 1, pose 11h kept at
+2.C000 with nothing held) and PS-run-stops; PS-ball-rolls (samus-mockball 75 → 76, 79h → 7Bh) and
+PS-ball-rests (109 → 110, 7Bh → 79h); PS-ball-air-kept, PS-spring-air-kept, PS-spring-hop and
+PS-ball-unmorphs, the chart's ball rows by the spring ball and the ground. The landed vector test
+reads none of the three keys (`deny_unknown_fields`), so with it unchanged the file fails to parse;
+with a local reading of them (`items` to the chart's spring ball, `speed_x` to its speed,
+`in_the_air` over the action's default), the round-16 model passes all 59 steps.
+
+**Blind 16, parameters.** MODEL §3: a `Parameter` is a value in `Rules`, and every value the model
+reads comes from `Rules`. The spec now defines the switch line (Header, Switches): `parameter` where
+the entry's params are numbers a game may set (SpeedBuildsAndBrakes, Dash, AimingAndShooting,
+RidingTheElevator, Jumping, FollowingTheGround, PoseFitAfterMoves, ShrinkingLowersHer,
+RisingAndFalling, WallJump, Landing, BlocksStopFlush), `none` where it has none or its number is the
+pixel a subpixel part reaches into, which the boxes' whole pixels then measure (SolidEnemies' 1 px),
+and the Toggle for WordwiseTopSpeed. "Mechanic and parameter" kinds became "mechanic": the switch
+line carries it. The round-16 catalogue gives Parameter to SpeedBuildsAndBrakes and Jumping alone,
+so its catalogue test still passes; the next round's catalogue follows the switch lines.
+
+**R-B1, motion's units recounted.** Motion counts 84.0 units now (79.0 before this round): 71 arms,
+8 cells, 31 operators. Ten of its arms count 0 as original only or record only (SpeedBuildsAndBrakes
+3, TurningRound, AimingAndShooting's shot, Jumping's carry with a dash, DriftInTheAir's carry,
+Moonfall's end by a kick, WallJump's enemy test, Landing's turn end), and the frame's order
+(`PoseFollows`, `PoseFitAfterMoves`, `MovesAsShePosed`) is prose, not arms; vectors for all of them
+would add about 10 units. The booster's own arms (+4.7 units here, counted in motion) raise
+motion's budget by 36 × 5.0 = 180, as every area's budget is k × its units. The old code shown
+beside it had no booster rule (c7f927ab6's `extra_run_speed` has one cap and no jump bonus).
+
+**The current model against the amended vectors.** With the landed test and a local reading of the
+pose steps' three keys: every old vector and pose step passes, and 12 of the 22 new vectors fail,
+all of them the booster: MB1, SB2, C-booster-dash and C-booster-dashcap-b (the cap: the model's dash
+stays 2.0000), and MB2, WB1, R8J, C-booster-carry, C-booster-walljump, C-booster-space-jump,
+C-booster-hop and C-booster-spring-land (the jump's share of the dash; WB1 also the cap). SB1 and
+C-booster-dashcap-a pass by the part-by-part test (6.F000 and 7.F000 have a subpixel part below 0,
+so they grow under any cap), and MB3, MB4, C-spring-hop, C-spring-land-held, C-unmorph-land-run,
+C-morph-land-run, C-fallcap-past and the eight pose steps pass.
+
+**Adversary 86's observer items.** O1 is in V5 above and the spec's question 22: the aimed crouched
+turns' movement type is the jump turn's, which the records can't tell from the ground turn's (they
+never have one with a vertical motion), so it stays open until an oracle run from a constructed
+start shows it. O2: C-booster-bounce, C-bounce with the booster and a dash of 3.0000, right held:
+`$91:F212` sets the bounce speed from `$90:9EB5`/`$90:9EB7` alone and never reads `0B42`, so it
+rises at 1.0000; the round-16 model passes it. O3: the Switches note says which tables are fixed
+(those whose params read "none (the table is data)") and that `SpeedBuildsAndBrakes`' table is a
+parameter; SolidEnemies stays `none` because its 1 px is the pixel a subpixel part reaches into,
+measured on the boxes' whole pixels (`$A0:A8F0`), not a distance of its own; PoseFitAfterMoves'
+params name the 8 px small body; Jumping's params say the booster share's arithmetic is fixed.
+
+**Units.** `tools spec-units` with these notes: 214.0 → 219.0 (motion 79.0 → 84.0: Dash 3.3 → 4.7,
+the booster's cap; Jumping 11.0 → 13.7, the booster's rise and its formula; Landing 6.7 → 7.7, the
+spring ball's landing with jump held, original only before). The budget is 7,704 → 7,884: motion
+2,844 → 3,024, the other areas unchanged.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1540,7 +1709,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 214.0 units = 7,704 (motion 2,844, pose fit 624, pose chart 2,088, collision 2,148)
+Budget: 36 × 219.0 units = 7,884 (motion 3,024, pose fit 624, pose chart 2,088, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

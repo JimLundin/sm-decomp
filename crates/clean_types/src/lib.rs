@@ -97,11 +97,19 @@ pub const ZERO: Fixed = Wrapping(0);
 /// One whole pixel: `1.0000`.
 pub const PIXEL: Fixed = Wrapping(1 << PIXEL_BITS);
 
-/// `WordwiseTopSpeed`, `Dash`: `below(a, b)` on 16-bit parts: bit 15 of `(a − b) mod 2^16` is
-/// set.
+/// `WordwiseTopSpeed`, `Dash`: the spec's `below(a, b)` on two 16-bit parts of `P.S` quantities.
+///
+/// It compares two pixel parts, or two subpixel parts: bit 15 of `(a − b) mod 2^16` is set. It
+/// is not an unsigned `a < b`: 1000 is not below C000, and C000 is below 4000 and below 0.
+#[must_use]
+pub const fn part_below(a: u16, b: u16) -> bool {
+    a.wrapping_sub(b).cast_signed() < 0
+}
+
+/// `part_below` by the spec's own name, kept for the domains that call it so.
 #[must_use]
 pub const fn below(a: u16, b: u16) -> bool {
-    a.wrapping_sub(b).cast_signed() < 0
+    part_below(a, b)
 }
 
 /// A value for each axis: x rightward, y downward.
@@ -345,7 +353,7 @@ pub struct Pose {
 
 /// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed, each a bit of
 /// `button`'s.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub struct Buttons(pub u16);
 
 /// The pad's buttons, each a set of one; sets join by their bits, `Buttons(a.0 | b.0)`.
@@ -432,7 +440,7 @@ pub enum Block {
 }
 
 /// `BlocksStopFlush`: the game's frame count's parity, alternating every frame.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Parity {
     /// An even frame.
     Even,
@@ -484,6 +492,7 @@ pub trait World {
 }
 
 /// What kind of behaviour a catalogue entry is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     /// A deliberate game rule.
     Mechanic,
@@ -499,18 +508,19 @@ pub enum Kind {
     Encoding,
 }
 
-/// How a catalogue entry can be adjusted.
+/// How a catalogue entry can be adjusted: its spec entry's `switch:` line.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Switch {
-    /// Always on.
+    /// `none`: always as the spec gives it, its numbers included.
     Fixed,
-    /// On or off.
+    /// A named rule of its own may stand in for it.
     Toggle,
-    /// Its values come from `Rules`.
+    /// The numbers its `params` give come from `Rules`, and may be set to other values.
     Parameter,
 }
 
 /// How the spec checks a catalogue entry: its `checked:` line.
-#[derive(PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Checked {
     /// By vectors: the oracle's records, constructed vectors, or both.
     ByVectors,
@@ -783,7 +793,8 @@ pub enum ScreenKind {
 /// A screen of the room: x its column, y its row, counted from the room's top-left.
 pub type Screen = Pair<u16>;
 
-/// A point of her body that samus-motion reports the cells of, listed top to bottom.
+/// A point of her body whose cell samus-motion reports as one she is inside (`TouchedCells`):
+/// her top edge, her centre, her bottom edge. (The report itself goes bottom edge first.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Point {
     /// Her top edge.

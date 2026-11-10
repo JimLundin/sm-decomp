@@ -124,6 +124,9 @@ struct PoseStep {
     source: String,
     /// The spec's behaviours it exercises.
     entries: Vec<String>,
+    /// The items switched on.
+    #[serde(default)]
+    items: Vec<ItemName>,
     /// The pose at the frame's start.
     pose: PoseTable,
     /// The buttons held.
@@ -133,10 +136,33 @@ struct PoseStep {
     /// The other buttons just pressed.
     #[serde(default)]
     pressed: Vec<ButtonName>,
+    /// Her horizontal speed at the frame's start, 0 where missing.
+    speed_x: Option<Signed>,
+    /// In the air once the frame's moves are made; where missing, as her pose and what her moves
+    /// met say (`PoseStep::in_the_air`).
+    in_the_air: Option<bool>,
     /// What the frame's moves met.
     met: MetName,
     /// The pose the frame ends in.
     after: StepAfter,
+}
+
+impl PoseStep {
+    /// Whether she is in the air once the frame's moves are made: as the step says, else in the
+    /// air in `Jumping` (the spring ball's hop too), `Spinning`, `Falling` and `WallJumping` and
+    /// after walking off a ledge, and on the ground after a landing and in every other pose (a
+    /// take-off and a turn are on the ground).
+    fn in_the_air(&self, met: Option<Met>) -> bool {
+        let in_air_pose = matches!(
+            self.pose.action,
+            ActionName::Jumping
+                | ActionName::Spinning
+                | ActionName::Falling
+                | ActionName::WallJumping
+        );
+        self.in_the_air
+            .unwrap_or_else(|| met == Some(Met::NoFloor) || met != Some(Met::Floor) && in_air_pose)
+    }
 }
 
 /// A pose step's `after`: the pose alone.
@@ -1029,15 +1055,15 @@ fn room(world: &WorldTable) -> Room {
     }
 }
 
-/// Samus at a vector's start (spec §1.2): her motion follows the pad unless she is skidding,
-/// her dash is hers to keep, and she remembers no spin and no seat. In a jump (its take-off
-/// included), a spin, a fall or a wall jump (a turn in a jump or a fall included) she is in the
-/// air: an upward speed there is a rise, and a vertical speed of 0 means she has just started to
-/// fall. In any other pose she is on the ground, keeping any vertical speed she has, an upward
-/// one a rise she keeps (`FollowingTheGround`, `RisingAndFalling`), or, where `before.falling`
-/// says so, falling at 0 there. Jump held through is as `before` gives it, a count of 0 and
-/// nothing the frame before where it doesn't.
-fn start(before: &Before, (pose, radius): SizedPose) -> Samus {
+/// Samus at a vector's start (spec §1.2) in `pose`: her motion follows the pad unless she is
+/// skidding, her dash is hers to keep, and she remembers no spin and no seat. In a jump (its
+/// take-off included), a spin, a fall or a wall jump (a turn in a jump or a fall included) she
+/// is in the air: an upward speed there is a rise, and a vertical speed of 0 means she has just
+/// started to fall. In any other pose she is on the ground, keeping any vertical speed she has,
+/// an upward one a rise she keeps (`FollowingTheGround`, `RisingAndFalling`), or, where
+/// `before.falling` says so, falling at 0 there. Jump held through is as `before` gives it, a
+/// count of 0 and nothing the frame before where it doesn't.
+fn start(before: &Before, pose: Pose) -> Samus {
     // A missing quantity is 0.
     let (speed_x, speed_y) = (
         before.speed_x.unwrap_or(STILL),
@@ -1101,7 +1127,6 @@ fn start(before: &Before, (pose, radius): SizedPose) -> Samus {
             bounces,
         },
         pose,
-        radius,
         spin: Spin::Off,
         seat: Seat::Unseated,
         jump_held,
@@ -1164,12 +1189,14 @@ const fn other(p: Parity) -> Parity {
     }
 }
 
-/// A pose's body size in a frame: the frame's own end where it names that pose (a record's
-/// body can lag its pose, so the same pose may come with two sizes), else the frame's start,
-/// else any the vector gives (spec §1.3: the game's data).
+/// A pose's body size in a frame (spec §1.3, the game's data): for the pose the frame starts in,
+/// the size its start gives, the body the frame's moves use; for another, the frame's own end
+/// where it names that pose, else any the vector gives. A record's body can lag its pose, so the
+/// same pose may come with two sizes, one at a frame's end and one at the next frame's start.
 fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -> Radius {
-    end.filter(|e| e.0 == p)
-        .or_else(|| (step.pose == p).then_some((step.pose, step.radius)))
+    (step.pose == p)
+        .then_some((step.pose, step.radius))
+        .or_else(|| end.filter(|e| e.0 == p))
         .or_else(|| known.iter().find(|k| k.0 == p).copied())
         .map_or(step.radius, |k| k.1)
 }
@@ -1194,7 +1221,7 @@ fn run(vector: &Vector) -> Vec<String> {
         .chain([&checked])
         .map(step_of)
         .collect();
-    let mut samus = start(&vector.before, (frames[0].pose, frames[0].radius));
+    let mut samus = start(&vector.before, frames[0].pose);
     // The pose each frame ends in, where the vector says it: the next frame's pose, and the
     // checked frame's next_pose. Every pose the vector gives a body size for: each frame's
     // start, the checked frame's next_pose, and the pose it ends in.
@@ -1276,23 +1303,15 @@ fn run_pose_step(step: &PoseStep) -> Option<String> {
     };
     let pressed = Buttons(buttons(&step.pressed).0 | jump.0);
     let (met, animation_ends) = step.met.model();
-    // A step gives no vertical motion: she is off the ground once her moves are made in
-    // the poses of the air and after walking off a ledge, and a turn is on the ground.
-    let airborne = met == Some(Met::NoFloor)
-        || (met != Some(Met::Floor)
-            && matches!(
-                start.action,
-                Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
-            ));
-    // A step gives no speed either: her horizontal speed at the frame's start is 0. It switches
-    // no item on, and has no lead-in, so nothing makes jump held through a press.
+    let items: Set<Item> = step.items.iter().map(|i| (i.model(), true)).collect();
+    // A step has no lead-in, so nothing makes jump held through a press.
     let moment = Moment {
         pad: held,
         pressed,
-        spring_ball: false,
+        spring_ball: items[Item::SpringBall],
         animation_ends,
-        speed: ZERO,
-        airborne,
+        speed: step.speed_x.unwrap_or(STILL).size,
+        airborne: step.in_the_air(met),
         met,
     };
     let chosen = moment.next_pose(start);
@@ -1359,11 +1378,11 @@ const fn bounces(b: Bounces) -> u8 {
 /// the actual one, as text.
 type Compared = (&'static str, Option<String>, String);
 
-/// What she is at the frame's end: her quantities, her pose with its body size, and jump held
-/// through's two parts, as `before` gives them.
+/// What she is at the frame's end: her quantities, her pose, and jump held through's two parts,
+/// as `before` gives them. The radius `after.pose` gives is that pose's body (spec §1.3), data
+/// the frames read like every pose's radius, not a quantity of hers.
 fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
     let x = after.position.map(|[x, _]| x).or(after.position_x);
-    let pose = |(pose, radius): SizedPose| format!("{pose:?} {radius:?}");
     let landed = samus.jump_held.before == FrameBefore::LandedOrEnded;
     vec![
         ("position.x", x.map(|q| show(q.0)), show(samus.position.x)),
@@ -1390,8 +1409,8 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
         ),
         (
             "pose",
-            after.pose.as_ref().map(|p| pose(p.sized())),
-            pose((samus.pose, samus.radius)),
+            after.pose.as_ref().map(|p| format!("{:?}", p.pose())),
+            format!("{:?}", samus.pose),
         ),
         (
             "jump_held",

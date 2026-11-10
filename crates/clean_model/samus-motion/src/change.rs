@@ -6,14 +6,15 @@ use crate::chart::Choice;
 use crate::collide::Probe::Blocks;
 use crate::fit::{Fitted, crouched};
 use crate::rows::Effect::{
-    self, AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, OnTheGround, Rise, SpinOn, TurnRound,
+    self, AsRunning, ComesToTheGround, EndSkid, Halt, Launch, LiftIfUnaimed, LoseDash, Rise,
+    SpinOn, TurnRound,
 };
 use crate::rules::Lowers;
 use crate::samus::{Samus, Spin};
 use crate::situation::ENTERING;
 use crate::tick::Tick;
 use crate::vertical::Contact;
-use clean_types::{Action, Aim, Fixed, Parts, px};
+use clean_types::{Action, Aim, Fixed, Parts, ZERO, px};
 
 impl Samus {
     /// `PoseFollows`, `PoseFitAfterMoves`: what she becomes. Pose fit (or a morph refused) says
@@ -41,14 +42,13 @@ impl Samus {
             Fitted::Crouched { .. } => (Choice::instead(crouched(self.pose.facing)), None),
         };
         self.pose = became.pose;
-        self.radius = t.body(became.pose);
         if let Some(lowers) = became.lower {
             self.shrink(lowers, t);
         }
         let placed = (fitted.moved() || became.lower.is_some())
             .then(|| self.position.y.with_sub(start.position.y.sub()));
         if let Some(contact) = contact {
-            self.vertical.meet(contact, t);
+            self.vertical.meet(contact, self.run.dash, t);
             self.run.meet(contact);
         }
         let entered = ENTERING
@@ -61,26 +61,29 @@ impl Samus {
     }
 
     /// `ShrinkingLowersHer`: the frame a change of shape starts, she looks down its distance
-    /// (`lowers`) at her new size, a block look, and is lowered as far as it got, after what
-    /// stops it writes to her as a stop would.
+    /// (`lowers`) at her new size, a block look, and is lowered as far as it got.
     fn shrink(&mut self, lowers: Lowers, t: &mut Tick) {
-        let seen = t.vmove(self.bounds(), t.rules.lowers(lowers), Blocks);
-        self.end_at(&seen);
-        self.position.y += px(seen.gone);
+        let look = t.vmove(self.bounds(t), t.rules.lowers(lowers), Blocks);
+        // What stopped the look writes her y subpixel FFFF, or seats her on a stepped block.
+        self.take_result(&look);
+        self.position.y += px(look.gone);
     }
 
     /// `Jumping`, `TurningRound`, `Moonfall`: one effect of the change (`PoseFollows`) on her
     /// speeds, dash and position, from how she was at the frame's start (`start`). `Jumping`:
-    /// changing into a take-off from a crouch without aim she is also lifted. `TurningRound`: a
-    /// turn, or a pose that faces her the other way (a spin reversed, the ball turning round),
-    /// makes her skid; the moonwalk's jump, the one turn that keeps her facing, skids too, and a
-    /// spin reversed while skidding turns her travel round. The ball held to the side it faces
+    /// changing into a take-off from a crouch without aim she is also lifted; a rise at the jump
+    /// speed takes its share of her dash as the frame's moves left it. `TurningRound`: a turn, or
+    /// a pose that faces her the other way (a spin reversed, the ball turning round), makes her
+    /// skid; the moonwalk's jump, the one turn that keeps her facing, skids too, and a spin
+    /// reversed while skidding turns her travel round. The ball held to the side it faces
     /// doesn't turn. `WallJump`: a spin that followed a wall jump is carried on.
     fn apply(&mut self, effect: Effect, start: &Self, t: &Tick) {
         let pose = self.pose;
         match effect {
-            Rise => self.vertical.jump(t),
-            Lift if start.pose.aim == Aim::Forward => self.position.y -= t.rules.crouch_lift,
+            Rise => self.vertical.jump(self.run.dash, t),
+            LiftIfUnaimed if start.pose.aim == Aim::Forward => {
+                self.position.y -= t.rules.crouch_lift;
+            }
             TurnRound
                 if pose.facing != start.pose.facing
                     || matches!(pose.action, Action::Turning(_)) =>
@@ -89,13 +92,13 @@ impl Samus {
             }
             EndSkid => self.run.end_skid(pose.facing),
             AsRunning => self.run.as_running(start.run.speed),
-            LoseDash => self.run.clear_dash(),
+            LoseDash => self.run.dash = ZERO,
             Halt => self.run.halt(),
-            Effect::Moonfall => self.vertical.enter_spin_from_a_turn(t),
+            Effect::Moonfall => self.vertical.enter_spin_from_a_turn(self.run.dash, t),
             Launch => self.run.launch(pose.facing),
             SpinOn => self.spin = Spin::CarriedOn,
-            OnTheGround => self.vertical.come_to_the_ground(),
-            Lift | TurnRound => {}
+            ComesToTheGround => self.vertical.come_to_the_ground(),
+            LiftIfUnaimed | TurnRound => {}
         }
     }
 }

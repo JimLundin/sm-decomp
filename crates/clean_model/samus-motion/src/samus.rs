@@ -4,9 +4,10 @@
 use crate::collide::{Bounds, Moved, Stop};
 use crate::jump_held::JumpHeld;
 use crate::run::Run;
+use crate::tick::Tick;
 use crate::vertical::Vertical;
 use clean_types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
-use clean_types::{Radius, Set, Touch, button::SHOOT};
+use clean_types::{Set, Touch, button::SHOOT};
 
 /// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each
 /// frame's start up to the spin carried on, where it stays.
@@ -38,7 +39,7 @@ impl Spin {
 
 /// `SlopesCarry`: whether she is seated on a slope, until her next vertical move of more than 0
 /// starts.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Seat {
     /// Not seated.
     Unseated,
@@ -47,7 +48,7 @@ pub enum Seat {
 }
 
 /// `WallJump`'s output: the near-wall test's outcome this frame.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum WallTest {
     /// No test, no wall found, or a wall near her once the spin has turned far, without jump
     /// pressed.
@@ -117,6 +118,7 @@ impl Sprite {
 }
 
 /// What a frame shows beyond her quantities: its outputs, for the caller to act on.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outcome {
     /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
@@ -141,7 +143,10 @@ pub struct Outcome {
 }
 
 /// Samus as the player can tell her, and what she remembers.
-#[derive(Clone, Copy)]
+///
+/// Her body's size is not hers to remember: it is the game's data for her pose (§1.3,
+/// `Frame::body`), and a frame's moves use the body of the pose she starts it in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Samus {
     /// Her body's centre.
     pub position: Position,
@@ -151,8 +156,6 @@ pub struct Samus {
     pub vertical: Vertical,
     /// Her pose.
     pub pose: Pose,
-    /// Her body's half-width and half-height.
-    pub radius: Radius,
     /// How long she has been in a spin.
     pub spin: Spin,
     /// `SlopesCarry`: seated on a slope.
@@ -163,17 +166,21 @@ pub struct Samus {
 }
 
 impl Samus {
-    /// `BlocksStopFlush`: her box, the one her moves test.
-    pub(crate) const fn bounds(&self) -> Bounds {
+    /// `BlocksStopFlush`, §1.3 body size: her box, the one her moves and looks test: her centre,
+    /// and the body of her pose (during the frame's moves, the pose she started it in; after the
+    /// pose change, the one she takes).
+    pub(crate) fn bounds(&self, t: &Tick) -> Bounds {
         Bounds {
             at: self.position,
-            r: self.radius,
+            r: t.body(self.pose),
         }
     }
 
-    /// She ends a move or a look where it left her (a look where it wrote to her);
-    /// `SlopesCarry`: a downward one that a stepped block stopped seats her.
-    pub(crate) fn end_at(&mut self, moved: &Moved) {
+    /// She takes what a move or a look did to her: a move puts her where it left her; a look
+    /// doesn't move her, but what stopped it writes her subpixel as a stop would (a block FFFF or
+    /// 0 on the look's axis, a solid enemy she touches her y subpixel 0). `SlopesCarry`: a
+    /// downward one that a stepped block stopped seats her.
+    pub(crate) fn take_result(&mut self, moved: &Moved) {
         self.position = moved.to;
         if moved.stop == Some(Stop::Seats) {
             self.seat = Seat::Seated;

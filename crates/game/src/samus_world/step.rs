@@ -9,10 +9,10 @@
 //! fault that can't happen, rather than invent a motion for it.
 
 use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, WallTest};
-use clean_types::{Action, Parts, Pose};
+use clean_types::{Action, Parts, Pose, Radius};
 
 use super::frame::{FrameSource, body};
-use super::state::{clean_of, dress, pose_id, write_back};
+use super::state::{clean_of, pose_id, write_back};
 use super::{SamusFault, SamusWorld};
 use crate::collision::{Surroundings, Touches};
 use crate::pose::{Content, PoseRequests};
@@ -66,6 +66,12 @@ pub struct Ran {
     pub after: Model,
     /// The frame's outputs.
     pub outcome: Outcome,
+    /// §1.3 body size: the body of the pose she starts the frame in, the one her moves test: her
+    /// radius word, which is the pose table's except on the elevator, whose ride keeps the pose
+    /// before's.
+    pub body_before: Radius,
+    /// The pose table's body for the pose she ends the frame in.
+    pub body_after: Radius,
     /// `AnimationEnds`: her animation ended this frame.
     pub animation_ends: bool,
     /// `RidingTheElevator`: the elevator moved.
@@ -88,8 +94,7 @@ pub fn run(
         return Ok(None);
     };
     let before = after;
-    let worn = dress(samus);
-    let sized = |pose| body(reads.content, worn, pose);
+    let sized = |pose| body(reads.content, samus, pose);
     let frame = FrameSource {
         samus,
         controller: reads.controller,
@@ -104,11 +109,14 @@ pub fn run(
         .map_err(|_| SamusFault::UnnamedPose(samus.pose))?;
     world.refused()?;
     let (animation_ends, elevator_moving) = (frame.animation_ends, frame.elevator_moving);
+    let (body_before, body_after) = (sized(before.pose), sized(after.pose));
     write_back(&after, outcome.rising, samus);
     Ok(Some(Ran {
         before,
         after,
         outcome,
+        body_before,
+        body_after,
         animation_ends,
         elevator_moving,
     }))
@@ -162,7 +170,7 @@ pub fn settle(samus: &mut Samus, ran: &Ran) {
     let shrinks = after.pose != before.pose
         && matches!(after.pose.action, Action::Crouching | Action::Morphing);
     if shrinks {
-        samus.y_radius = after.radius.y.0;
+        samus.y_radius = ran.body_after.y.0;
     }
     if let Some(placed) = ran.outcome.placed {
         samus.previous_position.y.pixels = placed.pixel().0;

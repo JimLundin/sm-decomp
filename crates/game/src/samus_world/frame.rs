@@ -7,10 +7,9 @@ use clean_model_samus_motion::Frame;
 use clean_types::{Buttons, Parity, Pose, Radius, button};
 use core::num::Wrapping;
 use data::assets::samus::import::map;
-use data::assets::samus::key::Dress;
 use data::pose::transition::{Control, Controls};
 
-use super::state::X_RADIUS;
+use super::state::{X_RADIUS, dress};
 use crate::animation;
 use crate::collision::ScanOrder;
 use crate::pose::{Content, PoseRequests, controls};
@@ -54,17 +53,25 @@ pub struct FrameSource<'a> {
     pub content: &'a Content,
 }
 
-/// §1.3 body size: a pose's half-height is the pose table's for the original's pose that shows
-/// it in her dress; a pose the table doesn't hold has none, as the engine's radius has none.
+/// §1.3 body size: a pose's half-height.
+///
+/// The pose she is in has her radius word, which the current state handler set from the pose
+/// table as the frame started, or which the elevator's ride kept from the pose before, since that
+/// handler doesn't run while it carries her. Any other pose has the pose table's for the
+/// original's pose that shows it in her dress; a pose the table doesn't hold has none, as the
+/// engine's radius has none.
 #[must_use]
-pub fn body(content: &Content, dress: Dress, pose: Pose) -> Radius {
+pub fn body(content: &Content, samus: &Samus, pose: Pose) -> Radius {
+    let y = if map::key_of(samus.pose) == Some(pose) {
+        samus.y_radius
+    } else {
+        map::id_of(pose, dress(samus))
+            .and_then(|id| content.poses.get(id))
+            .map_or(0, |definition| u16::from(definition.y_radius))
+    };
     Radius {
         x: X_RADIUS,
-        y: Wrapping(
-            map::id_of(pose, dress)
-                .and_then(|id| content.poses.get(id))
-                .map_or(0, |definition| u16::from(definition.y_radius)),
-        ),
+        y: Wrapping(y),
     }
 }
 

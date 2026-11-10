@@ -11,7 +11,7 @@
 //! its hop (`PadChart`, `WhatHerMovesMet`), so her pose alone gives her situation.
 
 use crate::rows::Effect::{
-    AsRunning, EndSkid, Halt, Launch, Lift, LoseDash, Rise, SpinOn, TurnRound,
+    AsRunning, EndSkid, Halt, Launch, LiftIfUnaimed, LoseDash, Rise, SpinOn, TurnRound,
 };
 use crate::rows::{
     AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, Class, Doing, Drift, Entering, FORWARD, FORWARD_AIM,
@@ -979,7 +979,7 @@ static CROUCHED: Situation = Situation {
             id: RowId::JumpPressed,
             needs: &[Pressed(key::JUMP)],
             next: TO_TAKING_OFF,
-            effects: &[Rise, Lift],
+            effects: &[Rise, LiftIfUnaimed],
             ..NO_CHANGE
         },
         Row {

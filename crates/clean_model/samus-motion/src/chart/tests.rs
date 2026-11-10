@@ -1,4 +1,5 @@
-//! `PadChart`: every situation and pad the chart can meet is decided. Where rows of her
+//! `PadChart`: every situation and pad the chart can meet is decided, off the ground or on it,
+//! moving or not, with the spring ball or without, and whatever her moves met. Where rows of her
 //! situation both fit, the one that loses to the other by rank or by a beats clause drops out;
 //! at most one fitting row may be left, beaten by no other (with none, the last row decides), so
 //! the chart never meets a tie and needs no rule for one. No two fitting rows beat each other,
@@ -6,7 +7,7 @@
 //! rows of a situation or a table share an identity.
 
 use super::{Moment, Reading, table};
-use crate::rows::{BACK, FORWARD, Row, RowId, Situation, Test};
+use crate::rows::{BACK, FORWARD, Met, Next, Row, RowId, Situation, Test};
 use crate::rules::Rules;
 use crate::situation::{CLASSES, UnknownPose, classify};
 use clean_types::Action::{Crouching, Morphing, Rolling, StandingUp, Unmorphing};
@@ -26,15 +27,16 @@ fn situations() -> Vec<&'static Situation> {
     all
 }
 
-/// Every row of the chart: each situation's pad chart rows and its last row, and the rows of
-/// `WhatHerMovesMet` and `AnimationEnds`, the blocked step's included.
-fn every_row() -> Vec<&'static Row> {
+/// Every outcome of the chart's rows: each situation's pad chart rows and its last row, the rows
+/// of `WhatHerMovesMet` and `AnimationEnds`, and the blocked step's, named by their row.
+fn every_outcome() -> Vec<(&'static Next, String)> {
     let pad = situations()
         .into_iter()
         .flat_map(|s| s.rows.iter().chain([&s.last]));
     pad.chain(table::MOVES_MET)
         .chain(table::ANIMATION_ENDS)
-        .chain([&table::STEP_BLOCKED])
+        .map(|r| (&r.next, format!("{:?}", r.id)))
+        .chain([(&table::STEP_BLOCKED, "the blocked step's".to_owned())])
         .collect()
 }
 
@@ -48,15 +50,15 @@ fn a_crouch_and_a_morph_lower_her_by_their_distances() {
         morph_lowers: px(Wrapping(11)),
         ..Rules::REFERENCE
     };
-    for row in every_row() {
-        let lowered = row.next.lower.map(|by| adjusted.lowers(by));
-        let expected = match row.next.action {
+    for (next, row) in every_outcome() {
+        let lowered = next.lower.map(|by| adjusted.lowers(by));
+        let expected = match next.action {
             Some(Crouching) => Some(adjusted.crouch_lowers),
             Some(Morphing) => Some(adjusted.morph_lowers),
             Some(StandingUp | Unmorphing) => Some(ZERO),
             Some(_) | None => None,
         };
-        assert_eq!(lowered, expected, "the row {:?}", row.id);
+        assert_eq!(lowered, expected, "the row {row}");
     }
     let vanilla = Rules::REFERENCE;
     assert_eq!(vanilla.crouch_lowers, px(Wrapping(5)), "the crouch's 5 px");
@@ -74,20 +76,6 @@ fn forward_and_back_are_apart_from_the_pad() {
     assert_ne!(BACK.0, 0, "back is empty");
 }
 
-/// A moment with this pad, her horizontal speed at the frame's start and whether she is off
-/// the ground, and nothing else: no spring ball, no animation's end, nothing her moves met.
-const fn moment(pad: Buttons, pressed: Buttons, speed: Fixed, airborne: bool) -> Moment {
-    Moment {
-        pad,
-        pressed,
-        spring_ball: false,
-        animation_ends: false,
-        speed,
-        airborne,
-        met: None,
-    }
-}
-
 /// `MovesAsShePosed`: a pose no situation names (upright `Rolling`) is reported, by the
 /// situations and by the chart, never given a situation's motion.
 #[test]
@@ -101,7 +89,15 @@ fn a_pose_no_situation_names_is_reported() {
         legs: Legs::Together,
     };
     assert_eq!(classify(pose).err(), Some(UnknownPose(pose)));
-    let still = moment(Buttons(0), Buttons(0), ZERO, false);
+    let still = Moment {
+        pad: Buttons(0),
+        pressed: Buttons(0),
+        spring_ball: false,
+        animation_ends: false,
+        speed: ZERO,
+        airborne: false,
+        met: None,
+    };
     assert_eq!(still.next_pose(pose), Err(UnknownPose(pose)));
 }
 
@@ -259,18 +255,42 @@ const MOVING: Fixed = Wrapping(0x1_0000);
 /// her motion the rows read.
 const MOTIONS: [(bool, Fixed); 4] = [(false, ZERO), (false, MOVING), (true, ZERO), (true, MOVING)];
 
-/// The rows left tied in situation `s` for a pose, her motion and one pad, with a line naming
-/// them. Jump held through only adds jump to the presses, which `pads` already gives with jump
-/// held.
-fn tie(
-    s: &'static Situation,
-    pose: Pose,
-    (airborne, speed): (bool, Fixed),
-    (held, pressed): (Buttons, Buttons),
-) -> Option<(Vec<RowId>, String)> {
-    let moment = moment(held, pressed, speed, airborne);
+/// Each thing her moves can meet (`WhatHerMovesMet`), and nothing.
+const EVERY_MET: [Option<Met>; 6] = [
+    None,
+    Some(Met::Wall),
+    Some(Met::WallKick),
+    Some(Met::Floor),
+    Some(Met::NoFloor),
+    Some(Met::Ceiling),
+];
+
+/// Every moment the rows can tell apart besides the pad: her motion, with the spring ball or
+/// without, and each thing her moves can meet. The pad chart's rows read no animation's end.
+fn moments() -> Vec<Moment> {
+    let motions = MOTIONS
+        .into_iter()
+        .flat_map(|motion| [false, true].map(|spring_ball| (motion, spring_ball)));
+    motions
+        .flat_map(|((airborne, speed), spring_ball)| {
+            EVERY_MET.map(|met| Moment {
+                pad: Buttons(0),
+                pressed: Buttons(0),
+                spring_ball,
+                animation_ends: false,
+                speed,
+                airborne,
+                met,
+            })
+        })
+        .collect()
+}
+
+/// The rows left tied in situation `s` for a pose and a moment, with a line naming them. Jump
+/// held through only adds jump to the presses, which `pads` already gives with jump held.
+fn tie(s: &'static Situation, pose: Pose, moment: &Moment) -> Option<(Vec<RowId>, String)> {
     let reading = Reading {
-        moment: &moment,
+        moment,
         pose,
         situation: s,
     };
@@ -284,25 +304,27 @@ fn tie(
         mutual.map_or_else(|| won.iter().map(|r| r.id).collect(), |a| vec![a.id]);
     (won.len() > 1 || mutual.is_some()).then(|| {
         let line = format!(
-            "{:?} rows {tied:?} are left, e.g. {pose:?} airborne {airborne} speed {speed:?} \
-             held {:09b} pressed {:09b}",
-            pose.action, held.0, pressed.0
+            "{:?} rows {tied:?} are left, e.g. {pose:?} {moment:?}",
+            pose.action
         );
         (tied, line)
     })
 }
 
-/// Every tie in situation `s`, over its own poses, the motions the rows read and its own pads.
+/// Every tie in situation `s`, over its own poses, the moments the rows read and its own pads.
 fn ties(s: &'static Situation) -> Vec<(Vec<RowId>, String)> {
     let pads = pads(s);
-    let cases = poses(s)
+    let moments: Vec<Moment> = moments()
         .into_iter()
-        .flat_map(|pose| MOTIONS.map(|motion| (pose, motion)));
-    let mut found: Vec<(Vec<RowId>, String)> = Vec::new();
-    for (pose, motion) in cases {
-        found.extend(pads.iter().filter_map(|&pad| tie(s, pose, motion, pad)));
-    }
-    found
+        .flat_map(|m| {
+            pads.iter()
+                .map(move |&(pad, pressed)| Moment { pad, pressed, ..m })
+        })
+        .collect();
+    poses(s)
+        .into_iter()
+        .flat_map(|pose| moments.iter().filter_map(move |m| tie(s, pose, m)))
+        .collect()
 }
 
 #[test]

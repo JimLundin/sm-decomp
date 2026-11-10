@@ -1,7 +1,7 @@
 //! The rows of `WhatHerMovesMet` and of `AnimationEnds` (§7), read in order, the first that
 //! fits. A next pose has its gun stowed and its legs together unless its cell says otherwise.
 
-use crate::rows::Effect::{self, LoseDash, OnTheGround};
+use crate::rows::Effect::{self, ComesToTheGround, LoseDash};
 use crate::rows::Test::{Aimed, Airborne, Held, SpringBall};
 use crate::rows::{
     DOWN_TO_FORWARD, Doing, Met, NO_CHANGE, Next, Row, RowId, TO_FALLING, TO_JUMPING, TO_SPINNING,
@@ -14,7 +14,7 @@ use clean_types::{Action, Aim, Body, Gun, LandedFrom, Legs, Turn};
 ///
 /// A floor met while turning or while her body changes shape has no row: the turn's own rows
 /// apply, and a changing body's pad has no say. The aim change's step comes after the pose is
-/// chosen, so its row is `STEP_BLOCKED`, apart.
+/// chosen, so its row's outcome is `STEP_BLOCKED`, apart.
 pub const MOVES_MET: &[Row] = &[
     Row {
         id: RowId::WallStopAimedUp,
@@ -137,20 +137,14 @@ pub const MOVES_MET: &[Row] = &[
     },
 ];
 
-/// `WhatHerMovesMet`, `AimingAndShooting`: a block or solid enemy in the way of the aim change's
-/// step, a running pose chosen: `AgainstWall`, facing kept, with the aim of the running pose
-/// chosen. The step comes after the pose is chosen, so this row is read of that pose, apart from
-/// `MOVES_MET`; where it doesn't fit (an animation's end handed over another pose) the pose
-/// chosen stands.
-pub const STEP_BLOCKED: Row = Row {
-    id: RowId::StepBlocked,
-    needs: &[Test::Action(&[Action::Running])],
-    next: Next {
-        action: Some(Action::AgainstWall),
-        aim: &[],
-        ..TO_STILL
-    },
-    ..NO_CHANGE
+/// `WhatHerMovesMet`, `AimingAndShooting`: the outcome of the row for a block or solid enemy in
+/// the way of the aim change's step, a running pose chosen: `AgainstWall`, facing kept, with the
+/// aim of the running pose chosen, and no effect. The step comes after the pose is chosen, so
+/// this outcome applies to that pose (`Choice::blocked`), apart from `MOVES_MET`.
+pub const STEP_BLOCKED: Next = Next {
+    action: Some(Action::AgainstWall),
+    aim: &[],
+    ..TO_STILL
 };
 
 /// `AnimationEnds`: the pose an ending animation hands over, whatever the pad.
@@ -300,7 +294,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
             body: Some(Body::Crouched),
             ..TO_STILL
         },
-        effects: &[OnTheGround],
+        effects: &[ComesToTheGround],
         ..NO_CHANGE
     },
 ];

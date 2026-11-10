@@ -3,7 +3,7 @@
 use clean_types::{Checked, Kind, Switch};
 
 /// A spec entry's id.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BehaviourId {
     /// §2.
     HowSheIsDrawn,
@@ -66,6 +66,7 @@ pub enum BehaviourId {
 }
 
 /// A catalogue entry.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Behaviour {
     /// Its id.
     pub id: BehaviourId,
@@ -73,8 +74,8 @@ pub struct Behaviour {
     pub summary: &'static str,
     /// The kind the spec entry names first: mechanic, quirk, timing, output or encoding.
     pub kind: Kind,
-    /// Fixed, toggle or parameter: a parameter where the entry's kind names one, a toggle where
-    /// its switch does.
+    /// As the spec entry's `switch:` says: `none` is fixed, `parameter` a parameter (its numbers
+    /// in `Rules`), a named rule a toggle.
     pub switch: Switch,
     /// How the spec checks it: by vectors, or on the original alone.
     pub checked: Checked,
@@ -98,9 +99,9 @@ pub const CATALOGUE: [Behaviour; 29] = [
     },
     Behaviour {
         id: BehaviourId::Dash,
-        summary: "the extra speed she builds running with run held, and its cap.",
+        summary: "the extra speed she builds running with run held, and its cap, higher with the speed booster.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -114,14 +115,14 @@ pub const CATALOGUE: [Behaviour; 29] = [
         id: BehaviourId::AimingAndShooting,
         summary: "changing into another running pose steps her 1 px forward.",
         kind: Kind::Quirk,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::RidingTheElevator,
         summary: "facing the screen on a moving elevator, she goes down with it.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -135,7 +136,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
         id: BehaviourId::FollowingTheGround,
         summary: "on the ground she is pulled down onto the floor after each horizontal move.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -149,21 +150,21 @@ pub const CATALOGUE: [Behaviour; 29] = [
         id: BehaviourId::PoseFitAfterMoves,
         summary: "when her new pose is taller, she is pushed clear of what is above or below her, or the change is refused or becomes a crouch.",
         kind: Kind::Timing,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::ShrinkingLowersHer,
         summary: "the frame she starts to crouch or morph, she is lowered.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::RisingAndFalling,
         summary: "gravity, the fall's limit, and when a rise ends.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -184,14 +185,14 @@ pub const CATALOGUE: [Behaviour; 29] = [
         id: BehaviourId::WallJump,
         summary: "a spin near a wall readies, then kicks off it.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::Landing,
         summary: "what touching down does to her speeds, by what she is doing, and the ball's bounces.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -233,7 +234,7 @@ pub const CATALOGUE: [Behaviour; 29] = [
         id: BehaviourId::BlocksStopFlush,
         summary: "a move into a solid block stops her flush against its face.",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
