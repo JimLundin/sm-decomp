@@ -26,7 +26,7 @@ use game::state::room::{
     ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyDrawing,
     EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ITEM_GFX_SLOTS, ItemGfx, ItemGfxSlot,
     Layer2Block, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers,
-    SpritePalette, StaleScroll,
+    SpritePalette,
 };
 use game::state::samus::{
     Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing, Fixed,
@@ -657,27 +657,19 @@ impl LevelSources {
             .to_vec();
         let screens =
             usize::from(width / SCREEN_BLOCKS).saturating_mul(usize::from(height / SCREEN_BLOCKS));
-        let (areas, stale) = self
+        let (areas, below) = self
             .scrolls
             .read(wram)?
             .split_at_checked(screens)
             .ok_or_else(|| short(self.scrolls))?;
-        let scroll_areas = areas
-            .iter()
-            .map(|&area| {
-                ScrollArea::try_from(area).map_err(|value| DecodeError::Unrepresentable {
-                    source: self.scrolls.name,
-                    value: u16::from(value),
-                })
-            })
-            .collect::<Result<_, _>>()?;
+        let scroll_areas = areas.iter().copied().map(ScrollArea::from).collect();
         Ok(Level {
             blocks: layer1,
             layer2,
             tail: level_tail,
             tileset: loaded.tileset,
             scroll_areas,
-            stale_scrolls: stale.iter().copied().map(StaleScroll::from).collect(),
+            scrolls_below: below.iter().copied().map(ScrollArea::from).collect(),
         })
     }
 }
@@ -721,7 +713,7 @@ struct Level {
     tail: Vec<u8>,
     tileset: TilesetId,
     scroll_areas: Vec<ScrollArea>,
-    stale_scrolls: Vec<StaleScroll>,
+    scrolls_below: Vec<ScrollArea>,
 }
 
 /// Where the original keeps the camera's scroll state beside layer 1's position.
@@ -1262,7 +1254,7 @@ impl Rules<'_> {
             tail,
             tileset,
             scroll_areas,
-            stale_scrolls,
+            scrolls_below,
         } = self.level.read(wram, rooms)?;
         Ok(RoomScoped {
             room,
@@ -1276,7 +1268,7 @@ impl Rules<'_> {
             tilemap_gap: VramWord(self.tilemap_gap.read(wram)?),
             layer_blending: LayerBlending(self.layer_blending.read(wram)?),
             scroll_areas,
-            stale_scrolls,
+            scrolls_below,
             camera: Camera {
                 x: Fixed {
                     pixels: self.camera_x.read(wram)?,

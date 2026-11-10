@@ -712,15 +712,6 @@ const fn index(cell: Cell, width: u16) -> BlockIndex {
     BlockIndex(cell.y.wrapping_mul(width).wrapping_add(cell.x))
 }
 
-/// A screen's kind by its scroll area: red is closed, blue short, green open.
-const fn screen_kind(area: ScrollArea) -> ScreenKind {
-    match area {
-        ScrollArea::Red => ScreenKind::Closed,
-        ScrollArea::Blue => ScreenKind::Short,
-        ScrollArea::Green => ScreenKind::Open,
-    }
-}
-
 /// The scroll area of a screen's kind.
 const fn scroll_area(kind: ScreenKind) -> ScrollArea {
     match kind {
@@ -753,7 +744,7 @@ fn changes(
                         x: screen.checked_rem(across).unwrap_or(screen),
                         y: screen.checked_div(across).unwrap_or(0),
                     },
-                    becomes: screen_kind(change.area),
+                    becomes: crate::camera_world::screen(change.area),
                 }
             })
             .collect(),
@@ -828,7 +819,12 @@ fn state(
         .scroll_areas
         .chunks(across.max(1))
         .filter(|_| across != 0)
-        .map(|row| row.iter().map(|&area| screen_kind(area)).collect())
+        .map(|row| {
+            row.iter()
+                .copied()
+                .map(crate::camera_world::screen)
+                .collect()
+        })
         .collect();
     Ok(State {
         // Rows of the level's width, each as long as the others.

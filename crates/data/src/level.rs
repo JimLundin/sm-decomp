@@ -526,17 +526,18 @@ pub enum ScrollArea {
     Blue,
     /// 2: the camera may enter freely.
     Green,
+    /// Any other byte. The camera tests only for red and blue, so it reads one as green
+    /// (docs/LEGACY.md); the byte goes back out unchanged.
+    Unknown(u8),
 }
 
-impl TryFrom<u8> for ScrollArea {
-    type Error = u8;
-
-    fn try_from(value: u8) -> Result<Self, u8> {
+impl From<u8> for ScrollArea {
+    fn from(value: u8) -> Self {
         match value {
-            0 => Ok(Self::Red),
-            1 => Ok(Self::Blue),
-            2 => Ok(Self::Green),
-            other => Err(other),
+            0 => Self::Red,
+            1 => Self::Blue,
+            2 => Self::Green,
+            other => Self::Unknown(other),
         }
     }
 }
@@ -547,68 +548,58 @@ impl From<ScrollArea> for u8 {
             ScrollArea::Red => 0,
             ScrollArea::Blue => 1,
             ScrollArea::Green => 2,
+            ScrollArea::Unknown(value) => value,
         }
     }
 }
 
-/// Why a scroll table doesn't decode.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ScrollError {
-    /// The table is outside the image.
-    Address(AddressError),
-    /// A screen's byte, or a generated table's bottom row, is no scroll area.
-    Area {
-        /// The screen, row-major.
-        screen: usize,
-        /// The byte.
-        value: u8,
-    },
-}
+/// How many bytes a scroll table gives: the scroll buffer's size, whatever the room's.
+pub const SCROLL_TABLE_BYTES: usize = 0x32;
 
-impl From<AddressError> for ScrollError {
-    fn from(error: AddressError) -> Self {
-        Self::Address(error)
-    }
+/// Whether a state's scroll pointer names a table, rather than preset scrolls.
+#[must_use]
+pub const fn names_scroll_table(pointer: RomAddress) -> bool {
+    pointer.offset & 0x8000 != 0
 }
 
 /// The scroll areas a state's scroll pointer gives a room of `size`, a screen each,
 /// row-major.
 ///
-/// A pointer of 0x8000 or more names a table of a byte a screen; one below 0x8000 has
-/// no table: every screen is green but the bottom row, which is the pointer's low byte plus
-/// one.
+/// A pointer of 0x8000 or more names a table: its [`SCROLL_TABLE_BYTES`] bytes are the room's
+/// screens and then the run after them, which a read below the room's last row takes. One
+/// below 0x8000 has no table: the room's screens are every one green but the bottom row, which
+/// is the pointer's low byte plus one, and nothing after them.
 ///
 /// # Errors
 ///
-/// [`ScrollError`] when the table is outside the image or holds a byte no area has.
+/// [`AddressError`] when the table is outside the image.
 pub fn scroll_areas(
     rom: Lorom<'_>,
     pointer: RomAddress,
     size: Screens,
-) -> Result<Vec<ScrollArea>, ScrollError> {
+) -> Result<Vec<ScrollArea>, AddressError> {
     let width = usize::from(size.width);
     let screens = width.wrapping_mul(usize::from(size.height));
-    let area = |screen: usize, value: u8| {
-        ScrollArea::try_from(value).map_err(|value| ScrollError::Area { screen, value })
-    };
-    if pointer.offset & 0x8000 == 0 {
+    if !names_scroll_table(pointer) {
         let [low, _] = pointer.offset.to_le_bytes();
-        let bottom = screens.saturating_sub(width);
-        return (0..screens)
+        let bottom = ScrollArea::from(low.wrapping_add(1));
+        let top = screens.saturating_sub(width);
+        return Ok((0..screens)
             .map(|screen| {
-                if screen < bottom {
-                    Ok(ScrollArea::Green)
+                if screen < top {
+                    ScrollArea::Green
                 } else {
-                    area(screen, low.wrapping_add(1))
+                    bottom
                 }
             })
-            .collect();
+            .collect());
     }
-    rom.read(pointer, screens)?
+    Ok(rom
+        .read(pointer, SCROLL_TABLE_BYTES)?
         .iter()
-        .enumerate()
-        .map(|(screen, &value)| area(screen, value))
-        .collect()
+        .copied()
+        .map(ScrollArea::from)
+        .collect())
 }
 
 #[cfg(test)]
@@ -630,3 +621,7 @@ mod tests;
 // A screen's scroll permission (bank `$80` log, the camera's scroll limits).
 // row-major (bank `$82` log, `$82:EA73`, on loading a room from a save).
 // A pointer in `$8F:8000`-`$FFFF` names a table of a byte a screen; one below `$8000` has
+// The camera's reads test only red (`AND #$00FF`, `BNE`) and blue (`CMP #$0001`), `$80:A575`
+// to `$80:A97E`, so any other byte reads as green.
+// A table's 32h bytes are what the room's loading copies to `$7E:CD20` (`$82:EB28`); preset
+// scrolls fill the room's screens only (`$82:EB3D`..`$82:EB67`).

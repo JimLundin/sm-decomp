@@ -7,13 +7,13 @@
 //! and written back after its step.
 
 use clean_model_camera::{
-    Camera as Model, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus as Her, ScreenKind,
+    Camera as Model, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus as Her,
 };
-use clean_types::{Facing as Side, Fixed, Pair};
+use clean_types::{Facing as Side, Fixed, Pair, ScreenKind};
 use core::num::Wrapping;
 
 use crate::model::num::Fixed as Exact;
-use crate::state::room::{Camera, CameraDistance, RoomScoped, ScrollArea, Scrollers, StaleScroll};
+use crate::state::room::{Camera, CameraDistance, RoomScoped, ScrollArea, Scrollers};
 use crate::state::samus::{Facing, MovementType, Point, Samus, SpeedMode, VerticalMotion};
 
 /// The model's quantity from the engine's.
@@ -42,26 +42,22 @@ fn point(pair: Pair<Fixed>) -> Point {
     }
 }
 
-/// A screen's kind by its scroll area: red is closed, blue short, green open.
+/// A screen's kind by its scroll area: red is closed, blue short, green open. The camera
+/// tests only for red and blue, so a byte no area has is open to it (docs/LEGACY.md).
 #[must_use]
 pub const fn screen(area: ScrollArea) -> ScreenKind {
     match area {
         ScrollArea::Red => ScreenKind::Closed,
         ScrollArea::Blue => ScreenKind::Short,
-        ScrollArea::Green => ScreenKind::Open,
+        ScrollArea::Green | ScrollArea::Unknown(_) => ScreenKind::Open,
     }
 }
 
 /// The screens as the camera reads them: one run of the room's, row-major, then the scroll
 /// buffer past them, which continues the run below the room (`BelowTheRoom`).
 #[must_use]
-pub fn run(areas: &[ScrollArea], stale: &[StaleScroll]) -> Vec<ScreenKind> {
-    areas
-        .iter()
-        .copied()
-        .chain(stale.iter().map(|stale| stale.area()))
-        .map(screen)
-        .collect()
+pub fn run(areas: &[ScrollArea], below: &[ScrollArea]) -> Vec<ScreenKind> {
+    areas.iter().chain(below).copied().map(screen).collect()
 }
 
 /// The room as the camera reads it: `size` screens across and down, the screens below it
@@ -73,11 +69,11 @@ pub fn run(areas: &[ScrollArea], stale: &[StaleScroll]) -> Vec<ScreenKind> {
 /// shorter than its screens, or more than 256 screens across or down.
 pub fn room(
     areas: &[ScrollArea],
-    stale: &[StaleScroll],
+    below: &[ScrollArea],
     size: Pair<usize>,
     scrollers: Scrollers,
 ) -> Result<Room, RoomError> {
-    Room::new(run(areas, stale), size, heights(scrollers))
+    Room::new(run(areas, below), size, heights(scrollers))
 }
 
 /// The room's aim heights from its scrollers.
@@ -185,7 +181,7 @@ pub fn scroll(room: &mut RoomScoped, samus: &mut Samus) -> Result<(), RoomError>
     }
     let screens = self::room(
         &room.scroll_areas,
-        &room.stale_scrolls,
+        &room.scrolls_below,
         screens(room),
         room.camera.scrollers,
     )?;

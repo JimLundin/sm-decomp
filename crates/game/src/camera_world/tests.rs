@@ -37,13 +37,13 @@ fn camera() -> Camera {
 }
 
 /// The room of `areas`, `width` screens across and as many rows down as they fill, with
-/// `stale` after it.
-fn of(areas: &[ScrollArea], stale: &[StaleScroll], width: usize) -> Room {
+/// `below` after it.
+fn of(areas: &[ScrollArea], below: &[ScrollArea], width: usize) -> Room {
     let size = Pair {
         x: width,
         y: areas.len().checked_div(width).unwrap_or_default(),
     };
-    match room(areas, stale, size, SCROLLERS) {
+    match room(areas, below, size, SCROLLERS) {
         Ok(room) => room,
         Err(error) => panic!("{error:?}"),
     }
@@ -57,11 +57,11 @@ fn the_room_runs_on_into_the_scroll_buffer() {
         ScrollArea::Red,
         ScrollArea::Green,
     ];
-    let stale = [0x01, 0x80, 0x00].map(StaleScroll::from);
+    let below = [0x01, 0x80, 0x00].map(ScrollArea::from);
     let (open, short, closed) = (ScreenKind::Open, ScreenKind::Short, ScreenKind::Closed);
     // A byte that is no area reads as open.
     assert_eq!(
-        run(&areas, &stale),
+        run(&areas, &below),
         [open, short, closed, open, short, open, closed]
     );
     let Heights { level, rising } = heights(SCROLLERS);
@@ -204,19 +204,19 @@ fn scrolling_down_reads_the_scroll_buffer_past_the_room() {
         y: at(0xFD, 0),
         ..camera()
     };
-    let samus_at = |stale: &[StaleScroll]| {
+    let samus_at = |below: &[ScrollArea]| {
         let mut camera = start;
         let mut samus = samus(
             spot(at(0x80, 0), at(0x16D, 0)),
             spot(at(0x80, 0), at(0x16F, 0)),
         );
-        let room = of(&[ScrollArea::Green, ScrollArea::Blue], stale, 1);
+        let room = of(&[ScrollArea::Green, ScrollArea::Blue], below, 1);
         follow(&mut camera, &mut samus, &room);
         camera.y.pixels
     };
-    assert_eq!(samus_at(&[StaleScroll::from(0x80)]), 0xFF);
+    assert_eq!(samus_at(&[ScrollArea::Unknown(0x80)]), 0xFF);
     // A red byte there backs the camera out, as one past the buffer does.
-    assert!(samus_at(&[StaleScroll::from(0)]) < 0xFF);
+    assert!(samus_at(&[ScrollArea::Red]) < 0xFF);
     assert!(samus_at(&[]) < 0xFF);
 }
 

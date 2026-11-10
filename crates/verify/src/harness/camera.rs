@@ -17,12 +17,13 @@ use core::num::Wrapping;
 
 use clean_model_camera::{
     BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules,
-    Samus as Her, ScreenKind,
+    Samus as Her,
 };
-use clean_types::{Facing, Fixed, Pair, Parts, Px, below, fixed};
+use clean_types::{Facing, Fixed, Pair, Parts, Px, ScreenKind, below, fixed};
+use data::level::ScrollArea;
 use game::camera_world;
 use game::model::num::Fixed as Exact;
-use game::state::room::{Scrollers, StaleScroll};
+use game::state::room::Scrollers;
 use oracle_record::FrameRecord;
 
 use super::samus_motion::{self, Ps, SamusMotion, Skip as Motion};
@@ -250,11 +251,10 @@ fn seen(record: &FrameRecord) -> Result<Pair<Fixed>, Skip> {
 /// The room's screens as the scroll read them in `record`: the whole scroll table, one run
 /// whose first `w × h` bytes are the room's and the rest what its loading left after them.
 fn screens(record: &FrameRecord) -> Result<Screens, Skip> {
-    // Only red and blue are ever tested: any other byte reads as green.
     let run = source::SCROLLS
         .read(&record.wram)?
         .iter()
-        .map(|&area| camera_world::screen(StaleScroll::from(area).area()))
+        .map(|&area| camera_world::screen(ScrollArea::from(area)))
         .collect();
     Ok(Screens {
         run,
@@ -867,7 +867,7 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         // (the next row's first) decide anything.
         (
             B::ScreensRunOn,
-            x >= last(w) && screens.edge_closed(y + Wrapping(MIDDLE)),
+            x >= last(w) && screens.edge_closed(y + Wrapping(READ_POINT)),
         ),
         (B::BelowTheRoom, down && in_last_row && screens.below()),
     ]
@@ -889,7 +889,7 @@ fn looks_ahead_decides(camera: &Camera, seen: Fixed, upstream: &Upstream) -> boo
         .step(&Rules::REFERENCE, &upstream.frame())
         .position()
         .x;
-    let column = (across.pixel() + Wrapping(MIDDLE)).0 / SCREEN;
+    let column = (across.pixel() + Wrapping(READ_POINT)).0 / SCREEN;
     let limited = |read: Px| upstream.screens.limit_down(&went, column, read);
     edge(went.reached) != edge(went.stopped) && limited(went.reached) != limited(went.stopped)
 }
@@ -947,20 +947,20 @@ impl Screens {
     /// `ShortScreens`).
     fn limit_down(&self, went: &DownMove, column: u16, read: Px) -> Px {
         let row = read.0 / SCREEN;
-        let rows = match self.kind(column, row) {
+        let margin = match self.kind(column, row) {
             ScreenKind::Short => Wrapping(0),
-            ScreenKind::Open | ScreenKind::Closed => Rules::REFERENCE.rows_not_short,
+            ScreenKind::Open | ScreenKind::Closed => Rules::REFERENCE.margin,
         };
         let next_closed = matches!(self.kind(column, row.wrapping_add(1)), ScreenKind::Closed);
         let back = went.reached - went.speed - Rules::REFERENCE.push;
         let stop = |at: Px| if below(at.0, back.0) { back } else { at };
         let height = u16::try_from(self.size.y.saturating_sub(1)).unwrap_or(u16::MAX);
-        let bottom = Wrapping(height.wrapping_mul(SCREEN)) + rows;
+        let bottom = Wrapping(height.wrapping_mul(SCREEN)) + margin;
         let c = went.stopped;
         if c > bottom {
             stop(bottom)
-        } else if next_closed && c > edge(c) + rows {
-            stop(edge(c) + rows)
+        } else if next_closed && c > edge(c) + margin {
+            stop(edge(c) + margin)
         } else {
             c
         }
@@ -975,8 +975,10 @@ const fn edge(p: Px) -> Px {
 /// A screen's size on each axis.
 const SCREEN: u16 = 256;
 
-/// Half the view: its middle is this far from its near edge.
-const MIDDLE: u16 = 128;
+/// The point the camera's reads go by: this far past the view's near edge on each axis.
+const READ_POINT: u16 = 128;
+
+pub mod cases;
 
 #[cfg(test)]
 mod tests {

@@ -115,9 +115,11 @@ fn scroll_tables_give_an_area_a_screen() {
         width: 3,
         height: 2,
     };
+    image[0x16] = 0x1f;
     let table = scroll_areas(Lorom::new(&image), RomAddress::new(0x80, 0x8010), size).unwrap();
+    let (screens, run) = table.split_at(6);
     assert_eq!(
-        table,
+        screens,
         [
             ScrollArea::Red,
             ScrollArea::Blue,
@@ -127,14 +129,18 @@ fn scroll_tables_give_an_area_a_screen() {
             ScrollArea::Red
         ]
     );
-    image[0x12] = 3;
-    assert_eq!(
-        scroll_areas(Lorom::new(&image), RomAddress::new(0x80, 0x8010), size),
-        Err(ScrollError::Area {
-            screen: 2,
-            value: 3
-        })
-    );
+    // The table goes on past the room's screens, a byte no area has kept as it is.
+    assert_eq!(table.len(), SCROLL_TABLE_BYTES);
+    assert_eq!(run.first(), Some(&ScrollArea::Unknown(0x1f)));
+    assert!(run.iter().skip(1).all(|&area| area == ScrollArea::Red));
+}
+
+#[test]
+fn every_scroll_byte_goes_back_out_exact() {
+    for value in 0..=u8::MAX {
+        assert_eq!(u8::from(ScrollArea::from(value)), value);
+    }
+    assert_eq!(ScrollArea::from(3), ScrollArea::Unknown(3));
 }
 
 #[test]
@@ -150,13 +156,8 @@ fn a_pointer_below_8000_generates_the_areas() {
     let blue = ScrollArea::Blue;
     assert_eq!(generated(0), Ok(vec![green, green, blue, blue]));
     assert_eq!(generated(1), Ok(vec![green; 4]));
-    assert_eq!(
-        generated(2),
-        Err(ScrollError::Area {
-            screen: 2,
-            value: 3
-        })
-    );
+    let unknown = ScrollArea::Unknown(3);
+    assert_eq!(generated(2), Ok(vec![green, green, unknown, unknown]));
 }
 
 /// An invented level four blocks across and three down, all air but `blocks`, each a block's

@@ -45,6 +45,7 @@ use data::level::{Block, ScrollArea};
 use data::rom::{Lorom, RomAddress};
 use data::room::Area;
 use game::blocks_world::BlockContent;
+use game::camera_world;
 use oracle_record::FrameRecord;
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Uncompared};
@@ -416,7 +417,7 @@ impl BlocksDomain {
                         x: screen.checked_rem(across).unwrap_or(screen),
                         y: screen.checked_div(across).unwrap_or(0),
                     },
-                    becomes: kind(change.area),
+                    becomes: camera_world::screen(change.area),
                 }
             })
             .collect();
@@ -554,13 +555,16 @@ impl BlocksDomain {
             .take(down)
             .map(|row| {
                 row.iter()
-                    .map(|&area| {
-                        ScrollArea::try_from(area).map(kind).map_err(|value| {
-                            Skip::Unreadable(DecodeError::Unrepresentable {
+                    .map(|&area| match ScrollArea::from(area) {
+                        ScrollArea::Unknown(value) => {
+                            Err(Skip::Unreadable(DecodeError::Unrepresentable {
                                 source: source::SCROLLS.name,
                                 value: u16::from(value),
-                            })
-                        })
+                            }))
+                        }
+                        area @ (ScrollArea::Red | ScrollArea::Blue | ScrollArea::Green) => {
+                            Ok(camera_world::screen(area))
+                        }
                     })
                     .collect::<Result<Vec<_>, _>>()
             })
@@ -602,15 +606,6 @@ impl BlocksDomain {
             },
             screens: state.screens.rows().to_vec(),
         }
-    }
-}
-
-/// A screen's kind by its scroll area: red is closed, blue short, green open.
-const fn kind(area: ScrollArea) -> ScreenKind {
-    match area {
-        ScrollArea::Red => ScreenKind::Closed,
-        ScrollArea::Blue => ScreenKind::Short,
-        ScrollArea::Green => ScreenKind::Open,
     }
 }
 

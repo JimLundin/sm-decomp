@@ -223,10 +223,15 @@ pub fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange
             return Ok(changes);
         }
         let ([value], next) = take::<1>(rom, after_screen)?;
-        let area = ScrollArea::try_from(value).map_err(|value| PlmError::ScrollArea {
-            at: after_screen,
-            value,
-        })?;
+        let area = match ScrollArea::from(value) {
+            ScrollArea::Unknown(value) => {
+                return Err(PlmError::ScrollArea {
+                    at: after_screen,
+                    value,
+                });
+            }
+            area @ (ScrollArea::Red | ScrollArea::Blue | ScrollArea::Green) => area,
+        };
         changes.push(ScrollChange { screen, area });
         cursor = next;
     }

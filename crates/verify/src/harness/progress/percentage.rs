@@ -2,8 +2,8 @@
 //! places, taken once from a new file, counts 100. It needs only the ROM.
 //!
 //! No importer lists the rooms, so the walk follows the doors from the Landing Site and from
-//! Ceres's first room, reading each room's door list and its states' PLM populations through the
-//! importer. A location holds one kind across its room's states, so the items are kept once per
+//! Ceres's first room, reading each room through the importer: its door list and its states' PLM
+//! populations. A location holds one kind across its room's states, so the items are kept once per
 //! location.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -12,7 +12,7 @@ use clean_model_progress::{Count, Pickup, Progress, Report, Rules};
 use clean_types::LocationId;
 use data::plm::PlmKind;
 use data::rom::{Lorom, RomAddress};
-use data::room::{RoomKey, populations};
+use data::room::{RoomKey, decode};
 
 use super::{ITEM_PLMS, ProgressDomain};
 
@@ -59,11 +59,11 @@ impl ProgressDomain {
             if seen.contains(&pointer) || !ROOM_HEADERS.contains(&pointer) {
                 continue;
             }
-            let room = populations(image, RoomKey::from_room_pointer(pointer))
+            let room = decode(image, RoomKey::from_room_pointer(pointer))
                 .map_err(|error| format!("room {pointer:#06X}: {error:?}"))?;
             seen.insert(pointer);
             rooms.push(RoomKey::from_room_pointer(pointer));
-            for plms in &room.plms {
+            for plms in room.states().map(|(_, state)| &state.plms) {
                 for entry in &plms.entries {
                     let plm = entry.kind.id();
                     let (PlmKind::Item(_, argument) | PlmKind::Unmodelled { argument, .. }) =

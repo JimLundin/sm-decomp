@@ -1,5 +1,5 @@
 use super::*;
-use crate::state::room::{CameraDistance, Layer2Scrolls, StaleScroll};
+use crate::state::room::{CameraDistance, Layer2Scrolls};
 use crate::state::samus::Fixed;
 
 const fn at(pixels: u16, subpixels: u16) -> Fixed {
@@ -38,11 +38,4 @@ fn the_scroll_settings_go_back_out_byte_exact() {
         assert_eq!(CameraDistance::try_from(u16::from(distance)), Ok(distance));
     }
     assert_eq!(CameraDistance::try_from(1), Err(1));
-}
-
-#[test]
-fn a_stale_scroll_byte_goes_back_out_byte_exact() {
-    for byte in 0..=u8::MAX {
-        assert_eq!(u8::from(StaleScroll::from(byte)), byte);
-    }
 }

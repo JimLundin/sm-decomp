@@ -177,12 +177,12 @@ is written only as 0, 1 or 2 in that room, and the second follows `$A9:EFF4`'s c
 neither sees a byte of 3 or more in the game (for the blocks and enemies domains). So every other
 byte reads as green at the camera's reads, and the spec states
 it as `Open`. The run past a room's screens holds such bytes (`80`, `12` and `13` in the records),
-and so does room `$ADAD`'s bottom row (docs/LEGACY.md): its scroll pointer `$8F:ADDA` names four
+and so does room `$ADAD`'s bottom row: its scroll pointer `$8F:ADDA` names four
 bytes for 4×2 screens, so the copy (`$82:EB28`, 32h bytes) takes the next room's header, `1F 02 1D
 04`, as the bottom row, all green to the camera. The importer keeps such a byte as a named variant
 (`Unknown(u8)` of `data::level::ScrollArea`), so it decodes the room and the byte goes back out
-unchanged wherever the table is observed; the bridge hands the camera `ScreenKind::Open` for it,
-as `StaleScroll::Unknown` already reads as green (`StaleScroll::area`).
+unchanged wherever the table is observed; the bridge hands the camera `ScreenKind::Open` for it
+(`game::camera_world::screen`).
 
 **The shared screen kind.** The blocks domain's `clean_types::ScreenKind` (`Closed`, `Open`,
 `Short`) is the camera's: the scroll cells write it and the camera reads it. The camera model's own
@@ -190,7 +190,7 @@ as `StaleScroll::Unknown` already reads as green (`StaleScroll::area`).
 
 **Switches** (spec, each entry's switch). `Parameter` where `Rules` holds the values:
 `FollowingHer` (`extra`), `LeadingHer` (the four settings' leads), `ClosedScreens` (`push`),
-`ShortScreens` (`rows_not_short`, the spec's margin). The rest are `none`: `AimingHeight`'s heights
+`ShortScreens` (`margin`). The rest are `none`: `AimingHeight`'s heights
 are the room's input and `Settling`'s ease is `ClosedScreens`' push.
 
 **The words** (adversary 59, O3 and O4). The spec's `rows` (31 or 0) is `margin` now, as three
@@ -423,7 +423,7 @@ same frame moved into an invented room (§How the spec was made), and carries th
   with these taken from the record instead, by name:
   - screens changed before the frame (the scroll cells, the room's own code): the cases list them;
   - for a preset room, the run after its screens, which is the last room's (`$82:EB3D`..`$82:EB67`
-    fill `w × h` only; the engine keeps it as `RoomScoped::stale_scrolls`).
+    fill `w × h` only; the engine keeps it as `RoomScoped::scrolls_below`).
   Any other difference is a harness defect.
 
 | Case | Row and record N+1 | Room and the content the importer loads | Twin |

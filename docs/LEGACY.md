@@ -27,12 +27,12 @@ original's bytes as data.
   column, so the bytes past the room are one run. A room with a scroll pointer copies all 50 bytes
   from the ROM whatever its size (`$82:EB28`), so its run is the ROM bytes after its screens; a room
   with preset scrolls fills width × height only and leaves the rest as the last room left it. The
-  engine keeps that part of the buffer (`RoomScoped::stale_scrolls`, decoded from the oracle) and
-  reads it as the original does; a byte no area has (`StaleScroll::Unknown`) is neither red nor
+  engine keeps that part of the buffer (`RoomScoped::scrolls_below`: the importer's table, or
+  decoded from the oracle) and reads it as the original does; a byte no area has (`ScrollArea::Unknown`) is neither red nor
   blue, so the camera goes through it. Past the 50-byte buffer the original reads the RAM after it,
   which the engine reads as red: the four shinespark rows read indices 50 and 51 there 409 times,
-  RAM `00 00`, red, so they agree. The engine's room load leaves the stale part empty (red) until
-  the room transition joins.
+  RAM `00 00`, red, so they agree. The engine's load of a room with preset scrolls leaves the part
+  empty (red) until the room transition joins.
 - **Samus spritemaps with a zero pointer or past the table** (`data::pose::spritemap`, `$81:89AE`): 183
   of the 2,096 pointers at `$92:808D` are zero, and the original reads such a spritemap's count from
   `$92:0000`, low work RAM; an index past the table reads a pointer from what follows. The engine draws
@@ -126,17 +126,6 @@ original's bytes as data.
   room's cells. The spec states patterns in cells, and the room's loading refuses a room whose
   reacting cells' patterns reach past its edge; no room of the game has one. Until the engine's
   room loading refuses it, the engine draws no such cell (`game::blocks_world`).
-- **Room $ADAD's scroll table runs into the next room's header** (the camera domain's scroll
-  areas, `data::level::scroll_areas`; `$82:EB28`, `$80:A575` on): the room is eight screens and its
-  scroll pointer (`$8F:ADDA`) names four bytes, so the game reads the next room's header
-  (`$8F:ADDE`, `1F 02 1D 04`) as the bottom row's scroll values and loads the room. The importer
-  refuses a value that is neither red, blue nor green, so `data::room::decode` refuses the room and
-  the engine can't load a room the game loads; a harness row in it would be a defect. Today only
-  the full-percentage walk (`verify::harness::progress::percentage`) reaches it, and reads it
-  through `data::room::populations`, without the scroll tables. The camera observer states what a
-  scroll value other than red, blue and green does; the importer then reads the bytes the game
-  reads and keeps such a value as a named variant (`Unknown(u8)`), byte-exact. The entry goes, with
-  `populations`, when `decode` reads the room and the walk uses it.
 - **The grapple on a bomb, a super missile or a power bomb block** (the blocks domain,
   `docs/behaviours/blocks.md` `BombBlocks`, `SuperMissileBlocks`, `PowerBombBlocks`; `$84:CEDA`,
   `$84:CF2E`, `$84:CF67`): these blocks decide by the weapon of the projectile last handled
@@ -180,7 +169,9 @@ original's bytes as data.
   and the hardware ignores DMAP bit 5 and repeats patterns 1 to 3 as 5 to 7. The registers are
   compared state today, so every byte decodes and goes back out unchanged. They leave the State as
   uncompared leftovers (MODEL decision 3).
-- `game::state::room::StaleScroll::Unknown(u8)`: a stale scroll byte no area has (above).
+- `data::level::ScrollArea::Unknown(u8)`: a scroll byte no area has, in the run past a room's screens
+  (above) or in room $ADAD's bottom row, whose four-byte table runs into the next room's header. The
+  camera tests only for red and blue, so it reads one as green; the byte goes back out unchanged.
 
 ## The oracle
 

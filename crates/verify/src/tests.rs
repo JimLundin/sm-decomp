@@ -1982,16 +1982,11 @@ fn every_moved_level_rule_fails() {
 }
 
 #[test]
-fn a_scroll_byte_no_area_has_is_unrepresentable() {
+fn a_scroll_byte_no_area_has_decodes_as_it_is() {
     let mut record = level_record();
     record.wram[0xCD21] = 3;
-    assert_eq!(
-        decode(&record, &rooms()),
-        Err(DecodeError::Unrepresentable {
-            source: "SCROLLS",
-            value: 3
-        })
-    );
+    let areas = decode(&record, &rooms()).map(|decoded| decoded.state.room.scroll_areas);
+    assert_eq!(areas, Ok(vec![ScrollArea::Green, ScrollArea::Unknown(3)]));
 }
 
 /// Both rows' frames from `SM_CACHE`, and the Morph Ball Room as content loads it.

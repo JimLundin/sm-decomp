@@ -672,7 +672,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.tilemap_gap", room.tilemap_gap),
     field!("room.layer_blending", room.layer_blending),
     field!("room.scroll_areas", room.scroll_areas),
-    field!("room.stale_scrolls", room.stale_scrolls),
+    field!("room.scrolls_below", room.scrolls_below),
     field!("room.camera.x.pixels", room.camera.x.pixels),
     field!("room.camera.x.subpixels", room.camera.x.subpixels),
     field!("room.camera.y.pixels", room.camera.y.pixels),

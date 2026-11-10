@@ -477,6 +477,72 @@ fn the_camera_holds_its_floors_against_the_cache() {
     hold_floors(&domain, "camera", &cache);
 }
 
+/// The camera's harness cases (the decode notes' "The harness cases"), each over its row's
+/// records N and N+1 and the importer's room; a case whose row isn't cached is reported and not
+/// checked, and one skipped, masked other than as the case says, or differing fails.
+#[test]
+fn the_cameras_harness_cases_hold_against_the_cache() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image =
+        std::fs::read(&rom).unwrap_or_else(|error| panic!("SM_ROM {}: {error}", rom.display()));
+    let domain = super::camera::CameraDomain::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
+    let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
+    let rows = cached_rows(&cache);
+    let mut failures = Vec::new();
+    for case in &super::camera::cases::CASES {
+        if !rows.iter().any(|row| row == case.row) {
+            let _ = writeln!(std::io::stdout(), "{}: {} not cached", case.id, case.row);
+            continue;
+        }
+        let locked = parsed
+            .row(&crate::lock::RowId(case.row.to_owned()))
+            .unwrap_or_else(|| panic!("{}: not in the lock", case.row));
+        let opened =
+            crate::cache::Cache::open(&cache, locked).unwrap_or_else(|error| panic!("{error}"));
+        let mut pair = opened
+            .entries()
+            .iter()
+            .filter(|entry| (case.record.saturating_sub(1)..=case.record).contains(&entry.frame.0))
+            .map(|entry| {
+                opened
+                    .record(entry)
+                    .unwrap_or_else(|error| panic!("{}: {error}", case.row))
+            });
+        let (Some(from), Some(next)) = (pair.next(), pair.next()) else {
+            panic!(
+                "{}: records {} and the one before aren't both cached",
+                case.id, case.record
+            );
+        };
+        match domain.case(case, data::rom::Lorom::new(&image), &from, &next) {
+            Ok(()) => {
+                let verdict = match case.compared {
+                    super::camera::cases::Compared::Both => "holds",
+                    super::camera::cases::Compared::Masked(_) => {
+                        "holds, under the harness note's mask"
+                    }
+                };
+                let _ = writeln!(std::io::stdout(), "{}: {verdict}", case.id);
+            }
+            Err(differences) => failures.push(format!("{}: {}", case.id, differences.join("; "))),
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "{}",
+        failures.join(
+            "
+"
+        )
+    );
+}
+
 /// The blocks over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
 /// test reads them (the ROM for the reactions and the scroll lists). The cache's rows carry the
 /// blocks' watched instructions' hits (`docs/behaviours/blocks.decode.md`, "The harness").
@@ -670,13 +736,13 @@ fn progress_harness_cases_hold_against_the_cache() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
-/// Every level the game holds loads through the importer, refused where a chain of stand-ins
-/// loops: each state's of the rooms the doors reach, and of the two no door reaches, the unused
-/// room and the debug room. It needs only `SM_ROM`, and is skipped where it is unset.
+/// Every room the game holds decodes through the importer, its levels refused where a chain of
+/// stand-ins loops: each state of the rooms the doors reach, and of the two no door reaches, the
+/// unused room and the debug room. It needs only `SM_ROM`, and is skipped where it is unset.
 #[test]
 fn every_level_the_game_holds_loads() {
     use data::rom::Lorom;
-    use data::room::{RoomKey, levels};
+    use data::room::{RoomKey, decode};
     use std::io::Write as _;
     /// The rooms no door reaches (bank $8F).
     const UNREACHED: [u16; 2] = [0xB3E1, 0xE82C];
@@ -694,8 +760,8 @@ fn every_level_the_game_holds_loads() {
         .rooms;
     let states = |keys: &[RoomKey]| -> usize {
         keys.iter()
-            .map(|&key| match levels(Lorom::new(&image), key) {
-                Ok(levels) => levels.len(),
+            .map(|&key| match decode(Lorom::new(&image), key) {
+                Ok(decoded) => decoded.states().count(),
                 Err(error) => panic!("room {key:?}: {error:?}"),
             })
             .sum()

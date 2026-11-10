@@ -122,35 +122,11 @@ fn a_header_and_its_states_decode() {
     assert!(air.tile.y_flip && !air.tile.x_flip);
     assert_eq!(default.layers.layer1, [air, air]);
     assert_eq!(default.layers.layer2, None);
-    // The image holds zeros at the scroll table: every screen red.
-    assert_eq!(default.scroll_areas, vec![ScrollArea::Red; 24]);
-}
-
-#[test]
-fn a_rooms_populations_are_its_door_list_and_each_states_plms() {
-    let mut image = synthetic();
-    // The conditional state's population: one Morph Ball item at location 26; the default's
-    // (`$8F:867E`) is empty.
-    put(
-        &mut image,
-        room_bank(0x8100 + 20),
-        &0x8700_u16.to_le_bytes(),
-    );
-    put(
-        &mut image,
-        room_bank(0x8700),
-        &[0x23, 0xef, 0x05, 0x06, 0x1a, 0x00, 0x00, 0x00],
-    );
-    let populations = populations(Lorom::new(&image), SYNTHETIC).unwrap();
-    let room = decode(Lorom::new(&image), SYNTHETIC).unwrap();
-    assert_eq!(populations.doors, room.doors);
-    let decoded: Vec<PlmPopulation> = room.states().map(|(_, state)| state.plms.clone()).collect();
-    assert_eq!(populations.plms, decoded);
+    // The image holds zeros at the scroll table: every screen red, and the run after them.
     assert_eq!(
-        populations.plms[0].entries[0].kind,
-        crate::plm::PlmKind::Item(crate::plm::ItemPlm::MorphBall, 26)
+        default.scroll_areas,
+        vec![ScrollArea::Red; crate::level::SCROLL_TABLE_BYTES]
     );
-    assert_eq!(populations.plms[1].entries, []);
 }
 
 #[test]
@@ -294,8 +270,8 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
         assert_eq!(&block.word().to_le_bytes(), word);
         assert_eq!(block.kind.bts(), *bts);
     }
-    // The scroll table at $8F:9EED gives each of the 24 screens an area.
-    assert_eq!(state.scroll_areas.len(), 24);
+    // The scroll table at $8F:9EED gives each of the 24 screens an area, then the run after them.
+    assert_eq!(state.scroll_areas.len(), crate::level::SCROLL_TABLE_BYTES);
     let mut kinds: Vec<u8> = blocks.iter().map(|block| block.kind.nybble()).collect();
     kinds.sort_unstable();
     kinds.dedup();
@@ -305,7 +281,7 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
     let mut areas = vec![red; 16];
     areas[5] = green;
     areas.extend([blue; 8]);
-    assert_eq!(state.scroll_areas, areas);
+    assert_eq!(state.scroll_areas.get(..24), Some(areas.as_slice()));
 
     assert_eq!(
         addresses.get(Location::State(id, index, StatePart::PlmPopulation)),

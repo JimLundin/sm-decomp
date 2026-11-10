@@ -15,7 +15,7 @@ use clean_types::Event;
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
 use crate::id::RoomId;
-use crate::level::{Level, LevelError, ScrollArea, ScrollError, scroll_areas};
+use crate::level::{Level, LevelError, ScrollArea, scroll_areas};
 use crate::plm::{PlmError, PlmPopulation, population};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
@@ -318,7 +318,8 @@ pub struct RoomState {
     pub layer2_scroll: [u8; 2],
     /// The scroll table.
     pub scroll: RomAddress,
-    /// The scroll areas it gives, a screen each, row-major.
+    /// The scroll areas it gives, a screen each, row-major; a table's go on past the room's
+    /// screens with the run after them (`scroll_areas`).
     pub scroll_areas: Vec<ScrollArea>,
     /// The special x-ray blocks.
     pub special_xray_blocks: RomAddress,
@@ -437,12 +438,12 @@ pub enum RoomError {
         /// Why.
         error: LevelError,
     },
-    /// A state's scroll table doesn't decode.
+    /// A state's scroll table is outside the image.
     Scroll {
         /// The state header.
         state: RomAddress,
         /// Why.
-        error: ScrollError,
+        error: AddressError,
     },
     /// A state's PLM population doesn't decode.
     Plm {
@@ -609,94 +610,6 @@ fn level(
         })
         .map_err(|error| RoomError::Level { at, error })?;
     Ok((level, layers))
-}
-
-/// A room's door list and each state's PLM population.
-///
-/// They are what a walk of the rooms by their doors needs, read without the states' levels and
-/// scroll tables (a few rooms' scroll tables run past what the importer decodes yet).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Populations {
-    /// The door list.
-    pub doors: RomAddress,
-    /// Each state's PLM population, in the list's order, the default last.
-    pub plms: Vec<PlmPopulation>,
-}
-
-/// Where a state header's PLM population pointer is, from the header's start.
-const STATE_PLM_POPULATION: usize = 20;
-
-/// The door list and the states' PLM populations of the room whose header is at `key`.
-///
-/// # Errors
-///
-/// [`RoomError`] if a record is outside the image, names an unknown condition, or a population
-/// doesn't decode.
-pub fn populations(rom: Lorom<'_>, key: RoomKey) -> Result<Populations, RoomError> {
-    let headers = state_headers(rom, key)?;
-    let plms = headers
-        .states
-        .into_iter()
-        .map(|state| state_population(rom, state))
-        .collect::<Result<_, _>>()?;
-    Ok(Populations {
-        doors: headers.doors,
-        plms,
-    })
-}
-
-/// Each state's level of the room whose header is at `key`, the default last, decoded and
-/// refused as the room's loading refuses it, without the scroll tables `populations` also skips.
-///
-/// # Errors
-///
-/// [`RoomError`] if a record is outside the image, names an unknown condition, a population
-/// doesn't decode, or a level doesn't decompress, decode, or end its stand-in chains.
-pub fn levels(rom: Lorom<'_>, key: RoomKey) -> Result<Vec<Level>, RoomError> {
-    let headers = state_headers(rom, key)?;
-    headers
-        .states
-        .into_iter()
-        .map(|state| {
-            let plms = state_population(rom, state)?;
-            let at = RomAddress::from_long(Reader { rom, at: state }.take()?);
-            let (_, layers) = level(rom, at, headers.size, &plms)?;
-            Ok(layers)
-        })
-        .collect()
-}
-
-/// A room header's size, its door list and where its state headers are, the default last.
-struct StateHeaders {
-    size: Screens,
-    doors: RomAddress,
-    states: Vec<RomAddress>,
-}
-
-/// The size, door list and state headers of the room whose header is at `key`.
-fn state_headers(rom: Lorom<'_>, key: RoomKey) -> Result<StateHeaders, RoomError> {
-    let mut reader = Reader { rom, at: key.0 };
-    let [_, _, _, _, width, height, _, _, _] = reader.take()?;
-    let doors = reader.pointer(ROOM_BANK)?;
-    let mut states = Vec::new();
-    while condition(&mut reader)?.is_some() {
-        states.push(reader.pointer(ROOM_BANK)?);
-    }
-    states.push(reader.at);
-    Ok(StateHeaders {
-        size: Screens { width, height },
-        doors,
-        states,
-    })
-}
-
-/// The PLM population of the state header at `state`.
-fn state_population(rom: Lorom<'_>, state: RomAddress) -> Result<PlmPopulation, RoomError> {
-    let at = state
-        .advance(STATE_PLM_POPULATION)
-        .ok_or(RoomError::BankEnd(state))?;
-    let list = Reader { rom, at }.pointer(ROOM_BANK)?;
-    population(rom, list).map_err(|error| RoomError::Plm { state, error })
 }
 
 /// The next state condition, or `None` at the default condition that ends the list.
