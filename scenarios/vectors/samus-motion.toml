@@ -2159,7 +2159,7 @@ source = "constructed"
 entries = ["RidingTheElevator"]
 world = { elevator_moving = true }
 before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
-pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
 pad = []
 jump_pressed = false
 after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000" }
@@ -2174,11 +2174,11 @@ id = "C-screen-skid"
 source = "constructed"
 entries = ["SpeedBuildsAndBrakes", "PadChart"]
 world = { floor_top = 288 }
-before = { position = ["0100.0000", "010B.FFFF"], speed_x = "-0001.0000" }
-pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 21] }
+before = { position = ["0100.0000", "0108.FFFF"], speed_x = "-0001.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false }
+after = { position = ["0100.0000", "0108.FFFF"], speed_x = "+0001.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false }
 
 [[vector]]
 id = "C-enemy-ahead"
@@ -2943,6 +2943,24 @@ next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [
 pad = []
 jump_pressed = false
 after = { position = ["0108.0000", "0103.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0003.1C00", placed = "none", jump_held = 0, landed_or_ended = false, pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] } }
+
+# C-fit-land-pushed: C-fit-land-refused without the stepped block. The block's far-side look up of
+# 7 px meets air, so the push is by the block's room, as if the enemy were not there: up 9 - 2 =
+# 7 px, to 00FC.0000, placed there (the frame's start subpixel 0). She lands: her speeds stop and
+# the landing is left for jump held through. Her body now overlaps the enemy by 2 px, where the
+# enemy's room (0) would have pushed her 9 px, to 00FA.0000.
+
+[[vector]]
+id = "C-fit-land-pushed"
+source = "constructed"
+entries = ["PoseFitAfterMoves", "Landing", "WhatHerMovesMet", "SolidEnemies", "SlopesCarry", "Jumping"]
+world = { slope_floor = { block = [256, 272], surface = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, enemy = { centre = [264, 279], radius = [8, 8] } }
+before = { position = ["0108.0000", "0101.0000"], speed_y = "+0003.0000" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+after = { position = ["0108.0000", "00FC.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "00FC.0000", jump_held = 0, landed_or_ended = true }
 
 # Pose-chart steps (spec section 7): one frame each, from a record. The next pose is the output.
 # - pose: the pose at the frame's start (body, action, facing, aim, and gun: "Drawn" or "Stowed",

@@ -537,7 +537,7 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   raises her centre by n px.
 - A block and a solid enemy on the same side → the enemy's far-side look comes first and can
   refuse the change; then the block's far-side look and push follow, by the block's room, as if
-  the enemy were not there [C-fit-land-refused]
+  the enemy were not there [C-fit-land-refused, C-fit-land-pushed]
 - That far-side look stopped, or something above her and something below her (blocks or solid
   enemies, in any mix) with her old body under 8 px half-height (the ball) → the change is
   refused [C-fit-ball-tunnel, C-fit-land-refused]
@@ -587,7 +587,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   enemy below; C-fit-land-tunnel, a landing crouched instead keeps her speeds,
   C-fit-land-tunnel-next the frame after it, C-fit-land-tunnel-held its jump held through, and
   C-fit-land-tunnel-skid a skid kept through it; C-fit-land-refused, a spin landing on a solid
-  enemy refused by the block's far-side look, block and enemy on the same side;
+  enemy refused by the block's far-side look, block and enemy on the same side, and
+  C-fit-land-pushed, the same landing pushed by the block's room;
   C-fit-tunnel-aimed, the crouch taken instead from a body already the crouch's height: no
   placement); original only
   (the looks' cells of the harness case W15 and of C-near-wall-item, a body growing 7 px in open

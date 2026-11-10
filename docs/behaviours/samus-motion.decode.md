@@ -1399,8 +1399,8 @@ motion and the pose chart at their caps (2,813 and 1,584).
 
 ## Round 16's amendments (2026-11-10)
 
-From adversary 78's observer items (V1-V3) and its finding I3. 261 vectors (258 + 3) and 51
-pose steps.
+From adversary 78's observer items (V1-V3) and its finding I3, and adversary 81's findings 1, 3
+and 4. 262 vectors (258 + 4) and 51 pose steps.
 
 **V1, a landing pose fit refuses.** `$91:FDAE` refuses in three places: an enemy one-side handler's
 re-look at the new radius (`$91:FE9E`, `$91:FEDF`) hitting, a block one-side handler's re-look at
@@ -1435,7 +1435,11 @@ bouncing) reads `0B2E` = 2, under 3, and goes to `$91:EA2D`: the ball's rest pos
 landing's command (`0B20` 0, speeds 0). The model passes it;
 mutant B1 (bounce 1 from 2 px) fails it alone (bounces 1, speed −1.0000, pose kept).
 
-**V3, facing the screen counts as right.** Observable, in the skid. Pose 00h/9Bh with `0E18` = 0:
+**V3, facing the screen counts as right.** A convention the vector pins, not a difference in RAM.
+Facing the screen she never moves (`$90:A383`), and `$90:8EA9` would read `0B4A` 1 with facing
+word 0 as rightward, so "a leftward speed facing the screen" is the decoding's reading, not the
+game's: the RAM checked is `0B4A` cleared with `0B46` kept. The spec states the convention, and
+the model and the bridge must agree on it. Pose 00h/9Bh with `0E18` = 0:
 `$90:A383` returns before any move (speeds kept), and `$91:804D` runs `$91:81A9`; with nothing
 held (`8B` = 0) it goes to `$91:82D9`, whose `$91:8304` gives movement type 0 command 2, and the
 pose is kept. `$91:EBEE` runs command 2, `$91:ECD0`: `0B4A` = 0. So a skid facing the screen
@@ -1446,10 +1450,19 @@ facing the screen is described. The model passes it; mutant S1 (`Side::of(Screen
 fails it alone (speed_x −1.0000). The facing-forward handler skips her move, not the pose
 input, so the skid's end comes as on any standing frame.
 
+**V1's push (adversary 81, finding 1).** C-fit-land-pushed is C-fit-land-refused without the
+stepped block: `$91:FF49`'s 7 px re-look meets air, `0A34` has no bit 1 (no enemy above), and
+`0AFA` −= 7, so she is at 00FC.0000, placed there, and the landing's command 5 runs (speeds 0,
+`$E926`). She overlaps the enemy by 2 px. The same-side arm is now checked on both its outcomes.
+
+**The facing-screen body (adversary 81, finding 4).** Poses 00h and 9Bh have a Y radius of 18h
+(`$91:B629`), so C-elevator and C-screen-skid give [5, 24], C-screen-skid flush on 120h at
+0108.FFFF.
+
 **I3, the stepped block's quarters.** The format header now allows exactly two characters per
 string, each `#` or `.`, and no other character.
 
-**The current model against the amended vectors.** All 261 vectors, the 51 pose steps and the
+**The current model against the amended vectors.** All 262 vectors, the 51 pose steps and the
 catalogue test pass. The gate's three survivors, each one line and reverted: R4 fails
 C-fit-land-refused, B1 fails C-bounce-under, S1 fails C-screen-skid, and each fails nothing
 else.
