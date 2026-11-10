@@ -166,6 +166,9 @@ const PLM_SLOTS: u16 = 40;
 /// its byte), then the pickup instruction and its word.
 const BEFORE_PICKUP: [u8; 4] = [0x99, 0x88, 0xDD, 0x8B];
 const PICKUP_AFTER: usize = 5;
+/// The instruction some item PLMs run between the fanfare and the pickup: clear the charge beam's
+/// counter (`$84:E29D`), which takes no argument.
+const CLEAR_CHARGE: [u8; 2] = [0x9D, 0xE2];
 /// Bank $84 log, `$84:8A91`: each door PLM's hit counter, which the instruction counts up (the
 /// same words hold an item PLM's graphics slot).
 const DOOR_HIT_COUNTERS: WramArray = WramArray {
@@ -705,6 +708,11 @@ impl ProgressDomain {
             .position(|window| window == BEFORE_PICKUP)
             .ok_or_else(none)?
             .wrapping_add(PICKUP_AFTER);
+        let at = if bytes.get(at..at.wrapping_add(CLEAR_CHARGE.len())) == Some(&CLEAR_CHARGE[..]) {
+            at.wrapping_add(CLEAR_CHARGE.len())
+        } else {
+            at
+        };
         let [code_low, code_high, argument_low, argument_high] = bytes
             .get(at..at.wrapping_add(4))
             .and_then(|slice| <[u8; 4]>::try_from(slice).ok())
