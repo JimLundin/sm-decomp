@@ -30,6 +30,8 @@
 //! answers from record N+1's HUD, so no field is unverified; the null model is the HUD left as
 //! record N has it.
 
+pub mod cases;
+
 use core::fmt;
 
 use clean_model_hud::{
