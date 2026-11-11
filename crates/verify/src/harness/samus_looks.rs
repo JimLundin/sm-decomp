@@ -20,8 +20,8 @@ use core::cell::Cell;
 use core::fmt;
 
 use clean_model_samus_looks::{
-    BehaviourId, Boost, CATALOGUE, ClipStep, Content, Frames, Inputs, Laps, Liquid, Move, Playhead,
-    Rules, State, Step, Vertical, step,
+    BehaviourId, Boost, CATALOGUE, Content, Frames, Inputs, Instruction, Laps, Liquid, Move,
+    Playhead, Rules, RunDown, State, Step, Vertical, update,
 };
 use clean_model_samus_motion::WallTest;
 use clean_types::{Action, BoostStage, Item, Set};
@@ -200,20 +200,20 @@ pub struct Declared {
     /// Her step.
     pub step: Step,
     /// The time left.
-    pub left: Frames,
+    pub frames_left: Frames,
     /// The boost stage.
     pub stage: BoostStage,
     /// The laps left.
-    pub laps: Laps,
+    pub laps_left: Laps,
 }
 
 impl From<&State> for Declared {
     fn from(state: &State) -> Self {
         Self {
             step: state.playhead.step,
-            left: state.playhead.left,
+            frames_left: state.playhead.frames_left,
             stage: state.boost.stage,
-            laps: state.boost.laps,
+            laps_left: state.boost.laps_left,
         }
     }
 }
@@ -284,11 +284,11 @@ impl SamusLooks {
         Ok(State {
             playhead: Playhead {
                 step,
-                left: Frames(left),
+                frames_left: Frames(left),
             },
             boost: Boost {
                 stage,
-                laps: Laps(laps),
+                laps_left: Laps(laps),
             },
         })
     }
@@ -455,9 +455,9 @@ impl Domain for SamusLooks {
     type Skip = Skip;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("step", step),
-        domain_field!("left", left),
+        domain_field!("frames_left", frames_left),
         domain_field!("stage", stage),
-        domain_field!("laps", laps),
+        domain_field!("laps_left", laps_left),
     ];
 
     fn behaviours(&self) -> Vec<Entry> {
@@ -533,7 +533,7 @@ impl Domain for SamusLooks {
     }
 
     fn step(&self, state: &mut State, (): &(), frame: &mut Frame) {
-        *state = step(*state, &frame.inputs, &self.clips, &Rules::VANILLA).0;
+        *state = update(*state, &frame.inputs, &self.clips, &Rules::VANILLA).0;
     }
 
     fn exercised(&self, state: &State, (): &(), frame: &Frame) -> Vec<usize> {
@@ -597,15 +597,14 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
         hit.push(B::FastFall);
     }
     let rising = clip.rising == Some(state.playhead.step)
-        && state.playhead.left == Frames(1)
+        && state.playhead.frames_left == Frames(1)
         && inputs.vertical == Vertical::NotDown;
     if rising {
         hit.push(B::RisingHold);
     }
     let running = inputs.dashing && inputs.pose.motion.action == Action::Running;
-    let moves_on =
-        !rising && !moves[Move::StandingRestart] && state.playhead.counted_down().is_none();
-    if let Some((_, next)) = moves_on.then(|| clip.after(state.playhead.step)).flatten() {
+    let played = !rising && !moves[Move::StandingRestart];
+    if let (true, RunDown::MovesOn(_, next)) = (played, state.playhead.run_down(clip)) {
         hit.extend(moved_on(next, running, inputs, state.boost));
     }
     if moves[Move::DashBegan] || moves[Move::DashLost] {
@@ -626,25 +625,25 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
 }
 
 /// The entries the clip moving on to `next` brings into play.
-fn moved_on(next: ClipStep, running: bool, inputs: &Inputs, boost: Boost) -> Vec<BehaviourId> {
+fn moved_on(next: Instruction, running: bool, inputs: &Inputs, boost: Boost) -> Vec<BehaviourId> {
     use BehaviourId as B;
     let booster = inputs.items[Item::SpeedBooster];
     match next {
-        ClipStep::Show(_) if running => vec![B::RunPace],
-        ClipStep::Show(_) => Vec::new(),
+        Instruction::Show(_) if running => vec![B::RunPace],
+        Instruction::Show(_) => Vec::new(),
         _ if running && inputs.run_held && !booster => vec![B::RunPace],
         _ if running && inputs.run_held => {
-            let up_to_boosting = boost.laps.0 <= 1 && boost.stage == BoostStage::Stage3;
+            let up_to_boosting = boost.laps_left.0 <= 1 && boost.stage == BoostStage::Stage3;
             if up_to_boosting {
                 vec![B::RunPace, B::BoostStages, B::BoostingLap]
             } else {
                 vec![B::RunPace, B::BoostStages]
             }
         }
-        ClipStep::Again(_) | ClipStep::Rest => vec![B::ClipControls],
-        ClipStep::Breathe => vec![B::Breathing],
-        ClipStep::End | ClipStep::EndUnlessJump => vec![B::ClipEnds],
-        ClipStep::Branch(_) => vec![B::WallJumpBranch],
+        Instruction::Again(_) | Instruction::Rest => vec![B::ClipControls],
+        Instruction::Breathe => vec![B::Breathing],
+        Instruction::End | Instruction::EndUnlessJump => vec![B::ClipEnds],
+        Instruction::Branch(_) => vec![B::WallJumpBranch],
     }
 }
 
@@ -659,7 +658,7 @@ mod tests {
             .iter()
             .map(|field| field.name)
             .collect();
-        assert_eq!(names, ["step", "left", "stage", "laps"]);
+        assert_eq!(names, ["step", "frames_left", "stage", "laps_left"]);
         assert!(PLAYHEAD.contains(0) && PLAYHEAD.contains(1) && !PLAYHEAD.contains(2));
         assert!(BOOST.contains(2) && BOOST.contains(3) && !BOOST.contains(1));
     }

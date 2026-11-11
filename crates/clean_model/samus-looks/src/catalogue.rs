@@ -81,7 +81,8 @@ pub const CATALOGUE: [Behaviour; 15] = [
     Behaviour {
         id: BehaviourId::ClipEnds,
         summary: "a clip that reaches its end reports which end it is, and samus-motion hands \
-                  over her next pose; at a turn's or a landing's end it gives way to a jump",
+                  over her next pose; at a turn's or a landing's end it gives way to a jump its \
+                  pad chart asks for",
         kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

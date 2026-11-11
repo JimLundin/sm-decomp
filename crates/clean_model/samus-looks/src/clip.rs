@@ -1,9 +1,10 @@
-//! §1.4 Her clips: the content the importer supplies, a list of steps per pose, written in the
-//! spec's own cells.
+//! §1.4 Her clips and the run's paces: the content the importer supplies, as typed values.
 
-use core::str::FromStr;
+use clean_types::{BoostStage, ClipEnd};
+use enum_map::EnumMap;
 
-/// A step of a clip, numbered from 0 (§1.4); her step is the one her clip is on.
+/// A place in a clip, numbered from 0 (§1.4): her step is the one her clip is on, and each step
+/// holds one instruction.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct Step(pub u8);
 
@@ -13,7 +14,7 @@ impl Step {
     /// The step after the first.
     pub const SECOND: Self = Self(1);
 
-    /// The step after this one, where the clip moves on to.
+    /// The step after this one, which the clip moves on to.
     #[must_use]
     pub fn next(self) -> Option<Self> {
         self.0.checked_add(1).map(Self)
@@ -38,10 +39,13 @@ impl Frames {
     /// No frames.
     pub const NONE: Self = Self(0);
 
-    /// This count lengthened by `more`, kept in the time left's range (0 to 255) by wrapping.
+    /// This hold lengthened by a slowdown. A hold is at most 127 frames and a slowdown at most 3,
+    /// and a hold takes two slowdowns at most (`HandOverSlowdown`), so the sum is at most 133
+    /// and always fits the time left's 0 to 255 (§1.5): nothing wraps. The add saturates only
+    /// because the crate refuses a bare `+` on a byte; within the spec it never reaches 255.
     #[must_use]
-    pub const fn plus(self, more: Self) -> Self {
-        Self(self.0.wrapping_add(more.0))
+    pub const fn slowed(self, slowdown: Self) -> Self {
+        Self(self.0.saturating_add(slowdown.0))
     }
 }
 
@@ -56,12 +60,14 @@ pub struct Branch {
     pub screw_attack: Step,
 }
 
-/// One step of a clip (§1.4): a shown step with its hold, or a control.
+/// What a step of a clip does when the clip reaches it (§1.4): show its picture for a hold, or a
+/// control, which the clip passes through in the frame it reaches it unless it rests there.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ClipStep {
+pub enum Instruction {
     /// `n`: shows its picture for its hold, 1 frame or more (`ClipPlays`).
     Show(Frames),
-    /// `rest`: she rests on it for one frame with no time left (`ClipControls`).
+    /// `rest`: she rests on it with no time left, and the clip moves on from it the next frame
+    /// (`ClipControls`).
     Rest,
     /// `again s`: the clip goes on from step `s` (`ClipControls`).
     Again(Step),
@@ -75,70 +81,28 @@ pub enum ClipStep {
     Branch(Branch),
 }
 
-/// A cell that is not one of §1.4's written steps.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct UnwrittenStep(pub String);
-
-impl FromStr for ClipStep {
-    type Err = UnwrittenStep;
-
-    /// §1.4's "Written" column: `n` (1 or more), `rest`, `again s`, `breathe`, `end`,
-    /// `end-unless-jump`, `branch x y z`.
-    fn from_str(text: &str) -> Result<Self, Self::Err> {
-        let words: Vec<&str> = text.split_whitespace().collect();
-        written(&words).ok_or_else(|| UnwrittenStep(text.to_owned()))
-    }
-}
-
-/// §1.4: the step a cell's words write, if they write one.
-fn written(words: &[&str]) -> Option<ClipStep> {
-    match words {
-        ["rest"] => Some(ClipStep::Rest),
-        ["breathe"] => Some(ClipStep::Breathe),
-        ["end"] => Some(ClipStep::End),
-        ["end-unless-jump"] => Some(ClipStep::EndUnlessJump),
-        ["again", to] => written_step(to).map(ClipStep::Again),
-        ["branch", spin, space_jump, screw_attack] => Some(ClipStep::Branch(Branch {
-            spin: written_step(spin)?,
-            space_jump: written_step(space_jump)?,
-            screw_attack: written_step(screw_attack)?,
-        })),
-        [hold] => hold
-            .parse()
-            .ok()
-            .filter(|&frames| frames > 0)
-            .map(|frames| ClipStep::Show(Frames(frames))),
-        _ => None,
-    }
-}
-
-/// §1.4: a step's number, written in a cell.
-fn written_step(text: &str) -> Option<Step> {
-    text.parse().ok().map(Step)
-}
-
-impl ClipStep {
-    /// `ClipEnds`: the end this step is, if it is one.
+impl Instruction {
+    /// `ClipEnds`: the end this instruction is, if it is one.
     #[must_use]
-    pub const fn end(self) -> Option<clean_types::ClipEnd> {
+    pub const fn end(self) -> Option<ClipEnd> {
         match self {
-            Self::End => Some(clean_types::ClipEnd::End),
-            Self::EndUnlessJump => Some(clean_types::ClipEnd::EndUnlessJump),
+            Self::End => Some(ClipEnd::End),
+            Self::EndUnlessJump => Some(ClipEnd::EndUnlessJump),
             Self::Show(_) | Self::Rest | Self::Again(_) | Self::Breathe | Self::Branch(_) => None,
         }
     }
 }
 
-/// A clip (§1.4): its steps from step 0, and the steps it marks.
+/// A clip (§1.4): its instructions from step 0, and the steps it marks.
 ///
 /// §1.5 gives the clips the spec covers: an `again` or a `branch` goes to a shown step, a `rest`
-/// is followed by a shown step, and the last step is not a shown one. Outside them the model
-/// stays total: a step past the clip's end leaves her where she is, and a step with no hold
-/// gives no time left.
+/// is followed by a shown step, the last step is not a shown one, and a hold is at most 127
+/// frames. Outside them the model stays total: a clip that would move on past its end leaves her
+/// where she is, and a step with no hold gives no time left.
 #[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct Clip {
-    /// The steps, in order from step 0.
-    pub steps: Vec<ClipStep>,
+    /// The instructions, one per step, in order from step 0.
+    pub instructions: Vec<Instruction>,
     /// A spin's kick step (`WallJumpReady`, `SpinTurnedFar`).
     pub kick: Option<Step>,
     /// A fall's fast fall step (`FastFall`).
@@ -148,23 +112,16 @@ pub struct Clip {
 }
 
 impl Clip {
-    /// The step of this clip at `step`, if the clip has one there.
+    /// The instruction at `step`, if the clip reaches that far.
     #[must_use]
-    pub fn at(&self, step: Step) -> Option<ClipStep> {
-        self.steps.get(step.index()).copied()
-    }
-
-    /// The step the clip moves on to from `step`, and what is there: none past the clip's end.
-    #[must_use]
-    pub fn after(&self, step: Step) -> Option<(Step, ClipStep)> {
-        let next = step.next()?;
-        Some((next, self.at(next)?))
+    pub fn at(&self, step: Step) -> Option<Instruction> {
+        self.instructions.get(step.index()).copied()
     }
 
     /// The hold of the shown step at `step`; none for a control.
     #[must_use]
     pub fn hold(&self, step: Step) -> Frames {
-        if let Some(ClipStep::Show(hold)) = self.at(step) {
+        if let Some(Instruction::Show(hold)) = self.at(step) {
             hold
         } else {
             Frames::NONE
@@ -191,5 +148,5 @@ pub struct Paces {
     /// Her stride without the speed booster.
     pub plain: Pace,
     /// Her stride with it, at each stage.
-    pub boosted: enum_map::EnumMap<clean_types::BoostStage, Pace>,
+    pub boosted: EnumMap<BoostStage, Pace>,
 }

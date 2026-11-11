@@ -13,7 +13,7 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 ## Where it stands
 
-Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **37 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
+Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **38 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
 
 ### The models
 
@@ -26,7 +26,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 | progress | P1 (in progress) | in progress | 6 | 66 | 25,419 of 25,426 | 979 | 1,092 | 0.90 |
 | hud | H2 (in progress) | in progress | 3 | 72 | 20,614 of 25,426 | 2,978 | 2,028 | 1.47 |
 | blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,643 | 1,992 | 1.33 |
-| samus-looks | S5 (in progress) | in progress | 1 | 85 | 16,210 of 24,230 | 2,409 | 1,356 | 1.78 |
+| samus-looks | S5 (in progress) | in progress | 2 | 85 | 16,210 of 24,230 | 2,162 | 1,356 | 1.59 |
 
 ### The whole-game plan
 
@@ -49,7 +49,7 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 | --- | ---: | ---: | ---: | ---: |
 | not yet rebuilt | 44 | 5,054 | 30,326 | 6,941 |
 | bridges from the engine to the models | 8 | 2,457 | 14,743 | 2,480 |
-| rebuilt models, shared types included | 70 | 3,359 | 20,153 | 8,576 |
+| rebuilt models, shared types included | 71 | 3,318 | 19,907 | 8,572 |
 
 ### Verification
 

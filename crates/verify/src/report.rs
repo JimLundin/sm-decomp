@@ -179,14 +179,15 @@ const DOMAINS: &[Domain] = &[
         ],
         apart: &[],
     },
-    // The inputs, the frame, the State, the rules and the catalogue are the domain's shared
-    // code. The clip's format (§1.4), its player and its start in a new pose are the clip's; her
-    // moves' writes and the run's pace and boost stages are the other two areas.
+    // The inputs, the frame and its update, the State, the rules and the catalogue are the
+    // domain's shared code. The clip's format (§1.4), its playback and its start in a new
+    // pose are the clip's; her moves' writes and the run's pace and boost stages are the other
+    // two areas.
     Domain {
         name: "samus-looks",
         bridge: "samus_looks_world",
         areas: &[
-            ("clip", &["clip.rs", "player.rs", "starting.rs"]),
+            ("clip", &["clip.rs", "playback.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
             ("run", &["run.rs"]),
         ],

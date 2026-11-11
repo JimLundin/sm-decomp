@@ -668,7 +668,7 @@ fn samus_looks_harness_cases_hold_against_the_cache() {
 /// only `SM_ROM`, and is skipped where it is unset.
 #[test]
 fn the_importer_gives_every_pose_of_hers_its_own_clip() {
-    use clean_model_samus_looks::ClipStep;
+    use clean_model_samus_looks::Instruction;
     use std::io::Write as _;
     let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
         let _ = writeln!(std::io::stdout(), "skipped: SM_ROM unset");
@@ -691,21 +691,25 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
             .collect();
         assert!(twins.is_empty(), "{:?} is drawn as {twins:?}", imported.id);
         let shown = |step: clean_model_samus_looks::Step| {
-            matches!(imported.clip.at(step), Some(ClipStep::Show(_)))
+            matches!(imported.clip.at(step), Some(Instruction::Show(_)))
         };
-        for step in &imported.clip.steps {
-            let lands = match *step {
-                ClipStep::Again(to) => shown(to),
-                ClipStep::Branch(branch) => {
+        for instruction in &imported.clip.instructions {
+            let lands = match *instruction {
+                Instruction::Again(to) => shown(to),
+                Instruction::Branch(branch) => {
                     shown(branch.spin) && shown(branch.space_jump) && shown(branch.screw_attack)
                 }
-                ClipStep::Show(_)
-                | ClipStep::Rest
-                | ClipStep::Breathe
-                | ClipStep::End
-                | ClipStep::EndUnlessJump => true,
+                Instruction::Show(_)
+                | Instruction::Rest
+                | Instruction::Breathe
+                | Instruction::End
+                | Instruction::EndUnlessJump => true,
             };
-            assert!(lands, "{:?}: {step:?} lands on a control", imported.id);
+            assert!(
+                lands,
+                "{:?}: {instruction:?} lands on a control",
+                imported.id
+            );
         }
     }
 }

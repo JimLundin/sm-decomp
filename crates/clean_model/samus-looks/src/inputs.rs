@@ -38,12 +38,12 @@ pub enum Move {
     DashLost,
 }
 
-/// Her vertical motion this frame.
+/// Her vertical motion this frame (samus-motion).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Vertical {
-    /// Rising, or not moving up or down.
+    /// Not heading down: she goes up, or keeps her height without a fall.
     NotDown,
-    /// Heading down, at this many whole pixels a frame (a fall at 0 included).
+    /// Heading down, at this many whole pixels a frame; a fall at 0 pixels a frame is one.
     Down(u16),
 }
 
@@ -93,7 +93,8 @@ pub struct Report {
     pub end: Option<ClipEnd>,
     /// Her spin has turned far enough to kick off a wall (`SpinTurnedFar`).
     pub turned_far: bool,
-    /// The sound asked for: a frame moves her clip on once, so it asks for one at most
-    /// (`WallJumpBranch`, `BoostStages`).
+    /// The sound asked for this frame, at most one: only a control asks for one
+    /// (`WallJumpBranch`'s branch, `BoostStages`' lap end), and a frame meets one control at
+    /// most.
     pub sound: Option<AnimationSound>,
 }

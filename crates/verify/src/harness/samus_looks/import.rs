@@ -6,11 +6,13 @@
 //! clip keeps its step map, the original's frame of each step, which the harness decodes her step
 //! through. Nothing the importer reads is committed: the harness builds it from the ROM each run.
 
-use clean_model_samus_looks::{Branch, Clip, ClipStep, Content, Frames, Pace, Paces, Pose, Step};
+use clean_model_samus_looks::{
+    Branch, Clip, Content, Frames, Instruction, Pace, Paces, Pose, Step,
+};
 use clean_types::{BoostStage, Sprite};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
-use data::pose::animation::{AnimationFrame, DelayItem, DelayList, Instruction, wall_jump_frame};
+use data::pose::animation::{self, AnimationFrame, DelayItem, DelayList, wall_jump_frame};
 use data::pose::{PoseError, PoseId, Poses};
 use data::rom::{AddressError, Lorom, RomAddress};
 use enum_map::EnumMap;
@@ -179,20 +181,20 @@ const fn size(item: DelayItem) -> usize {
     match item {
         DelayItem::Delay(_)
         | DelayItem::Instruction(
-            Instruction::NoOp(_)
-            | Instruction::LoopIfHealthy
-            | Instruction::DrainedFalling
-            | Instruction::WallJump
-            | Instruction::Loop,
+            animation::Instruction::NoOp(_)
+            | animation::Instruction::LoopIfHealthy
+            | animation::Instruction::DrainedFalling
+            | animation::Instruction::WallJump
+            | animation::Instruction::Loop,
         ) => 1,
         DelayItem::Instruction(
-            Instruction::AutoJumpTransition(_)
-            | Instruction::Transition(_)
-            | Instruction::GoBack(_),
+            animation::Instruction::AutoJumpTransition(_)
+            | animation::Instruction::Transition(_)
+            | animation::Instruction::GoBack(_),
         ) => 2,
-        DelayItem::Instruction(Instruction::BySpeed(_)) => 3,
-        DelayItem::Instruction(Instruction::ByItems { .. }) => 5,
-        DelayItem::Instruction(Instruction::ByItemsAndSpeed { .. }) => 7,
+        DelayItem::Instruction(animation::Instruction::BySpeed(_)) => 3,
+        DelayItem::Instruction(animation::Instruction::ByItems { .. }) => 5,
+        DelayItem::Instruction(animation::Instruction::ByItemsAndSpeed { .. }) => 7,
     }
 }
 
@@ -219,29 +221,31 @@ fn imported(id: PoseId, list: &DelayList, radius: u8) -> Result<Imported, Import
             .map(Step)
             .ok_or(ImportError::Unwritten(id))
     };
-    let steps = items
+    let instructions = items
         .iter()
         .map(|&(at, item)| {
             Ok(match item {
-                DelayItem::Delay(hold) => ClipStep::Show(Frames(hold)),
+                DelayItem::Delay(hold) => Instruction::Show(Frames(hold)),
                 DelayItem::Instruction(instruction) => match instruction {
-                    Instruction::NoOp(_) => ClipStep::Rest,
-                    Instruction::LoopIfHealthy => ClipStep::Breathe,
-                    Instruction::AutoJumpTransition(_) => ClipStep::EndUnlessJump,
-                    Instruction::Transition(_)
-                    | Instruction::BySpeed(_)
-                    | Instruction::ByItems { .. }
-                    | Instruction::ByItemsAndSpeed { .. } => ClipStep::End,
-                    Instruction::WallJump => ClipStep::Branch(Branch {
+                    animation::Instruction::NoOp(_) => Instruction::Rest,
+                    animation::Instruction::LoopIfHealthy => Instruction::Breathe,
+                    animation::Instruction::AutoJumpTransition(_) => Instruction::EndUnlessJump,
+                    animation::Instruction::Transition(_)
+                    | animation::Instruction::BySpeed(_)
+                    | animation::Instruction::ByItems { .. }
+                    | animation::Instruction::ByItemsAndSpeed { .. } => Instruction::End,
+                    animation::Instruction::WallJump => Instruction::Branch(Branch {
                         spin: step_at(at.checked_add(BRANCH_SPIN))?,
                         space_jump: step_at(at.checked_add(BRANCH_SPACE_JUMP))?,
                         screw_attack: step_at(at.checked_add(BRANCH_SCREW_ATTACK))?,
                     }),
-                    Instruction::GoBack(back) => {
-                        ClipStep::Again(step_at(at.checked_sub(usize::from(back)))?)
+                    animation::Instruction::GoBack(back) => {
+                        Instruction::Again(step_at(at.checked_sub(usize::from(back)))?)
                     }
-                    Instruction::Loop => ClipStep::Again(Step::FIRST),
-                    Instruction::DrainedFalling => return Err(ImportError::Unwritten(id)),
+                    animation::Instruction::Loop => Instruction::Again(Step::FIRST),
+                    animation::Instruction::DrainedFalling => {
+                        return Err(ImportError::Unwritten(id));
+                    }
                 },
             })
         })
@@ -257,7 +261,7 @@ fn imported(id: PoseId, list: &DelayList, radius: u8) -> Result<Imported, Import
         id,
         pose,
         clip: Clip {
-            steps,
+            instructions,
             kick: mark(kick)?,
             fast_fall: mark(fast_fall)?,
             rising: mark(rising)?,

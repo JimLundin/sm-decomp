@@ -8,8 +8,8 @@ mod vectors {
 
     use clean_model_samus_looks::{BehaviourId, Rules};
     use clean_model_samus_looks::{
-        Boost, CATALOGUE, Clip, ClipStep, Content, Frames, Inputs, Laps, Liquid, Move, Pace, Paces,
-        Playhead, Pose, State, Step, Vertical, step,
+        Boost, Branch, CATALOGUE, Clip, Content, Frames, Inputs, Instruction, Laps, Liquid, Move,
+        Pace, Paces, Playhead, Pose, State, Step, Vertical, update,
     };
     use clean_types::{
         Action, Aim, AnimationSound, Body, BoostStage, Checked, ClipEnd, Facing, Gun, Item,
@@ -216,13 +216,54 @@ mod vectors {
         pose
     }
 
+    /// A step's number, written in a cell.
+    fn step_number(text: &str) -> Step {
+        Step(
+            text.parse()
+                .unwrap_or_else(|_| panic!("unwritten step {text:?}")),
+        )
+    }
+
+    /// The spec's "Written" column (§1.4): `n` (1 or more), `rest`, `again s`, `breathe`, `end`,
+    /// `end-unless-jump`, `branch x y z`; any other cell fails the test.
+    fn instruction(cell: &str) -> Instruction {
+        let words: Vec<&str> = cell.split_whitespace().collect();
+        match words.as_slice() {
+            ["rest"] => Instruction::Rest,
+            ["breathe"] => Instruction::Breathe,
+            ["end"] => Instruction::End,
+            ["end-unless-jump"] => Instruction::EndUnlessJump,
+            ["again", to] => Instruction::Again(step_number(to)),
+            ["branch", spin, space_jump, screw_attack] => Instruction::Branch(Branch {
+                spin: step_number(spin),
+                space_jump: step_number(space_jump),
+                screw_attack: step_number(screw_attack),
+            }),
+            [frames] => Instruction::Show(hold(
+                frames
+                    .parse()
+                    .unwrap_or_else(|_| panic!("unwritten cell {cell:?}")),
+            )),
+            _ => panic!("unwritten cell {cell:?}"),
+        }
+    }
+
+    /// §1.5: a hold is at most 127 frames.
+    const LONGEST_HOLD: u8 = 127;
+
+    /// A hold the content gives, a clip's or a pace's: 1 frame or more (§1.4), and within
+    /// §1.5's bound; any other fails the test.
+    fn hold(frames: u8) -> Frames {
+        assert!(
+            (1..=LONGEST_HOLD).contains(&frames),
+            "a hold of {frames} frames is outside the spec"
+        );
+        Frames(frames)
+    }
+
     fn clip(table: &ClipTable) -> Clip {
         Clip {
-            steps: table
-                .steps
-                .iter()
-                .map(|cell| cell.parse::<ClipStep>().expect("a written step"))
-                .collect(),
+            instructions: table.steps.iter().map(|cell| instruction(cell)).collect(),
             kick: table.kick.map(Step),
             fast_fall: table.fast_fall.map(Step),
             rising: table.rising.map(Step),
@@ -230,18 +271,18 @@ mod vectors {
     }
 
     fn pace(holds: &[u8]) -> Pace {
-        Pace(holds.iter().copied().map(Frames).collect())
+        Pace(holds.iter().copied().map(hold).collect())
     }
 
     fn state(step: u8, left: u8, stage: u8, laps: u8) -> State {
         State {
             playhead: Playhead {
                 step: Step(step),
-                left: Frames(left),
+                frames_left: Frames(left),
             },
             boost: Boost {
                 stage: BoostStage::ALL[usize::from(stage)],
-                laps: Laps(laps),
+                laps_left: Laps(laps),
             },
         }
     }
@@ -350,7 +391,7 @@ mod vectors {
         );
         let b = &vector.before;
         let before = state(b.step, b.left, b.stage, b.laps);
-        let (after, report) = step(before, &inputs, &content, &Rules::VANILLA);
+        let (after, report) = update(before, &inputs, &content, &Rules::VANILLA);
 
         let a = &vector.after;
         let expected = (

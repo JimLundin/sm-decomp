@@ -34,7 +34,7 @@ rounds = 4
 
 [[model]]
 name = "samus-looks"
-rounds = 1
+rounds = 2
 
 # Wave 0
 

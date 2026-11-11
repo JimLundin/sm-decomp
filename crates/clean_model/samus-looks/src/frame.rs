@@ -1,56 +1,49 @@
-//! §6 A frame of her animation, in the order that matters.
+//! The frame her animation acts in: what it reads, gathered once, for every rule that acts in it.
 
-use crate::inputs::{Content, Inputs, Move, Report};
-use crate::moves;
-use crate::player::Player;
+use crate::clip::{Clip, Pace, Paces, Step};
+use crate::inputs::{Content, Inputs};
 use crate::rules::Rules;
-use crate::run;
-use crate::starting;
-use crate::state::{Boost, State};
+use crate::state::Playhead;
 
-/// One frame: the State after it, and what it reports.
-///
-/// First, from the frame's start, the end her clip reaches (`ClipEnds`, which a caller may also
-/// read ahead of samus-motion's step by `Playhead::end_ahead`). Then, with the pose she takes:
-/// her moves' changes, the rising hold, the time running down from her pose at the frame's
-/// start, the start of the clip of the pose she takes, a dash's loss, and whether she has turned
-/// far, from the step and clip the frame ends on.
-#[must_use]
-pub fn step(
-    state: State,
-    inputs: &Inputs,
-    content: &impl Content,
-    rules: &Rules,
-) -> (State, Report) {
-    let clip = content.clip(&inputs.pose);
-    let end = state.playhead.end_ahead(clip);
+/// The frame her animation acts in: its inputs (§1.3), the clip of her pose at its start and of
+/// the pose she ends it in, the run's paces and the tuning. Her moves, her clip's playback, her
+/// run and the start of the pose she takes each read it.
+pub struct Frame<'a> {
+    /// What the frame reads, each from the domain that owns it.
+    pub inputs: &'a Inputs,
+    /// The clip of her pose at the frame's start: the one that plays this frame.
+    pub clip: &'a Clip,
+    /// The clip of the pose she ends the frame in.
+    pub clip_after: &'a Clip,
+    /// The run's paces.
+    pub paces: &'a Paces,
+    /// The tuning.
+    pub rules: &'a Rules,
+}
 
-    let boost = if inputs.moves[Move::DashBegan] {
-        run::dash_began(&inputs.items, rules)
-    } else {
-        state.boost
-    };
-    let playhead = moves::apply(state.playhead, clip, inputs, rules);
-    let (ran_down, sound) = Player {
-        clip,
-        inputs,
-        paces: content.paces(),
-        rules,
+impl<'a> Frame<'a> {
+    /// The frame that reads `inputs`, with its clips and paces from `content`.
+    #[must_use]
+    pub fn new(inputs: &'a Inputs, content: &'a impl Content, rules: &'a Rules) -> Self {
+        Self {
+            inputs,
+            clip: content.clip(&inputs.pose),
+            clip_after: content.clip(&inputs.pose_after),
+            paces: content.paces(),
+            rules,
+        }
     }
-    .run_down(State { playhead, boost });
-    let playhead = starting::start(ran_down.playhead, inputs, content);
-    let boost = if inputs.moves[Move::DashLost] {
-        // Spec: `BoostStages`. A dash lost: stage 0, with 0 laps left.
-        Boost::default()
-    } else {
-        ran_down.boost
-    };
-    let turned_far = moves::turned_far(playhead, content.clip(&inputs.pose_after));
 
-    let report = Report {
-        end,
-        turned_far,
-        sound,
-    };
-    (State { playhead, boost }, report)
+    /// Spec: `ClipPlays`, `RunPace`. The clip goes on from `step`: its hold, or the pace's where
+    /// `pace` gives one, plus the slowdown, is the time left.
+    #[must_use]
+    pub fn goes_on(&self, step: Step, pace: Option<&Pace>) -> Playhead {
+        let hold = pace
+            .and_then(|pace| pace.hold(step))
+            .unwrap_or_else(|| self.clip.hold(step));
+        Playhead {
+            step,
+            frames_left: hold.slowed(self.inputs.liquid.slowdown),
+        }
+    }
 }
