@@ -167,6 +167,22 @@ N to land, so the implementer starts from the landed model.
 A domain's spec can start before a domain it reads from has landed. Its own round then waits
 until that domain has landed, so the interface it reads is fixed.
 
+## Working hours
+
+Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 local time, 10 to
+12 hours with its planning and review included. Each session has three parts:
+
+1. **Planning.** The root reads the last session's review, REPORT and the queue, chooses the
+   session's rounds and lanes within the limits above, and writes the plan down before any lane
+   starts.
+2. **Implementation.** The loop below runs the plan: rounds and lanes start, land and report as
+   they do today.
+3. **Review.** No new lane starts in the last part of the session. The lanes in flight finish
+   and land, or stop with a handoff. The root writes the session's review: what landed, the
+   figures before and after, what the gates found, and what the next session should take up.
+
+Outside working hours no lane runs.
+
 ## The loop
 
 - **Cut rounds.** The aim is code that reads well without bloat, not the shortest code: a seam
