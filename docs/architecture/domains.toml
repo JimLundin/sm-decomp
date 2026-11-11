@@ -22,7 +22,7 @@ rounds = 6
 
 [[model]]
 name = "progress"
-rounds = 6
+rounds = 7
 
 [[model]]
 name = "hud"

@@ -81,12 +81,11 @@ pub struct Inventory {
     pub reserve_mode: ReserveMode,
 }
 
-/// What a new file gives her: every capacity and count at 0 but energy, which is 99 of a
-/// capacity of 99; no reserve tank; and no items or beams, hers or switched on.
+/// What a new file gives her: no items or beams, hers or switched on; of each supply, the
+/// capacity and the count `new_file` gives; and no reserve tank.
 impl Default for Inventory {
     fn default() -> Self {
-        let mut supplies = EnumMap::<Supply, Count>::default();
-        supplies[Supply::Energy] = NEW_FILE_ENERGY;
+        let supplies = EnumMap::from_fn(new_file);
         Self {
             items: Set::default(),
             items_switched_on: Set::default(),
@@ -99,23 +98,22 @@ impl Default for Inventory {
     }
 }
 
-/// Energy and its capacity at the start of a new file.
-const NEW_FILE_ENERGY: Count = Wrapping(99);
-
-/// A row of the beams' table: a beam, and the beam taking it switches off, if any; spazer and
-/// plasma don't fire together. Spec: TakingBeams.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct BeamTaken {
-    /// The beam she takes.
-    pub beam: Beam,
-    /// The beam taking it switches off, if any.
-    pub switches_off: Option<Beam>,
+/// What a new file holds of each supply, its capacity and her count alike: 99 energy, and 0 of
+/// every other (spec §1.1, The start of a run).
+const fn new_file(supply: Supply) -> Count {
+    match supply {
+        Supply::Energy => Wrapping(99),
+        Supply::Reserve | Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => EMPTY,
+    }
 }
 
+/// None of a supply: a capacity or a count of 0.
+const EMPTY: Count = Wrapping(0);
+
 impl Inventory {
-    /// She takes an item, a beam or a tank; `taking_beams` gives the beam each beam taken
+    /// She takes an item, a beam or a tank; `switched_off_by` gives the beam each beam taken
     /// switches off, if any.
-    pub(crate) fn take(&mut self, pickup: Pickup, taking_beams: &EnumMap<Beam, BeamTaken>) {
+    pub(crate) fn take(&mut self, pickup: Pickup, switched_off_by: EnumMap<Beam, Option<Beam>>) {
         match pickup {
             // Spec: TakingItems. Hers and switched on, even one she had and switched off.
             Pickup::Item(item) => {
@@ -127,7 +125,7 @@ impl Inventory {
             Pickup::Beam(beam) => {
                 self.beams[beam] = true;
                 self.beams_switched_on[beam] = true;
-                if let Some(other) = taking_beams[beam].switches_off {
+                if let Some(other) = switched_off_by[beam] {
                     self.beams_switched_on[other] = false;
                 }
             }

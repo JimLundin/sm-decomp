@@ -237,7 +237,7 @@ fn every_vector_names_catalogue_entries() {
     for vector in vectors() {
         for entry in &vector.entries {
             assert!(
-                catalogue.values().any(|b| format!("{:?}", b.id) == *entry),
+                catalogue.iter().any(|(id, _)| format!("{id:?}") == *entry),
                 "{}: {entry} is no catalogue entry",
                 vector.id
             );
@@ -249,11 +249,11 @@ fn every_vector_names_catalogue_entries() {
 fn every_entry_checked_by_vectors_has_one() {
     let vectors = vectors();
     let catalogue = catalogue();
-    for behaviour in catalogue
-        .values()
-        .filter(|b| b.checked == Checked::ByVectors)
+    for (id, _) in catalogue
+        .iter()
+        .filter(|(_, b)| b.checked == Checked::ByVectors)
     {
-        let name = format!("{:?}", behaviour.id);
+        let name = format!("{id:?}");
         assert!(
             vectors.iter().any(|v| v.entries.contains(&name)),
             "{name} is checked by vectors, but no vector names it"

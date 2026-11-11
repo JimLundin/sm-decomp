@@ -71,7 +71,7 @@ impl Progress {
             Report::ZebetiteDestroyed => self.zebetites += Wrapping(1),
             Report::Defeated { kind, area } => self.defeated[area][kind] = true,
             Report::Taken { pickup, location } => {
-                self.inventory.take(pickup, &rules.taking_beams);
+                self.inventory.take(pickup, rules.switched_off_by);
                 self.emptied.remember(location);
             }
             Report::DoorOpened(door) => self.opened.remember(door),

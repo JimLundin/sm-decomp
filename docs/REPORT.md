@@ -38,12 +38,12 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,023 | 1,488 | 18,036 | 326 |
 | camera | 1,839 | 1,762 | 1.04 | 0.88 | 16 % | 2,274 | 631 | 306 | 20,513 | 83 |
-| progress | 898 | 1,136 | 0.79 | 0.53 | 34 % (over 25 %) | - | 488 | 150 | 25,419 | 66 |
+| progress | 862 | 1,136 | 0.76 | 0.51 | 32 % (over 25 %) | - | 439 | 144 | 25,419 | 66 |
 | hud | 2,788 | 2,112 | 1.32 | 0.77 | 41 % (over 25 %) | - | 1,107 | 465 | 20,615 | 82 |
 | blocks | 2,432 | 2,074 | 1.17 | 0.96 | 18 % | - | 1,078 | 405 | 20,530 | 100 |
 | samus-looks | 2,054 | 1,412 | 1.45 | 1.14 | 22 % | 1,443 | 834 | 342 | 16,210 | 85 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 630 | - | - | - | - | - | 514 | 105 | - | - |
-| total | 19,566 | 17,319 | 1.13 | 0.92 | 18 % | - | 8,675 | 3,261 | 121,323 | 742 |
+| total | 19,530 | 17,319 | 1.13 | 0.92 | 18 % | - | 8,626 | 3,255 | 121,323 | 742 |
 
 ## Models
 
@@ -89,16 +89,16 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 17 | 45 | 94 | 435 | 1 | 0 | 0 | 137 |
-| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 289 | 311 | 204 | 3 | 21 | 16 | 0 | 90 |
-| `crates/clean_model/progress/src/lib.rs` | - | logic | 0 | 95 | 12 | 0 | 0 | 0 | 0 | 19 |
-| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 76 | 112 | 3 | 0 | 3 | 0 | 0 | 14 |
+| `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 9 | 37 | 87 | 406 | 0 | 0 | 84 | 126 |
+| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 281 | 308 | 175 | 29 | 20 | 16 | 0 | 90 |
+| `crates/clean_model/progress/src/lib.rs` | - | logic | 0 | 90 | 12 | 0 | 0 | 0 | 0 | 19 |
+| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 72 | 109 | 3 | 0 | 2 | 0 | 0 | 13 |
 | `crates/clean_model/progress/src/places.rs` | places | logic | 66 | 123 | 56 | 0 | 2 | 0 | 0 | 30 |
 | `crates/clean_model/progress/src/progress.rs` | happened | tables and types | 0 | 51 | 89 | 0 | 0 | 0 | 0 | 17 |
-| `crates/clean_model/progress/src/report.rs` | - | logic | 227 | 280 | 81 | 0 | 13 | 0 | 0 | 54 |
+| `crates/clean_model/progress/src/report.rs` | - | logic | 226 | 279 | 81 | 0 | 13 | 0 | 0 | 54 |
 | `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 166 | 221 | 120 | 0 | 7 | 0 | 0 | 51 |
-| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 58 | 108 | 119 | 142 | 2 | 0 | 0 | 76 |
-| total | | | 898 | 1,346 | 778 | 580 | 48 | 16 | 0 | 488 |
+| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 42 | 85 | 65 | 70 | 0 | 0 | 0 | 39 |
+| total | | | 862 | 1,303 | 688 | 505 | 44 | 16 | 84 | 439 |
 
 ### hud
 
@@ -167,12 +167,12 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 4,023 | 2,556 | 1,467 | 1,488 |
 | camera | 631 | 226 | 405 | 306 |
-| progress | 488 | 230 | 258 | 150 |
+| progress | 439 | 182 | 257 | 144 |
 | hud | 1,107 | 602 | 505 | 465 |
 | blocks | 1,078 | 613 | 465 | 405 |
 | samus-looks | 834 | 384 | 450 | 342 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 514 | 514 | 0 | 105 |
-| total | 8,675 | 5,125 | 3,550 | 3,261 |
+| total | 8,626 | 5,077 | 3,549 | 3,255 |
 
 ## Spec, budget and fit by area
 
@@ -212,13 +212,13 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 37.5. Old code
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | happened | 3 | 3.3 | 125 | - | 0 | 0.00 |
 | places | 6 | 10.3 | 387 | - | 66 | 0.17 |
-| equipment | 3 | 7.7 | 287 | 254 | 289 | 1.01 |
+| equipment | 3 | 7.7 | 287 | 254 | 281 | 0.98 |
 | rooms | 1 | 7.0 | 262 | 197 | 166 | 0.63 |
-| percentage | 1 | 2.0 | 75 | - | 76 | 1.01 |
-| shared (in no area) | | | | | 302 | |
-| total | 14 | 30.3 | 1,136 | - | 898 | 0.79 |
+| percentage | 1 | 2.0 | 75 | - | 72 | 0.96 |
+| shared (in no area) | | | | | 277 | |
+| total | 14 | 30.3 | 1,136 | - | 862 | 0.76 |
 
-Area fit 0.53: the areas' score, 597, ÷ the budget. Shared code 302, its share of the model 34 % (over 25 %).
+Area fit 0.51: the areas' score, 585, ÷ the budget. Shared code 277, its share of the model 32 % (over 25 %).
 
 ### hud
 
@@ -531,4 +531,4 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 49 | 5,110 | 30,659 | 32,392 | 10,193 | 2,034 | 2,287 | 2,776 | 671 | 7,103 |
 | bridges | 8 | 2,409 | 14,453 | 15,416 | 943 | 768 | 981 | 760 | 116 | 2,423 |
-| rebuilt models, shared types included | 71 | 3,261 | 19,566 | 25,522 | 9,655 | 13,173 | 1,044 | 516 | 92 | 8,675 |
+| rebuilt models, shared types included | 71 | 3,255 | 19,530 | 25,479 | 9,565 | 13,098 | 1,041 | 516 | 176 | 8,626 |
