@@ -293,7 +293,11 @@ fn an_iteration_steps_the_rng_and_the_clock_and_commits_an_empty_oam() -> Result
     assert_eq!((after.rng.word, after.rng.calls), (0x0111, 1));
     assert_eq!(after.clock.game_time.frames, 1);
     let oam = &after.video.memory.oam;
-    assert!(oam.low.iter().all(|entry| entry.y == crate::oam::HIDDEN_Y));
+    assert!(
+        oam.low
+            .iter()
+            .all(|entry| entry.y == crate::exact::oam::HIDDEN_Y)
+    );
     assert_eq!(oam.high, [0; _]);
     assert_eq!(after.video.batch.sprites.0, 0);
     Ok(())

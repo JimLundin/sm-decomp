@@ -2,8 +2,9 @@ use std::marker::PhantomData;
 
 use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::rom::{Lorom, RomAddress};
+use data::spritemap::SpriteAttributes;
 
-use super::{draw, palette, queue};
+use super::{SpriteBase, draw, palette, queue};
 use crate::pose::Content;
 use crate::state::State;
 use crate::state::room::{
@@ -189,4 +190,23 @@ fn flashing_and_frozen_enemies_change_palette() {
     // Under $5A frames, only on the timer's bit 1.
     assert_eq!(palette(&frozen(0x59), 0), PaletteIndex(0x0400));
     assert_eq!(palette(&frozen(0x52), 0), PaletteIndex(0x0C00));
+}
+
+#[test]
+fn an_enemy_base_adds_its_tiles_and_ors_its_palette() {
+    let base = SpriteBase {
+        tiles: TilesIndex(0x0100),
+        palette: PaletteIndex(0x0A00),
+    };
+    let look = |tile, palette| SpriteAttributes {
+        tile,
+        palette,
+        priority: 2,
+        flip_x: false,
+        flip_y: false,
+    };
+    // Tile $110 + $100 is $210: the carry raises the palette from 0 to 1, and 1 | 5 is 5.
+    assert_eq!(base.apply(look(0x110, 0)), look(0x010, 5));
+    // Tile $1FF + $100 is $2FF: the carry raises the palette from 2 to 3, and 3 | 5 is 7.
+    assert_eq!(base.apply(look(0x1FF, 2)), look(0x0FF, 7));
 }

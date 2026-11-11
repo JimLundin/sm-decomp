@@ -6,10 +6,12 @@
 //! ends after its last; a graphic still in a frame moves as its kind does and is drawn,
 //! either as one sprite (`$90:8AC5`) or as one of Samus's spritemaps (`$90:8B74`).
 
+use clean_types::Pair;
 use data::pose::MovementType;
 use data::pose::spritemap::{SamusSpritemaps, SpritemapIndex};
 use data::spritemap::SpriteAttributes;
 
+use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;
 use crate::state::State;
 use crate::state::atmospheric::{
@@ -17,7 +19,6 @@ use crate::state::atmospheric::{
     LANDING_SLOT, TimerStep,
 };
 use crate::state::samus::{Facing, PoseRecord, Samus};
-use crate::state::video::NmiBatch;
 
 /// How a kind looks.
 #[derive(Clone, Copy, Debug)]
@@ -119,7 +120,7 @@ const fn behaviour(kind: AtmosphericKind) -> Behaviour {
 const FIRST_LEFTWARD_SLOT: usize = 2;
 
 /// How far up and left of its position a single sprite's corner sits (`$90:8AD7`).
-const SPRITE_CORNER: u16 = 4;
+const SPRITE_CORNER: i32 = 4;
 
 /// Animate and draw the atmospheric graphics (`$90:8A4C`), for the drawing handlers that
 /// draw them before Samus.
@@ -156,13 +157,8 @@ pub fn handle(state: &mut State, content: &Content) {
             }
         }
         step(graphic, slot, behaviour.motion);
-        draw(
-            batch,
-            *graphic,
-            behaviour.look,
-            camera,
-            &content.samus_spritemaps,
-        );
+        let drawn = draw(*graphic, behaviour.look, camera, &content.samus_spritemaps);
+        batch.draw_sprites(&drawn);
     }
 }
 
@@ -182,36 +178,50 @@ const fn step(graphic: &mut AtmosphericGraphic, slot: usize, motion: Motion) {
     }
 }
 
-/// Draw a graphic's frame.
+/// A graphic's frame, drawn.
 fn draw(
-    batch: &mut NmiBatch,
     graphic: AtmosphericGraphic,
     look: Look,
     (camera_x, camera_y): (u16, u16),
     maps: &SamusSpritemaps,
-) {
-    let x = graphic.x.wrapping_sub(camera_x);
-    let y = graphic.y.wrapping_sub(camera_y);
+) -> SpriteDraw {
+    let at = Pair {
+        x: on_screen(graphic.x, camera_x),
+        y: on_screen(graphic.y, camera_y),
+    };
     let frame = usize::from(graphic.frame.0);
+    let mut drawn = SpriteDraw::default();
     match look {
         // `$90:8AC5`: the sprite is dropped unless its corner is on the 256-pixel screen both
-        // ways; it takes the low table's four bytes only.
+        // ways.
         Look::Sprite(sprites) => {
-            let corner = |at: u16| u8::try_from(at.wrapping_sub(SPRITE_CORNER)).ok();
-            if let (Some(x), Some(y), Some(&attributes)) =
-                (corner(x), corner(y), sprites.get(frame))
+            let corner = Pair {
+                x: at.x.wrapping_sub(SPRITE_CORNER),
+                y: at.y.wrapping_sub(SPRITE_CORNER),
+            };
+            if within_screen(corner.x)
+                && within_screen(corner.y)
+                && let Some(&attributes) = sprites.get(frame)
             {
-                batch.add_low_sprite(u16::from(x), y, attributes);
+                drawn.lone(corner, attributes);
             }
         }
         // `$90:8B74`: dropped unless its Y is on the screen; the X may be anywhere.
         Look::SamusSpritemaps(first) => {
             let index = SpritemapIndex(first.0.wrapping_add(u16::from(graphic.frame.0)));
-            if let (Ok(y), Some(map)) = (u8::try_from(y), maps.spritemap(index)) {
-                batch.add_spritemap(map, (x, u16::from(y)));
+            if within_screen(at.y)
+                && let Some(map) = maps.spritemap(index)
+            {
+                drawn.place(map, at);
             }
         }
     }
+    drawn
+}
+
+/// Whether a screen coordinate is on the screen's first 256 pixels.
+fn within_screen(at: i32) -> bool {
+    u8::try_from(at).is_ok()
 }
 
 /// How far to the side of her position the wall-jump dust starts (`$91:FAB6`).

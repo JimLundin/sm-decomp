@@ -10,15 +10,18 @@
 
 use std::marker::PhantomData;
 
-use crate::oam::SpriteBase;
+use clean_types::Pair;
+use data::enemy::program::EnemyPrograms;
+use data::spritemap::SpriteAttributes;
+
+use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;
 use crate::state::State;
 use crate::state::room::{
     EnemyCommon, EnemyDrawing, EnemyExtraProperty, EnemyProperty, GraphicsDrawnHook, PaletteIndex,
+    TilesIndex,
 };
 use crate::state::slots::{Frames, SlotIndex};
-use crate::state::video::NmiBatch;
-use data::enemy::program::EnemyPrograms;
 
 /// The layer Samus draws with (`$A0:8871`).
 const SAMUS_LAYER: usize = 3;
@@ -73,13 +76,8 @@ pub fn draw(state: &mut State, content: &Content) {
         }
         for slot in queue {
             if let Some(enemy) = state.room.enemies.slots.get_mut(usize::from(slot.0)) {
-                draw_enemy(
-                    &mut state.video.batch,
-                    &mut enemy.common,
-                    camera,
-                    count,
-                    &content.enemy_programs,
-                );
+                let drawn = draw_enemy(&mut enemy.common, camera, count, &content.enemy_programs);
+                state.video.batch.draw_sprites(&drawn);
             }
         }
     }
@@ -110,27 +108,47 @@ fn palette(common: &EnemyCommon, routine_count: u16) -> PaletteIndex {
     }
 }
 
-/// Write one enemy's spritemap to OAM (`$A0:944A`): from its position less the camera's,
-/// a pixel left or right while it shakes, which counts its shake down, with its palette and
-/// tiles applied.
+/// What an enemy's spritemap adds to each sprite's tile and attributes word.
+///
+/// Bank `$81` log, add spritemap to OAM with base tile number `$81:8AB8`: the tiles index is
+/// added to the word and the palette bits are combined into the sum by OR, so a carry out of
+/// the tile number reaches the attributes, as in the original.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct SpriteBase {
+    /// Added to the word.
+    tiles: TilesIndex,
+    /// Combined into the sum by OR.
+    palette: PaletteIndex,
+}
+
+impl SpriteBase {
+    /// `attributes` with the base applied.
+    fn apply(self, attributes: SpriteAttributes) -> SpriteAttributes {
+        SpriteAttributes::from_word(attributes.word().wrapping_add(self.tiles.0) | self.palette.0)
+    }
+}
+
+/// One enemy's spritemap (`$A0:944A`): from its position less the camera's, a pixel left or
+/// right while it shakes, which counts its shake down, with its palette and tiles applied.
 // open: the graphical offsets (`$7E:7010`, `$7E:7012`) and the extended spritemaps
 // (`$A0:94F4`) join with the species that use them; until then the offsets are zero and an
 // extended enemy draws nothing.
 fn draw_enemy(
-    batch: &mut NmiBatch,
     common: &mut EnemyCommon,
     camera: (u16, u16),
     routine_count: u16,
     programs: &EnemyPrograms,
-) {
+) -> SpriteDraw {
     let (camera_x, camera_y) = camera;
-    let mut x = common.position.x.pixels.wrapping_sub(camera_x);
-    let y = common.position.y.pixels.wrapping_sub(camera_y);
+    let mut at = Pair {
+        x: on_screen(common.position.x.pixels, camera_x),
+        y: on_screen(common.position.y.pixels, camera_y),
+    };
     if common.shake != Frames(0) {
-        x = if common.frame_counter & 2 == 0 {
-            x.wrapping_add(1)
+        at.x = if common.frame_counter & 2 == 0 {
+            at.x.wrapping_add(1)
         } else {
-            x.wrapping_sub(1)
+            at.x.wrapping_sub(1)
         };
         common.shake = Frames(common.shake.0.wrapping_sub(1));
     }
@@ -138,15 +156,20 @@ fn draw_enemy(
         tiles: common.tiles,
         palette: palette(common, routine_count),
     };
+    let mut drawn = SpriteDraw::default();
     if common
         .extra_properties
         .contains(EnemyExtraProperty::ExtendedSpritemap)
     {
-        return;
+        return drawn;
     }
     if let Some(map) = programs.sprites(common.spritemap) {
-        batch.add_spritemap_with_base(map, (x, y), base);
+        drawn.place(map, at);
+        for piece in &mut drawn.pieces {
+            piece.look = base.apply(piece.look);
+        }
     }
+    drawn
 }
 
 #[cfg(test)]

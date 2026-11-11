@@ -211,6 +211,42 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | U1 | **Audio**: CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks; 3 rounds, `apu` stream and `apu_log` in every record); the driver: see risks | 3 rounds + ? |
 | V1 | Tooling: a domain free-run harness; RNG draws per consumer from `hits`; a compressed record cache tier | 3 |
 
+### E1: where sprite drawing stands, and its second lane
+
+Every sprite the engine draws is a `game::intent::SpriteDraw`: pieces, each with its place on
+the screen at full precision (`ScreenPoint`, `i32`), its look (picture, palette, priority,
+flips: `data::spritemap::SpriteAttributes`) and its placing (`Mapped(size)`, a spritemap's
+piece, or `Lone`, a small sprite placed by itself). `exact::oam` is the one encoder: X to nine
+bits and Y to eight, the high table's bits, the 128-entry wrap for mapped pieces, the lone
+sprite's low table only and no wrap, and the frame's clear and hide. Its three producers are
+Samus's body (`samus_drawing`), the atmospheric graphics and the enemies (`enemy::drawing`);
+each builds the draw and the caller writes it where the original wrote its sprites, so the
+order of the entries is the original's. The enemy's tile and palette base (`SpriteBase`, the
+carry from the tile into the palette) stays with the enemy: the piece holds the look it gives.
+
+The second lane carries, in this order:
+
+1. **The intent view (D16).** The Tick's draws, kept where `NmiBatch::draw_sprites` encodes
+   them, go out with the Tick (`TickOutput`, or `game::view::describe`), and a check holds that
+   the kept draws, encoded again from an empty buffer, give the frame's OAM. *Risk:* draws are
+   made per main-loop pass, not per Tick: a lag Tick has none and shows the previous; the view
+   must say which pass a picture is from.
+2. **Samus-looks part 2's bridge (S5).** The clean model says which clip frame shows and where
+   (and the flicker); the bridge turns it into the draw through the assets, as
+   `samus_drawing::body` does now, and `samus_drawing` goes. No sprite type joins `clean_types`:
+   a model names clips and frames, never sprites ([DESIGN](../cleanroom/DESIGN.md)). *Risk:*
+   the chest sprite is her body's one `Lone` piece (`SamusAssets::chest`); the bridge keeps it
+   between the top half and the bottom half, where the `oam` stream sees its entry.
+3. **The writers not yet drawn**, each with its domain: Samus's projectiles and their trails
+   (the `projectiles` field group and the `oam` stream of item-morph-ball), the arm cannon, the
+   charge flare and the echoes, then enemy projectiles and sprite objects. Each is a producer of
+   `SpriteDraw`; none adds an encoder rule unless the original writes OAM another way.
+4. **The encoder's open rules**, each a named rule in `exact::oam` or a LEGACY entry: a lone
+   sprite past the table's end (the original writes it into the high table; here it is
+   dropped), the enemies' extended spritemaps and graphical offsets (with A2), and margin draws
+   for the wide renderer (a producer that culls to the screen, as the atmospheric graphics do,
+   draws past it on request; the encoder never sees those pieces).
+
 ## 4. Order
 
 Each wave's domains are independent specs and run in parallel; a wave starts when what it

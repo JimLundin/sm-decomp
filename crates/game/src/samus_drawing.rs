@@ -6,9 +6,11 @@
 //! clip's, baked by the importer from the original's rules (docs/architecture/assets.md).
 //! Bank `$A0` log, `$A0:884D` draws her with enemy layer 3, after the enemies of layers 0 to 2.
 
+use clean_types::Pair;
 use data::assets::samus::Frame;
 use data::assets::samus::import::map;
 
+use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;
 use crate::state::State;
 use crate::state::samus::{DrawingHandler, Samus};
@@ -88,32 +90,47 @@ fn clip_frame<'a>(samus: &Samus, content: &'a Content) -> Option<&'a Frame> {
     frames.get(usize::from(samus.animation.frame.0))
 }
 
-/// Draw Samus's body from her clip's frame: its top half, the chest sprite where it has one,
-/// then its bottom half, placed from her position on screen moved by the frame's origin
-/// (`$90:85E2` past the flicker, `$90:8A00`).
+/// Draw Samus's body into the sprite buffer.
+fn draw_body(state: &mut State, content: &Content) {
+    let body = body(state, content);
+    state.video.batch.draw_sprites(&body);
+}
+
+/// Samus's body from her clip's frame: its top half, the chest sprite where it has one, then
+/// its bottom half, placed from her position on screen moved by the frame's origin
+/// (`$90:85E2` past the flicker, `$90:8A00`). Nothing past her clip's frames.
 // open: the half indices the original keeps (`$0AC8`, `$0ACA`, which `$90:8A00` leaves
 // alone) and the body position (`$0B04`, `$0B06`) join the State when a reader needs them.
-fn draw_body(state: &mut State, content: &Content) {
+fn body(state: &State, content: &Content) -> SpriteDraw {
+    let mut body = SpriteDraw::default();
     let Some(frame) = clip_frame(&state.samus, content) else {
-        return;
+        return body;
     };
     let assets = &content.samus_assets;
     let position = state.samus.motion.position;
-    let x = position.x.pixel().wrapping_sub(state.room.camera.x.pixels);
-    let y = position.y.pixel().wrapping_sub(state.room.camera.y.pixels);
-    let origin = (x, y.wrapping_add_signed(frame.origin_y));
-    let batch = &mut state.video.batch;
+    let at = Pair {
+        x: on_screen(position.x.pixel(), state.room.camera.x.pixels),
+        y: on_screen(position.y.pixel(), state.room.camera.y.pixels),
+    };
+    let origin = Pair {
+        y: at.y.wrapping_add(i32::from(frame.origin_y)),
+        ..at
+    };
     if let Some(top) = frame.top.and_then(|id| assets.sheet.sprite(id)) {
-        batch.add_spritemap(top, origin);
+        body.place(top, origin);
     }
     if frame.chest {
         let chest = assets.chest;
-        let [y_low, _] = y.wrapping_sub(chest.up).to_le_bytes();
-        batch.add_low_sprite(x.wrapping_sub(chest.left), y_low, chest.attributes);
+        let corner = Pair {
+            x: at.x.wrapping_sub(i32::from(chest.left)),
+            y: at.y.wrapping_sub(i32::from(chest.up)),
+        };
+        body.lone(corner, chest.attributes);
     }
     if let Some(bottom) = frame.bottom.and_then(|id| assets.sheet.sprite(id)) {
-        batch.add_spritemap(bottom, origin);
+        body.place(bottom, origin);
     }
+    body
 }
 
 #[cfg(test)]
