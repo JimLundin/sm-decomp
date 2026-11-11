@@ -103,11 +103,11 @@ fn place(column: usize, row: usize) -> Place {
     }
 }
 
-/// The model's pictures of `map`, `none` where it has no word: column `c` of row `y` is word
-/// `c div 32 × 400h + y × 20h + c mod 32`, and the beyond words follow the map's two pages as a
-/// third, so the map's columns 64 and 65 are that page's first two.
-fn map_pictures(map: &data::map::AreaMap, none: Look) -> MapPictures {
-    let mut pictures = MapPictures::filled(none);
+/// The model's pictures of `map`, picture 0 unflipped where it has no word: column `c` of row `y`
+/// is word `c div 32 × 400h + y × 20h + c mod 32`, and the beyond words follow the map's two pages
+/// as a third, so the map's columns 64 and 65 are that page's first two.
+fn map_pictures(map: &data::map::AreaMap) -> MapPictures {
+    let mut pictures = MapPictures::default();
     for row in 0..usize::from(MAP_ROWS) {
         for column in 0..PICTURE_COLUMNS {
             let word = (column / PAGE_CELLS)
@@ -125,9 +125,10 @@ fn map_pictures(map: &data::map::AreaMap, none: Look) -> MapPictures {
     pictures
 }
 
-/// The HUD's content as the model reads it.
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct Imported {
+/// What the HUD draws with: every area's map, and the HUD's pictures. With nothing imported
+/// (the default) no area has a map and every picture is picture 0, unflipped.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct HudContent {
     maps: Vec<(Area, HerMap)>,
     /// The map of an area with none, picture 0 everywhere and nothing charted: the debug area's
     /// pointers name no map.
@@ -135,43 +136,31 @@ struct Imported {
     pictures: HudPictures,
 }
 
-/// What the HUD draws with: every area's map, and the HUD's pictures; with nothing imported the
-/// HUD has nothing to draw, and its turns leave the State as it is.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct HudContent(Option<Imported>);
-
 impl HudContent {
     /// The model's content of the importer's maps and pictures.
     #[must_use]
     pub fn import(maps: &data::map::AreaMaps, pictures: &data::hud::HudPictures) -> Self {
-        let Some(none) = Picture::new(0).map(Look::unflipped) else {
-            return Self::default();
-        };
         let her_map = |map: &data::map::AreaMap| HerMap {
-            pictures: map_pictures(map, none),
+            pictures: map_pictures(map),
             charted: explored(&map.station),
         };
-        Self(Some(Imported {
+        Self {
             maps: maps.0.iter().map(|map| (map.area, her_map(map))).collect(),
-            blank: HerMap {
-                pictures: MapPictures::filled(none),
-                charted: MapCellSet::default(),
-            },
+            blank: HerMap::default(),
             pictures: hud_pictures(pictures),
-        }))
+        }
     }
 
     /// `area`'s map, a blank one that charts nothing for an area with none, and the HUD's
-    /// pictures; `None` with nothing imported.
+    /// pictures.
     #[must_use]
-    pub fn of(&self, area: Area) -> Option<(&HerMap, &HudPictures)> {
-        let imported = self.0.as_ref()?;
-        let map = imported
+    pub fn of(&self, area: Area) -> (&HerMap, &HudPictures) {
+        let map = self
             .maps
             .iter()
             .find(|(each, _)| *each == area)
-            .map_or(&imported.blank, |(_, map)| map);
-        Some((map, &imported.pictures))
+            .map_or(&self.blank, |(_, map)| map);
+        (map, &self.pictures)
     }
 }
 
@@ -450,22 +439,16 @@ fn inputs<'map>(
 }
 
 /// The model's HUD before and after its frame over the engine's State, the mini-map running when
-/// `runs`; `None` with no HUD content.
-fn frame(
-    state: &State,
-    content: &Content,
-    runs: bool,
-) -> Result<Option<(HudState, HudState)>, HudFault> {
-    let Some((map, pictures)) = content.hud.of(state.hud.mini_map.area) else {
-        return Ok(None);
-    };
+/// `runs`.
+fn frame(state: &State, content: &Content, runs: bool) -> Result<(HudState, HudState), HudFault> {
+    let (map, pictures) = content.hud.of(state.hud.mini_map.area);
     let before = model(&state.hud)?;
     let inputs = inputs(state, map, runs)?;
     let after = before
         .clone()
         .frame(&Rules::reference(), pictures, &inputs)
         .state;
-    Ok(Some((before, after)))
+    Ok((before, after))
 }
 
 /// The mini-map's turn, after her moves (`$90:E734`): it marks her cell explored and draws the
@@ -475,9 +458,7 @@ fn frame(
 ///
 /// A [`HudFault`] when the State holds what the model isn't defined on.
 pub fn mini_map_turn(state: &mut State, content: &Content) -> Result<(), HudFault> {
-    let Some((before, after)) = frame(state, content, true)? else {
-        return Ok(());
-    };
+    let (before, after) = frame(state, content, true)?;
     let hud = &mut state.hud;
     write_tiles(&mut hud.tilemap, &before, &after, in_window);
     if after.explored != before.explored {
@@ -496,9 +477,7 @@ pub fn mini_map_turn(state: &mut State, content: &Content) -> Result<(), HudFaul
 // open: the weapons and her look read `Switched`, the sound domain the click; the engine has
 // neither yet, so the events go unread.
 pub fn hud_turn(state: &mut State, content: &Content) -> Result<(), HudFault> {
-    let Some((before, after)) = frame(state, content, false)? else {
-        return Ok(());
-    };
+    let (before, after) = frame(state, content, false)?;
     let hud = &mut state.hud;
     write_tiles(&mut hud.tilemap, &before, &after, |_| true);
     let Shown {

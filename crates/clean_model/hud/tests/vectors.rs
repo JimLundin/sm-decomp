@@ -436,7 +436,8 @@ mod convert {
         toml::from_str(text).map_err(|error| error.to_string())
     }
 
-    /// The HUD's pictures.
+    /// The HUD's pictures. The blank's flips and the diagonal's are read by no rule (§1.4), so
+    /// each is held as its picture alone.
     pub fn pictures(pictures: &PicturesIn) -> HudPictures {
         let IconsIn {
             missiles,
@@ -446,7 +447,7 @@ mod convert {
             x_ray_scope,
         } = &pictures.icons;
         HudPictures {
-            blank: pictures.blank.0,
+            blank: pictures.blank.0.picture,
             digits: pictures.digits.map(|digit| digit.0),
             full_tank: pictures.full_tank.0,
             empty_tank: pictures.empty_tank.0,
@@ -459,7 +460,7 @@ mod convert {
                 x_ray_scope: rows(x_ray_scope),
             },
             map_blank: pictures.map_blank.0,
-            diagonal: pictures.diagonal.0,
+            diagonal: pictures.diagonal.0.picture,
         }
     }
 

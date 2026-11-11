@@ -23,11 +23,6 @@ impl ColourSet {
         }
     }
 
-    /// A colour set §1.4 names by its role; it names only numbers below eight.
-    const fn named(number: u8) -> Self {
-        Self(number)
-    }
-
     /// Its number, 0 to 7.
     #[must_use]
     pub const fn number(self) -> u8 {
@@ -61,25 +56,27 @@ impl Tile {
 /// The HUD's cells: 32 across by 3 down, the status bar and the mini-map's window (Notation).
 pub type HudGrid = Grid<Tile, 32, 3>;
 
+// The colour sets §1.4 names by their roles, each one of the eight.
+
 /// The blank's colours (§1.4).
-pub const BLANK_COLOURS: ColourSet = ColourSet::named(3);
+pub const BLANK_COLOURS: ColourSet = ColourSet(3);
 /// The digits' colours (§1.4).
-pub const DIGIT_COLOURS: ColourSet = ColourSet::named(3);
+pub const DIGIT_COLOURS: ColourSet = ColourSet(3);
 /// A full energy tank's colours (§1.4: full).
-pub const FULL_TANK_COLOURS: ColourSet = ColourSet::named(2);
+pub const FULL_TANK_COLOURS: ColourSet = ColourSet(2);
 /// An empty energy tank's colours (§1.4: empty).
-pub const EMPTY_TANK_COLOURS: ColourSet = ColourSet::named(5);
+pub const EMPTY_TANK_COLOURS: ColourSet = ColourSet(5);
 /// The reserve sign's colours with energy in the reserve tanks (§1.4: lit).
-pub const SIGN_LIT: ColourSet = ColourSet::named(7);
+pub const SIGN_LIT: ColourSet = ColourSet(7);
 /// The reserve sign's colours with the reserve tanks empty (§1.4: dim).
-pub const SIGN_DIM: ColourSet = ColourSet::named(3);
+pub const SIGN_DIM: ColourSet = ColourSet(3);
 /// An icon's colours while its item isn't the one lit (§1.4: plain).
-pub const PLAIN: ColourSet = ColourSet::named(5);
+pub const PLAIN: ColourSet = ColourSet(5);
 /// An icon's colours while its item is selected, or its flash is on (§1.4: highlighted).
-pub const HIGHLIGHTED: ColourSet = ColourSet::named(4);
+pub const HIGHLIGHTED: ColourSet = ColourSet(4);
 /// A mini-map cell she has explored (§1.4: explored).
-pub const EXPLORED: ColourSet = ColourSet::named(2);
+pub const EXPLORED: ColourSet = ColourSet(2);
 /// A mini-map cell a collected map charts, and the map's blank (§1.4: charted).
-pub const CHARTED: ColourSet = ColourSet::named(3);
+pub const CHARTED: ColourSet = ColourSet(3);
 /// Her mini-map cell while it blinks (§1.4: her blink).
-pub const BLINK: ColourSet = ColourSet::named(7);
+pub const BLINK: ColourSet = ColourSet(7);

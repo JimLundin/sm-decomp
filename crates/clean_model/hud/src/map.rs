@@ -18,7 +18,10 @@ pub type MapPictures = Grid<Look, 66, 32>;
 
 /// Her map, the one of the area she is in (§1.3), as the caller lends it: what it draws and
 /// charts. Whether she has collected it is a fact of the frame (`MiniMapInputs`).
-#[derive(Clone, PartialEq, Eq, Debug)]
+///
+/// Its default, every picture `000` unflipped and nothing charted, is a stand-in for a caller
+/// with nothing imported yet: no rule says what it shows (§1.4).
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct HerMap {
     /// Each cell's picture with its flips, then the beyond pictures.
     pub pictures: MapPictures,

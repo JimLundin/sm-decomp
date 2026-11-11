@@ -33,7 +33,7 @@ fn look(number: u16) -> Look {
 fn invented() -> data::hud::HudPictures {
     let icon = |first: u16| [[look(first); 2]; 2];
     data::hud::HudPictures {
-        blank: look(0x1E0),
+        blank: Number::new(0x1E0).unwrap(),
         digits: core::array::from_fn(|d| look(0x1D0_u16.wrapping_add(u16::try_from(d).unwrap()))),
         full_tank: look(0x1F0),
         empty_tank: look(0x1F1),
@@ -46,7 +46,7 @@ fn invented() -> data::hud::HudPictures {
             x_ray_scope: icon(0x1F7),
         },
         map_blank: look(0x1F8),
-        diagonal: look(0x1F9),
+        diagonal: Number::new(0x1F9).unwrap(),
     }
 }
 
@@ -65,7 +65,7 @@ fn the_maps_import_pictures_charts_and_beyond() {
         &data::map::AreaMaps(vec![rom_map(Area::Brinstar)]),
         &invented(),
     );
-    let (map, pictures) = content.of(Area::Brinstar).unwrap();
+    let (map, pictures) = content.of(Area::Brinstar);
     let flipped = |number| Look {
         picture: Number::new(number).unwrap(),
         flip: Flip::Both,
@@ -77,11 +77,10 @@ fn the_maps_import_pictures_charts_and_beyond() {
     assert!(!map.charted.contains(at(40, 2)));
     // Column 65 is the beyond pictures' column 1.
     assert_eq!(map.pictures.get(at(65, 2)), Some(flipped(0x341)));
-    let (debug, _) = content.of(Area::Debug).unwrap();
+    let (debug, _) = content.of(Area::Debug);
     assert_eq!(debug.pictures.get(at(5, 2)), Some(look(0)));
     assert_eq!(debug.charted, MapCellSet::default());
     assert_eq!(pictures.digits[9], look(0x1D9));
-    assert_eq!(HudContent::default().of(Area::Brinstar), None);
 }
 
 #[test]

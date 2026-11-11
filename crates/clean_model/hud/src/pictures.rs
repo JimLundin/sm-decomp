@@ -1,15 +1,19 @@
 //! The HUD's pictures (§1.4): content the importer supplies by name, which the caller gives each
 //! step. The spec gives no picture numbers; it says only which picture each thing is drawn with.
-//! Each is a picture with its flips, the shared `Look`.
+//! A picture drawn with its flips is the shared `Look`; the blank and the diagonal, whose flips
+//! no rule reads, are a `Picture` alone.
+//!
+//! The pictures are always supplied (§1.4). Each type's default, every picture `000` unflipped,
+//! is a stand-in for a caller with nothing imported yet: no rule says what it shows.
 
-use clean_types::Look;
+use clean_types::{Look, Picture};
 
 use crate::item::{Ammo, SelectableItem};
 use crate::tile::{BLANK_COLOURS, Tile};
 
 /// Each item's icon: two rows, the top first, of three pictures for the missiles and two for
 /// every other item, each with its flips (§1.4).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Icons {
     /// The missiles' icon.
     pub missiles: [[Look; 3]; 2],
@@ -45,10 +49,11 @@ pub fn rows<const ACROSS: usize, const DOWN: usize>(
 }
 
 /// The HUD's pictures, by the names §1.4 gives them.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct HudPictures {
-    /// The blank.
-    pub blank: Look,
+    /// The blank: a picture alone, as the highlight tests it unflipped and a pickup tests the
+    /// picture alone.
+    pub blank: Picture,
     /// The digits 0 to 9: digit `d`'s picture is the `d`-th, from 0.
     pub digits: [Look; 10],
     /// A full energy tank.
@@ -61,8 +66,9 @@ pub struct HudPictures {
     pub icons: Icons,
     /// The map's blank: a mini-map cell that shows nothing of her map.
     pub map_blank: Look,
-    /// The diagonal: a map cell drawn as a diagonal (spec: DiagonalPicture).
-    pub diagonal: Look,
+    /// The diagonal: a map cell drawn as a diagonal; a picture alone, as its test compares
+    /// numbers (spec: DiagonalPicture).
+    pub diagonal: Picture,
 }
 
 impl HudPictures {
@@ -70,6 +76,6 @@ impl HudPictures {
     /// colours.
     #[must_use]
     pub const fn blank_cell(&self) -> Tile {
-        Tile::new(Look::unflipped(self.blank.picture), BLANK_COLOURS)
+        Tile::new(Look::unflipped(self.blank), BLANK_COLOURS)
     }
 }

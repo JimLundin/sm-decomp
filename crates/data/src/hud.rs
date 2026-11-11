@@ -1,7 +1,8 @@
 //! The HUD's pictures, by what each one shows.
 //!
 //! The status bar and the mini-map draw with these. The colour sets they are drawn in are the
-//! HUD's rules, not content, so a look here is a picture and its flips only.
+//! HUD's rules, not content, so a look here is a picture and its flips only. The blank and the
+//! diagonal are pictures alone: the HUD tests the blank unflipped and the diagonal by its number.
 
 use clean_types::{Flip, Look, Picture};
 
@@ -56,7 +57,7 @@ pub struct ItemIcons {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct HudPictures {
     /// The blank a cell shows where nothing is drawn.
-    pub blank: Look,
+    pub blank: Picture,
     /// The digits, 0 first.
     pub digits: [Look; 10],
     /// A full energy tank.
@@ -70,7 +71,7 @@ pub struct HudPictures {
     /// A mini-map cell that shows nothing of the map.
     pub map_blank: Look,
     /// The map's diagonal, which also explores the cell above her.
-    pub diagonal: Look,
+    pub diagonal: Picture,
 }
 
 /// The look of a tilemap word: its ten bits of picture, which always name one, and its flips.
@@ -131,7 +132,7 @@ impl HudPictures {
     /// [`AddressError`] when a table is outside the image.
     pub fn load(rom: Lorom<'_>) -> Result<Self, AddressError> {
         Ok(Self {
-            blank: one(rom, BLANK)?,
+            blank: one(rom, BLANK)?.picture,
             digits: looks(rom, DIGITS)?,
             full_tank: one(rom, FULL_TANK)?,
             empty_tank: one(rom, EMPTY_TANK)?,
@@ -144,7 +145,7 @@ impl HudPictures {
                 x_ray_scope: rows(rom, X_RAY_SCOPE_ICON)?,
             },
             map_blank: one(rom, MAP_BLANK)?,
-            diagonal: one(rom, DIAGONAL)?,
+            diagonal: one(rom, DIAGONAL)?.picture,
         })
     }
 }

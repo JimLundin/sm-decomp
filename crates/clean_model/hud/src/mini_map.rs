@@ -1,7 +1,7 @@
 //! The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own
 //! cell blinking, the bosses that blank it, and the quirks at the map's first and last columns.
 
-use clean_types::{Look, Pair, Screen};
+use clean_types::{Look, Pair, Picture, Screen};
 
 use crate::grid::{Place, at, plus};
 use crate::inputs::{FrameCount, MiniMapInputs};
@@ -17,10 +17,10 @@ const SCREEN_PX: u16 = 256;
 const BLOCK_PX: u16 = 16;
 /// Her map's 64 columns (Notation), round which a room's screens wrap.
 const MAP_COLUMNS: i32 = 64;
-/// Spec: FirstColumnsShift. Her cell in the map's columns 0 and 1, up to this one.
-const FIRST_COLUMNS_END: i32 = 1;
-/// Spec: LastColumnsShift. Her cell in the map's columns 62 and 63, from this one.
-const LAST_COLUMNS_START: i32 = 62;
+/// Spec: FirstColumnsShift. The last of the map's first columns, 0 and 1: this one included.
+const LAST_OF_FIRST_COLUMNS: i32 = 1;
+/// Spec: LastColumnsShift. The first of the map's last columns, 62 and 63: this one included.
+const FIRST_OF_LAST_COLUMNS: i32 = 62;
 /// Spec: DiagonalPicture. A picture's number is read mod 512.
 const PICTURE_NUMBER_MODULUS: u16 = 512;
 
@@ -67,9 +67,9 @@ const LAST_COLUMNS_SHIFT: Reading = Reading {
 /// The reading for her cell's column: `FIRST_COLUMNS_SHIFT` in columns 0 and 1,
 /// `LAST_COLUMNS_SHIFT` in 62 and 63, `DIRECT` between.
 const fn reading(column: i32) -> Reading {
-    if column <= FIRST_COLUMNS_END {
+    if column <= LAST_OF_FIRST_COLUMNS {
         FIRST_COLUMNS_SHIFT
-    } else if column >= LAST_COLUMNS_START {
+    } else if column >= FIRST_OF_LAST_COLUMNS {
         LAST_COLUMNS_SHIFT
     } else {
         DIRECT
@@ -120,11 +120,10 @@ const fn her_screen(position: Pair<u16>) -> Screen {
     }
 }
 
-/// Spec: DiagonalPicture. Whether `look` counts as the diagonal: its picture's number mod 512 is
-/// the diagonal's, whatever the flips.
-const fn is_diagonal(look: Look, diagonal: Look) -> bool {
-    look.picture.index() % PICTURE_NUMBER_MODULUS
-        == diagonal.picture.index() % PICTURE_NUMBER_MODULUS
+/// Spec: DiagonalPicture. Whether `picture` counts as the diagonal: its number mod 512 is the
+/// diagonal's.
+const fn is_diagonal(picture: Picture, diagonal: Picture) -> bool {
+    picture.index() % PICTURE_NUMBER_MODULUS == diagonal.index() % PICTURE_NUMBER_MODULUS
 }
 
 /// The mini-map's window: each of its cells on the HUD with its offset from hers, the top row
@@ -170,7 +169,7 @@ impl HudState {
         // Spec: DiagonalPicture. Her window cell shown explored, with a picture that counts as
         // the diagonal: the cell over hers joins the explored cells, shown from the next frame.
         if let WindowCell::Explored(look) = her_cell
-            && is_diagonal(look, pictures.diagonal)
+            && is_diagonal(look.picture, pictures.diagonal)
         {
             self.explored.insert(plus(her, ABOVE));
         }

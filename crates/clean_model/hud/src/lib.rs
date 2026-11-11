@@ -12,6 +12,9 @@
 //! The HUD's cells, her map's pictures and the sets of her map's cells are each a `Grid`, read
 //! and written at a `Place`, column first; a place outside a grid has no cell. A picture with
 //! its flips is the shared `Look`; a HUD cell, a `Tile`, is a look in one of its colour sets.
+//! The content a caller lends, `HudPictures` and `HerMap`, is always supplied by the importer;
+//! each one's `Default` is an empty stand-in for a caller with nothing imported yet, which no
+//! rule reads.
 //!
 //! The values the rules read are in `Rules`; `Rules::reference` holds the spec's. `CATALOGUE`
 //! lists one behaviour per spec entry.

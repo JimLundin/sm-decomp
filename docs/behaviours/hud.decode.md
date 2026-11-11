@@ -66,7 +66,11 @@ vector each, and by no vector of round 3's file). `xcheck4.py` runs the 39 vecto
 update through `mm_bytes.py`, the file's invented map blank and diagonal in place of the vanilla
 ones: 37 agree, and the two that differ are spec §1.5's choices, as above. `real_content.py` there
 reads the HUD's keys column first: 0 hits. `scripts/ovr.rs` and `scripts/join.rs` (cdylibs over
-`verify`, run by `scripts/run.py`) count the overrun records of cache-v2 (§Harness).
+`verify`, run by `scripts/run.py`) count the overrun records of cache-v2 (§Harness). Round 5's are
+in `$TEMP/collab/hud-r5`: `scripts/edit_vectors.py` gave the invented pictures their flips and
+wrote two vectors (§Round 5), `model.py` now draws every picture with its flips, `vecrun.py`: 84 of
+84 agree, `mutants.py`: 21 mutants, each killed, `xcheck5.py` (`xcheck4.py` with the map's blank's
+flips kept): 41 of 43, the two §1.5's choices, and `real_content.py`: 0 hits.
 
 **Row names.** The chain rows go by opaque ids, as in the camera's notes, and so does one row
 whose name is a lexicon match:
@@ -198,7 +202,11 @@ routines (`$80:9B44`, `$90:A91B`) or of the switch (`$90:C4B5`), not a routine o
   28h and up for demos, `0592` a power bomb exploding) reach none of the 22. The sound domain owns
   the queue.
 - **The pickup's blank test** is `AND #$03FF` = 0Fh (picture only), the highlight's is the whole
-  word = 2C0Fh: the spec keeps both.
+  word = 2C0Fh: the spec keeps both. The highlight's word is a constant (`$80:9CF9` and its five
+  twins in `$80:9CEA`), with bits 14 and 15 clear: a cell holding picture 00F in palette 3 with
+  either flip fails the compare and takes the new palette (`AND #$E3FF : ORA`, which keeps the
+  flips). So the blank cell is the blank's picture unflipped in the blank's colours, whatever
+  flips the importer gives the blank (spec `SelectionHighlight`, C-highlight-blank-flipped).
 - **Counts past their cells.** Three digits of a count over 999 read the division's quotient past
   the digit table (`$80:9D8D`): at 10 the next table's first word, past it the timer's code
   (`$80:9DE7`). Two digits past 99 the same. No vanilla capacity reaches it (missiles 230, super
@@ -440,6 +448,43 @@ Every other entry is a fixed rule.
   `vecrun.py`: 82 of 82. `mutants.py`: 17 mutants, each killed; the nine new ones by no vector of
   the 75-vector file. `xcheck4.py`: 41 of 43, the two §1.5's choices. `real_content.py`: 0 hits.
 
+## Round 5 (adversary 95's F1, blind review 4)
+
+- **F1, the blank cell unflipped.** Checked against the bank log (§Findings, the pickup's blank
+  test): the highlight compares each icon cell with the constant word 2C0Fh, flips clear, and
+  recolours with the flips kept. Round 4's model is right and round 3's was wrong; round 4's file
+  couldn't tell them apart, because its blank was unflipped. `[pictures].blank` is now 0B4v
+  (flipped top to bottom), and C-highlight-blank-flipped shows the grapple beam's bottom row over
+  it: the top-left cell shows the blank's picture in the blank's colours with the blank's flip,
+  and takes the highlight, flip kept; the cell beside it is the blank cell and keeps it. The
+  model's mutant `blank_keeps_flips` is killed by it and by C-highlight-blank, and so is the Rust
+  one (`blank_cell` as `Tile::new(self.blank, BLANK_COLOURS)`, applied alone, then reverted).
+  Every cell of the file that showed the blank cell still does (it is unflipped whatever the
+  blank's flips), so no other vector changed.
+- **The other pictures' flips.** The same gap held for the digits, the tanks and the map's blank:
+  every one was unflipped, so a model drawing them without their flips passed (the reference
+  model did). Digit 6 is now 070h, the empty tank 0A2h and the map's blank 088h, and every cell of
+  the file showing one of them drawn gained the same flip (3, 33 and 545 cells), so each vector's
+  outcome is unchanged. C-flips-drawn (C-tanks-empty-row's scene, energy 196 of 299) draws the
+  empty tank and the 6. The mutants `digits_drop_flips`, `tanks_drop_flips` and
+  `map_blank_drops_flips` are killed. The full tank stays unflipped: the landed vector test quotes
+  `full_tank = "0A1"` in its refusals. The original draws its tanks and the window's blank from
+  constant words (3430h, 2831h, 2C1Fh) and its digits from tables; the importer gives each as a
+  picture with its flips, all unflipped in vanilla, and the spec draws each with its flips.
+- **Content with nothing imported** is outside the spec: every rule draws pictures the importer
+  supplies, and the original always has its own. Spec §1.4 says so. A default picture set (every
+  picture 000, unflipped) that lets the engine's tests tick without imported content is a
+  convenience of the engine, not a behaviour: no vector, harness case or gate compares it, and the
+  harness and every compared path import the content (adversary 95, §1).
+- **`turned_on` is a latched event,** not a state (blind review 4, item 8): spec §1.3's row now
+  says it is true on the one frame of play after its cause (or the frame its cause lands in,
+  before the mini-map's turn), false otherwise, and that whether the mini-map is on is the State.
+  The original has no such word: each writer stores 0 to `05F7` at once (§Inputs); the event is
+  the spec's, so that a turn-on outside play, which the State would see only on the next frame, has
+  a frame to land in.
+- **The re-measure** of the old code under score v2 is §Size baseline, and §Budget carries its
+  figures and the whole-domain line.
+
 ## The harness (for the integrator)
 
 The HUD is downstream of everything it shows: nothing in another domain reads its cells, and only
@@ -515,25 +560,30 @@ the records, with the other domains' values decoded as inputs.
   Re-seed at a room change (the door's domain resets the frame count and redraws nothing of the
   HUD, so the HUD carries over: a free run across doors is the better test once doors run).
 
-## Size baseline (tokens, 2026-11-08)
+## Size baseline (tokens, score v2, 2026-11-11)
 
-`tools size` (the wire-cam counter, `$TEMP/collab/wire-cam/size.dll`, the quality-terms weights),
-at spine `387640758`, over cuts of the old code in `$TEMP/collab/hud-spec/old`, measured together:
+`tools size` at main `83f4bb4ea` (score v2, built as a DLL), over cuts of the old code at spine
+`387640758` in `$TEMP/collab/hud-spec/old` (`status.rs`, `minimap.rs`), measured together:
 
-| Area | Old code | Score | Logic | Types | Data | Depth | Lines |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| status | `game/src/hud.rs` (all of it: the phase and its upload, the draws, the highlight); `game/src/state/hud.rs`: `Cell`, `HudTilemap` and their methods | 1,253.75 | 1,366 | 211 | 251 | 82.75 | 252 |
-| minimap | `game/src/mini_map.rs`; `data/src/map.rs`: `Page`, `MapCell::layout`, `LayoutIndex` and its methods, `MapCells::contains`, `contains_at`, `insert`, `AreaMap::tile`, `AreaMaps::of`; `game/src/state/hud.rs`: `MiniMap` | 1,665.5 | 1,741 | 454 | 47 | 144.5 | 347 |
-| total | | 2,919.25 | 3,107 | 665 | 298 | 227.25 | 599 |
+| Area | Old code | Score | Logic | Types | Data | Depth | Duplication | Lines |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| status | `game/src/hud.rs` (all of it: the phase and its upload, the draws, the highlight); `game/src/state/hud.rs`: `Cell`, `HudTilemap` and their methods | 1,068.75 | 1,155 | 211 | 462 | 82.75 | 58 | 252 |
+| minimap | `game/src/mini_map.rs`; `data/src/map.rs`: `Page`, `MapCell::layout`, `LayoutIndex` and its methods, `MapCells::contains`, `contains_at`, `insert`, `AreaMap::tile`, `AreaMaps::of`; `game/src/state/hud.rs`: `MiniMap` | 1,672.75 | 1,739 | 454 | 49 | 144.5 | 62.25 | 347 |
+| total | | 2,741.5 | 2,894 | 665 | 511 | 227.25 | 120.25 | 599 |
+
+Under the first counter (2026-11-08) the same cuts scored 1,253.75, 1,665.5 and 2,919.25. Score v2
+counts the old status bar's constant tables (its pictures and the digits' places) as data, 251 to
+462 tokens, so its score falls by 185; the minimap's rises by 7.25 with the duplication term.
 
 Lines are code lines (`$TEMP/collab/scripts/code_lines.py`: no blanks, comments or tests). Not
 counted: `MapCells::from_bitmap`, `to_bitmap` and `AreaMaps::load` (the importer and the decoder's),
 `tick.rs`'s `mini_map` (the bridge's). The selection has no old code: the old engine kept the
 selected item in the State and never changed it.
 
-**k out of sample:** the old code scores 59.7 a unit on the status bar (1,253.75 over 21.0) and
-64.1 on the minimap area (1,665.5 over 26.0); 62.1 over both, which at 0.55 would give k = 34.2
-against the frozen 36. Neither cap binds: status 756 of a 877 cap, minimap 936 of 1,166.
+**k out of sample:** under score v2 the old code scores 50.9 a unit on the status bar (1,068.75
+over 21.0) and 61.3 on the minimap area (1,672.75 over 27.3); 56.8 over both (2,741.5 over 48.3,
+the selection's 8.0 units having no old code), which at 0.55 would give k = 31.2 against the
+frozen 37.5.
 
 ## Scan
 
@@ -598,24 +648,31 @@ needs). The target is on everything else, the logic.
 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion. An
 area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
-score of the old code that area replaces, at spine `387640758`: for the status bar `game/src/hud.rs` and the
+score of the old code that area replaces, measured under score v2 (§Size baseline) over the
+old code at spine `387640758`: for the status bar `game/src/hud.rs` and the
 cells of the HUD in `game/src/state/hud.rs`; for the mini-map `game/src/mini_map.rs` and the
 map layout it walks in `data/src/map.rs`, without the ROM loader and the bitmap conversions. The
 selection has no old code: the old engine never changed the selected item. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; over an area's old code is a failure.
 
-- Area status (old 1,254): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
+- Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
   SwitchClick, OneShotFlash, IconsAppear
 - Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
-- Area minimap (old 1,666): Exploring, MiniMapWindow, HerBlink, MiniMapStill, BossBlanksTheMap,
+- Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, BossBlanksTheMap,
   DiagonalPicture, FirstColumnsShift, LastColumnsShift
 
 Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
 one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
 The arm the gated draft added for Mother Brain's fall is a "So" (adversary 79 F4).
 
+Old code (old 2,741.5): the status bar's and the minimap's old code together, under score v2;
+the selection has none.
+
 Round 4 adds no arm and no operator: its three vectors are cited by arms that were there, and
 `DiagonalPicture`'s new bullet and §5's order are a "So" and prose. 56.3 units.
+
+Round 5 adds none either: its two vectors are cited by arms that were there, and its spec text
+(§1.4's two paragraphs, `SelectionHighlight`'s "So", the input row) is prose. 56.3 units.
 
 Budget: 37.5 × 56.3 units = 2,112 (status 787, selection 300, minimap 1,025)

@@ -85,7 +85,7 @@ when Select cycles.
 | why no click | none, or she spin jumps, she wall jumps, the grapple beam is out, time is stopped | `SwitchClick` |
 | collected | an item whose pickup this frame draws its icon, or none | `IconsAppear` |
 | the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
-| the mini-map turned on | `bool`: something turned the mini-map on since its last turn, and no boss encountered since: the next room, a load, a new game or the demos' load; or, during this frame before the mini-map's turn, Crocomire's fall into the acid | `MiniMapStill` |
+| the mini-map turned on | `bool`, an event held until a frame reads it, not a state: true when something turned the mini-map on since the last frame of play and no boss was encountered after it, false on every other frame. A turn-on outside play (the next room, a load, a new game or the demos' load) reaches the frame of play that follows it; one during this frame before the mini-map's turn (Crocomire's fall into the acid) reaches this frame. Whether the mini-map is on is the State `the mini-map is off` (§1) | `MiniMapStill` |
 | a boss encountered | the boss she encounters: Kraid, Draygon, Crocomire, Phantoon, or Ridley in Norfair or in Ceres, on entering its room while it lives; a step of its own, outside a frame of play (supplied by the door and the load flow) | `BossBlanksTheMap` |
 | Mother Brain falls | `bool`: her first form falls this frame, her brain in the tank destroyed (supplied by her fight) | `BossBlanksTheMap` |
 | her position | x, y: whole pixels in her room, after this frame's moves and before a pose change places her | `Exploring`, `MiniMapStill` |
@@ -116,6 +116,15 @@ Cells: picture, flips, colours
 Colour sets by role: the blank's and the digits' 3; full 2, empty 5; the sign lit 7, dim 3; the
 icons plain 5, highlighted 4; on the mini-map explored 2, charted 3, her blink 7.
 
+Every picture is drawn with its flips. The blank's flips and the diagonal's are read by no rule:
+the blank cell a highlight tests is the blank's picture unflipped (`SelectionHighlight`), a
+pickup tests the blank's picture alone (`IconsAppear`), and the diagonal's test compares numbers
+(`DiagonalPicture`).
+
+The pictures are always supplied: the spec defines the HUD only with a set the importer gives it,
+as the game always has its own. A stand-in for pictures not yet imported is outside the spec: no
+rule says what it shows, and no vector or record checks it.
+
 ### 1.5 The inputs' domain
 
 The spec defines the HUD on these inputs; outside them the original reads past its tables, and
@@ -145,12 +154,13 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - Drawing, tank `i` (from 0, in fill order) for `i < min(capacity div 100, 14)`, with
   `i < energy div 100` → full [C-R3, C-R4, C-tanks-fourteen]
 - Drawing, tank `i` for `i < min(capacity div 100, 14)`, with `i ≥ energy div 100` → empty [C-R3,
-  C-R4, C-tanks-empty-row]
-- Drawing, the digits → `(energy mod 100) div 10` and `energy mod 10` [C-R1, C-R4, C-tanks-fourteen]
+  C-R4, C-tanks-empty-row, C-flips-drawn]
+- Drawing, the digits → `(energy mod 100) div 10` and `energy mod 10` [C-R1, C-R4, C-tanks-fourteen,
+  C-flips-drawn]
 - So a tank past her capacity, and every cell while her energy is the one last shown, keeps what
   it shows (C-R5, C-R6, C-energy-unchanged-stale).
 - checked: oracle (every harness case); constructed (their twins, C-tanks-fourteen,
-  C-tanks-empty-row, C-energy-unchanged-stale).
+  C-tanks-empty-row, C-energy-unchanged-stale, C-flips-drawn).
 
 ### AmmoCounts
 - kind: mechanic.
@@ -190,14 +200,17 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   C-R12, C-R13, C-R14, C-select-skip]
 - An icon taking colours, a cell of it showing the blank cell (the blank's picture in the
   blank's colours, unflipped) → that cell keeps it; every other cell of the icon keeps its picture
-  and flips [C-highlight-blank, C-highlight-tinted, C-R11]
+  and flips [C-highlight-blank, C-highlight-tinted, C-highlight-blank-flipped, C-R11]
+- So a cell showing the blank's picture in the blank's colours, but flipped, isn't the blank
+  cell: it takes the colours, its flips kept (C-highlight-blank-flipped).
 - So none selected has no icon to light (C-R13, C-R15, C-shot-cancels), and the flash
   (`OneShotFlash`) colours an icon the same way.
 - So the highlight tests the whole cell and a pickup (`IconsAppear`) the picture alone, on
   purpose: the blank's picture in other colours takes the colours here (C-highlight-tinted) and
   counts as blank there (C-icon-drawn-tinted).
 - checked: oracle (the harness cases R9 to R15); constructed (C-R9, C-R10, C-R11, C-R12,
-  C-R13, C-R14, C-R15, C-highlight-blank, C-highlight-tinted).
+  C-R13, C-R14, C-R15, C-highlight-blank, C-highlight-tinted,
+  C-highlight-blank-flipped).
 
 ### SwitchClick
 - kind: output.

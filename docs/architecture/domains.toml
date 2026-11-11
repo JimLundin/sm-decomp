@@ -26,7 +26,7 @@ rounds = 7
 
 [[model]]
 name = "hud"
-rounds = 4
+rounds = 5
 
 [[model]]
 name = "blocks"

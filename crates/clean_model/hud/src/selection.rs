@@ -50,9 +50,12 @@ impl HudState {
 /// ammunition with a count, an item she has on); `None` when none is left before the end, past
 /// the x-ray scope.
 fn next_item_she_has(current: Option<SelectableItem>, status: &Status) -> Option<SelectableItem> {
-    let mut order = SelectableItem::ORDER.into_iter();
+    let mut after_current = SelectableItem::ORDER.into_iter();
     if let Some(current) = current {
-        order.find(|&item| item == current);
+        // Skips past every item up to the current one, the current one included; from none,
+        // nothing is skipped.
+        after_current.find(|&item| item == current);
     }
-    order.find(|&item| status.has(item))
+    // Skips past each item she lacks.
+    after_current.find(|&item| status.has(item))
 }

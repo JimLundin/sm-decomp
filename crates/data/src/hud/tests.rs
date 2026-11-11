@@ -56,7 +56,7 @@ fn each_picture_is_read_from_its_table() {
     assert_eq!(
         pictures,
         HudPictures {
-            blank: look(0x101, false),
+            blank: Picture::new(0x101).unwrap(),
             digits: core::array::from_fn(|d| {
                 let d = u16::try_from(d).unwrap();
                 look(0x110_u16.wrapping_add(d), d % 2 == 1)
@@ -75,7 +75,7 @@ fn each_picture_is_read_from_its_table() {
                 x_ray_scope: two_by_two(0x180),
             },
             map_blank: look(0x191, false),
-            diagonal: look(0x192, false),
+            diagonal: Picture::new(0x192).unwrap(),
         }
     );
 }
@@ -83,10 +83,10 @@ fn each_picture_is_read_from_its_table() {
 #[test]
 fn a_word_keeps_its_flips_and_drops_its_colours() {
     let mut image = blank_image();
-    put(&mut image, DIAGONAL, &[0xDD5A]);
+    put(&mut image, MAP_BLANK, &[0xDD5A]);
     let pictures = HudPictures::load(Lorom::new(&image)).unwrap();
     assert_eq!(
-        pictures.diagonal,
+        pictures.map_blank,
         Look {
             picture: Picture::new(0x15A).unwrap(),
             flip: Flip::Both,

@@ -1,10 +1,12 @@
 //! The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the
 //! items' icons with the selection's highlight.
 
+use clean_types::Look;
+
 use crate::grid::Place;
 use crate::inputs::{Ammunition, Energy, FrameCount, Reserve, ReserveMode};
 use crate::item::SelectableItem;
-use crate::layout::{AMMO_DIGITS, ENERGY_DIGITS, RESERVE_SIGN, TANKS, icon_top_left, laid};
+use crate::layout::{ENERGY_DIGITS, RESERVE_SIGN, TANKS, ammo_digits, icon_top_left, laid};
 use crate::pictures::{HudPictures, rows};
 use crate::rules::Rules;
 use crate::state::HudState;
@@ -45,11 +47,10 @@ impl HudState {
     /// becomes the one shown, in its digits. With a capacity of 0 nothing is drawn and the count
     /// last shown stays.
     pub(crate) fn ammo_counts(&mut self, pictures: &HudPictures, ammunition: &Ammunition) {
-        for row in &AMMO_DIGITS {
-            let stock = ammunition.of(row.ammo);
-            if stock.capacity != 0 && stock.count != self.shown.ammo[row.ammo] {
-                self.shown.ammo[row.ammo] = stock.count;
-                self.draw_number(pictures, row.digits, stock.count);
+        for (ammo, stock) in ammunition.stocks() {
+            if stock.capacity != 0 && stock.count != self.shown.ammo[ammo] {
+                self.shown.ammo[ammo] = stock.count;
+                self.draw_number(pictures, ammo_digits(ammo), stock.count);
             }
         }
     }
@@ -66,9 +67,7 @@ impl HudState {
         } else {
             SIGN_LIT
         };
-        for (place, look) in laid(RESERVE_SIGN, rows(&pictures.reserve_sign)) {
-            self.grid.set(place, Tile::new(look, colours));
-        }
+        self.lay(RESERVE_SIGN, rows(&pictures.reserve_sign), colours);
     }
 
     /// Spec: IconsAppear. A pickup draws its item's icon in the plain colours when the icon's
@@ -76,15 +75,24 @@ impl HudState {
     /// alone is tested. Otherwise its cells keep what they show.
     pub(crate) fn icon_appears(&mut self, pictures: &HudPictures, item: SelectableItem) {
         let top_left = icon_top_left(item);
-        let blank = self
+        let shows_blank_picture = self
             .grid
             .get(top_left)
-            .is_some_and(|tile| tile.look.picture == pictures.blank.picture);
-        if !blank {
-            return;
+            .is_some_and(|tile| tile.look.picture == pictures.blank);
+        if shows_blank_picture {
+            self.lay(top_left, pictures.icons.of(item), PLAIN);
         }
-        for (place, look) in laid(top_left, pictures.icons.of(item)) {
-            self.grid.set(place, Tile::new(look, PLAIN));
+    }
+
+    /// Lays rows of pictures from `top_left`, each with its flips, all in `colours`.
+    fn lay<'p>(
+        &mut self,
+        top_left: Place,
+        rows: impl IntoIterator<Item = &'p [Look]>,
+        colours: ColourSet,
+    ) {
+        for (place, look) in laid(top_left, rows) {
+            self.grid.set(place, Tile::new(look, colours));
         }
     }
 
@@ -126,9 +134,9 @@ impl HudState {
     /// flips in the new colours, but a cell showing the blank cell, the whole cell tested, keeps
     /// it.
     fn colour_icon(&mut self, pictures: &HudPictures, item: SelectableItem, colours: ColourSet) {
-        let blank = pictures.blank_cell();
+        let blank_cell = pictures.blank_cell();
         for (place, _) in laid(icon_top_left(item), pictures.icons.of(item)) {
-            if let Some(tile) = self.grid.get(place).filter(|&tile| tile != blank) {
+            if let Some(tile) = self.grid.get(place).filter(|&tile| tile != blank_cell) {
                 self.grid.set(place, tile.in_colours(colours));
             }
         }

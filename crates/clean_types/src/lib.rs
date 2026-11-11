@@ -791,7 +791,9 @@ pub const LAST_PICTURE: u16 = 0x3FF;
 /// belongs to the tileset; the models only set the number.
 ///
 /// The HUD's pictures and her map's are numbered the same way, by the importer.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// Its default, picture `000`, stands in for content not yet imported.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Picture(u16);
 
 impl Picture {
@@ -812,10 +814,11 @@ impl Picture {
     }
 }
 
-/// How a picture is flipped as a cell shows it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// How a picture is flipped as a cell shows it. Its default is `None`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Flip {
     /// As it is.
+    #[default]
     None,
     /// Flipped across: left for right.
     Across,
@@ -827,7 +830,9 @@ pub enum Flip {
 
 /// A look: the picture a cell shows, and how it is flipped (blocks' notation, `312:x`): a block
 /// of the room, a cell of the HUD or of her map alike.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// Its default, picture `000` unflipped, stands in for content not yet imported.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Look {
     /// The tileset's picture.
     pub picture: Picture,

@@ -1,7 +1,7 @@
 //! What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she
 //! is on her map.
 
-use clean_types::{Pair, by_member};
+use clean_types::Pair;
 use enum_map::EnumMap;
 
 use crate::grid::Place;
@@ -40,29 +40,14 @@ pub struct Reserve {
     pub mode: ReserveMode,
 }
 
-/// The most of an ammunition, count or capacity, the HUD is defined on (§1.5).
-struct AmmoDomain {
-    /// The ammunition.
-    ammo: Ammo,
-    /// Its most.
-    most: u16,
+/// §1.5: the largest count or capacity of `ammo` the HUD is defined on: missiles at most 999,
+/// super missiles and power bombs at most 99.
+const fn largest_allowed(ammo: Ammo) -> u16 {
+    match ammo {
+        Ammo::Missiles => 999,
+        Ammo::SuperMissiles | Ammo::PowerBombs => 99,
+    }
 }
-
-/// §1.5: missiles at most 999, super missiles and power bombs at most 99.
-const AMMO_DOMAIN: [AmmoDomain; 3] = [
-    AmmoDomain {
-        ammo: Ammo::Missiles,
-        most: 999,
-    },
-    AmmoDomain {
-        ammo: Ammo::SuperMissiles,
-        most: 99,
-    },
-    AmmoDomain {
-        ammo: Ammo::PowerBombs,
-        most: 99,
-    },
-];
 
 /// A count of one ammunition and how many she can carry (§1.3).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
@@ -81,10 +66,9 @@ impl Ammunition {
     /// Her stocks, or `None` if a count or capacity is past what the HUD is defined on (§1.5).
     #[must_use]
     pub fn new(stocks: EnumMap<Ammo, Stock>) -> Option<Self> {
-        let domain = by_member(AMMO_DOMAIN, |row| row.ammo);
         stocks
             .iter()
-            .all(|(ammo, stock)| stock.count.max(stock.capacity) <= domain[ammo].most)
+            .all(|(ammo, stock)| stock.count.max(stock.capacity) <= largest_allowed(ammo))
             .then_some(Self(stocks))
     }
 
@@ -92,6 +76,11 @@ impl Ammunition {
     #[must_use]
     pub fn of(&self, ammo: Ammo) -> Stock {
         self.0[ammo]
+    }
+
+    /// Her stock of each ammunition, in the HUD's order.
+    pub fn stocks(&self) -> impl Iterator<Item = (Ammo, Stock)> + '_ {
+        self.0.iter().map(|(ammo, &stock)| (ammo, stock))
     }
 }
 
@@ -194,8 +183,12 @@ pub struct MiniMapInputs<'map> {
     /// False while she is held at a station, drained, entering or leaving the gunship, or while
     /// the game's opening shows her.
     pub runs: bool,
-    /// Something turned the mini-map on since its last turn, and no boss was met since; or,
-    /// during this frame before the mini-map's turn, Crocomire fell into the acid.
+    /// The mini-map turned on: an event the caller holds until a frame reads it, not a state.
+    /// True when something turned the mini-map on since the last frame of play and no boss was
+    /// encountered after it, false on every other frame. A turn-on outside play (the next room,
+    /// a load, a new game, the demos' load) reaches the frame of play that follows it; one
+    /// during this frame before the mini-map's turn (Crocomire's fall into the acid) reaches
+    /// this frame. Whether the mini-map is on is the state's (`HudState::mini_map`).
     pub turned_on: bool,
     /// Where she is: whole pixels in her room, after this frame's moves and before a pose change
     /// places her.
@@ -223,16 +216,4 @@ pub struct FrameInputs<'map> {
     pub mother_brain_falls: bool,
     /// What the mini-map reads.
     pub mini_map: MiniMapInputs<'map>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::AMMO_DOMAIN;
-    use crate::item::Ammo;
-    use crate::tests::names_each_member_once;
-
-    #[test]
-    fn the_ammo_domain_names_each_ammo_once() {
-        assert!(names_each_member_once::<Ammo, _>(&AMMO_DOMAIN, |row| row.ammo));
-    }
 }

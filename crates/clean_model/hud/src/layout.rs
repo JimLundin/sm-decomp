@@ -1,6 +1,6 @@
 //! Where things sit on the HUD (§1.2), as places on its grid: column across, row down.
 
-use clean_types::{Look, by_member};
+use clean_types::Look;
 
 use crate::grid::{Place, at, plus};
 use crate::item::{Ammo, SelectableItem};
@@ -27,70 +27,37 @@ pub const TANKS: [Place; 14] = [
 /// The energy's digits: row 2, columns 6 and 7.
 pub const ENERGY_DIGITS: [Place; 2] = [at(6, 2), at(7, 2)];
 
-/// Where a kind of ammunition's count sits: its digits' cells, the highest digit first.
-pub struct AmmoDigits {
-    /// The ammunition.
-    pub ammo: Ammo,
-    /// Its digits' cells: as many as its count has digits.
-    pub digits: &'static [Place],
-}
+/// The missiles' digits: row 2, columns 10 to 12.
+const MISSILES_DIGITS: [Place; 3] = [at(10, 2), at(11, 2), at(12, 2)];
+/// The super missiles' digits: row 2, columns 14 and 15.
+const SUPER_MISSILES_DIGITS: [Place; 2] = [at(14, 2), at(15, 2)];
+/// The power bombs' digits: row 2, columns 17 and 18.
+const POWER_BOMBS_DIGITS: [Place; 2] = [at(17, 2), at(18, 2)];
 
-/// Each ammunition's digits, in row 2: the missiles' in columns 10 to 12, the super missiles' in
-/// 14 and 15, the power bombs' in 17 and 18.
-pub const AMMO_DIGITS: [AmmoDigits; 3] = [
-    AmmoDigits {
-        ammo: Ammo::Missiles,
-        digits: &[at(10, 2), at(11, 2), at(12, 2)],
-    },
-    AmmoDigits {
-        ammo: Ammo::SuperMissiles,
-        digits: &[at(14, 2), at(15, 2)],
-    },
-    AmmoDigits {
-        ammo: Ammo::PowerBombs,
-        digits: &[at(17, 2), at(18, 2)],
-    },
-];
+/// Where `ammo`'s count sits: its digits' cells, the highest digit first, as many as its count
+/// has digits.
+pub const fn ammo_digits(ammo: Ammo) -> &'static [Place] {
+    match ammo {
+        Ammo::Missiles => &MISSILES_DIGITS,
+        Ammo::SuperMissiles => &SUPER_MISSILES_DIGITS,
+        Ammo::PowerBombs => &POWER_BOMBS_DIGITS,
+    }
+}
 
 /// The reserve sign's top-left cell: it fills rows 0 to 2, columns 8 and 9.
 pub const RESERVE_SIGN: Place = at(8, 0);
 
-/// Where an item's icon sits: its top-left cell, in row 0; the icon fills rows 0 and 1.
-pub struct IconPlace {
-    /// The item.
-    pub item: SelectableItem,
-    /// Its icon's top-left cell.
-    pub top_left: Place,
-}
-
-/// Each item's icon: the missiles' in columns 10 to 12, the super missiles' in 14 and 15, the
-/// power bombs' in 17 and 18, the grapple beam's in 20 and 21, the x-ray scope's in 23 and 24.
-pub const ICONS: [IconPlace; 5] = [
-    IconPlace {
-        item: SelectableItem::Ammo(Ammo::Missiles),
-        top_left: at(10, 0),
-    },
-    IconPlace {
-        item: SelectableItem::Ammo(Ammo::SuperMissiles),
-        top_left: at(14, 0),
-    },
-    IconPlace {
-        item: SelectableItem::Ammo(Ammo::PowerBombs),
-        top_left: at(17, 0),
-    },
-    IconPlace {
-        item: SelectableItem::GrappleBeam,
-        top_left: at(20, 0),
-    },
-    IconPlace {
-        item: SelectableItem::XRayScope,
-        top_left: at(23, 0),
-    },
-];
-
-/// `item`'s icon's top-left cell.
-pub fn icon_top_left(item: SelectableItem) -> Place {
-    by_member(ICONS, |place| place.item)[item].top_left
+/// Where `item`'s icon sits: its top-left cell, in row 0; the icon fills rows 0 and 1. The
+/// missiles' fills columns 10 to 12, the super missiles' 14 and 15, the power bombs' 17 and 18,
+/// the grapple beam's 20 and 21, the x-ray scope's 23 and 24.
+pub const fn icon_top_left(item: SelectableItem) -> Place {
+    match item {
+        SelectableItem::Ammo(Ammo::Missiles) => at(10, 0),
+        SelectableItem::Ammo(Ammo::SuperMissiles) => at(14, 0),
+        SelectableItem::Ammo(Ammo::PowerBombs) => at(17, 0),
+        SelectableItem::GrappleBeam => at(20, 0),
+        SelectableItem::XRayScope => at(23, 0),
+    }
 }
 
 /// The mini-map window's middle cell, her cell: column 28, row 1.
@@ -111,23 +78,4 @@ pub fn laid<'p>(
             .zip(row)
             .map(move |(across, &look)| (plus(top_left, at(across, down)), look))
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{AMMO_DIGITS, ICONS};
-    use crate::item::{Ammo, SelectableItem};
-    use crate::tests::names_each_member_once;
-
-    #[test]
-    fn the_ammo_digits_name_each_ammo_once() {
-        assert!(names_each_member_once::<Ammo, _>(&AMMO_DIGITS, |row| row.ammo));
-    }
-
-    #[test]
-    fn the_icons_name_each_item_once() {
-        assert!(names_each_member_once::<SelectableItem, _>(&ICONS, |row| {
-            row.item
-        }));
-    }
 }

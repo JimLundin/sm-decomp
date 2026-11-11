@@ -48,8 +48,8 @@ struct BossScreens {
 /// A room's top-left 2 by 2 screens: Kraid's and Draygon's.
 const TWO_BY_TWO: &[Screen] = &[screen(0, 0), screen(1, 0), screen(0, 1), screen(1, 1)];
 
-/// Spec: BossBlanksTheMap. The screens each boss counts as explored, the spec's table.
-const VANILLA_BOSS_SCREENS: [BossScreens; 7] = [
+/// Spec: BossBlanksTheMap. The reference screens each boss counts as explored, the spec's table.
+const REFERENCE_BOSS_SCREENS: [BossScreens; 7] = [
     BossScreens {
         boss: Boss::InItsRoom(RoomBoss::Kraid),
         screens: TWO_BY_TWO,
@@ -99,11 +99,11 @@ impl Alternation {
     }
 }
 
-/// Spec: OneShotFlash. The frames each way of the one-shot item's flash.
-const VANILLA_ONE_SHOT_FLASH_FRAMES: u8 = 16;
+/// Spec: OneShotFlash. The reference frames each way of the one-shot item's flash.
+const REFERENCE_ONE_SHOT_FLASH_FRAMES: u8 = 16;
 
-/// Spec: HerBlink. The frames each way of her cell's blink.
-const VANILLA_HER_BLINK_FRAMES: u8 = 8;
+/// Spec: HerBlink. The reference frames each way of her cell's blink.
+const REFERENCE_HER_BLINK_FRAMES: u8 = 8;
 
 /// The values the HUD's rules read.
 #[derive(Clone, Debug)]
@@ -124,12 +124,12 @@ impl Rules {
     pub fn reference() -> Self {
         Self {
             one_shot_flash: Alternation {
-                frames_each_way: VANILLA_ONE_SHOT_FLASH_FRAMES,
+                frames_each_way: REFERENCE_ONE_SHOT_FLASH_FRAMES,
             },
             her_blink: Alternation {
-                frames_each_way: VANILLA_HER_BLINK_FRAMES,
+                frames_each_way: REFERENCE_HER_BLINK_FRAMES,
             },
-            boss_screens: by_member(VANILLA_BOSS_SCREENS, |row| row.boss)
+            boss_screens: by_member(REFERENCE_BOSS_SCREENS, |row| row.boss)
                 .map(|_, row| row.screens.to_vec()),
         }
     }
@@ -143,13 +143,13 @@ impl Default for Rules {
 
 #[cfg(test)]
 mod tests {
-    use super::{Boss, VANILLA_BOSS_SCREENS};
+    use super::{Boss, REFERENCE_BOSS_SCREENS};
     use crate::tests::names_each_member_once;
 
     #[test]
     fn the_boss_table_names_each_boss_once() {
         assert!(names_each_member_once::<Boss, _>(
-            &VANILLA_BOSS_SCREENS,
+            &REFERENCE_BOSS_SCREENS,
             |row| row.boss
         ));
     }

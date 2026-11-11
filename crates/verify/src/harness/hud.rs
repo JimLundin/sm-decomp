@@ -849,11 +849,8 @@ impl Domain for HudDomain {
         Ok(masks)
     }
 
-    /// With no content the HUD has nothing to draw with, and the state stays as it was.
     fn step(&self, state: &mut HudState, pad: &Pad, world: &mut World) {
-        let Some((map, pictures)) = self.content.of(world.turn.area()) else {
-            return;
-        };
+        let (map, pictures) = self.content.of(world.turn.area());
         match world.turn {
             Turn::Frame(upstream) => {
                 let outcome =
@@ -873,11 +870,8 @@ impl Domain for HudDomain {
     }
 
     fn exercised(&self, state: &HudState, pad: &Pad, world: &World) -> Vec<usize> {
-        let diagonal = self
-            .content
-            .of(world.turn.area())
-            .map(|(_, pictures)| pictures.diagonal.picture.index());
-        exercised(state, *pad, world, diagonal)
+        let (_, pictures) = self.content.of(world.turn.area());
+        exercised(state, *pad, world, pictures.diagonal.index())
     }
 
     fn fields(&self, state: &HudState) -> Declared {
@@ -920,8 +914,8 @@ fn places(ids: impl IntoIterator<Item = BehaviourId>) -> Vec<usize> {
 
 /// The catalogue entries a frame brings into play, from the HUD as record N has it, the inputs,
 /// and what the step reported: the rule each part of the frame takes. `diagonal` is the
-/// diagonal's picture number, `None` with no content.
-fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: Option<u16>) -> Vec<usize> {
+/// diagonal's picture number.
+fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<usize> {
     use BehaviourId as B;
     let upstream = match world.turn {
         Turn::Frame(upstream) => upstream,
@@ -989,14 +983,10 @@ fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: Option<u16>) -
             entries.push(B::LastColumnsShift);
         }
         // The diagonal test reads her window tile as the explored branch drew it.
-        if world
-            .her_tile
-            .zip(diagonal)
-            .is_some_and(|(tile, diagonal)| {
-                (tile.look.picture.index() & DIAGONAL_READ) == (diagonal & DIAGONAL_READ)
-                    && tile.colours.number() != CHARTED
-            })
-        {
+        if world.her_tile.is_some_and(|tile| {
+            (tile.look.picture.index() & DIAGONAL_READ) == (diagonal & DIAGONAL_READ)
+                && tile.colours.number() != CHARTED
+        }) {
             entries.push(B::DiagonalPicture);
         }
     } else {
