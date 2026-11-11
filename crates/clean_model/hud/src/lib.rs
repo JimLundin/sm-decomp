@@ -5,12 +5,13 @@
 //! `HudState::frame` takes the rules, the HUD's pictures (content the importer supplies), what
 //! other domains report (her energy, ammunition and reserve, the items she has on, the buttons,
 //! where she is on her map) and the HUD's state, and returns the state after the frame (its grid
-//! is the picture drawn) with the events it reports: `Switched` for the weapons and her look,
-//! `Click` for the sound domain. Outside a frame, `HudState::boss_encountered` is a boss met on
-//! entering its room, which blanks the mini-map and turns it off.
+//! is the picture drawn) with the `HudEvent`s it reports: `Switched` for the weapons and her
+//! look, `Click` for the sound domain. Outside a frame, `HudState::boss_encountered` is a boss
+//! met on entering its room, which blanks the mini-map and turns it off.
 //!
 //! The HUD's cells, her map's pictures and the sets of her map's cells are each a `Grid`, read
-//! and written at a `Point`, across then down; a point outside a grid has no cell.
+//! and written at a `Place`, column first; a place outside a grid has no cell. A picture with
+//! its flips is the shared `Look`; a HUD cell, a `Tile`, is a look in one of its colour sets.
 //!
 //! The values the rules read are in `Rules`; `Rules::reference` holds the spec's. `CATALOGUE`
 //! lists one behaviour per spec entry.
@@ -36,10 +37,10 @@ mod status_bar;
 mod tile;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
-pub use clean_types::{Checked, Flip, Kind, Pair, Screen, Switch};
-pub use events::Event;
+pub use clean_types::{Checked, Flip, Kind, Look, Pair, Picture, Screen, Switch};
+pub use events::HudEvent;
 pub use frame::FrameOutcome;
-pub use grid::{Grid, Point};
+pub use grid::{Grid, Place};
 pub use inputs::{
     Ammunition, CancelButton, Controls, Energy, Equipped, FrameCount, FrameInputs, MiniMapInputs,
     Mute, Reserve, ReserveMode, Room, SelectButton, Status, Stock,
@@ -49,7 +50,7 @@ pub use map::{HerMap, MapCellSet, MapPictures};
 pub use pictures::{HudPictures, Icons};
 pub use rules::{Alternation, Boss, RoomBoss, Rules};
 pub use state::{HudState, MiniMapPower, Selection, Shown};
-pub use tile::{ColourSet, HudGrid, Picture, Tile};
+pub use tile::{ColourSet, HudGrid, Tile};
 
 #[cfg(test)]
 mod tests {

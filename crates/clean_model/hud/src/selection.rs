@@ -1,6 +1,6 @@
 //! How Select, item cancel and a shot change the selection (§3).
 
-use crate::events::Event;
+use crate::events::HudEvent;
 use crate::inputs::{CancelButton, Controls, SelectButton, Status};
 use crate::item::SelectableItem;
 use crate::state::{HudState, Selection};
@@ -13,24 +13,28 @@ impl HudState {
     /// Otherwise Select pressed moves to the next item she has; spec: OneShotItem, with item
     /// cancel held the new selection is the one-shot item, without it it isn't. Spec: Switching.
     /// Either acting reports the item it lands on.
-    pub(crate) fn press_buttons(&mut self, controls: Controls, status: &Status) -> Option<Event> {
+    pub(crate) fn press_buttons(
+        &mut self,
+        controls: Controls,
+        status: &Status,
+    ) -> Option<HudEvent> {
         if !controls.can_switch {
             return None;
         }
         if controls.cancel == CancelButton::Pressed {
             self.selection = Selection::None;
-            return Some(Event::Switched(None));
+            return Some(HudEvent::Switched(None));
         }
         if controls.select == SelectButton::NotPressed {
             return None;
         }
-        let next = next_item(self.selection.item(), status);
+        let next = next_item_she_has(self.selection.item(), status);
         self.selection = match (next, controls.cancel) {
             (None, _) => Selection::None,
             (Some(item), CancelButton::Held) => Selection::OneShot(item),
             (Some(item), CancelButton::NotPressed | CancelButton::Pressed) => Selection::Item(item),
         };
-        Some(Event::Switched(next))
+        Some(HudEvent::Switched(next))
     }
 
     /// Spec: CancellingTheItem. After the buttons, a shot the weapons cancel clears the selection,
@@ -42,9 +46,10 @@ impl HudState {
     }
 }
 
-/// Spec: CyclingItems. The first item after `current` in the HUD's order that she has (an
-/// ammunition with a count, an item she has on), or `None` past the x-ray scope.
-fn next_item(current: Option<SelectableItem>, status: &Status) -> Option<SelectableItem> {
+/// Spec: CyclingItems. Searches the HUD's order after `current` for the first item she has (an
+/// ammunition with a count, an item she has on); `None` when none is left before the end, past
+/// the x-ray scope.
+fn next_item_she_has(current: Option<SelectableItem>, status: &Status) -> Option<SelectableItem> {
     let mut order = SelectableItem::ORDER.into_iter();
     if let Some(current) = current {
         order.find(|&item| item == current);

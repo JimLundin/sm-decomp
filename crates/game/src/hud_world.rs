@@ -3,8 +3,8 @@
 //! The engine keeps the HUD as the game keeps it (`docs/behaviours/hud.decode.md`, "State"): the
 //! HUD tilemap's three rows, the values it last drew, the selected and the auto-cancel item, the
 //! explored cells and whether the mini-map is off. The model's `HudState` is built from those
-//! each turn and written back after it; the area maps and the HUD's pictures are the model's,
-//! converted once from the importer's when the content loads.
+//! each turn and written back after it. The HUD's pictures are the importer's looks; the area
+//! maps' tilemap words become the model's maps once, when the content loads.
 //!
 //! The original's HUD runs at two turns of the gameplay pass that the PLM pass lies between, and
 //! an item's message box called out of the PLM pass takes NMIs, so the frame count moves between
@@ -16,10 +16,10 @@
 use clean_model_hud::{
     Ammo, Ammunition, CancelButton, ColourSet, Controls, Energy, Equipped, Flip, FrameCount,
     FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, MapCellSet, MapPictures,
-    MiniMapInputs, MiniMapPower, Mute, Picture, Point, Reserve, ReserveMode, Room, Rules,
-    SelectButton, SelectableItem, Selection, Shown, Status, Stock, Tile,
+    MiniMapInputs, MiniMapPower, Mute, Place, Reserve, ReserveMode, Room, Rules, SelectButton,
+    SelectableItem, Selection, Shown, Status, Stock, Tile,
 };
-use clean_types::{Look, Pair};
+use clean_types::{Look, Pair, Picture};
 use data::dma::HUD_TILEMAP_BUFFER;
 use data::map::{MAP_COLUMNS, MAP_ROWS, MAP_TILEMAP_WORDS, MapCells};
 use data::pose::transition::Control;
@@ -47,8 +47,6 @@ const PICTURE_COLUMNS: usize = 66;
 const PAGE_CELLS: usize = 32;
 const PAGE_WORDS: usize = 0x400;
 const ROW_WORDS: usize = 0x20;
-/// A picture no map draws, which the model's map holds where the importer gives none.
-const NO_PICTURE: Picture = Picture::new(0, Flip::None);
 
 /// Why the HUD can't run a turn over the engine's State.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -58,61 +56,47 @@ pub enum HudFault {
     CountPastCells,
     /// An auto-cancel item that isn't the selected one, which the original never holds.
     OneShotNotSelected,
-    /// A HUD tilemap cell's palette is past the eight colour sets.
-    Colours(BgPalette),
+    /// A HUD tilemap cell that is no model tile: a palette past the eight colour sets, or a
+    /// tile past the 400h pictures.
+    Cell(TilemapEntry),
 }
 
-/// The model's picture of a look.
-const fn picture(look: Look) -> Picture {
-    Picture::new(look.picture.index(), look.flip)
-}
-
-/// The model's pictures of a table of looks.
-fn pictures<const ACROSS: usize, const DOWN: usize>(
-    looks: [[Look; ACROSS]; DOWN],
-) -> [[Picture; ACROSS]; DOWN] {
-    looks.map(|row| row.map(picture))
-}
-
-/// The model's HUD pictures of the importer's.
-fn hud_pictures(imported: &data::hud::HudPictures) -> HudPictures {
+/// The model's HUD pictures of the importer's, which hold the same looks by the same names.
+const fn hud_pictures(imported: &data::hud::HudPictures) -> HudPictures {
     let icons = &imported.icons;
     HudPictures {
-        blank: picture(imported.blank),
-        digits: imported.digits.map(picture),
-        full_tank: picture(imported.full_tank),
-        empty_tank: picture(imported.empty_tank),
-        reserve_sign: pictures(imported.reserve_sign),
+        blank: imported.blank,
+        digits: imported.digits,
+        full_tank: imported.full_tank,
+        empty_tank: imported.empty_tank,
+        reserve_sign: imported.reserve_sign,
         icons: Icons {
-            missiles: pictures(icons.missiles),
-            super_missiles: pictures(icons.super_missiles),
-            power_bombs: pictures(icons.power_bombs),
-            grapple_beam: pictures(icons.grapple_beam),
-            x_ray_scope: pictures(icons.x_ray_scope),
+            missiles: icons.missiles,
+            super_missiles: icons.super_missiles,
+            power_bombs: icons.power_bombs,
+            grapple_beam: icons.grapple_beam,
+            x_ray_scope: icons.x_ray_scope,
         },
-        map_blank: picture(imported.map_blank),
-        diagonal: picture(imported.diagonal),
+        map_blank: imported.map_blank,
+        diagonal: imported.diagonal,
     }
 }
 
-/// The model's flips of a tilemap entry's.
-const fn flip(flip_x: bool, flip_y: bool) -> Flip {
-    match (flip_x, flip_y) {
-        (false, false) => Flip::None,
-        (true, false) => Flip::Across,
-        (false, true) => Flip::Down,
-        (true, true) => Flip::Both,
-    }
-}
-
-/// A tilemap word's picture and flips; its colours are the HUD's to choose.
-const fn word_picture(word: u16) -> Picture {
-    let entry = TilemapEntry::from_word(word);
-    Picture::new(entry.tile.0, flip(entry.flip_x, entry.flip_y))
+/// The look of a tilemap entry: its picture and flips; its colours are the HUD's to choose.
+fn look(entry: TilemapEntry) -> Option<Look> {
+    Some(Look {
+        picture: Picture::new(entry.tile.0)?,
+        flip: match (entry.flip_x, entry.flip_y) {
+            (false, false) => Flip::None,
+            (true, false) => Flip::Across,
+            (false, true) => Flip::Down,
+            (true, true) => Flip::Both,
+        },
+    })
 }
 
 /// The place `column` across and `row` down a grid.
-fn place(column: usize, row: usize) -> Point {
+fn place(column: usize, row: usize) -> Place {
     let coordinate = |value: usize| i32::try_from(value).unwrap_or(i32::MAX);
     Pair {
         x: coordinate(column),
@@ -120,11 +104,11 @@ fn place(column: usize, row: usize) -> Point {
     }
 }
 
-/// The model's pictures of `map`: column `c` of row `y` is word `c div 32 × 400h + y × 20h +
-/// c mod 32`, and the beyond words follow the map's two pages as a third, so the map's columns
-/// 64 and 65 are that page's first two.
-fn map_pictures(map: &data::map::AreaMap) -> MapPictures {
-    let mut pictures = MapPictures::filled(NO_PICTURE);
+/// The model's pictures of `map`, `none` where it has no word: column `c` of row `y` is word
+/// `c div 32 × 400h + y × 20h + c mod 32`, and the beyond words follow the map's two pages as a
+/// third, so the map's columns 64 and 65 are that page's first two.
+fn map_pictures(map: &data::map::AreaMap, none: Look) -> MapPictures {
+    let mut pictures = MapPictures::filled(none);
     for row in 0..usize::from(MAP_ROWS) {
         for column in 0..PICTURE_COLUMNS {
             let word = (column / PAGE_CELLS)
@@ -134,122 +118,61 @@ fn map_pictures(map: &data::map::AreaMap) -> MapPictures {
             let read = word
                 .checked_sub(MAP_TILEMAP_WORDS)
                 .map_or_else(|| map.tiles.get(word), |beyond| map.beyond.get(beyond));
-            if let Some(&word) = read {
-                pictures.set(place(column, row), word_picture(word));
+            if let Some(look) = read.and_then(|&word| look(TilemapEntry::from_word(word))) {
+                pictures.set(place(column, row), look);
             }
         }
     }
     pictures
 }
 
-/// An area's map as the model reads it, before and after she collects it.
+/// The HUD's content as the model reads it.
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Maps {
-    /// The map she hasn't collected.
-    not_collected: HerMap,
-    /// The same map collected.
-    collected: HerMap,
-}
-
-impl Maps {
-    /// Both of a map's, with its `pictures` and `charted` cells.
-    const fn of(pictures: &MapPictures, charted: &MapCellSet) -> Self {
-        let (pictures, charted) = (*pictures, *charted);
-        Self {
-            not_collected: HerMap {
-                pictures,
-                charted,
-                collected: false,
-            },
-            collected: HerMap {
-                pictures,
-                charted,
-                collected: true,
-            },
-        }
-    }
-}
-
-/// What the HUD draws with: every area's map, and the HUD's pictures.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct HudContent {
-    maps: Vec<(Area, Maps)>,
-    /// The maps of an area with none: the debug area's pointers name no map.
-    blank: Maps,
+struct Imported {
+    maps: Vec<(Area, HerMap)>,
+    /// The map of an area with none, picture 0 everywhere and nothing charted: the debug area's
+    /// pointers name no map.
+    blank: HerMap,
     pictures: HudPictures,
 }
+
+/// What the HUD draws with: every area's map, and the HUD's pictures; with nothing imported the
+/// HUD has nothing to draw, and its turns leave the State as it is.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct HudContent(Option<Imported>);
 
 impl HudContent {
     /// The model's content of the importer's maps and pictures.
     #[must_use]
     pub fn import(maps: &data::map::AreaMaps, pictures: &data::hud::HudPictures) -> Self {
-        Self {
-            maps: maps
-                .0
-                .iter()
-                .map(|map| {
-                    let maps = Maps::of(&map_pictures(map), &explored(&map.station));
-                    (map.area, maps)
-                })
-                .collect(),
+        let Some(none) = Picture::new(0).map(Look::unflipped) else {
+            return Self::default();
+        };
+        let her_map = |map: &data::map::AreaMap| HerMap {
+            pictures: map_pictures(map, none),
+            charted: explored(&map.station),
+        };
+        Self(Some(Imported {
+            maps: maps.0.iter().map(|map| (map.area, her_map(map))).collect(),
+            blank: HerMap {
+                pictures: MapPictures::filled(none),
+                charted: MapCellSet::default(),
+            },
             pictures: hud_pictures(pictures),
-            ..Self::default()
-        }
+        }))
     }
 
-    /// `area`'s map, collected or not; a blank map that charts nothing for an area with none.
+    /// `area`'s map, a blank one that charts nothing for an area with none, and the HUD's
+    /// pictures; `None` with nothing imported.
     #[must_use]
-    pub fn map(&self, area: Area, collected: bool) -> &HerMap {
-        let maps = self
+    pub fn of(&self, area: Area) -> Option<(&HerMap, &HudPictures)> {
+        let imported = self.0.as_ref()?;
+        let map = imported
             .maps
             .iter()
             .find(|(each, _)| *each == area)
-            .map_or(&self.blank, |(_, maps)| maps);
-        if collected {
-            &maps.collected
-        } else {
-            &maps.not_collected
-        }
-    }
-
-    /// The HUD's pictures.
-    #[must_use]
-    pub const fn pictures(&self) -> &HudPictures {
-        &self.pictures
-    }
-}
-
-impl Default for HudContent {
-    /// The content with nothing imported: no area's map, and every picture the first, unflipped.
-    fn default() -> Self {
-        Self {
-            maps: Vec::new(),
-            blank: Maps::of(&MapPictures::filled(NO_PICTURE), &MapCellSet::default()),
-            pictures: HudPictures {
-                blank: NO_PICTURE,
-                digits: [NO_PICTURE; 10],
-                full_tank: NO_PICTURE,
-                empty_tank: NO_PICTURE,
-                reserve_sign: [[NO_PICTURE; 2]; 3],
-                icons: Icons {
-                    missiles: [[NO_PICTURE; 3]; 2],
-                    super_missiles: [[NO_PICTURE; 2]; 2],
-                    power_bombs: [[NO_PICTURE; 2]; 2],
-                    grapple_beam: [[NO_PICTURE; 2]; 2],
-                    x_ray_scope: [[NO_PICTURE; 2]; 2],
-                },
-                map_blank: NO_PICTURE,
-                diagonal: NO_PICTURE,
-            },
-        }
-    }
-}
-
-/// The place of column `column` of row `row` on her map.
-fn map_cell(column: u8, row: usize) -> Point {
-    Pair {
-        x: i32::from(column),
-        y: i32::try_from(row).unwrap_or(i32::MAX),
+            .map_or(&imported.blank, |(_, map)| map);
+        Some((map, &imported.pictures))
     }
 }
 
@@ -259,7 +182,7 @@ pub fn explored(cells: &MapCells) -> MapCellSet {
     let mut set = MapCellSet::default();
     for (row, word) in cells.0.iter().enumerate() {
         for column in (0..MAP_COLUMNS).filter(|&column| (word >> column) & 1 != 0) {
-            set.insert(map_cell(column, row));
+            set.insert(place(usize::from(column), row));
         }
     }
     set
@@ -269,16 +192,18 @@ pub fn explored(cells: &MapCells) -> MapCellSet {
 fn engine_cells(set: &MapCellSet) -> MapCells {
     let mut cells = MapCells::default();
     for (row, word) in cells.0.iter_mut().enumerate() {
-        for column in (0..MAP_COLUMNS).filter(|&column| set.contains(map_cell(column, row))) {
+        for column in
+            (0..MAP_COLUMNS).filter(|&column| set.contains(place(usize::from(column), row)))
+        {
             *word |= 1 << column;
         }
     }
     cells
 }
 
-/// Whether the HUD cell at `point` is the mini-map's window's.
-fn in_window(point: Point) -> bool {
-    WINDOW_COLUMNS.contains(&point.x)
+/// Whether the HUD cell at `place` is the mini-map's window's.
+fn in_window(place: Place) -> bool {
+    WINDOW_COLUMNS.contains(&place.x)
 }
 
 /// The model's tile for a tilemap cell. The HUD draws every word above the background, so its
@@ -286,17 +211,19 @@ fn in_window(point: Point) -> bool {
 ///
 /// # Errors
 ///
-/// [`HudFault::Colours`] for a palette past the eight colour sets.
+/// [`HudFault::Cell`] for a palette past the eight colour sets or a tile past the pictures.
 pub fn tile(entry: TilemapEntry) -> Result<Tile, HudFault> {
-    let colours = ColourSet::new(entry.palette.0).ok_or(HudFault::Colours(entry.palette))?;
-    Ok(Picture::new(entry.tile.0, flip(entry.flip_x, entry.flip_y)).in_colours(colours))
+    look(entry)
+        .zip(ColourSet::new(entry.palette.0))
+        .map(|(look, colours)| Tile::new(look, colours))
+        .ok_or(HudFault::Cell(entry))
 }
 
 /// The tilemap cell for the model's tile, above the background.
 const fn entry(tile: Tile) -> TilemapEntry {
-    let flip = tile.picture.flip;
+    let flip = tile.look.flip;
     TilemapEntry {
-        tile: TileNumber(tile.picture.number),
+        tile: TileNumber(tile.look.picture.index()),
         palette: BgPalette(tile.colours.number()),
         priority: true,
         flip_x: matches!(flip, Flip::Across | Flip::Both),
@@ -388,14 +315,14 @@ fn write_tiles(
     tilemap: &mut HudTilemap,
     before: &HudState,
     after: &HudState,
-    keep: fn(Point) -> bool,
+    keep: fn(Place) -> bool,
 ) {
     let rows = tilemap.cells.as_chunks_mut::<HUD_COLUMNS>().0;
     for (row, cells) in rows.iter_mut().enumerate() {
         for (column, cell) in cells.iter_mut().enumerate() {
-            let point = place(column, row);
-            let drawn = after.grid.get(point);
-            if let Some(drawn) = drawn.filter(|_| keep(point) && drawn != before.grid.get(point)) {
+            let at = place(column, row);
+            let drawn = after.grid.get(at);
+            if let Some(drawn) = drawn.filter(|_| keep(at) && drawn != before.grid.get(at)) {
                 *cell = entry(drawn);
             }
         }
@@ -442,7 +369,8 @@ fn muted_by(movement: MovementType) -> Option<Mute> {
     }
 }
 
-/// What the model reads this turn from the engine's State; the mini-map runs when `runs`.
+/// What the model reads this turn from the engine's State over her `map`; the mini-map runs
+/// when `runs`.
 ///
 /// She can switch while the normal current state handler runs her (the elevator's locked
 /// handler doesn't) and she doesn't face the screen. The engine fires no missiles, super
@@ -451,7 +379,7 @@ fn muted_by(movement: MovementType) -> Option<Mute> {
 /// door or a load, meets no boss, and Mother Brain doesn't fall.
 fn inputs<'map>(
     state: &State,
-    content: &'map HudContent,
+    map: &'map HerMap,
     runs: bool,
 ) -> Result<FrameInputs<'map>, HudFault> {
     let samus = &state.samus;
@@ -516,9 +444,29 @@ fn inputs<'map>(
                     y: blocks.checked_div(width).unwrap_or(0),
                 },
             },
-            map: content.map(mini_map.area, mini_map.map_collected),
+            map,
+            map_collected: mini_map.map_collected,
         },
     })
+}
+
+/// The model's HUD before and after its frame over the engine's State, the mini-map running when
+/// `runs`; `None` with no HUD content.
+fn frame(
+    state: &State,
+    content: &Content,
+    runs: bool,
+) -> Result<Option<(HudState, HudState)>, HudFault> {
+    let Some((map, pictures)) = content.hud.of(state.hud.mini_map.area) else {
+        return Ok(None);
+    };
+    let before = model(&state.hud)?;
+    let inputs = inputs(state, map, runs)?;
+    let after = before
+        .clone()
+        .frame(&Rules::reference(), pictures, &inputs)
+        .state;
+    Ok(Some((before, after)))
 }
 
 /// The mini-map's turn, after her moves (`$90:E734`): it marks her cell explored and draws the
@@ -528,12 +476,9 @@ fn inputs<'map>(
 ///
 /// A [`HudFault`] when the State holds what the model isn't defined on.
 pub fn mini_map_turn(state: &mut State, content: &Content) -> Result<(), HudFault> {
-    let before = model(&state.hud)?;
-    let inputs = inputs(state, &content.hud, true)?;
-    let after = before
-        .clone()
-        .frame(&Rules::reference(), content.hud.pictures(), &inputs)
-        .state;
+    let Some((before, after)) = frame(state, content, true)? else {
+        return Ok(());
+    };
     let hud = &mut state.hud;
     write_tiles(&mut hud.tilemap, &before, &after, in_window);
     if after.explored != before.explored {
@@ -552,12 +497,9 @@ pub fn mini_map_turn(state: &mut State, content: &Content) -> Result<(), HudFaul
 // open: the weapons and her look read `Switched`, the sound domain the click; the engine has
 // neither yet, so the events go unread.
 pub fn hud_turn(state: &mut State, content: &Content) -> Result<(), HudFault> {
-    let before = model(&state.hud)?;
-    let inputs = inputs(state, &content.hud, false)?;
-    let after = before
-        .clone()
-        .frame(&Rules::reference(), content.hud.pictures(), &inputs)
-        .state;
+    let Some((before, after)) = frame(state, content, false)? else {
+        return Ok(());
+    };
     let hud = &mut state.hud;
     write_tiles(&mut hud.tilemap, &before, &after, |_| true);
     let Shown {

@@ -789,6 +789,8 @@ pub const LAST_PICTURE: u16 = 0x3FF;
 
 /// One of the room's tileset's pictures, by its index, `000` to `3FF`. Which picture a number is
 /// belongs to the tileset; the models only set the number.
+///
+/// The HUD's pictures and her map's are numbered the same way, by the importer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Picture(u16);
 
@@ -823,7 +825,8 @@ pub enum Flip {
     Both,
 }
 
-/// A look: the picture a cell shows, and how it is flipped (blocks' notation, `312:x`).
+/// A look: the picture a cell shows, and how it is flipped (blocks' notation, `312:x`): a block
+/// of the room, a cell of the HUD or of her map alike.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Look {
     /// The tileset's picture.

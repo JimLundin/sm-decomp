@@ -156,7 +156,7 @@ pub const CATALOGUE: [Behaviour; 19] = [
     fixed(
         BehaviourId::MiniMapWindow,
         Kind::Mechanic,
-        "The mini-map shows the 5 by 3 cells around her: the explored ones with their pictures, \
+        "The mini-map shows the 5 × 3 cells around her: the explored ones with their pictures, \
          the ones the map charts once she has it, the rest blank.",
     ),
     parameter(

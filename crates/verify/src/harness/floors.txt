@@ -180,7 +180,7 @@ progress terrain-quicksand 456
 hud area-brinstar 476
 hud area-maridia 257
 hud area-norfair 208
-hud boss-kraid-defeated 1069
+hud boss-kraid-defeated 1070
 hud boss-phantoon 2062
 hud chain-0012-91F8 1031
 hud chain-0013-92FD 599

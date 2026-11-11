@@ -1,16 +1,15 @@
 //! The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own
 //! cell blinking, the bosses that blank it, and the quirks at the map's first and last columns.
 
-use clean_types::{Pair, Screen};
+use clean_types::{Look, Pair, Screen};
 
-use crate::grid::{Point, at, plus};
+use crate::grid::{Place, at, plus};
 use crate::inputs::{FrameCount, MiniMapInputs};
 use crate::layout::{HER_CELL, WINDOW_REACH};
-use crate::map::HerMap;
 use crate::pictures::HudPictures;
 use crate::rules::{Boss, Rules};
 use crate::state::{HudState, MiniMapPower};
-use crate::tile::{BLINK, CHARTED, EXPLORED, Picture, Tile};
+use crate::tile::{BLINK, CHARTED, EXPLORED, Tile};
 
 /// Spec: Exploring. A screen is 256 px.
 const SCREEN_PX: u16 = 256;
@@ -26,21 +25,21 @@ const LAST_COLUMNS_START: i32 = 62;
 const PICTURE_NUMBER_MODULUS: u16 = 512;
 
 /// The cell seen itself.
-const HERE: Point = at(0, 0);
+const HERE: Place = at(0, 0);
 /// Spec: FirstColumnsShift. 32 columns along and a row higher.
-const ALONG_AND_UP: Point = at(32, -1);
+const ALONG_AND_UP: Place = at(32, -1);
 /// Spec: LastColumnsShift. 32 columns back and a row lower.
-const BACK_AND_DOWN: Point = at(-32, 1);
+const BACK_AND_DOWN: Place = at(-32, 1);
 /// Spec: DiagonalPicture. The cell over hers.
-const ABOVE: Point = at(0, -1);
+const ABOVE: Place = at(0, -1);
 
 /// Where a window cell reads her map, each an offset from the map's cell it sees.
 #[derive(Clone, Copy)]
 struct Reading {
     /// Where it reads whether the cell is explored or charted.
-    state: Point,
+    state: Place,
     /// Where it reads the cell's picture.
-    picture: Point,
+    picture: Place,
 }
 
 /// Spec: MiniMapWindow. The window cell `k` across and `j` down from hers shows the map's cell
@@ -80,10 +79,11 @@ const fn reading(column: i32) -> Reading {
 /// What a window cell shows of the map's cell it reads (spec: MiniMapWindow).
 #[derive(Clone, Copy)]
 enum WindowCell {
-    /// It is explored: its picture, in the explored colours.
-    Explored(Picture),
-    /// Not explored, but charted by a map she has collected: its picture, in the charted colours.
-    Charted(Picture),
+    /// It is explored: its picture with its flips, in the explored colours.
+    Explored(Look),
+    /// Not explored, but charted by a map she has collected: its picture with its flips, in the
+    /// charted colours.
+    Charted(Look),
     /// Neither, or the cell it reads lies outside the map: the map's blank, in the charted
     /// colours.
     Blank,
@@ -93,9 +93,9 @@ impl WindowCell {
     /// The HUD's cell that shows it.
     const fn tile(self, pictures: &HudPictures) -> Tile {
         match self {
-            Self::Explored(picture) => picture.in_colours(EXPLORED),
-            Self::Charted(picture) => picture.in_colours(CHARTED),
-            Self::Blank => pictures.map_blank.in_colours(CHARTED),
+            Self::Explored(look) => Tile::new(look, EXPLORED),
+            Self::Charted(look) => Tile::new(look, CHARTED),
+            Self::Blank => Tile::new(pictures.map_blank, CHARTED),
         }
     }
 }
@@ -103,7 +103,7 @@ impl WindowCell {
 /// A room's screen `(sx, sy)` across and down from its top-left cell `(rx, ry)` is the map's cell
 /// `((rx + sx) mod 64, ry + sy)`: the columns wrap round the map, the rows don't (spec:
 /// Exploring, BossBlanksTheMap).
-fn screen_cell(room: Point, screen: Screen) -> Point {
+fn screen_cell(room: Place, screen: Screen) -> Place {
     at(
         room.x
             .saturating_add(i32::from(screen.x))
@@ -120,15 +120,16 @@ const fn her_screen(position: Pair<u16>) -> Screen {
     }
 }
 
-/// Spec: DiagonalPicture. Whether `picture` counts as the diagonal: its number mod 512 is the
-/// diagonal's.
-const fn is_diagonal(picture: Picture, diagonal: Picture) -> bool {
-    picture.number % PICTURE_NUMBER_MODULUS == diagonal.number % PICTURE_NUMBER_MODULUS
+/// Spec: DiagonalPicture. Whether `look` counts as the diagonal: its picture's number mod 512 is
+/// the diagonal's, whatever the flips.
+const fn is_diagonal(look: Look, diagonal: Look) -> bool {
+    look.picture.index() % PICTURE_NUMBER_MODULUS
+        == diagonal.picture.index() % PICTURE_NUMBER_MODULUS
 }
 
 /// The mini-map's window: each of its cells on the HUD with its offset from hers, the top row
 /// first, each row left to right.
-fn window() -> impl Iterator<Item = (Point, Point)> {
+fn window() -> impl Iterator<Item = (Place, Place)> {
     let reach = WINDOW_REACH;
     (reach.y.saturating_neg()..=reach.y)
         .flat_map(move |y| (reach.x.saturating_neg()..=reach.x).map(move |x| at(x, y)))
@@ -162,20 +163,21 @@ impl HudState {
         self.explored.insert(her);
         let reading = reading(her.x);
         for (place, offset) in window() {
-            let cell = self.window_cell(inputs.map, pictures, reading, plus(her, offset));
+            let cell = self.window_cell(inputs, pictures, reading, plus(her, offset));
             self.grid.set(place, cell.tile(pictures));
         }
-        let her_cell = self.window_cell(inputs.map, pictures, reading, her);
+        let her_cell = self.window_cell(inputs, pictures, reading, her);
         // Spec: DiagonalPicture. Her window cell shown explored, with a picture that counts as
         // the diagonal: the cell over hers joins the explored cells, shown from the next frame.
-        if let WindowCell::Explored(picture) = her_cell
-            && is_diagonal(picture, pictures.diagonal)
+        if let WindowCell::Explored(look) = her_cell
+            && is_diagonal(look, pictures.diagonal)
         {
             self.explored.insert(plus(her, ABOVE));
         }
-        // Spec: HerBlink. In the first half of the blink's cycle, her window cell takes the blink
-        // colours.
-        if rules.her_blink.first_half(frame) {
+        // Spec: HerBlink. The blink's first half shows her window cell in the blink colours; its
+        // second half leaves it as drawn.
+        let in_blink_colours = rules.her_blink.first_half(frame);
+        if in_blink_colours {
             self.grid
                 .set(HER_CELL, her_cell.tile(pictures).in_colours(BLINK));
         }
@@ -189,7 +191,7 @@ impl HudState {
         rules: &Rules,
         pictures: &HudPictures,
         boss: Boss,
-        room: Point,
+        room: Place,
     ) {
         for (place, _) in window() {
             self.grid.set(place, WindowCell::Blank.tile(pictures));
@@ -201,24 +203,25 @@ impl HudState {
     }
 
     /// Spec: MiniMapWindow. What the window cell that sees the map's cell `seen` shows, its state
-    /// and picture read as `reading` says. A picture read outside the map and its beyond
-    /// pictures is the map's blank (§1.5).
+    /// and picture read as `reading` says: explored, or charted by a map she has collected, or
+    /// blank. A picture read outside the map and its beyond pictures is the map's blank (§1.5).
     fn window_cell(
         &self,
-        map: &HerMap,
+        inputs: &MiniMapInputs<'_>,
         pictures: &HudPictures,
         reading: Reading,
-        seen: Point,
+        seen: Place,
     ) -> WindowCell {
         let state = plus(seen, reading.state);
-        let picture = map
+        let look = inputs
+            .map
             .pictures
             .get(plus(seen, reading.picture))
             .unwrap_or(pictures.map_blank);
         if self.explored.contains(state) {
-            WindowCell::Explored(picture)
-        } else if map.collected && map.charted.contains(state) {
-            WindowCell::Charted(picture)
+            WindowCell::Explored(look)
+        } else if inputs.map_collected && inputs.map.charted.contains(state) {
+            WindowCell::Charted(look)
         } else {
             WindowCell::Blank
         }

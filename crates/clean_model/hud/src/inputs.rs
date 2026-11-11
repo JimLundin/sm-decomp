@@ -4,7 +4,7 @@
 use clean_types::{Pair, by_member};
 use enum_map::EnumMap;
 
-use crate::grid::Point;
+use crate::grid::Place;
 use crate::item::{Ammo, SelectableItem};
 use crate::map::HerMap;
 
@@ -183,7 +183,7 @@ pub struct Controls {
 #[derive(Clone, Copy, Debug)]
 pub struct Room {
     /// Its top-left cell on her map.
-    pub cell: Point,
+    pub cell: Place,
     /// Its size in 16 px blocks, across and down.
     pub blocks: Pair<u16>,
 }
@@ -202,8 +202,10 @@ pub struct MiniMapInputs<'map> {
     pub position: Pair<u16>,
     /// Her room.
     pub room: Room,
-    /// Her map.
+    /// Her map: its pictures and the cells it charts.
     pub map: &'map HerMap,
+    /// She has collected her map, so the window shows the cells it charts.
+    pub map_collected: bool,
 }
 
 /// Everything the HUD reads in one frame of play (§1.3).

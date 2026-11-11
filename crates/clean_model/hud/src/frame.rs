@@ -1,7 +1,7 @@
 //! One frame of the HUD, and a boss met outside a frame (§5: the order that matters).
 
-use crate::events::Event;
-use crate::grid::Point;
+use crate::events::HudEvent;
+use crate::grid::Place;
 use crate::inputs::FrameInputs;
 use crate::pictures::HudPictures;
 use crate::rules::{Boss, RoomBoss, Rules};
@@ -13,7 +13,7 @@ pub struct FrameOutcome {
     /// The state after the frame; its grid is the picture the HUD draws.
     pub state: HudState,
     /// What it reports, in the order raised: `Switched`, then `Click`.
-    pub events: Vec<Event>,
+    pub events: Vec<HudEvent>,
 }
 
 impl HudState {
@@ -23,9 +23,9 @@ impl HudState {
     /// energy, the counts and the sign, a pickup's icon, the highlight, and the one-shot item's
     /// flash last.
     ///
-    /// Spec: SwitchClick. When the item shown highlighted changes, from an item to none as much
-    /// as to another item, and nothing mutes it (a spin jump, a wall jump, the grapple beam out,
-    /// time stopped), the frame requests a `Click`.
+    /// Spec: SwitchClick. When the item shown highlighted after the frame isn't the one shown
+    /// before it, from an item to none as much as to another item, and nothing mutes it (a spin
+    /// jump, a wall jump, the grapple beam out, time stopped), the frame requests a `Click`.
     #[must_use]
     pub fn frame(
         mut self,
@@ -33,6 +33,7 @@ impl HudState {
         pictures: &HudPictures,
         inputs: &FrameInputs<'_>,
     ) -> FrameOutcome {
+        let highlighted_before = self.shown.highlighted;
         let mut events = Vec::new();
         events.extend(self.press_buttons(inputs.controls, &inputs.status));
         self.shot_cancels(inputs.controls);
@@ -59,10 +60,11 @@ impl HudState {
         if let Some(item) = inputs.collected {
             self.icon_appears(pictures, item);
         }
-        let highlight_moved = self.highlight(pictures);
+        self.highlight(pictures);
         self.one_shot_flash(rules, pictures, inputs.frame);
+        let highlight_moved = self.shown.highlighted != highlighted_before;
         if highlight_moved && inputs.controls.muted_by.is_none() {
-            events.push(Event::Click);
+            events.push(HudEvent::Click);
         }
         FrameOutcome {
             state: self,
@@ -80,7 +82,7 @@ impl HudState {
         rules: &Rules,
         pictures: &HudPictures,
         boss: RoomBoss,
-        room: Point,
+        room: Place,
     ) -> Self {
         self.blank_mini_map(rules, pictures, Boss::InItsRoom(boss), room);
         self

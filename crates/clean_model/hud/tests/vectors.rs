@@ -2,8 +2,9 @@
 //! checked against them.
 //!
 //! The file is read with `toml` and `serde` into the shape declared once below, every table of
-//! it closed to keys the file's header doesn't define and every name an enum of the names it
-//! does; that shape is then turned into the model's own types.
+//! it closed to keys the file's header doesn't define, every name an enum of the names it does,
+//! and every "column,row" key a place on the grid it names; that shape is then turned into the
+//! model's own types.
 
 #[cfg(test)]
 mod shape {
@@ -11,8 +12,17 @@ mod shape {
 
     use std::collections::BTreeMap;
 
-    use clean_model_hud::{ColourSet, Event, Flip, Picture, SelectableItem, Tile};
+    use clean_model_hud::{
+        ColourSet, Flip, HudEvent, Look, Pair, Picture, Place, SelectableItem, Tile,
+    };
     use serde::Deserialize;
+
+    /// The HUD's columns and rows (Notation).
+    pub type HudPlaceIn = PlaceIn<32, 3>;
+    /// Her map's columns and rows (Notation).
+    pub type MapPlaceIn = PlaceIn<64, 32>;
+    /// The beyond pictures' columns and her map's rows (spec: `LastColumnsShift`).
+    pub type BeyondPlaceIn = PlaceIn<2, 32>;
 
     /// The whole file.
     #[derive(Deserialize)]
@@ -102,7 +112,7 @@ mod shape {
     #[serde(deny_unknown_fields)]
     pub struct AfterIn {
         #[serde(default)]
-        pub changed: BTreeMap<String, TileIn>,
+        pub changed: BTreeMap<HudPlaceIn, TileIn>,
         pub shown: Option<ShownIn>,
         pub selection: Option<ItemName>,
         pub one_shot: Option<bool>,
@@ -171,11 +181,11 @@ mod shape {
         #[serde(default)]
         pub collected: bool,
         #[serde(default)]
-        pub pictures: BTreeMap<String, PictureIn>,
+        pub pictures: BTreeMap<MapPlaceIn, PictureIn>,
         #[serde(default)]
         pub charted: Vec<[i32; 2]>,
         #[serde(default)]
-        pub beyond: BTreeMap<String, PictureIn>,
+        pub beyond: BTreeMap<BeyondPlaceIn, PictureIn>,
     }
 
     /// An item's name, or `"None"`.
@@ -230,10 +240,42 @@ mod shape {
         RidleyInCeres,
     }
 
+    /// A `"column,row"` key: a place, column first, on a grid `COLUMNS` across by `ROWS` down.
+    #[derive(Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    #[serde(try_from = "String")]
+    pub struct PlaceIn<const COLUMNS: i32, const ROWS: i32> {
+        column: i32,
+        row: i32,
+    }
+
+    impl<const COLUMNS: i32, const ROWS: i32> PlaceIn<COLUMNS, ROWS> {
+        /// The place it names.
+        pub const fn place(self) -> Place {
+            Pair {
+                x: self.column,
+                y: self.row,
+            }
+        }
+    }
+
+    impl<const COLUMNS: i32, const ROWS: i32> TryFrom<String> for PlaceIn<COLUMNS, ROWS> {
+        type Error = String;
+        fn try_from(text: String) -> Result<Self, String> {
+            let bad = || format!("no place {text} on a grid of {COLUMNS} columns by {ROWS} rows");
+            let (column, row) = text.split_once(',').ok_or_else(bad)?;
+            let column: i32 = column.trim().parse().map_err(|_| bad())?;
+            let row: i32 = row.trim().parse().map_err(|_| bad())?;
+            if !(0..COLUMNS).contains(&column) || !(0..ROWS).contains(&row) {
+                return Err(bad());
+            }
+            Ok(Self { column, row })
+        }
+    }
+
     /// A picture, `PPP` then `h` and `v` for its flips.
     #[derive(Deserialize, Clone, Copy)]
     #[serde(try_from = "String")]
-    pub struct PictureIn(pub Picture);
+    pub struct PictureIn(pub Look);
 
     impl TryFrom<String> for PictureIn {
         type Error = String;
@@ -242,9 +284,7 @@ mod shape {
                 .find(|c: char| !c.is_ascii_hexdigit())
                 .unwrap_or(text.len());
             let (number, flips) = text.split_at(split);
-            let number =
-                u16::from_str_radix(number, 16).map_err(|_| format!("bad picture {text}"))?;
-            Ok(Self(Picture::new(number, flip(flips)?)))
+            Ok(Self(look(number, flips)?))
         }
     }
 
@@ -258,7 +298,6 @@ mod shape {
         fn try_from(text: String) -> Result<Self, String> {
             let bad = || format!("bad cell {text}");
             let (number, rest) = text.split_once(':').ok_or_else(bad)?;
-            let number = u16::from_str_radix(number, 16).map_err(|_| bad())?;
             let mut chars = rest.chars();
             let colours = chars
                 .next()
@@ -266,9 +305,20 @@ mod shape {
                 .and_then(|c| u8::try_from(c).ok())
                 .and_then(ColourSet::new)
                 .ok_or_else(bad)?;
-            let picture = Picture::new(number, flip(chars.as_str())?);
-            Ok(Self(picture.in_colours(colours)))
+            Ok(Self(Tile::new(look(number, chars.as_str())?, colours)))
         }
+    }
+
+    /// A picture's three hex digits and its flip letters.
+    fn look(number: &str, flips: &str) -> Result<Look, String> {
+        let picture = u16::from_str_radix(number, 16)
+            .ok()
+            .and_then(Picture::new)
+            .ok_or_else(|| format!("no picture {number}"))?;
+        Ok(Look {
+            picture,
+            flip: flip(flips)?,
+        })
     }
 
     /// A HUD row: its 32 cells, left to right, separated by spaces.
@@ -294,13 +344,13 @@ mod shape {
     /// An event, `Switched:<item>` or `Click`.
     #[derive(Deserialize, Clone, Copy)]
     #[serde(try_from = "String")]
-    pub struct EventIn(pub Event);
+    pub struct EventIn(pub HudEvent);
 
     impl TryFrom<String> for EventIn {
         type Error = String;
         fn try_from(text: String) -> Result<Self, String> {
             if text == "Click" {
-                return Ok(Self(Event::Click));
+                return Ok(Self(HudEvent::Click));
             }
             let item = text
                 .strip_prefix("Switched:")
@@ -308,7 +358,7 @@ mod shape {
             let item: ItemName = toml::Value::String(item.to_owned())
                 .try_into()
                 .map_err(|_| format!("unknown item in {text}"))?;
-            Ok(Self(Event::Switched(item.item())))
+            Ok(Self(HudEvent::Switched(item.item())))
         }
     }
 
@@ -346,17 +396,17 @@ mod convert {
     use std::collections::BTreeMap;
 
     use clean_model_hud::{
-        Ammo, Ammunition, CancelButton, Controls, Energy, Equipped, Event, FrameCount, FrameInputs,
-        HerMap, HudGrid, HudPictures, HudState, Icons, MapCellSet, MapPictures, MiniMapInputs,
-        MiniMapPower, Mute, Pair, Picture, Point, Reserve, ReserveMode, Room, RoomBoss, Rules,
-        SelectButton, SelectableItem, Selection, Shown, Status, Stock,
+        Ammo, Ammunition, CancelButton, Controls, Energy, Equipped, FrameCount, FrameInputs,
+        HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet, MapPictures,
+        MiniMapInputs, MiniMapPower, Mute, Pair, Place, Reserve, ReserveMode, Room, RoomBoss,
+        Rules, SelectButton, SelectableItem, Selection, Shown, Status, Stock,
     };
     use enum_map::enum_map;
 
     use super::shape::{
         AfterIn, BeforeIn, BossName, CancelIn, Equipment, IconsIn, InputsIn, ItemName, MapIn,
-        MiniMapIn, MuteIn, PictureIn, PicturesIn, RoomIn, SelectIn, ShownIn, Step, VectorFile,
-        VectorIn,
+        MiniMapIn, MuteIn, PictureIn, PicturesIn, PlaceIn, RoomIn, SelectIn, ShownIn, Step,
+        VectorFile, VectorIn,
     };
 
     /// The vector file.
@@ -369,8 +419,6 @@ mod convert {
     const MAP_COLUMNS: i32 = 64;
     /// Her map's rows.
     const MAP_ROWS: i32 = 32;
-    /// The beyond pictures' columns (spec: `LastColumnsShift`).
-    const BEYOND_COLUMNS: i32 = 2;
 
     /// The file, read.
     pub fn load() -> Result<VectorFile, String> {
@@ -418,7 +466,7 @@ mod convert {
     /// Rows of pictures, as the model holds them.
     fn rows<const ACROSS: usize, const DOWN: usize>(
         rows: &[[PictureIn; ACROSS]; DOWN],
-    ) -> [[Picture; ACROSS]; DOWN] {
+    ) -> [[Look; ACROSS]; DOWN] {
         rows.map(|row| row.map(|picture| picture.0))
     }
 
@@ -448,13 +496,13 @@ mod convert {
                 }
             };
             let expected = expected_state(&self.after, &before)?;
-            let expected_events: Vec<Event> = self.after.events.iter().map(|e| e.0).collect();
+            let expected_events: Vec<HudEvent> = self.after.events.iter().map(|e| e.0).collect();
             Ok(differences(&expected, &actual, &expected_events, &events))
         }
     }
 
     /// A `BossEvent`'s inputs: her room's cell and the boss, and nothing else.
-    fn boss_event(inputs: &InputsIn) -> Result<(RoomBoss, Point), String> {
+    fn boss_event(inputs: &InputsIn) -> Result<(RoomBoss, Place), String> {
         let InputsIn {
             energy: None,
             reserve: None,
@@ -581,6 +629,7 @@ mod convert {
                     blocks: Pair { x: 0, y: 0 },
                 },
                 map,
+                map_collected: false,
             };
             return Ok((idle, false));
         };
@@ -598,6 +647,7 @@ mod convert {
                 blocks: Pair { x: across, y: down },
             },
             map,
+            map_collected: mini_map.map.as_ref().is_some_and(|map| map.collected),
         };
         Ok((inputs, mini_map.mother_brain_falls.unwrap_or(false)))
     }
@@ -607,10 +657,9 @@ mod convert {
         let mut map = HerMap {
             pictures: MapPictures::filled(pictures.map_blank),
             charted: MapCellSet::default(),
-            collected: false,
         };
         let Some(MapIn {
-            collected,
+            collected: _,
             pictures: cells,
             charted,
             beyond,
@@ -621,26 +670,21 @@ mod convert {
                 None => Ok(map),
             };
         };
-        map.collected = *collected;
-        lay_pictures(&mut map.pictures, cells, 0..MAP_COLUMNS, 0)?;
-        lay_pictures(&mut map.pictures, beyond, 0..BEYOND_COLUMNS, MAP_COLUMNS)?;
+        lay_pictures(&mut map.pictures, cells, 0);
+        lay_pictures(&mut map.pictures, beyond, MAP_COLUMNS);
         map.charted = cell_set(charted)?;
         Ok(map)
     }
 
-    /// Lays `"column,row" = picture` pictures, each in `columns`, into her map's pictures
-    /// `shift` columns along: the beyond pictures' columns 0 and 1 are its columns 64 and 65.
-    fn lay_pictures(
+    /// Lays `"column,row" = picture` pictures into her map's pictures `shift` columns along: the
+    /// beyond pictures' columns 0 and 1 are its columns 64 and 65.
+    fn lay_pictures<const COLUMNS: i32, const ROWS: i32>(
         grid: &mut MapPictures,
-        pictures: &BTreeMap<String, PictureIn>,
-        columns: std::ops::Range<i32>,
+        pictures: &BTreeMap<PlaceIn<COLUMNS, ROWS>, PictureIn>,
         shift: i32,
-    ) -> Result<(), String> {
+    ) {
         for (key, picture) in pictures {
-            let at = coordinates(key)?;
-            if !columns.contains(&at.x) || !(0..MAP_ROWS).contains(&at.y) {
-                return Err(format!("no map cell {key}"));
-            }
+            let at = key.place();
             grid.set(
                 Pair {
                     x: at.x.saturating_add(shift),
@@ -649,7 +693,6 @@ mod convert {
                 picture.0,
             );
         }
-        Ok(())
     }
 
     /// The state from a before; its HUD left out, every cell is the blank in its colours.
@@ -672,13 +715,8 @@ mod convert {
     /// The state an after expects: the before's, with the after's changes.
     fn expected_state(after: &AfterIn, before: &HudState) -> Result<HudState, String> {
         let mut grid = before.grid;
-        for (key, tile) in &after.changed {
-            let Pair { x: row, y: column } = coordinates(key)?;
-            let at = Pair { x: column, y: row };
-            if grid.get(at).is_none() {
-                return Err(format!("no HUD cell {key}"));
-            }
-            grid.set(at, tile.0);
+        for (place, tile) in &after.changed {
+            grid.set(place.place(), tile.0);
         }
         let item = after
             .selection
@@ -743,27 +781,17 @@ mod convert {
         Ok(set)
     }
 
-    /// A `[x, y]` pair as a place.
-    const fn point([x, y]: [i32; 2]) -> Point {
+    /// A `[column, row]` pair as a place.
+    const fn point([x, y]: [i32; 2]) -> Place {
         Pair { x, y }
-    }
-
-    /// A `"a,b"` key, as `x` and `y` in the order written.
-    fn coordinates(key: &str) -> Result<Point, String> {
-        let bad = || format!("bad key {key}");
-        let (a, b) = key.split_once(',').ok_or_else(bad)?;
-        Ok(Pair {
-            x: a.trim().parse().map_err(|_| bad())?,
-            y: b.trim().parse().map_err(|_| bad())?,
-        })
     }
 
     /// Every way the model's after differs from the vector's.
     fn differences(
         expected: &HudState,
         actual: &HudState,
-        expected_events: &[Event],
-        actual_events: &[Event],
+        expected_events: &[HudEvent],
+        actual_events: &[HudEvent],
     ) -> Vec<String> {
         let mut problems = grid_differences(&expected.grid, &actual.grid);
         if expected.shown != actual.shown {
@@ -799,7 +827,7 @@ mod convert {
         problems
     }
 
-    /// The cells that differ, each named "row,column" as the vector file names them.
+    /// The cells that differ, each named "column,row" as the vector file names them.
     fn grid_differences(expected: &HudGrid, actual: &HudGrid) -> Vec<String> {
         let mut problems = Vec::new();
         for y in 0..HUD_ROWS {
@@ -807,7 +835,7 @@ mod convert {
                 let at = Pair { x, y };
                 if expected.get(at) != actual.get(at) {
                     problems.push(format!(
-                        "cell {y},{x}: expected {:?}, got {:?}",
+                        "cell {x},{y}: expected {:?}, got {:?}",
                         expected.get(at),
                         actual.get(at)
                     ));
@@ -828,18 +856,21 @@ mod convert {
 
 #[cfg(test)]
 mod tests {
-    use clean_model_hud::{BehaviourId, CATALOGUE, Checked, Event};
+    use clean_model_hud::{BehaviourId, CATALOGUE, Checked, HudEvent};
 
     use crate::convert::{load, load_changed, pictures};
     use crate::shape::VectorIn;
 
-    /// Changes to the file that each add a key or a name its header doesn't define, one in each
-    /// kind of table and each kind of name.
-    const UNKNOWN: [(&str, &str); 16] = [
+    /// Changes to the file that each add a key or a name its header doesn't define: a key in
+    /// each table, a place off its grid or not written "column,row" in each table keyed by
+    /// places, and each kind of name.
+    const UNKNOWN: [(&str, &str); 30] = [
+        // A key in each table.
         ("[pictures]", "speed = 1\n[pictures]"),
-        ("diagonal = \"0E4\"", "diagonal = \"0E4\"\nspeed = \"000\""),
+        ("diagonal = \"2E4\"", "diagonal = \"2E4\"\nspeed = \"000\""),
         ("[pictures.icons]", "[pictures.icons]\nSpeedBooster = []"),
         ("id = \"C-R1\"", "id = \"C-R1\"\nspeed = 1"),
+        ("[vector.before]", "[vector.before]\nspeed = 1"),
         (
             "shown = { energy = 333,",
             "shown = { speed = 1, energy = 333,",
@@ -849,9 +880,21 @@ mod tests {
         ("blocks = [128, 32] }", "blocks = [128, 32], speed = 1 }"),
         ("collected = false", "collected = false\nspeed = 1"),
         (
-            "changed = { \"2,7\" = \"055:3\" }",
-            "changed = { \"2,7\" = \"055:3\" }\nspeed = 1",
+            "changed = { \"7,2\" = \"055:3\" }",
+            "changed = { \"7,2\" = \"055:3\" }\nspeed = 1",
         ),
+        (
+            "shown = { energy = 338,",
+            "shown = { speed = 1, energy = 338,",
+        ),
+        // A place off its grid, or not a place, in each table keyed by places. Column 7, row 2
+        // written row first is row 7, which the HUD lacks.
+        ("\"7,2\" = \"055:3\"", "\"2,7\" = \"055:3\""),
+        ("\"7,2\" = \"055:3\"", "\"speed\" = \"055:3\""),
+        ("\"30,20\" = \"06Av\"", "\"64,20\" = \"06Av\""),
+        ("\"30,20\" = \"06Av\"", "\"30\" = \"06Av\""),
+        ("beyond = { \"0,9\"", "beyond = { \"2,9\""),
+        // Each kind of name.
         ("boss = \"Kraid\"", "boss = \"Mario\""),
         ("muted_by = \"SpinJump\"", "muted_by = \"Somersault\""),
         ("source = \"constructed\"", "source = \"recorded\""),
@@ -861,6 +904,17 @@ mod tests {
             "\"Switched:Missiles\", \"Clack\"",
         ),
         ("selection = \"None\"", "selection = \"Nothing\""),
+        (
+            "equipped = [\"XRayScope\"]",
+            "equipped = [\"SpeedBooster\"]",
+        ),
+        ("select = \"Pressed\"", "select = \"Held\""),
+        ("cancel = \"Pressed\"", "cancel = \"Released\""),
+        ("collected = \"Missiles\"", "collected = \"Bombs\""),
+        // A picture, a flip or a colour set the format lacks.
+        ("full_tank = \"0A1\"", "full_tank = \"4A1\""),
+        ("full_tank = \"0A1\"", "full_tank = \"0A1x\""),
+        ("\"7,2\" = \"055:3\"", "\"7,2\" = \"055:8\""),
     ];
 
     #[test]
@@ -879,8 +933,8 @@ mod tests {
     /// (spec: `Switching`, `SwitchClick`).
     fn exercised(vector: &VectorIn) -> impl Iterator<Item = String> + '_ {
         let outputs = vector.after.events.iter().map(|event| match event.0 {
-            Event::Switched(_) => "Switching".to_owned(),
-            Event::Click => "SwitchClick".to_owned(),
+            HudEvent::Switched(_) => "Switching".to_owned(),
+            HudEvent::Click => "SwitchClick".to_owned(),
         });
         vector.entries.iter().cloned().chain(outputs)
     }

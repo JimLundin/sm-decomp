@@ -1,39 +1,12 @@
-//! What a cell of the HUD shows (§1.4): a picture, perhaps flipped, in one of the HUD's eight
-//! colour sets; and the colour sets by the role the spec gives each.
+//! What a cell of the HUD shows (§1.4): a picture with its flips (the shared `Look`), in one of
+//! the HUD's eight colour sets; and the colour sets by the role the spec gives each.
 
-use clean_types::Flip;
+use clean_types::Look;
 
 use crate::grid::Grid;
 
 /// The HUD's colour sets (§1.4: eight palettes).
 const COLOUR_SETS: u8 = 8;
-
-/// A picture with its flips (§1.4): a number the importer gives it, the HUD's and her map's
-/// numbered alike.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Picture {
-    /// Its number.
-    pub number: u16,
-    /// How it is flipped.
-    pub flip: Flip,
-}
-
-impl Picture {
-    /// The picture numbered `number`, flipped as `flip` says.
-    #[must_use]
-    pub const fn new(number: u16, flip: Flip) -> Self {
-        Self { number, flip }
-    }
-
-    /// This picture as a cell in `colours`, its flips kept.
-    #[must_use]
-    pub const fn in_colours(self, colours: ColourSet) -> Tile {
-        Tile {
-            picture: self,
-            colours,
-        }
-    }
-}
 
 /// One of the HUD's eight colour sets, 0 to 7 (§1.4).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -66,16 +39,22 @@ impl ColourSet {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Tile {
     /// The picture and its flips.
-    pub picture: Picture,
+    pub look: Look,
     /// Its colour set.
     pub colours: ColourSet,
 }
 
 impl Tile {
+    /// The cell that shows `look`, its flips kept, in `colours`.
+    #[must_use]
+    pub const fn new(look: Look, colours: ColourSet) -> Self {
+        Self { look, colours }
+    }
+
     /// The same picture and flips in other colours.
     #[must_use]
     pub const fn in_colours(self, colours: ColourSet) -> Self {
-        self.picture.in_colours(colours)
+        Self::new(self.look, colours)
     }
 }
 

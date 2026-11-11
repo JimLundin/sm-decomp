@@ -17,7 +17,7 @@ record pair into a vector of the spec's format and runs the model over it.
 
 Over the 14,947 record pairs that ran one frame of gameplay in one room (game state 8 at both,
 `05B6` advanced by one, the same room `079B`), with the 20 pairs where a count fell left out (the
-interim shot mask, §Harness; `why_shot.py` reports them apart, below the table):
+first rounds' shot mask; `why_shot.py` reports them apart, below the table):
 
 | Part | Frames | Model | Null model |
 | --- | ---: | ---: | ---: |
@@ -58,7 +58,15 @@ and `cons.py` wrote the constructed vectors. Round 3's files are in `$TEMP/colla
 named bosses), and `migrate.py` (seed 7) then gave every picture a fresh number and made the
 mini-map's off a State (§Adversary 79's fixes), and `vecrun.py` runs the 72 vectors: 72 of 72 agree.
 `real_content.py` checks the file for the game's content (§The harness cases, §Adversary 79's
-fixes).
+fixes). Round 4's are in `$TEMP/collab/hud-r4`: `scripts/edit_vectors.py` wrote the file's
+column-first keys and its three new vectors (§Adversary 83's observer items), `model.py` reads the
+keys column first and `vecrun.py` ran the 75 vectors: 75 of 75 agree (82 of 82 after §Adversary 92's
+fixes). `mutants.py` runs eight mutants of `model.py`, each killed (the three new ones by one new
+vector each, and by no vector of round 3's file). `xcheck4.py` runs the 39 vectors with a mini-map
+update through `mm_bytes.py`, the file's invented map blank and diagonal in place of the vanilla
+ones: 37 agree, and the two that differ are spec §1.5's choices, as above. `real_content.py` there
+reads the HUD's keys column first: 0 hits. `scripts/ovr.rs` and `scripts/join.rs` (cdylibs over
+`verify`, run by `scripts/run.py`) count the overrun records of cache-v2 (§Harness).
 
 **Row names.** The chain rows go by opaque ids, as in the camera's notes, and so does one row
 whose name is a lexicon match:
@@ -114,9 +122,9 @@ the scratch `$12`..`$34`.
 | equipment | `09A2` (equipped items) | bit 4000h grapple, 8000h x-ray |
 | item select, item cancel | `8F` (newly pressed) and `8B` (held) of record N, against the bindings `09BA` (item select) and `09B8` (item cancel) | `Pressed` when `8F` has the binding; cancel `Held` when only `8B` has it |
 | can switch | `0A42` (Samus current state handler) and `0A1C` (pose) at N+1 | `0A42` = `$E695` (normal; the demo handler `$E6C9` belongs to the demos) and `0A1C` ∉ {0, 9Bh} (facing forward, `$90:DCE0`) |
-| the shot's cancel | the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6` | true when one of them is hit in frame N+1 (an instruction hit, as `collected` is named); not in the cached records yet: §Harness |
+| the shot's cancel | the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6` | true when one of them is hit in frame N+1 (an instruction hit, as `collected` is named); cache-v2 watches all four on every row |
 | why no click | `0A1F` low byte, `0D32`, `0A78` at N+1 | 3 spin jumping, 14h wall jumping; `0D32` ≠ `$C4F0` the grapple beam is out; `0A78` ≠ 0 time stopped |
-| collected | the item PLM instructions | not in any cached record; a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` names it |
+| collected | the item PLM instructions | a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` in frame N+1 names it; cache-v2 watches all five on every row |
 | the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship). The title demos themselves are the demos' domain |
 | the mini-map turned on | the stores of 0 to `05F7` | true when one is hit in frame N+1; the writers: `$80:C4AF` (a load at a station), `$82:8767` (the demos' load), `$82:E1C4` (a door's start, before the new room's enemies load at `$82:E4D4`, so a boss of that room turns it off after), `$88:82F3` (the new room's effects setup), `$90:F233` (Samus command 8, called only in game states 6, 1Fh and 28h, before state 7: part of a new game or a load), `$A4:90C4` (Crocomire's skeleton flowing down the river). Only the last, `$A4:90C4`, can land in a compared pair; the others are a door's, a load's or a new game's, outside gameplay or in skipped pairs |
 | a boss encountered | a call of `$90:A7E2` outside game state 8, with the boss `179C` (3 Kraid, 5 Ridley in Norfair, 6 Crocomire, 7 Phantoon, 8 Draygon; 1 Ridley in Ceres) | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain); boss id 1 isn't in it, so Ceres Ridley's screens are none |
@@ -326,9 +334,10 @@ Every other entry is a fixed rule.
   invented numbers plus 100h, the digits and icons vanilla plus one constant (digit d at 1B0h + d
   against vanilla d − 1), and a vector's id named 228h. `migrate.py` now draws every picture
   number afresh: one random bijection on the low nine bits (seed 7, bit 9 kept, so a picture 512
-  past the diagonal stays 512 past it), onto numbers that are neither a vanilla HUD picture, nor
+  from the diagonal stays 512 from it), onto numbers that are neither a vanilla HUD picture, nor
   one the area maps use, nor one the file used before. The twins' frame cells are the blank. The
-  vector is C-mm-diagonal-512-past. `real_content.py` (over `real_content_lib.py`) now also
+  vector is C-mm-diagonal-512-apart (round 4's name: the diagonal is now the larger number).
+  `real_content.py` (over `real_content_lib.py`) now also
   checks:
   - the named set for one constant offset shared by three or more pictures;
   - every HUD cell outside the window for a named picture (so no frame picture survives in any
@@ -358,17 +367,95 @@ Every other entry is a fixed rule.
   control).
 - **F9.** The header points at §6.
 
+## Adversary 83's observer items
+
+- **F4, the diagonal on a cell shown charted.** The test runs only when the explored branch drew
+  her window cell (`$90:AAF2`..`$90:AB05`, inside the explored branch of `$90:AA43`..`$90:AB46`;
+  `mm_bytes.py` line `if e[k] & 0x8000`). Her window cell shows another cell's state only under
+  the two column rules, so the plain window never tells the two apart. Two new vectors on
+  `LastColumnsShift` at column 62, each with the diagonal as her cell's picture and the map
+  collected: C-mm-diagonal-charted (the cell 32 columns back and a row lower charted, not
+  explored: her window cell shown charted, the cell over hers stays unexplored) and
+  C-mm-diagonal-shifted (that cell explored: the cell over hers joins). `diagonal_on_charted`
+  (adversary 83's mutant) is killed by the first alone, `diagonal_never_shifted` by the second
+  alone; `xcheck4.py` agrees with both. The spec states it as a "So" of `DiagonalPicture`.
+- **F5, a turn-on and Mother Brain's fall in one frame.** Both are enemy AI, run by the main enemy
+  routine (`$A0:8FD4`, from `$82:8B65`) before the Samus new state handler that runs the mini-map
+  (`$90:E722`, `$82:8B69`): Crocomire's `$A4:90C4` stores 0 to `05F7`, and Mother Brain's
+  `$A9:8809` calls `$90:A7E2`. So the enemy processed later has the last word. No room holds both
+  (Crocomire in Norfair, Mother Brain in Tourian), so §5 chooses the turn-on first, which is the
+  landed model's order, and docs/LEGACY.md lists it. C-mm-turned-on-and-fall (C-mm-turned-on with
+  her fall added: off before, off after, the window blank and her four screens explored, no
+  update) kills `turn_on_after_fall` alone.
+- **F10, boss-kraid-defeated 801: the harness's frames, not the spec.** Record 800 is an overrun
+  (cut `O`: the NMI interrupted the main processing, `wait_entry` none). The frame begun after
+  record 799 ran Select (`8F` holds item select at 799 and still at 800: the overrun's NMI doesn't
+  read the pad) and moved `09D2` from none to missiles before the NMI, and drew the HUD after
+  it: at 800 `09D2` is missiles and `0A0E` none; at 801 both are missiles. Every watched hit of
+  that frame lies in interval 800, none in 801. The harness's pair (799, 800) is skipped (`05B6`
+  equal), and its pair (800, 801) passes the `05B6` test, so it starts from a half-run frame:
+  missiles selected, Select still pressed, and the model moves on to the super missiles. Taken from
+  cut to cut, the frame is (799, 801): from none, Select gives missiles, as recorded. The spec
+  needs nothing, and no LEGACY entry: §Harness now keys the pairs on the cut.
+  - In cache-v2, 177 pairs pass today's tests with an overrun at N (10 rows; boss-phantoon 43,
+    chain-0232-D5A7 72, item-charge-beam 23, boss-kraid-defeated 15, chain-0314-DAE1 15), and
+    only Kraid's 801 mismatches. Joined from cut to cut, each of the 177 frames is a gameplay pair
+    with `05B6` advanced by exactly one (168 over one mid-frame record, 8 over three, 1 over
+    five), so the compared count holds.
+  - The shot's-cancel hit at chain-0314-DAE1 240 is such a frame: record 240 is an overrun, so
+    today the hit falls in the skipped pair (239, 240) and the compared pair (240, 241) doesn't
+    see it. Joined, the frame (239, 241) holds it.
+  - The camera's harness has the same frame rule (`05B6` alone); it is the camera's to check.
+- **One coordinate order.** Every place in the vector file is column first: the HUD's `changed`
+  keys were "row,column" and are now "column,row", as her map's keys and every `[column, row]`
+  value already were (the blind review's item 10). The spec's notation says so. The vector
+  test's reading of `changed` changes with it, the next implementer's.
+- **The blind review's other points** are the implementer's (names, shapes) or the root's,
+  except item 14: §1.3's frame count now says what a lag frame is.
+
+## Adversary 92's fixes
+
+- **A, only her own window cell.** The diagonal test is in row 1's explored branch, at the
+  window's middle column (`$90:AAF2`, `$12` = 3). C-mm-diagonal-beside puts the diagonal on
+  explored cells beside hers and below it, with her own cell another picture and the cell over
+  hers unexplored before and after. It kills `diag_any_column` and `diag_any_row` alone. The
+  "So" now says only her own window cell counts.
+- **B, her column mod 64.** `$90:A94B`..`$90:A955` keep the page bit and the low five bits.
+  C-mm-column-wraps is C-mm-first-columns-0 with her room's cell in column 63 and her in its
+  second screen across: the same cells, her cell column 0. It kills `her_cell_no_wrap`.
+- **C, the room's blocks down.** `$90:A933`..`$90:A93F` return when `0AFA` div 16 ≥ `07A7`.
+  C-mm-outside-below has her y past the blocks and her x inside. It kills `outside_x_only`.
+- **D, the diagonal's own mod 512.** `[pictures].diagonal` is now 2E4 (bit 9 set), and the five
+  diagonal vectors trade 0E4 and 2E4: C-mm-diagonal shows the diagonal's own number, and
+  C-mm-diagonal-512-apart (C-mm-diagonal-512-past before) the number 512 below it. They kill
+  `diag_d_unreduced`. No other vector's explored window cell has the low nine bits E4h.
+- **E, off their usual conditions.** None of these is gated in the original: `$A4:90C4` and
+  `$A9:8809` are enemy AI, whatever her handler; `$90:A7E2` blanks unconditionally; the weapons'
+  stores don't read the switch's gate. C-mm-turned-on-not-running, C-mm-boss-not-running,
+  C-mm-boss-while-off and C-shot-cancels-cannot-switch kill `turn_on_needs_runs`,
+  `fall_needs_runs`, `fall_needs_on` and `shot_cancel_only_switching`, one each alone. The spec
+  says each as a "So".
+- **F,** §Harness: cache-v2's figures, and every cut but `R` folds into its frame.
+- `scripts/edit_vectors2.py` and `scripts/edit_spec2.py` in `$TEMP/collab/hud-r4` wrote these.
+  `vecrun.py`: 82 of 82. `mutants.py`: 17 mutants, each killed; the nine new ones by no vector of
+  the 75-vector file. `xcheck4.py`: 41 of 43, the two §1.5's choices. `real_content.py`: 0 hits.
+
 ## The harness (for the integrator)
 
 The HUD is downstream of everything it shows: nothing in another domain reads its cells, and only
 the weapons and her look read its selection, on later frames. It can be verified on its own from
 the records, with the other domains' values decoded as inputs.
 
-- **Frames:** every record pair N, N+1 of every row. Skipped, by name and never by outcome: game
-  state other than 8 at N or N+1 (the HUD routine runs only in gameplay and pause; pause is its own
-  domain), `05B6` not advanced by exactly one (lag: no main processing), a room change (`079B`
-  differs: the door's domain). Counted as a harness defect: a pair that doesn't decode, or a HUD
-  word without its priority bit.
+- **Frames:** every pair N, N+1 of consecutive records at a frame's end of every row: records
+  whose NMI returned to the main loop's wait (cut `R`, `NmiKind::Requested`). Every record whose
+  cut isn't `R` folds into its frame: `O` (the NMI interrupted the main processing, an overrun),
+  `V` (vblank with the NMI disabled) and `S` (vblank ended with the NMI still running) are
+  mid-frame. Such a record is never a pair's end, and a pair spans it, with the hits of every
+  interval between (frame N+1 is all of them). This is samus-looks' rule (its `folds`).
+  Skipped, by name and never by outcome: game state other than 8 at N or
+  N+1 (the HUD routine runs only in gameplay and pause; pause is its own domain), `05B6` not
+  advanced by exactly one, a room change (`079B` differs: the door's domain). Counted as a
+  harness defect: a pair that doesn't decode, or a HUD word without its priority bit.
 - **Decoded from record N:** the State: the HUD's cells, the values last shown, `09D2`, `0A04`,
   the explored cells; the frame count and the pad (§Inputs).
 - **Decoded from record N+1:** every other input, at the HUD's turn; the HUD's pictures and
@@ -378,8 +465,8 @@ the records, with the other domains' values decoded as inputs.
 - **Compared at N+1:** the HUD's 96 cells (picture, colour set, flips) and the values last shown;
   the selection and the one-shot item; the explored cells. The whole HUD tilemap is compared, not
   values: it is the output, and a stale cell is behaviour.
-- **Masks.** Each is keyed on its writer, and covers only the frames that writer makes. Both below
-  are interim: each goes once its writer is decoded, and until then its frames are reported as
+- **Masks.** Each is keyed on its writer, and covers only the frames that writer makes. The one
+  below is interim: it goes once its writer is decoded, and until then its frames are reported as
   masked, never as passed.
   - **Her position at the mini-map's turn.** Writer: the pose change's placement, `$91:EB88`,
     which runs after the mini-map (`$90:E734` calls `$90:A91B` first) and can move her across a
@@ -390,38 +477,37 @@ the records, with the other domains' values decoded as inputs.
       entry, or `$90:E734`'s call of it) in frame N+1.
 
     Until then mask the mini-map's 15 cells and the explored cells only on frames with a hit on
-    `$91:EB88`'s writes to `0AF6`/`0AFA` that moved her `x div 256` or `y div 256`. The cached
-    records have no such hit, and samus-motion's model reports only `camera_from` (a y, and only
-    where pose fit or a shrink moved her), not where her moves left her, so the first decode isn't
-    available yet. Today the mask falls back to the frames the writer can reach: `0A1C` differs,
+    `$91:EB88`'s writes to `0AF6`/`0AFA` that moved her `x div 256` or `y div 256`. cache-v2
+    records the hit on `$91:EB88` but not what it wrote, and samus-motion's model reports only
+    `camera_from` (a y, and only where pose fit or a shrink moved her), not where her moves left
+    her, so neither decode is available yet. Today the mask falls back to the frames the writer
+    can reach: `0A1C` differs,
     the mini-map runs and isn't off (on any other frame it never reads her), and her position at
     N+1 lies within 32 px of a screen's edge on either axis (the pose change's placements, pose
-    fit's push, the shrink, the take-off's lift and the aim step, move her by less). That is 669
-    frames for the 8 the writer is known to make (§How the spec was made); keyed on `0A1C` alone it
-    was 3,039, and on `0A1C` with the mini-map reading her 2,705. Unmasked, the 8 mismatch.
-  - **The shot's cancel.** Writers: the weapons' four stores, `$90:BF25` and `$90:C091` (clear
-    `09D2` and `0A04`) and `$90:BF41` and `$90:C0A6` (clear `09D2`, reached only when `0A04` is 0).
-    Decode `the shot's cancel` as true when one of them is hit in frame N+1, as `collected` is
-    named by hits; then no mask is needed, and the status bar is compared on those frames like any
-    other. Until the records carry those hits, mask the selection and the one-shot item on frames
-    where a count (`09C6`, `09CA`, `09CE`) fell, compare the status bar with the shot's cancel
-    false, and report both apart. In the cache: 20 frames, none cancels, the model agrees on all
-    20 in every part (§How the spec was made).
+    fit's push, the shrink, the take-off's lift and the aim step, move her by less). On cache-v2
+    that is 882 frames, and 886 with the frames taken from cut to cut (4 joined frames see a pose
+    change across a mid-frame record; unmasked, those 4 match). With the mask off, the same 10
+    mini-map frames mismatch under both rules, every one inside the mask, as the first cache's 8
+    were (§How the spec was made, where the mask was 669 frames on that cache; keyed on `0A1C` alone
+    it was 3,039, and on `0A1C` with the mini-map reading her 2,705).
+  - **The shot's cancel** needs no mask: its writers, the weapons' four stores, `$90:BF25` and
+    `$90:C091` (clear `09D2` and `0A04`) and `$90:BF41` and `$90:C0A6` (clear `09D2`, reached
+    only when `0A04` is 0), are decoded from their hits (§Inputs), and the selection is compared
+    on those frames like any other.
   - **The click** (`Click`) isn't compared until the sound domain's request stream exists (U1);
     report the model's requests beside the APU port writes. Of the 22 recorded moves with no 39h
     in three records, each has a cause in the queue (§Findings, the click).
-- **What the integrator needs from the records** (a new dump of the cached rows, then a ci-data
-  bundle the root uploads):
-  - instruction hits at `$90:A91B` with `0AF6`, `0AFA` at the hit (her position at the mini-map's
-    turn), or none if samus-motion's model supplies it;
-  - instruction hits at `$91:EB88`'s stores to `0AF6`/`0AFA` (to key the interim mask);
-  - instruction hits at `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6` (the shot's cancel);
-  - instruction hits at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E`, `$80:9A3E` (`collected`);
-  - calls of `$90:A7E2` with `179C` (`a boss turns it off`; only Mother Brain's can land in a
-    gameplay pair, the others come from the door and load domains);
+- **What the integrator needs from the records.** cache-v2 watches the shot's cancel, the
+  pickups, `$90:A7E2`, `$90:A91B`, `$90:E734` and `$91:EB88` on every row. Still needed, at the
+  next re-record (then a ci-data bundle the root uploads):
+  - `0AF6`, `0AFA` peeked at the hit on `$90:A91B` (her position at the mini-map's turn; the
+    hit's peek is empty today), or none if samus-motion's model supplies it;
+  - the six stores of 0 to `05F7` (§Inputs, `the mini-map turned on`): none is watched, so
+    `turned_on` is false because no one watched it;
   - for the click's check later: `0643`, `0646` and `0656`..`0665` per record.
 - **Null model:** nothing changes (the cells, the values last shown, the selection, the explored
-  cells as at N): 10,077 of the 11,900 frames with neither mask.
+  cells as at N): on cache-v2, 17,975 of the 20,615 compared frames, and 17,954 from cut to cut
+  (the first cache: 10,077 of the 11,900 frames with neither of its masks).
 - **Per-behaviour attribution:** `model.py`'s tags name the rule each frame takes; `vectors.py`'s
   `entries_of` maps tags to entries.
 - **Free run:** from a seed frame, carry the HUD's own State forward and take only the inputs from
@@ -528,5 +614,8 @@ as a wall; over an area's old code is a failure.
 Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
 one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
 The arm the gated draft added for Mother Brain's fall is a "So" (adversary 79 F4).
+
+Round 4 adds no arm and no operator: its three vectors are cited by arms that were there, and
+`DiagonalPicture`'s new bullet and §5's order are a "So" and prose. 56.3 units.
 
 Budget: 36 × 56.3 units = 2,028 (status 756, selection 288, minimap 984)

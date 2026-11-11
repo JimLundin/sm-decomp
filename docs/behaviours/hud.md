@@ -27,8 +27,9 @@ encoder); the pause screen's own map, which reads the explored cells this domain
 picture in a colour set, perhaps flipped left to right or top to bottom; vectors write it `PPP:c`
 with `h` and `v` for the flips (§1.4). The pictures are numbers the importer gives them; the
 vectors' are invented. Her map, the one of the area she is in, is 64 columns by 32 rows of cells,
-counted from 0 at the top left; no room lies on row 0. `div` and `mod` are whole-number division
-and its remainder.
+counted from 0 at the top left; no room lies on row 0. A place is written column first, `(column,
+row)`, on the HUD and on her map alike, as the vectors write it. `div` and `mod` are whole-number
+division and its remainder.
 
 ---
 
@@ -73,7 +74,7 @@ when Select cycles.
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| frame count | 0 to 255: the count of frames the game has finished, mod 256, as this frame begins (a lag frame isn't one) | `OneShotFlash`, `HerBlink` |
+| frame count | 0 to 255: the count of frames the game has finished, mod 256, as this frame begins (a frame the game didn't finish in time, a lag frame, isn't one) | `OneShotFlash`, `HerBlink` |
 | energy | now and capacity, counts | `EnergyGauge` |
 | reserve | the energy in the reserve tanks, a count; whether they refill on their own (`auto`) | `AutoReserveSign` |
 | missiles, super missiles, power bombs | each a count and a capacity | `AmmoCounts`, `CyclingItems` |
@@ -266,9 +267,10 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - Item cancel pressed this frame, she can switch → the selection becomes none, and with it
   the one-shot item, whatever Select does [C-R13, C-R14, C-cancel-wins]
 - The shot's cancel, after the cycling → the selection becomes none, and with it the one-shot
-  item [C-shot-cancels]
+  item [C-shot-cancels, C-shot-cancels-cannot-switch]
+- So the shot's cancel holds whether or not she can switch (C-shot-cancels-cannot-switch).
 - checked: oracle (the harness cases R13, R14); constructed (C-R13, C-R14, C-cancel-wins,
-  C-shot-cancels).
+  C-shot-cancels, C-shot-cancels-cannot-switch).
 
 ### OneShotItem
 - kind: mechanic.
@@ -304,9 +306,12 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - Her cell is column `cx = (rx + x div 256) mod 64` and row `cy = ry + y div 256` of her map:
   `rx`, `ry` her room's top-left cell, `x`, `y` where she is.
 - The mini-map updates (`MiniMapStill`), her cell `(cx, cy)` on the map (§1.5) → it joins the
-  explored cells [C-R16, C-R17, C-mm-diagonal-512-past, C-mm-her-cell-outside]
+  explored cells [C-R16, C-R17, C-mm-diagonal-512-apart, C-mm-her-cell-outside,
+  C-mm-column-wraps]
+- So her room's cell in column 63 and she in its second screen across puts her cell in column 0
+  (C-mm-column-wraps).
 - checked: oracle (the harness cases R16, R17); constructed (C-R16, C-R17,
-  C-mm-her-cell-outside).
+  C-mm-her-cell-outside, C-mm-column-wraps).
 
 ### MiniMapWindow
 - kind: mechanic.
@@ -343,13 +348,16 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   they show, blink included.
 - params: none.
 - switch: none.
-- The mini-map turned on → it isn't off, before this frame's update [C-mm-turned-on]
+- The mini-map turned on → it isn't off, before this frame's update [C-mm-turned-on,
+  C-mm-turned-on-not-running]
 - The mini-map doesn't run, or is off, or `x div 16 ≥ w` or `y div 16 ≥ h` (`w`, `h` her room's
   blocks, `x` and `y` read as 0 to 65,535) → it doesn't update [C-R18, C-mm-off,
-  C-mm-not-running, C-mm-boss, C-mm-outside, C-mm-outside-left]
+  C-mm-not-running, C-mm-boss, C-mm-outside, C-mm-outside-left, C-mm-outside-below]
 - So a position left of or above the room (FFF8) reads as past it (C-mm-outside-left).
+- So a turn-on holds while the mini-map doesn't run, though it doesn't update
+  (C-mm-turned-on-not-running).
 - checked: oracle (the harness case R18, a recorded frame with the mini-map off); constructed
-  (the others, C-mm-turned-on).
+  (the others, C-mm-turned-on, C-mm-turned-on-not-running, C-mm-outside-below).
 
 ### BossBlanksTheMap
 - kind: mechanic.
@@ -372,7 +380,8 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 - switch: **Parameter** (each boss's screens; the reference rules hold the table).
 - A boss encountered, or Mother Brain falls → every cell of the window shows the map's blank
-  in the charted colours, and the mini-map is off [C-mm-boss, C-mm-boss-across, C-mm-boss-alone]
+  in the charted colours, and the mini-map is off [C-mm-boss, C-mm-boss-across, C-mm-boss-alone,
+  C-mm-turned-on-and-fall, C-mm-boss-not-running, C-mm-boss-while-off]
 - The same, a screen `(sx, sy)` the boss names → the map's cell `((rx + sx) mod 64, ry + sy)`
   joins the explored cells [C-mm-boss, C-mm-boss-across, C-mm-boss-alone, C-mm-boss-draygon,
   C-mm-boss-phantoon, C-mm-boss-ridley, C-mm-boss-alone-none]
@@ -381,6 +390,8 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   isn't drawn [C-mm-boss-alone, C-mm-boss-alone-none]
 - So Mother Brain's fall comes before the mini-map's turn and leaves it off: that frame's update
   doesn't happen (`MiniMapStill`), and the frame goes on (C-mm-boss).
+- So her fall blanks the map and explores her screens whether or not the mini-map runs
+  (C-mm-boss-not-running), and when it is already off (C-mm-boss-while-off).
 - checked: constructed (no recorded row reaches these bosses).
 
 ### DiagonalPicture
@@ -391,10 +402,16 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - switch: none.
 - Her window cell shown explored, its picture's number `p` and the diagonal's `d` with
   `p mod 512 = d mod 512` → the cell over hers, `(cx, cy − 1)`, joins the explored cells, shown
-  from the next frame [C-mm-diagonal, C-mm-diagonal-512-past]
-- So a picture 512 past the diagonal counts as it (C-mm-diagonal-512-past): the number is read mod
-  512.
-- So the picture in the cell over hers doesn't count (C-mm-diagonal-above-only).
+  from the next frame [C-mm-diagonal, C-mm-diagonal-512-apart, C-mm-diagonal-shifted]
+- So two numbers 512 apart are the same picture here, whichever is the larger: both are read mod
+  512 (C-mm-diagonal, C-mm-diagonal-512-apart).
+- So only her own window cell counts: the diagonal in the cell over hers
+  (C-mm-diagonal-above-only), or on an explored cell beside hers or below it
+  (C-mm-diagonal-beside), explores nothing.
+- So where her window cell shows another cell's state (`FirstColumnsShift`, `LastColumnsShift`),
+  that state decides: her window cell shown charted leaves the cell over hers unexplored, though
+  she has explored her own (C-mm-diagonal-charted); shown explored, it joins
+  (C-mm-diagonal-shifted).
 - checked: constructed (no recorded row passes such a room).
 
 ### FirstColumnsShift
@@ -421,7 +438,7 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - switch: none.
 - `cx ≥ 62` → each window cell takes its explored and charted state from the map's cell
   `(cx + k − 32, cy + j + 1)`, its picture still from `(cx + k, cy + j)` [C-mm-last-columns-62,
-  C-mm-last-columns-63]
+  C-mm-last-columns-63, C-mm-diagonal-charted]
 - `cx ≥ 62`, `cx + k ≥ 64` → the picture is the map's beyond picture `(cx + k − 64, cy + j)`
   [C-mm-last-columns-62, C-mm-last-columns-63]
 - So past column 63 the state is that of columns 32 and 33, a row lower (C-mm-last-columns-63).
@@ -439,10 +456,13 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 - In the status bar: the icon a pickup draws comes before the highlight and the flash, so a
   selected item's new icon is lit; the flash has the last word on the colours of the one-shot
   item.
-- In the mini-map: a turn-on comes before the update; her cell is explored before the window
-  reads the explored cells; the cell
-  `DiagonalPicture` adds over hers is explored after, so it shows from the next frame; the blink
-  comes last.
+- In the mini-map: a turn-on comes before Mother Brain's fall, and both before the update. So in
+  a frame where the mini-map is turned on and her first form falls, the fall has the last word:
+  the mini-map is off after it and doesn't update (C-mm-turned-on-and-fall). No vanilla room
+  holds both (the one turn-on during play is Crocomire's fall, in another area), so this order
+  is the spec's choice (docs/LEGACY.md). Her cell is explored before the window reads the
+  explored cells; the cell `DiagonalPicture` adds over hers is explored after, so it shows from
+  the next frame; the blink comes last.
 - Where she is: after this frame's moves and before a pose change places her. On a frame whose
   pose changes, a placement that takes her into another screen comes after the mini-map has read
   her.

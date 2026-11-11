@@ -8,6 +8,11 @@
 //! and the model's output is compared with record N+1: the whole tilemap, not values, since a
 //! stale cell is behaviour. The HUD's pictures and her map's are the importer's.
 //!
+//! A frame runs from cut to cut: from a record whose NMI returned to the main loop's wait (cut
+//! `R`) to the next such record. A record with any other cut is mid-frame (an overrun, vblank
+//! with the NMI disabled, or vblank ended with the NMI still running) and folds into its frame,
+//! its hits carried along, so a frame whose work straddles an overrun is paired whole.
+//!
 //! The inputs other domains' writers make are named by their instruction hits in frame N+1: the
 //! shot's cancel (the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`), the item
 //! whose pickup draws its icon (`$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E`, `$80:9A3E`), Mother
@@ -33,9 +38,9 @@ pub mod cases;
 use core::fmt;
 
 use clean_model_hud::{
-    Ammo, Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, Event,
-    FrameCount, FrameInputs, HerMap, HudGrid, HudState, MapCellSet, MiniMapInputs, MiniMapPower,
-    Mute, Point, Reserve, ReserveMode, Room, RoomBoss, Rules, SelectButton, SelectableItem,
+    Ammo, Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, FrameCount,
+    FrameInputs, HerMap, HudEvent, HudGrid, HudState, MapCellSet, MiniMapInputs, MiniMapPower,
+    Mute, Place, Reserve, ReserveMode, Room, RoomBoss, Rules, SelectButton, SelectableItem,
     Selection, Shown, Status, Stock, Tile,
 };
 use clean_types::Pair;
@@ -48,6 +53,7 @@ use oracle_record::FrameRecord;
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
+use crate::cache::CutKind;
 use crate::decode::DecodeError;
 use crate::domain_field;
 use crate::source::{self, WramWord};
@@ -104,7 +110,7 @@ const WINDOW: core::ops::RangeInclusive<i32> = 26..=30;
 const HUD_COLUMNS: usize = 32;
 const HUD_ROWS: usize = 3;
 /// Her window tile, which the diagonal test reads.
-const HER_TILE: Point = Pair { x: 28, y: 1 };
+const HER_TILE: Place = Pair { x: 28, y: 1 };
 /// The HUD's item indices from 1, as the bank $90 log orders them: the harness's own table, so
 /// a model that ordered its items otherwise would fail rather than decode the records its way.
 const HUD_ITEMS: [SelectableItem; 5] = [
@@ -260,13 +266,13 @@ const fn near_screen_edge(at: u16) -> bool {
     into < PLACEMENT_REACH || into >= SCREEN_PX - PLACEMENT_REACH
 }
 
-/// Whether the HUD cell at `point` is the mini-map's window's.
-fn in_window(point: Point) -> bool {
-    WINDOW.contains(&point.x)
+/// Whether the HUD cell at `place` is the mini-map's window's.
+fn in_window(place: Place) -> bool {
+    WINDOW.contains(&place.x)
 }
 
 /// The place `column` across and `row` down the HUD.
-fn place(column: usize, row: usize) -> Point {
+fn place(column: usize, row: usize) -> Place {
     let coordinate = |value: usize| i32::try_from(value).unwrap_or(i32::MAX);
     Pair {
         x: coordinate(column),
@@ -416,15 +422,27 @@ pub enum Turn {
         /// The boss.
         boss: RoomBoss,
         /// Her room's top-left cell on her map.
-        room: Point,
+        room: Place,
+        /// Her area, whose map the HUD draws.
+        area: Area,
     },
+}
+
+impl Turn {
+    /// Her area, whose map the HUD draws.
+    const fn area(&self) -> Area {
+        match self {
+            Self::Frame(upstream) => upstream.map.area,
+            Self::BossMet { area, .. } => *area,
+        }
+    }
 }
 
 /// The pair's turn and what the step reported, for the attribution.
 #[derive(Clone, Debug)]
 pub struct World {
     turn: Turn,
-    events: Vec<Event>,
+    events: Vec<HudEvent>,
     her_tile: Option<Tile>,
 }
 
@@ -507,7 +525,7 @@ fn runs(next: &FrameRecord) -> Result<bool, Skip> {
 
 /// Her room's top-left cell on her map in `next`. Rooms start a row down: the map's row 0 is
 /// padding.
-fn room_cell(next: &FrameRecord) -> Result<Point, Skip> {
+fn room_cell(next: &FrameRecord) -> Result<Place, Skip> {
     let coordinate = |source: WramWord| -> Result<i32, Skip> {
         let value = word(next, source)?;
         u8::try_from(value)
@@ -555,14 +573,18 @@ fn boss_called(next: &FrameRecord) -> Result<Option<BossCalled>, Skip> {
     }
 }
 
+/// Her area in `record`.
+fn area(record: &FrameRecord) -> Result<Area, Skip> {
+    let index = word(record, source::AREA_INDEX)?;
+    u8::try_from(index)
+        .ok()
+        .and_then(|index| Area::try_from(index).ok())
+        .ok_or_else(|| unnamed(source::AREA_INDEX.name, index))
+}
+
 /// Every input but the pad, from `next` at the HUD's turn; Mother Brain falls when
 /// `mother_brain_falls`.
 fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Skip> {
-    let index = word(next, source::AREA_INDEX)?;
-    let area = u8::try_from(index)
-        .ok()
-        .and_then(|index| Area::try_from(index).ok())
-        .ok_or_else(|| unnamed(source::AREA_INDEX.name, index))?;
     Ok(Upstream {
         status: status(next)?,
         select: word(next, ITEM_SELECT_BINDING)?,
@@ -588,7 +610,7 @@ fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Sk
         },
         room: room(next)?,
         map: MapKey {
-            area,
+            area: area(next)?,
             collected: word(next, source::HAS_AREA_MAP)? != 0,
         },
     })
@@ -630,6 +652,7 @@ impl Upstream {
                 position: self.position,
                 room: self.room,
                 map,
+                map_collected: self.map.collected,
             },
         }
     }
@@ -782,6 +805,7 @@ impl Domain for HudDomain {
                     return Ok(world(Turn::BossMet {
                         boss,
                         room: room_cell(next)?,
+                        area: area(next)?,
                     }));
                 }
                 (state, _) => return Err(Skip::GameState(state)),
@@ -825,11 +849,13 @@ impl Domain for HudDomain {
         Ok(masks)
     }
 
+    /// With no content the HUD has nothing to draw with, and the state stays as it was.
     fn step(&self, state: &mut HudState, pad: &Pad, world: &mut World) {
-        let pictures = self.content.pictures();
+        let Some((map, pictures)) = self.content.of(world.turn.area()) else {
+            return;
+        };
         match world.turn {
             Turn::Frame(upstream) => {
-                let map = self.content.map(upstream.map.area, upstream.map.collected);
                 let outcome =
                     state
                         .clone()
@@ -837,7 +863,7 @@ impl Domain for HudDomain {
                 *state = outcome.state;
                 world.events = outcome.events;
             }
-            Turn::BossMet { boss, room } => {
+            Turn::BossMet { boss, room, .. } => {
                 *state = state
                     .clone()
                     .boss_encountered(&self.rules, pictures, boss, room);
@@ -847,7 +873,11 @@ impl Domain for HudDomain {
     }
 
     fn exercised(&self, state: &HudState, pad: &Pad, world: &World) -> Vec<usize> {
-        exercised(state, *pad, world, self.content.pictures().diagonal.number)
+        let diagonal = self
+            .content
+            .of(world.turn.area())
+            .map(|(_, pictures)| pictures.diagonal.picture.index());
+        exercised(state, *pad, world, diagonal)
     }
 
     fn fields(&self, state: &HudState) -> Declared {
@@ -869,6 +899,12 @@ impl Domain for HudDomain {
             }
         }
     }
+
+    /// A record whose cut isn't `R` is mid-frame (an overrun, vblank with the NMI disabled, or
+    /// vblank ended with the NMI still running): the frame runs on to the next `R`.
+    fn folds(&self, _from: &FrameRecord, next: &FrameRecord) -> bool {
+        CutKind::of(next.cut) != CutKind::Requested
+    }
 }
 
 /// The places in the catalogue of the entries `ids` names, in its order.
@@ -884,8 +920,8 @@ fn places(ids: impl IntoIterator<Item = BehaviourId>) -> Vec<usize> {
 
 /// The catalogue entries a frame brings into play, from the HUD as record N has it, the inputs,
 /// and what the step reported: the rule each part of the frame takes. `diagonal` is the
-/// diagonal's picture number.
-fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<usize> {
+/// diagonal's picture number, `None` with no content.
+fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: Option<u16>) -> Vec<usize> {
     use BehaviourId as B;
     let upstream = match world.turn {
         Turn::Frame(upstream) => upstream,
@@ -908,8 +944,8 @@ fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<us
         entries.push(B::AutoReserveSign);
     }
     let switched = world.events.iter().find_map(|event| match event {
-        Event::Switched(item) => Some(*item),
-        Event::Click => None,
+        HudEvent::Switched(item) => Some(*item),
+        HudEvent::Click => None,
     });
     let mut selected = state.selection.item();
     if controls.can_switch {
@@ -953,10 +989,14 @@ fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<us
             entries.push(B::LastColumnsShift);
         }
         // The diagonal test reads her window tile as the explored branch drew it.
-        if world.her_tile.is_some_and(|tile| {
-            (tile.picture.number & DIAGONAL_READ) == (diagonal & DIAGONAL_READ)
-                && tile.colours.number() != CHARTED
-        }) {
+        if world
+            .her_tile
+            .zip(diagonal)
+            .is_some_and(|(tile, diagonal)| {
+                (tile.look.picture.index() & DIAGONAL_READ) == (diagonal & DIAGONAL_READ)
+                    && tile.colours.number() != CHARTED
+            })
+        {
             entries.push(B::DiagonalPicture);
         }
     } else {

@@ -1,14 +1,13 @@
 //! Where things sit on the HUD (§1.2), as places on its grid: column across, row down.
 
-use clean_types::by_member;
+use clean_types::{Look, by_member};
 
-use crate::grid::{Point, at, plus};
+use crate::grid::{Place, at, plus};
 use crate::item::{Ammo, SelectableItem};
-use crate::tile::Picture;
 
 /// The energy tanks' cells in the order they fill: row 1 columns 1 to 7, then row 0 columns 1 to
 /// 7. There are 14, so at most 14 tanks show (spec: EnergyGauge).
-pub const TANKS: [Point; 14] = [
+pub const TANKS: [Place; 14] = [
     at(1, 1),
     at(2, 1),
     at(3, 1),
@@ -26,14 +25,14 @@ pub const TANKS: [Point; 14] = [
 ];
 
 /// The energy's digits: row 2, columns 6 and 7.
-pub const ENERGY_DIGITS: [Point; 2] = [at(6, 2), at(7, 2)];
+pub const ENERGY_DIGITS: [Place; 2] = [at(6, 2), at(7, 2)];
 
 /// Where a kind of ammunition's count sits: its digits' cells, the highest digit first.
 pub struct AmmoDigits {
     /// The ammunition.
     pub ammo: Ammo,
     /// Its digits' cells: as many as its count has digits.
-    pub digits: &'static [Point],
+    pub digits: &'static [Place],
 }
 
 /// Each ammunition's digits, in row 2: the missiles' in columns 10 to 12, the super missiles' in
@@ -54,14 +53,14 @@ pub const AMMO_DIGITS: [AmmoDigits; 3] = [
 ];
 
 /// The reserve sign's top-left cell: it fills rows 0 to 2, columns 8 and 9.
-pub const RESERVE_SIGN: Point = at(8, 0);
+pub const RESERVE_SIGN: Place = at(8, 0);
 
 /// Where an item's icon sits: its top-left cell, in row 0; the icon fills rows 0 and 1.
 pub struct IconPlace {
     /// The item.
     pub item: SelectableItem,
     /// Its icon's top-left cell.
-    pub top_left: Point,
+    pub top_left: Place,
 }
 
 /// Each item's icon: the missiles' in columns 10 to 12, the super missiles' in 14 and 15, the
@@ -90,27 +89,27 @@ pub const ICONS: [IconPlace; 5] = [
 ];
 
 /// `item`'s icon's top-left cell.
-pub fn icon_top_left(item: SelectableItem) -> Point {
+pub fn icon_top_left(item: SelectableItem) -> Place {
     by_member(ICONS, |place| place.item)[item].top_left
 }
 
-/// The mini-map window's middle cell, her cell: row 1, column 28.
-pub const HER_CELL: Point = at(28, 1);
+/// The mini-map window's middle cell, her cell: column 28, row 1.
+pub const HER_CELL: Place = at(28, 1);
 
-/// How far the window reaches from her cell: 2 columns each way and 1 row, so rows 0 to 2,
-/// columns 26 to 30.
-pub const WINDOW_REACH: Point = at(2, 1);
+/// How far the window reaches from her cell: 2 columns each way and 1 row, so columns 26 to 30,
+/// rows 0 to 2.
+pub const WINDOW_REACH: Place = at(2, 1);
 
 /// Rows of pictures laid from `top_left`: each picture with its cell, the rows downward, each
 /// left to right.
 pub fn laid<'p>(
-    top_left: Point,
-    rows: impl IntoIterator<Item = &'p [Picture]>,
-) -> impl Iterator<Item = (Point, Picture)> {
+    top_left: Place,
+    rows: impl IntoIterator<Item = &'p [Look]>,
+) -> impl Iterator<Item = (Place, Look)> {
     (0..).zip(rows).flat_map(move |(down, row)| {
         (0..)
             .zip(row)
-            .map(move |(across, &picture)| (plus(top_left, at(across, down)), picture))
+            .map(move |(across, &look)| (plus(top_left, at(across, down)), look))
     })
 }
 

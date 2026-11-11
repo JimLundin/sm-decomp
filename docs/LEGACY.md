@@ -77,6 +77,11 @@ original's bytes as data.
     area's tilemap for the rest (the left page's row -1, the right page's row 32; `$90:A91B`,
     `$90:AB75`). Vanilla maps draw and chart only columns 2-57 and rows 1-22; a randomised map
     could reach these cells, and the column rules themselves stay in the spec for it.
+  - A frame where the mini-map is turned on and Mother Brain's first form falls takes the turn-on
+    first (spec §5), so the mini-map stays off and doesn't update. In the original both are enemy
+    AI run by the main enemy routine (`$A0:8FD4`: Crocomire's `$A4:90C4`, Mother Brain's
+    `$A9:8809`), so the enemy processed later wins; with Crocomire's later, the mini-map would be
+    on and update that frame (`$90:E722` runs after). No vanilla room holds both bosses.
 - **Level columns and rows past the level buffer** (`game::bg_graphics`, `$80:A9DE`, `$80:AB78`): the
   engine reads the buffer as the original holds it up to its 3200h blocks (the BTS and layer 2 left
   after layer 1, then the `$8000` fill, `RoomScoped::level_tail`). Past those, or past layer 2's copy,

@@ -98,31 +98,31 @@ progress entry TakingBeams 4 0 4 0
 progress entry TakingItems 2 0 2 0
 progress entry Tanks 7 0 8 0
 progress entry ZebetitesCounted 0 0 0 0
-hud frames 25426 20614 0 17975
+hud frames 24230 20615 0 17954
 hud field 20615 0 status bar
 hud field 20615 0 values last shown
 hud field 20615 0 selected item
 hud field 20615 0 one-shot item
-hud field 19733 882 mini-map window
-hud field 19733 882 explored cells
+hud field 19729 886 mini-map window
+hud field 19729 886 explored cells
 hud field 20615 0 mini-map off
-hud entry AmmoCounts 49 0 50 0
-hud entry AutoReserveSign 13819 13029 13820 0
+hud entry AmmoCounts 50 0 50 0
+hud entry AutoReserveSign 13820 13024 13820 0
 hud entry BossBlanksTheMap 0 0 0 0
-hud entry CancellingTheItem 48 14 48 0
-hud entry CyclingItems 89 1 90 0
+hud entry CancellingTheItem 49 14 49 0
+hud entry CyclingItems 90 0 90 0
 hud entry DiagonalPicture 68 68 68 23
-hud entry EnergyGauge 642 0 642 0
-hud entry Exploring 14824 14760 14824 882
+hud entry EnergyGauge 647 0 647 0
+hud entry Exploring 14820 14755 14820 886
 hud entry FirstColumnsShift 0 0 0 0
-hud entry HerBlink 14824 12900 14824 882
+hud entry HerBlink 14820 12880 14820 886
 hud entry IconsAppear 0 0 0 0
 hud entry LastColumnsShift 0 0 0 0
-hud entry MiniMapStill 4908 4909 4909 0
-hud entry MiniMapWindow 14824 12900 14824 882
-hud entry OneShotFlash 49 38 49 0
-hud entry OneShotItem 89 85 90 0
-hud entry SelectionHighlight 124 0 125 0
+hud entry MiniMapStill 4909 4909 4909 0
+hud entry MiniMapWindow 14820 12880 14820 886
+hud entry OneShotFlash 50 38 50 0
+hud entry OneShotItem 90 85 90 0
+hud entry SelectionHighlight 125 0 125 0
 hud entry SwitchClick 0 0 0 125
 hud entry Switching 0 0 0 137
 blocks frames 21857 20530 85 19928

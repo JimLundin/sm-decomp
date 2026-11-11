@@ -1,7 +1,7 @@
 //! The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the
 //! items' icons with the selection's highlight.
 
-use crate::grid::Point;
+use crate::grid::Place;
 use crate::inputs::{Ammunition, Energy, FrameCount, Reserve, ReserveMode};
 use crate::item::SelectableItem;
 use crate::layout::{AMMO_DIGITS, ENERGY_DIGITS, RESERVE_SIGN, TANKS, icon_top_left, laid};
@@ -10,7 +10,7 @@ use crate::rules::Rules;
 use crate::state::HudState;
 use crate::tile::{
     ColourSet, DIGIT_COLOURS, EMPTY_TANK_COLOURS, FULL_TANK_COLOURS, HIGHLIGHTED, PLAIN, SIGN_DIM,
-    SIGN_LIT,
+    SIGN_LIT, Tile,
 };
 
 /// Spec: EnergyGauge. The energy one tank stands for.
@@ -32,9 +32,9 @@ impl HudState {
         let full = usize::from(energy.now / ENERGY_PER_TANK);
         for (tank, &place) in TANKS.iter().enumerate().take(tanks) {
             let tile = if tank < full {
-                pictures.full_tank.in_colours(FULL_TANK_COLOURS)
+                Tile::new(pictures.full_tank, FULL_TANK_COLOURS)
             } else {
-                pictures.empty_tank.in_colours(EMPTY_TANK_COLOURS)
+                Tile::new(pictures.empty_tank, EMPTY_TANK_COLOURS)
             };
             self.grid.set(place, tile);
         }
@@ -66,36 +66,35 @@ impl HudState {
         } else {
             SIGN_LIT
         };
-        for (place, picture) in laid(RESERVE_SIGN, rows(&pictures.reserve_sign)) {
-            self.grid.set(place, picture.in_colours(colours));
+        for (place, look) in laid(RESERVE_SIGN, rows(&pictures.reserve_sign)) {
+            self.grid.set(place, Tile::new(look, colours));
         }
     }
 
     /// Spec: IconsAppear. A pickup draws its item's icon in the plain colours when the icon's
-    /// top-left cell shows the blank's picture, whatever its colours and flips: the picture's
-    /// number alone is tested. Otherwise its cells keep what they show.
+    /// top-left cell shows the blank's picture, whatever its colours and flips: the picture
+    /// alone is tested. Otherwise its cells keep what they show.
     pub(crate) fn icon_appears(&mut self, pictures: &HudPictures, item: SelectableItem) {
         let top_left = icon_top_left(item);
         let blank = self
             .grid
             .get(top_left)
-            .is_some_and(|tile| tile.picture.number == pictures.blank.number);
+            .is_some_and(|tile| tile.look.picture == pictures.blank.picture);
         if !blank {
             return;
         }
-        for (place, picture) in laid(top_left, pictures.icons.of(item)) {
-            self.grid.set(place, picture.in_colours(PLAIN));
+        for (place, look) in laid(top_left, pictures.icons.of(item)) {
+            self.grid.set(place, Tile::new(look, PLAIN));
         }
     }
 
     /// Spec: SelectionHighlight. When the selected item isn't the item shown highlighted, its
     /// icon takes the highlighted colours, the one shown takes the plain ones, and the selected
-    /// item becomes the one shown. Returns whether the item shown changed; from an item to none
-    /// is a change like any other.
-    pub(crate) fn highlight(&mut self, pictures: &HudPictures) -> bool {
+    /// item becomes the one shown.
+    pub(crate) fn highlight(&mut self, pictures: &HudPictures) {
         let selected = self.selection.item();
         if selected == self.shown.highlighted {
-            return false;
+            return;
         }
         if let Some(item) = selected {
             self.colour_icon(pictures, item, HIGHLIGHTED);
@@ -104,7 +103,6 @@ impl HudState {
             self.colour_icon(pictures, item, PLAIN);
         }
         self.shown.highlighted = selected;
-        true
     }
 
     /// Spec: OneShotFlash. After the highlight, the one-shot item's icon takes the plain colours
@@ -119,11 +117,8 @@ impl HudState {
         let Some(item) = self.selection.one_shot() else {
             return;
         };
-        let colours = if rules.one_shot_flash.first_half(frame) {
-            PLAIN
-        } else {
-            HIGHLIGHTED
-        };
+        let shown_plain = rules.one_shot_flash.first_half(frame);
+        let colours = if shown_plain { PLAIN } else { HIGHLIGHTED };
         self.colour_icon(pictures, item, colours);
     }
 
@@ -141,11 +136,11 @@ impl HudState {
 
     /// Draws the last digits of `value` in `places`, one per cell, the lowest in the last; digit
     /// `d`'s picture is the `d`-th.
-    fn draw_number(&mut self, pictures: &HudPictures, places: &[Point], value: u16) {
+    fn draw_number(&mut self, pictures: &HudPictures, places: &[Place], value: u16) {
         let mut rest = value;
         for &place in places.iter().rev() {
-            if let Some(digit) = pictures.digits.get(usize::from(rest % DECIMAL)) {
-                self.grid.set(place, digit.in_colours(DIGIT_COLOURS));
+            if let Some(&digit) = pictures.digits.get(usize::from(rest % DECIMAL)) {
+                self.grid.set(place, Tile::new(digit, DIGIT_COLOURS));
             }
             rest /= DECIMAL;
         }

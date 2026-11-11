@@ -55,7 +55,7 @@ const fn word_of(number: u16) -> u16 {
     0x2C00 | number
 }
 
-fn at(column: i32, row: i32) -> Point {
+fn at(column: i32, row: i32) -> Place {
     Pair { x: column, y: row }
 }
 
@@ -65,33 +65,23 @@ fn the_maps_import_pictures_charts_and_beyond() {
         &data::map::AreaMaps(vec![rom_map(Area::Brinstar)]),
         &invented(),
     );
-    let map = content.map(Area::Brinstar, false);
+    let (map, pictures) = content.of(Area::Brinstar).unwrap();
+    let flipped = |number| Look {
+        picture: Number::new(number).unwrap(),
+        flip: Flip::Both,
+    };
     // Column 40 of row 3 is the right page's column 8: word 400h + 3 × 20h + 8.
-    assert_eq!(
-        map.pictures.get(at(40, 3)),
-        Some(Picture::new(0x068, Flip::Both))
-    );
-    assert_eq!(
-        map.pictures.get(at(5, 2)),
-        Some(Picture::new(0x045, Flip::Both))
-    );
+    assert_eq!(map.pictures.get(at(40, 3)), Some(flipped(0x068)));
+    assert_eq!(map.pictures.get(at(5, 2)), Some(flipped(0x045)));
     assert!(map.charted.contains(at(40, 3)));
     assert!(!map.charted.contains(at(40, 2)));
     // Column 65 is the beyond pictures' column 1.
-    assert_eq!(
-        map.pictures.get(at(65, 2)).map(|picture| picture.number),
-        Some(0x341)
-    );
-    assert!(!map.collected);
-    assert!(content.map(Area::Brinstar, true).collected);
-    assert_eq!(
-        content.map(Area::Debug, false),
-        HudContent::default().map(Area::Debug, false)
-    );
-    assert_eq!(
-        content.pictures().digits[9],
-        Picture::new(0x1D9, Flip::None)
-    );
+    assert_eq!(map.pictures.get(at(65, 2)), Some(flipped(0x341)));
+    let (debug, _) = content.of(Area::Debug).unwrap();
+    assert_eq!(debug.pictures.get(at(5, 2)), Some(look(0)));
+    assert_eq!(debug.charted, MapCellSet::default());
+    assert_eq!(pictures.digits[9], look(0x1D9));
+    assert_eq!(HudContent::default().of(Area::Brinstar), None);
 }
 
 #[test]
