@@ -6,11 +6,12 @@ use crate::chart::Choice;
 use crate::collide::Probe::Blocks;
 use crate::fit::{Fitted, crouched};
 use crate::rows::Effect::{
-    self, AsRunning, ComesToTheGround, EndSkid, Halt, Launch, LiftIfUnaimed, LoseDash, Rise,
-    SpinOn, TurnRound, TurnRoundIfFacingChanges,
+    self, AsRunning, ComesToTheGround, EndSkid, EndsTheBounce, Halt, Launch, LiftIfUnaimed,
+    LoseDash, Rise, SpinOn, TurnRound, TurnRoundIfFacingChanges,
 };
 use crate::rules::Lowers;
-use crate::samus::{Dashing, Samus, Spin};
+use crate::run::Dashing;
+use crate::samus::{Samus, Spin};
 use crate::situation::ENTERING;
 use crate::tick::Tick;
 use crate::vertical::Contact;
@@ -18,8 +19,8 @@ use clean_types::{Aim, Fixed, Parts, ZERO, px};
 
 impl Effect {
     /// `Dashing`: whether it is a let-go effect other than none (she follows the pad again, as
-    /// running, dash 0, or a halt). Taken from the pad chart at the pose change, one ends her
-    /// dashing; the same dash 0 that a turn's end hands over doesn't.
+    /// running, dash 0, or a halt), which ends her dashing at the pose change. (The dash 0 a
+    /// turn's end hands over is one too, but the turn's own moves have already ended it.)
     const fn lets_go(self) -> bool {
         matches!(self, EndSkid | AsRunning | LoseDash | Halt)
     }
@@ -31,9 +32,8 @@ impl Samus {
     /// pose she had or crouched `Still` with neither: her speeds, dash and whether she carries on
     /// or skids stay as her moves left them, her position and seat as her looks left them. What
     /// she becomes brings, in order: after pose fit's push the shrink (`shrink`), then what she
-    /// met, then its row's effects, then the change of action's own (`ENTERING`). `Dashing`: the
-    /// pad chart's let-go effect ends her dashing. `RidingTheElevator`: on the ride nothing else
-    /// of hers changes, so none of this comes.
+    /// met, then its row's effects, then the change of action's own (`ENTERING`). `Dashing`: a
+    /// let-go effect ends her dashing.
     ///
     /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where pose fit moved her, or a change of
     /// shape starts (a lowering of 0 px included), she is placed at her y pixel just after that,
@@ -58,15 +58,12 @@ impl Samus {
         }
         let placed = (fitted.moved() || became.lower.is_some())
             .then(|| self.position.y.with_sub(start.position.y.sub()));
-        if start.rides_the_elevator(t.frame) {
-            return placed;
-        }
         if let Some(contact) = contact {
             self.vertical.meet(contact, self.run.dash, t);
             self.run.meet(contact);
         }
-        if !became.handed_over && became.effects.iter().any(|e| e.lets_go()) {
-            self.dashing = Dashing::Off;
+        if became.effects.iter().any(|e| e.lets_go()) {
+            self.run.dashing = Dashing::Off;
         }
         let entered = ENTERING
             .iter()
@@ -104,7 +101,7 @@ impl Samus {
             TurnRound => self.run.turn_round(pose.facing),
             TurnRoundIfFacingChanges if pose.facing != start.pose.facing => {
                 self.run.turn_round(pose.facing);
-                self.dashing = Dashing::Off;
+                self.run.dashing = Dashing::Off;
             }
             EndSkid => self.run.end_skid(pose.facing),
             AsRunning => self.run.as_running(start.run.speed),
@@ -114,6 +111,7 @@ impl Samus {
             Launch => self.run.launch(pose.facing),
             SpinOn => self.spin = Spin::CarriedOn,
             ComesToTheGround => self.vertical.come_to_the_ground(),
+            EndsTheBounce => self.vertical.end_bounce(),
             LiftIfUnaimed | TurnRoundIfFacingChanges => {}
         }
     }

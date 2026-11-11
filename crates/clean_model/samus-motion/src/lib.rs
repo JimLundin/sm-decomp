@@ -8,11 +8,12 @@
 //! with `situation` and `rows` the pose chart; `rules` the tuning parameters and `catalogue` the
 //! spec's entries.
 //!
-//! A caller holds a `Samus`, every part of her state public (her `Run`, `Vertical`, pose, `Spin`,
-//! `Seat`, `JumpHeld` and `Dashing`), and steps her a `Frame` at a time (`Samus::step`) in a
-//! `World` under `Rules`, reading the frame's `Outcome` (what it gives the camera and her
-//! animation, §1 and §1.4), or `UnknownPose` for a pose no situation names. The pose chart alone
-//! answers through `Moment::next_pose`.
+//! A caller holds a `Samus`, every part of her state public (her `Run` with its `Dashing`,
+//! `Vertical`, pose, `Spin`, `Seat` and `JumpHeld`), and steps her a `Frame` at a time
+//! (`Samus::step`) in a `World` under `Rules`, reading the frame's `Outcome` (what it gives the
+//! camera, the world and her animation, §1, §1.4 and `TouchedCells`, her sprite as the shared
+//! `clean_types::Sprite`), or `UnknownPose` for a pose no situation names. The pose chart alone answers
+//! through `Moment::next_pose`.
 
 pub mod catalogue;
 mod change;
@@ -35,8 +36,8 @@ pub use chart::Moment;
 pub use jump_held::{FrameBefore, JumpHeld};
 pub use rows::Met;
 pub use rules::{Bounces, Rules, SpeedCap, WithItem};
-pub use run::{Carry, DashIs, Run};
-pub use samus::{Dashing, Outcome, Samus, Seat, Spin, Sprite, StandingAnimation, WallTest};
+pub use run::{Carry, Dashing, Run};
+pub use samus::{Outcome, Samus, Seat, Spin, StandingAnimation, WallTest};
 pub use situation::UnknownPose;
 pub use tick::Frame;
 pub use vertical::{Phase, Vertical};

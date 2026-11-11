@@ -60,7 +60,9 @@
 #   through, which a caller starting mid-play gives). A missing quantity is 0. The start is
 #   always a moment where she remembers nothing the quantities don't show (spec §1.2), with two
 #   exceptions: falling, which no lead-in in scope reaches, jump held through and dashing.
-#   dashing (optional, default false): whether she is dashing at the start (spec §1.2, `Dashing`).
+#   dashing (optional, default false): whether she is dashing at the start (spec §1.2, `Dashing`);
+#   a start with a dash and dashing false has a dash she is to lose (spec `Dash`), so a recorded
+#   start's dashing is its record's, and a constructed start that keeps its dash gives true.
 # - lead_in: the frames before the checked one, oldest first, when the checked frame depends on
 #   something she remembers. Each gives the pose at its start (as pose below), the pad,
 #   jump_pressed, pressed and animation_ends (optional, as below). A lead-in frame's pose is the one the next frame
@@ -119,7 +121,11 @@
 #   heading_down too where nothing her moves met and no rise of the pose change acts on her
 #   vertical motion; W13 (a landing) and MB2 (a spin started over a downward speed she kept) are
 #   worked from her moves, and WK1 (the kick) gives none. A recorded vector's end kind is its pose's
-#   in the game's clips, which the spec states (`AnimationEnds`).
+#   in the game's clips, which the spec states (`AnimationEnds`). speed_y_after_moves: her
+#   vertical speed as her moves leave her, signed as speed_y, at heading_down's point (spec §1.4,
+#   `RisingAndFalling`); compared only where given. A recorded vector's is worked from its record
+#   (the speed at N+1 where nothing her moves met and no rise of the pose change acts on her
+#   vertical motion; W13's is the fall's pulled speed before the landing zeroes it).
 # - Recorded vectors: taken from oracle frames where her pose and body size didn't change (or she
 #   landed), her horizontal move was her whole speed, and she met no slope. A lead-in's frames pass
 #   the same test, and the only pose changes in one are a jump, a fall or a turn started from
@@ -232,7 +238,7 @@ id = "C-limit"
 source = "constructed"
 entries = ["BlocksStopFlush", "DriftInTheAir"]
 world = {}
-before = { position = ["0100.0000", "0080.0000"], dash = "0011.0000" }
+before = { position = ["0100.0000", "0080.0000"], dash = "0011.0000", dashing = true }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
@@ -532,7 +538,7 @@ source = "constructed"
 entries = ["WallJump", "Jumping", "RisingAndFalling", "DriftInTheAir"]
 items = ["HiJumpBoots"]
 world = { solid_block = [1344, 640] }
-before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800" }
+before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
@@ -1386,7 +1392,7 @@ id = "R97"
 source = "r03:215"
 entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
 world = { floor_top = 2208 }
-before = { position = ["01DB.6FFF", "088B.FFFF"], speed_x = "+0000.0000", dash = "0000.2000", speed_y = "+0000.0000" }
+before = { position = ["01DB.6FFF", "088B.FFFF"], speed_x = "+0000.0000", dash = "0000.2000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
 jump_pressed = false
@@ -1408,7 +1414,7 @@ id = "R99"
 source = "r03:472"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
-before = { position = ["008A.7FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.7000", speed_y = "-0004.E000" }
+before = { position = ["008A.7FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.7000", speed_y = "-0004.E000", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = false },
 ]
@@ -1422,7 +1428,7 @@ id = "R100"
 source = "r03:483"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 world = {}
-before = { position = ["008A.7FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.7000", speed_y = "-0004.E000" }
+before = { position = ["008A.7FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.7000", speed_y = "-0004.E000", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = ["run", "jump", "right"], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["run", "jump", "right"], jump_pressed = false },
@@ -1448,7 +1454,7 @@ source = "r04:39"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 items = ["Bombs", "MorphBall"]
 world = {}
-before = { position = ["00B5.3FFF", "00AB.FFFF"], speed_x = "+0002.C000", dash = "0001.A000", speed_y = "-0004.E000" }
+before = { position = ["00B5.3FFF", "00AB.FFFF"], speed_x = "+0002.C000", dash = "0001.A000", speed_y = "-0004.E000", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }, pad = ["shoot", "jump"], jump_pressed = false },
 ]
@@ -1463,7 +1469,7 @@ source = "r04:308"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 items = ["Bombs", "MorphBall"]
 world = {}
-before = { position = ["0566.3FFF", "00A7.1FFF"], speed_x = "+0000.0000", dash = "0000.2000", speed_y = "-0004.C400" }
+before = { position = ["0566.3FFF", "00A7.1FFF"], speed_x = "+0000.0000", dash = "0000.2000", speed_y = "-0004.C400", dashing = true }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["run", "jump", "left", "right"]
 jump_pressed = false
@@ -1632,7 +1638,7 @@ source = "r06:663"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 items = ["Bombs", "HiJumpBoots", "MorphBall", "VariaSuit", "XRayScope"]
 world = {}
-before = { position = ["0BEB.D9FF", "0185.FFFF"], speed_x = "+0000.0000", dash = "0000.6000", speed_y = "-0005.E400" }
+before = { position = ["0BEB.D9FF", "0185.FFFF"], speed_x = "+0000.0000", dash = "0000.6000", speed_y = "-0005.E400", dashing = true }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["run", "jump"]
 jump_pressed = false
@@ -1706,7 +1712,7 @@ source = "r07:73"
 entries = ["TurningRound", "FollowingTheGround"]
 items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"]
 world = { floor_top = 160 }
-before = { position = ["0085.9000", "008B.FFFF"], speed_x = "-0001.9000", dash = "0000.0000", speed_y = "+0000.0000" }
+before = { position = ["0085.9000", "008B.FFFF"], speed_x = "-0001.9000", dash = "0000.0000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
 pad = ["run", "right"]
 jump_pressed = false
@@ -1755,7 +1761,7 @@ source = "r08:45"
 entries = ["RisingAndFalling", "DriftInTheAir"]
 items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"]
 world = {}
-before = { position = ["005C.8C00", "028B.FFFF"], speed_x = "-0002.C000", dash = "0001.0000", speed_y = "-0006.0000" }
+before = { position = ["005C.8C00", "028B.FFFF"], speed_x = "-0002.C000", dash = "0001.0000", speed_y = "-0006.0000", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 21] }, pad = ["run", "jump", "left"], jump_pressed = false },
 ]
@@ -1920,7 +1926,7 @@ id = "J1"
 source = "r03:470"
 entries = ["Jumping", "MovesAsShePosed", "SpeedBuildsAndBrakes", "Dash", "FollowingTheGround"]
 world = { floor_top = 160 }
-before = { position = ["0086.4FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.6000", speed_y = "+0000.0000" }
+before = { position = ["0086.4FFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.6000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
 pad = ["run", "jump", "right"]
@@ -1938,7 +1944,7 @@ pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] 
 next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
 pad = ["jump"]
 jump_pressed = true
-after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", rising = true }
+after = { position = ["056E.9FFF", "00AB.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", rising = true, speed_y_after_moves = "+0000.0000" }
 
 # J3: the take-off's body is its own, 19 px, as the jump's: the record at the take-off's start
 # shows 21 px, the standing body before the frame takes the take-off's, so the frame's moves use
@@ -1981,7 +1987,7 @@ before = { position = ["00EB.FFFF", "004C.F7FF"], speed_x = "+0000.0000", dash =
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0C00", rising = true, dashing = false, heading_down = false }
+after = { position = ["00EB.FFFF", "004C.E7FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0C00", rising = true, dashing = false, heading_down = false, speed_y_after_moves = "+0000.0C00" }
 
 # E2 continues E1 with the pad of E1 (the record's next frame also holds right, against a wall); its
 # vertical outcome is the record's (samus-ceres-push:990).
@@ -2049,7 +2055,7 @@ before = { position = ["0100.0000", "0050.8000"], speed_y = "-0005.0000" }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["0100.0000", "004C.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000", rising = false, heading_down = false }
+after = { position = ["0100.0000", "004C.0000"], speed_x = "+0000.0000", speed_y = "+0000.0000", rising = false, heading_down = false, speed_y_after_moves = "-0004.E400" }
 
 [[vector]]
 id = "C-slope-land"
@@ -2185,7 +2191,7 @@ before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
 pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000" }
+after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000", speed_y_after_moves = "+0000.0000" }
 
 # C-screen-skid: facing the screen counts as right (spec §2). She starts skidding, a leftward
 # speed facing the screen, with nothing held. She doesn't move and keeps her speed, and standing
@@ -2255,7 +2261,7 @@ id = "C-step-far"
 source = "constructed"
 entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]
 world = { stepped = { block = [256, 272], quarters = ["..", "##"] } }
-before = { position = ["00FB.0000", "0109.0000"], dash = "0009.0000" }
+before = { position = ["00FB.0000", "0109.0000"], dash = "0009.0000", dashing = true }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
@@ -2277,7 +2283,7 @@ id = "C-step-left"
 source = "constructed"
 entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]
 world = { stepped = { block = [256, 272], quarters = ["..", ".#"] } }
-before = { position = ["0117.4000", "0109.0000"], dash = "0002.0000" }
+before = { position = ["0117.4000", "0109.0000"], dash = "0002.0000", dashing = true }
 pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
 pad = ["left"]
 jump_pressed = false
@@ -2311,7 +2317,7 @@ id = "C-span-step"
 source = "constructed"
 entries = ["BlocksStopFlush", "WallsAndCeilings", "DriftInTheAir"]
 world = { stepped = { block = [272, 240], quarters = [".#", ".#"] }, solid_block = [272, 272] }
-before = { position = ["010B.0000", "0109.0000"], dash = "0009.0000" }
+before = { position = ["010B.0000", "0109.0000"], dash = "0009.0000", dashing = true }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
@@ -3758,7 +3764,7 @@ source = "r04:312"
 entries = ["ShrinkingLowersHer", "PadChart", "DriftInTheAir", "RisingAndFalling", "Dash"]
 items = ["Bombs", "MorphBall"]
 world = {}
-before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
+before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400", dashing = true }
 pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
 next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["run", "right", "down"]
@@ -3799,7 +3805,7 @@ id = "C-morph-no-ball-air"
 source = "constructed"
 entries = ["PoseFollows", "PadChart", "ShrinkingLowersHer", "DriftInTheAir", "RisingAndFalling"]
 world = {}
-before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
+before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400", dashing = true }
 pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
 next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["run", "right", "down"]
@@ -3882,7 +3888,7 @@ source = "constructed"
 entries = ["ShrinkingLowersHer", "TouchedCells", "PadChart", "DriftInTheAir", "RisingAndFalling"]
 items = ["MorphBall"]
 world = { floor_top = 160 }
-before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400" }
+before = { position = ["056B.7FFF", "0094.B7FF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "-0004.5400", dashing = true }
 pose = { body = "Upright", action = "Jumping", facing = "Right", aim = "Down", radius = [5, 10] }
 next_pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["run", "right", "down"]
@@ -4016,7 +4022,7 @@ pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], aim = "DownForward", landed_from = "Jump" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
-after = { position = ["047C.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "029B.9400", dashing = false, heading_down = true }
+after = { position = ["047C.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "029B.9400", dashing = false, heading_down = true, speed_y_after_moves = "+0001.F800" }
 
 [[vector]]
 id = "W20"
@@ -4057,7 +4063,7 @@ id = "C-near-wall-item"
 source = "constructed"
 entries = ["TouchedCells", "WallJump", "TurningRound", "DriftInTheAir"]
 world = { solid_block = [1360, 544], cells = [{ block = [1360, 528], kind = "ReactingAir" }] }
-before = { position = ["0571.3FFF", "020D.0800"], speed_x = "-0001.6000", dash = "0000.A000", speed_y = "+0000.5400" }
+before = { position = ["0571.3FFF", "020D.0800"], speed_x = "-0001.6000", dash = "0000.A000", speed_y = "+0000.5400", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["right"], jump_pressed = false, pressed = ["right"] },
   { pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }, pad = ["right"], jump_pressed = false },
@@ -4265,7 +4271,7 @@ id = "C-slope-roll-carry"
 source = "constructed"
 entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
 world = { slope_floor = [{ block = [368, 800], surface = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5] }, { block = [384, 800], surface = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], factor = "0.B0" }] }
-before = { position = ["017C.1FFF", "0318.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+before = { position = ["017C.1FFF", "0318.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
 pad = ["right"]
 jump_pressed = false
@@ -4277,7 +4283,7 @@ source = "constructed"
 entries = ["SlopesCarry", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
 world = { slope_floor = { block = [384, 800], surface = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9], factor = "0.B0" } }
 frame = "Odd"
-before = { position = ["0184.5FFF", "031C.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000" }
+before = { position = ["0184.5FFF", "031C.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
 pad = ["right"]
 jump_pressed = false
@@ -4294,7 +4300,7 @@ pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21
 next_pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
 jump_pressed = false
-after = { position = ["01E4.1C00", "012D.CFFF"], speed_x = "+0002.C000", dash = "0001.1000", speed_y = "+0000.0000", heading_down = false }
+after = { position = ["01E4.1C00", "012D.CFFF"], speed_x = "+0002.C000", dash = "0001.1000", speed_y = "+0000.0000", heading_down = false, speed_y_after_moves = "+0000.0000" }
 
 # C-slope-carry-kept (gap 27): SL2's carry while running with a vertical speed kept on the ground.
 # The kept +0.E000 plays no part in the pull or the stop: the pull is 3.C000 from y subpixel FFFF,
@@ -4552,7 +4558,7 @@ pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21
 next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 21] }
 pad = ["run", "right", "jump"]
 jump_pressed = true
-after = { position = ["013B.FFFF", "04BB.FFFF"], speed_x = "+0002.C000", dash = "0005.0000", speed_y = "-0008.0000", rising = true, dashing = true, heading_down = true }
+after = { position = ["013B.FFFF", "04BB.FFFF"], speed_x = "+0002.C000", dash = "0005.0000", speed_y = "-0008.0000", rising = true, dashing = true, heading_down = true, speed_y_after_moves = "+0000.E000" }
 
 [[vector]]
 id = "WB1"
@@ -4573,7 +4579,7 @@ source = "r08:187"
 entries = ["Jumping", "Dash", "MovesAsShePosed", "PadChart"]
 items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"]
 world = { floor_top = 416 }
-before = { position = ["005A.1C00", "018B.FFFF"], speed_x = "-0002.C000", dash = "0000.F000", speed_y = "+0000.0000" }
+before = { position = ["005A.1C00", "018B.FFFF"], speed_x = "-0002.C000", dash = "0000.F000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], gun = "Drawn" }
 next_pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 21] }
 pad = ["left", "shoot", "jump"]
@@ -4673,7 +4679,7 @@ source = "constructed"
 entries = ["WallJump", "Jumping", "RisingAndFalling"]
 items = ["SpeedBooster"]
 world = { solid_block = [1344, 640] }
-before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800" }
+before = { position = ["053D.D000", "02A2.5BFF"], speed_x = "-0001.6000", dash = "0001.2000", speed_y = "-0004.A800", dashing = true }
 lead_in = [
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
   { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false },
@@ -4696,7 +4702,7 @@ source = "constructed"
 entries = ["Jumping", "RisingAndFalling", "DriftInTheAir"]
 items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
 world = {}
-before = { position = ["0082.BFFF", "0478.1FFF"], speed_x = "+0001.6000", dash = "0003.4000", speed_y = "+0002.A000" }
+before = { position = ["0082.BFFF", "0478.1FFF"], speed_x = "+0001.6000", dash = "0003.4000", speed_y = "+0002.A000", dashing = true }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump", "right"]
 jump_pressed = true
@@ -4712,7 +4718,7 @@ source = "constructed"
 entries = ["Jumping", "PadChart", "MovesAsShePosed"]
 items = ["MorphBall", "SpringBall"]
 world = { floor_top = 288 }
-before = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000" }
+before = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", dashing = true }
 pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
 pad = ["right", "jump"]
@@ -4725,7 +4731,7 @@ source = "constructed"
 entries = ["Jumping", "PadChart", "MovesAsShePosed"]
 items = ["MorphBall", "SpeedBooster", "SpringBall"]
 world = { floor_top = 288 }
-before = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000" }
+before = { position = ["0100.0000", "0119.FFFF"], speed_x = "+0003.4000", dash = "0005.0000", dashing = true }
 pose = { body = "SpringBall", action = "Rolling", facing = "Right", radius = [5, 7] }
 next_pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
 pad = ["right", "jump"]
@@ -4744,7 +4750,7 @@ source = "constructed"
 entries = ["Landing", "Jumping", "BlocksStopFlush"]
 items = ["MorphBall", "SpringBall"]
 world = { floor_top = 288 }
-before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000" }
+before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000", dashing = true }
 pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
 pad = ["right", "jump"]
 jump_pressed = false
@@ -4756,7 +4762,7 @@ source = "constructed"
 entries = ["Landing", "Jumping", "BlocksStopFlush"]
 items = ["MorphBall", "SpeedBooster", "SpringBall"]
 world = { floor_top = 288 }
-before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000" }
+before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000", dashing = true }
 pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
 pad = ["right", "jump"]
 jump_pressed = false
@@ -4778,7 +4784,7 @@ before = { position = ["0580.BFFF", "00B0.FFFF"], speed_x = "+0001.0000", dash =
 pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
 pad = []
 jump_pressed = false
-after = { position = ["0580.DFFF", "00B0.FFFF"], speed_x = "+0001.0000", dash = "0000.2000", speed_y = "+0000.0000", bounces = 0, rising = false }
+after = { position = ["0580.DFFF", "00B0.FFFF"], speed_x = "+0001.0000", dash = "0000.2000", speed_y = "+0000.0000", bounces = 0, rising = false, heading_down = false, speed_y_after_moves = "+0000.0000" }
 
 [[vector]]
 id = "C-morph-land-run"
@@ -4790,7 +4796,7 @@ before = { position = ["01EC.DFFF", "04B9.C3FF"], speed_x = "+0001.4000", dash =
 pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["01F1.DFFF", "04B9.FFFF"], speed_x = "+0001.4000", dash = "0005.0000", speed_y = "+0000.0000", bounces = 0, rising = false }
+after = { position = ["01F1.DFFF", "04B9.FFFF"], speed_x = "+0001.4000", dash = "0005.0000", speed_y = "+0000.0000", bounces = 0, rising = false, heading_down = false, speed_y_after_moves = "+0000.0000" }
 
 # C-fallcap-past (blind review point 8): the fall stops growing only at a pixel part of exactly 5. A
 # speed of 6.0000, which no fall growing from below reaches, grows on.
@@ -4926,7 +4932,7 @@ source = "constructed"
 entries = ["Landing", "Jumping", "BlocksStopFlush"]
 items = ["MorphBall", "SpeedBooster"]
 world = { floor_top = 288 }
-before = { position = ["0100.0000", "0117.0000"], dash = "0003.0000", speed_y = "+0003.4000" }
+before = { position = ["0100.0000", "0117.0000"], dash = "0003.0000", speed_y = "+0003.4000", dashing = true }
 pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
 pad = ["right"]
 jump_pressed = false
@@ -5411,3 +5417,216 @@ pad = ["jump"]
 jump_pressed = false
 animation_ends = "EndUnlessJump"
 after = { position = ["0100.0000", "010B.FFFF"], speed_y = "-0004.E000", jump_held = 1, landed_or_ended = false, handed_over = false }
+
+# R-walljump-letgo: a wall jump rising at 5.4800 with nothing held. Letting go of jump ends the
+# rise as the frame starts: vertical speed 0, falling, no vertical move, and the pull leaves
+# +0.1C00, heading down. The pad chart's last row turns her into the spin, which with the screw
+# attack takes no effect: she keeps 1.6000 and moves by it.
+
+[[vector]]
+id = "R-walljump-letgo"
+source = "samus-grapple-walljump:115"
+entries = ["RisingAndFalling", "PadChart", "DriftInTheAir"]
+items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
+world = {}
+before = { position = ["0052.2000", "00ED.93FF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "-0005.4800" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0053.8000", "00ED.93FF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "+0000.1C00", rising = false, dashing = false, heading_down = true, speed_y_after_moves = "+0000.1C00" }
+
+# C-walljump-letgo-plain: R-walljump-letgo without the screw attack or space jump, dashing with
+# a dash. The rise ends the same way and she moves by 1.6000 and her dash 0.4000; then the last
+# row's effect acts: horizontal speed 0, dash 0, following the pad, and she stops dashing.
+
+[[vector]]
+id = "C-walljump-letgo-plain"
+source = "constructed"
+entries = ["RisingAndFalling", "PadChart", "Dashing"]
+world = {}
+before = { position = ["0052.2000", "00ED.93FF"], speed_x = "+0001.6000", dash = "0000.4000", speed_y = "-0005.4800", dashing = true }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0053.C000", "00ED.93FF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.1C00", rising = false, dashing = false, dashing_after_moves = true, dash_lost = true, heading_down = true }
+
+# C-walljump-letgo-space: C-walljump-letgo-plain with space jump alone. The spin she takes is the
+# space jump's, and the last row's effect doesn't act: she keeps 1.6000 and her dash 0.4000, and
+# goes on dashing.
+
+[[vector]]
+id = "C-walljump-letgo-space"
+source = "constructed"
+entries = ["RisingAndFalling", "PadChart", "Dashing"]
+items = ["SpaceJump"]
+world = {}
+before = { position = ["0052.2000", "00ED.93FF"], speed_x = "+0001.6000", dash = "0000.4000", speed_y = "-0005.4800", dashing = true }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 19] }
+pad = []
+jump_pressed = false
+after = { position = ["0053.C000", "00ED.93FF"], speed_x = "+0001.6000", dash = "0000.4000", speed_y = "+0000.1C00", rising = false, dashing = true, dashing_after_moves = true, dash_lost = false, heading_down = true }
+
+# C-walljump-rise-held: R-walljump-letgo with jump held. The rise goes on: she moves up by 5.4800
+# and the pull leaves -5.2C00; the pad chart's row for jump held keeps the wall jump.
+
+[[vector]]
+id = "C-walljump-rise-held"
+source = "constructed"
+entries = ["RisingAndFalling"]
+items = ["ScrewAttack"]
+world = {}
+before = { position = ["0052.2000", "00ED.93FF"], speed_x = "+0001.6000", dash = "0000.0000", speed_y = "-0005.4800" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0053.8000", "00E8.4BFF"], speed_x = "+0001.6000", speed_y = "-0005.2C00", rising = true, heading_down = false, speed_y_after_moves = "-0005.2C00" }
+
+# C-elevator-jump and C-elevator-side: C-elevator with a pad held. The ride is decided before a
+# pose is chosen, so neither jump pressed (a take-off on foot) nor a side held (a turn, or a
+# run) acts: she keeps her pose, goes down 1 px facing the screen, and nothing is handed over.
+
+[[vector]]
+id = "C-elevator-jump"
+source = "constructed"
+entries = ["RidingTheElevator", "PadChart"]
+world = { elevator_moving = true }
+before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
+pad = ["jump"]
+jump_pressed = true
+pressed = ["jump"]
+after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000", rising = false, pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }, handed_over = false }
+
+[[vector]]
+id = "C-elevator-side"
+source = "constructed"
+entries = ["RidingTheElevator", "PadChart"]
+world = { elevator_moving = true }
+before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
+pad = ["left"]
+jump_pressed = false
+pressed = ["left"]
+after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000", pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }, handed_over = false }
+
+# R-morph-land: the morph falling at 1.1800, dashing, with run and forward held. Its move by its
+# vertical speed meets the floor 0.1400 down, flush, and the landing stops her vertical motion
+# within her moves: not heading down, and no vertical speed as her moves leave her. She moves by
+# her dash alone, 0.2000.
+
+[[vector]]
+id = "R-morph-land"
+source = "item-reserve-tank:564"
+entries = ["Landing", "RisingAndFalling", "Dashing"]
+items = ["Bombs", "MorphBall"]
+world = { floor_top = 128 }
+before = { position = ["0192.0000", "0079.EBFF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0001.1800", dashing = true }
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0192.2000", "0079.FFFF"], speed_x = "+0001.4000", dash = "0000.2000", speed_y = "+0000.0000", rising = false, dashing = true, heading_down = false, speed_y_after_moves = "+0000.0000" }
+
+# C-dash-lost-not-dashing and C-dash-kept-dashing: running forward without run held, with a dash
+# of 0.8000. Not dashing, the dash is gone (0) before her move; dashing, it stays hers (0.8000),
+# and with run let go she stays dashing as running does.
+
+[[vector]]
+id = "C-dash-lost-not-dashing"
+source = "constructed"
+entries = ["Dash", "Dashing"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.0000", dash = "0000.8000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { dash = "0000.0000", dashing = false, dash_began = false, dash_lost = false }
+
+[[vector]]
+id = "C-dash-kept-dashing"
+source = "constructed"
+entries = ["Dash", "Dashing"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.0000", dash = "0000.8000", dashing = true }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { dash = "0000.8000", dashing = true, dash_began = false, dash_lost = false }
+
+# C-unmorph-on-bounce: C-place-0 on a bounce's rise: the ball rising at 1.0000 after its first
+# bounce (bounces 1), jump pressed. Her moves take her up 1 px and the pull leaves -0.E400 (her
+# speed as her moves leave her); starting the unmorph then ends her vertical motion: vertical
+# speed 0, not falling, bounces 0. She is placed at her y pixel after the 0 px lowering.
+
+[[vector]]
+id = "C-unmorph-on-bounce"
+source = "constructed"
+entries = ["ShrinkingLowersHer", "PadChart", "RisingAndFalling"]
+world = {}
+before = { position = ["0100.0000", "0100.8000"], speed_y = "-0001.0000", bounces = 1 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0100.0000", "00FF.8000"], speed_y = "+0000.0000", bounces = 0, placed = "00FF.8000", rising = false, heading_down = false, speed_y_after_moves = "-0000.E400" }
+
+# C-morph-ceiling: the morph rising at 6.0000 under a ceiling whose bottom face is at y 64. Her
+# move up stops flush, her top edge at the face (y 0047.0000 with her 7 px body), but while her
+# body changes shape the ceiling doesn't end her rise: she goes on rising at her pulled speed,
+# -6.0000 + 0.1C00 = -5.E400.
+
+[[vector]]
+id = "C-morph-ceiling"
+source = "constructed"
+entries = ["WallsAndCeilings", "BlocksStopFlush", "RisingAndFalling"]
+items = ["MorphBall"]
+world = { ceiling_bottom = 64 }
+before = { position = ["0100.0000", "004C.8000"], speed_y = "-0006.0000" }
+pose = { body = "Ball", action = "Morphing", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0047.0000"], speed_y = "-0005.E400", rising = true, heading_down = false, speed_y_after_moves = "-0005.E400" }
+
+# C-takeoff-loses-dash and C-takeoff-keeps-dash: a take-off with a dash of 0.4000 and jump held.
+# She moves by her dash only. Not dashing, the dash is gone before that move, so she doesn't
+# move; dashing, she moves 0.4000 by it and keeps it. Jump alone held, the take-off's last row
+# (as running) then ends her dashing at the pose change.
+
+[[vector]]
+id = "C-takeoff-loses-dash"
+source = "constructed"
+entries = ["Jumping", "Dash"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], dash = "0000.4000", speed_y = "-0004.E000" }
+pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.0000", "010B.FFFF"], dash = "0000.0000", speed_y = "-0004.E000", dashing = false }
+
+[[vector]]
+id = "C-takeoff-keeps-dash"
+source = "constructed"
+entries = ["Jumping", "Dash"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], dash = "0000.4000", speed_y = "-0004.E000", dashing = true }
+pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["0100.4000", "010B.FFFF"], dash = "0000.4000", speed_y = "-0004.E000", dashing = false, dashing_after_moves = true }
+
+# C-screen-kept-speed: facing the screen off the elevator, on the floor, with a downward speed
+# she keeps there (+0.E000, as a start may give). She doesn't move and keeps it, heading down,
+# and her speed as her moves leave her is that speed.
+
+[[vector]]
+id = "C-screen-kept-speed"
+source = "constructed"
+entries = ["SpeedBuildsAndBrakes", "FollowingTheGround", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0107.FFFF"], speed_y = "+0000.E000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0107.FFFF"], speed_y = "+0000.E000", heading_down = true, speed_y_after_moves = "+0000.E000" }

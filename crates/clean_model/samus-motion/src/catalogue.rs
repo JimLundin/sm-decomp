@@ -27,7 +27,7 @@ pub enum BehaviourId {
     MovesAsShePosed,
     /// How a taller new pose is fitted between what is above and below her (§4).
     PoseFitAfterMoves,
-    /// How starting to crouch or morph lowers her (§4).
+    /// How starting to crouch or morph lowers her, and a change of shape ends a bounce (§4).
     ShrinkingLowersHer,
     /// Gravity, the fall's limit, and when a rise ends (§5).
     RisingAndFalling,
@@ -51,7 +51,7 @@ pub enum BehaviourId {
     AnimationEnds,
     /// How a move into a solid block stops her flush against its face (§8).
     BlocksStopFlush,
-    /// How a wall halts her and a ceiling ends her rise (§8).
+    /// How a wall halts her and a ceiling ends her rise, but for a change of shape's (§8).
     WallsAndCeilings,
     /// How solid enemies stop her, by the gap between the boxes (§8).
     SolidEnemies,
@@ -164,7 +164,7 @@ pub const CATALOGUE: [Behaviour; 30] = [
     },
     Behaviour {
         id: BehaviourId::ShrinkingLowersHer,
-        summary: "the frame she starts to crouch or morph, she is lowered.",
+        summary: "the frame she starts to crouch or morph, she is lowered; a change of shape started from a bouncing ball ends its bounce.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -248,7 +248,7 @@ pub const CATALOGUE: [Behaviour; 30] = [
     },
     Behaviour {
         id: BehaviourId::WallsAndCeilings,
-        summary: "a wall halts her; a ceiling ends her rise.",
+        summary: "a wall halts her; a ceiling ends her rise, except while her body changes shape.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

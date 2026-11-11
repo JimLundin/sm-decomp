@@ -1,4 +1,4 @@
-use clean_model_samus_motion::{Carry, DashIs, Phase, Rules, Spin};
+use clean_model_samus_motion::{Carry, Dashing as ModelDashing, Phase, Rules, Spin};
 use core::num::Wrapping;
 
 use clean_types::{Action, Block as Kind, Heading, Radius, Side, Way, World};
@@ -166,7 +166,7 @@ fn what_she_remembers_reads_from_the_games_words() {
                 model.run.carry,
                 model.run.way,
                 (model.vertical.phase, model.vertical.speed),
-                model.run.dash_is,
+                model.run.dashing,
             )
         })
     };
@@ -195,7 +195,7 @@ fn what_she_remembers_reads_from_the_games_words() {
         0xFFFE_C800,
     );
     assert!(
-        moonfall.is_some_and(|(.., vertical, dash)| dash == DashIs::ToLose
+        moonfall.is_some_and(|(.., vertical, dash)| dash == ModelDashing::Off
             && vertical == (Phase::Moonfall, Wrapping(0x1_3800)))
     );
     // Running with a downward speed, she keeps it on the ground.

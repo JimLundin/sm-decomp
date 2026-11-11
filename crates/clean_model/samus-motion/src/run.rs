@@ -1,4 +1,4 @@
-//! Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash).
+//! Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash, dashing).
 //!
 //! How her speed builds, brakes and halts as her situation moves her (`SpeedBuildsAndBrakes`,
 //! `Dash`, `DriftInTheAir`, `Jumping`, `TurningRound`), and what a turn, a landing, a wall's
@@ -10,7 +10,6 @@ use crate::rules::{Gait, Limits, Rules};
 use crate::tick::Tick;
 use crate::vertical::Contact;
 use Carry::{CarriesOn, FollowsPad};
-use DashIs::{Hers, ToLose};
 use Stride::{DashAlone, DashThenHalt, Nothing, SpeedAndDash};
 use clean_types::button::{RUN, SIDES};
 use clean_types::{Buttons, Facing, Fixed, Parts, Side, ZERO, part_below};
@@ -25,13 +24,19 @@ pub enum Carry {
     CarriesOn,
 }
 
-/// §1.2 her dash: whether the dash on her stays hers.
+/// `Dashing` (§1, §1.2): whether she is dashing.
+///
+/// She dashes from a run with run held until a halt, a turn or the pad's let-go ends it, in any
+/// pose and with any dash: crouched she goes on dashing with a dash of 0, so her dash can't tell
+/// it. It is also what keeps her dash hers: a dash she has while not dashing is lost the next
+/// frame she moves (`Dash`). State a caller gives and reads back; samus-looks reads it for her
+/// run's pace and its stages towards boosting.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum DashIs {
-    /// The dash is hers to keep.
-    Hers,
-    /// Left on her by a landing: gone the next frame she moves.
-    ToLose,
+pub enum Dashing {
+    /// She is not dashing.
+    Off,
+    /// She is dashing.
+    On,
 }
 
 /// `SpeedBuildsAndBrakes`: what a frame's horizontal move is made of.
@@ -52,8 +57,8 @@ pub fn running_with_run_held(gait: Gait, pad: Buttons) -> bool {
     gait == Gait::Running && pad.any(RUN)
 }
 
-/// Her horizontal motion: her speed's size and the way it points, whether it carries on, and
-/// her dash, added the way she moves.
+/// Her horizontal motion: her speed's size and the way it points, whether it carries on, her
+/// dash, added the way she moves, and whether she is dashing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Run {
     /// Her horizontal speed's size.
@@ -64,8 +69,9 @@ pub struct Run {
     pub carry: Carry,
     /// `Dash`: the extra speed from holding run, added the way she moves.
     pub dash: Fixed,
-    /// §1.2 her dash: whether the dash stays hers or is lost the next frame she moves.
-    pub dash_is: DashIs,
+    /// `Dashing`: on from a run with run held until a halt, a turn or the pad's let-go ends it;
+    /// while it is off, a dash on her is lost the next frame she moves.
+    pub dashing: Dashing,
 }
 
 impl Run {
@@ -121,15 +127,12 @@ impl Run {
     }
 
     /// `Landing`, `WallJump`: what her moves' contact does to her run: a wall's kick stops
-    /// it, following the pad; a landing too, the dash keeping its value to lose (§1.2).
+    /// it, following the pad; a landing too, the dash keeping its value and her dashing going on
+    /// until the landing's own moves (`Dashing`).
     pub(crate) const fn meet(&mut self, contact: Contact) {
         match contact {
-            Contact::WallKick => self.stop(),
-            Contact::Land => {
-                self.stop();
-                self.dash_is = ToLose;
-            }
-            Contact::Hop | Contact::Bounce(_) | Contact::Settle => {}
+            Contact::WallKick | Contact::Land => self.stop(),
+            Contact::Hop | Contact::Bounce(_) => {}
         }
     }
 
@@ -177,18 +180,20 @@ impl Run {
         }
     }
 
-    /// `SpeedBuildsAndBrakes`, `DriftInTheAir`, `Dash`: her speed building towards her gait's
-    /// top, as her drift says. Running with run held she gains dash; in any other moving
-    /// activity a dash she is to lose is gone. Carrying on along the ground she brakes, and a skid
-    /// in the air brakes as on the ground, but not through a wall jump. Following the pad with
-    /// neither side held, a straight jump or a fall stops drifting, and the falling ball halts but
-    /// still moves by its dash. Else she builds; carrying on in the air she doesn't brake. A spin
-    /// drifts only while she holds the side she faces (left and right together read so) or
-    /// reached her top speed this frame, else she stops drifting and moves by her dash alone; a
-    /// spin drifting, and a wall jump always, carry on along her facing.
+    /// `SpeedBuildsAndBrakes`, `DriftInTheAir`, `Dash`, `Dashing`: her speed building towards her
+    /// gait's top, as her drift says. Running with run held she is dashing from her moves on and
+    /// gains dash; in any other moving activity a dash she is to lose is gone. Carrying on along
+    /// the ground she brakes, and a skid in the air brakes as on the ground, but not through a
+    /// wall jump. Following the pad with neither side held, a straight jump or a fall stops
+    /// drifting, and the falling ball halts but still moves by its dash. Else she builds;
+    /// carrying on in the air she doesn't brake. A spin drifts only while she holds the side she
+    /// faces (left and right together read so) or reached her top speed this frame, else she
+    /// stops drifting and moves by her dash alone; a spin drifting, and a wall jump always, carry
+    /// on along her facing.
     fn drift(&mut self, gait: Gait, drift: Drift, facing: Facing, t: &Tick) -> Stride {
         let (r, pad) = (t.rules, t.frame.pad);
         if running_with_run_held(gait, pad) {
+            self.dashing = Dashing::On;
             self.grow_dash(r.dash_cap.of(&t.frame.items), r);
         } else {
             self.lose_dash();
@@ -248,12 +253,12 @@ impl Run {
         } else {
             cap
         };
-        self.dash_is = Hers;
     }
 
-    /// `Dash` (§1.2): a dash she is to lose is gone the next frame she moves.
+    /// `Dash` (§1.2): a dash she has while not dashing is the dash she is to lose, gone (0)
+    /// before the move of the next frame she moves; dashing, she keeps it.
     fn lose_dash(&mut self) {
-        if self.dash_is == ToLose {
+        if self.dashing == Dashing::Off {
             self.dash = ZERO;
         }
     }

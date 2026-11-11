@@ -36,14 +36,14 @@ How it is counted:
 
 | Domain | Model score | Budget | Fit | Area fit | Shared | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | 8,858 | 8,587 | 1.03 | 1.00 | 3 % | 12,724 | 4,007 | 1,476 | 18,032 | 312 |
+| samus-motion | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,023 | 1,488 | 18,036 | 326 |
 | camera | 1,839 | 1,762 | 1.04 | 0.88 | 16 % | 2,274 | 631 | 306 | 20,513 | 83 |
 | progress | 898 | 1,136 | 0.79 | 0.53 | 34 % (over 25 %) | - | 488 | 150 | 25,419 | 66 |
 | hud | 2,788 | 2,112 | 1.32 | 0.77 | 41 % (over 25 %) | - | 1,107 | 465 | 20,615 | 82 |
 | blocks | 2,432 | 2,074 | 1.17 | 0.96 | 18 % | - | 1,078 | 405 | 20,530 | 100 |
 | samus-looks | 2,054 | 1,412 | 1.45 | 1.14 | 22 % | 1,443 | 834 | 342 | 16,210 | 85 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 630 | - | - | - | - | - | 514 | 105 | - | - |
-| total | 19,498 | 17,083 | 1.14 | 0.93 | 18 % | - | 8,659 | 3,250 | 121,319 | 728 |
+| total | 19,566 | 17,319 | 1.13 | 0.92 | 18 % | - | 8,675 | 3,261 | 121,323 | 742 |
 
 ## Models
 
@@ -52,25 +52,25 @@ How it is counted:
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean_model/samus-motion/src/catalogue.rs` | - | tables and types | 0 | 13 | 128 | 931 | 0 | 0 | 0 | 254 |
-| `crates/clean_model/samus-motion/src/change.rs` | pose fit | logic | 67 | 198 | 0 | 0 | 0 | 0 | 0 | 25 |
-| `crates/clean_model/samus-motion/src/change.rs` `fn change_pose` | pose chart | logic | 311 | 310 | 0 | 0 | 23 | 0 | 0 | 37 |
-| `crates/clean_model/samus-motion/src/change.rs` `fn apply` | motion | logic | 212 | 214 | 0 | 0 | 8 | 0 | 1 | 23 |
-| `crates/clean_model/samus-motion/src/chart/table.rs` | pose chart | tables and types | 0 | 91 | 22 | 1,262 | 0 | 0 | 0 | 286 |
-| `crates/clean_model/samus-motion/src/chart.rs` | pose chart | logic | 902 | 1,057 | 132 | 0 | 42 | 17 | 0 | 150 |
+| `crates/clean_model/samus-motion/src/change.rs` | pose fit | logic | 67 | 205 | 0 | 0 | 0 | 0 | 0 | 26 |
+| `crates/clean_model/samus-motion/src/change.rs` `fn change_pose` | pose chart | logic | 296 | 295 | 0 | 0 | 23 | 0 | 0 | 34 |
+| `crates/clean_model/samus-motion/src/change.rs` `fn apply` | motion | logic | 223 | 225 | 0 | 0 | 8 | 0 | 1 | 24 |
+| `crates/clean_model/samus-motion/src/chart/table.rs` | pose chart | tables and types | 0 | 93 | 28 | 1,269 | 0 | 0 | 0 | 287 |
+| `crates/clean_model/samus-motion/src/chart.rs` | pose chart | logic | 918 | 1,076 | 135 | 0 | 43 | 17 | 0 | 150 |
 | `crates/clean_model/samus-motion/src/collide.rs` | collision | logic | 2,234 | 2,367 | 191 | 23 | 141 | 73 | 1 | 298 |
 | `crates/clean_model/samus-motion/src/fit.rs` | pose fit | logic | 552 | 640 | 46 | 0 | 39 | 0 | 0 | 94 |
 | `crates/clean_model/samus-motion/src/jump_held.rs` | motion | logic | 221 | 327 | 55 | 14 | 8 | 0 | 0 | 60 |
-| `crates/clean_model/samus-motion/src/lib.rs` | - | logic | 0 | 145 | 0 | 0 | 0 | 0 | 0 | 25 |
-| `crates/clean_model/samus-motion/src/moves.rs` | motion | logic | 1,038 | 1,180 | 67 | 0 | 50 | 65 | 10 | 183 |
-| `crates/clean_model/samus-motion/src/rows.rs` | pose chart | tables and types | 294 | 396 | 845 | 376 | 5 | 13 | 0 | 357 |
+| `crates/clean_model/samus-motion/src/lib.rs` | - | logic | 0 | 141 | 0 | 0 | 0 | 0 | 0 | 25 |
+| `crates/clean_model/samus-motion/src/moves.rs` | motion | logic | 1,050 | 1,190 | 72 | 0 | 51 | 67 | 10 | 183 |
+| `crates/clean_model/samus-motion/src/rows.rs` | pose chart | tables and types | 294 | 398 | 854 | 376 | 5 | 13 | 0 | 359 |
 | `crates/clean_model/samus-motion/src/rules.rs` | - | tables and types | 304 | 391 | 410 | 371 | 3 | 38 | 0 | 220 |
-| `crates/clean_model/samus-motion/src/run.rs` | motion | logic | 824 | 1,010 | 105 | 0 | 40 | 30 | 0 | 170 |
-| `crates/clean_model/samus-motion/src/samus.rs` | motion | logic | 288 | 435 | 290 | 0 | 7 | 0 | 0 | 129 |
-| `crates/clean_model/samus-motion/src/situation.rs` | pose chart | tables and types | 100 | 335 | 337 | 5,674 | 9 | 0 | 0 | 1,400 |
-| `crates/clean_model/samus-motion/src/step.rs` | motion | logic | 460 | 564 | 0 | 0 | 2 | 12 | 0 | 68 |
+| `crates/clean_model/samus-motion/src/run.rs` | motion | logic | 811 | 990 | 105 | 0 | 39 | 30 | 0 | 165 |
+| `crates/clean_model/samus-motion/src/samus.rs` | motion | logic | 288 | 437 | 249 | 0 | 7 | 0 | 0 | 117 |
+| `crates/clean_model/samus-motion/src/situation.rs` | pose chart | tables and types | 100 | 340 | 337 | 5,733 | 9 | 0 | 0 | 1,413 |
+| `crates/clean_model/samus-motion/src/step.rs` | motion | logic | 473 | 578 | 0 | 0 | 6 | 12 | 0 | 75 |
 | `crates/clean_model/samus-motion/src/tick.rs` | motion | tables and types | 15 | 58 | 98 | 0 | 0 | 0 | 0 | 23 |
-| `crates/clean_model/samus-motion/src/vertical.rs` | motion | logic | 1,037 | 1,251 | 113 | 0 | 36 | 27 | 17 | 205 |
-| total | | | 8,858 | 10,982 | 2,839 | 8,651 | 410 | 275 | 29 | 4,007 |
+| `crates/clean_model/samus-motion/src/vertical.rs` | motion | logic | 1,080 | 1,304 | 111 | 0 | 38 | 27 | 17 | 216 |
+| total | | | 8,926 | 11,068 | 2,819 | 8,717 | 417 | 277 | 29 | 4,023 |
 
 ### camera
 
@@ -165,14 +165,14 @@ How it is counted:
 
 | Domain | Model lines | Tables-and-types files | Logic files | Logic-equivalent lines (score ÷ 6) |
 | --- | ---: | ---: | ---: | ---: |
-| samus-motion | 4,007 | 2,540 | 1,467 | 1,476 |
+| samus-motion | 4,023 | 2,556 | 1,467 | 1,488 |
 | camera | 631 | 226 | 405 | 306 |
 | progress | 488 | 230 | 258 | 150 |
 | hud | 1,107 | 602 | 505 | 465 |
 | blocks | 1,078 | 613 | 465 | 405 |
 | samus-looks | 834 | 384 | 450 | 342 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 514 | 514 | 0 | 105 |
-| total | 8,659 | 5,109 | 3,550 | 3,250 |
+| total | 8,675 | 5,125 | 3,550 | 3,261 |
 
 ## Spec, budget and fit by area
 
@@ -182,14 +182,14 @@ Spec [`docs/behaviours/samus-motion.md`](behaviours/samus-motion.md), k = 37.5. 
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| motion | 15 | 92.0 | 3,450 | 4,019 | 4,094 | 1.19 |
-| pose fit | 2 | 17.3 | 650 | 1,549 | 619 | 0.95 |
-| pose chart | 6 | 60.0 | 2,250 | 2,263 | 1,608 | 0.71 |
-| collision | 7 | 59.7 | 2,237 | 4,893 | 2,234 | 1.00 |
+| motion | 15 | 95.0 | 3,562 | 4,019 | 4,161 | 1.17 |
+| pose fit | 2 | 18.3 | 687 | 1,549 | 619 | 0.90 |
+| pose chart | 6 | 61.0 | 2,287 | 2,263 | 1,609 | 0.70 |
+| collision | 7 | 61.0 | 2,287 | 4,893 | 2,234 | 0.98 |
 | shared (in no area) | | | | | 304 | |
-| total | 30 | 229.0 | 8,587 | 12,724 | 8,858 | 1.03 |
+| total | 30 | 235.3 | 8,823 | 12,724 | 8,926 | 1.01 |
 
-Area fit 1.00: the areas' score, 8,554, ÷ the budget. Shared code 304, its share of the model 3 %.
+Area fit 0.98: the areas' score, 8,622, ÷ the budget. Shared code 304, its share of the model 3 %.
 
 ### camera
 
@@ -268,8 +268,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | bridge | 4 | 3,135 | 3,745 | 288 | 193 | 117 | 90 | 3 | 597 |
-| samus-motion | harness | 2 | 6,217 | 6,301 | 720 | 799 | 370 | 498 | 20 | 1,198 |
+| samus-motion | bridge | 4 | 3,131 | 3,742 | 288 | 173 | 117 | 90 | 3 | 593 |
+| samus-motion | harness | 2 | 6,456 | 6,489 | 729 | 804 | 399 | 529 | 21 | 1,230 |
 | camera | bridge | 1 | 563 | 756 | 21 | 33 | 1 | 17 | 0 | 120 |
 | camera | harness | 2 | 6,007 | 6,158 | 784 | 266 | 280 | 412 | 30 | 1,059 |
 | progress | bridge | 1 | 1,202 | 1,435 | 60 | 217 | 40 | 33 | 0 | 244 |
@@ -280,7 +280,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-looks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-looks | harness | 3 | 5,171 | 5,465 | 664 | 199 | 235 | 313 | 33 | 835 |
-| total | | | 50,690 | 51,445 | 5,713 | 3,676 | 3,821 | 3,109 | 284 | 8,685 |
+| total | | | 50,925 | 51,630 | 5,722 | 3,661 | 3,850 | 3,141 | 285 | 8,713 |
 
 ## Harness floors and vectors
 
@@ -318,7 +318,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-bomb-jump-vertical | 286 | 314 | 1,058 | 314 | 313 | 313 |
 | samus-ceres-push | 1,703 | 1,777 | 1,776 | 1,777 | 1,777 | 0 |
 | samus-grapple-release | 243 | 448 | 488 | 488 | 487 | 248 |
-| samus-grapple-walljump | 113 | 114 | 174 | 174 | 173 | 114 |
+| samus-grapple-walljump | 114 | 114 | 174 | 174 | 173 | 114 |
 | samus-input-poses | 296 | 397 | 559 | 397 | 396 | 0 |
 | samus-mockball | 129 | 129 | 129 | 129 | 128 | 129 |
 | samus-screw-attack | 853 | 945 | 945 | 945 | 944 | 859 |
@@ -328,15 +328,15 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-shinespark-up-left | 266 | 418 | 418 | 418 | 417 | 267 |
 | samus-space-jump-chain | 383 | 383 | 383 | 383 | 382 | 383 |
 | samus-square-slope-reserve | 37 | 36 | 398 | 36 | 35 | 36 |
-| samus-walljump-16 | 156 | 157 | 157 | 157 | 156 | 157 |
-| samus-walljump-22 | 161 | 163 | 163 | 163 | 162 | 163 |
-| samus-walljump-28 | 167 | 169 | 169 | 169 | 168 | 169 |
+| samus-walljump-16 | 157 | 157 | 157 | 157 | 156 | 157 |
+| samus-walljump-22 | 162 | 163 | 163 | 163 | 162 | 163 |
+| samus-walljump-28 | 168 | 169 | 169 | 169 | 168 | 169 |
 | terrain-quicksand | 333 | 450 | 456 | 450 | 421 | 402 |
-| total | 18,032 in 44 rows | 20,513 in 44 rows | 25,419 in 44 rows | 20,615 in 44 rows | 20,530 in 44 rows | 16,210 in 44 rows |
+| total | 18,036 in 44 rows | 20,513 in 44 rows | 25,419 in 44 rows | 20,615 in 44 rows | 20,530 in 44 rows | 16,210 in 44 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
-| samus-motion | 312 | 63 |
+| samus-motion | 326 | 63 |
 | camera | 83 | 0 |
 | progress | 66 | 0 |
 | hud | 82 | 0 |
@@ -349,7 +349,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 
 | Domain | Frames | Matched and verified | Unverified | Null model |
 | --- | ---: | ---: | ---: | ---: |
-| samus-motion | 25,426 | 18,032 | 0 | 5,633 |
+| samus-motion | 25,426 | 18,036 | 0 | 5,568 |
 | camera | 25,426 | 20,513 | 0 | 8,384 |
 | progress | 25,426 | 25,419 | 7 | 25,399 |
 | hud | 24,230 | 20,615 | 0 | 17,954 |
@@ -371,7 +371,8 @@ Per declared field, the compared frames on which it was compared and those on wh
 | samus-motion | bounce | 18,249 | 0 |
 | samus-motion | rising | 18,198 | 51 |
 | samus-motion | placed | 16,747 | 1,502 |
-| samus-motion | heading_down | 17,922 | 327 |
+| samus-motion | heading_down | 17,937 | 312 |
+| samus-motion | vertical_speed_after_moves | 17,703 | 546 |
 | samus-motion | handed_over | 18,249 | 0 |
 | camera | position.x | 20,496 | 119 |
 | camera | position.y | 20,209 | 406 |
@@ -417,19 +418,19 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | samus-motion | BlocksStopFlush | 10,981 | 4,859 | 11,052 | 155 |
 | samus-motion | Dash | 4,544 | 9 | 4,556 | 50 |
 | samus-motion | Dashing | 4,593 | 4,409 | 4,613 | 11 |
-| samus-motion | DriftInTheAir | 6,154 | 1,796 | 6,234 | 242 |
+| samus-motion | DriftInTheAir | 6,158 | 1,796 | 6,234 | 242 |
 | samus-motion | FollowingTheGround | 10,638 | 9,744 | 10,689 | 1,084 |
 | samus-motion | HowSheIsDrawn | vectors only | - | 0 | 0 |
-| samus-motion | Jumping | 239 | 3 | 245 | 10 |
+| samus-motion | Jumping | 243 | 3 | 245 | 10 |
 | samus-motion | Landing | 152 | 0 | 152 | 5 |
 | samus-motion | Moonfall | 369 | 9 | 369 | 66 |
-| samus-motion | MovesAsShePosed | 16,793 | 5,259 | 16,929 | 1,320 |
+| samus-motion | MovesAsShePosed | 16,797 | 5,259 | 16,929 | 1,320 |
 | samus-motion | OtherBlockKinds | vectors only | - | 0 | 0 |
 | samus-motion | PadChart | vectors only | - | 0 | 18,249 |
 | samus-motion | PoseFitAfterMoves | 357 | 0 | 358 | 34 |
 | samus-motion | PoseFollows | vectors only | - | 0 | 18,249 |
 | samus-motion | RidingTheElevator | vectors only | - | 0 | 906 |
-| samus-motion | RisingAndFalling | 5,951 | 60 | 6,029 | 447 |
+| samus-motion | RisingAndFalling | 5,955 | 60 | 6,029 | 447 |
 | samus-motion | ShrinkingLowersHer | 62 | 0 | 62 | 2 |
 | samus-motion | SlopesCarry | 80 | 3 | 80 | 1 |
 | samus-motion | SlopesSlowTheWalk | vectors only | - | 0 | 0 |
@@ -529,5 +530,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 49 | 5,110 | 30,659 | 32,392 | 10,193 | 2,034 | 2,287 | 2,776 | 671 | 7,103 |
-| bridges | 8 | 2,409 | 14,457 | 15,419 | 943 | 788 | 981 | 760 | 116 | 2,427 |
-| rebuilt models, shared types included | 71 | 3,250 | 19,498 | 25,436 | 9,675 | 13,107 | 1,038 | 514 | 92 | 8,659 |
+| bridges | 8 | 2,409 | 14,453 | 15,416 | 943 | 768 | 981 | 760 | 116 | 2,423 |
+| rebuilt models, shared types included | 71 | 3,261 | 19,566 | 25,522 | 9,655 | 13,173 | 1,044 | 516 | 92 | 8,675 |

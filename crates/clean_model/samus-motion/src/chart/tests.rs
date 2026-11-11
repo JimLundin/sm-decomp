@@ -1,5 +1,5 @@
 //! `PadChart`: every situation and pad the chart can meet is decided, off the ground or on it,
-//! moving or not, with the spring ball or without, and whatever her moves met. Where rows of her
+//! moving or not, with or without each item it reads, and whatever her moves met. Where rows of her
 //! situation both fit, the one that loses to the other by rank or by a beats clause drops out;
 //! at most one fitting row may be left, beaten by no other (with none, the last row decides), so
 //! the chart never meets a tie and needs no rule for one. No two fitting rows beat each other,
@@ -12,7 +12,7 @@ use crate::rules::Rules;
 use crate::situation::{CLASSES, UnknownPose, classify};
 use clean_types::Action::{Crouching, Morphing, Rolling, StandingUp, Unmorphing};
 use clean_types::button::{DOWN, PAD, SIDES, UP};
-use clean_types::{Aim, Body, Buttons, Facing, Fixed, Gun, Legs, Pose, ZERO, px};
+use clean_types::{Aim, Body, Buttons, Facing, Fixed, Gun, Item, Legs, Pose, Set, ZERO, px};
 use core::num::Wrapping;
 use core::ptr;
 
@@ -92,7 +92,7 @@ fn a_pose_no_situation_names_is_reported() {
     let still = Moment {
         pad: Buttons(0),
         pressed: Buttons(0),
-        spring_ball: false,
+        items: Set::default(),
         animation_ends: None,
         speed: ZERO,
         airborne: false,
@@ -158,7 +158,7 @@ fn named(tests: &[Test]) -> (u16, u16) {
             | Test::Action(_)
             | Test::Doing(_)
             | Test::Airborne
-            | Test::SpringBall
+            | Test::With(_)
             | Test::Moving
             | Test::Met(_) => (held, pressed),
         })
@@ -265,18 +265,28 @@ const EVERY_MET: [Option<Met>; 6] = [
     Some(Met::Ceiling),
 ];
 
-/// Every moment the rows can tell apart besides the pad: her motion, with the spring ball or
-/// without, and each thing her moves can meet. The pad chart's rows read no animation's end.
+/// The items the rows read (`Test::With`), each switched on alone, and none.
+const ITEMS_READ: [Option<Item>; 4] = [
+    None,
+    Some(Item::SpringBall),
+    Some(Item::ScrewAttack),
+    Some(Item::SpaceJump),
+];
+
+/// Every moment the rows can tell apart besides the pad: her motion, with none or one of the
+/// items the rows read, and each thing her moves can meet. The pad chart's rows read no
+/// animation's end.
 fn moments() -> Vec<Moment> {
     let motions = MOTIONS
         .into_iter()
-        .flat_map(|motion| [false, true].map(|spring_ball| (motion, spring_ball)));
+        .flat_map(|motion| ITEMS_READ.map(|item| (motion, item)));
     motions
-        .flat_map(|((airborne, speed), spring_ball)| {
+        .flat_map(|((airborne, speed), item)| {
+            let items: Set<Item> = item.iter().map(|&i| (i, true)).collect();
             EVERY_MET.map(|met| Moment {
                 pad: Buttons(0),
                 pressed: Buttons(0),
-                spring_ball,
+                items,
                 animation_ends: None,
                 speed,
                 airborne,

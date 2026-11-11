@@ -10,19 +10,19 @@ pub mod table;
 mod tests;
 
 use crate::rows::Test::{
-    Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, SpringBall,
+    Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, With,
 };
 use crate::rows::{Effect, Met, Row, Situation, Test, seen};
 use crate::rules::Lowers;
 use crate::situation::{UnknownPose, classify};
 use clean_types::Action::{Running, Spinning, TakingOff};
-use clean_types::{Aim, Buttons, ClipEnd, Fixed, Pose, Side, ZERO};
+use clean_types::{Aim, Buttons, ClipEnd, Fixed, Item, Pose, Set, Side, ZERO};
 
 /// What the chart reads of a frame besides her pose.
 ///
-/// The buttons held and those just pressed, the spring ball, the end her animation reaches,
-/// her horizontal speed at the frame's start, whether she is off the ground once her moves are
-/// made, and what they met.
+/// The buttons held and those just pressed, the items switched on, the end her animation
+/// reaches, her horizontal speed at the frame's start, whether she is off the ground once her
+/// moves are made, and what they met.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Moment {
     /// The buttons held.
@@ -30,8 +30,9 @@ pub struct Moment {
     /// The buttons the chart reads as just pressed: the pad's, and jump where jump held through
     /// counts as a press (`Jumping`).
     pub pressed: Buttons,
-    /// The spring ball is switched on.
-    pub spring_ball: bool,
+    /// The items switched on (§1.3): the chart reads the spring ball (`PadChart`,
+    /// `AnimationEnds`), and the screw attack and space jump (`PadChart`'s wall jump let-go).
+    pub items: Set<Item>,
     /// `AnimationEnds`: the end her pose's animation reaches this frame, if any: an end, or an
     /// end unless a jump.
     pub animation_ends: Option<ClipEnd>,
@@ -177,7 +178,7 @@ impl Reading<'_> {
             Action(actions) => actions.contains(&p.action),
             Doing(doings) => doings.contains(&self.situation.doing),
             Airborne => m.airborne,
-            SpringBall => m.spring_ball,
+            With(items) => items.iter().any(|&i| m.items[i]),
             Moving => m.speed != ZERO,
             Test::Met(met) => m.met == Some(met),
         }

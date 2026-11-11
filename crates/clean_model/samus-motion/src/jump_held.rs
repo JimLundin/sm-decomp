@@ -86,8 +86,8 @@ fn counts(frames: Wrapping<u16>, r: &Rules) -> bool {
 
 impl FrameBefore {
     /// §1.2: what a frame leaves behind for the next, from what her moves met, whether her
-    /// animation's end handed over the pose she ends in (`handed_over`), the pose she started it
-    /// in (`was`) and the one she ends it in (`now`). She landed: her moves met a floor and she
+    /// animation's end handed over her pose (`handed_over`), the pose she started it in (`was`)
+    /// and the one she ends it in (`now`). She landed: her moves met a floor and she
     /// ends in `Landing`, the pose `WhatHerMovesMet` chose and pose fit took; a landing pose fit
     /// refuses or turns into the crouch is none (`PoseFitAfterMoves`). Or the animation of a
     /// turn or of a landing ended and handed over its pose (`AnimationEnds`); an end that gave

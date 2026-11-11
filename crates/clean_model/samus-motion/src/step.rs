@@ -4,17 +4,18 @@
 //! (`change`): pose fit or the shrink places her, and what she met and the change's effects act,
 //! where the change is taken.
 
-use crate::chart::Moment;
+use crate::chart::{Choice, Moment};
 use crate::jump_held::FrameBefore;
 use crate::rows::Doing::Spinning;
 use crate::rules::Rules;
-use crate::samus::{Dashing, Outcome, Samus, Sprite, StandingAnimation};
+use crate::run::Dashing;
+use crate::samus::{Outcome, Samus, StandingAnimation, sprite};
 use crate::situation::{UnknownPose, classify};
 use crate::tick::{Frame, Tick};
 use crate::vertical::Contact;
 use clean_types::Body::SpringBall;
+use clean_types::World;
 use clean_types::button::JUMP;
-use clean_types::{Item, World};
 
 impl Samus {
     /// `PoseFollows`: one frame, in the order it runs. `TouchedCells`: the cells she is inside
@@ -23,7 +24,9 @@ impl Samus {
     /// start says (`MovesAsShePosed`) and what they met, which tells whether she is off the
     /// ground; the pose chosen, the pad chart reading jump held through as a press (`Jumping`),
     /// and the aim change's step; the pose change; at its end, what she remembers of jump held.
-    /// `Dashing`: her dashing is read once her moves are made, and again at the frame's end.
+    /// `RidingTheElevator`: on the ride she keeps the pose she has, whatever the pad, so no pose
+    /// is chosen. `Dashing`: her dashing is read once her moves are made, and again at the
+    /// frame's end.
     ///
     /// # Errors
     ///
@@ -47,7 +50,7 @@ impl Samus {
         self.spin = self.spin.then(situation.doing == Spinning);
         self.vertical.end_rise(situation.doing, frame.pad);
         let meeting = self.moves(situation, &mut t);
-        let dashing_after_moves = self.dashing;
+        let dashing_after_moves = self.run.dashing;
         let springs = start.pose.body == SpringBall && frame.pad.any(JUMP);
         let contact = self
             .vertical
@@ -55,33 +58,39 @@ impl Samus {
         let moment = Moment {
             pad: frame.pad,
             pressed: start.jump_held.pressed(frame.pressed, rules),
-            spring_ball: frame.items[Item::SpringBall],
+            items: frame.items,
             animation_ends: frame.animation_ends,
             speed: start.run.speed,
             airborne: contact.map_or_else(|| !self.vertical.on_ground(), Contact::rises),
             met: meeting.met,
         };
-        let chosen = moment.choose(start.pose, situation);
+        let chosen = if start.rides_the_elevator(frame) {
+            Choice::instead(start.pose)
+        } else {
+            moment.choose(start.pose, situation)
+        };
         let chosen = self.step_forward(chosen, &mut t);
         let placed = self.change_pose(chosen, contact, &start, &mut t);
-        let handed_over = chosen.handed_over && self.pose == chosen.pose;
-        let left_behind = FrameBefore::left_behind(meeting.met, handed_over, start.pose, self.pose);
+        let left_behind =
+            FrameBefore::left_behind(meeting.met, chosen.handed_over, start.pose, self.pose);
         self.jump_held = start.jump_held.then(rules, frame, left_behind);
-        let dashed = start.dashing == Dashing::On || meeting.ran_with_run_held;
+        let was_dashing = start.run.dashing == Dashing::On;
         Ok(Outcome {
             wall_test: meeting.wall_test,
             standing_animation: StandingAnimation::of(start.pose, frame.pad),
-            sprite: Sprite::of(self.pose, &frame.items),
+            sprite: sprite(self.pose, &frame.items),
             skidding: self.run.skids(self.pose.facing),
             reached: t.reached,
             inside,
             placed,
             rising: self.vertical.rising(),
             dashing_after_moves,
-            dash_began: start.dashing == Dashing::Off && meeting.ran_with_run_held,
-            dash_lost: dashed && self.dashing == Dashing::Off,
-            handed_over,
+            dash_began: !was_dashing && meeting.ran_with_run_held,
+            dash_lost: (was_dashing || meeting.ran_with_run_held)
+                && self.run.dashing == Dashing::Off,
+            handed_over: chosen.handed_over,
             heading_down: meeting.heading_down,
+            vertical_speed_after_moves: meeting.vertical_speed,
         })
     }
 }

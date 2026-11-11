@@ -8,11 +8,12 @@
 //! through the model over that level and the enemies the selection would touch
 //! (`game::samus_world`), and compares her motion words with record N+1's, dashing among them,
 //! the step's two outputs to the camera: whether she is rising, and the y a placement put her at,
-//! which the record shows through the camera's speed down, and two of its outputs to her
-//! animation (§1.4): whether she is heading down, and whether her pose is the one her
-//! animation's end handed over. Nothing answers from record N+1, so no field is unverified; the
-//! null model is her State left as record N has it, rising, heading down and handed over as
-//! record N shows them, and placed nowhere.
+//! which the record shows through the camera's speed down, and three of its outputs to her
+//! animation (§1.4): whether she is heading down and her vertical speed as her moves leave her,
+//! which record N+1 shows where the pose change writes neither, and whether her animation's end
+//! handed over her pose. Nothing answers from record N+1, so no field is unverified; the null
+//! model is her State left as record N has it, rising, heading down, her speed after her moves
+//! and handed over as record N shows them, and placed nowhere.
 
 use core::cell::RefCell;
 use core::fmt;
@@ -52,6 +53,8 @@ const MAIN_GAMEPLAY: u16 = 8;
 const UP: u16 = 1;
 /// The vertical direction down (`0B36`): she is heading down.
 const DOWN: u16 = 2;
+/// No vertical direction (`0B36`).
+const NO_DIRECTION: u16 = 0;
 
 /// Bank $91 log, `$91:E8B6`: the pose change command the pad's lookup leaves, and the one her
 /// moves' vertical result (a landing, a ceiling, a walk off a ledge, a bounce) writes over it,
@@ -61,10 +64,6 @@ const POSE_CHANGE_COMMAND: WramWord = WramWord {
     offset: 0x0A2E,
 };
 const VERTICAL_RESULT: u16 = 5;
-/// No vertical direction (`0B36`).
-const NO_DIRECTION: u16 = 0;
-/// The movement type of a change of shape (crouching, morphing, standing up, unmorphing).
-const CHANGING_SHAPE: u8 = 0x0F;
 /// Bank $91 log, `$91:F36E`: the super special command "transition animation finished", and
 /// the bit of its pose that says none is asked.
 const ANIMATION_FINISHED: u16 = 3;
@@ -366,39 +365,48 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
     })
 }
 
-/// Why record N+1's direction doesn't show heading down as her moves leave her, on the frame
-/// from `from` to `next`.
-///
-/// The frame's pose change can write her vertical direction after her moves: what they met (a
-/// landing, a ceiling, a walk off a ledge, a bounce), or a rise it starts. And where a change of
-/// shape lands, the original's direction after her moves isn't the spec's heading down, which the
-/// observer is asked to answer (samus-motion.gaps.md, gap 38).
-fn heading_down_unseen(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<&'static str>, Skip> {
+/// What record N+1 doesn't show of her vertical motion as her moves leave her, on the frame from
+/// `from` to `next`: the frame's pose change writes her vertical direction and speed after her
+/// moves, for what they met (a landing, a ceiling, a walk off a ledge, a bounce) or for a rise it
+/// starts. A rise her moves start (a space jump) keeps her pose, and a rise from no direction
+/// hides only her speed: she isn't heading down either way. A walk off a ledge from no direction
+/// at 0 hides only her heading: the falling result writes speed 0 over the 0 her ground moves
+/// leave (`$90:923F` writes no speed), so record N+1 shows it.
+fn after_moves_unseen(from: &FrameRecord, next: &FrameRecord) -> Result<FieldSet, Skip> {
+    use Quantity as Q;
     let direction = [
         word(from, source::SAMUS_Y_DIR)?,
         word(next, source::SAMUS_Y_DIR)?,
     ];
-    let movement = byte(from, source::SAMUS_MOVEMENT_TYPE)?;
-    // A rise her moves start (a space jump) keeps her pose, and one from no direction is no
-    // heading down either way, so only a pose change's rise from heading down hides it.
-    let rise_starts = direction[0] == DOWN
+    let met = word(next, POSE_CHANGE_COMMAND)? == VERTICAL_RESULT;
+    let walks_off_at_rest = direction == [NO_DIRECTION, DOWN] && signed_speed(from)?.0 == 0;
+    let rise_starts = direction[0] != UP
         && direction[1] == UP
         && word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?;
-    Ok([
-        (
-            word(next, POSE_CHANGE_COMMAND)? == VERTICAL_RESULT || rise_starts,
-            "unverified: the pose change writes her vertical direction after her moves (what they met, or a rise it starts from heading down)",
-        ),
-        (
-            movement == CHANGING_SHAPE
-                && direction[0] != NO_DIRECTION
-                && direction[1] == NO_DIRECTION,
-            "spec gap 38: a change of shape's landing clears her vertical direction in her moves ($90:A640), before the frame reports heading down",
-        ),
-    ]
-    .into_iter()
-    .filter_map(|(unseen, reason)| unseen.then_some(reason))
-    .collect())
+    Ok(if met && walks_off_at_rest {
+        Q::HeadingDown.set()
+    } else if met || rise_starts && direction[0] == DOWN {
+        Q::all(&[Q::HeadingDown, Q::SpeedAfterMoves])
+    } else if rise_starts {
+        Q::SpeedAfterMoves.set()
+    } else {
+        FieldSet::EMPTY
+    })
+}
+
+/// Her signed vertical speed in `record`, downward positive: its magnitude, downward with
+/// direction down and upward otherwise, as the State reads it.
+fn signed_speed(record: &FrameRecord) -> Result<Fixed, Skip> {
+    let magnitude = fixed(
+        &record.wram,
+        source::SAMUS_Y_SPEED,
+        source::SAMUS_Y_SUBSPEED,
+    )?;
+    Ok(if word(record, source::SAMUS_Y_DIR)? == DOWN {
+        magnitude
+    } else {
+        Fixed(magnitude.0.wrapping_neg())
+    })
 }
 
 /// Whether the running let-go row stands her (`PadChart`, AS3 and AS4): running with neither
@@ -520,6 +528,9 @@ pub struct Hers {
     /// Whether she is heading down: as record N has it (`0B36` = 2), then the step's
     /// `heading_down`.
     heading_down: bool,
+    /// Her vertical speed as her moves leave her, downward positive: as record N has it, then
+    /// the step's `vertical_speed_after_moves`.
+    speed_after_moves: Fixed,
     /// Whether her pose is the one her animation's end handed over: as record N has it, then
     /// the step's `handed_over`.
     handed_over: bool,
@@ -590,6 +601,8 @@ pub struct Declared {
     pub placed: Ps,
     /// `heading_down`.
     pub heading_down: bool,
+    /// `vertical_speed_after_moves`, downward positive.
+    pub speed_after_moves: Ps,
     /// `handed_over`.
     pub handed_over: bool,
 }
@@ -600,6 +613,7 @@ struct Shown {
     rising: bool,
     placed: Fixed,
     heading_down: bool,
+    speed_after_moves: Fixed,
     handed_over: bool,
 }
 
@@ -619,19 +633,23 @@ impl Declared {
             rising: shown.rising,
             placed: Ps(shown.placed),
             heading_down: shown.heading_down,
+            speed_after_moves: Ps(shown.speed_after_moves),
             handed_over: shown.handed_over,
         }
     }
 }
 
 /// The outputs a mask of `fields` reaches as well: the camera's speed down is made from her y,
-/// and whether she is rising or heading down is her vertical direction.
+/// and whether she is rising or heading down, and the sign of her speed after her moves, is her
+/// vertical direction. A mask of her frame-end vertical speed doesn't reach her speed after her
+/// moves: some of its writers act after her moves, so that speed's own writers mask it.
 fn follows(fields: FieldSet) -> FieldSet {
     use Quantity as Q;
     [
         (Q::Y, Q::Placed),
         (Q::Vertical, Q::Rising),
         (Q::Vertical, Q::HeadingDown),
+        (Q::Vertical, Q::SpeedAfterMoves),
     ]
     .into_iter()
     .filter(|(by, _)| fields.contains(by.index()))
@@ -664,7 +682,9 @@ fn shown_by(id: BehaviourId) -> FieldSet {
         B::RidingTheElevator => Q::Y.set(),
         B::ShrinkingLowersHer => Q::all(&[Q::Y, Q::Placed]),
         B::Jumping | B::FollowingTheGround | B::Moonfall => Q::all(&vertical),
-        B::RisingAndFalling => Q::all(&vertical).union(Q::HeadingDown.set()),
+        B::RisingAndFalling => {
+            Q::all(&vertical).union(Q::all(&[Q::HeadingDown, Q::SpeedAfterMoves]))
+        }
         B::Landing => Q::all(&[Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Bounce, Q::Rising]),
         B::MovesAsShePosed
         | B::BlocksStopFlush
@@ -714,6 +734,7 @@ enum Quantity {
     Rising,
     Placed,
     HeadingDown,
+    SpeedAfterMoves,
     HandedOver,
 }
 
@@ -738,7 +759,8 @@ impl Quantity {
             Self::Rising => 9,
             Self::Placed => 10,
             Self::HeadingDown => 11,
-            Self::HandedOver => 12,
+            Self::SpeedAfterMoves => 12,
+            Self::HandedOver => 13,
         }
     }
 
@@ -976,6 +998,7 @@ impl Domain for SamusMotion {
         domain_field!("rising", rising),
         domain_field!("placed", placed),
         domain_field!("heading_down", heading_down),
+        domain_field!("vertical_speed_after_moves", speed_after_moves),
         domain_field!("handed_over", handed_over),
     ];
 
@@ -994,6 +1017,7 @@ impl Domain for SamusMotion {
             samus,
             rising: direction == UP,
             heading_down: direction == DOWN,
+            speed_after_moves: signed_speed(from)?,
             handed_over: handed_over(from)?,
         };
         let doors = self.doors(word(from, source::ROOM_PTR)?)?;
@@ -1020,6 +1044,16 @@ impl Domain for SamusMotion {
                 "deferred: a block-inside push (quicksand, treadmill)",
                 Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed]),
             );
+            // The surface's inside reactions at the frame's start write her speed (`$84:B447`
+            // grounded: 0, `$84:B45A` moving up: capped); the sand's fall, the submerging
+            // quicksand and the treadmills write displacements only.
+            let direction = word(from, source::SAMUS_Y_DIR)?;
+            if direction == UP || direction == NO_DIRECTION && signed_speed(from)?.0 != 0 {
+                mask(
+                    "deferred: the quicksand surface sets her vertical speed before her moves (grounded 0, a rise capped)",
+                    Q::SpeedAfterMoves.set(),
+                );
+            }
         }
         if submerged(from, radius(from)?)? {
             mask("deferred: liquid physics (submerged)", FieldSet::ALL);
@@ -1032,8 +1066,12 @@ impl Domain for SamusMotion {
                 Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
             );
         }
-        for reason in heading_down_unseen(from, next)? {
-            mask(reason, Q::HeadingDown.set());
+        let unseen = after_moves_unseen(from, next)?;
+        if !unseen.is_empty() {
+            mask(
+                "unverified: the pose change writes her vertical direction and speed after her moves (what they met, or a rise it starts)",
+                unseen,
+            );
         }
         if let_go_stands(from, next)? {
             mask(
@@ -1118,6 +1156,7 @@ impl Domain for SamusMotion {
             settle(&mut hers.samus, &ran);
             hers.rising = ran.outcome.rising;
             hers.heading_down = ran.outcome.heading_down;
+            hers.speed_after_moves = Fixed(ran.outcome.vertical_speed_after_moves.0);
             hers.handed_over = ran.outcome.handed_over;
             world.0 = exercised(&ran, &level);
         }
@@ -1144,6 +1183,7 @@ impl Domain for SamusMotion {
                 rising: hers.rising,
                 placed: hers.speed_down(),
                 heading_down: hers.heading_down,
+                speed_after_moves: hers.speed_after_moves,
                 handed_over: hers.handed_over,
             },
         )
@@ -1157,6 +1197,7 @@ impl Domain for SamusMotion {
                 rising: direction == UP,
                 placed: fixed(&next.wram, CAMERA_Y_SPEED, CAMERA_Y_SUBSPEED)?,
                 heading_down: direction == DOWN,
+                speed_after_moves: signed_speed(next)?,
                 handed_over: handed_over(next)?,
             },
         ))
@@ -1249,7 +1290,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
         (B::AnimationEnds, ran.animation_ends.is_some()),
         (
             B::Dashing,
-            before.dashing == Dashes::On || after.dashing == Dashes::On,
+            before.run.dashing == Dashes::On || after.run.dashing == Dashes::On,
         ),
         (B::RidingTheElevator, ran.elevator_moving),
         (B::SolidEnemies, !level.solid_enemies().is_empty()),
@@ -1355,6 +1396,63 @@ mod tests {
     }
 
     #[test]
+    fn a_rise_the_pose_change_starts_hides_her_speed_after_moves_and_from_heading_down_her_heading()
+    {
+        use Quantity as Q;
+        let rise = |direction| {
+            masked(
+                &record(
+                    0,
+                    &[(source::SAMUS_Y_DIR, direction), (source::SAMUS_POSE, 1)],
+                ),
+                &record(
+                    1,
+                    &[(source::SAMUS_Y_DIR, super::UP), (source::SAMUS_POSE, 2)],
+                ),
+            )
+        };
+        assert_eq!(rise(0), Q::SpeedAfterMoves.set());
+        assert_eq!(
+            rise(super::DOWN),
+            Q::all(&[Q::HeadingDown, Q::SpeedAfterMoves])
+        );
+    }
+
+    #[test]
+    fn a_walk_off_at_rest_hides_her_heading_alone() {
+        use Quantity as Q;
+        let walk_off = |speed| {
+            masked(
+                &record(0, &[(source::SAMUS_Y_SPEED, speed)]),
+                &record(
+                    1,
+                    &[
+                        (source::SAMUS_Y_DIR, super::DOWN),
+                        (super::POSE_CHANGE_COMMAND, super::VERTICAL_RESULT),
+                    ],
+                ),
+            )
+        };
+        assert_eq!(walk_off(0), Q::HeadingDown.set());
+        assert_eq!(walk_off(1), Q::all(&[Q::HeadingDown, Q::SpeedAfterMoves]));
+    }
+
+    #[test]
+    fn a_push_hides_her_speed_after_moves_only_where_the_surface_sets_it() {
+        let after_moves_hidden = |words: &[(WramWord, u16)]| {
+            masked(&record(0, words), &record(1, &[(super::IN_QUICKSAND, 1)]))
+                .contains(Quantity::SpeedAfterMoves.index())
+        };
+        let up = (source::SAMUS_Y_DIR, super::UP);
+        let down = (source::SAMUS_Y_DIR, super::DOWN);
+        let moving = (source::SAMUS_Y_SPEED, 1);
+        assert!(after_moves_hidden(&[up]));
+        assert!(after_moves_hidden(&[moving]));
+        assert!(!after_moves_hidden(&[]));
+        assert!(!after_moves_hidden(&[down, moving]));
+    }
+
+    #[test]
     fn a_quantity_names_the_declared_field_at_its_place() {
         use Quantity as Q;
         let named = [
@@ -1370,6 +1468,7 @@ mod tests {
             (Q::Rising, "rising"),
             (Q::Placed, "placed"),
             (Q::HeadingDown, "heading_down"),
+            (Q::SpeedAfterMoves, "vertical_speed_after_moves"),
             (Q::HandedOver, "handed_over"),
         ];
         for (quantity, name) in named {

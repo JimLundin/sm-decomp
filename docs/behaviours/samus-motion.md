@@ -70,7 +70,8 @@ frames (the vectors' format), never by a value in its start, with three exceptio
   frame after (`TurningRound`). Whether she skids is output: the camera leads her backwards while
   she does, a skid of zero included, which a speed of 0 can't show (MT2).
 - **Her dash.** The dash she builds running stays hers, through jumps and into the ball, until a
-  halt takes it, and a dash a pose change left on her is lost the next frame she moves (`Dash`).
+  halt takes it, for as long as she is dashing; a dash she has while not dashing is lost the next
+  frame she moves (`Dash`).
 - **The moonfall** (`Moonfall`).
 - **How long jump has stayed held** since it was pressed: a count of frames, 0 to 65,535, which a
   landing or a turn's end can make a press. Read by `Jumping` (jump held through).
@@ -90,10 +91,11 @@ frames (the vectors' format), never by a value in its start, with three exceptio
 - **Dashing** (`Dashing`): whether she is dashing, from a run with run held until something
   ends it. Like jump held through it is State a caller gives and reads back, in any pose and
   with any dash: a vector gives it as `before.dashing` (default false) and compares it as
-  `after.dashing`.
+  `after.dashing`. It is also what keeps her dash hers: a start with a dash and not dashing has a
+  dash she is to lose (`Dash`), so a start whose dash stays hers gives `dashing`.
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
-is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
+is skidding, a dash she has is hers to keep only as `dashing` says (below), and a vertical speed of 0 means she stands on the ground,
 except in the air: in a jump (its take-off included, and the spring ball's hop, which is in the
 air from the frame it starts until a landing rests it), a spin, a fall or a wall jump, and in a
 turn in a jump or a fall, where it means she has just started to fall. Every other pose is on the
@@ -133,10 +135,11 @@ below, means with it switched on:
 | Item | What it changes here |
 | --- | --- |
 | `HiJumpBoots` | her jump and wall jump speeds (`Jumping`) |
-| `SpaceJump` | the jump again in a spin (`Jumping`), and the spin's sprite (`HowSheIsDrawn`) |
+| `SpaceJump` | the jump again in a spin (`Jumping`), the spin's sprite (`HowSheIsDrawn`), and the wall jump's let-go (`PadChart`) |
 | `MorphBall` | without it, a change into `Morphing` is refused (`PoseFollows`) |
 | `SpringBall` | the ball's hop (`PadChart`) and which ball a morph ends in (`AnimationEnds`) |
-| `ScrewAttack`, `VariaSuit`, `GravitySuit` | only her sprite (`HowSheIsDrawn`); `GravitySuit` also in liquids, out of scope (§10) |
+| `ScrewAttack` | the spin's sprite (`HowSheIsDrawn`), and the wall jump's let-go (`PadChart`) |
+| `VariaSuit`, `GravitySuit` | only her sprite (`HowSheIsDrawn`); `GravitySuit` also in liquids, out of scope (§10) |
 | `SpeedBooster` | her dash's cap (`Dash`) and the speed every jump and wall jump starts at (`Jumping`); what else it does starts the shinespark and is out of scope (§10) |
 | `Bombs`, `GrappleBeam`, `XRayScope` | none of her motion: what they do is other domains' (§10) |
 
@@ -150,8 +153,9 @@ each an output of the step; none is State.
 | --- | --- | --- |
 | dashing after her moves | `bool`: `dashing` as her moves leave it, before the pose change (`Dashing`) | samus-looks (`RunPace`, `BoostStages`) |
 | dash began, dash lost | `bool` each (`Dashing`) | samus-looks (`BoostStages`) |
-| handed over | `bool`: the pose she ends the frame in is the one her animation's end handed over (`AnimationEnds`) | samus-looks (`HandOverSlowdown`) |
+| handed over | `bool`: her animation's end handed over her pose this frame (`AnimationEnds`) | samus-looks (`HandOverSlowdown`) |
 | heading down | `bool`, as her moves leave it, before what they met acts and before the pose change (`RisingAndFalling`) | samus-looks (`RisingHold`) |
+| vertical speed after her moves | signed `P.S`, downward positive: her vertical speed (§1) at the point `heading down` is read, before what her moves met acts and before the pose change (`RisingAndFalling`) | samus-looks (`FastFall`) |
 
 It also reads, as they are: the pose she starts the frame in and the one she ends it in (§2; the
 one an animation's end hands over is `AnimationEnds`' choice), her vertical speed at the frame's
@@ -280,13 +284,16 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   (`BlocksStopFlush`). Her top speed itself is the same with the booster or without.
 - **What ends the dash** is the same with the booster or without: a halt (standing, crouched,
   against the wall, a wall stop, the ball letting go: MB4), a pose change that halts her, a turn
-  or a spin reversed (the dash joins her speed), the end of a turn, and the dash she is to lose
-  (below). It carries through jumps and spins and into the ball (MB3, the mockball: the ball
+  or a spin reversed (the dash joins her speed), the end of a turn, and a dash she has while
+  not dashing (below). It carries through jumps and spins and into the ball (MB3, the mockball: the ball
   rolls 3.4000 and the booster's 5.0000, 8.4000 a frame).
 - No other moving activity gains dash, taking off included (`Jumping`; W16, R95, R133).
-- A pose change halted her but left the dash's value on her (a dash she is to lose, §1.2) → the
-  next frame she moves, the dash is gone (0) before that move [W16]
-- A dash she is to lose is gone (0) in any other moving activity. Standing and against the
+- Not dashing (`Dashing`), with a dash → the next frame she moves, the dash is gone (0) before
+  that move [C-dash-lost-not-dashing, C-takeoff-loses-dash]
+- So dashing, the same move keeps it (R8J, C-dash-kept-dashing).
+- So a dash she is to lose is a dash she has while not dashing: a pose change that ends her
+  dashing and leaves the dash's value on her leaves one. It is gone (0) in any other moving
+  activity too. Standing and against the
   wall (`SpeedBuildsAndBrakes`), a wall stop (`WallsAndCeilings`), a turn's end
   (`AnimationEnds`), the falling ball letting go (`DriftInTheAir`) and a spin reversed
   (`TurningRound`) each take it (0).
@@ -295,7 +302,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   growing to 7.0000 and held there; WB1 item-wave-beam:7, 2.0000 growing to 2.1000; MB3 and MB4,
   samus-mockball:101 and 110, the ball rolling with the booster's dash, then letting go);
   constructed (C-dashcap-a and C-dashcap-b, the cap's part-by-part test without the booster, and
-  C-booster-dash, C-booster-dashcap-a and C-booster-dashcap-b, with it).
+  C-booster-dash, C-booster-dashcap-a and C-booster-dashcap-b, with it; C-dash-lost-not-dashing
+  and C-dash-kept-dashing, a dash outside a run with run held lost while not dashing and kept
+  while dashing).
 
 ### Dashing
 - kind: mechanic and output.
@@ -316,11 +325,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The pose change taking a let-go effect of the pad chart other than `none` (she follows the pad
   again, as running, dash 0, or horizontal speed 0, dash 0, following the pad: `PadChart`), a spin
   reversed, or either ball turning round → she stops dashing at the pose change, after her moves
+  (a wall jump's let-go with the screw attack or space jump takes no effect, `PadChart`)
   [AS1, MB4, C-dash-letgo-run, C-dash-letgo-crouched, C-dash-fall-letgo, C-dash-spin-reversed,
   C-dash-ball-turn]
 - So anything else leaves her dashing as she was: crouched, where her dash is 0 (C-dash-crouched),
-  facing the screen, whose moves don't end it, and on the elevator's ride, where nothing else of
-  hers changes (C-dash-screen), a spin let go (C-dash-spin), the frame she lands, until the
+  facing the screen, whose moves don't end it, and on the elevator's ride, where no pose is
+  chosen (`RidingTheElevator`; C-dash-screen), a spin let go (C-dash-spin), the frame she lands, until the
   landing's own moves (C-dash-landing), the frame a turn starts, though her dash joins her speed,
   until the turn's own moves (C-dash-turn-start), and a let-go effect that a landing or an
   animation's end replaces (`PoseFollows`: C-dash-landing-letgo, C-dash-takeoff-end).
@@ -442,12 +452,18 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - params: the descent, 1 px a frame.
 - switch: parameter.
 - Facing the screen on a moving elevator → she moves down 1 px a frame, and nothing else of hers
-  changes, her speeds and dash included [C-elevator]
+  changes, her speeds, dash, dashing and pose included [C-elevator, C-dash-screen]
+- On that ride, whatever the pad → she keeps the pose she has, and the frame reports nothing
+  handed over [C-elevator-jump, C-elevator-side]
+- So the ride is decided before a pose is chosen: jump pressed, which on foot takes off
+  (C-elevator-jump), and a side held, which on foot turns or runs (C-elevator-side), change
+  nothing.
 - A solid or stepped block stops that move as any downward move (`BlocksStopFlush`); a sloped
   surface under her there is out of scope.
 - So a stop of that move is found at the bottom edge of the body the caller gives for the ride
   (§1.3).
-- checked: constructed (C-elevator).
+- checked: constructed (C-elevator; C-elevator-jump and C-elevator-side, a pad held on the
+  ride).
 
 ---
 
@@ -468,8 +484,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The first poses of a straight jump (taking off) → she doesn't steer: she moves by her dash only
   and follows the pad; she gains no dash (`Dash`); she doesn't move vertically and the pull
   doesn't act [J3, W16]
-- A dash she is to lose (§1.2) is gone (0) before that move, so taking off from a crouch she
-  doesn't move at all and the jump that follows follows the pad (W16).
+- A dash she has while not dashing (§1.2) is gone (0) before that move, so taking off from a
+  crouch she doesn't move at all and the jump that follows follows the pad (W16); dashing, she
+  moves by it and keeps it (C-takeoff-loses-dash, C-takeoff-keeps-dash).
 - The frame she changes into a take-off → she starts rising at the jump speed, without moving
   vertically that frame [J2, PF1]
 - The frame she changes into a take-off from a crouch without aim → she is also lifted, `y − 10`
@@ -731,7 +748,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 
 ### ShrinkingLowersHer
 - kind: mechanic.
-- summary: the frame she starts to crouch or morph, she is lowered.
+- summary: the frame she starts to crouch or morph, she is lowered; a change of shape started
+  from a bouncing ball ends its bounce.
 - params: the crouch's 5 px; the morph's 9 px.
 - switch: parameter.
 - The frame she starts to crouch (`Crouching`, aimed or not) or to morph (`Morphing`) → after her
@@ -754,6 +772,13 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   body shrinks, the other grows.
 - Starting to crouch or morph leaves her speeds and dash as they are: the rows into `Crouching`
   and `Morphing` have no other effect (SH3, R48, R89).
+- Starting a change of shape from the ball (or the spring ball) after it has bounced, its bounces
+  1 or 2 → at the pose change her vertical motion ends: vertical speed 0, not falling, bounces 0
+  [C-unmorph-on-bounce]
+- So she then moves as a change of shape with no vertical motion does (`FollowingTheGround`),
+  her speed as her moves left her reported before it ends (C-unmorph-on-bounce: −0.E400), and no
+  bounce outlasts the ball: a change of shape, the poses after it and the ball she next becomes
+  all start with bounces 0.
 - A crouch or a morph starting this frame, aimed or not, and also standing up aimed `Forward`
   (`StandingUp`) or unmorphing (`Unmorphing`), which lower her 0 px → she is placed at her y pixel
   just after the lowering (and after pose fit's push, for a body that grows), with the subpixel
@@ -771,8 +796,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   by how far the records' screen may move); constructed (C-shrink-floor, a morph in the
   air 2 px above a floor: the 8 px look stops on it, she is lowered 5 px, her y subpixel FFFF,
   and the look's one cell; C-fit-ceiling, unmorphing, for the placement; C-place-0, a placement of
-  0 px at her start y); original only (a seat on a stepped block; the placement on a frame she
-  starts standing up).
+  0 px at her start y; C-unmorph-on-bounce, unmorphing on a bounce's rise); original only (a
+  seat on a stepped block; the placement on a frame she starts standing up).
 
 ---
 
@@ -794,10 +819,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   which only a start or a push beyond this spec gives her, grows on (C-fallcap-past: 6.0000 grows
   to 6.1C00).
 - Rising, at the start of a frame after her upward speed was spent (the pull took it past zero, so
-  that it points downward by even a subpixel), or, in a normal or spin jump or the spring ball's
-  hop, at the start of any frame with jump not held → the rise ends: vertical speed 0, falling,
-  and she doesn't move vertically that frame; the pull then acts as in a fall, so the frame ends
-  at +0.1C00 [E1, R91, R108, R6]
+  that it points downward by even a subpixel), or, in a normal or spin jump, a wall jump or the
+  spring ball's hop, at the start of any frame with jump not held → the rise ends: vertical speed
+  0, falling, and she doesn't move vertically that frame; the pull then acts as in a fall, so the
+  frame ends at +0.1C00 [E1, R91, R108, R6, R-walljump-letgo, C-walljump-letgo-plain]
+- So a wall jump with jump held rises on (C-walljump-rise-held), and one let go falls from the
+  frame she lets go, as a spin does.
 - Rising, the pull leaves her upward speed exactly 0 → it is not spent: she rises by 0 for one
   more frame [E2, E3]
 - **Whether she is rising** (§1, an output of the step), at the frame's end.
@@ -823,10 +850,22 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - Her moves leaving her falling (in the air, a fall whose move a floor stopped included, or on
   the ground falling at 0), or on the ground keeping a downward speed (`FollowingTheGround`) →
   `heading down` [E2, R7, C-dash-landing, W13, BG2, BG3, HV1, MB2]
+- A change of shape whose move by its vertical speed meets the floor → not `heading down`: its
+  landing stops her vertical motion within her moves (`Landing`) [C-unmorph-land-run,
+  C-morph-land-run, R-morph-land]
 - Her moves leaving her rising, in the moonfall, or with no vertical motion → not `heading down`
   [E1, R4, MT1, C-moonfall-nolimit, C-ground-rise-kept, R49, C-slope-run-off]
 - Her rise's move stopped by a ceiling this frame → not `heading down`: the ceiling ends the rise
   once what her moves met acts, so she heads down from the next frame [C-ceiling]
+- Each frame → `vertical speed after her moves` (§1.4) is her vertical speed at the point
+  `heading down` is read: her moves' pull included, a rise a ceiling stops included, and before
+  what they met acts on it [C-ceiling, W13, E1, J2, MB2, C-slope-run-off, R-walljump-letgo,
+  C-walljump-rise-held, R-morph-land, C-unmorph-land-run, C-morph-land-run, C-morph-ceiling,
+  C-unmorph-on-bounce, C-screen-kept-speed, C-elevator]
+- So a landing's frame reports her pulled fall speed (W13: +1.F800, which the landing then
+  zeroes), a ceiling's frame her pulled rise (C-ceiling: −4.E400, which the ceiling then ends),
+  a change of shape that lands 0, and a take-off or a spin start the speed she had before the
+  pose change's rise (J2: 0; MB2: the +0.E000 she kept on the ground).
 - So a landing's frame heads down, the walk off a ledge's frame doesn't, and the moonfall drops
   her without heading down (MT1); a speed kept on the ground heads down only when it points down
   (HV1, C-ground-rise-kept).
@@ -836,7 +875,9 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - An upward speed of exactly one pull is never met from a jump: no rise speed in `Jumping` is a
   whole number of pulls. The ball rises at exactly 0 when it bounces the second time, so it
   rises by 0 for one frame before the rise ends.
-- checked: oracle (every air vector; E1 for the speed past zero; `rising`: J2 a take-off, WK1 a
+- checked: oracle (every air vector; E1 for the speed past zero; R-walljump-letgo, a wall jump's
+  rise ended by jump let go; R-morph-land, a change of shape's landing, not heading down;
+  `vertical speed after her moves`: the recorded vectors that give it; `rising`: J2 a take-off, WK1 a
   wall jump's kick, R4 the rise after it, SJ1 space jump's jump again, E1 the frame that spends
   the rise, R91 the rise ended by jump let go, R32 a fall, MT1 the moonfall; `heading down`: the
   recorded vectors' `after.heading_down`, MT1 the moonfall, HV1 a downward speed kept on the
@@ -845,7 +886,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   C-moonfall-nolimit, C-ground-rise-kept; C-fallcap-a,
   C-fallcap-b, C-fallcap-past, E2, E3; `rising`: C-rise-spent and C-rise-at-0, the camera's
   cases, E3 and C-bounce-second at 0, E2 the rise's end, C-ceiling a ceiling, C-ground-rise-kept
-  and C-ground-rise an upward speed on the ground).
+  and C-ground-rise an upward speed on the ground; the wall jump's rise, C-walljump-letgo-plain
+  let go and C-walljump-rise-held held; a change of shape's landing, C-unmorph-land-run and
+  C-morph-land-run; `vertical speed after her moves`, C-ceiling, C-slope-run-off,
+  C-walljump-rise-held, C-morph-ceiling, C-unmorph-on-bounce, C-screen-kept-speed, C-elevator and
+  the two changes of shape that land).
 
 ### DriftInTheAir
 - kind: mechanic.
@@ -967,13 +1012,14 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   its pixel part counts: 3 px or more.
 - Falling onto a floor upright, or the ball landing after bounce 2 at any speed, or with no
   bounce yet at `vy < 3.0000` → she lands: vertical speed 0, bounces 0, horizontal speed 0,
-  following the pad; the dash keeps its value [PF2, PF3, W13, C-enemy-down, C-slope-land,
-  C-bounce-third, C-bounce-under]
+  following the pad; the dash keeps its value, and she goes on dashing until the landing's own
+  moves (`Dashing`) [PF2, PF3, W13, C-enemy-down, C-slope-land, C-bounce-third, C-bounce-under]
 - Only a move by her vertical speed lands her, in the air or while her body changes shape. On the
   ground the floor under her never lands her, whatever vertical speed she keeps or the ball moves
   by (`FollowingTheGround`).
-- Landing while her body changes shape → only her vertical motion stops (vertical speed 0); both
-  speeds, and whether she carries on, are kept [LB1, LB2, C-unmorph-land-run, C-morph-land-run]
+- Landing while her body changes shape → only her vertical motion stops, within her moves
+  (vertical speed 0); both speeds, and whether she carries on, are kept [LB1, LB2,
+  C-unmorph-land-run, C-morph-land-run, R-morph-land]
 - So a change of shape lands without the halt of `Landing`'s first row: in r04:332 the unmorph
   lands moving by its dash, 0.2000, with its speed 1.0000 kept (C-unmorph-land-run), and in
   samus-mockball:71 the morph lands with 1.4000 and the booster's dash 5.0000 kept
@@ -1005,7 +1051,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   read after the pull; C-bounce-under, no bounce at 2 px after the pull; C-bounce-second, bounce
   2 at under 3 px; C-bounce-third, the landing after it; BG1, the ball on the ground held by the
   floor; C-unmorph-land-run and C-morph-land-run, a change of shape landing with a speed and a
-  dash; C-spring-land-held and C-booster-spring-land, the spring ball landing with jump held).
+  dash; C-spring-land-held and C-booster-spring-land, the spring ball landing with jump held);
+  oracle besides (R-morph-land, the morph landing within its moves).
 
 ---
 
@@ -1062,6 +1109,12 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   C-chart-c, C-chart-d, G7]
 - No other row of her situation fits → its last row: its pose and its effect are her let-go
   outcome [P3]
+- Wall jumping, its last row, with the screw attack or space jump switched on → its effect
+  doesn't act: she takes the spin, drawn as `HowSheIsDrawn` says, with her horizontal speed, her
+  dash and her carrying on kept, and she goes on dashing [R-walljump-letgo,
+  C-walljump-letgo-space]
+- So with neither item the row's effect acts, as every other row's does
+  (C-walljump-letgo-plain).
 - A fitting row whose next pose is "kept" → her pose stays as it is, apart from an aim the cell
   names, the Effect cell says whatever else happens, and the last row is not used [P15, R102]
 - The rows' order in the table carries no meaning. "Aim" in a next pose means the aim the `Aiming`
@@ -1255,9 +1308,11 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   then points rightward along her facing (§2, C-screen-skid).
 - checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, L1, L2, U1, and R133 and
   R141 of `TurningRound`; R102 for left and right both held in a spin; AS1 to AS4 for the
-  let-go effect, AS4 the run at 0 that stands following the pad); constructed (C-chart-a to
-  C-chart-j; C-screen-skid, a skid ended facing the screen); original only (the other rows with
-  left and right both held).
+  let-go effect, AS4 the run at 0 that stands following the pad; R-walljump-letgo, a wall jump's
+  let-go into the screw attack's spin, keeping her speed); constructed (C-chart-a to C-chart-j;
+  C-screen-skid, a skid ended facing the screen; C-walljump-letgo-space and
+  C-walljump-letgo-plain, the wall jump's let-go with space jump and with neither item); original
+  only (the other rows with left and right both held).
 
 ### Aiming
 - kind: mechanic.
@@ -1351,6 +1406,11 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - Its end handing over its pose → the frame reports `handed over` (§1.4) [W16, C-landing-aimed-jump,
   C-turn-end-plain]
 - So with no end, or an end that gives way, it doesn't (R-turn-gives-way, C-landing-gives-way).
+- So an end's pose is always the pose she ends the frame in: no pose an end hands over is taller
+  than the pose it ends, so pose fit never refuses one (`PoseFitAfterMoves`).
+- So an end never ends her dashing at the pose change: of the effects an end hands over only a
+  turn's takes her dash, and a turn's own moves have already ended her dashing (`Dashing`,
+  C-dash-turn-moves).
 
 | Ending pose | Next pose | Effect |
 | --- | --- | --- |
@@ -1448,7 +1508,7 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 
 ### WallsAndCeilings
 - kind: mechanic.
-- summary: a wall halts her; a ceiling ends her rise.
+- summary: a wall halts her; a ceiling ends her rise, except while her body changes shape.
 - params: none.
 - switch: none.
 - A horizontal move stopped by a wall, on the ground or in the air → it halts her: horizontal
@@ -1457,7 +1517,11 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   stop [C-wall]
 - An upward move into a block → it stops flush and ends the rise: vertical speed 0, falling, with
   no pull that frame [C-ceiling, C-step-up]
-- checked: constructed (C-wall, C-ceiling).
+- While her body changes shape, an upward move into a block → it stops flush only: she goes on
+  rising at her pulled speed, `vy + 0.1C00`, and is `rising` [C-morph-ceiling]
+- So a change of shape under a low ceiling stays flush against it, frame after frame, until the
+  pull spends her rise (`RisingAndFalling`).
+- checked: constructed (C-wall, C-ceiling; C-morph-ceiling, a morph rising into a ceiling).
 
 ### SolidEnemies
 - kind: quirk.
@@ -1868,10 +1932,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
     and "in the air" give the same pose except at a vertical speed of 0 in the air (the morph
     ending on a rise at 0 or on a fall's first frame from rest), where the original's ball is
     `Still` and then walks off. No record or vector has one; open.
-21. A change of shape started from the ball while it bounces (unmorphing on a bounce's rise): the
-    original ends her vertical motion there (no vertical speed, not falling) and her bounces,
-    which would then move her as a change of shape with no vertical motion does
-    (`FollowingTheGround`). No record or vector has one; open.
+21. Answered: a change of shape started from a bouncing ball ends her vertical motion and its
+    bounces (`ShrinkingLowersHer`, C-unmorph-on-bounce).
 22. A crouched turn aimed up, down or up-forward, on the ground with a vertical speed she keeps
     there (`FollowingTheGround`; crouching from a run keeps +1.3400 in samus-shinespark-left
     176-189, and an upward one is C-ground-rise-kept's): the original moves it as a turn in a jump,

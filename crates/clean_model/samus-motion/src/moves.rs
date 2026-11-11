@@ -10,10 +10,10 @@ use crate::rows::Doing::{self, AgainstWall, Ball, Running, Standing, TakingOff, 
 use crate::rows::Met::{self, Wall, WallKick};
 use crate::rows::{Footing, Moves, Situation};
 use crate::run::Stride::{DashThenHalt, Nothing, SpeedAndDash};
-use crate::run::running_with_run_held;
+use crate::run::{Dashing, running_with_run_held};
 use crate::samus::Seat::{Seated, Unseated};
 use crate::samus::WallTest::{Kicked, Neither, Readied};
-use crate::samus::{Dashing, Samus, Spin, WallTest};
+use crate::samus::{Samus, Spin, WallTest};
 use crate::tick::Tick;
 use crate::vertical::Course;
 use clean_types::button::{JUMP, LEFT, SIDES};
@@ -31,6 +31,8 @@ pub struct Meeting {
     /// §1.4, `RisingAndFalling`: she is heading down as her moves leave her, before what they
     /// met acts.
     pub heading_down: bool,
+    /// §1.4, `RisingAndFalling`: her vertical speed where `heading_down` is read.
+    pub vertical_speed: Fixed,
 }
 
 /// `WallsAndCeilings`, `SpeedBuildsAndBrakes`: why her walk halted her.
@@ -70,7 +72,8 @@ impl Samus {
     /// moving elevator she moves down 1 px, a move stopped as any downward move. `WallJump`:
     /// kicking off she doesn't move vertically that frame; `Jumping`: nor taking off.
     /// `WhatHerMovesMet`: a wall stop while running wins over walking off a ledge. `Dashing`:
-    /// running with run held she dashes from her moves on, and her moves may then end it.
+    /// her moves may end her dashing. `RisingAndFalling`: whether she heads down, and her
+    /// vertical speed, are read once her moves are made, before what they met acts.
     pub(crate) fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
             if self.rides_the_elevator(t.frame) {
@@ -78,15 +81,13 @@ impl Samus {
             }
             return Meeting {
                 heading_down: self.vertical.heading_down(),
+                vertical_speed: self.vertical.speed,
                 ..Meeting::default()
             };
         }
         let walk = self.walk(s, t);
-        if walk.ran_with_run_held {
-            self.dashing = Dashing::On;
-        }
         if moves_end_dashing(s.doing, walk.halt) {
-            self.dashing = Dashing::Off;
+            self.run.dashing = Dashing::Off;
         }
         let wall_test = self.wall_test(t);
         self.vertical.space_jump(s.doing, self.run.dash, t);
@@ -97,7 +98,7 @@ impl Samus {
         } else {
             self.move_vertically(s.footing, walk.pull, t)
         };
-        let heading_down = self.vertical.heading_down();
+        let (heading_down, vertical_speed) = (self.vertical.heading_down(), self.vertical.speed);
         self.vertical.meet_in_moves(met);
         let stopped_running = walk.halt == Some(Halt::WallStop) && s.doing == Running;
         Meeting {
@@ -105,6 +106,7 @@ impl Samus {
             wall_test,
             ran_with_run_held: walk.ran_with_run_held,
             heading_down,
+            vertical_speed,
         }
     }
 

@@ -2,13 +2,16 @@
 //! fits. A next pose has its gun stowed and its legs together unless its cell says otherwise.
 
 use crate::rows::Effect::{self, ComesToTheGround, LoseDash};
-use crate::rows::Test::{Aimed, Airborne, Held, SpringBall};
+use crate::rows::Test::{Aimed, Airborne, Held, With};
 use crate::rows::{
     DOWN_TO_FORWARD, Doing, Met, NO_CHANGE, Next, Row, RowId, TO_FALLING, TO_JUMPING, TO_SPINNING,
     TO_STILL, Test, UP_AIM,
 };
 use clean_types::button::SHOOT;
-use clean_types::{Action, Aim, Body, Gun, LandedFrom, Legs, Turn};
+use clean_types::{Action, Aim, Body, Gun, Item, LandedFrom, Legs, Turn};
+
+/// With the spring ball.
+const SPRING_BALL: Test = With(&[Item::SpringBall]);
 
 /// `WhatHerMovesMet`: what her moves met chooses her pose over the pad, the first row that fits.
 ///
@@ -246,7 +249,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
     },
     Row {
         id: RowId::MorphingEndsSpringBallInTheAir,
-        needs: &[Test::Action(&[Action::Morphing]), SpringBall, Airborne],
+        needs: &[Test::Action(&[Action::Morphing]), SPRING_BALL, Airborne],
         next: Next {
             body: Some(Body::SpringBall),
             ..TO_FALLING
@@ -255,7 +258,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
     },
     Row {
         id: RowId::MorphingEndsSpringBall,
-        needs: &[Test::Action(&[Action::Morphing]), SpringBall],
+        needs: &[Test::Action(&[Action::Morphing]), SPRING_BALL],
         next: Next {
             body: Some(Body::SpringBall),
             ..TO_STILL

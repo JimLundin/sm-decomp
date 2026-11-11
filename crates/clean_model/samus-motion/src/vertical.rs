@@ -6,7 +6,7 @@
 //! kick does to it (`Landing`, `WallJump`, `Jumping`). Samus holds one; her moves read it. Each
 //! change names only the parts of it that it changes.
 
-use crate::rows::Doing::{self, Hop, Spinning, StraightJump};
+use crate::rows::Doing::{self, Hop, Spinning, StraightJump, WallJumping};
 use crate::rows::Footing;
 use crate::rows::Met::{self, Ceiling, Floor, NoFloor, Wall, WallKick};
 use crate::rules::{Bounce, Bounces, Rules};
@@ -58,7 +58,7 @@ pub enum Course {
     BallMovesByIt,
     /// In the air, or while her body changes shape with a vertical motion: she moves by her
     /// vertical speed under the pull; a floor meets her as her situation's footing says, and a
-    /// block above ends the rise.
+    /// block above ends the rise (while her body changes shape, it only stops the move).
     InTheAir,
 }
 
@@ -74,11 +74,8 @@ pub enum Contact {
     Hop,
     /// `Landing`: the ball bounces.
     Bounce(Bounce),
-    /// `Landing` while her body changes shape: only her vertical motion stops; both speeds, and
-    /// whether she carries on, are kept.
-    Settle,
     /// `Landing`: vertical speed 0, bounces 0, horizontal speed 0, following the pad; the dash
-    /// keeps its value, to lose (§1.2).
+    /// keeps its value, and she goes on dashing until the landing's own moves (`Dashing`).
     Land,
 }
 
@@ -151,9 +148,10 @@ impl Vertical {
 
     /// `RisingAndFalling`: at a frame's start the rise ends, falling from rest, once the pull
     /// spent it (her speed points down by even a subpixel), or with jump not held in a straight
-    /// jump, a spin or the spring ball's hop (`doing`).
+    /// jump, a spin, a wall jump or the spring ball's hop (`doing`).
     pub(crate) fn end_rise(&mut self, doing: Doing, pad: Buttons) {
-        let lets_go = !pad.any(JUMP) && matches!(doing, StraightJump | Spinning | Hop);
+        let lets_go =
+            !pad.any(JUMP) && matches!(doing, StraightJump | Spinning | WallJumping | Hop);
         let spent = !self.speed.negative() && self.speed != ZERO;
         if self.phase == Rising && (lets_go || spent) {
             self.fall_from_rest();
@@ -231,13 +229,15 @@ impl Vertical {
     }
 
     /// What her vertical move by `by` met, stopped or not, as its course and her situation's
-    /// footing say: an upward move stopped is a ceiling (`WallsAndCeilings`), with no pull that
-    /// frame. Moving by her speed, the pull then grows it (`RisingAndFalling`). In the air a floor
-    /// is met (`Landing`); on the ground the floor stops her flush and never lands her, and
-    /// finding none she walks off a ledge (`FollowingTheGround`), unless turning, where she sinks
-    /// by the pull. (Changing shape, she stays where she is instead: the move's own case,
-    /// `Samus::move_vertically`, before it ends.) What it met acts afterwards (`meet_in_moves`,
-    /// or at the pose change for a floor).
+    /// footing say. Moving by her speed, the pull then grows it (`RisingAndFalling`). An upward
+    /// move stopped is a ceiling (`WallsAndCeilings`), which then ends the rise with no pull that
+    /// frame; while her body changes shape it stops her flush only, and she rises on. In the air
+    /// a floor is met (`Landing`): while her body changes shape it lands her within her moves,
+    /// only her vertical motion stopping. On the ground the floor stops her flush and never lands
+    /// her, and finding none she walks off a ledge (`FollowingTheGround`), unless turning, where
+    /// she sinks by the pull. (Changing shape, she stays where she is instead: the move's own
+    /// case, `Samus::move_vertically`, before it ends.) What else it met acts afterwards
+    /// (`meet_in_moves`, or at the pose change for a floor).
     pub(crate) fn end_move(
         &mut self,
         course: Course,
@@ -246,13 +246,18 @@ impl Vertical {
         footing: Footing,
         r: &Rules,
     ) -> Option<Met> {
-        if stopped && by.negative() {
-            return Some(Ceiling);
-        }
         if course != Course::Pulled {
             self.grow(r);
         }
+        let shaping = footing == Footing::ChangingShape;
+        if stopped && by.negative() {
+            return (!shaping).then_some(Ceiling);
+        }
         match (course, stopped) {
+            (Course::InTheAir, true) if shaping => {
+                self.stand();
+                Some(Floor)
+            }
             (Course::InTheAir, true) => Some(Floor),
             (Course::Pulled, false) if footing == Footing::Turning => None,
             (Course::Pulled | Course::BallMovesByIt, false) => Some(NoFloor),
@@ -284,10 +289,11 @@ impl Vertical {
         match (met?, footing) {
             (WallKick, _) => Some(Contact::WallKick),
             (Floor, Footing::OnHerFeet) => Some(Contact::Land),
-            (Floor, Footing::ChangingShape) => Some(Contact::Settle),
             (Floor, Footing::Ball) if springs => Some(Contact::Hop),
             (Floor, Footing::Ball) => Some(self.bounce(r).map_or(Contact::Land, Contact::Bounce)),
-            (Floor, Footing::Turning) | (Wall | NoFloor | Ceiling, _) => None,
+            (Floor, Footing::Turning | Footing::ChangingShape) | (Wall | NoFloor | Ceiling, _) => {
+                None
+            }
         }
     }
 
@@ -303,8 +309,7 @@ impl Vertical {
     /// `Landing`, `WallJump`: what her moves' contact does to her vertical motion. The kick and
     /// the spring ball's hop rise as `Jumping` makes the wall-jump and jump speeds, with her
     /// `dash`; a bounce is a rise at the bounce speed less its own cut, with no share of the
-    /// dash, and its bounces. Settling and landing stand her on the ground; a landing also
-    /// rests the ball's bounces.
+    /// dash, and its bounces. A landing stands her on the ground and rests the ball's bounces.
     pub(crate) fn meet(&mut self, contact: Contact, dash: Fixed, t: &Tick) {
         let r = t.rules;
         match contact {
@@ -317,11 +322,22 @@ impl Vertical {
                 self.rise(r.bounce - b.slower);
                 self.bounces = b.then;
             }
-            Contact::Settle => self.stand(),
-            Contact::Land => {
-                self.stand();
-                self.bounces = Bounces::None;
-            }
+            Contact::Land => self.rest(),
+        }
+    }
+
+    /// `Landing`, `ShrinkingLowersHer`: she stands on the ground with no vertical motion and no
+    /// bounce.
+    const fn rest(&mut self) {
+        self.stand();
+        self.bounces = Bounces::None;
+    }
+
+    /// `ShrinkingLowersHer`: a change of shape started from the ball after it has bounced ends
+    /// her vertical motion and its bounces, at the pose change.
+    pub(crate) fn end_bounce(&mut self) {
+        if self.bounces != Bounces::None {
+            self.rest();
         }
     }
 }

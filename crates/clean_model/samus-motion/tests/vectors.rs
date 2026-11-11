@@ -10,8 +10,8 @@
 #![cfg(test)]
 
 use clean_model_samus_motion::{
-    Bounces, CATALOGUE, Carry, DashIs, Dashing, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome,
-    Phase, Rules, Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, Dashing, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome, Phase,
+    Rules, Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
 };
 use clean_types::{
     Action, Aim, Block, Body, Buttons, Cell, Checked, ClipEnd, Facing, Fixed, Gun, Heading, Hitbox,
@@ -396,6 +396,8 @@ struct After {
     handed_over: Option<bool>,
     /// Whether she is heading down as her moves leave her.
     heading_down: Option<bool>,
+    /// Her vertical speed as her moves leave her, at `heading_down`'s point.
+    speed_y_after_moves: Option<Signed>,
 }
 
 /// A reached cell: its top-left corner, and the way.
@@ -1090,13 +1092,14 @@ fn room(world: &WorldTable) -> Room {
 }
 
 /// Samus at a vector's start (spec §1.2) in `pose`: her motion follows the pad unless she is
-/// skidding, her dash is hers to keep, and she remembers no spin and no seat. In a jump (its
+/// skidding, and she remembers no spin and no seat. In a jump (its
 /// take-off included), a spin, a fall or a wall jump (a turn in a jump or a fall included) she
 /// is in the air: an upward speed there is a rise, and a vertical speed of 0 means she has just
 /// started to fall. In any other pose she is on the ground, keeping any vertical speed she has,
 /// an upward one a rise she keeps (`FollowingTheGround`, `RisingAndFalling`), or, where
 /// `before.falling` says so, falling at 0 there. Jump held through and dashing are as `before`
-/// gives them: a count of 0, nothing the frame before and not dashing where it doesn't.
+/// gives them: a count of 0, nothing the frame before and not dashing where it doesn't, so a
+/// dash she starts with and not dashing is one she is to lose (spec `Dash`).
 fn start(before: &Before, pose: Pose) -> Samus {
     // A missing quantity is 0.
     let (speed_x, speed_y) = (
@@ -1153,7 +1156,11 @@ fn start(before: &Before, pose: Pose) -> Samus {
                 Carry::CarriesOn
             },
             dash,
-            dash_is: DashIs::Hers,
+            dashing: if before.dashing {
+                Dashing::On
+            } else {
+                Dashing::Off
+            },
         },
         vertical: Vertical {
             speed: speed_y.value(),
@@ -1164,11 +1171,6 @@ fn start(before: &Before, pose: Pose) -> Samus {
         spin: Spin::Off,
         seat: Seat::Unseated,
         jump_held,
-        dashing: if before.dashing {
-            Dashing::On
-        } else {
-            Dashing::Off
-        },
     }
 }
 
@@ -1365,7 +1367,7 @@ fn run_pose_step(step: &PoseStep) -> Option<String> {
     let moment = Moment {
         pad: held,
         pressed,
-        spring_ball: items[Item::SpringBall],
+        items,
         animation_ends,
         speed: step.speed_x.unwrap_or(STILL).size,
         airborne: step.in_the_air(met),
@@ -1414,11 +1416,11 @@ const fn speed_x(samus: &Samus) -> Signed {
     }
 }
 
-/// Her vertical speed as the player reads it, downward positive.
-fn speed_y(samus: &Samus) -> Signed {
+/// A vertical speed as the player reads it, downward positive.
+fn speed_y(speed: Fixed) -> Signed {
     Signed {
-        negative: samus.vertical.speed.negative(),
-        size: samus.vertical.speed.size(),
+        negative: speed.negative(),
+        size: speed.size(),
     }
 }
 
@@ -1445,7 +1447,7 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
         (
             "dashing",
             after.dashing.map(|b| b.to_string()),
-            (samus.dashing == Dashing::On).to_string(),
+            (samus.run.dashing == Dashing::On).to_string(),
         ),
         ("position.x", x.map(|q| show(q.0)), show(samus.position.x)),
         (
@@ -1461,7 +1463,7 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
         (
             "speed_y",
             after.speed_y.map(Signed::show),
-            speed_y(samus).show(),
+            speed_y(samus.vertical.speed).show(),
         ),
         ("dash", after.dash.map(|d| show(d.0)), show(samus.run.dash)),
         (
@@ -1540,6 +1542,11 @@ fn for_her_animation(after: &After, outcome: &Outcome) -> Vec<Compared> {
         flag("dash_lost", after.dash_lost, outcome.dash_lost),
         flag("handed_over", after.handed_over, outcome.handed_over),
         flag("heading_down", after.heading_down, outcome.heading_down),
+        (
+            "speed_y_after_moves",
+            after.speed_y_after_moves.map(Signed::show),
+            speed_y(outcome.vertical_speed_after_moves).show(),
+        ),
     ]
 }
 
@@ -1627,17 +1634,105 @@ fn a_vector_missing_a_body_is_refused() {
     );
 }
 
-/// A key the shape doesn't know is refused in a nested table too, `after`'s here, as is a name
-/// it doesn't know, an end's kind here.
+/// A vector that has every table the header gives, each with a mark `%n%` where a key may be
+/// put in it: `rules`, `world` and each of its blocks, enemy and cells, `before`, a lead-in
+/// frame and its pose, the checked pose, `next_pose`, `after`, a reached cell and `after.pose`.
+const EVERY_TABLE: &str = r#"
+id = "every-table"
+source = "constructed"
+entries = ["Landing"]
+rules = { speed_cap = "Wordwise"%0% }
+items = ["MorphBall"]
+world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "1.00"%1% }, slope_ceiling = { block = [256, 0], surface = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17]%2% }, stepped = { block = [0, 0], quarters = ["..", ".."]%3% }, enemy = { centre = [8, 8], radius = [1, 1]%4% }, cells = [{ block = [16, 0], kind = "Spikes"%5% }]%6% }
+before = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.0000"%7% }
+lead_in = [
+  { pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%8% }, pad = [], jump_pressed = false%9% },
+]
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%10% }
+next_pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%11% }
+pad = []
+jump_pressed = false
+after = { reached = [{ cell = [0, 0], way = "Down"%12% }], pose = { body = "Upright", action = "Still", facing = "Right"%13% }%14% }
+"#;
+
+/// How many marks `EVERY_TABLE` has.
+const TABLES: usize = 15;
+
+/// A pose step whose own pose, `after` and `after.pose` each have a mark, as `EVERY_TABLE`'s.
+const STEP_TABLES: &str = r#"
+id = "every-table"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Still", facing = "Right"%0% }
+pad = []
+jump_pressed = false
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Right"%1% }%2% }
+"#;
+
+/// How many marks `STEP_TABLES` has.
+const STEP_MARKS: usize = 3;
+
+/// `text`, whose marks are `%0%` to `%marks - 1%`, with an unknown key in the table of mark `n`
+/// alone, or in none.
+fn with_unknown_key_in(text: &str, marks: usize, n: Option<usize>) -> String {
+    (0..marks).fold(text.to_owned(), |text, mark| {
+        let key = if Some(mark) == n { ", bogus = 1" } else { "" };
+        text.replace(&format!("%{mark}%"), key)
+    })
+}
+
+/// Whether `text` reads as a `T`, and as no `T` with an unknown key in any one table it has,
+/// nor with one of its own.
+fn refuses_every_unknown_key<T: for<'de> Deserialize<'de>>(text: &str, marks: usize) -> bool {
+    let known = with_unknown_key_in(text, marks, None);
+    let mut unknown = (0..marks).map(|n| with_unknown_key_in(text, marks, Some(n)));
+    toml::from_str::<T>(&known).is_ok()
+        && unknown.all(|u| toml::from_str::<T>(&u).is_err())
+        && toml::from_str::<T>(&format!("{known}bogus = 1\n")).is_err()
+}
+
+/// A key the shape doesn't know is refused in every table of a vector, the vector's own
+/// included, in a pose step and its `after`, and in the file; a name it doesn't know is refused
+/// for each kind of name a vector gives.
 #[test]
 fn an_unknown_key_or_name_is_refused() {
-    let unknown_key = format!("{C_WALL_UNTIL_NEXT_POSE}after = {{ dashng = true }}\n");
     assert!(
-        toml::from_str::<Vector>(&unknown_key).is_err(),
-        "dashng read"
+        refuses_every_unknown_key::<Vector>(EVERY_TABLE, TABLES),
+        "a vector's"
     );
-    let unknown_end = format!("{C_WALL_UNTIL_NEXT_POSE}animation_ends = \"Ends\"\nafter = {{}}\n");
-    assert!(toml::from_str::<Vector>(&unknown_end).is_err(), "Ends read");
+    assert!(
+        refuses_every_unknown_key::<PoseStep>(STEP_TABLES, STEP_MARKS),
+        "a pose step's"
+    );
+    assert!(
+        toml::from_str::<VectorFile>("vector = []\npose_step = []\nbogus = 1\n").is_err(),
+        "the file's key"
+    );
+    let known = with_unknown_key_in(EVERY_TABLE, TABLES, None);
+    let names = [
+        ("\"Wordwise\"", "\"Word\""),
+        ("\"MorphBall\"", "\"Morph\""),
+        ("\"Spikes\"", "\"Spike\""),
+        ("\"Upright\"", "\"Standing\""),
+        ("\"Still\"", "\"Rest\""),
+        ("\"Right\"", "\"East\""),
+        ("\"Down\"", "\"Downward\""),
+        ("\"0100.0000\"", "\"100\""),
+        ("pad = []", "pad = [\"select\"]"),
+        (
+            "jump_pressed = false\nafter",
+            "animation_ends = \"Ends\"\njump_pressed = false\nafter",
+        ),
+    ];
+    for (name, unknown) in names {
+        let text = known.replacen(name, unknown, 1);
+        assert_ne!(text, known, "{name} is in the vector");
+        assert!(toml::from_str::<Vector>(&text).is_err(), "{unknown} read");
+    }
+    let step = with_unknown_key_in(STEP_TABLES, STEP_MARKS, None);
+    let met = step.replace("\"nothing\"", "\"nothing_at_all\"");
+    assert!(toml::from_str::<PoseStep>(&met).is_err(), "a met read");
 }
 
 /// A pose step's frame reads no body, so a pose step that gives one is refused.

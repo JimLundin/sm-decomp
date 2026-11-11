@@ -11,8 +11,8 @@
 //! its hop (`PadChart`, `WhatHerMovesMet`), so her pose alone gives her situation.
 
 use crate::rows::Effect::{
-    AsRunning, EndSkid, Halt, Launch, LiftIfUnaimed, LoseDash, Rise, SpinOn, TurnRound,
-    TurnRoundIfFacingChanges,
+    AsRunning, EndSkid, EndsTheBounce, Halt, Launch, LiftIfUnaimed, LoseDash, Rise, SpinOn,
+    TurnRound, TurnRoundIfFacingChanges,
 };
 use crate::rows::{
     AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, Class, Doing, Drift, Entering, FORWARD, FORWARD_AIM,
@@ -28,7 +28,9 @@ use clean_types::Action::{
 };
 use clean_types::Body::{Ball, Crouched, SpringBall, Upright};
 use clean_types::button::{self as key, AIM_DOWN, AIM_UP, DOWN, LEFT, RIGHT, SHOOT, UP};
-use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, LandedFrom, Legs, Pose, Side, Turn};
+use clean_types::{
+    Action, Aim, Body, Buttons, Facing, Gun, Item, LandedFrom, Legs, Pose, Side, Turn,
+};
 
 /// A pose no situation names (no class of `CLASSES` holds it): the step gives her no motion
 /// and reports it, and the chart gives it no next pose. A caller that builds her pose decides
@@ -69,8 +71,14 @@ const GROUND_TURNS: &[Action] = &[Turning(Turn::Ground), Turning(Turn::MoonwalkJ
 ///
 /// `Jumping`: starting a straight jump (upright) or a fall, from any action but that one, with
 /// a dash she carries on along her facing, else she follows the pad. `WallJump` (§1.2): a spin
-/// that followed a wall jump is carried on.
+/// that followed a wall jump is carried on. `ShrinkingLowersHer`: unmorphing, the one change of
+/// shape a ball starts, ends a bounce she is in.
 pub static ENTERING: &[Entering] = &[
+    Entering {
+        into: &[(Crouched, Unmorphing)],
+        from: Was::AnyBut(&[Unmorphing]),
+        effect: EndsTheBounce,
+    },
     Entering {
         into: &[(Upright, Jumping)],
         from: Was::AnyBut(&[Jumping]),
@@ -1426,6 +1434,16 @@ static WALL_JUMPING: Situation = Situation {
         Row {
             id: RowId::JumpHeld,
             needs: &[Held(key::JUMP)],
+            ..NO_CHANGE
+        },
+        // The chart's last row for wall jumping, with the screw attack or space jump switched
+        // on: its effect doesn't act, so she keeps her speeds and carrying on, and goes on
+        // dashing. It names no button: every other fitting row outranks it, so it is used only
+        // where the last row would be.
+        Row {
+            id: RowId::AnythingElseWithTheSpin,
+            needs: &[Test::With(&[Item::ScrewAttack, Item::SpaceJump])],
+            next: TO_SPINNING,
             ..NO_CHANGE
         },
     ],

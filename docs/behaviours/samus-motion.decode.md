@@ -1555,7 +1555,7 @@ following the pad with the same quantities; the change of shape moves by the das
 Adversary 84's mutant M1 (`Settles` as `Land`) gives speed_x 0 on both. The bounces: `$91:ED11`
 zeroes `0B20` (and the vertical speed and direction) when a change of shape starts, so they are
 always 0 when one lands, and `$90:A640` zeroes them again; the vectors compare bounces 0. What
-`$91:ED11` does to a bounce's rise is the spec's question 21.
+`$91:ED11` does to a bounce's rise was the spec's question 21, answered in round 19 (below).
 
 **V5, the implementer's two refusals.**
 - A crouched turn other than `Ground`: the crouched turning poses are 43h/44h (movement type 0Eh,
@@ -1809,6 +1809,171 @@ C-ceiling and C-slope-run-off). The ceiling's arm adds 1 unit.
 unchanged; pose chart 58.0 → 60.0, `AnimationEnds` 2.7 → 4.7 for the end that gives way and
 `handed over`). The budget is 7,884 → 8,244: motion 3,024 → 3,312, pose chart 2,088 → 2,160.
 
+## Round 19's amendments (2026-11-11): adversary 96's observer items
+
+Adversary 96 (the round gate of round 18) queued F3 to F6, F8 and F9 for the observer. Each is
+answered from the bank logs and the cache-v2 dumps (`$TEMP/collab/samus-spec-r18/out`, read by
+`$TEMP/collab/samus-r19/*.py`).
+
+**F3, a wall jump's rise ends with jump let go.** Wall jumping (movement 14h, `$90:A734`) runs
+`$90:8FB3`, whose rise check (`$90:8FDC`..`$90:8FF9`) zeroes the speed and sets direction down when
+the direction is up and jump isn't held, as the normal jump's and the spring ball's do; only the
+normal jump's transition poses (4Bh, 4Ch, 55h-5Ah) skip it. `RisingAndFalling`'s arm now names the
+wall jump. Record: samus-grapple-walljump 114 → 115 (R-walljump-letgo): pose 83h, pad 0000,
+`0B2E`.`0B2C` 5.4800 up; at 115 y unchanged (`0AFA`.`0AFC` 00ED.93FF) and 0.1C00 down. It is the
+cache's only wall-jump frame rising with jump let go (`wjletgo.py`).
+
+**Found with F3: the wall jump's let-go into the screw attack's or space jump's spin takes no
+effect.** The same frame keeps `0B46`.`0B48` 1.6000 and `0B4A` 2, though the pad chart's last row
+for wall jumping (`$91:81DB` → `$91:82D9`, command 6 from `$91:8332`) zeroes them. Why:
+`$91:EB88` runs the prospective pose's command only when `$91:F404` returns carry clear, and
+`$91:F404` returns carry set when the pose's initialisation changed the pose. The spin's
+(`$91:F624`) replaces 19h/1Ah with the screw attack's 81h/82h (`09A2` bit 0008) or the space
+jump's 1Bh/1Ch (bit 0200), outside a liquid or with the gravity suit (liquids are out of scope).
+So command 6 (`$91:EC85`, falling into `$91:EC8E`: speed 0, mode 0, `$91:DE53`, dash 0) is
+skipped, and dashing stays as it was. The spin's own initialisation (the turn's speed join, the
+spin carried on) ran before the test, so it stands. Of the lookup failures, only wall jumping's
+lands in a spin (`$91:B629` byte 2 of 83h/84h is 19h/1Ah); the found rows' commands are 0. Over
+the cache, all 4 wall-jump let-goes into a spin keep the speed and mode (samus-grapple-walljump
+114, samus-walljump-16 57, samus-walljump-22 63, samus-walljump-28 69, all with the screw
+attack), the frames the harness misses on base speed and mode in those rows. The new `PadChart`
+arm says so (R-walljump-letgo; C-walljump-letgo-space, space jump alone; C-walljump-letgo-plain,
+neither item, where the halt acts and ends dashing). The items table names the two items.
+
+**F4, the ride takes no pose.** The riding state handler (`$90:E8EC`, installed in `0A44`) runs
+the movement handler, the minimap and the animation, and no pose input handler and no
+`$91:EB88`: her pose can't change on the ride. Over the cache, 906 ride frames, none with a pad
+held, the pose kept on each (`ride.py`). `RidingTheElevator` says the ride is decided before a
+pose is chosen; C-elevator-jump (jump pressed, which on foot takes off) and C-elevator-side (left
+held, which on foot turns) end facing the screen, not handed over. The jump held through count
+(`0AF4`, at the draw) still runs on the ride; no vector compares it there.
+
+**F5, gap 38: a change of shape lands in its moves.** `$90:A61C` moves her by her vertical speed
+(`$90:92C7`, or `$90:923F` with no direction), then at `$90:A640`..`$90:A651`, with `0DC6` = 0401h
+(landed, downward result no change), zeroes `0B2C`/`0B2E`, `0B36` and the bounce state `0B20`,
+in the movement handler, before the animation reads the direction. `Landing`'s change-of-shape
+arm now says "within her moves", and `RisingAndFalling` has the arm "a change of
+shape whose move meets the floor → not heading down". The 15 frames of gap 38 are exactly the
+cache's movement-Fh frames with `0B36` 2 at N and 0 at N+1, all command 0 at N+1
+(`shapeland.py`). Vectors: R-morph-land (item-reserve-tank 563 → 564, the morph falling at
+1.1800 onto the floor, dashing, run and right held); C-unmorph-land-run (chain-0057-9FBA 332) and
+C-morph-land-run (samus-mockball 71) now compare heading down. The bounce state's zeroing here
+is unobservable: a change of shape never holds a bounce (adversary 97's O1, below).
+
+**F6, dashing is her dash's keeping.** `0B3C` is one bit: `$90:973E` zeroes the dash outside a run
+with run held only when it is 0. The spec now says a dash she has while not dashing is the dash
+she is to lose (§1.2, `Dash`, `Jumping`, `Landing`), and a start that keeps its dash gives
+`before.dashing = true`. Adversary 96's D1 prototype's vector lines are taken, 25 vectors: the
+recorded R99, R100, R101, R102, R125, R137, SH3 and R8J, and the constructed C-limit,
+C-walljump-hijump, C-step-far, C-step-left, C-span-step, C-morph-no-ball-air, C-shrink-floor,
+C-near-wall-item, C-slope-roll-carry, C-slope-roll-carry-next, C-booster-walljump,
+C-booster-space-jump, C-spring-hop, C-booster-hop, C-spring-land-held, C-booster-spring-land and
+C-booster-bounce. `flagcheck.py` gives every recorded vector's start from `0B3C` at N (lead-ins
+included): three more had the flag set and now say so, R97 (r03:215), R132 (r07:73) and J1
+(r03:470), none comparing a field the flag changes; all 165 recorded starts then agree.
+C-dash-lost-not-dashing and C-dash-kept-dashing tell the two apart.
+
+**F8, her vertical speed as her moves leave her.** §1.4 gains `vertical speed after her moves`,
+for samus-looks' `FastFall` (root decision (a)). It is `0B2E`.`0B2C` signed by `0B36` after the
+movement handler, before `$91:EB88`: the point heading down is read (`$90:8032`). `$90:90E2` adds
+the pull before the move (`$90:90F7`..`$90:9124`, then `$90:9132`..`$90:9163`), and an upward
+move's collision only sets `0DC6` (`$90:93EC` → `$90:E606`), so a rise stopped by a ceiling has
+its pulled speed there (C-ceiling: −5.0000 + 0.1C00 = −4.E400); the ceiling's zeroing is command 5
+at the pose change (`$91:EFDF`). A landing likewise keeps its pulled speed (W13: +1.DC00 +
+0.1C00), a change of shape's landing has 0 (F5), and the pose change's rises come after (J2 0,
+MB2 +0.E000). The vectors give `after.speed_y_after_moves`. samus-looks' input row for her
+downward speed still names motion's speed at the frame's end; its round 3 changes that row and
+`FastFall`'s rule to this output.
+
+**F9, two conditions that can't happen.** (a) "handed over" was worded "the pose she ends the
+frame in is the one her animation's end handed over"; it is now "her animation's end handed over
+her pose this frame", and `AnimationEnds` says the end's pose is always the one she ends in (no
+hand-over's pose is taller, above, "Handed over"). (b) `AnimationEnds` now says an end never ends
+her dashing at the pose change: the only hand-over with a dash effect is a turn's end, and a
+turn's moves end dashing first (`Dashing`).
+
+**For the harness (the integrator).**
+- Drop the gap-38 mask (`samus_motion.rs`, "spec gap 38"): the model then reports not heading
+  down on the 15 frames.
+- Compare `vertical speed after her moves` with `0B2E`.`0B2C` signed by `0B36` at N+1 on the
+  frames heading down is compared on (no command 5 at N+1, no rise the pose change starts), and
+  mask it by the same writers elsewhere.
+- samus-grapple-walljump 115 and the three wall-jump let-goes (samus-walljump-16 58,
+  samus-walljump-22 64, samus-walljump-28 70) should then match on every field; nothing new is
+  masked.
+
+**Adversary 97's fixes** (spec gate, LAUNCH AFTER FIXES).
+- **O1, question 21.** A change of shape's row runs command 7 (`$91:ECDA`); at `$91:ED11`..`$91:ED1F`,
+  with the bounce state `0B20` nonzero, it zeroes `0B20`, `0B2C`/`0B2E` and `0B36`: no vertical
+  speed, not falling, bounces 0, at the pose change. `0B20` is nonzero only in a ball pose between
+  a bounce and the landing that rests it, so the only change of shape that sees one is the
+  unmorph from a ball (or spring ball) in the air after a bounce. `ShrinkingLowersHer` gains the
+  arm, with C-unmorph-on-bounce (C-place-0 on a bounce's rise: −1.0000, bounces 1; her moves
+  leave −0.E400, the pose change 0). No record has one. So no bounce reaches a change of shape:
+  `Landing`'s change-of-shape arm drops "bounces 0" and C-unmorph-land-bounced goes (its start
+  can't be reached). The hand-over's clear (`$91:F36E`, super special command 3, which also zeroes
+  the bounce state) can't be observed in scope either: the bounce state is nonzero only in a ball
+  pose, and no in-scope ball pose's animation hands over (the hand-over instructions `$90:8370`,
+  `$90:839A`, `$90:84B6` name no ball pose but the unused 3Fh and 40h); the morph's own end hands
+  over from `Morphing`, which command 7 has already cleared.
+- **O2, a change of shape's rise into a ceiling.** `$90:A61C` ends with `STZ $0DC6` (`$90:A654`)
+  whatever its move met, so `$91:E8B6` sees no collision: no command 5, no ceiling stop. The move
+  stops flush (`$90:93EC`'s block collision) and the speed stays as `$90:90E2` left it, pulled,
+  still rising, until spent. `WallsAndCeilings` gains the arm, with C-morph-ceiling (the morph at
+  −6.0000 under a ceiling at y 64: y 0047.0000, −5.E400, rising). No cache frame has one (24
+  change-of-shape rises, all unstopped).
+- **O3.** C-takeoff-loses-dash (not dashing, dash 0.4000: dash 0, no move) and its twin
+  C-takeoff-keeps-dash (dashing: she moves 0.4000 and keeps it; jump alone held, the take-off's
+  last row, as running, then ends her dashing). `Dash`'s arm cites C-takeoff-loses-dash in place of
+  W16, whose dash is 0.
+- **O4.** C-elevator gives `after.speed_y_after_moves` (0), and C-screen-kept-speed faces the
+  screen off the elevator with a downward speed she keeps (+0.E000, as a start on the ground may
+  give): her speed after her moves is that speed, heading down.
+- **O5.** `RidingTheElevator`'s arm names the pad alone; no clip of facing the screen hands over.
+- **N1, the other places the pose's initialisation changes the pose** (`$91:F404` returns carry
+  set, so `$91:EBEE` skips the row's command). In scope: pose fit's refusal (`$91:FE85`) and the
+  crouch taken instead (`$91:FFC4`), both already "none of the chosen pose's effects"
+  (`PoseFitAfterMoves`), and the morph refused without the ball (`$91:F7EF`, `PoseFollows`).
+  Through found rows only, whose command is 0 (`$90:E6A7` clears it): the moonwalk's
+  (`$91:F8A1`/`$91:F8A9`) and the turns' (`$91:F913`..`$91:F99E`). Dead or unused: running's
+  `$91:F534`/`$91:F53C` (`0DF8` always 0), the damage boost, the unused 39h and 3Ah. Out of scope,
+  with the shinespark: the normal jump's windup (`$91:F56C`/`$91:F579`), the damage boost's let-go
+  4Fh/50h → 4Dh/4Eh, and the falling-at-0 jump's special command 4 (`$91:80F7`). So the wall
+  jump's let-go into the screw attack's or space jump's spin is the one new case.
+
+**The reference model.** `refpatch.py` applies the amendment to the landed model with adversary
+96's D1 (`DashIs` dropped) and to its vector test (the new key), in scratch, never committed:
+the wall jump in the rise's let-go; the ride's pose not chosen; the change of shape's landing in
+its moves; a change of shape's ceiling stopping the move only (O2); a change of shape from a
+bouncing ball ending its vertical motion and bounces (O1); the wall jump's last-row halt left out
+with the screw attack or space jump; the speed captured at heading down's point, a ceiling's
+pulled. **All 326 vectors and 63 pose steps pass.** Each part left out (`MUTANT=`) fails vectors:
+F3 3 (R-walljump-letgo, C-walljump-letgo-plain, C-walljump-letgo-space), F4 2 (C-elevator-jump,
+C-elevator-side), F5 3 (R-morph-land, C-unmorph-land-run, C-morph-land-run), the let-go's skip 2
+(R-walljump-letgo, C-walljump-letgo-space), F8 9, the ceiling's pull 1 (C-ceiling), O1 1
+(C-unmorph-on-bounce), O2 1 (C-morph-ceiling); adversary 97's two survivors are killed now, the
+take-off keeping a dash while not dashing (C-takeoff-loses-dash) and facing the screen reporting
+0 (C-screen-kept-speed); D1 left out (the start not dashing) fails the kept dashes, as adversary
+96 found for its 25. Over the cache, the amendment's rules give the original's value on its
+frames, where the landed model gives none: 15 of 15 change-of-shape landings not heading down, 4
+of 4 let-goes into the screw attack's spin keeping the speed and mode, 1 of 1 wall-jump rise
+ended; no frame has O1's or O2's case. **The landed model** (no D1), with the new key stripped,
+fails 12 of 326: C-dash-lost-not-dashing, C-elevator-jump, C-elevator-side, C-morph-ceiling,
+C-morph-land-run, C-takeoff-loses-dash, C-unmorph-land-run, C-unmorph-on-bounce,
+C-walljump-letgo-plain, C-walljump-letgo-space, R-morph-land and R-walljump-letgo.
+
+**Units.** `tools spec-units` with these notes: 229.0 → 235.3 (motion 92.0 → 95.0:
+`RisingAndFalling` 8.7 → 10.7 for the change of shape's landing and the vertical speed after her
+moves, the wall jump joining an existing arm; `RidingTheElevator` 1.0 → 2.0 for the pose kept on
+the ride; `Dash` unchanged, its arm now read from dashing; pose chart 60.0 → 61.0, `PadChart` 35.0
+→ 36.0 for the wall jump's let-go with the screw attack or space jump; with adversary 97's fixes,
+pose fit 17.3 → 18.3, `ShrinkingLowersHer` 2.3 → 3.3 for the change of shape from a bouncing
+ball, and collision 59.7 → 61.0, `WallsAndCeilings` 3.0 → 4.3 for a change of shape's rise into
+a ceiling and its pulled speed): 229.0 → 235.3 in all. The budget is 8,244 → 8,472: motion 3,312
+→ 3,420, pose fit 624 → 660, pose chart 2,160 → 2,196, collision 2,148 → 2,196.
+
+**The gaps file** keeps gap 36 alone; gap 38 and the unmasked wall-jump frame are answered here.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1880,7 +2045,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 37.5 × 229.0 units = 8,587 (motion 3,450, pose fit 650, pose chart 2,250, collision 2,237)
+Budget: 37.5 × 235.3 units = 8,823 (motion 3,562, pose fit 687, pose chart 2,287, collision 2,287)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

@@ -6,7 +6,7 @@
 
 use crate::rules::{Gait, Lowers};
 use clean_types::button::{self, LEFT, PAD, RIGHT};
-use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Legs, Pose, Side};
+use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Item, Legs, Pose, Side};
 
 /// `PadChart`: forward held, the side she faces (§2). Its bit is one the pad's own buttons don't
 /// use (the chart's test holds it apart from `PAD`), and only `seen` sets it.
@@ -175,8 +175,8 @@ pub enum Test {
     Doing(&'static [Doing]),
     /// Off the ground once her moves are made.
     Airborne,
-    /// With the spring ball.
-    SpringBall,
+    /// With one of these items switched on.
+    With(&'static [Item]),
     /// Her horizontal speed at the frame's start isn't 0.
     Moving,
     /// Her moves met this (`WhatHerMovesMet`).
@@ -277,6 +277,9 @@ pub enum Effect {
     /// `AnimationEnds`: the unmorph's end hands over the crouch, a pose on the ground, in the
     /// air too: she comes to the ground there, her vertical speed kept (`FollowingTheGround`).
     ComesToTheGround,
+    /// `ShrinkingLowersHer`: a change of shape started from the ball after it has bounced ends
+    /// her vertical motion and its bounces.
+    EndsTheBounce,
 }
 
 /// A change of action's own effect, whatever brought the change.
@@ -444,6 +447,9 @@ pub enum RowId {
     AnythingElseOnTheGround,
     /// A ball's "in the air, without the spring ball".
     InTheAirWithoutTheSpringBall,
+    /// Wall jumping's "anything else, or nothing held", with the screw attack or space jump: its
+    /// effect doesn't act.
+    AnythingElseWithTheSpin,
     /// A changing body's "anything, or nothing held".
     AnythingOrNothingHeld,
     /// `WhatHerMovesMet`: a wall stop, running aimed `Up`.

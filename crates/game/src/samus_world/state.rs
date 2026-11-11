@@ -3,7 +3,7 @@
 //!
 //! The engine keeps her motion as the game keeps it, so the model's Samus is rebuilt from it
 //! each frame and written back after the step. What she remembers maps to the game's own
-//! words: carrying on and skidding to the speed mode, a dash to lose to the momentum flag clear,
+//! words: carrying on and skidding to the speed mode, her dashing to the dashing flag,
 //! her signed vertical speed to a magnitude and a direction, the moonfall to no vertical
 //! direction in the air, falling at 0 on the ground to direction down at 0, a spin carried on
 //! (its frame count) to the pose history, the seat to the slope flag, jump held through to its
@@ -15,12 +15,12 @@
 //! her motion's poses").
 
 use clean_model_samus_motion::{
-    Bounces, Carry, DashIs, Dashing, FrameBefore, JumpHeld, Moment, Phase, Run, Samus as Model,
-    Seat, Spin, Vertical,
+    Bounces, Carry, Dashing, FrameBefore, JumpHeld, Moment, Phase, Run, Samus as Model, Seat, Spin,
+    Vertical,
 };
 use core::num::Wrapping;
 
-use clean_types::{Action, Buttons, Fixed, Pose, Position, Px, Side, Turn, ZERO};
+use clean_types::{Action, Buttons, Fixed, Pose, Position, Px, Set, Side, Turn, ZERO};
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 
@@ -103,9 +103,9 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
             way,
             carry,
             dash: quantity(motion.extra_run),
-            dash_is: match motion.dashing {
-                samus::Dashing::On => DashIs::Hers,
-                samus::Dashing::Off => DashIs::ToLose,
+            dashing: match motion.dashing {
+                samus::Dashing::On => Dashing::On,
+                samus::Dashing::Off => Dashing::Off,
             },
         },
         vertical: Vertical {
@@ -135,10 +135,6 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
                 samus::FrameBefore::Other => FrameBefore::Other,
             },
         },
-        dashing: match motion.dashing {
-            samus::Dashing::On => Dashing::On,
-            samus::Dashing::Off => Dashing::Off,
-        },
     })
 }
 
@@ -153,7 +149,7 @@ pub fn named(pose: Pose) -> bool {
     let still = Moment {
         pad: Buttons::default(),
         pressed: Buttons::default(),
-        spring_ball: false,
+        items: Set::default(),
         animation_ends: None,
         speed: ZERO,
         airborne: false,
@@ -170,7 +166,7 @@ pub fn write_back(model: &Model, rising: bool, samus: &mut Samus) {
     motion.position.y = exact(model.position.y);
     motion.base_speed = exact(model.run.speed);
     motion.extra_run = exact(model.run.dash);
-    motion.dashing = match model.dashing {
+    motion.dashing = match model.run.dashing {
         Dashing::On => samus::Dashing::On,
         Dashing::Off => samus::Dashing::Off,
     };
