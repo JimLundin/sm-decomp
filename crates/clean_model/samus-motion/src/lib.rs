@@ -8,9 +8,11 @@
 //! with `situation` and `rows` the pose chart; `rules` the tuning parameters and `catalogue` the
 //! spec's entries.
 //!
-//! A caller holds a `Samus`, every part of her state public, and steps her a `Frame` at a time
-//! (`Samus::step`) in a `World` under `Rules`, reading the frame's `Outcome`, or `UnknownPose`
-//! for a pose no situation names. The pose chart alone answers through `Moment::next_pose`.
+//! A caller holds a `Samus`, every part of her state public (her `Run`, `Vertical`, pose, `Spin`,
+//! `Seat`, `JumpHeld` and `Dashing`), and steps her a `Frame` at a time (`Samus::step`) in a
+//! `World` under `Rules`, reading the frame's `Outcome` (what it gives the camera and her
+//! animation, §1 and §1.4), or `UnknownPose` for a pose no situation names. The pose chart alone
+//! answers through `Moment::next_pose`.
 
 pub mod catalogue;
 mod change;
@@ -34,7 +36,7 @@ pub use jump_held::{FrameBefore, JumpHeld};
 pub use rows::Met;
 pub use rules::{Bounces, Rules, SpeedCap, WithItem};
 pub use run::{Carry, DashIs, Run};
-pub use samus::{Outcome, Samus, Seat, Spin, Sprite, StandingAnimation, WallTest};
+pub use samus::{Dashing, Outcome, Samus, Seat, Spin, Sprite, StandingAnimation, WallTest};
 pub use situation::UnknownPose;
 pub use tick::Frame;
 pub use vertical::{Phase, Vertical};

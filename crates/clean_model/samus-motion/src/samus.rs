@@ -4,7 +4,7 @@
 use crate::collide::{Bounds, Moved, Stop};
 use crate::jump_held::JumpHeld;
 use crate::run::Run;
-use crate::tick::Tick;
+use crate::tick::{Frame, Tick};
 use crate::vertical::Vertical;
 use clean_types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
 use clean_types::{Set, Touch, button::SHOOT};
@@ -41,10 +41,24 @@ impl Spin {
 /// starts.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Seat {
-    /// Not seated.
+    /// She is not on a slope.
     Unseated,
     /// Seated on a slope: her ground pull is 1 px.
     Seated,
+}
+
+/// `Dashing` (§1, §1.2): whether she is dashing.
+///
+/// She dashes from a run with run held until a halt, a turn or the pad's let-go ends it, in any
+/// pose and with any dash: crouched she goes on dashing with a dash of 0, so her dash can't tell
+/// it. State a caller gives and reads back; samus-looks reads it for her run's pace and its
+/// stages towards boosting.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Dashing {
+    /// She is not dashing.
+    Off,
+    /// She is dashing.
+    On,
 }
 
 /// `WallJump`'s output: the near-wall test's outcome this frame.
@@ -118,7 +132,15 @@ impl Sprite {
 }
 
 /// What a frame shows beyond her quantities: its outputs, for the caller to act on.
+///
+/// The camera reads `skidding`, `placed` and `rising`; samus-looks the outputs §1.4 gives for
+/// her animation, `dashing_after_moves`, `dash_began`, `dash_lost`, `handed_over` and
+/// `heading_down`, with her pose and vertical speed at the frame's end.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
+)]
 pub struct Outcome {
     /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
@@ -140,6 +162,21 @@ pub struct Outcome {
     /// §1, `RisingAndFalling`: she is rising at the frame's end: a rise in the air (a rise at 0
     /// and the frame whose pull spends it included), or an upward speed she keeps on the ground.
     pub rising: bool,
+    /// §1.4, `Dashing`: whether she is dashing as her moves leave it, before the pose change.
+    pub dashing_after_moves: Dashing,
+    /// §1.4, `Dashing`: she wasn't dashing at the frame's start, and her moves were a run with
+    /// run held, which starts it.
+    pub dash_began: bool,
+    /// §1.4, `Dashing`: she was dashing at the frame's start or from a run in her moves, and
+    /// isn't at the frame's end. A run into a wall that starts her dashing reports both.
+    pub dash_lost: bool,
+    /// §1.4, `AnimationEnds`: the pose she ends the frame in is the one her animation's end
+    /// handed over.
+    pub handed_over: bool,
+    /// §1.4, `RisingAndFalling`: she is heading down as her moves leave her, before what they
+    /// met acts and before the pose change: falling (in the air, or on the ground at 0), or
+    /// keeping a downward speed on the ground.
+    pub heading_down: bool,
 }
 
 /// Samus as the player can tell her, and what she remembers.
@@ -148,24 +185,32 @@ pub struct Outcome {
 /// `Frame::body`), and a frame's moves use the body of the pose she starts it in.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Samus {
-    /// Her body's centre.
+    /// Where she is: her body's centre.
     pub position: Position,
     /// Her horizontal motion: speed, the way it points, carrying on, her dash.
     pub run: Run,
     /// Her vertical motion: speed, its phase, the ball's bounces.
     pub vertical: Vertical,
-    /// Her pose.
+    /// What the player sees her doing (§2): body, action, facing, aim, gun and legs.
     pub pose: Pose,
-    /// How long she has been in a spin.
+    /// `WallJump`: how long she has been in a spin.
     pub spin: Spin,
-    /// `SlopesCarry`: seated on a slope.
+    /// `SlopesCarry`: whether she is seated on a slope.
     pub seat: Seat,
     /// `Jumping`: how long jump has stayed held, and whether she landed or an animation ended
     /// the frame before.
     pub jump_held: JumpHeld,
+    /// `Dashing`: on from a run with run held until a halt, a turn or the pad's let-go ends it.
+    pub dashing: Dashing,
 }
 
 impl Samus {
+    /// `RidingTheElevator`: she faces the screen on a moving elevator, which carries her down;
+    /// nothing else of hers changes that frame.
+    pub(crate) fn rides_the_elevator(&self, f: &Frame) -> bool {
+        self.pose.facing == Facing::Screen && f.elevator_moving
+    }
+
     /// `BlocksStopFlush`, §1.3 body size: her box, the one her moves and looks test: her centre,
     /// and the body of her pose (during the frame's moves, the pose she started it in; after the
     /// pose change, the one she takes).

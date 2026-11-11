@@ -407,7 +407,7 @@ pub const FIELDS: &[Field] = &[
         source::SAMUS_X_EXTRA_RUN_SPEED,
         source::SAMUS_X_EXTRA_RUN_SUBSPEED,
     ),
-    wram("samus.motion.momentum", source::SAMUS_HAS_MOMENTUM_FLAG),
+    wram("samus.motion.dashing", source::SAMUS_HAS_MOMENTUM_FLAG),
     wram("samus.motion.mode", source::SAMUS_X_ACCEL_MODE),
     wram_fixed(
         "samus.motion.vertical_speed",

@@ -73,12 +73,14 @@ dropped: they set the moonfall as a start value, and no lead-in through a turn's
 | dash | `0B42`.`0B44` | as is |
 | vertical speed | `0B2E`.`0B2C` (a magnitude), `0B36` | `0B36` = 2: + magnitude; else − magnitude (two's complement over 32 bits) |
 | bounces | `0B20` low byte | 0, 1, 2 |
+| dashing | `0B3C` | ≠ 0 (the running momentum flag: written 1 by `$90:9796`/`$90:97CC`, cleared by `$91:DE53`); written back as 1 or 0 |
 | pose | `0A1C`, `0A1E` | body and action from the movement type `0A1F` (below); facing `0A1E` low byte 4 Left, 8 Right, 0 Screen |
 
 What she remembers (spec §1.2), for the decoder and the adversary only: carrying on and skidding
 are `0B4A` (0 follows the pad, 2 carries on, 1 skids; a skid of zero is `0B4A` = 1 with `0B46` =
 0); a dash to lose is `0B3C` = 0 with `0B42` ≠ 0; the moonfall is `0B36` = 0 in the air; a spin
-carried on is `0A27` ∈ {3, 14h}. None is in the spec's State. The horizontal speed's sign is exact
+carried on is `0A27` ∈ {3, 14h}. None is in the spec's State but dashing (`0B3C`, the table above)
+and jump held through. The horizontal speed's sign is exact
 except for the skid of zero, which the spec states as a behaviour.
 
 Pose decode by movement type: 0 Upright Still (poses 00, 9B face the screen); 1 Running; 2
@@ -107,13 +109,14 @@ and `scan.sh --mirror` agrees.
 | --- | --- |
 | SpeedBuildsAndBrakes | `$90:9BD1` and its table (the speeds by situation), `$90:9A7E` (speed-up), `$90:9B1F` (braking), the standing, crouching, transition, ran-into-wall and facing-forward handlers' tail stops in `$90:A337`'s table, `$90:A521` (the ball) |
 | Dash | `$90:973E`, `$90:97D5` (the cap), `$90:9789` (the booster's cap, `$90:9F0D`), `$91:DE53` (losing it), `$90:E5CE` (the wall stop's share) |
+| Dashing | `0B3C`: set in the running handler's speed `$90:9789`..`$90:97D2` (movement type 1, run held, not submerged: `$90:976E`); cleared by `$91:DE53` from the movement handlers, before the animation (`$90:A3D0` standing, not 00h or 9Bh; `$90:A551` the ball 1Dh/41h following the pad with `0B36` = 0; `$90:A5D9` the falling ball; `$90:A685` the ground turn; `$90:A6CF`, `$90:A712` the spring ball's; `$90:A768` against the wall; `$90:A79E`, `$90:A7BB` the turns in a jump and a fall; `$90:E5E9` the wall stop), and from the pose change, after it (`$91:EC76` command 1, `$91:ECD3` command 2, `$91:EC8E` command 8 and 6 falling into it, set by `$91:8304` from `$91:8332` on a failed lookup; `$91:F66F` the spin reversed; `$91:FA45` the ball turning); `$90:A57C` (crouched: the dash 0, the flag kept); `$91:F8D3`, `$91:F952`, `$91:F98A` (a turn's start joins the dash, the flag kept); `$91:EB88` (`$91:EBC3`: a super special or special pose skips the command), `$91:E8B6` (a landing writes its own pose and command 5 over the pad's) |
 | TurningRound | `$91:F543` (turn start and spin reverse), `$90:A68F` (turning handler, its sink and its end), `$90:A67C` (the creep), `$91:81A9` with `$91:82D9`, `$91:8304` and `$91:ECD0` (letting go: the failed transition lookup's stop command clears `0B4A` after the move) |
 | AimingAndShooting | `$91:EADE` (the step: any prospective pose `0A28` of the running movement type, her own included), `$91:82E4` (the failed lookup's decelerate command keeps her pose as the prospective pose, so a running pose braking steps every frame), `$91:81E4` (a found row naming her own pose sets no prospective pose: no step), `$94:971E` (its block stop), `$90:A3AD` (the shot) |
-| RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler) |
+| RidingTheElevator* | `$90:A392`, `$90:A397` (two branches of the facing-forward handler); the body: `$90:EC22` (the radius from the frame's pose) runs under the normal state handler, not the ride's `$90:E713` that `$91:E3F6` installs |
 | Jumping | `$90:98BC` (the speed table; `$90:9919` and `$90:99A6`, the booster's share of the dash), `$91:FBBB` (take-off), `$91:F624` and `$91:F8D3` (jump starts), `$90:A488` (space jump); jump held through: the count `0AF4` (`$90:EAB3`, from `$90:EB35`'s draw once a gameplay frame: `INC` with jump held now and in `0DFE`, else `STZ`), the one-frame pose input handler `$90:E926` (count 1 to 8: jump ORed into `8F` for `$91:8000` alone, `STZ 0AF4` at `$90:E93A`), installed by `$91:F1EC` (landed, downward result grounded: `$90:E676` gives it for movement types 2, 3, 6 and 14h, and Ah and 19h out of scope) and by animation delay instruction 8 `$90:8370` (the turns, A4h-A7h and E0h-E7h, BFh-C4h; not when `0A28` is 4Bh, 4Ch, 19h or 1Ah) |
 | FollowingTheGround | `$90:923F` (the pull), `$90:E61B` (walking off); the kept speed: `$90:923F` again (the ground handlers' only vertical move reads and writes no speed), `$90:E676` (landed in a ground movement type: no change, so `$91:F010` doesn't run), `$90:A61C` with `$90:92C7` (the change of shape moves by it when `0B36` ≠ 0; `$90:A640` clears it on landing); the ball on the ground: `$90:A521` (morph ball) and `$90:A69F` (spring ball) call `$90:92B8`, the clone of `$92C7`, on both branches (`A549`/`A569`, `A6C7`/`A6E7`): with `0B36` ≠ 0 it runs `$90:90C4` and `$90:90E2` (moves by the speed, then the pull grows it) and returns carry set, which skips `$90:923F` (no ground pull) and, at rest, the halt at `A551`-`A561`; `$90:E676` gives 04 for movement types 4 and 11h, so `$91:E931` returns and the floor doesn't land it (BG1), `$91:EFEF` (walking off: speed 0, unless `0B36` = 1: `$91:EFEF` then keeps the speed and the direction, item-charge-beam 7 → 8 keeps 2.4000 up), `$90:98BC` (a jump sets it) |
 | MovesAsShePosed | `$90:A337` (the handler of the frame-start pose), `$91:EB88` (the pose taken after) |
-| RisingAndFalling | `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0); `rising` is `0B36` = 1 at the frame's end, which the ground handlers keep as they keep the speed (`$90:923F` writes neither), so a crouch the unmorph's end hands over in a rise holds it (item-charge-beam 7) |
+| RisingAndFalling | `heading down` is `0B36` = 2 as the animation reads it (`$90:8032`, the rising hold), after the movement handler and before the pose change: a ceiling's down (`$91:E8E5` → `$91:EFC4` → `$91:EFDF`), a landing's none, a walk off's down and a bounce's up come at the pose change (0 in the moonfall, `$90:913A`; a speed kept on the ground keeps its direction, `$90:923F`); `$90:90E2` and `$90:913A` (gravity), `$90:910C` (the limit), `$90:8FDC`, `$90:9046` and `$90:90C4` (the rise's end: `0B2E` read as signed, ends when negative), `$91:F22B` (bounce 2 at 0.0); `rising` is `0B36` = 1 at the frame's end, which the ground handlers keep as they keep the speed (`$90:923F` writes neither), so a crouch the unmorph's end hands over in a rise holds it (item-charge-beam 7) |
 | DriftInTheAir | `$90:900D`, `$90:9174`, `$90:91A8` (normal jump and fall), `$90:906C` and `$90:9093` (spin; its stop still calls `$90:8EA9`, which adds the extra run speed) |
 | Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0), `$90:9D35` (the wall-jump test reads no direction), `$90:99CD` (the kick sets direction up); the turn in it: `$90:A790` and `$90:A7AD` (turning in a jump, in a fall) call `$90:92B8`, which with `0B36` = 0 returns carry clear, so `$90:923F` (the ground pull) runs and `0B2C`/`0B2E` are not touched; `$90:E65A`/`$90:E676` give 04 (no change) for movement types 17h and 18h |
 | WallJump | `$90:9D35` (arming and kick test), `$90:90B3` (one distance, `$90:9E9F` = 8, for both), `$91:FA0F` (kick), `$94:967F` (the probe) |
@@ -127,7 +130,7 @@ and `scan.sh --mirror` agrees.
 | PadChart | `$91:81A9` (a row fits when its newly-pressed and held masks are all set; first fit wins; same pose: no change), `$91:81F4` (bindings to default bits), the transition table `$91:9EE2`..`$91:B00F`, `$91:F404` (crouched into standing: the bottom edge kept, y − 5; `$91:8087`'s own y − 5 is dead); the last rows: `$91:81DB` (pad 0 or no fit, unless the pose's table is empty), `$91:82D9`, `$91:8304` and `$91:8332` (the effect per movement type), the pose definitions `$91:B629` byte 2 (the pose with no buttons), `$91:EC50` (decelerate), `$91:ECD0` (stop), `$91:EC85`, `$91:EC8E`; `$91:8146` (movement type Fh: no lookup at all, the changing-body row) |
 | Aiming | the table's aim rows per pose, `$91:E9F3` (landing keeps the aim, down becomes forward), `$91:EB74` (the wall stop keeps the aim) |
 | WhatHerMovesMet | `$91:E8F2` (falling poses, `$91:E921`), `$91:E95D`..`$91:EA47` (landing poses, ball bounces), `$91:EABE` (wall-jump pose), `$91:EADE` (ran-into-wall poses, the aim step's block); walking off from the crouch: `$90:E65A` gives 00 (airborne) for movement type 5 as for 0, 1, 10h and 15h, so `$91:E921` hands over 29h/2Ah, upright falling (item-charge-beam 7 → 8: 28h → 2Ah) |
-| AnimationEnds | the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins); the unmorph's end: 3Dh/3Eh's sequences `$91:B4E6`/`$91:B4EA` end in instruction Dh (`$90:84B6`) to 27h/28h, the crouch, with no test of the air (records: boss-kraid-defeated 779-782, item-charge-beam 5-7, item-reserve-tank 1115-1116); the morph's end: instruction 9 (`$90:839A`) chooses the ground ball when the speed magnitude `0B2E`.`0B2C` is 0 and the air ball otherwise (spec question 20) |
+| AnimationEnds | the end unless a jump: instruction 8 `$90:8370` (`$90:8378`..`$90:838D`: `0A28` ∈ {4Bh, 4Ch, 19h, 1Ah} returns with no request; in the demos, `0A60` = E91Dh, it never does); `handed over` is `0A32` = 3 with `0A2C` bit 15 clear; the animation delay table `$91:B010` (its go-to-pose instructions), `$91:EB88` (the super special pose wins); the unmorph's end: 3Dh/3Eh's sequences `$91:B4E6`/`$91:B4EA` end in instruction Dh (`$90:84B6`) to 27h/28h, the crouch, with no test of the air (records: boss-kraid-defeated 779-782, item-charge-beam 5-7, item-reserve-tank 1115-1116); the morph's end: instruction 9 (`$90:839A`) chooses the ground ball when the speed magnitude `0B2E`.`0B2C` is 0 and the air ball otherwise (spec question 20) |
 
 **The pose chart (spec §7).** The pad chart is the transition table regrouped by situation, with
 facing made relative (forward, back) and aim moved into one rule, so neither the table's layout,
@@ -1640,6 +1643,172 @@ the booster's cap; Jumping 11.0 → 13.7, the booster's rise and its formula; La
 spring ball's landing with jump held, original only before). The budget is 7,704 → 7,884: motion
 2,844 → 3,024, the other areas unchanged.
 
+## Round 18's amendments (2026-11-11): what a frame reports for her animation
+
+The outputs samus-looks' second half reads (samus-looks.decode, "Requests to samus-motion"; its
+gaps 1 and 2), and the queued observer items O1, J3 (adversary 88, item 5), I3 (item 3), V4 and V5
+(adversary 84, items 9 and 10). 308 vectors (284 + 24) and 63 pose steps (59 + 4). Scratch:
+`$TEMP/collab/samus-spec-r18/` (`r18dump` over cache-v2 with `0A2E`, `0A2A`, `0B46`..`0B4A`,
+`0AF8` added to the looks dump's words; `dashref.py`, `endcheck.py`, `recann.py`, `ref18.py`).
+
+**Where the original sets each output.**
+
+- **Dashing** is the running momentum flag `0B3C` (spec `Dashing`; Sources, above). Set only in
+  the running handler's speed, before the move, so a run into a wall sets and clears it in one
+  frame (`$90:9789` then `$90:E5CE` from the move, `$90:9370`..`$90:93E3`). Cleared by
+  `$91:DE53`, which zeroes the boost too but not the dash: in the movement handlers, before the
+  animation (`$90:E73B`), and in the pose change after it. Each clearing site is a rule of the
+  spec's: the standing, ran-into-wall, turning, ball-at-rest and falling-ball handlers and the wall
+  stop are "her moves", the failed lookup's commands 1, 2, 6 and 8 are the let-go effects other
+  than `none` (`$91:8332`: spin jumping, 3, has 0), and `$91:F66F`/`$91:FA45` the spin reversed and
+  the ball turning (`$91:F624`, `$91:FA0F`: a facing changed from a spin, a wall jump or a ball).
+  The crouch's handler `$90:A573` zeroes the dash without it, so a crouch from a run keeps dashing
+  at 0 (boss-kraid-defeated 607-613, its let-go at 614 clears it); a turn's start joins the dash in
+  its initialisation (`$91:F931`, `$91:F969`, `$91:F9A1`) and its handler clears the flag the next
+  frame. `$91:EB88` runs the prospective command only when neither a super special nor a special
+  pose wins (`$91:EBC3`, `BRA` past `$91:EBF5`), and a landing's vertical collision result
+  writes its pose and command 5 over the pad's (`$91:E8B6`), so a landing or an animation's end
+  replaces the let-go's clearing. Out of scope: lava (`$90:81CE`), the suits' pick-up (`$91:D4FE`,
+  `$91:D5D6`), the grapple (`$91:EFA5`), the pause screen's equipment change (`$91:E655`), the
+  quicksand's reaction to her inside it (`$84:B408`, the one writer of `0B3C` outside banks `$90`
+  and `$91`), and water, lava or acid without the gravity suit, where no dash begins (`$90:975D`,
+  `$90:976E`). The elevator's start (`$91:E3F6`) zeroes the
+  dash (`$91:E475`) but not the flag: facing the screen on the ride she stays dashing.
+- **Dash began, dash lost**: `0B3C` 0 at N and set in the moves; set at N or in the moves and 0 at
+  N+1. A dash begun and lost in one frame shows in no record (both inside frame N).
+- **Dashing after her moves**: `0B3C` as the animation reads it (`$90:84EF`, `$90:857D`), after
+  the movement handler and before `$91:EB88`. No record cuts there.
+- **Heading down**: `0B36` = 2 as the rising hold reads it (`$90:8032`), inside the animation,
+  after the movement handler: what her moves met writes the direction only at the pose change
+  (`$91:E8B6`'s command 5: a ceiling down at `$91:EFDF`, a landing none at `$91:F010`, a walk off
+  down at `$91:EFEF`, a bounce up), and so do the pose change's rises. So a rise into a ceiling is
+  not heading down on its frame: on a straight jump's rising step with 1 frame left the game holds
+  the picture 3 frames more (adversary 94, F1; chain-0059-A293 200 is such a ceiling, off the
+  hold). The records show `0B36` at N+1, which is her moves' value on every frame without
+  command 5 and without a rise the pose change starts. On the ground the kept speed keeps its
+  direction (`$90:923F` writes none: 996 running frames with a speed, all 2), falling at 0 is 2
+  (samus-bomb-jump-vertical 1035), the moonfall is 0 (`$90:913A`: the 102 spinning, 194 jumping
+  and 30 jump-turn frames with a speed and direction 0 are chain-0014-96BA's and
+  chain-0232-D5A7's moonfalls), a rise is 1.
+- **Handed over**: `0A32` = 3 with `0A2C` bit 15 clear at N+1 (the super special command
+  "transition animation finished", `$91:F36E`). No hand-over's pose is taller than the pose it
+  ends (the 78 ending poses' radii against their operands' in `$91:B629`), so pose fit never
+  refuses one, and the pose she ends the frame in is the table's.
+- **The end's kind** is an input: samus-looks' end from the frame's start (its harness's
+  `Playhead::end_ahead` over the importer's clips). F8h is the end unless a jump; F9h, FAh, FCh and
+  FDh the plain end. F8h ends every turn (25h, 26h, 2Fh, 30h, 43h, 44h, 87h, 88h, 8Bh-A3h,
+  BFh-C4h) and every landing (A4h-A7h, E0h-E7h).
+- **The end gives way**: `$90:8370` returns with no request when the pad's prospective pose
+  `0A28` (written by `$91:81EC` before the movement, with `$90:E926`'s jump held through ORed in)
+  is 4Bh, 4Ch (the take-off aimed forward) or 19h, 1Ah (the spin), outside the demos. The landings'
+  transition rows (`$91:A0EC` and its left twin) take off aimed (55h, 57h, 59h) with up or an aim
+  button, which don't give way; the ground turns' rows (25h/26h, 8Bh-8Eh, BFh-C4h) name only
+  4Bh/4Ch and 19h/1Ah; the turns in a jump, a fall, the crouched turns and 9Ch/9Dh have empty
+  tables. Over the cache (`endcheck.py`): 8 ends gave way, all ground turns to the pad's take-off
+  or spin (samus-screw-attack 243, 315, 387, 495, 531, 675 and two more), and 165 ends unless a
+  jump handed over (17 landings from a jump, 9 from a spin, 91 ground turns, 32 jump turns, 14 fall
+  turns, 2 moonwalk turns), with none in a demo; the two other gave-way frames (area-maridia 427,
+  chain-0106-AD5E 726) are the x-ray's, outside the domain.
+
+**AnimationEnds' table against the original.** `handover.py` reads each of the 78 ending poses'
+go-to-pose operands from `$91:B010` and compares them, through the pose map, with the table's
+rows: all agree but the aimed `Crouching` (F1h-F6h → 85h, 86h, 71h-74h) and the aimed
+`StandingUp` (F7h-FCh → 03h-08h), which keep their aim. The table now says "aim kept" there; the
+round-17 model's rows end them unaimed, and P-crouch-end-aimed and P-stand-end-aimed fail it. On
+record only terrain-quicksand 391 (F3h → 71h), a push's row.
+
+**The reference model.** `dashref.py`, the spec's `Dashing` rules over the cache's frames of play
+in the domain (samus-looks' frame set: game state 8, the frame count running, both poses in the
+pose map), taking the let-go from the original's command `0A2E` at N+1 and the wall stop from a
+running pose taking `AgainstWall` with the dash 0 or, in the air, the base speed and dash 0 with x
+flush: **16,210 of 16,210** frames' `0B3C` at N+1; the null model (it stays as it was) 16,021. By
+rule: 90 dashes begun (79 running on, 10 into a spin, 1 into a turn), 50 ended in her moves (14
+landings from a jump and 1 from a spin, 7 standing, 1 against the wall, 13 turns, 14 wall stops: 9
+running, 2 jumping, 3 spinning), 50 at the pose change (14 running's "as running", 3 jumping's, 3
+falls' "dash 0", 3 balls' let-go, 9 crouched let-goes, 15 spins reversed, 3 balls turning). `ref18.py` over
+the vectors: the 24 constructed or given-way vectors and the 5 constructed `heading_down` ones agree
+with their hand-worked facts (which row a frame takes, a wall stop, the phase at the end), the pose
+steps' ends unless a jump take off where the rule says, and the 95 recorded vectors' `dashing`,
+`heading_down` and starts are their records' (`recann.py`), 0 disagreeing.
+
+**For the harness (the integrator).** The State gains dashing, decoded from record N as `0B3C`
+≠ 0 and written back as 1 or 0 (the boost `0B3E` stays samus-looks'). Compared at N+1: dashing,
+`0B3C` ≠ 0; dash began and dash lost, from N to N+1 (a dash begun and lost inside one frame, a run
+into a wall, is a vector's only: C-dash-begins-wall); heading down, `0B36` = 2 at N+1 where
+`0A2E` at N+1 isn't 5 and the pose change starts no rise (elsewhere it is unverified: a landing's
+frame heads down, a ceiling's doesn't, a walk off's doesn't, and the pose change's rises keep the
+moves' value; the cache has no ceiling on the rising hold's frame); handed over, `0A32`
+= 3 with `0A2C` bit 15 clear. The input "her animation's end" is samus-looks' end from record N
+(its harness's `Playhead::end_ahead` over the importer's clips, the step at `0A96` and the time
+left `0A94`), in place of today's `animation_ends`. `dashing after her moves` has no record cut:
+samus-looks' harness checks it through her run's pace and the boost. Nothing new is masked; the
+x-ray's two gave-way frames above are outside the domain.
+
+**The current model against the amended vectors.** With the landed vector test, the new keys
+stripped, the ends read as `true` and `Dashing` dropped from the entries (`strip.py`, not
+committed): every vector and pose step passes but R-turn-gives-way, C-landing-gives-way,
+P-turn-gives-way and P-landing-gives-way (the model hands the end over: standing, rising 0) and
+P-crouch-end-aimed and P-stand-end-aimed (unaimed). The 20 dashing vectors' motion and poses pass
+as they stand. The catalogue test refuses `Dashing` until the round adds it.
+
+**O1, gap 37.** `$90:EC22` sets `0B00` from the frame's pose as each frame starts, under the
+normal state handler (`$90:E6B0`); the ride's handler `$90:E713` (from `$91:E44D`, in `$91:E3F6`,
+which turns her to the screen as the elevator starts) doesn't call it, so the ride's frames use the
+radius word the pose before set: the standing pose's 21 px when she steps on standing, on the 906
+cache frames of pose 00h on a ride. §1.3 and `RidingTheElevator` say so. No vector: her y on the
+ride is the elevator's, and the body is the caller's input, which the bridge gives as gap 37 says.
+
+**J3.** The take-off's own body is 19 px (4Bh's radius), as the jump's. Record r04 474 shows 21 px
+at the take-off's start because `0B00` holds the standing pose's until the frame sets the
+take-off's, so J3's start pose now gives 19 px, the body the frame's moves use, and its next_pose's
+19 px is that same body: no shrink.
+
+**I3.** A local reading of the landed test that logs each pose whose body falls back found 14
+constructed vectors, not 12: C-wall, C-enemy-ahead, C-touch-wall, C-kind-spikes,
+C-kind-reacting-solid and C-kind-stand-in (`AgainstWall`) and C-slope-land, C-enemy-down,
+C-enemy-overlap, C-step-down, C-down-even, C-down-odd, C-slope-edge and C-slope-floor-empty
+(`Landing` from `Jump`). Each now gives its chosen pose as next_pose with its body, the starting
+body's 21 px (their invented bodies are equal, so nothing in them changes), and the format says a
+vector gives every body its frames read. With the test refusing a missing body (a local patch), every
+vector passes; the refusal itself is the implementer's.
+
+**V4 and V5** were answered in round 17 (above, "V4, a change of shape landing with a run", "V5,
+the implementer's two refusals"): C-unmorph-land-run and C-morph-land-run tell `Settle` from
+`Land`; a crouched turn is always `Ground` (§2) and the spring ball's hop is in the air from its
+start (§1.2), so neither of V5's cases arises.
+
+**The gaps file** keeps gap 36 alone; the answered gaps (1-35, 37) are in git history at
+`858925a3e`.
+
+**Vector format** (for the round's brief): `animation_ends` takes the end's kind, `"End"` or
+`"EndUnlessJump"` (the 15 old `true`s by their pose, the game's kinds); a pose step's `met` gains
+`"animation_end_unless_jump"` (P11 and P19 take it); `before.dashing`; `after.dashing`,
+`after.dashing_after_moves`, `after.dash_began`, `after.dash_lost`, `after.handed_over` and
+`after.heading_down`, each compared only where given; and the test refuses a vector whose frame
+reads a body it doesn't give.
+
+**Adversary 94's fixes** (spec gate, LAUNCH AFTER FIXES). F1: `heading down` is reported as her
+moves leave her (above), with an arm for the ceiling's frame (C-ceiling, now false), W13 (a
+landing) and MB2 (a spin started over a kept downward speed) worked from her moves, WK1's dropped,
+and C-dash-landing and C-slope-run-off comparing it; samus-looks' input row names the point. F2:
+C-dash-landing-letgo (a fall's let-go replaced by the landing) and C-dash-takeoff-end (a take-off's
+let-go replaced by its end, handed over), both dashing. F3: the ride's body is the caller's input
+(§1.3), and `RidingTheElevator`'s line a note. F4: "either ball" in `Dashing`, and
+C-dash-spring-rest (`$90:A6CF`). F5: C-landing-gives-way-held, a give-way through jump held
+through. F6: the out-of-scope list above. F7: `Dashing`'s `checked:` gives the frames each rule
+alone decides (adversary 94's table) and names what is constructed only. F8: samus-looks §8 q2
+is decided (a), for its engine-wiring round. F10: the format note says a recorded vector's end
+kind is its pose's in the game's clips. 312 vectors and 63 pose steps. `ref18.py` agrees with all
+34 constructed and given-way vectors and the 95 recorded ones; its mutants "only `Ball` clears",
+"a landing takes the let-go", "an animation's end takes the let-go" and "heading down at the
+frame's end" each fail a vector (C-dash-spring-rest; C-dash-landing-letgo; C-dash-takeoff-end;
+C-ceiling and C-slope-run-off). The ceiling's arm adds 1 unit.
+
+**Units.** `tools spec-units` with these notes: 219.0 → 229.0 (motion 84.0 → 92.0: `Dashing` 5.0,
+`RisingAndFalling` 5.7 → 8.7 for `heading down` and the ceiling's frame, `RidingTheElevator`
+unchanged; pose chart 58.0 → 60.0, `AnimationEnds` 2.7 → 4.7 for the end that gives way and
+`handed over`). The budget is 7,884 → 8,244: motion 3,024 → 3,312, pose chart 2,088 → 2,160.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -1700,7 +1869,7 @@ that area replaces, counted the same way at `c7f927ab6`) is for reference and do
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; over an area's old code is a failure.
 
-- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, TurningRound, AimingAndShooting,
+- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
   DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
 - Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
@@ -1709,7 +1878,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 219.0 units = 7,884 (motion 3,024, pose fit 624, pose chart 2,088, collision 2,148)
+Budget: 36 × 229.0 units = 8,244 (motion 3,312, pose fit 624, pose chart 2,160, collision 2,148)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

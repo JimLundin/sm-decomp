@@ -9,7 +9,7 @@
 //! fault that can't happen, rather than invent a motion for it.
 
 use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, WallTest};
-use clean_types::{Action, Parts, Pose, Radius};
+use clean_types::{Action, ClipEnd, Parts, Pose, Radius};
 
 use super::frame::{FrameSource, body};
 use super::state::{clean_of, pose_id, write_back};
@@ -40,8 +40,6 @@ pub struct Reads<'a> {
     pub ride: ElevatorRide,
     /// The requested-NMI count, whose parity orders the vertical scans.
     pub completed: u16,
-    /// The pad's pose request, which the auto-jump hack reads.
-    pub requests: PoseRequests,
     /// The content.
     pub content: &'a Content,
 }
@@ -49,7 +47,7 @@ pub struct Reads<'a> {
 /// What the Tick's frame reads besides Samus.
 #[derive(Clone, Copy, Debug)]
 pub struct Inputs<'a> {
-    /// The pad, the elevator, the frame count, the pose request and the content.
+    /// The pad, the elevator, the frame count and the content.
     pub reads: Reads<'a>,
     /// Where her moves happen.
     pub surroundings: Surroundings<'a>,
@@ -72,8 +70,8 @@ pub struct Ran {
     pub body_before: Radius,
     /// The pose table's body for the pose she ends the frame in.
     pub body_after: Radius,
-    /// `AnimationEnds`: her animation ended this frame.
-    pub animation_ends: bool,
+    /// `AnimationEnds`: the end her animation reached this frame, if any.
+    pub animation_ends: Option<ClipEnd>,
     /// `RidingTheElevator`: the elevator moved.
     pub elevator_moving: bool,
 }
@@ -100,7 +98,6 @@ pub fn run(
         controller: reads.controller,
         ride: reads.ride,
         completed: reads.completed,
-        requests: reads.requests,
         content: reads.content,
     }
     .frame(&sized);

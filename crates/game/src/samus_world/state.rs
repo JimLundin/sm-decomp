@@ -15,8 +15,8 @@
 //! her motion's poses").
 
 use clean_model_samus_motion::{
-    Bounces, Carry, DashIs, FrameBefore, JumpHeld, Moment, Phase, Run, Samus as Model, Seat, Spin,
-    Vertical,
+    Bounces, Carry, DashIs, Dashing, FrameBefore, JumpHeld, Moment, Phase, Run, Samus as Model,
+    Seat, Spin, Vertical,
 };
 use core::num::Wrapping;
 
@@ -52,9 +52,9 @@ const fn in_the_air(pose: Pose) -> bool {
     )
 }
 
-/// Whether `pose` turns her in a jump or a fall: in the air while she falls, but with no
-/// vertical direction the turn's handler pulls her as the ground's does (chain-0232-D5A7
-/// 38 -> 44, a turn in a moonfall), so it is no moonfall.
+/// Whether `pose` turns her in a jump or a fall: in the air while she falls. With no vertical
+/// direction and a speed she kept, it is a turn in the moonfall (chain-0232-D5A7 38 -> 44),
+/// whose handler pulls her as the ground's does.
 const fn turning_in_the_air(pose: Pose) -> bool {
     matches!(pose.action, Action::Turning(Turn::Jump | Turn::Fall))
 }
@@ -74,7 +74,11 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
     // at 0 is falling at 0, as a bomb jump's or a knockback's end leaves her (BG2).
     let magnitude = quantity(motion.vertical_speed);
     let (phase, speed) = match motion.vertical {
-        VerticalMotion::None if in_the_air(pose) => (Phase::Moonfall, -magnitude),
+        VerticalMotion::None
+            if in_the_air(pose) || turning_in_the_air(pose) && magnitude != ZERO =>
+        {
+            (Phase::Moonfall, -magnitude)
+        }
         VerticalMotion::None => (Phase::Ground, -magnitude),
         VerticalMotion::Up => (Phase::Rising, -magnitude),
         VerticalMotion::Down if in_the_air(pose) || turning_in_the_air(pose) => {
@@ -99,10 +103,9 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
             way,
             carry,
             dash: quantity(motion.extra_run),
-            dash_is: if motion.momentum {
-                DashIs::Hers
-            } else {
-                DashIs::ToLose
+            dash_is: match motion.dashing {
+                samus::Dashing::On => DashIs::Hers,
+                samus::Dashing::Off => DashIs::ToLose,
             },
         },
         vertical: Vertical {
@@ -132,6 +135,10 @@ pub fn clean_of(samus: &Samus) -> Option<Model> {
                 samus::FrameBefore::Other => FrameBefore::Other,
             },
         },
+        dashing: match motion.dashing {
+            samus::Dashing::On => Dashing::On,
+            samus::Dashing::Off => Dashing::Off,
+        },
     })
 }
 
@@ -147,7 +154,7 @@ pub fn named(pose: Pose) -> bool {
         pad: Buttons::default(),
         pressed: Buttons::default(),
         spring_ball: false,
-        animation_ends: false,
+        animation_ends: None,
         speed: ZERO,
         airborne: false,
         met: None,
@@ -163,10 +170,10 @@ pub fn write_back(model: &Model, rising: bool, samus: &mut Samus) {
     motion.position.y = exact(model.position.y);
     motion.base_speed = exact(model.run.speed);
     motion.extra_run = exact(model.run.dash);
-    // The game's momentum flag holds while she has a dash: set as the dash grows, kept through
-    // a landing that leaves the dash to lose, cleared when the dash is gone.
-    motion.momentum =
-        model.run.dash != ZERO && (motion.momentum || model.run.dash_is == DashIs::Hers);
+    motion.dashing = match model.dashing {
+        Dashing::On => samus::Dashing::On,
+        Dashing::Off => samus::Dashing::Off,
+    };
     motion.mode = if model.run.carry == Carry::FollowsPad {
         SpeedMode::Accelerating
     } else if model.run.way == Side::of(model.pose.facing) {

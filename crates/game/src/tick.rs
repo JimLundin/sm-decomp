@@ -497,7 +497,6 @@ fn gameplay_phase(
                     controller: &state.controller,
                     ride: state.elevator,
                     completed,
-                    requests: pass.requests,
                     content,
                 },
                 surroundings,

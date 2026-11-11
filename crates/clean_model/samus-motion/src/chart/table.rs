@@ -149,7 +149,8 @@ pub const STEP_BLOCKED: Next = Next {
 
 /// `AnimationEnds`: the pose an ending animation hands over, whatever the pad.
 ///
-/// The first row that fits. A turn already faces its new way.
+/// The first row that fits. A turn already faces its new way. An end unless a jump gives way
+/// before any row is read (`chart`'s `gives_way`).
 pub const ANIMATION_ENDS: &[Row] = &[
     Row {
         id: RowId::TakingOffEnds,
@@ -229,6 +230,7 @@ pub const ANIMATION_ENDS: &[Row] = &[
         needs: &[Test::Action(&[Action::Crouching])],
         next: Next {
             body: Some(Body::Crouched),
+            aim: &[],
             ..TO_STILL
         },
         ..NO_CHANGE
@@ -236,7 +238,10 @@ pub const ANIMATION_ENDS: &[Row] = &[
     Row {
         id: RowId::StandingUpEnds,
         needs: &[Test::Action(&[Action::StandingUp])],
-        next: TO_STILL,
+        next: Next {
+            aim: &[],
+            ..TO_STILL
+        },
         ..NO_CHANGE
     },
     Row {

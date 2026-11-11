@@ -4,7 +4,7 @@ use data::assets::samus::import::map;
 use data::pose::Poses;
 
 use super::{FrameSource, body};
-use crate::pose::{Content, PoseRequests};
+use crate::pose::Content;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::{Item, PoseId, Samus};
 use crate::state::slots::FlagSet;
@@ -38,7 +38,6 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
             ..ElevatorRide::default()
         },
         completed: 7,
-        requests: PoseRequests::default(),
         content: &content,
     };
     let sized = |pose| body(&content, &samus, pose);
@@ -57,7 +56,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     // A pose the empty pose table doesn't hold has no half-height.
     let standing = map::key_of(PoseId(0x01)).map(frame.body);
     assert!(standing.is_some_and(|radius| (radius.x.0, radius.y.0) == (5, 0)));
-    assert!(!frame.animation_ends);
+    assert_eq!(frame.animation_ends, None);
 
     let still = FrameSource {
         completed: 8,

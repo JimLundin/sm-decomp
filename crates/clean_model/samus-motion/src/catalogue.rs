@@ -2,66 +2,68 @@
 
 use clean_types::{Checked, Kind, Switch};
 
-/// A spec entry's id.
+/// A spec entry's id, one per entry, named as the spec names it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BehaviourId {
-    /// §2.
+    /// What her sprite shows beyond her pose (§2).
     HowSheIsDrawn,
-    /// §3.
+    /// How her horizontal speed builds, brakes and halts (§3).
     SpeedBuildsAndBrakes,
-    /// §3.
+    /// The extra speed she builds running with run held (§3).
     Dash,
-    /// §3.
+    /// Whether she is dashing, from a run with run held until something ends it (§3).
+    Dashing,
+    /// How turning round or reversing a spin makes her skid (§3).
     TurningRound,
-    /// §3.
+    /// The 1 px step forward into another running pose (§3).
     AimingAndShooting,
-    /// §3.
+    /// Her descent facing the screen on a moving elevator (§3).
     RidingTheElevator,
-    /// §4.
+    /// How she takes off, spins, hops and jumps again (§4).
     Jumping,
-    /// §4.
+    /// The pull that holds her on the floor after each horizontal move (§4).
     FollowingTheGround,
-    /// §4.
+    /// A frame's moves follow the pose she started it in (§4).
     MovesAsShePosed,
-    /// §4.
+    /// How a taller new pose is fitted between what is above and below her (§4).
     PoseFitAfterMoves,
-    /// §4.
+    /// How starting to crouch or morph lowers her (§4).
     ShrinkingLowersHer,
-    /// §5.
+    /// Gravity, the fall's limit, and when a rise ends (§5).
     RisingAndFalling,
-    /// §5.
+    /// How she steers, keeps or loses her drift in the air (§5).
     DriftInTheAir,
-    /// §5.
+    /// A spin entered as a turn ends, which falls without the limit (§5).
     Moonfall,
-    /// §6.
+    /// How a spin near a wall readies, then kicks off it (§6).
     WallJump,
-    /// §6.
+    /// What touching down does to her speeds, and the ball's bounces (§6).
     Landing,
-    /// §7.
+    /// What decides her next pose, and when the change acts (§7).
     PoseFollows,
-    /// §7.
+    /// The pad's rows, and how a row is chosen (§7).
     PadChart,
-    /// §7.
+    /// The aim a next pose takes from the held buttons (§7).
     Aiming,
-    /// §7.
+    /// The poses that what her moves met chooses over the pad (§7).
     WhatHerMovesMet,
-    /// §7.
+    /// The poses that last as long as their animation, and what their end hands over (§7).
     AnimationEnds,
-    /// §8.
+    /// How a move into a solid block stops her flush against its face (§8).
     BlocksStopFlush,
-    /// §8.
+    /// How a wall halts her and a ceiling ends her rise (§8).
     WallsAndCeilings,
-    /// §8.
+    /// How solid enemies stop her, by the gap between the boxes (§8).
     SolidEnemies,
-    /// §8.
+    /// How sloped floors and ceilings seat, lift, push and stop her (§8).
     SlopesCarry,
-    /// §8.
+    /// How a sloped floor shortens the move she makes along it (§8).
     SlopesSlowTheWalk,
-    /// §8.
+    /// Which cells her moves and looks reach, and which she is inside (§8).
     TouchedCells,
-    /// §8.
+    /// How the remaining kinds of cell meet her motion (§8).
     OtherBlockKinds,
-    /// §9.
+    /// How the top speed is tested part by part (§9).
     WordwiseTopSpeed,
 }
 
@@ -82,7 +84,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 29] = [
+pub const CATALOGUE: [Behaviour; 30] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -102,6 +104,13 @@ pub const CATALOGUE: [Behaviour; 29] = [
         summary: "the extra speed she builds running with run held, and its cap, higher with the speed booster.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::Dashing,
+        summary: "she dashes from a run with run held until a halt, a turn or the pad's let-go ends it; her dash's size doesn't say whether she does.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {

@@ -11,9 +11,9 @@ use crate::tick::Tick;
 use crate::vertical::Contact;
 use Carry::{CarriesOn, FollowsPad};
 use DashIs::{Hers, ToLose};
-use Stride::{Both, Dash, DashThenHalt, Nothing};
+use Stride::{DashAlone, DashThenHalt, Nothing, SpeedAndDash};
 use clean_types::button::{RUN, SIDES};
-use clean_types::{Facing, Fixed, Parts, Side, ZERO, part_below};
+use clean_types::{Buttons, Facing, Fixed, Parts, Side, ZERO, part_below};
 
 /// §1.2 carrying on: how her horizontal motion goes.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -25,10 +25,10 @@ pub enum Carry {
     CarriesOn,
 }
 
-/// §1.2 her dash.
+/// §1.2 her dash: whether the dash on her stays hers.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DashIs {
-    /// Hers to keep.
+    /// The dash is hers to keep.
     Hers,
     /// Left on her by a landing: gone the next frame she moves.
     ToLose,
@@ -37,14 +37,19 @@ pub enum DashIs {
 /// `SpeedBuildsAndBrakes`: what a frame's horizontal move is made of.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Stride {
-    /// No move.
+    /// She makes no horizontal move.
     Nothing,
-    /// Her dash alone.
-    Dash,
-    /// Her dash alone, then a halt.
+    /// She moves by her dash alone.
+    DashAlone,
+    /// She moves by her dash alone, then halts.
     DashThenHalt,
-    /// Her speed and her dash.
-    Both,
+    /// She moves by her speed and her dash together.
+    SpeedAndDash,
+}
+
+/// `Dash`, `Dashing`: running with run held: she gains dash, and she dashes.
+pub fn running_with_run_held(gait: Gait, pad: Buttons) -> bool {
+    gait == Gait::Running && pad.any(RUN)
 }
 
 /// Her horizontal motion: her speed's size and the way it points, whether it carries on, and
@@ -53,13 +58,13 @@ pub enum Stride {
 pub struct Run {
     /// Her horizontal speed's size.
     pub speed: Fixed,
-    /// The side it points to.
+    /// The side her horizontal speed points to.
     pub way: Side,
-    /// §1.2 carrying on.
+    /// §1.2 carrying on: whether her motion follows the pad or carries on by itself.
     pub carry: Carry,
-    /// Her dash.
+    /// `Dash`: the extra speed from holding run, added the way she moves.
     pub dash: Fixed,
-    /// §1.2 her dash.
+    /// §1.2 her dash: whether the dash stays hers or is lost the next frame she moves.
     pub dash_is: DashIs,
 }
 
@@ -159,16 +164,16 @@ impl Run {
             Moves::Build(gait, drift) => self.drift(gait, drift, facing, t),
             Moves::Rest if self.carry == CarriesOn => {
                 self.brake(t.rules);
-                Both
+                SpeedAndDash
             }
-            Moves::Rest if falls => Dash,
-            Moves::Rest | Moves::DashThenHalt => DashThenHalt,
+            Moves::Rest if falls => DashAlone,
+            Moves::Rest | Moves::HaltsAfterDash => DashThenHalt,
             Moves::TakeOff => {
                 self.lose_dash();
                 self.carry = FollowsPad;
-                Dash
+                DashAlone
             }
-            Moves::Dash => Dash,
+            Moves::DashKeepingSpeeds => DashAlone,
         }
     }
 
@@ -183,7 +188,7 @@ impl Run {
     /// spin drifting, and a wall jump always, carry on along her facing.
     fn drift(&mut self, gait: Gait, drift: Drift, facing: Facing, t: &Tick) -> Stride {
         let (r, pad) = (t.rules, t.frame.pad);
-        if gait == Gait::Running && pad.any(RUN) {
+        if running_with_run_held(gait, pad) {
             self.grow_dash(r.dash_cap.of(&t.frame.items), r);
         } else {
             self.lose_dash();
@@ -191,7 +196,7 @@ impl Run {
         let (ahead, carries) = (Side::of(facing), self.carry == CarriesOn);
         if carries && (drift == Ground || self.way != ahead && drift != WallJump) {
             self.brake(r);
-            return Both;
+            return SpeedAndDash;
         }
         let let_go = !carries && !pad.any(SIDES);
         if let_go && drift == Air {
@@ -204,12 +209,12 @@ impl Run {
         let topped = self.build(r.limits(gait), ahead, r);
         if drift == Spin && !topped && !seen(pad, facing).any(FORWARD) {
             self.stop();
-            return Dash;
+            return DashAlone;
         }
         if matches!(drift, Spin | WallJump) {
             self.carry = CarriesOn;
         }
-        Both
+        SpeedAndDash
     }
 
     /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her

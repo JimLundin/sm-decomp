@@ -234,16 +234,17 @@ and `branch` in the 253 lists lands on a delay byte (checked in
 
 ## Requests to samus-motion
 
-The spec reads these from samus-motion; its model reports `StandingAnimation::Restarts`,
-`WallTest::Readied`, its pose and its vertical speed already. The end needs nothing from it: it
-is known at the frame's start (spec §6), and samus-motion's step takes it as its
-`animation_ends` input, now the end's kind. Its `AnimationEnds` then gives way on an end unless
-a jump when its own pad chart asks for a take-off or a spin from the ground (outside the demos).
-Not yet reported, for the second half of this domain's frame:
-1. `dashing` as of the animation's turn, `dash began` and `dash lost` (`0B3C`'s writers above).
-2. `handed over`: whether it took the pose the clip's end handed over (its `AnimationEnds`),
-   which is where the pad's jump ask now goes.
-3. `heading down`: `0B36` = 2 after its moves (its `RisingAndFalling` knows it).
+Answered in samus-motion's spec (§1.4 there, its round 18; its decode notes, "Round 18's
+amendments", give the sources). Its step reports `dashing after her moves`, `dash began`, `dash
+lost`, `handed over` and `heading down`, besides `StandingAnimation::Restarts`, `WallTest::Readied`,
+its pose and its vertical speed, and its `AnimationEnds` takes the end's kind as its input and
+gives way on an end unless a jump when its pad chart's pose is a take-off aimed forward (4Bh,
+4Ch) or a spin (19h, 1Ah). The harness's decodes above agree with those outputs on every frame
+these rules read: samus-motion's `dashing after her moves` differs from "`0B3C` at N, or a dash
+began" only where her moves end the dash, and while running at the frame's start that is a wall
+stop alone, whose frame hands her `AgainstWall`, so the clip the frame ends on starts anew
+(`StartingClip`) and the stage goes to 0 as the dash is lost either way. `heading down` is `0B36`
+= 2 at N+1, and `handed over` the decode above.
 
 ## Part 2, left for the next round
 

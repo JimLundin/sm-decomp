@@ -41,19 +41,20 @@ Every quantity here is something the player sees or can measure frame by frame.
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
-| vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround` |
+| vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround`; output (samus-looks reads its pixel part at the frame's end, §1.4) |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
 | the y a placement put her at, if any | y: `P.S`, or none | the screen scrolls after her vertical move as measured from where pose fit or a change of shape placed her this frame (`PoseFitAfterMoves`, `ShrinkingLowersHer`), a placement of 0 px included, so the scroll doesn't chase those placements; with none, it measures from where it last saw her. The camera reads only its pixel part and keeps its own subpixel; the subpixel given is hers at the frame's start (`PoseFitAfterMoves`) | output (the camera's domain reads its pixel part; each frame works it out, so it isn't State) |
 | rising | `bool`, at the frame's end | the view aims lower while she rises, so it shows more above her; her vertical speed can't tell it at a rise at 0, or on the frame whose pull spends the rise, where the speed already points down (`RisingAndFalling`) | output (the camera's domain reads it) |
 | pose | §2 | the sprite | every behaviour; output |
+| dashing | `bool`, at the frame's end | her run's pace and, with the speed booster, its stages towards boosting (samus-looks); her dash can't show it, since crouched she goes on dashing with a dash of 0 (`Dashing`) | `Dashing`; output |
 
 ### 1.2 What she remembers
 
 Some of what she does depends on what came before. These are behaviours, told by what the player
 sees; how the model keeps them is the implementer's choice. A vector shows them by its lead-in
-frames (the vectors' format), never by a value in its start, with two exceptions: falling at 0
-on the ground (below), which a start gives as `falling`, and jump held through (below), which a
-start may give.
+frames (the vectors' format), never by a value in its start, with three exceptions: falling at
+0 on the ground (below), which a start gives as `falling`, and jump held through and dashing
+(below), which a start may give.
 
 - **Carrying on.** Her horizontal motion either follows the pad (it builds while she holds a side,
   and in the air it stops when she lets go) or carries on by itself (it brakes on the ground and
@@ -86,6 +87,10 @@ start may give.
   A vector gives them as `before.jump_held` and `before.landed_or_ended`, and compares them as
   `after.jump_held` and `after.landed_or_ended` (C-held-landed).
 - **A spin carried on**, which can ready a wall jump (`WallJump`).
+- **Dashing** (`Dashing`): whether she is dashing, from a run with run held until something
+  ends it. Like jump held through it is State a caller gives and reads back, in any pose and
+  with any dash: a vector gives it as `before.dashing` (default false) and compares it as
+  `after.dashing`.
 
 A vector starts at a moment where none of this is in play: her motion follows the pad unless she
 is skidding, any dash she has is hers to keep, and a vertical speed of 0 means she stands on the ground,
@@ -117,9 +122,10 @@ or falling at 0.
 | items switched on | the `Item`s switched on: progress's own output (progress §1.1), never the ones merely hers | below |
 | world | the room's blocks and solid enemies, answered as §8 says | §8 |
 | spin turned far | `bool`: the spin's sprite has turned far enough to kick off a wall | `WallJump` |
+| her animation's end | none, an end, or an end unless a jump: the end her animation reaches this frame, known from the frame's start (samus-looks' `ClipEnds`) | `PoseFollows`, `AnimationEnds` |
 | elevator moving | `bool` | `RidingTheElevator` |
 | frame parity | `Even` or `Odd`: the game's frame count, alternating every frame | `BlocksStopFlush` |
-| body size | each pose's half-width and half-height in px (`radius`): the game's data, for any pose, the one the step chooses included. A frame's moves use the body of the pose she starts it in; the chosen pose's body is read within the frame only where it grows (`PoseFitAfterMoves`) or a change of shape lowers her (`ShrinkingLowersHer`), and otherwise first holds on the next frame, so a record's body at a frame's end can still be the body she started it in (J1's spin start shows 21 px) | §8, `PoseFitAfterMoves` |
+| body size | each pose's half-width and half-height in px (`radius`): the game's data, for any pose, the one the step chooses included. A frame's moves use the body of the pose she starts it in; the chosen pose's body is read within the frame only where it grows (`PoseFitAfterMoves`) or a change of shape lowers her (`ShrinkingLowersHer`), and otherwise first holds on the next frame, so a record's body at a frame's end can still be the body she started it in (J1's spin start shows 21 px). While a moving elevator carries her facing the screen (`RidingTheElevator`), the caller gives, as the body of the pose she starts the frame in, the body she had as the ride began, which the ride keeps, not the body of facing the screen (her y there is the elevator's) | §8, `PoseFitAfterMoves` |
 
 **The items she reads**, of progress's `Item`s, and what each changes. "With" an item, here and
 below, means with it switched on:
@@ -133,6 +139,24 @@ below, means with it switched on:
 | `ScrewAttack`, `VariaSuit`, `GravitySuit` | only her sprite (`HowSheIsDrawn`); `GravitySuit` also in liquids, out of scope (§10) |
 | `SpeedBooster` | her dash's cap (`Dash`) and the speed every jump and wall jump starts at (`Jumping`); what else it does starts the shinespark and is out of scope (§10) |
 | `Bombs`, `GrappleBeam`, `XRayScope` | none of her motion: what they do is other domains' (§10) |
+
+### 1.4 What a frame reports for her animation (Outputs)
+
+Samus-looks steps her animation in two halves (samus-looks §6): the end it reaches, before this
+domain's step, and the rest after it, from the step's results. These are the results it reads,
+each an output of the step; none is State.
+
+| Output | Type | Read by |
+| --- | --- | --- |
+| dashing after her moves | `bool`: `dashing` as her moves leave it, before the pose change (`Dashing`) | samus-looks (`RunPace`, `BoostStages`) |
+| dash began, dash lost | `bool` each (`Dashing`) | samus-looks (`BoostStages`) |
+| handed over | `bool`: the pose she ends the frame in is the one her animation's end handed over (`AnimationEnds`) | samus-looks (`HandOverSlowdown`) |
+| heading down | `bool`, as her moves leave it, before what they met acts and before the pose change (`RisingAndFalling`) | samus-looks (`RisingHold`) |
+
+It also reads, as they are: the pose she starts the frame in and the one she ends it in (§2; the
+one an animation's end hands over is `AnimationEnds`' choice), her vertical speed at the frame's
+end (§1), the standing animation's restart (`AimingAndShooting`) and the near-wall test's outcome
+(`WallJump`).
 
 ---
 
@@ -273,6 +297,54 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   constructed (C-dashcap-a and C-dashcap-b, the cap's part-by-part test without the booster, and
   C-booster-dash, C-booster-dashcap-a and C-booster-dashcap-b, with it).
 
+### Dashing
+- kind: mechanic and output.
+- summary: she dashes from a run with run held until a halt, a turn or the pad's let-go ends it;
+  her dash's size doesn't say whether she does.
+- params: none.
+- switch: none.
+- A frame's moves run in two parts for her dashing: her moves (`MovesAsShePosed`, the pose she
+  starts the frame in), then the pose change. `dashing after her moves` is `dashing` once the
+  first part is done.
+- Running with run held → she is dashing from her moves on [C-dash-begins, C-dash-kept-run, W20]
+- Her moves as standing still not facing the screen (a landing's too), as against the wall, as
+  any turn, or her moves halting her (a wall stop, `WallsAndCeilings`; either ball at rest on
+  the ground following the pad with no vertical motion; either ball falling, following the pad
+  with neither side held) → she stops dashing in her moves, a dash her run began that frame
+  included [C-dash-stand, C-dash-landing-moves, W17, C-dash-against-wall, C-dash-turn-moves,
+  C-dash-begins-wall, C-dash-jump-wall, C-dash-ball-rest, C-dash-spring-rest, C-dash-ball-fall]
+- The pose change taking a let-go effect of the pad chart other than `none` (she follows the pad
+  again, as running, dash 0, or horizontal speed 0, dash 0, following the pad: `PadChart`), a spin
+  reversed, or either ball turning round → she stops dashing at the pose change, after her moves
+  [AS1, MB4, C-dash-letgo-run, C-dash-letgo-crouched, C-dash-fall-letgo, C-dash-spin-reversed,
+  C-dash-ball-turn]
+- So anything else leaves her dashing as she was: crouched, where her dash is 0 (C-dash-crouched),
+  facing the screen, whose moves don't end it, and on the elevator's ride, where nothing else of
+  hers changes (C-dash-screen), a spin let go (C-dash-spin), the frame she lands, until the
+  landing's own moves (C-dash-landing), the frame a turn starts, though her dash joins her speed,
+  until the turn's own moves (C-dash-turn-start), and a let-go effect that a landing or an
+  animation's end replaces (`PoseFollows`: C-dash-landing-letgo, C-dash-takeoff-end).
+- Not dashing at the frame's start, dashing from a run in her moves → `dash began` [C-dash-begins,
+  W20, C-dash-begins-wall]
+- Dashing at the frame's start or from a run in her moves, not dashing at the frame's end →
+  `dash lost` [C-dash-stand, C-dash-letgo-run, C-dash-begins-wall, W17, AS1, MB4]
+- So a run into a wall that starts her dashing reports both: the dash began, and the wall stop
+  ended it (C-dash-begins-wall).
+- checked: oracle (the records' `dashing` on every frame of play in the domain, each rule on
+  the frames it alone decides: a run with run held starting it, 89; ended in her moves by a
+  running wall stop 9, standing 5, a landing's moves 13, a turn's moves 12, a wall stop in the
+  air 5; at the pose change by "as running" 19, "she follows the pad again" 9, the ball's halt
+  2, a fall's "dash 0" 3, a spin reversed 15, a ball turning 3; and kept crouched, against 13
+  frames a crouch ending it would miss; W20 a dash begun, W17 one ended by a landing's moves, AS1 and MB4
+  at the pose change, and the recorded vectors' `after.dashing`); constructed only (no record
+  decides them: against the wall's own moves, C-dash-against-wall; either ball at rest,
+  C-dash-ball-rest and C-dash-spring-rest; the falling ball, C-dash-ball-fall; facing the screen
+  and the elevator's ride, C-dash-screen; a let-go replaced, C-dash-landing-letgo and
+  C-dash-takeoff-end); constructed besides (C-dash-begins, C-dash-kept-run, C-dash-begins-wall,
+  C-dash-stand, C-dash-crouched, C-dash-letgo-crouched, C-dash-turn-start, C-dash-turn-moves,
+  C-dash-letgo-run, C-dash-spin, C-dash-spin-reversed, C-dash-landing, C-dash-landing-moves,
+  C-dash-ball-turn, C-dash-fall-letgo, C-dash-jump-wall).
+
 ### TurningRound
 - kind: mechanic.
 - summary: turning round, or reversing a spin, makes her skid the old way and brake before she
@@ -373,6 +445,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   changes, her speeds and dash included [C-elevator]
 - A solid or stepped block stops that move as any downward move (`BlocksStopFlush`); a sloped
   surface under her there is out of scope.
+- So a stop of that move is found at the bottom edge of the body the caller gives for the ride
+  (§1.3).
 - checked: constructed (C-elevator).
 
 ---
@@ -743,6 +817,19 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - So `rising` is not the sign of her vertical speed: at a rise at 0 the speed is 0 (C-rise-at-0,
   C-bounce-second), and on the frame that spends the rise it points down (E1: +0.0C00, rising)
   where the next frame's +0.1C00 is a fall (E2).
+- **Whether she is heading down** (§1.4, an output of the step), as her moves leave her: before
+  what her moves met acts on her vertical motion (a landing, a ceiling, a walk off a ledge, a
+  bounce) and before the pose change's rises (`PoseFitAfterMoves` gives the order).
+- Her moves leaving her falling (in the air, a fall whose move a floor stopped included, or on
+  the ground falling at 0), or on the ground keeping a downward speed (`FollowingTheGround`) →
+  `heading down` [E2, R7, C-dash-landing, W13, BG2, BG3, HV1, MB2]
+- Her moves leaving her rising, in the moonfall, or with no vertical motion → not `heading down`
+  [E1, R4, MT1, C-moonfall-nolimit, C-ground-rise-kept, R49, C-slope-run-off]
+- Her rise's move stopped by a ceiling this frame → not `heading down`: the ceiling ends the rise
+  once what her moves met acts, so she heads down from the next frame [C-ceiling]
+- So a landing's frame heads down, the walk off a ledge's frame doesn't, and the moonfall drops
+  her without heading down (MT1); a speed kept on the ground heads down only when it points down
+  (HV1, C-ground-rise-kept).
 - A frame's vertical move of exactly 0 (a fall from rest, a rise at 0) is never stopped by
   blocks, even with her bottom or top edge already inside one (`BlocksStopFlush`): it never lands
   her or ends her rise.
@@ -751,7 +838,11 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   rises by 0 for one frame before the rise ends.
 - checked: oracle (every air vector; E1 for the speed past zero; `rising`: J2 a take-off, WK1 a
   wall jump's kick, R4 the rise after it, SJ1 space jump's jump again, E1 the frame that spends
-  the rise, R91 the rise ended by jump let go, R32 a fall, MT1 the moonfall); constructed (C-fallcap-a,
+  the rise, R91 the rise ended by jump let go, R32 a fall, MT1 the moonfall; `heading down`: the
+  recorded vectors' `after.heading_down`, MT1 the moonfall, HV1 a downward speed kept on the
+  ground, BG2 the ball on the ground falling at 0, W13 a landing's frame); constructed (`heading
+  down`: E2, C-ceiling a ceiling's frame, C-dash-landing, C-slope-run-off, BG3,
+  C-moonfall-nolimit, C-ground-rise-kept; C-fallcap-a,
   C-fallcap-b, C-fallcap-past, E2, E3; `rising`: C-rise-spent and C-rise-at-0, the camera's
   cases, E3 and C-bounce-second at 0, E2 the rise's end, C-ceiling a ceiling, C-ground-rise-kept
   and C-ground-rise an upward speed on the ground).
@@ -930,8 +1021,8 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - params: none.
 - switch: none.
 - Her pose changes at most once a frame. What decides is the first that applies:
-- An animation ending this frame → it hands over its pose (`AnimationEnds`) [P10, P11, P12, P19,
-  P23]
+- An animation ending this frame, unless its end gives way (`AnimationEnds`) → it hands over its
+  pose [P10, P11, P12, P19, P23]
 - No animation ending, her moves met something that chooses a pose → that pose
   (`WhatHerMovesMet`, which says which wins when several apply) [P4, P5, P6, P7, P8]
 - Neither → the pad chart's pose (`PadChart`), from the pose and the pad at the frame's start; its
@@ -1242,10 +1333,24 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - summary: the poses that last as long as their animation, and what their end hands over.
 - params: none (the table is data).
 - switch: none.
-- Animation timing is out of scope (§10): a vector says on which frame it ends.
-- A pose that lasts only as long as its animation, its animation ending → its end hands over the
-  next pose and effect below, whatever the pad [P10, P11, P12, P19, P23, M1, C-morph-end-ball,
-  C-morph-end-spring, C-morph-end-ball-air, C-morph-end-spring-air]
+- Animation timing is out of scope (§10): the end her animation reaches is an input (§1.3), which
+  a vector gives.
+- An end unless a jump, the pad chart's pose this frame a take-off aimed `Forward` or a spin →
+  the end gives way: no animation ends this frame, and her pose follows from what her moves met
+  or the pad chart (`PoseFollows`) [R-turn-gives-way, C-landing-gives-way, P-turn-gives-way,
+  P-landing-gives-way, C-landing-gives-way-held]
+- So jump pressed on a turn's or a landing's last frame takes off or spins, and jump held through
+  counts there too (`Jumping`; C-landing-gives-way-held); a take-off aimed otherwise doesn't stop
+  the end, which hands over standing, and jump held through takes off from it the next frame
+  (C-landing-aimed-jump). In the game every turn's and every landing's animation ends unless a jump, and the others' end
+  plainly; an end that is plain hands over whatever the pad (C-turn-end-plain).
+- A pose that lasts only as long as its animation, its animation ending and not giving way → its
+  end hands over the next pose and effect below, whatever the pad [P10, P11, P12, P19, P23, M1,
+  C-morph-end-ball, C-morph-end-spring, C-morph-end-ball-air, C-morph-end-spring-air,
+  P-crouch-end-aimed, P-stand-end-aimed]
+- Its end handing over its pose → the frame reports `handed over` (§1.4) [W16, C-landing-aimed-jump,
+  C-turn-end-plain]
+- So with no end, or an end that gives way, it doesn't (R-turn-gives-way, C-landing-gives-way).
 
 | Ending pose | Next pose | Effect |
 | --- | --- | --- |
@@ -1255,8 +1360,8 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | `Turning` in a fall (turn `Fall`) | `Falling`, the new facing, aim kept | dash 0 |
 | crouched `Turning` | crouched `Still`, the new facing, aim kept | dash 0 |
 | `Turning` from the moonwalk's jump (turn `MoonwalkJump`) | `Spinning`, the new facing | `Moonfall` |
-| `Crouching` | crouched `Still` | none |
-| `StandingUp` | upright `Still` | none |
+| `Crouching` | crouched `Still`, aim kept | none |
+| `StandingUp` | upright `Still`, aim kept | none |
 | `Morphing` | ball `Still` on the ground, ball `Falling` in the air; with the spring ball, the spring ball's | none |
 | `Landing` | upright `Still`, aim kept, gun stowed | none |
 | `Unmorphing` | crouched `Still`, on the ground or in the air | none |
@@ -1273,10 +1378,16 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - So an unmorph that ends in a fall has one crouched frame and then falls from rest (record only:
   boss-kraid-defeated 779-782), and one that ends in a rise keeps the rise (item-charge-beam 5-8,
   item-reserve-tank 519-521).
-- checked: oracle (P10, P11, P12, P19, P23, M1); constructed (C-unmorph-air-end, and through the
-  crouch's frame after it, C-unmorph-air-end-off walking off and C-unmorph-air-end-floor held on
-  a floor; the morph's end with and without the spring ball, C-morph-end-ball and
-  C-morph-end-spring on a floor, C-morph-end-ball-air and C-morph-end-spring-air in the air).
+- checked: oracle (P10, P11, P12, P19, P23, M1; R-turn-gives-way, a ground turn's end giving way
+  to the pad's spin; W16 a take-off's end handed over; the records' ends: 8 turns' ends gave way
+  to the pad's take-off or spin, 165 ends unless a jump and 138 plain ends handed over);
+  constructed (C-unmorph-air-end, and through the crouch's frame after it,
+  C-unmorph-air-end-off walking off and C-unmorph-air-end-floor held on a floor; the morph's end
+  with and without the spring ball, C-morph-end-ball and C-morph-end-spring on a floor,
+  C-morph-end-ball-air and C-morph-end-spring-air in the air; C-landing-gives-way,
+  C-landing-aimed-jump, C-turn-end-plain, P-turn-gives-way and P-landing-gives-way, the end
+  unless a jump; P-crouch-end-aimed and P-stand-end-aimed, an aimed change of body's end keeping
+  its aim).
 
 ### Out of the chart's scope
 - The spring ball's rows, the grapple, knockback, the boost after damage, x-ray, shinespark, the
@@ -1674,9 +1785,11 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   landing would raise her 2 px). The knockback's own push, and her rise on the frame it starts (the
   records show her rising there), are the knockback (damage) domain's too, as her going backwards
   is.
-- **Animation timing:** how far an animation has run and on which frame it ends (a vector says,
-  `AnimationEnds`); its frames are drawn by the sprite, and readying a wall jump shows only there
-  (`WallJump`).
+- **Animation timing:** how far an animation has run and the end it reaches, samus-looks'
+  (`ClipEnds`, an input here, §1.3); its frames are drawn by the sprite, and readying a wall jump
+  shows only there (`WallJump`). What this domain reports for it is §1.4.
+- **The demos:** while the game plays its own recorded input, a turn's or a landing's end
+  hands over whatever the pad; this spec covers play.
 
 ## 11. Open questions
 

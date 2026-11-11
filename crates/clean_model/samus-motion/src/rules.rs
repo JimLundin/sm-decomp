@@ -15,22 +15,23 @@ pub enum SpeedCap {
     Exact,
 }
 
-/// `SpeedBuildsAndBrakes`: what she is doing, as its table's "She is" names it.
+/// `SpeedBuildsAndBrakes`: what she is doing, as its table's "She is" names it, which gives her
+/// speed's step and top.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Gait {
-    /// Running.
+    /// She runs on the ground.
     Running,
-    /// Rolling as a ball.
+    /// She rolls as a ball on the ground.
     Rolling,
-    /// Moonwalking.
+    /// She walks backwards, looking the other way.
     Moonwalking,
-    /// In a straight jump or the spring ball's hop.
+    /// She is in a straight jump or the spring ball's hop.
     StraightJump,
-    /// In a spin jump or a wall jump.
+    /// She is in a spin jump or a wall jump.
     SpinJump,
-    /// Falling, upright or as a ball.
+    /// She falls, upright or as a ball.
     Falling,
-    /// Turning round.
+    /// She turns round.
     Turning,
 }
 
@@ -43,22 +44,22 @@ pub struct Limits {
     pub top: Fixed,
 }
 
-/// `SpeedBuildsAndBrakes`'s table: a row for each thing she can be doing.
+/// `SpeedBuildsAndBrakes`'s table: a row for each thing she can be doing, a `Gait`'s each.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Speeds {
-    /// Running.
+    /// The row for `Gait::Running`.
     pub running: Limits,
-    /// Rolling as a ball.
+    /// The row for `Gait::Rolling`.
     pub rolling: Limits,
-    /// Moonwalking.
+    /// The row for `Gait::Moonwalking`.
     pub moonwalking: Limits,
-    /// In a straight jump or the spring ball's hop.
+    /// The row for `Gait::StraightJump`.
     pub straight_jump: Limits,
-    /// In a spin jump or a wall jump.
+    /// The row for `Gait::SpinJump`.
     pub spin_jump: Limits,
-    /// Falling, upright or as a ball.
+    /// The row for `Gait::Falling`.
     pub falling: Limits,
-    /// Turning round.
+    /// The row for `Gait::Turning`.
     pub turning: Limits,
 }
 
@@ -100,11 +101,11 @@ impl WithItem {
 /// `Landing`: how many times the ball has bounced since it last rested.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Bounces {
-    /// None.
+    /// It hasn't bounced since it last rested.
     None,
-    /// One.
+    /// It has bounced once: the next landing bounces it at any speed.
     Once,
-    /// Two.
+    /// It has bounced twice: the next landing rests it.
     Twice,
 }
 
@@ -127,7 +128,7 @@ pub struct Bounce {
 /// The values the model reads.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rules {
-    /// `WordwiseTopSpeed`.
+    /// `WordwiseTopSpeed`: how the top speed is tested.
     pub speed_cap: SpeedCap,
     /// `SpeedBuildsAndBrakes`: its table.
     pub speeds: Speeds,
@@ -158,8 +159,9 @@ pub struct Rules {
     /// `Jumping`, jump held through: the counts of frames jump has stayed held at which, the
     /// frame after a landing or a turn's or a landing's end, it counts as a press.
     pub held_through: RangeInclusive<u16>,
-    /// `Jumping`, jump held through: the counts of jump held about 9 minutes or more, which act
-    /// as one of `held_through` does (original only).
+    /// `Jumping`, jump held through: the long hold, counts of frames jump has stayed held since
+    /// its press, 32,777 to 65,535 (about 9 minutes or more), which act as one of
+    /// `held_through` does (original only).
     pub held_long: RangeInclusive<u16>,
     /// `RisingAndFalling`: the pull a frame.
     pub gravity: Fixed,
@@ -178,7 +180,9 @@ pub struct Rules {
     /// `PoseFitAfterMoves`: the long look, 8 px: a block look this long or longer is stopped by
     /// whatever a look of this length would stop.
     pub long_look: Fixed,
-    /// `PoseFitAfterMoves`: an old body under this half-height can't crouch instead.
+    /// `PoseFitAfterMoves`: with something above her and something below, a change from an old
+    /// body under this half-height, 8 px (the ball), is refused; from one of this half-height or
+    /// more she takes the crouch instead.
     pub small_body_px: Px,
     /// `ShrinkingLowersHer`: the crouch's own distance.
     pub crouch_lowers: Fixed,

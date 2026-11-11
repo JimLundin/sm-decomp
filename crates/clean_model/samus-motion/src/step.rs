@@ -8,7 +8,7 @@ use crate::chart::Moment;
 use crate::jump_held::FrameBefore;
 use crate::rows::Doing::Spinning;
 use crate::rules::Rules;
-use crate::samus::{Outcome, Samus, Sprite, StandingAnimation};
+use crate::samus::{Dashing, Outcome, Samus, Sprite, StandingAnimation};
 use crate::situation::{UnknownPose, classify};
 use crate::tick::{Frame, Tick};
 use crate::vertical::Contact;
@@ -23,6 +23,7 @@ impl Samus {
     /// start says (`MovesAsShePosed`) and what they met, which tells whether she is off the
     /// ground; the pose chosen, the pad chart reading jump held through as a press (`Jumping`),
     /// and the aim change's step; the pose change; at its end, what she remembers of jump held.
+    /// `Dashing`: her dashing is read once her moves are made, and again at the frame's end.
     ///
     /// # Errors
     ///
@@ -46,6 +47,7 @@ impl Samus {
         self.spin = self.spin.then(situation.doing == Spinning);
         self.vertical.end_rise(situation.doing, frame.pad);
         let meeting = self.moves(situation, &mut t);
+        let dashing_after_moves = self.dashing;
         let springs = start.pose.body == SpringBall && frame.pad.any(JUMP);
         let contact = self
             .vertical
@@ -62,8 +64,10 @@ impl Samus {
         let chosen = moment.choose(start.pose, situation);
         let chosen = self.step_forward(chosen, &mut t);
         let placed = self.change_pose(chosen, contact, &start, &mut t);
-        let left = FrameBefore::left(meeting.met, frame.animation_ends, start.pose, self.pose);
-        self.jump_held = start.jump_held.then(rules, frame, left);
+        let handed_over = chosen.handed_over && self.pose == chosen.pose;
+        let left_behind = FrameBefore::left_behind(meeting.met, handed_over, start.pose, self.pose);
+        self.jump_held = start.jump_held.then(rules, frame, left_behind);
+        let dashed = start.dashing == Dashing::On || meeting.ran_with_run_held;
         Ok(Outcome {
             wall_test: meeting.wall_test,
             standing_animation: StandingAnimation::of(start.pose, frame.pad),
@@ -73,6 +77,11 @@ impl Samus {
             inside,
             placed,
             rising: self.vertical.rising(),
+            dashing_after_moves,
+            dash_began: start.dashing == Dashing::Off && meeting.ran_with_run_held,
+            dash_lost: dashed && self.dashing == Dashing::Off,
+            handed_over,
+            heading_down: meeting.heading_down,
         })
     }
 }

@@ -15,14 +15,14 @@ use crate::rows::Test::{
 use crate::rows::{Effect, Met, Row, Situation, Test, seen};
 use crate::rules::Lowers;
 use crate::situation::{UnknownPose, classify};
-use clean_types::Action::Running;
-use clean_types::{Buttons, Fixed, Pose, Side, ZERO};
+use clean_types::Action::{Running, Spinning, TakingOff};
+use clean_types::{Aim, Buttons, ClipEnd, Fixed, Pose, Side, ZERO};
 
 /// What the chart reads of a frame besides her pose.
 ///
-/// The buttons held and those just pressed, the spring ball, an animation's end, her horizontal
-/// speed at the frame's start, whether she is off the ground once her moves are made, and what
-/// they met.
+/// The buttons held and those just pressed, the spring ball, the end her animation reaches,
+/// her horizontal speed at the frame's start, whether she is off the ground once her moves are
+/// made, and what they met.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Moment {
     /// The buttons held.
@@ -32,8 +32,9 @@ pub struct Moment {
     pub pressed: Buttons,
     /// The spring ball is switched on.
     pub spring_ball: bool,
-    /// `AnimationEnds`: her pose's animation ends this frame.
-    pub animation_ends: bool,
+    /// `AnimationEnds`: the end her pose's animation reaches this frame, if any: an end, or an
+    /// end unless a jump.
+    pub animation_ends: Option<ClipEnd>,
     /// Her horizontal speed at the frame's start.
     pub speed: Fixed,
     /// Off the ground once her moves are made.
@@ -42,17 +43,21 @@ pub struct Moment {
     pub met: Option<Met>,
 }
 
-/// A chosen pose, the change's effects, and whether it brings the aim change's step.
+/// A chosen pose: the pose, what the change does, whether it brings the aim change's step,
+/// and whether her animation's end handed it over.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Choice {
-    /// The pose.
+    /// The pose chosen.
     pub pose: Pose,
-    /// Its effects.
+    /// What the change does to her speeds, dash and position, in order.
     pub effects: &'static [Effect],
-    /// `AimingAndShooting`: a running pose other than hers, or one a row counts as chosen.
-    pub steps: bool,
+    /// `AimingAndShooting`: the choice brings the aim change's step: a running pose other than
+    /// hers, or one a row counts as chosen.
+    pub aim_step: bool,
     /// `ShrinkingLowersHer`: the look down the pose starts with.
     pub lower: Option<Lowers>,
+    /// `AnimationEnds`: her animation's end handed the pose over.
+    pub handed_over: bool,
 }
 
 impl Choice {
@@ -65,8 +70,9 @@ impl Choice {
         Self {
             pose,
             effects: &[],
-            steps: false,
+            aim_step: false,
             lower: None,
+            handed_over: false,
         }
     }
 
@@ -81,6 +87,15 @@ impl Choice {
             self
         }
     }
+}
+
+/// `AnimationEnds`: an end unless a jump gives way to the pad chart's pose this frame where that
+/// pose is a take-off aimed `Forward` or a spin: no animation ends then. A plain end never gives
+/// way.
+fn gives_way(end: ClipEnd, pad_chart: Pose) -> bool {
+    let jumps = matches!((pad_chart.action, pad_chart.aim), (TakingOff, Aim::Forward))
+        || pad_chart.action == Spinning;
+    end == ClipEnd::EndUnlessJump && jumps
 }
 
 /// `PadChart`: a row that needs a just-pressed button outranks one that doesn't; then the one that
@@ -175,15 +190,16 @@ impl Reading<'_> {
 
     /// `PadChart`, `Aiming`: a row's choice, the pose it leads to from hers and its effects;
     /// `AimingAndShooting`: a running pose other than hers, or her running pose a row counts as
-    /// chosen, brings the step.
+    /// chosen, brings the aim change's step.
     fn choice(&self, row: &Row) -> Choice {
         let aim = row.next.aim.iter().find(|a| self.fits(a.when));
         let pose = row.next.pose_from(self.pose, aim.map(|a| a.aim));
         Choice {
             pose,
             effects: row.effects,
-            steps: pose.action == Running && (pose != self.pose || row.steps),
+            aim_step: pose.action == Running && (pose != self.pose || row.aim_step),
             lower: row.next.lower,
+            handed_over: false,
         }
     }
 
@@ -203,19 +219,25 @@ impl Reading<'_> {
     }
 
     /// `PoseFollows`: the reading's choice, the first that applies. An animation ending this
-    /// frame hands over its row's pose and effects (`AnimationEnds`); else what her moves met
-    /// chooses (`WhatHerMovesMet`); else the pad chart's row (`PadChart`). Whether the aim
-    /// change's step comes is always the second's or third's, even where an animation's end
-    /// hands over the pose: the end neither brings nor cancels it (`AimingAndShooting`).
+    /// frame, unless its end gives way, hands over its row's pose and effects (`AnimationEnds`);
+    /// else what her moves met chooses (`WhatHerMovesMet`); else the pad chart's row
+    /// (`PadChart`). Whether the aim change's step comes is always the second's or third's, even
+    /// where an animation's end hands over the pose: the end neither brings nor cancels it
+    /// (`AimingAndShooting`).
     fn choose(&self) -> Choice {
+        let pad_chart = self.choice(self.pad_chart());
         let by_moves = self
             .first(table::MOVES_MET)
-            .unwrap_or_else(|| self.pad_chart());
-        let by_moves = self.choice(by_moves);
+            .map_or(pad_chart, |r| self.choice(r));
+        let ends = self
+            .moment
+            .animation_ends
+            .is_some_and(|end| !gives_way(end, pad_chart.pose));
         self.first(table::ANIMATION_ENDS)
-            .filter(|_| self.moment.animation_ends)
+            .filter(|_| ends)
             .map_or(by_moves, |r| Choice {
-                steps: by_moves.steps,
+                aim_step: by_moves.aim_step,
+                handed_over: true,
                 ..self.choice(r)
             })
     }

@@ -25,8 +25,8 @@ use game::state::samus::{
     MovementType, NewPoseFrame, PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor,
     VisorShade, VisorTimer,
 };
+use game::state::samus::{Dashing, SpeedMode, VerticalMotion};
 use game::state::samus::{Fixed, Point};
-use game::state::samus::{SpeedMode, VerticalMotion};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot};
 use game::state::strand::{
     Frame, GameplayAt, IrqCommand, IrqStrand, LagAt, MainLoopAt, MainStrand, MessageBoxAt,
@@ -1891,12 +1891,12 @@ fn decodes_the_speeds(state: &State) -> bool {
         motion.base_speed,
         motion.extra_run,
         motion.mode,
-        motion.momentum,
+        motion.dashing,
     ) == (
         Exact::new(0x0002, 0xC000),
         Exact::new(0x0001, 0x2000),
         SpeedMode::Decelerating,
-        true,
+        Dashing::On,
     )
 }
 

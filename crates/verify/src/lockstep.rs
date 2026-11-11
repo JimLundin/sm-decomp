@@ -593,7 +593,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.motion.position.y", samus.motion.position.y),
     field!("samus.motion.base_speed", samus.motion.base_speed),
     field!("samus.motion.extra_run", samus.motion.extra_run),
-    field!("samus.motion.momentum", samus.motion.momentum),
+    field!("samus.motion.dashing", samus.motion.dashing),
     field!("samus.motion.mode", samus.motion.mode),
     field!("samus.motion.vertical_speed", samus.motion.vertical_speed),
     field!("samus.motion.vertical", samus.motion.vertical),

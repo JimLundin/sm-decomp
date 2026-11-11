@@ -76,9 +76,10 @@ impl Samus {
     /// her old size: solid enemies up and down, then the enemy's far-side look (at her new size);
     /// blocks up and down, then the block's far-side look. A far-side look stopped refuses the
     /// change. With something on one side only she is pushed away from it (a block's room before
-    /// an enemy's on the same side), keeping the subpixel her looks left; with something on both,
-    /// a ball's change is refused, and any other body takes crouched `Still` instead, rising by
-    /// the crouch's growth over her old body, her feet where they were.
+    /// an enemy's on the same side), keeping the subpixel her looks left. With something on both,
+    /// the change from an old body under 8 px half-height (the ball, `Rules::small_body_px`) is
+    /// refused, and from one of 8 px or more she takes crouched `Still` instead, rising by the
+    /// crouch's growth over her old body, her feet where they were.
     ///
     /// `PoseFollows`: a change into `Morphing` without the morph ball is refused as pose fit
     /// refuses one, before any look.
@@ -87,8 +88,11 @@ impl Samus {
         if into_morph && !t.frame.items[Item::MorphBall] {
             return Fitted::Refused;
         }
+        if chosen == self.pose || chosen.facing == Facing::Screen {
+            return Fitted::Taken;
+        }
         let (old, new) = (t.body(self.pose), t.body(chosen));
-        if chosen == self.pose || chosen.facing == Facing::Screen || new.y <= old.y {
+        if new.y <= old.y {
             return Fitted::Taken;
         }
         let g = new.y - old.y;

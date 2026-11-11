@@ -6,19 +6,21 @@
 //! layer 1 and the enemies' common words, all from work RAM, so every room reads, and the
 //! room's door list, which the importer reads from the ROM by record N's room. It steps her
 //! through the model over that level and the enemies the selection would touch
-//! (`game::samus_world`), and compares her motion words with record N+1's, and the step's two
-//! outputs to the camera: whether she is rising, and the y a placement put her at, which the
-//! record shows through the camera's speed down. Nothing answers from record N+1, so no field is
-//! unverified; the null model is her State left as record N has it, rising as she was, and
-//! placed nowhere.
+//! (`game::samus_world`), and compares her motion words with record N+1's, dashing among them,
+//! the step's two outputs to the camera: whether she is rising, and the y a placement put her at,
+//! which the record shows through the camera's speed down, and two of its outputs to her
+//! animation (§1.4): whether she is heading down, and whether her pose is the one her
+//! animation's end handed over. Nothing answers from record N+1, so no field is unverified; the
+//! null model is her State left as record N has it, rising, heading down and handed over as
+//! record N shows them, and placed nowhere.
 
 use core::cell::RefCell;
 use core::fmt;
 use std::collections::BTreeMap;
 
 use clean_model_samus_motion::{
-    BehaviourId, CATALOGUE, Phase, Rules as Reference, Samus as Model, Seat, StandingAnimation,
-    WallTest,
+    BehaviourId, CATALOGUE, Dashing as Dashes, Outcome, Phase, Rules as Reference, Samus as Model,
+    Seat, StandingAnimation, WallTest,
 };
 use clean_types::{Action, Block as Kind, Heading, Pose as Shape, Way, World, ZERO};
 use data::rom::Lorom;
@@ -27,13 +29,13 @@ use game::Content;
 use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
 use game::model::num::Fixed;
-use game::pose::{self, PoseRequests};
+use game::pose;
 use game::samus_world::state::{clean_of, named};
 use game::samus_world::step::{Ran, Reads, run, settle};
 use game::samus_world::{SamusFault, SamusWorld};
 use game::state::Controller;
 use game::state::room::{Block, BlockColumns, ElevatorRide};
-use game::state::samus::{Bounce, Motion, Position, Samus, SpeedMode, VerticalMotion};
+use game::state::samus::{Bounce, Dashing, Motion, Position, Samus, SpeedMode, VerticalMotion};
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 
@@ -48,6 +50,25 @@ const MAIN_GAMEPLAY: u16 = 8;
 
 /// The vertical direction up (`0B36`): she is rising.
 const UP: u16 = 1;
+/// The vertical direction down (`0B36`): she is heading down.
+const DOWN: u16 = 2;
+
+/// Bank $91 log, `$91:E8B6`: the pose change command the pad's lookup leaves, and the one her
+/// moves' vertical result (a landing, a ceiling, a walk off a ledge, a bounce) writes over it,
+/// which writes her vertical direction after her moves.
+const POSE_CHANGE_COMMAND: WramWord = WramWord {
+    name: "SAMUS_POSE_CHANGE_COMMAND",
+    offset: 0x0A2E,
+};
+const VERTICAL_RESULT: u16 = 5;
+/// No vertical direction (`0B36`).
+const NO_DIRECTION: u16 = 0;
+/// The movement type of a change of shape (crouching, morphing, standing up, unmorphing).
+const CHANGING_SHAPE: u8 = 0x0F;
+/// Bank $91 log, `$91:F36E`: the super special command "transition animation finished", and
+/// the bit of its pose that says none is asked.
+const ANIMATION_FINISHED: u16 = 3;
+const NO_POSE: u16 = 0x8000;
 
 /// The equipment bit the liquid mask reads.
 const GRAVITY_SUIT: u16 = 0x0020;
@@ -345,6 +366,41 @@ fn submerged(record: &FrameRecord, radius: u16) -> Result<bool, Skip> {
     })
 }
 
+/// Why record N+1's direction doesn't show heading down as her moves leave her, on the frame
+/// from `from` to `next`.
+///
+/// The frame's pose change can write her vertical direction after her moves: what they met (a
+/// landing, a ceiling, a walk off a ledge, a bounce), or a rise it starts. And where a change of
+/// shape lands, the original's direction after her moves isn't the spec's heading down, which the
+/// observer is asked to answer (samus-motion.gaps.md, gap 38).
+fn heading_down_unseen(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<&'static str>, Skip> {
+    let direction = [
+        word(from, source::SAMUS_Y_DIR)?,
+        word(next, source::SAMUS_Y_DIR)?,
+    ];
+    let movement = byte(from, source::SAMUS_MOVEMENT_TYPE)?;
+    // A rise her moves start (a space jump) keeps her pose, and one from no direction is no
+    // heading down either way, so only a pose change's rise from heading down hides it.
+    let rise_starts = direction[0] == DOWN
+        && direction[1] == UP
+        && word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?;
+    Ok([
+        (
+            word(next, POSE_CHANGE_COMMAND)? == VERTICAL_RESULT || rise_starts,
+            "unverified: the pose change writes her vertical direction after her moves (what they met, or a rise it starts from heading down)",
+        ),
+        (
+            movement == CHANGING_SHAPE
+                && direction[0] != NO_DIRECTION
+                && direction[1] == NO_DIRECTION,
+            "spec gap 38: a change of shape's landing clears her vertical direction in her moves ($90:A640), before the frame reports heading down",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(unseen, reason)| unseen.then_some(reason))
+    .collect())
+}
+
 /// Whether the running let-go row stands her (`PadChart`, AS3 and AS4): running with neither
 /// side held in `from`, standing in `next`. Whether she carries on or follows the pad is then
 /// in her speed mode word alone, which standing halts either way, so no later frame shows it
@@ -430,7 +486,11 @@ pub fn decode(wram: &[u8]) -> Result<Motion, DecodeError> {
             source::SAMUS_X_EXTRA_RUN_SPEED,
             source::SAMUS_X_EXTRA_RUN_SUBSPEED,
         )?,
-        momentum: source::SAMUS_HAS_MOMENTUM_FLAG.read(wram)? != 0,
+        dashing: if source::SAMUS_HAS_MOMENTUM_FLAG.read(wram)? == 0 {
+            Dashing::Off
+        } else {
+            Dashing::On
+        },
         mode,
         vertical_speed: fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?,
         vertical,
@@ -457,6 +517,21 @@ pub struct Hers {
     samus: Samus,
     /// Whether she is rising: as record N has it (`0B36` = 1), then the step's `rising`.
     rising: bool,
+    /// Whether she is heading down: as record N has it (`0B36` = 2), then the step's
+    /// `heading_down`.
+    heading_down: bool,
+    /// Whether her pose is the one her animation's end handed over: as record N has it, then
+    /// the step's `handed_over`.
+    handed_over: bool,
+}
+
+/// Whether her pose in `record` is the one her animation's end handed over: the super special
+/// command "transition animation finished", with a pose.
+fn handed_over(record: &FrameRecord) -> Result<bool, Skip> {
+    Ok(
+        word(record, source::SAMUS_HURT_SWITCH_INDEX)? == ANIMATION_FINISHED
+            && word(record, source::SAMUS_NEW_POSE_TRANSITIONAL)? & NO_POSE == 0,
+    )
 }
 
 impl Hers {
@@ -498,8 +573,8 @@ pub struct Declared {
     pub base_speed: Ps,
     /// `extra_run`.
     pub extra_run: Ps,
-    /// `momentum`.
-    pub momentum: bool,
+    /// `dashing`.
+    pub dashing: Dashing,
     /// `mode`.
     pub mode: SpeedMode,
     /// `vertical_speed`.
@@ -513,36 +588,54 @@ pub struct Declared {
     /// `placed`, as the record shows it: the camera's speed down, measured from the y a
     /// placement put her at, or, with none, from where the camera last saw her.
     pub placed: Ps,
+    /// `heading_down`.
+    pub heading_down: bool,
+    /// `handed_over`.
+    pub handed_over: bool,
+}
+
+/// The outputs the step gives besides her State, or the record shows of them.
+#[derive(Clone, Copy, Debug)]
+struct Shown {
+    rising: bool,
+    placed: Fixed,
+    heading_down: bool,
+    handed_over: bool,
 }
 
 impl Declared {
-    /// The declared fields of `state`, rising or not, with the camera's speed down `placed`
-    /// makes.
-    const fn of(state: &Motion, rising: bool, placed: Fixed) -> Self {
+    /// The declared fields of `state`, with the outputs `shown`.
+    const fn of(state: &Motion, shown: Shown) -> Self {
         Self {
             x: Ps(state.position.x),
             y: Ps(state.position.y),
             base_speed: Ps(state.base_speed),
             extra_run: Ps(state.extra_run),
-            momentum: state.momentum,
+            dashing: state.dashing,
             mode: state.mode,
             vertical_speed: Ps(state.vertical_speed),
             vertical: state.vertical,
             bounce: state.bounce,
-            rising,
-            placed: Ps(placed),
+            rising: shown.rising,
+            placed: Ps(shown.placed),
+            heading_down: shown.heading_down,
+            handed_over: shown.handed_over,
         }
     }
 }
 
 /// The outputs a mask of `fields` reaches as well: the camera's speed down is made from her y,
-/// and whether she is rising is her vertical direction up.
+/// and whether she is rising or heading down is her vertical direction.
 fn follows(fields: FieldSet) -> FieldSet {
     use Quantity as Q;
-    [(Q::Y, Q::Placed), (Q::Vertical, Q::Rising)]
-        .into_iter()
-        .filter(|(by, _)| fields.contains(by.index()))
-        .fold(FieldSet::EMPTY, |set, (_, output)| set.union(output.set()))
+    [
+        (Q::Y, Q::Placed),
+        (Q::Vertical, Q::Rising),
+        (Q::Vertical, Q::HeadingDown),
+    ]
+    .into_iter()
+    .filter(|(by, _)| fields.contains(by.index()))
+    .fold(FieldSet::EMPTY, |set, (_, output)| set.union(output.set()))
 }
 
 /// The declared fields a catalogue entry's output reaches. Her pose, what she is drawn as, the
@@ -551,7 +644,7 @@ fn follows(fields: FieldSet) -> FieldSet {
 fn shown_by(id: BehaviourId) -> FieldSet {
     use BehaviourId as B;
     use Quantity as Q;
-    let horizontal = [Q::X, Q::BaseSpeed, Q::ExtraRun, Q::Momentum, Q::Mode];
+    let horizontal = [Q::X, Q::BaseSpeed, Q::ExtraRun, Q::Dashing, Q::Mode];
     let vertical = [Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Rising];
     match id {
         B::HowSheIsDrawn
@@ -559,17 +652,19 @@ fn shown_by(id: BehaviourId) -> FieldSet {
         | B::PadChart
         | B::Aiming
         | B::WhatHerMovesMet
-        | B::AnimationEnds
         | B::TouchedCells => FieldSet::EMPTY,
+        B::AnimationEnds => Q::HandedOver.set(),
+        B::Dashing => Q::Dashing.set(),
         B::SpeedBuildsAndBrakes | B::DriftInTheAir => {
-            Q::all(&[Q::X, Q::BaseSpeed, Q::Momentum, Q::Mode])
+            Q::all(&[Q::X, Q::BaseSpeed, Q::Dashing, Q::Mode])
         }
         B::Dash => Q::all(&[Q::X, Q::ExtraRun]),
         B::TurningRound => Q::all(&horizontal),
         B::AimingAndShooting | B::SlopesSlowTheWalk => Q::X.set(),
         B::RidingTheElevator => Q::Y.set(),
         B::ShrinkingLowersHer => Q::all(&[Q::Y, Q::Placed]),
-        B::Jumping | B::FollowingTheGround | B::RisingAndFalling | B::Moonfall => Q::all(&vertical),
+        B::Jumping | B::FollowingTheGround | B::Moonfall => Q::all(&vertical),
+        B::RisingAndFalling => Q::all(&vertical).union(Q::HeadingDown.set()),
         B::Landing => Q::all(&[Q::Y, Q::VerticalSpeed, Q::Vertical, Q::Bounce, Q::Rising]),
         B::MovesAsShePosed
         | B::BlocksStopFlush
@@ -583,7 +678,7 @@ fn shown_by(id: BehaviourId) -> FieldSet {
             Q::Y,
             Q::BaseSpeed,
             Q::ExtraRun,
-            Q::Momentum,
+            Q::Dashing,
             Q::Mode,
             Q::VerticalSpeed,
             Q::Vertical,
@@ -594,7 +689,7 @@ fn shown_by(id: BehaviourId) -> FieldSet {
             Q::Y,
             Q::BaseSpeed,
             Q::ExtraRun,
-            Q::Momentum,
+            Q::Dashing,
             Q::Mode,
             Q::VerticalSpeed,
             Q::Vertical,
@@ -611,13 +706,15 @@ enum Quantity {
     Y,
     BaseSpeed,
     ExtraRun,
-    Momentum,
+    Dashing,
     Mode,
     VerticalSpeed,
     Vertical,
     Bounce,
     Rising,
     Placed,
+    HeadingDown,
+    HandedOver,
 }
 
 impl Quantity {
@@ -633,13 +730,15 @@ impl Quantity {
             Self::Y => 1,
             Self::BaseSpeed => 2,
             Self::ExtraRun => 3,
-            Self::Momentum => 4,
+            Self::Dashing => 4,
             Self::Mode => 5,
             Self::VerticalSpeed => 6,
             Self::Vertical => 7,
             Self::Bounce => 8,
             Self::Rising => 9,
             Self::Placed => 10,
+            Self::HeadingDown => 11,
+            Self::HandedOver => 12,
         }
     }
 
@@ -706,19 +805,15 @@ impl SamusMotion {
     fn ran(&self, samus: &mut Samus, inputs: &Inputs, level: &SamusWorld) -> Result<Ran, Skip> {
         let pose = samus.pose.0;
         let content = &self.content;
-        // Her current state handler sets her radius and reads the pad's pose request before
-        // the movement handler, except while the elevator carries her.
-        let requests = if pose::carried(samus, inputs.ride) {
-            PoseRequests::default()
-        } else {
+        // Her current state handler sets her radius before the movement handler, except while
+        // the elevator carries her.
+        if !pose::carried(samus, inputs.ride) {
             pose::set_radius(samus, content);
-            pose::input(samus, &inputs.controller, content)
-        };
+        }
         let reads = Reads {
             controller: &inputs.controller,
             ride: inputs.ride,
             completed: inputs.completed,
-            requests,
             content,
         };
         run(samus, reads, level, &Reference::REFERENCE)
@@ -744,17 +839,17 @@ impl SamusMotion {
         Ok(ran.outcome.placed)
     }
 
-    /// What the near-wall test of her motion's frame from record `from` did (`Outcome::wall_test`,
-    /// the samus-motion spec's output to samus-looks' `WallJumpReady`).
+    /// What her motion's frame from record `from` shows (`Outcome`): among them what it gives
+    /// her animation (the samus-motion spec's §1.4, samus-looks' inputs).
     ///
     /// # Errors
     ///
     /// The reason her motion doesn't run in the frame, or the decode's failure.
-    pub fn wall_test(&self, from: &FrameRecord, interval: Interval) -> Result<WallTest, Skip> {
+    pub fn outcome(&self, from: &FrameRecord, interval: Interval) -> Result<Outcome, Skip> {
         let (mut hers, inputs) = self.decode(from, interval)?;
         let level = self.level(&inputs);
         let ran = self.ran(&mut hers.samus, &inputs, &level)?;
-        Ok(ran.outcome.wall_test)
+        Ok(ran.outcome)
     }
 }
 
@@ -873,13 +968,15 @@ impl Domain for SamusMotion {
         domain_field!("position.y", y),
         domain_field!("base_speed", base_speed),
         domain_field!("extra_run", extra_run),
-        domain_field!("momentum", momentum),
+        domain_field!("dashing", dashing),
         domain_field!("mode", mode),
         domain_field!("vertical_speed", vertical_speed),
         domain_field!("vertical", vertical),
         domain_field!("bounce", bounce),
         domain_field!("rising", rising),
         domain_field!("placed", placed),
+        domain_field!("heading_down", heading_down),
+        domain_field!("handed_over", handed_over),
     ];
 
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(Hers, Inputs), Skip> {
@@ -892,9 +989,12 @@ impl Domain for SamusMotion {
         if !named(model.pose) {
             return Err(Skip::Fault(SamusFault::UnnamedPose(samus.pose)));
         }
+        let direction = word(from, source::SAMUS_Y_DIR)?;
         let hers = Hers {
             samus,
-            rising: word(from, source::SAMUS_Y_DIR)? == UP,
+            rising: direction == UP,
+            heading_down: direction == DOWN,
+            handed_over: handed_over(from)?,
         };
         let doors = self.doors(word(from, source::ROOM_PTR)?)?;
         Ok((hers, Inputs::of(&from.wram, doors)?))
@@ -932,6 +1032,9 @@ impl Domain for SamusMotion {
                 Q::all(&[Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed, Q::Vertical]),
             );
         }
+        for reason in heading_down_unseen(from, next)? {
+            mask(reason, Q::HeadingDown.set());
+        }
         if let_go_stands(from, next)? {
             mask(
                 "unperceived: the running let-go row's speed mode, which standing halts either way",
@@ -952,7 +1055,7 @@ impl Domain for SamusMotion {
                     Q::Y,
                     Q::BaseSpeed,
                     Q::ExtraRun,
-                    Q::Momentum,
+                    Q::Dashing,
                     Q::Mode,
                     Q::VerticalSpeed,
                     Q::Vertical,
@@ -1014,6 +1117,8 @@ impl Domain for SamusMotion {
         if let Ok(ran) = self.ran(&mut hers.samus, inputs, &level) {
             settle(&mut hers.samus, &ran);
             hers.rising = ran.outcome.rising;
+            hers.heading_down = ran.outcome.heading_down;
+            hers.handed_over = ran.outcome.handed_over;
             world.0 = exercised(&ran, &level);
         }
     }
@@ -1033,14 +1138,27 @@ impl Domain for SamusMotion {
     }
 
     fn fields(&self, hers: &Hers) -> Declared {
-        Declared::of(&hers.samus.motion, hers.rising, hers.speed_down())
+        Declared::of(
+            &hers.samus.motion,
+            Shown {
+                rising: hers.rising,
+                placed: hers.speed_down(),
+                heading_down: hers.heading_down,
+                handed_over: hers.handed_over,
+            },
+        )
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
+        let direction = word(next, source::SAMUS_Y_DIR)?;
         Ok(Declared::of(
             &state(next)?,
-            word(next, source::SAMUS_Y_DIR)? == UP,
-            fixed(&next.wram, CAMERA_Y_SPEED, CAMERA_Y_SUBSPEED)?,
+            Shown {
+                rising: direction == UP,
+                placed: fixed(&next.wram, CAMERA_Y_SPEED, CAMERA_Y_SUBSPEED)?,
+                heading_down: direction == DOWN,
+                handed_over: handed_over(next)?,
+            },
         ))
     }
 
@@ -1128,7 +1246,11 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
             B::ShrinkingLowersHer,
             changed && matches!(after.pose.action, Action::Crouching | Action::Morphing),
         ),
-        (B::AnimationEnds, ran.animation_ends),
+        (B::AnimationEnds, ran.animation_ends.is_some()),
+        (
+            B::Dashing,
+            before.dashing == Dashes::On || after.dashing == Dashes::On,
+        ),
         (B::RidingTheElevator, ran.elevator_moving),
         (B::SolidEnemies, !level.solid_enemies().is_empty()),
         (
@@ -1240,13 +1362,15 @@ mod tests {
             (Q::Y, "position.y"),
             (Q::BaseSpeed, "base_speed"),
             (Q::ExtraRun, "extra_run"),
-            (Q::Momentum, "momentum"),
+            (Q::Dashing, "dashing"),
             (Q::Mode, "mode"),
             (Q::VerticalSpeed, "vertical_speed"),
             (Q::Vertical, "vertical"),
             (Q::Bounce, "bounce"),
             (Q::Rising, "rising"),
             (Q::Placed, "placed"),
+            (Q::HeadingDown, "heading_down"),
+            (Q::HandedOver, "handed_over"),
         ];
         for (quantity, name) in named {
             let place = SamusMotion::FIELDS

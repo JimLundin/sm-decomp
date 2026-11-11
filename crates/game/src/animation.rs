@@ -8,6 +8,7 @@
 //! (`$90:82DC`): a delay byte sets the timer (`$90:84E3`), an instruction byte first passes
 //! the running momentum check (`$90:852C`) and then runs, its table at `$90:8324`.
 
+use clean_types::ClipEnd;
 use data::pose::PoseId;
 use data::pose::animation::{
     AnimationFrame, BySpeed, DelayItem, DelayList, Instruction, ItemBits, wall_jump_frame,
@@ -17,7 +18,7 @@ use data::pose::transition::Control;
 use crate::pose::{Content, PoseRequests, controls};
 use crate::state::Controller;
 use crate::state::samus::{
-    AnimationTimer, Item, Items, MovementType, NewPoseFrame, Samus, SuperSpecial,
+    AnimationTimer, Dashing, Item, Items, MovementType, NewPoseFrame, Samus, SuperSpecial,
     SuperSpecialCommand,
 };
 
@@ -48,10 +49,10 @@ pub(crate) const fn frame_buffer(_samus: &Samus) -> u16 {
     0
 }
 
-/// Whether her running momentum runs the running list instead of her pose's: she has
-/// momentum and runs (`$90:84E3`).
-const fn running_momentum(samus: &Samus) -> bool {
-    matches!(samus.movement, MovementType::Running) && samus.motion.momentum
+/// Whether her running momentum runs the running list instead of her pose's: she is
+/// dashing and runs (`$90:84E3`).
+fn running_momentum(samus: &Samus) -> bool {
+    matches!(samus.movement, MovementType::Running) && samus.motion.dashing == Dashing::On
 }
 
 /// The falling poses whose animation jumps to its terminal velocity frame (`$90:A58D`).
@@ -120,47 +121,44 @@ pub fn spin_turned_far(samus: &Samus) -> bool {
         >= 0
 }
 
-/// Whether `animate` ends her pose's animation this frame (`AnimationEnds`).
+/// The end `animate` brings her pose's animation to this frame, if any (`AnimationEnds`).
 ///
 /// The timer runs out and the next item is an instruction that hands over a pose, which the
-/// running list doesn't take over and the auto-jump hack doesn't hold back. Read before the
-/// moves, so a
+/// running list doesn't take over. The auto-jump transition is the end unless a jump: whether
+/// the pad's jump takes its place is samus-motion's to decide. Read before the moves, so a
 /// frame the moves change (an armed wall jump, a fast fall: `after_motion`) is read as it
 /// stood.
 #[must_use]
 pub fn ends_this_frame(
     samus: &Samus,
     controller: &Controller,
-    requests: PoseRequests,
     content: &Content,
-) -> bool {
+) -> Option<ClipEnd> {
     let animation = &samus.animation;
     if AnimationTimer(animation.timer.0.wrapping_sub(1)).running() {
-        return false;
+        return None;
     }
     let next = AnimationFrame(animation.frame.0.wrapping_add(1));
     let Some(DelayItem::Instruction(instruction)) =
         content.delays.of(samus.pose).and_then(|list| list.at(next))
     else {
-        return false;
+        return None;
     };
     if running_momentum(samus) && controls(controller.held).contains(Control::Run) {
-        return false;
+        return None;
     }
     match instruction {
         Instruction::Transition(_)
         | Instruction::BySpeed(_)
-        | Instruction::ByItemsAndSpeed { .. } => true,
-        Instruction::AutoJumpTransition(_) => !requests
-            .ordinary
-            .is_some_and(|asked| JUMPS.contains(&asked)),
+        | Instruction::ByItemsAndSpeed { .. } => Some(ClipEnd::End),
+        Instruction::AutoJumpTransition(_) => Some(ClipEnd::EndUnlessJump),
         Instruction::NoOp(_)
         | Instruction::LoopIfHealthy
         | Instruction::DrainedFalling
         | Instruction::WallJump
         | Instruction::ByItems { .. }
         | Instruction::GoBack(_)
-        | Instruction::Loop => false,
+        | Instruction::Loop => None,
     }
 }
 

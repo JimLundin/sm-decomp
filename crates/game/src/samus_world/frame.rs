@@ -12,7 +12,7 @@ use data::pose::transition::{Control, Controls};
 use super::state::{X_RADIUS, dress};
 use crate::animation;
 use crate::collision::ScanOrder;
-use crate::pose::{Content, PoseRequests, controls};
+use crate::pose::{Content, controls};
 use crate::progress_world;
 use crate::state::Controller;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
@@ -47,8 +47,6 @@ pub struct FrameSource<'a> {
     pub ride: ElevatorRide,
     /// The requested-NMI count, whose parity orders the vertical scans.
     pub completed: u16,
-    /// The pose the frame's input asked for, which the auto-jump hack reads.
-    pub requests: PoseRequests,
     /// The delay lists.
     pub content: &'a Content,
 }
@@ -90,12 +88,7 @@ impl FrameSource<'_> {
                 ScanOrder::LeftToRight => Parity::Even,
                 ScanOrder::RightToLeft => Parity::Odd,
             },
-            animation_ends: animation::ends_this_frame(
-                samus,
-                self.controller,
-                self.requests,
-                self.content,
-            ),
+            animation_ends: animation::ends_this_frame(samus, self.controller, self.content),
             body,
         }
     }

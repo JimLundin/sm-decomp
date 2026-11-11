@@ -8,11 +8,12 @@ use crate::rules::{Gait, Lowers};
 use clean_types::button::{self, LEFT, PAD, RIGHT};
 use clean_types::{Action, Aim, Body, Buttons, Facing, Gun, Legs, Pose, Side};
 
-/// `PadChart`: forward held, the side she faces (§2): the first set above the pad's own buttons,
-/// so never on the pad. Only `seen` makes it.
-pub const FORWARD: Buttons = Buttons(PAD.0 + 1);
-/// `PadChart`: back held, the other side, the set above forward; likewise made by `seen` alone.
-pub const BACK: Buttons = Buttons(FORWARD.0 << 1);
+/// `PadChart`: forward held, the side she faces (§2). Its bit is one the pad's own buttons don't
+/// use (the chart's test holds it apart from `PAD`), and only `seen` sets it.
+pub const FORWARD: Buttons = Buttons(0x200);
+/// `PadChart`: back held, the other side. Its bit is apart from the pad's and from forward's,
+/// and likewise only `seen` sets it.
+pub const BACK: Buttons = Buttons(0x400);
 
 /// `PadChart`: the pad as the chart sees it, facing `facing`.
 ///
@@ -40,33 +41,33 @@ pub const fn seen(pad: Buttons, facing: Facing) -> Buttons {
 /// What she is doing, as the spec's tables name it ("She is", "She was").
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Doing {
-    /// Standing still, or landing.
+    /// She stands still, or she is landing.
     Standing,
-    /// Running.
+    /// She runs, upright, on the ground.
     Running,
-    /// Taking off: the first poses of a straight jump.
+    /// She takes off: the first poses of a straight jump.
     TakingOff,
-    /// In a straight jump, upright.
+    /// She is in a straight jump, upright.
     StraightJump,
-    /// Spinning.
+    /// She is in a spin jump.
     Spinning,
-    /// Falling, upright.
+    /// She falls, upright.
     Falling,
-    /// Wall jumping.
+    /// She is in a wall jump's spin.
     WallJumping,
-    /// Moonwalking.
+    /// She walks backwards, looking the other way.
     Moonwalking,
-    /// Against the wall.
+    /// She is pressed to the wall she ran into.
     AgainstWall,
-    /// Crouched.
+    /// She is crouched and still.
     Crouched,
-    /// A ball, on the ground or in the air.
+    /// She is a ball, on the ground or in the air.
     Ball,
-    /// The spring ball's hop.
+    /// She is the spring ball on its hop.
     Hop,
-    /// Turning, on the ground or in the air.
+    /// She turns round, on the ground or in the air.
     Turning,
-    /// Her body changing shape: crouching, standing up, morphing or unmorphing.
+    /// Her body changes shape: crouching, standing up, morphing or unmorphing.
     Shaping,
 }
 
@@ -91,44 +92,46 @@ pub enum Moves {
     /// Her speed builds by the table's row for what she is doing, as the drift says, and she
     /// moves by it and her dash.
     Build(Gait, Drift),
-    /// Standing, against the wall, crouched: her dash only, then a halt.
-    DashThenHalt,
+    /// Standing, against the wall, crouched: the pad doesn't move her; she moves by her dash
+    /// only, then halts.
+    HaltsAfterDash,
     /// The ball at rest on the ground: braking or skidding it rolls on, keeping its dash; with a
-    /// vertical speed, her dash only; else as standing.
+    /// vertical motion, her dash only; else as standing.
     Rest,
     /// `Jumping`: taking off, her dash only, a dash to lose gone first, following the pad.
     TakeOff,
     /// While her body changes shape: her dash only, keeping both speeds.
-    Dash,
+    DashKeepingSpeeds,
 }
 
-/// `Landing`, `FollowingTheGround`: what a floor does to her in her situation: one her
+/// `Landing`, `FollowingTheGround`: what a floor does to her, named for her situation: one her
 /// vertical speed meets, and the ground pull finding none.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Footing {
-    /// A floor lands her (`Landing`); the ground pull finding none walks her off a ledge.
-    Lands,
+    /// On her feet, upright or crouched: a floor lands her (`Landing`); the ground pull finding
+    /// none walks her off a ledge.
+    OnHerFeet,
     /// While her body changes shape: a floor stops only her vertical motion, and the ground
     /// pull finding none doesn't move her. With a vertical motion on the ground she moves by
     /// it as in the air.
-    Settles,
+    ChangingShape,
     /// Turning: a floor stops only the move, her vertical speed kept and growing by the pull,
     /// and the ground pull finding none sinks her by it.
-    Holds,
+    Turning,
     /// The ball: a floor bounces it, hops the spring ball with jump held, or brings it to rest;
     /// on the ground, with a vertical motion it moves by it, held flush by a floor and walking
     /// off a ledge where there is none.
-    Bounces,
+    Ball,
 }
 
 /// A state of the pose chart: what she is doing, how she moves, what a floor does to her, and
 /// its pad chart's rows, the last of them apart (`PadChart`: it covers nothing else fitting).
 pub struct Situation {
-    /// What she is doing.
+    /// What she is doing, as the spec's tables name it.
     pub doing: Doing,
-    /// How she moves.
+    /// How she moves horizontally there.
     pub moves: Moves,
-    /// What a floor does to her.
+    /// What a floor does to her there.
     pub footing: Footing,
     /// Its pad chart rows but the last.
     pub rows: &'static [Row],
@@ -193,7 +196,7 @@ pub struct Aiming {
 pub enum NextFacing {
     /// As she faced.
     Kept,
-    /// Back.
+    /// The other way from her facing.
     Back,
     /// This side of the pad, whichever way she faced.
     To(Facing),
@@ -202,17 +205,17 @@ pub enum NextFacing {
 /// The pose a row leads to; `None` keeps that part of her pose as it was.
 #[derive(Clone, Copy)]
 pub struct Next {
-    /// The body.
+    /// Her body in the pose it leads to.
     pub body: Option<Body>,
-    /// The action.
+    /// What she does in the pose it leads to.
     pub action: Option<Action>,
-    /// The facing.
+    /// Which way the pose it leads to faces.
     pub facing: NextFacing,
     /// The first aim whose tests pass; where none does, the aim is kept.
     pub aim: &'static [Aiming],
-    /// The gun.
+    /// Whether her gun is drawn in the pose it leads to.
     pub gun: Option<Gun>,
-    /// The legs.
+    /// Whether her legs stride in the pose it leads to.
     pub legs: Option<Legs>,
     /// `ShrinkingLowersHer`: the frame this pose starts, she looks down its own distance (the
     /// rules' crouch or morph distance) and is lowered by the room it finds; standing up and
@@ -249,17 +252,22 @@ pub enum Effect {
     Rise,
     /// `Jumping`'s take-off from a crouch: she is also lifted, if she was crouched without aim.
     LiftIfUnaimed,
-    /// `TurningRound`.
+    /// `TurningRound`: she turns round into a turn: her dash joins her speed and she skids
+    /// against her new facing. She goes on dashing until the turn's own moves (`Dashing`).
     TurnRound,
-    /// She follows the pad again: a skid ends, along her new facing.
+    /// `TurningRound`, `Dashing`: where the pose chosen faces the other way (a spin reversed, a
+    /// ball turning round), her dash joins her speed, she skids, and she stops dashing. A ball
+    /// held to the side it already faces doesn't turn.
+    TurnRoundIfFacingChanges,
+    /// A let-go effect: she follows the pad again, a skid ending along her new facing.
     EndSkid,
-    /// As running: the dash joins her speed and she carries on, braking.
+    /// A let-go effect, "as running": the dash joins her speed and she carries on, braking.
     AsRunning,
-    /// Dash 0.
+    /// Her dash is gone: dash 0, a let-go effect or a turn's end.
     LoseDash,
-    /// Horizontal speed 0, dash 0, following the pad.
+    /// A let-go effect, a halt: horizontal speed 0, dash 0, following the pad.
     Halt,
-    /// `Moonfall`.
+    /// `Moonfall`: a spin entered as a turn ends starts with no rise.
     Moonfall,
     /// `Jumping`: the change into a straight jump or a fall: with a dash she carries on along
     /// her facing, else she follows the pad.
@@ -329,8 +337,9 @@ pub struct Row {
     pub beats: &'static [RowId],
     /// `PadChart`: the rows of its situation it beats, but for a condition.
     pub beats_unless: &'static [Beat],
-    /// `AimingAndShooting`: its kept running pose counts as chosen, bringing the step.
-    pub steps: bool,
+    /// `AimingAndShooting`: its kept running pose counts as chosen, bringing the aim change's
+    /// step.
+    pub aim_step: bool,
 }
 
 /// A row's identity: its first cell in §7's tables, the Pad cell for the pad chart's rows. It is
@@ -508,7 +517,7 @@ pub const NO_CHANGE: Row = Row {
     effects: &[],
     beats: &[],
     beats_unless: &[],
-    steps: false,
+    aim_step: false,
 };
 
 /// "kept": her pose stays as it is.

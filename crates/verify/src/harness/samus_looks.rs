@@ -8,10 +8,12 @@
 //! records: the State is decoded from record N, her step through the step map of her pose's
 //! clip; the inputs from records N and N+1, at the animation's turn, as the decode notes give
 //! them; the State the model leaves is compared with record N+1's, her step through the step map
-//! of the clip of the pose she ends the frame in. A wall jump readied is samus-motion's near-wall
-//! test, from its model over record N where that model runs the frame; elsewhere it is read off
-//! record N+1's own step, and the fields such a frame's readied changes are unverified, not
-//! matched. The null model is her State left as record N has it.
+//! of the clip of the pose she ends the frame in. A wall jump readied, dashing, a dash begun or
+//! lost and the pose an end handed over are samus-motion's outputs, from its model over record N
+//! where that model runs the frame; elsewhere they are read off the records, and a wall jump
+//! readied off record N+1's own step, so the fields such a frame's readied changes are
+//! unverified, not matched. Heading down is record N+1's direction. The null model is her State
+//! left as record N has it.
 
 pub mod cases;
 pub mod import;
@@ -23,7 +25,7 @@ use clean_model_samus_looks::{
     BehaviourId, Boost, CATALOGUE, Content, Frames, Inputs, Instruction, Laps, Liquid, Move,
     Playhead, Rules, RunDown, State, Step, Vertical, update,
 };
-use clean_model_samus_motion::WallTest;
+use clean_model_samus_motion::{Dashing, Outcome, WallTest};
 use clean_types::{Action, BoostStage, Item, Set};
 use data::pose::PoseId;
 use data::pose::animation::AnimationFrame;
@@ -62,8 +64,8 @@ const SAMUS_NEW_STATE_HANDLER: WramWord = wram("FRAME_HANDLER_BETA", 0x0A44);
 const ANIMATING: [u16; 4] = [0xE725, 0xE7F5, 0xE833, 0xE8EC];
 /// Bank $90 log: the speed booster's counter, the stage in its high byte and the laps in its low.
 const SPEED_BOOST_COUNTER: WramWord = wram("SPEED_BOOSTER_LEVEL", 0x0B3E);
-/// Bank $90 log: her dash's momentum, the extra run speed, 0 without one.
-const EXTRA_RUN_SPEED: WramWord = wram("SAMUS_X_EXTRA_RUN_SPEED", 0x0B3C);
+/// Bank $90 log: whether she is dashing, 0 when not.
+const DASHING: WramWord = source::SAMUS_HAS_MOMENTUM_FLAG;
 /// Bank $90 log: the animation's frame buffer, the slowdown its clip moves on with (`$90:8078`).
 const FRAME_BUFFER: WramWord = wram("SAMUS_ANIM_FRAME_BUFFER", 0x0A9C);
 /// Bank $90 log: the X speed divisor, the start's slowdown with the gravity suit (`$91:FB3F`).
@@ -299,34 +301,22 @@ impl SamusLooks {
         let after = self.imported(next)?;
         let held = word(from, source::JOYPAD1_LASTKEYS)?;
         let pressing = |binding| Ok::<_, Skip>(held & word(from, binding)? != 0);
-        let dash = [
-            word(from, EXTRA_RUN_SPEED)? != 0,
-            word(next, EXTRA_RUN_SPEED)? != 0,
-        ];
-        let began = dash == [false, true];
         let restarts = byte(from, source::SAMUS_MOVEMENT_TYPE)? == STANDING
             && STANDING_UNAIMED.contains(&before.id.0)
             && pressing(BINDING_SHOOT)?;
-        let motion = self.motion.wall_test(from, Interval::ending_at(next));
-        let (readied, from_the_record) = if let Ok(test) = motion {
-            (test == WallTest::Readied, false)
-        } else {
-            let readied = readied(before, after, from, next)?;
-            (readied, readied)
+        let motion = match self.motion.outcome(from, Interval::ending_at(next)) {
+            Ok(outcome) => Motion::from(&outcome),
+            Err(_) => from_the_records(before, after, from, next)?,
         };
-        let handed_over = word(next, POSE_CHANGE_COMMAND)? == ANIMATION_FINISHED
-            && word(next, SUPER_SPECIAL_POSE)? & NO_POSE == 0;
-        let mut moves = Set::<Move>::default();
-        moves[Move::DashBegan] = began;
+        let from_the_record = motion.readied_from_the_record;
+        let mut moves = motion.moves;
         moves[Move::StandingRestart] = restarts;
-        moves[Move::WallJumpReadied] = readied;
-        moves[Move::HandedOver] = handed_over;
-        moves[Move::DashLost] = dash == [true, false];
         let equipped = word(next, source::EQUIPPED_ITEMS)?;
         let mut items = Set::<Item>::default();
         for (item, bit) in ITEM_BITS {
             items[item] = equipped & bit != 0;
         }
+        // Heading down is record N+1's direction, not samus-motion's (`Motion`).
         let vertical = if word(next, source::SAMUS_Y_DIR)? == DOWN {
             Vertical::Down(word(next, source::SAMUS_Y_SPEED)?)
         } else {
@@ -339,7 +329,7 @@ impl SamusLooks {
                 pose: before.pose,
                 pose_after: after.pose,
                 moves,
-                dashing: dash[0] || began,
+                dashing: motion.dashing,
                 run_held: pressing(source::BINDING_RUN)?,
                 vertical,
                 energy: word(next, source::SAMUS_HEALTH)?,
@@ -357,6 +347,61 @@ impl SamusLooks {
             readied_from_the_record: from_the_record,
         })
     }
+}
+
+/// What her motion gives the animation's turn: samus-motion's model's outputs where it runs the
+/// frame, else the decode notes' readings of records N and N+1.
+///
+/// Heading down isn't among them: the rising hold's harness cases are landings from a straight
+/// jump, where record N+1 shows no direction and samus-motion's heading down, as her moves leave
+/// her, is down. The landing's new clip starts either way, so every frame matches with both, but
+/// those cases would exercise no hold (samus-looks.gaps.md, 5).
+struct Motion {
+    /// A wall jump readied, a dash begun or lost, the pose an end handed over.
+    moves: Set<Move>,
+    /// She is dashing as her moves leave it.
+    dashing: bool,
+    /// The wall jump readied is read off record N+1's own step.
+    readied_from_the_record: bool,
+}
+
+impl From<&Outcome> for Motion {
+    fn from(outcome: &Outcome) -> Self {
+        let mut moves = Set::<Move>::default();
+        moves[Move::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
+        moves[Move::DashBegan] = outcome.dash_began;
+        moves[Move::DashLost] = outcome.dash_lost;
+        moves[Move::HandedOver] = outcome.handed_over;
+        Self {
+            moves,
+            dashing: outcome.dashing_after_moves == Dashing::On,
+            readied_from_the_record: false,
+        }
+    }
+}
+
+/// Her motion's outputs on a frame samus-motion's model doesn't run, from records `from` and
+/// `next`: dashing is `0B3C` at N or a dash begun, a dash begun or lost the flag's change from N
+/// to N+1, and handed over the super special command at N+1.
+fn from_the_records(
+    before: &Imported,
+    after: &Imported,
+    from: &FrameRecord,
+    next: &FrameRecord,
+) -> Result<Motion, Skip> {
+    let dash = [word(from, DASHING)? != 0, word(next, DASHING)? != 0];
+    let readied = readied(before, after, from, next)?;
+    let mut moves = Set::<Move>::default();
+    moves[Move::WallJumpReadied] = readied;
+    moves[Move::DashBegan] = dash == [false, true];
+    moves[Move::DashLost] = dash == [true, false];
+    moves[Move::HandedOver] = word(next, POSE_CHANGE_COMMAND)? == ANIMATION_FINISHED
+        && word(next, SUPER_SPECIAL_POSE)? & NO_POSE == 0;
+    Ok(Motion {
+        moves,
+        dashing: dash[0] || dash == [false, true],
+        readied_from_the_record: readied,
+    })
 }
 
 /// Whether samus-motion's near-wall test readied a wall jump on a frame its model doesn't run in,
@@ -506,7 +551,7 @@ impl Domain for SamusLooks {
     /// ends (terrain-quicksand 156 to 157, at the morph). Record N+1's boost is read only to find
     /// that writer's frames.
     fn masks(&self, from: &FrameRecord, next: &FrameRecord, (): &()) -> Result<Vec<Mask>, Skip> {
-        let dash = [word(from, EXTRA_RUN_SPEED)?, word(next, EXTRA_RUN_SPEED)?];
+        let dash = [word(from, DASHING)?, word(next, DASHING)?];
         let boost = [
             word(from, SPEED_BOOST_COUNTER)?,
             word(next, SPEED_BOOST_COUNTER)?,

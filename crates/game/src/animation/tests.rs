@@ -277,18 +277,16 @@ fn the_end_is_read_on_the_frame_animate_ends_the_turn() {
     let content = content();
     let mut turn = samus(TURN, MovementType::TurningAroundOnGround, 0, 2);
     let controller = Controller::default();
-    let none = PoseRequests::default();
     for _ in 0..5 {
-        assert!(!ends_this_frame(&turn, &controller, none, &content));
+        assert_eq!(ends_this_frame(&turn, &controller, &content), None);
         frame(&mut turn, &content);
     }
-    assert!(ends_this_frame(&turn, &controller, none, &content));
-    // A jump asked for holds the auto-jump transition back.
-    let jump = PoseRequests {
-        ordinary: Some(PoseId(0x4B)),
-    };
-    assert!(!ends_this_frame(&turn, &controller, jump, &content));
+    // The turn's auto-jump transition is the end unless a jump, whatever the pad asks.
+    assert_eq!(
+        ends_this_frame(&turn, &controller, &content),
+        Some(ClipEnd::EndUnlessJump)
+    );
     // A looping list never ends.
     let looping = samus(LOOPING, MovementType::Standing, 1, 1);
-    assert!(!ends_this_frame(&looping, &controller, none, &content));
+    assert_eq!(ends_this_frame(&looping, &controller, &content), None);
 }

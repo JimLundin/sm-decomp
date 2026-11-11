@@ -57,6 +57,14 @@ original's bytes as data.
   - An `again`, a `branch` or a rest leading to another control, a delay list's last byte a delay
     (the clip moving on past its list), and an ending clip with a mark, a running, standing or kept
     pose (spec §1.5, `ended` from the frame's start): none in the game's lists.
+- **Samus's motion in the demos** (the samus-motion domain, `docs/behaviours/samus-motion.md`
+  `AnimationEnds` and §10; `docs/behaviours/samus-motion.decode.md`, "Round 18's amendments"): the
+  spec covers play. While a demo plays (`0A60` = `$90:E91D`), the original's end unless a jump
+  (`$90:8370`) hands over whatever the pad, where the spec's gives way to the pad's take-off or
+  spin. Today's engine takes the end from the original's list (`game::animation`); once its pose
+  comes from samus-motion's hand-over (`docs/behaviours/samus-looks.gaps.md`, gaps 1 and 2), a demo
+  pressing jump on a turn's or a landing's last frame would take off where the original stands. No
+  recorded frame has one.
 - **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
   original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
   outer edge"): stated simplifications, each unreachable in vanilla.

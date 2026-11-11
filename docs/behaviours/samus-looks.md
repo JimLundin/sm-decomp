@@ -49,7 +49,7 @@ allows and read back. A vector gives them as `before` and compares them as `afte
 
 | Output | Type | Read by |
 | --- | --- | --- |
-| end | the end her clip reaches this frame (`ClipEnds`): none, an end, or an end unless a jump; known from the frame's start, before samus-motion picks her pose (§6) | samus-motion (`AnimationEnds`, which takes no hand-over from an end unless a jump when its own pad chart asks for a take-off or a spin from the ground) |
+| end | the end her clip reaches this frame (`ClipEnds`): none, an end, or an end unless a jump; known from the frame's start, before samus-motion picks her pose (§6) | samus-motion (`AnimationEnds`, where an end unless a jump gives way when its pad chart's pose that frame is a take-off aimed forward or a spin) |
 | turned far | `bool`, at the frame's end (`SpinTurnedFar`) | samus-motion (`WallJump`), the next frame |
 | sounds | the sound asked for this frame, at most one (a frame passes at most one control): `PlainSpin`, `SpaceJump`, `ScrewAttack` (`WallJumpBranch`), `Boosting` (`BoostStages`) | the sound domain |
 | her step and the boost stage | as §1 | part 2 (her sprite, her glow), the shinespark, the echoes, the blocks, the enemies |
@@ -74,13 +74,13 @@ each pose and sprite has its own clip. She takes another pose when either part d
 | slowdown | frames, 0 to 3: added to the holds her clip moves on to: 3 in water, whatever her suit; 2 in acid, whatever her suit; 2 in lava without the gravity suit, 0 with it; 0 out of a liquid (the liquids) | `ClipPlays`, `ClipControls`, `Breathing`, `WallJumpBranch`, `HandOverSlowdown`, `RunPace`, `BoostStages` |
 | the start's slowdown | frames, 0 to 3: added to the first hold of the pose she takes: 3 with the feet of that pose under water, 2 under lava or acid; 0 with the gravity suit, out of a liquid, or where the liquid doesn't slow her (the liquids) | `StartingClip`, `HandOverSlowdown` |
 | run held | `bool`: the pad holds run this frame | `RunPace`, `BoostStages` |
-| handed over | `bool`: samus-motion took the pose her clip's end handed over this frame (`AnimationEnds`) | `HandOverSlowdown` |
-| dashing | `bool`: she has a dash's momentum as the clip moves on (samus-motion's dash, from when a run with run held starts it until it is lost) | `RunPace`, `BoostStages` |
-| dash began, dash lost | `bool` each: a dash began this frame, before the clip moves on; it was lost this frame | `BoostStages` |
+| handed over | `bool`: samus-motion took the pose her clip's end handed over this frame (samus-motion's `handed over`, its §1.4) | `HandOverSlowdown` |
+| dashing | `bool`: she is dashing as the clip moves on (samus-motion's `dashing after her moves`, its §1.4) | `RunPace`, `BoostStages` |
+| dash began, dash lost | `bool` each: a dash began this frame, before the clip moves on; it was lost this frame (samus-motion's `dash began` and `dash lost`) | `BoostStages` |
 | standing restarts | `bool`: samus-motion's "the standing animation restarts" (`AimingAndShooting`) | `StandingRestart` |
 | wall jump readied | `bool`: samus-motion's near-wall test readied a wall jump (`WallJump`) | `WallJumpReady` |
-| her downward speed | whole pixels a frame, 0 when she rises or stays (samus-motion) | `FastFall` |
-| heading down | `bool`: her vertical motion is downward this frame, a fall at 0 included | `RisingHold` |
+| her downward speed | whole pixels a frame: the pixel part of samus-motion's vertical speed at the frame's end while she heads down, 0 otherwise | `FastFall` |
+| heading down | `bool`: samus-motion's `heading down` (its §1.4), as her moves leave her, before what they met acts and before the pose change: she falls, a fall at 0 included, and not in the moonfall; a rise a ceiling stops this frame is not heading down | `RisingHold` |
 | sounds waiting | 0 to 15: the sounds waiting in the queue the speed booster's sound joins, before it (the sound domain) | `BoostingLap` |
 
 ### 1.4 Her clips and the run's paces
@@ -432,3 +432,10 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
 1. The laps left at 0 with the speed booster (a dash begun without it, then the booster switched
    on mid-run) is outside the inputs' domain (§1.5); the pause screen's equipment change is out of
    scope.
+2. Her fall's fast fall picture reads her downward speed here. The game reads the size of her
+   vertical speed whichever way it points, so a fall's pose that rises at 5 px a frame or more
+   (an unmorph's end that carries such a rise into the crouch, then a walk off a ledge) would show
+   it too. No record rises so fast in a fall's pose (the fastest is 2.4000). Decided (a): this
+   domain reads the size of her vertical speed as her moves leave it, from its engine-wiring
+   round, which changes `FastFall`'s rule and its input and adds the vector; the rule above
+   stands until then.

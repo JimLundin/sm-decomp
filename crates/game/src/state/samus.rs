@@ -50,6 +50,17 @@ pub enum Bounce {
     Second,
 }
 
+/// Whether she is dashing: on from a run with run held until a halt, a turn or the pad's
+/// let-go ends it, whatever her dash (crouched from a run she goes on dashing with none).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Dashing {
+    /// Not dashing.
+    #[default]
+    Off,
+    /// Dashing.
+    On,
+}
+
 /// Her motion as the game keeps it: the quantities a later frame reads.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Motion {
@@ -59,8 +70,8 @@ pub struct Motion {
     pub base_speed: Exact,
     /// The speed running adds, never negative.
     pub extra_run: Exact,
-    /// Whether the run speed carries into rows that don't run.
-    pub momentum: bool,
+    /// Whether she is dashing.
+    pub dashing: Dashing,
     /// What the base speed is doing.
     pub mode: SpeedMode,
     /// The vertical speed's magnitude.

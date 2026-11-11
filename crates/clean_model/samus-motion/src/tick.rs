@@ -2,10 +2,10 @@
 //! the rules and the cells reached that the frame's moves and looks share (`TouchedCells`).
 
 use crate::rules::Rules;
-use clean_types::{Buttons, Item, Parity, Pose, Radius, Set, Touch, World};
+use clean_types::{Buttons, ClipEnd, Item, Parity, Pose, Radius, Set, Touch, World};
 
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
-/// and feeds us (the header): an animation's end from its timing.
+/// and feeds us (the header): the end her animation reaches, from its timing.
 pub struct Frame<'a> {
     /// The buttons held as the frame starts.
     pub pad: Buttons,
@@ -22,22 +22,26 @@ pub struct Frame<'a> {
     pub elevator_moving: bool,
     /// `BlocksStopFlush`: the frame count's parity.
     pub parity: Parity,
-    /// `AnimationEnds`: her pose's animation ends this frame.
-    pub animation_ends: bool,
+    /// `AnimationEnds`: the end her pose's animation reaches this frame, if any (samus-looks'
+    /// `ClipEnds`): an end, or an end unless a jump.
+    pub animation_ends: Option<ClipEnd>,
     /// §1.3 body size: each pose's half-width and half-height, the game's data. The frame's
     /// moves use the body of the pose she starts it in; the chosen pose's is read only where pose
-    /// fit sees it grow or a change of shape lowers her.
+    /// fit sees it grow or a change of shape lowers her. `RidingTheElevator`: while a moving
+    /// elevator carries her facing the screen, the caller gives, as the body of the pose she
+    /// starts the frame in, the body she had as the ride began, not the body of facing the
+    /// screen.
     pub body: &'a dyn Fn(Pose) -> Radius,
 }
 
 /// One frame's moves and looks: the frame they are made in, the room and rules they meet, and
 /// the cells they reach, in order (`TouchedCells`). §8's methods are in `collide`.
 pub struct Tick<'a> {
-    /// The frame.
+    /// What the frame brings from the player and the world.
     pub frame: &'a Frame<'a>,
-    /// The room.
+    /// The room her moves and looks meet.
     pub world: &'a dyn World,
-    /// The rules.
+    /// The tuning parameters her motion reads.
     pub rules: &'a Rules,
     /// The cells her moves and looks reach, in order.
     pub reached: Vec<Touch>,

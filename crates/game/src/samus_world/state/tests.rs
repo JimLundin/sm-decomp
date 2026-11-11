@@ -8,12 +8,12 @@ use super::{X_RADIUS, clean_of, named, pose_id, write_back};
 use crate::collision::Room;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::model::num::Fixed;
-use crate::pose::{Content, PoseRequests};
+use crate::pose::Content;
 use crate::samus_world::SamusWorld;
 use crate::samus_world::frame::FrameSource;
 use crate::state::room::{Block, BlockColumns, ElevatorRide};
 use crate::state::samus::{
-    Bounce, Item, Motion, MovementType, PoseId, PoseRecord, Position, Samus, SpeedMode,
+    Bounce, Dashing, Item, Motion, MovementType, PoseId, PoseRecord, Position, Samus, SpeedMode,
     VerticalMotion,
 };
 use crate::state::slots::FlagSet;
@@ -48,7 +48,7 @@ fn motion(mode: SpeedMode, vertical: VerticalMotion, speed: u32) -> Motion {
         },
         base_speed: Fixed::new(1, 0x8000),
         extra_run: Fixed::new(0, 0x3000),
-        momentum: false,
+        dashing: Dashing::Off,
         mode,
         vertical_speed: Fixed(speed),
         vertical,
@@ -124,13 +124,13 @@ fn the_games_words_come_back_as_they_went() {
         ),
     ];
     for (pose, mode, vertical, speed) in cases {
-        for (momentum, seated) in [(false, false), (true, true)] {
+        for (dashing, seated) in [(Dashing::Off, false), (Dashing::On, true)] {
             let before = Samus {
                 slope_adjusted: seated,
                 ..samus(
                     pose,
                     Motion {
-                        momentum,
+                        dashing,
                         ..motion(mode, vertical, speed)
                     },
                 )
@@ -138,11 +138,10 @@ fn the_games_words_come_back_as_they_went() {
             let Some(model) = clean_of(&before) else {
                 panic!("pose {pose:?} is hers");
             };
-            // The momentum flag and, on the ground, the vertical direction are the words the
-            // write-back keeps as the frame started with them.
+            // On the ground the vertical direction is the word the write-back keeps as the frame
+            // started with it; dashing comes back from the model.
             let mut after = Samus {
                 motion: Motion {
-                    momentum,
                     vertical,
                     ..Motion::default()
                 },
@@ -278,7 +277,7 @@ fn a_frame_on_the_floor_runs_her_right() {
                 y: Fixed::new(0x30 - 0x15, 0),
             },
             base_speed: Fixed::new(1, 0),
-            momentum: true,
+            dashing: Dashing::On,
             ..Motion::default()
         },
     );
@@ -295,7 +294,6 @@ fn a_frame_on_the_floor_runs_her_right() {
         controller: &controller,
         ride: ElevatorRide::default(),
         completed: 0,
-        requests: PoseRequests::default(),
         content: &content,
     }
     .frame(&|_| Radius {

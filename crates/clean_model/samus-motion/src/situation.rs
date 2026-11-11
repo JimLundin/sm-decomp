@@ -12,6 +12,7 @@
 
 use crate::rows::Effect::{
     AsRunning, EndSkid, Halt, Launch, LiftIfUnaimed, LoseDash, Rise, SpinOn, TurnRound,
+    TurnRoundIfFacingChanges,
 };
 use crate::rows::{
     AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, Class, Doing, Drift, Entering, FORWARD, FORWARD_AIM,
@@ -409,8 +410,8 @@ const NAMED: Buttons = Buttons(FORWARD.0 | BACK.0 | SHOOT.0 | UDA.0);
 /// Standing still, or landing.
 static STANDING: Situation = Situation {
     doing: Doing::Standing,
-    moves: Moves::DashThenHalt,
-    footing: Footing::Lands,
+    moves: Moves::HaltsAfterDash,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::DownPressed,
@@ -542,7 +543,7 @@ static STANDING: Situation = Situation {
 static RUNNING: Situation = Situation {
     doing: Doing::Running,
     moves: Moves::Build(Gait::Running, Drift::Ground),
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::DownPressed,
@@ -632,7 +633,7 @@ static RUNNING: Situation = Situation {
             id: RowId::AnythingElseMoving,
             needs: &[Test::Moving],
             effects: &[AsRunning],
-            steps: true,
+            aim_step: true,
             ..NO_CHANGE
         },
     ],
@@ -648,7 +649,7 @@ static RUNNING: Situation = Situation {
 static TAKING_OFF: Situation = Situation {
     doing: Doing::TakingOff,
     moves: Moves::TakeOff,
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::JumpAndForwardHeld,
@@ -701,7 +702,7 @@ static TAKING_OFF: Situation = Situation {
 static STRAIGHT_JUMP: Situation = Situation {
     doing: Doing::StraightJump,
     moves: Moves::Build(Gait::StraightJump, Drift::Air),
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::AimingDownDownPressed,
@@ -812,7 +813,7 @@ static STRAIGHT_JUMP: Situation = Situation {
 static SPINNING: Situation = Situation {
     doing: Doing::Spinning,
     moves: Moves::Build(Gait::SpinJump, Drift::Spin),
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::ShootPressed,
@@ -855,7 +856,7 @@ static SPINNING: Situation = Situation {
                 facing: NextFacing::Back,
                 ..TO_SPINNING
             },
-            effects: &[TurnRound],
+            effects: &[TurnRoundIfFacingChanges],
             ..NO_CHANGE
         },
         Row {
@@ -875,7 +876,7 @@ static SPINNING: Situation = Situation {
 static FALLING: Situation = Situation {
     doing: Doing::Falling,
     moves: Moves::Build(Gait::Falling, Drift::Air),
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::AimingDownDownPressed,
@@ -953,8 +954,8 @@ static FALLING: Situation = Situation {
 /// Crouched.
 static CROUCHED: Situation = Situation {
     doing: Doing::Crouched,
-    moves: Moves::DashThenHalt,
-    footing: Footing::Lands,
+    moves: Moves::HaltsAfterDash,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::DownPressed,
@@ -1082,7 +1083,7 @@ const BALL_ON_GROUND: &[Row] = &[
             facing: NextFacing::To(Facing::Right),
             ..TO_ROLLING
         },
-        effects: &[TurnRound],
+        effects: &[TurnRoundIfFacingChanges],
         beats: &[RowId::LeftHeld],
         ..NO_CHANGE
     },
@@ -1093,7 +1094,7 @@ const BALL_ON_GROUND: &[Row] = &[
             facing: NextFacing::To(Facing::Left),
             ..TO_ROLLING
         },
-        effects: &[TurnRound],
+        effects: &[TurnRoundIfFacingChanges],
         ..NO_CHANGE
     },
 ];
@@ -1113,7 +1114,7 @@ const BALL_IN_THE_AIR: &[Row] = &[
             facing: NextFacing::To(Facing::Right),
             ..KEEP_POSE
         },
-        effects: &[TurnRound],
+        effects: &[TurnRoundIfFacingChanges],
         beats_unless: &[Beat {
             row: RowId::LeftHeld,
             unless: &[
@@ -1130,7 +1131,7 @@ const BALL_IN_THE_AIR: &[Row] = &[
             facing: NextFacing::To(Facing::Left),
             ..KEEP_POSE
         },
-        effects: &[TurnRound],
+        effects: &[TurnRoundIfFacingChanges],
         ..NO_CHANGE
     },
     Row {
@@ -1155,7 +1156,7 @@ const BALL_ON_THE_HOP: &[Row] = &[
             facing: NextFacing::To(Facing::Right),
             ..KEEP_POSE
         },
-        effects: &[TurnRound],
+        effects: &[TurnRoundIfFacingChanges],
         beats: &[RowId::LeftHeld],
         ..NO_CHANGE
     },
@@ -1166,7 +1167,7 @@ const BALL_ON_THE_HOP: &[Row] = &[
             facing: NextFacing::To(Facing::Left),
             ..KEEP_POSE
         },
-        effects: &[TurnRound],
+        effects: &[TurnRoundIfFacingChanges],
         ..NO_CHANGE
     },
 ];
@@ -1200,7 +1201,7 @@ const SPRING_BALL_HALTS: Row = Row {
 static ROLLING: Situation = Situation {
     doing: Doing::Ball,
     moves: Moves::Build(Gait::Rolling, Drift::Ground),
-    footing: Footing::Bounces,
+    footing: Footing::Ball,
     rows: BALL_ON_GROUND,
     last: BALL_COMES_TO_REST,
 };
@@ -1209,7 +1210,7 @@ static ROLLING: Situation = Situation {
 static RESTING: Situation = Situation {
     doing: Doing::Ball,
     moves: Moves::Rest,
-    footing: Footing::Bounces,
+    footing: Footing::Ball,
     rows: BALL_ON_GROUND,
     last: BALL_COMES_TO_REST,
 };
@@ -1218,7 +1219,7 @@ static RESTING: Situation = Situation {
 static BALL_IN_AIR: Situation = Situation {
     doing: Doing::Ball,
     moves: Moves::Build(Gait::Falling, Drift::BallAir),
-    footing: Footing::Bounces,
+    footing: Footing::Ball,
     rows: BALL_IN_THE_AIR,
     last: BALL_KEEPS_ITS_POSE,
 };
@@ -1227,7 +1228,7 @@ static BALL_IN_AIR: Situation = Situation {
 static HOP: Situation = Situation {
     doing: Doing::Hop,
     moves: Moves::Build(Gait::StraightJump, Drift::BallAir),
-    footing: Footing::Bounces,
+    footing: Footing::Ball,
     rows: BALL_ON_THE_HOP,
     last: SPRING_BALL_HALTS,
 };
@@ -1236,7 +1237,7 @@ static HOP: Situation = Situation {
 static TURNING: Situation = Situation {
     doing: Doing::Turning,
     moves: Moves::Build(Gait::Turning, Drift::Ground),
-    footing: Footing::Holds,
+    footing: Footing::Turning,
     rows: &[
         Row {
             id: RowId::AimedUpOrDownForwardForwardHeldAndJumpPressed,
@@ -1282,7 +1283,7 @@ static TURNING: Situation = Situation {
 static TURNING_ON: Situation = Situation {
     doing: Doing::Turning,
     moves: Moves::Build(Gait::Turning, Drift::Ground),
-    footing: Footing::Holds,
+    footing: Footing::Turning,
     rows: &[Row {
         id: RowId::AnyButtonHeld,
         needs: &[Held(ANY_BUTTON)],
@@ -1298,8 +1299,8 @@ static TURNING_ON: Situation = Situation {
 /// Her body changing shape: the pad has no say until the animation ends.
 static SHAPING: Situation = Situation {
     doing: Doing::Shaping,
-    moves: Moves::Dash,
-    footing: Footing::Settles,
+    moves: Moves::DashKeepingSpeeds,
+    footing: Footing::ChangingShape,
     rows: &[],
     last: Row {
         id: RowId::AnythingOrNothingHeld,
@@ -1311,7 +1312,7 @@ static SHAPING: Situation = Situation {
 static MOONWALKING: Situation = Situation {
     doing: Doing::Moonwalking,
     moves: Moves::Build(Gait::Moonwalking, Drift::Ground),
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::DownPressed,
@@ -1383,7 +1384,7 @@ static MOONWALKING: Situation = Situation {
 static WALL_JUMPING: Situation = Situation {
     doing: Doing::WallJumping,
     moves: Moves::Build(Gait::SpinJump, Drift::WallJump),
-    footing: Footing::Lands,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::DownPressed,
@@ -1418,7 +1419,7 @@ static WALL_JUMPING: Situation = Situation {
                 facing: NextFacing::Back,
                 ..TO_SPINNING
             },
-            effects: &[TurnRound],
+            effects: &[TurnRoundIfFacingChanges],
             beats: &[RowId::ShootHeld, RowId::AimUpOrAimDownHeld, RowId::JumpHeld],
             ..NO_CHANGE
         },
@@ -1439,8 +1440,8 @@ static WALL_JUMPING: Situation = Situation {
 /// Against the wall.
 static AGAINST_WALL: Situation = Situation {
     doing: Doing::AgainstWall,
-    moves: Moves::DashThenHalt,
-    footing: Footing::Lands,
+    moves: Moves::HaltsAfterDash,
+    footing: Footing::OnHerFeet,
     rows: &[
         Row {
             id: RowId::DownPressed,

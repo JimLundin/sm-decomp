@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use clean_model_samus_motion::Rules;
 use game::collision::Room;
 use game::collision::solid_enemy::SolidEnemies;
-use game::pose::PoseRequests;
 use game::samus_world::SamusWorld;
 use game::samus_world::frame::{FrameSource, body};
 use game::samus_world::state::{clean_of, write_back};
@@ -47,7 +46,6 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
         controller: &to.controller,
         ride: from.elevator,
         completed: from.clock.counters.completed.0,
-        requests: PoseRequests::default(),
         content,
     }
     .frame(&sized);

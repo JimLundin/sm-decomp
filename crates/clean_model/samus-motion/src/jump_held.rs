@@ -16,7 +16,7 @@ pub enum FrameBefore {
     /// She landed from a straight jump, a fall, a spin or a wall jump, or the animation of a turn
     /// or of a landing ended and handed over its pose.
     LandedOrEnded,
-    /// Anything else.
+    /// She neither landed nor had such an animation end hand over its pose.
     Other,
 }
 
@@ -57,7 +57,8 @@ impl JumpHeld {
         }
     }
 
-    /// `Jumping`: what she remembers at the end of frame `f`, which leaves the next `before`. A
+    /// `Jumping`: what she remembers at the end of frame `f`, with what it left behind for the
+    /// next (`before`). A
     /// press the count made this frame puts it back to 0 first; then jump held and not just
     /// pressed counts one frame more, and jump just pressed or not held puts it at 0. The press
     /// this reads is the pad's own.
@@ -76,22 +77,24 @@ impl JumpHeld {
     }
 }
 
-/// `Jumping`: the counts that make a press: 1 to 8, and, a quirk the original has, 32,777 to
-/// 65,535 (jump held about 9 minutes or more), which act as one of 1 to 8 does.
+/// `Jumping`: the counts of frames jump has stayed held that make a press: 1 to 8, and, a quirk
+/// the original has, 32,777 to 65,535 frames (jump held about 9 minutes or more), which act as
+/// one of 1 to 8 does.
 fn counts(frames: Wrapping<u16>, r: &Rules) -> bool {
     r.held_through.contains(&frames.0) || r.held_long.contains(&frames.0)
 }
 
 impl FrameBefore {
-    /// §1.2: what a frame leaves the next, from what her moves met, whether her animation
-    /// ended, the pose she started it in (`was`) and the one she ends it in (`now`). She landed:
-    /// her moves met a floor and she ends in `Landing`, the pose `WhatHerMovesMet` chose and pose
-    /// fit took; a landing pose fit refuses or turns into the crouch is none
-    /// (`PoseFitAfterMoves`). Or the animation of a turn or of a landing ended and handed over
-    /// its pose (`AnimationEnds`).
-    pub(crate) fn left(met: Option<Met>, animation_ends: bool, was: Pose, now: Pose) -> Self {
+    /// §1.2: what a frame leaves behind for the next, from what her moves met, whether her
+    /// animation's end handed over the pose she ends in (`handed_over`), the pose she started it
+    /// in (`was`) and the one she ends it in (`now`). She landed: her moves met a floor and she
+    /// ends in `Landing`, the pose `WhatHerMovesMet` chose and pose fit took; a landing pose fit
+    /// refuses or turns into the crouch is none (`PoseFitAfterMoves`). Or the animation of a
+    /// turn or of a landing ended and handed over its pose (`AnimationEnds`); an end that gave
+    /// way handed over nothing.
+    pub(crate) fn left_behind(met: Option<Met>, handed_over: bool, was: Pose, now: Pose) -> Self {
         let landed = met == Some(Met::Floor) && matches!(now.action, Landing(_));
-        let ended = animation_ends && matches!(was.action, Turning(_) | Landing(_));
+        let ended = handed_over && matches!(was.action, Turning(_) | Landing(_));
         if landed || ended {
             Self::LandedOrEnded
         } else {

@@ -8,45 +8,48 @@ game-time field 25426 0 hours
 game-time field 25426 0 minutes
 game-time field 25426 0 seconds
 game-time field 25426 0 frames
-samus-motion frames 25426 18007 0 5843
+samus-motion frames 25426 18032 0 5633
 samus-motion field 17835 414 position.x
 samus-motion field 16929 1320 position.y
 samus-motion field 17829 420 base_speed
 samus-motion field 17829 420 extra_run
-samus-motion field 18204 45 momentum
+samus-motion field 18204 45 dashing
 samus-motion field 18182 67 mode
 samus-motion field 17829 420 vertical_speed
 samus-motion field 18198 51 vertical
 samus-motion field 18249 0 bounce
 samus-motion field 18198 51 rising
 samus-motion field 16747 1502 placed
-samus-motion entry Aiming 0 0 0 2737
-samus-motion entry AimingAndShooting 2873 477 2881 63
-samus-motion entry AnimationEnds 0 0 0 346
-samus-motion entry BlocksStopFlush 10963 4859 11052 155
-samus-motion entry Dash 4528 9 4556 50
-samus-motion entry DriftInTheAir 6117 1796 6204 242
-samus-motion entry FollowingTheGround 10651 9750 10719 1084
+samus-motion field 17922 327 heading_down
+samus-motion field 18249 0 handed_over
+samus-motion entry Aiming 0 0 0 2736
+samus-motion entry AimingAndShooting 2874 477 2881 62
+samus-motion entry AnimationEnds 343 9 355 0
+samus-motion entry BlocksStopFlush 10981 4859 11052 155
+samus-motion entry Dash 4544 9 4556 50
+samus-motion entry Dashing 4593 4409 4613 11
+samus-motion entry DriftInTheAir 6154 1796 6234 242
+samus-motion entry FollowingTheGround 10638 9744 10689 1084
 samus-motion entry HowSheIsDrawn 0 0 0 0
 samus-motion entry Jumping 239 3 245 10
 samus-motion entry Landing 152 0 152 5
-samus-motion entry Moonfall 339 3 339 66
-samus-motion entry MovesAsShePosed 16769 5259 16929 1320
+samus-motion entry Moonfall 369 9 369 66
+samus-motion entry MovesAsShePosed 16793 5259 16929 1320
 samus-motion entry OtherBlockKinds 0 0 0 0
 samus-motion entry PadChart 0 0 0 18249
-samus-motion entry PoseFitAfterMoves 351 0 358 34
+samus-motion entry PoseFitAfterMoves 357 0 358 34
 samus-motion entry PoseFollows 0 0 0 18249
 samus-motion entry RidingTheElevator 0 0 0 906
-samus-motion entry RisingAndFalling 6117 55 6204 242
+samus-motion entry RisingAndFalling 5951 60 6029 447
 samus-motion entry ShrinkingLowersHer 62 0 62 2
 samus-motion entry SlopesCarry 80 3 80 1
 samus-motion entry SlopesSlowTheWalk 0 0 0 0
-samus-motion entry SolidEnemies 4443 2034 4466 435
-samus-motion entry SpeedBuildsAndBrakes 11536 5589 11604 199
+samus-motion entry SolidEnemies 4451 2034 4466 435
+samus-motion entry SpeedBuildsAndBrakes 11523 5589 11574 199
 samus-motion entry TouchedCells 0 0 0 17865
-samus-motion entry TurningRound 1179 17 1246 11
+samus-motion entry TurningRound 1191 17 1246 11
 samus-motion entry WallJump 234 0 253 2
-samus-motion entry WallsAndCeilings 1397 474 1424 30
+samus-motion entry WallsAndCeilings 1398 474 1424 30
 samus-motion entry WhatHerMovesMet 0 0 0 1854
 samus-motion entry WordwiseTopSpeed 0 0 0 0
 camera frames 25426 20513 0 8384
@@ -152,7 +155,7 @@ samus-looks field 16210 0 step
 samus-looks field 16210 0 frames_left
 samus-looks field 16209 1 stage
 samus-looks field 16209 1 laps_left
-samus-looks entry BoostStages 254 4 254 0
+samus-looks entry BoostStages 255 4 255 0
 samus-looks entry BoostingLap 5 0 5 0
 samus-looks entry Breathing 30 0 30 0
 samus-looks entry ClipControls 459 0 459 0
@@ -161,7 +164,7 @@ samus-looks entry ClipPlays 16210 471 16210 0
 samus-looks entry FastFall 4 0 4 0
 samus-looks entry HandOverSlowdown 0 0 0 0
 samus-looks entry RisingHold 30 0 30 0
-samus-looks entry RunPace 1535 0 1535 0
+samus-looks entry RunPace 1532 0 1532 0
 samus-looks entry SpinTurnedFar 0 0 0 2408
 samus-looks entry StandingRestart 25 2 25 0
 samus-looks entry StartingClip 3790 469 3790 0

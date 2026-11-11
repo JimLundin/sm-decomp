@@ -2,20 +2,23 @@
 //!
 //! The file is read with `toml` and `serde` into its shape, declared once below as the file's
 //! header gives it: every table refuses a key the shape doesn't know, and every name a value it
-//! doesn't know, so an unknown key or name fails the test rather than being skipped. The model's
-//! types are built from the shape; they know nothing of the reader.
+//! doesn't know, so an unknown key or name fails the test rather than being skipped. A vector
+//! whose frame reads the body of a pose it doesn't give is refused, and so is a pose step that
+//! gives a body, which the chart never reads. The model's types are built from the shape; they
+//! know nothing of the reader.
 
 #![cfg(test)]
 
 use clean_model_samus_motion::{
-    Bounces, CATALOGUE, Carry, DashIs, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome, Phase,
-    Rules, Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, DashIs, Dashing, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome,
+    Phase, Rules, Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
 };
 use clean_types::{
-    Action, Aim, Block, Body, Buttons, Cell, Checked, Facing, Fixed, Gun, Heading, Hitbox, Item,
-    LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Px, Radius, Set, Side, Slope,
+    Action, Aim, Block, Body, Buttons, Cell, Checked, ClipEnd, Facing, Fixed, Gun, Heading, Hitbox,
+    Item, LandedFrom, Legs, Pair, Parity, Parts, Pose, Position, Px, Radius, Set, Side, Slope,
     SlopeFaces, Touch, Turn, Way, World, ZERO, button, fixed,
 };
+use core::cell::RefCell;
 use core::num::Wrapping;
 use serde::Deserialize;
 
@@ -69,9 +72,8 @@ struct Vector {
     /// The other buttons just pressed.
     #[serde(default)]
     pressed: Vec<ButtonName>,
-    /// The animation of her pose ends.
-    #[serde(default)]
-    animation_ends: bool,
+    /// The end the animation of her pose reaches, if any.
+    animation_ends: Option<EndName>,
     /// The input "spin turned far".
     #[serde(default)]
     spin_turned_far: bool,
@@ -106,9 +108,8 @@ struct FrameTable {
     /// The other buttons just pressed.
     #[serde(default)]
     pressed: Vec<ButtonName>,
-    /// The animation of her pose ends.
-    #[serde(default)]
-    animation_ends: bool,
+    /// The end the animation of her pose reaches, if any.
+    animation_ends: Option<EndName>,
     /// The input "spin turned far".
     #[serde(default)]
     spin_turned_far: bool,
@@ -344,6 +345,9 @@ struct Before {
     /// Jump held through's frame before.
     #[serde(default)]
     landed_or_ended: bool,
+    /// Whether she is dashing.
+    #[serde(default)]
+    dashing: bool,
 }
 
 /// What a vector compares at the checked frame's end, each only where given.
@@ -380,6 +384,18 @@ struct After {
     inside: Option<Vec<[u16; 2]>>,
     /// The near-wall test's outcome.
     wall_test: Option<WallTestName>,
+    /// Whether she is dashing at the frame's end.
+    dashing: Option<bool>,
+    /// Whether she is dashing once her moves are made.
+    dashing_after_moves: Option<bool>,
+    /// Whether her dash began this frame.
+    dash_began: Option<bool>,
+    /// Whether her dash was lost this frame.
+    dash_lost: Option<bool>,
+    /// Whether she ends in the pose her animation's end handed over.
+    handed_over: Option<bool>,
+    /// Whether she is heading down as her moves leave her.
+    heading_down: Option<bool>,
 }
 
 /// A reached cell: its top-left corner, and the way.
@@ -816,11 +832,28 @@ enum AnswerName {
     Air,
 }
 
+/// The kind of end her animation reaches (the header's `animation_ends`).
+#[derive(Deserialize, Clone, Copy)]
+enum EndName {
+    End,
+    EndUnlessJump,
+}
+
+impl EndName {
+    const fn model(self) -> ClipEnd {
+        match self {
+            Self::End => ClipEnd::End,
+            Self::EndUnlessJump => ClipEnd::EndUnlessJump,
+        }
+    }
+}
+
 /// What a pose step's moves met.
 #[derive(Deserialize, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 enum MetName {
     AnimationEnd,
+    AnimationEndUnlessJump,
     Floor,
     NoFloor,
     Nothing,
@@ -829,15 +862,16 @@ enum MetName {
 }
 
 impl MetName {
-    /// What her moves met, and whether her animation ends.
-    const fn model(self) -> (Option<Met>, bool) {
+    /// What her moves met, and the end her animation reaches.
+    const fn model(self) -> (Option<Met>, Option<ClipEnd>) {
         match self {
-            Self::AnimationEnd => (None, true),
-            Self::Floor => (Some(Met::Floor), false),
-            Self::NoFloor => (Some(Met::NoFloor), false),
-            Self::Nothing => (None, false),
-            Self::Wall => (Some(Met::Wall), false),
-            Self::WallKick => (Some(Met::WallKick), false),
+            Self::AnimationEnd => (None, Some(ClipEnd::End)),
+            Self::AnimationEndUnlessJump => (None, Some(ClipEnd::EndUnlessJump)),
+            Self::Floor => (Some(Met::Floor), None),
+            Self::NoFloor => (Some(Met::NoFloor), None),
+            Self::Nothing => (None, None),
+            Self::Wall => (Some(Met::Wall), None),
+            Self::WallKick => (Some(Met::WallKick), None),
         }
     }
 }
@@ -1061,8 +1095,8 @@ fn room(world: &WorldTable) -> Room {
 /// is in the air: an upward speed there is a rise, and a vertical speed of 0 means she has just
 /// started to fall. In any other pose she is on the ground, keeping any vertical speed she has,
 /// an upward one a rise she keeps (`FollowingTheGround`, `RisingAndFalling`), or, where
-/// `before.falling` says so, falling at 0 there. Jump held through is as `before` gives it, a
-/// count of 0 and nothing the frame before where it doesn't.
+/// `before.falling` says so, falling at 0 there. Jump held through and dashing are as `before`
+/// gives them: a count of 0, nothing the frame before and not dashing where it doesn't.
 fn start(before: &Before, pose: Pose) -> Samus {
     // A missing quantity is 0.
     let (speed_x, speed_y) = (
@@ -1130,6 +1164,11 @@ fn start(before: &Before, pose: Pose) -> Samus {
         spin: Spin::Off,
         seat: Seat::Unseated,
         jump_held,
+        dashing: if before.dashing {
+            Dashing::On
+        } else {
+            Dashing::Off
+        },
     }
 }
 
@@ -1146,8 +1185,8 @@ struct Step {
     pad: Buttons,
     /// The buttons just pressed.
     pressed: Buttons,
-    /// `AnimationEnds`: the frame's own `animation_ends` (default false), never inferred.
-    animation_ends: bool,
+    /// `AnimationEnds`: the frame's own `animation_ends` (default none), never inferred.
+    animation_ends: Option<ClipEnd>,
     /// `WallJump`: the frame's own `spin_turned_far` (default false), given as `animation_ends`.
     spin_turned_far: bool,
 }
@@ -1166,7 +1205,7 @@ fn step_of(f: &FrameTable) -> Step {
         radius,
         pad: buttons(&f.pad),
         pressed: Buttons(buttons(&f.pressed).0 | jump.0),
-        animation_ends: f.animation_ends,
+        animation_ends: f.animation_ends.map(EndName::model),
         spin_turned_far: f.spin_turned_far,
     }
 }
@@ -1193,12 +1232,13 @@ const fn other(p: Parity) -> Parity {
 /// the size its start gives, the body the frame's moves use; for another, the frame's own end
 /// where it names that pose, else any the vector gives. A record's body can lag its pose, so the
 /// same pose may come with two sizes, one at a frame's end and one at the next frame's start.
-fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -> Radius {
+/// None where the vector gives no body for the pose.
+fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -> Option<Radius> {
     (step.pose == p)
         .then_some((step.pose, step.radius))
         .or_else(|| end.filter(|e| e.0 == p))
         .or_else(|| known.iter().find(|k| k.0 == p).copied())
-        .map_or(step.radius, |k| k.1)
+        .map(|k| k.1)
 }
 
 /// Runs one vector; returns its mismatches.
@@ -1240,7 +1280,15 @@ fn run(vector: &Vector) -> Vec<String> {
     let mut misses = Vec::new();
     let mut outcome = None;
     for (n, (&step, &end)) in frames.iter().zip(&ends).enumerate() {
-        let body = |p: Pose| body_size(p, step, end, &known);
+        // The poses whose body the frame reads and the vector doesn't give: the vector is
+        // refused.
+        let ungiven: RefCell<Vec<Pose>> = RefCell::new(Vec::new());
+        let body = |p: Pose| {
+            body_size(p, step, end, &known).unwrap_or_else(|| {
+                ungiven.borrow_mut().push(p);
+                step.radius
+            })
+        };
         let frame = Frame {
             pad: step.pad,
             pressed: step.pressed,
@@ -1252,7 +1300,14 @@ fn run(vector: &Vector) -> Vec<String> {
             body: &body,
         };
         parity = other(parity);
-        match samus.step(&frame, &room, &rules) {
+        let stepped = samus.step(&frame, &room, &rules);
+        if let Some(p) = ungiven.borrow().first() {
+            misses.push(format!(
+                "{name}: frame {n} reads the body of {p:?}, not given"
+            ));
+            return misses;
+        }
+        match stepped {
             Ok(frame_outcome) => outcome = Some(frame_outcome),
             Err(unknown) => {
                 misses.push(format!("{name}: frame {n} starts in {unknown:?}"));
@@ -1285,15 +1340,17 @@ fn run(vector: &Vector) -> Vec<String> {
     misses
 }
 
-/// Runs one pose step through the chart (`Moment::next_pose`); returns its mismatch.
+/// Runs one pose step through the chart (`Moment::next_pose`); returns its mismatch. The chart
+/// reads no body, so a pose step's poses give none: one that gives a radius is refused, as a
+/// body its frame never reads.
 fn run_pose_step(step: &PoseStep) -> Option<String> {
     let id = &step.id;
-    let given = [&step.pose, &step.after.pose].map(|p| p.radius);
-    assert_eq!(
-        given,
-        [None, None],
-        "{id}: a pose step's poses give no radius"
-    );
+    if [&step.pose, &step.after.pose]
+        .iter()
+        .any(|p| p.radius.is_some())
+    {
+        return Some(format!("{id}: a pose step's poses give no radius"));
+    }
     let start = step.pose.pose();
     let held = buttons(&step.pad);
     let jump = if step.jump_pressed {
@@ -1385,6 +1442,11 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
     let x = after.position.map(|[x, _]| x).or(after.position_x);
     let landed = samus.jump_held.before == FrameBefore::LandedOrEnded;
     vec![
+        (
+            "dashing",
+            after.dashing.map(|b| b.to_string()),
+            (samus.dashing == Dashing::On).to_string(),
+        ),
         ("position.x", x.map(|q| show(q.0)), show(samus.position.x)),
         (
             "position.y",
@@ -1463,10 +1525,29 @@ fn outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
     ]
 }
 
+/// The frame's outputs for her animation (spec §1.4).
+fn for_her_animation(after: &After, outcome: &Outcome) -> Vec<Compared> {
+    let flag = |name, expected: Option<bool>, actual: bool| {
+        (name, expected.map(|b| b.to_string()), actual.to_string())
+    };
+    vec![
+        flag(
+            "dashing_after_moves",
+            after.dashing_after_moves,
+            outcome.dashing_after_moves == Dashing::On,
+        ),
+        flag("dash_began", after.dash_began, outcome.dash_began),
+        flag("dash_lost", after.dash_lost, outcome.dash_lost),
+        flag("handed_over", after.handed_over, outcome.handed_over),
+        flag("heading_down", after.heading_down, outcome.heading_down),
+    ]
+}
+
 /// Every field a vector's `after` gives, hers and the frame's outputs.
 fn compared(after: &After, samus: &Samus, outcome: &Outcome) -> Vec<Compared> {
     let mut fields = hers(after, samus);
     fields.extend(outputs(after, outcome));
+    fields.extend(for_her_animation(after, outcome));
     fields
 }
 
@@ -1513,6 +1594,72 @@ fn stepped_quarters_are_hash_or_dot() {
     for refused in ["#x", "# ", "X.", "o#", "##.", "#", ""] {
         assert!(read(refused).is_err(), "{refused:?} read as quarters");
     }
+}
+
+/// C-wall as the file gives it, but for its `next_pose` line and its `after`.
+const C_WALL_UNTIL_NEXT_POSE: &str = r#"
+id = "C-wall"
+source = "constructed"
+entries = ["WallsAndCeilings"]
+world = { floor_top = 288, wall_right = 256 }
+before = { position = ["00FA.0000", "010B.FFFF"], speed_x = "+0002.0000" }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+"#;
+
+/// A vector whose frame reads a body it doesn't give is refused: C-wall without its
+/// `next_pose`, whose wall stop chooses `AgainstWall`, a pose pose fit reads the body of.
+#[test]
+fn a_vector_missing_a_body_is_refused() {
+    let given = format!(
+        "{C_WALL_UNTIL_NEXT_POSE}{}\nafter = {{}}\n",
+        r#"next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }"#
+    );
+    let with_body: Vector = toml::from_str(&given).expect("C-wall reads");
+    assert_eq!(run(&with_body), Vec::<String>::new());
+    let missing: Vector =
+        toml::from_str(&format!("{C_WALL_UNTIL_NEXT_POSE}after = {{}}\n")).expect("it reads");
+    let misses = run(&missing);
+    assert!(
+        misses.iter().any(|m| m.contains("not given")),
+        "refused for no body: {misses:?}"
+    );
+}
+
+/// A key the shape doesn't know is refused in a nested table too, `after`'s here, as is a name
+/// it doesn't know, an end's kind here.
+#[test]
+fn an_unknown_key_or_name_is_refused() {
+    let unknown_key = format!("{C_WALL_UNTIL_NEXT_POSE}after = {{ dashng = true }}\n");
+    assert!(
+        toml::from_str::<Vector>(&unknown_key).is_err(),
+        "dashng read"
+    );
+    let unknown_end = format!("{C_WALL_UNTIL_NEXT_POSE}animation_ends = \"Ends\"\nafter = {{}}\n");
+    assert!(toml::from_str::<Vector>(&unknown_end).is_err(), "Ends read");
+}
+
+/// A pose step's frame reads no body, so a pose step that gives one is refused.
+#[test]
+fn a_pose_step_giving_a_body_is_refused() {
+    let step: PoseStep = toml::from_str(
+        r#"
+id = "P21"
+source = "r04:473"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = true
+met = "nothing"
+after = { pose = { body = "Upright", action = "TakingOff", facing = "Right" } }
+"#,
+    )
+    .expect("the step reads");
+    assert!(
+        run_pose_step(&step).is_some(),
+        "a radius in a pose step passed"
+    );
 }
 
 #[test]

@@ -1,38 +1,67 @@
 //! Her moves in a frame, as the pose at its start says (`MovesAsShePosed`): horizontally,
 //! the near-wall test, then the ground pull or her vertical move, and after the pose is chosen
-//! the aim change's step; and what they met (`WhatHerMovesMet`).
+//! the aim change's step; what they met (`WhatHerMovesMet`), and what they do to her dashing
+//! (`Dashing`).
 
 use crate::chart::Choice;
 use crate::collide::Probe::{Move, NearWall, Walk};
 use crate::collide::Stop;
-use crate::rows::Doing::{Running, TakingOff};
+use crate::rows::Doing::{self, AgainstWall, Ball, Running, Standing, TakingOff, Turning};
 use crate::rows::Met::{self, Wall, WallKick};
-use crate::rows::{Footing, Situation};
-use crate::run::Stride::{Both, DashThenHalt, Nothing};
+use crate::rows::{Footing, Moves, Situation};
+use crate::run::Stride::{DashThenHalt, Nothing, SpeedAndDash};
+use crate::run::running_with_run_held;
 use crate::samus::Seat::{Seated, Unseated};
 use crate::samus::WallTest::{Kicked, Neither, Readied};
-use crate::samus::{Samus, Spin, WallTest};
+use crate::samus::{Dashing, Samus, Spin, WallTest};
 use crate::tick::Tick;
 use crate::vertical::Course;
 use clean_types::button::{JUMP, LEFT, SIDES};
 use clean_types::{Facing, Fixed, Side, ZERO};
 
-/// `WhatHerMovesMet`: what a frame's moves met, and the near-wall test's outcome (`WallJump`).
+/// `WhatHerMovesMet`: what a frame's moves met, and what else the step reports of them.
 #[derive(Default)]
 pub struct Meeting {
     /// What her moves met.
     pub met: Option<Met>,
-    /// The near-wall test's outcome.
+    /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
+    /// `Dashing`: her moves were a run with run held, which dashes.
+    pub ran_with_run_held: bool,
+    /// §1.4, `RisingAndFalling`: she is heading down as her moves leave her, before what they
+    /// met acts.
+    pub heading_down: bool,
 }
 
-/// `FollowingTheGround`, `WallsAndCeilings`: what a walk did: the speed the ground pull reads,
-/// from before any stop, and a wall stop while running.
+/// `WallsAndCeilings`, `SpeedBuildsAndBrakes`: why her walk halted her.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Halt {
+    /// A wall stop: something stopped her horizontal move.
+    WallStop,
+    /// She moved by her dash alone, then halted.
+    AfterDash,
+}
+
+/// `FollowingTheGround`, `WallsAndCeilings`, `Dashing`: what a walk did: the speed the ground
+/// pull reads, from before any stop, the halt it ended in, and whether it was a run with run
+/// held.
 struct Walked {
     /// Her horizontal speed and dash.
     pull: Fixed,
-    /// A wall stop while running (`WhatHerMovesMet`).
-    wall: Option<Met>,
+    /// The halt the walk ended in, if any.
+    halt: Option<Halt>,
+    /// `Dashing`: a run with run held.
+    ran_with_run_held: bool,
+}
+
+/// `Dashing`: whether her moves end her dashing: moves as standing still (a landing's too), as
+/// against the wall or as any turn, or moves that halt her: a wall stop, or the ball halting
+/// after its dash (at rest on the ground, or falling with neither side held). Crouched, the
+/// halt after her dash leaves her dashing.
+fn moves_end_dashing(doing: Doing, halt: Option<Halt>) -> bool {
+    matches!(doing, Standing | AgainstWall | Turning)
+        || halt == Some(Halt::WallStop)
+        || doing == Ball && halt == Some(Halt::AfterDash)
 }
 
 impl Samus {
@@ -40,15 +69,25 @@ impl Samus {
     /// `SpeedBuildsAndBrakes`: facing the screen she doesn't move; `RidingTheElevator`: on a
     /// moving elevator she moves down 1 px, a move stopped as any downward move. `WallJump`:
     /// kicking off she doesn't move vertically that frame; `Jumping`: nor taking off.
-    /// `WhatHerMovesMet`: a wall stop while running wins over walking off a ledge.
+    /// `WhatHerMovesMet`: a wall stop while running wins over walking off a ledge. `Dashing`:
+    /// running with run held she dashes from her moves on, and her moves may then end it.
     pub(crate) fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
-            if t.frame.elevator_moving {
+            if self.rides_the_elevator(t.frame) {
                 self.position = t.vmove(self.bounds(t), t.rules.elevator, Move).to;
             }
-            return Meeting::default();
+            return Meeting {
+                heading_down: self.vertical.heading_down(),
+                ..Meeting::default()
+            };
         }
         let walk = self.walk(s, t);
+        if walk.ran_with_run_held {
+            self.dashing = Dashing::On;
+        }
+        if moves_end_dashing(s.doing, walk.halt) {
+            self.dashing = Dashing::Off;
+        }
         let wall_test = self.wall_test(t);
         self.vertical.space_jump(s.doing, self.run.dash, t);
         let met = if wall_test == Kicked {
@@ -58,9 +97,14 @@ impl Samus {
         } else {
             self.move_vertically(s.footing, walk.pull, t)
         };
+        let heading_down = self.vertical.heading_down();
+        self.vertical.meet_in_moves(met);
+        let stopped_running = walk.halt == Some(Halt::WallStop) && s.doing == Running;
         Meeting {
-            met: walk.wall.or(met),
+            met: stopped_running.then_some(Wall).or(met),
             wall_test,
+            ran_with_run_held: walk.ran_with_run_held,
+            heading_down,
         }
     }
 
@@ -69,25 +113,41 @@ impl Samus {
     /// or a move by her dash alone. `SlopesCarry`: the checks after it may seat her.
     fn walk(&mut self, s: &Situation, t: &mut Tick) -> Walked {
         let facing = self.pose.facing;
+        let ran_with_run_held =
+            matches!(s.moves, Moves::Build(gait, _) if running_with_run_held(gait, t.frame.pad));
         let stride = self
             .run
             .stride(s.moves, facing, self.vertical.has_motion(), t);
         let pull = self.run.speed + self.run.dash;
         if stride == Nothing {
-            return Walked { pull, wall: None };
+            return Walked {
+                pull,
+                halt: None,
+                ran_with_run_held,
+            };
         }
-        let by = if stride == Both { pull } else { self.run.dash };
+        let by = if stride == SpeedAndDash {
+            pull
+        } else {
+            self.run.dash
+        };
         let stop = self.hmove(self.run.moving(facing), by, t);
         if let Some(y) = t.slope_checks(self.bounds(t)) {
             self.position.y = y;
             self.seat = Seated;
         }
-        if stop.is_some() || stride == DashThenHalt {
+        let halt = if stop.is_some() {
+            Some(Halt::WallStop)
+        } else {
+            (stride == DashThenHalt).then_some(Halt::AfterDash)
+        };
+        if halt.is_some() {
             self.run.halt();
         }
         Walked {
             pull,
-            wall: (stop.is_some() && s.doing == Running).then_some(Wall),
+            halt,
+            ran_with_run_held,
         }
     }
 
@@ -110,7 +170,7 @@ impl Samus {
     /// touches still clearing her y subpixel. `WhatHerMovesMet`: something in its way puts the
     /// running pose chosen against the wall (`Choice::blocked`).
     pub(crate) fn step_forward(&mut self, chosen: Choice, t: &mut Tick) -> Choice {
-        if !chosen.steps {
+        if !chosen.aim_step {
             return chosen;
         }
         let x = self.position.x;
@@ -176,7 +236,7 @@ impl Samus {
             self.seat = Unseated;
         }
         let stopped = moved.stop.is_some();
-        if course == Course::Pulled && footing == Footing::Settles && !stopped {
+        if course == Course::Pulled && footing == Footing::ChangingShape && !stopped {
             return None;
         }
         self.take_result(&moved);
