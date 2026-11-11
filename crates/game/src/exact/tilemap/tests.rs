@@ -176,7 +176,7 @@ fn a_row_that_needs_four_uploads_needs_more_room() {
 fn the_overlays_rows_go_up_in_one_upload_from_the_huds_buffer() {
     let mut batch = NmiBatch::default();
     let cells = (0..96).map(TilemapEntry::from_word).collect();
-    let write = TileWrite::Overlay { row: 1, cells };
+    let write = TileWrite::Overlay(OverlayRows { row: 1, cells });
     TileQueue::new(&mut batch).write(&Camera::default(), &write);
     let words: Vec<u16> = (0..96).collect();
     assert_eq!(uploads(&batch), [(0x5820, 0xC608, words)]);

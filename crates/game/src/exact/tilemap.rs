@@ -14,16 +14,19 @@
 //!   PLM draw's buffer, is dropped whole.
 //!
 //! The lines of blocks the camera brings into view stream in apart from the queue, through the
-//! layers' column and row buffers ([`expose`], [`commit_exposures`]).
+//! layers' column and row buffers ([`expose`], [`commit_exposures`]). The message box writes
+//! its overlay rows at once, around the queue ([`write_now`]).
 
 use data::dma::{BusAddress, HUD_TILEMAP_BUFFER, PLM_DRAW_TILEMAP};
 
-use crate::intent::{BlockLook, TileWrite};
+use crate::intent::{BlockLook, OverlayRows, TileWrite};
 use crate::state::room::{BlockPoint, Camera};
 use crate::state::video::{NmiBatch, TilemapEntry, VramSource, VramStep, VramTransfer, VramWord};
 
+mod direct;
 mod exposure;
 
+pub use direct::{DirectBuffer, read_now, write_now};
 pub use exposure::{commit_exposures, expose};
 
 /// BG1's tilemap in VRAM, two 32x32 screens side by side.
@@ -85,7 +88,7 @@ impl<'a> TileQueue<'a> {
     /// Queue `write` where the original queued it; a block row is placed from `camera`.
     pub fn write(&mut self, camera: &Camera, write: &TileWrite) {
         match write {
-            TileWrite::Overlay { row, cells } => self.overlay(*row, cells),
+            TileWrite::Overlay(rows) => self.overlay(rows),
             TileWrite::Blocks { at, looks } => self.blocks(camera, *at, looks),
         }
     }
@@ -110,8 +113,8 @@ impl<'a> TileQueue<'a> {
     }
 
     /// The overlay's rows from `row`, as one upload.
-    fn overlay(&mut self, row: u16, cells: &[TilemapEntry]) {
-        let to = VramWord(OVERLAY_TILEMAP.0.wrapping_add(row.wrapping_mul(ROW_WORDS)));
+    fn overlay(&mut self, &OverlayRows { row, ref cells }: &OverlayRows) {
+        let to = overlay_row(row);
         let source = HUD_TILEMAP_BUFFER.advanced(
             row.wrapping_sub(HUD_BUFFER_ROW)
                 .wrapping_mul(ROW_WORDS)
@@ -191,6 +194,11 @@ impl<'a> TileQueue<'a> {
             .buffer
             .wrapping_add(clip.length.wrapping_mul(BLOCK_BUFFER_BYTES));
     }
+}
+
+/// Where the overlay's row `row` starts in VRAM.
+const fn overlay_row(row: u16) -> VramWord {
+    VramWord(OVERLAY_TILEMAP.0.wrapping_add(row.wrapping_mul(ROW_WORDS)))
 }
 
 /// Whether a 16-bit difference is negative as the original's flags see it.

@@ -5,18 +5,22 @@
 //! the main thread spins until the NMI counter changes, with no NMI requested, so the NMI
 //! takes its lag path (no commit, no pad latch) and the gameplay pass, which counts game time,
 //! doesn't finish while the box is up. A step runs the work after one wait up to the next and
-//! names that next wait as the frame's position. The video work is named here and done by the
-//! video lanes; the music and sound effect handlers the lag frames call are the sound
-//! domain's.
+//! names that next wait as the frame's position. The box's video is overlay writes and PPU
+//! set-up that `exact` encodes at once, since the box writes the PPU itself; the music and
+//! sound effect handlers the lag frames call are the sound domain's.
 
 mod video;
 
 use data::message::{Letter, MessageBoxes, Setup};
 
+use crate::exact::ppu;
+use crate::exact::tilemap::{self, DirectBuffer};
+use crate::intent::OverlayRows;
 use crate::state::slots::Frames;
 use crate::state::strand::{
     Frame, LagAt, Message, MessageBoxAt, MessageWrite, PpuPreparation, PpuRestoration, Side, Wait,
 };
+use crate::state::video::TilemapEntry;
 use crate::state::{Button, State};
 use crate::tick::Next;
 
@@ -26,6 +30,14 @@ pub const ANIMATION_STEPS: Frames = Frames(12);
 
 /// The lag frames $85:8574 plays, before the box opens and after it closes.
 const TWO_LAG_FRAMES: Frames = Frames(2);
+
+/// The overlay rows the box covers, from its top: all below the HUD's.
+const BOX_ROW: u16 = 4;
+const BOX_ROWS: u16 = 28;
+/// The cells in one of the overlay's rows.
+const ROW_CELLS: u16 = 32;
+/// The blank box's cell.
+const BLANK: TilemapEntry = TilemapEntry::from_word(0x000E);
 
 /// Open the box showing `message`: the PLM instruction's `JSL $858080` (C12 calls it).
 pub const fn display(state: &mut State, message: Message) -> Next {
@@ -91,12 +103,21 @@ const fn letter(button: Button) -> Letter {
 // and sound effects are C11's.
 fn work(work: Work, state: &mut State, boxes: &MessageBoxes) {
     match work {
-        Work::PrepareRegisters => state.video.prepare_message_box(),
-        Work::BackUpTilemap => state.video.back_up_message_box_tilemap(),
-        Work::UploadClearedTilemap => state.video.upload_blank_message_box(),
+        Work::PrepareRegisters => ppu::set_up_message_box(&mut state.video),
+        Work::BackUpTilemap => {
+            state.video.message_box.tilemap =
+                tilemap::read_now(&mut state.video, BOX_ROW, BOX_ROWS);
+        }
+        Work::UploadClearedTilemap => {
+            let blank = OverlayRows {
+                row: BOX_ROW,
+                cells: vec![BLANK; usize::from(BOX_ROWS.wrapping_mul(ROW_CELLS))],
+            };
+            tilemap::write_now(&mut state.video, &blank, DirectBuffer::Blank);
+        }
         Work::SetUpScrollHdma => state.video.set_up_message_box_scroll(),
-        Work::RestoreTilemap => state.video.restore_message_box_tilemap(),
-        Work::RestoreRegisters => state.video.restore_message_box_registers(),
+        Work::RestoreTilemap => restore_tilemap(state),
+        Work::RestoreRegisters => ppu::restore_after_message_box(&mut state.video),
         Work::UploadMessageTilemap => upload_message(state, boxes),
         Work::CancelSoundEffects
         | Work::WriteMessageTilemap
@@ -105,6 +126,23 @@ fn work(work: Work, state: &mut State, boxes: &MessageBoxes) {
         | Work::LagFrameSound
         | Work::QueueSamusMovementSound => {}
     }
+}
+
+/// Bank $85 log, restore PPU `$85:861F`: the backup goes back over the box's rows word for
+/// word, so cells VRAM held stale before the box come back stale.
+fn restore_tilemap(state: &mut State) {
+    let backup = OverlayRows {
+        row: BOX_ROW,
+        cells: state
+            .video
+            .message_box
+            .tilemap
+            .iter()
+            .copied()
+            .map(TilemapEntry::from_word)
+            .collect(),
+    };
+    tilemap::write_now(&mut state.video, &backup, DirectBuffer::Backup);
 }
 
 /// Bank $85 log, write message tilemap `$85:82B8` and set up PPU for active message box
@@ -137,7 +175,11 @@ fn upload_message(state: &mut State, boxes: &MessageBoxes) {
     {
         *word = tile;
     }
-    state.video.upload_message_box(&rows, message.setup.rows());
+    let rows = OverlayRows {
+        row: message.setup.rows() / ROW_CELLS,
+        cells: rows.into_iter().map(TilemapEntry::from_word).collect(),
+    };
+    tilemap::write_now(&mut state.video, &rows, DirectBuffer::Message);
 }
 
 /// The box waits for the next lag frame at `at`.
@@ -276,7 +318,7 @@ const fn button_wait(state: &State) -> (MessageBoxAt, Next) {
 mod tests {
     use data::message::{BorderSize, Message as Definition, MessageBoxes, Setup};
 
-    use super::{step, upload_message};
+    use super::{Work, step, upload_message, work};
     use crate::state::State;
     use crate::state::strand::{Message, MessageBoxAt, MessageWrite};
 
@@ -326,6 +368,27 @@ mod tests {
             state.video.memory.vram[0x59A0..0x59A8],
             [0x10, 0x10, 0x10, 0x32, 0xB, 0x10, 0x10, 0x10]
         );
+    }
+
+    #[test]
+    fn the_blank_box_covers_the_rows_below_the_hud_and_the_restore_puts_them_back() {
+        let mut state = showing(1);
+        let vram = &mut state.video.memory.vram;
+        for (index, word) in vram[0x5880..0x5C00].iter_mut().enumerate() {
+            *word = 0x2000 | u16::try_from(index).unwrap_or(0);
+        }
+        vram[0x587F] = 0x1111;
+        vram[0x5C00] = 0x1111;
+        let boxes = boxes();
+        work(Work::BackUpTilemap, &mut state, &boxes);
+        work(Work::UploadClearedTilemap, &mut state, &boxes);
+        let vram = &state.video.memory.vram;
+        assert_eq!((vram[0x587F], vram[0x5C00]), (0x1111, 0x1111));
+        assert!(vram[0x5880..0x5C00].iter().all(|&word| word == 0x000E));
+        work(Work::RestoreTilemap, &mut state, &boxes);
+        let vram = &state.video.memory.vram;
+        assert_eq!((vram[0x5880], vram[0x5BFF]), (0x2000, 0x237F));
+        assert_eq!(state.video.dma[1].source, 0x4100 + 0x700);
     }
 
     #[test]

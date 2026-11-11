@@ -86,17 +86,21 @@ pub struct BlockLook {
     pub bottom_right: TilemapEntry,
 }
 
+/// Whole rows of the overlay, the screen-fixed layer the HUD and the message box show on:
+/// `cells` row by row, 32 to a row, from row `row` down.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OverlayRows {
+    /// The first row written, from the overlay's top.
+    pub row: u16,
+    /// The cells, row-major.
+    pub cells: Vec<TilemapEntry>,
+}
+
 /// What a domain writes to a background layer: where, and the looks it writes there.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TileWrite {
-    /// Whole rows of the overlay, the screen-fixed layer the HUD shows on: `cells` row by
-    /// row, 32 to a row, from row `row` down.
-    Overlay {
-        /// The first row written, from the overlay's top.
-        row: u16,
-        /// The cells, row-major.
-        cells: Vec<TilemapEntry>,
-    },
+    /// Rows of the overlay.
+    Overlay(OverlayRows),
     /// A row of the room's blocks on layer 1, rightward from the block at `at`.
     Blocks {
         /// The row's first block.

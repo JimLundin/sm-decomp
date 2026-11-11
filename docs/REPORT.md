@@ -258,13 +258,13 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | camera | harness | 2 | 5,779 | 6,238 | 784 | 186 | 280 | 30 | 1,059 |
 | progress | bridge | 1 | 1,324 | 1,583 | 60 | 69 | 40 | 0 | 244 |
 | progress | harness | 3 | 7,201 | 7,264 | 1,048 | 974 | 772 | 62 | 1,325 |
-| hud | bridge | 1 | 2,430 | 2,667 | 135 | 9 | 162 | 16 | 404 |
+| hud | bridge | 1 | 2,432 | 2,672 | 135 | 9 | 162 | 16 | 404 |
 | hud | harness | 2 | 4,525 | 4,849 | 721 | 422 | 292 | 23 | 859 |
 | blocks | bridge | 1 | 6,984 | 7,093 | 439 | 54 | 682 | 97 | 1,062 |
 | blocks | harness | 2 | 6,277 | 6,007 | 833 | 210 | 895 | 0 | 982 |
 | samus-looks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-looks | harness | 3 | 4,963 | 5,465 | 664 | 199 | 235 | 33 | 835 |
-| total | | | 49,266 | 52,294 | 5,713 | 2,822 | 3,846 | 284 | 8,685 |
+| total | | | 49,268 | 52,299 | 5,713 | 2,822 | 3,846 | 284 | 8,685 |
 
 ## Harness floors and vectors
 
@@ -512,6 +512,6 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 47 | 5,131 | 30,789 | 33,483 | 10,160 | 798 | 2,305 | 671 | 7,076 |
-| bridges | 8 | 2,433 | 14,598 | 16,060 | 943 | 142 | 1,002 | 116 | 2,427 |
+| engine, not yet rebuilt | 49 | 5,136 | 30,815 | 33,629 | 10,193 | 797 | 2,301 | 671 | 7,103 |
+| bridges | 8 | 2,433 | 14,600 | 16,065 | 943 | 142 | 1,002 | 116 | 2,427 |
 | rebuilt models, shared types included | 71 | 3,401 | 20,406 | 25,548 | 9,675 | 12,995 | 1,038 | 92 | 8,659 |

@@ -26,7 +26,7 @@ use data::room::Area;
 use enum_map::enum_map;
 
 use crate::exact::tilemap::TileQueue;
-use crate::intent::TileWrite;
+use crate::intent::{OverlayRows, TileWrite};
 use crate::pose::{self, Content, FACING_FORWARD};
 use crate::state::State;
 use crate::state::hud::{Drawn, Hud, HudItem, HudTilemap};
@@ -515,10 +515,10 @@ pub fn hud_turn(state: &mut State, content: &Content) -> Result<(), HudFault> {
     };
     hud.selected = after.selection.item().map(hud_item);
     hud.auto_cancel = after.selection.one_shot().map(hud_item);
-    let write = TileWrite::Overlay {
+    let write = TileWrite::Overlay(OverlayRows {
         row: HUD_ROW,
         cells: hud.tilemap.cells.to_vec(),
-    };
+    });
     TileQueue::new(&mut state.video.batch).write(&state.room.camera, &write);
     Ok(())
 }

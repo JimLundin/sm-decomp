@@ -32,37 +32,32 @@ beyond the slice (32 rows, 18,331 frames), but only per frame, re-seeded.
 
 Totals: `game` 36,856, `data` 25,412, `runtime` 8,351, clean models 8,666, `clean_types` 467.
 
-### `crates/game` (36,856)
+### `crates/game`
 
-| Module | Score | What it does, what it covers |
-| --- | ---: | --- |
-| `state` | 3,984 (+7,089 types) | the State schema: samus, room (D4 reset struct), slots (D12, cursor D13), strand, video (D5), sram, hud, projectile, atmospheric |
-| `plm` (+crumble, draw, item_gfx) | 4,705 | spawning a room's PLMs; scroll PLMs, block extensions, items (hand-coded `ItemStep`, a review stop per D13), the 1x1 shot block crumble, PLM draw into BG1, item GFX load. Slice 0's PLMs only; others are `PlmKind::Unmodelled` |
-| `enemy` (+drawing, eye, face_block, instructions) | 4,567 | processing window and per-slot bookkeeping, the instruction-list runner, drawing by layer; species: the elevator, the Morph Ball Room's eye, the Blue Brinstar face block. 3 of about 170 species |
-| `samus_world` (bridge) | 2,769 | the samus-motion model's `World`, state map and step (integrator's; reported apart) |
-| `projectile` | 2,551 | Samus's projectiles: cooldown, the power beam's flight and block checks, instruction lists. No other beam, missiles, bombs |
-| `tick` | 2,384 | main-strand dispatcher, phases in the original's order |
-| `message_box` (+video) | 1,925 | the item pickup box as a strand frame with its lag waits |
-| `bg_graphics` | 1,803 | building tilemap columns/rows as layers scroll |
-| `animation` | 1,246 | Samus's animation delay lists |
-| `commit` | 1,203 | the NMI's video commit points |
-| `mini_map` | 1,146 | explored cells, the 5x3 HUD map |
-| `atmospheric` | 1,082 | splashes, bubbles, dust (4 slots) |
-| `hud` | 1,058 | HUD tilemap redraw (energy, tanks, ammo, selection, auto reserve) |
-| `collision` (+inside, solid_enemy) | 1,028 | the room she meets; block-inside reactions; solid enemies |
-| `pose` | 917 | what's left of the pose input / change outside the model |
-| `tilemap_dma` | 764 | the NMI's scrolling DMAs |
-| `session` | 597 | the Session, Tick begin/end |
-| `samus_drawing` | 605 | her clip's frame into the sprite buffer |
-| `camera_world` (bridge) | 562 | the camera model's contact |
-| `nmi` | 533 | commit or lag, pad latch, counters |
-| `oam` | 525 | sprite buffer frame (clear, hide undrawn) |
-| `scrolling` | 252 | BG scrolls follow the camera, layer 2 at the room's rates |
-| `samus_palette` | 183 | visor only |
-| `game_time` | 147 | play time |
-| `rng` | 120 | the RNG word |
-| `lines` | 107 | the scan-out skeleton (HUD split, HDMA not yet) |
-| `model`, `lib` | 98 | |
+The modules as they are now. The scores above are the plan's, at its spine; the engine's size
+today, as code still to be rebuilt, bridges and rebuilt models, is in
+[the rebuild report](../REPORT.md#engine-not-yet-rebuilt).
+
+| Module | What it does, what it covers |
+| --- | --- |
+| `state` | the State schema: samus, room (D4 reset struct), slots (D12, cursor D13), strand, video (D5), sram, hud, projectile, atmospheric |
+| `tick`, `session`, `nmi` | the main strand's dispatcher in the original's order; the Session and Tick begin and end; the NMI's commit or lag, pad latch and counters |
+| `intent` | the per-Tick intents: `SpriteDraw`, `TileWrite` (overlay rows, block rows), `LayerExposure` |
+| `exact` (`oam`, `tilemap`, `ppu`) | the encoder from intents to the original's bytes: the OAM buffer; the VRAM write queue, the scrolling DMAs and the message box's direct overlay writes; the message box's PPU set-up |
+| `commit` | the NMI's video commit points |
+| `lines` | the scan-out skeleton (HUD split, HDMA not yet) |
+| `samus_world`, `camera_world`, `blocks_world`, `hud_world`, `progress_world` (bridges) | each clean model's contact with the engine's State |
+| `plm` (+draw, item_gfx) | spawning a room's PLMs, the items' triggers and the PLM pass; the PLM draw as `TileWrite` block rows; item GFX load. Slice 0's PLMs only |
+| `enemy` (+drawing, eye, face_block, instructions) | processing window and per-slot bookkeeping, the instruction-list runner, drawing by layer; species: the elevator, the Morph Ball Room's eye, the Blue Brinstar face block |
+| `projectile` | Samus's projectiles: cooldown, the power beam's flight and block checks, instruction lists. No other beam, missiles, bombs |
+| `message_box` (+video) | the item pickup box as a strand frame with its lag waits; its rows as overlay writes; its BG3 scroll HDMA channel |
+| `scrolling` | the BG scrolls follow the camera, and the block lines they bring into view (`LayerExposure`) |
+| `bg_graphics` | the level lookup: each exposed or changed block's look |
+| `collision` (+inside, solid_enemy) | the room she meets; block-inside reactions; solid enemies |
+| `pose`, `animation` | what's left of the pose input and change outside the model; her animation delay lists |
+| `samus_drawing`, `samus_palette` | her clip's frame into the sprite buffer; the visor |
+| `atmospheric` | splashes, bubbles, dust (4 slots) |
+| `game_time`, `rng`, `model` | play time; the RNG word; the pixel and subpixel numbers motion counts in |
 
 No sound (only CPU-side hooks named), no doors, no pause, no front end, no damage, no HDMA.
 
@@ -247,7 +242,7 @@ The second lane carries, in this order:
    for the wide renderer (a producer that culls to the screen, as the atmospheric graphics do,
    draws past it on request; the encoder never sees those pieces).
 
-### E2: where tile writing stands, and its other two lanes
+### E2: where tile writing stands, and what is left
 
 A write to a background layer is a `game::intent::TileWrite`: where it lands, in the layer's
 own terms, and the looks it writes there. Each cell's look is a `TilemapEntry` (picture,
@@ -297,17 +292,20 @@ What is left of scrolling:
    room load's whole-screen draw with R1, as more producers of `LayerExposure` or a
    screen-sized shape of it.
 
-The third lane, **the message box's video**, carries:
+The message box writes the PPU itself while the NMI lags, around the batch. Its blank box, its
+message's rows (the borders around the message, with the special button's letter) and its
+restore are each an `OverlayRows` write, the overlay's shape of `TileWrite`, through the
+encoder's direct entry: `exact::tilemap::write_now` places the rows on the overlay at once and
+leaves DMA 1's registers as the box's own DMA does (its buffer's address run on past the rows,
+the indirect fields cleared), since the next NMI's uploads start from them. The backup is a
+read-back (D5), `exact::tilemap::read_now`, made where the box makes it. The restore writes the
+backup's words as cells, and a cell gives its word back exactly, so cells VRAM held stale come
+back stale. `exact::ppu` holds the box's PPU set-up and the way back: the text colours, the
+playfield it shows over, the black backdrop and BG3's scroll.
 
-1. **The box's rows as overlay writes:** the blank box over its rows, the message's rows (the
-   border, the text and the button's letter), and the restore. They need an encoder entry that
-   writes VRAM at once, because the box writes the PPU itself through DMA 1 while the NMI lags,
-   around the batch. Each write leaves the channel's registers as its own buffer's DMA does,
-   with the cleared indirect fields (`message_box::video`). The backup is a read-back (D5) and
-   stays a commit-point read. *Risk:* the restore must put back what VRAM held, stale cells
-   included, so it writes the backup's words, not cells rebuilt from the HUD.
-2. **The box's PPU set-up into `exact`:** the text colours, the playfield it shows over and the
-   black backdrop. Its HDMA scroll channel joins with E3.
+What is left of the message box's video: its BG3 Y scroll HDMA channel (`message_box::video`),
+its scroll table and HDMA's enable and restore, which go with E3's HDMA channels; and the save
+prompt's yes and no, with H3.
 
 R1 and R4 export tile writes onto the ring the scrolling lane settled. The PLM draw's open
 shapes go with W2 and A1, each as more `TileWrite` shapes or the row shape repeated: the draw
