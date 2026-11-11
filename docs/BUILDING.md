@@ -34,9 +34,14 @@ The README's status and [the rebuild report](REPORT.md) are generated together f
 cargo run -p tools --bin tools -- report --write
 ```
 
-writes `docs/REPORT.md` and the README's text between `<!-- status:begin -->` and
-`<!-- status:end -->`. `tools/check_report.sh`, in Quality and `tools/lane/gate.sh`, fails when
-either differs from what the tree generates. The status reads the plan's domains, their waves,
+writes `docs/REPORT.md`, the timeline's picture `docs/timeline.svg` and the README's text between
+`<!-- status:begin -->` and `<!-- status:end -->`. `tools/check_report.sh`, in Quality and
+`tools/lane/gate.sh`, fails when any of them differs from what the tree generates. The report's
+Structure section outlines each clean model (its modules, their areas and items, its interface,
+which module uses which) with the size lexer, and its Timeline section shows which stretches of
+each whole movie the lock's rows, the harnesses, the models, the gate and lockstep cover, from
+committed files alone (the movies' manifest and seed lists, the lock, the floors and the
+ratchets). The status reads the plan's domains, their waves,
 their progress and the rounds landed from
 [`docs/architecture/domains.toml`](architecture/domains.toml), which the root changes in the
 commit that lands a round.

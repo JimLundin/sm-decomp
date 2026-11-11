@@ -542,3 +542,898 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | engine, not yet rebuilt | 48 | 4,838 | 29,029 | 30,778 | 10,149 | 1,910 | 2,173 | 2,620 | 629 | 6,801 |
 | bridges | 10 | 2,682 | 16,091 | 17,391 | 1,096 | 1,046 | 1,077 | 818 | 153 | 2,755 |
 | rebuilt models, shared types included | 70 | 3,236 | 19,416 | 25,470 | 9,608 | 13,426 | 1,031 | 471 | 176 | 8,624 |
+
+## Timeline
+
+![How much of each movie the checks cover](timeline.svg)
+
+For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's streams that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. 21 of the lock's rows (25,475 frames) start from power-on or a derived seed, in no movie, and are not drawn.
+
+### The any% movie
+
+129,712 frames, 199 rows of the lock.
+
+| Track | Frames covered | Share of the movie |
+| --- | ---: | ---: |
+| recorded: the lock's rows | 102,847 | 79.3 % |
+| cached for the harnesses | 2,110 | 1.6 % |
+| blocks model matches | 2,055 | 1.6 % |
+| camera model matches | 2,061 | 1.6 % |
+| game-time model matches | 2,061 | 1.6 % |
+| hud model matches | 2,061 | 1.6 % |
+| progress model matches | 2,108 | 1.6 % |
+| samus-looks model matches | 1,952 | 1.5 % |
+| samus-motion model matches | 1,901 | 1.5 % |
+| free-run gate: green streams | 0 | 0.0 % |
+| lockstep: Ticks fully equal | 0 | 0.0 % |
+
+### The low% (13%) movie
+
+167,797 frames, 5 rows of the lock.
+
+| Track | Frames covered | Share of the movie |
+| --- | ---: | ---: |
+| recorded: the lock's rows | 5,908 | 3.5 % |
+| cached for the harnesses | 0 | 0.0 % |
+| blocks model matches | 0 | 0.0 % |
+| camera model matches | 0 | 0.0 % |
+| game-time model matches | 0 | 0.0 % |
+| hud model matches | 0 | 0.0 % |
+| progress model matches | 0 | 0.0 % |
+| samus-looks model matches | 0 | 0.0 % |
+| samus-motion model matches | 0 | 0.0 % |
+| free-run gate: green streams | 0 | 0.0 % |
+| lockstep: Ticks fully equal | 0 | 0.0 % |
+
+### The 100% movie
+
+222,788 frames, 415 rows of the lock.
+
+| Track | Frames covered | Share of the movie |
+| --- | ---: | ---: |
+| recorded: the lock's rows | 145,139 | 65.1 % |
+| cached for the harnesses | 20,480 | 9.2 % |
+| blocks model matches | 15,735 | 7.1 % |
+| camera model matches | 15,763 | 7.1 % |
+| game-time model matches | 17,605 | 7.9 % |
+| hud model matches | 15,805 | 7.1 % |
+| progress model matches | 20,431 | 9.2 % |
+| samus-looks model matches | 14,157 | 6.4 % |
+| samus-motion model matches | 14,015 | 6.3 % |
+| free-run gate: green streams | 529 | 0.2 % |
+| lockstep: Ticks fully equal | 1,391 | 0.6 % |
+
+### The Spore Spawn RTA movie
+
+33,342 frames, 2 rows of the lock.
+
+| Track | Frames covered | Share of the movie |
+| --- | ---: | ---: |
+| recorded: the lock's rows | 2,378 | 7.1 % |
+| cached for the harnesses | 0 | 0.0 % |
+| blocks model matches | 0 | 0.0 % |
+| camera model matches | 0 | 0.0 % |
+| game-time model matches | 0 | 0.0 % |
+| hud model matches | 0 | 0.0 % |
+| progress model matches | 0 | 0.0 % |
+| samus-looks model matches | 0 | 0.0 % |
+| samus-motion model matches | 0 | 0.0 % |
+| free-run gate: green streams | 0 | 0.0 % |
+| lockstep: Ticks fully equal | 0 | 0.0 % |
+
+## Structure
+
+How the code is built, read from the tree (`verify::report::structure`, over the size lexer's outline): the crates, then per clean model its modules, the interface its crate root exports, the shared types it takes and which of its modules uses which, then the shared types and the engine files that adapt each model. A module's items are those it declares for others (`pub` or `pub(crate)`), an enum with its variant count and a type's functions as `Type::{...}`, and how many it keeps private; what its doc says it is is its module doc's first sentence.
+
+### Crates
+
+The workspace's crates and the workspace crates each depends on. The clean room's crates are built from their specs alone; the engine runs them through its bridges, and the verification crates hold them to the oracle.
+
+```mermaid
+graph LR
+  subgraph engine["engine"]
+    c_app["app"]
+    c_data["data"]
+    c_game["game"]
+    c_runtime["runtime"]
+  end
+  subgraph clean["clean room"]
+    c_clean_model_blocks["clean_model_blocks"]
+    c_clean_model_camera["clean_model_camera"]
+    c_clean_model_hud["clean_model_hud"]
+    c_clean_model_progress["clean_model_progress"]
+    c_clean_model_samus_looks["clean_model_samus_looks"]
+    c_clean_model_samus_motion["clean_model_samus_motion"]
+    c_clean_types["clean_types"]
+  end
+  subgraph codec["State codec"]
+    c_canonical["canonical"]
+    c_canonical_derive["canonical_derive"]
+  end
+  subgraph verification["verification"]
+    c_oracle["oracle"]
+    c_oracle_record["oracle_record"]
+    c_tools["tools"]
+    c_verify["verify"]
+  end
+  c_app --> c_data
+  c_app --> c_game
+  c_app --> c_runtime
+  c_canonical --> c_canonical_derive
+  c_clean_model_blocks --> c_clean_types
+  c_clean_model_camera --> c_clean_types
+  c_clean_model_hud --> c_clean_types
+  c_clean_model_progress --> c_clean_types
+  c_clean_model_samus_looks --> c_clean_types
+  c_clean_model_samus_motion --> c_clean_types
+  c_data --> c_canonical
+  c_data --> c_clean_types
+  c_game --> c_canonical
+  c_game --> c_clean_model_blocks
+  c_game --> c_clean_model_camera
+  c_game --> c_clean_model_hud
+  c_game --> c_clean_model_progress
+  c_game --> c_clean_model_samus_looks
+  c_game --> c_clean_model_samus_motion
+  c_game --> c_clean_types
+  c_game --> c_data
+  c_oracle --> c_data
+  c_oracle --> c_oracle_record
+  c_runtime --> c_data
+  c_tools --> c_runtime
+  c_tools --> c_verify
+  c_verify --> c_canonical
+  c_verify --> c_clean_model_blocks
+  c_verify --> c_clean_model_camera
+  c_verify --> c_clean_model_hud
+  c_verify --> c_clean_model_progress
+  c_verify --> c_clean_model_samus_looks
+  c_verify --> c_clean_model_samus_motion
+  c_verify --> c_clean_types
+  c_verify --> c_data
+  c_verify --> c_game
+  c_verify --> c_oracle_record
+  c_verify --> c_runtime
+```
+
+### samus-motion
+
+`crates/clean_model/samus-motion`, 17 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | One entry per spec entry: what the player sees, its kind and its switch. | `enum BehaviourId (30)`, `struct Behaviour`, `const CATALOGUE` | 0 | 254 |
+| `change.rs` | pose fit; `fn change_pose` in pose chart, `fn apply` in motion | The pose change at a frame's end (`PoseFollows`, `PoseFitAfterMoves`): whether she takes the pose chosen, where pose fit or the shrink places her, then what her moves met and the change's effects. | `Samus::change_pose`, 3 private | 586 | 84 |
+| `chart/table.rs` | pose chart | The rows of `WhatHerMovesMet` and of `AnimationEnds` (§7), read in order, the first that fits. | `const MOVES_MET`, `const STEP_BLOCKED`, `const ANIMATION_ENDS`, 1 private | 0 | 287 |
+| `chart.rs` | pose chart | §7: the pose chart's reader. | `struct Moment`, `struct Choice`, `Choice::{instead, blocked}`, `Moment::{next_pose, choose}`, 11 private | 918 | 150 |
+| `collide.rs` | collision | Tilemap collision (`BlocksStopFlush`, `SolidEnemies`, `SlopesCarry`, `TouchedCells`, `OtherBlockKinds`): one axis at a time, against the room's grid of 16 px cells and the solid enemies' boxes. | `struct Bounds`, `enum Stop (3)`, `enum Probe (5)`, `struct Moved`, `struct Axis`, `Bounds::axis`, `Tick::{inside, go, vmove, slope_checks}`, 31 private | 2,234 | 298 |
+| `fit.rs` | pose fit | `PoseFitAfterMoves`: placing her body when the pose change grows it, by looks that test a move without making it, from her box and her poses alone. | `fn crouched`, `enum Fitted (4)`, `Fitted::moved`, `Samus::fit`, 3 private | 552 | 94 |
+| `jump_held.rs` | motion | `Jumping`, jump held through (§1.2): jump held through a landing, or through the end of a turn or of a landing, counts as a press for the pad chart the next frame, so she takes off again without pressing it. | `enum FrameBefore (2)`, `struct JumpHeld`, `JumpHeld::{NONE, pressed, then}`, `FrameBefore::left_behind`, 2 private | 221 | 60 |
+| `lib.rs` | - | The samus-motion model, built from its behaviour spec alone: a character controller for Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels. | - | 0 | 25 |
+| `moves.rs` | motion | Her moves in a frame, as the pose at its start says (`MovesAsShePosed`): horizontally, the near-wall test, then the ground pull or her vertical move, and after the pose is chosen the aim change's step; what they met (`WhatHerMovesMet`), and what they do to her dashing (`Dashing`). | `struct Meeting`, `Samus::{moves, step_forward}`, 7 private | 1,050 | 183 |
+| `rows.rs` | pose chart | The pose chart's vocabulary (§7). | `const FORWARD`, `const BACK`, `fn seen`, `enum Doing (14)`, `enum Drift (5)`, `enum Moves (5)`, `enum Footing (4)`, `struct Situation`, `struct Class`, `enum Test (13)`, `struct Aiming`, `enum NextFacing (3)`, `struct Next`, `enum Effect (13)`, `struct Entering`, `enum Was (2)`, `struct Beat`, `struct Row`, `enum RowId (76)`, `const AIM`, `const UP_DOWN`, `const UDA`, `const NO_CHANGE`, `const KEEP_POSE`, `const TO_STILL`, `const LOWERS_NOTHING`, `const TO_RUNNING`, `const TO_JUMPING`, `const TO_FALLING`, `const TO_SPINNING`, `const TO_TAKING_OFF`, `const TO_MOONWALKING`, `const TO_CROUCHING`, `const TO_MORPHING`, `const TO_TURNING`, `const FORWARD_AIM`, `const UP_AIM`, `const AIM_UP_ELSE_DOWN`, `const DOWN_TO_FORWARD`, `enum Met (5)`, `Next::pose_from`, `Entering::on` | 294 | 359 |
+| `rules.rs` | - | The tuning parameters the model reads. | `enum SpeedCap (2)`, `enum Gait (7)`, `struct Limits`, `struct Speeds`, `enum Lowers (3)`, `struct WithItem`, `enum Bounces (3)`, `struct Bounce`, `struct Rules`, `WithItem::of`, `Rules::{REFERENCE, limits, lowers, cap, rise_speed}` | 304 | 220 |
+| `run.rs` | motion | Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash, dashing). | `enum Carry (2)`, `enum Dashing (2)`, `enum Stride (4)`, `fn running_with_run_held`, `struct Run`, `Run::{halt, skids, turn_round, end_skid, as_running, meet, launch, moving, stride}`, 7 private | 811 | 165 |
+| `samus.rs` | motion | Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows beyond her quantities: its outputs, for the caller to act on. | `enum Spin (4)`, `enum Seat (2)`, `enum WallTest (3)`, `enum StandingAnimation (2)`, `fn sprite`, `struct Outcome`, `struct Samus`, `Spin::then`, `StandingAnimation::of`, `Samus::{rides_the_elevator, bounds, take_result}` | 288 | 117 |
+| `situation.rs` | pose chart | Her situation, classified once a frame from her pose at its start (`MovesAsShePosed`). | `struct UnknownPose`, `fn classify`, `static ENTERING`, `static CLASSES`, 45 private | 100 | 1,413 |
+| `step.rs` | motion | One frame of her motion, in the order `PoseFitAfterMoves` gives: she moves as the pose at its start says (`MovesAsShePosed`, `moves`); what those moves met is known; the pose is chosen (`PoseFollows`, `chart`) and the aim change's step made; then the pose change (`change`): pose fit or the shrink places her, and what she met and the change's effects act, where the change is taken. | `Samus::step` | 473 | 75 |
+| `tick.rs` | motion | One frame's play: what the frame brings from the player and the world (§1.3), and the room, the rules and the cells reached that the frame's moves and looks share (`TouchedCells`). | `struct Frame`, `struct Tick`, `Tick::body` | 15 | 23 |
+| `vertical.rs` | motion | Her vertical motion as a value of its own (§1 vertical speed and bounces, §1.2 falling at 0 and the moonfall). | `enum Phase (5)`, `struct Vertical`, `enum Course (3)`, `enum Contact (4)`, `Contact::rises`, `Vertical::{on_ground, has_motion, rising, heading_down, jump, end_rise, space_jump, enter_spin_from_a_turn, come_to_the_ground, course, end_move, meet_in_moves, contact, meet, end_bounce}`, 7 private | 1,080 | 216 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
+- from `chart`: `Moment`
+- from `jump_held`: `FrameBefore`, `JumpHeld`
+- from `rows`: `Met`
+- from `rules`: `Bounces`, `Rules`, `SpeedCap`, `WithItem`
+- from `run`: `Carry`, `Dashing`, `Run`
+- from `samus`: `Outcome`, `Samus`, `Seat`, `Spin`, `StandingAnimation`, `WallTest`
+- from `situation`: `UnknownPose`
+- from `tick`: `Frame`
+- from `vertical`: `Phase`, `Vertical`
+- the module `catalogue`
+- the module `rules`
+
+The public functions a caller reaches through them:
+
+```rust
+Moment::next_pose(&self, pose: Pose) -> Result<Pose, UnknownPose>
+WithItem::of(self, items: &Set<Item>) -> Fixed
+Rules::limits(&self, gait: Gait) -> Limits
+Rules::lowers(&self, by: Lowers) -> Fixed
+Rules::cap(&self, speed: Fixed, top: Fixed) -> Fixed
+Rules::rise_speed(&self, base: WithItem, items: &Set<Item>, dash: Fixed) -> Fixed
+Samus::step(&mut self, frame: &Frame, world: &dyn World, rules: &Rules) -> Result<Outcome, UnknownPose>
+Vertical::on_ground(self) -> bool
+```
+
+Shared types it takes from `clean_types`: `Action`, `Aim`, `Block`, `Body`, `Buttons`, `Cell`, `Checked`, `ClipEnd`, `Facing`, `Fixed`, `Gun`, `Heading`, `Hitbox`, `Item`, `Kind`, `LandedFrom`, `Legs`, `Pair`, `Parity`, `Parts`, `Pose`, `Position`, `Px`, `Radius`, `Set`, `Side`, `Slope`, `SlopeFaces`, `Sprite`, `Switch`, `Touch`, `Turn`, `Way`, `World`, `ZERO`, `button`, `fixed`, `part_below`, `px`. Other crates it uses: `core`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_lib["lib"]
+    m_rules["rules"]
+  end
+  subgraph a_collision["collision"]
+    m_collide["collide"]
+  end
+  subgraph a_motion["motion"]
+    m_jump_held["jump_held"]
+    m_moves["moves"]
+    m_run["run"]
+    m_samus["samus"]
+    m_step["step"]
+    m_tick["tick"]
+    m_vertical["vertical"]
+  end
+  subgraph a_pose_chart["pose chart"]
+    m_chart__table["chart::table"]
+    m_chart["chart"]
+    m_rows["rows"]
+    m_situation["situation"]
+  end
+  subgraph a_pose_fit["pose fit"]
+    m_change["change"]
+    m_fit["fit"]
+  end
+  m_change --> m_chart
+  m_change --> m_collide
+  m_change --> m_fit
+  m_change --> m_rows
+  m_change --> m_rules
+  m_change --> m_run
+  m_change --> m_samus
+  m_change --> m_situation
+  m_change --> m_tick
+  m_change --> m_vertical
+  m_chart --> m_chart__table
+  m_chart --> m_rows
+  m_chart --> m_rules
+  m_chart --> m_situation
+  m_chart__table --> m_rows
+  m_collide --> m_tick
+  m_fit --> m_collide
+  m_fit --> m_samus
+  m_fit --> m_tick
+  m_jump_held --> m_rows
+  m_jump_held --> m_rules
+  m_jump_held --> m_tick
+  m_lib --> m_catalogue
+  m_lib --> m_chart
+  m_lib --> m_jump_held
+  m_lib --> m_rows
+  m_lib --> m_rules
+  m_lib --> m_run
+  m_lib --> m_samus
+  m_lib --> m_situation
+  m_lib --> m_tick
+  m_lib --> m_vertical
+  m_moves --> m_chart
+  m_moves --> m_collide
+  m_moves --> m_rows
+  m_moves --> m_run
+  m_moves --> m_samus
+  m_moves --> m_tick
+  m_moves --> m_vertical
+  m_rows --> m_rules
+  m_run --> m_rows
+  m_run --> m_rules
+  m_run --> m_tick
+  m_run --> m_vertical
+  m_samus --> m_collide
+  m_samus --> m_jump_held
+  m_samus --> m_run
+  m_samus --> m_tick
+  m_samus --> m_vertical
+  m_situation --> m_rows
+  m_situation --> m_rules
+  m_step --> m_chart
+  m_step --> m_jump_held
+  m_step --> m_rows
+  m_step --> m_rules
+  m_step --> m_run
+  m_step --> m_samus
+  m_step --> m_situation
+  m_step --> m_tick
+  m_step --> m_vertical
+  m_tick --> m_rules
+  m_vertical --> m_rows
+  m_vertical --> m_rules
+  m_vertical --> m_tick
+```
+
+### camera
+
+`crates/clean_model/camera`, 7 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `axis.rs` | limits | One axis of a frame: the camera following her there (Spec: §2), and the room keeping the view in (Spec: §3): its edges, its closed and short screens, and how the view settles out of a closed screen. | `enum Axis (2)`, `struct Line`, `Line::{new, follow}`, 20 private | 951 | 186 |
+| `catalogue.rs` | - | The catalogue: one behaviour per spec entry, with its kind, its switch and how it is checked. | `enum BehaviourId (14)`, `struct Behaviour`, `const CATALOGUE` | 0 | 143 |
+| `follow.rs` | follow | Following her (Spec: §2): how positions compare, where the view aims, and how fast and how far it moves there. | `fn before`, `fn exceeds`, `fn max_by_before`, `fn min_by_exceeds`, `enum Going (2)`, `struct Move`, `fn aim`, `fn speed`, `fn chase`, 3 private | 360 | 84 |
+| `input.rs` | - | What the camera reads each frame (Spec: §1.3): her motion's outputs, the room, the lead setting and whether time is stopped. | `enum LeadSetting (4)`, `struct Samus`, `struct Frame` | 0 | 25 |
+| `lib.rs` | - | The camera model, built from its behaviour spec alone: the screen's view following Samus. | `struct Camera`, `Camera::{new, position, seen, step}` | 207 | 64 |
+| `room.rs` | limits | The room as the camera reads it (Spec: §1.3): its screens, run on as one strip, and its aim heights. | `const SCREEN`, `struct Heights`, `enum RoomError (3)`, `struct Room`, `Heights::height`, `Room::{new, screen}`, 2 private | 242 | 71 |
+| `rules.rs` | follow | The tuning the camera reads: `Rules`, whose reference profile holds the spec's vanilla values. | `struct Leads`, `struct Rules`, `Rules::{lead, REFERENCE}`, 1 private | 80 | 58 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
+- from `input`: `Frame`, `LeadSetting`, `Samus`
+- from `room`: `Heights`, `Room`, `RoomError`
+- from `rules`: `Leads`, `Rules`
+
+The public functions a caller reaches through them:
+
+```rust
+Camera::new(position: Pair<Fixed>, her: Position) -> Self
+Camera::position(&self) -> Pair<Fixed>
+Camera::seen(&self) -> Position
+Camera::step(self, rules: &Rules, frame: &Frame) -> Self
+Room::new(run: Vec<ScreenKind>, size: Pair<usize>, heights: Heights) -> Result<Self, RoomError>
+```
+
+Shared types it takes from `clean_types`: `Checked`, `Facing`, `Fixed`, `Kind`, `PIXEL`, `Pair`, `Parts`, `Position`, `Px`, `ScreenKind`, `Switch`, `below`, `fixed`, `px`. Other crates it uses: `core`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_input["input"]
+    m_lib["lib"]
+  end
+  subgraph a_follow["follow"]
+    m_follow["follow"]
+    m_rules["rules"]
+  end
+  subgraph a_limits["limits"]
+    m_axis["axis"]
+    m_room["room"]
+  end
+  m_axis --> m_follow
+  m_axis --> m_input
+  m_axis --> m_room
+  m_axis --> m_rules
+  m_follow --> m_input
+  m_follow --> m_rules
+  m_input --> m_room
+  m_lib --> m_axis
+  m_lib --> m_catalogue
+  m_lib --> m_follow
+  m_lib --> m_input
+  m_lib --> m_room
+  m_lib --> m_rules
+  m_rules --> m_input
+```
+
+### progress
+
+`crates/clean_model/progress`, 9 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | The catalogue: one behaviour for each entry of the progress spec. | `enum BehaviourId (14)`, `struct Behaviour`, `fn catalogue` | 9 | 126 |
+| `inventory.rs` | equipment | What she has (spec §1.1, §4): her items and beams, hers and switched on, her capacities, what she holds and her reserve mode; and what taking an item, a beam or a tank gives her. | `type Count`, `enum Supply (5)`, `enum ReserveMode (3)`, `enum Pickup (3)`, `struct Inventory`, `Inventory::take`, `impl Default for Inventory`, 3 private | 281 | 90 |
+| `lib.rs` | - | The progress model, built from its behaviour spec alone: what the game remembers of her run besides where she is. | - | 0 | 19 |
+| `percentage.rs` | percentage | The item percentage the ending shows. | `Inventory::item_percentage` | 72 | 13 |
+| `places.rs` | places | What the places remember (spec §3): the item locations emptied and the doors that stay open, by id, and how she has each area's map. | `struct Remembered`, `enum MapStatus (3)`, `Remembered::{remember, contains}`, `MapStatus::is_known`, `impl Default for Remembered<Id>` | 66 | 30 |
+| `progress.rs` | happened | The whole of what the game keeps of a run besides where she is (spec §1), and what has happened in the world (§2). | `struct Progress` | 0 | 17 |
+| `report.rs` | places | What other domains report (spec §1.3), and how each report changes the progress. | `enum Report (10)`, `Progress::apply` | 226 | 54 |
+| `room_states.rs` | rooms | Which version of a room loads, given the run's progress (spec §5). | `enum Condition (6)`, `struct EnteredRoom`, `struct RoomStates`, `enum Version (2)`, `RoomStates::choose`, 1 private | 166 | 51 |
+| `rules.rs` | - | The values the progress rules read: the reference profile holds the original game's. | `struct Rules`, `Rules::reference`, `impl Default for Rules`, 4 private | 42 | 39 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `catalogue`
+- from `inventory`: `Count`, `Inventory`, `Pickup`, `ReserveMode`, `Supply`
+- from `places`: `MapStatus`, `Remembered`
+- from `progress`: `Progress`
+- from `report`: `Report`
+- from `room_states`: `Condition`, `EnteredRoom`, `RoomStates`, `Version`
+- from `rules`: `Rules`
+
+The public functions a caller reaches through them:
+
+```rust
+catalogue() -> EnumMap<BehaviourId, Behaviour>
+Inventory::item_percentage(&self, rules: &Rules) -> Count
+Remembered::contains(&self, id: Option<Id>) -> bool
+MapStatus::is_known(self) -> bool
+Progress::apply(&mut self, rules: &Rules, report: Report)
+RoomStates::choose(&self, progress: &Progress, room: EnteredRoom) -> Version
+Rules::reference() -> Self
+```
+
+Shared types it takes from `clean_types`: `Area`, `Beam`, `BossKind`, `Checked`, `DoorId`, `Entrance`, `Event`, `Item`, `Kind`, `LocationId`, `Members`, `Set`, `StationId`, `Switch`. Other crates it uses: `core`, `enum_map`, `std`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_lib["lib"]
+    m_rules["rules"]
+  end
+  subgraph a_equipment["equipment"]
+    m_inventory["inventory"]
+  end
+  subgraph a_happened["happened"]
+    m_progress["progress"]
+  end
+  subgraph a_percentage["percentage"]
+    m_percentage["percentage"]
+  end
+  subgraph a_places["places"]
+    m_places["places"]
+    m_report["report"]
+  end
+  subgraph a_rooms["rooms"]
+    m_room_states["room_states"]
+  end
+  m_lib --> m_catalogue
+  m_lib --> m_inventory
+  m_lib --> m_places
+  m_lib --> m_progress
+  m_lib --> m_report
+  m_lib --> m_room_states
+  m_lib --> m_rules
+  m_percentage --> m_inventory
+  m_percentage --> m_rules
+  m_progress --> m_inventory
+  m_progress --> m_places
+  m_report --> m_inventory
+  m_report --> m_places
+  m_report --> m_progress
+  m_report --> m_rules
+  m_room_states --> m_inventory
+  m_room_states --> m_progress
+  m_rules --> m_inventory
+```
+
+### hud
+
+`crates/clean_model/hud`, 16 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | The catalogue: one behaviour per entry of the HUD's spec, with its kind, its switch and how the spec checks it. | `enum BehaviourId (19)`, `struct Behaviour`, `const CATALOGUE` | 0 | 187 |
+| `events.rs` | - | What a frame reports for other domains to act on. | `enum HudEvent (2)` | 0 | 6 |
+| `frame.rs` | - | One frame of the HUD, and a boss met outside a frame (§5: the order that matters). | `struct FrameOutcome`, `HudState::{frame, boss_encountered}` | 280 | 66 |
+| `grid.rs` | - | A grid of cells, each holding a value: the HUD's cells, her map's pictures and the sets of her map's cells are each one. | `type Place`, `fn at`, `fn plus`, `struct Grid`, `Grid::{filled, get, set, contains, insert}`, `impl Default for Grid<T, COLUMNS, ROWS>`, 1 private | 224 | 55 |
+| `inputs.rs` | -; `fn has` in selection | What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she is on her map. | `struct FrameCount`, `struct Energy`, `enum ReserveMode (2)`, `struct Reserve`, `struct Stock`, `struct Ammunition`, `struct Equipped`, `struct Status`, `enum SelectButton (2)`, `enum CancelButton (3)`, `enum Mute (4)`, `struct Controls`, `struct Room`, `struct MiniMapInputs`, `struct FrameInputs`, `Ammunition::{new, of, stocks}`, `Status::has`, 1 private | 141 | 122 |
+| `item.rs` | selection | The items the HUD can select (§1.1). | `enum Ammo (3)`, `enum SelectableItem (3)`, `SelectableItem::ORDER` | 0 | 22 |
+| `layout.rs` | status | Where things sit on the HUD (§1.2), as places on its grid: column across, row down. | `const TANKS`, `const ENERGY_DIGITS`, `fn ammo_digits`, `const RESERVE_SIGN`, `fn icon_top_left`, `const HER_CELL`, `const WINDOW_REACH`, `fn laid`, 3 private | 94 | 52 |
+| `lib.rs` | - | The HUD model, built from its behaviour spec alone: the status bar at the top of the screen, the selected item and the mini-map. | - | 0 | 34 |
+| `map.rs` | minimap | Her map, as the mini-map reads it (§1.3): 64 columns by 32 rows of cells, each cell's picture with its flips, its beyond pictures, and the cells it charts; and the sets of its cells. | `type MapCellSet`, `type MapPictures`, `struct HerMap` | 0 | 9 |
+| `mini_map.rs` | minimap | The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own cell blinking, the bosses that blank it, and the quirks at the map's first and last columns. | `HudState::{mini_map_updates, explore_and_draw_mini_map, blank_mini_map}`, 22 private | 654 | 153 |
+| `pictures.rs` | status | The HUD's pictures (§1.4): content the importer supplies by name, which the caller gives each step. | `struct Icons`, `fn rows`, `struct HudPictures`, `Icons::of`, `HudPictures::blank_cell` | 127 | 45 |
+| `rules.rs` | -; `fn reference` in minimap | The values the HUD's rules read: the reference profile holds the spec's; another `Rules` is an adjusted game. | `enum RoomBoss (6)`, `enum Boss (2)`, `struct Alternation`, `struct Rules`, `Alternation::first_half`, `Rules::reference`, `impl Default for Rules`, 6 private | 111 | 96 |
+| `selection.rs` | selection | How Select, item cancel and a shot change the selection (§3). | `HudState::{press_buttons, shot_cancels}`, 1 private | 220 | 41 |
+| `state.rs` | - | What the HUD keeps from one frame to the next (§1): its cells, the values last shown, the selection, the explored cells and whether the mini-map is off. | `struct Shown`, `enum Selection (3)`, `enum MiniMapPower (2)`, `struct HudState`, `Selection::{item, one_shot}` | 59 | 45 |
+| `status_bar.rs` | status | The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the items' icons with the selection's highlight. | `HudState::{energy_gauge, ammo_counts, reserve_sign, icon_appears, highlight, one_shot_flash}`, 5 private | 730 | 115 |
+| `tile.rs` | - | What a cell of the HUD shows (§1.4): a picture with its flips (the shared `Look`), in one of the HUD's eight colour sets; and the colour sets by the role the spec gives each. | `struct ColourSet`, `struct Tile`, `type HudGrid`, `const BLANK_COLOURS`, `const DIGIT_COLOURS`, `const FULL_TANK_COLOURS`, `const EMPTY_TANK_COLOURS`, `const SIGN_LIT`, `const SIGN_DIM`, `const PLAIN`, `const HIGHLIGHTED`, `const EXPLORED`, `const CHARTED`, `const BLINK`, `ColourSet::{new, number}`, `Tile::{new, in_colours}`, 1 private | 55 | 46 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
+- from `clean_types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`
+- from `events`: `HudEvent`
+- from `frame`: `FrameOutcome`
+- from `grid`: `Grid`, `Place`
+- from `inputs`: `Ammunition`, `CancelButton`, `Controls`, `Energy`, `Equipped`, `FrameCount`, `FrameInputs`, `MiniMapInputs`, `Mute`, `Reserve`, `ReserveMode`, `Room`, `SelectButton`, `Status`, `Stock`
+- from `item`: `Ammo`, `SelectableItem`
+- from `map`: `HerMap`, `MapCellSet`, `MapPictures`
+- from `pictures`: `HudPictures`, `Icons`
+- from `rules`: `Alternation`, `Boss`, `RoomBoss`, `Rules`
+- from `state`: `HudState`, `MiniMapPower`, `Selection`, `Shown`
+- from `tile`: `ColourSet`, `HudGrid`, `Tile`
+
+The public functions a caller reaches through them:
+
+```rust
+HudState::frame(mut self, rules: &Rules, pictures: &HudPictures, inputs: &FrameInputs<'_>) -> FrameOutcome
+HudState::boss_encountered(mut self, rules: &Rules, pictures: &HudPictures, boss: RoomBoss, room: Place) -> Self
+Grid::filled(value: T) -> Self
+Grid::get(&self, place: Place) -> Option<T>
+Grid::set(&mut self, place: Place, value: T)
+Grid::contains(&self, place: Place) -> bool
+Grid::insert(&mut self, place: Place)
+Ammunition::new(stocks: EnumMap<Ammo, Stock>) -> Option<Self>
+Ammunition::of(&self, ammo: Ammo) -> Stock
+Ammunition::stocks(&self) -> impl Iterator<Item = (Ammo, Stock)> + '_
+Status::has(&self, item: SelectableItem) -> bool
+Icons::of(&self, item: SelectableItem) -> [&[Look]; 2]
+HudPictures::blank_cell(&self) -> Tile
+Alternation::first_half(self, frame: FrameCount) -> bool
+Rules::reference() -> Self
+Selection::item(self) -> Option<SelectableItem>
+Selection::one_shot(self) -> Option<SelectableItem>
+ColourSet::new(number: u8) -> Option<Self>
+ColourSet::number(self) -> u8
+Tile::new(look: Look, colours: ColourSet) -> Self
+Tile::in_colours(self, colours: ColourSet) -> Self
+```
+
+Shared types it takes from `clean_types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`, `by_member`. Other crates it uses: `enum_map`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_events["events"]
+    m_frame["frame"]
+    m_grid["grid"]
+    m_inputs["inputs"]
+    m_lib["lib"]
+    m_rules["rules"]
+    m_state["state"]
+    m_tile["tile"]
+  end
+  subgraph a_minimap["minimap"]
+    m_map["map"]
+    m_mini_map["mini_map"]
+  end
+  subgraph a_selection["selection"]
+    m_item["item"]
+    m_selection["selection"]
+  end
+  subgraph a_status["status"]
+    m_layout["layout"]
+    m_pictures["pictures"]
+    m_status_bar["status_bar"]
+  end
+  m_events --> m_item
+  m_frame --> m_events
+  m_frame --> m_grid
+  m_frame --> m_inputs
+  m_frame --> m_pictures
+  m_frame --> m_rules
+  m_frame --> m_state
+  m_inputs --> m_grid
+  m_inputs --> m_item
+  m_inputs --> m_map
+  m_layout --> m_grid
+  m_layout --> m_item
+  m_lib --> m_catalogue
+  m_lib --> m_events
+  m_lib --> m_frame
+  m_lib --> m_grid
+  m_lib --> m_inputs
+  m_lib --> m_item
+  m_lib --> m_map
+  m_lib --> m_pictures
+  m_lib --> m_rules
+  m_lib --> m_state
+  m_lib --> m_tile
+  m_map --> m_grid
+  m_mini_map --> m_grid
+  m_mini_map --> m_inputs
+  m_mini_map --> m_layout
+  m_mini_map --> m_pictures
+  m_mini_map --> m_rules
+  m_mini_map --> m_state
+  m_mini_map --> m_tile
+  m_pictures --> m_item
+  m_pictures --> m_tile
+  m_rules --> m_inputs
+  m_selection --> m_events
+  m_selection --> m_inputs
+  m_selection --> m_item
+  m_selection --> m_state
+  m_state --> m_item
+  m_state --> m_map
+  m_state --> m_tile
+  m_status_bar --> m_grid
+  m_status_bar --> m_inputs
+  m_status_bar --> m_item
+  m_status_bar --> m_layout
+  m_status_bar --> m_pictures
+  m_status_bar --> m_rules
+  m_status_bar --> m_state
+  m_status_bar --> m_tile
+  m_tile --> m_grid
+```
+
+### blocks
+
+`crates/clean_model/blocks`, 9 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | The catalogue: one behaviour per spec entry, with its kind, its switch and how it is checked. | `enum BehaviourId (18)`, `struct Behaviour`, `const CATALOGUE` | 0 | 168 |
+| `cells.rs` | -; `fn show` in places, `fn regrow` in places, `fn offset` in places, `fn answer` in breakables, `fn plain` in breakables, `fn met_as` in breakables | The room's cells as this domain sees them: each cell's kind, mark and look (spec §1), and how a step writes a cell. | `struct Grid`, `type Tilemap`, `struct Tile`, `enum CellKind (4)`, `enum ReactingBody (2)`, `enum StandIn (2)`, `enum Answer (3)`, `enum Mark (7)`, `enum OtherMetAs (2)`, `enum Inside (2)`, `fn offset`, `Grid::{new, rows, get, get_mut}`, `CellKind::answer`, `ReactingBody::plain`, `Mark::met_as`, `Tile::{show, regrow}` | 314 | 138 |
+| `inputs.rs` | - | What the frame and the room's start give the model (spec §1.3). | `enum Request (2)`, `enum Meeting (3)`, `enum Run (2)`, `enum Placement (3)`, `struct ScreenChange`, `struct OutsideTheRoom` | 0 | 41 |
+| `lib.rs` | - | The blocks model, built from its behaviour spec alone: blocks that break and come back, the scroll cells that change which screens the view may show, and the stand-ins a room places. | - | 0 | 22 |
+| `places.rs` | places | The places reactions run in (`Places`), and the run of what they hold (`TheScriptsRun`): at most 40 run at once, each one started takes the highest free place, and every frame that isn't paused each place from the highest down has its turn. | `const PLACE_COUNT`, `struct Places`, `enum Place (5)`, `struct Running`, `struct ScrollReaction`, `enum Touched (2)`, `Places::{take, full, hold_until_run, touch_scroll, run}`, `Running::started`, `impl Default for Places`, 7 private | 755 | 172 |
+| `reactions.rs` | places | Reactions and their scripts: the imported assets (spec §2). | `const MOST_FRAMES`, `struct Frames`, `struct ReactionName`, `struct Reaction`, `enum Step (4)`, `struct SoundRequest`, `struct PatternCell`, `enum Becomes (4)`, `Frames::{ONE, new, count, less_one}`, `Reaction::{first_wait_of, regrows}` | 96 | 75 |
+| `report.rs` | - | What a frame reports (spec §1.4) beyond the state's screens. | `struct Report` | 0 | 9 |
+| `rules.rs` | breakables | The rules (spec §5, `BlocksMarkedNothing`): for each family, and for each family a cell marked `Nothing` is met as, what her touches and the hits ask of its cells. | `struct Rules`, `struct Row`, `enum TouchRule (2)`, `enum Starter (3)`, `struct HitRule`, `enum Bodies (2)`, `struct HoldUntilRun`, `struct Start`, `enum FirstStep (2)`, `enum Change (3)`, `Rules::reference`, `Row::answer`, `Starter::starts`, `Bodies::includes`, `FirstStep::index`, `Change::apply`, 23 private | 444 | 320 |
+| `state.rs` | breakables | What the model remembers from frame to frame (spec §1.2): the cells, the places and the screens, and the two entry points that change them: the room's start and the frame's step. | `struct State`, `State::{start_room, step}`, 2 private | 787 | 133 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
+- from `cells`: `Answer`, `CellKind`, `Grid`, `Inside`, `Mark`, `OtherMetAs`, `ReactingBody`, `StandIn`, `Tile`, `Tilemap`
+- from `inputs`: `Meeting`, `OutsideTheRoom`, `Placement`, `Request`, `Run`, `ScreenChange`
+- from `places`: `PLACE_COUNT`, `Place`, `Places`, `Running`, `ScrollReaction`, `Touched`
+- from `reactions`: `Becomes`, `Frames`, `MOST_FRAMES`, `PatternCell`, `Reaction`, `ReactionName`, `SoundRequest`, `Step`
+- from `report`: `Report`
+- from `rules`: `Bodies`, `Change`, `FirstStep`, `HitRule`, `HoldUntilRun`, `Row`, `Rules`, `Start`, `Starter`, `TouchRule`
+- from `state`: `State`
+
+The public functions a caller reaches through them:
+
+```rust
+Grid::new(rows: Vec<Vec<T>>) -> Option<Self>
+Grid::rows(&self) -> &[Vec<T>]
+Grid::get(&self, at: Pair<u16>) -> Option<&T>
+Grid::get_mut(&mut self, at: Pair<u16>) -> Option<&mut T>
+CellKind::answer(self) -> Answer
+ReactingBody::plain(self) -> CellKind
+Mark::met_as(&self) -> Option<MetAs>
+Tile::show(&mut self, cell: &PatternCell)
+Tile::regrow(&mut self, body: ReactingBody, whole_look: Option<Picture>)
+Frames::new(count: u16) -> Option<Self>
+Frames::count(self) -> u16
+Frames::less_one(self) -> Option<Self>
+Reaction::first_wait_of(&self, script: Script) -> Frames
+Reaction::regrows(&self, script: Script) -> bool
+Rules::reference() -> Self
+Starter::starts(&self, way: Way, moving: Set<Motion>) -> bool
+Bodies::includes(self, body: ReactingBody) -> bool
+FirstStep::index(self, steps: &[Step]) -> usize
+State::start_room(&mut self, placements: impl IntoIterator<Item = Placement>) -> Result<(), OutsideTheRoom>
+State::step(&mut self, rules: &Rules, requests: &[Request], moving: Set<Motion>, run: Run) -> Result<Report, OutsideTheRoom>
+```
+
+Shared types it takes from `clean_types`: `Cell`, `Checked`, `Family`, `Heading`, `HitBy`, `Kind`, `Look`, `MetAs`, `Motion`, `Pair`, `Picture`, `Point`, `Screen`, `ScreenKind`, `Script`, `Set`, `Switch`, `Way`, `by_member`. Other crates it uses: `enum_map`, `std`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_cells["cells"]
+    m_inputs["inputs"]
+    m_lib["lib"]
+    m_report["report"]
+  end
+  subgraph a_breakables["breakables"]
+    m_rules["rules"]
+    m_state["state"]
+  end
+  subgraph a_places["places"]
+    m_places["places"]
+    m_reactions["reactions"]
+  end
+  m_cells --> m_reactions
+  m_inputs --> m_cells
+  m_lib --> m_catalogue
+  m_lib --> m_cells
+  m_lib --> m_inputs
+  m_lib --> m_places
+  m_lib --> m_reactions
+  m_lib --> m_report
+  m_lib --> m_rules
+  m_lib --> m_state
+  m_places --> m_cells
+  m_places --> m_inputs
+  m_places --> m_reactions
+  m_places --> m_report
+  m_places --> m_rules
+  m_report --> m_cells
+  m_report --> m_reactions
+  m_rules --> m_cells
+  m_rules --> m_inputs
+  m_rules --> m_reactions
+  m_state --> m_cells
+  m_state --> m_inputs
+  m_state --> m_places
+  m_state --> m_report
+  m_state --> m_rules
+```
+
+### samus-looks
+
+`crates/clean_model/samus-looks`, 11 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | The catalogue: one behaviour per entry of the spec. | `enum BehaviourId (15)`, `struct Behaviour`, `const CATALOGUE` | 0 | 149 |
+| `clip.rs` | clip | §1.4 Her clips and the run's paces: the content the importer supplies, as typed values. | `struct Step`, `struct Frames`, `struct Hold`, `struct Slowdown`, `struct Branch`, `enum Instruction (2)`, `enum Control (6)`, `struct Clip`, `struct Pace`, `struct Paces`, `Step::{FIRST, SECOND, next, before}`, `Frames::{NONE, slowed}`, `Hold::{LONGEST, new, frames}`, `Slowdown::{MOST, NONE, new}`, `Control::end`, `Clip::{at, hold}`, `Pace::hold`, 1 private | 196 | 116 |
+| `inputs.rs` | - | §1.3 What a frame reads, each from the domain that owns it, and §1.1 what it reports. | `struct Pose`, `trait Content`, `enum Move (5)`, `struct Liquid`, `struct Inputs`, `struct Report` | 16 | 46 |
+| `lib.rs` | - | The samus-looks model, built from its behaviour spec alone: her animation's timing. | - | 0 | 16 |
+| `moves.rs` | moves | §4 What her moves do to her clip, before the time runs down, and whether her spin has turned far enough to kick off a wall. | `Update::{her_moves, turned_far}`, 5 private | 264 | 51 |
+| `playback.rs` | clip | §2 Her clip plays: the time runs down, and the clip moves on through its instructions. | `struct Onward`, `Update::play_clip`, 4 private | 445 | 72 |
+| `rules.rs` | - | The numbers the spec's entries give, as a game's tuning: `Rules::VANILLA` holds the spec's. | `struct Rules`, `Rules::VANILLA` | 0 | 24 |
+| `run.rs` | run | §5 Her run: its pace while she dashes, and the speed booster's stages up to boosting. | `struct LapEnd`, `Update::{stride, lap_end, dash_began, dash_lost}`, 5 private | 416 | 94 |
+| `starting.rs` | clip | §3 Taking another pose: where the clip of the pose she takes starts. | `Update::start`, 12 private | 270 | 164 |
+| `state.rs` | -; `fn run_down` in clip, `fn end_ahead` in clip, `fn counted_down` in run | §1 What the domain remembers from one frame to the next: where her clip is, and her run's boost. | `struct Playhead`, `enum RunDown (2)`, `struct Laps`, `struct Boost`, `struct State`, `Playhead::{run_down, end_ahead}`, `Laps::counted_down` | 204 | 52 |
+| `update.rs` | - | §6 A frame of her animation, in the order that matters. | `struct Update`, `fn update`, `Update::{new, goes_on}` | 261 | 60 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
+- from `clip`: `Branch`, `Clip`, `Control`, `Frames`, `Hold`, `Instruction`, `Pace`, `Paces`, `Slowdown`, `Step`
+- from `inputs`: `Content`, `Inputs`, `Liquid`, `Move`, `Pose`, `Report`
+- from `rules`: `Rules`
+- from `state`: `Boost`, `Laps`, `Playhead`, `RunDown`, `State`
+- from `update`: `update`
+
+The public functions a caller reaches through them:
+
+```rust
+Step::next(self) -> Option<Self>
+Step::before(self) -> Option<Self>
+Frames::slowed(self, slowdown: Slowdown) -> Self
+Hold::new(frames: u8) -> Option<Self>
+Hold::frames(self) -> Frames
+Slowdown::new(frames: u8) -> Option<Self>
+Control::end(self) -> Option<ClipEnd>
+Clip::at(&self, step: Step) -> Option<Instruction>
+Clip::hold(&self, step: Step) -> Option<Hold>
+Pace::hold(&self, step: Step) -> Option<Hold>
+Playhead::run_down(self, clip: &Clip) -> RunDown
+Playhead::end_ahead(self, clip: &Clip) -> Option<ClipEnd>
+Laps::counted_down(self) -> Option<Self>
+update(state: State, inputs: &Inputs, content: &impl Content, rules: &Rules) -> (State, Report)
+```
+
+Shared types it takes from `clean_types`: `Action`, `Aim`, `AnimationSound`, `Body`, `BoostStage`, `Checked`, `ClipEnd`, `Fixed`, `Item`, `Kind`, `LandedFrom`, `Parts`, `Pose`, `Set`, `Sprite`, `Switch`, `Turn`. Other crates it uses: `core`, `enum_map`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_inputs["inputs"]
+    m_lib["lib"]
+    m_rules["rules"]
+    m_state["state"]
+    m_update["update"]
+  end
+  subgraph a_clip["clip"]
+    m_clip["clip"]
+    m_playback["playback"]
+    m_starting["starting"]
+  end
+  subgraph a_moves["moves"]
+    m_moves["moves"]
+  end
+  subgraph a_run["run"]
+    m_run["run"]
+  end
+  m_inputs --> m_clip
+  m_lib --> m_catalogue
+  m_lib --> m_clip
+  m_lib --> m_inputs
+  m_lib --> m_rules
+  m_lib --> m_state
+  m_lib --> m_update
+  m_moves --> m_clip
+  m_moves --> m_inputs
+  m_moves --> m_state
+  m_moves --> m_update
+  m_playback --> m_clip
+  m_playback --> m_state
+  m_playback --> m_update
+  m_rules --> m_clip
+  m_rules --> m_state
+  m_run --> m_clip
+  m_run --> m_inputs
+  m_run --> m_playback
+  m_run --> m_state
+  m_run --> m_update
+  m_starting --> m_clip
+  m_starting --> m_inputs
+  m_starting --> m_state
+  m_starting --> m_update
+  m_state --> m_clip
+  m_update --> m_clip
+  m_update --> m_inputs
+  m_update --> m_rules
+  m_update --> m_state
+```
+
+### Shared types by model
+
+The public items of `crates/clean_types` the clean models share, and the models that name each.
+
+| Item | Used by |
+| --- | --- |
+| `type Fixed` | camera, samus-looks, samus-motion |
+| `type Px` | camera, samus-motion |
+| `fn fixed` | camera, samus-motion |
+| `fn px` | camera, samus-motion |
+| `trait Parts` | camera, samus-looks, samus-motion |
+| `const ZERO` | samus-motion |
+| `const PIXEL` | camera |
+| `fn part_below` | samus-motion |
+| `fn below` | camera |
+| `struct Pair` | blocks, camera, hud, samus-motion |
+| `type Position` | camera, samus-motion |
+| `type Radius` | samus-motion |
+| `enum Heading (4)` | blocks, samus-motion |
+| `enum Side (2)` | samus-motion |
+| `enum Facing (3)` | camera, samus-motion |
+| `enum Body (4)` | samus-looks, samus-motion |
+| `enum Action (16)` | samus-looks, samus-motion |
+| `enum Aim (5)` | samus-looks, samus-motion |
+| `enum Turn (4)` | samus-looks, samus-motion |
+| `enum LandedFrom (2)` | samus-looks, samus-motion |
+| `enum Gun (2)` | samus-motion |
+| `enum Legs (2)` | samus-motion |
+| `struct Pose` | samus-looks, samus-motion |
+| `enum Sprite (4)` | samus-looks, samus-motion |
+| `enum ClipEnd (2)` | samus-looks, samus-motion |
+| `enum BoostStage (5)` | samus-looks |
+| `enum AnimationSound (4)` | samus-looks |
+| `struct Buttons` | samus-motion |
+| `mod button` (RUN, JUMP, SHOOT, LEFT, RIGHT, UP, DOWN, AIM_UP, AIM_DOWN, SIDES, PAD) | samus-motion |
+| `type Cell` | blocks, samus-motion |
+| `enum Way (2)` | blocks, samus-motion |
+| `struct Touch` | samus-motion |
+| `enum Block (6)` | samus-motion |
+| `enum Parity (2)` | samus-motion |
+| `enum SlopeFaces (2)` | samus-motion |
+| `struct Slope` | samus-motion |
+| `struct Hitbox` | samus-motion |
+| `trait World` | samus-motion |
+| `enum Kind (5)` | blocks, camera, hud, progress, samus-looks, samus-motion |
+| `enum Switch (3)` | blocks, camera, hud, progress, samus-looks, samus-motion |
+| `enum Checked (2)` | blocks, camera, hud, progress, samus-looks, samus-motion |
+| `type Set` | blocks, progress, samus-looks, samus-motion |
+| `trait Members` | progress |
+| `fn by_member` | blocks, hud |
+| `enum Area (7)` | progress |
+| `enum Item (11)` | progress, samus-looks, samus-motion |
+| `enum Beam (5)` | progress |
+| `enum Event (18)` | progress |
+| `enum BossKind (3)` | progress |
+| `struct LocationId` | progress |
+| `struct DoorId` | progress |
+| `struct StationId` | progress |
+| `struct Entrance` | progress |
+| `const LAST_PICTURE` | - |
+| `struct Picture` | blocks, hud |
+| `enum Flip (4)` | hud |
+| `struct Look` | blocks, hud |
+| `enum ScreenKind (3)` | blocks, camera |
+| `type Screen` | blocks, hud |
+| `enum Point (3)` | blocks |
+| `enum HitBy (6)` | blocks |
+| `enum Motion (3)` | blocks |
+| `enum Family (6)` | blocks |
+| `enum MetAs (3)` | blocks |
+| `enum Script (3)` | blocks |
+
+### Bridges
+
+The engine files (`crates/game/src`) that name each model's crate: its bridge, which the registry names, and the others. Names are what each takes from the model.
+
+| Model | Engine file | Part | Names | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| samus-motion | `crates/game/src/samus_looks_world.rs` | names it | `Dashing`, `Outcome`, `StandingAnimation`, `WallTest` | 510 | 123 |
+| samus-motion | `crates/game/src/samus_world/frame.rs` | bridge | `Frame` | 338 | 70 |
+| samus-motion | `crates/game/src/samus_world/state.rs` | bridge | `Bounces`, `Carry`, `Dashing`, `FrameBefore`, `JumpHeld`, `Moment`, `Phase`, `Run`, `Samus`, `Seat`, `Spin`, `Vertical` | 978 | 186 |
+| samus-motion | `crates/game/src/samus_world/step.rs` | bridge | `Outcome`, `Rules`, `Samus`, `SpeedCap` | 577 | 139 |
+| samus-motion | `crates/game/src/samus_world.rs` | bridge | - | 1,285 | 214 |
+| camera | `crates/game/src/camera_world.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `RoomError`, `Rules`, `Samus` | 505 | 120 |
+| camera | `crates/game/src/session.rs` | names it | `RoomError` | 579 | 211 |
+| progress | `crates/game/src/progress_world.rs` | bridge | `Condition`, `Count`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supply`, `Version` | 1,202 | 244 |
+| hud | `crates/game/src/hud_world.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,297 | 385 |
+| blocks | `crates/game/src/blocks_world.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,101 | 1,062 |
+| samus-looks | `crates/game/src/samus_looks_world/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Hold`, `Instruction`, `Pace`, `Paces`, `Pose`, `Step` | 1,299 | 212 |
+| samus-looks | `crates/game/src/samus_looks_world.rs` | bridge | `Boost`, `Frames`, `Inputs`, `Laps`, `Liquid`, `Move`, `Playhead`, `Rules`, `State`, `Step`, `update` | 510 | 123 |

@@ -30,6 +30,7 @@
 //! together without a type, are reported beside the score as a diagnostic and weigh nothing in
 //! it.
 
+pub mod outline;
 mod quality;
 
 use std::fmt;

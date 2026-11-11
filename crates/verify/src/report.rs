@@ -8,18 +8,21 @@
 //! `docs/behaviours/<domain>.decode.md`) and the fit, score ÷ budget; the old code's baseline as
 //! that section states it; the bridge's and the harness's scores; code lines ([`lines`]); the
 //! harness floors and the vector counts; the harnesses' oracle coverage, unverified frames
-//! and per catalogue entry; and the engine code not yet rebuilt, `crates/game`
-//! without the bridges.
+//! and per catalogue entry; the engine code not yet rebuilt, `crates/game`
+//! without the bridges; the timeline of each movie's cover by the checks ([`timeline`], also
+//! drawn as `docs/timeline.svg`); and how each clean model is built ([`structure`]).
 //!
 //! The same measures, with the whole-game plan and the verification state, give the README's
 //! status ([`status`]), written between its markers.
 //!
-//! The report and the status are generated, never edited: [`check`] fails when either committed
-//! text differs from what the tree generates. Everything in them is sorted or in registry order,
+//! The report, the picture and the status are generated, never edited: [`check`] fails when any
+//! committed one differs from what the tree generates. Everything in them is sorted or in registry order,
 //! with paths relative to the repository root and no timestamp, so one tree gives one report.
 
 pub mod lines;
 mod status;
+mod structure;
+mod timeline;
 
 #[cfg(test)]
 mod tests;
@@ -757,8 +760,12 @@ struct Tree {
     shared_files: Vec<File>,
     /// The rebuilt domains, in registry order.
     domains: Vec<Measured>,
-    /// The engine code not yet rebuilt, and its file count.
-    remaining: (Measure, usize),
+    /// The engine code not yet rebuilt, file by file.
+    engine: Vec<File>,
+    /// The sources the structure section outlines.
+    sources: structure::Sources,
+    /// The movies' cover by the checks.
+    timeline: timeline::Timeline,
     floors: BTreeMap<(String, String), usize>,
     coverage: BTreeMap<String, Coverage>,
 }
@@ -785,12 +792,16 @@ impl Tree {
             .into_iter()
             .filter(|file| !bridges.contains(&relative(root, file).as_str()))
             .collect();
-        let remaining = (total(&measure(root, &engine)?), engine.len());
+        let engine = measure(root, &engine)?;
+        let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
+        let floors = floors(&read(&root.join(FLOORS))?)?;
         Ok(Self {
             shared_files,
             domains,
-            remaining,
-            floors: floors(&read(&root.join(FLOORS))?)?,
+            engine,
+            sources: structure::Sources::read(root, &names)?,
+            timeline: timeline::Timeline::measure(root, &floors)?,
+            floors,
             coverage: coverage(&read(&root.join(COVERAGE))?)?,
         })
     }
@@ -816,6 +827,11 @@ impl Tree {
             .sum::<usize>()
             .saturating_add(self.shared_files.len());
         (measure, files)
+    }
+
+    /// The engine code not yet rebuilt: its measure and its file count.
+    fn remaining(&self) -> (Measure, usize) {
+        (total(&self.engine), self.engine.len())
     }
 
     /// The bridges: their measure and their file count.
@@ -852,6 +868,8 @@ fn report(tree: &Tree) -> String {
     floors_section(&mut out, domains, &tree.floors);
     coverage_section(&mut out, domains, &tree.coverage);
     engine_section(&mut out, tree);
+    tree.timeline.section(&mut out);
+    structure::section(&mut out, tree);
     out
 }
 
@@ -1449,7 +1467,7 @@ fn engine_section(out: &mut String, tree: &Tree) {
          what the rebuilt domains have yet to replace, beside what they hold.\n\n",
     );
     measure_table(out, 1, &["Part", "Files", "Logic-equivalent lines"]);
-    let (remaining, files) = tree.remaining;
+    let (remaining, files) = tree.remaining();
     let (bridge, bridges) = tree.bridges();
     let (models, model_files) = tree.models();
     for (part, count, measure) in [
@@ -1466,10 +1484,22 @@ fn engine_section(out: &mut String, tree: &Tree) {
     }
 }
 
-/// The report and the README's status for the tree at `root`, measured once.
-fn pages(root: &Path) -> Result<(String, String), String> {
+/// The pages the tree at `root` generates, measured once.
+struct Pages {
+    report: String,
+    /// The README's status.
+    status: String,
+    /// The timeline's picture.
+    svg: String,
+}
+
+fn pages(root: &Path) -> Result<Pages, String> {
     let tree = Tree::measure(root)?;
-    Ok((report(&tree), status::status(root, &tree)?))
+    Ok(Pages {
+        report: report(&tree),
+        status: status::status(root, &tree)?,
+        svg: tree.timeline.svg(),
+    })
 }
 
 /// The committed report's and the README status's staleness: an error naming the command that
@@ -1480,20 +1510,27 @@ fn pages(root: &Path) -> Result<(String, String), String> {
 /// The regeneration command when the report or the README's status is stale or missing, or why
 /// they can't be generated.
 pub fn check(root: &Path) -> Result<(), String> {
-    let (report, status) = pages(root)?;
+    let pages = pages(root)?;
     let committed = fs::read_to_string(root.join(PATH)).unwrap_or_default();
-    current(&committed, &report)?;
+    current(&committed, &pages.report)?;
+    let svg = fs::read_to_string(root.join(timeline::SVG)).unwrap_or_default();
+    current_at(timeline::SVG, &svg, &pages.svg)?;
     let readme = fs::read_to_string(root.join(README)).unwrap_or_default();
-    status_current(&readme, &status)
+    status_current(&readme, &pages.status)
 }
 
 /// Whether the committed report is the fresh one; a checkout's CRLF line endings don't count.
 fn current(committed: &str, fresh: &str) -> Result<(), String> {
+    current_at(PATH, committed, fresh)
+}
+
+/// Whether the committed page at `path` is the fresh one; CRLF line endings don't count.
+fn current_at(path: &str, committed: &str, fresh: &str) -> Result<(), String> {
     if committed.replace("\r\n", "\n") == fresh {
         Ok(())
     } else {
         Err(format!(
-            "{PATH} is stale: regenerate it with `{COMMAND}` from the repository root"
+            "{path} is stale: regenerate it with `{COMMAND}` from the repository root"
         ))
     }
 }
@@ -1538,15 +1575,23 @@ pub fn run(args: &[String]) -> Result<String, String> {
     match args {
         [] => generate(root),
         [flag] if flag == "--write" => {
-            let (report, status) = pages(root)?;
-            fs::write(root.join(PATH), report).map_err(|e| format!("{PATH}: {e}"))?;
-            let readme = with_status(&read(&root.join(README))?, &status)?;
+            let pages = pages(root)?;
+            fs::write(root.join(PATH), pages.report).map_err(|e| format!("{PATH}: {e}"))?;
+            fs::write(root.join(timeline::SVG), pages.svg)
+                .map_err(|e| format!("{}: {e}", timeline::SVG))?;
+            let readme = with_status(&read(&root.join(README))?, &pages.status)?;
             fs::write(root.join(README), readme).map_err(|e| format!("{README}: {e}"))?;
-            Ok(format!("wrote {PATH} and {README}'s status\n"))
+            Ok(format!(
+                "wrote {PATH}, {} and {README}'s status\n",
+                timeline::SVG
+            ))
         }
-        [flag] if flag == "--check" => {
-            check(root).map(|()| format!("{PATH} and {README}'s status are current\n"))
-        }
+        [flag] if flag == "--check" => check(root).map(|()| {
+            format!(
+                "{PATH}, {} and {README}'s status are current\n",
+                timeline::SVG
+            )
+        }),
         _ => Err(USAGE.to_owned()),
     }
 }

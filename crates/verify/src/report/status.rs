@@ -21,11 +21,11 @@ use crate::ratchet;
 /// The whole-game plan as data, from the repository root.
 const PLAN: &str = "docs/architecture/domains.toml";
 /// The free-run gate's green (row, stream) pairs.
-const GREEN: &str = "scenarios/locks/lsnes.green.txt";
+pub(super) const GREEN: &str = "scenarios/locks/lsnes.green.txt";
 /// The lockstep ratchet.
-const LOCKSTEP: &str = "scenarios/locks/lockstep.ratchet.txt";
+pub(super) const LOCKSTEP: &str = "scenarios/locks/lockstep.ratchet.txt";
 /// The lock both are measured against.
-const LOCK: &str = "scenarios/locks/lsnes.toml";
+pub(super) const LOCK: &str = "scenarios/locks/lsnes.toml";
 
 /// The plan file.
 #[derive(Deserialize)]
@@ -198,12 +198,21 @@ pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
          `tools/check_report.sh` fails when it is stale. Never edit it by hand. -->\n"
     );
     headline(&mut out, &plan);
+    let _ = write!(
+        out,
+        "\n![How much of each movie the checks cover]({svg})\n\nHow much of each whole movie the \
+         lock's rows, the harnesses, the models, the free-run gate and lockstep cover, frame by \
+         frame; the figures are in [the report's timeline](docs/REPORT.md#timeline).\n",
+        svg = super::timeline::SVG
+    );
     models(&mut out, &plan, tree);
     waves(&mut out, &plan);
     engine(&mut out, tree);
     verification(&mut out, root, tree)?;
     out.push_str(
-        "\nEvery figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md).\n",
+        "\nEvery figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md); \
+         how each model is built, module by module, is in [its structure \
+         section](docs/REPORT.md#structure).\n",
     );
     Ok(out)
 }
@@ -345,7 +354,7 @@ fn engine(out: &mut String, tree: &Tree) {
         1,
         &["Code", "Files", "Logic-equivalent lines", "Score", "Lines"],
     );
-    let (remaining, files) = tree.remaining;
+    let (remaining, files) = tree.remaining();
     let (bridge, bridges) = tree.bridges();
     let (models, model_files) = tree.models();
     for (part, count, measure) in [

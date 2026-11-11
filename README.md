@@ -15,6 +15,10 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **44 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
 
+![How much of each movie the checks cover](docs/timeline.svg)
+
+How much of each whole movie the lock's rows, the harnesses, the models, the free-run gate and lockstep cover, frame by frame; the figures are in [the report's timeline](docs/REPORT.md#timeline).
+
 ### The models
 
 Each model is built in the clean room from its spec alone, then checked frame by frame against the original game: its harness frames are the recorded frames on which it matched the original on every compared field, of the frames it ran over. Score and budget are weighted tokens; fit is score over budget.
@@ -62,7 +66,7 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 | the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
 | the harnesses: each model on recorded frames | 44 rows cached, 25,470 frames |
 
-Every figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md).
+Every figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md); how each model is built, module by module, is in [its structure section](docs/REPORT.md#structure).
 <!-- status:end -->
 
 ## Documentation
