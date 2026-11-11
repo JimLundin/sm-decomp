@@ -152,7 +152,23 @@ check() {
   [ $# -ge 1 ] || die "usage: canary.sh check TRANSCRIPT_OR_DIR..."
   [ -s "$private/tokens.tsv" ] || die "nothing planted: no $private/tokens.tsv"
   cut -f1 "$private/tokens.tsv" | sort -u >"$private/.patterns"
-  [ -f "$private/fingerprints.txt" ] && cat "$private/fingerprints.txt" >>"$private/.patterns"
+  if [ -f "$private/fingerprints.txt" ]; then
+    # A fingerprint is a line of a forbidden file. One that also stands, as a line or inside one,
+    # in what an export was given (its first commit: the round's own spec and vectors) is shared
+    # text, not a leak, so it is dropped before the search. Tokens are never dropped.
+    cp "$private/fingerprints.txt" "$private/.fingerprints"
+    for p in "$@"; do
+      if [ -d "$p/.git" ]; then
+        root=$(git -C "$p" rev-list --max-parents=0 HEAD | head -1)
+        git -C "$p" grep -hoIF -f "$private/.fingerprints" "$root" -- . 2>/dev/null | LC_ALL=C sort -u >"$private/.given" || true
+        LC_ALL=C sort -u "$private/.fingerprints" | LC_ALL=C comm -23 - "$private/.given" >"$private/.kept"
+        mv "$private/.kept" "$private/.fingerprints"
+        rm -f "$private/.given"
+      fi
+    done
+    cat "$private/.fingerprints" >>"$private/.patterns"
+    rm -f "$private/.fingerprints"
+  fi
   hits=0
   report() { # LABEL: each matched string with its source
     while IFS= read -r m; do
