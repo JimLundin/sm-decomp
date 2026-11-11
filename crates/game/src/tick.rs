@@ -592,13 +592,19 @@ fn surroundings<'a>(
     }
 }
 
-/// The BG scrolls from the camera, then the BG graphics update (`$80:A3AB`).
+/// The BG scrolls from the camera, then the lines of blocks they bring into view, each built
+/// for the NMI to upload (`$80:A3AB`).
 fn bg_scroll(state: &mut State, content: &Content) {
-    scrolling::scroll_backgrounds(&mut state.room.camera, &mut state.video.batch.registers);
-    crate::bg_graphics::update(
-        &mut state.room,
-        &state.video.batch.registers,
-        &content.tile_tables,
-        &mut state.video.batch.level,
-    );
+    let registers = &mut state.video.batch.registers;
+    scrolling::scroll_backgrounds(&mut state.room.camera, registers);
+    let room = &mut state.room;
+    for exposure in scrolling::exposures(&mut room.camera, registers) {
+        let looks = crate::bg_graphics::exposed_looks(room, &content.tile_tables, &exposure);
+        crate::exact::tilemap::expose(
+            &mut state.video.batch.level,
+            &exposure,
+            room.tilemap_gap,
+            looks,
+        );
+    }
 }

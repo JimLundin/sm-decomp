@@ -105,3 +105,51 @@ pub enum TileWrite {
         looks: Vec<BlockLook>,
     },
 }
+
+/// One of the room's two level layers, each shown on its own background.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LevelLayer {
+    /// Layer 1, the playfield's blocks, on BG1.
+    One,
+    /// Layer 2, the room's back layer when it has level data, on BG2.
+    Two,
+}
+
+/// A line of a layer's blocks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BlockLine {
+    /// A column, downward.
+    Column,
+    /// A row, rightward.
+    Row,
+}
+
+impl BlockLine {
+    /// The blocks a line coming into view holds: a column the screen's 16 down; a row 17
+    /// across, as a screen scrolled part of a block across shows parts of 17.
+    #[must_use]
+    pub const fn blocks(self) -> u16 {
+        match self {
+            Self::Column => 16,
+            Self::Row => 17,
+        }
+    }
+}
+
+/// A line of a layer's blocks coming into view as the camera moves into another block column
+/// or row.
+///
+/// Its blocks are read from the layer's level at `level`, and land on the layer's background
+/// at `background`: the background's scroll moves it by the scroll offset from the layer, so
+/// the two can differ.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LayerExposure {
+    /// The layer.
+    pub layer: LevelLayer,
+    /// A column or a row.
+    pub line: BlockLine,
+    /// The line's first block in the layer's level.
+    pub level: BlockPoint,
+    /// The block of the background the first block lands on.
+    pub background: BlockPoint,
+}

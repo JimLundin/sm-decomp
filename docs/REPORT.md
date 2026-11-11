@@ -512,6 +512,6 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 47 | 5,108 | 30,646 | 33,258 | 10,107 | 799 | 2,306 | 693 | 7,055 |
+| engine, not yet rebuilt | 47 | 5,131 | 30,789 | 33,483 | 10,160 | 798 | 2,305 | 671 | 7,076 |
 | bridges | 8 | 2,433 | 14,598 | 16,060 | 943 | 142 | 1,002 | 116 | 2,427 |
 | rebuilt models, shared types included | 71 | 3,401 | 20,406 | 25,548 | 9,675 | 12,995 | 1,038 | 92 | 8,659 |

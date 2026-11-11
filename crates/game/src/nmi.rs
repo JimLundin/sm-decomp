@@ -106,7 +106,7 @@ fn run(command: NmiCommand, state: &mut State, rules: Rules, content: &Content, 
         NmiCommand::IoRegisters => state.video.commit_registers(),
         NmiCommand::VramWrites => {
             state.video.process_vram_writes(&content.graphics);
-            state.video.execute_scrolling_dmas();
+            crate::exact::tilemap::commit_exposures(&mut state.video);
         }
         // open: the animated tiles join with their content (B3, C lanes); mode 7 and the
         // read table have no slice 0 user; HDMA is B6's.

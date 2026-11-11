@@ -269,20 +269,33 @@ model's grid as the overlay's rows 1 to 3) and the PLM pass (`plm::draw::Drawing
 block's look from `bg_graphics::block_look`). Each caller writes where the original queued, so
 the queue keeps the original's order.
 
-The second lane, **scrolling**, carries the layers' streaming:
+A line of blocks the camera brings into view is a `game::intent::LayerExposure`: the layer, a
+column (16 blocks down) or a row (17 across), its first block in the layer's level and the
+background's block it lands on. The two differ because the BG scroll adds the scroll offset to
+the layer's position, so the intent carries both. `scrolling::exposures` decides the lines from
+the layers' blocks and the ones they last exposed (`camera.drawn`), layer 2 only on an axis where
+BG2 shows its level. `bg_graphics` is only the level lookup (`exposed_looks`, `block_look`): the
+original's index multiply, the level buffer's tail and fill, the item GFX entries and the flips.
+`exact::tilemap::expose` places a line on the ring (each BG's two screens, BG2's the room's
+tilemap gap before BG1's, the column part that wraps to the screen's top and the row part that
+wraps to the other screen) and builds it into the layer's column or row buffer
+(`video.batch.level`), counting a request; `exact::tilemap::commit_exposures` is the NMI's
+scrolling DMAs. The buffers stay State decoded from work RAM, so a lag frame carries them and
+their request counts to the next NMI.
 
-1. **The exposed column and row as an intent.** The BG graphics update decides which block
-   column and row of each layer come into view; that is the camera's (MODEL lists
-   `LayerExposure`). The mapping onto the ring goes into `exact::tilemap`: `Tilemap::screens`
-   and `at`, the column part that wraps to the tilemap's top, the row part that wraps to the
-   other screen, and BG2's tilemap gap. The NMI's scrolling DMAs (`tilemap_dma`) become its
-   commit, and `bg_graphics` keeps only the level lookup. *Risk:* the column and row buffers
-   (`video.batch.level`) are State decoded from work RAM, and their request counts carry across
-   lag frames, so the encoder writes them as State and the NMI still makes them. The tilemap
-   place comes from the BG scroll, the level source from the layer's position, so the intent
-   carries both.
-2. **The lookup's stale reads** (docs/LEGACY.md: a block past the level data, a tile past the
+What is left of scrolling:
+
+1. **The lookup's stale reads** (docs/LEGACY.md: a block past the level data, a tile past the
    tile tables) stay with the lookup, not the encoder.
+2. **The exposures in the intent view (D16)**, with E1's second lane: the Tick's exposures go
+   out with it, and the wide renderer draws a line from its `level` without the ring.
+3. **Who decides the lines.** `scrolling::exposures` is engine code over the engine's camera
+   State; the camera's clean model exports layer 1's position and nothing about lines. When R4
+   brings layer 2's own motion and the BG scrolls into a domain, the exposure goes with it as an
+   output, and the camera's interface gains it then, not before.
+4. **Mode 7 and time frozen** (`scrolling`'s open notes), with the rooms that use them, and the
+   room load's whole-screen draw with R1, as more producers of `LayerExposure` or a
+   screen-sized shape of it.
 
 The third lane, **the message box's video**, carries:
 
@@ -296,11 +309,10 @@ The third lane, **the message box's video**, carries:
 2. **The box's PPU set-up into `exact`:** the text colours, the playfield it shows over and the
    black backdrop. Its HDMA scroll channel joins with E3.
 
-The scrolling lane goes first: the camera's exposure is what every room after slice 0 reads, and
-R1 and R4 export tile writes onto the ring it settles. The PLM draw's open shapes go with W2 and
-A1, each as more `TileWrite` shapes or the row shape repeated: the draw instructions that draw a
-column or more than one row, and the buffer's index restarting at a pickup's resume
-(`plm::resume`'s open note).
+R1 and R4 export tile writes onto the ring the scrolling lane settled. The PLM draw's open
+shapes go with W2 and A1, each as more `TileWrite` shapes or the row shape repeated: the draw
+instructions that draw a column or more than one row, and the buffer's index restarting at a
+pickup's resume (`plm::resume`'s open note).
 
 ## 4. Order
 

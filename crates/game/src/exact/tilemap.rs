@@ -12,12 +12,19 @@
 //!   of the other one, which takes two uploads for each half.
 //! - The queue holds a limited number of uploads: a block row that would pass it, or pass the
 //!   PLM draw's buffer, is dropped whole.
+//!
+//! The lines of blocks the camera brings into view stream in apart from the queue, through the
+//! layers' column and row buffers ([`expose`], [`commit_exposures`]).
 
 use data::dma::{BusAddress, HUD_TILEMAP_BUFFER, PLM_DRAW_TILEMAP};
 
 use crate::intent::{BlockLook, TileWrite};
 use crate::state::room::{BlockPoint, Camera};
 use crate::state::video::{NmiBatch, TilemapEntry, VramSource, VramStep, VramTransfer, VramWord};
+
+mod exposure;
+
+pub use exposure::{commit_exposures, expose};
 
 /// BG1's tilemap in VRAM, two 32x32 screens side by side.
 pub const BG1_TILEMAP: VramWord = VramWord(0x5000);

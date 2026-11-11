@@ -771,8 +771,11 @@ pub struct LayerUploads {
     pub row: RowUpload,
 }
 
-/// The level tilemap uploads the BG graphics update builds as the camera scrolls (bank `$80`
-/// log, `$80:A3DF`), which the NMI's scrolling DMAs make (`$80:8CD8`, `$80:8DAC`).
+/// The lines of blocks coming into view as the camera scrolls, in the original's column and row
+/// buffers.
+///
+/// `exact::tilemap::expose` builds them (bank `$80` log, `$80:A3DF`) and the NMI's scrolling
+/// DMAs upload them (`exact::tilemap::commit_exposures`, `$80:8CD8`, `$80:8DAC`).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct LevelUploads {
     /// BG1's, from layer 1.
@@ -873,8 +876,8 @@ pub struct Video {
     /// What the HUD interrupt writes for the playfield.
     pub playfield: Playfield,
     /// The DMA channels' registers as the last transfer left them.
-    // open: the animated tiles (`$80:9416`, channel 0), the scrolling DMAs (`$80:8CD8`,
-    // `$80:8DAC`, channel 1) and the HDMA queue join with their transfers.
+    // open: the animated tiles (`$80:9416`, channel 0) and the HDMA queue join with their
+    // transfers.
     pub dma: [DmaChannel; DMA_CHANNELS],
     /// The batch for the next requested NMI.
     pub batch: NmiBatch,
