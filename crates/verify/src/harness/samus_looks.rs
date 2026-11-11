@@ -4,32 +4,33 @@
 //! (`docs/behaviours/samus-looks.md` §1), by the decode notes' harness note
 //! (`docs/behaviours/samus-looks.decode.md`, "The harness").
 //!
-//! Her clips and the run's paces are the importer's, from the ROM. A frame is a pair of quiescent
-//! records: the State is decoded from record N, her step through the step map of her pose's
-//! clip; the inputs from records N and N+1, at the animation's turn, as the decode notes give
-//! them; the State the model leaves is compared with record N+1's, her step through the step map
-//! of the clip of the pose she ends the frame in. A wall jump readied, dashing, a dash begun or
-//! lost and the pose an end handed over are samus-motion's outputs, from its model over record N
-//! where that model runs the frame; elsewhere they are read off the records, and a wall jump
-//! readied off record N+1's own step, so the fields such a frame's readied changes are
-//! unverified, not matched. Heading down is record N+1's direction. The null model is her State
-//! left as record N has it.
+//! Her clips and the run's paces are the engine's importer's (`game::samus_looks_world`), from
+//! the ROM. A frame is a pair of quiescent records: the State is decoded from record N, her step
+//! through the step map of her pose's clip; the inputs from records N and N+1, at the
+//! animation's turn, as the decode notes give them; the State the model leaves is compared with
+//! record N+1's, her step through the step map of the clip of the pose she ends the frame in. A
+//! wall jump readied, the standing restart, dashing, a dash begun or lost, the pose an end handed
+//! over, heading down and her vertical speed are samus-motion's outputs, from its model over record
+//! N where that model runs the frame, the moves through the engine's own mapping
+//! (`game::samus_looks_world::moves`); elsewhere they are read off the records, and a wall jump
+//! readied off record N+1's own step, so the fields such a frame's readied changes are unverified,
+//! not matched. The null model is her State left as record N has it.
 
 pub mod cases;
-pub mod import;
 
 use core::cell::Cell;
 use core::fmt;
 
 use clean_model_samus_looks::{
-    BehaviourId, Boost, CATALOGUE, Content, Frames, Inputs, Instruction, Laps, Liquid, Move,
-    Playhead, Rules, RunDown, State, Step, Vertical, update,
+    BehaviourId, Boost, CATALOGUE, Content, Control, Frames, Inputs, Instruction, Laps, Liquid,
+    Move, Playhead, Rules, RunDown, Slowdown, State, Step, update,
 };
-use clean_model_samus_motion::{Dashing, Outcome, WallTest};
-use clean_types::{Action, BoostStage, Item, Set};
-use data::pose::PoseId;
+use clean_model_samus_motion::{Dashing, Outcome};
+use clean_types::{Action, BoostStage, Fixed, Item, Parts as _, Set};
+use core::num::Wrapping;
 use data::pose::animation::AnimationFrame;
-use data::rom::Lorom;
+use data::pose::{PoseId, Poses};
+use game::samus_looks_world::{Clips, Imported, moves};
 use oracle_record::FrameRecord;
 
 use super::samus_motion::SamusMotion;
@@ -39,16 +40,10 @@ use crate::cache::CutKind;
 use crate::decode::DecodeError;
 use crate::domain_field;
 use crate::source::{self, WramByte, WramWord};
-use import::{Clips, ImportError, Imported};
 
-/// Why the domain can't load.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum LoadError {
-    /// The importer's clips or paces.
-    Clips(ImportError),
-    /// Samus-motion's content, which its model reads.
-    Motion(ContentError),
-}
+/// Why the domain can't load: the engine's content, which holds her clips and which
+/// samus-motion's model reads.
+pub type LoadError = ContentError;
 
 /// A work RAM word the harness reads that `source` doesn't name.
 const fn wram(name: &'static str, offset: u16) -> WramWord {
@@ -59,11 +54,14 @@ const fn wram(name: &'static str, offset: u16) -> WramWord {
 const MAIN_GAMEPLAY: u16 = 8;
 /// Bank $90 log: the handler gameplay runs for Samus once a frame ($90:E722).
 const SAMUS_NEW_STATE_HANDLER: WramWord = wram("FRAME_HANDLER_BETA", 0x0A44);
-/// The handlers that run her animation: the normal one, the demos' two and the elevator's
-/// (`$90:E725`, `$90:E7F5`, `$90:E833`, `$90:E8EC`).
-const ANIMATING: [u16; 4] = [0xE725, 0xE7F5, 0xE833, 0xE8EC];
+/// The game state a door's start is in at the frame's end: her frame runs before the door's.
+const DOOR_STARTS: u16 = 9;
+/// The handlers that run her animation: the normal one, the demos' two, the elevator's and the
+/// Ceres escape's timer, which runs the normal one first (`$90:E725`, `$90:E7F5`, `$90:E833`,
+/// `$90:E8EC`, `$90:E8AA`).
+const ANIMATING: [u16; 5] = [0xE725, 0xE7F5, 0xE833, 0xE8EC, 0xE8AA];
 /// Bank $90 log: the speed booster's counter, the stage in its high byte and the laps in its low.
-const SPEED_BOOST_COUNTER: WramWord = wram("SPEED_BOOSTER_LEVEL", 0x0B3E);
+const SPEED_BOOST_COUNTER: WramWord = source::SPEED_BOOSTER_LEVEL;
 /// Bank $90 log: whether she is dashing, 0 when not.
 const DASHING: WramWord = source::SAMUS_HAS_MOMENTUM_FLAG;
 /// Bank $90 log: the animation's frame buffer, the slowdown its clip moves on with (`$90:8078`).
@@ -81,7 +79,8 @@ const BINDING_SHOOT: WramWord = wram("BUTTON_CONFIG_SHOOT_X", 0x09B2);
 /// The standing movement type, and the two unaimed standing poses (`$90:A3AD`).
 const STANDING: u8 = 0;
 const STANDING_UNAIMED: [u16; 2] = [0x01, 0x02];
-/// Her vertical direction down (`0B36`).
+/// Her vertical directions up and down (`0B36`).
+const UP: u16 = 1;
 const DOWN: u16 = 2;
 /// The equipment bits the model reads, and the gravity suit's, which the liquids read.
 const ITEM_BITS: [(Item, u16); 3] = [
@@ -108,8 +107,8 @@ const LAVA_ACID_Y_POS: WramWord = wram("LAVA_ACID_Y_POS", 0x1962);
 const FX_LIQUID_OPTIONS: WramWord = wram("FX_LIQUID_OPTIONS", 0x197E);
 const LIQUID_PHYSICS_OFF: u16 = 0x0004;
 /// The start's slowdown under water and under lava or acid (`$90:9E93`, `$90:9E95`).
-const WATER_START: Frames = Frames(3);
-const LAVA_ACID_START: Frames = Frames(2);
+const WATER_START: u16 = 3;
+const LAVA_ACID_START: u16 = 2;
 
 /// The declared fields by their places in [`SamusLooks`]'s `FIELDS`.
 const STEP: FieldSet = FieldSet::single(0);
@@ -230,9 +229,8 @@ pub struct Frame {
 }
 
 /// The samus-looks domain, over the importer's clips, with the samus-motion model that supplies
-/// the near-wall test.
+/// her moves' outputs.
 pub struct SamusLooks {
-    clips: Clips,
     motion: SamusMotion,
     /// The frame count at the record before the current frame's, and its record's index; then the
     /// current frame's. The frame a message box ends is told by the stall into record N.
@@ -245,11 +243,10 @@ impl SamusLooks {
     ///
     /// # Errors
     ///
-    /// [`LoadError`] when the clips, the paces or samus-motion's content don't import.
+    /// [`LoadError`] when the engine's content, her clips and paces among it, doesn't import.
     pub fn load(image: &[u8]) -> Result<Self, LoadError> {
         Ok(Self {
-            clips: Clips::load(Lorom::new(image)).map_err(LoadError::Clips)?,
-            motion: SamusMotion::load(image).map_err(LoadError::Motion)?,
+            motion: SamusMotion::load(image)?,
             before: Cell::new(None),
             last: Cell::new(None),
         })
@@ -258,13 +255,25 @@ impl SamusLooks {
     /// The imported clips.
     #[must_use]
     pub const fn clips(&self) -> &Clips {
-        &self.clips
+        &self.motion.content().samus_clips
+    }
+
+    /// The pose definitions, which give her radius in each pose.
+    const fn poses(&self) -> &Poses {
+        &self.motion.content().poses
     }
 
     /// Her pose in `record`, with its clip.
     fn imported(&self, record: &FrameRecord) -> Result<&Imported, Skip> {
         let id = word(record, source::SAMUS_POSE)?;
-        self.clips.of(PoseId(id)).ok_or(Skip::Pose(id))
+        self.clips().of(PoseId(id)).ok_or(Skip::Pose(id))
+    }
+
+    /// Her y radius in `imported`'s pose.
+    fn radius(&self, imported: &Imported) -> u8 {
+        self.poses()
+            .get(imported.id)
+            .map_or(0, |definition| definition.y_radius)
     }
 
     /// The State `record` holds.
@@ -304,24 +313,23 @@ impl SamusLooks {
         let restarts = byte(from, source::SAMUS_MOVEMENT_TYPE)? == STANDING
             && STANDING_UNAIMED.contains(&before.id.0)
             && pressing(BINDING_SHOOT)?;
-        let motion = match self.motion.outcome(from, Interval::ending_at(next)) {
-            Ok(outcome) => Motion::from(&outcome),
-            Err(_) => from_the_records(before, after, from, next)?,
+        // Where samus-motion's model runs the frame its moves are the bridge's, standing restart
+        // included; elsewhere the records give them, and the restart is `$90:A3AD`'s test.
+        let (motion, from_the_model) = match self.motion.outcome(from, Interval::ending_at(next)) {
+            Ok(outcome) => (Motion::from(&outcome), true),
+            Err(_) => (from_the_records(before, after, from, next)?, false),
         };
+        let radius = (self.radius(before), self.radius(after));
         let from_the_record = motion.readied_from_the_record;
         let mut moves = motion.moves;
-        moves[Move::StandingRestart] = restarts;
+        if !from_the_model {
+            moves[Move::StandingRestart] = restarts;
+        }
         let equipped = word(next, source::EQUIPPED_ITEMS)?;
         let mut items = Set::<Item>::default();
         for (item, bit) in ITEM_BITS {
             items[item] = equipped & bit != 0;
         }
-        // Heading down is record N+1's direction, not samus-motion's (`Motion`).
-        let vertical = if word(next, source::SAMUS_Y_DIR)? == DOWN {
-            Vertical::Down(word(next, source::SAMUS_Y_SPEED)?)
-        } else {
-            Vertical::NotDown
-        };
         let waiting = byte(from, SOUND_3_WRITE)?.wrapping_sub(byte(from, SOUND_3_READ)?);
         let slowdown = word(next, FRAME_BUFFER)?;
         Ok(Frame {
@@ -331,16 +339,14 @@ impl SamusLooks {
                 moves,
                 dashing: motion.dashing,
                 run_held: pressing(source::BINDING_RUN)?,
-                vertical,
-                energy: word(next, source::SAMUS_HEALTH)?,
+                heading_down: motion.heading_down,
+                vertical_speed: motion.vertical_speed,
+                energy: word(from, source::SAMUS_HEALTH)?,
                 items,
                 liquid: Liquid {
-                    slowdown: Frames(
-                        u8::try_from(slowdown)
-                            .map_err(|_| Skip::Undecodable("SAMUS_ANIM_FRAME_BUFFER", slowdown))?,
-                    ),
-                    start_slowdown: start_slowdown(next, after, equipped)?,
-                    submerged: submerged(next, before, equipped)?,
+                    slowdown: slowdown_of("SAMUS_ANIM_FRAME_BUFFER", slowdown)?,
+                    start_slowdown: start_slowdown(next, radius.1, equipped)?,
+                    submerged: submerged(next, radius.0, equipped)?,
                 },
                 sounds_waiting: waiting & QUEUE_PLACES,
             },
@@ -351,30 +357,26 @@ impl SamusLooks {
 
 /// What her motion gives the animation's turn: samus-motion's model's outputs where it runs the
 /// frame, else the decode notes' readings of records N and N+1.
-///
-/// Heading down isn't among them: the rising hold's harness cases are landings from a straight
-/// jump, where record N+1 shows no direction and samus-motion's heading down, as her moves leave
-/// her, is down. The landing's new clip starts either way, so every frame matches with both, but
-/// those cases would exercise no hold (samus-looks.gaps.md, 5).
 struct Motion {
-    /// A wall jump readied, a dash begun or lost, the pose an end handed over.
+    /// A wall jump readied, the standing restart, a dash begun or lost, the pose an end handed over.
     moves: Set<Move>,
     /// She is dashing as her moves leave it.
     dashing: bool,
+    /// She is heading down as her moves leave her.
+    heading_down: bool,
+    /// Her vertical speed as her moves leave her, downward positive.
+    vertical_speed: Fixed,
     /// The wall jump readied is read off record N+1's own step.
     readied_from_the_record: bool,
 }
 
 impl From<&Outcome> for Motion {
     fn from(outcome: &Outcome) -> Self {
-        let mut moves = Set::<Move>::default();
-        moves[Move::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
-        moves[Move::DashBegan] = outcome.dash_began;
-        moves[Move::DashLost] = outcome.dash_lost;
-        moves[Move::HandedOver] = outcome.handed_over;
         Self {
-            moves,
+            moves: moves(outcome),
             dashing: outcome.dashing_after_moves == Dashing::On,
+            heading_down: outcome.heading_down,
+            vertical_speed: outcome.vertical_speed_after_moves,
             readied_from_the_record: false,
         }
     }
@@ -382,7 +384,8 @@ impl From<&Outcome> for Motion {
 
 /// Her motion's outputs on a frame samus-motion's model doesn't run, from records `from` and
 /// `next`: dashing is `0B3C` at N or a dash begun, a dash begun or lost the flag's change from N
-/// to N+1, and handed over the super special command at N+1.
+/// to N+1, handed over the super special command at N+1, heading down her direction at N+1 and
+/// her vertical speed record N+1's, read as signed and turned upward when she rises.
 fn from_the_records(
     before: &Imported,
     after: &Imported,
@@ -397,11 +400,26 @@ fn from_the_records(
     moves[Move::DashLost] = dash == [true, false];
     moves[Move::HandedOver] = word(next, POSE_CHANGE_COMMAND)? == ANIMATION_FINISHED
         && word(next, SUPER_SPECIAL_POSE)? & NO_POSE == 0;
+    let direction = word(next, source::SAMUS_Y_DIR)?;
+    let speed = Wrapping(
+        (u32::from(word(next, source::SAMUS_Y_SPEED)?) << 16)
+            | u32::from(word(next, source::SAMUS_Y_SUBSPEED)?),
+    );
     Ok(Motion {
         moves,
         dashing: dash[0] || dash == [false, true],
+        heading_down: direction == DOWN,
+        vertical_speed: if direction == UP { -speed } else { speed },
         readied_from_the_record: readied,
     })
+}
+
+/// A slowdown word as the model's slowdown: a harness defect past the most a liquid gives.
+fn slowdown_of(name: &'static str, word: u16) -> Result<Slowdown, Skip> {
+    u8::try_from(word)
+        .ok()
+        .and_then(Slowdown::new)
+        .ok_or(Skip::Undecodable(name, word))
 }
 
 /// Whether samus-motion's near-wall test readied a wall jump on a frame its model doesn't run in,
@@ -447,34 +465,32 @@ fn surfaces(record: &FrameRecord) -> Result<(Option<i16>, Option<i16>), Skip> {
     ))
 }
 
-/// The start's slowdown for the pose `taken`: with the gravity suit the X speed divisor;
-/// otherwise 3 with the water's surface above the feet of the pose she takes, 2 with the lava's
-/// or acid's, else the divisor (`$91:FB08`).
-fn start_slowdown(next: &FrameRecord, taken: &Imported, equipped: u16) -> Result<Frames, Skip> {
+/// The start's slowdown for the pose she takes, of y radius `radius`: with the gravity suit the
+/// X speed divisor; otherwise 3 with the water's surface above the feet of the pose she takes, 2
+/// with the lava's or acid's, else the divisor (`$91:FB08`).
+fn start_slowdown(next: &FrameRecord, radius: u8, equipped: u16) -> Result<Slowdown, Skip> {
     let divisor = word(next, X_SPEED_DIVISOR)?;
-    let divisor =
-        Frames(u8::try_from(divisor).map_err(|_| Skip::Undecodable("X_SPEED_DIVISOR", divisor))?);
     if equipped & GRAVITY_SUIT != 0 {
-        return Ok(divisor);
+        return slowdown_of("X_SPEED_DIVISOR", divisor);
     }
-    let (_, bottom) = boundaries(next, taken.radius)?;
+    let (_, bottom) = boundaries(next, radius)?;
     let (water, lava) = surfaces(next)?;
-    Ok(if water.is_some_and(|surface| surface < bottom) {
-        WATER_START
+    if water.is_some_and(|surface| surface < bottom) {
+        slowdown_of("the water's start", WATER_START)
     } else if lava.is_some_and(|surface| surface < bottom) {
-        LAVA_ACID_START
+        slowdown_of("the lava's or acid's start", LAVA_ACID_START)
     } else {
-        divisor
-    })
+        slowdown_of("X_SPEED_DIVISOR", divisor)
+    }
 }
 
-/// Whether she is submerged as a wall jump's branch tests it: no gravity suit, and a liquid's
-/// surface above her top (`$90:841D`).
-fn submerged(next: &FrameRecord, pose: &Imported, equipped: u16) -> Result<bool, Skip> {
+/// Whether she is submerged as a wall jump's branch tests it, in a pose of y radius `radius`:
+/// no gravity suit, and a liquid's surface above her top (`$90:841D`).
+fn submerged(next: &FrameRecord, radius: u8, equipped: u16) -> Result<bool, Skip> {
     if equipped & GRAVITY_SUIT != 0 {
         return Ok(false);
     }
-    let (top, _) = boundaries(next, pose.radius)?;
+    let (top, _) = boundaries(next, radius)?;
     let (water, lava) = surfaces(next)?;
     Ok(water.or(lava).is_some_and(|surface| surface < top))
 }
@@ -487,6 +503,14 @@ fn quiescent(record: &FrameRecord) -> bool {
 fn gameplay(record: &FrameRecord) -> Result<(), Skip> {
     match word(record, source::GAME_STATE)? {
         MAIN_GAMEPLAY => Ok(()),
+        state => Err(Skip::GameState(state)),
+    }
+}
+
+/// Gameplay, or a door's start, at the frame's end: her frame ran before the door's.
+fn gameplay_or_door(record: &FrameRecord) -> Result<(), Skip> {
+    match word(record, source::GAME_STATE)? {
+        MAIN_GAMEPLAY | DOOR_STARTS => Ok(()),
         state => Err(Skip::GameState(state)),
     }
 }
@@ -530,18 +554,22 @@ impl Domain for SamusLooks {
         Ok((self.state(from)?, ()))
     }
 
+    /// A stall from N to N+1 is the message box's or the fanfare's wait, unless the count moved
+    /// into N: then it is the frame a message box opens, in which her frame ran before the box's
+    /// wait. A row's first record has no count before it, so its stall is taken as a wait.
     fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Frame, Skip> {
-        gameplay(next)?;
+        gameplay_or_door(next)?;
         let count = word(from, source::NMI_FRAME_COUNTER_WORD)?;
-        if word(next, source::NMI_FRAME_COUNTER_WORD)? == count {
-            return Err(Skip::Stalled);
-        }
-        let ended = self
+        let stalled_into = self
             .before
             .get()
-            .is_some_and(|(index, before)| index < from.index && before == count);
-        if ended {
-            return Err(Skip::MessageBoxEnded);
+            .filter(|&(index, _)| index < from.index)
+            .map(|(_, before)| before == count);
+        let stalls = word(next, source::NMI_FRAME_COUNTER_WORD)? == count;
+        match (stalled_into, stalls) {
+            (Some(true) | None, true) => return Err(Skip::Stalled),
+            (Some(true), false) => return Err(Skip::MessageBoxEnded),
+            (Some(false), true | false) | (None, false) => {}
         }
         self.inputs(from, next)
     }
@@ -578,11 +606,11 @@ impl Domain for SamusLooks {
     }
 
     fn step(&self, state: &mut State, (): &(), frame: &mut Frame) {
-        *state = update(*state, &frame.inputs, &self.clips, &Rules::VANILLA).0;
+        *state = update(*state, &frame.inputs, self.clips(), &Rules::VANILLA).0;
     }
 
     fn exercised(&self, state: &State, (): &(), frame: &Frame) -> Vec<usize> {
-        exercised(*state, &frame.inputs, &self.clips)
+        exercised(*state, &frame.inputs, self.clips())
             .into_iter()
             .filter_map(|id| CATALOGUE.iter().position(|entry| entry.id == id))
             .collect()
@@ -633,8 +661,7 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
     if moves[Move::WallJumpReadied] && clip.kick.is_some() {
         hit.push(B::WallJumpReady);
     }
-    let fast =
-        matches!(inputs.vertical, Vertical::Down(speed) if speed >= Rules::VANILLA.fast_fall_speed);
+    let fast = inputs.vertical_speed.size() >= Rules::VANILLA.fast_fall_speed;
     if clip
         .fast_fall
         .is_some_and(|step| fast && state.playhead.step < step)
@@ -643,7 +670,7 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
     }
     let rising = clip.rising == Some(state.playhead.step)
         && state.playhead.frames_left == Frames(1)
-        && inputs.vertical == Vertical::NotDown;
+        && !inputs.heading_down;
     if rising {
         hit.push(B::RisingHold);
     }
@@ -657,7 +684,7 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
     }
     if inputs.pose != inputs.pose_after {
         hit.push(B::StartingClip);
-        if moves[Move::HandedOver] && inputs.liquid.slowdown != Frames::NONE {
+        if moves[Move::HandedOver] && inputs.liquid.slowdown != Slowdown::NONE {
             hit.push(B::HandOverSlowdown);
         }
     }
@@ -673,9 +700,12 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
 fn moved_on(next: Instruction, running: bool, inputs: &Inputs, boost: Boost) -> Vec<BehaviourId> {
     use BehaviourId as B;
     let booster = inputs.items[Item::SpeedBooster];
-    match next {
-        Instruction::Show(_) if running => vec![B::RunPace],
-        Instruction::Show(_) => Vec::new(),
+    let control = match next {
+        Instruction::Show(_) if running => return vec![B::RunPace],
+        Instruction::Show(_) => return Vec::new(),
+        Instruction::Control(control) => control,
+    };
+    match control {
         _ if running && inputs.run_held && !booster => vec![B::RunPace],
         _ if running && inputs.run_held => {
             let up_to_boosting = boost.laps_left.0 <= 1 && boost.stage == BoostStage::Stage3;
@@ -685,10 +715,10 @@ fn moved_on(next: Instruction, running: bool, inputs: &Inputs, boost: Boost) -> 
                 vec![B::RunPace, B::BoostStages]
             }
         }
-        Instruction::Again(_) | Instruction::Rest => vec![B::ClipControls],
-        Instruction::Breathe => vec![B::Breathing],
-        Instruction::End | Instruction::EndUnlessJump => vec![B::ClipEnds],
-        Instruction::Branch(_) => vec![B::WallJumpBranch],
+        Control::Again(_) | Control::Rest => vec![B::ClipControls],
+        Control::Breathe => vec![B::Breathing],
+        Control::End | Control::EndUnlessJump => vec![B::ClipEnds],
+        Control::Branch(_) => vec![B::WallJumpBranch],
     }
 }
 

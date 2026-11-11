@@ -3,8 +3,8 @@
 use clean_types::{BoostStage, ClipEnd};
 use enum_map::EnumMap;
 
-/// A place in a clip, numbered from 0 (§1.4): her step is the one her clip is on, and each step
-/// holds one instruction.
+/// A place in a clip, numbered from 0 as the spec's notation numbers them: her step is the one
+/// her clip is on, and each step holds one instruction.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct Step(pub u8);
 
@@ -31,7 +31,7 @@ impl Step {
     }
 }
 
-/// A count of frames: a hold, a slowdown, or the time her step has left (0 to 255, §1).
+/// A count of frames: the time her step has left (0 to 255, §1), or a hold the model sets.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct Frames(pub u8);
 
@@ -39,13 +39,54 @@ impl Frames {
     /// No frames.
     pub const NONE: Self = Self(0);
 
-    /// This hold lengthened by a slowdown. A hold is at most 127 frames and a slowdown at most 3,
-    /// and a hold takes two slowdowns at most (`HandOverSlowdown`), so the sum is at most 133
-    /// and always fits the time left's 0 to 255 (§1.5): nothing wraps. The add saturates only
-    /// because the crate refuses a bare `+` on a byte; within the spec it never reaches 255.
+    /// This hold lengthened by `slowdown`. The spec's bounds keep the sum in range: a hold is at
+    /// most `Hold::LONGEST`, 127 frames (§1.5), and a slowdown at most `Slowdown::MOST`, 3
+    /// (§1.3), so a hold slowed twice (`HandOverSlowdown`) is at most 133 frames, within the time
+    /// left's 0 to 255. The add saturates only where no value the spec allows reaches.
     #[must_use]
-    pub const fn slowed(self, slowdown: Self) -> Self {
+    pub const fn slowed(self, slowdown: Slowdown) -> Self {
         Self(self.0.saturating_add(slowdown.0))
+    }
+}
+
+/// A shown step's hold (§1.4), 1 frame or more and at most `Hold::LONGEST`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Hold(u8);
+
+impl Hold {
+    /// Spec §1.5: a hold is at most 127 frames (the game's are at most 80), so a hold with both
+    /// slowdowns stays within the time left's 0 to 255.
+    pub const LONGEST: u8 = 127;
+
+    /// The hold of `frames`, if the spec allows it: 1 to `LONGEST`.
+    #[must_use]
+    pub fn new(frames: u8) -> Option<Self> {
+        (1..=Self::LONGEST)
+            .contains(&frames)
+            .then_some(Self(frames))
+    }
+
+    /// Its frames.
+    #[must_use]
+    pub const fn frames(self) -> Frames {
+        Frames(self.0)
+    }
+}
+
+/// A slowdown (§1.3): frames a liquid adds to a hold, 0 to `Slowdown::MOST`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub struct Slowdown(u8);
+
+impl Slowdown {
+    /// Spec §1.3: a slowdown is at most 3 frames, in water.
+    pub const MOST: u8 = 3;
+    /// No slowdown: out of a liquid, or in one that doesn't slow her.
+    pub const NONE: Self = Self(0);
+
+    /// The slowdown of `frames`, if the spec allows it: 0 to `MOST`.
+    #[must_use]
+    pub fn new(frames: u8) -> Option<Self> {
+        (frames <= Self::MOST).then_some(Self(frames))
     }
 }
 
@@ -61,11 +102,18 @@ pub struct Branch {
 }
 
 /// What a step of a clip does when the clip reaches it (§1.4): show its picture for a hold, or a
-/// control, which the clip passes through in the frame it reaches it unless it rests there.
+/// control.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Instruction {
-    /// `n`: shows its picture for its hold, 1 frame or more (`ClipPlays`).
-    Show(Frames),
+    /// `n`: shows its picture for its hold (`ClipPlays`).
+    Show(Hold),
+    /// A control, which the clip passes through in the frame it reaches it unless it rests there.
+    Control(Control),
+}
+
+/// A step that shows no picture of its own (§1.4): it says where the clip goes, or that it ends.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Control {
     /// `rest`: she rests on it with no time left, and the clip moves on from it the next frame
     /// (`ClipControls`).
     Rest,
@@ -81,14 +129,14 @@ pub enum Instruction {
     Branch(Branch),
 }
 
-impl Instruction {
-    /// `ClipEnds`: the end this instruction is, if it is one.
+impl Control {
+    /// `ClipEnds`: the end this control is, if it is one.
     #[must_use]
     pub const fn end(self) -> Option<ClipEnd> {
         match self {
             Self::End => Some(ClipEnd::End),
             Self::EndUnlessJump => Some(ClipEnd::EndUnlessJump),
-            Self::Show(_) | Self::Rest | Self::Again(_) | Self::Breathe | Self::Branch(_) => None,
+            Self::Rest | Self::Again(_) | Self::Breathe | Self::Branch(_) => None,
         }
     }
 }
@@ -96,9 +144,9 @@ impl Instruction {
 /// A clip (§1.4): its instructions from step 0, and the steps it marks.
 ///
 /// §1.5 gives the clips the spec covers: an `again` or a `branch` goes to a shown step, a `rest`
-/// is followed by a shown step, the last step is not a shown one, and a hold is at most 127
-/// frames. Outside them the model stays total: a clip that would move on past its end leaves her
-/// where she is, and a step with no hold gives no time left.
+/// is followed by a shown step, and the last step is not a shown one. Outside them the model
+/// stays total: a clip that would move on past its end leaves her where she is, and a step with
+/// no hold gives no time left.
 #[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct Clip {
     /// The instructions, one per step, in order from step 0.
@@ -120,11 +168,10 @@ impl Clip {
 
     /// The hold of the shown step at `step`; none for a control.
     #[must_use]
-    pub fn hold(&self, step: Step) -> Frames {
-        if let Some(Instruction::Show(hold)) = self.at(step) {
-            hold
-        } else {
-            Frames::NONE
+    pub fn hold(&self, step: Step) -> Option<Hold> {
+        match self.at(step)? {
+            Instruction::Show(hold) => Some(hold),
+            Instruction::Control(_) => None,
         }
     }
 }
@@ -132,12 +179,12 @@ impl Clip {
 /// One of the run's paces (§1.4): a hold for each shown step of her running clips, by step.
 /// Where a pace gives no hold for a step (outside §1.4's content), the clip's own hold shows.
 #[derive(Clone, PartialEq, Eq, Debug, Default)]
-pub struct Pace(pub Vec<Frames>);
+pub struct Pace(pub Vec<Hold>);
 
 impl Pace {
     /// The pace's hold for `step`, if it gives one.
     #[must_use]
-    pub fn hold(&self, step: Step) -> Option<Frames> {
+    pub fn hold(&self, step: Step) -> Option<Hold> {
         self.0.get(step.index()).copied()
     }
 }

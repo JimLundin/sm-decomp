@@ -131,6 +131,7 @@ dependencies = [
  "clean_model_camera",
  "clean_model_hud",
  "clean_model_progress",
+ "clean_model_samus_looks",
  "clean_model_samus_motion",
  "clean_types",
  "data",

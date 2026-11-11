@@ -69,7 +69,9 @@ pub fn draw(state: &mut State, content: &Content) {
 /// after its list, and no animation reaches one.
 fn queue_tiles(state: &mut State, content: &Content) {
     let samus = &state.samus;
-    let Some(frame) = content.samus_tiles.frame(samus.pose, samus.animation.frame) else {
+    let Some(frame) = crate::samus_looks_world::frame(samus, &content.samus_clips)
+        .and_then(|frame| content.samus_tiles.frame(samus.pose, frame))
+    else {
         return;
     };
     let queued = &mut state.video.batch.samus_tiles;
@@ -79,15 +81,14 @@ fn queue_tiles(state: &mut State, content: &Content) {
     }
 }
 
-/// The frame of her clip she is drawn in: her pose's clip in the dress its id shows, or a
-/// pose outside her domain's frames; `None` past them.
+/// The frame of her clip she is drawn in: her pose's clip in the dress its id shows, at the
+/// original's frame of her step; `None` past them. Her animation keeps a step only in her
+/// domain's poses, so a pose outside it, which the engine never reaches, has no frame.
 fn clip_frame<'a>(samus: &Samus, content: &'a Content) -> Option<&'a Frame> {
-    let assets = &content.samus_assets;
-    let frames = match map::shown(samus.pose) {
-        Some((pose, dress)) => &assets.clip(pose, dress)?.frames,
-        None => &assets.unkeyed(samus.pose)?.frames,
-    };
-    frames.get(usize::from(samus.animation.frame.0))
+    let (pose, dress) = map::shown(samus.pose)?;
+    let frames = &content.samus_assets.clip(pose, dress)?.frames;
+    let frame = crate::samus_looks_world::frame(samus, &content.samus_clips)?;
+    frames.get(usize::from(frame.0))
 }
 
 /// Draw Samus's body into the sprite buffer.

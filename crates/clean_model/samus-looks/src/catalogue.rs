@@ -135,7 +135,8 @@ pub const CATALOGUE: [Behaviour; 15] = [
     },
     Behaviour {
         id: BehaviourId::FastFall,
-        summary: "falling fast, her fall jumps to its fast fall picture",
+        summary: "moving fast in a fall's pose, her fall jumps to its fast fall picture, \
+                  whichever way she moves",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

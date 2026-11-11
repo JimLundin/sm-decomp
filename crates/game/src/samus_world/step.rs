@@ -1,34 +1,35 @@
 //! The engine's one contact with the samus-motion model.
 //!
 //! Her frame is stepped by the model over the engine's world; the cells her moves and looks
-//! reached become the engine's touches, and the engine's animation and pose change read the
-//! rest.
+//! reached become the engine's touches, and the pose change and her animation
+//! (`samus_looks_world`) read the rest.
 //!
 //! The model answers `UnknownPose` for a pose no situation names. Every pose the pose map holds
 //! is one a situation names (`state::named`, pinned by its test), so the frame refuses it as a
 //! fault that can't happen, rather than invent a motion for it.
 
-use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap, WallTest};
+use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap};
 use clean_types::{Action, ClipEnd, Parts, Pose, Radius};
 
 use super::frame::{FrameSource, body};
-use super::state::{clean_of, pose_id, write_back};
+use super::state::{clean_of, dress, pose_id, write_back};
 use super::{SamusFault, SamusWorld};
 use crate::collision::{Surroundings, Touches};
 use crate::pose::{Content, PoseRequests};
 use crate::session;
 use crate::state::Controller;
 use crate::state::room::ElevatorRide;
-use crate::state::samus::{PoseId, Samus};
+use crate::state::samus::{PoseId, Samus, SuperSpecial, SuperSpecialCommand};
+use data::assets::samus::import::map;
+use data::assets::samus::key::{Dress, SpinSprite};
 
-/// What the model's frame leaves for the engine's animation and pose change.
-#[derive(Clone, Copy, Debug)]
+/// What the model's frame leaves for the pose change and her animation.
+#[derive(Clone, Debug)]
 pub struct Stepped {
     /// The pose the frame ends in.
     pub pose: Pose,
-    /// `WallJump`: a wall is near enough to kick off, but the spin hasn't turned far enough
-    /// yet; the animation holds the spin a frame short of the kick.
-    pub armed: bool,
+    /// The frame's outputs, which her animation reads.
+    pub outcome: Outcome,
 }
 
 /// What the frame reads besides Samus and her world.
@@ -149,10 +150,27 @@ pub fn step(
             .copied(),
     );
     settle(samus, &ran);
+    if ran.outcome.handed_over {
+        samus.super_special = hand_over(samus, ran.after.pose);
+    }
     Ok(Some(Stepped {
         pose: ran.after.pose,
-        armed: ran.outcome.wall_test == WallTest::Readied,
+        outcome: ran.outcome,
     }))
+}
+
+/// The request her animation's end makes, which the pose change takes before any other
+/// (`$90:84B6`): the pose handed over, in her plain sprite as the end names it, with the command
+/// "transition animation finished". Her pose id itself is the one her dress shows (`next`).
+fn hand_over(samus: &Samus, pose: Pose) -> SuperSpecial {
+    let plain = Dress {
+        spin: SpinSprite::Plain,
+        ..dress(samus)
+    };
+    SuperSpecial {
+        pose: map::id_of(pose, plain),
+        command: SuperSpecialCommand::TransitionAnimationFinished,
+    }
 }
 
 /// The words the pose change leaves that the model doesn't hold.
@@ -177,14 +195,15 @@ pub fn settle(samus: &mut Samus, ran: &Ran) {
 /// The pose the frame's pose change is asked for, as the engine's pose id.
 ///
 /// `None` when the frame asks for none, so the change records no history. Where the model
-/// ran, the pose it chose, asked when the pad asked for one or it differs from hers; elsewhere
-/// the pad's request.
+/// ran, the pose it chose: on a hand-over always, in the sprite her dress shows; otherwise
+/// asked when the pad asked for one or it differs from hers. Elsewhere the pad's request.
 #[must_use]
-pub fn next(samus: &Samus, stepped: Option<Stepped>, requests: PoseRequests) -> Option<PoseId> {
+pub fn next(samus: &Samus, stepped: Option<&Stepped>, requests: PoseRequests) -> Option<PoseId> {
     let Some(stepped) = stepped else {
         return requests.ordinary;
     };
-    let asked = samus.super_special.pose.or(requests.ordinary);
+    let handed_over = stepped.outcome.handed_over;
+    let asked = if handed_over { None } else { requests.ordinary };
     let id = pose_id(stepped.pose, samus, asked).unwrap_or(samus.pose);
-    (requests.ordinary.is_some() || id != samus.pose).then_some(id)
+    (handed_over || requests.ordinary.is_some() || id != samus.pose).then_some(id)
 }

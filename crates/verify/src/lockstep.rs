@@ -58,6 +58,7 @@ pub fn slice_zero_rooms() -> RoomMap {
         species: data::enemy::SpeciesMap::slice_zero(),
         programs: data::enemy::program::EnemyPrograms::default(),
         samus_tiles: data::pose::tiles::SamusTiles::default(),
+        samus_clips: game::samus_looks_world::Clips::default(),
         plms: Vec::new(),
         states: Vec::new(),
         reactions: data::blocks::Reactions::default(),
@@ -627,11 +628,12 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.facing", samus.facing),
     field!("samus.movement", samus.movement),
     field!("samus.equipment.collected", samus.equipment.collected),
-    field!("samus.animation.frame", samus.animation.frame),
-    field!("samus.animation.timer", samus.animation.timer),
+    field!("samus.animation.step", samus.animation.step),
+    field!("samus.animation.frames_left", samus.animation.frames_left),
+    field!("samus.animation.boost.stage", samus.animation.boost.stage),
     field!(
-        "samus.animation.new_pose_frame",
-        samus.animation.new_pose_frame
+        "samus.animation.boost.laps_left",
+        samus.animation.boost.laps_left
     ),
     field!("samus.super_special.pose", samus.super_special.pose),
     field!("samus.super_special.command", samus.super_special.command),

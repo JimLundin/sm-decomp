@@ -1,9 +1,9 @@
 //! §1.3 What a frame reads, each from the domain that owns it, and §1.1 what it reports.
 
-use clean_types::{AnimationSound, ClipEnd, Item, Set, Sprite};
+use clean_types::{AnimationSound, ClipEnd, Fixed, Item, Set, Sprite};
 use enum_map::Enum;
 
-use crate::clip::{Clip, Frames, Paces};
+use crate::clip::{Clip, Paces, Slowdown};
 
 /// §1.2 Her pose: samus-motion's pose with the sprite she is drawn in. Each pose and sprite has
 /// its own clip, and she takes another pose when either part differs.
@@ -38,22 +38,13 @@ pub enum Move {
     DashLost,
 }
 
-/// Her vertical motion this frame (samus-motion).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Vertical {
-    /// Not heading down: she goes up, or keeps her height without a fall.
-    NotDown,
-    /// Heading down, at this many whole pixels a frame; a fall at 0 pixels a frame is one.
-    Down(u16),
-}
-
 /// What the liquid she is in does to her animation (the liquids).
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Liquid {
-    /// Added to the holds her clip moves on to, 0 to 3.
-    pub slowdown: Frames,
-    /// Added to the first hold of the pose she takes, 0 to 3.
-    pub start_slowdown: Frames,
+    /// Added to the holds her clip moves on to.
+    pub slowdown: Slowdown,
+    /// The start's slowdown: added to the first hold of the pose she takes.
+    pub start_slowdown: Slowdown,
     /// Under a liquid's surface that slows her, without the gravity suit (`WallJumpBranch`).
     pub submerged: bool,
 }
@@ -71,8 +62,12 @@ pub struct Inputs {
     pub dashing: bool,
     /// The pad holds run this frame.
     pub run_held: bool,
-    /// Her vertical motion.
-    pub vertical: Vertical,
+    /// Heading down, as her moves leave her: she falls, a fall at 0 included, and not in the
+    /// moonfall; a rise a ceiling stops this frame is not (`RisingHold`).
+    pub heading_down: bool,
+    /// Her vertical speed as her moves leave her, downward positive, read apart from heading
+    /// down: she can rise fast in a fall's pose (`FastFall`).
+    pub vertical_speed: Fixed,
     /// Her energy (`Breathing`).
     pub energy: u16,
     /// The items switched on; this domain reads the speed booster, the space jump and the screw

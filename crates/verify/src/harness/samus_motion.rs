@@ -36,7 +36,9 @@ use game::samus_world::step::{Ran, Reads, run, settle};
 use game::samus_world::{SamusFault, SamusWorld};
 use game::state::Controller;
 use game::state::room::{Block, BlockColumns, ElevatorRide};
-use game::state::samus::{Bounce, Dashing, Motion, Position, Samus, SpeedMode, VerticalMotion};
+use game::state::samus::{
+    Bounce, Dashing, Motion, PoseId, Position, Samus, SpeedMode, VerticalMotion,
+};
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 
@@ -861,6 +863,12 @@ impl SamusMotion {
         Ok(ran.outcome.placed)
     }
 
+    /// The engine's content the model reads, her clips among it.
+    #[must_use]
+    pub const fn content(&self) -> &Content {
+        &self.content
+    }
+
     /// What her motion's frame from record `from` shows (`Outcome`): among them what it gives
     /// her animation (the samus-motion spec's §1.4, samus-looks' inputs).
     ///
@@ -1005,7 +1013,12 @@ impl Domain for SamusMotion {
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(Hers, Inputs), Skip> {
         runs_after(from)?;
         motion_runs(from)?;
-        let samus = Rules::ORIGINAL.samus(&from.wram)?;
+        // A pose outside her domain has no clip to read her animation's step through.
+        let pose = word(from, source::SAMUS_POSE)?;
+        if data::assets::samus::import::map::key_of(PoseId(pose)).is_none() {
+            return Err(Skip::Pose(pose));
+        }
+        let samus = Rules::ORIGINAL.samus(&from.wram, &self.content.samus_clips)?;
         let Some(model) = clean_of(&samus) else {
             return Err(Skip::Pose(samus.pose.0));
         };

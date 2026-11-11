@@ -21,9 +21,9 @@ use game::state::room::{
 };
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
-    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Facing, FrameBefore, JumpHeld,
-    MovementType, NewPoseFrame, PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor,
-    VisorShade, VisorTimer,
+    Animation, Boost, BoostStage, ClipStep, DrawingHandler, Facing, FrameBefore, JumpHeld,
+    MovementType, PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor, VisorShade,
+    VisorTimer,
 };
 use game::state::samus::{Dashing, SpeedMode, VerticalMotion};
 use game::state::samus::{Fixed, Point};
@@ -68,10 +68,24 @@ fn rooms() -> RoomMap {
         species: SpeciesMap::slice_zero(),
         programs: programs(),
         samus_tiles: samus_tiles(),
+        samus_clips: samus_clips(),
         plms: vec![(MORPH_BALL_ROOM_ID, population())],
         states: vec![(MORPH_BALL_STATE, MORPH_BALL_LEVEL)],
         reactions: data::blocks::Reactions::default(),
     }
+}
+
+/// Every pose of hers with a clip of 28 shown steps of a frame each that starts over, so each
+/// of the first 28 frames is a step and every mark lands on one.
+fn samus_clips() -> game::samus_looks_world::Clips {
+    let bytes: Vec<u8> = [[1_u8; 0x1C].as_slice(), &[0xFF]].concat();
+    let list = data::pose::animation::DelayList::decode(&bytes).unwrap();
+    let delays = data::pose::animation::AnimationDelays::new(
+        vec![list; data::pose::POSE_COUNT],
+        data::pose::animation::DelayList::default(),
+    );
+    game::samus_looks_world::Clips::import(&delays, &data::pose::animation::RunPaces::default())
+        .unwrap()
 }
 
 /// Three tiles definitions, at pointers 0, 7 and 14.
@@ -384,6 +398,14 @@ fn put_ride(wram: &mut [u8]) {
 }
 
 /// A record in main gameplay with a distinct value at every decoded source.
+/// Her animation: step 3 of her pose's clip with 7 frames left, the boost at stage 1 with 2 laps
+/// left.
+fn put_animation(wram: &mut [u8]) {
+    put(wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
+    put(wram, 0x0A96, 0x0003); // SAMUS_ANIM_FRAME
+    put(wram, 0x0B3E, 0x0102); // SPEED_BOOSTER_LEVEL: stage 1, 2 laps left
+}
+
 fn record() -> FrameRecord {
     let mut wram = vec![0; 0x20000];
     put(&mut wram, 0x05B8, 0x1201); // NMI_FRAME_COUNTER_INCLUDING_LAG
@@ -428,13 +450,11 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0A2C, 0x0002); // SAMUS_NEW_POSE_TRANSITIONAL
     put(&mut wram, 0x0A32, 0x0003); // SAMUS_HURT_SWITCH_INDEX: transition animation finished
     put_ride(&mut wram);
-    put(&mut wram, 0x0A94, 0x0007); // SAMUS_ANIM_FRAME_TIMER
+    put_animation(&mut wram);
     put_samus_tiles(&mut wram);
     put(&mut wram, 0x0A72, 0x0803); // SAMUS_VISOR_PALETTE_TIMER_INDEX: dim, 3 frames
     put(&mut wram, 0x1982, 0x002A); // FX_LAYER_BLENDING_CONFIG_A
     put_glow(&mut wram);
-    put(&mut wram, 0x0A96, 0x0003); // SAMUS_ANIM_FRAME
-    put(&mut wram, 0x0A9A, 0x8000); // SAMUS_ANIM_FRAME_SKIP: preserve
     put(&mut wram, 0x0B3C, 0x0001); // SAMUS_HAS_MOMENTUM_FLAG
     put(&mut wram, 0x0B42, 0x0001); // SAMUS_X_EXTRA_RUN_SPEED
     put(&mut wram, 0x0B44, 0x2000); // SAMUS_X_EXTRA_RUN_SUBSPEED
@@ -495,9 +515,12 @@ fn record() -> FrameRecord {
 fn decodes_the_animation(state: &State) -> bool {
     state.samus.animation
         == Animation {
-            frame: AnimationFrame(3),
-            timer: AnimationTimer(7),
-            new_pose_frame: NewPoseFrame::Preserve,
+            step: ClipStep(3),
+            frames_left: 7,
+            boost: Boost {
+                stage: BoostStage::Stage1,
+                laps_left: 2,
+            },
         }
         && state.samus.super_special
             == SuperSpecial {
@@ -728,9 +751,7 @@ const WORD_RULES: [(&str, WordRule); 82] = [
     }),
     ("animation.frame", |rules| &mut rules.animation.frame),
     ("animation.timer", |rules| &mut rules.animation.timer),
-    ("animation.new_pose_frame", |rules| {
-        &mut rules.animation.new_pose_frame
-    }),
+    ("animation.boost", |rules| &mut rules.animation.boost),
     ("super_special.pose", |rules| &mut rules.super_special.pose),
     ("super_special.command", |rules| {
         &mut rules.super_special.command
@@ -2010,6 +2031,7 @@ fn cached_rows() -> Option<CachedRows> {
     let rooms = crate::lockstep::slice_zero_rooms()
         .with_programs(content.enemy_programs)
         .with_samus_tiles(content.samus_tiles)
+        .with_samus_clips(content.samus_clips)
         .with_plms(crate::lockstep::slice_zero_plms(&image).unwrap())
         .with_states(crate::lockstep::slice_zero_states(&image).unwrap())
         .with_reactions(content.blocks.imported().clone());

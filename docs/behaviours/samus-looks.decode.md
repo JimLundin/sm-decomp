@@ -23,9 +23,9 @@ the Budget section of [samus-looks.md](samus-looks.md). Bank logs:
 - **The reference model** (`model.py`, over the spec's format only) is run through an importer of
   the delay lists parsed from the bank log text (`importer.py`, `clips.py`) and the pose map
   (`poses.py`, from `data::assets::samus::import::map`). Per frame over the cache
-  (`cachecheck.py`): **16,210 of 16,210** frames of play in the domain match on all three words
-  (`0A94`, `0A96` through the step map, `0B3E`); the null model (nothing changes) matches 471.
-  On the vectors (`vec.py`): 85 of 85.
+  (`cachecheck.py`): **18,233 of 18,233** frames of play in the domain match on all three words
+  (`0A94`, `0A96` through the step map, `0B3E`); the null model (nothing changes) matches 506.
+  On the vectors (`vec.py`): 88 of 88.
 - The scripts are in `$TEMP/collab/looks-spec/`; `cases.py` lists the recorded frames per rule.
 
 ## State
@@ -37,9 +37,30 @@ the Budget section of [samus-looks.md](samus-looks.md). Bank logs:
 | the boost stage | `0B3F` (the high byte of `0B3E`) | as is, 0 to 4 |
 | the laps left | `0B3E` low byte | as is (the speed boost timer: the laps the stage still lasts) |
 
-`0A9A` (the new pose's frame, reset to 0 every pose change at `$91:F422`) and `0A9C` (the frame
-buffer, rewritten by the FX routine at the start of every animation step, `$90:8078`) are not
-State: they never carry from one frame to the next. `0B40` (the echo sound flag, set with the
+`0A9A` (the new pose's frame) and `0A9C` (the frame buffer, rewritten by the FX routine at the
+start of every animation step, `$90:8078`) are not State: they never carry from one frame to the
+next. `0A9A` is cleared at every frame's start (`$90:E6C3` → `$90:EB02`, `$90:EB1D`) and after a
+pose change's start (`$91:F422`), which the super special path (`$91:EBAF`) skips, so at a frame's
+end it holds what the pose's initialisation wrote on a hand-over. No rule reads the value a
+frame leaves (every reader runs in the pose change, after the same frame's write), so it is not
+compared (ARCHITECTURE §11.6). For the record, it is 1 when the frame handed over (`handed
+over`), her pose changed and her step after is 1 (a `StartingClip` row from step 1), else 0: over
+the cache's 23,432 `R` cuts in game state 8 that is right on every one, 346 hand-overs, one of
+them from step 1 (chain-0314-DAE1 139 → 140, 56h → 16h).
+The super special request, `0A2C` (its pose) and `0A32` (its command), is not State either:
+the frame's start resets it to none and 0 (`$90:E695`), and a clip's end writes it (`$90:84B6`,
+command 3, "transition animation finished"), which the pose change takes (`$91:EB88`). Lockstep
+compares both words, so the RAM translation writes them from the frame's outputs: on a frame that
+handed over (`handed over`), `0A2C` the engine's pose id of the pose she took in the plain sprite
+(the end's own pose, before `HowSheIsDrawn` dresses it: chain-0232-D5A7 23 → 24 hands over 1Ah
+and she shows 82h, the screw attack's) and `0A32` 3; on any other frame of hers FFFFh and 0; and
+on a frame hers doesn't run (a message box's, the frame it closes) as the last frame left them.
+Over the cache's cuts in the domain's poses: 341 hand-overs, 17,881 other frames and 3,512 carried
+are right; 3 others hold command 1 with her pose, the knockback's end (`$91:F31D`'s writer, out of
+the domain: boss-kraid-defeated 570, chain-0059-A293 399, chain-0106-AD5E 111). item-morph-ball's
+4 hand-overs are at 687, 1265, 1310 and 1312.
+
+`0A9C` is the liquids' (0 out of them). `0B40` (the echo sound flag, set with the
 boosting sound at `$90:85A0`) is the echoes' (part 2).
 
 ## Inputs
@@ -51,7 +72,7 @@ record N to the next `R` record):
 | --- | --- |
 | her pose, her pose after | `0A1C` at N and N+1, through the pose map (key and dress) |
 | her clips, the paces | the importer (§The importer) |
-| energy | `09C2` at N+1 (no writer between the movement handler and the animation in scope) |
+| energy | `09C2` at N: the animation reads it before the frame's damage (the periodic damage `$90:E74D` follows `Animate Samus` in `$90:E725`, and the enemies' contact damage comes later in the frame). 4 cuts cross 30 within a frame, none at a breathe step |
 | items switched on | `09A2` at N+1: bits 2000h, 0200h, 0008h |
 | submerged | `$90:841D`'s test: gravity suit `09A2` & 20h clear, and the FX surface `195E` (non-negative, below the top boundary from `$90:EC58`, liquid physics on: `197E` & 4 clear) or the lava/acid surface `1962`. Never true in the cache |
 | slowdown | `0A9C` at N+1, the animation's own buffer: `$90:8078` the X speed divisor `0A66` (0 out of liquids); `$90:80B8` water: 3 (`$90:80CB`) with no gravity suit test; acid 2 (`$90:8219` → `$90:824C`, `$90:9E95`) with no gravity suit test either; lava (`$90:81C0`) 2, and 0 with the gravity suit (`$90:81DB` → `$90:820F`). FX types 8, Ah and Ch run `$90:8077` (RTS) and leave it as it was: the liquids' domain must carry it |
@@ -63,8 +84,8 @@ record N to the next `R` record):
 | dash lost | `0B3C` non-zero at N, 0 at N+1 (`$91:DE53`; also `$91:E655`, the pause screen's equipment change) |
 | standing restarts | movement type 0 at N, pose 1 or 2, pad `8B` at N & the shoot binding `09B2` (`$90:A3AD`); samus-motion's `StandingAnimation::Restarts` |
 | wall jump readied | samus-motion's `WallTest::Readied`. In `cachecheck.py`, from the records: the pose unchanged, a kick step, `0A96` at N+1 on it and at N neither on it nor one before (the kick step is reached no other way) |
-| downward speed | `0B2E` at N+1 (after the movement handler's falling movement, `$90:A590`) |
-| heading down | `0B36` = 2 at N+1 |
+| vertical speed | samus-motion's `vertical speed after her moves` where its model runs the frame; elsewhere `0B2E`.`0B2C` at N+1 read as signed, then negated when `0B36` = 1 (up), so a rise the pull took past zero (`FFFF.F400` rising, samus-ceres-push 989) is the small `+0000.0C00`, as samus-motion gives it and as `BMI` reads it. The original reads `0B2E` alone at `$90:A5AC` (`CMP #5`, `BMI`), right after the falling movement (`$90:A590` → `$90:9168`) and before the pose change: `0B2E`.`0B2C` holds the size and `0B36` the direction, so the test is the size's, whichever way she moves (root decision a) |
+| heading down | samus-motion's `heading down` where its model runs the frame; elsewhere `0B36` = 2 at N+1. The two differ on a landing (as her moves leave her she heads down; N+1 shows none), where the landing's clip starts either way |
 | sounds waiting | `(0648 low − 0645) & 0Fh` at N: library 3's queue, `$80:9158` |
 
 Which inputs samus-motion's model doesn't yet report is §Requests to samus-motion.
@@ -128,8 +149,13 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   3 whatever her suit; the pose's start adds `$91:FB08`'s `$12`, which is 0 with the gravity suit
   and otherwise tests the surface against the feet of the pose she takes. So in water with the
   gravity suit a started clip is `hold + 0` and a handed-over one `hold + 0 + 3`, and at a surface
-  the two differ by whose feet are under it. The old engine's `pose.rs` says the same in its
-  comment on `reset_animation`. The cache can't show it (`0A9C` is 0 on every frame): C-slow-*.
+  the two differ by whose feet are under it. The cache can't show it (`0A9C` is 0 on every
+  frame): C-slow-*.
+- **The fast fall reads the size** (root decision a). `0B2E` holds the vertical speed's size and
+  `0B36` its direction, and `$90:A5AC` tests `0B2E` alone, so a fall's pose rising at 5 px a frame
+  or more shows the fast fall picture: an unmorph's end that hands over the crouch in a rise, then
+  a walk off a ledge into a fall's pose, carries the rise (samus-motion's `FollowingTheGround`).
+  No record rises so fast in a fall's pose (the fastest 2.4000): C-fast-fall-rising.
 - **The end before the pose** (adversary 89, finding 2; adversary 90, finding 1; the root's
   decisions). samus-motion's step reads `animation_ends` before it chooses her pose, and this
   domain reads the pose chosen. The spec restricts its inputs (§1.5) so that the end is a function
@@ -140,7 +166,7 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   `$91:E8B6`..`$91:EADD` never write 4Bh, 4Ch, 19h or 1Ah). The second half reads back whether
   it did (`handed over`), for `HandOverSlowdown`. The frame is then two calls: the end first, the
   rest with samus-motion's results (spec §6). Over the cache the end's kind from the frame's start
-  is the original's on all 311 end frames (138 `end`, 173 `end-unless-jump`, 8 of them given way),
+  is the original's on all 350 end frames (151 `end`, 199 `end-unless-jump`, 9 of them given way),
   each with a pose change, and none elsewhere.
 
 - **A dash lost after the animation.** `$91:DE53` is called from the movement handlers (before the
@@ -185,18 +211,31 @@ and `branch` in the 253 lists lands on a delay byte (checked in
 
 - **Frames:** each pair of consecutive `R` (quiescent) records of every row: an `O` record is
   mid-frame. Skipped, by name and never by outcome:
-  - not a frame of play: game state `0998` ≠ 8 at N or N+1, or the new state handler `0A44` at N
-    not one that runs the animation (`$90:E725` normal, `$90:E7F5` and `$90:E833` the demos,
-    `$90:E8EC` the elevator) — 3,587;
-  - the frame count stalled: `05B6` equal at N and N+1 (message boxes, the item fanfare) — 2,810;
+  - not a frame of play: game state `0998` ≠ 8 at N, or at N+1 neither 8 nor 9 (9 is a door's
+    start: her frame runs first, then the door, so it is compared: 8 on record), or the new state
+    handler `0A44` at N not one that runs the animation (`$90:E725` normal, `$90:E7F5` and
+    `$90:E833` the demos,
+    `$90:E8EC` the elevator, `$90:E8AA` the Ceres escape's timer, which runs the normal one first,
+    `$90:E8B0`) — 1,506;
+  - the frame count stalled: `05B6` equal at N and N+1, unless it moved from N−1 to N (message
+    boxes, the item fanfare) — 2,796. The pair where it first stalls is the frame a message box
+    opens: her frame runs, then the box (the PLM's message box waits inside the frame), so it is
+    compared — 14 on record, each moving her animation on (item-morph-ball 816, item-charge-beam
+    295, 901, item-energy-tank 239, item-reserve-tank 111, 657, 1211, item-plasma-beam 145,
+    item-wave-beam 36, chain-0043-9AD9 416, chain-0163-A890 27, chain-0234-D51E 152,
+    samus-bomb-jump-vertical 54, samus-square-slope-reserve 36);
   - a message box ended the frame: `05B6` equal at N−1 and N (the pair after a stall) — 5;
   - a pose outside the domain at N or N+1 (not in the pose map: x-ray, grapple, shinespark,
-    knockback, drained, crystal flash, the Draygon grab, the appearance) — 1,616.
+    knockback, drained, crystal flash, the Draygon grab, the appearance) — 1,688.
 
   A step that doesn't decode (a frame number on an operand byte) is a harness defect: none.
 - **Decoded:** the State from record N, the inputs as §Inputs.
 - **Compared at N+1:** `0A96` (through the step map of the clip of the pose at N+1), `0A94`,
-  `0B3E`. Per frame over the cache: 16,210 of 16,210; null 471.
+  `0B3E`. Per frame over the cache: 18,233 of 18,233; null 506. Of them, 2,001 are the Ceres
+  escape's (samus-ceres-push, samus-input-poses: `$90:E8AA`), 14 the frames a message box opens
+  and 8 the frames a door starts (area-maridia 22, area-norfair 119, boss-kraid-defeated 1089,
+  chain-0014-96BA 221, chain-0097-ACF0 662, chain-0106-AD5E 481, chain-0224-D0B9 200,
+  samus-input-poses 250).
 - **Mask:** the boost (`0B3E`) on frames where it changes with no dash: `0B3C` 0 at N and at
   N+1, so no dash at N, none beginning and none lost, and `0B3E` differing from N to N+1. No rule
   of the animation changes it then. Writer: the shinespark's (S3) end of the shine, which clears
@@ -209,13 +248,17 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   domain's request stream exists: spin 31h, space jump 3Eh, screw attack 33h on library 1;
   speed booster 3 on library 3).
 - **Per-behaviour attribution** (frames on record that take each rule, `cases.py`): the time runs
-  down 16,210, a shown step reached 4,178, again 466, rest 6, breathing loops 30 (on: 0), ends 303
-  (138 `end`, 165 `end-unless-jump`) and 8 that gave way, branches 13 (9 plain, 4 screw attack;
-  space jump: 0), a pose taken 3,790 (1,867 kept, 94 from step 1, 1,829 from step 0), restarts
-  25, readied 38, fast falls 4, rising holds 30, plain pace 701 and 54 laps, boosted pace 714,
-  dashes began 89 and lost 100, stages up 50, laps counted 16, boosting laps 5 (all 0 waiting).
-  Vectors only: the slowdown (`0A9C` is 0 on every frame of play in the cache), submerged,
-  breathing on, the space jump's branch, sounds waiting other than 0.
+  down 18,233, a shown step reached 4,581, again 500, rest 6, breathing loops 31 and on 2
+  (samus-ceres-push 1085, 1316), ends 341 (151 `end`, 190 `end-unless-jump`) and 9 that gave way,
+  branches 13 (9 plain, 4 screw attack; space jump: 0), a pose taken 4,205 (1,964 kept, 102 from
+  step 1, 2,139 from step 0), restarts 29, readied 39, fast falls 4, rising holds 20 (boss-phantoon
+  11, chain-0059-A293 1, samus-ceres-push 8: her pose the same and rising at N+1; the 12 outside
+  the Ceres escape are the ones samus-motion's heading down brings into play in the harness, and
+  record N+1's direction gives 19 more, all landings), plain pace 760 and 58 laps, boosted pace
+  715, dashes began 96 and lost 109, stages up 50, laps counted 16, boosting laps 5 (all 0
+  waiting). Vectors only: the slowdown (`0A9C` is 0 on every frame of play in the cache),
+  submerged, the space jump's branch, sounds waiting other than 0, a fall's pose rising at 5 px or
+  more.
 - **The harness cases** (recorded frames that read a game clip, compared through the importer's
   clips; each rule's constructed vector carries it): FastFall chain-0232-D5A7 224, 230,
   samus-grapple-release 254, samus-shinespark-up-left 394 (C-fast-fall); BoostingLap boss-phantoon
@@ -224,11 +267,20 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   61, 192, 205 (C-branch-spin); WallJumpReady boss-phantoon 3, chain-0014-96BA 50,
   chain-0043-9AD9 22, 36 (C-ready); ClipEnds gave way samus-screw-attack 243, 315
   (C-end-gives-way); rests chain-0057-9FBA 232, 241 (C-rest); breathing area-maridia 247, 337
-  (C-breathe-loop); StartingClip from step 1 boss-phantoon 2, 61, chain-0014-96BA 20
+  (C-breathe-loop); breathing on samus-ceres-push 1085, 1316 (C-breathe-on; the Ceres escape's
+  handler); StartingClip from step 1 boss-phantoon 2, 61, chain-0014-96BA 20
   (C-spin-from-spin and the aimed-up rows); BoostStages up area-maridia 13, boss-phantoon 127, 152,
-  172; laps counted samus-shinespark-left 72, 93 (C-lap-count); RisingHold boss-kraid-defeated
-  297, 315 (C-rising); RunPace laps boss-kraid-defeated 988, chain-0012-91F8 638 (C-lap-plain).
-- **Null model:** nothing changes: 471 of 16,210.
+  172; laps counted samus-shinespark-left 72, 93 (C-lap-count); RisingHold boss-phantoon 570
+  (4Eh, the first hold of its rise) and chain-0059-A293 298 (4Eh) (C-rising): each holds, her pose
+  the same and rising at N+1 and step 1 kept with 3 left, so samus-motion's heading down and
+  record N+1's agree (not down). A landing from a straight jump (boss-kraid-defeated 297, 315)
+  passes the hold's test by record N+1's direction but not by samus-motion's heading down, so it
+  is no case. Checked in a scratch run of the harness with heading down from samus-motion's
+  model and this note's frames (the Ceres escape's handler, the frame a message box opens, the
+  frame a door starts): both hold, all 18,233 frames match (stage and laps 18,232, 1 masked), and
+  the hold's exercised frames are 20. RunPace laps boss-kraid-defeated 988, chain-0012-91F8 638
+  (C-lap-plain).
+- **Null model:** nothing changes: 506 of 18,233.
 - **Free run:** from a seed frame carry the four State words and take only the inputs; re-seed at
   each skipped stretch. A free run through samus-motion's model needs its outputs (§Requests).
 
@@ -236,8 +288,9 @@ and `branch` in the 253 lists lands on a delay byte (checked in
 
 Answered in samus-motion's spec (§1.4 there, its round 18; its decode notes, "Round 18's
 amendments", give the sources). Its step reports `dashing after her moves`, `dash began`, `dash
-lost`, `handed over` and `heading down`, besides `StandingAnimation::Restarts`, `WallTest::Readied`,
-its pose and its vertical speed, and its `AnimationEnds` takes the end's kind as its input and
+lost`, `handed over` and `heading down`, and from its round 19 `vertical speed after her moves`
+(signed, as her moves leave her, beside `heading down`), besides `StandingAnimation::Restarts`,
+`WallTest::Readied` and its pose, and its `AnimationEnds` takes the end's kind as its input and
 gives way on an end unless a jump when its pad chart's pose is a take-off aimed forward (4Bh,
 4Ch) or a spin (19h, 1Ah). The harness's decodes above agree with those outputs on every frame
 these rules read: samus-motion's `dashing after her moves` differs from "`0B3C` at N, or a dash
@@ -289,8 +342,8 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 37.7 units = 1,412 (clip 812, moves 225, run 375), 15 entries, 33 arms, 85 vectors
-(79 constructed, 6 recorded).
+Budget: 37.5 × 37.7 units = 1,412 (clip 812, moves 225, run 375), 15 entries, 33 arms, 88 vectors
+(82 constructed, 6 recorded).
 
 Old code (old 1,443): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.

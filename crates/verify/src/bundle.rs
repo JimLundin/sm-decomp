@@ -14,7 +14,7 @@ use data::enemy::face_block::{FaceBlockLists, GlowColours};
 use data::enemy::program::{EnemyPrograms, ProgramError};
 use data::level::slope::Slopes;
 use data::palette::VisorColours;
-use data::pose::animation::{AnimationDelays, AnimationError};
+use data::pose::animation::{AnimationDelays, AnimationError, RunPaces};
 use data::pose::spritemap::{SamusSpritemaps, SpritemapError};
 use data::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles};
 use data::pose::transition::PoseTransitions;
@@ -125,6 +125,8 @@ pub enum ContentError {
     Transitions(AddressError),
     /// Samus's animation delay lists don't decode.
     Delays(AnimationError),
+    /// Her clips and her run's paces don't import.
+    SamusClips(game::samus_looks_world::ImportError),
     /// The slope shapes aren't in the image.
     Slopes(AddressError),
     /// The enemies' instruction lists don't decode.
@@ -161,6 +163,7 @@ impl fmt::Display for ContentError {
             Self::SamusAssets(error) => write!(f, "Samus's assets: {error:?}"),
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
+            Self::SamusClips(error) => write!(f, "Samus's clips: {error:?}"),
             Self::Slopes(error) => write!(f, "the slope shapes: {error:?}"),
             Self::EnemyPrograms(error) => write!(f, "the enemy instruction lists: {error:?}"),
             Self::SamusSpritemaps(error) => write!(f, "Samus's spritemaps: {error:?}"),
@@ -215,10 +218,13 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
             graphics: &graphics,
         })
         .map_err(ContentError::SamusAssets)?;
+    let paces = RunPaces::load(rom.lorom()).map_err(ContentError::Delays)?;
+    let samus_clips = game::samus_looks_world::Clips::import(&delays, &paces)
+        .map_err(ContentError::SamusClips)?;
     Ok(Content {
         poses,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
-        delays,
+        samus_clips,
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
         enemy_programs,
         eye_lists,
@@ -255,6 +261,7 @@ pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, data::room::Roo
     Ok(slice_zero_rooms()
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
+        .with_samus_clips(content.samus_clips.clone())
         .with_plms(slice_zero_plms(image)?)
         .with_states(slice_zero_states(image)?)
         .with_reactions(content.blocks.imported().clone()))

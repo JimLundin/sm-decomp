@@ -1,4 +1,5 @@
 use super::*;
+use crate::state::samus::ClipStep;
 use crate::state::slots::Frames;
 use crate::state::video::{OamEntry, SamusTileUploads, SpriteCount};
 use crate::state::{FrameCount, State};
@@ -6,7 +7,7 @@ use data::assets::samus::import::map::key_of;
 use data::assets::samus::key::Worn;
 use data::assets::samus::{Chest, Clip, ClipEnd, Frame, Hold, SamusAssets, SpriteId, SpriteSheet};
 use data::pose::PoseId;
-use data::pose::animation::AnimationFrame;
+use data::pose::animation::{AnimationDelays, DelayList, RunPaces};
 use data::pose::tiles::{FrameTiles, SamusTiles, TileDefinition, TileDefinitionId};
 use data::spritemap::Spritemap;
 
@@ -98,8 +99,18 @@ fn content() -> Content {
             ],
             vec![TileDefinition::default(); 3],
         ),
+        samus_clips: clips(),
         ..Content::default()
     }
+}
+
+/// Every pose of hers with a clip of 28 shown steps that starts over, so each step is the
+/// original's frame of the same number.
+fn clips() -> crate::samus_looks_world::Clips {
+    let bytes: Vec<u8> = [[1_u8; 0x1C].as_slice(), &[0xFF]].concat();
+    let list = DelayList::decode(&bytes).unwrap();
+    let delays = AnimationDelays::new(vec![list; data::pose::POSE_COUNT], DelayList::default());
+    crate::samus_looks_world::Clips::import(&delays, &RunPaces::default()).unwrap()
 }
 
 /// Samus at (0x150, 0x90) in pose `pose`, the camera at (0x100, 0x20).
@@ -181,7 +192,7 @@ fn a_hidden_samus_leaves_the_atmospheric_graphics_alone() {
 #[test]
 fn the_frame_picks_the_sprites_and_a_frame_may_have_no_bottom_half() {
     let mut rolling = state(2);
-    rolling.samus.animation.frame = AnimationFrame(1);
+    rolling.samus.animation.step = ClipStep(1);
     draw(&mut rolling, &content());
     assert_eq!(tiles(&rolling), [2]);
 }
@@ -204,7 +215,7 @@ fn facing_forward_adds_the_chest_sprite_between_the_halves() {
     // From the third frame the forward pose's origin is a pixel up, not its graphics offset;
     // frame 2 draws spritemap 3, whose first sprite is at (0, 0).
     let mut later = state(0);
-    later.samus.animation.frame = AnimationFrame(2);
+    later.samus.animation.step = ClipStep(2);
     draw(&mut later, &content());
     assert_eq!(later.video.batch.oam.low[0].y, 0x90 - 1 - 0x20);
 }
@@ -276,7 +287,7 @@ fn drawing_queues_the_frames_tile_uploads_flickering_or_not() {
     assert_eq!(drawn.video.batch.samus_tiles, queued(1, Some(2)));
     // A frame without bottom tiles leaves the bottom half's upload as it was.
     let mut rolling = state(2);
-    rolling.samus.animation.frame = AnimationFrame(1);
+    rolling.samus.animation.step = ClipStep(1);
     rolling.video.batch.samus_tiles.bottom = Some(TileDefinitionId(2));
     draw(&mut rolling, &content());
     assert_eq!(rolling.video.batch.samus_tiles, queued(0, Some(2)));

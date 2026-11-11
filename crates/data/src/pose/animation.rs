@@ -114,12 +114,30 @@ pub fn wall_jump_frame(pose: PoseId) -> AnimationFrame {
     }
 }
 
-/// The frame `pose`'s animation reaches whatever its delay list says, if any: a spin
-/// jump's wall jump frame, which its wall jump check steps the animation to.
+/// The falls whose animation a fast fall steps to [`FAST_FALL_FRAME`].
+pub const FAST_FALLS: [PoseId; 4] = [PoseId(0x29), PoseId(0x2A), PoseId(0x67), PoseId(0x68)];
+/// The frame a fast fall steps a fall's animation to.
+pub const FAST_FALL_FRAME: AnimationFrame = AnimationFrame(5);
+/// The straight jumps whose animation holds [`RISING_FRAME`] while she rises.
+pub const RISINGS: [PoseId; 2] = [PoseId(0x4D), PoseId(0x4E)];
+/// The frame a straight jump's animation holds while she rises.
+pub const RISING_FRAME: AnimationFrame = AnimationFrame(1);
+
+/// The frame `pose`'s animation reaches whatever its delay list says, if any.
+///
+/// That is a spin jump's wall jump frame, which its wall jump check steps the animation to, a
+/// fall's fast fall frame and a straight jump's rising frame. The original reads on past a
+/// list's end to any of them as it would the list.
 #[must_use]
 pub fn reached(poses: &Poses, pose: PoseId) -> Option<AnimationFrame> {
     let spin_jump = matches!(poses.get(pose)?.movement, MovementType::SpinJumping);
-    spin_jump.then(|| wall_jump_frame(pose))
+    if spin_jump {
+        Some(wall_jump_frame(pose))
+    } else if FAST_FALLS.contains(&pose) {
+        Some(FAST_FALL_FRAME)
+    } else {
+        RISINGS.contains(&pose).then_some(RISING_FRAME)
+    }
 }
 
 /// The longest list the decoder walks before it gives up on finding the end.
@@ -334,6 +352,65 @@ impl AnimationDelays {
     }
 }
 
+/// The table of the boosted running lists' pointers, one per speed booster stage.
+const BOOSTED_RUNNING_DELAYS: RomAddress = RomAddress::new(0x91, 0xB5DE);
+
+/// The speed booster's stages, each with its own running list.
+pub const BOOST_STAGES: usize = 5;
+
+/// The most delays a running list holds before its first instruction.
+const PACE_LIMIT: usize = 0x20;
+
+/// The paces her run is played at: the delays of the running lists up to their first
+/// instruction, one per frame of her running animations, without the speed booster and with
+/// it at each of its stages.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RunPaces {
+    /// The pace without the speed booster.
+    pub plain: Vec<u8>,
+    /// The pace with it, by stage, from the first.
+    pub boosted: [Vec<u8>; BOOST_STAGES],
+}
+
+impl RunPaces {
+    /// The paces in `rom`.
+    ///
+    /// # Errors
+    ///
+    /// [`AnimationError::Address`] when a pointer or a list is outside the image.
+    pub fn load(rom: Lorom<'_>) -> Result<Self, AnimationError> {
+        let pace = |pointer: RomAddress| -> Result<Vec<u8>, AnimationError> {
+            let target = rom
+                .read(pointer, 2)
+                .map_err(AnimationError::Address)?
+                .first_chunk::<2>()
+                .ok_or(AnimationError::Address(AddressError::PastEnd(pointer)))?;
+            let list = rom
+                .from(RomAddress::new(LIST_BANK, u16::from_le_bytes(*target)))
+                .map_err(AnimationError::Address)?;
+            Ok(list
+                .iter()
+                .take(PACE_LIMIT)
+                .take_while(|&&byte| (byte & 0x80) == 0)
+                .copied()
+                .collect())
+        };
+        let mut boosted: [Vec<u8>; BOOST_STAGES] = Default::default();
+        for (index, slot) in boosted.iter_mut().enumerate() {
+            let pointer = BOOSTED_RUNNING_DELAYS
+                .advance(index.wrapping_mul(2))
+                .ok_or(AnimationError::Address(AddressError::PastEnd(
+                    BOOSTED_RUNNING_DELAYS,
+                )))?;
+            *slot = pace(pointer)?;
+        }
+        Ok(Self {
+            plain: pace(RUNNING_DELAYS)?,
+            boosted,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests;
 
@@ -363,3 +440,7 @@ mod tests;
 // the frame timer whatever the item (`$90:84E3`, `$90:8315`).
 // The table's first pointer (bank $91 log).
 // The pointer to the running list without the speed booster (bank $91 log).
+// The boosted running lists, one pointer per speed booster stage (bank $91 log, `$91:B5DE`),
+// which `$90:84EF` picks by `0B3F`.
+// The fast fall (`$90:A58D`: poses 29h, 2Ah, 67h, 68h, frame 5, `$90:A5BC`) and the rising hold
+// (`$90:8011`: poses 4Dh, 4Eh, frame 1).

@@ -61,10 +61,9 @@ original's bytes as data.
   `AnimationEnds` and §10; `docs/behaviours/samus-motion.decode.md`, "Round 18's amendments"): the
   spec covers play. While a demo plays (`0A60` = `$90:E91D`), the original's end unless a jump
   (`$90:8370`) hands over whatever the pad, where the spec's gives way to the pad's take-off or
-  spin. Today's engine takes the end from the original's list (`game::animation`); once its pose
-  comes from samus-motion's hand-over (`docs/behaviours/samus-looks.gaps.md`, gaps 1 and 2), a demo
-  pressing jump on a turn's or a landing's last frame would take off where the original stands. No
-  recorded frame has one.
+  spin. The engine's pose comes from samus-motion's hand-over (`game::samus_world::step`), so a
+  demo pressing jump on a turn's or a landing's last frame would take off where the original
+  stands. No recorded frame has one.
 - **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
   original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
   outer edge"): stated simplifications, each unreachable in vanilla.
@@ -177,13 +176,15 @@ original's bytes as data.
 ## The engine: memory a model keeps that the engine can't hold yet
 
 - **Samus's animation timing in the engine** (the samus-looks domain,
-  `docs/behaviours/samus-looks.md`; its model is checked in the harness but not yet wired,
-  `docs/behaviours/samus-looks.gaps.md`; `game::animation`): the engine's own animation keeps no
-  boost (the speed booster's stages, `BoostStages`, `BoostingLap`), so with the speed booster she
-  runs at the plain pace and never boosts; it has no slowdown (`animation::frame_buffer` is 0);
-  it holds no straight jump's rising step (`RisingHold`); and a new pose's clip starts at its
-  second step only from a spin or a wall jump, not when her arm was already up (`StartingClip`'s
-  aimed-up rows). Each goes when the model replaces the engine's animation (the gaps file).
+  `docs/behaviours/samus-looks.md`; `game::samus_looks_world`): the engine runs the model, and
+  gives it what the domains it lacks would: no slowdown, no start's slowdown and never submerged
+  until the liquids join (R3, S2); the sounds the model asks for (the wall jump's spin, the boost)
+  go nowhere and none wait, which every boosting lap on record had, until the sound queue joins
+  (U1); and the boost stage it keeps is read by none of its readers (the shinespark, the echoes,
+  her glow, the blocks, the enemies) until they join. Her animation keeps a step only in the
+  domain's poses: in a pose outside it (the shinespark's, the grapple's, the x-ray scope's,
+  knockback, the drained fall), which the engine doesn't reach, her animation stands still, she
+  is drawn with no frame, and the RAM translation refuses a record in one as undecodable.
 
 - **Jump held through outside her motion's poses** (the samus-motion domain,
   `docs/behaviours/samus-motion.md` `Jumping`; `game::samus_world::state`; `$90:EB35` →
@@ -201,7 +202,7 @@ original's bytes as data.
 - **The blocks' askers the engine doesn't have yet** (the blocks domain, `docs/behaviours/blocks.md`
   §1.3; `game::blocks_world`): her moves meet each reacting cell by its body and the touches reach
   the blocks after them, so a touch's answer (`AnswersToHerMotion`, `FullPlacesLetHerThrough`)
-  changes nothing she does; the engine keeps no speed booster's charge, so to the blocks she never
+  changes nothing she does; the blocks read no boost stage her animation keeps, so to them she never
   dashes, shinesparks or screw attacks; her beam's hits reach only shootable blocks, and the bombs,
   power bombs, missiles and the grapple hit none; the run is never paused; and the sounds the
   scripts ask for go nowhere. Slice 0's rooms meet none of it: their reacting cells are scroll

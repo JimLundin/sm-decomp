@@ -477,11 +477,15 @@ pub const FIELDS: &[Field] = &[
     ),
     wram("samus.equipment.reserve_mode", source::RESERVE_HEALTH_MODE),
     open("samus.invincibility"),
-    wram("samus.animation.frame", source::SAMUS_ANIM_FRAME),
-    wram("samus.animation.timer", source::SAMUS_ANIM_FRAME_TIMER),
+    wram("samus.animation.step", source::SAMUS_ANIM_FRAME),
     wram(
-        "samus.animation.new_pose_frame",
-        source::SAMUS_ANIM_FRAME_SKIP,
+        "samus.animation.frames_left",
+        source::SAMUS_ANIM_FRAME_TIMER,
+    ),
+    wram("samus.animation.boost.stage", source::SPEED_BOOSTER_LEVEL),
+    wram(
+        "samus.animation.boost.laps_left",
+        source::SPEED_BOOSTER_LEVEL,
     ),
     wram(
         "samus.super_special.pose",
@@ -961,7 +965,7 @@ mod tests {
             rules.message,
             rules.animation.frame,
             rules.animation.timer,
-            rules.animation.new_pose_frame,
+            rules.animation.boost,
             rules.super_special.pose,
             rules.super_special.command,
             rules.visor,

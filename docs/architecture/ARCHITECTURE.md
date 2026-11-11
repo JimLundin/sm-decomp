@@ -465,6 +465,11 @@ Lockstep steps the engine one Tick from each decoded oracle cut and names the fi
 
 - **Hardware leftovers** no rule reads and no player sees, such as DMA channel registers after a
   transfer (MODEL decision 3): not State, not decoded, not compared, each named here as it leaves.
+- **Words a frame clears before any rule reads them:** her new pose's frame (`0A9A`), which every
+  frame's start clears (`$90:EB02`) and only the same frame's pose change reads, after its own
+  write. The super special request (`0A2C`, `0A32`), cleared at the frame's start (`$90:E6A4`,
+  `$90:E6AD`), is in the same class but is still State and compared, until a check of its readers
+  across frames decides it.
 - **The five `ppu` fields lsnes lacks:** `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` (ORACLE Q4).
 - **WRAM scratch** no decode rule reads, from the nightly unowned-RAM report: named in LEGACY, or a
   field once a behaviour reads it.

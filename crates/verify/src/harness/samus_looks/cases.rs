@@ -23,7 +23,7 @@ const fn case(entry: BehaviourId, row: &'static str, record: u64) -> Case {
 }
 
 /// The decode notes' harness cases, by entry.
-pub const CASES: [Case; 39] = {
+pub const CASES: [Case; 41] = {
     use BehaviourId as B;
     [
         case(B::FastFall, "chain-0232-D5A7", 224),
@@ -52,6 +52,8 @@ pub const CASES: [Case; 39] = {
         case(B::ClipControls, "chain-0057-9FBA", 241),
         case(B::Breathing, "area-maridia", 247),
         case(B::Breathing, "area-maridia", 337),
+        case(B::Breathing, "samus-ceres-push", 1085),
+        case(B::Breathing, "samus-ceres-push", 1316),
         case(B::StartingClip, "boss-phantoon", 2),
         case(B::StartingClip, "boss-phantoon", 61),
         case(B::StartingClip, "chain-0014-96BA", 20),
@@ -61,8 +63,8 @@ pub const CASES: [Case; 39] = {
         case(B::BoostStages, "boss-phantoon", 172),
         case(B::BoostStages, "samus-shinespark-left", 72),
         case(B::BoostStages, "samus-shinespark-left", 93),
-        case(B::RisingHold, "boss-kraid-defeated", 297),
-        case(B::RisingHold, "boss-kraid-defeated", 315),
+        case(B::RisingHold, "boss-phantoon", 570),
+        case(B::RisingHold, "chain-0059-A293", 298),
         case(B::RunPace, "boss-kraid-defeated", 988),
         case(B::RunPace, "chain-0012-91F8", 638),
     ]

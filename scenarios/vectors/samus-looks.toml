@@ -21,7 +21,9 @@
 #   its clip. energy (default 99); items (default none): "SpeedBooster", "SpaceJump",
 #   "ScrewAttack"; submerged, run_held, handed_over, dashing, dash_began, dash_lost,
 #   standing_restarts, wall_jump_readied, heading_down (each default false; dashing is true
-#   whenever dash_began is); slowdown, start_slowdown, down_speed, sounds_waiting (each default 0).
+#   whenever dash_began is); slowdown, start_slowdown, sounds_waiting (each default 0);
+#   vertical_speed (default "+0000.0000"): her vertical speed, a signed P.S quantity "+PPPP.SSSS"
+#   or "-PPPP.SSSS", the pixel part and the subpixel part both hex, downward positive.
 # - Every vector holds RAM values and invented content only: no clip or pace of the game. The
 #   constructed vectors (C) work each rule on the invented clips. The recorded vectors (R) are
 #   frames the oracle recorded on which no clip is read: the time runs down without the clip
@@ -534,16 +536,16 @@ id = "C-fast-fall"
 source = "constructed"
 entries = ["FastFall"]
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 5, heading_down = true }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0005.0000", heading_down = true }
 after = { step = 2, left = 7, stage = 0, laps = 0 }
 
-# at 4 px a frame: the clip plays on, to step 2 with its own 11
+# falling at 4.FFFF px a frame, just short of 5: the clip plays on, to step 2 with its own 11
 [[vector]]
 id = "C-fast-fall-slow"
 source = "constructed"
 entries = ["FastFall", "ClipPlays"]
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 4, heading_down = true }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0004.FFFF", heading_down = true }
 after = { step = 2, left = 11, stage = 0, laps = 0 }
 
 # on step 3, past the fast fall step: plays on
@@ -552,7 +554,7 @@ id = "C-fast-fall-past"
 source = "constructed"
 entries = ["FastFall"]
 before = { step = 3, left = 3 }
-inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 7, heading_down = true }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0007.0000", heading_down = true }
 after = { step = 3, left = 2, stage = 0, laps = 0 }
 
 # on the fast fall step itself at 6 px a frame: plays on, 3 left become 2
@@ -561,8 +563,17 @@ id = "C-fast-fall-on"
 source = "constructed"
 entries = ["FastFall"]
 before = { step = 2, left = 3 }
-inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 6, heading_down = true }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0006.4000", heading_down = true }
 after = { step = 2, left = 2, stage = 0, laps = 0 }
+
+# falling at 5 px a frame on step 0 with 5 left: any step before the fast fall step jumps to it, 8 left, run down to 7
+[[vector]]
+id = "C-fast-fall-early"
+source = "constructed"
+entries = ["FastFall"]
+before = { step = 0, left = 5 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0005.0000", heading_down = true }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
 
 # the fast fall with a slowdown of 2: still 8 left, run down to 7
 [[vector]]
@@ -570,8 +581,26 @@ id = "C-fast-fall-liquid"
 source = "constructed"
 entries = ["FastFall"]
 before = { step = 1, left = 1 }
-inputs = { pose = "Upright Falling Right Forward", clip = "fall", down_speed = 5, heading_down = true, slowdown = 2 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "+0005.0000", heading_down = true, slowdown = 2 }
 after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# in a fall pose but rising at 5 px a frame on step 1: its size counts, so the fast fall step 2, 8 left, run down to 7
+[[vector]]
+id = "C-fast-fall-rising"
+source = "constructed"
+entries = ["FastFall"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "-0005.0000" }
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+# rising at 4.FFFF px a frame: short of 5 either way, so the clip plays on, to step 2 with its own 11
+[[vector]]
+id = "C-fast-fall-rising-slow"
+source = "constructed"
+entries = ["FastFall", "ClipPlays"]
+before = { step = 1, left = 1 }
+inputs = { pose = "Upright Falling Right Forward", clip = "fall", vertical_speed = "-0004.FFFF" }
+after = { step = 2, left = 11, stage = 0, laps = 0 }
 
 # on the rising step with 3 left, rising: it counts down as usual, to 2
 [[vector]]
@@ -834,13 +863,13 @@ before = { step = 0, left = 2 }
 inputs = { pose = "Upright Running Left Forward", clip = "run", dashing = true, dash_began = true, run_held = true, items = ["SpeedBooster"] }
 after = { step = 0, left = 1, stage = 0, laps = 1 }
 
-# jumping left aimed down-forward, the dash lost while boosting: stage 0, 0 laps; 15 left become 14
+# jumping left aimed down-forward and heading down, the dash lost while boosting: stage 0, 0 laps; 15 left become 14
 [[vector]]
 id = "R-lost-a"
 source = "chain-0100-B07A:3"
 entries = ["BoostStages"]
 before = { step = 1, left = 15, stage = 4, laps = 2 }
-inputs = { pose = "Upright Jumping Left DownForward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster"] }
+inputs = { pose = "Upright Jumping Left DownForward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster"], heading_down = true, vertical_speed = "+0000.FC00" }
 after = { step = 1, left = 14, stage = 0, laps = 0 }
 
 # falling left, the dash lost at stage 3: stage 0, 0 laps; 2 left become 1
@@ -849,5 +878,5 @@ id = "R-lost-b"
 source = "chain-0314-DAE1:108"
 entries = ["BoostStages"]
 before = { step = 0, left = 2, stage = 3, laps = 1 }
-inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, down_speed = 1 }
+inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, vertical_speed = "+0000.C400" }
 after = { step = 0, left = 1, stage = 0, laps = 0 }

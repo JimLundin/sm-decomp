@@ -43,7 +43,10 @@ after the one it is on. A hold is a number of frames.
 | the laps left | 0 to 2: the laps of her run the stage still lasts | when the pace next quickens | `BoostStages` |
 
 These four are all the domain remembers; each is State a caller can set to any value the spec
-allows and read back. A vector gives them as `before` and compares them as `after`.
+allows and read back. A caller keeps them from one frame to the next and gives them back as they
+were left: nothing else carries over, since the end, where the clip of the pose she takes starts,
+the slowdowns and what her moves did are each worked out within the frame. A vector gives them
+as `before` and compares them as `after`.
 
 ### 1.1 Outputs
 
@@ -79,7 +82,7 @@ each pose and sprite has its own clip. She takes another pose when either part d
 | dash began, dash lost | `bool` each: a dash began this frame, before the clip moves on; it was lost this frame (samus-motion's `dash began` and `dash lost`) | `BoostStages` |
 | standing restarts | `bool`: samus-motion's "the standing animation restarts" (`AimingAndShooting`) | `StandingRestart` |
 | wall jump readied | `bool`: samus-motion's near-wall test readied a wall jump (`WallJump`) | `WallJumpReady` |
-| her downward speed | whole pixels a frame: the pixel part of samus-motion's vertical speed at the frame's end while she heads down, 0 otherwise | `FastFall` |
+| her vertical speed | signed `P.S`, pixels a frame, downward positive: samus-motion's `vertical speed after her moves` (its §1.4), as her moves leave her, before what they met acts and before the pose change. An input of its own, apart from heading down: she can rise fast in a fall's pose, and the moonfall and a rise a ceiling stops are not heading down whatever the speed | `FastFall` |
 | heading down | `bool`: samus-motion's `heading down` (its §1.4), as her moves leave her, before what they met acts and before the pose change: she falls, a fall at 0 included, and not in the moonfall; a rise a ceiling stops this frame is not heading down | `RisingHold` |
 | sounds waiting | 0 to 15: the sounds waiting in the queue the speed booster's sound joins, before it (the sound domain) | `BoostingLap` |
 
@@ -158,7 +161,7 @@ this spec (stated simplifications, docs/LEGACY.md):
 - The clip moving on to a `rest` → she rests on it with no time left, 0 [C-rest]
 - So a rest shows its picture for exactly one frame, however slow the liquid, and the clip moves
   on from it the next frame (C-after-rest).
-- checked: oracle (466 loops and 6 rests on record); constructed (C-again, C-slow-again, C-rest,
+- checked: oracle (500 loops and 6 rests on record); constructed (C-again, C-slow-again, C-rest,
   C-after-rest).
 
 ### Breathing
@@ -171,7 +174,8 @@ this spec (stated simplifications, docs/LEGACY.md):
   the slowdown [C-breathe-loop]
 - The clip moving on to `breathe`, her energy below 30 → on to the next step, with its hold plus
   the slowdown [C-breathe-on]
-- checked: oracle (30 loops on record); constructed (C-breathe-loop, C-breathe-on).
+- checked: oracle (31 loops and 2 on to breathe hard, on record); constructed (C-breathe-loop,
+  C-breathe-on).
 
 ### ClipEnds
 - kind: output.
@@ -185,7 +189,7 @@ this spec (stated simplifications, docs/LEGACY.md):
 - So with time left on the step before an end, the frame reports no end (C-end-later); the
   frame an end is reported is the frame her next pose shows (`StartingClip`), and whether an end
   unless a jump hands over is samus-motion's (C-end-gives-way: its pad's jump taken).
-- checked: oracle (311 ends on record: 138 ends, 173 ends unless a jump, of which 8 gave way;
+- checked: oracle (350 ends on record: 151 ends, 199 ends unless a jump, of which 9 gave way;
   each is reported from the frame's start); constructed (C-end, C-end-unless-jump,
   C-end-gives-way, C-end-later).
 
@@ -260,7 +264,7 @@ Cells: kept, step 1
 
 - So the ball `Morphing` is not one of the ball's rows (C-not-kept-morph), and a turn aimed up
   doesn't shoot, so it doesn't count as aimed up (C-stand-up-from-turn).
-- checked: oracle (1,867 kept, 94 from step 1 and 1,829 from step 0 on record); constructed
+- checked: oracle (1,964 kept, 102 from step 1 and 2,139 from step 0 on record); constructed
   (the vectors above).
 
 ---
@@ -275,7 +279,7 @@ Cells: kept, step 1
 - Standing restarts → step 0 with 16 frames left, before the time runs down this frame
   [C-restart, R-restart-a, R-restart-b]
 - So the frame ends on step 0 with 15 frames left (R-restart-a, from 1 frame left).
-- checked: oracle (25 restarts on record); constructed (C-restart); recorded (R-restart-a,
+- checked: oracle (29 restarts on record); constructed (C-restart); recorded (R-restart-a,
   R-restart-b).
 
 ### WallJumpReady
@@ -287,7 +291,7 @@ Cells: kept, step 1
   left, before the time runs down this frame [C-ready, C-ready-walljump]
 - So the clip moves on the same frame and shows the kick step for its hold (C-ready), or, in a
   wall jump's clip whose kick step is an `again`, goes where that leads (C-ready-walljump).
-- checked: oracle (38 readied on record); constructed (C-ready, C-ready-walljump).
+- checked: oracle (39 readied on record); constructed (C-ready, C-ready-walljump).
 
 ### SpinTurnedFar
 - kind: output.
@@ -303,16 +307,22 @@ Cells: kept, step 1
 
 ### FastFall
 - kind: mechanic.
-- summary: falling fast, her fall jumps to its fast fall picture.
+- summary: moving fast in a fall's pose, her fall jumps to its fast fall picture, whichever way
+  she moves.
 - params: the speed, 5 pixels a frame; the hold, 8 frames, which no liquid slows.
 - switch: none.
-- Her clip with a fast fall step, her step before it, her downward speed at 5 or more → the fast
-  fall step with 8 frames left, before the time runs down this frame
-  [C-fast-fall, C-fast-fall-liquid]
-- So below 5 pixels a frame (C-fast-fall-slow), or on the fast fall step or past it
-  (C-fast-fall-on, C-fast-fall-past), the clip plays as it would.
-- checked: oracle (4 on record); constructed (C-fast-fall, C-fast-fall-liquid, C-fast-fall-slow,
-  C-fast-fall-on, C-fast-fall-past).
+- Her clip with a fast fall step, her step on any step before it, whatever the time left, her
+  vertical speed 5 pixels a frame or more either way (its size, rising or falling) → the fast
+  fall step with 8 frames left, before the time runs down this frame [C-fast-fall,
+  C-fast-fall-early, C-fast-fall-liquid, C-fast-fall-rising]
+- So short of 5 pixels a frame either way (C-fast-fall-slow, C-fast-fall-rising-slow), or on the
+  fast fall step or past it (C-fast-fall-on, C-fast-fall-past), the clip plays as it would.
+- So a fall's pose rising at 5 pixels a frame or more (an unmorph's end that carries such a rise
+  into the crouch, then a walk off a ledge) shows the fast fall picture too (C-fast-fall-rising);
+  no record rises so fast in a fall's pose (the fastest is 2.4000).
+- checked: oracle (4 on record); constructed (C-fast-fall, C-fast-fall-early, C-fast-fall-liquid,
+  C-fast-fall-slow, C-fast-fall-rising, C-fast-fall-rising-slow, C-fast-fall-on,
+  C-fast-fall-past).
 
 ### RisingHold
 - kind: mechanic.
@@ -324,7 +334,7 @@ Cells: kept, step 1
 - So with more time left on it, it counts down as usual (C-rising-early).
 - So she stays on the rising step 3 frames at a time until she heads down, then the clip goes on
   (C-rising-down).
-- checked: oracle (30 on record); constructed (C-rising, C-rising-early, C-rising-down).
+- checked: oracle (20 on record); constructed (C-rising, C-rising-early, C-rising-down).
 
 ---
 
@@ -346,7 +356,7 @@ Cells: kept, step 1
   C-lap-again-mid, C-lap-at-rest]
 - So dashing with run let go, a lap ends as the clip says, on the clip's own hold
   (C-lap-not-held), and not dashing her run shows the clip's holds (C-not-dashing).
-- checked: oracle (701 plain and 714 boosted holds, 54 laps on record); constructed (C-pace-plain,
+- checked: oracle (760 plain and 715 boosted holds, 58 laps on record); constructed (C-pace-plain,
   C-pace-boost, C-lap-plain, C-lap-not-held, C-not-dashing, C-dash-jump).
 
 ### BoostStages
@@ -370,7 +380,7 @@ Cells: kept, step 1
 - The stage going up to 4 → asks for `Boosting` [C-boost-quirk-0]
 - A dash lost → stage 0, with 0 laps left, after the clip moves on [C-lost, C-dash-lost-moving-on,
   R-lost-a, R-lost-b]
-- checked: oracle (89 began, 50 stages up, 16 laps counted, 100 lost on record); constructed
+- checked: oracle (96 began, 50 stages up, 16 laps counted, 109 lost on record); constructed
   (C-began-booster, C-began-plain, C-lap-count, C-lap-not-held-booster, C-stage-not-held,
   C-stage-up, C-boosting-lap, C-lost); recorded (R-began, R-lost-a, R-lost-b).
 
@@ -432,10 +442,3 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
 1. The laps left at 0 with the speed booster (a dash begun without it, then the booster switched
    on mid-run) is outside the inputs' domain (§1.5); the pause screen's equipment change is out of
    scope.
-2. Her fall's fast fall picture reads her downward speed here. The game reads the size of her
-   vertical speed whichever way it points, so a fall's pose that rises at 5 px a frame or more
-   (an unmorph's end that carries such a rise into the crouch, then a walk off a ledge) would show
-   it too. No record rises so fast in a fall's pose (the fastest is 2.4000). Decided (a): this
-   domain reads the size of her vertical speed as her moves leave it, from its engine-wiring
-   round, which changes `FastFall`'s rule and its input and adds the vector; the rule above
-   stands until then.

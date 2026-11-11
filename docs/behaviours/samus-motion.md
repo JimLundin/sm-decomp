@@ -41,7 +41,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
-| vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround`; output (samus-looks reads its pixel part at the frame's end, §1.4) |
+| vertical speed | signed `P.S`, downward positive; at 0, also whether she is falling (§1.2) | how fast she rises or falls; on the ground, a speed she keeps without moving by it, except as the ball or while her body changes shape | `RisingAndFalling`, `Jumping`, `Landing`, `Moonfall`, `FollowingTheGround`; output (samus-looks reads `vertical speed after her moves`, §1.4) |
 | bounces | count 0..=2 | how many times the ball has bounced since it last rested | `Landing` |
 | the y a placement put her at, if any | y: `P.S`, or none | the screen scrolls after her vertical move as measured from where pose fit or a change of shape placed her this frame (`PoseFitAfterMoves`, `ShrinkingLowersHer`), a placement of 0 px included, so the scroll doesn't chase those placements; with none, it measures from where it last saw her. The camera reads only its pixel part and keeps its own subpixel; the subpixel given is hers at the frame's start (`PoseFitAfterMoves`) | output (the camera's domain reads its pixel part; each frame works it out, so it isn't State) |
 | rising | `bool`, at the frame's end | the view aims lower while she rises, so it shows more above her; her vertical speed can't tell it at a rise at 0, or on the frame whose pull spends the rise, where the speed already points down (`RisingAndFalling`) | output (the camera's domain reads it) |
@@ -158,9 +158,8 @@ each an output of the step; none is State.
 | vertical speed after her moves | signed `P.S`, downward positive: her vertical speed (§1) at the point `heading down` is read, before what her moves met acts and before the pose change (`RisingAndFalling`) | samus-looks (`FastFall`) |
 
 It also reads, as they are: the pose she starts the frame in and the one she ends it in (§2; the
-one an animation's end hands over is `AnimationEnds`' choice), her vertical speed at the frame's
-end (§1), the standing animation's restart (`AimingAndShooting`) and the near-wall test's outcome
-(`WallJump`).
+one an animation's end hands over is `AnimationEnds`' choice), the standing animation's restart
+(`AimingAndShooting`) and the near-wall test's outcome (`WallJump`).
 
 ---
 

@@ -1,5 +1,6 @@
 //! §1 What the domain remembers from one frame to the next: where her clip is, and her run's
-//! boost. A caller may build each part at any value the spec allows and read it back.
+//! boost. A caller may build each part at any value the spec allows and read it back, and keeps
+//! it between frames as `update` left it: nothing else carries over.
 
 use clean_types::{BoostStage, ClipEnd};
 
@@ -53,8 +54,8 @@ impl Playhead {
     #[must_use]
     pub fn end_ahead(self, clip: &Clip) -> Option<ClipEnd> {
         match self.run_down(clip) {
-            RunDown::MovesOn(_, instruction) => instruction.end(),
-            RunDown::Stays(_) => None,
+            RunDown::MovesOn(_, Instruction::Control(control)) => control.end(),
+            RunDown::MovesOn(_, Instruction::Show(_)) | RunDown::Stays(_) => None,
         }
     }
 }
@@ -81,7 +82,11 @@ pub struct Boost {
     pub laps_left: Laps,
 }
 
-/// The State: everything the domain remembers from one frame to the next.
+/// The State: everything the domain remembers from one frame to the next (§1).
+///
+/// Her step, the time left, the boost stage and the laps left. The end, where the clip of the
+/// pose she takes starts, the slowdowns and what her moves did are each worked out within the
+/// frame.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct State {
     /// Where her clip is.

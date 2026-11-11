@@ -17,6 +17,7 @@ use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
 use data::tileset::{BlockTiles, TilesetId};
 use game::plm::item_gfx;
+use game::samus_looks_world::Clips;
 use game::state::atmospheric::{
     AtmosphericFrame, AtmosphericGraphic, AtmosphericKind, AtmosphericTimer, Atmospherics,
 };
@@ -29,9 +30,9 @@ use game::state::room::{
     SpritePalette,
 };
 use game::state::samus::{
-    Animation, AnimationFrame, AnimationTimer, DrawingHandler, Equipment, Facing, Fixed,
-    FrameBefore, Gauge, Item, Items, JumpHeld, NewPoseFrame, Point, PoseId, PoseRecord,
-    ReserveMode, Samus, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
+    Animation, AnimationFrame, Boost, BoostStage, ClipStep, DrawingHandler, Equipment, Facing,
+    Fixed, FrameBefore, Gauge, Item, Items, JumpHeld, Point, PoseId, PoseRecord, ReserveMode,
+    Samus, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
@@ -80,6 +81,8 @@ pub struct RoomMap {
     pub programs: EnemyPrograms,
     /// Samus's tiles definitions, by the pointers her tile uploads hold.
     pub samus_tiles: SamusTiles,
+    /// Her clips, whose step maps her animation's frame is read through.
+    pub samus_clips: Clips,
     /// Each room's PLM population, which names the PLMs its slots hold.
     pub plms: Vec<(RoomId, PlmPopulation)>,
     /// What each known room state loads that RAM doesn't keep, by its header pointer.
@@ -114,6 +117,15 @@ impl RoomMap {
     pub fn with_samus_tiles(self, samus_tiles: SamusTiles) -> Self {
         Self {
             samus_tiles,
+            ..self
+        }
+    }
+
+    /// The map with `samus_clips` as her clips.
+    #[must_use]
+    pub fn with_samus_clips(self, samus_clips: Clips) -> Self {
+        Self {
+            samus_clips,
             ..self
         }
     }
@@ -828,12 +840,12 @@ pub struct ElevatorSources {
 /// Where the original keeps Samus's animation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct AnimationSources {
-    /// `.frame`.
+    /// `.step`, as the original's frame in her pose's delay list.
     pub frame: WramWord,
-    /// `.timer`.
+    /// `.frames_left`.
     pub timer: WramWord,
-    /// `.new_pose_frame`.
-    pub new_pose_frame: WramWord,
+    /// `.boost`: the stage in the high byte, the laps left in the low.
+    pub boost: WramWord,
 }
 
 /// Where the original keeps the super special prospective pose request.
@@ -1085,7 +1097,7 @@ impl Rules<'_> {
         animation: AnimationSources {
             frame: source::SAMUS_ANIM_FRAME,
             timer: source::SAMUS_ANIM_FRAME_TIMER,
-            new_pose_frame: source::SAMUS_ANIM_FRAME_SKIP,
+            boost: source::SPEED_BOOSTER_LEVEL,
         },
         super_special: SuperSpecialSources {
             pose: source::SAMUS_NEW_POSE_TRANSITIONAL,
@@ -1232,7 +1244,7 @@ impl Rules<'_> {
                 ..Timing::default()
             },
             video: self.video(record, rooms)?,
-            samus: self.samus(wram)?,
+            samus: self.samus(wram, &rooms.samus_clips)?,
             atmospherics: self.atmospherics.read(wram)?,
             room: self.room(wram, rooms, room)?,
             elevator: self.elevator.read(wram)?,
@@ -1293,13 +1305,14 @@ impl Rules<'_> {
         })
     }
 
-    /// Samus: her position, pose and equipment.
+    /// Samus: her position, pose and equipment, her animation's step read through her pose's
+    /// clip in `clips`.
     ///
     /// # Errors
     ///
     /// [`DecodeError`] when a word is outside `wram` or holds a code the State has no value
     /// for.
-    pub fn samus(&self, wram: &[u8]) -> Result<Samus, DecodeError> {
+    pub fn samus(&self, wram: &[u8], clips: &Clips) -> Result<Samus, DecodeError> {
         let pose = self.pose.read(wram)?;
         Ok(Samus {
             motion: crate::harness::samus_motion::decode(wram)?,
@@ -1331,7 +1344,7 @@ impl Rules<'_> {
             last_different: self.last_different_pose.read(wram)?,
             facing: pose.facing,
             movement: pose.movement,
-            animation: self.animation.read(wram)?,
+            animation: self.animation.read(wram, pose.pose, clips)?,
             super_special: self.super_special.read(wram)?,
             visor: visor(self.visor, wram)?,
             drawing: drawing_handler(self.drawing, wram)?,
@@ -2008,33 +2021,47 @@ pub struct PoseSources {
 }
 
 impl AnimationSources {
-    /// The animation in `wram`.
+    /// The animation in `wram`, her step through the step map of `pose`'s clip in `clips`.
     ///
     /// # Errors
     ///
-    /// [`DecodeError::Unrepresentable`] for a new pose frame with bit 15 set but $8000:
-    /// `$91:FB08` tests the bit alone, and no writer stores another.
-    fn read(self, wram: &[u8]) -> Result<Animation, DecodeError> {
-        let new_pose_frame = match self.new_pose_frame.read(wram)? {
-            PRESERVE_FRAME => NewPoseFrame::Preserve,
-            frame if frame & PRESERVE_FRAME == 0 => NewPoseFrame::From(AnimationFrame(frame)),
-            value => {
-                return Err(DecodeError::Unrepresentable {
-                    source: self.new_pose_frame.name,
-                    value,
-                });
-            }
+    /// [`DecodeError::Unrepresentable`] for a frame on no step of her pose's clip (an operand
+    /// byte, or a pose outside her domain, which has no clip), a time left past 255, or a boost
+    /// stage past 4.
+    fn read(self, wram: &[u8], pose: PoseId, clips: &Clips) -> Result<Animation, DecodeError> {
+        let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
+            source: source.name,
+            value,
         };
+        let frame = self.frame.read(wram)?;
+        let step = clips
+            .of(pose)
+            .and_then(|imported| imported.step_of(AnimationFrame(frame)))
+            .ok_or_else(|| unrepresentable(self.frame, frame))?;
+        let timer = self.timer.read(wram)?;
+        let frames_left = u8::try_from(timer).map_err(|_| unrepresentable(self.timer, timer))?;
+        let boost = self.boost.read(wram)?;
+        let [laps_left, stage] = boost.to_le_bytes();
+        let stage = BOOST_STAGES
+            .get(usize::from(stage))
+            .copied()
+            .ok_or_else(|| unrepresentable(self.boost, boost))?;
         Ok(Animation {
-            frame: AnimationFrame(self.frame.read(wram)?),
-            timer: AnimationTimer(self.timer.read(wram)?),
-            new_pose_frame,
+            step: ClipStep(step.0),
+            frames_left,
+            boost: Boost { stage, laps_left },
         })
     }
 }
 
-/// The new pose frame that keeps the animation (`$91:FB08` tests bit 15).
-const PRESERVE_FRAME: u16 = 0x8000;
+/// Her run's boost stages, by the number the speed booster's counter holds.
+const BOOST_STAGES: [BoostStage; 5] = [
+    BoostStage::Stage0,
+    BoostStage::Stage1,
+    BoostStage::Stage2,
+    BoostStage::Stage3,
+    BoostStage::Boosting,
+];
 
 /// Samus's visor cycle from its word: the timer in the low byte, in the high byte the byte
 /// offset of the next colour in the visor colours (`$9B:A3C0`), whose cycle is the last three.

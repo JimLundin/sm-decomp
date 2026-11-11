@@ -1,4 +1,3 @@
-use data::pose::animation::AnimationDelays;
 use data::pose::transition::{Control, Controls, PoseTransitions, Transition};
 use data::pose::{MovementType, PoseFacing as Facing, PoseId, Poses};
 
@@ -26,7 +25,7 @@ fn content() -> Content {
     Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
-        delays: AnimationDelays::default(),
+        samus_clips: crate::samus_looks_world::Clips::default(),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
         eye_lists: data::enemy::eye::EyeLists::default(),

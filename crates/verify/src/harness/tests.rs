@@ -668,7 +668,7 @@ fn samus_looks_harness_cases_hold_against_the_cache() {
 /// only `SM_ROM`, and is skipped where it is unset.
 #[test]
 fn the_importer_gives_every_pose_of_hers_its_own_clip() {
-    use clean_model_samus_looks::Instruction;
+    use clean_model_samus_looks::{Control, Instruction};
     use std::io::Write as _;
     let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
         let _ = writeln!(std::io::stdout(), "skipped: SM_ROM unset");
@@ -678,9 +678,9 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
         Ok(image) => image,
         Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
     };
-    let clips = super::samus_looks::import::Clips::load(data::rom::Lorom::new(&image))
-        .unwrap_or_else(|error| panic!("content: {error:?}"));
-    let poses = clips.poses();
+    let content =
+        crate::bundle::content(image).unwrap_or_else(|error| panic!("content: {error:?}"));
+    let poses = content.samus_clips.poses();
     assert_eq!(poses.len(), data::assets::samus::import::map::MAP.len());
     for (at, imported) in poses.iter().enumerate() {
         let twins: Vec<_> = poses
@@ -695,15 +695,14 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
         };
         for instruction in &imported.clip.instructions {
             let lands = match *instruction {
-                Instruction::Again(to) => shown(to),
-                Instruction::Branch(branch) => {
+                Instruction::Control(Control::Again(to)) => shown(to),
+                Instruction::Control(Control::Branch(branch)) => {
                     shown(branch.spin) && shown(branch.space_jump) && shown(branch.screw_attack)
                 }
                 Instruction::Show(_)
-                | Instruction::Rest
-                | Instruction::Breathe
-                | Instruction::End
-                | Instruction::EndUnlessJump => true,
+                | Instruction::Control(
+                    Control::Rest | Control::Breathe | Control::End | Control::EndUnlessJump,
+                ) => true,
             };
             assert!(
                 lands,

@@ -5,7 +5,6 @@
 //! It touches no pixels, samples, files, devices or SNES addresses (ARCHITECTURE §4.1, K1).
 #![deny(clippy::float_arithmetic)]
 
-pub mod animation;
 pub mod atmospheric;
 pub mod bg_graphics;
 pub mod blocks_world;
@@ -27,6 +26,7 @@ pub mod progress_world;
 pub mod projectile;
 pub mod rng;
 pub mod samus_drawing;
+pub mod samus_looks_world;
 pub mod samus_palette;
 pub mod samus_world;
 pub mod scrolling;

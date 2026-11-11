@@ -5,13 +5,13 @@
 //! returns a [`Next`]. The phases are in the original's call order; slice 0's are empty until
 //! their domain lanes fill them.
 
-use crate::animation;
 use crate::camera_world;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::collision::{Room, Surroundings, Touches, inside};
 use crate::hud_world;
 use crate::message_box;
 use crate::pose::{self, Content};
+use crate::samus_looks_world;
 use crate::samus_world;
 use crate::scrolling;
 use crate::session::{Rules, SessionFault};
@@ -485,8 +485,9 @@ fn gameplay_phase(
     match phase {
         // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => pass.requests = samus_current_state(state, content)?,
-        // The movement handler, the animation, the pose the moves ask for (`$91:E8B6`), then
-        // the pose update (`$90:E725`).
+        // The movement handler, the pose the moves ask for (`$91:E8B6`) and the pose update,
+        // then her animation, whose model plays her clip and starts the one of the pose she
+        // took (`$90:E725`).
         GameplayPhase::SamusNewState => {
             let completed = state.clock.counters.completed.0;
             let surroundings = surroundings(&state.room, content, &pass.active);
@@ -502,13 +503,19 @@ fn gameplay_phase(
                 surroundings,
                 speed_cap: rules.switches.speed_cap,
             };
+            let start = samus_looks_world::Start::of(&state.samus);
             let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches)
                 .map_err(SessionFault::Samus)?;
-            animation::after_motion(&mut state.samus, stepped.is_some_and(|s| s.armed));
             hud_world::mini_map_turn(state, content).map_err(SessionFault::Hud)?;
-            animation::animate(&mut state.samus, &state.controller, pass.requests, content);
-            let next = samus_world::step::next(&state.samus, stepped, pass.requests);
+            let next = samus_world::step::next(&state.samus, stepped.as_ref(), pass.requests);
             change_pose(&mut state.samus, &mut state.atmospherics, next, content);
+            samus_looks_world::animate(
+                &mut state.samus,
+                start,
+                stepped.as_ref().map(|stepped| &stepped.outcome),
+                &state.controller,
+                &content.samus_clips,
+            );
             // The touch PLMs the moves spawned, which change nothing the moves read.
             touches
                 .apply(&mut state.room, reads)

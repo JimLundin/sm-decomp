@@ -275,45 +275,46 @@ pub enum ReserveMode {
 
 pub use data::pose::animation::AnimationFrame;
 
-/// The frames an animation frame still shows, as the original counts them: a word that
-/// goes negative, since a decrement from 0 gives $FFFF and the frame then advances
-/// (bank $90 log, `$90:8000`).
+/// Her step in her pose's clip, numbered from 0 without the original's operand bytes
+/// (samus-looks §1.4); `samus_looks_world` gives the original's frame of it.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct AnimationTimer(pub u16);
+pub struct ClipStep(pub u8);
 
-impl AnimationTimer {
-    /// Whether the frame still shows: the timer is above zero, read as signed.
-    #[must_use]
-    pub const fn running(self) -> bool {
-        self.0 != 0 && (self.0 & 0x8000) == 0
-    }
+/// Her run's speed booster stage (samus-looks §1).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum BoostStage {
+    /// Stage 0, where every dash begins.
+    #[default]
+    Stage0,
+    /// Stage 1.
+    Stage1,
+    /// Stage 2.
+    Stage2,
+    /// Stage 3.
+    Stage3,
+    /// Stage 4: boosting.
+    Boosting,
 }
 
-/// The frame a new pose's animation starts on (bank $91 log, `$91:FB08`).
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NewPoseFrame {
-    /// From this frame.
-    From(AnimationFrame),
-    /// Keep the frame and its timer: running from running, a ball from a ball (the
-    /// original's $8000).
-    Preserve,
+/// Her run's boost: its stage and the laps the stage still lasts (samus-looks §1).
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Boost {
+    /// The stage.
+    pub stage: BoostStage,
+    /// The laps of her run the stage still lasts.
+    pub laps_left: u8,
 }
 
-impl Default for NewPoseFrame {
-    fn default() -> Self {
-        Self::From(AnimationFrame::default())
-    }
-}
-
-/// Samus's animation: where her pose's delay list is and how long its frame still shows.
+/// Samus's animation (samus-looks §1): where her clip is and her run's boost, all it keeps
+/// from one frame to the next.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Animation {
-    /// The frame: a byte offset into the pose's delay list.
-    pub frame: AnimationFrame,
-    /// How long the frame still shows.
-    pub timer: AnimationTimer,
-    /// The frame the next pose change starts the animation on.
-    pub new_pose_frame: NewPoseFrame,
+    /// Her step in her pose's clip.
+    pub step: ClipStep,
+    /// The frames her step still shows, 0 to 255.
+    pub frames_left: u8,
+    /// Her run's boost.
+    pub boost: Boost,
 }
 
 /// What the pose update does after it takes the super special prospective pose (bank $91

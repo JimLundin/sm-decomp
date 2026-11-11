@@ -1,7 +1,7 @@
-//! The catalogue matches the spec one for one, and each table keyed by an enum names every
-//! member once.
+//! The catalogue matches the spec one for one, and the stages are numbered as the spec numbers
+//! them.
 
-use clean_model_samus_looks::{BehaviourId, CATALOGUE, Rules};
+use clean_model_samus_looks::{BehaviourId, CATALOGUE};
 use clean_types::BoostStage;
 use enum_map::{Enum, EnumMap};
 
@@ -24,12 +24,9 @@ fn the_catalogue_names_every_behaviour_once() {
     }
 }
 
-/// The stages numbered 0 to 4 name every stage once, in the order the stages go up; the
-/// stage-keyed tables (`Rules::laps_per_stage`, `Paces::boosted`) are `EnumMap`s, one entry per
-/// stage by their type.
+/// The stages numbered 0 to 4 (`BoostStage::ALL`, which `BoostingLap` numbers by the sounds
+/// waiting) name every stage once, in the order the stages go up.
 #[test]
 fn the_stages_name_every_stage_once_in_order() {
-    let stages = members::<BoostStage>();
-    assert_eq!(BoostStage::ALL.to_vec(), stages);
-    assert_eq!(Rules::VANILLA.laps_per_stage.len(), stages.len());
+    assert_eq!(BoostStage::ALL.to_vec(), members::<BoostStage>());
 }

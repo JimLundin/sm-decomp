@@ -10,10 +10,10 @@ use data::assets::samus::import::map;
 use data::pose::transition::{Control, Controls};
 
 use super::state::{X_RADIUS, dress};
-use crate::animation;
 use crate::collision::ScanOrder;
 use crate::pose::{Content, controls};
 use crate::progress_world;
+use crate::samus_looks_world;
 use crate::state::Controller;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
 use crate::state::samus::Samus;
@@ -47,7 +47,7 @@ pub struct FrameSource<'a> {
     pub ride: ElevatorRide,
     /// The requested-NMI count, whose parity orders the vertical scans.
     pub completed: u16,
-    /// The delay lists.
+    /// The content: her clips among it.
     pub content: &'a Content,
 }
 
@@ -82,13 +82,13 @@ impl FrameSource<'_> {
             pad: pad(controls(self.controller.held)),
             pressed: pad(controls(self.controller.pressed)),
             items: progress_world::switched_on(&samus.equipment),
-            spin_turned_far: animation::spin_turned_far(samus),
+            spin_turned_far: samus_looks_world::turned_far(samus, &self.content.samus_clips),
             elevator_moving: self.ride.status != ElevatorStatus::Inactive,
             parity: match ScanOrder::of(self.completed) {
                 ScanOrder::LeftToRight => Parity::Even,
                 ScanOrder::RightToLeft => Parity::Odd,
             },
-            animation_ends: animation::ends_this_frame(samus, self.controller, self.content),
+            animation_ends: samus_looks_world::end_ahead(samus, &self.content.samus_clips),
             body,
         }
     }

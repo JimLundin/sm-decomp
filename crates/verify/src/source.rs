@@ -1117,10 +1117,11 @@ pub const SAMUS_ANIM_FRAME: WramWord = WramWord {
     name: "SAMUS_ANIM_FRAME",
     offset: 0x0A96,
 };
-/// Bank $91 log, `$91:FB08`: the frame a new pose's animation starts on, $8000 to keep it.
-pub const SAMUS_ANIM_FRAME_SKIP: WramWord = WramWord {
-    name: "SAMUS_ANIM_FRAME_SKIP",
-    offset: 0x0A9A,
+/// Bank $90 log, `$90:857D`: the speed booster's counter, her run's boost stage in its high
+/// byte and the laps the stage still lasts in its low.
+pub const SPEED_BOOSTER_LEVEL: WramWord = WramWord {
+    name: "SPEED_BOOSTER_LEVEL",
+    offset: 0x0B3E,
 };
 /// Bank $91 log, `$91:EB88`: the super special prospective pose, $FFFF for none.
 pub const SAMUS_NEW_POSE_TRANSITIONAL: WramWord = WramWord {

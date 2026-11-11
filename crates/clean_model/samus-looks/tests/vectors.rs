@@ -3,17 +3,18 @@
 
 #[cfg(test)]
 mod vectors {
+    use core::num::Wrapping;
     use std::collections::BTreeMap;
     use std::fmt::Debug;
 
     use clean_model_samus_looks::{BehaviourId, Rules};
     use clean_model_samus_looks::{
-        Boost, Branch, CATALOGUE, Clip, Content, Frames, Inputs, Instruction, Laps, Liquid, Move,
-        Pace, Paces, Playhead, Pose, State, Step, Vertical, update,
+        Boost, Branch, CATALOGUE, Clip, Content, Control, Frames, Hold, Inputs, Instruction, Laps,
+        Liquid, Move, Pace, Paces, Playhead, Pose, Slowdown, State, Step, update,
     };
     use clean_types::{
-        Action, Aim, AnimationSound, Body, BoostStage, Checked, ClipEnd, Facing, Gun, Item,
-        LandedFrom, Legs, Set, Sprite, Turn,
+        Action, Aim, AnimationSound, Body, BoostStage, Checked, ClipEnd, Facing, Fixed, Gun, Item,
+        LandedFrom, Legs, Set, Sprite, Turn, fixed,
     };
     use enum_map::EnumMap;
     use serde::Deserialize;
@@ -108,12 +109,14 @@ mod vectors {
         heading_down: bool,
         slowdown: u8,
         start_slowdown: u8,
-        down_speed: u16,
+        vertical_speed: String,
         sounds_waiting: u8,
     }
 
     /// The file header's default energy.
     const DEFAULT_ENERGY: u16 = 99;
+    /// The file header's default vertical speed.
+    const DEFAULT_VERTICAL_SPEED: &str = "+0000.0000";
 
     /// The file header's defaults.
     impl Default for VectorInputs {
@@ -136,7 +139,7 @@ mod vectors {
                 heading_down: false,
                 slowdown: 0,
                 start_slowdown: 0,
-                down_speed: 0,
+                vertical_speed: DEFAULT_VERTICAL_SPEED.to_owned(),
                 sounds_waiting: 0,
             }
         }
@@ -229,16 +232,18 @@ mod vectors {
     fn instruction(cell: &str) -> Instruction {
         let words: Vec<&str> = cell.split_whitespace().collect();
         match words.as_slice() {
-            ["rest"] => Instruction::Rest,
-            ["breathe"] => Instruction::Breathe,
-            ["end"] => Instruction::End,
-            ["end-unless-jump"] => Instruction::EndUnlessJump,
-            ["again", to] => Instruction::Again(step_number(to)),
-            ["branch", spin, space_jump, screw_attack] => Instruction::Branch(Branch {
-                spin: step_number(spin),
-                space_jump: step_number(space_jump),
-                screw_attack: step_number(screw_attack),
-            }),
+            ["rest"] => Instruction::Control(Control::Rest),
+            ["breathe"] => Instruction::Control(Control::Breathe),
+            ["end"] => Instruction::Control(Control::End),
+            ["end-unless-jump"] => Instruction::Control(Control::EndUnlessJump),
+            ["again", to] => Instruction::Control(Control::Again(step_number(to))),
+            ["branch", spin, space_jump, screw_attack] => {
+                Instruction::Control(Control::Branch(Branch {
+                    spin: step_number(spin),
+                    space_jump: step_number(space_jump),
+                    screw_attack: step_number(screw_attack),
+                }))
+            }
             [frames] => Instruction::Show(hold(
                 frames
                     .parse()
@@ -248,17 +253,45 @@ mod vectors {
         }
     }
 
-    /// §1.5: a hold is at most 127 frames.
-    const LONGEST_HOLD: u8 = 127;
+    /// A hold the content gives, a clip's or a pace's: 1 frame or more (§1.4), and at most
+    /// §1.5's bound, `Hold::LONGEST`; any other fails the test.
+    fn hold(frames: u8) -> Hold {
+        Hold::new(frames).unwrap_or_else(|| panic!("a hold of {frames} frames is outside the spec"))
+    }
 
-    /// A hold the content gives, a clip's or a pace's: 1 frame or more (§1.4), and within
-    /// §1.5's bound; any other fails the test.
-    fn hold(frames: u8) -> Frames {
-        assert!(
-            (1..=LONGEST_HOLD).contains(&frames),
-            "a hold of {frames} frames is outside the spec"
-        );
-        Frames(frames)
+    /// A slowdown the file gives: 0 to 3 frames (§1.3); any other fails the test.
+    fn slowdown(frames: u8) -> Slowdown {
+        Slowdown::new(frames)
+            .unwrap_or_else(|| panic!("a slowdown of {frames} frames is outside the spec"))
+    }
+
+    /// The digits of each part of a vertical speed.
+    const PART_DIGITS: usize = 4;
+    /// The base the parts are written in.
+    const HEX: u32 = 16;
+
+    /// The header's vertical speed, "+PPPP.SSSS" or "-PPPP.SSSS": a sign, then the pixel part and
+    /// the subpixel part, four hex digits each, downward positive; any other text fails the test.
+    fn vertical_speed(text: &str) -> Fixed {
+        let part = |digits: &str| {
+            assert_eq!(
+                digits.len(),
+                PART_DIGITS,
+                "unwritten vertical speed {text:?}"
+            );
+            u16::from_str_radix(digits, HEX)
+                .unwrap_or_else(|_| panic!("unwritten vertical speed {text:?}"))
+        };
+        let (pixel, sub) = text
+            .get(1..)
+            .and_then(|digits| digits.split_once('.'))
+            .unwrap_or_else(|| panic!("unwritten vertical speed {text:?}"));
+        let size = fixed(Wrapping(part(pixel)), part(sub));
+        match text.get(..1) {
+            Some("+") => size,
+            Some("-") => -size,
+            _ => panic!("unwritten vertical speed {text:?}"),
+        }
     }
 
     fn clip(table: &ClipTable) -> Clip {
@@ -321,27 +354,19 @@ mod vectors {
         for item in &given.items {
             items[named(ITEMS, item)] = true;
         }
-        let vertical = if given.heading_down {
-            Vertical::Down(given.down_speed)
-        } else {
-            assert_eq!(
-                given.down_speed, 0,
-                "a downward speed while not heading down"
-            );
-            Vertical::NotDown
-        };
         Inputs {
             pose: start,
             pose_after: given.pose_after.as_deref().map_or(start, pose),
             moves,
             dashing: given.dashing || given.dash_began,
             run_held: given.run_held,
-            vertical,
+            heading_down: given.heading_down,
+            vertical_speed: vertical_speed(&given.vertical_speed),
             energy: given.energy,
             items,
             liquid: Liquid {
-                slowdown: Frames(given.slowdown),
-                start_slowdown: Frames(given.start_slowdown),
+                slowdown: slowdown(given.slowdown),
+                start_slowdown: slowdown(given.start_slowdown),
                 submerged: given.submerged,
             },
             sounds_waiting: given.sounds_waiting,
