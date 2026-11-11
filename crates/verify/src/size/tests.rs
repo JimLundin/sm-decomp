@@ -441,6 +441,9 @@ fn an_exhaustive_match_is_data() {
     // Literals, a range of two and `_` are keys too.
     let literals = "fn f(n: u8) -> K { match n { 0 => K::A, 2..=4 | 7 => K::B, _ => K::C } }";
     assert_eq!(halves(literals), halves("fn f(n: u8) -> K { match n {} }"));
+    // A variant nested in a tuple variant, with no binding, is a key.
+    let nested = "fn f(s: S) -> u16 { match s { S::A(K::B) => 3, S::A(K::C | K::D, _) => 4,                   S::E(T::F(0)) => 5, S::G => 6 } }";
+    assert_eq!(halves(nested), halves("fn f(s: S) -> u16 { match s {} }"));
     // In a constant's value, the match is logic and its arms data.
     let constant = of("const A: u16 = match B { C => 1, D => 2 };");
     assert!(constant.logic > 0 && constant.data > 0);
@@ -469,6 +472,9 @@ fn a_match_that_decides_stays_logic() {
         "K::A => B + 1, K::B => 4",
         "K::A => S { x }, K::B => S { x: 4 }",
         "Some(x) => 3, None => 4",
+        "S::A(K::B(x)) => 3, S::C => 4",
+        "S::A(K::B, n) => 3, S::C => 4",
+        "S::A(K::B) + 1 => 3, S::C => 4",
         "x => 3, _ => 4",
         "K::A => 3",
     ] {

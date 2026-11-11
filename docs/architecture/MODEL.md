@@ -288,13 +288,14 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
 - **An exhaustive lookup is data** (Jim, 2026-11-11). A table the compiler checks for a missing
   or repeated member is data as a constant's rows are: the arms of a `match` of two or more arms
   with no guard, whose every pattern is `_` or keys joined by `|` (a path to a variant or a
-  constant, a literal, or a range of two literals) and whose every value is data by L3 and names
-  no local (`K::A => 3`, `0 | 1 => Picture::new(0x009)`), and the rows of `enum_map!` on the
-  same test (`K::A => Speed(2)`). The `match`, its scrutinee and its braces, and the macro's
-  name and brackets, stay logic. A guard, a block arm, a binding, a local, a field, a method
-  call or an operator in any arm keeps a decision there, and the whole `match` stays logic.
-  The rule sits beside L3 in `verify::size` (`lookups`), and `code_check.sh`'s L2 exempts the
-  same values.
+  constant, a literal, or a range of two literals; a tuple variant's fields may hold such
+  patterns in turn, `Outer::A(Inner::B) =>`, so long as nothing is bound) and whose every
+  value is data by L3 and names no local (`K::A => 3`, `0 | 1 => Picture::new(0x009)`), and
+  the rows of `enum_map!` on the same test (`K::A => Speed(2)`). The `match`, its scrutinee
+  and its braces, and the macro's name and brackets, stay logic. A guard, a block arm, a
+  binding, a local, a field, a method call or an operator in any arm keeps a decision there,
+  and the whole `match` stays logic. The rule sits beside L3 in `verify::size` (`lookups`),
+  and `code_check.sh`'s L2 exempts the same values.
 - **Declarations are not counted against the rule** (Jim, 2026-11-07): `tools size` reports the
   tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as
   types, on both sides. Defining shapes is what decision 6 asks for. A declaration holds no

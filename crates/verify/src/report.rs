@@ -133,57 +133,115 @@ const DOMAINS: &[Domain] = &[
             },
         ],
     },
+    // `rules.rs` is the lead's: its functions give a lead setting's lead for the way she travels,
+    // and its other values (the push, the margin) are constants.
     Domain {
         name: "camera",
         bridge: "camera_world",
         areas: &[
-            ("follow", &["follow.rs"]),
+            ("follow", &["follow.rs", "rules.rs"]),
             ("limits", &["axis.rs", "room.rs"]),
         ],
         apart: &[],
     },
-    // The reports, the rules and the catalogue are the domain's shared code; the keyed tables
-    // and sets are `clean_types`'. `progress.rs` holds what has happened with the whole progress.
+    // The rules (equipment's beams and percentage's divisors) and the catalogue are the domain's
+    // shared code; the keyed tables and sets are `clean_types'`. `progress.rs` holds what has
+    // happened with the whole progress. The report handler is one function whose arms are
+    // mostly the places' (emptied places, doors, maps, stations, items placed), so it counts
+    // there.
     Domain {
         name: "progress",
         bridge: "progress_world",
         areas: &[
             ("happened", &["progress.rs"]),
-            ("places", &["places.rs"]),
+            ("places", &["places.rs", "report.rs"]),
             ("equipment", &["inventory.rs"]),
             ("rooms", &["room_states.rs"]),
             ("percentage", &["percentage.rs"]),
         ],
         apart: &[],
     },
-    // The pictures and the places, which both the status bar and the mini-map read, are the
-    // domain's shared code, with the grid, the inputs and the frame.
+    // The status bar's pictures and layout are its own (§1.2, §1.4), the mini-map's two places
+    // in the layout being constants. The frame's order, the grid, the inputs, the tiles, the
+    // State, the flash's and blink's timing and the catalogue are the domain's shared code.
     Domain {
         name: "hud",
         bridge: "hud_world",
         areas: &[
-            ("status", &["status_bar.rs"]),
+            ("status", &["status_bar.rs", "pictures.rs", "layout.rs"]),
             ("selection", &["selection.rs", "item.rs"]),
             ("minimap", &["mini_map.rs", "map.rs"]),
         ],
-        apart: &[],
+        apart: &[
+            // `CyclingItems`: whether Select can land on an item.
+            Apart {
+                file: "inputs.rs",
+                function: "has",
+                area: "selection",
+            },
+            // The reference rules: the bosses' screens (`BossBlanksTheMap`) and her blink are
+            // the mini-map's; the flash's one value rides with them.
+            Apart {
+                file: "rules.rs",
+                function: "reference",
+                area: "minimap",
+            },
+        ],
     },
-    // The cells, the reactions' format, the inputs, the report and the catalogue are the
-    // domain's shared code. The places and their run are the places' area, the scroll cells'
-    // touch and run among them; the requests' path and the rules by family, with the room's
-    // start beside them in the State, the breakables'. The scroll's area has no file of its own.
+    // The cells' grid and kinds, the inputs, the report and the catalogue are the domain's
+    // shared code. The places and their run, with the reactions' scripts they run, are the
+    // places' area, the scroll cells' touch and run among them; the requests' path and the rules
+    // by family, with the room's start beside them in the State, the breakables'. The scroll's
+    // area has no file of its own.
     Domain {
         name: "blocks",
         bridge: "blocks_world",
         areas: &[
-            ("places", &["places.rs"]),
+            ("places", &["places.rs", "reactions.rs"]),
             ("scroll", &[]),
             ("breakables", &["rules.rs", "state.rs"]),
         ],
-        apart: &[],
+        apart: &[
+            // `PatternCells`: a show's pattern cell writes a cell.
+            Apart {
+                file: "cells.rs",
+                function: "show",
+                area: "places",
+            },
+            // `Regrowing`: a cell grows back.
+            Apart {
+                file: "cells.rs",
+                function: "regrow",
+                area: "places",
+            },
+            // `PatternCells`: where a pattern's cell lands from its origin.
+            Apart {
+                file: "cells.rs",
+                function: "offset",
+                area: "places",
+            },
+            // `AnswersToHerMotion`: what a touch of a cell's kind answers.
+            Apart {
+                file: "cells.rs",
+                function: "answer",
+                area: "breakables",
+            },
+            // The plain cell a reaction that stops reacting leaves (the rules by family).
+            Apart {
+                file: "cells.rs",
+                function: "plain",
+                area: "breakables",
+            },
+            // `BlocksMarkedNothing`: the family a cell marked `Nothing` or `Other` is met as.
+            Apart {
+                file: "cells.rs",
+                function: "met_as",
+                area: "breakables",
+            },
+        ],
     },
-    // The inputs, the frame and its update, the State, the rules and the catalogue are the
-    // domain's shared code. The clip's format (§1.4), its playback and its start in a new
+    // The inputs, the frame and its update, the State's shapes, the rules and the catalogue are
+    // the domain's shared code. The clip's format (§1.4), its playback and its start in a new
     // pose are the clip's; her moves' writes and the run's pace and boost stages are the other
     // two areas.
     Domain {
@@ -194,7 +252,26 @@ const DOMAINS: &[Domain] = &[
             ("moves", &["moves.rs"]),
             ("run", &["run.rs"]),
         ],
-        apart: &[],
+        apart: &[
+            // `ClipPlays`: the time on her step runs down.
+            Apart {
+                file: "state.rs",
+                function: "run_down",
+                area: "clip",
+            },
+            // `ClipEnds`: the end her clip reaches this frame.
+            Apart {
+                file: "state.rs",
+                function: "end_ahead",
+                area: "clip",
+            },
+            // `BoostStages`: a stage's laps count down.
+            Apart {
+                file: "state.rs",
+                function: "counted_down",
+                area: "run",
+            },
+        ],
     },
 ];
 

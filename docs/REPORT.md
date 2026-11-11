@@ -37,13 +37,13 @@ How it is counted:
 | Domain | Model score | Budget | Fit | Area fit | Shared | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,023 | 1,488 | 18,036 | 326 |
-| camera | 1,839 | 1,762 | 1.04 | 0.88 | 16 % | 2,274 | 631 | 306 | 20,513 | 83 |
-| progress | 862 | 1,136 | 0.76 | 0.51 | 32 % (over 25 %) | - | 439 | 144 | 25,419 | 66 |
-| hud | 2,788 | 2,112 | 1.32 | 0.77 | 41 % (over 25 %) | - | 1,107 | 465 | 20,615 | 82 |
-| blocks | 2,432 | 2,074 | 1.17 | 0.96 | 18 % | - | 1,078 | 405 | 20,530 | 100 |
-| samus-looks | 2,054 | 1,412 | 1.45 | 1.14 | 22 % | 1,443 | 834 | 342 | 16,210 | 85 |
+| camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 20,513 | 83 |
+| progress | 862 | 1,136 | 0.76 | 0.71 | 6 % | - | 439 | 144 | 25,419 | 66 |
+| hud | 2,788 | 2,112 | 1.32 | 0.93 | 30 % (over 25 %) | - | 1,107 | 465 | 20,615 | 82 |
+| blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,078 | 399 | 20,530 | 100 |
+| samus-looks | 2,007 | 1,412 | 1.42 | 1.24 | 13 % | 1,443 | 834 | 335 | 16,210 | 85 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 630 | - | - | - | - | - | 514 | 105 | - | - |
-| total | 19,530 | 17,319 | 1.13 | 0.92 | 18 % | - | 8,626 | 3,255 | 121,323 | 742 |
+| total | 19,446 | 17,319 | 1.12 | 0.98 | 12 % | - | 8,626 | 3,241 | 121,323 | 742 |
 
 ## Models
 
@@ -82,7 +82,7 @@ How it is counted:
 | `crates/clean_model/camera/src/input.rs` | - | tables and types | 0 | 20 | 106 | 0 | 0 | 0 | 0 | 25 |
 | `crates/clean_model/camera/src/lib.rs` | - | logic | 207 | 300 | 63 | 0 | 3 | 26 | 7 | 64 |
 | `crates/clean_model/camera/src/room.rs` | limits | logic | 242 | 308 | 88 | 3 | 10 | 0 | 0 | 71 |
-| `crates/clean_model/camera/src/rules.rs` | - | tables and types | 80 | 134 | 75 | 86 | 0 | 0 | 0 | 58 |
+| `crates/clean_model/camera/src/rules.rs` | follow | tables and types | 80 | 134 | 75 | 86 | 0 | 0 | 0 | 58 |
 | total | | | 1,839 | 2,350 | 555 | 536 | 53 | 76 | 21 | 631 |
 
 ### progress
@@ -95,7 +95,7 @@ How it is counted:
 | `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 72 | 109 | 3 | 0 | 2 | 0 | 0 | 13 |
 | `crates/clean_model/progress/src/places.rs` | places | logic | 66 | 123 | 56 | 0 | 2 | 0 | 0 | 30 |
 | `crates/clean_model/progress/src/progress.rs` | happened | tables and types | 0 | 51 | 89 | 0 | 0 | 0 | 0 | 17 |
-| `crates/clean_model/progress/src/report.rs` | - | logic | 226 | 279 | 81 | 0 | 13 | 0 | 0 | 54 |
+| `crates/clean_model/progress/src/report.rs` | places | logic | 226 | 279 | 81 | 0 | 13 | 0 | 0 | 54 |
 | `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 166 | 221 | 120 | 0 | 7 | 0 | 0 | 51 |
 | `crates/clean_model/progress/src/rules.rs` | - | tables and types | 42 | 85 | 65 | 70 | 0 | 0 | 0 | 39 |
 | total | | | 862 | 1,303 | 688 | 505 | 44 | 16 | 84 | 439 |
@@ -108,14 +108,16 @@ How it is counted:
 | `crates/clean_model/hud/src/events.rs` | - | tables and types | 0 | 8 | 25 | 0 | 0 | 0 | 0 | 6 |
 | `crates/clean_model/hud/src/frame.rs` | - | logic | 280 | 350 | 33 | 0 | 15 | 0 | 14 | 66 |
 | `crates/clean_model/hud/src/grid.rs` | - | logic | 224 | 363 | 56 | 0 | 3 | 0 | 0 | 55 |
-| `crates/clean_model/hud/src/inputs.rs` | - | tables and types | 120 | 196 | 447 | 40 | 5 | 0 | 0 | 132 |
+| `crates/clean_model/hud/src/inputs.rs` | - | tables and types | 73 | 142 | 447 | 40 | 5 | 0 | 0 | 125 |
+| `crates/clean_model/hud/src/inputs.rs` `fn has` | selection | logic | 47 | 54 | 0 | 0 | 0 | 0 | 0 | 7 |
 | `crates/clean_model/hud/src/item.rs` | selection | tables and types | 0 | 11 | 59 | 33 | 0 | 0 | 0 | 22 |
-| `crates/clean_model/hud/src/layout.rs` | - | tables and types | 96 | 147 | 83 | 292 | 11 | 0 | 0 | 80 |
+| `crates/clean_model/hud/src/layout.rs` | status | tables and types | 96 | 147 | 83 | 292 | 11 | 0 | 0 | 80 |
 | `crates/clean_model/hud/src/lib.rs` | - | logic | 0 | 200 | 12 | 0 | 0 | 0 | 0 | 34 |
 | `crates/clean_model/hud/src/map.rs` | minimap | tables and types | 0 | 15 | 48 | 0 | 0 | 0 | 0 | 9 |
 | `crates/clean_model/hud/src/mini_map.rs` | minimap | logic | 656 | 797 | 116 | 59 | 36 | 13 | 16 | 154 |
-| `crates/clean_model/hud/src/pictures.rs` | - | logic | 129 | 195 | 142 | 0 | 0 | 0 | 0 | 45 |
-| `crates/clean_model/hud/src/rules.rs` | - | tables and types | 111 | 168 | 156 | 204 | 3 | 0 | 0 | 96 |
+| `crates/clean_model/hud/src/pictures.rs` | status | logic | 129 | 195 | 142 | 0 | 0 | 0 | 0 | 45 |
+| `crates/clean_model/hud/src/rules.rs` | - | tables and types | 61 | 114 | 156 | 204 | 1 | 0 | 0 | 84 |
+| `crates/clean_model/hud/src/rules.rs` `fn reference` | minimap | logic | 50 | 54 | 0 | 0 | 2 | 0 | 0 | 12 |
 | `crates/clean_model/hud/src/selection.rs` | selection | logic | 220 | 282 | 0 | 0 | 13 | 0 | 0 | 41 |
 | `crates/clean_model/hud/src/state.rs` | - | tables and types | 59 | 110 | 132 | 0 | 0 | 0 | 0 | 45 |
 | `crates/clean_model/hud/src/status_bar.rs` | status | logic | 760 | 821 | 12 | 2 | 84 | 41 | 13 | 110 |
@@ -127,22 +129,28 @@ How it is counted:
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean_model/blocks/src/catalogue.rs` | - | tables and types | 0 | 13 | 90 | 560 | 0 | 0 | 0 | 168 |
-| `crates/clean_model/blocks/src/cells.rs` | - | logic | 351 | 500 | 260 | 60 | 5 | 0 | 0 | 138 |
+| `crates/clean_model/blocks/src/cells.rs` | - | tables and types | 129 | 233 | 260 | 0 | 2 | 0 | 0 | 93 |
+| `crates/clean_model/blocks/src/cells.rs` `fn show` | places | tables and types | 25 | 32 | 0 | 44 | 0 | 0 | 0 | 9 |
+| `crates/clean_model/blocks/src/cells.rs` `fn regrow` | places | logic | 40 | 48 | 0 | 0 | 3 | 0 | 0 | 6 |
+| `crates/clean_model/blocks/src/cells.rs` `fn offset` | places | logic | 39 | 50 | 0 | 0 | 0 | 0 | 0 | 6 |
+| `crates/clean_model/blocks/src/cells.rs` `fn answer` | breakables | tables and types | 7 | 12 | 0 | 38 | 0 | 0 | 0 | 6 |
+| `crates/clean_model/blocks/src/cells.rs` `fn plain` | breakables | tables and types | 7 | 12 | 0 | 16 | 0 | 0 | 0 | 6 |
+| `crates/clean_model/blocks/src/cells.rs` `fn met_as` | breakables | logic | 67 | 75 | 0 | 0 | 0 | 0 | 0 | 12 |
 | `crates/clean_model/blocks/src/inputs.rs` | - | tables and types | 0 | 29 | 167 | 0 | 0 | 0 | 0 | 41 |
 | `crates/clean_model/blocks/src/lib.rs` | - | logic | 0 | 155 | 0 | 0 | 0 | 0 | 0 | 22 |
 | `crates/clean_model/blocks/src/places.rs` | places | logic | 755 | 843 | 194 | 1 | 111 | 0 | 0 | 172 |
-| `crates/clean_model/blocks/src/reactions.rs` | - | tables and types | 96 | 162 | 233 | 4 | 2 | 0 | 0 | 75 |
+| `crates/clean_model/blocks/src/reactions.rs` | places | tables and types | 96 | 162 | 233 | 4 | 2 | 0 | 0 | 75 |
 | `crates/clean_model/blocks/src/report.rs` | - | tables and types | 0 | 20 | 40 | 0 | 0 | 0 | 0 | 9 |
 | `crates/clean_model/blocks/src/rules.rs` | breakables | tables and types | 444 | 643 | 458 | 645 | 9 | 0 | 0 | 320 |
 | `crates/clean_model/blocks/src/state.rs` | breakables | logic | 787 | 782 | 32 | 0 | 131 | 38 | 1 | 133 |
-| total | | | 2,432 | 3,147 | 1,474 | 1,270 | 258 | 38 | 1 | 1,078 |
+| total | | | 2,395 | 3,109 | 1,474 | 1,308 | 258 | 38 | 1 | 1,078 |
 
 ### samus-looks
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean_model/samus-looks/src/catalogue.rs` | - | tables and types | 0 | 18 | 100 | 466 | 0 | 0 | 0 | 148 |
-| `crates/clean_model/samus-looks/src/clip.rs` | clip | logic | 188 | 276 | 257 | 9 | 1 | 0 | 0 | 88 |
+| `crates/clean_model/samus-looks/src/clip.rs` | clip | tables and types | 141 | 228 | 257 | 57 | 1 | 0 | 0 | 88 |
 | `crates/clean_model/samus-looks/src/frame.rs` | - | logic | 104 | 174 | 47 | 0 | 3 | 0 | 0 | 33 |
 | `crates/clean_model/samus-looks/src/inputs.rs` | - | tables and types | 16 | 64 | 220 | 0 | 0 | 0 | 0 | 50 |
 | `crates/clean_model/samus-looks/src/lib.rs` | - | logic | 0 | 109 | 0 | 0 | 0 | 0 | 0 | 17 |
@@ -151,9 +159,12 @@ How it is counted:
 | `crates/clean_model/samus-looks/src/rules.rs` | - | tables and types | 0 | 29 | 55 | 55 | 0 | 0 | 0 | 23 |
 | `crates/clean_model/samus-looks/src/run.rs` | run | logic | 425 | 517 | 64 | 39 | 22 | 0 | 0 | 105 |
 | `crates/clean_model/samus-looks/src/starting.rs` | clip | tables and types | 260 | 321 | 117 | 464 | 11 | 0 | 0 | 163 |
-| `crates/clean_model/samus-looks/src/state.rs` | - | logic | 188 | 215 | 140 | 0 | 10 | 17 | 0 | 52 |
+| `crates/clean_model/samus-looks/src/state.rs` | - | tables and types | 0 | 33 | 140 | 0 | 0 | 0 | 0 | 31 |
+| `crates/clean_model/samus-looks/src/state.rs` `fn run_down` | clip | logic | 109 | 106 | 0 | 0 | 9 | 0 | 0 | 12 |
+| `crates/clean_model/samus-looks/src/state.rs` `fn end_ahead` | clip | logic | 35 | 44 | 0 | 0 | 0 | 0 | 0 | 6 |
+| `crates/clean_model/samus-looks/src/state.rs` `fn counted_down` | run | logic | 44 | 32 | 0 | 0 | 1 | 17 | 0 | 3 |
 | `crates/clean_model/samus-looks/src/update.rs` | - | logic | 139 | 177 | 3 | 0 | 0 | 13 | 0 | 29 |
-| total | | | 2,054 | 2,749 | 1,018 | 1,036 | 85 | 44 | 0 | 834 |
+| total | | | 2,007 | 2,701 | 1,018 | 1,084 | 85 | 44 | 0 | 834 |
 
 ### Shared types
 
@@ -168,11 +179,11 @@ How it is counted:
 | samus-motion | 4,023 | 2,556 | 1,467 | 1,488 |
 | camera | 631 | 226 | 405 | 306 |
 | progress | 439 | 182 | 257 | 144 |
-| hud | 1,107 | 602 | 505 | 465 |
-| blocks | 1,078 | 613 | 465 | 405 |
-| samus-looks | 834 | 384 | 450 | 342 |
+| hud | 1,107 | 583 | 524 | 465 |
+| blocks | 1,078 | 727 | 351 | 399 |
+| samus-looks | 834 | 503 | 331 | 335 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 514 | 514 | 0 | 105 |
-| total | 8,626 | 5,077 | 3,549 | 3,255 |
+| total | 8,626 | 5,291 | 3,335 | 3,241 |
 
 ## Spec, budget and fit by area
 
@@ -197,12 +208,12 @@ Spec [`docs/behaviours/camera.md`](behaviours/camera.md), k = 37.5. Old code 2,2
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| follow | 5 | 15.7 | 587 | 715 | 360 | 0.61 |
+| follow | 5 | 15.7 | 587 | 715 | 439 | 0.75 |
 | limits | 9 | 31.3 | 1,175 | 1,559 | 1,193 | 1.02 |
-| shared (in no area) | | | | | 287 | |
+| shared (in no area) | | | | | 207 | |
 | total | 14 | 47.0 | 1,762 | 2,274 | 1,839 | 1.04 |
 
-Area fit 0.88: the areas' score, 1,552, ÷ the budget. Shared code 287, its share of the model 16 %.
+Area fit 0.93: the areas' score, 1,632, ÷ the budget. Shared code 207, its share of the model 11 %.
 
 ### progress
 
@@ -211,14 +222,14 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 37.5. Old code
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | happened | 3 | 3.3 | 125 | - | 0 | 0.00 |
-| places | 6 | 10.3 | 387 | - | 66 | 0.17 |
+| places | 6 | 10.3 | 387 | - | 292 | 0.75 |
 | equipment | 3 | 7.7 | 287 | 254 | 281 | 0.98 |
 | rooms | 1 | 7.0 | 262 | 197 | 166 | 0.63 |
 | percentage | 1 | 2.0 | 75 | - | 72 | 0.96 |
-| shared (in no area) | | | | | 277 | |
+| shared (in no area) | | | | | 51 | |
 | total | 14 | 30.3 | 1,136 | - | 862 | 0.76 |
 
-Area fit 0.51: the areas' score, 585, ÷ the budget. Shared code 277, its share of the model 32 % (over 25 %).
+Area fit 0.71: the areas' score, 811, ÷ the budget. Shared code 51, its share of the model 6 %.
 
 ### hud
 
@@ -226,13 +237,13 @@ Spec [`docs/behaviours/hud.md`](behaviours/hud.md), k = 37.5. Old code -, at `38
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| status | 7 | 21.0 | 787 | 1,254 | 760 | 0.97 |
-| selection | 4 | 8.0 | 300 | - | 220 | 0.73 |
-| minimap | 8 | 27.3 | 1,025 | 1,666 | 656 | 0.64 |
-| shared (in no area) | | | | | 1,152 | |
+| status | 7 | 21.0 | 787 | 1,254 | 985 | 1.25 |
+| selection | 4 | 8.0 | 300 | - | 267 | 0.89 |
+| minimap | 8 | 27.3 | 1,025 | 1,666 | 706 | 0.69 |
+| shared (in no area) | | | | | 831 | |
 | total | 19 | 56.3 | 2,112 | - | 2,788 | 1.32 |
 
-Area fit 0.77: the areas' score, 1,637, ÷ the budget. Shared code 1,152, its share of the model 41 % (over 25 %).
+Area fit 0.93: the areas' score, 1,958, ÷ the budget. Shared code 831, its share of the model 30 % (over 25 %).
 
 ### blocks
 
@@ -240,13 +251,13 @@ Spec [`docs/behaviours/blocks.md`](behaviours/blocks.md), k = 37.5. Old code -, 
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| places | 7 | 22.3 | 837 | 1,252 | 755 | 0.90 |
+| places | 7 | 22.3 | 837 | 1,252 | 954 | 1.14 |
 | scroll | 1 | 4.0 | 150 | 1,145 | 0 | 0.00 |
-| breakables | 10 | 29.0 | 1,087 | - | 1,231 | 1.13 |
-| shared (in no area) | | | | | 446 | |
-| total | 18 | 55.3 | 2,074 | - | 2,432 | 1.17 |
+| breakables | 10 | 29.0 | 1,087 | - | 1,312 | 1.21 |
+| shared (in no area) | | | | | 129 | |
+| total | 18 | 55.3 | 2,074 | - | 2,395 | 1.15 |
 
-Area fit 0.96: the areas' score, 1,986, ÷ the budget. Shared code 446, its share of the model 18 %.
+Area fit 1.09: the areas' score, 2,266, ÷ the budget. Shared code 129, its share of the model 5 %.
 
 ### samus-looks
 
@@ -254,13 +265,13 @@ Spec [`docs/behaviours/samus-looks.md`](behaviours/samus-looks.md), k = 37.5. Ol
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| clip | 7 | 21.7 | 812 | - | 896 | 1.10 |
+| clip | 7 | 21.7 | 812 | - | 993 | 1.22 |
 | moves | 5 | 6.0 | 225 | - | 288 | 1.28 |
-| run | 3 | 10.0 | 375 | - | 425 | 1.13 |
-| shared (in no area) | | | | | 446 | |
-| total | 15 | 37.7 | 1,412 | 1,443 | 2,054 | 1.45 |
+| run | 3 | 10.0 | 375 | - | 469 | 1.25 |
+| shared (in no area) | | | | | 258 | |
+| total | 15 | 37.7 | 1,412 | 1,443 | 2,007 | 1.42 |
 
-Area fit 1.14: the areas' score, 1,608, ÷ the budget. Shared code 446, its share of the model 22 %.
+Area fit 1.24: the areas' score, 1,749, ÷ the budget. Shared code 258, its share of the model 13 %.
 
 ## Bridges and harnesses
 
@@ -268,19 +279,19 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | bridge | 4 | 3,131 | 3,742 | 288 | 173 | 117 | 90 | 3 | 593 |
-| samus-motion | harness | 2 | 6,456 | 6,489 | 729 | 804 | 399 | 529 | 21 | 1,230 |
-| camera | bridge | 1 | 563 | 756 | 21 | 33 | 1 | 17 | 0 | 120 |
+| samus-motion | bridge | 4 | 3,102 | 3,712 | 288 | 203 | 117 | 90 | 3 | 593 |
+| samus-motion | harness | 2 | 6,411 | 6,443 | 729 | 850 | 399 | 529 | 21 | 1,230 |
+| camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
 | camera | harness | 2 | 6,007 | 6,158 | 784 | 266 | 280 | 412 | 30 | 1,059 |
 | progress | bridge | 1 | 1,202 | 1,435 | 60 | 217 | 40 | 33 | 0 | 244 |
 | progress | harness | 3 | 7,636 | 7,246 | 1,048 | 992 | 768 | 590 | 62 | 1,325 |
-| hud | bridge | 1 | 2,455 | 2,600 | 135 | 81 | 162 | 121 | 16 | 404 |
+| hud | bridge | 1 | 2,404 | 2,548 | 135 | 133 | 162 | 121 | 16 | 404 |
 | hud | harness | 2 | 4,530 | 4,849 | 721 | 422 | 292 | 84 | 23 | 859 |
 | blocks | bridge | 1 | 7,101 | 6,883 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-looks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-looks | harness | 3 | 5,171 | 5,465 | 664 | 199 | 235 | 313 | 33 | 835 |
-| total | | | 50,925 | 51,630 | 5,722 | 3,661 | 3,850 | 3,141 | 285 | 8,713 |
+| total | | | 50,742 | 51,442 | 5,722 | 3,849 | 3,850 | 3,141 | 285 | 8,713 |
 
 ## Harness floors and vectors
 
@@ -530,5 +541,5 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 49 | 5,110 | 30,659 | 32,392 | 10,193 | 2,034 | 2,287 | 2,776 | 671 | 7,103 |
-| bridges | 8 | 2,409 | 14,453 | 15,416 | 943 | 768 | 981 | 760 | 116 | 2,423 |
-| rebuilt models, shared types included | 71 | 3,255 | 19,530 | 25,479 | 9,565 | 13,098 | 1,041 | 516 | 176 | 8,626 |
+| bridges | 8 | 2,386 | 14,315 | 15,274 | 943 | 910 | 981 | 760 | 116 | 2,423 |
+| rebuilt models, shared types included | 71 | 3,241 | 19,446 | 25,393 | 9,565 | 13,184 | 1,041 | 516 | 176 | 8,626 |

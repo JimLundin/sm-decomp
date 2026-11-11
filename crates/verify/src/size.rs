@@ -760,21 +760,51 @@ fn rows_of(tokens: &[Token<'_>]) -> Option<usize> {
     Some(rows)
 }
 
-/// Whether an arm's pattern is a lookup's key: `_`, or alternatives (`A | B`) each a path to a
-/// variant or a constant (its last part capitalised), a literal (a minus on one included) or a
-/// range of two literals. A binding, a guard's `if` and a destructuring pattern are not keys.
+/// Whether an arm's pattern is a lookup's key: `_`, or alternatives (`A | B`) each a
+/// [`lookup_key`]. A binding, a guard's `if` and a struct pattern are not keys.
 fn lookup_pattern(pattern: &[Token<'_>]) -> bool {
     pattern == [Token::Word("_")]
         || split_top(pattern, Token::Punct("|"))
             .into_iter()
-            .all(|key| match after_literal(key) {
-                Some([]) => true,
-                Some([Token::Punct(".." | "..="), end @ ..]) => after_literal(end) == Some(&[]),
-                Some(_) => false,
-                None => {
-                    after_path(key) == Some(&[])
-                        && matches!(key.last(), Some(Token::Word(name)) if name.starts_with(char::is_uppercase))
-                }
+            .all(lookup_key)
+}
+
+/// Whether `key` is one key of a lookup's pattern: a literal (a minus on one included), a range
+/// of two literals, or a path to a variant or a constant (its last part capitalised), which may
+/// hold, as a tuple variant's fields, patterns that are keys in turn (`Outer::A(Inner::B, _)`).
+/// A key binds nothing, so the compiler still checks each member's arm.
+fn lookup_key(key: &[Token<'_>]) -> bool {
+    match after_literal(key) {
+        Some([]) => true,
+        Some([Token::Punct(".." | "..="), end @ ..]) => after_literal(end) == Some(&[]),
+        Some(_) => false,
+        None => {
+            let Some(rest) = after_path(key) else {
+                return false;
+            };
+            let path = key
+                .get(..key.len().saturating_sub(rest.len()))
+                .unwrap_or_default();
+            matches!(path.last(), Some(Token::Word(name)) if name.starts_with(char::is_uppercase))
+                && (rest.is_empty() || nested_keys(rest))
+        }
+    }
+}
+
+/// Whether `fields`, a tuple variant's bracket group and nothing after it, holds only
+/// [`lookup_pattern`]s, separated by commas.
+fn nested_keys(fields: &[Token<'_>]) -> bool {
+    let (Some(Token::Open('(')), Some(Token::Close)) = (fields.first(), fields.last()) else {
+        return false;
+    };
+    after_group(fields).is_empty()
+        && fields
+            .get(1..fields.len().saturating_sub(1))
+            .is_some_and(|inside| {
+                split_top(inside, Token::Punct(","))
+                    .into_iter()
+                    .filter(|field| !field.is_empty())
+                    .all(lookup_pattern)
             })
 }
 

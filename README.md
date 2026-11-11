@@ -25,8 +25,8 @@ Each model is built in the clean room from its spec alone, then checked frame by
 | camera | CAM (in progress) | in progress | 6 | 83 | 20,513 of 25,426 | 1,839 | 1,762 | 1.04 |
 | progress | P1 (in progress) | in progress | 7 | 66 | 25,419 of 25,426 | 862 | 1,136 | 0.76 |
 | hud | H2 (in progress) | in progress | 4 | 82 | 20,615 of 24,230 | 2,788 | 2,112 | 1.32 |
-| blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,432 | 2,074 | 1.17 |
-| samus-looks | S5 (in progress) | in progress | 2 | 85 | 16,210 of 24,230 | 2,054 | 1,412 | 1.45 |
+| blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,395 | 2,074 | 1.15 |
+| samus-looks | S5 (in progress) | in progress | 2 | 85 | 16,210 of 24,230 | 2,007 | 1,412 | 1.42 |
 
 ### The whole-game plan
 
@@ -48,8 +48,8 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
 | not yet rebuilt | 49 | 5,110 | 30,659 | 7,103 |
-| bridges from the engine to the models | 8 | 2,409 | 14,453 | 2,423 |
-| rebuilt models, shared types included | 71 | 3,255 | 19,530 | 8,626 |
+| bridges from the engine to the models | 8 | 2,386 | 14,315 | 2,423 |
+| rebuilt models, shared types included | 71 | 3,241 | 19,446 | 8,626 |
 
 ### Verification
 

@@ -13,7 +13,8 @@
 #                data (the counter's L3: literals, paths, tuples, arrays, struct literals and
 #                calls whose arguments are data), the value of an exhaustive lookup's arm (the
 #                counter's lookups: a guard-free `match` of two or more arms, or an `enum_map!`,
-#                each arm a variant, constant or literal key, `=>` and a data value naming no
+#                each arm a variant, constant or literal key, keys nested in a tuple variant
+#                with no binding included, `=>` and a data value naming no
 #                local; a key's own number is still refused), an array length (`[T; N]`,
 #                `[x; N]`) and a tuple field (`.2`).
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
@@ -190,8 +191,10 @@ function key_lit() {
   return 0
 }
 # Whether a..b-1 is one key of a lookup's pattern: a literal, a range of two literals, or a path
-# to a variant or a constant (its last part capitalised).
-function lookup_key(a, b) {
+# to a variant or a constant (its last part capitalised), which may hold, as a tuple variant's
+# fields, patterns that are keys in turn (`Outer::A(Inner::B, _)`). A key binds nothing.
+# lookup_pattern recurses through here, so nothing below the recursion reads `at` or `lim`.
+function lookup_key(a, b,   p, e, k, d, s) {
   at = a; lim = b
   if (key_lit()) {
     if (at == lim) return 1
@@ -200,7 +203,19 @@ function lookup_key(a, b) {
     return key_lit() && at == lim
   }
   at = a
-  return data_path() && at == lim && text[b - 1] ~ /^[A-Z]/
+  if (!data_path() || text[at - 1] !~ /^[A-Z]/) return 0
+  p = at
+  if (p == b) return 1
+  if (kind[p] != "open" || text[p] != "(" || after_group(p) != b) return 0
+  d = 0; s = p + 1
+  for (k = p + 1; k < b; k++) {
+    if (k < b - 1 && kind[k] == "open") { d++; continue }
+    if (k < b - 1 && kind[k] == "close") { d--; continue }
+    if (k < b - 1 && !(d == 0 && kind[k] == "punct" && text[k] == ",")) continue
+    if (k > s && !lookup_pattern(s, k)) return 0
+    s = k + 1
+  }
+  return 1
 }
 # Whether a..b-1 is a lookup's pattern: `_`, or keys joined by `|`.
 function lookup_pattern(a, b,   k, d, s) {

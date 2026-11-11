@@ -45,6 +45,13 @@ pub const fn digit(n: u8) -> Speed {
         _ => Speed(-2),
     }
 }
+/// A key may nest variants in a tuple variant's fields, so long as it binds nothing.
+pub const fn screen(at: Option<Kind>) -> u16 {
+    match at {
+        Some(Kind::A) => 7,
+        Some(Kind::B) | None => 0x30,
+    }
+}
 pub fn tiles() -> EnumMap<Kind, u16> {
     enum_map! { Kind::A => 16, Kind::B => TILE }
 }
