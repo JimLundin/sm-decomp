@@ -12,14 +12,14 @@
 use data::level::Tile;
 use data::tileset::{BlockTiles, TileTables};
 
+use crate::exact::tilemap::BG1_TILEMAP;
+use crate::intent::BlockLook;
 use crate::state::room::{BlockPoint, RoomScoped};
 use crate::state::video::{
     ColumnUpload, LayerUploads, LevelUploads, Registers, RowUpload, Scroll, TilemapEntry,
     TilemapPart, VramWord,
 };
 
-/// BG1's tilemap in VRAM, two 32x32 screens side by side.
-pub const BG1_TILEMAP: VramWord = VramWord(0x5000);
 /// A 32x32 tilemap screen's words.
 const SCREEN_WORDS: u16 = 0x0400;
 /// A block row's words in a tilemap screen: two rows of 32.
@@ -117,17 +117,17 @@ impl Level<'_> {
     /// A block word past the level data, or a tile number past what the tile tables fill,
     /// reads stale RAM in the original; the engine draws tile 0's words or zero words there
     /// (docs/LEGACY.md).
-    fn drawn(self, layer: Layer, index: u16) -> Drawn {
+    fn drawn(self, layer: Layer, index: u16) -> BlockLook {
         self.drawn_tile(Tile::from_word(self.word(layer, index).unwrap_or_default()))
     }
 
     /// The four tilemap words `tile` draws, with its flips.
-    fn drawn_tile(self, tile: Tile) -> Drawn {
+    fn drawn_tile(self, tile: Tile) -> BlockLook {
         let number = tile.number.0;
         let tiles = crate::plm::item_gfx::block(&self.room.item_gfx, number)
             .or_else(|| self.tables.block(self.room.area, self.room.tileset, number))
             .unwrap_or_default();
-        Drawn::of(tiles, tile)
+        BlockLook::of(tiles, tile)
     }
 
     /// The level block index the original's multiply gives `block`: the row's low byte times
@@ -141,28 +141,13 @@ impl Level<'_> {
     }
 }
 
-/// The four tilemap words `tile` draws in `room` as the PLM draw copies them (`$84:8DAA`): top
-/// left, top right, bottom left, bottom right, with the tile's flips.
-pub(crate) fn tile_words(room: &RoomScoped, tables: &TileTables, tile: Tile) -> [u16; 4] {
-    let Drawn {
-        top_left,
-        top_right,
-        bottom_left,
-        bottom_right,
-    } = Level { room, tables }.drawn_tile(tile);
-    [top_left, top_right, bottom_left, bottom_right].map(TilemapEntry::word)
+/// The look `tile` has in `room`, as the level draws it.
+pub(crate) fn block_look(room: &RoomScoped, tables: &TileTables, tile: Tile) -> BlockLook {
+    Level { room, tables }.drawn_tile(tile)
 }
 
-/// A block's four tilemap words as it draws: its tile table entry with its flips.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct Drawn {
-    top_left: TilemapEntry,
-    top_right: TilemapEntry,
-    bottom_left: TilemapEntry,
-    bottom_right: TilemapEntry,
-}
-
-impl Drawn {
+/// A block's look is its tile table entry with its flips.
+impl BlockLook {
     /// A block flipped across mirrors its quarters and flips each word the same way.
     fn of(tiles: BlockTiles, tile: Tile) -> Self {
         let entry = |word: u16| {

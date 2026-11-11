@@ -20,23 +20,22 @@ use clean_model_hud::{
     SelectableItem, Selection, Shown, Status, Stock, Tile,
 };
 use clean_types::{Look, Pair, Picture};
-use data::dma::HUD_TILEMAP_BUFFER;
 use data::map::{MAP_COLUMNS, MAP_ROWS, MAP_TILEMAP_WORDS, MapCells};
 use data::pose::transition::Control;
 use data::room::Area;
 use enum_map::enum_map;
 
+use crate::exact::tilemap::TileQueue;
+use crate::intent::TileWrite;
 use crate::pose::{self, Content, FACING_FORWARD};
 use crate::state::State;
 use crate::state::hud::{Drawn, Hud, HudItem, HudTilemap};
 use crate::state::samus::{Gauge, Item, MovementType, Point as Position, ReserveMode as Refill};
-use crate::state::video::{
-    BgPalette, TileNumber, TilemapEntry, VramSource, VramStep, VramTransfer, VramWord,
-};
+use crate::state::video::{BgPalette, TileNumber, TilemapEntry};
 use crate::state::{Button, Controller};
 
-/// Where the queued tilemap lands: the HUD's second BG3 row (`$80:9CC1`).
-pub const HUD_TILEMAP_VRAM: VramWord = VramWord(0x5820);
+/// The overlay's row the HUD's cells start at: its second (`$80:9CC1`).
+const HUD_ROW: u16 = 1;
 /// The mini-map's window (spec §1.2): rows 0 to 2, columns 26 to 30.
 const WINDOW_COLUMNS: core::ops::RangeInclusive<i32> = 26..=30;
 /// The HUD's cells across a row.
@@ -516,15 +515,11 @@ pub fn hud_turn(state: &mut State, content: &Content) -> Result<(), HudFault> {
     };
     hud.selected = after.selection.item().map(hud_item);
     hud.auto_cancel = after.selection.one_shot().map(hud_item);
-    let words = hud.tilemap.cells.iter().map(|entry| entry.word()).collect();
-    state.video.batch.vram.push(VramTransfer {
-        to: HUD_TILEMAP_VRAM,
-        step: VramStep::Row,
-        source: VramSource::Words {
-            from: HUD_TILEMAP_BUFFER,
-            words,
-        },
-    });
+    let write = TileWrite::Overlay {
+        row: HUD_ROW,
+        cells: hud.tilemap.cells.to_vec(),
+    };
+    TileQueue::new(&mut state.video.batch).write(&state.room.camera, &write);
     Ok(())
 }
 

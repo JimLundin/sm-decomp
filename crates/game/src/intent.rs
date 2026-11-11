@@ -4,6 +4,9 @@
 use clean_types::Pair;
 use data::spritemap::{SpriteAttributes, SpriteSize, Spritemap};
 
+use crate::state::room::BlockPoint;
+use crate::state::video::TilemapEntry;
+
 /// A point on the screen, in pixels from the picture's top-left corner, at full precision.
 ///
 /// A piece left of or above the picture has a negative coordinate, and one past its right or
@@ -67,4 +70,38 @@ impl SpriteDraw {
 #[must_use]
 pub fn on_screen(at: u16, camera: u16) -> i32 {
     i32::from(at.wrapping_sub(camera).cast_signed())
+}
+
+/// What one block of the room shows: its four cells, each a picture with its palette,
+/// priority and flips.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct BlockLook {
+    /// The top-left cell.
+    pub top_left: TilemapEntry,
+    /// The top-right cell.
+    pub top_right: TilemapEntry,
+    /// The bottom-left cell.
+    pub bottom_left: TilemapEntry,
+    /// The bottom-right cell.
+    pub bottom_right: TilemapEntry,
+}
+
+/// What a domain writes to a background layer: where, and the looks it writes there.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TileWrite {
+    /// Whole rows of the overlay, the screen-fixed layer the HUD shows on: `cells` row by
+    /// row, 32 to a row, from row `row` down.
+    Overlay {
+        /// The first row written, from the overlay's top.
+        row: u16,
+        /// The cells, row-major.
+        cells: Vec<TilemapEntry>,
+    },
+    /// A row of the room's blocks on layer 1, rightward from the block at `at`.
+    Blocks {
+        /// The row's first block.
+        at: BlockPoint,
+        /// Each block's look, left to right.
+        looks: Vec<BlockLook>,
+    },
 }

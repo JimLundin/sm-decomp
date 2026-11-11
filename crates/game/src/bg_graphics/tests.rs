@@ -247,7 +247,7 @@ fn flipped_blocks_mirror_their_quarters_and_flip_each_word() {
         bottom_right: 4,
     };
     let words = |tile: Tile| {
-        let drawn = Drawn::of(tiles, tile);
+        let drawn = BlockLook::of(tiles, tile);
         [
             drawn.top_left,
             drawn.top_right,
@@ -270,7 +270,10 @@ fn flipped_blocks_mirror_their_quarters_and_flip_each_word() {
         top_left: 0x4001,
         ..tiles
     };
-    assert_eq!(Drawn::of(flipped, tile(true, false)).top_right.word(), 1);
+    assert_eq!(
+        BlockLook::of(flipped, tile(true, false)).top_right.word(),
+        1
+    );
 }
 
 #[test]

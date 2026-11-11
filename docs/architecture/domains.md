@@ -247,6 +247,61 @@ The second lane carries, in this order:
    for the wide renderer (a producer that culls to the screen, as the atmospheric graphics do,
    draws past it on request; the encoder never sees those pieces).
 
+### E2: where tile writing stands, and its other two lanes
+
+A write to a background layer is a `game::intent::TileWrite`: where it lands, in the layer's
+own terms, and the looks it writes there. Each cell's look is a `TilemapEntry` (picture,
+palette, priority, flips), the background's counterpart of a sprite's `SpriteAttributes`.
+`Overlay { row, cells }` is whole rows of the overlay, the screen-fixed layer the HUD and the
+message box show on. `Blocks { at, looks }` is a row of the room's blocks on layer 1, placed in
+room blocks, each with its `BlockLook` (its four cells). A level write is in room terms because
+the tilemap is a ring of 32 block columns around the camera: the encoder, not the producer,
+says whether the ring holds a block now and where. The wide renderer reads the same write
+without the ring.
+
+`exact::tilemap::TileQueue` is the encoder for the VRAM write queue. The overlay's rows are one
+upload read from the HUD's buffer. A block row is clipped to the blocks the ring holds and
+placed in BG1's two screens, with the screen swap BG1's scroll offset makes. Its top cells are
+queued before its bottom cells, and a row that runs off its screen is split onto the other (the
+screen split of tilemap rows). It is read from the PLM draw's buffer, which a pass fills from
+its start. The queue's capacity drops a row whole. Its producers are the HUD (`hud_world`, the
+model's grid as the overlay's rows 1 to 3) and the PLM pass (`plm::draw::Drawing`, a changed
+block's look from `bg_graphics::block_look`). Each caller writes where the original queued, so
+the queue keeps the original's order.
+
+The second lane, **scrolling**, carries the layers' streaming:
+
+1. **The exposed column and row as an intent.** The BG graphics update decides which block
+   column and row of each layer come into view; that is the camera's (MODEL lists
+   `LayerExposure`). The mapping onto the ring goes into `exact::tilemap`: `Tilemap::screens`
+   and `at`, the column part that wraps to the tilemap's top, the row part that wraps to the
+   other screen, and BG2's tilemap gap. The NMI's scrolling DMAs (`tilemap_dma`) become its
+   commit, and `bg_graphics` keeps only the level lookup. *Risk:* the column and row buffers
+   (`video.batch.level`) are State decoded from work RAM, and their request counts carry across
+   lag frames, so the encoder writes them as State and the NMI still makes them. The tilemap
+   place comes from the BG scroll, the level source from the layer's position, so the intent
+   carries both.
+2. **The lookup's stale reads** (docs/LEGACY.md: a block past the level data, a tile past the
+   tile tables) stay with the lookup, not the encoder.
+
+The third lane, **the message box's video**, carries:
+
+1. **The box's rows as overlay writes:** the blank box over its rows, the message's rows (the
+   border, the text and the button's letter), and the restore. They need an encoder entry that
+   writes VRAM at once, because the box writes the PPU itself through DMA 1 while the NMI lags,
+   around the batch. Each write leaves the channel's registers as its own buffer's DMA does,
+   with the cleared indirect fields (`message_box::video`). The backup is a read-back (D5) and
+   stays a commit-point read. *Risk:* the restore must put back what VRAM held, stale cells
+   included, so it writes the backup's words, not cells rebuilt from the HUD.
+2. **The box's PPU set-up into `exact`:** the text colours, the playfield it shows over and the
+   black backdrop. Its HDMA scroll channel joins with E3.
+
+The scrolling lane goes first: the camera's exposure is what every room after slice 0 reads, and
+R1 and R4 export tile writes onto the ring it settles. The PLM draw's open shapes go with W2 and
+A1, each as more `TileWrite` shapes or the row shape repeated: the draw instructions that draw a
+column or more than one row, and the buffer's index restarting at a pickup's resume
+(`plm::resume`'s open note).
+
 ## 4. Order
 
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
