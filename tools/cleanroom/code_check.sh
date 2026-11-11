@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# code_check.sh DIR...: refuse clean-room crates whose code could reach outside its own
+# code_check.sh [--import] DIR...: refuse clean-room crates whose code could reach outside its own
 # computation when `cargo test` or `cargo build` runs it (MODEL §5; launch.sh cannot confine
 # what cargo runs). Each DIR is a crate directory (it holds a Cargo.toml) or a root holding
 # crates/clean_types and crates/clean_model/*: an export, a git archive of one, or this
 # repository. A root with no clean crate passes. Exit 1 prints one line per finding:
 #   code_check: PATH: TAG: DETAIL
+# A warning, which doesn't fail, is `code_check: warning: PATH: TAG: DETAIL`.
 #
 # Sources (src/ and tests/ *.rs, comments and string contents removed, whitespace collapsed):
 #   std-fs std-net std-process std-env std-os std-io std-glob std-alias std-macro-ident
@@ -27,8 +28,12 @@
 #     call, an operator, control flow, a closure or a macro makes it logic), the values of an
 #     exhaustive lookup (a guard-free `match` of two or more arms, or an `enum_map!`, each arm a
 #     variant, constant or literal key, `=>` and a data value naming no local, as `tools size`
-#     counts it; a key's own number is still refused), array lengths and tuple fields. Both
-#     rules are tools/cleanroom/lint_scan.awk.
+#     counts it; a key's own number is still refused), array lengths and tuple fields.
+#   variant-import (L4) a `use` outside test code that imports an enum's variants (`use Kind::A`,
+#     `use Kind::{A, B}`, `use Kind::*`). In a crate variant_import_warn.txt lists (crates written
+#     before the rule) it is a warning, unless --import, which import.sh passes: an implementer
+#     round removes them from every crate its export holds. A listed crate with none left is a
+#     `variant-import` finding too, so its line goes. The three rules are lint_scan.awk.
 # Manifest: build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
 #   dep-registry (not in allowed_deps.txt; or not at its pinned version, of an allowed kind, with
 #   allowed features only and no other key than version, features, default-features and package)
@@ -48,11 +53,22 @@
 # and anything that runs outside cargo.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
-[ $# -ge 1 ] || { echo "usage: code_check.sh DIR..." >&2; exit 2; }
+importing=0
+[ "${1:-}" = --import ] && { importing=1; shift; }
+[ $# -ge 1 ] || { echo "usage: code_check.sh [--import] DIR..." >&2; exit 2; }
 bad=0
 count=0
+# The crates whose variant imports still warn; CODE_CHECK_VARIANT_WARN names another list (tests).
+warn_list=${CODE_CHECK_VARIANT_WARN:-$here/variant_import_warn.txt}
+# Whether the crate being checked only warns of its variant imports, and how many it has.
+variant_warn=0
+variants=0
 
 hit() { # REL TAG DETAIL
+  if [ "$2" = variant-import ]; then
+    variants=$((variants + 1))
+    [ "$variant_warn" -eq 1 ] && { printf 'code_check: warning: %s: %s: %s\n' "$1" "$2" "$3"; return; }
+  fi
   printf 'code_check: %s: %s: %s\n' "$1" "$2" "$3"
   bad=1; count=$((count + 1))
 }
@@ -148,6 +164,9 @@ check_crate() { # CRATE_DIR
     *) root=$crate; domain="" ;;
   esac
   rel=${crate#"$root"/}; [ "$rel" = "$crate" ] && rel=$(basename "$crate")
+  variants=0; variant_warn=0
+  [ "$importing" -eq 0 ] && [ -f "$warn_list" ] &&
+    grep -qxF "$rel" <(sed -E 's/[[:space:]]+$//' "$warn_list" | grep -v '^#') && variant_warn=1
   allowed="$root/crates/clean_types"
   [ -n "$domain" ] && allowed="$allowed|$root/crates/clean_model/$domain"
 
@@ -182,6 +201,10 @@ check_crate() { # CRATE_DIR
   done < <(cd "$crate" && find src -type f -name '*.rs' ! -name tests.rs ! -path '*/tests/*' 2>/dev/null | sort |
     while IFS= read -r f; do printf '\001FILE %s\n' "${f#src/}"; awk -f "$here/strip_rust.awk" "$f"; done |
     awk -f "$here/shape_scan.awk")
+  if [ "$variant_warn" -eq 1 ] && [ "$variants" -eq 0 ]; then
+    variant_warn=0
+    hit "$rel" variant-import "listed in $(basename "$warn_list") with no variant import left: delete its line"
+  fi
 }
 
 for dir in "$@"; do

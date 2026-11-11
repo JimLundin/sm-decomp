@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use super::{Movie, Timeline, Track, percent, runs};
+use super::{GATE, Movie, Timeline, Track, percent, runs, seed_frame};
 
 fn root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
@@ -69,4 +69,32 @@ fn the_picture_regenerates_byte_identically() {
     assert_eq!(committed.replace("\r\n", "\n"), first.svg());
     // Nothing of the game: the picture holds counts, labels and the checks' names.
     assert!(!first.svg().contains("seed"));
+}
+
+#[test]
+fn the_milestone_counts_the_frames_whose_every_stream_is_green() {
+    let mut gate = Track::new(GATE.to_owned(), 6);
+    gate.cover((0, 2), 1000);
+    gate.cover((2, 2), 500);
+    gate.cover((4, 2), 1000);
+    let timeline = Timeline {
+        movies: vec![Movie {
+            key: String::from("any"),
+            category: String::from("any%"),
+            frames: 6,
+            rows: 1,
+            tracks: vec![gate],
+        }],
+        outside: (0, 0),
+    };
+    // Of the first five frames, the two whole ones and the first of the last two.
+    assert_eq!(timeline.green_from_start("any", 5), Some(("any%", 3)));
+    assert_eq!(timeline.green_from_start("100", 5), None);
+}
+
+#[test]
+fn a_seed_gives_its_movie_frame() {
+    assert_eq!(seed_frame(root(), "any", 12), Ok(15_428));
+    assert!(seed_frame(root(), "any", 100_000).is_err());
+    assert!(seed_frame(root(), "no-such-capture", 1).is_err());
 }

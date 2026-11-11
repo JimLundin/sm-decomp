@@ -29,9 +29,12 @@ engine's current code for your domain.
 4. **Vectors.** Take recorded ones from the records, naming the row and frame. Construct the
    cases no record reaches, and each switch's other variants. A vector holds RAM observations and
    invented content only (MODEL §1 decision 13): a case that needs the game's content is a harness
-   case, named in the decode notes. Done when every arm that says
-   `checked: oracle` has a vector, and every constructed vector's values are worked by hand from
-   the bank log.
+   case, named in the decode notes. Each entry whose switch is `Parameter` gets at least one
+   vector at a value other than the reference one: it names the entry and overrides the
+   reference rules in the vector's `rules` table, the form the vector file's header states.
+   Done when every arm that says `checked: oracle` has a vector, every constructed vector's
+   values are worked by hand from the bank log, and `tools/cleanroom/adjusted_vectors.sh --gate
+   <domain>` passes.
 5. **Reference model.** Write a small model of your spec (Python, in `$TEMP/collab/<lane>/`) and
    run it on every vector, and per frame over the cached records. Done when it agrees with every
    vector, and its agreement per frame beats a do-nothing model, with the counts stated.

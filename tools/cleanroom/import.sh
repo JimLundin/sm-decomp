@@ -6,7 +6,8 @@
 # `git am`, authorship and messages kept. Each must touch only the [import] paths of
 # allowlist.txt (the domain's clean crates), add no symlink or submodule, and carry the trailer
 # `Role: implementer`; otherwise nothing is applied. The export's crates must also pass
-# code_check.sh (no file, network, process or build-time reach), or nothing is applied. If BRANCH
+# code_check.sh --import (no file, network, process or build-time reach, and no variant import
+# even in a crate whose old ones still only warn on the trunk), or nothing is applied. If BRANCH
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
 # `Role: integrator`), so the patches
 # apply as they were made. Wiring the crates into the workspace is the integrator's next commit.
@@ -58,7 +59,7 @@ done
 checked=$(mktemp -d)
 trap 'rm -rf "$checked"' EXIT
 git_isolated "$dest" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
-bash "$cleanroom_dir/code_check.sh" "$checked" || die "code_check.sh refused the export's crates; nothing applied"
+bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh refused the export's crates; nothing applied"
 
 before=$(git rev-parse HEAD)
 missing=()

@@ -107,12 +107,14 @@ id = "E1"
 name = "Sprite drawing"
 wave = 1
 lanes = 2
+status = "in-progress"
 
 [[platform]]
 id = "E2"
 name = "Tile writes"
 wave = 1
 lanes = 3
+status = "in-progress"
 
 [[platform]]
 id = "A1"
@@ -120,7 +122,7 @@ name = "Instruction lists as assets"
 wave = 1
 lanes = 3
 
-# Wave 2
+# Wave 2: the engine past slice 0, toward the milestone: doors, rooms and the fight.
 
 [[domain]]
 id = "R1"
@@ -135,29 +137,23 @@ wave = 2
 rounds = 5
 
 [[domain]]
-id = "W3"
-name = "Items to pick up"
+id = "C1"
+name = "Fighting enemies"
+wave = 2
+rounds = 6
+
+[[domain]]
+id = "H1"
+name = "Energy, reserves and death"
 wave = 2
 rounds = 2
 
 [[domain]]
-id = "S3"
-name = "The shinespark and echoes"
+id = "S4"
+name = "Hurt and knockback, bomb jumps"
 wave = 2
 rounds = 2
 model = "samus-motion"
-
-[[domain]]
-id = "S6"
-name = "The grapple beam"
-wave = 2
-rounds = 3
-
-[[domain]]
-id = "H3"
-name = "Message boxes"
-wave = 2
-rounds = 2
 
 [[platform]]
 id = "R2"
@@ -165,32 +161,37 @@ name = "Room loading"
 wave = 2
 lanes = 4
 
-# Wave 3
+[[platform]]
+id = "A2"
+name = "Enemy and room importers"
+wave = 2
+lanes = 3
+
+[[platform]]
+id = "V2"
+name = "Whole-movie run: one free run from power-on, sparse then dense checkpoints"
+wave = 2
+lanes = 2
+
+# Wave 3: Ceres and the opening; the milestone closes with it.
 
 [[domain]]
-id = "C1"
-name = "Fighting enemies"
+id = "B8"
+name = "Ceres Ridley and the escape"
 wave = 3
-rounds = 6
+rounds = 4
 
 [[domain]]
-id = "S4"
-name = "Hurt and knockback, bomb jumps"
+id = "F2"
+name = "Title, intro, file select, options"
 wave = 3
-rounds = 2
-model = "samus-motion"
+rounds = 8
 
 [[domain]]
-id = "H1"
-name = "Energy, reserves and death"
+id = "F4"
+name = "Cinematics and credits"
 wave = 3
-rounds = 2
-
-[[domain]]
-id = "S7"
-name = "The x-ray scope"
-wave = 3
-rounds = 2
+rounds = 5
 
 [[domain]]
 id = "R3"
@@ -211,16 +212,10 @@ wave = 3
 rounds = 3
 
 [[domain]]
-id = "F3"
-name = "Game over"
+id = "U1"
+name = "Audio, the CPU side"
 wave = 3
-rounds = 1
-
-[[platform]]
-id = "A2"
-name = "Enemy and room importers"
-wave = 3
-lanes = 3
+rounds = 3
 
 [[platform]]
 id = "E3"
@@ -228,8 +223,33 @@ name = "The line program"
 wave = 3
 lanes = 3
 
-# Wave 4. domains.md estimates the enemy families at 25-30 rounds; B0, the phase tables, is
+[[platform]]
+id = "E4"
+name = "Mode 7 and mid-line writes"
+wave = 3
+lanes = 2
+
+[[platform]]
+id = "T1"
+name = "Slowdown and loading time"
+wave = 3
+lanes = 6
+
+# Wave 4: the movie's next stretches: items and their messages, the enemy families and the
+# bosses. domains.md estimates the enemy families at 25-30 rounds; B0, the phase tables, is
 # designed within B1 and B2.
+
+[[domain]]
+id = "W3"
+name = "Items to pick up"
+wave = 4
+rounds = 2
+
+[[domain]]
+id = "H3"
+name = "Message boxes"
+wave = 4
+rounds = 2
 
 [[domain]]
 id = "C2-C11"
@@ -280,12 +300,6 @@ wave = 4
 rounds = 3
 
 [[domain]]
-id = "B8"
-name = "Ceres Ridley and the escape"
-wave = 4
-rounds = 4
-
-[[domain]]
 id = "B9"
 name = "Ridley"
 wave = 4
@@ -297,40 +311,48 @@ name = "Mother Brain and the escape"
 wave = 4
 rounds = 8
 
-[[domain]]
-id = "F1"
-name = "The pause screen"
-wave = 4
-rounds = 5
-
-# Wave 5
+# Wave 5: the rest of Samus and the screens around play.
 
 [[domain]]
-id = "F2"
-name = "Title, intro, file select, options"
+id = "S3"
+name = "The shinespark and echoes"
 wave = 5
-rounds = 8
+rounds = 2
+model = "samus-motion"
 
 [[domain]]
-id = "F4"
-name = "Cinematics and credits"
-wave = 5
-rounds = 5
-
-[[domain]]
-id = "U1"
-name = "Audio, the CPU side"
+id = "S6"
+name = "The grapple beam"
 wave = 5
 rounds = 3
 
-[[platform]]
-id = "E4"
-name = "Mode 7 and mid-line writes"
+[[domain]]
+id = "S7"
+name = "The x-ray scope"
 wave = 5
-lanes = 2
+rounds = 2
 
-[[platform]]
-id = "T1"
-name = "Slowdown and loading time"
+[[domain]]
+id = "F1"
+name = "The pause screen"
 wave = 5
-lanes = 6
+rounds = 5
+
+[[domain]]
+id = "F3"
+name = "Game over"
+wave = 5
+rounds = 1
+
+# The headline milestone (MODEL §1 decision 14): the engine replays the any% movie from
+# power-on to the frame of its seed any:12, the first room on Zebes, with nothing fed back. The
+# plan items its stretch touches, from domains.md §4; Ceres's own enemies and objects are B8's.
+
+[milestone]
+name = "Power-on through Ceres"
+movie = "any"
+ends = "any:12"
+needs = [
+    "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "P2", "W1", "W2", "C1", "B8", "R1", "R3",
+    "R4", "F2", "F4", "U1", "E1", "E2", "E3", "E4", "A1", "A2", "R2", "T1", "V2",
+]

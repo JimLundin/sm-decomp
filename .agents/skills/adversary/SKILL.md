@@ -32,6 +32,9 @@ findings it resolves. For a re-gate, review the delta, and check each earlier fi
    the observer added to the scan's allow list. Done when every entry has been read for structure.
 4. **Form and units.** Every rule is an arm citing vectors that exist, with no padding. Run the
    official counter (`tools spec-units`) and check the decode notes' Budget section against it.
+   Every `Parameter` entry has a vector at a value other than the reference one
+   (`tools/cleanroom/adjusted_vectors.sh --gate <domain>`); re-derive a sample of those values
+   as you would a constructed vector's. A missing one stops the spec.
 5. **The brief** asks for what the spec supports and nothing more. It names spec entries and
    shape, and holds no score or measure. Done when each brief item is checked against the spec.
 6. **Verdict:** LAUNCH, LAUNCH AFTER FIXES, or REWORK.

@@ -143,11 +143,19 @@ fn coverage_parses() {
 fn the_plan_agrees_with_the_rebuilt_domains() {
     let rebuilt = BTreeSet::from(["camera"]);
     let plan = |domain: &str| {
-        format!("platform = []\n[[model]]\nname = \"camera\"\nrounds = 5\n[[domain]]\n{domain}")
+        format!(
+            "platform = []\n[[model]]\nname = \"camera\"\nrounds = 5\n[[domain]]\n{domain}\
+             [milestone]\nname = \"m\"\nmovie = \"any\"\nends = \"any:12\"\nneeds = [\"CAM\"]\n"
+        )
     };
     let parse = |domain: &str| Plan::parse(&plan(domain), &rebuilt).map(|_| ());
     let named = "id = \"CAM\"\nname = \"The camera\"\nwave = 0\nrounds = 1\n";
     assert_eq!(parse(named), Ok(()));
+    // The milestone needs plan items the plan holds, and ends at a seed.
+    let other = |from: &str, to: &str| Plan::parse(&plan(named).replace(from, to), &rebuilt);
+    assert!(other("[\"CAM\"]", "[\"CAM\", \"R1\"]").is_err());
+    assert!(other("any:12", "any").is_err());
+    assert!(other("any:12", "any:twelve").is_err());
     assert_eq!(
         parse(&format!(
             "{named}model = \"camera\"\nstatus = \"in-progress\"\n"

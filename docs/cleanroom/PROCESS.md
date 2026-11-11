@@ -63,6 +63,11 @@ Each step names its owner, what it waits for, and its done-condition.
 1. **Spec** (observer). Done when:
    - `docs/behaviours/<domain>.md` states every rule in arm form;
    - `scenarios/vectors/<domain>.toml` holds recorded and constructed vectors;
+   - each entry whose switch is `Parameter` has at least one vector at a value other than the
+     reference one: a vector that names the entry and overrides the reference rules (the
+     vector's `rules` table), so adjusting the behaviour is proven, not assumed.
+     `tools/cleanroom/adjusted_vectors.sh --gate <domain>` passes. A domain specced before this
+     rule meets it at its next spec round; until then the script's listing is advisory;
    - `docs/behaviours/<domain>.decode.md` holds the sources, the harness note and the Budget
      section;
    - the observer's reference model agrees with every vector;
@@ -72,9 +77,10 @@ Each step names its owner, what it waits for, and its done-condition.
    - names only spec entries and shape findings;
    - carries the runner command;
    - passes `tools/cleanroom/scan_brief.sh` with 0.
-3. **Spec gate** (adversary), after 1 and 2: it gates the spec and the brief together. Done on a
-   verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer
-   for the spec, the root for the brief), then a re-gate of the delta.
+3. **Spec gate** (adversary), after 1 and 2: it gates the spec and the brief together, and
+   refuses a spec whose `Parameter` entries lack an adjusted vector (`adjusted_vectors.sh
+   --gate`). Done on a verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their
+   owners (the observer for the spec, the root for the brief), then a re-gate of the delta.
 4. **Hold the spec** (root). A round lands as one commit (step 11), so the spec stays on the
    round's branch, a new domain's first spec as much as an amendment, and the round exports from
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
@@ -83,12 +89,14 @@ Each step names its owner, what it waits for, and its done-condition.
    on the round's branch, then `launch.sh`. Done on `LAUNCH OK` with a clean canary check.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
-7. **Import** (root): `import.sh` runs `code_check.sh`, applies the commits to a lane branch,
-   then runs both clippy configurations of `tools/lane/gate.sh` over every clean crate in the
-   workspace: an export holds one domain's model and `clean_types`, so a change to `clean_types`
-   can break a crate its implementer never saw. Done when the import passes. A refusal goes back
-   to the same implementer's export as a short follow-up session: the brief quotes each finding
-   (file, line, the rule it breaks) in the coding standards' words, and the import runs again.
+7. **Import** (root): `import.sh` runs `code_check.sh --import`, which refuses a variant import
+   (L4) even in a crate whose older ones still only warn on the trunk, applies the commits to a
+   lane branch, then runs both clippy configurations of `tools/lane/gate.sh` over every clean
+   crate in the workspace: an export holds one domain's model and `clean_types`, so a change to
+   `clean_types` can break a crate its implementer never saw. Done when the import passes. A
+   refusal goes back to the same implementer's export as a short follow-up session: the brief
+   quotes each finding (file, line, the rule it breaks) in the coding standards' words, and the
+   import runs again.
    A clippy failure names the crates and leaves the patches applied:
    - a **mechanical** fix (a parameter by value instead of by reference, a derive, `assert_eq!`
      for `assert!(a == b)`, an import path; no item's logic changed) is the root's own commit,
@@ -98,9 +106,9 @@ Each step names its owner, what it waits for, and its done-condition.
      wasn't needed, the broken crate's next round when it was;
    - an integrator never edits a clean crate. A fix it finds it needs is a finding for the root.
 8. **Blind review** (blind reviewer, confined), after 7. The root makes a code-only copy (the
-   model, its tests and the vector file) and launches the review. Done on its report. The root
-   compares the review's "what the code does" with the spec: where the reviewer misread the
-   code, the code doesn't explain itself.
+   model, its tests and the vector file) with `tools/cleanroom/blind_copy.sh EXPORT DEST` and
+   launches the review on it. Done on its report. The root compares the review's "what the code
+   does" with the spec: where the reviewer misread the code, the code doesn't explain itself.
 9. **Integrate** (integrator), after 7. Done when:
    - the engine runs the model through an adapter;
    - the honest harness compares it with the records, and its floors are committed;
@@ -126,7 +134,9 @@ Each step names its owner, what it waits for, and its done-condition.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
     in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
-    domain's `status` when its work starts or ends), and regenerates `docs/REPORT.md` and the
+    domain's `status` when its work starts or ends), deletes the crate's line from
+    `tools/cleanroom/variant_import_warn.txt` once the round left it no variant import (the
+    trunk's check refuses a listed crate with none), and regenerates `docs/REPORT.md` and the
     README's status (`tools report --write`). It rebases the branch onto `origin/main`, re-gates
     it, and runs `tools/lane/squash.sh SUBJECT BRANCH` in the landing worktree: one commit with
     the branch's tree on `origin/main`, its subject the root's, its body each part under its role
@@ -135,6 +145,8 @@ Each step names its owner, what it waits for, and its done-condition.
     checks ran on the branch's own commits at step 7; the round's branch keeps them. The squashed
     commit lands through `land.sh`, a fast-forward.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
+    So does every item two blind reads name, a zero-cost one (a name, a wrong doc, an
+    unreachable arm) included.
     The domain is done when the queue holds nothing that changes behaviour or shape enough to
     be worth a round.
 

@@ -35,6 +35,49 @@ need is in this repository; read nothing outside it.
   read where it lives, rather than copied forward or handed back by an accessor that adds
   nothing.
 
+## What the model checks, and what it leaves to others
+
+The model stays **total**: it doesn't refuse content or rules outside the spec, and every value
+its types admit gives an answer. Checking is placed by what is checked:
+
+- **A value the spec gives a range is a checked newtype.** Its constructor refuses a value
+  outside the range (a count of at most 99, a frame within a clip), and the rest of the model
+  then relies on it.
+- **Relations between fields and the shape of content are the importer's.** That a clip's marks
+  fall inside its frames, or that a table has a row for each screen, is checked where the game's
+  content is loaded into this format, outside this repository. The model doesn't check them
+  again, and its docs don't say they are checked.
+- **A trap inside the domain is closed by types.** A call the spec allows but that is easy to
+  get wrong gets a type that rules it out: two arguments of one type that a caller could swap
+  get a type each, or a struct whose fields name them; an `Option` or a sentinel value standing
+  for something the domain doesn't have (`contains(None)`, a number set aside to mean "none")
+  gives way to a type that holds only the domain's values.
+
+## Load-bearing versus incidental
+
+Some details of the game are behaviour, and some are only how its hardware held the behaviour.
+The spec states the first kind; the second is yours to replace.
+
+- **Load-bearing, kept exactly and stated:** a timer that wraps around, a borrow or carry
+  between a value's whole and sub-unit parts (pixels and subpixels), and the order in which a
+  frame's updates read each other's results. Each is a named behaviour where the spec names it,
+  and the code says where it happens.
+- **Incidental, replaced by the plain modern form:** storage widths (a quantity takes the type
+  it needs; a width matters only where the spec says a value wraps or stops at it), code
+  pointers and jump tables (an enum and a `match`), and hardware layouts (packed bits,
+  interleaved tables, one table indexed by another's position).
+
+## Names and docs
+
+- A doc cites a behaviour by its entry id (`LeadingHer`), the id the catalogue uses, and states
+  the rule in plain words. It never cites a section number of the spec, which moves when the
+  spec does.
+- A type has a `Default` only where the spec gives its default value (a new file, an empty
+  set). A stand-in for content a caller hasn't supplied gets a named constructor that says what
+  it is, never a `Default` that reads as real content.
+- One name means one thing in a crate: no type named like a variant of another enum or like
+  another type in another module, and no one word for two quantities.
+
 ## What the checks refuse
 
 Clippy here refuses more than one bool parameter, a block nested five deep (test code included),
@@ -63,6 +106,10 @@ is imported, so keep to them as you go:
 - No `allow` attribute at all; every `expect` gives a `reason`. Outside tests, no `expect` names
   a lint the workspace denies by name, a denied group or `warnings`; a lint denied only through
   a group (such as `struct_excessive_bools`) may be expected with its reason.
+- No `use` that imports an enum's variants outside tests (`use Kind::{A, B}`, `use Kind::*`):
+  write `Kind::A` where it is used, so a reader always sees which enum a name belongs to.
+  Crates written before this check may still hold such imports; when your work is imported
+  they are refused in every crate your workspace holds, so remove any you find.
 - No struct that only wraps one call's arguments (taken by one function, built only at its
   calls, with no methods).
 - Modules import in one direction only: no module reaches itself through the modules it imports,

@@ -1,0 +1,7 @@
+# The clean crates whose variant imports (L4, code_check.sh's `variant-import`) were written
+# before the rule: on the trunk code_check.sh prints them as warnings. Each crate's next
+# implementer round removes them, since the import (`code_check.sh --import`) refuses them in
+# every crate an export holds, and the root deletes the crate's line in that round's commit. A
+# listed crate with no variant import left is a finding, so a line can't outlive its sites.
+# One crate per line, as a path from the repository root.
+crates/clean_model/samus-motion

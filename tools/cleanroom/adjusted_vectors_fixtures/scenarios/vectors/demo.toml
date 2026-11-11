@@ -1,0 +1,20 @@
+# Vectors for adjusted_vectors_test.sh: Inline is adjusted by an inline table, Table by a
+# [vector.rules] table over entries on two lines, Missing only at the reference rules.
+
+[[vector]]
+id = "reference"
+entries = ["Inline", "Table", "Missing"]
+
+[[vector]]
+id = "inline"
+entries = ["Fixed", "Inline"]
+rules = { step = 3 }
+
+[[vector]]
+id = "table"
+entries = [
+  "Table",
+]
+
+[vector.rules]
+margin = 4

@@ -47,6 +47,10 @@ is wrong, not what code to write.
   [STATUS](../../../docs/STATUS.md) shows. CI runs the ratchet and the gate on every pull request.
 - A new check must catch a deliberate one-line bug: apply the mutant locally, confirm the check
   fails at the right frame and field, revert. Never commit the mutant.
+- **Fixing a failure.** Reproduce the exact failure (the same command, row, frame and field)
+  before a second fix attempt. Never stack speculative fixes: revert one that didn't fix it
+  before trying the next. The regression test asserts the property that was reported, not the
+  mechanism of the fix.
 
 **Triage a difference:** localise (the localiser's first frame and field group, then lockstep's
 field) → observer: find the writer in the bank log and amend the spec → implementer: fix the model

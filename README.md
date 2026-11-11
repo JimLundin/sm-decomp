@@ -13,6 +13,12 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 ## Where it stands
 
+| Milestone | Frames | The engine plays alone | Still needed |
+| --- | ---: | ---: | --- |
+| **Power-on through Ceres**, the any% movie from power-on | 15,428 | 0 (0.0 %) | 28 of 28: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, P2, W1, C1, B8, R1, R3, R4, F2, F4, U1, E3, E4, A1, A2, R2, T1, V2 (not started) |
+
+The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every stream the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
+
 Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **44 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
@@ -25,7 +31,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | S1, S2 (in progress); S3, S4 (not started) | in progress | 19 | 326 | 18,036 of 25,426 | 8,926 | 8,823 | 1.01 |
+| samus-motion | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 18,036 of 25,426 | 8,926 | 8,823 | 1.01 |
 | camera | CAM (in progress) | in progress | 6 | 83 | 20,513 of 25,426 | 1,839 | 1,762 | 1.04 |
 | progress | P1 (in progress) | in progress | 7 | 66 | 25,419 of 25,426 | 862 | 1,136 | 0.76 |
 | hud | H2 (in progress) | in progress | 5 | 84 | 20,615 of 24,230 | 2,695 | 2,112 | 1.28 |
@@ -40,10 +46,10 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 | --- | --- | --- | ---: | ---: |
 | 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3) | 2 of 2 | 2 |
 | 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); A1 Instruction lists as assets (3) | 5 of 5 | 15 |
-| 2 | R1 Doors and elevators; W1 Beams, missiles and bombs; W3 Items to pick up; S3 The shinespark and echoes; S6 The grapple beam; H3 Message boxes | R2 Room loading (4) | 0 of 6 | 20 |
-| 3 | C1 Fighting enemies; S4 Hurt and knockback, bomb jumps; H1 Energy, reserves and death; S7 The x-ray scope; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; F3 Game over | A2 Enemy and room importers (3); E3 The line program (3) | 0 of 8 | 23 |
-| 4 | C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B8 Ceres Ridley and the escape; B9 Ridley; B10 Mother Brain and the escape; F1 The pause screen | - | 0 of 12 | 71 |
-| 5 | F2 Title, intro, file select, options; F4 Cinematics and credits; U1 Audio, the CPU side | E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 0 of 3 | 16 |
+| 2 | R1 Doors and elevators; W1 Beams, missiles and bombs; C1 Fighting enemies; H1 Energy, reserves and death; S4 Hurt and knockback, bomb jumps | R2 Room loading (4); A2 Enemy and room importers (3); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 0 of 5 | 21 |
+| 3 | B8 Ceres Ridley and the escape; F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; U1 Audio, the CPU side | E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 0 of 7 | 30 |
+| 4 | W3 Items to pick up; H3 Message boxes; C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B9 Ridley; B10 Mother Brain and the escape | - | 0 of 12 | 66 |
+| 5 | S3 The shinespark and echoes; S6 The grapple beam; S7 The x-ray scope; F1 The pause screen; F3 Game over | - | 0 of 5 | 13 |
 
 ### The engine
 

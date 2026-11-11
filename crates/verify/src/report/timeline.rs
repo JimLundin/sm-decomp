@@ -96,6 +96,8 @@ struct Movie {
 
 /// How many of a movie's tracks every movie draws: the recorded and the cached.
 const ALWAYS_DRAWN: usize = 2;
+/// The free-run gate's track.
+const GATE: &str = "free-run gate: green streams";
 
 impl Movie {
     /// The tracks the picture draws: all of them, or, when the harnesses run none of the movie's
@@ -150,6 +152,18 @@ impl Track {
 fn per_mille(part: u64, whole: u64) -> u32 {
     let share = part.saturating_mul(u64::from(WHOLE)).checked_div(whole);
     u32::try_from(share.unwrap_or_default()).unwrap_or(WHOLE)
+}
+
+/// The movie frame of the seed `index` of `capture`.
+///
+/// # Errors
+///
+/// The path and the error when the capture's seeds can't be read or don't hold the seed.
+pub(super) fn seed_frame(root: &Path, capture: &str, index: u32) -> Result<usize, String> {
+    seed_frames(root, &BTreeSet::from([capture]))?
+        .get(&(capture.to_owned(), index))
+        .copied()
+        .ok_or_else(|| format!("{}{capture}{}: no seed {index}", SEEDS.0, SEEDS.1))
 }
 
 /// The movie frame of each capture's seed, by (capture, index).
@@ -208,12 +222,9 @@ fn movies(manifest: &Manifest, domains: &BTreeSet<&str>) -> Vec<Movie> {
                         .map(|domain| format!("{domain} model matches")),
                 )
                 .chain(
-                    [
-                        "free-run gate: green streams",
-                        "lockstep: Ticks fully equal",
-                    ]
-                    .into_iter()
-                    .map(str::to_owned),
+                    [GATE, "lockstep: Ticks fully equal"]
+                        .into_iter()
+                        .map(str::to_owned),
                 );
             Some(Movie {
                 key: key.to_owned(),
@@ -321,6 +332,21 @@ impl Timeline {
         }
         movies.retain(|movie| movie.rows > 0);
         Ok(Self { movies, outside })
+    }
+
+    /// The movie whose key is `movie`, if the lock cuts a row from it: its category, and of its
+    /// first `frames` frames, those inside a row whose every stream the free-run gate holds
+    /// green.
+    pub(super) fn green_from_start(&self, movie: &str, frames: usize) -> Option<(&str, usize)> {
+        let movie = self.movies.iter().find(|listed| listed.key == movie)?;
+        let gate = movie.tracks.iter().find(|track| track.label == GATE)?;
+        let green = gate
+            .cover
+            .iter()
+            .take(frames)
+            .filter(|&&cover| u32::from(cover) >= WHOLE)
+            .count();
+        Some((&movie.category, green))
     }
 
     /// The picture, as SVG text.
@@ -472,7 +498,7 @@ impl Timeline {
 }
 
 /// `part` of `whole` as a percentage to one place.
-fn percent(part: usize, whole: usize) -> String {
+pub(super) fn percent(part: usize, whole: usize) -> String {
     let tenths = part
         .saturating_mul(1000)
         .saturating_add(whole / 2)

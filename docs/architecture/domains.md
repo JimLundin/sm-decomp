@@ -15,9 +15,12 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
   plus 30-40 platform lanes (encoders, room loading, timing, renderer, audio backend, tooling).
   With 4-6 lanes in parallel at about 2.5 h a round it is 70-100 h of pipeline wall-clock in
   the best case. With review, Jim's gates and one-at-a-time landing, expect several weeks.
-- The order: finish Samus and the world she touches on the 32 cached rows, then doors (so the
-  engine runs past slice 0), then combat and enemies, bosses smallest first, menus and
-  cinematics last. Audio and slowdown run as separate tracks, each with a goal question for Jim.
+- The order is toward the headline milestone (MODEL §1 decision 14), the engine replaying a
+  whole movie alone, first power-on through Ceres (§4): finish Samus and the world she touches
+  on the 32 cached rows; then doors, rooms and the fight (so the engine runs past slice 0 and
+  through Ceres's rooms); then Ceres itself and the opening around it (Ceres Ridley and the
+  escape, the title, intro and file select, the cinematics, audio, Mode 7, slowdown and loading
+  time). Then the movie's next stretches: items, enemies and bosses; the rest last.
 
 ## 1. The engine today
 
@@ -205,6 +208,19 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | T1 | **Slowdown and loading time** (D9): the cost model that replaces recorded NMI timing | 6+ |
 | U1 | **Audio**: CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks; 3 rounds, `apu` stream and `apu_log` in every record); the driver: see risks | 3 rounds + ? |
 | V1 | Tooling: a domain free-run harness; RNG draws per consumer from `hits`; a compressed record cache tier | 3 |
+| V2 | The whole-movie run: the engine from power-on through a movie's inputs alone, compared at sparse checkpoints, then at dense ones over the range they narrow a divergence to | 2 |
+
+Two rules hold for the platform work whatever lane carries it:
+
+- **D16, the display snapshot.** What the renderers read (the Tick's intents, D16's view) is
+  latched at the boundary where the hardware latches the picture, the NMI's commit at the end of
+  the frame: a lag frame shows the previous snapshot, as the screen does. Rendering reads the
+  snapshot and never advances the game; drawing a frame twice, or at the host's own rate,
+  changes no State.
+- **T1, one coordinator of time.** One coordinator advances the game by whole original frames,
+  each with the lag the cost model gives it. A host that falls behind catches up by running
+  whole frames, at most a capped number per host frame, and drops the rest of the debt rather
+  than run ahead in a burst. Neither the renderer nor the audio backend advances the game.
 
 ### E1: where sprite drawing stands, and its second lane
 
@@ -314,6 +330,54 @@ pickup's resume (`plm::resume`'s open note).
 
 ## 4. Order
 
+The waves are ordered toward the **headline milestone** (MODEL §1 decision 14): the engine
+replays a whole movie from one start state with nothing fed back. The first target is power-on
+through Ceres: the any% movie from power-on to its frame 15,428, where seed `any:12` loads the
+first room on Zebes. A divergence is localised by sparse checkpoints over the run, then dense ones
+over the range they narrow it to.
+
+**What the stretch holds.** From the movies manifest, the any% movie's room seeds
+(`movies/room-seeds-any.csv`) and the lock:
+
+| Frames | What plays | Lock rows from the stretch |
+| --- | --- | --- |
+| 0-8,537 | power-on, boot, the title, the intro, file select and the new game, the flight to Ceres | none: the opening has no row of its own (`options-menu-tour` and `file-copy-clear` start from power-on in other recordings) |
+| 8,538-10,161 | Ceres's rooms one to five, down the elevator shaft and through its doors | `chain-any-0001-DF45` to `chain-any-0005-E06B`; the 100% movie's same frames (`chain-0001-DF45` to `chain-0005-E06B`, `area-ceres`, `door-transition`, `samus-input-poses`) |
+| 10,162-11,938 | Ceres Ridley's room: the fight, the baby taken, the escape's start | `chain-any-0006-E0B5`; from the 100% movie, `boss-ceres-ridley`, `boss-ceres-ridley-fireballs`, `samus-ceres-push` |
+| 11,939-13,071 | the escape back up through rooms five to two, with its timer, its Mode 7 room and its quakes | `chain-any-0007-E06B` to `chain-any-0010-DF8D` |
+| 13,072-15,427 | the elevator room, the ride up, the gunship's escape, the station's explosion and the flight to Zebes | none |
+
+The movie's rows cover its frames from 8,538 only by chain rows of one room each, so the
+milestone also needs the whole-movie run (V2) that strings them together and the opening that
+no row records.
+
+**What the milestone needs.** The plan items the stretch touches; Ceres's own enemies and objects
+(what moves in its rooms besides Samus and Ridley) go with B8, so no enemy
+family is needed:
+
+| Item | For |
+| --- | --- |
+| S1, S2, S4, S5 (samus-motion, samus-looks) | her motion everywhere, Ceres's pushes, Ridley's hits and her knockback, how she looks |
+| CAM | the view in every room |
+| W2 | the cells she touches, in every room the engine runs |
+| W1 | her power beam at Ridley |
+| C1, A2 | Ridley's contact with her and her shots' hits; the enemy importers |
+| H1, H2 | her energy as Ridley hurts her; the HUD, the escape's timer |
+| P1, P2 | Ceres's boss defeated; the save file the file select reads and the new game writes |
+| B8 | Ceres Ridley, the escape and Ceres's own objects |
+| R1, R2 | Ceres's doors and its elevator; loading each room |
+| R3, R4 | the escape's quakes; the rooms' palette and tile animation, where they have it |
+| F2, F4 | the title, intro and file select; the flight to Ceres, the station's explosion and the flight to Zebes |
+| U1 | the sound and music the `apu` stream records: the CPU side, and the driver MODEL §1 decision 9 rebuilds too |
+| E1, E2, E3, E4, A1 | sprites, tile writes, the line program (the HUD split and HDMA), Mode 7 (the cinematics and the tilted room), instruction lists as assets |
+| T1 | slowdown and loading time: with nothing fed back, the recorded NMI timing can't stand in |
+| V2 | the whole-movie run: one free run from power-on, compared at sparse checkpoints, then dense ones |
+
+Not needed for it: S3, S6, S7, W3, H3, F1, F3, the enemy families and the other bosses.
+`tools report` shows the milestone as the README's first row, from `[milestone]` in
+[domains.toml](domains.toml): the stretch's frames, how many the engine plays alone today and
+which of these items are not done.
+
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).
 
@@ -328,18 +392,23 @@ depends on has its model shape (decision 2).
 **Wave 1 (on the cached rows, 4-5 lanes):** S2 (4), S5 (3) with E1, H2 (2) with E2, W2 (5)
 with A1, P1 (1). About 15 rounds plus 8 platform lanes.
 
-**Wave 2:** R1 (6) with R2, W1 (5), W3 (2), S3 (2), S6 (3), H3 (2). This is where the engine
-first runs a chain row across a door: value jumps, since every later domain is then proven in
-the engine's free run on hundreds of chain rows, not only the harness. About 20 rounds.
+**Wave 2, the engine past slice 0, toward Ceres:** R1 (6) with R2, W1 (5), C1 (6) with A2, then
+H1 (2) and S4 (2) (camera C4 closes); V2, the whole-movie run. This is where the engine first
+runs a chain row across a door: value jumps, since every later domain is then proven in the
+engine's free run on hundreds of chain rows, not only the harness. About 21 rounds.
 
-**Wave 3:** C1 (6) with A2, then S4 (2) and H1 (2) (camera C4 closes), S7 (2), R3 (4), R4 (3)
-with E3, P2 (3), F3 (1). About 23 rounds.
+**Wave 3, Ceres and the opening; the milestone closes with it:** B8 (4), F2 (8), F4 (5), R3 (4),
+R4 (3) with E3, P2 (3), U1 (3); E4 and T1 alongside. F4's Ceres scenes come first; its ending
+and credits can wait for the movie's end. About 30 rounds.
 
-**Wave 4 (widest):** the enemy families C2-C11 (25-30), up to 6 in parallel; B1+B2 together to
-fix the phase table shape (5), then the other bosses in size order (B3-B10, 34); F1 (5).
-About 70 rounds.
+**Wave 4 (widest), the movie's next stretches:** W3 (2) and H3 (2), the first things after
+Ceres; the enemy families C2-C11 (25-30), up to 6 in parallel; B1+B2 together to fix the phase
+table shape (5), then the other bosses in size order (B3-B7, B9, B10, 30). An enemy species keeps
+its definition, its state, its AI and its animations together, in one place, as one family's
+member; its animations are typed programs (A1's instruction lists, in steps named by behaviour)
+checked against the ROM by the importer. About 66 rounds.
 
-**Wave 5:** F2 (8), F4 (5) with E4, U1, T1 continuing. About 15 rounds plus the tracks.
+**Wave 5:** S3 (2), S6 (3), S7 (2), F1 (5), F3 (1). About 13 rounds.
 
 **Total:** about 145 clean-room rounds and 30-40 platform lanes, against about 13 done so far
 (samus-motion's 12, the camera's 1). Units per round need to average about 30 (the camera did

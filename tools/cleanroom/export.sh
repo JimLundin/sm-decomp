@@ -101,7 +101,16 @@ $enum_tables" "$vector_parser"
 {
   printf '[workspace]\nresolver = "3"\nexclude = ["vendor"]\n'
   printf 'members = ["crates/clean_types", "crates/clean_model/%s"]\n\n' "$domain"
-  git show "$sha:Cargo.toml" | sed -n '/^\[workspace\.lints\.rust\]/,/^\[profile/p' | sed '$d'
+  # The lint sections alone. A comment after their last line heads the next section (the
+  # release profile's), which the export doesn't have, so it goes too.
+  git show "$sha:Cargo.toml" | awk '
+    /^\[/ { on = ($0 ~ /^\[workspace\.lints\./) }
+    on { kept[++n] = $0 }
+    END {
+      while (n > 0 && kept[n] ~ /^[ \t]*(#.*)?$/) n--
+      for (i = 1; i <= n; i++) print kept[i]
+      print ""
+    }'
   # The registry crates whose build scripts can't run here, patched as the root manifest does.
   git show "$sha:Cargo.toml" | awk '/^\[/ { on = ($0 == "[patch.crates-io]") } on'
 } >"$dest/Cargo.toml"

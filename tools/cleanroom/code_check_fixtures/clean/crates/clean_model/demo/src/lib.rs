@@ -3,7 +3,14 @@ use clean_types::Speed;
 use std::fmt::Write as _;
 use std::io::Write;
 use std::collections::{BTreeMap, HashMap};
+/// A group holding only `self` imports the enum itself, not its variants (L4).
+use clean_types::Kind::{self};
 mod shapes;
+
+/// A precise capture names lifetimes, not variants.
+pub fn speeds<'a>(s: &'a [Speed]) -> impl Iterator<Item = &'a Speed> + use<'a> {
+    s.iter()
+}
 
 /* a block comment with std::net::TcpStream and include_bytes!("x") */
 pub fn label(s: &Speed) -> String {
@@ -89,6 +96,8 @@ pub fn tile(x: u16, t: (u8, u8, u8), g: [u16; 3]) -> u16 {
 
 #[cfg(test)]
 mod tests {
+    // Test code may import variants (L4).
+    use clean_types::Kind::{A, B};
     #[test]
     #[expect(clippy::arithmetic_side_effects, reason = "test arithmetic")]
     fn sizes() {

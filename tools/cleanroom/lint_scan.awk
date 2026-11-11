@@ -17,6 +17,10 @@
 #                with no binding included, `=>` and a data value naming no
 #                local; a key's own number is still refused), an array length (`[T; N]`,
 #                `[x; N]`) and a tuple field (`.2`).
+# variant-import (L4) a `use` outside test code that imports an enum's variants: `use Kind::A`,
+#                `use Kind::{A, B}` or `use Kind::*`, at any depth of a use tree. A capitalised
+#                segment followed by `::` names a type, and a variant is all a `use` can take
+#                from one. A group holding only `self` imports the enum itself and passes.
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
 function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = NR }
 BEGIN {
@@ -294,6 +298,31 @@ function lint_attr(a, b, intest,   k, e, m, lint, why) {
     k = e - 1
   }
 }
+# The variant imports of the `use` at a, each a finding: the enum's name and what it takes.
+function variant_imports(a,   e, k, t, g, m, d, names) {
+  e = a
+  while (e <= n && !(kind[e] == "punct" && text[e] == ";")) {
+    if (kind[e] == "open") { e = after_group(e); continue }
+    e++
+  }
+  for (k = a + 1; k < e; k++) {
+    if (kind[k] != "word" || text[k] !~ /^[A-Z]/ || text[k] == "Self" || text[k + 1] != "::") continue
+    t = k + 2; names = ""
+    if (text[t] == "*") names = "*"
+    else if (kind[t] == "word") names = text[t]
+    else if (kind[t] == "open" && text[t] == "{") {
+      g = after_group(t); d = 0
+      for (m = t + 1; m < g - 1; m++) {
+        if (kind[m] == "open") { d++; continue }
+        if (kind[m] == "close") { d--; continue }
+        if (d || kind[m] != "word" || text[m] == "self" || text[m] == "as" || text[m - 1] == "as") continue
+        names = names (names == "" ? "" : ", ") text[m]
+      }
+      if (names != "") names = "{" names "}"
+    }
+    if (names != "") printf "variant-import\tline %d: %s::%s (name a variant through its enum)\n", lineof[k], text[k], names
+  }
+}
 function zero_or_one(t,   v) {
   v = t; gsub(/_/, "", v)
   if (v ~ /^0[xob]/) { v = substr(v, 3); sub(/[iu](8|16|32|64|128|size)$/, "", v); return v ~ /^0*1?$/ && v != "" }
@@ -337,6 +366,7 @@ END {
       lint_attr(a, e, test || region[a] == "test")
       a = e - 1; continue
     }
+    if (!test && region[a] != "test" && kind[a] == "word" && text[a] == "use" && text[a + 1] != "<") variant_imports(a)
     if (test || region[a] != "logic" || kind[a] != "num" || zero_or_one(text[a])) continue
     if (text[a - 1] == ";" && text[a + 1] == "]") continue
     printf "magic-literal\tline %d: %s\n", lineof[a], text[a]

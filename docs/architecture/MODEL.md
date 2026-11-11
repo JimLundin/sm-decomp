@@ -130,6 +130,26 @@ Jim's decisions, 2026-11-09:
     constructed vector over invented content carries the rule. Each domain's next observer pass
     converts its recorded vectors that carry real content.
 
+Jim's decisions, 2026-11-11:
+
+14. **The headline milestone is whole-movie acceptance.** The engine replays a whole movie from
+    one start state with nothing fed back: no re-seeding, no recorded state or timing from the
+    oracle, only the movie's inputs, and every compared cut and output byte matches. The first
+    target is power-on through Ceres: the any% movie from power-on to the frame it reaches
+    Zebes. A divergence is localised by sparse checkpoints over the whole run, then dense ones
+    over the range they narrow it to. The harnesses, the free-run gate's rows and lockstep serve
+    this milestone; the plan's waves are ordered toward it
+    ([domains.md §4](domains.md#4-order)), and `tools report` shows it as the first row of the
+    README's status, from the milestone in [domains.toml](domains.toml).
+15. **A model stays total; content is checked at the edge.** A model doesn't refuse content or
+    rules outside its spec. A value with a range the spec gives is a checked newtype; relations
+    between fields and the shape of content are checked by the importer, outside the clean
+    room; a trap inside the domain is closed by types. The wording is in
+    [DESIGN](../cleanroom/DESIGN.md#what-the-model-checks-and-what-it-leaves-to-others).
+16. **Each adjustable behaviour proves it can be adjusted.** Every catalogue entry whose switch
+    is `Parameter` has at least one vector at a value other than the reference one; the spec
+    gate requires it ([PROCESS](../cleanroom/PROCESS.md#a-round), steps 1 and 3).
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our
@@ -373,8 +393,8 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   samus-motion, at `c7f927ab6`) per unit of the official `tools spec-units` count (193.3), times
   0.55, is 37.47, and k is 37.5, to one decimal. The decode notes' Budget section states the
   value and its inputs (decision 10); it is then frozen, and every domain's budget uses it.
-- **Two lints close what no weight can** (Jim, 2026-11-07), as `tools/cleanroom/code_check.sh`
-  tags on the clean crates:
+- **Three lints close what no weight can** (Jim, 2026-11-07; L4, 2026-11-11), as
+  `tools/cleanroom/code_check.sh` tags on the clean crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
     `#[expect]` carries a `reason = "..."` (`allow_attributes_without_reason` is denied too).
     Outside test code, no attribute may expect, allow or warn a lint that `[workspace.lints]`
@@ -392,6 +412,14 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     discriminants, array lengths in types), in an array length `[x; N]`, as a tuple field
     (`.2`), in attributes and in test code. Every number traces to a named constant, a `Rules`
     field or a behaviour.
+  - **L4, `variant-import`.** No `use` of an enum's variants outside test code (`use
+    Kind::{A, B}`, `use Kind::*`, at any depth of a use tree): a variant is named through its
+    enum, so a reader sees which enum a bare name belongs to. A score weight would have priced
+    the import instead, and moved every fit for one domain's habit. Crates that held imports
+    when the rule came are listed in `tools/cleanroom/variant_import_warn.txt`: on the trunk
+    their sites are warnings, the import (`code_check.sh --import`) refuses them in every crate
+    an export holds from that crate's next implementer round on, and a listed crate with none
+    left is a finding, so its line goes with the round.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once
@@ -588,6 +616,8 @@ function named after a routine is a review stop.
 
 Measured first (review R9; a raw behaviour count is easy to inflate by splitting entries, so it
 isn't a goal):
+- the headline milestone (§1 decision 14): of its stretch's frames, how many the engine plays
+  alone, and the plan domains it still needs;
 - the domains that meet §4's definition of done;
 - for each domain, its oracle-checked entries out of its total;
 - for each domain, the RAM-shape list (§5) and its size against budget.

@@ -24,7 +24,8 @@ indexing_slicing = "deny"
 arithmetic_side_effects = "deny"
 as_conversions = "deny"
 unreachable = "deny"
-# Off until a clippy.toml sets its threshold: the clean crates' (tools/cleanroom/clippy.toml, G5).
+# It has no effect until a clippy.toml sets its threshold, as the clean crates' clippy.toml does
+# (G5): elsewhere nesting is left to review.
 excessive_nesting = "deny"
 todo = "deny"
 unimplemented = "deny"

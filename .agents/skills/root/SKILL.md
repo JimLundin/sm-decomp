@@ -63,6 +63,12 @@ For the two confined roles, the brief is also part of the barrier:
   would get there ("a value decided before", "an enum of its cases", "no snapshot"). A named
   device is followed even where it costs more than what it replaces: two cut rounds grew this
   way. The round's largest lever, when a gate names one, leads the brief.
+- **What two blind reads name goes in.** An item named by two blind reads goes into the
+  domain's next brief as an outcome, a zero-cost one (a rename, a wrong doc, an unreachable arm)
+  included: nothing else carries those. An item one read names is optional.
+- **Interface a brief adds is named.** An outcome that adds interface (a constructor, a
+  `Default`, a new public type) says so in the brief, and you check the next blind read for
+  it: a trap the new interface made shows there first.
 - **Scanned.** `tools/cleanroom/scan_brief.sh BRIEF` reports 0 before `launch.sh` takes it.
 
 ## The confined sessions
@@ -81,9 +87,11 @@ From a checkout of `main`:
    Send anything that changes an item's logic back to an implementer
    ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7).
 
-The blind review uses the same launch, on a code-only copy: the model crate, its tests, the
-vector file and the [blind-reviewer](../blind-reviewer/SKILL.md) skill. Leave out the spec, the
-design notes and `CLEANROOM.md`. Its brief is one line: load that skill.
+The blind review uses the same launch, on a code-only copy that
+`bash tools/cleanroom/blind_copy.sh EXPORT DEST` makes from the round's export: the model crate,
+its tests, the vector file and the [blind-reviewer](../blind-reviewer/SKILL.md) skill, without
+the spec, the design notes, `CLEANROOM.md` or a test that reads them. Its brief is one line: load
+that skill.
 
 ## Landing
 

@@ -2,6 +2,10 @@
 //! the tree already holds (Jim, 2026-11-10: the README shows where the project is, and can't go
 //! stale).
 //!
+//! The headline milestone (MODEL §1 decision 14) comes first: its stretch of a movie from
+//! power-on, how much of it the engine plays alone today and the plan items it still needs, from
+//! the plan's `[milestone]`, the movie's seeds and the free-run gate's green pairs.
+//!
 //! The plan's domains, their waves and the rounds landed are [`PLAN`]; the models' vectors, harness
 //! frames, scores and budgets are the report's own measures; the verification state is the
 //! free-run gate's green pairs ([`GREEN`]), the lockstep ratchet ([`LOCKSTEP`]) and the lock
@@ -13,6 +17,7 @@ use std::path::Path;
 
 use serde::Deserialize;
 
+use super::timeline::{percent, seed_frame};
 use super::{COMMAND, Tree, fit, grouped, or_dash, read, table};
 use crate::gate::Ratchet;
 use crate::lock::{Lock, RowId};
@@ -34,6 +39,33 @@ pub(super) struct Plan {
     model: Vec<Model>,
     domain: Vec<PlanDomain>,
     platform: Vec<Platform>,
+    milestone: Milestone,
+}
+
+/// The headline milestone: a stretch of a movie, from power-on, that the engine is to replay
+/// alone, and the plan items it needs.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Milestone {
+    /// What the README calls it.
+    name: String,
+    /// The movie: the key of a movie of `movies/manifest.toml`, its file name's word after
+    /// `super-metroid-`.
+    movie: String,
+    /// The seed whose movie frame ends the stretch, `CAPTURE:INDEX`: the first room past it.
+    ends: String,
+    /// The plan ids of the domains and platform work the stretch needs.
+    needs: Vec<String>,
+}
+
+impl Milestone {
+    /// The seed that ends the stretch: its capture and index.
+    fn end(&self) -> Result<(&str, u32), String> {
+        self.ends
+            .split_once(':')
+            .and_then(|(capture, index)| Some((capture, index.parse().ok()?)))
+            .ok_or_else(|| format!("{PLAN}: milestone ends `{}`, not CAPTURE:INDEX", self.ends))
+    }
 }
 
 /// A clean-room model crate and the rounds landed on it.
@@ -67,6 +99,8 @@ struct Platform {
     name: String,
     wave: u8,
     lanes: usize,
+    #[serde(default)]
+    status: Stage,
 }
 
 /// How far a domain's work has come.
@@ -118,7 +152,32 @@ impl Plan {
                 (Some(_) | None, _) => {}
             }
         }
+        plan.milestone.end()?;
+        if let Some(need) = plan
+            .milestone
+            .needs
+            .iter()
+            .find(|need| plan.stage_of(need).is_none())
+        {
+            return Err(format!(
+                "{PLAN}: the milestone needs {need}, which the plan lacks"
+            ));
+        }
         Ok(plan)
+    }
+
+    /// The stage of the domain or platform work whose plan id is `id`.
+    fn stage_of(&self, id: &str) -> Option<Stage> {
+        self.domain
+            .iter()
+            .map(|domain| (&domain.id, domain.status))
+            .chain(
+                self.platform
+                    .iter()
+                    .map(|platform| (&platform.id, platform.status)),
+            )
+            .find(|(listed, _)| *listed == id)
+            .map(|(_, stage)| stage)
     }
 
     /// The plan's domains a model holds.
@@ -163,13 +222,13 @@ impl Plan {
     }
 }
 
-/// The ids of `domains`, grouped by stage: "S1, S2 (in progress); S3 (not started)".
-fn ids_by_stage<'a>(domains: impl Iterator<Item = &'a PlanDomain>) -> String {
+/// The plan ids of `items`, grouped by stage: "S1, S2 (in progress); S3 (not started)".
+fn ids_by_stage<'a>(items: impl Iterator<Item = (&'a str, Stage)>) -> String {
     let mut groups: Vec<(Stage, Vec<&str>)> = Vec::new();
-    for domain in domains {
-        match groups.iter_mut().find(|(stage, _)| *stage == domain.status) {
-            Some((_, ids)) => ids.push(&domain.id),
-            None => groups.push((domain.status, vec![&domain.id])),
+    for (id, status) in items {
+        match groups.iter_mut().find(|(stage, _)| *stage == status) {
+            Some((_, ids)) => ids.push(id),
+            None => groups.push((status, vec![id])),
         }
     }
     groups
@@ -197,6 +256,8 @@ pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
         "\n<!-- Generated with docs/REPORT.md by `{COMMAND}` (verify::report) from the tree; \
          `tools/check_report.sh` fails when it is stale. Never edit it by hand. -->\n"
     );
+    out.push_str("\n## Where it stands\n");
+    milestone(&mut out, root, &plan, tree)?;
     headline(&mut out, &plan);
     let _ = write!(
         out,
@@ -217,12 +278,67 @@ pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
     Ok(out)
 }
 
+/// The milestone's row: its stretch's frames, those the engine plays alone today and the plan
+/// items still needed, by stage.
+fn milestone(out: &mut String, root: &Path, plan: &Plan, tree: &Tree) -> Result<(), String> {
+    let milestone = &plan.milestone;
+    let (capture, index) = milestone.end()?;
+    let frames = seed_frame(root, capture, index)?;
+    let (category, alone) = tree
+        .timeline
+        .green_from_start(&milestone.movie, frames)
+        .ok_or_else(|| {
+            format!(
+                "{PLAN}: the milestone's movie {} has no row of the lock",
+                milestone.movie
+            )
+        })?;
+    let needed: Vec<(&str, Stage)> = milestone
+        .needs
+        .iter()
+        .filter_map(|need| Some((need.as_str(), plan.stage_of(need)?)))
+        .filter(|(_, stage)| *stage != Stage::Done)
+        .collect();
+    let still = if needed.is_empty() {
+        String::from("nothing")
+    } else {
+        format!(
+            "{} of {}: {}",
+            needed.len(),
+            milestone.needs.len(),
+            ids_by_stage(needed.iter().copied())
+        )
+    };
+    // The last column is text, so it is aligned left as the first is.
+    out.push_str(
+        "\n| Milestone | Frames | The engine plays alone | Still needed |\n\
+         | --- | ---: | ---: | --- |\n",
+    );
+    let _ = writeln!(
+        out,
+        "| **{}**, the {category} movie from power-on | {} | {} ({}) | {still} |",
+        milestone.name,
+        grouped(frames),
+        grouped(alone),
+        percent(alone, frames),
+    );
+    out.push_str(
+        "\nThe headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), \
+         decision 14): the engine replays the stretch from power-on with nothing fed back, every \
+         compared cut and byte matching. Until it does, the frames it plays alone are those \
+         inside the movie's rows whose every stream the free-run gate holds green, each row run \
+         from its own seed. Still needed are the plan's domains and platform work the stretch \
+         touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.\n",
+    );
+    Ok(())
+}
+
 fn headline(out: &mut String, plan: &Plan) {
     let landed: usize = plan.model.iter().map(|model| model.rounds).sum();
     let planned: usize = plan.domain.iter().map(|domain| domain.rounds).sum();
     let _ = write!(
         out,
-        "\n## Where it stands\n\nOf the {} clean-room domains in the \
+        "\nOf the {} clean-room domains in the \
          [whole-game plan](docs/architecture/domains.md), **{} are in progress** and **{} done**; \
          {} have not started. **{} rounds** have landed on {} models; the plan estimates {} rounds \
          for the whole game.\n",
@@ -272,7 +388,10 @@ fn models(out: &mut String, plan: &Plan, tree: &Tree) {
         let _ = writeln!(
             out,
             "| {name} | {} | {} | {} | {} | {frames} | {} | {} | {} |",
-            ids_by_stage(plan.holding(name)),
+            ids_by_stage(
+                plan.holding(name)
+                    .map(|domain| (domain.id.as_str(), domain.status))
+            ),
             plan.stage(name).label(),
             grouped(plan.rounds(name)),
             grouped(domain.vectors),
