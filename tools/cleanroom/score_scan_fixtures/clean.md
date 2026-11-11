@@ -8,3 +8,4 @@ The baseband, the buddy, a gadget, the keyboard and a weighted die mean nothing 
 Old coding habits, the old cod, the code's age: none of these is the old engine's size.
 Tokens of a lexer, a token's span, a weight she carries and the depth of a pool.
 Q3 and Q10 are neither of the two terms, and k is a name: `k = speed`.
+The pose fits the area, a shared step runs once, a duplicated tile repeats and she weighs in.

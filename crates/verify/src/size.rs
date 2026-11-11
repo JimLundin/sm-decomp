@@ -10,20 +10,25 @@
 //! parameters, which the old engine read from the ROM and the new one states (Jim, 2026-11-07).
 //! A value is data only while it is built from literals, paths, tuples, arrays, struct literals
 //! and calls whose arguments are data; anything else (control flow, a closure, a method call,
-//! an operator) holds behaviour and is logic all the same.
+//! an operator) holds behaviour and is logic all the same. An exhaustive lookup is data too
+//! (Jim, 2026-11-11): the arms of a guard-free `match` from variants, constants or literals to
+//! data values, and the rows of `enum_map!`, are tables whose members the compiler checks.
 //!
 //! The size rule is held on one weighted score of the logic (Jim, 2026-11-07), so that a lower
 //! score means better code. Forms that hold no behaviour weigh nothing: `use` items, `mod`
-//! declarations, a trailing comma before a closing bracket and the forced `const` of a
-//! `const fn`; a constant's head (`const NAME: T =` and its `;`) is counted with the types. A
-//! function signature weighs half, so a named step costs less than its body inlined twice.
-//! `true` and `false` weigh double: flag-style code that a typed state replaces. Every other
-//! logic token weighs one.
+//! declarations, visibility (`pub`, `pub(crate)`), an `impl` header, a trailing comma before a
+//! closing bracket and the forced `const` of a `const fn`; a constant's head (`const NAME: T =`
+//! and its `;`) is counted with the types. A function signature weighs half, so a named step
+//! costs less than its body inlined twice. `true` and `false` weigh double: flag-style code that
+//! a typed state replaces. Every other logic token weighs one.
 //!
-//! Two quality terms compose with the weights (Jim, 2026-11-07; `quality` states them). Depth
-//! (Q1): a token `d` blocks deep weighs `1 + 0.25 × d` times its weight, so nested decisions cost
-//! more than a flat dispatch. Clumps (Q2): values that travel together and want a type pay where
-//! they recur, in signatures and at call sites, over all the paths of one run.
+//! Two quality terms compose with the weights (`quality` states them). Depth (Q1, Jim,
+//! 2026-11-07): a token `d` blocks deep weighs `1 + 0.25 × d` times its weight, so nested
+//! decisions cost more than a flat dispatch. Duplication (Jim, 2026-11-11): a run of logic in a
+//! function body that repeats one seen before, local names aside, pays its tokens again, so a
+//! decision written twice costs more than one shared step. Clumps (Q2), values that travel
+//! together without a type, are reported beside the score as a diagnostic and weigh nothing in
+//! it.
 
 mod quality;
 
@@ -248,8 +253,10 @@ const TEST_ATTRIBUTE: [Token<'static>; 7] = [
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Weight {
     /// A form that holds no behaviour, so trading it costs nothing: a `use` item, a `mod`
-    /// declaration, a trailing comma before a closing bracket (rustfmt's), the `const` of a
-    /// `const fn` (`missing_const_for_fn` forces it).
+    /// declaration, visibility (`pub`, `pub(crate)`: widening or narrowing it changes no
+    /// behaviour), an `impl` header up to its body's `{` (no behaviour can live there), a
+    /// trailing comma before a closing bracket (rustfmt's), the `const` of a `const fn`
+    /// (`missing_const_for_fn` forces it).
     Free,
     /// A function signature, from `fn` to its body's `{`: a named step's price.
     Half,
@@ -314,7 +321,9 @@ pub struct Size {
     pub score: Score,
     /// The part of the score that depth adds (Q1).
     pub depth: Score,
-    /// The part of the score that clumps add (Q2).
+    /// The part of the score that duplication adds: each repeated token once more, at its depth.
+    pub duplication: Score,
+    /// What clumps (Q2) would add: a diagnostic, not part of the score.
     pub clumps: Score,
     /// Every counted token that is neither a declaration nor a constant's or a static's value.
     pub logic: usize,
@@ -332,6 +341,7 @@ impl Size {
         Self {
             score: self.score.add(other.score),
             depth: self.depth.add(other.depth),
+            duplication: self.duplication.add(other.duplication),
             clumps: self.clumps.add(other.clumps),
             logic: self.logic.saturating_add(other.logic),
             types: self.types.saturating_add(other.types),
@@ -344,7 +354,7 @@ impl Size {
         match class {
             Class::Logic(weight) => {
                 let quarters = context.depth.saturating_add(4);
-                // A parameter in a clump (Q2) loses the signature's half.
+                // A parameter in a clump (Q2) would lose the signature's half.
                 let clump = if context.clump && weight == Weight::Half {
                     Score::of(
                         Weight::Single
@@ -355,12 +365,19 @@ impl Size {
                 } else {
                     Score::default()
                 };
+                // A repeated token is paid again at one token, at its depth.
+                let again = if context.repeated {
+                    Score::of(Weight::Single.halves(), quarters)
+                } else {
+                    Score::default()
+                };
                 Self {
                     score: self
                         .score
                         .add(Score::of(weight.halves(), quarters))
-                        .add(clump),
+                        .add(again),
                     depth: self.depth.add(Score::of(weight.halves(), context.depth)),
+                    duplication: self.duplication.add(again),
                     clumps: self.clumps.add(clump),
                     logic: self.logic.saturating_add(1),
                     ..self
@@ -378,11 +395,10 @@ impl Size {
         }
     }
 
-    /// The size with `tokens` more paid again for a repeated argument pair (Q2), at one each.
+    /// The size with `tokens` more that a repeated argument pair (Q2) would pay, at one each.
     const fn repeated(self, tokens: usize) -> Self {
         let again = Score::of(Weight::Single.halves().saturating_mul(tokens), 4);
         Self {
-            score: self.score.add(again),
             clumps: self.clumps.add(again),
             ..self
         }
@@ -471,13 +487,18 @@ fn without_tests<'a>(lexed: &[(Token<'a>, Range<usize>)]) -> Vec<(Token<'a>, Ran
 
 /// One class for each token: the values of item-level constants and statics as data unless
 /// they hold behaviour, declarations as types, each logic token weighed and each closing bracket
-/// uncounted.
+/// uncounted. Lookups are left as logic; [`lookups`] turns their arms into data.
 fn classify(tokens: &[Token<'_>], out: &mut Vec<Class>) {
     let mut rest = tokens;
     let mut previous = None;
     // How many tokens are left once the last signature reaches its body or its `;`.
     let mut signature_end = None;
+    // How many tokens are left once the last visibility or `impl` header ends.
+    let mut free_end = None;
     while let Some((&token, tail)) = rest.split_first() {
+        if free_end.is_none_or(|end| rest.len() <= end) {
+            free_end = free_span(token, tail, previous);
+        }
         if let Some(after) = free_item(rest, previous, out) {
             previous = before(rest, after).last().copied();
             rest = after;
@@ -502,12 +523,35 @@ fn classify(tokens: &[Token<'_>], out: &mut Vec<Class>) {
         }
         out.push(if token == Token::Close {
             Class::Uncounted
+        } else if free_end.is_some_and(|end| rest.len() > end) {
+            Class::Logic(Weight::Free)
         } else {
             let in_signature = signature_end.is_some_and(|end| rest.len() > end);
             Class::Logic(weight(token, tail.first(), in_signature))
         });
         previous = Some(token);
         rest = tail;
+    }
+}
+
+/// How many tokens are left after the form that holds no behaviour starting at `token`, whose
+/// item `previous` ended, if one starts there: a visibility (`pub`, `pub(crate)`) or an `impl`
+/// header through its body's `{`. `tail` follows `token`.
+fn free_span(token: Token<'_>, tail: &[Token<'_>], previous: Option<Token<'_>>) -> Option<usize> {
+    match token {
+        Token::Word("pub") => Some(match tail.first() {
+            Some(Token::Open('(')) => after_group(tail).len(),
+            _ => tail.len(),
+        }),
+        // An `impl` in a type (`-> impl Iterator`, `&mut impl World`) stands after no item.
+        Token::Word("impl") if ends_item(previous) && previous != Some(Token::Word("mut")) => Some(
+            signature_body(tail)
+                .split_first()
+                .map_or(0, |(_, body)| body.len()),
+        ),
+        Token::Open(_) | Token::Close | Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {
+            None
+        }
     }
 }
 
@@ -641,6 +685,158 @@ const KEYWORDS: &[&str] = &[
 /// operator are logic, wherever they stand.
 fn holds_behaviour(value: &[Token<'_>]) -> bool {
     after_data(value) != Some(&[])
+}
+
+/// Turns the arms of each exhaustive lookup among `tokens` into data (Jim, 2026-11-11): a table
+/// the compiler checks for a missing or repeated member is data as a constant's rows are. A
+/// lookup is a `match` that [`lookup_arms`] accepts or an `enum_map!` that [`lookup_rows`]
+/// accepts. The `match`, its scrutinee and its braces, and the macro's name and brackets, stay
+/// logic. `code_check.sh`'s L2 (`lint_scan.awk`) exempts the same values from the
+/// magic-literal rule, but not a pattern's literals: a key that is a number is still named.
+fn lookups(tokens: &[Token<'_>], classes: &mut [Class]) {
+    for (at, pair) in tokens.windows(2).enumerate() {
+        if !matches!(classes.get(at), Some(Class::Logic(_))) {
+            continue;
+        }
+        let arms = match pair {
+            [Token::Word("match"), _] => lookup_arms(tokens, at),
+            [Token::Word("enum_map"), Token::Punct("!")] => lookup_rows(tokens, at),
+            _ => None,
+        };
+        for class in arms
+            .and_then(|arms| classes.get_mut(arms))
+            .into_iter()
+            .flatten()
+        {
+            if matches!(class, Class::Logic(_)) {
+                *class = Class::Data;
+            }
+        }
+    }
+}
+
+/// The arms of the `match` at `at`, if it is a lookup: two or more arms, each a
+/// [`lookup_pattern`] with no guard, then `=>` and a [`lookup_value`] that is no block. A guard,
+/// a binding or a block arm keeps a decision in the arm, so the whole `match` stays logic.
+fn lookup_arms(tokens: &[Token<'_>], at: usize) -> Option<Range<usize>> {
+    let scrutinee = tokens.get(at.saturating_add(1)..)?;
+    let open = tokens.len().saturating_sub(scrutinee.len()).saturating_add(
+        top_level(scrutinee)
+            .find(|&(_, t)| t == Token::Open('{'))?
+            .0,
+    );
+    let arms = open.saturating_add(1)..group_end(tokens, open).saturating_sub(1);
+    let rows = rows_of(tokens.get(arms.clone())?)?;
+    (rows >= 2).then_some(arms)
+}
+
+/// The rows of the `enum_map!` at `at`, if each is a [`lookup_pattern`], `=>` and a
+/// [`lookup_value`].
+fn lookup_rows(tokens: &[Token<'_>], at: usize) -> Option<Range<usize>> {
+    let open = at.saturating_add(2);
+    if !matches!(tokens.get(open), Some(Token::Open(_))) {
+        return None;
+    }
+    let rows = open.saturating_add(1)..group_end(tokens, open).saturating_sub(1);
+    rows_of(tokens.get(rows.clone())?)?;
+    Some(rows)
+}
+
+/// How many lookup rows `tokens` holds, separated by commas, if every one is a
+/// [`lookup_pattern`], `=>` and a [`lookup_value`].
+fn rows_of(tokens: &[Token<'_>]) -> Option<usize> {
+    let mut rows = 0usize;
+    for row in split_top(tokens, Token::Punct(",")) {
+        if row.is_empty() {
+            continue;
+        }
+        let arrow = top_level(row).find(|&(_, t)| t == Token::Punct("=>"))?.0;
+        let (pattern, value) = (row.get(..arrow)?, row.get(arrow.saturating_add(1)..)?);
+        if !(lookup_pattern(pattern) && lookup_value(value)) {
+            return None;
+        }
+        rows = rows.saturating_add(1);
+    }
+    Some(rows)
+}
+
+/// Whether an arm's pattern is a lookup's key: `_`, or alternatives (`A | B`) each a path to a
+/// variant or a constant (its last part capitalised), a literal (a minus on one included) or a
+/// range of two literals. A binding, a guard's `if` and a destructuring pattern are not keys.
+fn lookup_pattern(pattern: &[Token<'_>]) -> bool {
+    pattern == [Token::Word("_")]
+        || split_top(pattern, Token::Punct("|"))
+            .into_iter()
+            .all(|key| match after_literal(key) {
+                Some([]) => true,
+                Some([Token::Punct(".." | "..="), end @ ..]) => after_literal(end) == Some(&[]),
+                Some(_) => false,
+                None => {
+                    after_path(key) == Some(&[])
+                        && matches!(key.last(), Some(Token::Word(name)) if name.starts_with(char::is_uppercase))
+                }
+            })
+}
+
+/// Whether an arm's value is a lookup's: data by the constant rule ([`holds_behaviour`]) that
+/// names no local. A local, a field and `self` read the moment's state, so an arm holding one
+/// is a decision.
+fn lookup_value(value: &[Token<'_>]) -> bool {
+    !value.is_empty() && !holds_behaviour(value) && !names_local(value)
+}
+
+/// Whether a value names a local: a lowercase word (`self` included) that is no part of a path,
+/// no function it calls, no field's label in a struct literal, and not `true` or `false`.
+fn names_local(value: &[Token<'_>]) -> bool {
+    value.iter().enumerate().any(|(at, &token)| {
+        let Token::Word(word) = token else {
+            return false;
+        };
+        let previous = at.checked_sub(1).and_then(|p| value.get(p));
+        let next = value.get(at.saturating_add(1));
+        word.starts_with(|c: char| c.is_lowercase() || c == '_')
+            && !matches!(word, "true" | "false")
+            && previous != Some(&Token::Punct("::"))
+            && !matches!(next, Some(Token::Open('(') | Token::Punct("::" | ":")))
+    })
+}
+
+/// The tokens after a literal, or a minus on one, at the start of `tokens`.
+fn after_literal<'a, 'b>(tokens: &'a [Token<'b>]) -> Option<&'a [Token<'b>]> {
+    match tokens {
+        [Token::Literal(_), rest @ ..] | [Token::Punct("-"), Token::Literal(_), rest @ ..] => {
+            Some(rest)
+        }
+        _ => None,
+    }
+}
+
+/// The tokens of `tokens` outside every bracket group, each with its index.
+fn top_level<'a, 'b>(tokens: &'a [Token<'b>]) -> impl Iterator<Item = (usize, Token<'b>)> + 'a {
+    let mut depth = 0usize;
+    tokens.iter().enumerate().filter_map(move |(at, &token)| {
+        let outside = depth == 0;
+        match token {
+            Token::Open(_) => depth = depth.saturating_add(1),
+            Token::Close => depth = depth.saturating_sub(1),
+            Token::Word(_) | Token::Punct(_) | Token::Literal(_) => {}
+        }
+        (outside && token != Token::Close).then_some((at, token))
+    })
+}
+
+/// `tokens` split at each `separator` outside every bracket group.
+fn split_top<'a, 'b>(tokens: &'a [Token<'b>], separator: Token<'b>) -> Vec<&'a [Token<'b>]> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    for (at, token) in top_level(tokens) {
+        if token == separator {
+            parts.extend(tokens.get(start..at));
+            start = at.saturating_add(1);
+        }
+    }
+    parts.extend(tokens.get(start..));
+    parts
 }
 
 /// The tokens after the data expression at the start of `tokens`, if one starts there.
@@ -852,36 +1048,66 @@ struct Measured<'a> {
     shares: Vec<Size>,
 }
 
-/// The sources measured together: a clump (Q2) recurs across them.
+/// The sources measured together: a repeated run or a clump (Q2) recurs across them.
 fn measured<'a>(srcs: &[&'a str]) -> Vec<Measured<'a>> {
     let (tokens, spans): (Vec<Vec<Token<'a>>>, Vec<Vec<Range<usize>>>) = srcs
         .iter()
         .map(|src| without_tests(&lex(src)).into_iter().unzip())
         .unzip();
+    let classes: Vec<Vec<Class>> = tokens
+        .iter()
+        .map(|tokens| {
+            let mut classes = Vec::with_capacity(tokens.len());
+            classify(tokens, &mut classes);
+            lookups(tokens, &mut classes);
+            classes
+        })
+        .collect();
+    // Duplication counts what holds behaviour at full weight: no signature, no free form, no data.
+    let weighed: Vec<Vec<bool>> = classes
+        .iter()
+        .map(|classes| {
+            classes
+                .iter()
+                .map(|class| matches!(class, Class::Logic(Weight::Single | Weight::Double)))
+                .collect()
+        })
+        .collect();
+    let repeats = quality::repeats(&tokens, &weighed);
     let quality = quality::of(&tokens);
     tokens
         .into_iter()
         .zip(spans)
-        .zip(quality)
-        .map(|((tokens, spans), (contexts, repeated))| {
-            let mut classes = Vec::with_capacity(tokens.len());
-            classify(&tokens, &mut classes);
-            let mut shares: Vec<Size> = classes
-                .into_iter()
-                .zip(contexts)
-                .map(|(class, context)| Size::default().with(class, context))
-                .collect();
-            for pay in repeated {
-                if let Some(share) = shares.get_mut(pay.at) {
-                    *share = share.repeated(pay.tokens);
+        .zip(classes)
+        .zip(quality.into_iter().zip(repeats))
+        .map(
+            |(((tokens, spans), classes), ((contexts, repeated), repeats))| {
+                let mut shares: Vec<Size> = classes
+                    .into_iter()
+                    .zip(contexts)
+                    .zip(repeats)
+                    .map(|((class, context), repeats)| {
+                        Size::default().with(
+                            class,
+                            Context {
+                                repeated: repeats,
+                                ..context
+                            },
+                        )
+                    })
+                    .collect();
+                for pay in repeated {
+                    if let Some(share) = shares.get_mut(pay.at) {
+                        *share = share.repeated(pay.tokens);
+                    }
                 }
-            }
-            Measured {
-                tokens,
-                spans,
-                shares,
-            }
-        })
+                Measured {
+                    tokens,
+                    spans,
+                    shares,
+                }
+            },
+        )
         .collect()
 }
 
@@ -989,9 +1215,11 @@ pub fn of(src: &str) -> Size {
     sizes(&[src]).into_iter().next().unwrap_or_default()
 }
 
-/// Each `.rs` file's score, then its logic, types and data tokens and the score's depth and
-/// clump parts, under the paths, one line each, then the totals. Clumps are found over all the
-/// files together.
+/// Each `.rs` file's size under the paths, one line each, then the totals.
+///
+/// A line holds the score, the logic, types and data tokens, the score's depth and duplication
+/// parts and the clumps diagnostic. Repeated runs and clumps are found over all the files
+/// together.
 ///
 /// # Errors
 ///
@@ -1009,7 +1237,8 @@ pub fn run(args: &[String]) -> Result<String, String> {
         .map(|file| fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display())))
         .collect::<Result<Vec<_>, _>>()?;
     let srcs: Vec<&str> = texts.iter().map(String::as_str).collect();
-    let mut out = String::from("      score   logic   types    data     depth    clumps file\n");
+    let mut out =
+        String::from("      score   logic   types    data     depth duplication    clumps file\n");
     let mut total = Size::default();
     for (file, size) in files.iter().zip(sizes(&srcs)) {
         total = total.add(size);
@@ -1019,11 +1248,11 @@ pub fn run(args: &[String]) -> Result<String, String> {
     Ok(out)
 }
 
-/// A size's report columns: score, logic, types, data, depth, clumps.
+/// A size's report columns: score, logic, types, data, depth, duplication, clumps.
 fn columns(size: Size) -> String {
     format!(
-        "{:>11} {:>7} {:>7} {:>7} {:>9} {:>9}",
-        size.score, size.logic, size.types, size.data, size.depth, size.clumps
+        "{:>11} {:>7} {:>7} {:>7} {:>9} {:>11} {:>9}",
+        size.score, size.logic, size.types, size.data, size.depth, size.duplication, size.clumps
     )
 }
 

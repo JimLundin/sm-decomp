@@ -611,7 +611,7 @@ data), and declarations (the `struct`, `enum` and `type` items and attributes th
 model's shapes; define as many as the behaviour needs). The scripts are imported assets (§2): they
 are data the importer writes, not code. The target is on everything else, the logic.
 
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion. An
+**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion. An
 area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
 score of the old code that area replaces, at spine `387640758`. The old code covers the places and
 the scroll cells, but of the blocks that break only the start of one shot block (175.5), so
@@ -625,7 +625,7 @@ never as a wall; over an area's old code is a failure.
 - Area breakables: CrumbleBlocks, SpeedBlocks, BombBlocks, ShotBlocks, SuperMissileBlocks,
   PowerBombBlocks, BombsReveal, AnswersToHerMotion, BlocksMarkedNothing, FullPlacesLetHerThrough
 
-Budget: 36 × 55.3 units = 1,992 (places 804, scroll 144, breakables 1,044)
+Budget: 37.5 × 55.3 units = 2,074 (places 837, scroll 150, breakables 1,087)
 
 ### The old code (tokens, 2026-11-08)
 
@@ -653,5 +653,5 @@ port at `archive/old-engine` holds this part's mechanism in `room_mechanisms/sch
 the other three parts (`$TEMP/collab/reviews/sz_old.txt`).
 
 **k out of sample:** the old places and scroll score 2,396.5 over their 26.3 units, 91.1 a unit
-(samus-motion's 65.8, the camera's 53.7); 0.55 of it would give 50.1 against the frozen 36. The budget is 36 × 55.3 = 1,992 (places 804, §2's four cell terms included;
-scroll 144; breakables 1,044).
+(samus-motion's 65.8, the camera's 53.7); 0.55 of it would give 50.1 against the frozen 37.5. The budget is 37.5 × 55.3 = 2,074 (places 837, §2's four cell terms
+included; scroll 150; breakables 1,087).

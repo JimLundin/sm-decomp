@@ -7,7 +7,8 @@ who sees what. The rules it relies on live elsewhere, and are linked where they 
 - [MODEL §5](../architecture/MODEL.md#5-how-the-work-is-planned): what a leak is, and the spec
   template;
 - [DESIGN](DESIGN.md): the coding standards;
-- [size-budget](../architecture/size-budget.md): the score and the budget.
+- [MODEL §4](../architecture/MODEL.md#4-the-reference-domain-samuss-motion) and §1 decision 7: the
+  score and the budget; [size-budget](../architecture/size-budget.md), the study behind them.
 
 ## Roles
 
@@ -114,6 +115,14 @@ Each step names its owner, what it waits for, and its done-condition.
 10. **Round gate** (adversary), after 8 and 9. It reads the leaks, the harness's honesty, the
     score against the budget and the blind review. Done on a verdict of MERGE. Findings go to
     the integrator (harness, adapter), or into the next round's queue (model shape, spec gaps).
+    How it measures size:
+    - A round's size delta is the model's, the bridge's and that of code moved into test
+      support, each shown; a move out of the model is no cut.
+    - It reads the area fit and the shared share (`tools report`) apart from the total fit; a
+      shared share over 25 % is a finding.
+    - A measured item under 1 % of its domain's score is **neutral**: it is judged on clarity
+      alone, and a brief may carry it as a shape without calling it growth. The round's total
+      stays measured.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
     in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
@@ -164,7 +173,8 @@ until that domain has landed, so the interface it reads is fixed.
   that makes the code clearer can be worth its tokens, and growth that adds no clarity is bloat.
   A round gate that finds bloat prototypes the cuts on the current model and measures each one,
   every vector still passing. The next round of that domain is a cut round only when the measured
-  total is worth a round (about 3 % of the model, or an area brought back under its old code). Its
+  total is worth a round (about 3 % of the model, or an area brought back under its old code;
+  an item under 1 % counts as neutral, and the total is model, bridge and moved test code). Its
   brief carries the coarse verdict and those measured cuts, as outcomes in words, and asks for no
   new behaviour; a cut no gate has measured stays out of the brief. Smaller measured cuts ride
   along with the domain's next round of behaviour. Cut rounds stop when the gate measures nothing

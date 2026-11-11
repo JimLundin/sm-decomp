@@ -36,9 +36,11 @@ Jim's decisions, 2026-11-07:
    logic, not counted against it (§4). So are type declarations: defining shapes is to be
    promoted, not taxed. The score weighs each logic token by what the code's priorities make of
    it, so that a lower score means better code, not churn: forms that hold no behaviour are
-   free, a function signature is half, a `true` or `false` is double (§4). Two quality terms
-   compose with those weights: depth (Q1), so nested decisions cost more than a flat dispatch,
-   and clumps (Q2), so values that travel together without a type pay where they recur (§4).
+   free, a function signature is half, a `true` or `false` is double (§4). An exhaustive lookup,
+   a table the compiler checks, is data like a constant's rows (Jim, 2026-11-11). Two quality
+   terms compose with those weights: depth (Q1), so nested decisions cost more than a flat
+   dispatch, and duplication, so a decision written twice costs more than one shared step
+   (Jim, 2026-11-11; §4).
    Hard lints on the clean crates refuse what no weight can price: ceilings in the clean
    room's clippy configuration (G5), an argument object (G6) and a module cycle (G7).
    The integrator's bridge is reported apart and not counted against the model, which its
@@ -70,9 +72,12 @@ Jim's decisions, 2026-11-07:
    a reasonable optimum of logic against specification, and stop compacting when a round's gain
    in fit is small beside its cost and risk; a form that is worse only to get under the line is
    not wanted. Over the old code is still a failure: it means the design is wrong. The study is
-   [size-budget.md](size-budget.md), and the weights' is [size-weights.md](size-weights.md); the
-   template convention that makes the count exact is
-   in §5.
+   [size-budget.md](size-budget.md); the weights are §4's, and the template convention that
+   makes the count exact is in §5.
+   Code in no area (state types, inputs, the frame's order, the catalogue) has no units of its
+   own, so it is held by the same k (Jim, 2026-11-11): `tools report` shows each domain's area
+   fit (the areas' score ÷ the budget) and its shared share (the code in no area ÷ the model)
+   apart, and a shared share over 25 % is a finding.
 8. **The repository shows only the current state** (Jim, 2026-11-08). Old code or docs kept only
    for comparison are deleted; a comparison uses git history (the tag `archive/old-engine`, or the
    commit before a deletion). When a clean model replaces engine code, the integrator deletes the
@@ -280,15 +285,29 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   (`A | B << 4`, `-A`). Chart rows are data while they state the spec's chart;
   L3 and review guard the line. `tools size` and `code_check.sh` apply the same rule, so the
   import check and the counter agree.
+- **An exhaustive lookup is data** (Jim, 2026-11-11). A table the compiler checks for a missing
+  or repeated member is data as a constant's rows are: the arms of a `match` of two or more arms
+  with no guard, whose every pattern is `_` or keys joined by `|` (a path to a variant or a
+  constant, a literal, or a range of two literals) and whose every value is data by L3 and names
+  no local (`K::A => 3`, `0 | 1 => Picture::new(0x009)`), and the rows of `enum_map!` on the
+  same test (`K::A => Speed(2)`). The `match`, its scrutinee and its braces, and the macro's
+  name and brackets, stay logic. A guard, a block arm, a binding, a local, a field, a method
+  call or an operator in any arm keeps a decision there, and the whole `match` stays logic.
+  The rule sits beside L3 in `verify::size` (`lookups`), and `code_check.sh`'s L2 exempts the
+  same values.
 - **Declarations are not counted against the rule** (Jim, 2026-11-07): `tools size` reports the
   tokens of item-level `struct`, `enum`, `union` and `type` items and of attributes apart, as
   types, on both sides. Defining shapes is what decision 6 asks for. A declaration holds no
-  behaviour; anything that does (an `impl`, a function, a match) is logic. A constant's head
+  behaviour; anything that does (an `impl`'s body, a function, a `match` that decides) is
+  logic. A constant's head
   (`const NAME: T =` and its `;`) is a declaration too.
 - **The rule is held on one weighted score** (Jim, 2026-11-07). `tools size` prints it per file
   and in total, with the plain logic, types and data columns beside it. Weights, on both sides:
-  - **0** for forms that hold no behaviour: `use` items, `mod` declarations, a trailing comma
-    before a closing bracket (rustfmt places it), and the `const` of a `const fn`
+  - **0** for forms that hold no behaviour: `use` items, `mod` declarations, visibility (`pub`,
+    `pub(crate)`, `pub(super)`: narrowing or widening it changes no behaviour, and
+    `redundant_pub_crate` keeps it plain), an `impl` header up to its body's `{` (no behaviour
+    lives there; an `impl Trait` in a type is the signature's), a trailing comma before a
+    closing bracket (rustfmt places it), and the `const` of a `const fn`
     (`missing_const_for_fn` forces it).
   - **0.5** for a function signature, from `fn` to its body's `{` (or its `;`), so a named step
     costs less than its body inlined twice. `too_many_arguments` and the bool-parameter lints
@@ -299,33 +318,35 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
 
   A target is set under the same weights as the baseline it is compared with; a reweighted model
   against an old-weight target would be a rule change hidden in a tool change.
-- **Two quality terms compose with the weights** (Jim, 2026-11-07, on the quality-score review).
-  Size-like metrics (Halstead, ABC, cyclomatic, fan-out) track the token count and would count
-  size twice; these two measure what tokens miss. `tools size` prints each term's part of the
-  score in its own column, so every number stays auditable.
+- **Two quality terms compose with the weights** (Jim, 2026-11-07, on the quality-score review;
+  duplication, 2026-11-11). Size-like metrics (Halstead, ABC, cyclomatic, fan-out) track the
+  token count and would count size twice; these two measure what tokens miss. `tools size`
+  prints each term's part of the score in its own column, so every number stays auditable.
   - **Q1, depth.** A logic token weighs `1 + 0.25 × d` times its weight, `d` the number of blocks
     around it inside a function body that nest: the block of an `if`, an `else`, a loop or a
     let-else, a closure's body (a block or an expression) and a `match` arm written as a block
     (`=> {`). A `match`'s own braces, its expression arms and a guard's `if` don't nest, so a flat
     dispatch stays at depth 0. Helpers, early returns and let-else are the cheaper forms, and they
     are the better ones.
-  - **Q2, clumps.** A pair of parameter types other than `bool` that is in three or more
-    signatures loses the signature's half on those parameters: they weigh one a token. A
-    parameter's type is the first name it holds (`&mut Mover` is `Mover`), primitives included,
-    so downgrading a type to `u16` doesn't dodge it. A pair of argument expressions (call
-    arguments or a struct literal's field values) that recurs at three or more sites pays the
-    shorter expression's tokens again at every site after the second; an expression holding a
-    call, a literal and `..base` are left out. Clumps are counted over all the files measured
-    together. A concept that removes a recurring pair pays for itself; a struct built only to
-    carry one call's arguments pays as the arguments did.
+  - **Duplication.** A run of 12 logic tokens inside a function body that repeats a run seen
+    before, anywhere in the files measured together, pays each of its tokens again, at one token
+    and at its depth. The run counts what holds behaviour at full weight (no signature, no free
+    form, no data, no closing bracket). Local names are one name (a lowercase word that no `.`
+    or `::` qualifies and no `(`, `::` or `!` follows), so renaming a copy's locals doesn't hide
+    it; fields, methods, paths and literals keep their names. A run that overlaps the first one
+    it repeats is part of it. Twelve is the shortest run that two calls of one helper with the
+    same arguments don't reach. So a decision written twice costs more than one shared step,
+    whose signature weighs half.
+  - **Clumps (Q2) are a diagnostic, outside the score.** `tools size` reports what they would
+    add: a pair of parameter types other than `bool` in three or more signatures (a type is the
+    first name it holds, primitives included), and a pair of argument expressions (call
+    arguments or a struct literal's field values, an expression holding a call, a literal and
+    `..base` left out) at three or more sites. Weighed, they rewarded a bag of references and
+    taxed a shared helper; reported, they point a gate at values that travel together.
   - **The parameter count is not a term.** A struct of the arguments would game any count, and
-    the base and Q2 already price an interface's width.
-  - Measured on round 7 (`tools size` at `bc6f74f9c`, both sides the same counter, over the old
-    code and round 7 as they stand at `c7f927ab6`): the old code scores 12,723 (base 11,557.5,
-    depth +828.5, clumps +337) and round 7 8,401.75 (7,465, +700.25, +236.5).
-    Of four rewrites of round 7, the argument struct scores worse (+59.5) and her body box as a
-    concept (−34.75), the box without methods (−33.75) and a split of `Samus::take` (−20)
-    better.
+    the call sites already price an interface's width.
+  - Measured on the old samus-motion code at `c7f927ab6` and its two cuts: 13,169.75, of which
+    depth is 828.5 and duplication 1,220.75 (clumps would add 337).
 - **Gates refuse what no weight can price** (Jim, 2026-11-07): hard lints on the clean crates,
   ceilings that yield no score, so nothing is counted twice.
   - **G5, the clean room's clippy configuration** (`tools/cleanroom/clippy.toml`, which
@@ -346,11 +367,11 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     only. A file's module is its path; a reference is a path through `crate::`, `super::`,
     `self::` or a child module's name, `use` groups included, and any cycle among them is
     refused, a child naming its parent while the parent reads the child included. It stops
-    passing a whole owner (`&Samus`) down to a helper module to dodge Q2.
-- **k is computed under this score** (decision 7): the old code's score (12,723 for
-  samus-motion, at `c7f927ab6`) per unit of the official `tools spec-units` count, times 0.55.
-  The decode notes' Budget section states the value and its inputs (decision 10); it is then
-  frozen.
+    passing a whole owner (`&Samus`) down to a helper module to shorten its signatures.
+- **k is computed under this score** (decision 7): the old code's score (13,169.75 for
+  samus-motion, at `c7f927ab6`) per unit of the official `tools spec-units` count (193.3), times
+  0.55, is 37.47, and k is 37.5, to one decimal. The decode notes' Budget section states the
+  value and its inputs (decision 10); it is then frozen, and every domain's budget uses it.
 - **Two lints close what no weight can** (Jim, 2026-11-07), as `tools/cleanroom/code_check.sh`
   tags on the clean crates:
   - **L1, `lint-attr`.** No `#[allow]` (the workspace denies `allow_attributes`), and every
@@ -365,9 +386,11 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
   - **L2, `magic-literal`.** A number other than 0 or 1 in logic is refused, in any spelling
     (`15_i16`, `0x7FFF`, `0b10`, `0.5`, the `15` of `0..=15`). Allowed in a constant's or
     static's value while L3 counts it as data (`Picture::new(0x009)` is; a `.expect(..)` on it
-    is not), in declarations (enum discriminants, array lengths in types), in an array length
-    `[x; N]`, as a tuple field (`.2`), in attributes and
-    in test code. Every number traces to a named constant, a `Rules` field or a behaviour.
+    is not), in the value of an exhaustive lookup's arm or an `enum_map!` row (`K::A => 3`;
+    a key's own number is still refused, so `7 => ..` names its 7), in declarations (enum
+    discriminants, array lengths in types), in an array length `[x; N]`, as a tuple field
+    (`.2`), in attributes and in test code. Every number traces to a named constant, a `Rules`
+    field or a behaviour.
 
 The declared fields are the spec's quantities whose **Read by** is not "none" (§5). A quantity that
 no later rule reads and that never reaches output is not State, not decoded and not compared. Once

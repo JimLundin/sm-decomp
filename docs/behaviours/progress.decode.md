@@ -483,7 +483,7 @@ item, a beam or a tank, without the drawing and the message, 253.5. Happened, pl
 percentage have no complete old code. The counter takes the old code in
 whole tokens: 197 and 254.
 
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion
+**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion
 and tested on the camera. An area's budget is k × its units; its old code (`old`), where it has
 one, is for reference and doesn't bound it. The budget is an indicator: the fit is score ÷ budget, and being over it
 costs in proportion to how far over, never as a wall; over an area's old code is a failure.
@@ -495,5 +495,4 @@ costs in proportion to how far over, never as a wall; over an area's old code is
 - Area rooms (old 197): RoomStates
 - Area percentage: ItemPercentage
 
-Budget: 36 × 30.3 units = 1,092 (happened 120, places 372, equipment 276, rooms 252,
-percentage 72)
+Budget: 37.5 × 30.3 units = 1,136 (happened 125, places 387, equipment 287, rooms 262, percentage 75)

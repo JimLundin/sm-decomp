@@ -1861,11 +1861,13 @@ the game's data, such as the chart's rows), and declarations (the `struct`, `enu
 items and attributes that define the model's shapes; define as many as the behaviour needs). The
 target is on everything else, the logic.
 
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen: the old code's
-score, 12,723 (`tools size` at spine `bc6f74f9c`, over the old code at `c7f927ab6` and its two
-cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`), times
-0.55 is 36.2. An area's budget is k × its units; its old code (`old`, the score of the old files
-that area replaces, counted the same way at `c7f927ab6`) is for reference and doesn't bound it. The budget is an
+**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen: the old code's
+score under MODEL §4's weights, 13,169.75 (`tools size` over the old code at `c7f927ab6` and its
+two cuts), per unit of this spec's official count, 193.3 (`tools spec-units` at `d9ee05f7c`),
+times 0.55 is 37.47, which is 37.5 to one decimal. An area's budget is k × its units; its old code
+(`old`, the score of the old files that area replaces at `c7f927ab6`, measured before lookups were
+data, duplication was priced and visibility and impl headers were free) is for reference and
+doesn't bound it. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; over an area's old code is a failure.
 
@@ -1878,7 +1880,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 36 × 229.0 units = 8,244 (motion 3,312, pose fit 624, pose chart 2,160, collision 2,148)
+Budget: 37.5 × 229.0 units = 8,587 (motion 3,450, pose fit 650, pose chart 2,250, collision 2,237)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

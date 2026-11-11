@@ -276,7 +276,7 @@ Moved from the spec's header by design (MODEL §1 decision 10): the implementer 
 score or the budget. `tools spec-units` reads k and the areas here, and `tools report` the areas'
 old figures and the commit.
 
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion. An
+**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion. An
 area's budget is k × its units. The old code (for reference, not a bound) is the `tools size`
 score at `f1df56ede` of `game/src/animation.rs` (1,245.5) and the animation's part of
 `game/src/pose.rs` (`reset_animation` and `run_super_special`, 197.75, measured as an extract
@@ -289,7 +289,7 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 36 × 37.7 units = 1,356 (clip 780, moves 216, run 360), 15 entries, 33 arms, 85 vectors
+Budget: 37.5 × 37.7 units = 1,412 (clip 812, moves 225, run 375), 15 entries, 33 arms, 85 vectors
 (79 constructed, 6 recorded).
 
 Old code (old 1,443): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,

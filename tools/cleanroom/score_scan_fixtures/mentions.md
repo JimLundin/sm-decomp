@@ -21,3 +21,7 @@ The 1,500 tokens of logic for the chart.
 The tables are counted as data.
 Data is not held against the logic.
 The size target is near.
+The area fit is under one.
+Its shared share is 41 %.
+The duplication part grew by a run.
+Visibility weighs nothing in it.

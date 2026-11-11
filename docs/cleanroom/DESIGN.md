@@ -15,6 +15,13 @@ need is in this repository; read nothing outside it.
   be. One rule lives in one place. A row states something the spec gives as a fact (a speed, a
   cell, a row of a chart); a decision the code would otherwise make, such as which branch to take,
   stays in the code, and a constant or a table holds values, not control flow, closures or calls.
+- **A table keyed by an enum** names each member once, in one of three forms: an exhaustive
+  `match` from each variant (or a constant, or a literal) to its value, with no guard and no
+  block arm; `enum_map!` rows; or a constant's rows, each naming its member, gathered with
+  `clean_types::by_member`. The compiler checks the first two for a missing or repeated
+  member; the third needs a test that checks the set. Its values are values: literals,
+  constants, variants and constructors given only values, never a local, a field or a
+  computation. Choose the form that reads best where the table is used.
 - **Shaped by types.** Define as many types as the behaviour needs. Values that travel together
   through several functions are a concept with a name. A flat `match`, a helper and an early
   return read better than decisions nested inside each other. A state is an enum, not a flag.
@@ -48,6 +55,11 @@ is imported, so keep to them as you go:
   `.unwrap()`), a field or an index, a cast, a range with arithmetic or a call at an end
   (`0..A + 1`), or any other operator but the minus of a negative literal (`A | B`). Where a constructor can fail, name its number in a constant of
   its own first (`Divisor::new(ENERGY_DIVISOR).expect(..)`).
+- The value of each arm of a table `match` or each `enum_map!` row may hold numbers the same
+  way (`Kind::Wave => 3`), when the `match` has two or more arms, no guard and no block arm,
+  every pattern is `_`, a variant, a constant or a literal (`A | B` joins them), and no value
+  reads a local or a field or computes. A number used as a key is still named (`TOP =>`, not
+  `7 =>`).
 - No `allow` attribute at all; every `expect` gives a `reason`. Outside tests, no `expect` names
   a lint the workspace denies by name, a denied group or `warnings`; a lint denied only through
   a group (such as `struct_excessive_bools`) may be expected with its reason.

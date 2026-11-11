@@ -150,8 +150,8 @@ impl Units {
 
     /// k × the units, in weighted tokens, rounded down.
     #[must_use]
-    pub const fn budget(self, k: u64) -> u64 {
-        self.thirds.saturating_mul(k) / 3
+    pub const fn budget(self, k: PerUnit) -> u64 {
+        self.thirds.saturating_mul(k.tenths) / 30
     }
 }
 
@@ -160,6 +160,51 @@ impl fmt::Display for Units {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let tenths = self.thirds.saturating_mul(20).saturating_add(3) / 6;
         write!(f, "{}.{}", tenths / 10, tenths % 10)
+    }
+}
+
+/// k, the weighted tokens one spec unit buys (MODEL §1 decision 7), held in tenths: the decode
+/// notes state it to one decimal (`k = 37.5`) or whole (`k = 36`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct PerUnit {
+    tenths: u64,
+}
+
+impl PerUnit {
+    /// k of `tenths` tenths of a token.
+    #[must_use]
+    pub const fn tenths(tenths: u64) -> Self {
+        Self { tenths }
+    }
+
+    /// The k at the start of `text`, `37.5` or `36`, and the text after it.
+    fn parse(text: &str) -> Option<(Self, &str)> {
+        let whole_end = text
+            .find(|c: char| !c.is_ascii_digit())
+            .unwrap_or(text.len());
+        let whole: u64 = text.get(..whole_end)?.parse().ok()?;
+        let rest = text.get(whole_end..)?;
+        let (tenth, rest) = match rest.strip_prefix('.') {
+            Some(fraction) => {
+                let digit = fraction.chars().next()?.to_digit(10)?;
+                (u64::from(digit), fraction.get(1..)?)
+            }
+            None => (0, rest),
+        };
+        Some((
+            Self::tenths(whole.checked_mul(10)?.checked_add(tenth)?),
+            rest,
+        ))
+    }
+}
+
+impl fmt::Display for PerUnit {
+    /// Whole when it is, else to one decimal.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.tenths % 10 {
+            0 => write!(f, "{}", self.tenths / 10),
+            tenth => write!(f, "{}.{tenth}", self.tenths / 10),
+        }
     }
 }
 
@@ -832,7 +877,7 @@ pub struct AreaCount {
     /// What it holds.
     pub tally: Tally,
     /// The domain's k, if its decode notes' Budget section states one.
-    pub k: Option<u64>,
+    pub k: Option<PerUnit>,
 }
 
 impl AreaCount {
@@ -861,7 +906,7 @@ pub struct Count {
     pub strays: Vec<StrayFormula>,
     /// The domain's k, from its decode notes' Budget section, "k = N weighted tokens per spec
     /// unit".
-    pub k: Option<u64>,
+    pub k: Option<PerUnit>,
     /// Whether the spec itself states k or an area, which belong in the decode notes.
     pub spec_states_budget: bool,
     /// The old code's weighted score for the whole domain, where the notes give it whole
@@ -1159,8 +1204,9 @@ impl Count {
     }
 }
 
-/// The k a spec's text states, "k = N weighted tokens per spec unit", the first one found.
-fn stated_k(blocks: &[Block]) -> Option<u64> {
+/// The k a spec's text states, "k = N weighted tokens per spec unit" (N whole or to one
+/// decimal), the first one found.
+fn stated_k(blocks: &[Block]) -> Option<PerUnit> {
     const AFTER: &str = " weighted tokens per spec unit";
     blocks
         .iter()
@@ -1168,13 +1214,8 @@ fn stated_k(blocks: &[Block]) -> Option<u64> {
         .find_map(|piece| {
             piece.text.match_indices("k = ").find_map(|(at, start)| {
                 let rest = piece.text.get(at.saturating_add(start.len())..)?;
-                let digits = rest
-                    .find(|c: char| !c.is_ascii_digit())
-                    .unwrap_or(rest.len());
-                let after = rest.get(digits..)?;
-                after
-                    .starts_with(AFTER)
-                    .then(|| rest.get(..digits)?.parse().ok())?
+                let (k, after) = PerUnit::parse(rest)?;
+                after.starts_with(AFTER).then_some(k)
             })
         })
 }
@@ -1544,7 +1585,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
     let mut out = format!(
         "spec units: {spec}, {} vectors (k = {})\n\n{}",
         vectors.len(),
-        or_dash(count.k),
+        count.k.map_or_else(|| String::from("-"), |k| k.to_string()),
         count.report()
     );
     if let Some(old) = options.against {
@@ -1576,8 +1617,8 @@ fails: an arm or a formula is outside any entry (see the findings)
 #[cfg(test)]
 mod tests {
     use super::{
-        Complement, Count, StrayFormula, Unchecked, Units, Vectors, Verdict, budget_section, delta,
-        entry_operators, operators, thousands,
+        Complement, Count, PerUnit, StrayFormula, Unchecked, Units, Vectors, Verdict,
+        budget_section, delta, entry_operators, operators, thousands,
     };
 
     const VECTORS: &str = r#"
@@ -2028,22 +2069,27 @@ Area moving",
         assert_eq!(Units::of(0, 1, 0).to_string(), "0.3");
         assert_eq!(Units::of(1, 1, 1).to_string(), "1.7");
         assert_eq!(Units::of(271, 0, 0).to_string(), "271.0");
-        assert_eq!(Units::of(271, 0, 0).budget(24), 6504);
-        assert_eq!(Units::of(193, 1, 0).budget(36), 6960);
+        assert_eq!(Units::of(271, 0, 0).budget(PerUnit::tenths(240)), 6504);
+        assert_eq!(Units::of(193, 1, 0).budget(PerUnit::tenths(360)), 6960);
     }
 
     #[test]
     fn k_and_the_areas_are_read_from_the_notes_budget_section() {
         let count = demo();
-        assert_eq!(count.k, Some(24));
+        assert_eq!(count.k, Some(PerUnit::tenths(240)));
         let names: Vec<_> = count.areas.iter().map(|area| area.name.as_str()).collect();
         assert_eq!(names, ["moving", "falling", "unassigned"]);
         assert!(!count.spec_states_budget);
         let budget = "## Budget\n\nk = 36 weighted tokens per spec unit, frozen.\n\nArea a: A\n";
         let count = count_with("### A\n- x → y [V1]\n", budget);
-        assert_eq!(count.k, Some(36));
+        assert_eq!(count.k, Some(PerUnit::tenths(360)));
         assert_eq!(count.budget(), Some(36));
         assert_eq!(count.budget_line(), "Budget: 36 × 1.0 units = 36 (a 36)");
+        // k may be stated to one decimal, and the budget rounds down.
+        let decimal = "## Budget\n\nk = 37.5 weighted tokens per spec unit, frozen.\n\nArea a: A\n";
+        let count = count_with("### A\n- x → y [V1]\n", decimal);
+        assert_eq!(count.k, Some(PerUnit::tenths(375)));
+        assert_eq!(count.budget_line(), "Budget: 37.5 × 1.0 units = 37 (a 37)");
         // Another number written as "k = " is not the budget's k.
         assert_eq!(count_with("### A\n- x → y [V1]\n", "k = 3 cells\n").k, None);
     }

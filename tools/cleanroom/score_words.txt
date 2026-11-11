@@ -25,3 +25,7 @@
 \bcounted (apart|as data|as logic)\b
 \bheld against\b
 \bsize target\b
+\barea fit\b
+\bshared share\b
+\bduplication (column|part|term)\b
+\bweighs? (nothing|half|double)\b

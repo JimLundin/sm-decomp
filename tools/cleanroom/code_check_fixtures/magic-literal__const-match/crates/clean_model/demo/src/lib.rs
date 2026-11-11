@@ -1,1 +1,1 @@
-pub const A: u16 = match B { C => 3, D => 4 };
+pub const A: u16 = match B { C if D => 3, _ => 4 };

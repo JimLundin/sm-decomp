@@ -11,8 +11,11 @@
 # magic-literal  (L2) a number other than 0 or 1 in logic. Exempt: test code, attributes,
 #                struct/enum/union/type items, a constant's head, a constant's value while it is
 #                data (the counter's L3: literals, paths, tuples, arrays, struct literals and
-#                calls whose arguments are data), an array length (`[T; N]`, `[x; N]`) and a
-#                tuple field (`.2`).
+#                calls whose arguments are data), the value of an exhaustive lookup's arm (the
+#                counter's lookups: a guard-free `match` of two or more arms, or an `enum_map!`,
+#                each arm a variant, constant or literal key, `=>` and a data value naming no
+#                local; a key's own number is still refused), an array length (`[T; N]`,
+#                `[x; N]`) and a tuple field (`.2`).
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
 function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = NR }
 BEGIN {
@@ -170,6 +173,94 @@ function data_fields() {
   }
 }
 function mark(a, b, r,   k) { for (k = a; k < b; k++) region[k] = r }
+# The first token of a..b-1 outside every bracket group whose text is t, or 0.
+function top_find(a, b, t,   d) {
+  d = 0
+  for (; a < b; a++) {
+    if (d == 0 && text[a] == t && kind[a] != "lit") return a
+    if (kind[a] == "open") d++
+    else if (kind[a] == "close") d--
+  }
+  return 0
+}
+# A literal key, a minus on one included; advances `at` as data_* do.
+function key_lit() {
+  if (tok("num") || tok("lit")) { at++; return 1 }
+  if (tok("punct", "-")) { at++; if (tok("num") || tok("lit")) { at++; return 1 } }
+  return 0
+}
+# Whether a..b-1 is one key of a lookup's pattern: a literal, a range of two literals, or a path
+# to a variant or a constant (its last part capitalised).
+function lookup_key(a, b) {
+  at = a; lim = b
+  if (key_lit()) {
+    if (at == lim) return 1
+    if (!tok("punct", "..") && !tok("punct", "..=")) return 0
+    at++
+    return key_lit() && at == lim
+  }
+  at = a
+  return data_path() && at == lim && text[b - 1] ~ /^[A-Z]/
+}
+# Whether a..b-1 is a lookup's pattern: `_`, or keys joined by `|`.
+function lookup_pattern(a, b,   k, d, s) {
+  if (b == a + 1 && text[a] == "_") return 1
+  d = 0; s = a
+  for (k = a; k < b; k++) {
+    if (kind[k] == "open") d++
+    else if (kind[k] == "close") d--
+    else if (d == 0 && kind[k] == "punct" && text[k] == "|") { if (!lookup_key(s, k)) return 0; s = k + 1 }
+  }
+  return lookup_key(s, b)
+}
+# Whether a..b-1 names a local: a lowercase word that is no part of a path, no function it calls,
+# no field's label, and not true or false.
+function names_local(a, b,   k) {
+  for (k = a; k < b; k++) {
+    if (kind[k] != "word" || text[k] !~ /^[a-z_]/ || text[k] ~ /^(true|false)$/) continue
+    if (k > a && text[k - 1] == "::") continue
+    if (k + 1 < b && (text[k + 1] == "(" || text[k + 1] == "::" || text[k + 1] == ":")) continue
+    return 1
+  }
+  return 0
+}
+# Whether a..b-1 is a lookup's value: data by the constant rule that names no local.
+function lookup_value(a, b) { return b > a && !behaviour(a, b) && !names_local(a, b) }
+# The rows of a lookup in a..b-1, separated by commas, each a pattern, `=>` and a value; -1 if
+# one is not. Their values' spans are left in vs[1..nv], ve[1..nv].
+function lookup_rows(a, b,   k, d, s, rows, arrow) {
+  nv = 0; rows = 0; d = 0; s = a
+  for (k = a; k <= b; k++) {
+    if (k < b && kind[k] == "open") { d++; continue }
+    if (k < b && kind[k] == "close") { d--; continue }
+    if (k < b && !(d == 0 && kind[k] == "punct" && text[k] == ",")) continue
+    if (k > s) {
+      arrow = top_find(s, k, "=>")
+      if (!arrow || !lookup_pattern(s, arrow) || !lookup_value(arrow + 1, k)) return -1
+      nv++; vs[nv] = arrow + 1; ve[nv] = k; rows++
+    }
+    s = k + 1
+  }
+  return rows
+}
+# Marks the values of each exhaustive lookup in logic as data, as the size counter does (verify::size
+# `lookups`): a guard-free `match` of two or more arms, and an `enum_map!`, whose every arm maps a
+# lookup_pattern to a lookup_value. Only the values: a pattern's number is still a magic literal.
+function lookups(   a, o, e, k) {
+  for (a = 1; a <= n; a++) {
+    if (region[a] != "logic" || kind[a] != "word") continue
+    if (text[a] == "match") {
+      o = top_find(a + 1, n + 1, "{")
+      if (!o || kind[o] != "open") continue
+      e = after_group(o)
+      if (lookup_rows(o + 1, e - 1) < 2) continue
+    } else if (text[a] == "enum_map" && text[a + 1] == "!" && kind[a + 2] == "open") {
+      e = after_group(a + 2)
+      if (lookup_rows(a + 3, e - 1) < 0) continue
+    } else continue
+    for (k = 1; k <= nv; k++) mark(vs[k], ve[k], "data")
+  }
+}
 # A lint-control attribute's findings: the attribute spans a..b-1.
 function lint_attr(a, b, intest,   k, e, m, lint, why) {
   for (k = a; k < b; k++) {
@@ -224,6 +315,7 @@ END {
     }
     region[a] = "logic"; p = a; a++
   }
+  lookups()
   for (a = 1; a <= n; a++) {
     if (text[a] == "#" && (text[a + 1] == "[" || (text[a + 1] == "!" && text[a + 2] == "["))) {
       e = after_group(a + (text[a + 1] == "!" ? 2 : 1))

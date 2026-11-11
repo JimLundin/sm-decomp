@@ -24,8 +24,11 @@
 #     static's head and value while the value is data (L3, as `tools size` decides: literals,
 #     paths, tuples, arrays, struct literals, calls whose every argument is data and ranges
 #     whose two ends are literals or paths; a method
-#     call, an operator, control flow, a closure or a macro makes it logic), array lengths and
-#     tuple fields. Both rules are tools/cleanroom/lint_scan.awk.
+#     call, an operator, control flow, a closure or a macro makes it logic), the values of an
+#     exhaustive lookup (a guard-free `match` of two or more arms, or an `enum_map!`, each arm a
+#     variant, constant or literal key, `=>` and a data value naming no local, as `tools size`
+#     counts it; a key's own number is still refused), array lengths and tuple fields. Both
+#     rules are tools/cleanroom/lint_scan.awk.
 # Manifest: build-key links-key proc-macro build-deps dep-path dep-git dep-workspace
 #   dep-registry (not in allowed_deps.txt; or not at its pinned version, of an allowed kind, with
 #   allowed features only and no other key than version, features, default-features and package)

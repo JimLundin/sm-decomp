@@ -534,7 +534,7 @@ data, such as the lead distances), and declarations (the `struct`, `enum` and `t
 attributes that define the model's shapes; define as many as the behaviour needs). The target is on
 everything else, the logic.
 
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion and
+**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion and
 tested here out of sample. An area's budget is k × its units; its old code (`old`, for reference,
 not a bound) is the `tools size` score of the old code that area replaces: `game/src/scrolling.rs`
 without its layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at
@@ -547,4 +547,4 @@ code is a failure.
 - Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
   DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
 
-Budget: 36 × 47.0 units = 1,692 (follow 564, limits 1,128)
+Budget: 37.5 × 47.0 units = 1,762 (follow 587, limits 1,175)

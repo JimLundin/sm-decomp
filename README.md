@@ -21,12 +21,12 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | S1, S2 (in progress); S3, S4 (not started) | in progress | 18 | 312 | 18,032 of 25,426 | 8,932 | 8,244 | 1.08 |
-| camera | CAM (in progress) | in progress | 6 | 83 | 20,513 of 25,426 | 1,883 | 1,692 | 1.11 |
-| progress | P1 (in progress) | in progress | 6 | 66 | 25,419 of 25,426 | 979 | 1,092 | 0.90 |
-| hud | H2 (in progress) | in progress | 4 | 82 | 20,615 of 24,230 | 3,020 | 2,028 | 1.49 |
-| blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,643 | 1,992 | 1.33 |
-| samus-looks | S5 (in progress) | in progress | 2 | 85 | 16,210 of 24,230 | 2,162 | 1,356 | 1.59 |
+| samus-motion | S1, S2 (in progress); S3, S4 (not started) | in progress | 18 | 312 | 18,032 of 25,426 | 8,858 | 8,587 | 1.03 |
+| camera | CAM (in progress) | in progress | 6 | 83 | 20,513 of 25,426 | 1,839 | 1,762 | 1.04 |
+| progress | P1 (in progress) | in progress | 6 | 66 | 25,419 of 25,426 | 898 | 1,136 | 0.79 |
+| hud | H2 (in progress) | in progress | 4 | 82 | 20,615 of 24,230 | 2,788 | 2,112 | 1.32 |
+| blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,432 | 2,074 | 1.17 |
+| samus-looks | S5 (in progress) | in progress | 2 | 85 | 16,210 of 24,230 | 2,054 | 1,412 | 1.45 |
 
 ### The whole-game plan
 
@@ -47,9 +47,9 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
-| not yet rebuilt | 49 | 5,136 | 30,815 | 7,103 |
-| bridges from the engine to the models | 8 | 2,433 | 14,600 | 2,427 |
-| rebuilt models, shared types included | 71 | 3,401 | 20,406 | 8,659 |
+| not yet rebuilt | 49 | 5,110 | 30,659 | 7,103 |
+| bridges from the engine to the models | 8 | 2,409 | 14,457 | 2,427 |
+| rebuilt models, shared types included | 71 | 3,250 | 19,498 | 8,659 |
 
 ### Verification
 

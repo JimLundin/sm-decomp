@@ -57,7 +57,16 @@ Your brief names the import and integration branches, the blind review, and the 
    Judge bloat, not length: a seam that makes the code clearer can be worth its tokens. Prototype
    each cut you propose on the current model, every vector passing, and measure it; give the root
    the measured total. A cut you haven't measured is a note, not a brief item (PROCESS, "Cut
-   rounds").
+   rounds"). Measure as PROCESS's round gate says:
+   - the round's delta is model + bridge + code moved into test support, each shown, so a move
+     out of the model is no cut;
+   - an item under 1 % of the domain's score is **neutral**, judged on clarity alone, never
+     reported as growth or as a cut; a cut round still needs about 3 %;
+   - read the area fit and the shared share (`tools report`) beside the total fit, and report
+     a shared share over 25 % as a finding;
+   - a `match` or `enum_map!` that is an exhaustive lookup is data (MODEL §4), so a brief may
+     ask for a table the compiler checks; the `Duplication` column shows a decision written
+     twice, and `Clumps` is only a hint at values that travel together.
 6. **The blind review.** Compare the reviewer's "what the code does" with the spec, and turn each
    misreading into a finding about a name, a doc or a shape.
 7. **The old code** the model replaces is deleted, and the engine's gates hold.

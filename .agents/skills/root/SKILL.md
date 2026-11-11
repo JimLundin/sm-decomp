@@ -22,7 +22,9 @@ barrier; every other role does one step.
    relay comes from output you saw.
 5. **Relay** to Jim: what the step found, what you decided, and what comes next. Give every size
    as score, actual code lines and logic-equivalent lines (score ÷ 6), and cite `docs/REPORT.md`
-   once a change lands.
+   once a change lands. A round's size is its model, bridge and moved test code together; an
+   item under 1 % of its domain is neutral, and the area fit and shared share go beside the
+   fit (PROCESS, the round gate).
 6. **Record** the step in the coordination log (`$TEMP/collab/reviews/coord-log.md`): heads,
    verdicts, and the queue. Done when a fresh root could resume from the log alone.
 
@@ -44,9 +46,10 @@ For the two confined roles, the brief is also part of the barrier:
   its reason. An item that asks for a mechanism can leave only a costly encoding under the checks
   DESIGN lists. The one that recurs: asking for a keyed shape to be built in a constant. A
   table's lookup is a trait method, which can't be `const`, so a constant set leaves only a
-  positional array or a macro per set. Ask that the value be held, not when it is built. Its
-  mirror: asking that the compiler check a table's members turns the table into a `match` per
-  member, which is logic. Ask that each row name its member; a test checks the set. When a
+  positional array or a macro per set. Ask that the value be held, not when it is built. A
+  table the compiler checks is one of DESIGN's table forms (an exhaustive `match` from each
+  member to its value, or `enum_map!` rows), so a brief may ask that a table name each member
+  once and leave the form to the implementer. When a
   gate names the way out of a trap ("constant rows, each naming its member"), the brief carries
   that shape; a release alone ("need not be a constant") leaves the costly encoding open. Before
   launch, the brief's gate works through each item under the checks.

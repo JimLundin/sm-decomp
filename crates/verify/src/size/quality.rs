@@ -1,23 +1,30 @@
-//! The score's two quality terms (Jim, 2026-11-07, on the quality-score review).
+//! The score's quality terms.
 //!
-//! **Depth (Q1).** A logic token weighs `1 + 0.25 × d` times its weight, `d` the number of
-//! blocks around it, inside a function body, that nest: the block of an `if`, an `else`, a
-//! `for`, `while` or `loop` and a let-else; a closure's body, a block or an expression; and a
-//! `match` arm written as a block (`=> {`). A `match`'s own braces, its expression arms and a
-//! guard's `if` don't nest, so a flat dispatch stays at depth 0.
+//! **Depth (Q1, Jim, 2026-11-07).** A logic token weighs `1 + 0.25 × d` times its weight, `d`
+//! the number of blocks around it, inside a function body, that nest: the block of an `if`, an
+//! `else`, a `for`, `while` or `loop` and a let-else; a closure's body, a block or an
+//! expression; and a `match` arm written as a block (`=> {`). A `match`'s own braces, its
+//! expression arms and a guard's `if` don't nest, so a flat dispatch stays at depth 0.
 //!
-//! **Clumps (Q2).** Values that travel together want a type, and pay where they recur:
-//! - A pair of parameter types other than `bool` that is in three or more signatures loses the
-//!   signature's half on those parameters in each of them: their tokens and comma weigh one. A
-//!   parameter's type is the first name it holds (`&mut Mover` is `Mover`, `(u16, u16)` is
+//! **Duplication (Jim, 2026-11-11).** A run of [`RUN`] logic tokens inside a function body that
+//! repeats a run seen before, anywhere in the sources measured together, pays each of its tokens
+//! again, at one token and at its depth. So a decision written twice costs more than one shared
+//! step, whose signature weighs half. The run counts what holds behaviour at full weight (no
+//! signature, no free form, no data, no closing bracket), and local names are one name, so
+//! renaming a copy's locals doesn't hide it; fields, methods, paths and literals keep their
+//! names. A run that overlaps the first one it repeats is part of it, not a repeat.
+//!
+//! **Clumps (Q2, a diagnostic, outside the score).** Values that travel together want a type:
+//! - A pair of parameter types other than `bool` that is in three or more signatures would lose
+//!   the signature's half on those parameters in each of them: their tokens and comma weigh one.
+//!   A parameter's type is the first name it holds (`&mut Mover` is `Mover`, `(u16, u16)` is
 //!   `u16`), primitives included, so a type can't dodge the term by becoming a `u16`.
 //! - A pair of argument expressions (a call's arguments or a struct literal's field values) that
-//!   recurs at three or more sites pays the shorter expression's tokens again, at one each, at
-//!   every site after the second. A struct built only to carry arguments pays as the arguments
-//!   did. An expression that holds a call or no name (a literal) varies from site to site and is
-//!   left out, as is `..base`.
+//!   recurs at three or more sites would pay the shorter expression's tokens again, at one each,
+//!   at every site after the second. An expression that holds a call or no name (a literal)
+//!   varies from site to site and is left out, as is `..base`.
 //!
-//! Clumps are counted over all the sources measured together, in order.
+//! Repeats and clumps are counted over all the sources measured together, in order.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Range;
@@ -31,6 +38,83 @@ pub struct Context {
     pub depth: usize,
     /// Whether it belongs to a parameter whose type is in a clump (Q2).
     pub clump: bool,
+    /// Whether it is in a run that repeats one seen before.
+    pub repeated: bool,
+}
+
+/// The shortest run of logic tokens whose repeat is duplication: the shortest that two calls of
+/// one helper with the same arguments don't reach.
+const RUN: usize = 12;
+
+/// A token as a run compares it: a local's name is any local's.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+enum Key<'a> {
+    Local,
+    Token(Token<'a>),
+}
+
+/// Lowercase words that name no local.
+const NOT_LOCALS: &[&str] = &[
+    "as", "break", "const", "continue", "crate", "dyn", "else", "enum", "false", "fn", "for", "if",
+    "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self",
+    "static", "struct", "super", "trait", "true", "type", "use", "where", "while",
+];
+
+/// The token at `at` as a run compares it: a lowercase word that no `.` or `::` qualifies and
+/// that no `(`, `::` or `!` follows is a local.
+fn key<'a>(tokens: &[Token<'a>], at: usize) -> Option<Key<'a>> {
+    let token = *tokens.get(at)?;
+    let previous = at.checked_sub(1).and_then(|p| tokens.get(p));
+    let next = tokens.get(at.saturating_add(1));
+    let local = matches!(token, Token::Word(word)
+        if word.starts_with(char::is_lowercase) && !NOT_LOCALS.contains(&word))
+        && !matches!(previous, Some(Token::Punct("." | "::")))
+        && !matches!(next, Some(Token::Open('(') | Token::Punct("::" | "!")));
+    Some(if local { Key::Local } else { Key::Token(token) })
+}
+
+/// For each source, whether each token is in a run that repeats one seen before. `weighed`
+/// says, per source and token, whether a run counts it.
+pub fn repeats(sources: &[Vec<Token<'_>>], weighed: &[Vec<bool>]) -> Vec<Vec<bool>> {
+    // Each outermost function body's counted tokens: its source, their indices and their keys.
+    let runs: Vec<(usize, Vec<usize>, Vec<Key<'_>>)> = sources
+        .iter()
+        .zip(weighed)
+        .enumerate()
+        .flat_map(|(source, (tokens, weighed))| {
+            outermost(&functions(tokens)).into_iter().map(move |body| {
+                let inner = body.start.saturating_add(1)..body.end.saturating_sub(1);
+                let at: Vec<usize> = inner
+                    .filter(|&at| weighed.get(at).copied().unwrap_or_default())
+                    .collect();
+                let keys = at.iter().filter_map(|&at| key(tokens, at)).collect();
+                (source, at, keys)
+            })
+        })
+        .collect();
+    let mut out: Vec<Vec<bool>> = sources.iter().map(|t| vec![false; t.len()]).collect();
+    let mut first: BTreeMap<&[Key<'_>], (usize, usize)> = BTreeMap::new();
+    for (run, (source, at, keys)) in runs.iter().enumerate() {
+        for (start, window) in keys.windows(RUN).enumerate() {
+            match first.get(window) {
+                None => {
+                    first.insert(window, (run, start));
+                }
+                Some(&(seen, from)) if seen == run && start < from.saturating_add(RUN) => {}
+                Some(_) => {
+                    let Some(marked) = out.get_mut(*source) else {
+                        continue;
+                    };
+                    for &index in at.iter().skip(start).take(RUN) {
+                        if let Some(flag) = marked.get_mut(index) {
+                            *flag = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    out
 }
 
 /// A function's parameters and body, as token ranges of its source.

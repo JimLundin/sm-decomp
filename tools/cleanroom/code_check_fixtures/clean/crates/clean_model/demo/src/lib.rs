@@ -31,6 +31,24 @@ const NOTED: (&str, u16) = ("a note that runs \
 /// A range whose ends are literals or constants is data.
 const WINDOWS: [Range<u16>; 3] = [0x280..0x500, 2..=TILE, -3..Grid::MAX];
 
+/// An exhaustive lookup is data: a guard-free match from variants, constants or literals to
+/// data values, and enum_map! rows. Its values may be any number; its keys name theirs.
+pub const fn steps(kind: Kind) -> u16 {
+    match kind {
+        Kind::A => 3,
+        Kind::B => 0x7FFF,
+    }
+}
+pub const fn digit(n: u8) -> Speed {
+    match n {
+        0 | 1 => Speed::new(0x009),
+        _ => Speed(-2),
+    }
+}
+pub fn tiles() -> EnumMap<Kind, u16> {
+    enum_map! { Kind::A => 16, Kind::B => TILE }
+}
+
 /// An enum's discriminants are declarations.
 pub enum Kind {
     /// Two.

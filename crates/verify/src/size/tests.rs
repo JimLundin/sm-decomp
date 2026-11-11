@@ -7,10 +7,14 @@ fn tokens(src: &str) -> usize {
         .saturating_add(size.data)
 }
 
-/// The score in half tokens, of code that nothing nests or clumps.
+/// The score in half tokens, of code that nothing nests or repeats.
 fn halves(src: &str) -> usize {
     let size = of(src);
-    assert_eq!((size.depth, size.clumps), (Score(0), Score(0)), "{src}");
+    assert_eq!(
+        (size.depth, size.duplication),
+        (Score(0), Score(0)),
+        "{src}"
+    );
     size.score.eighths() / 4
 }
 
@@ -61,12 +65,12 @@ fn test_items_are_not_counted() {
 
 #[test]
 fn a_constants_value_is_data_and_its_head_a_type() {
-    // const ROWS : [] u8 ; 2 = and the ; are types; [] 1 , 2 is data; pub is logic.
+    // const ROWS : [] u8 ; 2 = and the ; are types; [] 1 , 2 is data; pub is logic, weighing
+    // nothing.
     let table = "pub const ROWS: [u8; 2] = [1, 2];";
     assert_eq!(
         of(table),
         Size {
-            score: Score(8),
             logic: 1,
             types: 9,
             data: 4,
@@ -92,8 +96,8 @@ fn declarations_and_attributes_are_types() {
     assert_eq!(
         of(src),
         Size {
-            // pub 1, then fn f ( at half each, then { 1: 3.5 tokens.
-            score: Score(28),
+            // pub 0, then fn f ( at half each, then { 1: 2.5 tokens.
+            score: Score(20),
             logic: 5,
             types: 11,
             ..Size::default()
@@ -212,7 +216,7 @@ fn a_constant_built_from_data_is_data() {
 fn a_constant_holding_behaviour_is_logic() {
     for value in [
         "if A { 1 } else { 2 }",
-        "match A { B => 1, C => 2 }",
+        "match A { B if C => 1, _ => 2 }",
         "loop { break 3 }",
         "unsafe { A }",
         "{ let a = 3; a }",
@@ -383,7 +387,7 @@ fn a_sources_functions_and_the_rest_add_up_to_its_size() {
         assert!(parts.score <= size.score);
         assert!(parts.logic <= size.logic);
     }
-    // `impl S { }` and the `use`, outside every function: the impl's three tokens, at one each.
+    // `impl S { }` and the `use`, outside every function: both weigh nothing.
     let rest = |at: usize| {
         whole[at].score.eighths()
             - measured[at]
@@ -391,9 +395,120 @@ fn a_sources_functions_and_the_rest_add_up_to_its_size() {
                 .map(|function| function.size.score.eighths())
                 .sum::<usize>()
     };
-    assert_eq!(rest(0), 3 * 8);
+    assert_eq!(rest(0), 0);
     assert_eq!(rest(1), 0);
     // The pair `(a, b)` recurs at a third site in `k` and a fourth in `m`: each pays there.
     assert_eq!(measured[0][2].size.clumps.eighths(), 8);
     assert_eq!(measured[1][0].size.clumps.eighths(), 8);
+}
+
+#[test]
+fn visibility_weighs_nothing() {
+    assert_eq!(halves("pub fn f() {}"), halves("fn f() {}"));
+    assert_eq!(halves("pub(crate) fn f() {}"), halves("fn f() {}"));
+    assert_eq!(halves("pub(in crate::m) const A: u8 = 1;"), 0);
+    // Its tokens are still logic: pub ( crate, the bracket pair once.
+    assert_eq!(of("pub(crate) fn f() {}").logic, of("fn f() {}").logic + 3);
+}
+
+#[test]
+fn an_impl_header_weighs_nothing() {
+    let header = "impl<const N: usize, T: Copy> Grid<T, N> where T: Default { fn f() {} }";
+    assert_eq!(halves(header), halves("fn f() {}"));
+    assert_eq!(
+        halves("impl Trait for S { fn f() {} }"),
+        halves("fn f() {}")
+    );
+    // An `impl` in a parameter's or a return's type is the signature's, at half.
+    assert_eq!(
+        halves("fn f(w: &mut impl World) {}"),
+        halves("fn f(w: &mut W) {}") + 1
+    );
+    assert_eq!(
+        halves("fn f() -> impl World {}"),
+        halves("fn f() -> W {}") + 1
+    );
+}
+
+#[test]
+fn an_exhaustive_match_is_data() {
+    // The arms are data; the match, its scrutinee and its braces stay logic.
+    let lookup = "fn f(k: K) -> u16 { match k { K::A => 3, K::B | K::C => LIMIT, \
+                  K::D => Some(Fixed::new(2)), } }";
+    let empty = "fn f(k: K) -> u16 { match k {} }";
+    assert_eq!(halves(lookup), halves(empty));
+    assert!(of(lookup).data > 0);
+    // Literals, a range of two and `_` are keys too.
+    let literals = "fn f(n: u8) -> K { match n { 0 => K::A, 2..=4 | 7 => K::B, _ => K::C } }";
+    assert_eq!(halves(literals), halves("fn f(n: u8) -> K { match n {} }"));
+    // In a constant's value, the match is logic and its arms data.
+    let constant = of("const A: u16 = match B { C => 1, D => 2 };");
+    assert!(constant.logic > 0 && constant.data > 0);
+}
+
+#[test]
+fn enum_map_rows_are_data() {
+    // The rows are data; the macro's name and brackets stay logic.
+    let rows = "fn f() -> M { enum_map! { K::A => 3, K::B | K::C => S { x: 1, ..BASE } } }";
+    assert_eq!(halves(rows), halves("fn f() -> M { enum_map! {} }"));
+    // A row that reads a local or computes is a decision.
+    for row in ["K::A => a", "K::A => 3 + B", "K::A => B.min(C)"] {
+        let src = format!("fn f() -> M {{ enum_map! {{ {row}, K::B => 0 }} }}");
+        assert_eq!(of(&src).data, 0, "{row}");
+    }
+}
+
+#[test]
+fn a_match_that_decides_stays_logic() {
+    for arms in [
+        "K::A if b => 3, _ => 4",
+        "K::A => { 3 } K::B => 4",
+        "K::A => a, K::B => 4",
+        "K::A => self.x, K::B => 4",
+        "K::A => B.get(), K::B => 4",
+        "K::A => B + 1, K::B => 4",
+        "K::A => S { x }, K::B => S { x: 4 }",
+        "Some(x) => 3, None => 4",
+        "x => 3, _ => 4",
+        "K::A => 3",
+    ] {
+        let src = format!("fn f(k: K) -> u16 {{ match k {{ {arms} }} }}");
+        assert_eq!(of(&src).data, 0, "{arms}");
+    }
+}
+
+#[test]
+fn a_repeated_run_pays_again_whatever_its_locals_are_named() {
+    let body = "let d = a.x.wrapping_add(b.y); if d > c.max { c.max = d; }";
+    let renamed = "let e = p.x.wrapping_add(q.y); if e > r.max { r.max = e; }";
+    let twice = format!("fn f() {{ {body} }} fn g() {{ {body} }}");
+    let copy = format!("fn f() {{ {body} }} fn g() {{ {renamed} }}");
+    let duplication = |src: &str| of(src).duplication;
+    assert!(duplication(&twice) > Score(0));
+    assert_eq!(duplication(&copy), duplication(&twice));
+    let once = of(&format!("fn f() {{ {body} }}"));
+    assert_eq!(once.duplication, Score(0));
+    // The score holds the repeat's part: two copies cost twice one, and the part again.
+    assert_eq!(
+        of(&twice).score,
+        Score(once.score.0 * 2).add(duplication(&twice))
+    );
+    // A field or a method renamed makes another run.
+    let other = "let d = a.z.wrapping_sub(b.w); if d > c.min { c.min = d; }";
+    let different = format!("fn f() {{ {body} }} fn g() {{ {other} }}");
+    assert_eq!(duplication(&different), Score(0));
+    // Written once in a step both call, the run costs less than its copy.
+    let shared = format!(
+        "fn h(a: A, b: B, c: &mut C) {{ {body} }} fn f() {{ h(a, b, c); }} fn g() {{ h(p, q, r); }}"
+    );
+    assert!(of(&shared).score < of(&copy).score);
+}
+
+#[test]
+fn clumps_are_reported_but_weigh_nothing() {
+    let clumped = of("fn f(a: A, b: B) {} fn g(a: A, b: B) {} fn h(a: A, b: B) {}");
+    let apart = of("fn f(a: A, b: C) {} fn g(a: A, b: D) {} fn h(a: A, b: E) {}");
+    assert!(clumped.clumps > Score(0));
+    assert_eq!(apart.clumps, Score(0));
+    assert_eq!(clumped.score, apart.score);
 }

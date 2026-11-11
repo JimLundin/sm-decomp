@@ -596,7 +596,7 @@ data, such as the HUD's pictures and where each count sits), and declarations (t
 and `type` items and attributes that define the model's shapes; define as many as the behaviour
 needs). The target is on everything else, the logic.
 
-**Budget (MODEL §1 decision 7).** k = 36 weighted tokens per spec unit, frozen on samus-motion. An
+**Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion. An
 area's budget is k × its units; its old code (`old`, for reference, not a bound) is the `tools size`
 score of the old code that area replaces, at spine `387640758`: for the status bar `game/src/hud.rs` and the
 cells of the HUD in `game/src/state/hud.rs`; for the mini-map `game/src/mini_map.rs` and the
@@ -618,4 +618,4 @@ The arm the gated draft added for Mother Brain's fall is a "So" (adversary 79 F4
 Round 4 adds no arm and no operator: its three vectors are cited by arms that were there, and
 `DiagonalPicture`'s new bullet and §5's order are a "So" and prose. 56.3 units.
 
-Budget: 36 × 56.3 units = 2,028 (status 756, selection 288, minimap 984)
+Budget: 37.5 × 56.3 units = 2,112 (status 787, selection 300, minimap 1,025)
