@@ -36,14 +36,14 @@ How it is counted:
 
 | Domain | Model score | Budget | Fit | Area fit | Shared | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-movement | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,021 | 1,488 | 20,764 | 326 |
+| samus-movement | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,021 | 1,488 | 20,814 | 326 |
 | world-camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 23,501 | 83 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 40,442 | 76 |
 | interface-hud | 2,695 | 2,112 | 1.28 | 0.91 | 29 % (over 25 %) | 2,742 | 1,094 | 449 | 23,604 | 84 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 399 | 23,517 | 100 |
 | samus-appearance | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 20,977 | 98 |
 | shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance) | 662 | - | - | - | - | - | 519 | 110 | - | - |
-| total | 19,526 | 17,244 | 1.13 | 1.00 | 12 % | - | 8,657 | 3,254 | 152,805 | 767 |
+| total | 19,526 | 17,244 | 1.13 | 1.00 | 12 % | - | 8,657 | 3,254 | 152,855 | 767 |
 
 ## Models
 
@@ -280,7 +280,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-movement | bridge | 4 | 3,157 | 3,752 | 286 | 197 | 127 | 90 | 3 | 597 |
-| samus-movement | harness | 2 | 6,495 | 6,553 | 738 | 887 | 402 | 529 | 21 | 1,249 |
+| samus-movement | harness | 2 | 6,823 | 6,889 | 760 | 890 | 429 | 529 | 22 | 1,299 |
 | world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
 | world-camera | harness | 2 | 6,082 | 6,206 | 784 | 266 | 290 | 432 | 30 | 1,066 |
 | run-progress | bridge | 1 | 1,343 | 1,634 | 54 | 195 | 31 | 45 | 22 | 272 |
@@ -291,7 +291,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
 | samus-appearance | harness | 2 | 3,714 | 4,020 | 421 | 136 | 116 | 178 | 14 | 591 |
-| total | | | 51,495 | 52,568 | 5,667 | 4,160 | 3,867 | 3,097 | 307 | 8,928 |
+| total | | | 51,822 | 52,904 | 5,689 | 4,163 | 3,895 | 3,097 | 308 | 8,978 |
 
 ## Harness floors and vectors
 
@@ -311,20 +311,20 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | area-maridia | 252 | 257 | 428 | 257 | 254 | 255 |
 | area-norfair | 209 | 208 | 374 | 208 | 205 | 209 |
 | boss-kraid-defeated | 1,024 | 1,068 | 1,137 | 1,070 | 1,068 | 1,023 |
-| boss-phantoon | 1,903 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 |
+| boss-phantoon | 1,904 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 |
 | chain-0012-91F8 | 421 | 1,031 | 1,032 | 1,031 | 1,030 | 421 |
 | chain-0013-92FD | 597 | 599 | 599 | 599 | 598 | 599 |
 | chain-0014-96BA | 343 | 342 | 506 | 342 | 340 | 343 |
-| chain-0043-9AD9 | 398 | 416 | 417 | 416 | 415 | 417 |
+| chain-0043-9AD9 | 417 | 416 | 417 | 416 | 415 | 417 |
 | chain-0057-9FBA | 537 | 549 | 549 | 549 | 547 | 535 |
 | chain-0059-A293 | 519 | 584 | 777 | 584 | 583 | 512 |
 | chain-0097-ACF0 | 663 | 662 | 817 | 662 | 660 | 663 |
-| chain-0100-B07A | 276 | 284 | 285 | 284 | 283 | 277 |
-| chain-0106-AD5E | 495 | 600 | 782 | 600 | 597 | 487 |
+| chain-0100-B07A | 277 | 284 | 285 | 284 | 283 | 277 |
+| chain-0106-AD5E | 496 | 600 | 782 | 600 | 597 | 487 |
 | chain-0163-A890 | 28 | 27 | 30 | 27 | 26 | 28 |
 | chain-0220-D017 | 145 | 144 | 538 | 144 | 143 | 144 |
-| chain-0224-D0B9 | 154 | 335 | 512 | 335 | 332 | 159 |
-| chain-0232-D5A7 | 598 | 632 | 706 | 632 | 631 | 601 |
+| chain-0224-D0B9 | 159 | 335 | 512 | 335 | 332 | 159 |
+| chain-0232-D5A7 | 599 | 632 | 706 | 632 | 631 | 601 |
 | chain-0234-D51E | 145 | 152 | 153 | 152 | 152 | 153 |
 | chain-0314-DAE1 | 443 | 450 | 465 | 450 | 449 | 443 |
 | chain-any-0001-DF45 | 148 | 249 | 411 | 249 | 248 | 149 |
@@ -332,12 +332,12 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | chain-any-0003-DFD7 | 182 | 181 | 344 | 181 | 181 | 182 |
 | chain-any-0004-E021 | 102 | 101 | 263 | 101 | 101 | 102 |
 | chain-any-0005-E06B | 94 | 93 | 320 | 94 | 93 | 94 |
-| chain-any-0006-E0B5 | 1,473 | 1,609 | 1,775 | 1,609 | 1,609 | 1,486 |
+| chain-any-0006-E0B5 | 1,479 | 1,609 | 1,775 | 1,609 | 1,609 | 1,486 |
 | chain-any-0007-E06B | 96 | 95 | 258 | 95 | 95 | 96 |
 | chain-any-0008-E021 | 100 | 99 | 263 | 99 | 99 | 100 |
 | chain-any-0009-DFD7 | 163 | 168 | 330 | 168 | 168 | 162 |
 | chain-any-0010-DF8D | 91 | 111 | 278 | 111 | 111 | 90 |
-| chain-any-0011-DF45 | 159 | 163 | 2,123 | 163 | 163 | 163 |
+| chain-any-0011-DF45 | 163 | 163 | 2,123 | 163 | 163 | 163 |
 | event-zebes-awake | 128 | 179 | 178 | 179 | 179 | 126 |
 | item-charge-beam | 469 | 479 | 919 | 479 | 477 | 480 |
 | item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 |
@@ -351,7 +351,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-grapple-walljump | 114 | 114 | 174 | 174 | 173 | 114 |
 | samus-input-poses | 296 | 397 | 559 | 397 | 396 | 297 |
 | samus-mockball | 129 | 129 | 129 | 129 | 128 | 129 |
-| samus-screw-attack | 853 | 945 | 945 | 945 | 944 | 859 |
+| samus-screw-attack | 862 | 945 | 945 | 945 | 944 | 859 |
 | samus-shinespark-left | 315 | 418 | 418 | 418 | 417 | 316 |
 | samus-shinespark-right | 293 | 405 | 405 | 405 | 404 | 293 |
 | samus-shinespark-up | 212 | 393 | 393 | 393 | 392 | 212 |
@@ -359,10 +359,10 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-space-jump-chain | 383 | 383 | 383 | 383 | 382 | 383 |
 | samus-square-slope-reserve | 37 | 36 | 398 | 36 | 35 | 37 |
 | samus-walljump-16 | 157 | 157 | 157 | 157 | 156 | 157 |
-| samus-walljump-22 | 162 | 163 | 163 | 163 | 162 | 163 |
-| samus-walljump-28 | 168 | 169 | 169 | 169 | 168 | 169 |
-| terrain-quicksand | 333 | 450 | 456 | 450 | 421 | 402 |
-| total | 20,764 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 23,604 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows |
+| samus-walljump-22 | 163 | 163 | 163 | 163 | 162 | 163 |
+| samus-walljump-28 | 169 | 169 | 169 | 169 | 168 | 169 |
+| terrain-quicksand | 334 | 450 | 456 | 450 | 421 | 402 |
+| total | 20,814 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 23,604 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
@@ -379,7 +379,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 
 | Domain | Frames | Matched and verified | Unverified | Null model |
 | --- | ---: | ---: | ---: | ---: |
-| samus-movement | 40,835 | 20,764 | 0 | 5,600 |
+| samus-movement | 40,835 | 20,814 | 0 | 5,600 |
 | world-camera | 40,835 | 23,501 | 0 | 9,168 |
 | run-progress | 40,835 | 40,442 | 7 | 40,414 |
 | interface-hud | 37,669 | 23,604 | 0 | 20,782 |
@@ -395,7 +395,7 @@ Per declared field, the compared frames on which it was compared and those on wh
 | samus-movement | base_speed | 20,574 | 427 |
 | samus-movement | extra_run | 20,574 | 427 |
 | samus-movement | dashing | 20,949 | 52 |
-| samus-movement | mode | 20,923 | 78 |
+| samus-movement | mode | 20,873 | 128 |
 | samus-movement | vertical_speed | 20,574 | 427 |
 | samus-movement | vertical | 20,943 | 58 |
 | samus-movement | bounce | 21,001 | 0 |
@@ -448,27 +448,27 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | samus-movement | BlocksStopFlush | 12,597 | 4,998 | 12,681 | 158 |
 | samus-movement | Dash | 5,721 | 9 | 5,733 | 52 |
 | samus-movement | Dashing | 5,771 | 5,515 | 5,791 | 13 |
-| samus-movement | DriftInTheAir | 7,331 | 2,045 | 7,418 | 247 |
+| samus-movement | DriftInTheAir | 7,331 | 2,045 | 7,369 | 296 |
 | samus-movement | FollowingTheGround | 12,186 | 11,080 | 12,250 | 1,086 |
 | samus-movement | HowSheIsDrawn | vectors only | - | 0 | 0 |
 | samus-movement | Jumping | 321 | 5 | 323 | 11 |
 | samus-movement | Landing | 193 | 0 | 193 | 5 |
 | samus-movement | Moonfall | 751 | 121 | 751 | 66 |
-| samus-movement | MovesAsShePosed | 19,518 | 5,498 | 19,674 | 1,327 |
+| samus-movement | MovesAsShePosed | 19,567 | 5,498 | 19,674 | 1,327 |
 | samus-movement | OtherBlockKinds | vectors only | - | 0 | 0 |
 | samus-movement | PadChart | vectors only | - | 0 | 21,001 |
 | samus-movement | PoseFitAfterMoves | 454 | 0 | 455 | 35 |
 | samus-movement | PoseFollows | vectors only | - | 0 | 21,001 |
 | samus-movement | RidingTheElevator | vectors only | - | 0 | 906 |
-| samus-movement | RisingAndFalling | 7,081 | 188 | 7,166 | 499 |
+| samus-movement | RisingAndFalling | 7,130 | 188 | 7,166 | 499 |
 | samus-movement | ShrinkingLowersHer | 67 | 0 | 67 | 2 |
 | samus-movement | SlopesCarry | 80 | 3 | 80 | 1 |
 | samus-movement | SlopesSlowTheWalk | vectors only | - | 0 | 0 |
-| samus-movement | SolidEnemies | 7,164 | 2,273 | 7,203 | 442 |
+| samus-movement | SolidEnemies | 7,175 | 2,273 | 7,203 | 442 |
 | samus-movement | SpeedBuildsAndBrakes | 13,067 | 5,652 | 13,131 | 205 |
 | samus-movement | TouchedCells | vectors only | - | 0 | 20,520 |
 | samus-movement | TurningRound | 1,524 | 17 | 1,591 | 11 |
-| samus-movement | WallJump | 281 | 0 | 302 | 2 |
+| samus-movement | WallJump | 281 | 0 | 281 | 23 |
 | samus-movement | WallsAndCeilings | 1,655 | 474 | 1,682 | 31 |
 | samus-movement | WhatHerMovesMet | vectors only | - | 0 | 2,196 |
 | samus-movement | WordwiseTopSpeed | vectors only | - | 0 | 0 |
@@ -581,7 +581,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | interface-hud model matches | 5,046 | 3.9 % |
 | run-progress model matches | 17,121 | 13.2 % |
 | samus-appearance model matches | 4,692 | 3.6 % |
-| samus-movement model matches | 4,624 | 3.6 % |
+| samus-movement model matches | 4,638 | 3.6 % |
 | world-blocks model matches | 5,038 | 3.9 % |
 | world-camera model matches | 5,045 | 3.9 % |
 | free-run gate: green streams | 1,399 | 1.1 % |
@@ -617,7 +617,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | interface-hud model matches | 15,805 | 7.1 % |
 | run-progress model matches | 20,432 | 9.2 % |
 | samus-appearance model matches | 14,157 | 6.4 % |
-| samus-movement model matches | 14,015 | 6.3 % |
+| samus-movement model matches | 14,052 | 6.3 % |
 | world-blocks model matches | 15,735 | 7.1 % |
 | world-camera model matches | 15,763 | 7.1 % |
 | free-run gate: green streams | 596 | 0.3 % |
@@ -657,7 +657,7 @@ Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/archi
 | interface-hud | 181 of 345 (52.5 %) | 744 of 1,624 (45.8 %) | 2,826 of 4,534 (62.3 %) |
 | run-progress | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
 | samus-appearance | 182 of 345 (52.8 %) | 647 of 1,624 (39.8 %) | 2,581 of 4,534 (56.9 %) |
-| samus-movement | 106 of 345 (30.7 %) | 366 of 1,624 (22.5 %) | 1,694 of 4,534 (37.4 %) |
+| samus-movement | 182 of 345 (52.8 %) | 646 of 1,624 (39.8 %) | 2,571 of 4,534 (56.7 %) |
 | world-blocks | 181 of 345 (52.5 %) | 743 of 1,624 (45.8 %) | 2,825 of 4,534 (62.3 %) |
 | world-camera | 181 of 345 (52.5 %) | 743 of 1,624 (45.8 %) | 2,825 of 4,534 (62.3 %) |
 

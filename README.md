@@ -23,9 +23,9 @@ The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): s
 
 | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held | Still needed |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 2 of 6 | 30.7 % (samus-movement) | 18 of 18: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
-| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 10 of 35 | 22.5 % (samus-movement) | 22 of 22: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
-| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 20 of 70 | 37.4 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 2 of 6 | 52.5 % (interface-hud) | 18 of 18: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 10 of 35 | 39.8 % (samus-movement) | 22 of 22: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 20 of 70 | 56.7 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
 Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 30 have not started. **47 rounds** have landed on 6 models; the plan estimates 157 rounds for the whole game.
 
@@ -39,7 +39,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 20,764 of 40,835 | 8,926 | 8,823 | 1.01 |
+| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 20,814 of 40,835 | 8,926 | 8,823 | 1.01 |
 | world-camera | CAM (in progress) | in progress | 6 | 83 | 23,501 of 40,835 | 1,839 | 1,762 | 1.04 |
 | run-progress | P1 (in progress) | in progress | 8 | 76 | 40,442 of 40,835 | 819 | 1,061 | 0.77 |
 | interface-hud | H2 (in progress) | in progress | 5 | 84 | 23,604 of 37,669 | 2,695 | 2,112 | 1.28 |

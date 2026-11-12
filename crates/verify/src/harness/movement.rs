@@ -14,6 +14,13 @@
 //! handed over her pose. Nothing answers from record N+1, so no field is unverified; the null
 //! model is her State left as record N has it, rising, heading down, her speed after her moves
 //! and handed over as record N shows them, and placed nowhere.
+//!
+//! After her moves the step runs the frame's pose change and her animation as the engine's
+//! Tick does (`samus_movement_bridge::step::next`, `pose::change`,
+//! `samus_appearance_bridge::animate`), and takes where the camera last saw her from record N
+//! (the scroll writes it), so a free run carries her pose, facing, radius and clip into the
+//! next frame. Her pose isn't a declared field yet: its writers outside this domain, knockback's
+//! start among them, have no masks for it.
 
 use core::cell::RefCell;
 use core::fmt;
@@ -28,13 +35,14 @@ use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
 use game::model::num::Fixed;
 use game::pose;
+use game::samus_appearance_bridge::{self, Start};
 use game::samus_movement_bridge::state::{clean_of, named};
-use game::samus_movement_bridge::step::{Ran, Reads, run, settle};
+use game::samus_movement_bridge::step::{Ran, Reads, Stepped, next, run, settle};
 use game::samus_movement_bridge::{SamusFault, SamusWorld};
 use game::state::Controller;
 use game::state::room::{Block, BlockColumns, ElevatorRide};
 use game::state::samus::{
-    Bounce, Dashing, Motion, PoseId, Position, Samus, SpeedMode, VerticalMotion,
+    Bounce, Dashing, Motion, Point, PoseId, Position, Samus, SpeedMode, VerticalMotion,
 };
 use game::state::strand::Frame;
 use oracle_record::{Cut, FrameRecord, NmiKind};
@@ -44,7 +52,7 @@ use samus_movement::{
 };
 use types::{Action, Block as Kind, Heading, Pose as Shape, Way, World, ZERO};
 
-use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Hides, Interval, Mask, Uncompared};
 use crate::bundle::{self, ContentError};
 use crate::decode::{DecodeError, Rules, buttons};
 use crate::domain_field;
@@ -216,6 +224,11 @@ const RUNNING: u8 = 0x01;
 const STANDING: u8 = 0x00;
 /// The pad's left and right (`JOYPAD1_LASTKEYS`), which no binding moves.
 const SIDES: u16 = 0x0300;
+/// The spinning movement type: the spin jump, the space jump and the screw attack.
+const SPINNING: u8 = 0x03;
+/// Bank $90 log, `$90:9A7E`: her speed mode (`0B4A`) skidding, and slowing to a halt.
+const SKIDDING: u16 = 1;
+const HALTING: u16 = 2;
 /// Bank $90 log: the shinespark windup's movement handler, which the windup's start sets
 /// ($90:CFFA).
 const SHINESPARK_WINDUP: u16 = 0xD068;
@@ -422,6 +435,34 @@ fn let_go_stands(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
     Ok(movement(from)? == RUNNING
         && word(from, source::JOYPAD1_LASTKEYS)? & SIDES == 0
         && movement(next)? == STANDING)
+}
+
+/// The mask of her speed mode where braking ended a spin's skid and the side she faces, held,
+/// then halted her: spinning and skidding in `from`, spinning and halting at no speed in `next`.
+/// Braking below zero ends the skid at speed 0 (`$90:9B1F`) and the spin's frame carries on with
+/// the pad, so the halt is in her speed mode word alone, which no later frame shows: a spin
+/// decides it afresh each frame, every pose a spin changes into sets it again, and the scroll
+/// reads only a skid. No writer stands behind it, so a free run carries on.
+fn a_spins_skid_that_braking_ends(
+    from: &FrameRecord,
+    next: &FrameRecord,
+) -> Result<Option<Mask>, Skip> {
+    let spinning = |record| Ok::<_, Skip>(byte(record, source::SAMUS_MOVEMENT_TYPE)? == SPINNING);
+    let mode = |record| word(record, source::SAMUS_X_ACCEL_MODE);
+    let halted = spinning(from)?
+        && mode(from)? == SKIDDING
+        && spinning(next)?
+        && mode(next)? == HALTING
+        && fixed(
+            &next.wram,
+            source::SAMUS_X_BASE_SPEED,
+            source::SAMUS_X_BASE_SUBSPEED,
+        )? == Fixed(0);
+    Ok(halted.then_some(Mask {
+        reason: "unperceived: a spin's skid that braking ends, halted by the side she faces held, which its next frame decides afresh",
+        fields: Quantity::Mode.set(),
+        hides: Hides::NoWriter,
+    }))
 }
 
 fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, DecodeError> {
@@ -900,7 +941,8 @@ impl Movement {
 }
 
 /// What the model reads besides her, from record N: the pad, the elevator, the frame count,
-/// the level, its room's door list and the enemies she can touch.
+/// the level, its room's door list, the enemies she can touch, and where the camera last saw
+/// her.
 pub struct Inputs {
     controller: Controller,
     ride: ElevatorRide,
@@ -909,12 +951,16 @@ pub struct Inputs {
     blocks: Vec<Block>,
     doors: Vec<Door>,
     enemies: Vec<Obstacle>,
+    /// Where the camera last saw her: the scroll (the camera's domain) writes it after her
+    /// frame, so a free run takes it from record N rather than carrying her own.
+    seen: Point,
 }
 
 impl Inputs {
-    /// Record N's inputs, in a room of `doors`: the enemies are the live ones the selection
-    /// would let her touch, by the camera as record N has it.
-    fn of(wram: &[u8], doors: Vec<Door>) -> Result<Self, DecodeError> {
+    /// Record N's inputs, in a room of `doors`, with the camera having last seen her at `seen`:
+    /// the enemies are the live ones the selection would let her touch, by the camera as record
+    /// N has it.
+    fn of(wram: &[u8], doors: Vec<Door>, seen: Point) -> Result<Self, DecodeError> {
         let rules = Rules::ORIGINAL;
         let (camera_x, camera_y) = (rules.camera_x.read(wram)?, rules.camera_y.read(wram)?);
         let enemies = rules
@@ -937,6 +983,7 @@ impl Inputs {
             blocks: rules.level.layer1(wram)?,
             doors,
             enemies,
+            seen,
         })
     }
 }
@@ -1050,7 +1097,8 @@ impl Domain for Movement {
             handed_over: handed_over(from)?,
         };
         let doors = self.doors(word(from, source::ROOM_PTR)?)?;
-        Ok((hers, Inputs::of(&from.wram, doors)?))
+        let seen = hers.samus.previous_position;
+        Ok((hers, Inputs::of(&from.wram, doors, seen)?))
     }
 
     fn masks(
@@ -1166,6 +1214,7 @@ impl Domain for Movement {
                 Q::Placed.set(),
             );
         }
+        masks.extend(a_spins_skid_that_braking_ends(from, next)?);
         Ok(masks
             .into_iter()
             .map(|mask| Mask {
@@ -1181,6 +1230,14 @@ impl Domain for Movement {
 
     fn step(&self, hers: &mut Hers, inputs: &Inputs, world: &mut Exercised) {
         let level = self.level(inputs);
+        let content = &self.content;
+        hers.samus.previous_position = inputs.seen;
+        let start = Start::of(&hers.samus);
+        let requests = if pose::carried(&hers.samus, inputs.ride) {
+            pose::PoseRequests::default()
+        } else {
+            pose::input(&hers.samus, &inputs.controller, content)
+        };
         if let Ok(ran) = self.ran(&mut hers.samus, inputs, &level) {
             settle(&mut hers.samus, &ran);
             hers.rising = ran.outcome.rising;
@@ -1188,6 +1245,22 @@ impl Domain for Movement {
             hers.speed_after_moves = Fixed(ran.outcome.vertical_speed_after_moves.0);
             hers.handed_over = ran.outcome.handed_over;
             world.0 = exercised(&ran, &level);
+            // The frame's pose change and her animation, as the engine's Tick runs them after
+            // her moves: the free run carries her State, so the next frame's moves read the
+            // pose, facing, radius and clip this frame left, not the seed's.
+            let stepped = Stepped {
+                pose: ran.after.pose,
+                outcome: ran.outcome,
+            };
+            let asked = next(&hers.samus, Some(&stepped), requests);
+            pose::change(&mut hers.samus, asked, content);
+            samus_appearance_bridge::animate(
+                &mut hers.samus,
+                start,
+                Some(&stepped.outcome),
+                &inputs.controller,
+                &content.samus_clips,
+            );
         }
     }
 
@@ -1343,7 +1416,7 @@ pub mod cases;
 
 #[cfg(test)]
 mod tests {
-    use super::{Domain, FieldSet, Inputs, Movement, Quantity};
+    use super::{Domain, FieldSet, Hides, Inputs, Mask, Movement, Quantity};
     use crate::source::{self, WramWord};
     use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 
@@ -1386,8 +1459,8 @@ mod tests {
         }
     }
 
-    /// The fields the masks of the frame from `from` to `next` take.
-    fn masked(from: &FrameRecord, next: &FrameRecord) -> FieldSet {
+    /// The masks of the frame from `from` to `next`.
+    fn masks(from: &FrameRecord, next: &FrameRecord) -> Vec<Mask> {
         let domain = Movement {
             content: game::Content::default(),
             image: Vec::new(),
@@ -1401,13 +1474,44 @@ mod tests {
             blocks: Vec::new(),
             doors: Vec::new(),
             enemies: Vec::new(),
+            seen: game::state::samus::Point::default(),
         };
         match domain.masks(from, next, &inputs) {
-            Ok(masks) => masks
-                .iter()
-                .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields)),
+            Ok(masks) => masks,
             Err(skip) => panic!("masks: {skip}"),
         }
+    }
+
+    /// The fields the masks of the frame from `from` to `next` take.
+    fn masked(from: &FrameRecord, next: &FrameRecord) -> FieldSet {
+        masks(from, next)
+            .iter()
+            .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields))
+    }
+
+    #[test]
+    fn a_spins_skid_that_braking_ends_hides_her_speed_mode_alone_with_no_writer() {
+        let movement = WramWord {
+            name: "SAMUS_MOVEMENT_TYPE",
+            offset: source::SAMUS_MOVEMENT_TYPE.offset,
+        };
+        let spin = (movement, u16::from(super::SPINNING));
+        let skidding = (source::SAMUS_X_ACCEL_MODE, super::SKIDDING);
+        let halting = (source::SAMUS_X_ACCEL_MODE, super::HALTING);
+        let hidden = |from: &[(WramWord, u16)], next: &[(WramWord, u16)]| {
+            masks(&record(0, from), &record(1, next))
+                .iter()
+                .map(|mask| (mask.fields, mask.hides))
+                .collect::<Vec<_>>()
+        };
+        let mode = [(Quantity::Mode.set(), Hides::NoWriter)];
+        let nothing: [(FieldSet, Hides); 0] = [];
+        assert_eq!(hidden(&[spin, skidding], &[spin, halting]), mode);
+        let moving = (source::SAMUS_X_BASE_SUBSPEED, 0x8000);
+        assert_eq!(hidden(&[spin, skidding], &[spin, halting, moving]), nothing);
+        assert_eq!(hidden(&[spin, skidding], &[halting]), nothing);
+        assert_eq!(hidden(&[skidding], &[spin, halting]), nothing);
+        assert_eq!(hidden(&[spin, halting], &[spin, halting]), nothing);
     }
 
     #[test]
