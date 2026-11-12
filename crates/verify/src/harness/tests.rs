@@ -681,7 +681,7 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
     let content =
         crate::bundle::content(image).unwrap_or_else(|error| panic!("content: {error:?}"));
     let poses = content.samus_clips.poses();
-    assert_eq!(poses.len(), data::assets::samus::import::map::MAP.len());
+    assert_eq!(poses.len(), data::assets::samus::map::MAP.len());
     for (at, imported) in poses.iter().enumerate() {
         let twins: Vec<_> = poses
             .iter()

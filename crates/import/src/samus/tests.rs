@@ -1,10 +1,10 @@
-use super::map::{MAP, id_of, key_of};
 use super::*;
-use crate::assets::samus::ClipEnd;
-use crate::assets::samus::key::{
+use data::assets::samus::ClipEnd;
+use data::assets::samus::key::{
     Action, Aim, Body, Dress, Facing, Gun, LandedFrom, Legs, Pose, SpinSprite, Suit, Turn,
 };
-use crate::rom::Rom;
+use data::assets::samus::map::{MAP, id_of, key_of};
+use data::rom::Rom;
 
 /// The ROM, from `SM_ROM` or the checkout's `rom/sm.smc`; `None` where it isn't present.
 fn rom() -> Option<Rom> {

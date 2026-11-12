@@ -7,7 +7,7 @@
 //! Bank `$A0` log, `$A0:884D` draws her with enemy layer 3, after the enemies of layers 0 to 2.
 
 use data::assets::samus::Frame;
-use data::assets::samus::import::map;
+use data::assets::samus::map;
 use types::Pair;
 
 use crate::intent::{SpriteDraw, on_screen};

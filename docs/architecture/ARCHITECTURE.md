@@ -76,14 +76,15 @@ amendments are applied here. The oracle and the lock are in [ORACLE.md](../ORACL
 
 | Crate | Owns | Must not |
 | --- | --- | --- |
-| `data` | IDs and stable keys; the ROM decoder; typed content and world records; profiles and the rule tables (the vanilla value of every behaviour parameter); the portable records (display frame, video memory image, sound frame, intents); the address map; the digest and span fold | hold mutable state or game State |
+| `data` | IDs and stable keys; the ROM decoder (moving into `import` family by family); typed content and world records; profiles and the rule tables (the vanilla value of every behaviour parameter); the portable records (display frame, video memory image, sound frame, intents); the address map; the digest and span fold | hold mutable state or game State |
 | `game` | `Session`, `State`, the Tick, strands, slot store, interpreter, every gameplay domain, the behaviour catalogue, the sound protocol, the cost model, SRAM. Inside it MODEL §2's layers: `model` decides, `intent` carries the per-Tick intents, `exact` encodes them, `tick` orders. Producers never write video State; only `exact` does | touch pixels, samples, files, devices or addresses (K1) |
 | `runtime` | the line compositor, `wgpu` presentation, the wide renderer, sound backends, storage | feed anything back into the Session |
 | `app` | the run coordinator, Tick admission, the input profile, effect delivery; binary `super-metroid` | contain gameplay |
 | `oracle` | emulator adapters, the `Oracle` trait, seeds, the lock recorder | depend on `game` or `verify` |
 | `oracle_record` | `FrameRecord` and its codec (`oracle::record`), so `verify` reads records without an emulator | link an emulator |
 | `verify` | the record → State decoder, projections, facts, digests, free-run and lockstep comparison | be depended on by an engine crate |
-| `tools` | the command line and the importers | hold comparison logic of its own |
+| `import` | the importers: the player's ROM, read once, into our own formats ([assets.md §5](assets.md#5-the-importers)) | be depended on by `game` or `runtime` |
+| `tools` | the command line | hold comparison logic of its own |
 | `clean/types`, `clean/<crate>` | the clean room's crates (MODEL §5): the shared domain types and the `World` trait; each rebuilt domain's model and catalogue | depend on anything but each other, `std` and the registry crates of `tools/cleanroom/allowed_deps.txt`; hold an address, a bank reference or the original's names |
 | `canonical`, `canonical_derive` | the `Canonical` trait (codec, diff, schema hash) and its derive over `proc_macro` alone (no `syn` or `quote`, whose build scripts Defender blocks); separate so `data` can derive it | hold State or rules |
 
@@ -96,7 +97,8 @@ second comparison path (P7). [crates/README.md](../../crates/README.md) lists th
 `tools/check_crate_rules.sh` checks, in Quality and `tools/lane/gate.sh`:
 
 1. No engine crate (`data`, `game`, `runtime`, `app`) depends on `oracle`, `verify` or `tools`.
-2. `game` and `runtime` don't depend on each other; `oracle` depends only on `data` and `oracle_record`.
+2. `game` and `runtime` don't depend on each other, nor reach `import`; `oracle` depends only on
+   `data` and `oracle_record`.
 3. Engine crates hold no `cfg(verify)`, probe or observer (P6), and no SNES address literal in
    `game`, `runtime` or `app` (K1).
 4. No `#![feature]`, `allow` or `expect` attribute, and no routine-label names, in the engine (K8, K9).

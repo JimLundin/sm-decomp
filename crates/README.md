@@ -8,11 +8,12 @@ The rebuild's crates, as planned in
 | `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `types` (the asset key is the clean room's pose) |
 | `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress` |
 | `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
-| `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `game`, `runtime` |
+| `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `import` (the player's ROM at startup), `game`, `runtime` |
+| `import` | the importers ([assets.md §5](../docs/architecture/assets.md#5-the-importers)): the only code that knows the ROM's layout of the content it writes, into `data`'s formats. `game` and `runtime` never reach it. | `data` |
 | `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
 | `oracle_record` | `FrameRecord` and the types in it, the lsnes raw record decoder, the wait sites and the pad file reader, with no emulator: linking `oracle` needs the emulator archive. | none |
-| `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `game`, `runtime`, `oracle_record`, `canonical` (lockstep names differences with `Canonical::diff`), `types` and the six clean models (the domain harnesses run them) |
-| `tools` | the command line over the above and the importers. No comparison logic of its own. | `verify`, `oracle`, `runtime` |
+| `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `import` (it builds the content from the ROM), `game`, `runtime`, `oracle_record`, `canonical` (lockstep names differences with `Canonical::diff`), `types` and the six clean models (the domain harnesses run them) |
+| `tools` | the command line over the above. No comparison logic of its own. | `verify`, `oracle`, `runtime`, `import` |
 | `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. | `canonical_derive` |
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
 | `types` | the clean room's shared domain types (`crates/clean/types`, MODEL §5): `P.S` quantities, poses, cells, the `World` trait, the catalogue's kinds. No address or original name. | none |
@@ -36,7 +37,8 @@ on `enum-map` because the progress model's tables are `EnumMap`s.
 `data`, `game`, `runtime` and `app` are the engine. Every new crate takes the workspace lint
 set in the root `Cargo.toml` (PRINCIPLES K5, K7, K8); `game` also denies float arithmetic.
 
-`tools/check_crate_rules.sh` checks the table's last column and the source rules of
+`tools/check_crate_rules.sh` checks the table's last column, that `data`, `game` and `runtime`
+reach no `import`, and the source rules of
 [§4.2](../docs/architecture/ARCHITECTURE.md#42-dependency-rules-checked-in-ci): no
 `cfg(verify)`, probe or observer in the engine, no SNES address literal in `game`, `runtime` or
 `app`, no `#![feature]`, `allow` or `expect` in the engine, and no routine-label names. CI runs

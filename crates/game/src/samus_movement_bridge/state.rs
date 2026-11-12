@@ -20,8 +20,8 @@ use samus_movement::{
     Vertical,
 };
 
-use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
+use data::assets::samus::map;
 use types::{Action, Buttons, Fixed, Pose, Position, Px, Set, Side, Turn, ZERO};
 
 use crate::model::num::Fixed as Exact;

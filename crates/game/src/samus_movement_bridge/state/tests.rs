@@ -18,7 +18,7 @@ use crate::state::samus::{
 };
 use crate::state::slots::FlagSet;
 use crate::state::{Button, Controller};
-use data::assets::samus::import::map;
+use data::assets::samus::map;
 
 /// Running right (pose 9), facing right.
 const RUNNING_RIGHT: PoseId = PoseId(0x09);

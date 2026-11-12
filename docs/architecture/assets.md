@@ -250,8 +250,10 @@ and no ROM layout: `rom`, `compression`, `address_map` and the decoders move int
 family by family, private to it once their format lands. `tools`, `verify` and `app` (for the
 player's ROM at startup) depend on `import`; `game` and `runtime` may not, and
 `tools/check_crate_rules.sh` checks it, so "only the importer knows the layout" is a build
-error rather than a review rule. Today Samus's importer is `data::assets::samus::import`, over
-the decoded tables of `data::pose`; AF0 moves both into `import`.
+error rather than a review rule. Samus's importer is `import::samus`. The decoded tables of
+`data::pose` it reads stay in `data` while the engine loads them too (`game::pose::Content`
+holds her pose definitions, transitions, spritemaps and tiles); they move into `import` when
+the engine moves and draws her from the format alone.
 
 | Importer | Reads | Knowledge that never leaves `import` |
 | --- | --- | --- |
@@ -270,13 +272,13 @@ and compares (§1 point 3, sound excepted), and checks the relations between fie
 hand-made images and, in CI, on the ci-data ROM. Its registries are committed: an id and the
 original's place it stands for hold no ROM bytes.
 
-Samus's importer is the only code that knows the ROM's layout of her records. It reads the
-decoded tables of `data::pose` (they keep their bank and address comments) and writes the
+Samus's importer (`import::samus`) is the only code that knows the ROM's layout of her
+records. It reads the decoded tables of `data::pose` (they keep their bank and address comments) and writes the
 format:
 
 | Format | From |
 | --- | --- |
-| the key and dress variant of each clip | the pose map (the 164 ids the domain reaches, decode notes "The pose map"), held once here; nothing in the ROM names a pose by its parts |
+| the key and dress variant of each clip | the pose map (the 164 ids the domain reaches, decode notes "The pose map"), held once in `data::assets::samus::map`; nothing in the ROM names a pose by its parts |
 | frames, holds and the clip's end | the pose's animation delay list (`data::pose::animation`), one frame per byte the animation reaches; the end from the instruction that ends the list |
 | top and bottom sprites | the top and bottom half spritemap tables (`data::pose::spritemap`), first index by pose plus the frame |
 | whether the bottom half is drawn | the bottom-half rule of draw Samus, by movement type, pose and frame, baked per frame |
@@ -285,9 +287,10 @@ format:
 | `chest` | the facing-forward drawing routine's immediate sprite, held here |
 | `running` | the running delay list |
 
-It also answers the bridge's two questions while the engine still keeps a pose id
-(`import::map::key_of`, `import::map::id_of`): the key of an id, and the id that shows a key in
-a dress.
+The pose map is a registry (§1 point 1), so it is `data`'s, `data::assets::samus::map`: the
+engine's bridges ask it two questions while the engine still keeps a pose id (`key_of`,
+`id_of`), the key of an id and the id that shows a key in a dress, and `game` may not ask
+`import`.
 
 ## 6. Loading at runtime
 

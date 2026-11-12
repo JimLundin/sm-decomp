@@ -16,6 +16,7 @@ samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
+import = { path = "../import" }
 enum-map = "=3.1.0"
 game = { path = "../game" }
 oracle_record = { path = "../oracle_record" }

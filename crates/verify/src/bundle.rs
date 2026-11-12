@@ -138,7 +138,7 @@ pub enum ContentError {
     /// Samus's tiles definitions or graphics are outside the image.
     SamusTiles(AddressError),
     /// Samus's assets don't import.
-    SamusAssets(data::assets::samus::import::ImportError),
+    SamusAssets(import::samus::ImportError),
     /// Slice 0's rooms don't decode.
     Rooms(data::room::RoomError),
     /// The area maps are outside the image.
@@ -209,15 +209,14 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let samus_spritemaps =
         SamusSpritemaps::load(rom.lorom()).map_err(ContentError::SamusSpritemaps)?;
     let graphics = Graphics::load(rom.lorom(), GRAPHICS_BANKS).map_err(ContentError::SamusTiles)?;
-    let samus_assets =
-        data::assets::samus::import::from_tables(data::assets::samus::import::Tables {
-            poses: &poses,
-            delays: &delays,
-            spritemaps: &samus_spritemaps,
-            tiles: &samus_tiles,
-            graphics: &graphics,
-        })
-        .map_err(ContentError::SamusAssets)?;
+    let samus_assets = import::samus::from_tables(import::samus::Tables {
+        poses: &poses,
+        delays: &delays,
+        spritemaps: &samus_spritemaps,
+        tiles: &samus_tiles,
+        graphics: &graphics,
+    })
+    .map_err(ContentError::SamusAssets)?;
     let paces = RunPaces::load(rom.lorom()).map_err(ContentError::Delays)?;
     let samus_clips = game::samus_appearance_bridge::Clips::import(&delays, &paces)
         .map_err(ContentError::SamusClips)?;

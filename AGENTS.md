@@ -57,7 +57,7 @@ Model the domain with types, not raw numbers:
   tolerates one, keep a named variant (`Unknown(u16)`) and list it in LEGACY. Stay byte-exact: the
   original's value goes back out wherever it is observed.
 
-`cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p
+`cargo clippy --locked -p data -p import -p game -p runtime -p app -p verify -p tools -p canonical -p
 canonical_derive -p oracle_record -p oracle -p types -p samus_movement -p
 world_blocks -p world_camera -p interface_hud -p run_progress -p
 samus_appearance --all-targets --no-deps -- -D warnings` must pass, as `tools/lane/gate.sh` runs it, and

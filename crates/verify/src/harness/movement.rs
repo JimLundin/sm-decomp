@@ -1015,7 +1015,7 @@ impl Domain for Movement {
         motion_runs(from)?;
         // A pose outside her domain has no clip to read her animation's step through.
         let pose = word(from, source::SAMUS_POSE)?;
-        if data::assets::samus::import::map::key_of(PoseId(pose)).is_none() {
+        if data::assets::samus::map::key_of(PoseId(pose)).is_none() {
             return Err(Skip::Pose(pose));
         }
         let samus = Rules::ORIGINAL.samus(&from.wram, &self.content.samus_clips)?;

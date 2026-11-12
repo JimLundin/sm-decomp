@@ -6,7 +6,7 @@
 //! frames do, and compares what the decode notes' table ("Room content: harness cases") names
 //! with record N+1. The constructed vectors carry the same rules over invented rooms.
 
-use data::assets::samus::import::map;
+use data::assets::samus::map;
 use game::samus_movement_bridge::step::{Ran, settle};
 use game::state::samus::PoseId;
 use oracle_record::FrameRecord;

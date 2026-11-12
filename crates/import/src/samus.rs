@@ -5,23 +5,22 @@
 //! spritemap tables and tile uploads) and bakes, frame by frame, what each of her poses
 //! draws.
 
-pub mod map;
-
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use super::{
+use data::assets::samus::map;
+use data::assets::samus::{
     Chest, Clip, ClipEnd, Frame, FrameNumber, FrameTiles, Hold, SamusAssets, SpriteId, SpriteSheet,
     TileUpload, TilesId, Unkeyed,
 };
-use crate::pose::animation::{
+use data::pose::animation::{
     AnimationDelays, AnimationError, AnimationFrame, DelayItem, DelayList, Instruction,
 };
-use crate::pose::spritemap::{Half, PositionOffsets, SamusSpritemaps, SpritemapError};
-use crate::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles, TileDefinitionId};
-use crate::pose::{MovementType, POSE_COUNT, PoseError, PoseId, Poses};
-use crate::rom::{AddressError, Lorom};
-use crate::spritemap::{SpriteAttributes, Spritemap};
+use data::pose::spritemap::{Half, PositionOffsets, SamusSpritemaps, SpritemapError};
+use data::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles, TileDefinitionId};
+use data::pose::{MovementType, POSE_COUNT, PoseError, PoseId, Poses};
+use data::rom::{AddressError, Lorom};
+use data::spritemap::{SpriteAttributes, Spritemap};
 
 /// The decoded tables the importer reads.
 #[derive(Clone, Copy, Debug)]

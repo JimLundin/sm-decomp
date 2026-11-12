@@ -1,0 +1,13 @@
+[package]
+name = "import"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The importers: the player's ROM, read once at the edge, into our own content formats"
+
+[dependencies]
+data = { path = "../data" }
+
+[lints]
+workspace = true

@@ -1,4 +1,4 @@
-use data::assets::samus::import::map;
+use data::assets::samus::map;
 use data::pose::Poses;
 use types::Parity;
 use types::button::{AIM_DOWN, AIM_UP, DOWN, JUMP, LEFT, RIGHT, RUN, SHOOT, UP};

@@ -3,8 +3,8 @@
 //! A clip's frames each hold for a time and draw sprites of the sheet: her top and bottom
 //! halves, placed from her position, and the graphics they upload (docs/architecture/assets.md).
 
-pub mod import;
 pub mod key;
+pub mod map;
 
 use crate::pose::PoseId;
 use crate::spritemap::{SpriteAttributes, Spritemap};

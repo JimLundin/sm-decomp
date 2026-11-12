@@ -279,8 +279,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-movement | bridge | 4 | 3,157 | 3,754 | 286 | 203 | 127 | 90 | 3 | 597 |
-| samus-movement | harness | 2 | 6,470 | 6,509 | 732 | 850 | 401 | 529 | 21 | 1,240 |
+| samus-movement | bridge | 4 | 3,157 | 3,750 | 286 | 203 | 127 | 90 | 3 | 597 |
+| samus-movement | harness | 2 | 6,468 | 6,505 | 732 | 850 | 401 | 529 | 21 | 1,240 |
 | world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
 | world-camera | harness | 2 | 6,007 | 6,158 | 784 | 266 | 280 | 412 | 30 | 1,059 |
 | run-progress | bridge | 1 | 1,217 | 1,446 | 60 | 217 | 42 | 33 | 0 | 246 |
@@ -289,9 +289,9 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | interface-hud | harness | 2 | 4,504 | 4,824 | 721 | 422 | 288 | 86 | 23 | 850 |
 | world-blocks | bridge | 1 | 7,101 | 6,883 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
-| samus-appearance | bridge | 2 | 1,743 | 2,089 | 201 | 136 | 89 | 50 | 19 | 352 |
+| samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
 | samus-appearance | harness | 2 | 3,706 | 4,012 | 421 | 136 | 114 | 178 | 14 | 590 |
-| total | | | 51,228 | 52,251 | 5,667 | 4,151 | 3,860 | 3,066 | 285 | 8,880 |
+| total | | | 51,226 | 52,241 | 5,667 | 4,151 | 3,860 | 3,066 | 285 | 8,880 |
 
 ## Harness floors and vectors
 
@@ -549,8 +549,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 48 | 4,831 | 28,988 | 30,739 | 10,094 | 1,910 | 2,168 | 2,620 | 629 | 6,787 |
-| bridges | 10 | 2,670 | 16,020 | 17,318 | 1,123 | 1,046 | 1,076 | 799 | 135 | 2,762 |
+| engine, not yet rebuilt | 48 | 4,831 | 28,988 | 30,737 | 10,094 | 1,910 | 2,168 | 2,620 | 629 | 6,787 |
+| bridges | 10 | 2,670 | 16,020 | 17,312 | 1,123 | 1,046 | 1,076 | 799 | 135 | 2,762 |
 | rebuilt models, shared types included | 71 | 3,254 | 19,526 | 25,708 | 9,595 | 13,491 | 1,038 | 497 | 307 | 8,657 |
 
 ## Timeline
@@ -842,6 +842,7 @@ graph LR
     c_canonical_derive["canonical_derive"]
   end
   subgraph verification["verification"]
+    c_import["import"]
     c_interface_hud["interface_hud"]
     c_oracle["oracle"]
     c_oracle_record["oracle_record"]
@@ -869,6 +870,7 @@ graph LR
   c_game --> c_types
   c_game --> c_world_blocks
   c_game --> c_world_camera
+  c_import --> c_data
   c_interface_hud --> c_types
   c_oracle --> c_data
   c_oracle --> c_oracle_record
@@ -881,6 +883,7 @@ graph LR
   c_verify --> c_canonical
   c_verify --> c_data
   c_verify --> c_game
+  c_verify --> c_import
   c_verify --> c_interface_hud
   c_verify --> c_oracle_record
   c_verify --> c_run_progress

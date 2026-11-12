@@ -22,7 +22,7 @@ the Budget section of [samus-appearance.md](samus-appearance.md). Bank logs:
   its counter writes) or the crouch's shine.
 - **The reference model** (`model.py`, over the spec's format only) is run through an importer of
   the delay lists parsed from the bank log text (`importer.py`, `clips.py`) and the pose map
-  (`poses.py`, from `data::assets::samus::import::map`). Per frame over the cache
+  (`poses.py`, from `data::assets::samus::map`). Per frame over the cache
   (`cachecheck.py`): **18,233 of 18,233** frames of play in the domain match on all three words
   (`0A94`, `0A96` through the step map, `0B3E`); the null model (nothing changes) matches 506.
   On the vectors (`vec.py`): 98 of 98, the seven with adjusted rules included.

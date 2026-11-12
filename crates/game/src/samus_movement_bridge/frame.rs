@@ -4,7 +4,7 @@
 //! the elevator and the frame count, and each pose's body size from the pose table.
 
 use core::num::Wrapping;
-use data::assets::samus::import::map;
+use data::assets::samus::map;
 use data::pose::transition::{Control, Controls};
 use samus_movement::Frame;
 use types::{Buttons, Parity, Pose, Radius, button};

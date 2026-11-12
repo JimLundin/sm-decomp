@@ -61,8 +61,8 @@ jobs:
             exit 1
           fi
           rm -rf .ci-data
-      - name: Test the rebuild's content decoders against the ROM
-        run: cargo test --locked -p data --no-fail-fast
+      - name: Test the rebuild's content decoders and importers against the ROM
+        run: cargo test --locked -p data -p import --no-fail-fast
 
   # The free-run gate (ARCHITECTURE D22) on the slice-0 rows: each row runs from its seed's
   # record in the relock bundle on the content read from the ROM, and the job fails when a

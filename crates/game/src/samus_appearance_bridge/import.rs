@@ -6,8 +6,8 @@
 //! clip keeps its step map, the original's frame of each step: the RAM translation reads her step
 //! through it, and her sprite, drawn by the original's frame, looks her picture up through it.
 
-use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
+use data::assets::samus::map;
 use data::pose::PoseId;
 use data::pose::animation::{
     self, AnimationDelays, AnimationFrame, DelayItem, DelayList, FAST_FALL_FRAME, FAST_FALLS,

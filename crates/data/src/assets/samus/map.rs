@@ -3,6 +3,9 @@
 //! Nothing in the ROM names a pose by its parts, so the map is held here, once (the
 //! samus-movement decode notes, "The pose map"). Of the original's 253 poses, 164 are one of
 //! hers; the rest are another domain's or unused.
+//!
+//! It is a registry and holds no ROM bytes: the importer (`import::samus`) reads it to key the
+//! clips, and the engine's bridges read it while the engine still keeps a pose id.
 
 use crate::assets::samus::key::{
     Action, Aim, Body, Dress, Facing, Gun, LandedFrom, Legs, Pose, SpinSprite, Suit, Turn, Worn,
