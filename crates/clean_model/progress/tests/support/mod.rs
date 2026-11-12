@@ -4,10 +4,11 @@
 //! file this test doesn't know stops it.
 
 use std::collections::BTreeMap;
-use std::num::Wrapping;
+use std::num::{NonZeroU16, Wrapping};
 
 use clean_model_progress::{
-    Condition, Inventory, MapStatus, Pickup, Progress, Remembered, Report, ReserveMode, Supply,
+    Condition, Inventory, MapStatus, Pickup, Progress, Remembered, Report, ReserveMode, Rules,
+    Supplies, Supply,
 };
 use clean_types::{
     Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId,
@@ -31,6 +32,8 @@ pub struct Vector {
     pub source: String,
     pub entries: Vec<String>,
     pub area: Named<Area>,
+    #[serde(default)]
+    rules: RulesRow,
     pub before: State,
     reports: Option<Vec<ReportRow>>,
     after: Option<State>,
@@ -67,6 +70,61 @@ impl Vector {
                 self.id
             ),
         }
+    }
+
+    /// The rules the vector runs under: the game's, but for the tables its `rules` gives.
+    pub fn rules(&self) -> Rules {
+        let reference = Rules::reference();
+        let RulesRow {
+            switches_off,
+            divisors,
+        } = &self.rules;
+        Rules {
+            switches_off: switches_off
+                .as_ref()
+                .map_or(reference.switches_off, |rows| {
+                    per_member(rows, |beams| {
+                        beams.iter().map(|&Named(beam)| beam).collect()
+                    })
+                }),
+            divisors: divisors
+                .as_ref()
+                .map_or(reference.divisors, Divisors::table),
+        }
+    }
+}
+
+/// A vector's `rules`: the tables it gives, each left out at the game's.
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+struct RulesRow {
+    /// For each beam she takes, the beams it switches off; the table given is the whole table,
+    /// so a beam it doesn't name switches none off.
+    switches_off: Option<BTreeMap<Named<Beam>, Vec<Named<Beam>>>>,
+    divisors: Option<Divisors>,
+}
+
+/// The divisors of the item percentage; all five are given, each a whole number from 1.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Divisors {
+    energy: NonZeroU16,
+    reserve: NonZeroU16,
+    missiles: NonZeroU16,
+    super_missiles: NonZeroU16,
+    power_bombs: NonZeroU16,
+}
+
+impl Divisors {
+    /// The divisors as the model's table.
+    fn table(&self) -> EnumMap<Supply, NonZeroU16> {
+        EnumMap::from_fn(|supply| match supply {
+            Supply::Energy => self.energy,
+            Supply::Reserve => self.reserve,
+            Supply::Missiles => self.missiles,
+            Supply::SuperMissiles => self.super_missiles,
+            Supply::PowerBombs => self.power_bombs,
+        })
     }
 }
 
@@ -227,13 +285,14 @@ fn set<K: Enum + Copy>(names: &[Named<K>]) -> Set<K> {
     names.iter().map(|&Named(member)| (member, true)).collect()
 }
 
-/// A value for each area: `value` of the row the file gives it, and the default for any other.
-fn per_area<T, V: Default>(
-    rows: &BTreeMap<Named<Area>, T>,
+/// A value for each member (an area, a beam): `value` of the row the file gives it, and the
+/// default (none, nothing) for any other.
+fn per_member<K: Enum + Copy, T, V: Default>(
+    rows: &BTreeMap<Named<K>, T>,
     value: impl Fn(&T) -> V,
-) -> EnumMap<Area, V> {
+) -> EnumMap<K, V> {
     rows.iter()
-        .map(|(&Named(area), row)| (area, value(row)))
+        .map(|(&Named(member), row)| (member, value(row)))
         .collect()
 }
 
@@ -325,7 +384,7 @@ impl State {
     /// The progress this state gives.
     pub fn progress(&self) -> Progress {
         let capacity = &self.capacity;
-        let capacity = EnumMap::from_fn(|supply| {
+        let capacity = Supplies(EnumMap::from_fn(|supply| {
             Wrapping(match supply {
                 Supply::Energy => capacity.energy,
                 Supply::Reserve => capacity.reserve,
@@ -333,8 +392,8 @@ impl State {
                 Supply::SuperMissiles => capacity.super_missiles,
                 Supply::PowerBombs => capacity.power_bombs,
             })
-        });
-        let held = EnumMap::from_fn(|supply| {
+        }));
+        let held = Supplies(EnumMap::from_fn(|supply| {
             Wrapping(match supply {
                 Supply::Energy => self.energy,
                 Supply::Reserve => self.reserve_energy,
@@ -342,7 +401,7 @@ impl State {
                 Supply::SuperMissiles => self.super_missiles,
                 Supply::PowerBombs => self.power_bombs,
             })
-        });
+        }));
         let Named(reserve_mode) = self.reserve_mode;
         Progress {
             inventory: Inventory {
@@ -356,11 +415,11 @@ impl State {
             },
             events: set(&self.events),
             zebetites: Wrapping(self.zebetites),
-            defeated: per_area(&self.defeated, |kinds| set(kinds)),
+            defeated: per_member(&self.defeated, |kinds| set(kinds)),
             emptied: Remembered(self.emptied.iter().map(|&id| LocationId(id)).collect()),
             opened: Remembered(self.opened.iter().map(|&id| DoorId(id)).collect()),
-            maps: per_area(&self.maps, |&Named(map)| map),
-            stations: per_area(&self.stations, |ids| {
+            maps: per_member(&self.maps, |&Named(map)| map),
+            stations: per_member(&self.stations, |ids| {
                 ids.iter().map(|&id| StationId(id)).collect()
             }),
             items_placed: Wrapping(self.items_placed),
@@ -441,10 +500,10 @@ impl ReportRow {
             } => Report::Happened(event),
             Self::ZebetiteDestroyed {} => Report::ZebetiteDestroyed,
             Self::Defeated {
-                boss: Named(kind),
+                boss: Named(boss),
                 area: named,
             } => Report::Defeated {
-                kind,
+                boss,
                 area: area(named),
             },
             Self::Taken {
@@ -508,24 +567,10 @@ pub struct Asks {
     room_states: Option<Vec<When>>,
     pub entered_by: Option<u16>,
     pub percentage: bool,
-    emptied: Option<Vec<AskedLocation>>,
-    opened: Option<Vec<AskedDoor>>,
+    emptied: Option<Vec<u16>>,
+    opened: Option<Vec<u16>>,
     pub map_known: Option<Vec<Named<Area>>>,
     pub zebetites: bool,
-}
-
-/// A question about a location: its id, or none for an item placed without one.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct AskedLocation {
-    location: Option<u16>,
-}
-
-/// A question about a door: its id, or none for a door placed without one.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct AskedDoor {
-    door: Option<u16>,
 }
 
 impl Asks {
@@ -542,16 +587,16 @@ impl Asks {
         Some(conditional.iter().map(condition).collect())
     }
 
-    /// The locations asked about, if any are.
-    pub fn emptied(&self) -> Option<Vec<Option<LocationId>>> {
+    /// The locations asked about, by id, if any are.
+    pub fn emptied(&self) -> Option<Vec<LocationId>> {
         let asked = self.emptied.as_ref()?;
-        Some(asked.iter().map(|q| q.location.map(LocationId)).collect())
+        Some(asked.iter().map(|&id| LocationId(id)).collect())
     }
 
-    /// The doors asked about, if any are.
-    pub fn opened(&self) -> Option<Vec<Option<DoorId>>> {
+    /// The doors asked about, by id, if any are.
+    pub fn opened(&self) -> Option<Vec<DoorId>> {
         let asked = self.opened.as_ref()?;
-        Some(asked.iter().map(|q| q.door.map(DoorId)).collect())
+        Some(asked.iter().map(|&id| DoorId(id)).collect())
     }
 }
 

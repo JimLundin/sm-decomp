@@ -12,8 +12,8 @@ use crate::rules::Rules;
 /// Something another domain tells progress has happened.
 ///
 /// When a report comes is the reporting domain's to decide; progress only records it. A report
-/// that concerns an area names it. That is the frame's area, the area of the room she is in,
-/// except for her leaving: in the frame a door takes her into another area, the frame's area is
+/// that concerns an area carries it. Each carries the frame's area, the area of the room she is
+/// in, except `LeftArea`: in the frame a door takes her into another area, the frame's area is
 /// the new room's, and `LeftArea` carries the area she leaves.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Report {
@@ -21,11 +21,11 @@ pub enum Report {
     Happened(Event),
     /// A zebetite is destroyed. Spec: ZebetitesCounted.
     ZebetiteDestroyed,
-    /// A boss of this kind is defeated in this area. Spec: BossesDefeated.
+    /// A boss of this kind is defeated. Spec: BossesDefeated.
     Defeated {
         /// The kind the boss reports.
-        kind: BossKind,
-        /// The area it is defeated in.
+        boss: BossKind,
+        /// The frame's area, which the boss is defeated in.
         area: Area,
     },
     /// She takes an item, a beam or a tank, from a place with an id or without one.
@@ -39,17 +39,19 @@ pub enum Report {
     /// A door that stays open is opened, with its id if its room's population gave it one.
     /// Spec: DoorsStayOpen.
     DoorOpened(Option<DoorId>),
-    /// The map station of this area downloads. Spec: MapsByArea.
+    /// The map station downloads; it carries the frame's area, its station's. Spec: MapsByArea.
     MapStation(Area),
-    /// She enters the room that gives the map of its area, the area named. Spec: MapOnArrival.
+    /// She enters the room that gives the map of its area; it carries the frame's area, the
+    /// room's. Spec: MapOnArrival.
     MapOnArrival(Area),
-    /// A door takes her into another area, out of the area named. Spec: MapOnArrival.
+    /// A door takes her into another area; it carries the area she leaves, not the frame's.
+    /// Spec: MapOnArrival.
     LeftArea(Area),
-    /// She saves at a save station of this area; or the gunship lands for the first time, which
-    /// counts as a save at the first station of the area it lands in, and comes with that
-    /// station's id. Spec: StationsSavedAt.
+    /// She saves at a save station; or the gunship lands for the first time, which counts as a
+    /// save at the first station of the area it lands in, and comes with that station's id.
+    /// Spec: StationsSavedAt.
     Saved {
-        /// The station's area.
+        /// The frame's area, the station's.
         area: Area,
         /// The station's id within its area.
         station: StationId,
@@ -59,19 +61,29 @@ pub enum Report {
 }
 
 impl Progress {
-    /// Records one report.
+    /// Records a frame's reports, in the order they come: the progress after them is what the
+    /// same reports give one per frame, in that order.
     ///
-    /// A frame's reports are applied one call each, in the order they come (spec §7). Each
-    /// report carries its own area: `LeftArea` the area she leaves, every other report the new
-    /// room's. So none of the rules reads another's result within the frame, and no order within
-    /// a frame is visible.
-    pub fn apply(&mut self, rules: &Rules, report: Report) {
+    /// The order shows for two pairs. Two beams taken, one of which switches the other off: the
+    /// later stays on (Spec: TakingBeams). A map given on arrival and her leaving its area:
+    /// given then left is `Downloaded`, left then given `OnArrival` (Spec: MapOnArrival). Every
+    /// other pair changes different quantities, adds to one count, or sets what is already set.
+    /// The game never puts either pair in one frame; only an adjusted game's reports show the
+    /// order.
+    pub fn apply(&mut self, rules: &Rules, reports: &[Report]) {
+        for &report in reports {
+            self.record(rules, report);
+        }
+    }
+
+    /// Records one report.
+    fn record(&mut self, rules: &Rules, report: Report) {
         match report {
             Report::Happened(event) => self.events[event] = true,
             Report::ZebetiteDestroyed => self.zebetites += Wrapping(1),
-            Report::Defeated { kind, area } => self.defeated[area][kind] = true,
+            Report::Defeated { boss, area } => self.defeated[area][boss] = true,
             Report::Taken { pickup, location } => {
-                self.inventory.take(pickup, rules.switched_off_by);
+                self.inventory.take(pickup, &rules.switches_off);
                 self.emptied.remember(location);
             }
             Report::DoorOpened(door) => self.opened.remember(door),

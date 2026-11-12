@@ -39,7 +39,7 @@ use std::rc::Rc;
 
 use clean_model_progress::{
     BehaviourId, Condition, Count, EnteredRoom, MapStatus, Pickup, Progress, Remembered, Report,
-    ReserveMode, RoomStates, Rules, Supply, catalogue,
+    ReserveMode, RoomStates, Rules, Supplies, Supply, catalogue,
 };
 use clean_types::{
     Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId,
@@ -420,8 +420,8 @@ fn progress(record: &FrameRecord) -> Result<Progress, Skip> {
     inventory.beams = beams(COLLECTED_BEAMS)?;
     inventory.beams_switched_on = beams(EQUIPPED_BEAMS)?;
     for (supply, capacity, held) in SUPPLIES {
-        inventory.capacity[supply] = count(record, capacity)?;
-        inventory.held[supply] = count(record, held)?;
+        inventory.capacity.0[supply] = count(record, capacity)?;
+        inventory.held.0[supply] = count(record, held)?;
     }
     inventory.reserve_mode = match word(record, source::RESERVE_HEALTH_MODE)? {
         0 => ReserveMode::NoTank,
@@ -539,8 +539,8 @@ pub struct Declared {
     items_switched_on: Set<Item>,
     beams: Set<Beam>,
     beams_switched_on: Set<Beam>,
-    capacity: EnumMap<Supply, Count>,
-    held: EnumMap<Supply, Count>,
+    capacity: Supplies,
+    held: Supplies,
     reserve_mode: ReserveMode,
     events: Set<Event>,
     zebetites: Count,
@@ -692,8 +692,8 @@ impl ProgressDomain {
     }
 
     /// What the item PLM `plm` gives, by its list's pickup instruction and its word, with the
-    /// instruction's address.
-    fn pickup(&self, plm: u16) -> Result<(u32, Pickup), Skip> {
+    /// instruction's address and where the list sets its place emptied.
+    fn pickup(&self, plm: u16) -> Result<ItemList, Skip> {
         let rom = Lorom::new(&self.image);
         let none = || Skip::NoReport(format!("item PLM {plm:#06X} has no pickup the spec names"));
         let read = |offset: u16, count: usize| rom.read(RomAddress::new(PLM_BANK, offset), count);
@@ -703,11 +703,11 @@ impl ProgressDomain {
             .ok_or_else(none)?;
         let list = u16::from_le_bytes([list_low, list_high]);
         let bytes = read(list, LIST_REACH).map_err(|_| none())?;
-        let at = bytes
+        let set_emptied = bytes
             .windows(BEFORE_PICKUP.len())
             .position(|window| window == BEFORE_PICKUP)
-            .ok_or_else(none)?
-            .wrapping_add(PICKUP_AFTER);
+            .ok_or_else(none)?;
+        let at = set_emptied.wrapping_add(PICKUP_AFTER);
         let at = if bytes.get(at..at.wrapping_add(CLEAR_CHARGE.len())) == Some(&CLEAR_CHARGE[..]) {
             at.wrapping_add(CLEAR_CHARGE.len())
         } else {
@@ -738,7 +738,11 @@ impl ProgressDomain {
             0x89FB => tank(Supply::PowerBombs),
             _ => return Err(none()),
         };
-        Ok((instruction, pickup))
+        Ok(ItemList {
+            instruction,
+            set_emptied: list.wrapping_add(u16::try_from(set_emptied).map_err(|_| none())?),
+            pickup,
+        })
     }
 
     /// Whether the door `record` is taking leads into another area, by its header's flag in the
@@ -817,19 +821,31 @@ impl ProgressDomain {
         let emptying = next.hits.iter().filter(|hit| hit.pc == SET_EMPTIED).count();
         if emptying == 1 {
             let was = progress(from)?;
-            // A PLM whose pickup the spec doesn't name may be the one that emptied its place, so
-            // it stays a candidate, one that can't be heard: the frame's pickup is then stood in.
-            let candidates: Vec<Option<Report>> = item_plms(from)?
-                .into_iter()
-                .filter(|&(_, argument)| !was.emptied.contains(progress_world::place(argument)))
-                .filter_map(|(plm, argument)| match self.pickup(plm) {
-                    Ok((instruction, pickup)) => ran(instruction).then_some(Some(Report::Taken {
-                        pickup,
-                        location: progress_world::place(argument),
-                    })),
-                    Err(_) => Some(None),
-                })
-                .collect();
+            // Record N finds the taking PLM's instruction pointer at its own list's "set the place
+            // emptied", where no other item PLM's stands, so two PLMs whose lists share the
+            // pickup instruction that ran are told apart by it, not by the bit it sets. A PLM
+            // whose pickup the spec doesn't name may be the one that emptied its place, so it
+            // stays a candidate, one that can't be heard: the frame's pickup is then stood in.
+            let mut candidates: Vec<Option<Report>> = Vec::new();
+            for (plm, argument) in item_plms(from)? {
+                let location = progress_world::place(argument);
+                if location.is_some_and(|place| was.emptied.contains(place)) {
+                    continue;
+                }
+                match self.pickup(plm) {
+                    Ok(list)
+                        if ran(list.instruction)
+                            && instruction_at(next, plm, argument)? == Some(list.set_emptied) =>
+                    {
+                        candidates.push(Some(Report::Taken {
+                            pickup: list.pickup,
+                            location,
+                        }));
+                    }
+                    Ok(_) => {}
+                    Err(_) => candidates.push(None),
+                }
+            }
             if let [Some(taken)] = candidates[..] {
                 reports.push(taken);
             }
@@ -892,7 +908,7 @@ impl ProgressDomain {
             let defeated = BOSS_KINDS
                 .iter()
                 .filter(|&&(_, kind)| now.defeated[area][kind] && !was.defeated[area][kind])
-                .map(|&(_, kind)| Report::Defeated { kind, area });
+                .map(|&(_, boss)| Report::Defeated { boss, area });
             let saved = now.stations[area]
                 .difference(&was.stations[area])
                 .map(|&station| Report::Saved { area, station });
@@ -937,7 +953,7 @@ impl ProgressDomain {
                     Skip::NoReport(format!("place {place} emptied, no item PLM holds it"))
                 })?;
             reports.push(Report::Taken {
-                pickup: self.pickup(plm)?.1,
+                pickup: self.pickup(plm)?.pickup,
                 location: Some(LocationId(place)),
             });
         }
@@ -955,6 +971,29 @@ fn item_plms(record: &FrameRecord) -> Result<BTreeSet<(u16, u16)>, Skip> {
         }
     }
     Ok(plms)
+}
+
+/// The instruction pointer, in bank $84, of the item PLM `plm` with room argument `argument` in
+/// `record`'s slots; none when no slot holds it.
+fn instruction_at(record: &FrameRecord, plm: u16, argument: u16) -> Result<Option<u16>, Skip> {
+    for slot in 0..PLM_SLOTS {
+        if word(record, source::PLM_HEADER_PTR.word(slot)?)? == plm
+            && word(record, source::PLM_ROOM_ARGUMENTS.word(slot)?)? == argument
+        {
+            return word(record, source::PLM_INSTR_LIST_PTRS.word(slot)?).map(Some);
+        }
+    }
+    Ok(None)
+}
+
+/// What an item PLM's list gives, and where in it.
+struct ItemList {
+    /// The pickup instruction's address, as a hit names it.
+    instruction: u32,
+    /// The list's "set the place emptied" (`$84:8899`), in bank $84.
+    set_emptied: u16,
+    /// What its pickup gives.
+    pickup: Pickup,
 }
 
 /// A door PLM a shot could reach in a record: the door it names and whether one more hit opens
@@ -1130,9 +1169,8 @@ impl Domain for ProgressDomain {
         }
         let placed = upstream.placed.map(Report::ItemsPlaced);
         let reports = upstream.reports.iter().map(|&(report, _)| report);
-        for report in placed.into_iter().chain(reports) {
-            held.progress.apply(&rules, report);
-        }
+        let frame: Vec<Report> = placed.into_iter().chain(reports).collect();
+        held.progress.apply(&rules, &frame);
     }
 
     fn exercised(&self, _held: &Held, (): &(), upstream: &Upstream) -> Vec<usize> {

@@ -6,24 +6,25 @@ use std::collections::BTreeSet;
 /// Places of one sort she has changed for good, by the id a room's population gives them.
 ///
 /// They are the item locations emptied and the doors that stay open. A population may place one
-/// without an id; then nothing of it is remembered, and asked about, it reads as unchanged: an
-/// item still in its place, a door closed. Spec: EmptiedLocations, Spec: DoorsStayOpen.
+/// without an id; then nothing of it is remembered, so there is nothing to ask about it: other
+/// domains ask by id alone, and its own domain shows it unchanged each time its room loads.
+/// Spec: EmptiedLocations, Spec: DoorsStayOpen.
 ///
 /// Its set is every id remembered, which a caller reads back whole and sets, as a saved file
 /// holds them.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Remembered<Id>(pub BTreeSet<Id>);
 
-impl<Id: Ord> Remembered<Id> {
-    /// Remembers the place of `id`; a place without one is not remembered.
+impl<Id: Ord + Copy> Remembered<Id> {
+    /// Remembers the place of `id`; a place reported without one is not remembered.
     pub(crate) fn remember(&mut self, id: Option<Id>) {
         self.0.extend(id);
     }
 
-    /// Whether the place of `id` is remembered; a place without one never is.
+    /// Whether the place of `id` is remembered: the item taken from it, the door open.
     #[must_use]
-    pub fn contains(&self, id: Option<Id>) -> bool {
-        id.is_some_and(|id| self.0.contains(&id))
+    pub fn contains(&self, id: Id) -> bool {
+        self.0.contains(&id)
     }
 }
 

@@ -597,6 +597,13 @@ pub enum Checked {
 /// as `set[member]`. Its default is the empty set.
 pub type Set<K> = EnumMap<K, bool>;
 
+/// The set of the members listed, none if the list is empty: `set_of([Beam::Spazer])`. A table
+/// whose cells are sets writes each cell this way.
+#[must_use]
+pub fn set_of<K: Enum, const N: usize>(members: [K; N]) -> Set<K> {
+    members.into_iter().map(|member| (member, true)).collect()
+}
+
 /// What a set tells of its members, read from the set itself.
 pub trait Members {
     /// Whether any member is in both sets.

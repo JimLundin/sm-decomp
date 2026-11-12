@@ -38,12 +38,12 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-motion | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,023 | 1,488 | 18,036 | 326 |
 | camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 20,513 | 83 |
-| progress | 862 | 1,136 | 0.76 | 0.71 | 6 % | - | 439 | 144 | 25,419 | 66 |
+| progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 25,420 | 76 |
 | hud | 2,695 | 2,112 | 1.28 | 0.91 | 29 % (over 25 %) | 2,742 | 1,094 | 449 | 20,615 | 84 |
 | blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,078 | 399 | 20,530 | 100 |
 | samus-looks | 2,228 | 1,412 | 1.58 | 1.40 | 11 % | 1,525 | 922 | 371 | 18,233 | 98 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 630 | - | - | - | - | - | 515 | 105 | - | - |
-| total | 19,574 | 17,319 | 1.13 | 0.99 | 12 % | - | 8,702 | 3,262 | 123,346 | 757 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 662 | - | - | - | - | - | 519 | 110 | - | - |
+| total | 19,563 | 17,244 | 1.13 | 1.00 | 12 % | - | 8,704 | 3,260 | 123,347 | 767 |
 
 ## Models
 
@@ -90,15 +90,15 @@ How it is counted:
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `crates/clean_model/progress/src/catalogue.rs` | - | tables and types | 9 | 37 | 87 | 406 | 0 | 0 | 84 | 126 |
-| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 281 | 308 | 175 | 29 | 20 | 16 | 0 | 90 |
-| `crates/clean_model/progress/src/lib.rs` | - | logic | 0 | 90 | 12 | 0 | 0 | 0 | 0 | 19 |
-| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 72 | 109 | 3 | 0 | 2 | 0 | 0 | 13 |
-| `crates/clean_model/progress/src/places.rs` | places | logic | 66 | 123 | 56 | 0 | 2 | 0 | 0 | 30 |
+| `crates/clean_model/progress/src/inventory.rs` | equipment | logic | 217 | 257 | 197 | 36 | 20 | 0 | 0 | 84 |
+| `crates/clean_model/progress/src/lib.rs` | - | logic | 0 | 92 | 12 | 0 | 0 | 0 | 0 | 19 |
+| `crates/clean_model/progress/src/percentage.rs` | percentage | logic | 74 | 111 | 3 | 0 | 2 | 0 | 0 | 12 |
+| `crates/clean_model/progress/src/places.rs` | places | logic | 56 | 115 | 56 | 0 | 0 | 0 | 0 | 30 |
 | `crates/clean_model/progress/src/progress.rs` | happened | tables and types | 0 | 51 | 89 | 0 | 0 | 0 | 0 | 17 |
-| `crates/clean_model/progress/src/report.rs` | places | logic | 226 | 279 | 81 | 0 | 13 | 0 | 0 | 54 |
-| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 166 | 221 | 120 | 0 | 7 | 0 | 0 | 51 |
-| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 42 | 85 | 65 | 70 | 0 | 0 | 0 | 39 |
-| total | | | 862 | 1,303 | 688 | 505 | 44 | 16 | 84 | 439 |
+| `crates/clean_model/progress/src/report.rs` | places | logic | 253 | 312 | 81 | 0 | 15 | 0 | 0 | 59 |
+| `crates/clean_model/progress/src/room_states.rs` | rooms | logic | 168 | 223 | 120 | 0 | 8 | 0 | 0 | 51 |
+| `crates/clean_model/progress/src/rules.rs` | - | tables and types | 42 | 85 | 63 | 85 | 0 | 0 | 0 | 39 |
+| total | | | 819 | 1,283 | 708 | 527 | 45 | 0 | 84 | 437 |
 
 ### hud
 
@@ -172,7 +172,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 630 | 975 | 1,464 | 100 | 15 | 0 | 0 | 515 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 662 | 1,018 | 1,467 | 100 | 16 | 0 | 0 | 519 |
 
 ## Lines
 
@@ -180,12 +180,12 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 4,023 | 2,556 | 1,467 | 1,488 |
 | camera | 631 | 226 | 405 | 306 |
-| progress | 439 | 182 | 257 | 144 |
+| progress | 437 | 182 | 255 | 136 |
 | hud | 1,094 | 566 | 528 | 449 |
 | blocks | 1,078 | 727 | 351 | 399 |
 | samus-looks | 922 | 540 | 382 | 371 |
-| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 515 | 515 | 0 | 105 |
-| total | 8,702 | 5,312 | 3,390 | 3,262 |
+| shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 519 | 519 | 0 | 110 |
+| total | 8,704 | 5,316 | 3,388 | 3,260 |
 
 ## Spec, budget and fit by area
 
@@ -224,14 +224,14 @@ Spec [`docs/behaviours/progress.md`](behaviours/progress.md), k = 37.5. Old code
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | happened | 3 | 3.3 | 125 | - | 0 | 0.00 |
-| places | 6 | 10.3 | 387 | - | 292 | 0.75 |
-| equipment | 3 | 7.7 | 287 | 254 | 281 | 0.98 |
-| rooms | 1 | 7.0 | 262 | 197 | 166 | 0.63 |
-| percentage | 1 | 2.0 | 75 | - | 72 | 0.96 |
+| places | 6 | 8.3 | 312 | - | 308 | 0.99 |
+| equipment | 3 | 7.7 | 287 | 232 | 217 | 0.76 |
+| rooms | 1 | 7.0 | 262 | 185 | 168 | 0.64 |
+| percentage | 1 | 2.0 | 75 | - | 74 | 0.99 |
 | shared (in no area) | | | | | 51 | |
-| total | 14 | 30.3 | 1,136 | - | 862 | 0.76 |
+| total | 14 | 28.3 | 1,061 | - | 819 | 0.77 |
 
-Area fit 0.71: the areas' score, 811, ÷ the budget. Shared code 51, its share of the model 6 %.
+Area fit 0.72: the areas' score, 768, ÷ the budget. Shared code 51, its share of the model 6 %.
 
 ### hud
 
@@ -285,15 +285,15 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | samus-motion | harness | 2 | 6,470 | 6,509 | 732 | 850 | 401 | 529 | 21 | 1,240 |
 | camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
 | camera | harness | 2 | 6,007 | 6,158 | 784 | 266 | 280 | 412 | 30 | 1,059 |
-| progress | bridge | 1 | 1,202 | 1,435 | 60 | 217 | 40 | 33 | 0 | 244 |
-| progress | harness | 3 | 7,636 | 7,246 | 1,048 | 992 | 768 | 590 | 62 | 1,325 |
+| progress | bridge | 1 | 1,217 | 1,446 | 60 | 217 | 42 | 33 | 0 | 246 |
+| progress | harness | 3 | 7,849 | 7,424 | 1,053 | 1,221 | 807 | 609 | 62 | 1,399 |
 | hud | bridge | 1 | 2,297 | 2,450 | 116 | 133 | 157 | 111 | 16 | 385 |
 | hud | harness | 2 | 4,504 | 4,824 | 721 | 422 | 288 | 86 | 23 | 850 |
 | blocks | bridge | 1 | 7,101 | 6,883 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-looks | bridge | 2 | 1,712 | 2,056 | 207 | 137 | 89 | 50 | 19 | 347 |
 | samus-looks | harness | 2 | 3,732 | 4,031 | 424 | 136 | 117 | 178 | 14 | 591 |
-| total | | | 50,995 | 52,049 | 5,671 | 3,923 | 3,822 | 3,047 | 285 | 8,802 |
+| total | | | 51,223 | 52,238 | 5,676 | 4,152 | 3,863 | 3,066 | 285 | 8,878 |
 
 ## Harness floors and vectors
 
@@ -326,7 +326,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 |
 | item-morph-ball | 1,028 | 1,028 | 1,427 | 1,028 | 1,027 | 1,028 |
 | item-plasma-beam | 145 | 145 | 169 | 145 | 145 | 146 |
-| item-reserve-tank | 413 | 413 | 1,228 | 413 | 411 | 414 |
+| item-reserve-tank | 413 | 413 | 1,229 | 413 | 411 | 414 |
 | item-wave-beam | 37 | 36 | 59 | 36 | 35 | 37 |
 | samus-bomb-jump-vertical | 286 | 314 | 1,058 | 314 | 313 | 314 |
 | samus-ceres-push | 1,703 | 1,777 | 1,776 | 1,777 | 1,777 | 1,705 |
@@ -345,13 +345,13 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-walljump-22 | 162 | 163 | 163 | 163 | 162 | 163 |
 | samus-walljump-28 | 168 | 169 | 169 | 169 | 168 | 169 |
 | terrain-quicksand | 333 | 450 | 456 | 450 | 421 | 402 |
-| total | 18,036 in 44 rows | 20,513 in 44 rows | 25,419 in 44 rows | 20,615 in 44 rows | 20,530 in 44 rows | 18,233 in 44 rows |
+| total | 18,036 in 44 rows | 20,513 in 44 rows | 25,420 in 44 rows | 20,615 in 44 rows | 20,530 in 44 rows | 18,233 in 44 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
 | samus-motion | 326 | 63 |
 | camera | 83 | 0 |
-| progress | 66 | 0 |
+| progress | 76 | 0 |
 | hud | 84 | 0 |
 | blocks | 100 | 0 |
 | samus-looks | 98 | 0 |
@@ -364,7 +364,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 | --- | ---: | ---: | ---: | ---: |
 | samus-motion | 25,426 | 18,036 | 0 | 5,568 |
 | camera | 25,426 | 20,513 | 0 | 8,384 |
-| progress | 25,426 | 25,419 | 7 | 25,399 |
+| progress | 25,426 | 25,420 | 6 | 25,399 |
 | hud | 24,230 | 20,615 | 0 | 17,954 |
 | blocks | 21,857 | 20,530 | 85 | 19,928 |
 | samus-looks | 24,230 | 18,233 | 0 | 506 |
@@ -471,7 +471,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | camera | TimeStopped | 113 | 113 | 113 | 6 |
 | progress | BossesDefeated | 0 | 0 | 3 | 0 |
 | progress | DoorsStayOpen | 2 | 0 | 5 | 0 |
-| progress | EmptiedLocations | 13 | 0 | 14 | 0 |
+| progress | EmptiedLocations | 14 | 0 | 14 | 0 |
 | progress | EventsHappen | 1 | 0 | 1 | 0 |
 | progress | ItemPercentage | vectors only | - | 0 | 0 |
 | progress | ItemsPlacedCount | 3 | 0 | 3 | 0 |
@@ -481,7 +481,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | progress | StationsSavedAt | 1 | 0 | 1 | 0 |
 | progress | TakingBeams | 4 | 0 | 4 | 0 |
 | progress | TakingItems | 2 | 0 | 2 | 0 |
-| progress | Tanks | 7 | 0 | 8 | 0 |
+| progress | Tanks | 8 | 0 | 8 | 0 |
 | progress | ZebetitesCounted | vectors only | - | 0 | 0 |
 | hud | AmmoCounts | 50 | 0 | 50 | 0 |
 | hud | AutoReserveSign | 13,820 | 13,024 | 13,820 | 0 |
@@ -543,8 +543,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 48 | 4,832 | 28,993 | 30,738 | 10,094 | 1,910 | 2,169 | 2,620 | 629 | 6,784 |
-| bridges | 10 | 2,662 | 15,974 | 17,274 | 1,129 | 1,047 | 1,074 | 799 | 135 | 2,755 |
-| rebuilt models, shared types included | 73 | 3,262 | 19,574 | 25,822 | 9,612 | 13,439 | 1,037 | 479 | 313 | 8,702 |
+| bridges | 10 | 2,665 | 15,989 | 17,285 | 1,129 | 1,047 | 1,076 | 799 | 135 | 2,757 |
+| rebuilt models, shared types included | 73 | 3,260 | 19,563 | 25,845 | 9,635 | 13,461 | 1,039 | 463 | 313 | 8,704 |
 
 ## Timeline
 
@@ -600,7 +600,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | camera model matches | 15,763 | 7.1 % |
 | game-time model matches | 17,605 | 7.9 % |
 | hud model matches | 15,805 | 7.1 % |
-| progress model matches | 20,431 | 9.2 % |
+| progress model matches | 20,432 | 9.2 % |
 | samus-looks model matches | 14,157 | 6.4 % |
 | samus-motion model matches | 14,015 | 6.3 % |
 | free-run gate: green streams | 529 | 0.2 % |
@@ -923,19 +923,19 @@ graph LR
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
 | `catalogue.rs` | - | The catalogue: one behaviour for each entry of the progress spec. | `enum BehaviourId (14)`, `struct Behaviour`, `fn catalogue` | 9 | 126 |
-| `inventory.rs` | equipment | What she has (spec §1.1, §4): her items and beams, hers and switched on, her capacities, what she holds and her reserve mode; and what taking an item, a beam or a tank gives her. | `type Count`, `enum Supply (5)`, `enum ReserveMode (3)`, `enum Pickup (3)`, `struct Inventory`, `Inventory::take`, `impl Default for Inventory`, 3 private | 281 | 90 |
+| `inventory.rs` | equipment | What she has (spec §1.1, §4): her items and beams, hers and switched on, her capacities, what she holds and her reserve mode; and what taking an item, a beam or a tank gives her. | `type Count`, `enum Supply (5)`, `enum ReserveMode (3)`, `enum Pickup (3)`, `struct Supplies`, `struct Inventory`, `Inventory::take`, `impl Default for Supplies`, 3 private | 217 | 84 |
 | `lib.rs` | - | The progress model, built from its behaviour spec alone: what the game remembers of her run besides where she is. | - | 0 | 19 |
-| `percentage.rs` | percentage | The item percentage the ending shows. | `Inventory::item_percentage` | 72 | 13 |
-| `places.rs` | places | What the places remember (spec §3): the item locations emptied and the doors that stay open, by id, and how she has each area's map. | `struct Remembered`, `enum MapStatus (3)`, `Remembered::{remember, contains}`, `MapStatus::is_known`, `impl Default for Remembered<Id>` | 66 | 30 |
+| `percentage.rs` | percentage | The item percentage the ending shows. | `Inventory::item_percentage` | 74 | 12 |
+| `places.rs` | places | What the places remember (spec §3): the item locations emptied and the doors that stay open, by id, and how she has each area's map. | `struct Remembered`, `enum MapStatus (3)`, `Remembered::{remember, contains}`, `MapStatus::is_known`, `impl Default for Remembered<Id>` | 56 | 30 |
 | `progress.rs` | happened | The whole of what the game keeps of a run besides where she is (spec §1), and what has happened in the world (§2). | `struct Progress` | 0 | 17 |
-| `report.rs` | places | What other domains report (spec §1.3), and how each report changes the progress. | `enum Report (10)`, `Progress::apply` | 226 | 54 |
-| `room_states.rs` | rooms | Which version of a room loads, given the run's progress (spec §5). | `enum Condition (6)`, `struct EnteredRoom`, `struct RoomStates`, `enum Version (2)`, `RoomStates::choose`, 1 private | 166 | 51 |
+| `report.rs` | places | What other domains report (spec §1.3), and how each report changes the progress. | `enum Report (10)`, `Progress::apply`, 1 private | 253 | 59 |
+| `room_states.rs` | rooms | Which version of a room loads, given the run's progress (spec §5). | `enum Condition (6)`, `struct EnteredRoom`, `struct RoomStates`, `enum Version (2)`, `RoomStates::choose`, 1 private | 168 | 51 |
 | `rules.rs` | - | The values the progress rules read: the reference profile holds the original game's. | `struct Rules`, `Rules::reference`, `impl Default for Rules`, 4 private | 42 | 39 |
 
 Its crate root exports:
 
 - from `catalogue`: `Behaviour`, `BehaviourId`, `catalogue`
-- from `inventory`: `Count`, `Inventory`, `Pickup`, `ReserveMode`, `Supply`
+- from `inventory`: `Count`, `Inventory`, `Pickup`, `ReserveMode`, `Supplies`, `Supply`
 - from `places`: `MapStatus`, `Remembered`
 - from `progress`: `Progress`
 - from `report`: `Report`
@@ -947,9 +947,9 @@ The public functions a caller reaches through them:
 ```rust
 catalogue() -> EnumMap<BehaviourId, Behaviour>
 Inventory::item_percentage(&self, rules: &Rules) -> Count
-Remembered::contains(&self, id: Option<Id>) -> bool
+Remembered::contains(&self, id: Id) -> bool
 MapStatus::is_known(self) -> bool
-Progress::apply(&mut self, rules: &Rules, report: Report)
+Progress::apply(&mut self, rules: &Rules, reports: &[Report])
 RoomStates::choose(&self, progress: &Progress, room: EnteredRoom) -> Version
 Rules::reference() -> Self
 ```
@@ -1424,6 +1424,7 @@ The public items of `crates/clean_types` the clean models share, and the models 
 | `enum Switch (3)` | blocks, camera, hud, progress, samus-looks, samus-motion |
 | `enum Checked (2)` | blocks, camera, hud, progress, samus-looks, samus-motion |
 | `type Set` | blocks, progress, samus-looks, samus-motion |
+| `fn set_of` | - |
 | `trait Members` | progress |
 | `fn by_member` | blocks, hud |
 | `enum Area (7)` | progress |
@@ -1461,7 +1462,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-motion | `crates/game/src/samus_world.rs` | bridge | - | 1,285 | 214 |
 | camera | `crates/game/src/camera_world.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `RoomError`, `Rules`, `Samus` | 505 | 120 |
 | camera | `crates/game/src/session.rs` | names it | `RoomError` | 579 | 211 |
-| progress | `crates/game/src/progress_world.rs` | bridge | `Condition`, `Count`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supply`, `Version` | 1,202 | 244 |
+| progress | `crates/game/src/progress_world.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,217 | 246 |
 | hud | `crates/game/src/hud_world.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,297 | 385 |
 | blocks | `crates/game/src/blocks_world.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,101 | 1,062 |
 | samus-looks | `crates/game/src/samus_looks_world/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Hold`, `Instruction`, `Pace`, `Paces`, `Pose`, `Step` | 1,168 | 205 |

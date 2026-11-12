@@ -26,8 +26,8 @@ fn vectors() -> Vec<Vector> {
         .vector
 }
 
-/// The model's answers to `asks`, about `progress` in a room of `area`.
-fn answer(asks: &Asks, progress: &Progress, area: Area) -> Answers {
+/// The model's answers to `asks`, about `progress` in a room of `area`, under `rules`.
+fn answer(asks: &Asks, progress: &Progress, area: Area, rules: &Rules) -> Answers {
     let room = EnteredRoom {
         area,
         entered_by: asks.entered_by.map(Entrance),
@@ -46,7 +46,7 @@ fn answer(asks: &Asks, progress: &Progress, area: Area) -> Answers {
         room_state: asks.room_states().map(room_state),
         percentage: asks
             .percentage
-            .then(|| progress.inventory.item_percentage(&Rules::reference()).0),
+            .then(|| progress.inventory.item_percentage(rules).0),
         emptied: asks.emptied().map(|q| {
             q.into_iter()
                 .map(|l| progress.emptied.contains(l))
@@ -104,19 +104,18 @@ fn differences(actual: &Progress, expected: &Progress) -> Vec<String> {
 
 /// What fails of one vector; nothing when it passes.
 fn run(vector: &Vector) -> Vec<String> {
-    let before = vector.before.progress();
+    let (before, rules) = (vector.before.progress(), vector.rules());
     match vector.check() {
         Check::Frame { reports, after } => {
-            let (mut progress, rules) = (before, Rules::reference());
-            for report in reports {
-                progress.apply(&rules, report);
-            }
+            let mut progress = before;
+            progress.apply(&rules, &reports);
             differences(&progress, &after)
         }
         Check::Asks { asks, answers } => {
             let mut out = Vec::new();
             let Named(area) = vector.area;
-            differ(&mut out, "answers", &answer(asks, &before, area), answers);
+            let answers_given = answer(asks, &before, area, &rules);
+            differ(&mut out, "answers", &answers_given, answers);
             out
         }
     }
@@ -159,6 +158,18 @@ fn frame(before: &str, reports: &str) -> String {
     )
 }
 
+/// A vector of one frame, with no reports, run under the `rules` given.
+fn ruled(rules: &str) -> String {
+    format!(
+        "[[vector]]\nid = \"x\"\nsource = \"constructed\"\nentries = []\nrules = {rules}\n\
+         area = \"Crateria\"\nbefore = {{}}\nreports = []\nafter = {{}}\n"
+    )
+}
+
+/// Divisors with every key, the game's own.
+const DIVISORS: &str =
+    "divisors = { energy = 100, reserve = 100, missiles = 5, super_missiles = 5, power_bombs = 5 }";
+
 /// A vector of questions whose asks and answers are given.
 fn questions(asks: &str, answers: &str) -> String {
     format!(
@@ -190,7 +201,11 @@ fn unknown_keys_and_names_fail_in_every_table() {
             "{ room_states = [{ when = \"Always\" }] }",
             "{ room_state = 0 }",
         ),
-        questions("{ emptied = [{ location = 1 }], opened = [{}] }", "{}"),
+        questions("{ emptied = [1], opened = [0, 2] }", "{}"),
+        ruled("{}"),
+        ruled(&format!(
+            "{{ switches_off = {{ Ice = [\"Charge\", \"Wave\"] }}, {DIVISORS} }}"
+        )),
     ];
     for text in &known {
         assert!(read(text).is_ok(), "a known vector fails to read:\n{text}");
@@ -222,9 +237,18 @@ fn unknown_keys_and_names_fail_in_every_table() {
         questions("{}", "{ extra = 0 }"),
         questions("{ room_states = [{ when = \"Always\", extra = 1 }] }", "{}"),
         questions("{ room_states = [{ when = \"Sometimes\" }] }", "{}"),
-        questions("{ emptied = [{ location = 1, extra = 1 }] }", "{}"),
-        questions("{ opened = [{ door = 1, extra = 1 }] }", "{}"),
+        questions("{ emptied = [{ location = 1 }] }", "{}"),
+        questions("{ opened = [{ door = 1 }] }", "{}"),
         questions("{ map_known = [\"Zebes\"] }", "{}"),
+        ruled("{ extra = 1 }"),
+        ruled("{ switches_off = { Hyper = [\"Charge\"] } }"),
+        ruled("{ switches_off = { Ice = [\"Hyper\"] } }"),
+        ruled(&format!(
+            "{{ {} }}",
+            DIVISORS.replace(" }", ", extra = 1 }")
+        )),
+        ruled(&format!("{{ {} }}", DIVISORS.replace("energy", "health"))),
+        ruled(&format!("{{ {} }}", DIVISORS.replace("100,", "0,"))),
     ];
     for text in &unknown {
         assert!(read(text).is_err(), "an unknown key or name reads:\n{text}");

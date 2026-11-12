@@ -41,9 +41,39 @@ table of the record before. The bank logs were then read to name the cases and p
   before, 0 after. `edit74.py` adds C-new-file, which spells out a new file's start in its
   `after`, so a start other than the vector header's fails (a mutant model starting at 0 energy
   fails it, and no other vector). r5's `model.py` agrees with 66 of 66 through `vecrun.py`.
+- `$TEMP/collab/progress-r8/` holds round 8's pass: the order within a frame, questions by id,
+  the switch-off table's direction, and a vector at a value other than the game's for each
+  `Parameter` entry. `dump/` is the dump cdylib rebuilt over this tree's `oracle_record`, run
+  on the 44 rows of `$TEMP/collab/scenes/cache-v2` (`out/`). `model.py` is r6's model with
+  per-vector rules (a `switches_off` table of sets, the divisors) and questions by id;
+  `vecrun.py` runs it, or a mutant, on the vector file: 76 of 76. `frames.py` runs it per frame
+  over the cache: the reports are heard from each record's hits (`hits.txt`), the ids and kinds
+  that only an argument names stood in from what changed (10 frames), and the progress after
+  them compared with record N's on the fields this domain owns (what she holds on a tank's frame
+  only; the beams switched on from the hyper beam's frame on, none in these rows): 25,426 of
+  25,426 frame pairs agree, the null model 25,399. `analyse.py` over the same rows: 52 of 52
+  room states (44 rows' first records, 8 loads) agree, the null model (the default) 42.
+  `make_mutants.py` writes ten one-line mutants; each fails the vectors named:
+  - the table read backwards (taking a beam switches off the beams whose rows hold it):
+    C-switches-off-adjusted, C-switches-off-adjusted-other;
+  - the game's table whatever the rules: C-switches-off-adjusted, C-switches-off-adjusted-pair;
+  - one beam at most per row: C-switches-off-adjusted;
+  - only a beam that is hers switched off: C-plasma-taken-spazer-not-hers;
+  - a frame's reports applied last first: C-beams-in-order, C-beams-in-order-reversed,
+    C-arrival-then-leaving, C-leaving-then-arrival;
+  - the game's divisors whatever the rules: C-percent-adjusted;
+  - energy's and reserve's divisors swapped: C-percent-adjusted;
+  - her leaving taking the frame's area: C-door-from-tourian, C-door-into-tourian;
+  - an event reported again un-happening: C-event-again, R-planet-awake;
+  - a location asked by id reading emptied when any is: C-asked-locations.
+
+  Over the cache every mutant agrees on every frame, as the model does (the last asks a
+  question, which `frames.py` doesn't): the game's table is symmetric, no frame has two reports
+  whose order shows, no row leaves an area, no row asks the percentage, and the stand-in hears
+  event-zebes-awake 152's event once. That is why the vectors carry those rules.
 
 **Row ids.** As in the camera's notes, the chain rows go by opaque ids, because a chain row's name
-carries a room header's address; s01 is a row whose name matches the lexicon:
+carries a room header's address; s01 and e01 are rows whose names match the lexicon:
 
 | Id | Row |
 | --- | --- |
@@ -59,6 +89,7 @@ carries a room header's address; s01 is a row whose name matches the lexicon:
 | r10 | chain-0224-D0B9 |
 | r11 | chain-0232-D5A7 |
 | s01 | samus-square-slope-reserve |
+| e01 | event-zebes-awake |
 
 ## State
 
@@ -168,6 +199,11 @@ FFFFh would make the cleared slot load as a file. The spec names this P2's.
   state conditions `$8F:E5FF` (with 1) and `$8F:E629`, and the bosses' own reads of `$7E:D828,x`.
 - A location emptied: `$84:887C` (bit 15 of the room argument: never).
 - A door open: `$84:8A72` (bit 15: never).
+- Both questions are asked only with an id. An item or door PLM whose room argument has bit 15
+  (placed without an id) skips the question itself and shows its item, or stays shut, and
+  setting the bit is skipped the same way (`$84:8899`, `$84:8A91`). So the spec has progress
+  asked by id only (§1.2), and the no-id case is the asker's (§8); no vanilla population sets
+  bit 15.
 - The map known: `0789` or the area's byte, nonzero (`$82:9478`, `$82:9565`, `$82:BB3D`,
   `$82:9EC6`, `$82:B8C6`, `$90:AAA0`): every reader tests nonzero, so `OnArrival` and
   `Downloaded` read the same.
@@ -229,17 +265,37 @@ behaviour.
   `0789` is nonzero, and it is nonzero whenever the area's byte is (the Tourian room sets it, and
   every arrival copies the byte). So `OnArrival` turns into `Downloaded` on leaving; a save in
   Tourian before leaving (Mother Brain's save station, room `$DE23`) writes 01h to the file.
-- **No frame takes two pickups.** Every pickup instruction (`$84:88B0` beams; `$84:88F3`,
-  `$891A`, `$8941` items; `$8968`, `$8986` energy and reserve tanks; `$89A9`, `$89D2`, `$89FB`
-  ammunition tanks) ends in `JSL $85:8080`, which doesn't return until the message box has gone
-  (about 6 s; it spins on `$85:8136`, wait for lag frame). A second item PLM touched in the same
-  frame runs its pickup in the same PLM pass, but only after the box closes, and the oracle
-  records one record per video frame, lag or not (ORACLE §2), so the two reports land hundreds
-  of records apart, whatever the content. This is why spec §7 can say no order within a frame
-  is visible, although `TakingBeams` reads the beams switched on that another `TakingBeams`
-  writes (Spazer then Plasma differs from Plasma then Spazer). No vector: a frame with two
-  pickups would be invented behaviour; the order across frames is C-spazer-taken's,
-  C-plasma-taken's and C-plasma-taken-spazer-off's.
+- **The order within a frame** (spec §7). The model applies a frame's reports in the order
+  they come, and two pairs give a different progress in the other order: two beams taken, one
+  switching the other off, and an area's map given on arrival with her leaving that area. Three
+  blind reads of the model doubted the old claim that no order is visible; tested against the
+  original, neither pair ever falls in one frame, so in the game none is seen:
+  - **No frame takes two pickups.** Every pickup instruction (`$84:88B0` beams; `$84:88F3`,
+    `$891A`, `$8941` items; `$8968`, `$8986` energy and reserve tanks; `$89A9`, `$89D2`,
+    `$89FB` ammunition tanks) ends in `JSL $85:8080`, which doesn't return until the message box
+    has gone (about 6 s; it spins on `$85:8136`, wait for lag frame). A second item PLM touched
+    in the same frame runs its pickup in the same PLM pass, but only after the box closes, and
+    the oracle records one record per video frame, lag or not (ORACLE §2), so the two reports
+    land hundreds of records apart, whatever the content. Over the 44 cached rows, 14 frames
+    take a pickup (`frames.py -v`), each alone in its frame.
+  - **Leaving an area and the map on arrival are frames apart.** `$82:DF99` (leaving, on a door
+    with bit 40h) runs in the door transition step `$82:E36E`, which sets the next step and
+    returns; the room's setup code (`$8F:C90A` for Tourian's map) runs from `$82:EB6C` in the
+    later step `$82:E4A9`, with the room's PLMs. Each step runs in its own pass of the main
+    loop. The records show the gap with the PLMs' setup, which runs in the same call as the
+    setup code: `$82:DF99`'s hit and the room's first item PLM setup (`$84:EE64`) are 37 records
+    apart in area-norfair (163, 200), 31 in chain-0097-ACF0 (726, 757) and 39 in
+    chain-0106-AD5E (528, 567). And the two name different areas: her leaving the one `079F`
+    held before the room header's load, the arrival the new room's.
+  - **Every other pair commutes**: different quantities, one count added to, or a set member set
+    again. event-zebes-awake 152 is a recorded frame with two reports, `$84:BE0B` from two PLMs,
+    both event 0 (R-planet-awake).
+
+  So the vectors that put either pair in one frame (C-beams-in-order, C-beams-in-order-reversed,
+  C-arrival-then-leaving, C-leaving-then-arrival) are constructed: they pin the model's rule,
+  which is what the same reports give one per frame, as an adjusted game that sends both in one
+  frame would see. C-door-from-tourian and C-door-into-tourian, which put her leaving and an
+  arrival in one frame, now hold the door's frame alone, as the game gives it.
 - **The gunship** marks Crateria's station 0 itself, not through the save station PLM: on its
   first landing (`$A2:A9A7`, then `$81:8000` saves; r01:610 is that landing, so R-gunship-save
   is not a save she chose) and when she saves in it (`$A2:AB2B`). To progress both are the same
@@ -332,9 +388,31 @@ instruction's amount, the door PLM's room argument, the item PLMs the room's sta
 | R-placed-two | area-norfair 200 | `ItemsPlaced(2)`: the room's state spawns two item PLMs | `D91A` 2Eh → 30h | C-placed-several |
 | R-placed-a | r06 757 | `ItemsPlaced(1)` | `D91A` 38h → 39h | C-placed-one |
 | R-placed-b | r08 567 | `ItemsPlaced(1)`, the room's one item (location 64) already taken | `D91A` 3Eh → 3Fh; `D878` unchanged | C-placed-taken |
+| R-plasma-beam | item-plasma-beam 146 | `Taken(Plasma)`, location 143, with spazer switched on | `09A6` 1007h → 100Bh (spazer off), `09A8` 1007h → 100Fh, `D881` bit 7 | C-plasma-taken |
+| R-ice-beam | chain-0163-A890 28 | `Taken(Ice)`, location 50, with wave on | `09A6`, `09A8` 1 → 3, `D876` bit 2 | C-beam-other |
+| R-charge-beam | item-charge-beam 902 | `Taken(Charge)`, location 23 | `09A7`, `09A9` 0 → 10h, `D872` bit 7 | C-beam-other |
+| R-wave-beam | item-wave-beam 37 | `Taken(Wave)`, location 68 | `09A6`, `09A8` 0 → 1, `D878` bit 4 | C-beam-other |
+| R-energy-tank | item-energy-tank 240 | `Taken(EnergyTank)`, location 8, amount 100 | `09C4` 99 → 199, `09C2` 69 → 199, `D871` bit 0 | C-energy-tank |
+| R-reserve-tank | item-reserve-tank 1212 | `Taken(ReserveTank)`, location 17, amount 100 | `09D4` 0 → 100, `09C0` 0 → 1, `09D6` unchanged, `D872` bit 1 | C-reserve-first |
+| R-power-bomb-tank | chain-0043-9AD9 417 | `Taken(PowerBombTank)`, location 13, amount 5 | `09D0`, `09CE` 0 → 5, `D871` bit 5 | C-power-bomb-tank |
 
-The three item cases, the three items-placed cases and R-door-a are heard. The harness hears a
-door at `$84:8A91` when record N holds exactly one door PLM not yet open whose hit counter
+The item, beam and tank cases, the three items-placed cases and R-door-a are heard. The seven
+from R-plasma-beam on are in the rows added since the cases were named (the cache-v2 rows), where
+the harness already matches them frame by frame (`coverage.txt`: `TakingBeams 4`, `Tanks 7` of
+8); the integrator names them as cases. The cache's other missile tanks (chain-0234-D51E 153,
+item-charge-beam 296, item-reserve-tank 112 and 658) carry the same rule as R-missile-tank.
+
+`coverage.txt`'s `Tanks 7` of 8: the frame left unverified is item-reserve-tank 112, not a named
+case. Record N-1 holds two uncollected missile tank PLMs (room arguments 13h and 12h) whose lists
+both use the missile pickup instruction that ran, so the hit alone can't say which was taken;
+the harness hears none and the frame falls to the stand-in. At 658 the first is emptied and one
+candidate remains, so it is heard; `frames.py` matches all eight because it takes the location
+from the newly set bit, the stand-in's own source. A harness option for the integrator (the
+root's call, it needs a re-record): a watched peek of X, or `$1DC7,x`, at `$84:8899` would hear
+it.
+
+The harness hears a door at `$84:8A91` when record N holds exactly one door PLM not yet open
+whose hit counter
 (`$7E:DF0C,x`) is one short of its count, and takes its room argument (`$1DC7,x`) as the door
 id; `coverage.txt` has `DoorsStayOpen 2 0 5 0`: r04:280 (door 51) and boss-phantoon:1985 (door
 134, no case of its own) are matched. R-door-b stays stood in (`Source::Copied`) and doesn't
@@ -394,9 +472,10 @@ among them); 6 vectors had one, now 0. A two-state shape (one condition, then th
 the smallest that shows a condition, so it is not counted as a room's.
 
 **Kept as vectors.** R-ceres-boss (samus-ceres-push 1586: `D82E` 00h → 01h, Ceres Ridley's
-`Defeated(MainBoss)`) and R-gunship-save (r01 610: `D8F8` bit 0, the gunship's station 0) are
-RAM only: the boss's kind and the gunship's station are what those domains report, constants of
-their code, not a room's population or a table.
+`Defeated(MainBoss)`), R-gunship-save (r01 610: `D8F8` bit 0, the gunship's station 0) and
+R-planet-awake (e01 152: `D820` bit 0, from `$84:BE0B`, run by two PLMs in the
+frame, so two reports) are RAM only: the boss's kind, the gunship's station and the event are
+what those domains report, constants of their code, not a room's population or a table.
 
 ## Size baseline
 
@@ -420,46 +499,42 @@ fair bar.
   uncapped. The observer's reference model (`model.py`, about 170 Python lines) agrees that the
   earlier 1,200 was generous.
 
-**Old code** (`tools size`, the wire-cam size dll `$TEMP/collab/wire-cam/size.dll` through
-`$TEMP/collab/wire-cam/sizedll/run.py`, 2026-11-08; code lines by
-`$TEMP/collab/scripts/code_lines.py`):
+**Old code** (`tools size` of `5e2e4ee51`, the score v2 weights: lookups as data,
+duplication priced, clumps off; through the DLL `$TEMP/collab/progress-r8/tools.dll`,
+2026-11-11; code lines by `$TEMP/collab/scripts/code_lines.py`, unchanged):
 
-| Area | Cut | Score | Logic | Types | Depth | Code lines |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| equipment | `crates/sm_game/src/item_pickups.rs` at `archive/old-engine`: `PickupKind`, `Loadout`, `Supply`, `Inventory`, and `Inventory::collect`'s first `match` (the state arms), without the `VisualUpdate`/message match and `restore` (`$TEMP/collab/progress-spec/archive_cut/equipment_collect.rs`) | 253.5 | 223 | 143 | 43.5 | 72 |
-| rooms | `data/src/room.rs` at spine `387640758`: `Item`, `Condition`, `Progress`, `Condition::holds`, `Room::select` (`$TEMP/collab/progress-spec/old/states.rs`) | 197.25 | 209 | 147 | 3.75 | 54 |
+| Area | Cut | Score | Logic | Types | Data | Depth | Code lines | Before (2026-11-08) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| equipment | `crates/sm_game/src/item_pickups.rs` at `archive/old-engine`: `PickupKind`, `Loadout`, `Supply`, `Inventory`, and `Inventory::collect`'s first `match` (the state arms), without the `VisualUpdate`/message match and `restore` (`$TEMP/collab/progress-spec/archive_cut/equipment_collect.rs`) | 231.75 | 211 | 143 | 12 | 40.75 | 72 | 253.5 |
+| rooms | `data/src/room.rs` at spine `387640758`: `Item`, `Condition`, `Progress`, `Condition::holds`, `Room::select` (`$TEMP/collab/progress-spec/old/states.rs`) | 185.25 | 209 | 147 | 0 | 3.75 | 54 | 197.25 |
 
-The spec counter takes `old` in whole tokens, so the header writes 254 and 197 (nearest).
-
-**Units** (`tools spec-units`, `$TEMP/collab/specunitsdll/run.py`): 14 entries, 28 arms, 7
-operators, 30.3 units. Happened 3.3, places 10.3, equipment 7.7, rooms 7.0, percentage 2.0.
-
-**Budget:** 36 × 30.3 units, capped at 70% of old = 878: happened 120, places 372, equipment 177
-(capped from 276), rooms 137 (capped from 252), percentage 72. The `ItemPercentage` formula is
-written over its divisors table (3 operators, was 11 written row by row) and `ItemsPlacedCount`
-drops a repeat of the Notation's wrap, so the units fell from 33.3.
+Both fell under the v2 weights: a match that maps one value to another is a lookup, counted as
+data (equipment's pickup kinds, 12 tokens), and the depth term is lower. Neither cut has
+duplication. The spec counter takes `old` in whole tokens, so the Budget section writes 232 and
+185 (nearest).
 
 ### The other cuts (for the record)
 
-`tools size` (the quality-terms counter, built from spine `387640758`'s `verify`, in
-`$TEMP/collab/progress-spec/sizedll`), over cuts in `$TEMP/collab/progress-spec/old`, measured
-together; code lines by `$TEMP/collab/scripts/code_lines.py`:
+`tools size` of `5e2e4ee51` (score v2), over cuts in `$TEMP/collab/progress-spec/old`, measured
+together; the 2026-11-08 figures (the quality-terms counter built from spine `387640758`'s
+`verify`) beside them; code lines by `$TEMP/collab/scripts/code_lines.py`:
 
-| Area | Old code (today's engine, spine `387640758`) | Score | Logic | Types | Data |
-| --- | --- | ---: | ---: | ---: | ---: |
-| happened | `data/src/room.rs`: `Event`, `BossBits` and `intersects` | 26 | 32 | 63 | 6 |
-| places | `game/src/state/mod.rs`: `COLLECTED_ITEM_WORDS`, `CollectedItems` and its `place`, `contains`, `insert`; `game/src/plm.rs`: `is_collected`, `NEVER_COLLECTED` | 123 | 143 | 41 | 2 |
-| equipment | `game/src/state/samus.rs`: `Item`, `Items`, `Item::bit`, `Items::insert`/`contains`, `Gauge`, `Equipment`, `ReserveMode`; `game/src/plm.rs`: the two `insert`s in `resume` | 148.5 | 172 | 173 | 0 |
-| rooms | `data/src/room.rs`: `Item`, `Condition`, `Progress`, `Condition::holds`, `Room::select` | 197.25 | 209 | 147 | 0 |
-| percentage | none | 0 | | | |
-| total | 161 code lines | 494.75 | 556 | 424 | 8 |
+| Area | Old code (today's engine, spine `387640758`) | Score | Logic | Types | Data | Duplication | Before |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| happened | `data/src/room.rs`: `Event`, `BossBits` and `intersects` | 15 | 32 | 63 | 6 | 0 | 26 |
+| places | `game/src/state/mod.rs`: `COLLECTED_ITEM_WORDS`, `CollectedItems` and its `place`, `contains`, `insert`; `game/src/plm.rs`: `is_collected`, `NEVER_COLLECTED` | 128 | 143 | 41 | 2 | 12 | 123 |
+| equipment | `game/src/state/samus.rs`: `Item`, `Items`, `Item::bit`, `Items::insert`/`contains`, `Gauge`, `Equipment`, `ReserveMode`; `game/src/plm.rs`: the two `insert`s in `resume` | 69.5 | 106 | 173 | 66 | 0 | 148.5 |
+| rooms | `data/src/room.rs`: `Item`, `Condition`, `Progress`, `Condition::holds`, `Room::select` | 185.25 | 209 | 147 | 0 | 0 | 197.25 |
+| percentage | none | 0 | | | | | 0 |
+| total | 161 code lines | 397.75 | 490 | 424 | 74 | 12 | 494.75 |
 
 Not counted: the state condition decoder `condition()` in `data/src/room.rs` (the importer's), the
 HUD's and mini-map's reads (`hud.rs`, `mini_map.rs`: their domains').
 
 The whole-game port as a whole, at the tag `archive/old-engine` (`crates/sm_game/src`, cut to
 `$TEMP/collab/progress-spec/archive`): `progress.rs` 1,350, `gameplay_flag_state.rs` 227,
-`item_pickups.rs` 844.25, 2,421.25 in all, 386 code lines (no ceiling, above);
+`item_pickups.rs` 844.25, 2,421.25 in all, 386 code lines (no ceiling, above); under score v2
+(`5e2e4ee51`) 1,285, 247 and 808.25, 2,340.25 in all;
 its room states and percentage are elsewhere in it and not counted (`inventory_domain.rs`, the
 reserves, 349.75, is the energy domain's).
 
@@ -477,11 +552,12 @@ items and attributes that define the model's shapes; define as many as the behav
 target is on everything else, the logic.
 
 **Baseline.** Each area is compared with the old code that is complete for that area (`tools
-size`). Rooms: today's engine's state conditions and choice of state, which handle every
-condition and the first that holds, 197.25. Equipment: the earlier whole-game port's taking of an
-item, a beam or a tank, without the drawing and the message, 253.5. Happened, places and
-percentage have no complete old code. The counter takes the old code in
-whole tokens: 197 and 254.
+size`, score v2, re-measured 2026-11-11 at this round's base; §Size baseline). Rooms: today's
+engine's state conditions and choice of state, which handle every condition and the first that
+holds, 185.25 (197.25 under the earlier weights). Equipment: the earlier whole-game port's taking
+of an item, a beam or a tank, without the drawing and the message, 231.75 (253.5). Happened,
+places and percentage have no complete old code. The counter takes the old code in whole tokens:
+185 and 232.
 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion
 and tested on the camera. An area's budget is k × its units; its old code (`old`), where it has
@@ -491,8 +567,20 @@ costs in proportion to how far over, never as a wall; over an area's old code is
 - Area happened: EventsHappen, ZebetitesCounted, BossesDefeated
 - Area places: EmptiedLocations, DoorsStayOpen, MapsByArea, MapOnArrival, StationsSavedAt,
   ItemsPlacedCount
-- Area equipment (old 254): TakingItems, TakingBeams, Tanks
-- Area rooms (old 197): RoomStates
+- Area equipment (old 232): TakingItems, TakingBeams, Tanks
+- Area rooms (old 185): RoomStates
 - Area percentage: ItemPercentage
 
-Budget: 37.5 × 30.3 units = 1,136 (happened 125, places 387, equipment 287, rooms 262, percentage 75)
+**Adjustable entries.** The two `Parameter` entries, each with vectors at a value other than
+the game's, carried by the vector's `rules` (the vector header gained the key in round 8):
+`TakingBeams` (C-switches-off-adjusted, C-switches-off-adjusted-other,
+C-switches-off-adjusted-pair: taking ice switches charge and wave off) and `ItemPercentage`
+(C-percent-adjusted: divisors 50, 200, 10, 2, 3).
+
+**Units, round 8.** 30.3 → 28.3: `EmptiedLocations`' and `DoorsStayOpen`'s arms for an item or
+door placed without an id became consequences, since their outcome is that nothing changes (the
+counter's null-outcome rule) and the question without an id is gone. No arm was added: the
+order within a frame, the direction of the switch-off table and the adjusted values are stated
+as consequences and params.
+
+Budget: 37.5 × 28.3 units = 1,061 (happened 125, places 312, equipment 287, rooms 262, percentage 75)

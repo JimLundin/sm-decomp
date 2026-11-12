@@ -74,7 +74,7 @@ impl ProgressDomain {
                     if !ITEM_PLMS.contains(&plm) {
                         continue;
                     }
-                    let (_, pickup) = self.pickup(plm).map_err(|skip| skip.to_string())?;
+                    let pickup = self.pickup(plm).map_err(|skip| skip.to_string())?.pickup;
                     let location = LocationId(argument);
                     if items
                         .insert(location, pickup)
@@ -104,13 +104,11 @@ pub fn of_everything(population: &Population) -> Count {
     let rules = Rules::reference();
     let mut progress = Progress::default();
     for (&location, &pickup) in &population.items {
-        progress.apply(
-            &rules,
-            Report::Taken {
-                pickup,
-                location: Some(location),
-            },
-        );
+        let taken = Report::Taken {
+            pickup,
+            location: Some(location),
+        };
+        progress.apply(&rules, &[taken]);
     }
     progress.inventory.item_percentage(&rules)
 }

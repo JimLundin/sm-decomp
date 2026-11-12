@@ -132,7 +132,7 @@ fn the_first_state_whose_condition_holds_loads() {
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(3)));
     progress.events[Event::PlanetAwake] = true;
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(2)));
-    progress.inventory.capacity[Supply::PowerBombs] = Wrapping(5);
+    progress.inventory.capacity.0[Supply::PowerBombs] = Wrapping(5);
     assert_eq!(room_state(&landing, &progress, None), Some(StateIndex(1)));
 }
 

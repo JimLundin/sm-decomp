@@ -13,8 +13,8 @@
 use core::num::Wrapping;
 
 use clean_model_progress::{
-    Condition, Count, EnteredRoom, Inventory, Pickup, Progress, Remembered, Report, ReserveMode,
-    RoomStates, Rules, Supply, Version,
+    Condition, EnteredRoom, Inventory, Pickup, Progress, Remembered, Report, ReserveMode,
+    RoomStates, Rules, Supplies, Supply, Version,
 };
 use clean_types::{Area as Region, BossKind, Entrance, Item as Piece, LocationId, Set};
 use data::rom::RomAddress;
@@ -117,8 +117,10 @@ const fn gauge(equipment: &mut Equipment, supply: Supply) -> &mut Gauge {
 }
 
 /// The gauges' capacities or what she holds, by `part`.
-fn supplies(mut equipment: Equipment, part: fn(Gauge) -> u16) -> EnumMap<Supply, Count> {
-    EnumMap::from_fn(|supply| Wrapping(part(*gauge(&mut equipment, supply))))
+fn supplies(mut equipment: Equipment, part: fn(Gauge) -> u16) -> Supplies {
+    Supplies(EnumMap::from_fn(|supply| {
+        Wrapping(part(*gauge(&mut equipment, supply)))
+    }))
 }
 
 /// What she has, as the model keeps it. The engine has no beams yet: none are hers.
@@ -138,7 +140,7 @@ fn inventory(equipment: &Equipment) -> Inventory {
 fn store_inventory(inventory: &Inventory, equipment: &mut Equipment) {
     equipment.collected = items(inventory.items);
     equipment.equipped = items(inventory.items_switched_on);
-    for ((supply, held), max) in inventory.held.iter().zip(inventory.capacity.values()) {
+    for ((supply, held), max) in inventory.held.0.iter().zip(inventory.capacity.0.values()) {
         *gauge(equipment, supply) = Gauge {
             current: held.0,
             max: max.0,
@@ -213,7 +215,7 @@ pub fn progress(equipment: &Equipment, collected: &CollectedItems) -> Progress {
 /// Whether the item PLM with room argument `argument` finds its place emptied (`$84:887C`).
 #[must_use]
 pub fn is_emptied(collected: &CollectedItems, argument: u16) -> bool {
-    emptied(collected).contains(place(argument))
+    place(argument).is_some_and(|place| emptied(collected).contains(place))
 }
 
 /// The model's area for a room's, or none for the debug rooms, which no state condition reads.
@@ -239,7 +241,7 @@ pub fn take(state: &mut State, item: Item, argument: u16) {
         pickup: Pickup::Item(piece(item)),
         location: place(argument),
     };
-    progress.apply(&Rules::reference(), report);
+    progress.apply(&Rules::reference(), &[report]);
     store_inventory(&progress.inventory, &mut state.samus.equipment);
     store_emptied(&progress.emptied, &mut state.collected_items);
 }

@@ -71,7 +71,7 @@ camera entry ScreensRunOn 0 0 0 0
 camera entry Settling 16154 8196 16154 293
 camera entry ShortScreens 18980 12742 18980 386
 camera entry TimeStopped 113 113 113 6
-progress frames 25426 25419 7 25399
+progress frames 25426 25420 6 25399
 progress field 25426 0 items
 progress field 25426 0 items switched on
 progress field 25426 0 beams
@@ -90,7 +90,7 @@ progress field 25426 0 items placed
 progress field 8 25418 room state
 progress entry BossesDefeated 0 0 3 0
 progress entry DoorsStayOpen 2 0 5 0
-progress entry EmptiedLocations 13 0 14 0
+progress entry EmptiedLocations 14 0 14 0
 progress entry EventsHappen 1 0 1 0
 progress entry ItemPercentage 0 0 0 0
 progress entry ItemsPlacedCount 3 0 3 0
@@ -100,7 +100,7 @@ progress entry RoomStates 8 8 8 0
 progress entry StationsSavedAt 1 0 1 0
 progress entry TakingBeams 4 0 4 0
 progress entry TakingItems 2 0 2 0
-progress entry Tanks 7 0 8 0
+progress entry Tanks 8 0 8 0
 progress entry ZebetitesCounted 0 0 0 0
 hud frames 24230 20615 0 17954
 hud field 20615 0 status bar

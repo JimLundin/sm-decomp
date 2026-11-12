@@ -119,7 +119,9 @@ them):
 
 A location id and a door id come from the room's population, where each item and each door that
 stays open is placed. A population may place one without an id: then nothing of it is remembered
-(`EmptiedLocations`, `DoorsStayOpen`).
+(`EmptiedLocations`, `DoorsStayOpen`). So other domains ask about a location or a door only by
+its id: one placed without an id has nothing remembered to ask about, and its own domain shows it
+as placed each time its room loads (§8).
 
 ### 1.3 What other domains report (Inputs)
 
@@ -146,10 +148,10 @@ doors. An entrance is not a door of `DoorsStayOpen`: its ids are a space of thei
 
 Each answer reads what §1.1 and §1.2 hold, as the entries below say: whether an event has
 happened (`EventsHappen`), the zebetites' count (`ZebetitesCounted`), whether a boss of any of
-the kinds asked about is defeated in an area (`BossesDefeated`), whether a location is emptied
-(`EmptiedLocations`), whether a door is open (`DoorsStayOpen`), whether the map is known for an
-area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentage
-(`ItemPercentage`).
+the kinds asked about is defeated in an area (`BossesDefeated`), whether the location of an id
+is emptied (`EmptiedLocations`), whether the door of an id is open (`DoorsStayOpen`), whether the
+map is known for an area (`MapsByArea`), which state a room loads (`RoomStates`), the item
+percentage (`ItemPercentage`).
 
 ---
 
@@ -160,11 +162,12 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - summary: an event, once it happens, has happened for the rest of the run.
 - params: none.
 - switch: none.
-- An event reported → it has happened from then on: asked, yes [C-event, C-event-again,
-  C-state-event]
-- So an event never stops having happened; one that happens again changes nothing (C-event-again).
-- checked: constructed (no recorded frame makes an event happen; the room states the harness
-  checks at rows' first records read events, its cases samus-mockball:0 and area-maridia:0).
+- An event reported → it has happened from then on: asked, yes [R-planet-awake, C-event,
+  C-event-again, C-state-event]
+- So an event never stops having happened; one that happens again changes nothing
+  (C-event-again), in a later frame or in the same one (R-planet-awake: two reports of it in one
+  frame).
+- checked: oracle (R-planet-awake); constructed.
 
 ### ZebetitesCounted
 - kind: mechanic.
@@ -196,11 +199,12 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - summary: an item she takes is gone from its place for good.
 - params: none.
 - switch: none.
-- She takes an item with a location id → the location is emptied: asked, yes [C-item-first,
-  C-item-second, C-missile-tank-stocked, C-item-beside-another, C-asked-no-location]
-- She takes an item placed without a location id → asked about, it reads as still in its
-  place [C-no-location, C-asked-no-location]
-- So an item placed without an id appears each time its room loads, however often she takes it.
+- She takes an item with a location id → the location is emptied: asked by its id, yes
+  [C-item-first, C-item-second, C-missile-tank-stocked, C-item-beside-another,
+  C-asked-locations]
+- So an item placed without a location id, taken, empties no location (C-no-location): nothing
+  remembers that it was taken, and it shows each time its room loads, however often she takes it
+  (the items' domain, §8).
 - checked: oracle (the harness cases item-morph-ball:817, samus-bomb-jump-vertical:55 and
   s01:37); constructed (no id).
 
@@ -209,10 +213,10 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - summary: a door she opens for good stays open.
 - params: none.
 - switch: none.
-- A door with an id opened → it is open: asked, yes [C-door-between, C-door-last,
+- A door with an id opened → it is open: asked by its id, yes [C-door-between, C-door-last,
   C-asked-doors]
-- A door placed without an id opened → asked about, it reads as closed [C-door-no-id,
-  C-asked-doors]
+- So a door placed without an id, opened, is remembered by no id (C-door-no-id): it is shut
+  again each time its room loads (the doors' domain, §8).
 - checked: oracle (the harness case r04:280); constructed; r06:519 is stood in (a super
   missile opens it).
 
@@ -233,12 +237,13 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - params: none.
 - switch: none.
 - She enters the room that gives the map of its area, the map not `Downloaded` → it is
-  `OnArrival` [C-map-on-arrival, C-map-on-arrival-had, C-door-from-tourian,
-  C-door-into-tourian]
+  `OnArrival` [C-map-on-arrival, C-map-on-arrival-had]
 - When a door takes her into another area, the map of the area she leaves `OnArrival` → it
   becomes `Downloaded` [C-map-left, C-map-left-none, C-door-from-tourian, C-door-into-tourian]
 - So the two read the same everywhere in play (`MapsByArea`); only the saved file tells them apart,
   when she saves before leaving.
+- So the map of an area given on arrival and then left, in that order, is `Downloaded`; left and
+  then given, `OnArrival` (C-arrival-then-leaving, C-leaving-then-arrival; §7).
 - checked: constructed.
 
 ### StationsSavedAt
@@ -279,14 +284,25 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - kind: mechanic.
 - summary: a beam she takes is hers and switched on; spazer and plasma don't fire together, so
   taking one switches the other off.
-- params: the beam each switches off, a table of the game's data: `Spazer` switches off
-  `Plasma`; `Plasma` switches off `Spazer`; the rest none; its cells are beams.
-- switch: **Parameter**, the beam each switches off (params).
+- params: the beams that taking each beam switches off, a table of the game's data, one row per
+  beam taken: taking `Spazer` switches `Plasma` off; taking `Plasma` switches `Spazer` off;
+  taking any other beam switches none off. Its cells are sets of beams; a row never holds the
+  beam it is for. Each of the game's rows holds one beam or none; a row holding several is an
+  adjusted game's.
+- switch: **Parameter**, the beams that taking each beam switches off (params).
 - She takes a `Beam` → it is hers and switched on [C-beam-other, C-spazer-taken, C-plasma-taken]
-- The beam taken switches another off → that one is switched off, hers still [C-spazer-taken,
-  C-plasma-taken, C-plasma-taken-spazer-off]
-- checked: constructed (no recorded frame takes a beam; the late files hold spazer as hers and
-  switched off beside plasma, as the rule leaves them: samus-mockball's first record).
+- She takes a `Beam` whose row holds beams → each of them is switched off, hers still
+  [C-spazer-taken, C-plasma-taken, C-plasma-taken-spazer-off, C-switches-off-adjusted,
+  C-plasma-taken-spazer-not-hers]
+- So a beam switched on without being hers (the rainbow beam's, §1.1) is switched off the same
+  way, and stays not hers (C-plasma-taken-spazer-not-hers).
+- So the row read is the row of the beam she takes, never the rows that hold it: under a table
+  where taking `Ice` switches `Charge` and `Wave` off, taking `Wave` leaves `Ice` on
+  (C-switches-off-adjusted, C-switches-off-adjusted-other, C-switches-off-adjusted-pair).
+- So of two beams taken one after the other, one of which switches the other off, the later is
+  the one switched on (C-beams-in-order, C-beams-in-order-reversed; §7).
+- checked: oracle (the harness case item-plasma-beam:146: plasma taken with spazer switched
+  on switches spazer off); constructed.
 
 ### Tanks
 - kind: mechanic.
@@ -309,7 +325,8 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
   (C-reserve-manual).
 - So after firing some, a missile tank leaves her short of the new capacity
   (C-missile-not-full: 3 of 20 becomes 7 of 24, by a tank of 4).
-- checked: oracle (the harness case s01:37); constructed.
+- checked: oracle (the harness cases s01:37, item-energy-tank:240 and
+  item-reserve-tank:1212); constructed.
 
 ---
 
@@ -353,12 +370,14 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 - kind: mechanic.
 - summary: the ending shows how much of the game's equipment she found, as a percentage.
 - params: the divisors, a table of the game's data: energy 100, reserve 100, missiles 5,
-  super missiles 5, power bombs 5; its cells are numbers.
+  super missiles 5, power bombs 5; its cells are whole numbers from 1.
 - switch: **Parameter**, the divisors (params).
 - Asked → the sum over the divisors of each capacity ÷ its divisor, rounded down, plus the
   count of her items and beams, `Σ capacity ÷ divisor + items + beams` [C-percent-start,
-  C-percent-many, C-percent-partial, C-percent-rainbow]
+  C-percent-many, C-percent-partial, C-percent-rainbow, C-percent-adjusted]
 - So the 99 energy she starts with counts 0 (C-percent-start).
+- So nothing caps the sum: with the game's divisors and every item it places it is 100, and
+  other divisors can take it past 100 (C-percent-adjusted).
 - checked: constructed (no recorded row reaches the ending); the harness, that every item, beam
   and tank the game places counts 100.
 
@@ -366,12 +385,20 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 
 ## 7. Order that matters
 
-- A frame's reports apply in the order they come. Only taking a beam reads what another report
-  writes (the beams switched on, `TakingBeams`), and no frame takes two of anything: each item,
-  beam or tank she takes holds the game in its message box for seconds before the next can be
-  taken. Her leaving names the area she leaves and every other report the new room's, so her
-  leaving and a map given on arrival concern two areas; every other pair changes different
-  quantities, or adds to the same count. So no order within a frame is visible.
+- A frame's reports apply in the order they come: the progress after them is what the same
+  reports give one per frame, in that order. Two pairs of reports give a different progress in
+  the other order: two beams taken, one of which switches the other off (the later stays on,
+  `TakingBeams`; C-beams-in-order, C-beams-in-order-reversed), and a map given on arrival
+  together with her leaving its area (given then left is `Downloaded`, left then given
+  `OnArrival`, `MapOnArrival`; C-arrival-then-leaving, C-leaving-then-arrival). Every other pair
+  changes different quantities, adds to one count, or sets what is already set
+  (R-planet-awake: one event reported twice in a frame).
+- The game never puts either pair in one frame, so in it no order within a frame is seen. Each
+  item, beam or tank she takes holds the game in its message box for seconds before anything
+  else can be taken. A door that takes her into another area reports her leaving while the screen
+  is dark, some 30 to 40 frames before the new room is ready and gives its map on arrival,
+  and the two name different areas: the one she leaves and the one she enters. Only an adjusted
+  game that reports such a pair in one frame sees the order.
 - A room's state is chosen with the room's own area, after it is known, so `Defeated` reads the
   new room's area.
 
@@ -395,7 +422,8 @@ area (`MapsByArea`), which state a room loads (`RoomStates`), the item percentag
 
 ## 9. Open questions
 
-1. In none of the recorded rows does an event happen, is a boss other than Ceres's defeated,
-   does a map station download, or is a beam or a tank other than a missile tank taken. Rows
-   from the 100% route's chain (bosses, the statues, Tourian, the beams) would promote the
-   constructed vectors.
+1. The recorded rows take every kind of beam but spazer, and energy, reserve, missile and
+   power bomb tanks, and defeat three main bosses; in none does an event other than the planet's
+   waking happen, a zebetite break, a map station download, a room give its map on arrival, a door
+   take her into another area, or does she save at a station. Rows from the 100% route's chain
+   (the statues, Tourian, the stations) would promote the constructed vectors.

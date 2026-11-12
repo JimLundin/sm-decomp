@@ -9,34 +9,35 @@ use crate::inventory::Supply;
 
 /// The values the rules of a run's progress read. `Rules::reference()` is the original game;
 /// any other value is an adjusted game.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rules {
-    /// For each beam, the beam that taking it switches off, if any. Spec: TakingBeams.
-    pub switched_off_by: EnumMap<Beam, Option<Beam>>,
+    /// For each beam she takes, the beams that taking it switches off: `switches_off[taken]`.
+    /// Only the row of the beam taken is read, never the rows that hold it. Spec: TakingBeams.
+    pub switches_off: EnumMap<Beam, Vec<Beam>>,
     /// For each supply, the capacity that counts one towards the item percentage: what the
     /// capacity is divided by, rounding down. Spec: ItemPercentage.
-    pub percentage_divisors: EnumMap<Supply, NonZeroU16>,
+    pub divisors: EnumMap<Supply, NonZeroU16>,
 }
 
 impl Rules {
     /// The original game's values.
     ///
     /// Spec: TakingBeams. Spazer and plasma don't fire together, so taking either switches the
-    /// other off; the other beams switch none off.
+    /// other off; taking any other beam switches none off.
     ///
     /// Spec: ItemPercentage. Energy and the reserve count one for each 100 of capacity;
     /// missiles, super missiles and power bombs one for each 5.
     #[must_use]
     pub fn reference() -> Self {
         Self {
-            switched_off_by: enum_map! {
-                Beam::Charge => None,
-                Beam::Ice => None,
-                Beam::Plasma => Some(Beam::Spazer),
-                Beam::Spazer => Some(Beam::Plasma),
-                Beam::Wave => None,
+            switches_off: enum_map! {
+                Beam::Charge => Vec::new(),
+                Beam::Ice => Vec::new(),
+                Beam::Plasma => Vec::from([Beam::Spazer]),
+                Beam::Spazer => Vec::from([Beam::Plasma]),
+                Beam::Wave => Vec::new(),
             },
-            percentage_divisors: enum_map! {
+            divisors: enum_map! {
                 Supply::Energy => BY_TANK,
                 Supply::Reserve => BY_TANK,
                 Supply::Missiles => BY_AMMO,

@@ -158,7 +158,7 @@ progress item-charge-beam 919
 progress item-energy-tank 259
 progress item-morph-ball 1427
 progress item-plasma-beam 169
-progress item-reserve-tank 1228
+progress item-reserve-tank 1229
 progress item-wave-beam 59
 progress samus-bomb-jump-vertical 1058
 progress samus-ceres-push 1776

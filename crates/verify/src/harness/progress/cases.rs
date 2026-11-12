@@ -12,7 +12,7 @@
 use core::num::Wrapping;
 
 use clean_model_progress::{Pickup, Report, Supply};
-use clean_types::{DoorId, Item, LocationId};
+use clean_types::{Beam, DoorId, Item, LocationId};
 use oracle_record::FrameRecord;
 
 use super::{Held, ProgressDomain, Source, Standing};
@@ -77,12 +77,20 @@ pub struct RoomCase {
     pub chosen: Chosen,
 }
 
-/// A pickup of `item` at location `location`.
-const fn taken(item: Item, location: u16) -> Heard {
+/// `pickup` taken at location `location`.
+const fn taken(pickup: Pickup, location: u16) -> Heard {
     Heard::Report(Report::Taken {
-        pickup: Pickup::Item(item),
+        pickup,
         location: Some(LocationId(location)),
     })
+}
+
+/// A tank of `supply` that gives `amount`.
+const fn tank(supply: Supply, amount: u16) -> Pickup {
+    Pickup::Tank {
+        supply,
+        amount: Wrapping(amount),
+    }
 }
 
 /// The door `door` opened.
@@ -90,33 +98,27 @@ const fn opened(door: u16) -> Heard {
     Heard::Report(Report::DoorOpened(Some(DoorId(door))))
 }
 
-/// The decode notes' eight report cases.
-pub const REPORTS: [ReportCase; 8] = [
+/// The decode notes' fifteen report cases.
+pub const REPORTS: [ReportCase; 15] = [
     ReportCase {
         id: "R-morph-ball",
         row: "item-morph-ball",
         record: 817,
-        heard: taken(Item::MorphBall, 26),
+        heard: taken(Pickup::Item(Item::MorphBall), 26),
         counted: Counted::Heard,
     },
     ReportCase {
         id: "R-bombs",
         row: "samus-bomb-jump-vertical",
         record: 55,
-        heard: taken(Item::Bombs, 7),
+        heard: taken(Pickup::Item(Item::Bombs), 7),
         counted: Counted::Heard,
     },
     ReportCase {
         id: "R-missile-tank",
         row: "samus-square-slope-reserve",
         record: 37,
-        heard: Heard::Report(Report::Taken {
-            pickup: Pickup::Tank {
-                supply: Supply::Missiles,
-                amount: Wrapping(5),
-            },
-            location: Some(LocationId(63)),
-        }),
+        heard: taken(tank(Supply::Missiles, 5), 63),
         counted: Counted::Heard,
     },
     ReportCase {
@@ -152,6 +154,55 @@ pub const REPORTS: [ReportCase; 8] = [
         row: "chain-0106-AD5E",
         record: 567,
         heard: Heard::Placed(1),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-plasma-beam",
+        row: "item-plasma-beam",
+        record: 146,
+        heard: taken(Pickup::Beam(Beam::Plasma), 143),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-ice-beam",
+        row: "chain-0163-A890",
+        record: 28,
+        heard: taken(Pickup::Beam(Beam::Ice), 50),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-charge-beam",
+        row: "item-charge-beam",
+        record: 902,
+        heard: taken(Pickup::Beam(Beam::Charge), 23),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-wave-beam",
+        row: "item-wave-beam",
+        record: 37,
+        heard: taken(Pickup::Beam(Beam::Wave), 68),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-energy-tank",
+        row: "item-energy-tank",
+        record: 240,
+        heard: taken(tank(Supply::Energy, 100), 8),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-reserve-tank",
+        row: "item-reserve-tank",
+        record: 1212,
+        heard: taken(tank(Supply::Reserve, 100), 17),
+        counted: Counted::Heard,
+    },
+    ReportCase {
+        id: "R-power-bomb-tank",
+        row: "chain-0043-9AD9",
+        record: 417,
+        heard: taken(tank(Supply::PowerBombs, 5), 13),
         counted: Counted::Heard,
     },
 ];

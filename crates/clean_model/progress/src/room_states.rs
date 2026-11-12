@@ -39,7 +39,7 @@ impl Condition {
     /// taken even with every one spent.
     fn holds(self, progress: &Progress, room: EnteredRoom) -> bool {
         let inventory = &progress.inventory;
-        let has_any = |supply| inventory.capacity[supply].0 != 0;
+        let has_any = |supply| inventory.capacity.0[supply].0 != 0;
         match self {
             Self::Happened(event) => progress.events[event],
             Self::Defeated(kinds) => progress.defeated[room.area].intersects(&kinds),

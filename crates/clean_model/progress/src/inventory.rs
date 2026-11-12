@@ -4,7 +4,7 @@
 use core::num::Wrapping;
 
 use clean_types::{Beam, Item, Set};
-use enum_map::{Enum, EnumMap};
+use enum_map::{Enum, EnumMap, enum_map};
 
 /// A count or a capacity. The spec's notation: counts and capacities are whole numbers of 16 bits
 /// and wrap at 65536, so 65535 and 2 more is 1: its `+` is `Wrapping`'s.
@@ -54,6 +54,31 @@ pub enum Pickup {
     },
 }
 
+/// A count of each supply: her capacities, or what she holds. Read and changed as
+/// `supplies.0[supply]`.
+///
+/// Its default is what a new file gives her of each supply, capacity and count alike: 99 energy,
+/// and 0 of every other supply (spec §1.1, The start of a run).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Supplies(pub EnumMap<Supply, Count>);
+
+impl Default for Supplies {
+    fn default() -> Self {
+        Self(enum_map! {
+            Supply::Energy => NEW_FILE_ENERGY,
+            Supply::Reserve => EMPTY,
+            Supply::Missiles => EMPTY,
+            Supply::SuperMissiles => EMPTY,
+            Supply::PowerBombs => EMPTY,
+        })
+    }
+}
+
+/// The energy a new file gives her, and its capacity.
+const NEW_FILE_ENERGY: Count = Wrapping(99);
+/// None of a supply: a capacity or a count of 0.
+const EMPTY: Count = Wrapping(0);
+
 /// What she has: what is hers, and what is switched on.
 ///
 /// The two are kept apart and neither is kept within the other. Taking an item or a beam makes
@@ -61,7 +86,10 @@ pub enum Pickup {
 /// equipment screen, and the rainbow beam she is given late in the fight with Mother Brain,
 /// which switches on exactly charge, plasma and wave, whether or not they are hers. So a beam
 /// can be switched on without being hers.
-#[derive(Clone, Debug, PartialEq, Eq)]
+///
+/// Its default is what a new file gives her: no items or beams, hers or switched on; the
+/// supplies' own default, capacity and count alike; and no reserve tank.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Inventory {
     /// The items that are hers, switched on or not. Spec: TakingItems.
     pub items: Set<Item>,
@@ -74,60 +102,32 @@ pub struct Inventory {
     /// The beams switched on, which decide the beam she shoots; not always among hers.
     pub beams_switched_on: Set<Beam>,
     /// The most of each supply she can hold.
-    pub capacity: EnumMap<Supply, Count>,
+    pub capacity: Supplies,
     /// How much of each supply she holds now.
-    pub held: EnumMap<Supply, Count>,
+    pub held: Supplies,
     /// Whether the reserve refills her on its own.
     pub reserve_mode: ReserveMode,
 }
 
-/// What a new file gives her: no items or beams, hers or switched on; of each supply, the
-/// capacity and the count `new_file` gives; and no reserve tank.
-impl Default for Inventory {
-    fn default() -> Self {
-        let supplies = EnumMap::from_fn(new_file);
-        Self {
-            items: Set::default(),
-            items_switched_on: Set::default(),
-            beams: Set::default(),
-            beams_switched_on: Set::default(),
-            capacity: supplies,
-            held: supplies,
-            reserve_mode: ReserveMode::default(),
-        }
-    }
-}
-
-/// What a new file holds of each supply, its capacity and her count alike: 99 energy, and 0 of
-/// every other (spec §1.1, The start of a run).
-const fn new_file(supply: Supply) -> Count {
-    match supply {
-        Supply::Energy => Wrapping(99),
-        Supply::Reserve | Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => EMPTY,
-    }
-}
-
-/// None of a supply: a capacity or a count of 0.
-const EMPTY: Count = Wrapping(0);
-
 impl Inventory {
-    /// She takes an item, a beam or a tank; `switched_off_by` gives the beam each beam taken
-    /// switches off, if any.
-    pub(crate) fn take(&mut self, pickup: Pickup, switched_off_by: EnumMap<Beam, Option<Beam>>) {
+    /// She takes an item, a beam or a tank; `switches_off` gives, for each beam she takes, the
+    /// beams that taking it switches off.
+    pub(crate) fn take(&mut self, pickup: Pickup, switches_off: &EnumMap<Beam, Vec<Beam>>) {
         match pickup {
             // Spec: TakingItems. Hers and switched on, even one she had and switched off.
             Pickup::Item(item) => {
                 self.items[item] = true;
                 self.items_switched_on[item] = true;
             }
-            // Spec: TakingBeams. Hers and switched on, and the beam it doesn't fire with
-            // switched off, though still hers.
+            // Spec: TakingBeams. Each beam of the taken beam's row is switched off: hers still
+            // if it was, not hers if it wasn't (a beam the rainbow beam switched on). Then the
+            // beam taken is hers and switched on, even one its own row names.
             Pickup::Beam(beam) => {
-                self.beams[beam] = true;
-                self.beams_switched_on[beam] = true;
-                if let Some(other) = switched_off_by[beam] {
+                for &other in &switches_off[beam] {
                     self.beams_switched_on[other] = false;
                 }
+                self.beams[beam] = true;
+                self.beams_switched_on[beam] = true;
             }
             Pickup::Tank { supply, amount } => self.take_tank(supply, amount),
         }
@@ -138,15 +138,15 @@ impl Inventory {
     /// makes it refill her on its own; any other tank adds its amount to what she holds, without
     /// filling her up. Spec: Tanks.
     fn take_tank(&mut self, supply: Supply, amount: Count) {
-        self.capacity[supply] += amount;
+        self.capacity.0[supply] += amount;
         match supply {
-            Supply::Energy => self.held[supply] = self.capacity[supply],
+            Supply::Energy => self.held.0[supply] = self.capacity.0[supply],
             Supply::Reserve if self.reserve_mode == ReserveMode::NoTank => {
                 self.reserve_mode = ReserveMode::Automatic;
             }
             Supply::Reserve => {}
             Supply::Missiles | Supply::SuperMissiles | Supply::PowerBombs => {
-                self.held[supply] += amount;
+                self.held.0[supply] += amount;
             }
         }
     }
