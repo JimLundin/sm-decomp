@@ -291,7 +291,7 @@ them with `verify::decode`, every fact is `"unevaluated"` and doesn't block gree
 | b2 | frame pads for every row | done |
 | c | `corpus --record-v2`, the format-2 recorder | done, but facts, typed streams and row rungs (below) |
 | d | record every row twice, compare, merge | done: 635 rows in `lsnes.toml`, 642 with the seven movie rows of `scenes-v1` |
-| e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-6ead7227957a4a10`) |
+| e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-e307a7d520ec1ff6`) |
 | f | `verify::lock`: the reader and the per-(row, stream) comparison | done |
 | g | the free-run gate: `tools gate`, ratcheting green pairs | done for `area-brinstar`, `item-morph-ball` |
 
@@ -321,7 +321,9 @@ the seed's first step is: line `first` to `first + frames` of the `.inputs`, one
 row's frames. The seven movie rows of `scenes-v1` (`event-zebes-awake`, `item-energy-tank`,
 `item-reserve-tank`, `item-charge-beam`, `item-wave-beam`, `item-plasma-beam`,
 `boss-kraid-defeated`) are cut that way and play the movie through the progress report each was
-chosen for. The chain rows are re-cut and re-locked the same way (§9).
+chosen for. The any% Ceres chain rows `chain-any-0001` to `chain-any-0011` are cut that way
+too: each ends at the next seed's frame counter and crosses its room's door. The 100% chain rows
+are re-cut and re-locked the same way (§9).
 
 ### Step c: the recorder (RELOCK §6)
 
@@ -437,14 +439,14 @@ echo "SHA256  b.enc" | sha256sum --check
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -in b.enc | tar -xz -C DATA
 ```
 
-- **The relock bundle** `relock-v2-lsnes-6ead7227957a4a10.tar.gz.enc` (SHA-256
-  `41f0b2ed8da8d2fd87c18746f2f06c4f2c746e33ac6de91c72388d7ae5d9009e`), pinned by the `bundles` line
+- **The relock bundle** `relock-v2-lsnes-e307a7d520ec1ff6.tar.gz.enc` (SHA-256
+  `2da2c6686fff86c66fcbbf5939ea0ab6d91bd115d5855b83913732e7f6294d96`), pinned by the `bundles` line
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
   `.lss` and `.words`, and the rows' `.pads` (`verify::bundle`).
-- **The lockstep record cache** `lockstep-cache-898a5b01b4429e72.tar.xz.enc` (SHA-256
-  `76a97379d35b4c7d529b43502cd78644bc56323e862847e25922160776da96a0`), pinned in
+- **The lockstep record cache** `lockstep-cache-5663de2c4b548c68.tar.xz.enc` (SHA-256
+  `4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f`), pinned in
   `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
-  81 MB, the lean tier). It holds the 53 rows `floors.txt` names, each with its `hits.txt` (the watched
+  92 MB, the lean tier). It holds the 63 rows `floors.txt` names, each with its `hits.txt` (the watched
   instructions of every domain, the blocks' scripts included), so CI holds the ratchet's rows and
   every domain's harness floors and coverage. Pack it with
   `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that

@@ -39,12 +39,12 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 18,195 of 36,311 | 8,926 | 8,823 | 1.01 |
-| world-camera | CAM (in progress) | in progress | 6 | 83 | 20,676 of 36,311 | 1,839 | 1,762 | 1.04 |
-| run-progress | P1 (in progress) | in progress | 8 | 76 | 35,919 of 36,311 | 819 | 1,061 | 0.77 |
-| interface-hud | H2 (in progress) | in progress | 5 | 84 | 20,778 of 34,377 | 2,695 | 2,112 | 1.28 |
-| world-blocks | W2 (in progress) | in progress | 4 | 100 | 20,693 of 32,006 | 2,395 | 2,074 | 1.15 |
-| samus-appearance | S5 (in progress) | in progress | 5 | 98 | 18,396 of 34,377 | 2,191 | 1,412 | 1.55 |
+| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 20,764 of 40,835 | 8,926 | 8,823 | 1.01 |
+| world-camera | CAM (in progress) | in progress | 6 | 83 | 23,501 of 40,835 | 1,839 | 1,762 | 1.04 |
+| run-progress | P1 (in progress) | in progress | 8 | 76 | 40,442 of 40,835 | 819 | 1,061 | 0.77 |
+| interface-hud | H2 (in progress) | in progress | 5 | 84 | 23,604 of 37,669 | 2,695 | 2,112 | 1.28 |
+| world-blocks | W2 (in progress) | in progress | 4 | 100 | 23,517 of 35,949 | 2,395 | 2,074 | 1.15 |
+| samus-appearance | S5 (in progress) | in progress | 5 | 98 | 20,977 of 37,669 | 2,191 | 1,412 | 1.55 |
 
 ### The whole-game plan
 
@@ -75,10 +75,10 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 
 | Check | State |
 | --- | --- |
-| the lock | 651 rows of play, 460,437 frames |
+| the lock | 651 rows of play, 459,806 frames |
 | the free-run gate: the engine runs a row alone | 8 green (row, stream) pairs over 2 rows |
 | the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
-| the harnesses: each model on recorded frames | 53 rows cached, 36,364 frames |
+| the harnesses: each model on recorded frames | 63 rows cached, 40,898 frames |
 
 Every figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md); how each model is built, module by module, is in [its structure section](docs/REPORT.md#structure).
 <!-- status:end -->
