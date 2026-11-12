@@ -31,8 +31,7 @@ use crate::decode::{DecodeError, RoomMap};
 use crate::gate::{Seed, buttons};
 use crate::lock::{Row, RowId, Sha256, Start};
 use crate::lockstep::{
-    slice_zero_doors, slice_zero_plms, slice_zero_rooms, slice_zero_scroll_lists,
-    slice_zero_states, slice_zero_world,
+    loaded_doors, loaded_plms, loaded_rooms, loaded_scroll_lists, loaded_states, loaded_world,
 };
 
 /// Why a row's inputs can't be read from the bundle.
@@ -209,11 +208,11 @@ impl std::error::Error for ContentError {}
 /// A [`ContentError`] when the image isn't the release or a table doesn't decode.
 pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     // Imported before the image moves into the ROM, reported after the ROM's own check.
-    let world = slice_zero_world(&image);
+    let world = loaded_world(&image);
     let rom = Rom::new(image).map_err(ContentError::Rom)?;
     let world = world.map_err(ContentError::Rooms)?;
-    let room_plms = RoomPlms(slice_zero_plms(&world));
-    let room_doors = game::collision::RoomDoors(slice_zero_doors(&world));
+    let room_plms = RoomPlms(loaded_plms(&world));
+    let room_doors = game::collision::RoomDoors(loaded_doors(&world));
     let reactions = data::blocks::Reactions::load(rom.lorom()).map_err(ContentError::Blocks)?;
     let blocks = game::world_blocks_bridge::BlockContent::import(&reactions)
         .map_err(ContentError::Reaction)?;
@@ -277,12 +276,12 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
 /// # Errors
 /// When a room doesn't import from the image.
 pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, WorldError> {
-    Ok(slice_zero_rooms()
+    Ok(loaded_rooms()
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
         .with_samus_clips(content.samus_clips.clone())
-        .with_plms(slice_zero_plms(&slice_zero_world(image)?))
-        .with_scroll_lists(slice_zero_scroll_lists(image)?)
-        .with_states(slice_zero_states(image)?)
+        .with_plms(loaded_plms(&loaded_world(image)?))
+        .with_scroll_lists(loaded_scroll_lists(image)?)
+        .with_states(loaded_states(image)?)
         .with_reactions(content.blocks.imported().clone()))
 }

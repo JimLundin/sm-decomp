@@ -34,8 +34,16 @@ const PLACES: [(RoomId, u16); 10] = [
 /// as no imported room has a version its entrance chooses.
 const DOORWAYS: [(DoorwayId, RomAddress); 0] = [];
 
-/// The rooms slice 0 loads.
-pub const SLICE_ZERO: [RoomId; 1] = [MORPH_BALL_ROOM];
+/// The rooms the engine loads: slice 0's Morph Ball Room and Ceres's six.
+pub const LOADED: [RoomId; 7] = [
+    MORPH_BALL_ROOM,
+    CERES_ELEVATOR_ROOM,
+    FALLING_TILE_ROOM,
+    MAGNET_STAIRS_ROOM,
+    DEAD_SCIENTIST_ROOM,
+    ESCAPE_ROOM_58,
+    CERES_RIDLEY_ROOM,
+];
 
 /// Why the world doesn't import.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

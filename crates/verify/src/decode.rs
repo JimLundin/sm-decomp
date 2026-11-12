@@ -70,7 +70,7 @@ pub struct RoomHeader(pub u16);
 
 /// The rooms the decoder knows: each room header with the room registry's ID for it (from
 /// `import::world`), and the species their enemies are (see
-/// `lockstep::slice_zero_rooms`).
+/// `lockstep::loaded_rooms`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct RoomMap {
     /// The known rooms.

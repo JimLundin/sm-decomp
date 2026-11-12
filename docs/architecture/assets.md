@@ -102,6 +102,9 @@ come from its registry, `rooms` (slice 0's room, Ceres's six and the rooms their
 names its destination's `RoomId`, a version's condition is the world's own `Condition` in
 progress's terms (a doorway by its `DoorwayId`), and a PLM population names its scroll change
 lists by their place in it. The importer refuses a room, doorway or boss bit no id stands for.
+The engine loads `import::world::LOADED`, slice 0's room and Ceres's six: their PLMs and doors
+come from the records; the state headers' tilesets and layer 2, and where the scroll change
+lists are, still come from the decoder (verification only); the level is read from work RAM.
 Still to come: the world's `Condition` and progress's are two types until the records can name
 progress's, a PLM no model runs keeps its ID and room argument (`PlmKind::Unmodelled`), and the
 verifier's state-header lookup still decodes the room directly.

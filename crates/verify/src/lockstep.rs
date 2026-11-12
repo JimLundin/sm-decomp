@@ -43,17 +43,18 @@ use crate::enemy::AiVariables;
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
 
-/// The rooms slice 0's rows play in and the species their enemies are.
+/// The rooms the engine loads and the species their enemies are.
 ///
-/// The rooms have the IDs the room registry gives them (`import::world::SLICE_ZERO`, the
-/// Morph Ball Room), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
+/// The rooms have the IDs the room registry gives them (`import::world::LOADED`: the Morph
+/// Ball Room and Ceres's six), the species theirs (`data::enemy::SpeciesMap::slice_zero`, so
+/// an enemy of a species slice 0 doesn't hold, such as Ceres's doors, still doesn't decode).
 /// It holds no enemy programs, tiles definitions or PLM populations:
 /// [`RoomMap::with_programs`], [`RoomMap::with_samus_tiles`] and [`RoomMap::with_plms`] add
 /// them.
 #[must_use]
-pub fn slice_zero_rooms() -> RoomMap {
+pub fn loaded_rooms() -> RoomMap {
     RoomMap {
-        rooms: import::world::SLICE_ZERO
+        rooms: import::world::LOADED
             .iter()
             .filter_map(|&id| {
                 let pointer = import::world::key(id)?.room_pointer()?;
@@ -71,24 +72,24 @@ pub fn slice_zero_rooms() -> RoomMap {
     }
 }
 
-/// The rooms slice 0 loads, imported from the ROM `image`.
+/// The rooms the engine loads, imported from the ROM `image`.
 ///
 /// # Errors
 ///
 /// [`WorldError`] if a room doesn't import.
-pub fn slice_zero_world(image: &[u8]) -> Result<World, WorldError> {
-    import::world::import(Lorom::new(image), &import::world::SLICE_ZERO)
+pub fn loaded_world(image: &[u8]) -> Result<World, WorldError> {
+    import::world::import(Lorom::new(image), &import::world::LOADED)
 }
 
-/// What each state of each room [`slice_zero_rooms`] holds loads that RAM doesn't keep, by
+/// What each state of each room [`loaded_rooms`] holds loads that RAM doesn't keep, by
 /// its state header's pointer.
 ///
 /// # Errors
 ///
 /// [`WorldError`] if a room doesn't decode from `image`.
-pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>, WorldError> {
+pub fn loaded_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>, WorldError> {
     let mut states = Vec::new();
-    for id in import::world::SLICE_ZERO {
+    for id in import::world::LOADED {
         let key = import::world::key(id).ok_or(WorldError::Unregistered(id))?;
         let room = data::room::decode(Lorom::new(image), key)
             .map_err(|error| WorldError::Room { room: id, error })?;
@@ -108,9 +109,9 @@ pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>,
 }
 
 /// The PLM population of each room of `world`, as it loads on a new file entered by no door:
-/// the version slice 0's rows play in.
+/// the version the rows play in.
 #[must_use]
-pub fn slice_zero_plms(world: &World) -> Vec<(RoomId, PlmPopulation)> {
+pub fn loaded_plms(world: &World) -> Vec<(RoomId, PlmPopulation)> {
     world
         .rooms()
         .filter_map(|room| {
@@ -120,15 +121,15 @@ pub fn slice_zero_plms(world: &World) -> Vec<(RoomId, PlmPopulation)> {
         .collect()
 }
 
-/// Where the scroll change lists are that the PLMs of [`slice_zero_plms`] name, room by room:
+/// Where the scroll change lists are that the PLMs of [`loaded_plms`] name, room by room:
 /// the decoder's, for the room arguments the work RAM holds (K1).
 ///
 /// # Errors
 ///
 /// [`WorldError`] if a room doesn't decode from `image`.
-pub fn slice_zero_scroll_lists(image: &[u8]) -> Result<Vec<(RoomId, ScrollLists)>, WorldError> {
+pub fn loaded_scroll_lists(image: &[u8]) -> Result<Vec<(RoomId, ScrollLists)>, WorldError> {
     let mut lists = Vec::new();
-    for id in import::world::SLICE_ZERO {
+    for id in import::world::LOADED {
         let key = import::world::key(id).ok_or(WorldError::Unregistered(id))?;
         let room = data::room::decode(Lorom::new(image), key)
             .map_err(|error| WorldError::Room { room: id, error })?;
@@ -143,7 +144,7 @@ pub fn slice_zero_scroll_lists(image: &[u8]) -> Result<Vec<(RoomId, ScrollLists)
 
 /// The door list of each room of `world`.
 #[must_use]
-pub fn slice_zero_doors(world: &World) -> Vec<(RoomId, Vec<Door>)> {
+pub fn loaded_doors(world: &World) -> Vec<(RoomId, Vec<Door>)> {
     world
         .rooms()
         .map(|room| (room.id, room.doors.clone()))

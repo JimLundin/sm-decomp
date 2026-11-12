@@ -2031,16 +2031,7 @@ fn cached_rows() -> Option<CachedRows> {
     let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
     let content = crate::bundle::content(image.clone()).unwrap();
-    let rooms = crate::lockstep::slice_zero_rooms()
-        .with_programs(content.enemy_programs)
-        .with_samus_tiles(content.samus_tiles)
-        .with_samus_clips(content.samus_clips)
-        .with_plms(crate::lockstep::slice_zero_plms(
-            &crate::lockstep::slice_zero_world(&image).unwrap(),
-        ))
-        .with_scroll_lists(crate::lockstep::slice_zero_scroll_lists(&image).unwrap())
-        .with_states(crate::lockstep::slice_zero_states(&image).unwrap())
-        .with_reactions(content.blocks.imported().clone());
+    let rooms = crate::bundle::rooms(&content, &image).unwrap();
     let rom = data::rom::Rom::new(image).unwrap();
     let id = MORPH_BALL_ROOM;
     let morph_ball_room =
