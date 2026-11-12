@@ -28,9 +28,17 @@ A rung counts only the streams its needs claim: `video` once it needs the line p
 without that work is measured on the other compared streams. The milestone needs every stream.
 Beside "plays alone", each rung shows figures that move before it is reached, over the lock's
 rows that start inside its stretch: the rows the free-run gate starts, their green (row, stream)
-pairs over the streams the rung counts, and the frames of them the domain free run holds
-(`free_floors.txt`), for the domain that holds the fewest; the report's
-[ladder section](REPORT.md#the-ladder) gives every domain. The checks below serve the milestone
+pairs over the streams the rung counts, and two figures from the domain free run
+(`free_floors.txt`). It accounts for each of a row's frames after its seed once, per domain:
+**compared** (run from a seed, held or diverged; **masked** when another writer moved some of
+its fields, compared on the rest), **skipped** (the domain doesn't run in it or can't decode it)
+or **folded** (a record the domain folds into the frame before it, such as lag). "Least held"
+is the domain that holds the smallest share of the frames it compares, so a domain that skips
+or folds frames isn't capped by them; "least compared" is the domain that compares the smallest
+share of the rows' frames, so the frames a domain's proof doesn't reach yet stay in view.
+The report's [ladder section](REPORT.md#the-ladder) gives every domain's figures by reason and
+the frames no model domain compares, its gap: game-time, the clock, compares every frame, so it
+is left out of the gap, which would otherwise always be empty. The checks below serve the milestone
 and its rungs. [domains.md §4](architecture/domains.md#4-order) holds the stretch: its frame
 ranges, what each one runs, the lock rows that cover every frame of it and the order of work
 toward it. The `any-power-on` row starts from power-on, as the movie does, so the timeline
@@ -44,7 +52,7 @@ its 568 frames count once the gate runs it, which today runs only from seeds.
 | `scenarios/locks/lockstep.ratchet.txt` | per row, Ticks fully equal in lockstep, and per field group the differing Ticks and first frame | CI `verify / lockstep-ratchet` |
 | `scenarios/locks/lsnes.green.txt` | the rows the free-run gate starts (`ROW starts`) and its green (row, stream) pairs, against `scenarios/locks/lsnes.toml` | CI `verify / free-run-gate` |
 | `crates/verify/src/harness/floors.txt` | per domain harness and row, the frames matched on every unmasked field | `verify`'s harness tests, over the rows cached in `SM_CACHE` |
-| `crates/verify/src/harness/free_floors.txt` | per domain and row, the frames its free run holds from its seeds | `every_domain_runs_free_against_the_cache`, over the rows cached in `SM_CACHE` |
+| `crates/verify/src/harness/free_floors.txt` | per domain and row, the frames its free run holds from its seeds (a floor) and how it accounts for the rest (exact); per row, the frames no model domain (all but game-time) compares (exact) | `every_domain_runs_free_against_the_cache`, over the rows cached in `SM_CACHE` |
 
 Fully equal counts must not fall, differing counts must not rise, a row that starts keeps
 starting, green pairs never go, and no harness row falls below its floor.

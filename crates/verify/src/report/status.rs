@@ -24,6 +24,7 @@ pub(super) use graph::{section as graph_section, undeclared};
 use super::timeline::{Timeline, percent, seed_frame};
 use super::{COMMAND, Tree, fit, grouped, or_dash, read, table};
 use crate::gate::Ratchet;
+use crate::harness::free::{Accounting, Floors};
 use crate::lock::{Lock, RowId, Stream};
 use crate::ratchet;
 
@@ -517,17 +518,81 @@ pub(super) struct RungFigures {
     pairs: usize,
     /// Its rows' frames.
     frames: u64,
-    /// Per domain, the frames its free run holds over the rows.
-    held: BTreeMap<String, u64>,
+    /// Per domain, how its free run accounts for the rows' frames after their seeds: those it
+    /// compares and holds, and those it doesn't reach.
+    held: BTreeMap<String, Accounting>,
+    /// The rows' frames after their seeds that no model domain's free run compares.
+    uncompared: u64,
+}
+
+/// The domains a rung's free-run figure is least for, and that share.
+#[derive(Debug, PartialEq, Eq)]
+struct Least<'a> {
+    domains: Vec<&'a str>,
+    /// The share, as (part, whole).
+    share: (u64, u64),
+    /// Whether they are every domain the figure has a share for, more than one.
+    every: bool,
+}
+
+impl Least<'_> {
+    /// The share and who holds it, as a table cell.
+    fn cell(&self) -> String {
+        let who = if self.every {
+            String::from("every domain")
+        } else {
+            self.domains.join(", ")
+        };
+        format!("{} ({who})", share(self.share.0, self.share.1))
+    }
 }
 
 impl RungFigures {
-    /// The domain whose free run holds the fewest of the rows' frames, and those frames.
-    fn least_held(&self) -> Option<(&str, u64)> {
-        self.held
+    /// The domains whose free runs hold the smallest share of the frames they compare; a domain
+    /// that compares none of the rows' frames holds no share.
+    fn least_held(&self) -> Option<Least<'_>> {
+        self.least(|held| (held.held, held.compared))
+    }
+
+    /// The domains whose free runs compare the smallest share of the rows' frames after their
+    /// seeds.
+    fn least_compared(&self) -> Option<Least<'_>> {
+        self.least(|held| (held.compared, held.frames()))
+    }
+
+    /// The domains with the smallest share `part` gives, of those whose share has a whole.
+    fn least(&self, part: impl Fn(&Accounting) -> (u64, u64)) -> Option<Least<'_>> {
+        let shares: Vec<(&str, (u64, u64))> = self
+            .held
             .iter()
-            .min_by_key(|(_, held)| **held)
-            .map(|(domain, held)| (domain.as_str(), *held))
+            .map(|(domain, held)| (domain.as_str(), part(held)))
+            .filter(|(_, (_, whole))| *whole > 0)
+            .collect();
+        let by_share = |(a, of_a): (u64, u64), (b, of_b): (u64, u64)| {
+            u128::from(a)
+                .saturating_mul(u128::from(of_b))
+                .cmp(&u128::from(b).saturating_mul(u128::from(of_a)))
+        };
+        let (_, least) = shares
+            .iter()
+            .copied()
+            .min_by(|(_, a), (_, b)| by_share(*a, *b))?;
+        let domains: Vec<&str> = shares
+            .iter()
+            .filter(|(_, share)| by_share(*share, least).is_eq())
+            .map(|(domain, _)| *domain)
+            .collect();
+        Some(Least {
+            every: domains.len() == shares.len() && domains.len() > 1,
+            domains,
+            share: least,
+        })
+    }
+
+    /// The rows' frames after their seeds.
+    fn after_seeds(&self) -> u64 {
+        self.frames
+            .saturating_sub(u64::try_from(self.rows).unwrap_or(u64::MAX))
     }
 }
 
@@ -542,9 +607,10 @@ pub(super) fn rungs(
     root: &Path,
     plan: &Plan,
     timeline: &Timeline,
-    free_floors: &BTreeMap<(String, String), usize>,
+    free_floors: &Floors,
 ) -> Result<Vec<RungFigures>, String> {
     let domains: BTreeSet<&str> = free_floors
+        .domains
         .keys()
         .map(|(domain, _)| domain.as_str())
         .collect();
@@ -591,12 +657,22 @@ pub(super) fn rungs(
                 .map(|domain| {
                     let held = rows
                         .iter()
-                        .filter_map(|row| free_floors.get(&((*domain).to_owned(), row.id.clone())))
-                        .map(|&held| u64::try_from(held).unwrap_or_default())
-                        .fold(0_u64, u64::saturating_add);
+                        .filter_map(|row| {
+                            free_floors
+                                .domains
+                                .get(&((*domain).to_owned(), row.id.clone()))
+                        })
+                        .fold(Accounting::default(), |mut total, row| {
+                            total.add(row);
+                            total
+                        });
                     ((*domain).to_owned(), held)
                 })
                 .collect();
+            let uncompared = rows
+                .iter()
+                .filter_map(|row| free_floors.uncompared.get(&row.id))
+                .fold(0_u64, |total, gap| total.saturating_add(*gap));
             Ok(RungFigures {
                 id: rung.id.clone(),
                 name: rung.name.clone(),
@@ -613,6 +689,7 @@ pub(super) fn rungs(
                     .map(|row| row.frames)
                     .fold(0_u64, u64::saturating_add),
                 held,
+                uncompared,
             })
         })
         .collect()
@@ -645,20 +722,21 @@ fn ladder(out: &mut String, tree: &Tree) {
          counted over the streams the rung claims: `video` only once it needs the line program, \
          `apu` only once it needs the sound requests. Until then, over the lock's rows that \
          start inside it: the rows the free-run gate starts, their green (row, stream) pairs \
-         over those streams, and the frames of them the domain free run holds for the domain \
-         that holds the fewest ([the report's ladder](docs/REPORT.md#the-ladder)).\n\n\
-         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held | Still needed |\n\
-         | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n",
+         over those streams, and the domain free run's two figures: the domain that holds the \
+         smallest share of the frames it compares, and the domain that compares the smallest \
+         share of the rows' frames after their seeds ([the report's ladder](docs/REPORT.md#the-ladder) \
+         gives every domain, why it doesn't compare the rest, and the frames no model domain compares).\n\n\
+         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least compared | Still needed |\n\
+         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
     );
     for rung in &tree.rungs {
         let frames = rung.span.1.saturating_sub(rung.span.0);
-        let least = rung.least_held().map_or_else(
-            || String::from("-"),
-            |(domain, held)| format!("{} ({domain})", share(held, rung.frames)),
-        );
+        let cell = |least: Option<Least<'_>>| {
+            least.map_or_else(|| String::from("-"), |least| least.cell())
+        };
         let _ = writeln!(
             out,
-            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} of {} | {least} | {} |",
+            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} of {} | {} | {} | {} |",
             rung.id,
             rung.name,
             grouped(rung.span.0),
@@ -670,13 +748,16 @@ fn ladder(out: &mut String, tree: &Tree) {
             rung.rows,
             rung.green,
             rung.pairs,
+            cell(rung.least_held()),
+            cell(rung.least_compared()),
             rung.still,
         );
     }
 }
 
 /// The report's ladder section: per rung, the streams it counts, its rows and what the free-run
-/// gate holds of them, and per domain the frames its free run holds over them.
+/// gate holds of them, and per domain what its free run holds of the frames it compares and
+/// why it doesn't reach the rest.
 pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
     if tree.rungs.is_empty() {
         return;
@@ -687,9 +768,7 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
          its stretch. A rung counts every compared stream but those `[[stream]]` gives through \
          work it doesn't need; the milestone counts every one. **Rows start** are the rows the \
          free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); \
-         **green pairs** their (row, stream) pairs green over the streams counted; the domain \
-         free run's frames are each domain's held frames over the rows \
-         (`crates/verify/src/harness/free_floors.txt`), which don't need the gate to start them.\n\n",
+         **green pairs** their (row, stream) pairs green over the streams counted.\n\n",
     );
     table(
         out,
@@ -717,32 +796,49 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
             rung.pairs
         );
     }
-    out.push('\n');
-    let ids: Vec<&str> = tree.rungs.iter().map(|rung| rung.id.as_str()).collect();
-    let columns: Vec<&str> = std::iter::once("Domain free run")
-        .chain(ids.iter().copied())
-        .collect();
-    table(out, 1, &columns);
-    let domains: BTreeSet<&str> = tree
-        .rungs
-        .iter()
-        .flat_map(|rung| rung.held.keys().map(String::as_str))
-        .collect();
-    for domain in domains {
-        let cells: Vec<String> = tree
-            .rungs
-            .iter()
-            .map(|rung| {
-                let held = rung.held.get(domain).copied().unwrap_or_default();
-                format!(
-                    "{} of {} ({})",
-                    figure(held),
-                    figure(rung.frames),
-                    share(held, rung.frames)
-                )
-            })
-            .collect();
-        let _ = writeln!(out, "| {domain} | {} |", cells.join(" | "));
+    out.push_str(
+        "\nThe domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't need \
+         the gate to start a row, accounts for each of a row's frames after its seed once: \
+         **compared**, run from a seed and held or diverged, **held** being a floor under those \
+         that matched (a **masked** one is compared on the fields no other writer moved); \
+         **skipped**, a frame the domain doesn't run in or can't decode; or **folded**, a record \
+         the domain folds into the frame before it, such as a lag record. The share held is of \
+         the frames compared, so it reads the same for a domain that compares every frame and \
+         one that compares a few. The frames no model domain compares are the rung's gap; \
+         game-time, the clock, compares every frame and is left out of it.\n",
+    );
+    for rung in &tree.rungs {
+        let _ = writeln!(
+            out,
+            "\n**{}**: {} frames after its rows' seeds, {} ({}) compared by no model domain.\n",
+            rung.id,
+            figure(rung.after_seeds()),
+            figure(rung.uncompared),
+            share(rung.uncompared, rung.after_seeds()),
+        );
+        table(
+            out,
+            1,
+            &[
+                "Domain free run",
+                "Held of compared",
+                "Masked",
+                "Skipped",
+                "Folded",
+            ],
+        );
+        for (domain, held) in &rung.held {
+            let _ = writeln!(
+                out,
+                "| {domain} | {} of {} ({}) | {} | {} | {} |",
+                figure(held.held),
+                figure(held.compared),
+                share(held.held, held.compared),
+                figure(held.masked),
+                figure(held.skipped),
+                figure(held.folded),
+            );
+        }
     }
 }
 

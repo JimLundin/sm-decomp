@@ -426,8 +426,9 @@ once it needs the line program (E3), the APU port log (`apu`) only once it needs
 requests (U1), as `[[stream]]` in [domains.toml](domains.toml) lists them; the milestone needs
 every stream. Until a rung is reached, the README gives three figures over the lock's rows that
 start inside it: the rows the free-run gate starts, their green (row, stream) pairs over the
-streams the rung counts, and the frames of them the domain free run holds for the domain that
-holds the fewest (each domain's in [the report](../REPORT.md#the-ladder)). The gate runs every
+streams the rung counts, and, from the domain free run, the smallest share of the frames it
+compares that a domain holds and the smallest share of the rows' frames a domain compares (each
+domain's, and why it doesn't compare the rest, in [the report](../REPORT.md#the-ladder)). The gate runs every
 Ceres chain row in CI and reports a row it can't start yet, with why, so a rung's rows count the
 moment they start.
 

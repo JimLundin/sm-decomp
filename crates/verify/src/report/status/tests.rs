@@ -1,8 +1,9 @@
 use std::collections::BTreeSet;
 use std::path::Path;
 
-use super::super::{FREE_FLOORS, Tree, floors, read};
-use super::Plan;
+use super::super::{FREE_FLOORS, Tree, read};
+use super::{Least, Plan, RungFigures};
+use crate::harness::free::{Accounting, Floors};
 use crate::lock::Stream;
 
 fn root() -> &'static Path {
@@ -47,7 +48,7 @@ fn a_rung_counts_a_claimed_stream_only_when_it_needs_its_work() {
 #[test]
 fn the_first_rung_is_measured_over_its_rows_and_claimed_streams() {
     let tree = Tree::measure(root());
-    let free = read(&root().join(FREE_FLOORS)).and_then(|text| floors(&text));
+    let free = read(&root().join(FREE_FLOORS)).and_then(|text| Floors::parse(&text));
     let (Ok(tree), Ok(free)) = (tree, free) else {
         panic!("the tree doesn't measure");
     };
@@ -63,9 +64,67 @@ fn the_first_rung_is_measured_over_its_rows_and_claimed_streams() {
     let row = "chain-any-0003-DFD7";
     assert_eq!((m0.rows, m0.pairs), (1, 6));
     assert!(m0.green <= m0.pairs && m0.started <= m0.rows);
+    // Each domain accounts for every frame of it after its seed, as its line holds.
     for (domain, held) in &m0.held {
-        let floor = free.get(&(domain.clone(), row.to_owned())).copied();
-        assert_eq!(usize::try_from(*held).ok(), Some(floor.unwrap_or_default()));
+        let line = free.domains.get(&(domain.clone(), row.to_owned()));
+        assert_eq!(Some(held), line);
+        assert_eq!(held.frames(), m0.after_seeds());
     }
     assert!(!m0.held.is_empty());
+    assert_eq!(free.uncompared.get(row), Some(&m0.uncompared));
+}
+
+#[test]
+fn the_least_held_domain_holds_the_smallest_share_of_what_it_compares() {
+    let held = |held, compared, skipped| Accounting {
+        held,
+        compared,
+        skipped,
+        ..Accounting::default()
+    };
+    let rung = RungFigures {
+        id: String::from("M0"),
+        name: String::from("r"),
+        span: (0, 101),
+        alone: 0,
+        still: String::new(),
+        claimed: BTreeSet::new(),
+        rows: 1,
+        started: 1,
+        green: 0,
+        pairs: 0,
+        frames: 101,
+        held: [
+            // Holds every frame it compares, though it skips most of the row.
+            (String::from("folds"), held(40, 40, 60)),
+            // Holds more frames, but not all it compares.
+            (String::from("misses"), held(90, 100, 0)),
+            // Compares nothing, so holds no share.
+            (String::from("absent"), held(0, 0, 100)),
+        ]
+        .into_iter()
+        .collect(),
+        uncompared: 0,
+    };
+    assert_eq!(
+        rung.least_held(),
+        Some(Least {
+            domains: vec!["misses"],
+            share: (90, 100),
+            every: false,
+        })
+    );
+    // The domain that compares least is the one that skips most of the row.
+    assert_eq!(
+        rung.least_compared().map(|least| least.domains),
+        Some(vec!["absent"])
+    );
+    assert_eq!(rung.after_seeds(), 100);
+    // Two domains that each hold all they compare tie, and are every domain that compares.
+    let mut whole = rung;
+    whole.held.insert(String::from("misses"), held(100, 100, 0));
+    assert_eq!(
+        whole.least_held().map(|least| least.cell()),
+        Some(String::from("100.0 % (every domain)"))
+    );
 }

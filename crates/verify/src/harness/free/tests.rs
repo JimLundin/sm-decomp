@@ -1,8 +1,9 @@
+use std::collections::{BTreeMap, BTreeSet};
 use std::convert::Infallible;
 
 use oracle_record::FrameRecord;
 
-use super::{End, FreeReport, Segment, run};
+use super::{Accounting, End, Floors, FreeReport, Segment, UNCOMPARED, run};
 use crate::harness::Hides;
 use crate::harness::game_time::Clock;
 use crate::harness::tests::{Copying, record};
@@ -78,6 +79,8 @@ fn a_mask_ends_the_segment_once_its_frame_is_held_on_the_other_fields() {
         records.map(Ok::<_, Infallible>),
     );
     assert_eq!((report.held, report.masked), (1, 1));
+    // The frame is compared, on the fields no other writer moved.
+    assert_eq!((report.compared(), report.masked_frames), (1, 1));
     assert!(matches!(
         report.longest.first().map(|segment| &segment.end),
         Some(End::Masked(Frame(1), fields)) if fields == &["frames"]
@@ -112,6 +115,44 @@ fn a_frame_the_domain_cannot_read_ends_the_segment_as_skipped() {
 }
 
 #[test]
+fn a_rows_records_are_each_compared_skipped_or_folded_once() {
+    // Record 2 can't be read, so neither the frame ending at it nor the one starting there is
+    // compared: of the four records after the seed, two are compared and two skipped.
+    let mut records = clock(&[0, 1, 2, 3, 4]);
+    let mut short = record(2, 8, [0; 4]);
+    short.wram = Box::default();
+    if let Some(slot) = records.get_mut(2) {
+        *slot = Ok(short);
+    }
+    let report = free(records);
+    assert_eq!(
+        (report.compared(), report.skipped_frames, report.folded),
+        (2, 2, 0)
+    );
+    assert_eq!(report.compared_at, BTreeSet::from([1, 4]));
+    let accounting = Accounting::of(&report);
+    assert_eq!((accounting.held, accounting.frames()), (2, 4));
+}
+
+#[test]
+fn the_floors_parse_each_domains_accounting_and_each_rows_gap() {
+    let parsed = Floors::parse("# floors\ngame-time r1 5 6 1 2 3\nuncompared r1 4\n");
+    let Ok(floors) = parsed else {
+        panic!("the floors don't parse: {parsed:?}");
+    };
+    let accounting = floors
+        .domains
+        .get(&("game-time".to_owned(), "r1".to_owned()));
+    assert_eq!(
+        accounting.map(|accounting| (accounting.held, accounting.frames())),
+        Some((5, 11))
+    );
+    assert_eq!(floors.uncompared.get("r1"), Some(&4));
+    assert!(Floors::parse("game-time r1 5\n").is_err());
+    assert!(Floors::parse("uncompared r1\n").is_err());
+}
+
+#[test]
 fn a_total_adds_rows_counts() {
     let mut total = FreeReport::new::<Clock>();
     total.add(&free(clock(&[0, 1, 2])));
@@ -122,58 +163,74 @@ fn a_total_adds_rows_counts() {
     );
 }
 
-/// The committed free-run floors: `<domain> <row> <frames held>` a line, `#` comments.
+/// The committed free-run floors.
 const FLOORS: &str = include_str!("../free_floors.txt");
 
-/// The floor of `domain` on `row`, from [`FLOORS`].
-fn floor(domain: &str, row: &str) -> Option<u64> {
-    FLOORS
-        .lines()
-        .filter(|line| !line.starts_with('#') && !line.trim().is_empty())
-        .find_map(|line| {
-            let mut words = line.split_whitespace();
-            let (Some(name), Some(at), Some(held)) = (words.next(), words.next(), words.next())
-            else {
-                panic!("free_floors.txt: {line:?}");
-            };
-            (name == domain && at == row).then(|| {
-                held.parse()
-                    .unwrap_or_else(|error| panic!("free_floors.txt: {line:?}: {error}"))
-            })
-        })
+/// The clock, which compares every frame: the frames no domain compares count the model domains
+/// only, or the clock would hide every gap.
+const CLOCK: &str = "game-time";
+
+/// Per row, its frames after the seed and the records that end a frame some model domain
+/// compares.
+type Reach = BTreeMap<String, (u64, BTreeSet<u64>)>;
+
+/// The domains' free runs over the rows cached under `cache`, held to `floors`.
+struct Held<'a> {
+    cache: &'a std::path::Path,
+    floors: &'a Floors,
+    /// The frames the domains run so far compare, by row.
+    reach: Reach,
+    failures: Vec<String>,
 }
 
-/// `domain` run free over every row cached under `cache`: each row's report, the total, and
-/// for a row with a floor in `free_floors.txt` a failure when its held frames fall below it. A
-/// row without a floor prints the line that would hold it, so a first run over a new cache
-/// sets the floors.
-fn hold_free_floors<D: crate::harness::Domain>(domain: &D, name: &str, cache: &std::path::Path) {
-    use std::io::Write as _;
-    let lock =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
-    let mut total = FreeReport::new::<D>();
-    let mut failures = Vec::new();
-    for row in crate::harness::tests::cached_rows(cache) {
-        let report = super::run_cached(domain, &lock, cache, &row)
-            .unwrap_or_else(|error| panic!("{row}: {error}"));
-        let _ = write!(std::io::stdout(), "{row}: {report}");
-        match floor(name, &row) {
-            Some(floor) if report.held < floor => {
-                failures.push(format!("{row}: {} held < floor {floor}", report.held));
+impl Held<'_> {
+    /// `domain` run free over every row: each row's report and the total, and a failure for a
+    /// row whose held frames fall below its floor or whose records it accounts for otherwise
+    /// than its line says. A row without a line prints the line that would hold it, so a first
+    /// run over a new cache sets them.
+    fn hold<D: crate::harness::Domain>(&mut self, domain: &D, name: &str) {
+        use std::io::Write as _;
+        let lock = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../scenarios/locks/lsnes.toml");
+        let mut total = FreeReport::new::<D>();
+        for row in crate::harness::tests::cached_rows(self.cache) {
+            let report = super::run_cached(domain, &lock, self.cache, &row)
+                .unwrap_or_else(|error| panic!("{row}: {error}"));
+            let _ = write!(std::io::stdout(), "{row}: {report}");
+            let ran = Accounting::of(&report);
+            match self.floors.domains.get(&(name.to_owned(), row.clone())) {
+                Some(floor) if ran.held < floor.held => self.failures.push(format!(
+                    "{name} {row}: {} held < floor {}",
+                    ran.held, floor.held
+                )),
+                Some(floor) if !ran.same_records(floor) => {
+                    let line = Accounting {
+                        held: floor.held,
+                        ..ran
+                    }
+                    .line(name, &row);
+                    self.failures.push(format!(
+                        "{name} {row}: its records are accounted as `{line}`"
+                    ));
+                }
+                Some(_) => {}
+                None => {
+                    let _ = writeln!(
+                        std::io::stdout(),
+                        "no floor; add `{}`",
+                        ran.line(name, &row)
+                    );
+                }
             }
-            Some(_) => {}
-            None => {
-                let _ = writeln!(
-                    std::io::stdout(),
-                    "no floor; add `{name} {row} {}`",
-                    report.held
-                );
+            let (frames, compared) = self.reach.entry(row).or_default();
+            *frames = ran.frames();
+            if name != CLOCK {
+                compared.extend(&report.compared_at);
             }
+            total.add(&report);
         }
-        total.add(&report);
+        let _ = write!(std::io::stdout(), "all rows: {total}");
     }
-    let _ = write!(std::io::stdout(), "all rows: {total}");
-    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
 /// The ROM image `SM_ROM` names, with the cache, or `None` where both are unset.
@@ -184,33 +241,60 @@ fn cache_and_image() -> Option<(std::path::PathBuf, Vec<u8>)> {
     Some((cache, image))
 }
 
-/// Every domain's free run over every cached row, held to `free_floors.txt`; `SM_CACHE` and
-/// `SM_ROM` as the per-frame harness's tests read them. Run with `--nocapture` to see each
-/// row's segments and first divergences.
+/// Every domain's free run over every cached row, held to `free_floors.txt`, and each row's
+/// frames no model domain compares to its `uncompared` line; `SM_CACHE` and `SM_ROM` as the
+/// per-frame harness's tests read them. Run with `--nocapture` to see each row's segments and
+/// first divergences.
 #[test]
 fn every_domain_runs_free_against_the_cache() {
+    use std::io::Write as _;
+
     use crate::harness::{appearance, blocks, camera, ceres, hud, movement, progress};
     let Some((cache, image)) = cache_and_image() else {
         return;
     };
-    hold_free_floors(&Clock, "game-time", &cache);
+    let floors = Floors::parse(FLOORS).unwrap_or_else(|error| panic!("free_floors.txt: {error}"));
+    let mut held = Held {
+        cache: &cache,
+        floors: &floors,
+        reach: Reach::new(),
+        failures: Vec::new(),
+    };
+    held.hold(&Clock, "game-time");
     let samus =
         movement::Movement::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
-    hold_free_floors(&samus, "samus-movement", &cache);
+    held.hold(&samus, "samus-movement");
     let looks =
         appearance::Appearance::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
-    hold_free_floors(&looks, "samus-appearance", &cache);
+    held.hold(&looks, "samus-appearance");
     let view =
         camera::CameraDomain::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
-    hold_free_floors(&view, "world-camera", &cache);
+    held.hold(&view, "world-camera");
     let hud = hud::HudDomain::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
-    hold_free_floors(&hud, "interface-hud", &cache);
+    held.hold(&hud, "interface-hud");
     let progress = progress::ProgressDomain::new(image.clone());
-    hold_free_floors(&progress, "run-progress", &cache);
+    held.hold(&progress, "run-progress");
     let doors =
         ceres::CeresDomain::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
     let blocks =
         blocks::BlocksDomain::load(image).unwrap_or_else(|error| panic!("content: {error}"));
-    hold_free_floors(&blocks, "world-blocks", &cache);
-    hold_free_floors(&doors, "boss-ceres-ridley", &cache);
+    held.hold(&blocks, "world-blocks");
+    held.hold(&doors, "boss-ceres-ridley");
+    let Held {
+        reach,
+        mut failures,
+        ..
+    } = held;
+    for (row, (frames, compared)) in &reach {
+        let gap = frames.saturating_sub(u64::try_from(compared.len()).unwrap_or(u64::MAX));
+        let line = format!("{UNCOMPARED} {row} {gap}");
+        match floors.uncompared.get(row) {
+            Some(&floor) if floor == gap => {}
+            Some(_) => failures.push(format!("{row}: no model domain compares `{line}`")),
+            None => {
+                let _ = writeln!(std::io::stdout(), "no gap; add `{line}`");
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }

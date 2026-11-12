@@ -702,7 +702,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 
 ## The ladder
 
-Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/architecture/domains.toml`) over the lock's rows that start inside its stretch. A rung counts every compared stream but those `[[stream]]` gives through work it doesn't need; the milestone counts every one. **Rows start** are the rows the free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); **green pairs** their (row, stream) pairs green over the streams counted; the domain free run's frames are each domain's held frames over the rows (`crates/verify/src/harness/free_floors.txt`), which don't need the gate to start them.
+Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/architecture/domains.toml`) over the lock's rows that start inside its stretch. A rung counts every compared stream but those `[[stream]]` gives through work it doesn't need; the milestone counts every one. **Rows start** are the rows the free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); **green pairs** their (row, stream) pairs green over the streams counted.
 
 | Rung | Streams counted | Rows | Rows start | Green pairs |
 | --- | --- | ---: | ---: | ---: |
@@ -710,16 +710,46 @@ Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/archi
 | M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 5 of 5 | 10 of 35 |
 | M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 10 of 10 | 20 of 70 |
 
-| Domain free run | M0 | M1 | M2 |
-| --- | ---: | ---: | ---: |
-| boss-ceres-ridley | 341 of 345 (98.8 %) | 1,465 of 1,624 (90.2 %) | 2,667 of 4,534 (58.8 %) |
-| game-time | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
-| interface-hud | 181 of 345 (52.5 %) | 744 of 1,624 (45.8 %) | 2,826 of 4,534 (62.3 %) |
-| run-progress | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
-| samus-appearance | 182 of 345 (52.8 %) | 647 of 1,624 (39.8 %) | 2,581 of 4,534 (56.9 %) |
-| samus-movement | 182 of 345 (52.8 %) | 647 of 1,624 (39.8 %) | 2,577 of 4,534 (56.8 %) |
-| world-blocks | 181 of 345 (52.5 %) | 743 of 1,624 (45.8 %) | 2,825 of 4,534 (62.3 %) |
-| world-camera | 181 of 345 (52.5 %) | 743 of 1,624 (45.8 %) | 2,825 of 4,534 (62.3 %) |
+The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't need the gate to start a row, accounts for each of a row's frames after its seed once: **compared**, run from a seed and held or diverged, **held** being a floor under those that matched (a **masked** one is compared on the fields no other writer moved); **skipped**, a frame the domain doesn't run in or can't decode; or **folded**, a record the domain folds into the frame before it, such as a lag record. The share held is of the frames compared, so it reads the same for a domain that compares every frame and one that compares a few. The frames no model domain compares are the rung's gap; game-time, the clock, compares every frame and is left out of it.
+
+**M0**: 344 frames after its rows' seeds, 0 (0.0 %) compared by no model domain.
+
+| Domain free run | Held of compared | Masked | Skipped | Folded |
+| --- | ---: | ---: | ---: | ---: |
+| boss-ceres-ridley | 341 of 341 (100.0 %) | 0 | 3 | 0 |
+| game-time | 344 of 344 (100.0 %) | 0 | 0 | 0 |
+| interface-hud | 181 of 181 (100.0 %) | 18 | 44 | 119 |
+| run-progress | 344 of 344 (100.0 %) | 0 | 0 | 0 |
+| samus-appearance | 182 of 182 (100.0 %) | 0 | 43 | 119 |
+| samus-movement | 182 of 182 (100.0 %) | 5 | 162 | 0 |
+| world-blocks | 181 of 181 (100.0 %) | 0 | 105 | 58 |
+| world-camera | 181 of 181 (100.0 %) | 0 | 163 | 0 |
+
+**M1**: 1,619 frames after its rows' seeds, 0 (0.0 %) compared by no model domain.
+
+| Domain free run | Held of compared | Masked | Skipped | Folded |
+| --- | ---: | ---: | ---: | ---: |
+| boss-ceres-ridley | 1,465 of 1,465 (100.0 %) | 0 | 154 | 0 |
+| game-time | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 |
+| interface-hud | 744 of 744 (100.0 %) | 63 | 243 | 632 |
+| run-progress | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 |
+| samus-appearance | 647 of 647 (100.0 %) | 0 | 340 | 632 |
+| samus-movement | 647 of 647 (100.0 %) | 13 | 972 | 0 |
+| world-blocks | 743 of 743 (100.0 %) | 0 | 590 | 286 |
+| world-camera | 743 of 743 (100.0 %) | 0 | 876 | 0 |
+
+**M2**: 4,524 frames after its rows' seeds, 0 (0.0 %) compared by no model domain.
+
+| Domain free run | Held of compared | Masked | Skipped | Folded |
+| --- | ---: | ---: | ---: | ---: |
+| boss-ceres-ridley | 2,667 of 2,667 (100.0 %) | 0 | 1,857 | 0 |
+| game-time | 4,524 of 4,524 (100.0 %) | 0 | 0 | 0 |
+| interface-hud | 2,826 of 2,826 (100.0 %) | 137 | 466 | 1,232 |
+| run-progress | 4,524 of 4,524 (100.0 %) | 5 | 0 | 0 |
+| samus-appearance | 2,581 of 2,581 (100.0 %) | 0 | 711 | 1,232 |
+| samus-movement | 2,577 of 2,588 (99.6 %) | 82 | 1,936 | 0 |
+| world-blocks | 2,825 of 2,825 (100.0 %) | 0 | 1,118 | 581 |
+| world-camera | 2,825 of 2,825 (100.0 %) | 21 | 1,699 | 0 |
 
 ## Domain graph
 

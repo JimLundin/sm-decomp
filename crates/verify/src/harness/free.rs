@@ -19,14 +19,18 @@
 //! - the row's end.
 //!
 //! The next segment seeds from the next frame the domain runs in. A segment's **held** frames
-//! are those it ran before it ended, all matching. The report gives, per row, the frames held,
-//! the segments by how they ended, the longest, and each field's first divergence. A model
-//! that holds a row in one segment plays that row alone, as far as its fields go; a row of
-//! many short segments ending in masks says the domain's boundary, not its model, limits the
-//! proof.
+//! are those it ran before it ended, all matching. Each of a row's records but its first, which
+//! only seeds, is one of: **folded**, a record the domain folds into the frame before it, so it
+//! ends no frame of its own; **skipped**, ending a frame the domain doesn't run in or can't
+//! decode; or **compared**, ending a frame held or diverged. A compared frame on which another
+//! writer moved a declared field is compared on the rest (**masked**). The report gives, per
+//! row, the frames held and how its records are accounted for, the segments by how they ended,
+//! the longest, and each field's first divergence. A model that holds a row in one segment
+//! plays that row alone, as far as its fields go; a row of many short segments ending in masks
+//! says the domain's boundary, not its model, limits the proof.
 
 use core::fmt;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use oracle_record::FrameRecord;
@@ -69,8 +73,17 @@ pub struct Segment {
 pub struct FreeReport {
     /// The domain.
     pub domain: &'static str,
-    /// The frames in the run: every pair of consecutive records.
+    /// The frames in the run: every pair of records the domain doesn't fold together.
     pub frames: u64,
+    /// The records folded into the frame before them, ending no frame of their own.
+    pub folded: u64,
+    /// The frames the domain doesn't run in or couldn't decode, so never compared.
+    pub skipped_frames: u64,
+    /// The compared frames on which another domain's writer moved a declared field, compared on
+    /// the others.
+    pub masked_frames: u64,
+    /// The records that end a compared frame, by index: a row's, as the longest segments are.
+    pub compared_at: BTreeSet<u64>,
     /// The frames held: run from a seed and matching on every unmasked field.
     pub held: u64,
     /// The segments that ended in a divergence.
@@ -99,6 +112,12 @@ impl FreeReport {
             first: D::FIELDS.iter().map(|field| (field.name, None)).collect(),
             ..Self::default()
         }
+    }
+
+    /// The frames compared: run from a seed, held or diverged.
+    #[must_use]
+    pub const fn compared(&self) -> u64 {
+        self.frames.saturating_sub(self.skipped_frames)
     }
 
     /// The segments, of every kind.
@@ -150,6 +169,9 @@ impl FreeReport {
     pub fn add(&mut self, other: &Self) {
         self.domain = other.domain;
         self.frames = self.frames.saturating_add(other.frames);
+        self.folded = self.folded.saturating_add(other.folded);
+        self.skipped_frames = self.skipped_frames.saturating_add(other.skipped_frames);
+        self.masked_frames = self.masked_frames.saturating_add(other.masked_frames);
         self.held = self.held.saturating_add(other.held);
         self.diverged = self.diverged.saturating_add(other.diverged);
         self.masked = self.masked.saturating_add(other.masked);
@@ -166,11 +188,14 @@ impl fmt::Display for FreeReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "{} free run: {} frames, {} held; {} segments: {} diverged, {} masked, {} skipped, \
-             {} to the row's end",
+            "{} free run: {} frames compared, {} held, {} masked; {} skipped, {} folded; \
+             {} segments: {} diverged, {} masked, {} skipped, {} to the row's end",
             self.domain,
-            self.frames,
+            self.compared(),
             self.held,
+            self.masked_frames,
+            self.skipped_frames,
+            self.folded,
             self.segments(),
             self.diverged,
             self.masked,
@@ -232,14 +257,15 @@ fn names<D: Domain>(set: FieldSet) -> Vec<&'static str> {
         .collect()
 }
 
-/// One frame from `from` to `next`, stepping the segment in progress or seeding one; `None`
-/// when the domain doesn't run in the frame or can't decode it.
+/// One frame from `from` to `next`, stepping the segment in progress or seeding one, and
+/// whether another writer moved a declared field in it; `None` when the domain doesn't run in
+/// the frame or can't decode it.
 fn step<D: Domain>(
     domain: &D,
     open: Option<Open<D::State>>,
     from: &FrameRecord,
     next: &FrameRecord,
-) -> Option<Step<D::State>> {
+) -> Option<(Step<D::State>, bool)> {
     let (seeded, inputs) = domain.decode(from, Interval::ending_at(next)).ok()?;
     let mut world = domain.world(from, next).ok()?;
     let masks = domain.masks(from, next, &inputs).ok()?;
@@ -281,21 +307,23 @@ fn step<D: Domain>(
                 )
             })
             .collect();
-        return Some(Step::Ended(Segment {
+        let ended = Step::Ended(Segment {
             seed,
             held,
             end: End::Diverged(frame, fields),
-        }));
+        });
+        return Some((ended, !lost.is_empty()));
     }
     let held = held.saturating_add(1);
     if lost.is_empty() {
-        Some(Step::Held(Open { seed, held, state }))
+        Some((Step::Held(Open { seed, held, state }), false))
     } else {
-        Some(Step::Ended(Segment {
+        let ended = Step::Ended(Segment {
             seed,
             held,
             end: End::Masked(frame, names::<D>(lost)),
-        }))
+        });
+        Some((ended, true))
     }
 }
 
@@ -310,23 +338,38 @@ pub fn run<D: Domain, E>(
 ) -> Result<FreeReport, E> {
     let mut report = FreeReport::new::<D>();
     let mut open: Option<Open<D::State>> = None;
+    let mut read = 0_u64;
+    let records = records
+        .into_iter()
+        .inspect(|_| read = read.saturating_add(1));
     frames(domain, records, |from, next| {
         report.frames = report.frames.saturating_add(1);
         let carried = open.take();
         let (seed, held) = carried
             .as_ref()
             .map_or((Frame(from.index), 0), |open| (open.seed, open.held));
-        match step(domain, carried, from, next) {
-            Some(Step::Held(running)) => open = Some(running),
-            Some(Step::Ended(segment)) => report.close(segment),
-            None if held > 0 => report.close(Segment {
-                seed,
-                held,
-                end: End::Skipped(Frame(next.index)),
-            }),
-            None => {}
+        let Some((stepped, masked)) = step(domain, carried, from, next) else {
+            report.skipped_frames = report.skipped_frames.saturating_add(1);
+            if held > 0 {
+                report.close(Segment {
+                    seed,
+                    held,
+                    end: End::Skipped(Frame(next.index)),
+                });
+            }
+            return;
+        };
+        report.compared_at.insert(next.index);
+        if masked {
+            report.masked_frames = report.masked_frames.saturating_add(1);
+        }
+        match stepped {
+            Step::Held(running) => open = Some(running),
+            Step::Ended(segment) => report.close(segment),
         }
     })?;
+    // The first record only seeds; every other record ends a frame or is folded into one.
+    report.folded = read.saturating_sub(1).saturating_sub(report.frames);
     if let Some(Open { seed, held, .. }) = open {
         report.close(Segment {
             seed,
@@ -355,6 +398,126 @@ pub fn run_cached<D: Domain>(
         .iter()
         .map(|entry| cache.record(entry).map_err(HarnessError::from));
     run(domain, records)
+}
+
+/// A domain's free run over rows as `free_floors.txt` holds it: a floor under the frames it
+/// holds, and how it accounts for the rows' records after their seeds, which holds exactly.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Accounting {
+    /// The frames held, a floor.
+    pub held: u64,
+    /// The frames compared, held or diverged.
+    pub compared: u64,
+    /// Of those, the frames another writer moved a declared field in, compared on the rest.
+    pub masked: u64,
+    /// The frames the domain doesn't run in or can't decode.
+    pub skipped: u64,
+    /// The records folded into the frame before them.
+    pub folded: u64,
+}
+
+impl Accounting {
+    /// A row's report as its line would hold it.
+    #[must_use]
+    pub const fn of(report: &FreeReport) -> Self {
+        Self {
+            held: report.held,
+            compared: report.compared(),
+            masked: report.masked_frames,
+            skipped: report.skipped_frames,
+            folded: report.folded,
+        }
+    }
+
+    /// Whether `self` accounts for the records as `other` does, whatever each holds.
+    #[must_use]
+    pub const fn same_records(&self, other: &Self) -> bool {
+        self.compared == other.compared
+            && self.masked == other.masked
+            && self.skipped == other.skipped
+            && self.folded == other.folded
+    }
+
+    /// The records after the rows' seeds: compared, skipped or folded.
+    #[must_use]
+    pub const fn frames(&self) -> u64 {
+        self.compared
+            .saturating_add(self.skipped)
+            .saturating_add(self.folded)
+    }
+
+    /// `other`'s figures added to `self`'s, a total over rows.
+    pub const fn add(&mut self, other: &Self) {
+        self.held = self.held.saturating_add(other.held);
+        self.compared = self.compared.saturating_add(other.compared);
+        self.masked = self.masked.saturating_add(other.masked);
+        self.skipped = self.skipped.saturating_add(other.skipped);
+        self.folded = self.folded.saturating_add(other.folded);
+    }
+
+    /// Its line in `free_floors.txt` for `domain` on `row`.
+    #[must_use]
+    pub fn line(&self, domain: &str, row: &str) -> String {
+        format!(
+            "{domain} {row} {} {} {} {} {}",
+            self.held, self.compared, self.masked, self.skipped, self.folded
+        )
+    }
+}
+
+/// The word that starts a row's line of the frames no model domain (all but the clock) compares in `free_floors.txt`.
+pub const UNCOMPARED: &str = "uncompared";
+
+/// The committed free-run floors, `free_floors.txt`.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Floors {
+    /// Each domain's run over each row, by (domain, row).
+    pub domains: BTreeMap<(String, String), Accounting>,
+    /// Per row, its frames after the seed that no model domain compares.
+    pub uncompared: BTreeMap<String, u64>,
+}
+
+impl Floors {
+    /// The floors in `text`: `<domain> <row> <held> <compared> <masked> <skipped> <folded>` and
+    /// `uncompared <row> <frames>` lines, `#` comments skipped.
+    ///
+    /// # Errors
+    ///
+    /// The first line that is neither, with why.
+    pub fn parse(text: &str) -> Result<Self, String> {
+        let mut floors = Self::default();
+        for line in text
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        {
+            let number = |word: &str| word.parse::<u64>().map_err(|e| format!("{line}: {e}"));
+            match line.split_whitespace().collect::<Vec<_>>().as_slice() {
+                [UNCOMPARED, row, frames] => {
+                    floors.uncompared.insert((*row).to_owned(), number(frames)?);
+                }
+                [domain, row, held, compared, masked, skipped, folded] => {
+                    let accounting = Accounting {
+                        held: number(held)?,
+                        compared: number(compared)?,
+                        masked: number(masked)?,
+                        skipped: number(skipped)?,
+                        folded: number(folded)?,
+                    };
+                    floors
+                        .domains
+                        .insert(((*domain).to_owned(), (*row).to_owned()), accounting);
+                }
+                _ => {
+                    return Err(format!(
+                        "{line}: not `domain row held compared masked skipped folded` nor \
+                         `{UNCOMPARED} row frames`"
+                    ));
+                }
+            }
+        }
+        Ok(floors)
+    }
 }
 
 #[cfg(test)]

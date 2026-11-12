@@ -33,6 +33,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::harness::free::Floors;
 use crate::size::{self, Size};
 use crate::spec_units::{Count, Vectors, budget_section};
 
@@ -843,8 +844,8 @@ impl Tree {
         let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
         let rebuilt = names.iter().copied().collect();
         let plan = status::Plan::parse(&read(&root.join(status::PLAN))?, &rebuilt)?;
-        let free_floors =
-            floors(&read(&root.join(FREE_FLOORS))?).map_err(|e| format!("{FREE_FLOORS}: {e}"))?;
+        let free_floors = Floors::parse(&read(&root.join(FREE_FLOORS))?)
+            .map_err(|e| format!("{FREE_FLOORS}: {e}"))?;
         let floors = floors(&read(&root.join(FLOORS))?).map_err(|e| format!("{FLOORS}: {e}"))?;
         let timeline = timeline::Timeline::measure(root, &floors)?;
         let rungs = status::rungs(root, &plan, &timeline, &free_floors)?;
