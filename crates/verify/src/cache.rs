@@ -12,21 +12,36 @@
 //! line, then `frame pc line dot peek` per hit); [`Cache::record`] puts each frame's hits
 //! in its record, and [`Cache::watched`] names the addresses, so a frame without a hit on
 //! one is known not to have reached it.
+//!
+//! A row may instead hold the lean tier (`oracle_record::lean`): `lean.bin`, the records
+//! without their pictures as a chain of memory changes, and `lean.txt`, an index of the same
+//! layout under [`LEAN_HEAD`]. [`Cache::open`] reads the lean tier when the row has one,
+//! the full tier otherwise; a reader that needs pictures needs a full tier taken with them.
+//! [`Cache::write_lean`] writes a row's lean tier from either.
 
 use crate::lock::{EngineRow, Frame, FrameCount, Row, Sha256, Stream};
 use core::fmt;
 use data::digest::Digest;
 use data::span::{self, PortAccess, PortDirection, SpanFold};
 use oracle_record::codec::{self, CodecError, PictureMode};
+use oracle_record::lean;
 use oracle_record::{ApuAccessKind, Beam, Cut, FrameRecord, Hit, NmiKind, PpuRegisters};
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{BufWriter, Read, Seek, SeekFrom, Write as _};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 
 /// The index's first line: the layout's name and version, as `oracle::cache` writes it.
 pub const HEAD: &str = "# sm-decomp record cache 1";
+/// The lean tier's index's first line.
+pub const LEAN_HEAD: &str = "# sm-decomp record cache lean 1";
+
+/// The full tier's index and records, under a row's directory.
+const FULL_FILES: (&str, &str) = ("index.txt", "records.bin");
+/// The lean tier's.
+const LEAN_FILES: (&str, &str) = ("lean.txt", "lean.bin");
 
 /// How a cached frame's interval ended, as the index names it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -62,6 +77,16 @@ impl CutKind {
             b"V" => Some(Self::VblankWithoutNmi),
             b"S" => Some(Self::NmiStillRunning),
             _ => None,
+        }
+    }
+
+    /// The index's letter for the kind.
+    const fn letter(self) -> char {
+        match self {
+            Self::Requested => 'R',
+            Self::Overrun => 'O',
+            Self::VblankWithoutNmi => 'V',
+            Self::NmiStillRunning => 'S',
         }
     }
 
@@ -154,15 +179,35 @@ pub struct Entry {
 /// One row's cache, opened and checked.
 #[derive(Debug)]
 pub struct Cache {
+    directory: PathBuf,
     entries: Vec<Entry>,
     pictures: bool,
-    /// `records.bin`, its path for errors, and its length.
-    records: Mutex<File>,
+    /// The records' file and how it holds them, its path for errors, and its length.
+    records: Mutex<Records>,
     records_path: PathBuf,
     bytes: usize,
     /// The addresses `hits.txt` watched, and its hits by frame; empty without it.
     watched: Vec<u32>,
     hits: BTreeMap<u64, Vec<Hit>>,
+}
+
+/// A tier's records file, and what reading it has kept.
+#[derive(Debug)]
+struct Records {
+    file: File,
+    tier: Tier,
+}
+
+/// How a row's records file holds its records.
+#[derive(Debug)]
+enum Tier {
+    /// Each record whole, in `codec`'s encoding.
+    Full,
+    /// A lean chain, with the memories of the record at position `at`, the last one read.
+    Lean {
+        memories: lean::Memories,
+        at: Option<usize>,
+    },
 }
 
 /// The watched addresses and the hits by frame of a `hits.txt`.
@@ -207,6 +252,7 @@ fn parse_hits(path: &Path, text: &str) -> Result<Hits, CacheError> {
 
 /// The pins and entries an index holds.
 struct Index {
+    lean: bool,
     row: String,
     seed_record: Option<Sha256>,
     seed_words: Option<Sha256>,
@@ -228,7 +274,10 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
             line: number.saturating_add(1),
         };
         match key {
-            "" => (line == HEAD).then(String::new).ok_or_else(malformed),
+            "" => [HEAD, LEAN_HEAD]
+                .contains(&line)
+                .then(|| line.to_owned())
+                .ok_or_else(malformed),
             key => line
                 .strip_prefix(key)
                 .and_then(|rest| rest.strip_prefix(' '))
@@ -246,7 +295,7 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
             .map(Some)
             .map_err(|_| malformed(line)),
     };
-    next("")?;
+    let lean = next("")? == LEAN_HEAD;
     let row = next("row")?;
     let seed_record = sha(&next("seed_record")?, 3)?;
     let seed_words = sha(&next("seed_words")?, 4)?;
@@ -279,6 +328,7 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Index {
+        lean,
         row,
         seed_record,
         seed_words,
@@ -287,6 +337,14 @@ fn parse_index(path: &Path, text: &str) -> Result<Index, CacheError> {
         pictures,
         entries,
     })
+}
+
+/// Whether `directory` holds a row's cache, in either tier.
+#[must_use]
+pub fn holds_row(directory: &Path) -> bool {
+    [FULL_FILES, LEAN_FILES]
+        .iter()
+        .any(|(index, _)| directory.join(index).is_file())
 }
 
 fn read(path: PathBuf) -> Result<Vec<u8>, CacheError> {
@@ -302,7 +360,12 @@ impl Cache {
     /// another row, or a pin differs from the lock row's ([`CacheError::Stale`]).
     pub fn open(root: &Path, row: &Row) -> Result<Self, CacheError> {
         let directory = root.join(&row.id.0);
-        let index_path = directory.join("index.txt");
+        let (index_name, records_name) = if directory.join(LEAN_FILES.0).is_file() {
+            LEAN_FILES
+        } else {
+            FULL_FILES
+        };
+        let index_path = directory.join(index_name);
         let text = read(index_path.clone())?;
         let text = String::from_utf8_lossy(&text);
         let index = parse_index(&index_path, &text)?;
@@ -322,7 +385,7 @@ impl Cache {
         if let Some((_, pin)) = pins.iter().find(|(same, _)| !same) {
             return Err(CacheError::Stale(*pin));
         }
-        let records_path = directory.join("records.bin");
+        let records_path = directory.join(records_name);
         let io = |error| CacheError::Io {
             path: records_path.clone(),
             error,
@@ -346,10 +409,22 @@ impl Cache {
                 });
             }
         };
+        let tier = if index.lean {
+            Tier::Lean {
+                memories: lean::Memories::default(),
+                at: None,
+            }
+        } else {
+            Tier::Full
+        };
         Ok(Self {
+            directory,
             entries: index.entries,
             pictures: index.pictures,
-            records: Mutex::new(records),
+            records: Mutex::new(Records {
+                file: records,
+                tier,
+            }),
             records_path,
             bytes,
             watched,
@@ -388,9 +463,11 @@ impl Cache {
     /// A [`CacheError`] when its bytes are outside the records, not a record, or not the
     /// record the index names.
     pub fn record(&self, entry: &Entry) -> Result<FrameRecord, CacheError> {
-        let mut bytes = Vec::new();
-        self.read_bytes(entry, &mut bytes)?;
-        self.decode(entry, &bytes, PictureMode::Keep)
+        let position = self
+            .entries
+            .binary_search_by_key(&entry.frame, |entry| entry.frame)
+            .map_err(|_| CacheError::OutOfRange(entry.frame))?;
+        self.read(position, PictureMode::Keep, &mut Vec::new())
     }
 
     /// Every frame's record, in frame order.
@@ -411,16 +488,78 @@ impl Cache {
         pictures: PictureMode,
     ) -> impl Iterator<Item = Result<(Frame, FrameRecord), CacheError>> + '_ {
         let mut bytes = Vec::new();
-        self.entries.iter().map(move |entry| {
-            self.read_bytes(entry, &mut bytes)?;
-            let record = self.decode(entry, &bytes, pictures)?;
-            Ok((entry.frame, record))
-        })
+        self.entries
+            .iter()
+            .enumerate()
+            .map(move |(position, entry)| {
+                let record = self.read(position, pictures, &mut bytes)?;
+                Ok((entry.frame, record))
+            })
     }
 
-    /// Reads the bytes of the record `entry` indexes into `bytes`, which keeps its allocation
-    /// from one record to the next.
-    fn read_bytes(&self, entry: &Entry, bytes: &mut Vec<u8>) -> Result<(), CacheError> {
+    /// The record at `position` in the index, checked, with its hits; `bytes` keeps its
+    /// allocation from one record to the next. A lean record that doesn't follow the last
+    /// one read is reached from the whole record that starts its stretch of the chain.
+    fn read(
+        &self,
+        position: usize,
+        pictures: PictureMode,
+        bytes: &mut Vec<u8>,
+    ) -> Result<FrameRecord, CacheError> {
+        let entry = self
+            .entries
+            .get(position)
+            .ok_or(CacheError::OutOfRange(Frame(u64::MAX)))?;
+        // A poisoned lock only means another reader panicked; the file is still whole.
+        let mut records = self.records.lock().unwrap_or_else(PoisonError::into_inner);
+        let Records { file, tier } = &mut *records;
+        let record = match tier {
+            Tier::Full => {
+                self.read_bytes(file, entry, bytes)?;
+                codec::decode_with(bytes, pictures).map_err(|error| CacheError::Record {
+                    frame: entry.frame,
+                    error,
+                })?
+            }
+            Tier::Lean { memories, at } => {
+                let follows = at.and_then(|at| at.checked_add(1)) == Some(position);
+                let first = if follows {
+                    position
+                } else {
+                    position.saturating_sub(position % lean::KEY_INTERVAL)
+                };
+                *at = None;
+                let mut last = None;
+                for (link, entry) in self
+                    .entries
+                    .iter()
+                    .enumerate()
+                    .take(position.saturating_add(1))
+                    .skip(first)
+                {
+                    self.read_bytes(file, entry, bytes)?;
+                    let record =
+                        lean::decode(bytes, memories).map_err(|error| CacheError::Record {
+                            frame: entry.frame,
+                            error,
+                        })?;
+                    *at = Some(link);
+                    last = Some(record);
+                }
+                last.ok_or(CacheError::OutOfRange(entry.frame))?
+            }
+        };
+        drop(records);
+        self.checked(entry, record)
+    }
+
+    /// Reads the bytes of the record `entry` indexes from `file` into `bytes`.
+    fn read_bytes(
+        &self,
+        file: &mut File,
+        entry: &Entry,
+        bytes: &mut Vec<u8>,
+    ) -> Result<(), CacheError> {
         let within = entry
             .offset
             .checked_add(entry.length)
@@ -430,8 +569,6 @@ impl Cache {
             .filter(|_| within)
             .ok_or(CacheError::OutOfRange(entry.frame))?;
         bytes.resize(entry.length, 0);
-        // A poisoned lock only means another reader panicked; the file is still whole.
-        let mut file = self.records.lock().unwrap_or_else(PoisonError::into_inner);
         file.seek(SeekFrom::Start(start))
             .and_then(|_| file.read_exact(bytes))
             .map_err(|error| CacheError::Io {
@@ -440,17 +577,8 @@ impl Cache {
             })
     }
 
-    /// The record of `entry` that `bytes` encode, checked against the index, with its hits.
-    fn decode(
-        &self,
-        entry: &Entry,
-        bytes: &[u8],
-        pictures: PictureMode,
-    ) -> Result<FrameRecord, CacheError> {
-        let record = codec::decode_with(bytes, pictures).map_err(|error| CacheError::Record {
-            frame: entry.frame,
-            error,
-        })?;
+    /// `record`, read for `entry`, checked against the index, with its hits.
+    fn checked(&self, entry: &Entry, record: FrameRecord) -> Result<FrameRecord, CacheError> {
         if record.index != entry.frame.0 || CutKind::of(record.cut) != entry.cut {
             return Err(CacheError::Mismatch(entry.frame));
         }
@@ -459,6 +587,65 @@ impl Cache {
             record.hits.clone_from(hits);
         }
         Ok(record)
+    }
+
+    /// Writes this cache's lean tier for `row` under `root` (`root/<row>/`, with `hits.txt`
+    /// copied beside it), the index last so a row that fails part way has none; the bytes
+    /// the lean records take.
+    ///
+    /// # Errors
+    ///
+    /// A [`CacheError`] when a record can't be read or a file can't be written.
+    pub fn write_lean(&self, row: &Row, root: &Path) -> Result<usize, CacheError> {
+        let directory = root.join(&row.id.0);
+        let io = |path: &Path| {
+            let path = path.to_owned();
+            move |error| CacheError::Io { path, error }
+        };
+        std::fs::create_dir_all(&directory).map_err(io(&directory))?;
+        let (index_name, records_name) = LEAN_FILES;
+        let index_path = directory.join(index_name);
+        match std::fs::remove_file(&index_path) {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
+                return Err(io(&index_path)(error));
+            }
+            Ok(()) | Err(_) => {}
+        }
+        let records_path = directory.join(records_name);
+        let mut records = BufWriter::new(File::create(&records_path).map_err(io(&records_path))?);
+        let none = || "-".to_owned();
+        let shown = |pin: Option<Sha256>| pin.as_ref().map_or_else(none, ToString::to_string);
+        let mut index = format!(
+            "{LEAN_HEAD}\nrow {}\nseed_record {}\nseed_words {}\npads {}\nframes {}\npictures no\n# frame offset length cut\n",
+            row.id.0,
+            shown(row.seed_record),
+            shown(row.seed_words),
+            row.pads,
+            row.frames.0,
+        );
+        let mut memories = lean::Memories::default();
+        let (mut bytes, mut offset) = (Vec::new(), 0_usize);
+        for (position, item) in self.records_without_pictures().enumerate() {
+            let (frame, record) = item?;
+            bytes.clear();
+            lean::encode(
+                &record,
+                &mut memories,
+                position.is_multiple_of(lean::KEY_INTERVAL),
+                &mut bytes,
+            );
+            records.write_all(&bytes).map_err(io(&records_path))?;
+            let cut = CutKind::of(record.cut).letter();
+            let _ = writeln!(index, "{} {offset} {} {cut}", frame.0, bytes.len());
+            offset = offset.saturating_add(bytes.len());
+        }
+        records.flush().map_err(io(&records_path))?;
+        let hits = self.directory.join("hits.txt");
+        if hits.is_file() && directory != self.directory {
+            std::fs::copy(&hits, directory.join("hits.txt")).map_err(io(&hits))?;
+        }
+        std::fs::write(&index_path, index).map_err(io(&index_path))?;
+        Ok(offset)
     }
 }
 
@@ -609,8 +796,149 @@ pub fn fold(cache: &Cache) -> Result<EngineRow, CacheError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lock::{RowId, Start, Ticks};
+    use oracle_record::{CpuRegisters, Pad, Picture};
 
     const SHA: &str = "36f9967524b6959d84129fe8fc770ce83127c08b51bfaf8dd066208e9383a172";
+
+    /// Frame `index` of an invented row, whose WRAM byte $123 and VRAM word $40 count frames
+    /// and WRAM byte $200 counts hundreds of them, so a frame's changes alone don't make it.
+    fn frame(index: u64) -> FrameRecord {
+        let count = u8::try_from(index % 251).unwrap_or_default();
+        let mut wram = vec![0x55; 0x400];
+        if let Some(byte) = wram.get_mut(0x123) {
+            *byte = count;
+        }
+        if let Some(byte) = wram.get_mut(0x200) {
+            *byte = u8::try_from(index / 100).unwrap_or_default();
+        }
+        let mut vram: Box<[u16]> = (0..0x100).collect();
+        if let Some(word) = vram.get_mut(0x40) {
+            *word = u16::from(count);
+        }
+        FrameRecord {
+            index,
+            video_frame: 0,
+            pad: Pad(0),
+            cut: Cut::VblankWithoutNmi,
+            joypad_reads: 0,
+            wait_entry: None,
+            overscan: false,
+            cpu: CpuRegisters::default(),
+            wram: wram.into_boxed_slice(),
+            vram,
+            cgram: vec![0x7FFF; 0x100].into_boxed_slice(),
+            oam: vec![1; 0x220].into_boxed_slice(),
+            sram: vec![2; 0x20].into_boxed_slice(),
+            ppu: PpuRegisters::default(),
+            apu_log: Vec::new(),
+            picture: Some(Picture::default()),
+            spc: None,
+            bank_instructions: None,
+            writes: Vec::new(),
+            hits: Vec::new(),
+            legacy_ppu_digest: 0,
+        }
+    }
+
+    fn row(frames: u64) -> Option<Row> {
+        Some(Row {
+            id: RowId("lean-tier".to_owned()),
+            start: Start::PowerOn,
+            seed_record: None,
+            seed_words: None,
+            pads: Sha256::try_from(SHA).ok()?,
+            frames: FrameCount(frames),
+            ticks: Ticks(0),
+            overruns: Vec::new(),
+            nmi_off: Vec::new(),
+            still_running: Vec::new(),
+            rungs: Vec::new(),
+            facts: Vec::new(),
+            streams: BTreeMap::new(),
+        })
+    }
+
+    /// Writes `row`'s full tier of `frames` invented records under `root`.
+    fn full_tier(root: &Path, row: &Row, frames: u64) -> std::io::Result<()> {
+        let directory = root.join(&row.id.0);
+        std::fs::create_dir_all(&directory)?;
+        let mut records = Vec::new();
+        let mut index = format!(
+            "{HEAD}\nrow {}\nseed_record -\nseed_words -\npads {SHA}\nframes {frames}\npictures yes\n# frame offset length cut\n",
+            row.id.0
+        );
+        for number in 0..frames {
+            let offset = records.len();
+            codec::encode(&frame(number), PictureMode::Keep, &mut records);
+            let _ = writeln!(
+                index,
+                "{number} {offset} {} V",
+                records.len().saturating_sub(offset)
+            );
+        }
+        std::fs::write(directory.join("records.bin"), records)?;
+        std::fs::write(directory.join("index.txt"), index)
+    }
+
+    /// Whether `a` and `b` are the same frame with the same memories.
+    fn same(a: &FrameRecord, b: &FrameRecord) -> bool {
+        (a.index, &a.wram, &a.vram, &a.cgram) == (b.index, &b.wram, &b.vram, &b.cgram)
+            && (&a.oam, &a.sram) == (&b.oam, &b.sram)
+    }
+
+    #[test]
+    fn the_lean_tier_reads_as_the_full_tier_without_pictures_in_order_and_out_of_it() {
+        let key = u64::try_from(lean::KEY_INTERVAL).unwrap_or(u64::MAX);
+        let frames = key.saturating_add(40);
+        let Some(row) = row(frames) else {
+            return assert!(Sha256::try_from(SHA).is_ok());
+        };
+        let root = std::env::temp_dir().join(format!("verify-lean-tier-{}", std::process::id()));
+        let (full, lean) = (root.join("full"), root.join("lean"));
+        assert!(full_tier(&full, &row, frames).is_ok());
+        let full = Cache::open(&full, &row);
+        let written = full.as_ref().ok().map(|full| full.write_lean(&row, &lean));
+        let lean = Cache::open(&lean, &row);
+        let (Ok(full), Some(Ok(written)), Ok(lean)) = (full, written, lean) else {
+            let _ = std::fs::remove_dir_all(&root);
+            panic!("the tiers open");
+        };
+        assert_eq!(lean.bytes(), written);
+        assert!(lean.bytes() * 10 < full.bytes());
+        let expected: Vec<FrameRecord> = full
+            .records_without_pictures()
+            .filter_map(Result::ok)
+            .map(|(_, record)| record)
+            .collect();
+        let in_order: Vec<FrameRecord> = lean
+            .records()
+            .filter_map(Result::ok)
+            .map(|(_, record)| record)
+            .collect();
+        assert_eq!(in_order.len(), expected.len());
+        assert!(
+            in_order
+                .iter()
+                .zip(&expected)
+                .all(|(lean, full)| same(lean, full) && lean.picture.is_none())
+        );
+        for position in [frames.saturating_sub(1), 3, key.saturating_add(1), 0] {
+            let entry = usize::try_from(position)
+                .ok()
+                .and_then(|position| lean.entries().get(position));
+            let read = entry.map(|entry| lean.record(entry));
+            let want = usize::try_from(position)
+                .ok()
+                .and_then(|position| expected.get(position));
+            let same = read
+                .and_then(Result::ok)
+                .zip(want)
+                .is_some_and(|(read, want)| same(&read, want));
+            assert!(same, "frame {position}");
+        }
+        let _ = std::fs::remove_dir_all(&root);
+    }
 
     fn index(pictures: &str) -> String {
         format!(

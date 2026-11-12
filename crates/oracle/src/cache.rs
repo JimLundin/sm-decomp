@@ -11,16 +11,24 @@
 //! stay out of `records.bin`, so a row recorded again with watches has the same records
 //! as without, and an earlier cache gains its hits by the file alone.
 //!
+//! Without pictures the writer takes the lean tier instead (`oracle_record::lean`): the
+//! records as a chain of memory changes in `lean.bin`, indexed by `lean.txt` under
+//! [`LEAN_HEAD`], a fraction of the bytes. With them it takes the full tier above. Either
+//! way it removes both indexes first, so a row holds only the tier last written whole.
+//!
 //! `verify::cache` reads it.
 
 use crate::record::FrameRecord;
 use crate::record::codec::{self, PictureMode};
+use crate::record::lean;
 use std::fmt::Write as _;
 use std::io::{BufWriter, Write as _};
 use std::path::{Path, PathBuf};
 
 /// The index's first line: the layout's name and version.
 pub const HEAD: &str = "# sm-decomp record cache 1";
+/// The lean tier's index's first line.
+pub const LEAN_HEAD: &str = "# sm-decomp record cache lean 1";
 
 /// The lock pins a row's cache is valid for, as the lock writes them.
 #[derive(Clone, Debug, Default)]
@@ -33,11 +41,19 @@ pub struct Pins {
     pub pads: String,
 }
 
+/// The tier a writer takes.
+enum Tier {
+    /// Each record whole, with its picture.
+    Full,
+    /// The lean chain, with the memories of the last record written.
+    Lean(lean::Memories),
+}
+
 /// One row's cache, being written.
 pub struct Writer {
     directory: PathBuf,
     records: BufWriter<std::fs::File>,
-    pictures: PictureMode,
+    tier: Tier,
     scratch: Vec<u8>,
     offset: u64,
     index: String,
@@ -47,7 +63,8 @@ pub struct Writer {
 }
 
 impl Writer {
-    /// Start row `id`'s cache under `root`, removing any earlier index first.
+    /// Start row `id`'s cache under `root`, removing any earlier index first: the full tier
+    /// when `pictures` keeps them, the lean tier otherwise.
     ///
     /// # Errors
     ///
@@ -55,15 +72,21 @@ impl Writer {
     pub fn create(root: &Path, id: &str, pictures: PictureMode) -> std::io::Result<Self> {
         let directory = root.join(id);
         std::fs::create_dir_all(&directory)?;
-        match std::fs::remove_file(directory.join("index.txt")) {
-            Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error),
-            Ok(()) | Err(_) => {}
+        for index in ["index.txt", "lean.txt"] {
+            match std::fs::remove_file(directory.join(index)) {
+                Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error),
+                Ok(()) | Err(_) => {}
+            }
         }
-        let records = BufWriter::new(std::fs::File::create(directory.join("records.bin"))?);
+        let (tier, records) = match pictures {
+            PictureMode::Keep => (Tier::Full, "records.bin"),
+            PictureMode::Drop => (Tier::Lean(lean::Memories::default()), "lean.bin"),
+        };
+        let records = BufWriter::new(std::fs::File::create(directory.join(records))?);
         Ok(Self {
             directory,
             records,
-            pictures,
+            tier,
             scratch: Vec::with_capacity(0x6_0000),
             offset: 0,
             index: String::new(),
@@ -102,12 +125,20 @@ impl Writer {
                 );
             }
         }
-        if record.hits.is_empty() {
-            codec::encode(record, self.pictures, &mut self.scratch);
-        } else {
-            let mut without = record.clone();
-            without.hits.clear();
-            codec::encode(&without, self.pictures, &mut self.scratch);
+        match &mut self.tier {
+            Tier::Lean(memories) => {
+                let whole = usize::try_from(self.frames)
+                    .is_ok_and(|position| position.is_multiple_of(lean::KEY_INTERVAL));
+                lean::encode(record, memories, whole, &mut self.scratch);
+            }
+            Tier::Full if record.hits.is_empty() => {
+                codec::encode(record, PictureMode::Keep, &mut self.scratch);
+            }
+            Tier::Full => {
+                let mut without = record.clone();
+                without.hits.clear();
+                codec::encode(&without, PictureMode::Keep, &mut self.scratch);
+            }
         }
         self.records.write_all(&self.scratch)?;
         let length = u64::try_from(self.scratch.len()).unwrap_or(u64::MAX);
@@ -131,12 +162,12 @@ impl Writer {
     pub fn finish(mut self, id: &str, pins: &Pins) -> std::io::Result<u64> {
         self.records.flush()?;
         let none = || "-".to_owned();
-        let pictures = match self.pictures {
-            PictureMode::Keep => "yes",
-            PictureMode::Drop => "no",
+        let (head, pictures, index) = match self.tier {
+            Tier::Full => (HEAD, "yes", "index.txt"),
+            Tier::Lean(_) => (LEAN_HEAD, "no", "lean.txt"),
         };
         let text = format!(
-            "{HEAD}\nrow {id}\nseed_record {}\nseed_words {}\npads {}\nframes {}\npictures {pictures}\n# frame offset length cut\n{}",
+            "{head}\nrow {id}\nseed_record {}\nseed_words {}\npads {}\nframes {}\npictures {pictures}\n# frame offset length cut\n{}",
             pins.seed_record.clone().unwrap_or_else(none),
             pins.seed_words.clone().unwrap_or_else(none),
             pins.pads,
@@ -151,7 +182,7 @@ impl Writer {
                 Ok(()) | Err(_) => {}
             },
         }
-        std::fs::write(self.directory.join("index.txt"), text)?;
+        std::fs::write(self.directory.join(index), text)?;
         Ok(self.offset)
     }
 }

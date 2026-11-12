@@ -20,11 +20,15 @@
 //! `tools harness DOMAIN LOCK CACHE ROW...`: a domain's model against the oracle on every cached
 //! frame of each row (`verify::harness`); `DOMAIN` is `game-time`.
 //!
+//! `tools cache-lean LOCK FROM TO ROW...`: each row's record cache under `FROM` written again
+//! as the lean tier under `TO` ([`cache_lean`]).
+//!
 //! `tools size PATH...`: code volume in logical tokens, per file and in total (`verify::size`).
 //!
 //! `tools report [--write | --check]`: the rebuild's size and progress report, `docs/REPORT.md`
 //! (`verify::report`), printed, or written or checked with the README's status.
 
+mod cache_lean;
 mod gate;
 mod localise;
 mod ratchet;
@@ -43,10 +47,11 @@ const HARNESS_USAGE: &str = "tools harness game-time LOCK CACHE ROW...";
 
 fn usage() -> String {
     format!(
-        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}\n       {}\n       {}",
+        "usage: {LOCKSTEP_USAGE}\n       {HARNESS_USAGE}\n       {}\n       {}\n       {}\n       {}\n       {}\n       {}",
         verify::spec_units::USAGE,
         gate::USAGE,
         localise::USAGE,
+        cache_lean::USAGE,
         verify::size::USAGE,
         verify::report::USAGE
     )
@@ -59,6 +64,7 @@ fn run(args: &[String]) -> Result<String, String> {
         [command, rest @ ..] if command == "gate" => gate::run(rest),
         [command, rest @ ..] if command == "localise" => localise::run(rest),
         [command, rest @ ..] if command == "harness" => run_harness(rest),
+        [command, rest @ ..] if command == "cache-lean" => cache_lean::run(rest),
         [command, rest @ ..] if command == "size" => verify::size::run(rest),
         [command, rest @ ..] if command == "report" => verify::report::run(rest),
         _ => Err(usage()),

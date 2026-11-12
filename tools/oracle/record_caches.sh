@@ -13,10 +13,11 @@
 #
 # Each row is `oracle corpus ... --oracle lsnes --native-seeds <bundle>/seeds
 # --from-frame-pads <dir> --cache <cache> --only <row>`, with the row's pad file copied to a
-# directory of its own, since corpus writes `<row>.played` beside the pads. No pictures: the
-# harness and lockstep don't read them, and they are three quarters of a record.
+# directory of its own, since corpus writes `<row>.played` beside the pads. No pictures, so
+# corpus writes the lean tier (`lean.bin`, `lean.txt`): the harnesses and lockstep don't read
+# pictures, and the lean tier is about a hundredth of the full one's bytes.
 #
-# Resumable: a row whose `index.txt` exists (the writer writes it last) with the bundle's pad
+# Resumable: a row whose `lean.txt` exists (the writer writes it last) with the bundle's pad
 # hash is skipped. One line per row on stdout: `<row> cached|recorded|failed ...`; each row's
 # corpus output is kept in `<cache>/.logs/<row>.log`.
 #
@@ -63,7 +64,7 @@ mapfile -t rows < <(sed -e 's/#.*//' -e 's/[[:space:]]//g' -e '/^$/d' "$rows_fil
 
 # One row: skip it when cached, else record it. Prints the row's one line.
 record() {
-  local row=$1 pads=$bundle/pads/$1.pads index=$cache/$1/index.txt
+  local row=$1 pads=$bundle/pads/$1.pads index=$cache/$1/lean.txt
   local log=$cache/.logs/$1.log work=$cache/.pads/$1
   if [ ! -f "$pads" ]; then
     echo "$row failed: no $row.pads in the bundle"

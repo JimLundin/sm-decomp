@@ -400,14 +400,22 @@ with `LIBRARY_PATH` set). Where Defender blocks fresh executables, run the CLI a
 | `oracle relock-compare`, `relock-merge`, `relock-refold` | checking recordings (§5) |
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
 | `tools gate`, `tools lockstep`, `tools localise` | the engine against the lock ([STATUS](STATUS.md)) |
+| `tools cache-lean LOCK FROM TO ROW...` | writes record cache rows again as the lean tier |
 | `tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
 
 `oracle corpus` reads `scenarios/lock.toml` for the old rows' starts and pads, and every other
 `*.toml` beside it (`corpus.toml`, `coverage.toml`, `route-*.toml`) for row facts. Those files are
 re-lock inputs only. `DATA/<bundle stem>/movies/<inputs>` holds the inputs. The **record cache**
-(`--cache OUT`) holds `OUT/<row>/records.bin` (every `FrameRecord` in `oracle_record::codec`'s
-encoding) and `index.txt` (the lock pins and one `frame offset length cut` line per frame);
-`verify::cache` refuses a cache whose pins differ from the lock row. A row recorded with
+(`--cache OUT`) holds one directory per row in one of two tiers, with the lock pins and one
+`frame offset length cut` line per frame in its index; `verify::cache` refuses a cache whose
+pins differ from the lock row. The **full tier** (`--cache-pictures`) is `OUT/<row>/records.bin`,
+every `FrameRecord` with its picture in `oracle_record::codec`'s encoding, and `index.txt`. The
+**lean tier** (the default) is `lean.bin`, each record without its picture and its five memories
+as the bytes that changed since the frame before, whole every 256th frame
+(`oracle_record::lean`), and `lean.txt`: about a hundredth of the bytes. Lockstep, the harnesses
+and the domain free run read no picture, so they read the lean tier when a row has one and the
+full tier otherwise; `tools cache-lean LOCK FROM TO ROW...` writes full rows again as lean ones.
+A row recorded with
 `--watch-pcs` also has `hits.txt`: `# watched` and the addresses, then `frame pc line dot peek`
 per hit. The hits stay out of `records.bin`, so a row recorded again with watches has the same
 records byte for byte, and `verify::cache::Cache::record` puts each frame's hits back.

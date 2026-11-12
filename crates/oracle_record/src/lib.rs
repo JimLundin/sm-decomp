@@ -5,6 +5,7 @@
 pub mod codec;
 pub mod game;
 pub mod inputs;
+pub mod lean;
 pub mod lsnes;
 
 /// The picture's width in dots.

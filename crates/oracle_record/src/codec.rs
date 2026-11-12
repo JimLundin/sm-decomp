@@ -45,6 +45,9 @@ pub enum CodecError {
     TooLong(&'static str),
     /// Bytes follow the record.
     Trailing(usize),
+    /// A lean record holds changes, but the memories they apply to aren't the record
+    /// before's (`crate::lean`).
+    NoBase,
 }
 
 impl fmt::Display for CodecError {
@@ -56,6 +59,7 @@ impl fmt::Display for CodecError {
             Self::BadTag { field, tag } => write!(f, "{field}: tag {tag}"),
             Self::TooLong(field) => write!(f, "{field}: too long"),
             Self::Trailing(count) => write!(f, "{count} bytes after the record"),
+            Self::NoBase => f.write_str("changes without the record before"),
         }
     }
 }

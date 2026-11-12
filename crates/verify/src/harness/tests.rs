@@ -273,7 +273,7 @@ fn coverage(domain: &str) -> String {
     lines
 }
 
-/// The rows cached under `cache` (a directory with an `index.txt`), sorted.
+/// The rows cached under `cache` (a directory with an index of either tier), sorted.
 pub(super) fn cached_rows(cache: &Path) -> Vec<String> {
     let entries = match std::fs::read_dir(cache) {
         Ok(entries) => entries,
@@ -281,7 +281,7 @@ pub(super) fn cached_rows(cache: &Path) -> Vec<String> {
     };
     let mut rows: Vec<String> = entries
         .filter_map(Result::ok)
-        .filter(|entry| entry.path().join("index.txt").is_file())
+        .filter(|entry| crate::cache::holds_row(&entry.path()))
         .filter_map(|entry| entry.file_name().into_string().ok())
         .collect();
     rows.sort();

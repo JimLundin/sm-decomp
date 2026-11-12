@@ -76,11 +76,12 @@ to make a check pass. Speed: `cargo run --profile verify -p game --example empty
 
 `CACHE` is made by `oracle corpus ROM scenarios/lock.toml DATA --oracle lsnes --native-seeds
 BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE §6): lsnes plays the row's
-frame pads from its native seed and writes `CACHE/ROW/records.bin` and, last, `index.txt` with
-the lock pins `verify::cache` checks. `DATA` is the old lock's decrypted bundles (corpus still
-reads each row's seed and movie name there); `--cache-pictures` adds the pictures, which only
-the compositor's checks read. The two CI rows were made this way, with pictures (330 KB a
-frame); without them a frame is about 206 KB.
+frame pads from its native seed and writes the lean tier, `CACHE/ROW/lean.bin` and, last,
+`lean.txt` with the lock pins `verify::cache` checks: about 2 KB a frame, each frame's memory
+changes with the whole memories every 256th frame. `DATA` is the old lock's decrypted bundles
+(corpus still reads each row's seed and movie name there); `--cache-pictures` writes the full
+tier instead (`records.bin`, `index.txt`, 330 KB a frame with its picture), which only the
+compositor's checks need. `tools cache-lean` turns a full tier into a lean one.
 
 `tools/oracle/record_caches.sh ROWS BUNDLE DATA ROM CACHE [JOBS]` does it for a list of rows,
 8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
