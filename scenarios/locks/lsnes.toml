@@ -1685,6 +1685,26 @@ streams.timing = ["add9abf5337f5409"]
 streams.wram = ["c210d15aaa6979ee"]
 
 [[row]]
+id = "chain-any-0011-DF45"
+start = "any-boundary:11"
+seed_record = "e7543f6624f5051f0049470600e2f7926c81732fdd42b9cf65e7cdcae3b4cbfd"
+pads = "bf4ebc08edce602e2cad410cfe215325b226b1f6c3d0801d449d70c24b2e0d87"
+frames = 2356
+ticks = 2161
+overruns = ["239-240", "251-280", "282", "306-332", "1005-1013", "2163", "2201-2236", "2314"]
+nmi_off = ["281", "2124-2162", "2184", "2241-2287"]
+facts = { "room:91F8" = "unevaluated" }
+streams.vram = ["a726ed8d6c89b15b", "d2e013c7c4846fdf", "787cfc46ef2912b1"]
+streams.cgram = ["7d35dc9660e37153", "9a61ce8035090544", "ea32e6d3e91e3d99"]
+streams.oam = ["1b25aa9e1f9e823c", "18d5ba568fc165b5", "fd2f59d329c625a3"]
+streams.sram = ["921c721deef8ebcc", "698b652c7db0483f", "15feb789dc0f4f36"]
+streams.ppu = ["b13f10030bd8762d", "340344af1af5d664", "3c54f727eed15fe5"]
+streams.apu = ["58f74601371f8c31", "56bb1f971bcdf7eb", "104f47a2db648078"]
+streams.video = ["7f309e08340316aa", "075a239a4781b2b8", "b1a765ddf8899cef"]
+streams.timing = ["1624cacc6418e5f2", "edbf33f16846b773", "3bc14e5860d5707a"]
+streams.wram = ["ea92834c3fc7660e", "c3fa4b644afb0ddb", "88ef5df544aa71f2"]
+
+[[row]]
 id = "chain-any-0023-975C"
 start = "any-boundary:23"
 seed_record = "83790f7b8a96377c2d9258b9ba6236c17e85ab601470653bbdd14c2c7e9a8569"
@@ -12861,3 +12881,142 @@ streams.apu = ["85665f76881a6ccf"]
 streams.video = ["b488bdcdd62a3961"]
 streams.timing = ["2352f594274b493e"]
 streams.wram = ["f86d4c40b78a166f"]
+
+[[row]]
+id = "any-power-on"
+start = "power-on"
+pads = "fb492754103a059c418653d342e993447555f78ea565dd2c66fe38efb0822964"
+frames = 568
+ticks = 362
+overruns = ["168-256", "258-270", "272-302", "304-305", "307", "316-353", "394", "397-399", "432", "466-471"]
+nmi_off = ["0-17", "257", "303", "306"]
+facts = {  }
+streams.vram = ["baa6e11b0f951169"]
+streams.cgram = ["f9e860677f97b3a3"]
+streams.oam = ["a092385d59527c0e"]
+streams.sram = ["6e50c4085caa8cb7"]
+streams.ppu = ["e3976d54c2e52a94"]
+streams.apu = ["3b2ee8d2462d6964"]
+streams.video = ["29419c11d74a1458"]
+streams.timing = ["c1e47077ab21c547"]
+streams.wram = ["8d0330dd13d25395"]
+
+[[row]]
+id = "any-intro-0568"
+start = "any-opening:1"
+seed_record = "1277533b97c2ad0d7f2c809d8bbee630f4e335d2e523fba8ea0ac2db777bcea9"
+pads = "06bec3dc580edac4752cc9e6da5fac50ada8aed1fc6e2e41cd2aba2039a3c2ce"
+frames = 1651
+ticks = 1505
+overruns = ["1-53", "71-104", "412-435", "739-773"]
+nmi_off = []
+facts = {  }
+streams.vram = ["2772088a528aa8f7", "4cbf145b96b85049"]
+streams.cgram = ["48d5eb3d1fc891bb", "f72dbced3b19fb90"]
+streams.oam = ["16a9b2d3aec5b8c5", "296e45e7f0c359f2"]
+streams.sram = ["1f74f176194d45f6", "e7b276d0520fefc3"]
+streams.ppu = ["391e3b1a762902e7", "a0427fb8de4b4f86"]
+streams.apu = ["d42dfda7f1cbd52b", "dd450e19a9df10f1"]
+streams.video = ["f0bdc6811285781d", "acf6234e8adf20dd"]
+streams.timing = ["8e081618b7b38717", "e86a38cf84be6244"]
+streams.wram = ["a677c8833410af31", "aa48bc882c09c0fe"]
+
+[[row]]
+id = "any-intro-2219"
+start = "any-opening:2"
+seed_record = "e1a975dee30fa3894c91800d27da8d39d27f239559931a5e3115653ff9af0c29"
+pads = "1332cbfd4e23248443ab42f101b4ebde1762d1b75d66b7a8a6ce1b72b4f113ae"
+frames = 2104
+ticks = 2097
+overruns = ["0", "101", "106", "131", "520", "1298", "1427"]
+nmi_off = []
+facts = {  }
+streams.vram = ["e8cc7f848ff83592", "eca73bf55a60c6d1", "20dfd8c103fec031"]
+streams.cgram = ["1c6734fbf837ef20", "22a7c593b380acc9", "70ac721996d22282"]
+streams.oam = ["a1dba214990db6d8", "a1becfd44085e748", "74a7d7d1228f3271"]
+streams.sram = ["3a8aead2f8d7ac78", "35bcdce5586e5272", "8637648def36eb63"]
+streams.ppu = ["254cb7d72307c946", "f9d8e6121eeeb175", "542cc9a9ef4e5ed6"]
+streams.apu = ["fef8a470c2ea8796", "f091f465fde94646", "10da98b8beb69cd2"]
+streams.video = ["c90eac92b2a3331d", "b12632b55118a7c4", "bb4b228d72003b03"]
+streams.timing = ["42f343e6ebed56e9", "9fb1d7f248b90690", "26a8b40301fc153c"]
+streams.wram = ["c6cbbc40a9dc46c0", "1324e2bb0f3a84cf", "1b4337dc90b159ac"]
+
+[[row]]
+id = "any-intro-4323"
+start = "any-opening:3"
+seed_record = "48cc18cc3ffa8f5ab68738a91bc118535bd3c9296fbd7c4bc42eabfe68eaf3a1"
+pads = "e8008a64e72ecf7298be4e6895b718f32adc022a4cc4ed979b5e75b3035060cd"
+frames = 1689
+ticks = 1685
+overruns = ["0", "618", "747", "1021"]
+nmi_off = []
+facts = {  }
+streams.vram = ["64a1d8a8acfdd5d1", "bceaf82c68308187"]
+streams.cgram = ["1b6796cda4a0eed4", "21df22782f1f0ae9"]
+streams.oam = ["0ccaa1937f6b4276", "a668072f46af3669"]
+streams.sram = ["fa3d72c031970bed", "e311e5c5d530ea15"]
+streams.ppu = ["844b2c9531c24f7f", "87e50a0e6eda5e2e"]
+streams.apu = ["7280335418b381dc", "ebcd6bdb8bfbd3b4"]
+streams.video = ["a26dcec57f956c80", "9b8242d44f6bdd37"]
+streams.timing = ["d1a85a938c68c172", "97f09c4f34528d6f"]
+streams.wram = ["ed9ed443e3ca1a87", "3bd848b51f8d99c4"]
+
+[[row]]
+id = "any-intro-6012"
+start = "any-opening:4"
+seed_record = "c7dfb6a6799b6b505758849579e7940212c088044a9e94a97c7217baff5e34fd"
+pads = "f9a2e2c148b15198392efe789a72d4ae441f96b4733820b74505182b9d23d784"
+frames = 1500
+ticks = 1497
+overruns = ["0", "129", "403"]
+nmi_off = []
+facts = {  }
+streams.vram = ["59e58145dfe7a260", "e29024c75a664bb4"]
+streams.cgram = ["7cdd621d4e2004b1", "5f22de04cce99cbd"]
+streams.oam = ["a6c2efac8d05bb17", "68ce678371066367"]
+streams.sram = ["fa3d72c031970bed", "feed0c98b8ebdb57"]
+streams.ppu = ["bd7fdf6e4f2fa52b", "d55e9c1838562a82"]
+streams.apu = ["791348b95068058a", "9c0d53a07d0d7623"]
+streams.video = ["760918c236a436f6", "596f6971a26ba37d"]
+streams.timing = ["a1b7b1ef6da1a723", "17dd3d376cc20064"]
+streams.wram = ["a49e3c6107efd26e", "569c02e50b2c8886"]
+
+[[row]]
+id = "any-fly-to-ceres"
+start = "any-opening:5"
+seed_record = "4f2026c088aeb558f17a4e5fefd495592999785876e54bfc14bfe85f8fc31cf8"
+pads = "614fe62226c219a11c9154d0e7834036d6d02ed5af45c3e30566cbadfb217e84"
+frames = 803
+ticks = 744
+overruns = ["1-31", "41-68"]
+nmi_off = []
+facts = {  }
+streams.vram = ["bf5c19cc4dfee504"]
+streams.cgram = ["8a3a9d519602b576"]
+streams.oam = ["4b9d486d1227bd07"]
+streams.sram = ["c754583b2ac46766"]
+streams.ppu = ["97d2add19da6f92a"]
+streams.apu = ["fe389c20bd696238"]
+streams.video = ["8ce0cf65cc93a6ec"]
+streams.timing = ["3f80857b85739b8e"]
+streams.wram = ["0317e400e1d19d16"]
+
+[[row]]
+id = "any-ceres-arrival"
+start = "any-opening:6"
+seed_record = "f7f09b237aed84c3816debd903244aab8086a197667a831e174849c5f30a99ba"
+pads = "f72200cc99fd20659e41b2d06a91b2f9fc4decd0dd598996dbeee7b36b709e92"
+frames = 223
+ticks = 99
+overruns = ["0", "106", "123-149", "190"]
+nmi_off = ["2-85", "154-163"]
+facts = { "room:DF45" = "unevaluated" }
+streams.vram = ["c018659441d6cbba"]
+streams.cgram = ["eea33202c1e12079"]
+streams.oam = ["c4b656902e5ba855"]
+streams.sram = ["d47d031a2b4c18a5"]
+streams.ppu = ["c2f65ec7ad3adf4d"]
+streams.apu = ["06ee6a604173a66e"]
+streams.video = ["e32a59ec6bf25fb7"]
+streams.timing = ["66ae4287d8215d50"]
+streams.wram = ["bd226e1224b3c69a"]

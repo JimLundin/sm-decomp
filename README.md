@@ -67,7 +67,7 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 
 | Check | State |
 | --- | --- |
-| the lock | 642 rows of play, 449,543 frames |
+| the lock | 650 rows of play, 460,437 frames |
 | the free-run gate: the engine runs a row alone | 8 green (row, stream) pairs over 2 rows |
 | the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
 | the harnesses: each model on recorded frames | 44 rows cached, 25,470 frames |

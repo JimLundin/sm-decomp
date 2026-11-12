@@ -547,15 +547,15 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 ![How much of each movie the checks cover](timeline.svg)
 
-For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's streams that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. 21 of the lock's rows (25,475 frames) start from power-on or a derived seed, in no movie, and are not drawn.
+For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's streams that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. 22 of the lock's rows (26,043 frames) start from power-on or a derived seed, in no movie, and are not drawn.
 
 ### The any% movie
 
-129,712 frames, 199 rows of the lock.
+129,712 frames, 206 rows of the lock.
 
 | Track | Frames covered | Share of the movie |
 | --- | ---: | ---: |
-| recorded: the lock's rows | 102,847 | 79.3 % |
+| recorded: the lock's rows | 113,148 | 87.2 % |
 | cached for the harnesses | 2,110 | 1.6 % |
 | blocks model matches | 2,055 | 1.6 % |
 | camera model matches | 2,061 | 1.6 % |

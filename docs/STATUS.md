@@ -18,6 +18,10 @@ The README's first row is generated from `[milestone]` in `docs/architecture/dom
 stretch's frames, those the engine plays alone today, and the plan items still needed. Until the
 whole run exists, "plays alone" counts the stretch's frames inside rows of the movie whose every
 stream the free-run gate holds green, each row run from its own seed. The checks below serve it.
+[domains.md §4](architecture/domains.md#4-order) holds the stretch: its frame ranges, what each
+one runs, the lock rows that cover every frame of it and the order of work toward it. The
+`any-power-on` row starts from power-on, which the timeline places in no movie, so its 568
+frames don't count toward "plays alone" yet.
 
 ## The ratchets and floors
 

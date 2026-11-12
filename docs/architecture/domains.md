@@ -175,7 +175,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | B5 | Kraid (and its room keeping her on its first screen; mini Kraid) | 4 | chain rows |
 | B6 | Phantoon | 4 | `boss-phantoon*`, `phantoon-exit-spawn-parameter` |
 | B7 | Draygon | 3 | `boss-draygon*` (8 rows) |
-| B8 | Ceres Ridley and the Ceres escape | 4 | `boss-ceres-ridley*`, `area-ceres` |
+| B8 | Ceres Ridley and the Ceres escape | 4 | `boss-ceres-ridley*`, `area-ceres`, `chain-any-0006-E0B5` to `chain-any-0011-DF45` |
 | B9 | Ridley | 5 | `boss-ridley*` |
 | B10 | Mother Brain, the glass, zebetites, rinkas, the baby metroid, the escape | 8 | `boss-mother-brain`, `mother-brain-*` (7), `enemy-baby-metroid-remorse` |
 
@@ -191,9 +191,9 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | P1 | **Progress** | events, boss flags, collected items, map stations, the percentage; which room state a room loads | none | chains | none | 1 |
 | P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums, the load flow, energy and missile refill stations, map stations | `state/sram` | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |
 | F1 | **The pause screen** | map screen (scrolling, areas, explored), equipment screen (toggles), its fades and the unpause | none (old 49k with file select) | **new recording** (no `pause-menu-tour` in the lock; the 100% chains may pause for toggles: check) | P1, E2 | 5 |
-| F2 | **Title, intro and file select; options** | boot, title, the intro's text and pages, file select (copy, clear), options and controls, demos (a recorded input source) | none | `options-menu-tour`, `file-copy-clear`, the `power-on` row; **new** for the attract demos and the intro | E2, E4 | 8 |
+| F2 | **Title, intro and file select; options** | boot, title, the intro's text and pages, file select (copy, clear), options and controls, demos (a recorded input source) | none | `options-menu-tour`, `file-copy-clear`, `any-power-on`, the intro's `any-intro-*` (four rows); **new** for the attract demos | E2, E4 | 8 |
 | F3 | **Game over** | death's screen, continue | none | `death` | H1 | 1 |
-| F4 | **Cinematics and credits** | the gunship's landing and take-off, Samus's arrival, the planet's explosion, the ending, credits | none | `gunship-bobbing-cycle`, `credits*` (14 rows, 67k frames) | E4 | 5 |
+| F4 | **Cinematics and credits** | the gunship's landing and take-off, Samus's arrival, the planet's explosion, the ending, credits | none | `gunship-bobbing-cycle`, `credits*` (14 rows, 67k frames), `any-fly-to-ceres`, `chain-any-0011-DF45` (the explosion and the flight to Zebes) | E4 | 5 |
 
 ### Platform and tracks (not clean-room; hardware formats or the original's timing)
 
@@ -336,47 +336,79 @@ through Ceres: the any% movie from power-on to its frame 15,428, where seed `any
 first room on Zebes. A divergence is localised by sparse checkpoints over the run, then dense ones
 over the range they narrow it to.
 
-**What the stretch holds.** From the movies manifest, the any% movie's room seeds
-(`movies/room-seeds-any.csv`) and the lock:
+**What the stretch holds.** Observed, not read off the game: lsnes played the any% movie from
+power-on to frame 15,500 and logged, per frame, the game state, the cinematic step, the room,
+each object list (enemies, enemy projectiles, PLMs, palette FX, animated tiles, HDMA objects,
+cinematic objects), the BG mode, the quake, the FX type, the music and sounds, the timer, the
+message box, energy, SRAM writes and the APU port writes; the bank logs name what each id is.
+A frame is a video frame of the movie, lag frames included; the stretch is frames 0 to 15,427.
 
-| Frames | What plays | Lock rows from the stretch |
-| --- | --- | --- |
-| 0-8,537 | power-on, boot, the title, the intro, file select and the new game, the flight to Ceres | none: the opening has no row of its own (`options-menu-tour` and `file-copy-clear` start from power-on in other recordings) |
-| 8,538-10,161 | Ceres's rooms one to five, down the elevator shaft and through its doors | `chain-any-0001-DF45` to `chain-any-0005-E06B`; the 100% movie's same frames (`chain-0001-DF45` to `chain-0005-E06B`, `area-ceres`, `door-transition`, `samus-input-poses`) |
-| 10,162-11,938 | Ceres Ridley's room: the fight, the baby taken, the escape's start | `chain-any-0006-E0B5`; from the 100% movie, `boss-ceres-ridley`, `boss-ceres-ridley-fireballs`, `samus-ceres-push` |
-| 11,939-13,071 | the escape back up through rooms five to two, with its timer, its Mode 7 room and its quakes | `chain-any-0007-E06B` to `chain-any-0010-DF8D` |
-| 13,072-15,427 | the elevator room, the ride up, the gunship's escape, the station's explosion and the flight to Zebes | none |
+| Frames | What plays | What runs (evidence) | Lock rows (`lsnes.toml`) |
+| --- | --- | --- | --- |
+| 0-270 | power-on and boot | the sound driver's upload (115,715 APU port writes); SRAM checked and written (263-270); 99 lag frames | `any-power-on` |
+| 271-567 | the title, file select (a new file, SRAM written at 432), the start menu | mode 7 and its objects in the title; HDMA; palette FX objects (the title's tube light and displays); the title music's upload; 41 lag frames | `any-power-on` |
+| 568-7,511 | the intro: its text pages, the old Mother Brain fight, the baby metroid's discovery | cinematic text, sprite and BG objects; Samus played by demo input in two scenes (2,219-2,738, 3,517-4,322): her motion, looks, missiles (899 to 896) and a knockback, rinkas and Mother Brain as cinematic objects; a palette FX object; the intro's music uploads | `any-intro-0568`, `any-intro-2219`, `any-intro-4323`, `any-intro-6012` |
+| 7,512-8,314 | the flight to Ceres | mode 7; cinematic objects; palette FX objects (the gunship's engine, Ceres's lights) | `any-fly-to-ceres` |
+| 8,315-8,537 | the new game: SRAM written (8,315), the elevator shaft loaded and faded in | room loading; the elevator pad (two enemy projectiles); the shaft's mode 7 by HDMA; the Ceres haze; 32 lag frames | `any-ceres-arrival` |
+| 8,538-10,160 | Ceres's rooms 1 to 5 and the five doors down to Ridley's room | her motion and looks, the view, the HUD; the Ceres doors (an enemy) in every room; FX: the elevator's mode switch, the haze; door transitions with their lag | `chain-any-0001-DF45` to `chain-any-0005-E06B` |
+| 10,161-11,771 | Ceres Ridley's room | Ceres Ridley: five contact hits (energy 99 to 24 by 15, five knockbacks), her power beam's hits; the mini-map off; the getaway in mode 7; quakes; the escape timer starts; no fireballs | `chain-any-0006-E0B5` |
+| 11,772-13,235 | the escape back up through rooms 5 to 1 | the timer; quakes in every room; steam (an enemy) in rooms 3 to 1; falling debris (enemy projectiles) in room 2, dust in rooms 2 and 1; the rooms' boss-dead states; the shaft rotating | `chain-any-0007-E06B` to `chain-any-0010-DF8D`, `chain-any-0011-DF45` |
+| 13,236-15,196 | made it to the elevator, the blackout, Ceres goes boom (SRAM written at 13,312), the flight to Zebes | mode 7; cinematic objects; HDMA; palette FX objects (the planet's name fading); music uploads | `chain-any-0011-DF45` |
+| 15,197-15,427 | the Landing Site loaded and faded in | room loading; its door caps (yellow, green) and scroll PLM; the rain FX, rain tiles, lightning and the gunship's glow; the gunship (an enemy); the Crateria music's upload; 40 lag frames | `chain-any-0011-DF45` |
 
-The movie's rows cover its frames from 8,538 only by chain rows of one room each, so the
-milestone also needs the whole-movie run (V2) that strings them together and the opening that
-no row records.
+What the stretch never shows: a block that reacts to her (Ceres's rooms have no PLMs, so no
+door caps, crumble, shot or scroll blocks), animated tiles or palette FX in Ceres's rooms, a
+liquid, an item, a message box (its index stays 0), a pause, a death, a sprite object, an enemy
+outside Ceres's three species and the Landing Site's gunship. 454 frames lag, 141 of them before
+the intro.
 
-**What the milestone needs.** The plan items the stretch touches; Ceres's own enemies and objects
-(what moves in its rooms besides Samus and Ridley) go with B8, so no enemy
-family is needed:
+**What the milestone needs**, each item for what the stretch shows of it:
 
 | Item | For |
 | --- | --- |
-| S1, S2, S4, S5 (samus-motion, samus-looks) | her motion everywhere, Ceres's pushes, Ridley's hits and her knockback, how she looks |
-| CAM | the view in every room |
-| W2 | the cells she touches, in every room the engine runs |
-| W1 | her power beam at Ridley |
-| C1, A2 | Ridley's contact with her and her shots' hits; the enemy importers |
-| H1, H2 | her energy as Ridley hurts her; the HUD, the escape's timer |
-| P1, P2 | Ceres's boss defeated; the save file the file select reads and the new game writes |
-| B8 | Ceres Ridley, the escape and Ceres's own objects |
-| R1, R2 | Ceres's doors and its elevator; loading each room |
-| R3, R4 | the escape's quakes; the rooms' palette and tile animation, where they have it |
-| F2, F4 | the title, intro and file select; the flight to Ceres, the station's explosion and the flight to Zebes |
-| U1 | the sound and music the `apu` stream records: the CPU side, and the driver MODEL §1 decision 9 rebuilds too |
-| E1, E2, E3, E4, A1 | sprites, tile writes, the line program (the HUD split and HDMA), Mode 7 (the cinematics and the tilted room), instruction lists as assets |
-| T1 | slowdown and loading time: with nothing fed back, the recorded NMI timing can't stand in |
+| S1, S5 (samus-motion, samus-looks) | her motion and looks in every room and in the intro's two demo scenes |
+| S2 | Ceres Ridley's getaway pushes her when she stands in his way (the 100% movie's `samus-ceres-push`); no liquid in the stretch |
+| S4 | her knockback: Ridley's five hits, the intro's one; no bomb |
+| CAM | the view in every room; while the mode 7 flag is set (the shaft, Ridley's getaway) the BG scroll doesn't follow it |
+| W1 | her power beam at Ridley, her missiles in the intro's Mother Brain fight |
+| W2 | no reacting block: only the PLM runner's pieces the stretch spawns: the timer that enables sounds, the escape shaft's door turned to solid blocks (its boss-dead state's set-up), and the Landing Site's door caps and scroll PLM drawn at its load |
+| C1, A2 | the enemy framework (process, draw, contact, her shots' hits) and the enemy projectile runner, over Ceres's species and projectiles; their importers |
+| B8 | Ceres's own species and projectiles: Ceres Ridley and the getaway, the Ceres doors (and the shaft's platform), steam, the elevator pad, the falling debris, the dust; the shaft's rotation |
+| H1, H2 | her energy as Ridley hurts her; the HUD, the mini-map switched off, the escape's timer |
+| P1, P2 | Ceres's boss defeated and the boss-dead room states; SRAM at boot, the new file, the new game and Ceres's end |
+| R1, R2 | ten door passages and their lag; loading every room, the shaft at the new game and the Landing Site; no elevator ride |
+| R3 | quakes (Ridley's room, every escape room); the FX types of the shaft, Ridley's room and the haze; the Landing Site's rain |
+| R4 | the palette FX runner, which the title, the intro and both flights use; the Landing Site's rain tiles, lightning and the gunship's glow. Ceres's rooms have neither |
+| F2 | boot, the title, file select, the start menu and the intro, its demo input included |
+| F4 | the flight to Ceres, the elevator's end, Ceres goes boom, the flight to Zebes, the gunship at the Landing Site |
+| U1 | the `apu` stream holds the CPU side of every exchange, the driver's uploads included (more than 400,000 port writes over the stretch), so the driver's replies must be reproduced, not only the requests |
+| E1, E2, A1 | sprites, tile writes, instruction lists as assets (PLM, enemy, projectile, palette FX, HDMA and cinematic object lists) |
+| E3, E4 | HDMA objects in every stretch but boot, the shaft's and Ridley room's mode switch per line; mode 7 in the title, both flights, the shaft, Ridley's getaway and the explosion |
+| T1 | 454 lag frames: with nothing fed back, the recorded NMI timing can't stand in |
 | V2 | the whole-movie run: one free run from power-on, compared at sparse checkpoints, then dense ones |
 
-Not needed for it: S3, S6, S7, W3, H3, F1, F3, the enemy families and the other bosses.
-`tools report` shows the milestone as the README's first row, from `[milestone]` in
-[domains.toml](domains.toml): the stretch's frames, how many the engine plays alone today and
-which of these items are not done.
+Not needed for it: S3, S6, S7, W3, H3, F1, F3, the enemy families and the other bosses (Ceres
+Ridley shares Ridley's code; B9 may reuse B8's model, not the reverse). The last 231 frames
+(15,197-15,427) alone pull in the Landing Site's content: W2's door caps and scroll PLM, R3's
+rain, R4's room objects and the gunship. `tools report` shows the milestone as the README's first
+row, from `[milestone]` in [domains.toml](domains.toml): the stretch's frames, how many the engine
+plays alone today and which of these items are not done.
+
+**The milestone's order of work.** Each night picks the first step whose prerequisites hold.
+
+1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,427) are recorded
+   and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock
+   covers the whole stretch, one row run from its own seed at a time.
+2. Ceres's play, 8,538-13,235 (4,698 frames, 30%): the in-progress Samus, camera, HUD and
+   progress work; then R1 with R2, A1 and A2, C1 with its projectile runner, B8 (the Ceres doors
+   first, in every room), H1 with S4, W1's power beam, R3's FX and quakes, E3's mode switch and
+   E4's shaft. Each lands on Ceres's chain rows.
+3. The run as a whole: T1's lag, U1's driver and uploads, V2's free run with checkpoints.
+4. The cinematics and the front end, 0-8,537 and 13,236-15,196 (10,729 frames, 70%; the intro
+   alone is 45%): F4's flights and explosion, F2's boot, title, file select and intro (its demo
+   scenes reuse S1, S5 and W1), R4's palette FX runner, P2's four SRAM writes.
+5. The Landing Site's load, 15,197-15,427: R2 for its room, W2's door caps and scroll PLM, R3's
+   rain, R4's tiles and lightning, F4's gunship.
 
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).

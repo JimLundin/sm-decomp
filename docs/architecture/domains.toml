@@ -346,7 +346,8 @@ rounds = 1
 
 # The headline milestone (MODEL §1 decision 14): the engine replays the any% movie from
 # power-on to the frame of its seed any:12, the first room on Zebes, with nothing fed back. The
-# plan items its stretch touches, from domains.md §4; Ceres's own enemies and objects are B8's.
+# plan items its stretch touches, each for what lsnes showed the stretch running (domains.md §4,
+# with the frames); Ceres's own enemies and enemy projectiles are B8's.
 
 [milestone]
 name = "Power-on through Ceres"

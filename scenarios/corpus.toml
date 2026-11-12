@@ -1353,3 +1353,54 @@ id = "boss-kraid-defeated"
 start = "seed:2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
 ticks = 1092
 facts = ["room:A6E2"]
+
+# The any% movie from power-on to seed any:12, the stretches no other row covered
+# (docs/architecture/domains.md §4, the headline milestone).
+# Movie frames 0-567. Power-on, boot, the title, file select (a new file) and the start menu, to the intro's first frame.
+[[scenario]]
+id = "any-power-on"
+start = "boot"
+ticks = 568
+facts = []
+
+# Movie frames 568-2218. The intro: its first text and music, page 1, to the old Mother Brain fight.
+[[scenario]]
+id = "any-intro-0568"
+start = "seed:1277533b97c2ad0d7f2c809d8bbee630f4e335d2e523fba8ea0ac2db777bcea9"
+ticks = 1651
+facts = []
+
+# Movie frames 2219-4322. The intro: the old Mother Brain fight under demo input, page 2, the baby metroid's discovery under demo input, page 3.
+[[scenario]]
+id = "any-intro-2219"
+start = "seed:e1a975dee30fa3894c91800d27da8d39d27f239559931a5e3115653ff9af0c29"
+ticks = 2104
+facts = []
+
+# Movie frames 4323-6011. The intro: the baby metroid delivered and pages 4 and 5's first part.
+[[scenario]]
+id = "any-intro-4323"
+start = "seed:48cc18cc3ffa8f5ab68738a91bc118535bd3c9296fbd7c4bc42eabfe68eaf3a1"
+ticks = 1689
+facts = []
+
+# Movie frames 6012-7511. The intro: the baby metroid examined, page 5's end, the last text and the intro's finish.
+[[scenario]]
+id = "any-intro-6012"
+start = "seed:c7dfb6a6799b6b505758849579e7940212c088044a9e94a97c7217baff5e34fd"
+ticks = 1500
+facts = []
+
+# Movie frames 7512-8314. The flight to Ceres in mode 7, to the new game's start.
+[[scenario]]
+id = "any-fly-to-ceres"
+start = "seed:4f2026c088aeb558f17a4e5fefd495592999785876e54bfc14bfe85f8fc31cf8"
+ticks = 803
+facts = []
+
+# Movie frames 8315-8537. The new game written to SRAM, Ceres's elevator shaft loaded and faded in, to the first frame of play.
+[[scenario]]
+id = "any-ceres-arrival"
+start = "seed:f7f09b237aed84c3816debd903244aab8086a197667a831e174849c5f30a99ba"
+ticks = 223
+facts = ["room:DF45"]
