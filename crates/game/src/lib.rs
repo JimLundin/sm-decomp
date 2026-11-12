@@ -7,6 +7,7 @@
 
 pub mod atmospheric;
 pub mod bg_graphics;
+pub mod boss_ceres_ridley_bridge;
 pub mod collision;
 pub mod commit;
 pub mod enemy;

@@ -581,6 +581,81 @@ fn progress_holds_its_floors_against_the_cache() {
     );
 }
 
+/// The Ceres doors over every cached row, held to their floors; `SM_CACHE` and `SM_ROM` as the
+/// clock's test reads them (the ROM for the doors' colour sets).
+#[test]
+fn the_ceres_doors_hold_their_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = match std::fs::read(&rom) {
+        Ok(image) => image,
+        Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
+    };
+    let domain = match super::ceres::CeresDomain::load(&image) {
+        Ok(domain) => domain,
+        Err(error) => panic!("content: {error:?}"),
+    };
+    hold_floors(&domain, "boss-ceres-ridley", &cache);
+}
+
+/// The Ceres doors' harness cases (the decode notes' "The harness cases", H1 and H2): the frame
+/// a room places its doors, calm and in the escape, whose target colours take the importer's
+/// set the stage names. With `SM_CACHE` set, a case whose row isn't cached fails, as does one
+/// skipped, differing, or not bringing `TheDoorsColours` into play.
+#[test]
+fn the_ceres_doors_colour_cases_hold_against_the_cache() {
+    use std::io::Write as _;
+    /// H1 and H2: the row, and the record the doors are placed in.
+    const CASES: [(&str, u64); 2] = [("chain-any-0002-DF8D", 198), ("chain-any-0008-E021", 180)];
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image =
+        std::fs::read(&rom).unwrap_or_else(|error| panic!("SM_ROM {}: {error}", rom.display()));
+    let domain = super::ceres::CeresDomain::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
+    let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
+    let rows = cached_rows(&cache);
+    let mut failures = Vec::new();
+    for (row, record) in CASES {
+        let name = format!("TheDoorsColours {row} {record}");
+        if !rows.iter().any(|cached| cached == row) {
+            failures.push(format!("{name}: not cached"));
+            continue;
+        }
+        let locked = parsed
+            .row(&crate::lock::RowId(row.to_owned()))
+            .unwrap_or_else(|| panic!("{row}: not in the lock"));
+        let opened =
+            crate::cache::Cache::open(&cache, locked).unwrap_or_else(|error| panic!("{error}"));
+        let pair = opened
+            .entries()
+            .iter()
+            .filter(|entry| (record - 1..=record).contains(&entry.frame.0))
+            .map(|entry| {
+                opened
+                    .record(entry)
+                    .unwrap_or_else(|error| panic!("{name}: {error}"))
+            })
+            .map(Ok::<_, Infallible>);
+        let Ok(report) = run(&domain, pair);
+        let colours = report
+            .behaviours
+            .iter()
+            .find(|entry| entry.name == "TheDoorsColours")
+            .is_some_and(|entry| entry.exercised == 1);
+        if report.compared == 1 && report.matched == 1 && colours {
+            let _ = writeln!(std::io::stdout(), "{name}: holds");
+        } else {
+            failures.push(format!("{name}: {report}"));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
 /// Her animation's timing over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as
 /// the clock's test reads them (the ROM for the importer's clips and paces).
 #[test]

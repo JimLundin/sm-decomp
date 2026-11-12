@@ -10,7 +10,7 @@
 
 use std::marker::PhantomData;
 
-use data::enemy::program::EnemyPrograms;
+use data::enemy::program::{EnemyPrograms, SpritemapId};
 use data::spritemap::SpriteAttributes;
 use types::Pair;
 
@@ -18,10 +18,10 @@ use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;
 use crate::state::State;
 use crate::state::room::{
-    EnemyCommon, EnemyDrawing, EnemyExtraProperty, EnemyProperty, GraphicsDrawnHook, PaletteIndex,
-    TilesIndex,
+    EnemyBody, EnemyCommon, EnemyDrawing, EnemyExtraProperty, EnemyProperty, GraphicsDrawnHook,
+    PaletteIndex, TilesIndex,
 };
-use crate::state::slots::{Frames, SlotIndex};
+use crate::state::slots::{Frames, Occupancy, SlotIndex};
 
 /// The layer Samus draws with (`$A0:8871`).
 const SAMUS_LAYER: usize = 3;
@@ -76,7 +76,17 @@ pub fn draw(state: &mut State, content: &Content) {
         }
         for slot in queue {
             if let Some(enemy) = state.room.enemies.slots.get_mut(usize::from(slot.0)) {
-                let drawn = draw_enemy(&mut enemy.common, camera, count, &content.enemy_programs);
+                let programs = &content.enemy_programs;
+                let spritemap = match enemy.occupancy {
+                    Occupancy::Live(EnemyBody::CeresDoor(door))
+                    | Occupancy::Deleting(EnemyBody::CeresDoor(door)) => {
+                        crate::boss_ceres_ridley_bridge::spritemap(door, programs)
+                    }
+                    Occupancy::Live(_) | Occupancy::Deleting(_) | Occupancy::Free => {
+                        Some(enemy.common.spritemap)
+                    }
+                };
+                let drawn = draw_enemy(&mut enemy.common, spritemap, camera, count, programs);
                 state.video.batch.draw_sprites(&drawn);
             }
         }
@@ -135,6 +145,7 @@ impl SpriteBase {
 // extended enemy draws nothing.
 fn draw_enemy(
     common: &mut EnemyCommon,
+    spritemap: Option<SpritemapId>,
     camera: (u16, u16),
     routine_count: u16,
     programs: &EnemyPrograms,
@@ -163,7 +174,7 @@ fn draw_enemy(
     {
         return drawn;
     }
-    if let Some(map) = programs.sprites(common.spritemap) {
+    if let Some(map) = spritemap.and_then(|spritemap| programs.sprites(spritemap)) {
         drawn.place(map, at);
         for piece in &mut drawn.pieces {
             piece.look = base.apply(piece.look);

@@ -30,6 +30,7 @@
 pub mod appearance;
 pub mod blocks;
 pub mod camera;
+pub mod ceres;
 pub mod free;
 pub mod game_time;
 pub mod hud;

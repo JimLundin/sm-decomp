@@ -12,6 +12,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "boss_ceres_ridley"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
+]
+
+[[package]]
 name = "canonical"
 version = "0.1.0"
 dependencies = [
@@ -60,6 +70,7 @@ checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 name = "game"
 version = "0.1.0"
 dependencies = [
+ "boss_ceres_ridley",
  "canonical",
  "data",
  "enum-map",
@@ -328,6 +339,7 @@ checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 name = "verify"
 version = "0.1.0"
 dependencies = [
+ "boss_ceres_ridley",
  "canonical",
  "data",
  "enum-map",

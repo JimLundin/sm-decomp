@@ -42,8 +42,9 @@ How it is counted:
 | interface-hud | 2,695 | 2,112 | 1.28 | 0.91 | 29 % (over 25 %) | 2,742 | 1,094 | 449 | 23,604 | 84 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 399 | 23,517 | 100 |
 | samus-appearance | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 20,977 | 98 |
-| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance) | 662 | - | - | - | - | - | 519 | 110 | - | - |
-| total | 20,000 | 17,408 | 1.15 | 1.01 | 12 % | - | 8,720 | 3,333 | 152,897 | 786 |
+| boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 216 | 5,437 | 56 |
+| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley) | 662 | - | - | - | - | - | 519 | 110 | - | - |
+| total | 21,299 | 18,558 | 1.15 | 1.02 | 11 % | - | 9,286 | 3,550 | 158,334 | 842 |
 
 ## Models
 
@@ -166,11 +167,28 @@ How it is counted:
 | `crates/clean/samus_appearance/src/update.rs` | - | logic | 104 | 181 | 3 | 0 | 0 | 0 | 15 | 26 |
 | total | | | 2,191 | 3,039 | 1,050 | 1,128 | 86 | 71 | 131 | 879 |
 
+### boss-ceres-ridley
+
+| File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `crates/clean/boss_ceres_ridley/src/catalogue.rs` | - | tables and types | 20 | 54 | 89 | 385 | 0 | 0 | 69 | 123 |
+| `crates/clean/boss_ceres_ridley/src/door.rs` | doors | logic | 522 | 583 | 165 | 15 | 25 | 51 | 0 | 130 |
+| `crates/clean/boss_ceres_ridley/src/figure.rs` | doors | logic | 310 | 339 | 84 | 50 | 0 | 24 | 0 | 102 |
+| `crates/clean/boss_ceres_ridley/src/inputs.rs` | - | tables and types | 0 | 29 | 51 | 1 | 0 | 0 | 0 | 15 |
+| `crates/clean/boss_ceres_ridley/src/inputs.rs` `fn she_is_near` | doors | logic | 37 | 48 | 0 | 0 | 0 | 0 | 0 | 3 |
+| `crates/clean/boss_ceres_ridley/src/inputs.rs` `fn gap` | doors | logic | 22 | 29 | 0 | 0 | 0 | 0 | 0 | 3 |
+| `crates/clean/boss_ceres_ridley/src/inputs.rs` `fn escape_shake` | station | logic | 57 | 63 | 0 | 0 | 3 | 0 | 0 | 10 |
+| `crates/clean/boss_ceres_ridley/src/lib.rs` | - | logic | 0 | 92 | 0 | 0 | 0 | 0 | 0 | 14 |
+| `crates/clean/boss_ceres_ridley/src/phase.rs` | doors | logic | 272 | 314 | 123 | 36 | 1 | 24 | 0 | 97 |
+| `crates/clean/boss_ceres_ridley/src/rules.rs` | - | tables and types | 47 | 70 | 94 | 24 | 0 | 0 | 0 | 37 |
+| `crates/clean/boss_ceres_ridley/src/station.rs` | station | tables and types | 14 | 30 | 74 | 36 | 0 | 0 | 0 | 32 |
+| total | | | 1,299 | 1,651 | 680 | 547 | 29 | 99 | 69 | 566 |
+
 ### Shared types
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance) | 662 | 1,018 | 1,467 | 100 | 16 | 0 | 0 | 519 |
+| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley) | 662 | 1,018 | 1,467 | 100 | 16 | 0 | 0 | 519 |
 
 ## Lines
 
@@ -182,8 +200,9 @@ How it is counted:
 | interface-hud | 1,094 | 566 | 528 | 449 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
 | samus-appearance | 879 | 559 | 320 | 365 |
-| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance) | 519 | 519 | 0 | 110 |
-| total | 8,720 | 5,396 | 3,324 | 3,333 |
+| boss-ceres-ridley | 566 | 207 | 359 | 216 |
+| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley) | 519 | 519 | 0 | 110 |
+| total | 9,286 | 5,603 | 3,683 | 3,550 |
 
 ## Spec, budget and fit by area
 
@@ -273,6 +292,19 @@ Spec [`docs/behaviours/samus-appearance.md`](behaviours/samus-appearance.md), k 
 
 Area fit 1.41: the areas' score, 1,991, ÷ the budget. Shared code 200, its share of the model 9 %.
 
+### boss-ceres-ridley
+
+Spec [`docs/behaviours/boss-ceres-ridley.md`](behaviours/boss-ceres-ridley.md), k = 37.5. Old code -, at `-` as its decode notes' Budget section states.
+
+| Area | Entries | Units | Budget | Old code | Model score | Fit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| doors | 9 | 25.3 | 950 | - | 1,162 | 1.22 |
+| station | 2 | 5.3 | 200 | - | 71 | 0.35 |
+| shared (in no area) | | | | | 67 | |
+| total | 11 | 30.7 | 1,150 | - | 1,299 | 1.13 |
+
+Area fit 1.07: the areas' score, 1,232, ÷ the budget. Shared code 67, its share of the model 5 %.
+
 ## Bridges and harnesses
 
 The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engine; the harness (`crates/verify/src/harness/<harness>*`) checks the model against the oracle. Neither is the model's.
@@ -291,78 +323,80 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
 | samus-appearance | harness | 2 | 3,714 | 4,020 | 421 | 136 | 116 | 178 | 14 | 591 |
-| total | | | 51,824 | 52,906 | 5,689 | 4,163 | 3,895 | 3,097 | 308 | 8,978 |
+| boss-ceres-ridley | bridge | 1 | 1,118 | 1,286 | 71 | 181 | 11 | 63 | 0 | 222 |
+| boss-ceres-ridley | harness | 1 | 3,328 | 3,084 | 561 | 96 | 317 | 344 | 7 | 556 |
+| total | | | 56,270 | 57,276 | 6,321 | 4,440 | 4,222 | 3,504 | 315 | 9,756 |
 
 ## Harness floors and vectors
 
 Frames matched and verified on every unmasked field, per row (`crates/verify/src/harness/floors.txt`).
 
-| Row | samus-movement | world-camera | run-progress | interface-hud | world-blocks | samus-appearance |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| any-ceres-arrival | 0 | 0 | 222 | 0 | 0 | 0 |
-| any-fly-to-ceres | 0 | 0 | 802 | 0 | 0 | 0 |
-| any-intro-0568 | 0 | 0 | 1,649 | 0 | 0 | 0 |
-| any-intro-2219 | 0 | 0 | 2,103 | 0 | 0 | 0 |
-| any-intro-4323 | 0 | 0 | 1,688 | 0 | 0 | 0 |
-| any-intro-6012 | 0 | 0 | 1,499 | 0 | 0 | 0 |
-| any-power-on | 0 | 0 | 182 | 0 | 0 | 0 |
-| any-zebes-arrival | 0 | 0 | 231 | 0 | 0 | 0 |
-| area-brinstar | 476 | 476 | 476 | 476 | 476 | 476 |
-| area-maridia | 252 | 257 | 428 | 257 | 254 | 255 |
-| area-norfair | 209 | 208 | 374 | 208 | 205 | 209 |
-| boss-kraid-defeated | 1,024 | 1,068 | 1,137 | 1,070 | 1,068 | 1,023 |
-| boss-phantoon | 1,920 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 |
-| chain-0012-91F8 | 421 | 1,031 | 1,032 | 1,031 | 1,030 | 421 |
-| chain-0013-92FD | 598 | 599 | 599 | 599 | 598 | 599 |
-| chain-0014-96BA | 343 | 342 | 506 | 342 | 340 | 343 |
-| chain-0043-9AD9 | 417 | 416 | 417 | 416 | 415 | 417 |
-| chain-0057-9FBA | 537 | 549 | 549 | 549 | 547 | 535 |
-| chain-0059-A293 | 519 | 584 | 777 | 584 | 583 | 512 |
-| chain-0097-ACF0 | 663 | 662 | 817 | 662 | 660 | 663 |
-| chain-0100-B07A | 277 | 284 | 285 | 284 | 283 | 277 |
-| chain-0106-AD5E | 496 | 600 | 782 | 600 | 597 | 487 |
-| chain-0163-A890 | 28 | 27 | 30 | 27 | 26 | 28 |
-| chain-0220-D017 | 145 | 144 | 538 | 144 | 143 | 144 |
-| chain-0224-D0B9 | 159 | 335 | 512 | 335 | 332 | 159 |
-| chain-0232-D5A7 | 599 | 632 | 706 | 632 | 631 | 601 |
-| chain-0234-D51E | 145 | 152 | 153 | 152 | 152 | 153 |
-| chain-0314-DAE1 | 444 | 450 | 465 | 450 | 449 | 443 |
-| chain-any-0001-DF45 | 149 | 249 | 411 | 249 | 248 | 149 |
-| chain-any-0002-DF8D | 120 | 119 | 281 | 119 | 119 | 120 |
-| chain-any-0003-DFD7 | 182 | 181 | 344 | 181 | 181 | 182 |
-| chain-any-0004-E021 | 102 | 101 | 263 | 101 | 101 | 102 |
-| chain-any-0005-E06B | 94 | 93 | 320 | 94 | 93 | 94 |
-| chain-any-0006-E0B5 | 1,491 | 1,609 | 1,775 | 1,609 | 1,609 | 1,486 |
-| chain-any-0007-E06B | 96 | 95 | 258 | 95 | 95 | 96 |
-| chain-any-0008-E021 | 100 | 99 | 263 | 99 | 99 | 100 |
-| chain-any-0009-DFD7 | 163 | 168 | 330 | 168 | 168 | 162 |
-| chain-any-0010-DF8D | 91 | 111 | 278 | 111 | 111 | 90 |
-| chain-any-0011-DF45 | 164 | 163 | 2,123 | 163 | 163 | 163 |
-| event-zebes-awake | 128 | 179 | 178 | 179 | 179 | 126 |
-| item-charge-beam | 469 | 479 | 919 | 479 | 477 | 480 |
-| item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 |
-| item-morph-ball | 1,028 | 1,028 | 1,427 | 1,028 | 1,027 | 1,028 |
-| item-plasma-beam | 145 | 145 | 169 | 145 | 145 | 146 |
-| item-reserve-tank | 413 | 413 | 1,229 | 413 | 411 | 414 |
-| item-wave-beam | 37 | 36 | 59 | 36 | 35 | 37 |
-| samus-bomb-jump-vertical | 286 | 314 | 1,058 | 314 | 313 | 314 |
-| samus-ceres-push | 1,710 | 1,777 | 1,776 | 1,777 | 1,777 | 1,705 |
-| samus-grapple-release | 243 | 448 | 488 | 488 | 487 | 248 |
-| samus-grapple-walljump | 114 | 114 | 174 | 174 | 173 | 114 |
-| samus-input-poses | 297 | 397 | 559 | 397 | 396 | 297 |
-| samus-mockball | 129 | 129 | 129 | 129 | 128 | 129 |
-| samus-screw-attack | 862 | 945 | 945 | 945 | 944 | 859 |
-| samus-shinespark-left | 316 | 418 | 418 | 418 | 417 | 316 |
-| samus-shinespark-right | 293 | 405 | 405 | 405 | 404 | 293 |
-| samus-shinespark-up | 212 | 393 | 393 | 393 | 392 | 212 |
-| samus-shinespark-up-left | 267 | 418 | 418 | 418 | 417 | 267 |
-| samus-space-jump-chain | 383 | 383 | 383 | 383 | 382 | 383 |
-| samus-square-slope-reserve | 37 | 36 | 398 | 36 | 35 | 37 |
-| samus-walljump-16 | 157 | 157 | 157 | 157 | 156 | 157 |
-| samus-walljump-22 | 163 | 163 | 163 | 163 | 162 | 163 |
-| samus-walljump-28 | 169 | 169 | 169 | 169 | 168 | 169 |
-| terrain-quicksand | 334 | 450 | 456 | 450 | 421 | 402 |
-| total | 20,856 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 23,604 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows |
+| Row | samus-movement | world-camera | run-progress | interface-hud | world-blocks | samus-appearance | boss-ceres-ridley |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| any-ceres-arrival | 0 | 0 | 222 | 0 | 0 | 0 | 32 |
+| any-fly-to-ceres | 0 | 0 | 802 | 0 | 0 | 0 | 0 |
+| any-intro-0568 | 0 | 0 | 1,649 | 0 | 0 | 0 | 0 |
+| any-intro-2219 | 0 | 0 | 2,103 | 0 | 0 | 0 | 0 |
+| any-intro-4323 | 0 | 0 | 1,688 | 0 | 0 | 0 | 0 |
+| any-intro-6012 | 0 | 0 | 1,499 | 0 | 0 | 0 | 0 |
+| any-power-on | 0 | 0 | 182 | 0 | 0 | 0 | 0 |
+| any-zebes-arrival | 0 | 0 | 231 | 0 | 0 | 0 | 59 |
+| area-brinstar | 476 | 476 | 476 | 476 | 476 | 476 | 0 |
+| area-maridia | 252 | 257 | 428 | 257 | 254 | 255 | 0 |
+| area-norfair | 209 | 208 | 374 | 208 | 205 | 209 | 0 |
+| boss-kraid-defeated | 1,024 | 1,068 | 1,137 | 1,070 | 1,068 | 1,023 | 0 |
+| boss-phantoon | 1,920 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 | 0 |
+| chain-0012-91F8 | 421 | 1,031 | 1,032 | 1,031 | 1,030 | 421 | 0 |
+| chain-0013-92FD | 598 | 599 | 599 | 599 | 598 | 599 | 0 |
+| chain-0014-96BA | 343 | 342 | 506 | 342 | 340 | 343 | 0 |
+| chain-0043-9AD9 | 417 | 416 | 417 | 416 | 415 | 417 | 0 |
+| chain-0057-9FBA | 537 | 549 | 549 | 549 | 547 | 535 | 0 |
+| chain-0059-A293 | 519 | 584 | 777 | 584 | 583 | 512 | 0 |
+| chain-0097-ACF0 | 663 | 662 | 817 | 662 | 660 | 663 | 0 |
+| chain-0100-B07A | 277 | 284 | 285 | 284 | 283 | 277 | 0 |
+| chain-0106-AD5E | 496 | 600 | 782 | 600 | 597 | 487 | 0 |
+| chain-0163-A890 | 28 | 27 | 30 | 27 | 26 | 28 | 0 |
+| chain-0220-D017 | 145 | 144 | 538 | 144 | 143 | 144 | 0 |
+| chain-0224-D0B9 | 159 | 335 | 512 | 335 | 332 | 159 | 0 |
+| chain-0232-D5A7 | 599 | 632 | 706 | 632 | 631 | 601 | 0 |
+| chain-0234-D51E | 145 | 152 | 153 | 152 | 152 | 153 | 0 |
+| chain-0314-DAE1 | 444 | 450 | 465 | 450 | 449 | 443 | 0 |
+| chain-any-0001-DF45 | 149 | 249 | 411 | 249 | 248 | 149 | 408 |
+| chain-any-0002-DF8D | 120 | 119 | 281 | 119 | 119 | 120 | 278 |
+| chain-any-0003-DFD7 | 182 | 181 | 344 | 181 | 181 | 182 | 341 |
+| chain-any-0004-E021 | 102 | 101 | 263 | 101 | 101 | 102 | 260 |
+| chain-any-0005-E06B | 94 | 93 | 320 | 94 | 93 | 94 | 178 |
+| chain-any-0006-E0B5 | 1,491 | 1,609 | 1,775 | 1,609 | 1,609 | 1,486 | 84 |
+| chain-any-0007-E06B | 96 | 95 | 258 | 95 | 95 | 96 | 255 |
+| chain-any-0008-E021 | 100 | 99 | 263 | 99 | 99 | 100 | 260 |
+| chain-any-0009-DFD7 | 163 | 168 | 330 | 168 | 168 | 162 | 327 |
+| chain-any-0010-DF8D | 91 | 111 | 278 | 111 | 111 | 90 | 276 |
+| chain-any-0011-DF45 | 164 | 163 | 2,123 | 163 | 163 | 163 | 2,123 |
+| event-zebes-awake | 128 | 179 | 178 | 179 | 179 | 126 | 0 |
+| item-charge-beam | 469 | 479 | 919 | 479 | 477 | 480 | 0 |
+| item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 | 0 |
+| item-morph-ball | 1,028 | 1,028 | 1,427 | 1,028 | 1,027 | 1,028 | 0 |
+| item-plasma-beam | 145 | 145 | 169 | 145 | 145 | 146 | 0 |
+| item-reserve-tank | 413 | 413 | 1,229 | 413 | 411 | 414 | 0 |
+| item-wave-beam | 37 | 36 | 59 | 36 | 35 | 37 | 0 |
+| samus-bomb-jump-vertical | 286 | 314 | 1,058 | 314 | 313 | 314 | 0 |
+| samus-ceres-push | 1,710 | 1,777 | 1,776 | 1,777 | 1,777 | 1,705 | 0 |
+| samus-grapple-release | 243 | 448 | 488 | 488 | 487 | 248 | 0 |
+| samus-grapple-walljump | 114 | 114 | 174 | 174 | 173 | 114 | 0 |
+| samus-input-poses | 297 | 397 | 559 | 397 | 396 | 297 | 556 |
+| samus-mockball | 129 | 129 | 129 | 129 | 128 | 129 | 0 |
+| samus-screw-attack | 862 | 945 | 945 | 945 | 944 | 859 | 0 |
+| samus-shinespark-left | 316 | 418 | 418 | 418 | 417 | 316 | 0 |
+| samus-shinespark-right | 293 | 405 | 405 | 405 | 404 | 293 | 0 |
+| samus-shinespark-up | 212 | 393 | 393 | 393 | 392 | 212 | 0 |
+| samus-shinespark-up-left | 267 | 418 | 418 | 418 | 417 | 267 | 0 |
+| samus-space-jump-chain | 383 | 383 | 383 | 383 | 382 | 383 | 0 |
+| samus-square-slope-reserve | 37 | 36 | 398 | 36 | 35 | 37 | 0 |
+| samus-walljump-16 | 157 | 157 | 157 | 157 | 156 | 157 | 0 |
+| samus-walljump-22 | 163 | 163 | 163 | 163 | 162 | 163 | 0 |
+| samus-walljump-28 | 169 | 169 | 169 | 169 | 168 | 169 | 0 |
+| terrain-quicksand | 334 | 450 | 456 | 450 | 421 | 402 | 0 |
+| total | 20,856 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 23,604 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows | 5,437 in 63 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
@@ -372,6 +406,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | interface-hud | 84 | 0 |
 | world-blocks | 100 | 0 |
 | samus-appearance | 98 | 0 |
+| boss-ceres-ridley | 56 | 0 |
 
 ## Oracle coverage
 
@@ -385,6 +420,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 | interface-hud | 37,669 | 23,604 | 0 | 20,782 |
 | world-blocks | 35,949 | 23,517 | 86 | 22,915 |
 | samus-appearance | 37,669 | 20,977 | 0 | 557 |
+| boss-ceres-ridley | 40,835 | 5,437 | 0 | 3,233 |
 
 Per declared field, the compared frames on which it was compared and those on which a mask, by its named writer, put it out of scope. The summary's harness frames count a frame matched on its unmasked fields alone.
 
@@ -437,6 +473,14 @@ Per declared field, the compared frames on which it was compared and those on wh
 | samus-appearance | time_left | 20,977 | 0 |
 | samus-appearance | stage | 20,976 | 1 |
 | samus-appearance | laps_left | 20,976 | 1 |
+| boss-ceres-ridley | phase | 5,437 | 0 |
+| boss-ceres-ridley | figure | 5,437 | 0 |
+| boss-ceres-ridley | shown | 5,437 | 0 |
+| boss-ceres-ridley | solid | 5,437 | 0 |
+| boss-ceres-ridley | new figure | 5,437 | 0 |
+| boss-ceres-ridley | shake | 5,056 | 381 |
+| boss-ceres-ridley | colours | 3,847 | 1,590 |
+| boss-ceres-ridley | box | 5,437 | 0 |
 
 Per catalogue entry, the frames that exercised it with every field its output reaches compared, those of them matched and verified, those of them on which the null model matched every such field too, and the frames that exercised it unchecked: one of its fields masked, or an output (an event) the harness doesn't compare. An entry the null model matches on as many frames as the model is only weakly checked by the rows, since doing nothing would pass them too; an entry no frame verifies is checked by its vectors only.
 
@@ -552,6 +596,17 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | samus-appearance | StartingClip | 5,260 | 555 | 5,260 | 0 |
 | samus-appearance | WallJumpBranch | 14 | 3 | 14 | 0 |
 | samus-appearance | WallJumpReady | 77 | 4 | 77 | 0 |
+| boss-ceres-ridley | Closing | 45 | 0 | 45 | 0 |
+| boss-ceres-ridley | EscapeShakes | 2,069 | 1,347 | 2,069 | 138 |
+| boss-ceres-ridley | Opening | 50 | 0 | 50 | 0 |
+| boss-ceres-ridley | Polling | 942 | 0 | 942 | 0 |
+| boss-ceres-ridley | RoomStart | 32 | 0 | 32 | 0 |
+| boss-ceres-ridley | ShaftWall | 254 | 253 | 254 | 0 |
+| boss-ceres-ridley | SheIsNear | 952 | 0 | 952 | 0 |
+| boss-ceres-ridley | Shown | 2,218 | 2,167 | 2,218 | 0 |
+| boss-ceres-ridley | Solid | 2,218 | 2,168 | 2,218 | 0 |
+| boss-ceres-ridley | TheDoorsColours | 11 | 0 | 11 | 0 |
+| boss-ceres-ridley | Waiting | 2,207 | 253 | 2,207 | 0 |
 
 ## Engine not yet rebuilt
 
@@ -559,9 +614,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 49 | 4,916 | 29,496 | 31,219 | 10,248 | 1,912 | 2,217 | 2,720 | 629 | 6,876 |
-| bridges | 10 | 2,692 | 16,153 | 17,509 | 1,117 | 1,018 | 1,065 | 811 | 157 | 2,788 |
-| rebuilt models, shared types included | 71 | 3,333 | 20,000 | 25,662 | 9,615 | 14,264 | 1,070 | 511 | 307 | 8,720 |
+| engine, not yet rebuilt | 49 | 4,981 | 29,887 | 31,503 | 10,292 | 1,912 | 2,323 | 2,768 | 629 | 6,920 |
+| bridges | 11 | 2,878 | 17,271 | 18,795 | 1,188 | 1,199 | 1,076 | 874 | 157 | 3,010 |
+| rebuilt models, shared types included | 79 | 3,550 | 21,299 | 27,313 | 10,295 | 14,811 | 1,099 | 610 | 376 | 9,286 |
 
 ## Timeline
 
@@ -577,6 +632,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | --- | ---: | ---: |
 | recorded: the lock's rows | 113,716 | 87.7 % |
 | cached for the harnesses | 17,538 | 13.5 % |
+| boss-ceres-ridley model matches | 4,878 | 3.8 % |
 | game-time model matches | 17,328 | 13.4 % |
 | interface-hud model matches | 5,046 | 3.9 % |
 | run-progress model matches | 17,121 | 13.2 % |
@@ -595,6 +651,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | --- | ---: | ---: |
 | recorded: the lock's rows | 5,908 | 3.5 % |
 | cached for the harnesses | 0 | 0.0 % |
+| boss-ceres-ridley model matches | 0 | 0.0 % |
 | game-time model matches | 0 | 0.0 % |
 | interface-hud model matches | 0 | 0.0 % |
 | run-progress model matches | 0 | 0.0 % |
@@ -613,6 +670,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | --- | ---: | ---: |
 | recorded: the lock's rows | 145,139 | 65.1 % |
 | cached for the harnesses | 20,480 | 9.2 % |
+| boss-ceres-ridley model matches | 556 | 0.2 % |
 | game-time model matches | 17,605 | 7.9 % |
 | interface-hud model matches | 15,805 | 7.1 % |
 | run-progress model matches | 20,432 | 9.2 % |
@@ -631,6 +689,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | --- | ---: | ---: |
 | recorded: the lock's rows | 2,378 | 7.1 % |
 | cached for the harnesses | 0 | 0.0 % |
+| boss-ceres-ridley model matches | 0 | 0.0 % |
 | game-time model matches | 0 | 0.0 % |
 | interface-hud model matches | 0 | 0.0 % |
 | run-progress model matches | 0 | 0.0 % |
@@ -653,6 +712,7 @@ Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/archi
 
 | Domain free run | M0 | M1 | M2 |
 | --- | ---: | ---: | ---: |
+| boss-ceres-ridley | 341 of 345 (98.8 %) | 1,465 of 1,624 (90.2 %) | 2,667 of 4,534 (58.8 %) |
 | game-time | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
 | interface-hud | 181 of 345 (52.5 %) | 744 of 1,624 (45.8 %) | 2,826 of 4,534 (62.3 %) |
 | run-progress | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
@@ -846,7 +906,7 @@ flowchart LR
   P1 --> F1
   H1 --> F3
   classDef started fill:#cde8c4,stroke:#3c7a2e
-  class S1,CAM,S2,S5,H2,W2,P1 started
+  class S1,CAM,S2,S5,H2,W2,P1,B8 started
 ```
 
 ## Structure
@@ -872,6 +932,7 @@ graph LR
     c_canonical_derive["canonical_derive"]
   end
   subgraph verification["verification"]
+    c_boss_ceres_ridley["boss_ceres_ridley"]
     c_import["import"]
     c_interface_hud["interface_hud"]
     c_oracle["oracle"]
@@ -888,9 +949,11 @@ graph LR
   c_app --> c_data
   c_app --> c_game
   c_app --> c_runtime
+  c_boss_ceres_ridley --> c_types
   c_canonical --> c_canonical_derive
   c_data --> c_canonical
   c_data --> c_types
+  c_game --> c_boss_ceres_ridley
   c_game --> c_canonical
   c_game --> c_data
   c_game --> c_interface_hud
@@ -910,6 +973,7 @@ graph LR
   c_samus_movement --> c_types
   c_tools --> c_runtime
   c_tools --> c_verify
+  c_verify --> c_boss_ceres_ridley
   c_verify --> c_canonical
   c_verify --> c_data
   c_verify --> c_game
@@ -1592,6 +1656,92 @@ graph LR
   m_update --> m_state
 ```
 
+### boss-ceres-ridley
+
+`crates/clean/boss_ceres_ridley`, 8 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | The catalogue: one behaviour for each entry of the spec, with its kind, its switch and how it is checked. | `enum BehaviourId (11)`, `struct Behaviour`, `fn catalogue`, `BehaviourId::behaviour` | 20 | 123 |
+| `door.rs` | doors | A Ceres door: how a room places it, and its run each frame the enemies run. | `const BOX_RADIUS`, `enum DoorKind (2)`, `struct CeresDoor`, `struct Placement`, `struct OpeningSound`, `struct Run`, `DoorKind::becomes_wall`, `OpeningSound::QUEUE_LIMIT`, `CeresDoor::{place, run, figure, hitbox}`, 1 private | 522 | 130 |
+| `figure.rs` | doors | The figures a door holds: which one each phase shows, for each way the door faces. | `enum FigureLook (5)`, `struct Figure`, `struct Figures`, `fn figures`, `Figures::for_door`, 4 private | 310 | 102 |
+| `inputs.rs` | -; `fn she_is_near` in doors, `fn gap` in doors, `fn escape_shake` in station | What a door reads as the frame starts, and the two rules that read only it: whether she is near, and whether the door starts a shake. | `struct Inputs`, `Inputs::{she_is_near, escape_shake}`, 2 private | 116 | 31 |
+| `lib.rs` | - | The boss-ceres-ridley model, part 1: the Ceres doors, built from its behaviour spec alone. | - | 0 | 14 |
+| `phase.rs` | doors | A door's phase: where it stands in its cycle, with what each phase carries (its wait, and how far an opening or a closing has gone), and the tables of which phases are shown and solid. | `struct Wait`, `enum Quarter (4)`, `enum Phase (7)`, `Wait::{new, frames}`, `Quarter::next`, `Phase::{counted_down, shown, solid}`, 2 private | 272 | 97 |
+| `rules.rs` | - | The doors' tuning values: every number a Parameter entry of the spec lists. | `struct Rules`, `impl Default for Rules`, 8 private | 47 | 37 |
+| `station.rs` | station | The station around the doors: its stage, the doors' two colour sets and the shakes they start. | `enum Stage (3)`, `enum ColourSet (2)`, `struct Shake`, `Stage::{ridley_has_fled, door_colours}` | 14 | 32 |
+
+Its crate root exports:
+
+- from `catalogue`: `Behaviour`, `BehaviourId`, `catalogue`
+- from `door`: `BOX_RADIUS`, `CeresDoor`, `DoorKind`, `OpeningSound`, `Placement`, `Run`
+- from `figure`: `Figure`, `FigureLook`
+- from `inputs`: `Inputs`
+- from `phase`: `Phase`, `Quarter`, `Wait`
+- from `rules`: `Rules`
+- from `station`: `ColourSet`, `Shake`, `Stage`
+
+The public functions a caller reaches through them:
+
+```rust
+BehaviourId::behaviour(self) -> Behaviour
+catalogue() -> EnumMap<BehaviourId, Behaviour>
+DoorKind::becomes_wall(self, stage: Stage) -> bool
+CeresDoor::place(kind: DoorKind, facing: Side, position: Pair<Px>, stage: Stage) -> Placement
+CeresDoor::run(self, inputs: &Inputs, rules: &Rules) -> Run
+CeresDoor::figure(self) -> Option<Figure>
+CeresDoor::hitbox(self) -> Hitbox
+Inputs::she_is_near(&self, door: Pair<Px>, reach: u16) -> bool
+Inputs::escape_shake(&self, rules: &Rules) -> Option<Shake>
+Wait::new(frames: u16) -> Option<Self>
+Wait::frames(self) -> u16
+Quarter::next(self) -> Option<Self>
+Phase::counted_down(mut self) -> Option<Self>
+Phase::shown(self) -> bool
+Phase::solid(self) -> bool
+Stage::ridley_has_fled(self) -> bool
+Stage::door_colours(self) -> ColourSet
+```
+
+Shared types it takes from `types`: `Checked`, `Hitbox`, `Kind`, `Pair`, `Px`, `Radius`, `Side`, `Switch`. Other crates it uses: `core`, `enum_map`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+    m_inputs["inputs"]
+    m_lib["lib"]
+    m_rules["rules"]
+  end
+  subgraph a_doors["doors"]
+    m_door["door"]
+    m_figure["figure"]
+    m_phase["phase"]
+  end
+  subgraph a_station["station"]
+    m_station["station"]
+  end
+  m_door --> m_figure
+  m_door --> m_inputs
+  m_door --> m_phase
+  m_door --> m_rules
+  m_door --> m_station
+  m_figure --> m_phase
+  m_inputs --> m_rules
+  m_inputs --> m_station
+  m_lib --> m_catalogue
+  m_lib --> m_door
+  m_lib --> m_figure
+  m_lib --> m_inputs
+  m_lib --> m_phase
+  m_lib --> m_rules
+  m_lib --> m_station
+  m_rules --> m_phase
+  m_rules --> m_station
+```
+
 ### Shared types by model
 
 The public items of `crates/clean/types` the clean models share, and the models that name each.
@@ -1599,7 +1749,7 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | Item | Used by |
 | --- | --- |
 | `type Fixed` | samus-appearance, samus-movement, world-camera |
-| `type Px` | samus-movement, world-camera |
+| `type Px` | boss-ceres-ridley, samus-movement, world-camera |
 | `fn fixed` | samus-movement, world-camera |
 | `fn px` | samus-movement, world-camera |
 | `trait Parts` | samus-appearance, samus-movement, world-camera |
@@ -1607,11 +1757,11 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `const PIXEL` | world-camera |
 | `fn part_below` | samus-movement |
 | `fn below` | world-camera |
-| `struct Pair` | interface-hud, samus-movement, world-blocks, world-camera |
+| `struct Pair` | boss-ceres-ridley, interface-hud, samus-movement, world-blocks, world-camera |
 | `type Position` | samus-movement, world-camera |
-| `type Radius` | samus-movement |
+| `type Radius` | boss-ceres-ridley, samus-movement |
 | `enum Heading (4)` | samus-movement, world-blocks |
-| `enum Side (2)` | samus-movement |
+| `enum Side (2)` | boss-ceres-ridley, samus-movement |
 | `enum Facing (3)` | samus-movement, world-camera |
 | `enum Body (4)` | samus-appearance, samus-movement |
 | `enum Action (16)` | samus-appearance, samus-movement |
@@ -1634,11 +1784,11 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `enum Parity (2)` | samus-movement |
 | `enum SlopeFaces (2)` | samus-movement |
 | `struct Slope` | samus-movement |
-| `struct Hitbox` | samus-movement |
+| `struct Hitbox` | boss-ceres-ridley, samus-movement |
 | `trait World` | samus-movement |
-| `enum Kind (5)` | interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera |
-| `enum Switch (3)` | interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera |
-| `enum Checked (2)` | interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera |
+| `enum Kind (5)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera |
+| `enum Switch (3)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera |
+| `enum Checked (2)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera |
 | `type Set` | run-progress, samus-appearance, samus-movement, world-blocks |
 | `fn set_of` | - |
 | `trait Members` | run-progress |
@@ -1683,3 +1833,4 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,107 | 1,062 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,168 | 205 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | `Ahead`, `Dash`, `Frames`, `Inputs`, `Laps`, `LapsLeft`, `Liquid`, `MoveEvent`, `Playhead`, `Rules`, `SoundsWaiting`, `State`, `Step`, `update` | 575 | 147 |
+| boss-ceres-ridley | `crates/game/src/boss_ceres_ridley_bridge.rs` | bridge | `CeresDoor`, `DoorKind`, `FigureLook`, `Inputs`, `Phase`, `Placement`, `Quarter`, `Rules`, `Stage`, `Wait` | 1,118 | 222 |

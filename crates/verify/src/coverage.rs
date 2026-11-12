@@ -732,6 +732,8 @@ pub const FIELDS: &[Field] = &[
     wram("hud.mini_map.map_collected", source::HAS_AREA_MAP),
     wram("hud.mini_map.disabled", source::DEBUG_DISABLE_MINIMAP),
     wram("message", source::MESSAGE_BOX_INDEX),
+    // 0 calm, 1 the getaway, any other the escape: the doors test it non-zero and `>= 2`.
+    wram("ceres", source::CERES_STATUS),
     Field {
         path: "collected_items",
         status: Status::Decoded(Source::WramBlock(source::ITEM_BIT_ARRAY)),
@@ -834,6 +836,7 @@ mod tests {
             "enemy_palette_cycle",
             "hud",
             "message",
+            "ceres",
             "collected_items",
             "sram",
             "projectiles",
@@ -955,6 +958,7 @@ mod tests {
             rules.previous_position[3],
             rules.irq_command,
             rules.message,
+            rules.ceres,
             rules.animation.frame,
             rules.animation.timer,
             rules.animation.boost,

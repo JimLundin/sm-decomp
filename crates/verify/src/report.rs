@@ -287,6 +287,37 @@ const DOMAINS: &[Domain] = &[
             },
         ],
     },
+    // The doors' phases, figures and run are the doors'; the stage, the colour sets and the
+    // shakes are the station's. The inputs' two rules split between them, and the rules and the
+    // catalogue are the domain's shared code.
+    Domain {
+        name: "boss-ceres-ridley",
+        bridge: "boss_ceres_ridley_bridge",
+        harness: "ceres",
+        areas: &[
+            ("doors", &["door.rs", "phase.rs", "figure.rs"]),
+            ("station", &["station.rs"]),
+        ],
+        apart: &[
+            // `SheIsNear`: whether she is within the reach, and its per-axis gap.
+            Apart {
+                file: "inputs.rs",
+                function: "she_is_near",
+                area: "doors",
+            },
+            Apart {
+                file: "inputs.rs",
+                function: "gap",
+                area: "doors",
+            },
+            // `EscapeShakes`: the shake a door's run starts.
+            Apart {
+                file: "inputs.rs",
+                function: "escape_shake",
+                area: "station",
+            },
+        ],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.

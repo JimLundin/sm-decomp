@@ -2307,6 +2307,8 @@ fn only_the_listed_unknown_species_are_carried() {
     let species = SpeciesMap::slice_zero();
     let programs = EnemyPrograms::default();
     let mut wram = vec![0; 0x20000];
+    // A Ceres door of parameter 2, a kind boss-ceres-ridley doesn't model yet.
+    put(&mut wram, ENEMY_SLOT_1.wrapping_add(0x3C), 2);
     for word in 1..=u16::MAX {
         if species.get(data::enemy::SpeciesKey(word)).is_some() {
             continue;
@@ -2334,6 +2336,46 @@ fn only_the_listed_unknown_species_are_carried() {
             ),
         }
     }
+}
+
+#[test]
+fn a_modelled_ceres_door_decodes_as_the_models_door() {
+    let slot = ENEMY_SLOT_1.wrapping_add(0x40);
+    let mut record = record();
+    put_enemy(
+        &mut record.wram,
+        slot,
+        0xE23F,
+        0x3000,
+        [0xF95F, 0xF5F2, 0x00A6],
+    );
+    // Facing left, closed with 2 frames to wait, its AI words a door's.
+    put(&mut record.wram, slot.wrapping_add(0x3C), 1);
+    put(&mut record.wram, slot.wrapping_add(0x1C), 2);
+    for (offset, word) in (0x30_usize..)
+        .step_by(2)
+        .zip(crate::enemy::ceres_door::WORDS)
+    {
+        put(&mut record.wram, slot.wrapping_add(offset), word);
+    }
+    put(&mut record.wram, slot.wrapping_add(0x02), 0x80);
+    put(&mut record.wram, slot.wrapping_add(0x06), 0x60);
+    let state = decode(&record, &rooms()).unwrap().state;
+    let decoded = &state.room.enemies.slots[2];
+    let Occupancy::Live(EnemyBody::CeresDoor(door)) = decoded.occupancy else {
+        panic!("not a door: {:?}", decoded.occupancy);
+    };
+    assert_eq!(door.0.facing, types::Side::Left);
+    assert_eq!((door.0.position.x.0, door.0.position.y.0), (0x80, 0x60));
+    assert!(matches!(
+        door.0.phase,
+        boss_ceres_ridley::Phase::Closed { wait } if wait.frames() == 2
+    ));
+    // The wait is the phase's: the cursor runs no instructions.
+    assert_eq!(decoded.common.cursor.delay.0, 0);
+    // Other AI words than a door's are refused, not dropped.
+    put(&mut record.wram, slot.wrapping_add(0x32), 1);
+    assert!(decode(&record, &rooms()).is_err());
 }
 
 /// The timer that enables sounds: the one PLM the engine carries but doesn't run.

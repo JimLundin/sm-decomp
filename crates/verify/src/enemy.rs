@@ -19,6 +19,8 @@ use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, 
 use crate::decode::DecodeError;
 use crate::source::{self, SlotField, WramTable};
 
+pub mod ceres_door;
+
 /// The properties word's deleted bit (bank $A0 log): the next determine pass frees the slot.
 const DELETED: u16 = 0x0200;
 
@@ -214,6 +216,9 @@ impl EnemySources {
                     value: word.value,
                 })?
             }
+            Occupant::Unmodelled(UnmodelledSpecies::CeresDoor) => {
+                self.ceres_door(wram, index, variables)?
+            }
             Occupant::Unmodelled(species) => EnemyBody::Unmodelled(UnmodelledEnemy {
                 species,
                 instruction: word(self.instruction)?,
@@ -225,6 +230,51 @@ impl EnemySources {
             Occupancy::Live(body)
         } else {
             Occupancy::Deleting(body)
+        })
+    }
+
+    /// A Ceres door's body: the model's door for the kinds boss-ceres-ridley models, its words
+    /// carried unmodelled for the others.
+    fn ceres_door(
+        &self,
+        wram: &[u8],
+        index: u16,
+        variables: AiVariables,
+    ) -> Result<EnemyBody, DecodeError> {
+        let word = |field: SlotField| self.table.word(field, index)?.read(wram);
+        let instruction = word(self.instruction)?;
+        let position = ceres_door::position(word(self.x)?, word(self.y)?);
+        let door = ceres_door::door(
+            word(self.parameter_1)?,
+            position,
+            instruction,
+            word(self.instruction_timer)?,
+        )
+        .map_err(|unknown| match unknown {
+            ceres_door::Unknown::Instruction(value) => DecodeError::Unrepresentable {
+                source: self.instruction.name,
+                value,
+            },
+            ceres_door::Unknown::Timer(value) => DecodeError::Unrepresentable {
+                source: self.instruction_timer.name,
+                value,
+            },
+        })?;
+        let words = words(variables);
+        Ok(match door {
+            Some(door) if words == ceres_door::WORDS => EnemyBody::CeresDoor(door),
+            Some(_) => {
+                return Err(DecodeError::Unrepresentable {
+                    source: self.variables[0].name,
+                    value: variables.a,
+                });
+            }
+            None => EnemyBody::Unmodelled(UnmodelledEnemy {
+                species: UnmodelledSpecies::CeresDoor,
+                instruction,
+                spritemap: word(self.spritemap)?,
+                variables: words,
+            }),
         })
     }
 
@@ -337,9 +387,18 @@ impl EnemySources {
         } else {
             (Label::default(), SpritemapId::default())
         };
+        // A Ceres door's wait is its phase's: it runs no instructions.
+        let door = matches!(
+            occupancy,
+            Occupancy::Live(EnemyBody::CeresDoor(_)) | Occupancy::Deleting(EnemyBody::CeresDoor(_))
+        );
         let cursor = Cursor {
             at,
-            delay: frames(self.instruction_timer)?,
+            delay: if door {
+                Frames::default()
+            } else {
+                frames(self.instruction_timer)?
+            },
             ..Cursor::default()
         };
         Ok(Slot {
@@ -392,7 +451,13 @@ pub const fn words(variables: AiVariables) -> [u16; 6] {
 /// The words an unmodelled enemy holds, in slot order.
 #[must_use]
 pub const fn unmodelled_words(enemy: UnmodelledEnemy) -> AiVariables {
-    let [first, second, third, fourth, fifth, sixth] = enemy.variables;
+    from_words(enemy.variables)
+}
+
+/// Six words in slot order as the AI words.
+#[must_use]
+pub const fn from_words(words: [u16; 6]) -> AiVariables {
+    let [first, second, third, fourth, fifth, sixth] = words;
     AiVariables {
         a: first,
         b: second,

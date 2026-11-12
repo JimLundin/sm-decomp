@@ -24,7 +24,7 @@ use game::state::atmospheric::{
 };
 use game::state::hud::{Drawn, Hud, HudItem, HudTilemap, MiniMap};
 use game::state::room::{
-    Block, BlockColumns, BlockPoint, BlockRows, Camera, CameraDistance, DrawnBlocks,
+    Block, BlockColumns, BlockPoint, BlockRows, Camera, CameraDistance, CeresStage, DrawnBlocks,
     ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyDrawing,
     EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ITEM_GFX_SLOTS, ItemGfx, ItemGfxSlot,
     Layer2Block, Layer2Scroll, Layer2Scrolls, LayerBlending, RoomScoped, ScrollArea, Scrollers,
@@ -450,6 +450,8 @@ pub struct Rules<'t> {
     pub last_different_pose: PoseSources,
     /// `message`.
     pub message: WramWord,
+    /// `ceres`.
+    pub ceres: WramWord,
     /// `collected_items`.
     pub collected_items: WramBlock,
     /// `room.plms`.
@@ -1094,6 +1096,7 @@ impl Rules<'_> {
         irq_command: source::CUR_IRQ_HANDLER,
         irq_next: source::IRQHANDLER_NEXT_HANDLER,
         message: source::MESSAGE_BOX_INDEX,
+        ceres: source::CERES_STATUS,
         collected_items: source::ITEM_BIT_ARRAY,
         plms: PlmSources::ORIGINAL,
         projectiles: ProjectileSources::ORIGINAL,
@@ -1250,6 +1253,7 @@ impl Rules<'_> {
             elevator: self.elevator.read(wram)?,
             enemy_palette_cycle: self.palette_cycle.read(wram)?,
             message: Message(self.message.read(wram)?),
+            ceres: ceres_stage(self.ceres.read(wram)?),
             collected_items: collected_items(self.collected_items, wram)?,
             hud: self.hud.read(wram)?,
             sram: save_ram(&record.sram)?,
@@ -2373,5 +2377,19 @@ impl PoseSources {
                 }
             })?,
         })
+    }
+}
+
+/// The Ceres station's stage from the Ceres status word.
+///
+/// The doors test it non-zero (the getaway on) and `>= 2` unsigned (the escape, the shaft's
+/// rotation `8000h` included), so every word is one of the three (bank $A6 log, `$A6:F678`,
+/// `$A6:F773`).
+#[must_use]
+pub const fn ceres_stage(status: u16) -> CeresStage {
+    match status {
+        0 => CeresStage::Calm,
+        1 => CeresStage::Getaway,
+        _ => CeresStage::Escape,
     }
 }

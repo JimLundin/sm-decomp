@@ -189,7 +189,7 @@ fn cache_and_image() -> Option<(std::path::PathBuf, Vec<u8>)> {
 /// row's segments and first divergences.
 #[test]
 fn every_domain_runs_free_against_the_cache() {
-    use crate::harness::{appearance, blocks, camera, hud, movement, progress};
+    use crate::harness::{appearance, blocks, camera, ceres, hud, movement, progress};
     let Some((cache, image)) = cache_and_image() else {
         return;
     };
@@ -207,7 +207,10 @@ fn every_domain_runs_free_against_the_cache() {
     hold_free_floors(&hud, "interface-hud", &cache);
     let progress = progress::ProgressDomain::new(image.clone());
     hold_free_floors(&progress, "run-progress", &cache);
+    let doors =
+        ceres::CeresDomain::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
     let blocks =
         blocks::BlocksDomain::load(image).unwrap_or_else(|error| panic!("content: {error}"));
     hold_free_floors(&blocks, "world-blocks", &cache);
+    hold_free_floors(&doors, "boss-ceres-ridley", &cache);
 }

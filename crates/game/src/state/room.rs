@@ -678,12 +678,29 @@ pub struct FaceBlock {
 /// variant.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UnmodelledSpecies {
-    /// A Ceres door, `$A0:E23F`.
+    /// A Ceres door of a kind boss-ceres-ridley doesn't model yet, `$A0:E23F` with parameter 2,
+    /// 3, 5 or 6 (the shaft's cover, Ridley's room's door and the getaway's walls).
     CeresDoor,
     /// Ceres Ridley, `$A0:E13F`.
     CeresRidley,
     /// The steam of Ceres's escape, `$A0:E1FF`.
     CeresSteam,
+}
+
+/// The Ceres station's stage, which the Ceres doors read.
+///
+/// No engine domain writes it yet: Ridley's getaway and the escape's start are later pieces of
+/// boss-ceres-ridley.
+// Bank $A6 log: the Ceres status word, `$093F`.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CeresStage {
+    /// Before Ridley's getaway, and outside Ceres.
+    #[default]
+    Calm,
+    /// Ridley flees; the escape has not yet started.
+    Getaway,
+    /// From the escape's start, the shaft's rotation included.
+    Escape,
 }
 
 /// An unmodelled enemy's words, as the seed held them: its species' lists aren't loaded, so its
@@ -709,6 +726,8 @@ pub enum EnemyBody {
     Elevator(Elevator),
     /// A Blue Brinstar face block.
     FaceBlock(FaceBlock),
+    /// A Ceres door (boss-ceres-ridley), the model's door.
+    CeresDoor(crate::boss_ceres_ridley_bridge::Door),
     /// A species the engine carries as the seed held it, and doesn't select: it runs no AI or
     /// instructions, isn't drawn and touches nothing.
     Unmodelled(UnmodelledEnemy),

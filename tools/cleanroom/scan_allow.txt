@@ -182,3 +182,11 @@ speed block          # the speed booster breaks it
 super missile block  # a super missile breaks it
 power bomb block     # a power bomb's blast breaks it
 grapple block        # her grapple holds it
+
+# The Ceres station (boss-ceres-ridley): what a player says about it.
+ceres ridley         # boss, Ridley on the Ceres station
+facing left          # the player's word for which way she or a door faces
+closed door          # plain English: a door that is shut
+random number        # the game's dice; a player calls it RNG
+screen shake         # what the player sees during the escape: the screen shakes
+during escape        # plain English: while the timed escape runs

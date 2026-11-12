@@ -171,3 +171,23 @@ samus-appearance entry StandingRestart 32 2 32 0
 samus-appearance entry StartingClip 5260 555 5260 0
 samus-appearance entry WallJumpBranch 14 3 14 0
 samus-appearance entry WallJumpReady 77 4 77 0
+boss-ceres-ridley frames 40835 5437 0 3233
+boss-ceres-ridley field 5437 0 phase
+boss-ceres-ridley field 5437 0 figure
+boss-ceres-ridley field 5437 0 shown
+boss-ceres-ridley field 5437 0 solid
+boss-ceres-ridley field 5437 0 new figure
+boss-ceres-ridley field 5056 381 shake
+boss-ceres-ridley field 3847 1590 colours
+boss-ceres-ridley field 5437 0 box
+boss-ceres-ridley entry Closing 45 0 45 0
+boss-ceres-ridley entry EscapeShakes 2069 1347 2069 138
+boss-ceres-ridley entry Opening 50 0 50 0
+boss-ceres-ridley entry Polling 942 0 942 0
+boss-ceres-ridley entry RoomStart 32 0 32 0
+boss-ceres-ridley entry ShaftWall 254 253 254 0
+boss-ceres-ridley entry SheIsNear 952 0 952 0
+boss-ceres-ridley entry Shown 2218 2167 2218 0
+boss-ceres-ridley entry Solid 2218 2168 2218 0
+boss-ceres-ridley entry TheDoorsColours 11 0 11 0
+boss-ceres-ridley entry Waiting 2207 253 2207 0

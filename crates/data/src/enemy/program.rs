@@ -178,6 +178,24 @@ pub const SLICE_ZERO_SPRITEMAPS: [Spritemap; 2] = [
     Spritemap(RomAddress::new(0xa8, 0x804d)),
 ];
 
+/// The Ceres doors' ten figures, which `game::boss_ceres_ridley_bridge` draws.
+///
+/// Closed, the three ajar figures and open, facing right, then the same facing left. Their
+/// importer is AF3's.
+// Bank $A6 log: `$A6:FA13` to `$A6:FAA7` facing right, `$A6:F95F` to `$A6:F9F3` facing left.
+pub const CERES_DOOR_SPRITEMAPS: [Spritemap; 10] = [
+    Spritemap(RomAddress::new(0xa6, 0xfa13)),
+    Spritemap(RomAddress::new(0xa6, 0xfa3d)),
+    Spritemap(RomAddress::new(0xa6, 0xfa67)),
+    Spritemap(RomAddress::new(0xa6, 0xfa87)),
+    Spritemap(RomAddress::new(0xa6, 0xfaa7)),
+    Spritemap(RomAddress::new(0xa6, 0xf95f)),
+    Spritemap(RomAddress::new(0xa6, 0xf989)),
+    Spritemap(RomAddress::new(0xa6, 0xf9b3)),
+    Spritemap(RomAddress::new(0xa6, 0xf9d3)),
+    Spritemap(RomAddress::new(0xa6, 0xf9f3)),
+];
+
 /// The sprites of each of `spritemaps`, in the format bank $81's `$81:8AB8` reads.
 // open: the extended format (bank $A0 log, `$A0:944A` with extra property bit 2) joins with
 // the first species that has it.
@@ -389,13 +407,17 @@ impl EnemyPrograms {
         Ok(loaded)
     }
 
-    /// The programs slice 0's species run.
+    /// The programs slice 0's species run, with the Ceres doors' figures.
     ///
     /// # Errors
     ///
     /// As [`Self::load`].
     pub fn slice_zero(rom: Lorom<'_>) -> Result<Self, ProgramError> {
-        Self::load(rom, &SLICE_ZERO_LISTS, &SLICE_ZERO_SPRITEMAPS)
+        let spritemaps: Vec<Spritemap> = SLICE_ZERO_SPRITEMAPS
+            .into_iter()
+            .chain(CERES_DOOR_SPRITEMAPS)
+            .collect();
+        Self::load(rom, &SLICE_ZERO_LISTS, &spritemaps)
     }
 
     /// Fail if a step can reach itself through steps that don't stop: processing would

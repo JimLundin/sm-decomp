@@ -339,6 +339,8 @@ fn occupant(state: &State) -> [Occupancy<EnemyBody>; ENEMY_SLOTS] {
             variables: [0; 6],
             ..unmodelled
         }),
+        // A door's State is its body: its AI words are constant.
+        EnemyBody::CeresDoor(door) => EnemyBody::CeresDoor(door),
     };
     state.room.enemies.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => Occupancy::Free,
@@ -356,6 +358,7 @@ fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
             EnemyBody::FaceBlock(block) => crate::enemy::face_block_words(block),
             EnemyBody::Elevator(elevator) => crate::enemy::elevator_words(elevator),
             EnemyBody::Unmodelled(unmodelled) => crate::enemy::unmodelled_words(unmodelled),
+            EnemyBody::CeresDoor(_) => crate::enemy::from_words(crate::enemy::ceres_door::WORDS),
         }),
     })
 }
@@ -851,6 +854,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("hud.mini_map.map_collected", hud.mini_map.map_collected),
     field!("hud.mini_map.disabled", hud.mini_map.disabled),
     field!("message", message),
+    field!("ceres", ceres),
     field!("collected_items", collected_items),
     field!("sram", sram),
     field!("projectiles.count", projectiles.count),

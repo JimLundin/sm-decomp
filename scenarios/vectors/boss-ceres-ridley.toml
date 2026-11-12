@@ -1,0 +1,661 @@
+# Test vectors for docs/behaviours/boss-ceres-ridley.md (part 1, the Ceres doors).
+#
+# Format
+# - Each [[vector]] is one run of one door, from its state at the run's start to its state at the
+#   end, or (placing = true, no before, her or random) the room placing it: id; placing (optional); source ("constructed": every vector here is); entries (the spec's behaviours it
+#   exercises); rules (optional); door; before; her; stage (optional); random (optional);
+#   shaking (optional); after.
+# - rules (optional): the reference rules this vector overrides (spec, each Parameter entry's
+#   params): reach (px, SheIsNear), poll (frames, Polling), hold (frames, Opening and Closing),
+#   strong_below (EscapeShakes' chance c, out of 4,096), small and strong (EscapeShakes' two
+#   shakes, each { pixels, frames }). A vector without rules runs the reference ones: reach 48,
+#   poll 2, hold 5, strong_below 128, small { pixels = 1, frames = 2 }, strong { pixels = 3,
+#   frames = 4 }.
+# - door: kind, "Door" or "ShaftDoor"; facing, "Left" or "Right"; position = [x, y], each a
+#   16-bit position in pixels, in hex (spec, Notation), the centre of its box.
+# - before: phase, one of "Closed", "Closing", "Open", "Opening", "Placed", "Starting", "Wall"
+#   (spec §1, Phases; listed alphabetically, the order means nothing); step, 1 to 4, for "Closing"
+#   and "Opening" only (the n of Closing(n) and Opening(n)); wait, frames, 1 to 5.
+# - her: [x, y], where she was at the end of the last frame, 16-bit positions in pixels, in hex (spec
+#   §1.3).
+# - stage (optional, default "Calm"): "Calm", "Escape" or "Getaway" (spec §1.3).
+# - random (optional, default "0000"): the random number as the door reads it, 16-bit hex.
+# - shaking (optional, default 0): the shake's frames left when the door runs.
+# - after, compared at the end of the run: phase, step (as in before) and wait; figure, the
+#   figure its phase holds, { look, facing } with look one of "Ajar1", "Ajar2", "Ajar3", "Closed",
+#   "Open", or absent for none (spec §1, Figures); shown and solid, bools; sound, whether it asked for the doors' opening sound (queue limit 6);
+#   shake (absent for none): { pixels, frames }; colours (placing only): which of the doors'
+#   two colour sets the doors' palette takes, "Calm" or "Escape" (spec §1.4).
+# - The vectors hold the doors' and her positions, invented: no door's position is the game's.
+#   The cases the records show are each such a run moved, with her, to an invented place; the
+#   comment gives its recorded case by its id (R1 to R18), whose row and frame the observer keeps. The rest (every edge of the reach, wrapping, the getaway, the
+#   shaft's wall, every adjusted rule) are worked from the spec's rules.
+
+# ---------------------------------------------------------------- the room's start
+
+[[vector]]
+# recorded case H1: placed while calm, it waits one frame, shown and blocking with no figure, and
+# the doors' palette takes the calm set
+id = "D-placed-calm"
+source = "constructed"
+entries = ["RoomStart", "TheDoorsColours"]
+placing = true
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Calm" }
+
+[[vector]]
+# recorded case H2: placed in the escape, the escape set
+id = "D-placed-escape"
+source = "constructed"
+entries = ["RoomStart", "TheDoorsColours"]
+placing = true
+door = { kind = "Door", facing = "Left", position = ["0300", "0090"] }
+stage = "Escape"
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Escape" }
+
+[[vector]]
+# placed during the getaway (no row places one then): the escape set
+id = "D-placed-getaway"
+source = "constructed"
+entries = ["TheDoorsColours"]
+placing = true
+door = { kind = "ShaftDoor", facing = "Left", position = ["0200", "0300"] }
+stage = "Getaway"
+after = { phase = "Placed", wait = 1, shown = true, solid = true, sound = false, colours = "Escape" }
+
+[[vector]]
+# recorded case R1, the door she came through: its first run hides it with the closed
+# figure facing right
+id = "D-start-first-run"
+source = "constructed"
+entries = ["RoomStart", "Waiting", "Solid", "Shown"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0147", "009C"]
+after = { phase = "Starting", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R1, the far door, facing left: its first run holds the closed figure
+# facing right too
+id = "D-start-left-first-run"
+source = "constructed"
+entries = ["RoomStart", "Waiting"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0090"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0147", "009C"]
+after = { phase = "Starting", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R2: a run with a wait over 1 only counts it
+id = "D-start-wait"
+source = "constructed"
+entries = ["Waiting", "Solid", "Shown"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Starting", wait = 2 }
+her = ["0147", "009C"]
+after = { phase = "Starting", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R3, the door she came through: she is 7 px from it, so it stands open,
+# silently
+id = "D-start-near-opens"
+source = "constructed"
+entries = ["RoomStart", "SheIsNear", "Shown", "Solid"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Starting", wait = 1 }
+her = ["0147", "009C"]
+after = { phase = "Open", wait = 2, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# as D-start-near-opens, facing left: the open door holds its closed figure
+id = "D-start-left-near"
+source = "constructed"
+entries = ["RoomStart", "SheIsNear"]
+door = { kind = "Door", facing = "Left", position = ["0140", "0090"] }
+before = { phase = "Starting", wait = 1 }
+her = ["0130", "009C"]
+after = { phase = "Open", wait = 2, figure = { look = "Closed", facing = "Left" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R3, the far door: closed, shown and solid
+id = "D-start-far-closes"
+source = "constructed"
+entries = ["RoomStart", "SheIsNear", "Shown", "Solid"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0090"] }
+before = { phase = "Starting", wait = 1 }
+her = ["0147", "009C"]
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# the shaft's door placed while calm starts as a left-facing door
+id = "D-shaft-before-getaway"
+source = "constructed"
+entries = ["RoomStart", "ShaftWall"]
+door = { kind = "ShaftDoor", facing = "Left", position = ["0200", "0300"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0080", "0310"]
+after = { phase = "Starting", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R15 has the wall standing; placed in the escape, the shaft's door is a wall,
+# hidden and blocking
+id = "D-shaft-wall"
+source = "constructed"
+entries = ["RoomStart", "ShaftWall", "Solid", "Shown"]
+door = { kind = "ShaftDoor", facing = "Left", position = ["0200", "0300"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0080", "0310"]
+stage = "Escape"
+shaking = 1
+after = { phase = "Wall", wait = 1, figure = { look = "Closed", facing = "Left" }, shown = false, solid = true, sound = false }
+
+[[vector]]
+# placed during the getaway (no row places one then), it is a wall too
+id = "D-shaft-wall-getaway"
+source = "constructed"
+entries = ["RoomStart", "ShaftWall"]
+door = { kind = "ShaftDoor", facing = "Left", position = ["0200", "0300"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0080", "0310"]
+stage = "Getaway"
+after = { phase = "Wall", wait = 1, figure = { look = "Closed", facing = "Left" }, shown = false, solid = true, sound = false }
+
+[[vector]]
+# recorded case R16: the wall stays a wall, wait 1, and doesn't open for her
+id = "D-shaft-wall-again"
+source = "constructed"
+entries = ["ShaftWall", "Waiting"]
+door = { kind = "ShaftDoor", facing = "Left", position = ["0200", "0300"] }
+before = { phase = "Wall", wait = 1 }
+her = ["01F0", "0300"]
+stage = "Escape"
+shaking = 1
+after = { phase = "Wall", wait = 1, figure = { look = "Closed", facing = "Left" }, shown = false, solid = true, sound = false }
+
+# ---------------------------------------------------------------- closed
+
+[[vector]]
+# recorded case R4: she was 56 px away, so the closed door stays closed and waits the poll
+# again
+id = "D-closed-far-stays"
+source = "constructed"
+entries = ["Polling", "SheIsNear", "Waiting", "Solid", "Shown"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Closed", wait = 1 }
+her = ["02C8", "019C"]
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case R5
+id = "D-closed-wait"
+source = "constructed"
+entries = ["Waiting"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Closed", wait = 2 }
+her = ["02CD", "019C"]
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case R6: she was 47 px left of it at the end of the last frame: it hisses and
+# shows its first ajar figure
+id = "D-closed-near-opens"
+source = "constructed"
+entries = ["Opening", "SheIsNear", "Solid", "Shown"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Closed", wait = 1 }
+her = ["02D1", "019C"]
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Left" }, shown = true, solid = true, sound = true }
+
+[[vector]]
+# a right-facing door, she 47 px right of it and 47 px down: near
+id = "D-closed-left-of"
+source = "constructed"
+entries = ["Opening", "SheIsNear"]
+door = { kind = "Door", facing = "Right", position = ["0140", "00A0"] }
+before = { phase = "Closed", wait = 1 }
+her = ["016F", "00CF"]
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true }
+
+[[vector]]
+# 47 px above it, straight above: near
+id = "D-closed-edge-y"
+source = "constructed"
+entries = ["Opening", "SheIsNear"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0140", "0061"]
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true }
+
+[[vector]]
+# 48 px left of it, level with it: not near
+id = "D-closed-edge-x"
+source = "constructed"
+entries = ["SheIsNear", "Polling"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0110", "0090"]
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# level across, 48 px below: not near
+id = "D-closed-far-y"
+source = "constructed"
+entries = ["SheIsNear", "Polling"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0140", "00C0"]
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# 8000 apart across: the gap's negation is itself, not near
+id = "D-wrap-far"
+source = "constructed"
+entries = ["SheIsNear", "Polling"]
+door = { kind = "Door", facing = "Right", position = ["0010", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["8010", "0090"]
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# her position left of the room, FFF0, is 24 px from a door at 0008: near
+id = "D-wrap-near"
+source = "constructed"
+entries = ["SheIsNear", "Opening"]
+door = { kind = "Door", facing = "Right", position = ["0008", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["FFF0", "009C"]
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true }
+
+# ---------------------------------------------------------------- opening
+
+[[vector]]
+# recorded case R7
+id = "D-opening-step"
+source = "constructed"
+entries = ["Opening", "Solid", "Shown"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Opening", step = 1, wait = 1 }
+her = ["02D3", "019C"]
+after = { phase = "Opening", step = 2, wait = 5, figure = { look = "Ajar2", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case R8
+id = "D-opening-wait"
+source = "constructed"
+entries = ["Waiting"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Opening", step = 3, wait = 3 }
+her = ["02D9", "019C"]
+after = { phase = "Opening", step = 3, wait = 2, figure = { look = "Ajar3", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# an opening door goes on opening when she has gone
+id = "D-opening-ignores-her"
+source = "constructed"
+entries = ["Opening"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Opening", step = 2, wait = 1 }
+her = ["0200", "0090"]
+after = { phase = "Opening", step = 3, wait = 5, figure = { look = "Ajar3", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# the last figure's wait runs out: hidden and passable, holding its open figure
+id = "D-opening-last"
+source = "constructed"
+entries = ["Opening", "Solid", "Shown"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Opening", step = 4, wait = 1 }
+her = ["0120", "0090"]
+after = { phase = "Open", wait = 2, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R9: facing left, the open door holds its closed figure
+id = "D-opening-last-left"
+source = "constructed"
+entries = ["Opening"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Opening", step = 4, wait = 1 }
+her = ["02EE", "019C"]
+after = { phase = "Open", wait = 2, figure = { look = "Closed", facing = "Left" }, shown = false, solid = false, sound = false }
+
+# ---------------------------------------------------------------- open
+
+[[vector]]
+# recorded case R10: she was 45 px past it: it stays open
+id = "D-open-near-stays"
+source = "constructed"
+entries = ["Polling", "SheIsNear", "Waiting", "Solid", "Shown"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Open", wait = 1 }
+her = ["016D", "009C"]
+after = { phase = "Open", wait = 2, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R11
+id = "D-open-wait"
+source = "constructed"
+entries = ["Waiting"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Open", wait = 2 }
+her = ["0173", "009C"]
+after = { phase = "Open", wait = 1, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# recorded case R12: she was 57 px past it: it shows itself open and starts to close,
+# silently
+id = "D-open-far-closes"
+source = "constructed"
+entries = ["Closing", "SheIsNear"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Open", wait = 1 }
+her = ["0179", "009C"]
+after = { phase = "Closing", step = 1, wait = 5, figure = { look = "Open", facing = "Right" }, shown = true, solid = true, sound = false }
+
+# ---------------------------------------------------------------- closing
+
+[[vector]]
+# recorded case R13
+id = "D-closing-step"
+source = "constructed"
+entries = ["Closing", "Solid", "Shown"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closing", step = 1, wait = 1 }
+her = ["0199", "009C"]
+after = { phase = "Closing", step = 2, wait = 5, figure = { look = "Ajar3", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# she is back beside it while it closes: it goes on closing
+id = "D-closing-ignores-her"
+source = "constructed"
+entries = ["Closing"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Closing", step = 3, wait = 1 }
+her = ["02F0", "019C"]
+after = { phase = "Closing", step = 4, wait = 5, figure = { look = "Ajar1", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# recorded case R14: closed again, looking for her every two frames
+id = "D-closing-last"
+source = "constructed"
+entries = ["Closing"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closing", step = 4, wait = 1 }
+her = ["01CE", "009C"]
+after = { phase = "Closed", wait = 2, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+# ---------------------------------------------------------------- the escape's shaking
+
+[[vector]]
+# the low 12 bits, 128, are not under 128: a small shake
+id = "D-shake-small"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "C080"
+shaking = 0
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 1, frames = 2 } }
+
+[[vector]]
+# the low 12 bits, 256, are not under 128, though the low 8 bits, 0, are: a small shake
+id = "D-shake-small-bit8"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "0100"
+shaking = 0
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 1, frames = 2 } }
+
+[[vector]]
+# recorded case R17: the low 12 bits, 127, are under 128: a strong shake
+id = "D-shake-strong"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "C07F"
+shaking = 0
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 3, frames = 4 } }
+
+[[vector]]
+# only the low 12 bits count: F000 + 7F is under 128
+id = "D-shake-high-bits"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Left", position = ["0300", "0090"] }
+before = { phase = "Open", wait = 2 }
+her = ["0300", "009C"]
+stage = "Escape"
+random = "F07F"
+shaking = 0
+after = { phase = "Open", wait = 1, figure = { look = "Closed", facing = "Left" }, shown = false, solid = false, sound = false, shake = { pixels = 3, frames = 4 } }
+
+[[vector]]
+# a door that steps shakes the screen in the same run
+id = "D-shake-wait"
+source = "constructed"
+entries = ["EscapeShakes", "Opening"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0150", "009C"]
+stage = "Escape"
+random = "0FFF"
+shaking = 0
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true, shake = { pixels = 1, frames = 2 } }
+
+[[vector]]
+# recorded case R18: the screen is still shaking: no new shake
+id = "D-shake-busy"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "0000"
+shaking = 1
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# calm: no shake
+id = "D-shake-calm"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+random = "0000"
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# the getaway, before the escape: no shake
+id = "D-shake-getaway"
+source = "constructed"
+entries = ["EscapeShakes"]
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Getaway"
+random = "0000"
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+# ---------------------------------------------------------------- adjusted rules
+
+[[vector]]
+# reach 64: 50 px away is near
+id = "D-reach-adjusted"
+source = "constructed"
+entries = ["SheIsNear", "Opening"]
+rules = { reach = 64 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0172", "0090"]
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true }
+
+[[vector]]
+# poll 4: a closed door that doesn't see her waits for 4
+id = "D-poll-adjusted"
+source = "constructed"
+entries = ["Polling"]
+rules = { poll = 4 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0200", "0090"]
+after = { phase = "Closed", wait = 4, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# hold 3: each figure of the opening lasts 3 frames
+id = "D-hold-adjusted-opening"
+source = "constructed"
+entries = ["Opening"]
+rules = { hold = 3 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 1 }
+her = ["0150", "0090"]
+after = { phase = "Opening", step = 1, wait = 3, figure = { look = "Ajar1", facing = "Right" }, shown = true, solid = true, sound = true }
+
+[[vector]]
+# hold 3: each figure of the closing lasts 3 frames
+id = "D-hold-adjusted-closing"
+source = "constructed"
+entries = ["Closing"]
+rules = { hold = 3 }
+door = { kind = "Door", facing = "Left", position = ["0300", "0090"] }
+before = { phase = "Open", wait = 1 }
+her = ["0200", "0090"]
+after = { phase = "Closing", step = 1, wait = 3, figure = { look = "Open", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# a chance of 256 in 4,096 and a strong shake of 2 px for 6 frames: C0C0's low bits, 192, are
+# under 256
+id = "D-shake-adjusted"
+source = "constructed"
+entries = ["EscapeShakes"]
+rules = { strong_below = 256, strong = { pixels = 2, frames = 6 } }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "C0C0"
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 2, frames = 6 } }
+
+[[vector]]
+# a small shake of 1 px for 3 frames
+id = "D-shake-adjusted-small"
+source = "constructed"
+entries = ["EscapeShakes"]
+rules = { small = { pixels = 1, frames = 3 } }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "C080"
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 1, frames = 3 } }
+
+[[vector]]
+# reach 64: 50 px away across and 50 px away down is near
+id = "D-reach-adjusted-both"
+source = "constructed"
+entries = ["SheIsNear", "Opening"]
+rules = { reach = 64 }
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Closed", wait = 1 }
+her = ["02CE", "01C2"]
+after = { phase = "Opening", step = 1, wait = 5, figure = { look = "Ajar1", facing = "Left" }, shown = true, solid = true, sound = true }
+
+[[vector]]
+# poll 4: the first run of a placed door starts it with a wait of 4
+id = "D-poll-adjusted-start"
+source = "constructed"
+entries = ["RoomStart", "Polling"]
+rules = { poll = 4 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Placed", wait = 1 }
+her = ["0147", "009C"]
+after = { phase = "Starting", wait = 4, figure = { look = "Closed", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# poll 4: the door that finishes opening waits 4 before it first looks for her
+id = "D-poll-adjusted-opened"
+source = "constructed"
+entries = ["Opening", "Polling"]
+rules = { poll = 4 }
+door = { kind = "Door", facing = "Left", position = ["0300", "0190"] }
+before = { phase = "Opening", step = 4, wait = 1 }
+her = ["02EE", "019C"]
+after = { phase = "Open", wait = 4, figure = { look = "Closed", facing = "Left" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# poll 4: the door that finishes closing waits 4 before it first looks for her
+id = "D-poll-adjusted-closed"
+source = "constructed"
+entries = ["Closing", "Polling"]
+rules = { poll = 4 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closing", step = 4, wait = 1 }
+her = ["01CE", "009C"]
+after = { phase = "Closed", wait = 4, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# hold 3: the opening's second figure steps to its third, which lasts 3 frames
+id = "D-hold-adjusted-opening-step"
+source = "constructed"
+entries = ["Opening"]
+rules = { hold = 3 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Opening", step = 2, wait = 1 }
+her = ["0150", "0090"]
+after = { phase = "Opening", step = 3, wait = 3, figure = { look = "Ajar3", facing = "Right" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# hold 3: the closing's second figure steps to its third, which lasts 3 frames
+id = "D-hold-adjusted-closing-step"
+source = "constructed"
+entries = ["Closing"]
+rules = { hold = 3 }
+door = { kind = "Door", facing = "Left", position = ["0300", "0090"] }
+before = { phase = "Closing", step = 2, wait = 1 }
+her = ["0200", "0090"]
+after = { phase = "Closing", step = 3, wait = 3, figure = { look = "Ajar2", facing = "Left" }, shown = true, solid = true, sound = false }
+
+[[vector]]
+# a small shake of 2 px for 2 frames
+id = "D-shake-adjusted-small-pixels"
+source = "constructed"
+entries = ["EscapeShakes"]
+rules = { small = { pixels = 2, frames = 2 } }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Closed", wait = 2 }
+her = ["0200", "009C"]
+stage = "Escape"
+random = "C080"
+after = { phase = "Closed", wait = 1, figure = { look = "Closed", facing = "Right" }, shown = true, solid = true, sound = false, shake = { pixels = 2, frames = 2 } }
+
+[[vector]]
+# poll 4: a starting door that sees her stands open and waits 4
+id = "D-poll-adjusted-started"
+source = "constructed"
+entries = ["RoomStart", "Polling"]
+rules = { poll = 4 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Starting", wait = 1 }
+her = ["0147", "009C"]
+after = { phase = "Open", wait = 4, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }
+
+[[vector]]
+# poll 4: an open door that still sees her waits 4
+id = "D-poll-adjusted-open"
+source = "constructed"
+entries = ["Polling"]
+rules = { poll = 4 }
+door = { kind = "Door", facing = "Right", position = ["0140", "0090"] }
+before = { phase = "Open", wait = 1 }
+her = ["016D", "009C"]
+after = { phase = "Open", wait = 4, figure = { look = "Open", facing = "Right" }, shown = false, solid = false, sound = false }

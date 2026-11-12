@@ -216,6 +216,24 @@ original's bytes as data.
   door's cells and the room goes on running. The harness compares the frame that reaches the door,
   her move, and skips those after it, which aren't gameplay. The entry goes with the doors (R1, R2).
 
+- **The Ceres doors in the engine** (the boss-ceres-ridley domain,
+  `docs/behaviours/boss-ceres-ridley.md`; `game::boss_ceres_ridley_bridge`): the engine runs the
+  model for the doors of parameters 0, 1 and 4 in the old enemy runner, and gives it what the
+  domains it lacks would. The engine holds no screen shake and no sound queue, so the shakes the
+  doors start in the escape (`EscapeShakes`, `$A6:F773`) and the opening sound (`$A6:F6BD`) go
+  nowhere, and each frame's first door reads no shake running; the harness compares the shake on
+  every frame with a door (5,056 frames over the cache, all but the door passage's frames with one
+  running) and the sound is compared nowhere. They go when R3 holds the shake's
+  timer and U1 the sound queue. The station's stage (`$093F`) is State the engine decodes and no
+  domain writes: Ridley's getaway and the escape's start are later pieces of B8. Her touch and her
+  shots on a door are the old runner's (`$A0:9758`, `$A0:A1F7`): the engine's solid-enemy
+  collision stops her at a solid door, but it deletes no shot that meets one, where the original
+  deletes every shot but plasma; no lockstep row has a shot meet a door. The engine places no
+  door at a room's start (it has no room loading; the bridge's `place` waits for R2 and C1), so
+  the doors' colours (`TheDoorsColours`) are the seed's; the harness compares the model's
+  placing, colours included, on the 11 frames a room places its doors (H1 and H2 among them). Each
+  goes with the domain named: R3, U1, B8's later pieces, C1, R2.
+
 ## The engine: slots it carries but doesn't run
 
 A stop-gap so Ceres's seeds start: the decoder admits an enemy or PLM slot of the ids below,
@@ -228,13 +246,16 @@ engine never selects such an enemy (`LEGACY(unmodelled)` in `game::enemy::select
 AI or instructions, its frame counter and timers stand still, it isn't drawn and nothing touches
 it; such a PLM is no place of the blocks' (`LEGACY(unmodelled)` in `game::world_blocks_bridge`) and
 the items' pass skips it, so it never runs or deletes itself. No Ceres row has a Tick fully equal in
-lockstep (in `chain-any-0003-DFD7` the door's slot 0 differs from frame 1 and the OAM from frame 9);
+lockstep but `chain-any-0003-DFD7` (178 of 181), whose doors the engine runs, and `0004` (101 of 101);
 the free-run gate's Ceres rows start, green on `sram` and `timing` only. Each entry goes, with its
 id in the list, when the round named replaces it:
 
-- **Enemy `$A0:E23F`, a Ceres door** (9 rows: `chain-any-0002` to `0005`, `0007` to `0009`,
-  `0011`, and `0006`): no opening, closing or blocking, no drawing and no contact. Replaced by B8 (the
-  Ceres doors, first in the plan) with C1 and AF3 ([domains.md §4](architecture/domains.md#4-order)).
+- **Enemy `$A0:E23F`, a Ceres door, of parameter 2, 3, 5 or 6** (the shaft's cover in
+  `chain-any-0001`, `0010` and `0011`; Ridley's room's door in `0005` and `0006`; the getaway's
+  walls in `0006`): no opening, closing or blocking, no drawing and no contact. The doors of
+  parameters 0, 1 and 4 are boss-ceres-ridley's (`EnemyBody::CeresDoor`, "The Ceres doors in the
+  engine" above); the others are its later pieces, with C1 and AF3
+  ([domains.md §4](architecture/domains.md#4-order)).
 - **Enemy `$A0:E13F`, Ceres Ridley** (`chain-any-0006-E0B5`): no fight, getaway, drawing or
   contact. Replaced by B8 with C1 and AF3.
 - **Enemy `$A0:E1FF`, the steam of Ceres's escape** (`chain-any-0009` to `0011`, up to 11 slots): no

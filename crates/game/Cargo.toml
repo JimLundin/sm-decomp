@@ -8,6 +8,7 @@ description = "The Session, its State and the Tick: every gameplay domain"
 
 [dependencies]
 canonical = { path = "../canonical" }
+boss_ceres_ridley = { path = "../clean/boss_ceres_ridley" }
 world_blocks = { path = "../clean/world_blocks" }
 world_camera = { path = "../clean/world_camera" }
 interface_hud = { path = "../clean/interface_hud" }

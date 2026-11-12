@@ -51,6 +51,10 @@ rounds = 4
 name = "samus-appearance"
 rounds = 5
 
+[[model]]
+name = "boss-ceres-ridley"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -281,6 +285,8 @@ area = "boss"
 wave = 3
 rounds = 4
 reads = ["S1", "CAM", "C1"]
+model = "boss-ceres-ridley"
+status = "in-progress"
 
 [[domain]]
 id = "F2"

@@ -220,6 +220,8 @@ pub struct State {
     pub elevator: room::ElevatorRide,
     /// The enemy palette cycle, which carries over from room to room.
     pub enemy_palette_cycle: room::EnemyPaletteCycle,
+    /// The Ceres station's stage, which carries over from room to room.
+    pub ceres: room::CeresStage,
     /// The HUD.
     pub hud: Hud,
     /// The message the message box shows, or showed last.

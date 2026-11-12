@@ -676,6 +676,13 @@ pub const MESSAGE_BOX_ANIMATION_Y_RADIUS: WramWord = WramWord {
     offset: 0x05A2,
 };
 
+/// Bank $A6 log: the Ceres status, 0 calm, 1 Ridley's getaway, 2 the escape, `8000h` the shaft
+/// rotating (`$A6:F67F`).
+pub const CERES_STATUS: WramWord = WramWord {
+    name: "CERES_STATUS",
+    offset: 0x093F,
+};
+
 /// Bank $85 log: the message box's message index, stored on entry to the display routine
 /// (`$85:8080`).
 pub const MESSAGE_BOX_INDEX: WramWord = WramWord {

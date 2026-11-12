@@ -41,12 +41,12 @@ jobs:
           if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
       - name: Lint the rebuild's crates
         # Their lint set is the root Cargo.toml's [workspace.lints] (PRINCIPLES K8).
-        run: cargo clippy --locked -p data -p import -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance --all-targets --no-deps
+        run: cargo clippy --locked -p data -p import -p game -p runtime -p app -p verify -p tools -p canonical -p canonical_derive -p oracle_record -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley --all-targets --no-deps
       - name: Lint the clean crates under the clean room's ceilings (G5)
         # tools/cleanroom/clippy.toml, which export.sh writes as the export's clippy.toml.
-        run: CLIPPY_CONF_DIR="$PWD/tools/cleanroom" cargo clippy --locked -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance --all-targets --no-deps
+        run: CLIPPY_CONF_DIR="$PWD/tools/cleanroom" cargo clippy --locked -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley --all-targets --no-deps
       - name: Test the rebuild's crates
-        run: cargo test --locked -p canonical -p canonical_derive -p data -p import -p game -p runtime -p app -p verify -p tools -p oracle_record -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance --no-fail-fast
+        run: cargo test --locked -p canonical -p canonical_derive -p data -p import -p game -p runtime -p app -p verify -p tools -p oracle_record -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley --no-fail-fast
       - name: "Report the empty Tick rate (B1 target: 50k Ticks/s)"
         run: cargo run --locked --profile verify -p game --example empty_ticks
       - name: "Report the compositor time per frame (A5 target: 0.3 ms)"

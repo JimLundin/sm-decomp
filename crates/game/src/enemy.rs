@@ -6,8 +6,10 @@
 //! routine (`$A0:8FD4`) walks it, choosing the AI from the slot's AI handler bits, then
 //! counts the frame, and counts the hurt flash down after drawing.
 
+use core::num::Wrapping;
 use std::marker::PhantomData;
 
+use crate::boss_ceres_ridley_bridge::{self as ceres_doors, Station};
 use crate::model::num::Fixed as Exact;
 use crate::pose::Content;
 use crate::state::room::{
@@ -18,6 +20,7 @@ use crate::state::samus::{DrawingHandler, Fixed, Samus};
 use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 use crate::state::{Button, Controller, State};
 use data::id::SpeciesId;
+use types::Pair;
 
 pub mod drawing;
 pub mod eye;
@@ -145,6 +148,7 @@ pub fn select(state: &mut State) -> Active {
 // death, the sprite objects and the solid-enemy collision reset join with their lanes.
 pub fn run(state: &mut State, active: &Active, content: &Content) {
     let camera = (state.room.camera.x.pixels, state.room.camera.y.pixels);
+    let mut station = Station::new(state.ceres, state.rng.word);
     for &index in active.slots.iter().filter(|&&index| index < ENEMY_SLOTS) {
         let Some(slot) = state.room.enemies.slots.get_mut(index) else {
             continue;
@@ -164,31 +168,54 @@ pub fn run(state: &mut State, active: &Active, content: &Content) {
             continue;
         }
         let routine = AiRoutine::of(&slot.common);
-        let mut glow = face_block::Glow {
-            hook: &mut state.room.drawing.hook,
-            cycle: &mut state.enemy_palette_cycle,
-        };
-        ai(
-            slot,
-            routine,
-            &mut state.elevator,
-            &mut state.samus,
-            &state.controller,
-            content,
-            &mut glow,
-        );
-        slot.common.frame_counter = slot.common.frame_counter.wrapping_add(1);
-        if slot
-            .common
-            .properties
-            .contains(EnemyProperty::ProcessesInstructions)
+        let instructions = runs_instructions(slot);
+        if let (Occupancy::Live(EnemyBody::CeresDoor(door)), AiRoutine::Main) =
+            (&mut slot.occupancy, routine)
         {
+            // The door reads her position as it stands when it runs: before her move.
+            let position = &state.samus.motion.position;
+            let her = Pair {
+                x: Wrapping(position.x.pixel()),
+                y: Wrapping(position.y.pixel()),
+            };
+            ceres_doors::run(&mut slot.common, door, her, &mut station);
+        } else {
+            let mut glow = face_block::Glow {
+                hook: &mut state.room.drawing.hook,
+                cycle: &mut state.enemy_palette_cycle,
+            };
+            ai(
+                slot,
+                routine,
+                &mut state.elevator,
+                &mut state.samus,
+                &state.controller,
+                content,
+                &mut glow,
+            );
+        }
+        slot.common.frame_counter = slot.common.frame_counter.wrapping_add(1);
+        if instructions {
             instructions::process(slot, &content.enemy_programs);
         }
         drawing::queue(&mut state.room.drawing, index, &slot.common, camera);
         count_flash(slot);
     }
     state.room.drawing.routine_count = state.room.drawing.routine_count.wrapping_add(1);
+}
+
+/// Whether the main enemy routine processes the slot's instructions: a Ceres door's model
+/// holds its phase and figure, so the old instruction processing never runs for it.
+fn runs_instructions(slot: &Slot<EnemyCommon, EnemyBody>) -> bool {
+    let door = matches!(
+        slot.occupancy,
+        Occupancy::Live(EnemyBody::CeresDoor(_)) | Occupancy::Deleting(EnemyBody::CeresDoor(_))
+    );
+    !door
+        && slot
+            .common
+            .properties
+            .contains(EnemyProperty::ProcessesInstructions)
 }
 
 /// The hurt flash's countdown, which ends the hurt AI under 8 frames left (`$A0:9118`).
@@ -244,8 +271,9 @@ fn ai(
             // open: the face block's grapple, hurt and frozen AI, as its header names them.
             AiRoutine::Grapple | AiRoutine::Hurt | AiRoutine::Frozen => {}
         },
-        // The selection never lists one.
-        EnemyBody::Unmodelled(_) => {}
+        // `run` runs a door's main AI through its bridge, and has no other; the selection never
+        // lists an unmodelled enemy.
+        EnemyBody::CeresDoor(_) | EnemyBody::Unmodelled(_) => {}
     }
 }
 

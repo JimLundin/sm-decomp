@@ -18,12 +18,12 @@ engine="data game runtime app"
 allowed() {
   case $1 in
     data) echo "canonical types" ;;
-    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance" ;;
+    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley" ;;
     runtime) echo "data" ;;
     app) echo "data import game runtime" ;;
     oracle) echo "data oracle_record" ;;
     oracle_record) echo "" ;;
-    verify) echo "data import game runtime oracle_record canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance" ;;
+    verify) echo "data import game runtime oracle_record canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley" ;;
     tools) echo "verify oracle runtime import" ;;
     # The importers (docs/architecture/assets.md §5): game and runtime never list it.
     import) echo "data" ;;
@@ -37,9 +37,10 @@ allowed() {
     interface_hud) echo "types" ;;
     run_progress) echo "types" ;;
     samus_appearance) echo "types" ;;
+    boss_ceres_ridley) echo "types" ;;
   esac
 }
-new_crates="data import game runtime app oracle oracle_record verify tools canonical canonical_derive types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance"
+new_crates="data import game runtime app oracle oracle_record verify tools canonical canonical_derive types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {
