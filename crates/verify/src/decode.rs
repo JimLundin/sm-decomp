@@ -11,7 +11,7 @@ use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
 use data::id::{Line, RoomId};
 use data::map::{MAP_BIT_BYTES, MapCells};
-use data::plm::{ItemPlm, PlmPopulation};
+use data::plm::{ItemPlm, PlmPopulation, ScrollLists};
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
@@ -85,6 +85,8 @@ pub struct RoomMap {
     pub samus_clips: Clips,
     /// Each room's PLM population, which names the PLMs its slots hold.
     pub plms: Vec<(RoomId, PlmPopulation)>,
+    /// Where each room's scroll change lists are, which its scroll PLMs' room arguments name.
+    pub scroll_lists: Vec<(RoomId, ScrollLists)>,
     /// What each known room state loads that RAM doesn't keep, by its header pointer.
     pub states: Vec<(StateHeader, StateLevel)>,
     /// The blocks' reactions, which name the PLMs their places hold.
@@ -136,6 +138,15 @@ impl RoomMap {
         Self { plms, ..self }
     }
 
+    /// The map with `scroll_lists` as where its rooms' scroll change lists are.
+    #[must_use]
+    pub fn with_scroll_lists(self, scroll_lists: Vec<(RoomId, ScrollLists)>) -> Self {
+        Self {
+            scroll_lists,
+            ..self
+        }
+    }
+
     /// The map with `reactions` as the blocks' reactions.
     #[must_use]
     pub fn with_reactions(self, reactions: data::blocks::Reactions) -> Self {
@@ -168,6 +179,17 @@ impl RoomMap {
             .iter()
             .find_map(|(known, population)| (*known == room).then_some(population))
             .unwrap_or(&EMPTY)
+    }
+
+    /// Where room `room`'s scroll change lists are: none for a room the map has none for, so
+    /// no scroll PLM decodes there.
+    #[must_use]
+    pub fn scroll_lists(&self, room: RoomId) -> &ScrollLists {
+        static NONE: ScrollLists = ScrollLists(Vec::new());
+        self.scroll_lists
+            .iter()
+            .find_map(|(known, lists)| (*known == room).then_some(lists))
+            .unwrap_or(&NONE)
     }
 
     /// The content's ID for the room whose header is at `header`.
@@ -1277,9 +1299,12 @@ impl Rules<'_> {
                 },
                 ..self.scrolling.read(wram)?
             },
-            plms: self
-                .plms
-                .read(wram, rooms.population(room), &rooms.reactions)?,
+            plms: self.plms.read(
+                wram,
+                rooms.population(room),
+                rooms.scroll_lists(room),
+                &rooms.reactions,
+            )?,
             item_gfx: self.item_gfx.read(wram)?,
             enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
             drawing: EnemyDrawing {

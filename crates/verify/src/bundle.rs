@@ -31,7 +31,8 @@ use crate::decode::{DecodeError, RoomMap};
 use crate::gate::{Seed, buttons};
 use crate::lock::{Row, RowId, Sha256, Start};
 use crate::lockstep::{
-    slice_zero_doors, slice_zero_plms, slice_zero_rooms, slice_zero_states, slice_zero_world,
+    slice_zero_doors, slice_zero_plms, slice_zero_rooms, slice_zero_scroll_lists,
+    slice_zero_states, slice_zero_world,
 };
 
 /// Why a row's inputs can't be read from the bundle.
@@ -281,6 +282,7 @@ pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, WorldError> {
         .with_samus_tiles(content.samus_tiles.clone())
         .with_samus_clips(content.samus_clips.clone())
         .with_plms(slice_zero_plms(&slice_zero_world(image)?))
+        .with_scroll_lists(slice_zero_scroll_lists(image)?)
         .with_states(slice_zero_states(image)?)
         .with_reactions(content.blocks.imported().clone()))
 }

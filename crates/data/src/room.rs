@@ -10,13 +10,13 @@
 //! the dense [`RoomId`] the [`RoomMap`] gives it.
 
 use canonical::Canonical;
-use types::Event;
+use types::{BossKind, Event, Set};
 
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};
 use crate::id::RoomId;
 use crate::level::{BlockKind, DoorIndex, Level, LevelError, ScrollArea, scroll_areas};
-use crate::plm::{PlmError, PlmPopulation, population};
+use crate::plm::{PlmError, PlmPopulation, ScrollLists, population};
 use crate::rom::{AddressError, Lorom, RomAddress};
 
 /// Room headers, state headers, door lists, scroll tables and PLM populations.
@@ -233,6 +233,31 @@ pub fn event(number: u8) -> Option<Event> {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct BossBits(pub u8);
 
+/// The boss kind each boss bit names.
+const BOSS_KINDS: [(u8, BossKind); 3] = [
+    (1, BossKind::MainBoss),
+    (2, BossKind::MiniBoss),
+    (4, BossKind::Torizo),
+];
+
+impl BossBits {
+    /// The area's main boss alone, which the main-boss condition asks about.
+    pub const MAIN_BOSS: Self = Self(1);
+
+    /// The boss kinds these bits name, or none when one names no kind.
+    #[must_use]
+    pub fn kinds(self) -> Option<Set<BossKind>> {
+        let known = BOSS_KINDS.iter().fold(0, |all, &(bit, _)| all | bit);
+        (self.0 & !known == 0).then(|| {
+            let mut kinds = Set::default();
+            for &(bit, kind) in &BOSS_KINDS {
+                kinds[kind] = self.0 & bit != 0;
+            }
+            kinds
+        })
+    }
+}
+
 /// A state condition other than the default.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Condition {
@@ -321,6 +346,8 @@ pub struct RoomState {
     pub plm_population: RomAddress,
     /// The PLMs it places.
     pub plms: PlmPopulation,
+    /// Where the scroll change lists its scroll PLMs name are.
+    pub scroll_lists: ScrollLists,
     /// The library background.
     pub library_background: RomAddress,
     /// The room's setup code.
@@ -723,7 +750,7 @@ fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, Roo
     let library_background = reader.pointer(ROOM_BANK)?;
     let setup_code = reader.pointer(ROOM_BANK)?;
     let level_at = RomAddress::from_long([level_low, level_high, level_bank]);
-    let plms =
+    let (plms, scroll_lists) =
         population(rom, plm_population).map_err(|error| RoomError::Plm { state: at, error })?;
     let (level, layers) = level(rom, level_at, size, &plms)?;
     let scroll_areas =
@@ -747,6 +774,7 @@ fn state(rom: Lorom<'_>, at: RomAddress, size: Screens) -> Result<RoomState, Roo
         main_code,
         plm_population,
         plms,
+        scroll_lists,
         library_background,
         setup_code,
     })

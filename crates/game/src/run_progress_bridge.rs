@@ -12,7 +12,7 @@
 
 use core::num::Wrapping;
 
-use data::assets::world;
+use data::assets::world::{self, DoorwayId};
 use data::rom::RomAddress;
 use data::room::{self, Area, BossBits, Room, StateIndex};
 use enum_map::EnumMap;
@@ -20,7 +20,7 @@ use run_progress::{
     Condition, EnteredRoom, Inventory, Pickup, Progress, Remembered, Report, ReserveMode,
     RoomStates, Rules, Supplies, Supply, Version,
 };
-use types::{Area as Region, BossKind, Entrance, Item as Piece, LocationId, Set};
+use types::{Area as Region, Entrance, Item as Piece, LocationId, Set};
 
 use crate::state::samus::{self, Equipment, Gauge, Item, Items};
 use crate::state::{COLLECTED_ITEM_WORDS, CollectedItems, State};
@@ -38,13 +38,6 @@ const ITEMS: [Item; 11] = [
     Item::SpeedBooster,
     Item::GrappleBeam,
     Item::XRayScope,
-];
-
-/// The boss kinds by their bit in an area's boss byte (`$80:81A6`'s list).
-const BOSS_KINDS: [(u8, BossKind); 3] = [
-    (1, BossKind::MainBoss),
-    (2, BossKind::MiniBoss),
-    (4, BossKind::Torizo),
 ];
 
 /// A room argument with bit 15 set names no place: its item is never remembered (`$84:887C`).
@@ -247,37 +240,35 @@ pub fn take(state: &mut State, item: Item, argument: u16) {
     store_emptied(&progress.emptied, &mut state.collected_items);
 }
 
-/// The boss kinds of an area's boss byte, or none when it holds a bit no kind has.
-fn kinds(bits: BossBits) -> Option<Set<BossKind>> {
-    let known = BOSS_KINDS.iter().fold(0, |all, &(bit, _)| all | bit);
-    (bits.0 & !known == 0).then(|| {
-        let mut kinds = Set::default();
-        for &(bit, kind) in &BOSS_KINDS {
-            kinds[kind] = bits.0 & bit != 0;
-        }
-        kinds
-    })
-}
-
-/// The kinds a room's main-boss condition asks about: the main boss alone.
-fn main_boss() -> Set<BossKind> {
-    let mut kinds = Set::default();
-    kinds[BossKind::MainBoss] = true;
-    kinds
-}
-
-/// The model's condition for the importer's.
+/// The model's condition for the decoder's.
 fn condition(condition: room::Condition) -> Option<Condition> {
     Some(match condition {
         room::Condition::Door(door) => Condition::EnteredBy(Entrance(door.offset)),
-        room::Condition::MainAreaBossDead => Condition::Defeated(main_boss()),
+        room::Condition::MainAreaBossDead => Condition::Defeated(BossBits::MAIN_BOSS.kinds()?),
         room::Condition::Event(event) => Condition::Happened(event),
-        room::Condition::BossDead(bits) => Condition::Defeated(kinds(bits)?),
+        room::Condition::BossDead(bits) => Condition::Defeated(bits.kinds()?),
         room::Condition::MorphBall => Condition::Has(Piece::MorphBall),
         room::Condition::MorphBallAndMissiles => Condition::MorphBallAndMissiles,
         room::Condition::PowerBombs => Condition::PowerBombs,
         room::Condition::SpeedBooster => Condition::Has(Piece::SpeedBooster),
     })
+}
+
+/// The model's condition for a record's: the same terms, a doorway its entrance.
+const fn version_condition(condition: world::Condition) -> Condition {
+    match condition {
+        world::Condition::EnteredBy(doorway) => Condition::EnteredBy(entrance(doorway)),
+        world::Condition::Happened(event) => Condition::Happened(event),
+        world::Condition::Defeated(kinds) => Condition::Defeated(kinds),
+        world::Condition::Has(item) => Condition::Has(item),
+        world::Condition::MorphBallAndMissiles => Condition::MorphBallAndMissiles,
+        world::Condition::PowerBombs => Condition::PowerBombs,
+    }
+}
+
+/// The entrance the model knows a doorway by.
+const fn entrance(doorway: DoorwayId) -> Entrance {
+    Entrance(doorway.0)
 }
 
 /// The conditions of the room's conditional states, in its order, as `RoomStates` reads them;
@@ -301,23 +292,19 @@ pub const fn state_place(version: Version, conditional: usize) -> usize {
 }
 
 /// The place in a room's list of the version that loads for `progress` in a room of `area`
-/// with these conditions, entered by the door at `door` if any (`$8F:E5D2`); none when the
-/// model can't read its area or conditions.
+/// with the `conditional` versions' conditions, entered by `entered_by` if any (`$8F:E5D2`);
+/// none when the model can't read its area.
 fn chosen_place(
     area: Area,
-    conditions: impl Iterator<Item = room::Condition>,
+    conditional: &[Condition],
     progress: &Progress,
-    door: Option<RomAddress>,
+    entered_by: Option<Entrance>,
 ) -> Option<usize> {
     let entered = EnteredRoom {
         area: region(area)?,
-        entered_by: door.map(|door| Entrance(door.offset)),
+        entered_by,
     };
-    let conditional = conditions.map(condition).collect::<Option<Vec<_>>>()?;
-    let version = RoomStates {
-        conditional: &conditional,
-    }
-    .choose(progress, entered);
+    let version = RoomStates { conditional }.choose(progress, entered);
     Some(state_place(version, conditional.len()))
 }
 
@@ -329,21 +316,32 @@ pub fn room_state(
     progress: &Progress,
     door: Option<RomAddress>,
 ) -> Option<StateIndex> {
-    let conditions = room.conditional.iter().map(|entry| entry.condition);
-    let place = chosen_place(room.area, conditions, progress, door)?;
+    let conditional = conditions(room)?;
+    let entered_by = door.map(|door| Entrance(door.offset));
+    let place = chosen_place(room.area, &conditional, progress, entered_by)?;
     u8::try_from(place).ok().map(StateIndex)
 }
 
-/// The version `room` loads in for `progress`, entered by the door at `door` if any; none when
-/// the model can't read its conditions.
+/// The version `room` loads in for `progress`, entered through `doorway` if any; none when
+/// the model can't read its area.
 #[must_use]
 pub fn room_version<'a>(
     room: &'a world::Room,
     progress: &Progress,
-    door: Option<RomAddress>,
+    doorway: Option<DoorwayId>,
 ) -> Option<&'a world::Version> {
-    let conditions = room.conditional.iter().map(|entry| entry.condition);
-    room.version(chosen_place(room.place.area, conditions, progress, door)?)
+    let conditional: Vec<_> = room
+        .conditional
+        .iter()
+        .map(|entry| version_condition(entry.condition))
+        .collect();
+    let place = chosen_place(
+        room.place.area,
+        &conditional,
+        progress,
+        doorway.map(entrance),
+    )?;
+    room.version(place)
 }
 
 #[cfg(test)]

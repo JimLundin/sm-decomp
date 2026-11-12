@@ -1,6 +1,5 @@
 use data::level::ScrollArea;
 use data::plm::{ItemPlm, ScrollChange, ScrollChangesId};
-use data::rom::RomAddress;
 
 use data::plm::{Extension, PlmEntry};
 
@@ -46,13 +45,10 @@ fn population() -> PlmPopulation {
             entry(PlmKind::Extension(Extension::Right), 4, 2),
             entry(PlmKind::Item(ItemPlm::MorphBall, 0x1a), 20, 5),
         ],
-        scroll_changes: vec![(
-            RomAddress::new(0x8f, 0x9f0b),
-            vec![ScrollChange {
-                screen: 1,
-                area: ScrollArea::Green,
-            }],
-        )],
+        scroll_changes: vec![vec![ScrollChange {
+            screen: 1,
+            area: ScrollArea::Green,
+        }]],
     }
 }
 

@@ -19,8 +19,10 @@ use core::cell::RefCell;
 use core::fmt;
 use std::collections::BTreeMap;
 
+use data::assets::world::Door;
+use data::id::RoomId;
 use data::rom::Lorom;
-use data::room::{Door, RoomError, RoomKey, decode as decode_room};
+use data::room::{self, RoomError, RoomKey, decode as decode_room};
 use game::Content;
 use game::collision::Room;
 use game::collision::solid_enemy::Obstacle;
@@ -785,6 +787,20 @@ pub struct Movement {
     doors: RefCell<BTreeMap<u16, Vec<Door>>>,
 }
 
+/// The stand-in for a door's destination the room registry has no id for: her moves read only
+/// whether a door leads to a room, never which, and the rows cross rooms the registry doesn't
+/// hold yet.
+const UNREGISTERED_ROOM: RoomId = RoomId(u16::MAX);
+
+/// The engine's door for the decoder's `door`. A door whose header is in work RAM leads
+/// nowhere the engine can follow, so it is solid, as one that leads nowhere.
+fn engine_door(door: room::Door) -> Door {
+    match door {
+        room::Door::ToRoom(key) => Door::To(import::world::id(key).unwrap_or(UNREGISTERED_ROOM)),
+        room::Door::Nowhere | room::Door::HeaderInRam(_) => Door::Nowhere,
+    }
+}
+
 impl Movement {
     /// The domain over the ROM `image`.
     ///
@@ -806,7 +822,7 @@ impl Movement {
         }
         let room = decode_room(Lorom::new(&self.image), RoomKey::from_room_pointer(pointer))
             .map_err(|error| Skip::Room(pointer, error))?;
-        let doors = room.doors.doors;
+        let doors: Vec<Door> = room.doors.doors.into_iter().map(engine_door).collect();
         self.doors.borrow_mut().insert(pointer, doors.clone());
         Ok(doors)
     }

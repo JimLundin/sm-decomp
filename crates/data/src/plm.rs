@@ -121,8 +121,26 @@ pub struct PlmEntry {
 pub struct PlmPopulation {
     /// The entries, in the original's order.
     pub entries: Vec<PlmEntry>,
-    /// Each distinct scroll change list, first named first, with where it is.
-    pub scroll_changes: Vec<(RomAddress, Vec<ScrollChange>)>,
+    /// Each distinct scroll change list, first named first.
+    pub scroll_changes: Vec<Vec<ScrollChange>>,
+}
+
+/// Where each scroll change list of a population is, by its [`ScrollChangesId`]: the ROM
+/// addresses its scroll PLMs' room arguments name, which only the decoder and verification
+/// read.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ScrollLists(pub Vec<RomAddress>);
+
+impl ScrollLists {
+    /// The list at `at`, a scroll PLM's room argument, if the population names it.
+    #[must_use]
+    pub fn id(&self, at: RomAddress) -> Option<ScrollChangesId> {
+        self.0
+            .iter()
+            .position(|&known| known == at)
+            .and_then(|index| u16::try_from(index).ok())
+            .map(ScrollChangesId)
+    }
 }
 
 impl From<Extension> for BlockKind {
@@ -162,17 +180,7 @@ impl PlmPopulation {
     pub fn changes(&self, id: ScrollChangesId) -> Option<&[ScrollChange]> {
         self.scroll_changes
             .get(usize::from(id.0))
-            .map(|(_, changes)| changes.as_slice())
-    }
-
-    /// The list at `at`, a scroll PLM's room argument, if the population names it.
-    #[must_use]
-    pub fn changes_at(&self, at: RomAddress) -> Option<ScrollChangesId> {
-        self.scroll_changes
-            .iter()
-            .position(|(known, _)| *known == at)
-            .and_then(|index| u16::try_from(index).ok())
-            .map(ScrollChangesId)
+            .map(Vec::as_slice)
     }
 }
 
@@ -225,33 +233,35 @@ pub fn scroll_changes(rom: Lorom<'_>, at: RomAddress) -> Result<Vec<ScrollChange
     }
 }
 
-/// Decode the population at `at`.
+/// Decode the population at `at`, with where its scroll change lists are.
 ///
 /// # Errors
 ///
 /// [`PlmError`] if the population or one of its scroll change lists is outside the image.
-pub fn population(rom: Lorom<'_>, at: RomAddress) -> Result<PlmPopulation, PlmError> {
+pub fn population(
+    rom: Lorom<'_>,
+    at: RomAddress,
+) -> Result<(PlmPopulation, ScrollLists), PlmError> {
     let mut decoded = PlmPopulation::default();
+    let mut lists = ScrollLists::default();
     let mut cursor = at;
     loop {
         let ([id_low, id_high], after_id) = take::<2>(rom, cursor)?;
         let id = u16::from_le_bytes([id_low, id_high]);
         if id == 0 {
-            return Ok(decoded);
+            return Ok((decoded, lists));
         }
         let ([x, y, argument_low, argument_high], next) = take::<4>(rom, after_id)?;
         let argument = u16::from_le_bytes([argument_low, argument_high]);
         let kind = match id {
             SCROLL => {
                 let list = RomAddress::new(ROOM_BANK, argument);
-                if let Some(known) = decoded.changes_at(list) {
+                if let Some(known) = lists.id(list) {
                     PlmKind::Scroll(known)
                 } else {
-                    let index = u16::try_from(decoded.scroll_changes.len())
-                        .map_err(|_| PlmError::TooManyLists)?;
-                    decoded
-                        .scroll_changes
-                        .push((list, scroll_changes(rom, list)?));
+                    let index = u16::try_from(lists.0.len()).map_err(|_| PlmError::TooManyLists)?;
+                    decoded.scroll_changes.push(scroll_changes(rom, list)?);
+                    lists.0.push(list);
                     PlmKind::Scroll(ScrollChangesId(index))
                 }
             }

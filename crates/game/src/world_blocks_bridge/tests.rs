@@ -1,6 +1,5 @@
 use data::level::ScrollArea;
 use data::plm::{Extension, PlmEntry, PlmKind, ScrollChange};
-use data::rom::RomAddress;
 use types::{Heading, Point, Way};
 
 use super::fixture::{CRUMBLE, SHOT, content};
@@ -41,13 +40,10 @@ fn population() -> PlmPopulation {
             entry(PlmKind::Extension(Extension::Up), 3, 1),
             entry(PlmKind::Extension(Extension::Right), 4, 2),
         ],
-        scroll_changes: vec![(
-            RomAddress::new(0x8f, 0x9f0b),
-            vec![ScrollChange {
-                screen: 1,
-                area: ScrollArea::Green,
-            }],
-        )],
+        scroll_changes: vec![vec![ScrollChange {
+            screen: 1,
+            area: ScrollArea::Green,
+        }]],
     }
 }
 

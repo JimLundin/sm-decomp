@@ -238,8 +238,9 @@ Differences the plan keeps on purpose, listed ahead of the work that brings them
 
 - `data::room::Door::HeaderInRam(u16)`: the unused room `$8F:B3E1`'s door list names a door header
   below the door bank's ROM, so a door block naming it would read its destination from low work
-  RAM (`$94:93AC`). The importer keeps the pointer, and the engine answers the door solid. No door
-  reaches the room, and no row enters it.
+  RAM (`$94:93AC`). The decoder keeps the pointer; the world importer refuses such a door
+  (`WorldError::DoorHeaderInRam`), and the movement harness answers it solid, as a door that leads
+  nowhere. No door reaches the room, and no row enters it.
 
 - `data::pose::PoseFacing::Unknown(u8)`: the unused poses $21 and $22 (`$91:B731`, `$91:B739`) hold X
   direction bytes 1 and 2, neither left (4), right (8) nor forward (0). The original's facing tests read

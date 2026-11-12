@@ -13,11 +13,11 @@ use std::ops::Range;
 use std::sync::{Arc, LazyLock};
 
 use canonical::{Canonical, Difference, Segment};
-use data::assets::world::World;
+use data::assets::world::{Door, World};
 use data::id::RoomId;
-use data::plm::PlmPopulation;
+use data::plm::{PlmPopulation, ScrollLists};
 use data::rom::Lorom;
-use data::room::{Door, RoomKey};
+use data::room::RoomKey;
 use data::tileset::TilesetId;
 use game::run_progress_bridge;
 use game::state::atmospheric::AtmosphericGraphic;
@@ -65,6 +65,7 @@ pub fn slice_zero_rooms() -> RoomMap {
         samus_tiles: data::pose::tiles::SamusTiles::default(),
         samus_clips: game::samus_appearance_bridge::Clips::default(),
         plms: Vec::new(),
+        scroll_lists: Vec::new(),
         states: Vec::new(),
         reactions: data::blocks::Reactions::default(),
     }
@@ -117,6 +118,27 @@ pub fn slice_zero_plms(world: &World) -> Vec<(RoomId, PlmPopulation)> {
             Some((room.id, version.plms.clone()))
         })
         .collect()
+}
+
+/// Where the scroll change lists are that the PLMs of [`slice_zero_plms`] name, room by room:
+/// the decoder's, for the room arguments the work RAM holds (K1).
+///
+/// # Errors
+///
+/// [`WorldError`] if a room doesn't decode from `image`.
+pub fn slice_zero_scroll_lists(image: &[u8]) -> Result<Vec<(RoomId, ScrollLists)>, WorldError> {
+    let mut lists = Vec::new();
+    for id in import::world::SLICE_ZERO {
+        let key = import::world::key(id).ok_or(WorldError::Unregistered(id))?;
+        let room = data::room::decode(Lorom::new(image), key)
+            .map_err(|error| WorldError::Room { room: id, error })?;
+        let state = run_progress_bridge::room_state(&room, &Progress::default(), None)
+            .and_then(|index| room.state(index));
+        if let Some(state) = state {
+            lists.push((id, state.scroll_lists.clone()));
+        }
+    }
+    Ok(lists)
 }
 
 /// The door list of each room of `world`.

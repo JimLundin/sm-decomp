@@ -7,7 +7,9 @@ use crate::enemy::AiVariables;
 use data::enemy::SpeciesMap;
 use data::enemy::program::{EnemyPrograms, Spritemap, SpritemapId};
 use data::id::{Line, RoomId, SpeciesId};
-use data::plm::{Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation, ScrollChangesId};
+use data::plm::{
+    Extension, ItemPlm, PlmEntry, PlmKind, PlmPopulation, ScrollChangesId, ScrollLists,
+};
 use data::pose::tiles::{SamusTiles, TileDefinition, TileDefinitionId};
 use data::rom::{Lorom, RomAddress};
 use data::room::{Area, MapPosition};
@@ -69,6 +71,7 @@ fn rooms() -> RoomMap {
         samus_tiles: samus_tiles(),
         samus_clips: samus_clips(),
         plms: vec![(MORPH_BALL_ROOM_ID, population())],
+        scroll_lists: vec![(MORPH_BALL_ROOM_ID, scroll_lists())],
         states: vec![(MORPH_BALL_STATE, MORPH_BALL_LEVEL)],
         reactions: data::blocks::Reactions::default(),
     }
@@ -1181,11 +1184,16 @@ fn population() -> PlmPopulation {
             entry(PlmKind::Scroll(ScrollChangesId(1))),
             entry(PlmKind::Item(ItemPlm::MorphBall, 0x1A)),
         ],
-        scroll_changes: vec![
-            (RomAddress::new(0x8F, 0x9F05), Vec::new()),
-            (RomAddress::new(0x8F, 0x9F08), Vec::new()),
-        ],
+        scroll_changes: vec![Vec::new(), Vec::new()],
     }
+}
+
+/// Where [`population`]'s two scroll change lists are.
+fn scroll_lists() -> ScrollLists {
+    ScrollLists(vec![
+        RomAddress::new(0x8F, 0x9F05),
+        RomAddress::new(0x8F, 0x9F08),
+    ])
 }
 
 /// Slot `slot`'s word in the PLM array at `array` (bank $84 log: one word per slot).
@@ -1371,8 +1379,12 @@ fn a_room_without_items_runs_no_item_collision_detection_plm() {
                 x: 1,
                 y: 2,
             }],
-            scroll_changes: vec![(RomAddress::new(0x8F, 0x9F05), Vec::new())],
+            scroll_changes: vec![Vec::new()],
         },
+    )];
+    rooms.scroll_lists = vec![(
+        MORPH_BALL_ROOM_ID,
+        ScrollLists(vec![RomAddress::new(0x8F, 0x9F05)]),
     )];
     let mut record = record();
     put(&mut record.wram, plm_word(PLM_ID, 37), 0);
@@ -2026,6 +2038,7 @@ fn cached_rows() -> Option<CachedRows> {
         .with_plms(crate::lockstep::slice_zero_plms(
             &crate::lockstep::slice_zero_world(&image).unwrap(),
         ))
+        .with_scroll_lists(crate::lockstep::slice_zero_scroll_lists(&image).unwrap())
         .with_states(crate::lockstep::slice_zero_states(&image).unwrap())
         .with_reactions(content.blocks.imported().clone());
     let rom = data::rom::Rom::new(image).unwrap();

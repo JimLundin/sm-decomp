@@ -13,9 +13,9 @@
 
 use core::cell::OnceCell;
 use core::num::Wrapping;
+use data::assets::world::Door;
 use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, DoorIndex, Offset, PlmChoice};
-use data::room::Door;
 use types::{Block, Cell, Hitbox, Pair, Radius, Slope, SlopeFaces, Way, World};
 
 use crate::collision::solid_enemy::{Obstacle, SolidEnemies, obstacles};
@@ -160,14 +160,13 @@ impl<'a> SamusWorld<'a> {
     }
 
     /// A door block of `index`, by where the room's door list says it leads: a door to a room
-    /// lets her through, and one that leads nowhere (an elevator's) is solid. So is a door the
-    /// engine can't follow: one whose header is in work RAM, or a place past the list, which no
-    /// door block of the room's levels names.
+    /// lets her through, and one that leads nowhere (an elevator's) is solid. So is a place past
+    /// the list, which no door block of the room's levels names.
     // open: her passage to the room is the doors' domain, which the engine doesn't have yet.
     fn door(&self, index: DoorIndex) -> Block {
         match self.room.door(index) {
-            Some(Door::ToRoom(_)) => Block::Air,
-            Some(Door::Nowhere | Door::HeaderInRam(_)) | None => Block::Solid,
+            Some(Door::To(_)) => Block::Air,
+            Some(Door::Nowhere) | None => Block::Solid,
         }
     }
 

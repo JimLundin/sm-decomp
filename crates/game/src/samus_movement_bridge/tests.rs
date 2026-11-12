@@ -1,7 +1,8 @@
 use core::num::Wrapping;
+use data::assets::world::Door;
+use data::assets::world::rooms::CONSTRUCTION_ZONE;
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, DoorIndex, Offset, PlmChoice, Slope};
-use data::room::{Door, RoomKey};
 use types::{Block, Cell, Heading, SlopeFaces, Way, World};
 
 use super::{SamusFault, SamusWorld};
@@ -99,10 +100,7 @@ fn a_door_lets_her_through_where_its_door_leads_to_a_room() {
         ((2, 0), BlockKind::Door(DoorIndex(0x81))),
         ((3, 0), BlockKind::Door(DoorIndex(2))),
     ]);
-    let doors = [
-        Door::Nowhere,
-        Door::ToRoom(RoomKey::from_room_pointer(0x91f8)),
-    ];
+    let doors = [Door::Nowhere, Door::To(CONSTRUCTION_ZONE)];
     let world = with_doors(&blocks, &slopes, &doors);
     assert!(matches!(world.block(at(0, 0)), Block::Solid));
     assert!(matches!(world.block(at(1, 0)), Block::Air));

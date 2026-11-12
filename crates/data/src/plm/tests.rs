@@ -28,8 +28,10 @@ fn each_entry_decodes_to_its_kind_and_a_shared_list_once() {
         0x00, 0x00,
     ];
     let rom = image(&population, &[(0x9000, &[18, 2, 13, 0, 0x80])]);
-    let decoded = population_at(&rom);
+    let (decoded, lists) = super::population(Lorom::new(&rom), AT).unwrap();
     let first = ScrollChangesId(0);
+    assert_eq!(lists.id(RomAddress::new(0x8f, 0x9000)), Some(first));
+    assert_eq!(lists.id(RomAddress::new(0x8f, 0x8000)), None);
     let kinds: Vec<PlmKind> = decoded.entries.iter().map(|entry| entry.kind).collect();
     assert_eq!(
         kinds,
@@ -59,17 +61,13 @@ fn each_entry_decodes_to_its_kind_and_a_shared_list_once() {
             .as_slice()
         )
     );
-    assert_eq!(
-        decoded.changes_at(RomAddress::new(0x8f, 0x9000)),
-        Some(first)
-    );
     // The kinds give the original's IDs back.
     let ids: Vec<u16> = kinds.iter().map(|kind| kind.id()).collect();
     assert_eq!(ids, [0xb703, 0xb647, 0xb63b, 0xb703, 0xef23]);
 }
 
 fn population_at(image: &[u8]) -> PlmPopulation {
-    population(Lorom::new(image), AT).unwrap()
+    population(Lorom::new(image), AT).unwrap().0
 }
 
 #[test]
@@ -115,7 +113,7 @@ fn the_morph_ball_rooms_plms_decode_as_the_bank_log_says() {
     let Some(cartridge) = rom() else {
         return;
     };
-    let decoded = population(cartridge.lorom(), RomAddress::new(0x8f, 0x867e)).unwrap();
+    let (decoded, places) = population(cartridge.lorom(), RomAddress::new(0x8f, 0x867e)).unwrap();
     // Five scroll PLMs, eight upwards and three rightwards extensions, and the Morph Ball.
     assert_eq!(decoded.entries.len(), 17);
     let count = |wanted: fn(PlmKind) -> bool| {
@@ -135,11 +133,14 @@ fn the_morph_ball_rooms_plms_decode_as_the_bank_log_says() {
     assert_eq!(last.kind, PlmKind::Item(ItemPlm::MorphBall, 0x1a));
     assert_eq!((last.x, last.y), (69, 41));
     // Four lists: $9F05, $9F08, $9F0B (two PLMs) and $9F0E, each one change.
-    let lists: Vec<(u16, Vec<ScrollChange>)> = decoded
-        .scroll_changes
-        .iter()
-        .map(|(at, changes)| (at.offset, changes.clone()))
+    let lists: Vec<(u16, Vec<ScrollChange>)> = [0x9f05, 0x9f08, 0x9f0b, 0x9f0e]
+        .into_iter()
+        .filter_map(|at| {
+            let id = places.id(RomAddress::new(0x8f, at))?;
+            Some((at, decoded.changes(id)?.to_vec()))
+        })
         .collect();
+    assert_eq!(decoded.scroll_changes.len(), lists.len());
     let change = |screen, area| vec![ScrollChange { screen, area }];
     assert_eq!(
         lists,

@@ -94,11 +94,17 @@ are variants of it that share what they share.
 | `Background` | a `TileLayer<Cell>` over the tileset's sheet, with its setup steps |
 | object and enemy layers | placed reactions, items, door caps, scroll cells, stations; placed species with their init, and the kill quota |
 
-Of these, `data::assets::world` holds today what the engine reads of a room: `World`, and
-`Room` with its place, size, scrollers and doors, and its versions with the PLMs each places.
-Room ids come from its registry, `rooms` (slice 0's room and Ceres's six); `import::world` maps
-the original's room headers to them and builds the records with `data::room`'s decoders. The
-conditions, the doors' destinations and the PLM population are still the decoders' types.
+Of these, `data::assets::world` holds today what the engine reads of a room: `World`, and `Room`
+with its place, size, scrollers and doors, and its versions with the PLMs each places. Room ids
+come from its registry, `rooms` (slice 0's room, Ceres's six and the rooms their doors lead to);
+`import::world` maps the original's room headers to them and builds the records with
+`data::room`'s decoders. Its doors, conditions and scroll changes hold no ROM address: a door
+names its destination's `RoomId`, a version's condition is the world's own `Condition` in
+progress's terms (a doorway by its `DoorwayId`), and a PLM population names its scroll change
+lists by their place in it. The importer refuses a room, doorway or boss bit no id stands for.
+Still to come: the world's `Condition` and progress's are two types until the records can name
+progress's, a PLM no model runs keeps its ID and room argument (`PlmKind::Unmodelled`), and the
+verifier's state-header lookup still decodes the room directly.
 
 Collision is a second tile layer, not a tile property: in Super Metroid a cell's kind is the
 cell's own, not its picture's. Room loading (R2) writes `Level` back into the original's work RAM

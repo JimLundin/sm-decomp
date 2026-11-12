@@ -7,7 +7,7 @@
 //! so does every reaction of the blocks' (`data::blocks`), whose list's place names its step.
 
 use data::blocks::{Reactions, Runs, Step};
-use data::plm::{ItemPlm, PlmKind, PlmPopulation};
+use data::plm::{ItemPlm, PlmKind, PlmPopulation, ScrollLists};
 use data::rom::RomAddress;
 use game::state::room::{
     BlockIndex, GrowsBackAs, ITEM_GFX_SLOTS, ItemFrame, ItemGfxSlot, ItemStep, PLM_SLOTS, PlmBody,
@@ -144,7 +144,8 @@ impl PlmSources {
         item_gfx: source::PLM_ITEM_GFX_SLOT,
     };
 
-    /// Every slot in `wram`, its ID resolved through the room's `population`.
+    /// Every slot in `wram`, its ID resolved through the room's `population`, a scroll PLM's
+    /// list through where the room's lists are, `lists`.
     ///
     /// The generation stays at its default: the original keeps no fill count. A free slot
     /// keeps its last occupant's block and timer, which the original leaves.
@@ -161,11 +162,12 @@ impl PlmSources {
         &self,
         wram: &[u8],
         population: &PlmPopulation,
+        lists: &ScrollLists,
         reactions: &Reactions,
     ) -> Result<SlotStore<PlmCommon, PlmBody, PLM_SLOTS>, DecodeError> {
         let mut store = SlotStore::default();
         for (slot, index) in store.slots.iter_mut().zip(0_u16..) {
-            *slot = self.slot(wram, index, population, reactions)?;
+            *slot = self.slot(wram, index, population, lists, reactions)?;
         }
         Ok(store)
     }
@@ -176,6 +178,7 @@ impl PlmSources {
         wram: &[u8],
         index: u16,
         population: &PlmPopulation,
+        lists: &ScrollLists,
         reactions: &Reactions,
     ) -> Result<Slot<PlmCommon, PlmBody>, DecodeError> {
         let word = |array: WramArray| array.word(index)?.read(wram);
@@ -193,7 +196,7 @@ impl PlmSources {
                 match known(population, reactions, id)
                     .ok_or_else(|| unrepresentable(self.id, id))?
                 {
-                    Known::Scroll => PlmBody::Scroll(self.scroll(wram, index, population)?),
+                    Known::Scroll => PlmBody::Scroll(self.scroll(wram, index, lists)?),
                     Known::ScrollTouch => PlmBody::ScrollTouch,
                     Known::Item(item) => PlmBody::Item {
                         item,
@@ -299,12 +302,12 @@ impl PlmSources {
         })
     }
 
-    /// The scroll PLM in slot `index`.
+    /// The scroll PLM in slot `index`, its list one of `lists`.
     fn scroll(
         &self,
         wram: &[u8],
         index: u16,
-        population: &PlmPopulation,
+        lists: &ScrollLists,
     ) -> Result<ScrollPlm, DecodeError> {
         let word = |array: WramArray| array.word(index)?.read(wram);
         let unrepresentable = |array: WramArray, value| DecodeError::Unrepresentable {
@@ -312,8 +315,8 @@ impl PlmSources {
             value,
         };
         let argument = word(self.argument)?;
-        let changes = population
-            .changes_at(RomAddress::new(ROOM_BANK, argument))
+        let changes = lists
+            .id(RomAddress::new(ROOM_BANK, argument))
             .ok_or_else(|| unrepresentable(self.argument, argument))?;
         let triggered = match word(self.variable)? {
             0 => false,

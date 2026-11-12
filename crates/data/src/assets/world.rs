@@ -5,13 +5,49 @@
 //! default.
 //!
 //! `import::world` builds it from the ROM; the engine reads only this. It holds what the
-//! engine reads of a room today: a version's PLMs, and the room's doors.
+//! engine reads of a room today: a version's PLMs, and the room's doors. A record names other
+//! content by our ids, never by where the original keeps it.
 
 pub mod rooms;
 
+pub use types::{BossKind, Event, Item, Set};
+
 use crate::id::RoomId;
 use crate::plm::PlmPopulation;
-use crate::room::{Area, Condition, Door, Screens, Scrollers};
+use crate::room::{Area, Screens, Scrollers};
+
+/// A doorway: one way into a room, by our id.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct DoorwayId(pub u16);
+
+/// Where a door of a room's door list leads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Door {
+    /// To this room: a door block of this door lets her through, and her passage there starts.
+    To(RoomId),
+    /// Nowhere: an elevator's doorway, whose door block is solid to her.
+    Nowhere,
+}
+
+/// What chooses a conditional version.
+///
+/// It says what progress's own condition (`run_progress::Condition`) says, in the same terms,
+/// so the two can become one type when the records can name progress's.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Condition {
+    /// She came in through this doorway.
+    EnteredBy(DoorwayId),
+    /// The event has happened.
+    Happened(Event),
+    /// A boss of any of these kinds is defeated in the room's own area.
+    Defeated(Set<BossKind>),
+    /// The item is hers.
+    Has(Item),
+    /// The Morph Ball is hers and her missile capacity isn't 0.
+    MorphBallAndMissiles,
+    /// Her power bomb capacity isn't 0.
+    PowerBombs,
+}
 
 /// Where a room sits on its area's map.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -131,7 +167,7 @@ mod tests {
                 up: 0x70,
                 down: 0xa0,
             },
-            doors: vec![Door::Nowhere],
+            doors: vec![Door::Nowhere, Door::To(rooms::FALLING_TILE_ROOM)],
             conditional: vec![Conditional {
                 condition: Condition::PowerBombs,
                 version: version(),

@@ -4,10 +4,10 @@
 //! blocks model and the items meet after the moves. The moves themselves are the samus-movement
 //! model's (`samus_movement_bridge`); the cells she is inside are `inside`'s.
 
+use data::assets::world::Door;
 use data::id::RoomId;
 use data::level::slope::Slopes;
 use data::level::{BlockKind, DoorIndex};
-use data::room::Door;
 
 use crate::plm::{self, TouchFault};
 use crate::state::room::{Block, BlockColumns, BlockIndex, RoomScoped};

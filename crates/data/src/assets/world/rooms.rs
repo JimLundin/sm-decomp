@@ -2,8 +2,8 @@
 //!
 //! The ids are ours: the importer (`import::world`) maps the original's places to them, and the
 //! registry holds no ROM bytes. They are dense (D15): a room's id is its place in [`ROOMS`]. The
-//! registry may name rooms the engine doesn't load yet; a world holds the rooms it was imported
-//! with. The names are sm-json-data's, as labels for reading only.
+//! registry may name rooms the engine doesn't load yet, such as the rooms a loaded room's doors
+//! lead to; a world holds the rooms it was imported with. The names are sm-json-data's, as labels for reading only.
 
 use crate::id::RoomId;
 
@@ -21,6 +21,12 @@ pub const DEAD_SCIENTIST_ROOM: RoomId = RoomId(4);
 pub const ESCAPE_ROOM_58: RoomId = RoomId(5);
 /// Ceres's last room, where Ridley holds the baby.
 pub const CERES_RIDLEY_ROOM: RoomId = RoomId(6);
+/// A Brinstar room a door of the Morph Ball Room leads to.
+pub const GREEN_HILL_ZONE: RoomId = RoomId(7);
+/// The other Brinstar room a door of the Morph Ball Room leads to.
+pub const CONSTRUCTION_ZONE: RoomId = RoomId(8);
+/// The Crateria room a door of the Morph Ball Room leads to.
+pub const BLUE_BRINSTAR_ELEVATOR_ROOM: RoomId = RoomId(9);
 
 /// A registered room: its id and the name a reader knows it by.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -32,7 +38,7 @@ pub struct Entry {
 }
 
 /// Every registered room, in id order.
-pub const ROOMS: [Entry; 7] = [
+pub const ROOMS: [Entry; 10] = [
     Entry {
         id: MORPH_BALL_ROOM,
         name: "Morph Ball Room",
@@ -61,6 +67,18 @@ pub const ROOMS: [Entry; 7] = [
         id: CERES_RIDLEY_ROOM,
         name: "Ceres Ridley's Room",
     },
+    Entry {
+        id: GREEN_HILL_ZONE,
+        name: "Green Hill Zone",
+    },
+    Entry {
+        id: CONSTRUCTION_ZONE,
+        name: "Construction Zone",
+    },
+    Entry {
+        id: BLUE_BRINSTAR_ELEVATOR_ROOM,
+        name: "Blue Brinstar Elevator Room",
+    },
 ];
 
 /// The name of room `id`, if it is registered.
@@ -85,6 +103,6 @@ mod tests {
                     .all(|other| other.name != entry.name)
             );
         }
-        assert_eq!(name(RoomId(7)), None);
+        assert_eq!(name(RoomId(10)), None);
     }
 }

@@ -1,10 +1,10 @@
 use data::level::Level;
-use data::plm::PlmPopulation;
+use data::plm::{PlmPopulation, ScrollLists};
 use data::room::{
     ConditionalState, DoorList, LevelData, MapPosition, Music, RoomKey, RoomState, Screens,
     Scrollers,
 };
-use types::Event;
+use types::{BossKind, Event};
 
 use super::*;
 
@@ -30,6 +30,7 @@ fn state_at(at: u16) -> RoomState {
         main_code: nowhere,
         plm_population: nowhere,
         plms: PlmPopulation::default(),
+        scroll_lists: ScrollLists::default(),
         library_background: nowhere,
         setup_code: nowhere,
     }
