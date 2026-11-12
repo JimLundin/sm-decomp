@@ -19,7 +19,8 @@ use game::state::room::{
     Block, BlockIndex, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, Enemy,
     EnemyBody, EnemyCommon, EnemyPaletteCycle, GlowSet, GraphicsDrawnHook, ItemFrame, ItemStep,
     LayerBlending, PLM_SLOTS, PaletteIndex, PlmBody, PlmCommon, ScrollArea, ScrollPlm, ScrollStep,
-    SpritePalette, TilesIndex,
+    SpritePalette, TilesIndex, UnmodelledEnemy, UnmodelledPlm, UnmodelledPlmKind,
+    UnmodelledSpecies,
 };
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
@@ -2240,4 +2241,143 @@ fn the_cached_plm_slots_are_the_loaded_rooms_population() {
         (crumbles.first().copied(), crumbles.len()),
         (Some("item-morph-ball:1236"), 13)
     );
+}
+
+/// The species words the engine carries but doesn't run, each with its kind.
+const UNMODELLED_SPECIES: [(u16, UnmodelledSpecies); 3] = [
+    (0xE23F, UnmodelledSpecies::CeresDoor),
+    (0xE13F, UnmodelledSpecies::CeresRidley),
+    (0xE1FF, UnmodelledSpecies::CeresSteam),
+];
+
+#[test]
+fn an_unmodelled_species_decodes_holding_its_words() {
+    for (species, kind) in UNMODELLED_SPECIES {
+        let slot = ENEMY_SLOT_1.wrapping_add(0x40);
+        let mut record = record();
+        put_enemy(
+            &mut record.wram,
+            slot,
+            species,
+            0x3000,
+            [0x8123, 0x8456, 0x00A6],
+        );
+        let state = decode(&record, &rooms()).unwrap().state;
+        let decoded = &state.room.enemies.slots[2];
+        let at = |offset: u16| 0x3000_u16.wrapping_add(offset);
+        assert_eq!(
+            decoded.occupancy,
+            Occupancy::Live(EnemyBody::Unmodelled(UnmodelledEnemy {
+                species: kind,
+                instruction: 0x8456,
+                spritemap: 0x8123,
+                variables: [at(0x30), at(0x32), at(0x34), at(0x36), at(0x38), at(0x3A)],
+            })),
+            "{species:04X}"
+        );
+        assert_eq!(decoded.common.frame_counter, at(0x2C), "{species:04X}");
+        // Deleted, it is deleting.
+        put(
+            &mut record.wram,
+            slot.wrapping_add(0x0E),
+            DELETED_PROPERTIES,
+        );
+        let state = decode(&record, &rooms()).unwrap().state;
+        assert!(
+            matches!(
+                state.room.enemies.slots[2].occupancy,
+                Occupancy::Deleting(EnemyBody::Unmodelled(_))
+            ),
+            "{species:04X}"
+        );
+    }
+}
+
+#[test]
+fn only_the_listed_unknown_species_are_carried() {
+    let species = SpeciesMap::slice_zero();
+    let programs = EnemyPrograms::default();
+    let mut wram = vec![0; 0x20000];
+    for word in 1..=u16::MAX {
+        if species.get(data::enemy::SpeciesKey(word)).is_some() {
+            continue;
+        }
+        put(&mut wram, ENEMY_SLOT_1, word);
+        let decoded = crate::enemy::EnemySources::ORIGINAL.read(&wram, &species, &programs);
+        let admitted = UNMODELLED_SPECIES.iter().any(|&(listed, _)| listed == word);
+        match decoded {
+            Ok(store) => assert!(
+                admitted
+                    && matches!(
+                        store.slots[1].occupancy,
+                        Occupancy::Live(EnemyBody::Unmodelled(_))
+                    ),
+                "{word:04X} carried"
+            ),
+            Err(error) => assert!(
+                !admitted
+                    && error
+                        == DecodeError::Unrepresentable {
+                            source: "enemy_ptr",
+                            value: word
+                        },
+                "{word:04X} refused"
+            ),
+        }
+    }
+}
+
+/// The timer that enables sounds: the one PLM the engine carries but doesn't run.
+const SOUNDS_TIMER: u16 = 0xB7EB;
+
+#[test]
+fn an_unmodelled_plm_decodes_holding_its_words() {
+    let mut record = record();
+    put(&mut record.wram, plm_word(PLM_ID, 30), SOUNDS_TIMER);
+    put(&mut record.wram, plm_word(PLM_INSTRUCTION, 30), 0x8ACE);
+    put(&mut record.wram, plm_word(PLM_ARGUMENT, 30), 0x1357);
+    put(&mut record.wram, plm_word(PLM_VARIABLE, 30), 0x2468);
+    let state = decode(&record, &rooms()).unwrap().state;
+    assert_eq!(
+        state.room.plms.slots[30].occupancy,
+        Occupancy::Live(PlmBody::Unmodelled(UnmodelledPlm {
+            kind: UnmodelledPlmKind::SoundsTimer,
+            instruction: 0x8ACE,
+            argument: 0x1357,
+            variable: 0x2468,
+        }))
+    );
+}
+
+#[test]
+fn only_the_listed_unknown_plm_is_carried() {
+    let mut wram = vec![0; 0x20000];
+    for id in 1..=u16::MAX {
+        put(&mut wram, plm_word(PLM_ID, 0), id);
+        let decoded = crate::plm::PlmSources::ORIGINAL.read(
+            &wram,
+            &PlmPopulation::default(),
+            &ScrollLists::default(),
+            &data::blocks::Reactions::default(),
+        );
+        match decoded {
+            Ok(store) => assert!(
+                id == SOUNDS_TIMER
+                    && matches!(
+                        store.slots[0].occupancy,
+                        Occupancy::Live(PlmBody::Unmodelled(_))
+                    ),
+                "{id:04X} carried"
+            ),
+            Err(error) => assert!(
+                id != SOUNDS_TIMER
+                    && error
+                        == DecodeError::Unrepresentable {
+                            source: "PLM_HEADER_PTR",
+                            value: id
+                        },
+                "{id:04X} refused"
+            ),
+        }
+    }
 }

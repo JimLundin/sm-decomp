@@ -117,7 +117,9 @@ pub fn select(state: &mut State) -> Active {
     let mut active = Active::default();
     for (index, slot) in state.room.enemies.slots.iter_mut().enumerate() {
         match slot.occupancy {
-            Occupancy::Free => {}
+            // LEGACY(unmodelled): a species the engine carries but doesn't run is never
+            // selected, so it runs no AI or instructions, isn't drawn and touches nothing.
+            Occupancy::Free | Occupancy::Live(EnemyBody::Unmodelled(_)) => {}
             Occupancy::Deleting(_) => {
                 slot.occupancy = Occupancy::Free;
                 slot.common.species = SpeciesId::default();
@@ -242,6 +244,8 @@ fn ai(
             // open: the face block's grapple, hurt and frozen AI, as its header names them.
             AiRoutine::Grapple | AiRoutine::Hurt | AiRoutine::Frozen => {}
         },
+        // The selection never lists one.
+        EnemyBody::Unmodelled(_) => {}
     }
 }
 
@@ -381,7 +385,7 @@ mod tests {
     use crate::model::num::Fixed as Exact;
     use crate::state::room::{
         Elevator, ElevatorArming, ElevatorDirection, ElevatorRide, ElevatorStatus, EnemyBody,
-        EnemyCommon, EnemyExtraProperty, EnemyProperty,
+        EnemyCommon, EnemyExtraProperty, EnemyProperty, UnmodelledEnemy, UnmodelledSpecies,
     };
     use crate::state::samus::{DrawingHandler, Fixed, Samus};
     use crate::state::slots::{Flag, Occupancy};
@@ -546,5 +550,31 @@ mod tests {
         assert_eq!(active.slots, vec![0, 1, 2]);
         let interactive: Vec<u8> = active.interactive().iter().map(|slot| slot.0).collect();
         assert_eq!(interactive, [0, 2]);
+    }
+
+    #[test]
+    fn an_unmodelled_enemy_is_never_selected_and_keeps_its_words() {
+        let mut state = State::default();
+        let (common, _, _) = arriving(at(0x1b, 0), 0x80);
+        let carried = Occupancy::Live(EnemyBody::Unmodelled(UnmodelledEnemy {
+            species: UnmodelledSpecies::CeresDoor,
+            instruction: 0x1234,
+            spritemap: 0x5678,
+            variables: [1, 2, 3, 4, 5, 6],
+        }));
+        if let Some(slot) = state.room.enemies.slots.first_mut() {
+            slot.common = common;
+            slot.common
+                .properties
+                .insert(EnemyProperty::ProcessedOffScreen);
+            slot.occupancy = carried;
+        }
+        let before = state.room.enemies.slots.first().copied();
+        let active = select(&mut state);
+        assert_eq!(active.slots, Vec::<usize>::new());
+        assert_eq!(active.interactive(), []);
+        run(&mut state, &active, &crate::pose::Content::default());
+        assert_eq!(state.room.enemies.slots.first().copied(), before);
+        assert!(state.room.drawing.queues.iter().all(Vec::is_empty));
     }
 }

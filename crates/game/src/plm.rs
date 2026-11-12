@@ -514,7 +514,11 @@ fn run_item(
             // Only [`resume`] runs these, the pass waiting on their message box.
             ItemStep::PickingUp | ItemStep::InBox => {}
         },
-        PlmBody::Scroll(_) | PlmBody::ScrollTouch | PlmBody::Held | PlmBody::Reaction(_) => {}
+        PlmBody::Scroll(_)
+        | PlmBody::ScrollTouch
+        | PlmBody::Held
+        | PlmBody::Reaction(_)
+        | PlmBody::Unmodelled(_) => {}
     }
     None
 }

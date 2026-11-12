@@ -287,11 +287,11 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | run-progress | harness | 3 | 7,869 | 7,442 | 1,053 | 1,221 | 811 | 609 | 62 | 1,401 |
 | interface-hud | bridge | 1 | 2,297 | 2,450 | 116 | 133 | 157 | 111 | 16 | 385 |
 | interface-hud | harness | 2 | 4,512 | 4,832 | 721 | 422 | 289 | 86 | 23 | 851 |
-| world-blocks | bridge | 1 | 7,101 | 6,883 | 439 | 264 | 661 | 500 | 97 | 1,062 |
+| world-blocks | bridge | 1 | 7,107 | 6,889 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
 | samus-appearance | harness | 2 | 3,714 | 4,020 | 421 | 136 | 116 | 178 | 14 | 591 |
-| total | | | 51,514 | 52,570 | 5,664 | 4,128 | 3,867 | 3,097 | 301 | 8,920 |
+| total | | | 51,520 | 52,576 | 5,664 | 4,128 | 3,867 | 3,097 | 301 | 8,920 |
 
 ## Harness floors and vectors
 
@@ -559,8 +559,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 48 | 4,831 | 28,988 | 30,739 | 10,094 | 1,910 | 2,168 | 2,620 | 629 | 6,787 |
-| bridges | 10 | 2,688 | 16,130 | 17,469 | 1,114 | 1,018 | 1,065 | 811 | 151 | 2,780 |
+| engine, not yet rebuilt | 48 | 4,836 | 29,018 | 30,766 | 10,225 | 1,910 | 2,171 | 2,623 | 629 | 6,818 |
+| bridges | 10 | 2,689 | 16,136 | 17,475 | 1,114 | 1,018 | 1,065 | 811 | 151 | 2,780 |
 | rebuilt models, shared types included | 71 | 3,254 | 19,526 | 25,708 | 9,595 | 13,491 | 1,038 | 497 | 307 | 8,657 |
 
 ## Timeline
@@ -584,7 +584,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | samus-movement model matches | 4,624 | 3.6 % |
 | world-blocks model matches | 5,038 | 3.9 % |
 | world-camera model matches | 5,045 | 3.9 % |
-| free-run gate: green streams | 0 | 0.0 % |
+| free-run gate: green streams | 1,399 | 1.1 % |
 | lockstep: Ticks fully equal | 0 | 0.0 % |
 
 ### The low% (13%) movie
@@ -647,9 +647,9 @@ Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/archi
 
 | Rung | Streams counted | Rows | Rows start | Green pairs |
 | --- | --- | ---: | ---: | ---: |
-| M0 | vram, cgram, oam, sram, ppu, timing | 1, 345 frames | 0 of 1 | 0 of 6 |
-| M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 0 of 5 | 0 of 35 |
-| M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 0 of 10 | 0 of 70 |
+| M0 | vram, cgram, oam, sram, ppu, timing | 1, 345 frames | 1 of 1 | 2 of 6 |
+| M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 5 of 5 | 10 of 35 |
+| M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 10 of 10 | 20 of 70 |
 
 | Domain free run | M0 | M1 | M2 |
 | --- | ---: | ---: | ---: |
@@ -1680,6 +1680,6 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-camera | `crates/game/src/world_camera_bridge.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `RoomError`, `Rules`, `Samus` | 505 | 120 |
 | run-progress | `crates/game/src/run_progress_bridge.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,327 | 264 |
 | interface-hud | `crates/game/src/interface_hud_bridge.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,297 | 385 |
-| world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,101 | 1,062 |
+| world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,107 | 1,062 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,168 | 205 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | `Ahead`, `Dash`, `Frames`, `Inputs`, `Laps`, `LapsLeft`, `Liquid`, `MoveEvent`, `Playhead`, `Rules`, `SoundsWaiting`, `State`, `Step`, `update` | 575 | 147 |

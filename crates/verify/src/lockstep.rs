@@ -24,7 +24,7 @@ use game::state::atmospheric::AtmosphericGraphic;
 use game::state::projectile::ProjectileBody;
 use game::state::room::{
     ENEMY_SLOTS, Elevator, EnemyBody, FaceBlock, ItemGfxSlot, ItemStep, MorphBallEye, PLM_SLOTS,
-    PlmBody, ReactionPlace, ScrollPlm, ScrollStep,
+    PlmBody, ReactionPlace, ScrollPlm, ScrollStep, UnmodelledEnemy,
 };
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
@@ -250,6 +250,7 @@ fn plm_occupant(state: &State) -> [Occupancy<PlmBody>; PLM_SLOTS] {
         },
         PlmBody::ItemCollision => PlmBody::ItemCollision,
         PlmBody::Held => PlmBody::Held,
+        PlmBody::Unmodelled(unmodelled) => PlmBody::Unmodelled(unmodelled),
         PlmBody::Reaction(running) => PlmBody::Reaction(ReactionPlace {
             next: 0,
             grows_back_as: None,
@@ -271,7 +272,8 @@ const fn scroll(body: PlmBody) -> Option<ScrollPlm> {
         | PlmBody::Item { .. }
         | PlmBody::ItemCollision
         | PlmBody::Held
-        | PlmBody::Reaction(_) => None,
+        | PlmBody::Reaction(_)
+        | PlmBody::Unmodelled(_) => None,
     }
 }
 
@@ -289,9 +291,11 @@ const fn plm_step(body: PlmBody) -> Option<PlmStep> {
     match body {
         PlmBody::Scroll(scroll) => Some(PlmStep::Scroll(scroll.step)),
         PlmBody::Item { step, .. } => Some(PlmStep::Item(step)),
-        PlmBody::ScrollTouch | PlmBody::ItemCollision | PlmBody::Held | PlmBody::Reaction(_) => {
-            None
-        }
+        PlmBody::ScrollTouch
+        | PlmBody::ItemCollision
+        | PlmBody::Held
+        | PlmBody::Reaction(_)
+        | PlmBody::Unmodelled(_) => None,
     }
 }
 
@@ -303,7 +307,8 @@ const fn collected_bit(body: PlmBody) -> Option<u16> {
         | PlmBody::ScrollTouch
         | PlmBody::ItemCollision
         | PlmBody::Held
-        | PlmBody::Reaction(_) => None,
+        | PlmBody::Reaction(_)
+        | PlmBody::Unmodelled(_) => None,
     }
 }
 
@@ -315,7 +320,8 @@ const fn reaction(body: PlmBody) -> Option<ReactionPlace> {
         | PlmBody::ScrollTouch
         | PlmBody::Item { .. }
         | PlmBody::ItemCollision
-        | PlmBody::Held => None,
+        | PlmBody::Held
+        | PlmBody::Unmodelled(_) => None,
     }
 }
 
@@ -325,6 +331,10 @@ fn occupant(state: &State) -> [Occupancy<EnemyBody>; ENEMY_SLOTS] {
         EnemyBody::MorphBallEye(_) => EnemyBody::MorphBallEye(MorphBallEye::default()),
         EnemyBody::Elevator(_) => EnemyBody::Elevator(Elevator::default()),
         EnemyBody::FaceBlock(_) => EnemyBody::FaceBlock(FaceBlock::default()),
+        EnemyBody::Unmodelled(unmodelled) => EnemyBody::Unmodelled(UnmodelledEnemy {
+            variables: [0; 6],
+            ..unmodelled
+        }),
     };
     state.room.enemies.slots.map(|slot| match slot.occupancy {
         Occupancy::Free => Occupancy::Free,
@@ -341,6 +351,7 @@ fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
             EnemyBody::MorphBallEye(eye) => crate::enemy::eye_words(eye),
             EnemyBody::FaceBlock(block) => crate::enemy::face_block_words(block),
             EnemyBody::Elevator(elevator) => crate::enemy::elevator_words(elevator),
+            EnemyBody::Unmodelled(unmodelled) => crate::enemy::unmodelled_words(unmodelled),
         }),
     })
 }
@@ -745,7 +756,8 @@ const COMPARATORS: &[Comparator] = &[
         | PlmBody::ScrollTouch
         | PlmBody::ItemCollision
         | PlmBody::Held
-        | PlmBody::Reaction(_) => None,
+        | PlmBody::Reaction(_)
+        | PlmBody::Unmodelled(_) => None,
     }),
     plm_body!("room.plms.slots.occupancy.collected_bit", collected_bit),
     plm_body!("room.plms.slots.occupancy.reaction", reaction),

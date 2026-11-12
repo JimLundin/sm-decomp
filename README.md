@@ -23,9 +23,9 @@ The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): s
 
 | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held | Still needed |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 0 of 1 | 0 of 6 | 30.7 % (samus-movement) | 18 of 18: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
-| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 0 of 5 | 0 of 35 | 22.5 % (samus-movement) | 22 of 22: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
-| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 0 of 10 | 0 of 70 | 37.4 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 2 of 6 | 30.7 % (samus-movement) | 18 of 18: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 10 of 35 | 22.5 % (samus-movement) | 22 of 22: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 20 of 70 | 37.4 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
 Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 30 have not started. **47 rounds** have landed on 6 models; the plan estimates 157 rounds for the whole game.
 
@@ -65,8 +65,8 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
-| not yet rebuilt | 48 | 4,831 | 28,988 | 6,787 |
-| bridges from the engine to the models | 10 | 2,688 | 16,130 | 2,780 |
+| not yet rebuilt | 48 | 4,836 | 29,018 | 6,818 |
+| bridges from the engine to the models | 10 | 2,689 | 16,136 | 2,780 |
 | rebuilt models, shared types included | 71 | 3,254 | 19,526 | 8,657 |
 
 ### Verification
@@ -76,7 +76,7 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 | Check | State |
 | --- | --- |
 | the lock | 651 rows of play, 459,806 frames |
-| the free-run gate: the engine runs a row alone | 8 green (row, stream) pairs over 2 rows |
+| the free-run gate: the engine runs a row alone | 29 green (row, stream) pairs over 13 rows |
 | the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
 | the harnesses: each model on recorded frames | 63 rows cached, 40,898 frames |
 

@@ -11,7 +11,7 @@ use data::rom::RomAddress;
 use game::enemy::instructions::label;
 use game::state::room::{
     ENEMY_SLOTS, Elevator, EnemyBody, EnemyCommon, EyePhase, FaceBlock, MorphBallEye, PaletteIndex,
-    TilesIndex,
+    TilesIndex, UnmodelledEnemy, UnmodelledSpecies,
 };
 use game::state::samus::{Fixed, Point};
 use game::state::slots::{Cursor, FlagSet, Frames, Generation, Label, Occupancy, Slot, SlotStore};
@@ -21,6 +21,34 @@ use crate::source::{self, SlotField, WramTable};
 
 /// The properties word's deleted bit (bank $A0 log): the next determine pass frees the slot.
 const DELETED: u16 = 0x0200;
+
+/// The species the engine carries but doesn't run, by the species word a slot holds.
+///
+/// Only these decode with no entry in the species map (docs/LEGACY.md, "The engine: slots it
+/// carries but doesn't run"); any other unknown word is still refused.
+pub const UNMODELLED_SPECIES: [(SpeciesKey, UnmodelledSpecies); 3] = [
+    (SpeciesKey(0xe23f), UnmodelledSpecies::CeresDoor),
+    (SpeciesKey(0xe13f), UnmodelledSpecies::CeresRidley),
+    (SpeciesKey(0xe1ff), UnmodelledSpecies::CeresSteam),
+];
+
+/// The unmodelled species whose slots hold `key`.
+#[must_use]
+pub fn unmodelled_species(key: SpeciesKey) -> Option<UnmodelledSpecies> {
+    UNMODELLED_SPECIES
+        .iter()
+        .find(|&&(admitted, _)| admitted == key)
+        .map(|&(_, species)| species)
+}
+
+/// What a slot's species word names.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Occupant {
+    /// A species of the map, by its ID, running its behaviour.
+    Modelled(SpeciesId, Behaviour),
+    /// A species the engine carries but doesn't run.
+    Unmodelled(UnmodelledSpecies),
+}
 
 /// The six words the original gives each enemy's AI, in slot order (`+30` to `+3A`): each
 /// species' body names them, and these are its words byte-exact.
@@ -156,13 +184,14 @@ impl EnemySources {
         Ok(store)
     }
 
-    /// The occupant of slot `index`, a species with `behaviour` and `properties`: its body
-    /// from its AI words, deleting if the properties say so.
+    /// The occupant of slot `index`, of species `occupant` with `properties`: its body from
+    /// its AI words (an unmodelled species' with its pointers, as words), deleting if the
+    /// properties say so.
     fn occupant(
         &self,
         wram: &[u8],
         index: u16,
-        behaviour: Behaviour,
+        occupant: Occupant,
         properties: u16,
     ) -> Result<Occupancy<EnemyBody>, DecodeError> {
         let word = |field: SlotField| self.table.word(field, index)?.read(wram);
@@ -175,13 +204,23 @@ impl EnemySources {
             e: word(fifth)?,
             f: word(sixth)?,
         };
-        let body = body(behaviour, variables).map_err(|word| DecodeError::Unrepresentable {
-            source: self
-                .variables
-                .get(word.index)
-                .map_or(self.species.name, |field| field.name),
-            value: word.value,
-        })?;
+        let body = match occupant {
+            Occupant::Modelled(_, behaviour) => {
+                body(behaviour, variables).map_err(|word| DecodeError::Unrepresentable {
+                    source: self
+                        .variables
+                        .get(word.index)
+                        .map_or(self.species.name, |field| field.name),
+                    value: word.value,
+                })?
+            }
+            Occupant::Unmodelled(species) => EnemyBody::Unmodelled(UnmodelledEnemy {
+                species,
+                instruction: word(self.instruction)?,
+                spritemap: word(self.spritemap)?,
+                variables: words(variables),
+            }),
+        };
         Ok(if properties & DELETED == 0 {
             Occupancy::Live(body)
         } else {
@@ -261,6 +300,8 @@ impl EnemySources {
             key => Some(
                 species
                     .get(SpeciesKey(key))
+                    .map(|(id, behaviour)| Occupant::Modelled(id, behaviour))
+                    .or_else(|| unmodelled_species(SpeciesKey(key)).map(Occupant::Unmodelled))
                     .ok_or(DecodeError::Unrepresentable {
                         source: self.species.name,
                         value: key,
@@ -270,7 +311,7 @@ impl EnemySources {
         let properties = word(self.properties)?;
         let occupancy = match occupant {
             None => Occupancy::Free,
-            Some((_, behaviour)) => self.occupant(wram, index, behaviour, properties)?,
+            Some(occupant) => self.occupant(wram, index, occupant, properties)?,
         };
         let frames = |field: SlotField| word(field).map(Frames);
         let [bank, _] = word(self.bank)?.to_le_bytes();
@@ -283,7 +324,8 @@ impl EnemySources {
                 source: field.name,
                 value,
             };
-        let (at, spritemap) = if occupant.is_some() {
+        // An unmodelled species' lists aren't loaded: its body keeps its pointers as words.
+        let (at, spritemap) = if let Some(Occupant::Modelled(..)) = occupant {
             let at = pointer(self.instruction)?;
             let shown = pointer(self.spritemap)?;
             (
@@ -303,7 +345,10 @@ impl EnemySources {
         Ok(Slot {
             generation: Generation::default(),
             common: EnemyCommon {
-                species: occupant.map_or_else(SpeciesId::default, |(id, _)| id),
+                species: match occupant {
+                    Some(Occupant::Modelled(id, _)) => id,
+                    Some(Occupant::Unmodelled(_)) | None => SpeciesId::default(),
+                },
                 cursor,
                 spritemap,
                 ..self.common(wram, index)?
@@ -329,6 +374,33 @@ pub struct UnknownWord {
     pub index: usize,
     /// The word.
     pub value: u16,
+}
+
+/// The six words in slot order.
+#[must_use]
+pub const fn words(variables: AiVariables) -> [u16; 6] {
+    [
+        variables.a,
+        variables.b,
+        variables.c,
+        variables.d,
+        variables.e,
+        variables.f,
+    ]
+}
+
+/// The words an unmodelled enemy holds, in slot order.
+#[must_use]
+pub const fn unmodelled_words(enemy: UnmodelledEnemy) -> AiVariables {
+    let [first, second, third, fourth, fifth, sixth] = enemy.variables;
+    AiVariables {
+        a: first,
+        b: second,
+        c: third,
+        d: fourth,
+        e: fifth,
+        f: sixth,
+    }
 }
 
 /// The body a species with `behaviour` runs, holding its AI words.

@@ -296,6 +296,27 @@ pub struct ReactionPlace {
     pub grows_back_as: Option<GrowsBackAs>,
 }
 
+/// A PLM the engine carries but doesn't run yet (docs/LEGACY.md, "The engine: slots it carries but
+/// doesn't run"): a Ceres seed holds it, and the round that models it replaces the variant.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UnmodelledPlmKind {
+    /// The timer that enables sounds, `$84:B7EB`, which a new game spawns.
+    SoundsTimer,
+}
+
+/// An unmodelled PLM's words, as the seed held them: they stay so, and go back out unchanged.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct UnmodelledPlm {
+    /// Which PLM, its ID word.
+    pub kind: UnmodelledPlmKind,
+    /// Its instruction list pointer.
+    pub instruction: u16,
+    /// Its room argument.
+    pub argument: u16,
+    /// Its variable.
+    pub variable: u16,
+}
+
 /// A PLM's typed body: one variant per PLM slice 0's rooms run, and the blocks' reactions. An
 /// extension PLM deletes itself in its setup, so no body holds one.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -327,6 +348,8 @@ pub enum PlmBody {
     /// A hold until the next pass of a cell marked to react to nothing: its touch, a hit or
     /// she inside it spawns a PLM that only deletes itself (`$84:B62F` and its like).
     Held,
+    /// A PLM the engine carries as the seed held it, and doesn't run.
+    Unmodelled(UnmodelledPlm),
 }
 
 /// The enemy family marker.
@@ -651,6 +674,33 @@ pub struct FaceBlock {
     pub unused: [u16; 4],
 }
 
+/// A species the engine carries but doesn't run yet (docs/LEGACY.md, "The engine: slots it carries
+/// but doesn't run"): Ceres's seeds hold them, and the round that models each replaces its
+/// variant.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UnmodelledSpecies {
+    /// A Ceres door, `$A0:E23F`.
+    CeresDoor,
+    /// Ceres Ridley, `$A0:E13F`.
+    CeresRidley,
+    /// The steam of Ceres's escape, `$A0:E1FF`.
+    CeresSteam,
+}
+
+/// An unmodelled enemy's words, as the seed held them: its species' lists aren't loaded, so its
+/// instruction and spritemap pointers stay words, and all of them go back out unchanged.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct UnmodelledEnemy {
+    /// Which species.
+    pub species: UnmodelledSpecies,
+    /// Its instruction pointer, in its AI bank.
+    pub instruction: u16,
+    /// Its spritemap pointer, in its AI bank.
+    pub spritemap: u16,
+    /// Its six AI words, in slot order.
+    pub variables: [u16; 6],
+}
+
 /// A species' AI state (D14): one variant per species slice 0 runs.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EnemyBody {
@@ -660,6 +710,9 @@ pub enum EnemyBody {
     Elevator(Elevator),
     /// A Blue Brinstar face block.
     FaceBlock(FaceBlock),
+    /// A species the engine carries as the seed held it, and doesn't select: it runs no AI or
+    /// instructions, isn't drawn and touches nothing.
+    Unmodelled(UnmodelledEnemy),
 }
 
 /// The enemies the main enemy routine queued to draw, and its frame count.

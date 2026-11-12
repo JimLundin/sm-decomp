@@ -11,7 +11,8 @@ use data::plm::{ItemPlm, PlmKind, PlmPopulation, ScrollLists};
 use data::rom::RomAddress;
 use game::state::room::{
     BlockIndex, GrowsBackAs, ITEM_GFX_SLOTS, ItemFrame, ItemGfxSlot, ItemStep, PLM_SLOTS, PlmBody,
-    PlmCommon, ReactionPlace, ReactionScript, ScrollPlm, ScrollStep,
+    PlmCommon, ReactionPlace, ReactionScript, ScrollPlm, ScrollStep, UnmodelledPlm,
+    UnmodelledPlmKind,
 };
 use game::state::slots::{Cursor, Frames, Generation, Occupancy, Slot, SlotStore};
 use types::Script;
@@ -66,6 +67,22 @@ const ITEM_TRIGGERED: u16 = 0x00ff;
 /// A scroll PLM's triggered word once touched (`$84:B393`); its update clears it.
 const TRIGGERED: u16 = 0x8000;
 
+/// The PLMs the engine carries but doesn't run, by the ID word a slot holds.
+///
+/// Only these decode, whatever the room (docs/LEGACY.md, "The engine: slots it carries but
+/// doesn't run"); any other unknown ID is still refused.
+pub const UNMODELLED_PLMS: [(u16, UnmodelledPlmKind); 1] =
+    [(0xb7eb, UnmodelledPlmKind::SoundsTimer)];
+
+/// The unmodelled PLM whose slots hold `id`.
+#[must_use]
+pub fn unmodelled_plm(id: u16) -> Option<UnmodelledPlmKind> {
+    UNMODELLED_PLMS
+        .iter()
+        .find(|&&(admitted, _)| admitted == id)
+        .map(|&(_, kind)| kind)
+}
+
 /// What a slot's ID word names in its room.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Known {
@@ -81,12 +98,17 @@ enum Known {
     Reaction(data::blocks::ReactionId, Script),
     /// A hold of a cell marked to react to nothing.
     Held,
+    /// A PLM the engine carries but doesn't run.
+    Unmodelled(UnmodelledPlmKind),
 }
 
 /// The PLM `id` names in a room with `population`, if the room runs one with it: an
 /// extension deletes itself in its setup, so no slot keeps one. A touch PLM runs only in a
 /// room whose population places the PLMs it touches.
 fn known(population: &PlmPopulation, reactions: &Reactions, id: u16) -> Option<Known> {
+    if let Some(kind) = unmodelled_plm(id) {
+        return Some(Known::Unmodelled(kind));
+    }
     let mut placed = population.entries.iter().map(|entry| entry.kind);
     match reactions.runs(id) {
         Some(Runs::Script(reaction, script)) => return Some(Known::Reaction(reaction, script)),
@@ -225,6 +247,12 @@ impl PlmSources {
                         PlmBody::Reaction(self.reaction(wram, index, reactions, reaction, script)?)
                     }
                     Known::Held => PlmBody::Held,
+                    Known::Unmodelled(kind) => PlmBody::Unmodelled(UnmodelledPlm {
+                        kind,
+                        instruction: word(self.instruction)?,
+                        argument: word(self.argument)?,
+                        variable: word(self.variable)?,
+                    }),
                 },
             ),
         };

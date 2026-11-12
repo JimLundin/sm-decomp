@@ -216,6 +216,33 @@ original's bytes as data.
   door's cells and the room goes on running. The harness compares the frame that reaches the door,
   her move, and skips those after it, which aren't gameplay. The entry goes with the doors (R1, R2).
 
+## The engine: slots it carries but doesn't run
+
+A stop-gap so Ceres's seeds start: the decoder admits an enemy or PLM slot of the ids below,
+which no model runs yet, as `EnemyBody::Unmodelled` or `PlmBody::Unmodelled`, holding the words
+the seed held (the species or ID as a named kind; an enemy's instruction and spritemap pointers and
+six AI words, a PLM's instruction pointer, room argument and variable), which go back out
+unchanged where lockstep compares them. Only these ids are admitted (`verify::enemy::UNMODELLED_SPECIES`,
+`verify::plm::UNMODELLED_PLMS`); any other id the engine doesn't hold is still refused by name. The
+engine never selects such an enemy (`LEGACY(unmodelled)` in `game::enemy::select`), so it runs no
+AI or instructions, its frame counter and timers stand still, it isn't drawn and nothing touches
+it; such a PLM is no place of the blocks' (`LEGACY(unmodelled)` in `game::world_blocks_bridge`) and
+the items' pass skips it, so it never runs or deletes itself. No Ceres row has a Tick fully equal in
+lockstep (in `chain-any-0003-DFD7` the door's slot 0 differs from frame 1 and the OAM from frame 9);
+the free-run gate's Ceres rows start, green on `sram` and `timing` only. Each entry goes, with its
+id in the list, when the round named replaces it:
+
+- **Enemy `$A0:E23F`, a Ceres door** (9 rows: `chain-any-0002` to `0005`, `0007` to `0009`,
+  `0011`, and `0006`): no opening, closing or blocking, no drawing and no contact. Replaced by B8 (the
+  Ceres doors, first in the plan) with C1 and AF3 ([domains.md §4](architecture/domains.md#4-order)).
+- **Enemy `$A0:E13F`, Ceres Ridley** (`chain-any-0006-E0B5`): no fight, getaway, drawing or
+  contact. Replaced by B8 with C1 and AF3.
+- **Enemy `$A0:E1FF`, the steam of Ceres's escape** (`chain-any-0009` to `0011`, up to 11 slots): no
+  puffs, drawing or contact. Replaced by B8 with C1 and AF3.
+- **PLM `$84:B7EB`, the timer that enables sounds** (`chain-any-0001-DF45`, slot 39, spawned by the new
+  game): it never counts down, enables the sounds or deletes itself, so its slot stays taken.
+  Replaced by W2's piece for Ceres (the PLM runner's pieces the stretch spawns).
+
 ## The engine: planned differences from the original
 
 Differences the plan keeps on purpose, listed ahead of the work that brings them.

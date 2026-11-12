@@ -775,7 +775,9 @@ fn place(
             },
         }),
         PlmBody::ScrollTouch | PlmBody::Held => Place::HeldUntilRun,
-        PlmBody::Item { .. } | PlmBody::ItemCollision => Place::OtherPart,
+        // LEGACY(unmodelled): a PLM the engine carries but doesn't run is no place of the
+        // blocks'.
+        PlmBody::Item { .. } | PlmBody::ItemCollision | PlmBody::Unmodelled(_) => Place::OtherPart,
         PlmBody::Reaction(running) => Place::Running(Running {
             reaction: Arc::clone(content.reaction(running.reaction)?),
             script: script(running.script),
