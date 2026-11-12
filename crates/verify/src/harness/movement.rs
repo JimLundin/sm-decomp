@@ -897,7 +897,7 @@ impl Movement {
             completed: inputs.completed,
             content,
         };
-        run(samus, reads, level, &Reference::REFERENCE)
+        run(samus, reads, level, &Reference::default())
             .map_err(Skip::Fault)?
             .ok_or(Skip::Pose(pose))
     }

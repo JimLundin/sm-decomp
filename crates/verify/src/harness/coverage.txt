@@ -8,7 +8,7 @@ game-time field 40835 0 hours
 game-time field 40835 0 minutes
 game-time field 40835 0 seconds
 game-time field 40835 0 frames
-samus-movement frames 40835 20814 0 5600
+samus-movement frames 40835 20856 0 5600
 samus-movement field 20580 421 position.x
 samus-movement field 19674 1327 position.y
 samus-movement field 20574 427 base_speed
@@ -24,33 +24,33 @@ samus-movement field 20635 366 heading_down
 samus-movement field 20361 640 vertical_speed_after_moves
 samus-movement field 21001 0 handed_over
 samus-movement entry Aiming 0 0 0 3473
-samus-movement entry AimingAndShooting 3632 507 3640 62
+samus-movement entry AimingAndShooting 3632 505 3638 62
 samus-movement entry AnimationEnds 410 9 422 0
-samus-movement entry BlocksStopFlush 12597 4998 12681 158
+samus-movement entry BlocksStopFlush 12637 4998 12681 158
 samus-movement entry Dash 5721 9 5733 52
 samus-movement entry Dashing 5771 5515 5791 13
-samus-movement entry DriftInTheAir 7331 2045 7369 296
-samus-movement entry FollowingTheGround 12186 11080 12250 1086
+samus-movement entry DriftInTheAir 7332 2045 7369 296
+samus-movement entry FollowingTheGround 12227 11080 12250 1086
 samus-movement entry HowSheIsDrawn 0 0 0 0
 samus-movement entry Jumping 321 5 323 11
 samus-movement entry Landing 193 0 193 5
 samus-movement entry Moonfall 751 121 751 66
-samus-movement entry MovesAsShePosed 19567 5498 19674 1327
+samus-movement entry MovesAsShePosed 19609 5498 19674 1327
 samus-movement entry OtherBlockKinds 0 0 0 0
 samus-movement entry PadChart 0 0 0 21001
 samus-movement entry PoseFitAfterMoves 454 0 455 35
 samus-movement entry PoseFollows 0 0 0 21001
 samus-movement entry RidingTheElevator 0 0 0 906
-samus-movement entry RisingAndFalling 7130 188 7166 499
+samus-movement entry RisingAndFalling 7131 188 7166 499
 samus-movement entry ShrinkingLowersHer 67 0 67 2
 samus-movement entry SlopesCarry 80 3 80 1
 samus-movement entry SlopesSlowTheWalk 0 0 0 0
-samus-movement entry SolidEnemies 7175 2273 7203 442
-samus-movement entry SpeedBuildsAndBrakes 13067 5652 13131 205
-samus-movement entry TouchedCells 0 0 0 20520
-samus-movement entry TurningRound 1524 17 1591 11
+samus-movement entry SolidEnemies 7198 2273 7203 442
+samus-movement entry SpeedBuildsAndBrakes 13108 5652 13131 205
+samus-movement entry TouchedCells 0 0 0 20518
+samus-movement entry TurningRound 1565 17 1593 11
 samus-movement entry WallJump 281 0 281 23
-samus-movement entry WallsAndCeilings 1655 474 1682 31
+samus-movement entry WallsAndCeilings 1656 474 1682 31
 samus-movement entry WhatHerMovesMet 0 0 0 2196
 samus-movement entry WordwiseTopSpeed 0 0 0 0
 world-camera frames 40835 23501 0 9168

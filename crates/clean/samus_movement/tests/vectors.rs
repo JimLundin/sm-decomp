@@ -174,12 +174,66 @@ struct StepAfter {
     pose: PoseTable,
 }
 
-/// A vector's `rules`.
+/// A vector's `rules`: the parameters it adjusts, each a value of the one `Rules` the model
+/// reads; a parameter it doesn't name keeps the game's value.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RulesTable {
     /// `WordwiseTopSpeed`'s switch.
-    speed_cap: SpeedCapName,
+    speed_cap: Option<SpeedCapName>,
+    /// `Dash`: the dash gained a frame.
+    dash_gain: Option<Quantity>,
+    /// `AimingAndShooting`: the step forward into another running pose.
+    aim_step: Option<Quantity>,
+    /// `RidingTheElevator`: the ride's descent a frame.
+    elevator_descent: Option<Quantity>,
+    /// `Jumping`: the jump's speed without the hi-jump boots.
+    jump_speed: Option<Quantity>,
+    /// `FollowingTheGround`: the pull beyond her speed on the ground.
+    ground_pull: Option<Quantity>,
+    /// `ShrinkingLowersHer`: the crouch's own distance.
+    crouch_lowers: Option<Quantity>,
+    /// `RisingAndFalling`: the pull a frame.
+    gravity: Option<Quantity>,
+    /// `WallJump`: the near-wall test's move.
+    wall_reach: Option<Quantity>,
+    /// `PoseFitAfterMoves`: the old body's half-height under which a change is refused.
+    small_body: Option<u16>,
+    /// `Landing`: the pixel part from which a landing makes the ball's bounce 1.
+    bounce_threshold: Option<u16>,
+    /// `BlocksStopFlush`: the horizontal move's limit.
+    move_limit: Option<u16>,
+}
+
+impl RulesTable {
+    /// `rules` with each parameter this table names set to its value.
+    fn applied(&self, mut rules: Rules) -> Rules {
+        let set = |value: &mut Fixed, q: Option<Quantity>| {
+            if let Some(q) = q {
+                *value = q.0;
+            }
+        };
+        set(&mut rules.dash_gain, self.dash_gain);
+        set(&mut rules.aim_step, self.aim_step);
+        set(&mut rules.elevator_descent, self.elevator_descent);
+        set(&mut rules.jump.without, self.jump_speed);
+        set(&mut rules.ground_pull, self.ground_pull);
+        set(&mut rules.crouch_lowers, self.crouch_lowers);
+        set(&mut rules.gravity, self.gravity);
+        set(&mut rules.wall_reach, self.wall_reach);
+        let set_px = |value: &mut Px, n: Option<u16>| {
+            if let Some(n) = n {
+                *value = Wrapping(n);
+            }
+        };
+        set_px(&mut rules.small_body, self.small_body);
+        set_px(&mut rules.bounce_threshold, self.bounce_threshold);
+        set_px(&mut rules.move_limit, self.move_limit);
+        if let Some(cap) = self.speed_cap {
+            rules.speed_cap = cap.model();
+        }
+        rules
+    }
 }
 
 /// A pose (spec §2), with her body's size there where a vector gives it.
@@ -1246,14 +1300,10 @@ fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -
 /// Runs one vector; returns its mismatches.
 fn run(vector: &Vector) -> Vec<String> {
     let name = format!("{} ({})", vector.id, vector.source);
-    let speed_cap = vector
+    let rules = vector
         .rules
         .as_ref()
-        .map_or(SpeedCapName::Wordwise, |r| r.speed_cap);
-    let rules = Rules {
-        speed_cap: speed_cap.model(),
-        ..Rules::REFERENCE
-    };
+        .map_or_else(Rules::default, |r| r.applied(Rules::default()));
     let items: Set<Item> = vector.items.iter().map(|i| (i.model(), true)).collect();
     let room = room(&vector.world);
     let checked = vector.checked();
@@ -1615,6 +1665,47 @@ pad = ["right"]
 jump_pressed = false
 "#;
 
+/// Every `rules` key the header defines, with the game's value it gives, and another value.
+const RULES_KEYS: [(&str, &str, &str); 12] = [
+    ("speed_cap", "\"Wordwise\"", "\"Exact\""),
+    ("dash_gain", "\"0000.1000\"", "\"0000.2000\""),
+    ("aim_step", "\"0001.0000\"", "\"0003.0000\""),
+    ("elevator_descent", "\"0001.0000\"", "\"0002.0000\""),
+    ("jump_speed", "\"0004.E000\"", "\"0003.0000\""),
+    ("ground_pull", "\"0001.0000\"", "\"0002.0000\""),
+    ("crouch_lowers", "\"0005.0000\"", "\"0003.0000\""),
+    ("gravity", "\"0000.1C00\"", "\"0000.4000\""),
+    ("wall_reach", "\"0008.0000\"", "\"0010.0000\""),
+    ("small_body", "8", "17"),
+    ("bounce_threshold", "3", "2"),
+    ("move_limit", "15", "8"),
+];
+
+/// The vector test applies each `rules` key to the one set of rules the model reads: at the
+/// game's value the header gives, every key leaves the default rules as they are, and each key
+/// at another value changes them.
+#[test]
+fn every_rules_key_is_applied() {
+    let game = Rules::default();
+    let read = |text: &str| -> Rules {
+        let table: RulesTable = toml::from_str(text).expect("the rules read");
+        table.applied(Rules::default())
+    };
+    let all = RULES_KEYS
+        .iter()
+        .map(|(key, value, _)| format!("{key} = {value}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert_eq!(read(&all), game, "the game's values");
+    for (key, _, other) in RULES_KEYS {
+        assert_ne!(
+            read(&format!("{key} = {other}\n")),
+            game,
+            "{key} isn't applied"
+        );
+    }
+}
+
 /// A vector whose frame reads a body it doesn't give is refused: C-wall without its
 /// `next_pose`, whose wall stop chooses `AgainstWall`, a pose pose fit reads the body of.
 #[test]
@@ -1641,7 +1732,7 @@ const EVERY_TABLE: &str = r#"
 id = "every-table"
 source = "constructed"
 entries = ["Landing"]
-rules = { speed_cap = "Wordwise"%0% }
+rules = { speed_cap = "Wordwise", dash_gain = "0000.1000", aim_step = "0001.0000", elevator_descent = "0001.0000", jump_speed = "0004.E000", ground_pull = "0001.0000", crouch_lowers = "0005.0000", gravity = "0000.1C00", wall_reach = "0008.0000", small_body = 8, bounce_threshold = 3, move_limit = 15%0% }
 items = ["MorphBall"]
 world = { floor_top = 288, slope_floor = { block = [256, 272], surface = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16], factor = "1.00"%1% }, slope_ceiling = { block = [256, 0], surface = [17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17]%2% }, stepped = { block = [0, 0], quarters = ["..", ".."]%3% }, enemy = { centre = [8, 8], radius = [1, 1]%4% }, cells = [{ block = [16, 0], kind = "Spikes"%5% }]%6% }
 before = { position = ["0100.0000", "0100.0000"], speed_y = "+0000.0000"%7% }
@@ -1712,6 +1803,8 @@ fn an_unknown_key_or_name_is_refused() {
     let known = with_unknown_key_in(EVERY_TABLE, TABLES, None);
     let names = [
         ("\"Wordwise\"", "\"Word\""),
+        ("\"0000.1C00\"", "\"1C00\""),
+        ("small_body = 8", "small_body = \"8\""),
         ("\"MorphBall\"", "\"Morph\""),
         ("\"Spikes\"", "\"Spike\""),
         ("\"Upright\"", "\"Standing\""),

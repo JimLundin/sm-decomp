@@ -6,16 +6,15 @@
 
 use crate::chart::{Choice, Moment};
 use crate::jump_held::FrameBefore;
-use crate::rows::Doing::Spinning;
+use crate::rows::Doing;
 use crate::rules::Rules;
 use crate::run::Dashing;
 use crate::samus::{Outcome, Samus, StandingAnimation, sprite};
 use crate::situation::{UnknownPose, classify};
 use crate::tick::{Frame, Tick};
 use crate::vertical::Contact;
-use types::Body::SpringBall;
-use types::World;
 use types::button::JUMP;
+use types::{Body, World};
 
 impl Samus {
     /// `PoseFollows`: one frame, in the order it runs. `TouchedCells`: the cells she is inside
@@ -47,11 +46,11 @@ impl Samus {
         };
         let inside = t.inside(self.bounds(&t));
         let start = *self;
-        self.spin = self.spin.then(situation.doing == Spinning);
+        self.spin = self.spin.then(situation.doing == Doing::Spinning);
         self.vertical.end_rise(situation.doing, frame.pad);
         let meeting = self.moves(situation, &mut t);
         let dashing_after_moves = self.run.dashing;
-        let springs = start.pose.body == SpringBall && frame.pad.any(JUMP);
+        let springs = start.pose.body == Body::SpringBall && frame.pad.any(JUMP);
         let contact = self
             .vertical
             .contact(meeting.met, situation.footing, springs, rules);

@@ -135,7 +135,7 @@ pub fn step(
             session::SpeedCap::Wordwise => SpeedCap::Wordwise,
             session::SpeedCap::Exact => SpeedCap::Exact,
         },
-        ..Rules::REFERENCE
+        ..Rules::default()
     };
     let Some(ran) = run(samus, inputs.reads, &world, &rules)? else {
         return Ok(None);

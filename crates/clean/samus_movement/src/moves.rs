@@ -4,16 +4,10 @@
 //! (`Dashing`).
 
 use crate::chart::Choice;
-use crate::collide::Probe::{Move, NearWall, Walk};
-use crate::collide::Stop;
-use crate::rows::Doing::{self, AgainstWall, Ball, Running, Standing, TakingOff, Turning};
-use crate::rows::Met::{self, Wall, WallKick};
-use crate::rows::{Footing, Moves, Situation};
-use crate::run::Stride::{DashThenHalt, Nothing, SpeedAndDash};
-use crate::run::{Dashing, running_with_run_held};
-use crate::samus::Seat::{Seated, Unseated};
-use crate::samus::WallTest::{Kicked, Neither, Readied};
-use crate::samus::{Samus, Spin, WallTest};
+use crate::collide::{Probe, Stop};
+use crate::rows::{Doing, Footing, Met, Moves, Situation};
+use crate::run::{Dashing, Stride, running_with_run_held};
+use crate::samus::{Samus, Seat, Spin, WallTest};
 use crate::tick::Tick;
 use crate::vertical::Course;
 use types::button::{JUMP, LEFT, SIDES};
@@ -61,9 +55,9 @@ struct Walked {
 /// after its dash (at rest on the ground, or falling with neither side held). Crouched, the
 /// halt after her dash leaves her dashing.
 fn moves_end_dashing(doing: Doing, halt: Option<Halt>) -> bool {
-    matches!(doing, Standing | AgainstWall | Turning)
+    matches!(doing, Doing::Standing | Doing::AgainstWall | Doing::Turning)
         || halt == Some(Halt::WallStop)
-        || doing == Ball && halt == Some(Halt::AfterDash)
+        || doing == Doing::Ball && halt == Some(Halt::AfterDash)
 }
 
 impl Samus {
@@ -77,7 +71,8 @@ impl Samus {
     pub(crate) fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
             if self.rides_the_elevator(t.frame) {
-                self.position = t.vmove(self.bounds(t), t.rules.elevator, Move).to;
+                let ride = t.vmove(self.bounds(t), t.rules.elevator_descent, Probe::Move);
+                self.position = ride.to;
             }
             return Meeting {
                 heading_down: self.vertical.heading_down(),
@@ -91,18 +86,18 @@ impl Samus {
         }
         let wall_test = self.wall_test(t);
         self.vertical.space_jump(s.doing, self.run.dash, t);
-        let met = if wall_test == Kicked {
-            Some(WallKick)
-        } else if s.doing == TakingOff {
+        let met = if wall_test == WallTest::Kicked {
+            Some(Met::WallKick)
+        } else if s.doing == Doing::TakingOff {
             None
         } else {
             self.move_vertically(s.footing, walk.pull, t)
         };
         let (heading_down, vertical_speed) = (self.vertical.heading_down(), self.vertical.speed);
         self.vertical.meet_in_moves(met);
-        let stopped_running = walk.halt == Some(Halt::WallStop) && s.doing == Running;
+        let stopped_running = walk.halt == Some(Halt::WallStop) && s.doing == Doing::Running;
         Meeting {
-            met: stopped_running.then_some(Wall).or(met),
+            met: stopped_running.then_some(Met::Wall).or(met),
             wall_test,
             ran_with_run_held: walk.ran_with_run_held,
             heading_down,
@@ -121,14 +116,14 @@ impl Samus {
             .run
             .stride(s.moves, facing, self.vertical.has_motion(), t);
         let pull = self.run.speed + self.run.dash;
-        if stride == Nothing {
+        if stride == Stride::Nothing {
             return Walked {
                 pull,
                 halt: None,
                 ran_with_run_held,
             };
         }
-        let by = if stride == SpeedAndDash {
+        let by = if stride == Stride::SpeedAndDash {
             pull
         } else {
             self.run.dash
@@ -136,12 +131,12 @@ impl Samus {
         let stop = self.hmove(self.run.moving(facing), by, t);
         if let Some(y) = t.slope_checks(self.bounds(t)) {
             self.position.y = y;
-            self.seat = Seated;
+            self.seat = Seat::Seated;
         }
         let halt = if stop.is_some() {
             Some(Halt::WallStop)
         } else {
-            (stride == DashThenHalt).then_some(Halt::AfterDash)
+            (stride == Stride::DashThenHalt).then_some(Halt::AfterDash)
         };
         if halt.is_some() {
             self.run.halt();
@@ -157,9 +152,9 @@ impl Samus {
     /// her vertical speed exactly 0. Returns what stopped it.
     fn hmove(&mut self, way: Side, d: Fixed, t: &mut Tick) -> Option<Stop> {
         let probe = if self.vertical.speed == ZERO {
-            Walk
+            Probe::Walk
         } else {
-            Move
+            Probe::Move
         };
         let moved = t.go(self.bounds(t).axis(way.heading(), d, probe));
         self.position = moved.to;
@@ -195,7 +190,7 @@ impl Samus {
     fn wall_test(&mut self, t: &mut Tick) -> WallTest {
         let f = t.frame;
         if self.spin != Spin::CarriedOn || !f.pad.any(SIDES) {
-            return Neither;
+            return WallTest::Neither;
         }
         let wall = if f.pad.any(LEFT) {
             Side::Right
@@ -204,18 +199,18 @@ impl Samus {
         };
         let towards_wall = self
             .bounds(t)
-            .axis(wall.heading(), t.rules.wall_reach, NearWall);
+            .axis(wall.heading(), t.rules.wall_reach, Probe::NearWall);
         let look = t.go(towards_wall);
         // What stopped the look writes her x subpixel, or her y subpixel against an enemy.
         self.take_result(&look);
         if look.stop.is_none() {
-            Neither
+            WallTest::Neither
         } else if !f.spin_turned_far {
-            Readied
+            WallTest::Readied
         } else if f.pressed.any(JUMP) {
-            Kicked
+            WallTest::Kicked
         } else {
-            Neither
+            WallTest::Neither
         }
     }
 
@@ -229,13 +224,13 @@ impl Samus {
         let r = t.rules;
         let course = self.vertical.course(footing);
         let by = match course {
-            Course::Pulled if self.seat == Seated => r.ground_pull,
+            Course::Pulled if self.seat == Seat::Seated => r.ground_pull,
             Course::Pulled => pull + r.ground_pull,
             Course::BallMovesByIt | Course::InTheAir => self.vertical.speed,
         };
-        let moved = t.vmove(self.bounds(t), by, Move);
+        let moved = t.vmove(self.bounds(t), by, Probe::Move);
         if by != ZERO {
-            self.seat = Unseated;
+            self.seat = Seat::Unseated;
         }
         let stopped = moved.stop.is_some();
         if course == Course::Pulled && footing == Footing::ChangingShape && !stopped {

@@ -3,7 +3,7 @@
 # Format
 # - Each [[vector]] is a short run of frames ending in the frame it checks: id; source ("<row>:<frame>"
 #   for the record holding the last frame's result, or "constructed"); entries (the spec's
-#   behaviours it exercises); rules (optional: speed_cap = "Wordwise", the default, or "Exact");
+#   behaviours it exercises); rules (optional, below);
 #   items (optional, default none): the items switched on (spec §1.3), named as progress names
 #   its `Item`s: "Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall",
 #   "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope" (listed
@@ -79,6 +79,20 @@
 #   where its body grows (pose fit) or a change of shape lowers her, and otherwise, as a record
 #   shows it, still the body she started the frame in, the new body holding from the next frame
 #   (spec §1.3, body size; J1's spin start gives 21 px).
+# - rules: the vector's own values of the spec's parameters, for an adjusted game; a parameter it
+#   doesn't name has the game's value. speed_cap, `WordwiseTopSpeed`'s switch, "Wordwise" or
+#   "Exact" (WordwiseTopSpeed; "Wordwise"). P.S quantities: dash_gain, the dash gained a frame
+#   (Dash; "0000.1000"); aim_step, the step forward into another running pose
+#   (AimingAndShooting; "0001.0000"); elevator_descent, the ride's descent a frame
+#   (RidingTheElevator; "0001.0000"); jump_speed, the jump's speed without the hi-jump boots
+#   (Jumping; "0004.E000"); ground_pull, the pull beyond her speed on the ground
+#   (FollowingTheGround; "0001.0000"); crouch_lowers, the crouch's own distance
+#   (ShrinkingLowersHer; "0005.0000"); gravity, the pull a frame (RisingAndFalling;
+#   "0000.1C00"); wall_reach, the near-wall test's move (WallJump; "0008.0000"). Whole pixels:
+#   small_body, the old body's half-height under which pose fit refuses a change rather than
+#   take the crouch (PoseFitAfterMoves; 8); bounce_threshold, the pixel part from which a landing
+#   makes the ball's bounce 1 (Landing; 3); move_limit, the horizontal move's limit
+#   (BlocksStopFlush; 15).
 # - frame (optional): "Even" or "Odd", the parity of the checked frame (spec §1.3); default "Even".
 #   The lead-in's frames alternate back from it.
 # - pad: the buttons held; jump_pressed: jump just pressed this frame; pressed (optional, default
@@ -5630,3 +5644,334 @@ pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24]
 pad = []
 jump_pressed = false
 after = { position = ["0100.0000", "0107.FFFF"], speed_y = "+0000.E000", heading_down = true, speed_y_after_moves = "+0000.E000" }
+
+# Ceres (the any% movie's chain rows 0001 to 0011). Frames are numbered by their start: frame N
+# runs from record N to record N+1 on record N's pad, and the source names record N+1.
+#
+# CE1 (chain-any-0011-DF45 3 to 4): spinning, she faces left and skids at +0.8000, jump alone held. The
+# brake takes the skid to exactly 0, not below, so she is still skidding when she moves, and the
+# move of 0 goes the old way, rightward. A solid enemy sits against her right side (her right side
+# 211 + 5, its left side 224 - 8: a gap of 0; her start's subpixel D000 pushes the reach a pixel
+# on), so the touch clears her y subpixel and halts her: no longer skidding. She then rises 4.1C00
+# from 026B.0000 (record 4: 0266.E400), and the pull leaves 4.0000.
+
+[[vector]]
+id = "CE1"
+source = "chain-any-0011-DF45:4"
+entries = ["SpeedBuildsAndBrakes", "TurningRound", "SolidEnemies", "WallsAndCeilings", "DriftInTheAir", "RisingAndFalling"]
+world = { enemy = { centre = [224, 639], radius = [8, 32] } }
+before = { position = ["00D3.D000", "026B.C800"], speed_x = "+0000.8000", dash = "0000.0000", speed_y = "-0004.1C00", jump_held = 7 }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["jump"]
+jump_pressed = false
+after = { position = ["00D3.D000", "0266.E400"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.0000", skidding = false, rising = true, dashing = false }
+
+# C-skid-zero-enemy: CE1's rule on the ground. Turning on the ground to face left, skidding at
+# +0.8000 with left held (forward for her new facing: the turn is kept and the skid goes on). The
+# brake takes it to exactly 0, so the move of 0 goes the old way, rightward, where a solid enemy
+# touches her (C-enemy-adjacent's geometry): it halts her, so she follows the pad again, not
+# skidding. Her y subpixel is cleared, then the ground pull from 010B.0000 stops flush on the
+# floor at 288, 010B.FFFF. Moved the new way, the move of 0 would meet nothing and she would
+# still be skidding.
+
+[[vector]]
+id = "C-skid-zero-enemy"
+source = "constructed"
+entries = ["SpeedBuildsAndBrakes", "TurningRound", "SolidEnemies", "WallsAndCeilings", "FollowingTheGround"]
+world = { floor_top = 288, enemy = { centre = [269, 256], radius = [8, 16] } }
+before = { position = ["0100.4000", "010B.FFFF"], speed_x = "+0000.8000" }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0100.4000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false }
+
+# CE2 (chain-any-0001-DF45 101 to 102): standing still after the elevator, she faces the screen;
+# run and right are just pressed. Facing the screen she doesn't move; the pad turns her to face
+# right, a ground turn (record 102), whose skid is of zero. Her body at the frame's end is still the one she
+# started in.
+
+[[vector]]
+id = "CE2"
+source = "chain-any-0001-DF45:102"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes"]
+world = {}
+before = { position = ["0080.0000", "0048.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
+next_pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 24], turn = "Ground" }
+pad = ["run", "right"]
+jump_pressed = false
+pressed = ["run", "right"]
+after = { position = ["0080.0000", "0048.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = true, dashing = false }
+
+# C-screen-turn: CE2 with left held: she turns to face left, her skid of zero pointing the old way
+# (rightward, as facing the screen counts).
+
+[[vector]]
+id = "C-screen-turn"
+source = "constructed"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0108.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
+next_pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 24], turn = "Ground" }
+pad = ["left"]
+jump_pressed = false
+pressed = ["left"]
+after = { position = ["0100.0000", "0108.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = true }
+
+# CE3 (chain-any-0006-E0B5 522 to 523): moonwalking left (her sprite looks right) at 0.8000, the
+# way she walks held. The moonwalk moves her 0.8000 left, and the turn it starts keeps her facing
+# (record 523: she faces left, turning) and leaves her skidding: her speed points against her facing,
+# rightward.
+
+[[vector]]
+id = "CE3"
+source = "chain-any-0006-E0B5:523"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+world = { floor_top = 208 }
+before = { position = ["00C8.2000", "00BB.FFFF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Moonwalking", facing = "Left", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["00C7.A000", "00BB.FFFF"], speed_x = "+0000.8000", dash = "0000.0000", speed_y = "+0000.0000", skidding = true, dashing = false }
+
+# C-moonwalk-turn: CE3 to the right, from MT2's start with right held and jump not pressed: the
+# moonwalk moves her 0.8000 right, and the ground turn keeps her facing, skidding leftward.
+
+[[vector]]
+id = "C-moonwalk-turn"
+source = "constructed"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+world = { floor_top = 112 }
+before = { position = ["019B.8000", "005B.FFFF"] }
+pose = { body = "Upright", action = "Moonwalking", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
+pad = ["right"]
+jump_pressed = false
+after = { position = ["019C.0000", "005B.FFFF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.0000", skidding = true }
+
+# CE4 (chain-any-0006-E0B5 534 to 535): crouched and still, she faces left, aimed down-forward;
+# pressing right turns her (record 535: the crouched turn, aimed down-forward), and the turn
+# skids, a skid of zero (records 535 to 537: no move the frame after, then the creep of 0.C000).
+
+[[vector]]
+id = "CE4"
+source = "chain-any-0006-E0B5:535"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes"]
+world = { floor_top = 208 }
+before = { position = ["00C5.6000", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Crouched", action = "Still", facing = "Left", radius = [5, 16], aim = "DownForward" }
+next_pose = { body = "Crouched", action = "Turning", facing = "Right", radius = [5, 16], aim = "DownForward", turn = "Ground" }
+pad = ["right"]
+jump_pressed = false
+pressed = ["right"]
+after = { position = ["00C5.6000", "00C0.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = true, dashing = false }
+
+# C-crouch-turn-skid: CE4's turn unaimed, carried two frames on. Crouched facing right, left
+# pressed: the crouched turn skids at 0. The next frame, left still held (a crouched turn keeps its
+# pose while any button is held), the skid of zero brakes below zero and ends, so she follows the
+# pad and doesn't move; the frame after, checked, she creeps 0.C000 left: x 00FF.4000, speed
+# -0.C000. Without the skid she would creep a frame sooner and then stop, at 00FF.4000 with speed 0.
+
+[[vector]]
+id = "C-crouch-turn-skid"
+source = "constructed"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes", "WordwiseTopSpeed"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0110.FFFF"] }
+lead_in = [
+  { pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }, pad = ["left"], jump_pressed = false, pressed = ["left"] },
+  { pose = { body = "Crouched", action = "Turning", facing = "Left", radius = [5, 16], turn = "Ground" }, pad = ["left"], jump_pressed = false },
+]
+pose = { body = "Crouched", action = "Turning", facing = "Left", radius = [5, 16], turn = "Ground" }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["00FF.4000", "0110.FFFF"], speed_x = "-0000.C000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false }
+
+# C-screen-jump: facing the screen, jump pressed: no row turns her or takes her off, so she stays.
+
+[[pose_step]]
+id = "C-screen-jump"
+source = "constructed"
+entries = ["PadChart"]
+pose = { body = "Upright", action = "Still", facing = "Screen", aim = "Forward" }
+pad = ["jump"]
+jump_pressed = true
+met = "nothing"
+after = { pose = { body = "Upright", action = "Still", facing = "Screen", aim = "Forward" } }
+
+# Adjusted vectors: one per Parameter entry, each run with that entry's value changed (`rules`),
+# so a model that holds the game's value fixed gets its outcome wrong. Each is worked from the
+# spec's arithmetic at the adjusted value; the game's value's outcome is given for contrast.
+# - C-adj-dash-gain (Dash, a gain of 0.2000): running at the top speed 2.C000 with run held and a
+#   dash of 1.0000, under the cap: the dash grows to 1.2000 and she moves 2.C000 + 1.2000 =
+#   3.E000 (the game's gain: 1.1000 and 3.D000).
+# - C-adj-aim-step (AimingAndShooting, a step of 3 px): running left at the top speed, aim down
+#   pressed: she moves 2.C000, then steps 3 px forward, 5.C000 in all (the game's: 3.C000).
+# - C-adj-elevator (RidingTheElevator, a descent of 2 px): C-elevator's ride goes down 2 px.
+# - C-adj-jump (Jumping, a jump of 3.0000): standing, jump pressed: she takes off rising at
+#   3.0000 (the game's: 4.E000).
+# - C-adj-ground-pull (FollowingTheGround, a pull of 2 px beyond her speed): W11's turn on the
+#   ground over air, in an invented room: her speed 0.C000, pulled 0.C000 + 2.0000 = 2.C000 (the
+#   game's: 1.C000).
+# - C-adj-small-body (PoseFitAfterMoves, under 17 px): C-fit-tunnel-aimed with the crouch's
+#   16 px now under the small body: the take-off is refused, so she keeps her aim Up (the game's
+#   takes the crouch instead, aimed Forward).
+# - C-adj-crouch-lowers (ShrinkingLowersHer, a crouch of 3 px): standing on a floor, down
+#   pressed: the look down reaches only air, so she is lowered 3 px and placed there (the game's:
+#   5 px, 0110.FFFF).
+# - C-adj-gravity (RisingAndFalling, a pull of 0.4000): falling at 1.0000 she moves 1 px and her
+#   speed grows to 1.4000 (the game's: 1.1C00).
+# - C-adj-wall-reach (WallJump, a test of 16 px): a spin carried on, left held, moves 0.C000
+#   left to 00FF.4000, her right edge at 259 with 12 px of air to a wall at 272. A 16 px test
+#   reaches 275, so the wall is near: the jump is readied and her x subpixel written FFFF (the
+#   game's 8 px reaches 267: neither, x 00FF.4000).
+# - C-adj-bounce-threshold (Landing, bounce 1 from 2 px): C-bounce-under's landing, 2.F000
+#   after the pull, makes bounce 1: rising at the bounce speed, bounces 1 (the game's: it
+#   rests).
+# - C-adj-move-limit (BlocksStopFlush, a limit of 8 px): C-limit's move of 11.C000 is limited
+#   to 8.C000 (the game's: 15 px, 010F.C000).
+
+[[vector]]
+id = "C-adj-dash-gain"
+source = "constructed"
+entries = ["Dash"]
+rules = { dash_gain = "0000.2000" }
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0001.0000", dashing = true }
+pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
+pad = ["run", "right"]
+jump_pressed = false
+after = { position = ["0103.E000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0001.2000" }
+
+[[vector]]
+id = "C-adj-aim-step"
+source = "constructed"
+entries = ["AimingAndShooting"]
+rules = { aim_step = "0003.0000" }
+world = { floor_top = 288 }
+before = { position = ["0100.4000", "010B.FFFF"], speed_x = "-0002.C000" }
+pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21], aim = "DownForward" }
+pad = ["left", "aim_down"]
+jump_pressed = false
+pressed = ["aim_down"]
+after = { position = ["00FA.8000", "010B.FFFF"], speed_x = "-0002.C000", dash = "0000.0000" }
+
+[[vector]]
+id = "C-adj-elevator"
+source = "constructed"
+entries = ["RidingTheElevator"]
+rules = { elevator_descent = "0002.0000" }
+world = { elevator_moving = true }
+before = { position = ["0100.0000", "0100.4000"], dash = "0001.0000" }
+pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0102.4000"], speed_x = "+0000.0000", dash = "0001.0000", speed_y = "+0000.0000" }
+
+[[vector]]
+id = "C-adj-jump"
+source = "constructed"
+entries = ["Jumping"]
+rules = { jump_speed = "0003.0000" }
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 21] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0000.0000", speed_y = "-0003.0000", rising = true }
+
+[[vector]]
+id = "C-adj-ground-pull"
+source = "constructed"
+entries = ["FollowingTheGround"]
+rules = { ground_pull = "0002.0000" }
+world = {}
+before = { position = ["0100.1000", "0100.0000"] }
+pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
+pad = ["run", "left"]
+jump_pressed = false
+after = { position = ["00FF.5000", "0102.C000"], speed_x = "-0000.C000", dash = "0000.0000" }
+
+[[vector]]
+id = "C-adj-small-body"
+source = "constructed"
+entries = ["PoseFitAfterMoves"]
+rules = { small_body = 17 }
+world = { floor_top = 288, ceiling_bottom = 256 }
+before = { position = ["0100.0000", "0110.FFFF"] }
+pose = { body = "Crouched", action = "Still", facing = "Right", aim = "Up", radius = [5, 16] }
+next_pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+pad = ["jump"]
+jump_pressed = true
+after = { position = ["0100.0000", "0110.FFFF"], speed_y = "+0000.0000", placed = "none", pose = { body = "Crouched", action = "Still", facing = "Right", aim = "Up", radius = [5, 16] } }
+
+[[vector]]
+id = "C-adj-crouch-lowers"
+source = "constructed"
+entries = ["ShrinkingLowersHer"]
+rules = { crouch_lowers = "0003.0000" }
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "010B.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Left", aim = "DownForward", radius = [5, 21] }
+next_pose = { body = "Crouched", action = "Crouching", facing = "Left", radius = [5, 16] }
+pad = ["down"]
+jump_pressed = false
+pressed = ["down"]
+after = { position = ["0100.0000", "010E.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000", placed = "010E.FFFF" }
+
+[[vector]]
+id = "C-adj-gravity"
+source = "constructed"
+entries = ["RisingAndFalling"]
+rules = { gravity = "0000.4000" }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], speed_y = "+0001.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0081.0000"], speed_y = "+0001.4000" }
+
+[[vector]]
+id = "C-adj-wall-reach"
+source = "constructed"
+entries = ["WallJump"]
+rules = { wall_reach = "0010.0000" }
+world = { wall_right = 272 }
+before = { position = ["0100.0000", "0100.0000"] }
+lead_in = [
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = [], jump_pressed = false },
+  { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = [], jump_pressed = false },
+]
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+pad = ["left"]
+jump_pressed = false
+pressed = ["left"]
+after = { position_x = "00FF.FFFF", wall_test = "Readied" }
+
+[[vector]]
+id = "C-adj-bounce-threshold"
+source = "constructed"
+entries = ["Landing"]
+rules = { bounce_threshold = 2 }
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], speed_y = "+0002.D400" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.0000", "0119.FFFF"], speed_y = "-0001.0000", bounces = 1, speed_x = "+0000.0000" }
+
+[[vector]]
+id = "C-adj-move-limit"
+source = "constructed"
+entries = ["BlocksStopFlush"]
+rules = { move_limit = 8 }
+world = {}
+before = { position = ["0100.0000", "0080.0000"], dash = "0011.0000", dashing = true }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = ["right"]
+jump_pressed = false
+after = { position_x = "0108.C000", speed_x = "+0000.C000", dash = "0011.0000" }

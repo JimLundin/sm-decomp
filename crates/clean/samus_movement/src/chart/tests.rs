@@ -48,7 +48,7 @@ fn a_crouch_and_a_morph_lower_her_by_their_distances() {
     let adjusted = Rules {
         crouch_lowers: px(Wrapping(6)),
         morph_lowers: px(Wrapping(11)),
-        ..Rules::REFERENCE
+        ..Rules::default()
     };
     for (next, row) in every_outcome() {
         let lowered = next.lower.map(|by| adjusted.lowers(by));
@@ -60,7 +60,7 @@ fn a_crouch_and_a_morph_lower_her_by_their_distances() {
         };
         assert_eq!(lowered, expected, "the row {row}");
     }
-    let vanilla = Rules::REFERENCE;
+    let vanilla = Rules::default();
     assert_eq!(vanilla.crouch_lowers, px(Wrapping(5)), "the crouch's 5 px");
     assert_eq!(vanilla.morph_lowers, px(Wrapping(9)), "the morph's 9 px");
 }
@@ -102,7 +102,8 @@ fn a_pose_no_situation_names_is_reported() {
 }
 
 /// The poses that put her in situation `s`: those of its classes that no earlier class takes,
-/// facing either side, with either gun (the rows read no legs, so they are together).
+/// facing each way its class holds, with either gun (the rows read no legs, so they are
+/// together).
 fn poses(s: &'static Situation) -> Vec<Pose> {
     let mut poses: Vec<Pose> = Vec::new();
     for class in CLASSES.iter().filter(|c| ptr::eq(c.is, s)) {
@@ -120,11 +121,12 @@ fn poses(s: &'static Situation) -> Vec<Pose> {
                 legs: Legs::Together,
             })
         });
-        poses.extend(aimed);
+        let faced =
+            aimed.flat_map(|p| class.facing.iter().map(move |&facing| Pose { facing, ..p }));
+        poses.extend(faced);
     }
     poses
         .into_iter()
-        .flat_map(|p| [Facing::Left, Facing::Right].map(|facing| Pose { facing, ..p }))
         .flat_map(|p| [Gun::Drawn, Gun::Stowed].map(|gun| Pose { gun, ..p }))
         .filter(|p| classify(*p).is_ok_and(|c| ptr::eq(c, s)))
         .collect()

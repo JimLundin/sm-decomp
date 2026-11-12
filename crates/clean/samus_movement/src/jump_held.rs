@@ -6,9 +6,8 @@ use crate::rows::Met;
 use crate::rules::Rules;
 use crate::tick::Frame;
 use core::num::Wrapping;
-use types::Action::{Landing, Turning};
 use types::button::JUMP;
-use types::{Buttons, Pose};
+use types::{Action, Buttons, Pose};
 
 /// §1.2 landed or ended the frame before: what a frame leaves the next one, for that frame alone.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -93,8 +92,8 @@ impl FrameBefore {
     /// turn or of a landing ended and handed over its pose (`AnimationEnds`); an end that gave
     /// way handed over nothing.
     pub(crate) fn left_behind(met: Option<Met>, handed_over: bool, was: Pose, now: Pose) -> Self {
-        let landed = met == Some(Met::Floor) && matches!(now.action, Landing(_));
-        let ended = handed_over && matches!(was.action, Turning(_) | Landing(_));
+        let landed = met == Some(Met::Floor) && matches!(now.action, Action::Landing(_));
+        let ended = handed_over && matches!(was.action, Action::Turning(_) | Action::Landing(_));
         if landed || ended {
             Self::LandedOrEnded
         } else {

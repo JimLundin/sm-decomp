@@ -1974,6 +1974,90 @@ a ceiling and its pulled speed): 229.0 → 235.3 in all. The budget is 8,244 →
 
 **The gaps file** keeps gap 36 alone; gap 38 and the unmasked wall-jump frame are answered here.
 
+## Ceres's free run (2026-11-12): why samus-movement holds the least of rungs M0 to M2
+
+The domain free run held 106 of chain-any-0003-DFD7's 344 frames (M0), and 1,779 of the 6,647
+frames of the eleven Ceres rows (`every_domain_runs_free_against_the_cache`, CI's lean cache, at
+`16bc904e6`). The per-frame harness compares 2,752 of those frames and matches 2,728. Read with
+`--nocapture`, then with three scratch runs of the free run (never committed): her pose fed from
+the records, then the engine's pose change on the model's chosen pose (`samus_movement_bridge::
+step::next`, `pose::change`, `samus_appearance_bridge::animate`), with and without the animation
+fed. Records read through a scratch dump of `0AF6`..`0B4A`, `008B`, `008F`, `0A1C`, `0A2E`,
+`0B00`, `0AFE` and the harness's enemy list; bank logs `$90` and `$91`.
+
+**The main cause is outside the spec: the free run never moves her pose.** `Movement::step` runs
+the model and `settle`, and nothing writes the pose the model chose back into the carried State,
+so the carried pose, its facing, movement type, radius, history and animation stay those of the
+seed. The next frame's moves then read the wrong pose: chain-any-0004-E021 alternates 0Fh and 11h
+every frame (the aim buttons), and every segment ends one frame after its seed, x a pixel off.
+With the pose and its animation carried as the engine carries them, the free run holds every
+compared frame of chain-any-0002 to 0005 and 0007 to 0010, and 182 of 0003's 344 (M0's row):
+
+| Row | held, now | held, pose carried | compared (per frame) |
+| --- | ---: | ---: | ---: |
+| chain-any-0001-DF45 | 84 | 148 | 149 |
+| chain-any-0002-DF8D | 66 | 120 | 120 |
+| chain-any-0003-DFD7 | 106 | 182 | 182 |
+| chain-any-0004-E021 | 53 | 102 | 102 |
+| chain-any-0005-E06B | 57 | 94 | 94 |
+| chain-any-0006-E0B5 | 1,068 | 1,469 | 1,491 |
+| chain-any-0007-E06B | 60 | 96 | 96 |
+| chain-any-0008-E021 | 52 | 100 | 100 |
+| chain-any-0009-DFD7 | 96 | 163 | 163 |
+| chain-any-0010-DF8D | 52 | 91 | 91 |
+| chain-any-0011-DF45 | 85 | 159 | 164 |
+
+The integrator's part: the free run's step applies the frame's pose change to the carried State
+(the model's chosen pose through the bridge's `next`, the engine's `pose::change`) and takes her
+animation either from samus-appearance's model or from record N+1 (a neighbour's answer); both
+gave the same counts here. `pose` is spec §1's quantity "Read by every behaviour; output", and
+no harness compares it, so the per-frame harness hides the same fault: it decodes the pose from
+every record.
+
+**The remaining divergences, in the domain, each with its cause:**
+
+| Row, frame | Field | Cause | Resolution |
+| --- | --- | --- | --- |
+| 0001: 102 | x, mode | facing the screen, right held: the original turns her (`$91:A0DE`: right held → 26h, left held → 25h, nothing else), a skid of zero (`$91:F8D3` from 0 or 9Bh goes straight to the speed join and `0B4A` = 1); the model ran on, facing the screen | `PadChart`: the facing-the-screen rows; CE2, C-screen-turn, C-screen-jump |
+| 0011: 4 | y, mode, placed | a spin's skid braked to exactly 0 (`$90:9B1F`: 0.8000 − 0.8000 is not negative, so `0B4A` stays 1) moves 0 by `$90:8EA9`, whose way is `0B4A` and the facing, not the speed: rightward. `$90:93B1` meets the solid enemy at (224, 639) touching her right side, which clears `0AFC` and halts her (`0B4A` 0). The model moved the 0 along her facing | `SpeedBuildsAndBrakes`, `SolidEnemies`: a skid braked to 0 moves the old way; CE1, C-skid-zero-enemy |
+| 0006: 523 | (pose) | moonwalking with the way she walks held: `$91:A8AC`/`$91:A874` give 25h/26h, the turn facing the way she walks, as the moonwalk's jump keeps it; the model faced back. Shows in the free run once the pose is carried | `PadChart`'s moonwalk row, the `Turning` cell's facing, `TurningRound`; CE3, C-moonwalk-turn |
+| 0006: 535, 541, 547, ..., 601 (12 frames, every 6th) | mode | a crouched turn skids like every turn: `$91:F8D3` (movement Eh, 43h/44h) and `$91:F952` (17h, the aimed crouched turns 97h-9Ah, A2h, A3h) both end with the dash joined and `0B4A` = 1; the chart's crouched row said no effect, so the model follows the pad and creeps a frame early | `PadChart`'s crouched row, `TurningRound`; CE4, C-crouch-turn-skid |
+| 0006: 10, 259, 261, 267, 273, 279; 0011: 38, 91, 95, 144 | mode | a spin's skid that braking ends (`$90:9B1F`: below zero, speed 0, `0B4A` 0) runs on in `$90:9040` that frame: the faced side held (`$90:9076`..`$90:9091`) sets `0B4A` = 2 at `$90:90AA`. Unperceived: a spin decides afresh each frame (the same test), and every pose a spin changes into sets the mode again (`$91:F543`, `$91:F60D`, `$91:F624`, the landing's and the wall jump's), and the scroll reads only `0B4A` = 1 (`$90:95D4`) | a mask, below |
+| 0006: 539, 541 | (pose) | gap 37: the crouched turn aimed down-forward hands over the crouch facing the old way | open |
+
+**The mask the harness adds.** "unperceived: a spin's skid ended by braking, carrying on or
+following the pad, which its next frame decides afresh": `mode` alone, no writer
+(`Hides::NoWriter`), on a frame that starts in a spin (19h, 1Ah, 1Bh, 1Ch, 81h, 82h) with
+`0B4A` = 1 and ends in a spin with `0B4A` = 2 and `0B46`.`0B48` = 0. Over the Ceres rows it
+hides exactly the 6 frames of chain-any-0006 and the 4 of chain-any-0011 above.
+
+**Outside the domain** (skipped frames; each ends a segment as skipped):
+
+| Frames | Why the domain doesn't run | Owner |
+| --- | --- | --- |
+| about 161 per row; 1,689 in all (game states 9h and Bh) | the door's passage: the room fades, scrolls and loads | R1 (doors and elevators), R2 (room loading) |
+| chain-any-0001: 101 (handler `$90:E8DC`, locked) | the elevator's descent into Ceres, she faces the screen and is locked | R1 (doors and elevators) |
+| chain-any-0011: 1,959 (game states 20h, 21h, 22h) | Ceres's escape ends: the elevator up and the station's explosion | B8 (Ceres Ridley and the escape), F4 (cinematics) |
+| chain-any-0006, 0009, 0010: 26 knockback frames, 115 frames of 50h (the damage boost), 3 of 53h/54h, and 7 knockback starts masked | hits (Ridley's fight) | S4 (hurt and knockback) |
+| chain-any-0006: 2 frames of handler `$90:E90E` | her frame handler runs no movement (not traced) | B8 (Ridley's fight), to confirm |
+
+So, with the pose carried, M0's row holds 182 of its 344 frames, every frame the domain runs in;
+the other 162 are the door's (R1).
+
+**Units.** `tools spec-units` with these notes: 235.3 → 239.7 (motion 95.0 → 96.0,
+`SpeedBuildsAndBrakes` 11.0 → 12.0 for a skid braked to 0 moving the old way; pose chart 61.0 →
+63.3, `PadChart` 36.0 → 38.3 for the facing-the-screen rows, the moonwalk's turn and the crouched
+turn's effect; collision 61.0 → 62.0, `SolidEnemies` 9.0 → 10.0 for a move of 0 touching an
+enemy). The budget is 8,823 → 8,987: motion 3,562 → 3,600, pose chart 2,287 → 2,375, collision
+2,287 → 2,325.
+
+**Vectors.** 9 new, 389 → 398: recorded CE1 to CE4, constructed C-skid-zero-enemy,
+C-screen-turn, C-moonwalk-turn and C-crouch-turn-skid, and the pose step C-screen-jump. The landed
+model fails 7 of them, each as its amendment says (CE1, C-skid-zero-enemy, CE2, CE3,
+C-moonwalk-turn, CE4, C-crouch-turn-skid) and the pose step C-screen-jump (it takes off); it
+passes C-screen-turn, where the standing rows already turn her. The observer's reference for the
+amendments (`$TEMP/collab/sm-ceres/ref_ceres.py`) agrees with all 8 new motion vectors.
+
 ## Size baseline (tokens, 2026-11-07)
 
 Restated at c7f927ab6 with declarations apart (Jim, 2026-11-07: types and the bridge are not
@@ -2045,7 +2129,7 @@ as a wall; over an area's old code is a failure.
 - Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 37.5 × 235.3 units = 8,823 (motion 3,562, pose fit 687, pose chart 2,287, collision 2,287)
+Budget: 37.5 × 239.7 units = 8,987 (motion 3,600, pose fit 687, pose chart 2,375, collision 2,325)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

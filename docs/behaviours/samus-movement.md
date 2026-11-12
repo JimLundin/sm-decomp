@@ -236,6 +236,12 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   a spin jump or a wall jump; falling, upright or as a ball; turning round.
 - A frame whose pose moves her → she moves horizontally by `speed + dash × way`, `way` being +1
   or −1 as her horizontal speed points (her facing when it is 0) [R2, R61, R144, J1]
+- A skid whose speed is 0 when she moves, one braked to exactly 0 this frame → the move of 0 goes
+  the old way, against her facing, not along it [CE1, C-skid-zero-enemy]
+- So only a solid enemy shows it: a move of 0 reaches no cells and blocks never stop it
+  (`TouchedCells`, `BlocksStopFlush`), but an enemy against her on the old side halts her and
+  clears her y subpixel (`SolidEnemies`). A skid of 0 at the frame's start brakes below zero
+  first, so it moves the new way.
 - Left and right both held → her motion reads it as the side she faces held, never as back held
   [original only]
 - Following the pad while running, moonwalking, rolling or turning, or in the air as §5 says →
@@ -255,9 +261,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - The ball at rest, braking or skidding → it rolls like running, with its own speeds, and keeps
   its dash (the mockball) [original only]
 - checked: oracle (the running, ground and turning vectors; samus-mockball,
-  samus-bomb-jump-vertical; BG2, the ball at rest falling at 0); original only (braking below
-  zero: R98 and R123 start `Still` following the pad, so they halt as standing does; left and
-  right both held); constructed (C-screen-skid, facing the screen she keeps her speed).
+  samus-bomb-jump-vertical; BG2, the ball at rest falling at 0; CE1, a skid braked to 0 moving
+  the old way); original only (braking below zero: R98 and R123 start `Still` following the pad,
+  so they halt as standing does; left and right both held); constructed (C-screen-skid, facing
+  the screen she keeps her speed; C-skid-zero-enemy, a skid braked to 0 on the ground).
 
 ### Dash
 - kind: mechanic.
@@ -369,9 +376,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   dash (`AnimationEnds`).
 - Every turn and every spin reversed leaves her skidding, whatever she was doing before: her
   speed, the dash added, then points against her new facing.
-- The moonwalk's jump, the one turn that keeps her facing (`PadChart`) → it leaves her skidding
-  too: her speed points against her facing, back the way her sprite looks, though the moonwalk
-  carried her along her facing [MT2]
+- The moonwalk's two turns, its jump and the one holding the way she walks, the turns that keep
+  her facing (`PadChart`) → they leave her skidding too: her speed points against her facing,
+  back the way her sprite looks, though the moonwalk carried her along her facing [MT2, CE3,
+  C-moonwalk-turn]
 - So the turn's first frame brakes that speed to 0 (the moonwalk's top speed, 0.8000, is one
   frame's brake), and only the camera, which reads the skid, shows which way it pointed.
 - A spin reversed while she is already skidding (travelling against her old facing, which is the
@@ -381,6 +389,8 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
 - So turning from a standstill slides her 0.C000 every other frame the new way: the speed goes 0,
   0.C000, 0, because turning's top speed is 0 and `WordwiseTopSpeed` keeps 0.C000 over 0 once
   (R93, R94).
+- A crouched turn is a turn like any other: her dash joins her speed and she skids, so from a
+  standstill its first frame brakes and she creeps from the frame after [CE4, C-crouch-turn-skid]
 - Turning with no button held at all, on the ground or in the air, or on the ground holding only
   buttons that bring no pose change (run, shoot or jump alone: the chart's last row for turning
   on the ground, `PadChart`) → her skid ends after that frame's move: she keeps her horizontal
@@ -402,8 +412,10 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   121, which a skid kept at 0 would not; R141 for run held in the air; SR1 for a spin reversed in
   its first frame, which skids; TL4 for the sinking onto a floor; W11 for the sinking over air,
   subpixel and all; W14 for a spin reversed while skidding; MT2 for the moonwalk's jump, chain-0014-96BA,
-  as chain-0232-D5A7:18 and samus-input-poses:119 show it too); constructed (the sinking); original
-  only (the aim of a turn begun aimed `DownForward`).
+  as chain-0232-D5A7:18 and samus-input-poses:119 show it too; CE3 for the moonwalk's turn
+  holding the way she walks; CE4 for a crouched turn's skid); constructed (the sinking;
+  C-moonwalk-turn, C-crouch-turn-skid); original only (the aim of a turn begun aimed
+  `DownForward`).
 
 ### AimingAndShooting
 - kind: quirk and output.
@@ -1163,6 +1175,8 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 
 | She is | Pad | Next pose | Effect |
 | --- | --- | --- | --- |
+| standing still facing the screen | left or right held; right held beats left held | `Turning`, facing that side | `TurningRound` |
+| | anything else, or nothing held | kept | she follows the pad again (a skid ends) |
 | standing still, or landing | down pressed | crouched `Crouching`, crouch aim | she is lowered 5 px (`ShrinkingLowersHer`) |
 | | jump pressed; beats down pressed | upright `TakingOff`, take-off aim | `Jumping`'s take-off |
 | | back, shoot and an aim button held; beats back and both aim buttons held | `Moonwalking` facing back, `DownForward` with aim down, else `UpForward` | none |
@@ -1218,7 +1232,7 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | crouched | down pressed; beats jump pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | up pressed; beats every other row naming a pressed button | `StandingUp`, crouch aim | none |
 | | jump pressed | upright `TakingOff`, `Forward` | `Jumping`'s take-off |
-| | back pressed; beats down pressed and jump pressed | crouched `Turning` | none |
+| | back pressed; beats down pressed and jump pressed | crouched `Turning` | `TurningRound` |
 | | forward and an aim button held | upright `Still`, `Forward` | she stands at once; her feet stay where they were, 5 px up on a floor, by pose fit's push (`PoseFitAfterMoves`), not an effect of its own |
 | | both aim buttons held; beats forward and an aim button held | crouched `Still`, `Up` | none |
 | | forward held | upright `Still`, `Forward` | she stands at once; her feet stay where they were, 5 px up on a floor, by pose fit's push (`PoseFitAfterMoves`), not an effect of its own |
@@ -1243,7 +1257,7 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | | the way she walks, shoot and an aim button held | `Moonwalking`, `UpForward` with aim up, else `DownForward`; with both aim buttons held, `UpForward` facing left and `DownForward` facing right | none |
 | | the way she walks and shoot held | `Moonwalking`, `Forward` | none |
 | | the way she looks held | `Running` that way, `Forward` | none |
-| | the way she walks held | `Turning` | `TurningRound` |
+| | the way she walks held | `Turning`, facing kept (the way she walks) | `TurningRound` |
 | | anything else, or nothing held | upright `Still`, facing the way she looks | she follows the pad again |
 | wall jumping | down pressed | ball `Morphing` | she is lowered 9 px (`ShrinkingLowersHer`) |
 | | shoot held; beats jump held | `Jumping`, `Forward`, gun drawn | none |
@@ -1262,8 +1276,9 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 | | anything else, or nothing held | kept, aim `Forward` | she follows the pad again (a skid ends) |
 
 
-- Cells: standing still, or landing; running; taking off; in a straight jump; spinning; falling
-  (upright); crouched; a ball, on the ground or in the air; turning on the ground or from the
+- Cells: standing still facing the screen; left or right held; right held beats left held;
+  facing that side; standing still, or landing; running; taking off; in a straight jump;
+  spinning; falling (upright); crouched; a ball, on the ground or in the air; turning on the ground or from the
   moonwalk's jump (not aimed `UpForward`); turning in a jump or a fall, crouched turning, or
   turning on the ground or from the moonwalk's jump aimed `UpForward`; changing body; moonwalking;
   wall jumping; against the wall; pressed; held; beats; anything else, or nothing held; an aim
@@ -1281,13 +1296,18 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
   decided as in any straight jump, forward held winning (`Jumping`, `Forward`, striding): the
   row for those three fits only when she faces `Right`, and nothing takes its place the other way
   [C-chart-j, C-chart-i]
+- Standing still facing the screen → only a side held turns her, to face that side; nothing
+  else she holds or presses moves her out of it, jump and down included, and the other standing
+  rows don't apply [CE2, C-screen-turn, C-screen-jump]
+- Left and right held together facing the screen → she turns to face right [original only]
 - A `Turning` cell gives the turn she is in (§2): `Ground` unless it says "in a jump", "in a
   fall" or "from the moonwalk's jump". Facing is kept unless the row says otherwise; `Turning`
   faces back (the turn shows her new facing, and `TurningRound` turns her), and keeps the aim she
   had (§2, aim in a turn). A moonwalk faces the way she walks, which is backwards: her sprite
-  looks the other way. So the moonwalk's jump is the one turn that keeps her facing: it already
-  points the way she walks, the way her spin then goes, and its turn shows her looking that way
-  (MT1's first frame: the moonwalk and its turn face the same side).
+  looks the other way. So the moonwalk's two turns, its jump and the one holding the way she
+  walks, are the turns that keep her facing: it already points the way she walks, and the turn
+  shows her looking that way (MT1's first frame: the moonwalk and its jump's turn face the same
+  side; CE3 the same for the other turn).
 - Body follows the action: `Running`, `Moonwalking`, `TakingOff`, `Jumping`, `Spinning`, `Falling`,
   `WallJumping`, `AgainstWall`, `Landing` and `StandingUp` are upright; `Crouching` and `Unmorphing`
   are crouched; `Morphing` is a ball (§2).
@@ -1308,10 +1328,13 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - checked: oracle (P1, P3, P13 to P18, P20 to P22, P24, P25, G1 to G9, L1, L2, U1, and R133 and
   R141 of `TurningRound`; R102 for left and right both held in a spin; AS1 to AS4 for the
   let-go effect, AS4 the run at 0 that stands following the pad; R-walljump-letgo, a wall jump's
-  let-go into the screw attack's spin, keeping her speed); constructed (C-chart-a to C-chart-j;
-  C-screen-skid, a skid ended facing the screen; C-walljump-letgo-space and
-  C-walljump-letgo-plain, the wall jump's let-go with space jump and with neither item); original
-  only (the other rows with left and right both held).
+  let-go into the screw attack's spin, keeping her speed; CE2, a turn from facing the screen;
+  CE3, the moonwalk's turn holding the way she walks; CE4, a crouched turn's skid); constructed
+  (C-chart-a to C-chart-j; C-screen-skid, a skid ended facing the screen; C-screen-turn and
+  C-screen-jump, a side held and jump pressed facing the screen; C-moonwalk-turn;
+  C-crouch-turn-skid; C-walljump-letgo-space and C-walljump-letgo-plain, the wall jump's let-go
+  with space jump and with neither item); original only (the other rows with left and right
+  both held).
 
 ### Aiming
 - kind: mechanic.
@@ -1546,6 +1569,8 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   not there, so another solid enemy in its path decides it, or with none, blocks do
   (`BlocksStopFlush`) [C-enemy-overlap]
 - So a move of 0 is never shortened by one.
+- A move of 0 toward an enemy she already touches on that side → it is a touch like any other: her
+  y subpixel becomes 0, and sideways it halts her (`WallsAndCeilings`) [CE1, C-skid-zero-enemy]
 - So standing on a solid enemy, with no gap between them, each frame's ground pull reaches it and
   stops at once, so she stays on it (a landing, `Landing`), her y subpixel 0 (W20). A landing on
   one stops her with her subpixel kept, and when the landing pose's taller body is then fitted
@@ -1558,8 +1583,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
   stops her, even a nearer one, so the move can end with her edge overlapping a block; blocks stop
   her only on a path free of solid enemies (`BlocksStopFlush`) [original only]
 - checked: oracle (W13, a landing on one 2 px below and the fit's look touching it; W20,
-  running on one); constructed (C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-enemy-overlap,
-  C-aim-enemy, C-aim-enemy-stop).
+  running on one; CE1, a skid braked to 0 beside one); constructed (C-enemy-ahead,
+  C-enemy-adjacent, C-enemy-down, C-enemy-overlap, C-aim-enemy, C-aim-enemy-stop,
+  C-skid-zero-enemy).
 
 ### SlopesCarry
 - kind: mechanic.

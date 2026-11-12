@@ -4,13 +4,10 @@
 //! `Dash`, `DriftInTheAir`, `Jumping`, `TurningRound`), and what a turn, a landing, a wall's
 //! kick or the pad chart's let-go rows do to it. Samus holds one; her moves read it.
 
-use crate::rows::Drift::{self, Air, BallAir, Ground, Spin, WallJump};
-use crate::rows::{FORWARD, Moves, seen};
+use crate::rows::{Drift, FORWARD, Moves, seen};
 use crate::rules::{Gait, Limits, Rules};
 use crate::tick::Tick;
 use crate::vertical::Contact;
-use Carry::{CarriesOn, FollowsPad};
-use Stride::{DashAlone, DashThenHalt, Nothing, SpeedAndDash};
 use types::button::{RUN, SIDES};
 use types::{Buttons, Facing, Fixed, Parts, Side, ZERO, part_below};
 
@@ -85,13 +82,13 @@ impl Run {
     /// `Landing`, `WallJump`, `DriftInTheAir`: horizontal speed 0, following the pad.
     const fn stop(&mut self) {
         self.speed = ZERO;
-        self.carry = FollowsPad;
+        self.carry = Carry::FollowsPad;
     }
 
     /// `TurningRound` (§1.2 skidding): she carries on against her facing, at any speed, 0
     /// included.
     pub(crate) fn skids(&self, facing: Facing) -> bool {
-        self.carry == CarriesOn && self.way != Side::of(facing)
+        self.carry == Carry::CarriesOn && self.way != Side::of(facing)
     }
 
     /// `TurningRound`, `PadChart`'s "as running": the dash joins her speed (dash 0) and she
@@ -99,7 +96,7 @@ impl Run {
     fn join_dash(&mut self) {
         self.speed += self.dash;
         self.dash = ZERO;
-        self.carry = CarriesOn;
+        self.carry = Carry::CarriesOn;
     }
 
     /// `TurningRound`: her dash joins her speed and she travels against her new facing
@@ -111,7 +108,7 @@ impl Run {
 
     /// `PadChart`: she follows the pad again, a skid ending along her new facing (`facing`).
     pub(crate) const fn end_skid(&mut self, facing: Facing) {
-        self.carry = FollowsPad;
+        self.carry = Carry::FollowsPad;
         self.way = Side::of(facing);
     }
 
@@ -120,7 +117,7 @@ impl Run {
     /// else the dash joins her speed and she carries on, braking.
     pub(crate) fn as_running(&mut self, start: Fixed) {
         if start == ZERO || self.speed == ZERO {
-            self.carry = FollowsPad;
+            self.carry = Carry::FollowsPad;
         } else {
             self.join_dash();
         }
@@ -139,17 +136,19 @@ impl Run {
     /// `Jumping`: starting a straight jump or a fall with a dash she carries on along her
     /// facing; without a dash she follows the pad.
     pub(crate) fn launch(&mut self, facing: Facing) {
-        self.carry = FollowsPad;
+        self.carry = Carry::FollowsPad;
         if self.dash != ZERO {
             self.way = Side::of(facing);
-            self.carry = CarriesOn;
+            self.carry = Carry::CarriesOn;
         }
     }
 
     /// `SpeedBuildsAndBrakes`: the side she moves to: the way her speed points, her facing's when
-    /// it is 0 (§1).
+    /// it is 0 (§1). A skid braked to exactly 0 this frame still carries on, so its move of 0
+    /// goes the old way, against her facing (a skid of 0 at the frame's start braked below zero
+    /// and follows the pad, so it moves the new way).
     pub(crate) fn moving(&self, facing: Facing) -> Side {
-        if self.speed == ZERO {
+        if self.speed == ZERO && self.carry == Carry::FollowsPad {
             Side::of(facing)
         } else {
             self.way
@@ -165,18 +164,18 @@ impl Run {
     pub(crate) fn stride(&mut self, moves: Moves, facing: Facing, falls: bool, t: &Tick) -> Stride {
         match moves {
             Moves::Build(gait, drift) => self.drift(gait, drift, facing, t),
-            Moves::Rest if self.carry == CarriesOn => {
+            Moves::Rest if self.carry == Carry::CarriesOn => {
                 self.brake(t.rules);
-                SpeedAndDash
+                Stride::SpeedAndDash
             }
-            Moves::Rest if falls => DashAlone,
-            Moves::Rest | Moves::HaltsAfterDash => DashThenHalt,
+            Moves::Rest if falls => Stride::DashAlone,
+            Moves::Rest | Moves::HaltsAfterDash => Stride::DashThenHalt,
             Moves::TakeOff => {
                 self.lose_dash();
-                self.carry = FollowsPad;
-                DashAlone
+                self.carry = Carry::FollowsPad;
+                Stride::DashAlone
             }
-            Moves::DashKeepingSpeeds => DashAlone,
+            Moves::DashKeepingSpeeds => Stride::DashAlone,
         }
     }
 
@@ -198,28 +197,28 @@ impl Run {
         } else {
             self.lose_dash();
         }
-        let (ahead, carries) = (Side::of(facing), self.carry == CarriesOn);
-        if carries && (drift == Ground || self.way != ahead && drift != WallJump) {
+        let (ahead, carries) = (Side::of(facing), self.carry == Carry::CarriesOn);
+        if carries && (drift == Drift::Ground || self.way != ahead && drift != Drift::WallJump) {
             self.brake(r);
-            return SpeedAndDash;
+            return Stride::SpeedAndDash;
         }
         let let_go = !carries && !pad.any(SIDES);
-        if let_go && drift == Air {
+        if let_go && drift == Drift::Air {
             self.speed = ZERO;
-            return Nothing;
+            return Stride::Nothing;
         }
-        if let_go && drift == BallAir {
-            return DashThenHalt;
+        if let_go && drift == Drift::BallAir {
+            return Stride::DashThenHalt;
         }
         let topped = self.build(r.limits(gait), ahead, r);
-        if drift == Spin && !topped && !seen(pad, facing).any(FORWARD) {
+        if drift == Drift::Spin && !topped && !seen(pad, facing).any(FORWARD) {
             self.stop();
-            return DashAlone;
+            return Stride::DashAlone;
         }
-        if matches!(drift, Spin | WallJump) {
-            self.carry = CarriesOn;
+        if matches!(drift, Drift::Spin | Drift::WallJump) {
+            self.carry = Carry::CarriesOn;
         }
-        SpeedAndDash
+        Stride::SpeedAndDash
     }
 
     /// `SpeedBuildsAndBrakes`: gains the step up to the top (`WordwiseTopSpeed`), along her
@@ -237,7 +236,7 @@ impl Run {
     fn brake(&mut self, r: &Rules) {
         if self.speed < r.brake {
             self.speed = ZERO;
-            self.carry = FollowsPad;
+            self.carry = Carry::FollowsPad;
         } else {
             self.speed -= r.brake;
         }
@@ -249,7 +248,7 @@ impl Run {
     fn grow_dash(&mut self, cap: Fixed, r: &Rules) {
         let ((p, s), (cp, cs)) = (self.dash.words(), cap.words());
         self.dash = if part_below(p, cp) || part_below(s, cs) {
-            self.dash + r.dash_step
+            self.dash + r.dash_gain
         } else {
             cap
         };

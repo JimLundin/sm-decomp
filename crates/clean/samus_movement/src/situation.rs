@@ -10,23 +10,13 @@
 //! A ball `Still` or `Rolling` is on the ground: in the air a ball keeps its pose, falling or on
 //! its hop (`PadChart`, `WhatHerMovesMet`), so her pose alone gives her situation.
 
-use crate::rows::Effect::{
-    AsRunning, EndSkid, EndsTheBounce, Halt, Launch, LiftIfUnaimed, LoseDash, Rise, SpinOn,
-    TurnRound, TurnRoundIfFacingChanges,
-};
 use crate::rows::{
-    AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, Class, Doing, Drift, Entering, FORWARD, FORWARD_AIM,
-    Footing, KEEP_POSE, LOWERS_NOTHING, Moves, NO_CHANGE, Next, NextFacing, Row, RowId, Situation,
-    TO_CROUCHING, TO_FALLING, TO_JUMPING, TO_MOONWALKING, TO_MORPHING, TO_RUNNING, TO_SPINNING,
-    TO_STILL, TO_TAKING_OFF, TO_TURNING, Test, UDA, UP_AIM, UP_DOWN, Was,
+    AIM, AIM_UP_ELSE_DOWN, Aiming, BACK, Beat, Class, Doing, Drift, Effect, Entering, FORWARD,
+    FORWARD_AIM, Footing, KEEP_POSE, LOWERS_NOTHING, Moves, NO_CHANGE, Next, NextFacing, Row,
+    RowId, Situation, TO_CROUCHING, TO_FALLING, TO_JUMPING, TO_MOONWALKING, TO_MORPHING,
+    TO_RUNNING, TO_SPINNING, TO_STILL, TO_TAKING_OFF, TO_TURNING, Test, UDA, UP_AIM, UP_DOWN, Was,
 };
 use crate::rules::Gait;
-use Test::{Aimed, Faces, Held, Not, Pressed};
-use types::Action::{
-    AgainstWall, Crouching, Falling, Jumping, Landing, Moonwalking, Morphing, Rolling, Running,
-    Spinning, StandingUp, Still, TakingOff, Turning, Unmorphing, WallJumping,
-};
-use types::Body::{Ball, Crouched, SpringBall, Upright};
 use types::button::{self as key, AIM_DOWN, AIM_UP, DOWN, LEFT, RIGHT, SHOOT, UP};
 use types::{Action, Aim, Body, Buttons, Facing, Gun, Item, LandedFrom, Legs, Pose, Side, Turn};
 
@@ -44,7 +34,10 @@ pub struct UnknownPose(pub Pose);
 /// `UnknownPose`, where no class holds her pose.
 pub fn classify(pose: Pose) -> Result<&'static Situation, UnknownPose> {
     let fits = |c: &&Class| {
-        c.body.contains(&pose.body) && c.action.contains(&pose.action) && c.aim.contains(&pose.aim)
+        c.body.contains(&pose.body)
+            && c.action.contains(&pose.action)
+            && c.aim.contains(&pose.aim)
+            && c.facing.contains(&pose.facing)
     };
     CLASSES
         .iter()
@@ -62,9 +55,12 @@ const AIMS: &[Aim] = &[
     Aim::Down,
 ];
 /// The ball, with the spring ball or without.
-const BALLS: &[Body] = &[Ball, SpringBall];
+const BALLS: &[Body] = &[Body::Ball, Body::SpringBall];
 /// The turns on the ground: a ground turn and the moonwalk's jump.
-const GROUND_TURNS: &[Action] = &[Turning(Turn::Ground), Turning(Turn::MoonwalkJump)];
+const GROUND_TURNS: &[Action] = &[
+    Action::Turning(Turn::Ground),
+    Action::Turning(Turn::MoonwalkJump),
+];
 /// The change of action's own effects, whatever brought the change.
 ///
 /// `Jumping`: starting a straight jump (upright) or a fall, from any action but that one, with
@@ -73,32 +69,38 @@ const GROUND_TURNS: &[Action] = &[Turning(Turn::Ground), Turning(Turn::MoonwalkJ
 /// shape a ball starts, ends a bounce she is in.
 pub static ENTERING: &[Entering] = &[
     Entering {
-        into: &[(Crouched, Unmorphing)],
-        from: Was::AnyBut(&[Unmorphing]),
-        effect: EndsTheBounce,
+        into: &[(Body::Crouched, Action::Unmorphing)],
+        from: Was::AnyBut(&[Action::Unmorphing]),
+        effect: Effect::EndsTheBounce,
     },
     Entering {
-        into: &[(Upright, Jumping)],
-        from: Was::AnyBut(&[Jumping]),
-        effect: Launch,
+        into: &[(Body::Upright, Action::Jumping)],
+        from: Was::AnyBut(&[Action::Jumping]),
+        effect: Effect::Launch,
     },
     Entering {
-        into: &[(Upright, Falling), (Ball, Falling), (SpringBall, Falling)],
-        from: Was::AnyBut(&[Falling]),
-        effect: Launch,
+        into: &[
+            (Body::Upright, Action::Falling),
+            (Body::Ball, Action::Falling),
+            (Body::SpringBall, Action::Falling),
+        ],
+        from: Was::AnyBut(&[Action::Falling]),
+        effect: Effect::Launch,
     },
     Entering {
-        into: &[(Upright, Spinning)],
-        from: Was::OneOf(&[WallJumping]),
-        effect: SpinOn,
+        into: &[(Body::Upright, Action::Spinning)],
+        from: Was::OneOf(&[Action::WallJumping]),
+        effect: Effect::SpinOn,
     },
 ];
 
-/// A class's defaults: upright, at any aim; each class names its actions and its situation.
+/// A class's defaults: upright, at any aim, facing any way; each class names its actions and its
+/// situation.
 const UPRIGHT_AT_ANY_AIM: Class = Class {
-    body: &[Upright],
+    body: &[Body::Upright],
     action: &[],
     aim: AIMS,
+    facing: &[Facing::Left, Facing::Right, Facing::Screen],
     is: &STANDING,
 };
 
@@ -107,54 +109,54 @@ const UPRIGHT_AT_ANY_AIM: Class = Class {
 /// (upright `Rolling`, a crouched `Running`) is none of hers.
 pub static CLASSES: &[Class] = &[
     Class {
-        body: &[Crouched],
-        action: &[Crouching, Unmorphing],
+        body: &[Body::Crouched],
+        action: &[Action::Crouching, Action::Unmorphing],
         is: &SHAPING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[StandingUp],
-        is: &SHAPING,
-        ..UPRIGHT_AT_ANY_AIM
-    },
-    Class {
-        body: BALLS,
-        action: &[Morphing],
+        action: &[Action::StandingUp],
         is: &SHAPING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
         body: BALLS,
-        action: &[Jumping],
+        action: &[Action::Morphing],
+        is: &SHAPING,
+        ..UPRIGHT_AT_ANY_AIM
+    },
+    Class {
+        body: BALLS,
+        action: &[Action::Jumping],
         is: &HOP,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
         body: BALLS,
-        action: &[Rolling],
+        action: &[Action::Rolling],
         is: &ROLLING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
         body: BALLS,
-        action: &[Still],
+        action: &[Action::Still],
         is: &RESTING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
         body: BALLS,
-        action: &[Falling],
+        action: &[Action::Falling],
         is: &BALL_IN_AIR,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        body: &[Crouched],
-        action: &[Turning(Turn::Ground)],
+        body: &[Body::Crouched],
+        action: &[Action::Turning(Turn::Ground)],
         is: &TURNING_ON,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Turning(Turn::Jump), Turning(Turn::Fall)],
+        action: &[Action::Turning(Turn::Jump), Action::Turning(Turn::Fall)],
         is: &TURNING_ON,
         ..UPRIGHT_AT_ANY_AIM
     },
@@ -170,53 +172,63 @@ pub static CLASSES: &[Class] = &[
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        body: &[Crouched],
-        action: &[Still],
+        body: &[Body::Crouched],
+        action: &[Action::Still],
         is: &CROUCHED,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Running],
+        action: &[Action::Running],
         is: &RUNNING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[TakingOff],
+        action: &[Action::TakingOff],
         is: &TAKING_OFF,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Jumping],
+        action: &[Action::Jumping],
         is: &STRAIGHT_JUMP,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Spinning],
+        action: &[Action::Spinning],
         is: &SPINNING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Falling],
+        action: &[Action::Falling],
         is: &FALLING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Moonwalking],
+        action: &[Action::Moonwalking],
         is: &MOONWALKING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[WallJumping],
+        action: &[Action::WallJumping],
         is: &WALL_JUMPING,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[AgainstWall],
+        action: &[Action::AgainstWall],
         is: &AGAINST_WALL,
         ..UPRIGHT_AT_ANY_AIM
     },
     Class {
-        action: &[Still, Landing(LandedFrom::Jump), Landing(LandedFrom::Spin)],
+        action: &[Action::Still],
+        facing: &[Facing::Screen],
+        is: &FACING_THE_SCREEN,
+        ..UPRIGHT_AT_ANY_AIM
+    },
+    Class {
+        action: &[
+            Action::Still,
+            Action::Landing(LandedFrom::Jump),
+            Action::Landing(LandedFrom::Spin),
+        ],
         is: &STANDING,
         ..UPRIGHT_AT_ANY_AIM
     },
@@ -225,7 +237,7 @@ pub static CLASSES: &[Class] = &[
 /// `Aiming`: `UpForward` with up, else `DownForward`.
 const UP_ELSE_DOWN: &[Aiming] = &[
     Aiming {
-        when: &[Held(UP)],
+        when: &[Test::Held(UP)],
         aim: Aim::UpForward,
     },
     Aiming {
@@ -236,7 +248,7 @@ const UP_ELSE_DOWN: &[Aiming] = &[
 /// `Aiming`: `DownForward` with aim down, else `UpForward`.
 const AIM_DOWN_ELSE_UP: &[Aiming] = &[
     Aiming {
-        when: &[Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
@@ -247,15 +259,15 @@ const AIM_DOWN_ELSE_UP: &[Aiming] = &[
 /// `Aiming`'s crouch rule.
 const CROUCH_AIM: &[Aiming] = &[
     Aiming {
-        when: &[Held(AIM_UP), Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_UP), Test::Held(AIM_DOWN)],
         aim: Aim::Up,
     },
     Aiming {
-        when: &[Held(AIM_UP)],
+        when: &[Test::Held(AIM_UP)],
         aim: Aim::UpForward,
     },
     Aiming {
-        when: &[Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
@@ -266,15 +278,15 @@ const CROUCH_AIM: &[Aiming] = &[
 /// `Aiming`'s take-off rule.
 const TAKE_OFF_AIM: &[Aiming] = &[
     Aiming {
-        when: &[Held(UP)],
+        when: &[Test::Held(UP)],
         aim: Aim::Up,
     },
     Aiming {
-        when: &[Held(AIM_UP)],
+        when: &[Test::Held(AIM_UP)],
         aim: Aim::UpForward,
     },
     Aiming {
-        when: &[Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
@@ -285,27 +297,27 @@ const TAKE_OFF_AIM: &[Aiming] = &[
 /// `Aiming`'s air rule.
 const AIR_AIM: &[Aiming] = &[
     Aiming {
-        when: &[Held(FORWARD), Held(UP)],
+        when: &[Test::Held(FORWARD), Test::Held(UP)],
         aim: Aim::UpForward,
     },
     Aiming {
-        when: &[Held(FORWARD), Held(DOWN)],
+        when: &[Test::Held(FORWARD), Test::Held(DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
-        when: &[Held(UP)],
+        when: &[Test::Held(UP)],
         aim: Aim::Up,
     },
     Aiming {
-        when: &[Held(DOWN)],
+        when: &[Test::Held(DOWN)],
         aim: Aim::Down,
     },
     Aiming {
-        when: &[Held(AIM_UP)],
+        when: &[Test::Held(AIM_UP)],
         aim: Aim::UpForward,
     },
     Aiming {
-        when: &[Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
@@ -316,15 +328,15 @@ const AIR_AIM: &[Aiming] = &[
 /// `Up` with up, else `Down` with down, else `UpForward` with aim up, else `DownForward`.
 const UP_DOWN_AIM: &[Aiming] = &[
     Aiming {
-        when: &[Held(UP)],
+        when: &[Test::Held(UP)],
         aim: Aim::Up,
     },
     Aiming {
-        when: &[Held(DOWN)],
+        when: &[Test::Held(DOWN)],
         aim: Aim::Down,
     },
     Aiming {
-        when: &[Held(AIM_UP)],
+        when: &[Test::Held(AIM_UP)],
         aim: Aim::UpForward,
     },
     Aiming {
@@ -335,15 +347,15 @@ const UP_DOWN_AIM: &[Aiming] = &[
 /// `Up` with up, else `UpForward` with aim up, else `DownForward` with aim down, else `Down`.
 const SPIN_AIM: &[Aiming] = &[
     Aiming {
-        when: &[Held(UP)],
+        when: &[Test::Held(UP)],
         aim: Aim::Up,
     },
     Aiming {
-        when: &[Held(AIM_UP)],
+        when: &[Test::Held(AIM_UP)],
         aim: Aim::UpForward,
     },
     Aiming {
-        when: &[Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
@@ -355,15 +367,19 @@ const SPIN_AIM: &[Aiming] = &[
 /// `UpForward` facing left and `DownForward` facing right.
 const MOON_AIM: &[Aiming] = &[
     Aiming {
-        when: &[Held(AIM_UP), Held(AIM_DOWN), Faces(Side::Left)],
+        when: &[
+            Test::Held(AIM_UP),
+            Test::Held(AIM_DOWN),
+            Test::Faces(Side::Left),
+        ],
         aim: Aim::UpForward,
     },
     Aiming {
-        when: &[Held(AIM_UP), Held(AIM_DOWN)],
+        when: &[Test::Held(AIM_UP), Test::Held(AIM_DOWN)],
         aim: Aim::DownForward,
     },
     Aiming {
-        when: &[Held(AIM_UP)],
+        when: &[Test::Held(AIM_UP)],
         aim: Aim::UpForward,
     },
     Aiming {
@@ -373,38 +389,43 @@ const MOON_AIM: &[Aiming] = &[
 ];
 /// §2 aim in a turn: a turn in a jump or a fall shows `DownForward` as `Down`; else kept.
 const TURN_IN_THE_AIR: &[Aiming] = &[Aiming {
-    when: &[Aimed(&[Aim::DownForward])],
+    when: &[Test::Aimed(&[Aim::DownForward])],
     aim: Aim::Down,
 }];
 /// `Forward`, except landing: kept as she is.
 const STANDS_FORWARD: &[Aiming] = &[Aiming {
-    when: &[Test::Action(&[Still])],
+    when: &[Test::Action(&[Action::Still])],
     aim: Aim::Forward,
 }];
 
 /// `Turning` in a jump.
 const TO_TURNING_IN_A_JUMP: Next = Next {
-    action: Some(Turning(Turn::Jump)),
+    action: Some(Action::Turning(Turn::Jump)),
     aim: TURN_IN_THE_AIR,
     ..TO_TURNING
 };
 /// `Turning` in a fall.
 const TO_TURNING_IN_A_FALL: Next = Next {
-    action: Some(Turning(Turn::Fall)),
+    action: Some(Action::Turning(Turn::Fall)),
     aim: TURN_IN_THE_AIR,
+    ..TO_TURNING
+};
+/// The moonwalk's turns: `Turning` with her facing kept, the way she walks.
+const TO_MOONWALK_TURN: Next = Next {
+    facing: NextFacing::Kept,
     ..TO_TURNING
 };
 /// Crouched `Unmorphing`, which lowers her 0 px (`ShrinkingLowersHer`).
 const TO_UNMORPHING: Next = Next {
-    body: Some(Crouched),
-    action: Some(Unmorphing),
+    body: Some(Body::Crouched),
+    action: Some(Action::Unmorphing),
     lower: LOWERS_NOTHING,
     ..TO_STILL
 };
 /// The same ball, rolling.
 const TO_ROLLING: Next = Next {
     body: None,
-    action: Some(Rolling),
+    action: Some(Action::Rolling),
     ..TO_STILL
 };
 
@@ -412,6 +433,43 @@ const TO_ROLLING: Next = Next {
 const ANY_BUTTON: Buttons = Buttons(u16::MAX);
 /// Every button a straight jump's row names but jump.
 const NAMED: Buttons = Buttons(FORWARD.0 | BACK.0 | SHOOT.0 | UDA.0);
+
+/// Standing still facing the screen: a side held turns her to face it (right held beats left
+/// held), a turn like any other, from a skid of zero; nothing else she holds or presses moves her
+/// out of it. Her moves facing the screen don't move her (`SpeedBuildsAndBrakes`).
+static FACING_THE_SCREEN: Situation = Situation {
+    doing: Doing::Standing,
+    moves: Moves::HaltsAfterDash,
+    footing: Footing::OnHerFeet,
+    rows: &[
+        Row {
+            id: RowId::RightHeld,
+            needs: &[Test::Held(RIGHT)],
+            next: Next {
+                facing: NextFacing::To(Facing::Right),
+                ..TO_TURNING
+            },
+            effects: &[Effect::TurnRound],
+            beats: &[RowId::LeftHeld],
+            ..NO_CHANGE
+        },
+        Row {
+            id: RowId::LeftHeld,
+            needs: &[Test::Held(LEFT)],
+            next: Next {
+                facing: NextFacing::To(Facing::Left),
+                ..TO_TURNING
+            },
+            effects: &[Effect::TurnRound],
+            ..NO_CHANGE
+        },
+    ],
+    last: Row {
+        id: RowId::AnythingElse,
+        effects: &[Effect::EndSkid],
+        ..NO_CHANGE
+    },
+};
 
 /// Standing still, or landing.
 static STANDING: Situation = Situation {
@@ -421,7 +479,7 @@ static STANDING: Situation = Situation {
     rows: &[
         Row {
             id: RowId::DownPressed,
-            needs: &[Pressed(DOWN)],
+            needs: &[Test::Pressed(DOWN)],
             next: Next {
                 aim: CROUCH_AIM,
                 ..TO_CROUCHING
@@ -430,18 +488,18 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::JumpPressed,
-            needs: &[Pressed(key::JUMP)],
+            needs: &[Test::Pressed(key::JUMP)],
             next: Next {
                 aim: TAKE_OFF_AIM,
                 ..TO_TAKING_OFF
             },
-            effects: &[Rise],
+            effects: &[Effect::Rise],
             beats: &[RowId::DownPressed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::BackShootAndAnAimButtonHeld,
-            needs: &[Held(BACK), Held(SHOOT), Held(AIM)],
+            needs: &[Test::Held(BACK), Test::Held(SHOOT), Test::Held(AIM)],
             next: Next {
                 facing: NextFacing::Back,
                 aim: AIM_DOWN_ELSE_UP,
@@ -452,14 +510,14 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::BackAndBothAimButtonsHeld,
-            needs: &[Held(BACK), Held(AIM_UP), Held(AIM_DOWN)],
+            needs: &[Test::Held(BACK), Test::Held(AIM_UP), Test::Held(AIM_DOWN)],
             next: TO_TURNING,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             ..NO_CHANGE
         },
         Row {
             id: RowId::BackAndShootHeld,
-            needs: &[Held(BACK), Held(SHOOT)],
+            needs: &[Test::Held(BACK), Test::Held(SHOOT)],
             next: Next {
                 facing: NextFacing::Back,
                 ..TO_MOONWALKING
@@ -468,7 +526,7 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardAndAnAimButtonHeld,
-            needs: &[Held(FORWARD), Held(AIM)],
+            needs: &[Test::Held(FORWARD), Test::Held(AIM)],
             next: Next {
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_RUNNING
@@ -478,7 +536,7 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardWithUpOrDownHeld,
-            needs: &[Held(FORWARD), Held(UP_DOWN)],
+            needs: &[Test::Held(FORWARD), Test::Held(UP_DOWN)],
             next: Next {
                 aim: UP_ELSE_DOWN,
                 ..TO_RUNNING
@@ -488,7 +546,7 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::BothAimButtonsHeld,
-            needs: &[Held(AIM_UP), Held(AIM_DOWN)],
+            needs: &[Test::Held(AIM_UP), Test::Held(AIM_DOWN)],
             next: Next {
                 aim: UP_AIM,
                 ..TO_STILL
@@ -502,13 +560,13 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             next: TO_RUNNING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::UpHeld,
-            needs: &[Held(UP)],
+            needs: &[Test::Held(UP)],
             next: Next {
                 aim: UP_AIM,
                 ..TO_STILL
@@ -518,7 +576,7 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::AimUpOrAimDownHeld,
-            needs: &[Held(AIM)],
+            needs: &[Test::Held(AIM)],
             next: Next {
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_STILL
@@ -527,9 +585,9 @@ static STANDING: Situation = Situation {
         },
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: TO_TURNING,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             beats: &[RowId::UpHeld, RowId::AimUpOrAimDownHeld, RowId::ForwardHeld],
             ..NO_CHANGE
         },
@@ -540,7 +598,7 @@ static STANDING: Situation = Situation {
             aim: STANDS_FORWARD,
             ..KEEP_POSE
         },
-        effects: &[EndSkid],
+        effects: &[Effect::EndSkid],
         ..NO_CHANGE
     },
 };
@@ -553,21 +611,21 @@ static RUNNING: Situation = Situation {
     rows: &[
         Row {
             id: RowId::DownPressed,
-            needs: &[Pressed(DOWN)],
+            needs: &[Test::Pressed(DOWN)],
             next: TO_CROUCHING,
             beats: &[RowId::JumpPressed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::JumpPressed,
-            needs: &[Pressed(key::JUMP)],
+            needs: &[Test::Pressed(key::JUMP)],
             next: TO_SPINNING,
-            effects: &[Rise],
+            effects: &[Effect::Rise],
             ..NO_CHANGE
         },
         Row {
             id: RowId::ForwardAndShootHeld,
-            needs: &[Held(FORWARD), Held(SHOOT)],
+            needs: &[Test::Held(FORWARD), Test::Held(SHOOT)],
             next: Next {
                 gun: Some(Gun::Drawn),
                 ..TO_RUNNING
@@ -576,7 +634,7 @@ static RUNNING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardAndAnAimButtonHeld,
-            needs: &[Held(FORWARD), Held(AIM)],
+            needs: &[Test::Held(FORWARD), Test::Held(AIM)],
             next: Next {
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_RUNNING
@@ -586,7 +644,7 @@ static RUNNING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardWithUpOrDownHeld,
-            needs: &[Held(FORWARD), Held(UP_DOWN)],
+            needs: &[Test::Held(FORWARD), Test::Held(UP_DOWN)],
             next: Next {
                 aim: UP_ELSE_DOWN,
                 ..TO_RUNNING
@@ -596,7 +654,7 @@ static RUNNING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             next: Next {
                 gun: None,
                 ..TO_RUNNING
@@ -606,7 +664,7 @@ static RUNNING: Situation = Situation {
         },
         Row {
             id: RowId::UpHeld,
-            needs: &[Held(UP)],
+            needs: &[Test::Held(UP)],
             next: Next {
                 aim: UP_AIM,
                 ..TO_STILL
@@ -616,7 +674,7 @@ static RUNNING: Situation = Situation {
         },
         Row {
             id: RowId::AimUpOrAimDownHeld,
-            needs: &[Held(AIM)],
+            needs: &[Test::Held(AIM)],
             next: Next {
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_STILL
@@ -625,9 +683,9 @@ static RUNNING: Situation = Situation {
         },
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: TO_TURNING,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             beats: &[RowId::UpHeld, RowId::AimUpOrAimDownHeld],
             ..NO_CHANGE
         },
@@ -638,7 +696,7 @@ static RUNNING: Situation = Situation {
         Row {
             id: RowId::AnythingElseMoving,
             needs: &[Test::Moving],
-            effects: &[AsRunning],
+            effects: &[Effect::AsRunning],
             aim_step: true,
             ..NO_CHANGE
         },
@@ -646,7 +704,7 @@ static RUNNING: Situation = Situation {
     last: Row {
         id: RowId::AnythingElseAtRest,
         next: TO_STILL,
-        effects: &[AsRunning],
+        effects: &[Effect::AsRunning],
         ..NO_CHANGE
     },
 };
@@ -659,7 +717,7 @@ static TAKING_OFF: Situation = Situation {
     rows: &[
         Row {
             id: RowId::JumpAndForwardHeld,
-            needs: &[Held(key::JUMP), Held(FORWARD)],
+            needs: &[Test::Held(key::JUMP), Test::Held(FORWARD)],
             next: Next {
                 legs: Some(Legs::Striding),
                 ..TO_JUMPING
@@ -668,7 +726,7 @@ static TAKING_OFF: Situation = Situation {
         },
         Row {
             id: RowId::JumpWithUpDownOrAnAimButtonHeld,
-            needs: &[Held(key::JUMP), Held(UDA)],
+            needs: &[Test::Held(key::JUMP), Test::Held(UDA)],
             next: Next {
                 aim: UP_DOWN_AIM,
                 ..TO_JUMPING
@@ -678,9 +736,9 @@ static TAKING_OFF: Situation = Situation {
         },
         Row {
             id: RowId::JumpAndBackHeld,
-            needs: &[Held(key::JUMP), Held(BACK)],
+            needs: &[Test::Held(key::JUMP), Test::Held(BACK)],
             next: TO_TURNING_IN_A_JUMP,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             beats: &[
                 RowId::JumpWithUpDownOrAnAimButtonHeld,
                 RowId::JumpAndForwardHeld,
@@ -689,7 +747,7 @@ static TAKING_OFF: Situation = Situation {
         },
         Row {
             id: RowId::ShootHeld,
-            needs: &[Held(SHOOT)],
+            needs: &[Test::Held(SHOOT)],
             next: Next {
                 gun: Some(Gun::Drawn),
                 ..TO_JUMPING
@@ -699,7 +757,7 @@ static TAKING_OFF: Situation = Situation {
     ],
     last: Row {
         id: RowId::AnythingElse,
-        effects: &[AsRunning],
+        effects: &[Effect::AsRunning],
         ..NO_CHANGE
     },
 };
@@ -712,18 +770,18 @@ static STRAIGHT_JUMP: Situation = Situation {
     rows: &[
         Row {
             id: RowId::AimingDownDownPressed,
-            needs: &[Aimed(&[Aim::Down]), Pressed(DOWN)],
+            needs: &[Test::Aimed(&[Aim::Down]), Test::Pressed(DOWN)],
             next: TO_MORPHING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::AimingDownFacingRightForwardJumpAndShootHeld,
             needs: &[
-                Aimed(&[Aim::Down]),
-                Faces(Side::Right),
-                Held(FORWARD),
-                Held(key::JUMP),
-                Held(SHOOT),
+                Test::Aimed(&[Aim::Down]),
+                Test::Faces(Side::Right),
+                Test::Held(FORWARD),
+                Test::Held(key::JUMP),
+                Test::Held(SHOOT),
             ],
             next: Next {
                 gun: Some(Gun::Drawn),
@@ -733,7 +791,7 @@ static STRAIGHT_JUMP: Situation = Situation {
         },
         Row {
             id: RowId::ForwardWithUpDownOrAnAimButtonHeld,
-            needs: &[Held(FORWARD), Held(UDA)],
+            needs: &[Test::Held(FORWARD), Test::Held(UDA)],
             next: Next {
                 aim: AIR_AIM,
                 ..TO_JUMPING
@@ -743,7 +801,7 @@ static STRAIGHT_JUMP: Situation = Situation {
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             next: Next {
                 legs: Some(Legs::Striding),
                 ..TO_JUMPING
@@ -753,7 +811,7 @@ static STRAIGHT_JUMP: Situation = Situation {
         },
         Row {
             id: RowId::ShootHeld,
-            needs: &[Held(SHOOT)],
+            needs: &[Test::Held(SHOOT)],
             next: Next {
                 gun: Some(Gun::Drawn),
                 ..TO_JUMPING
@@ -763,13 +821,13 @@ static STRAIGHT_JUMP: Situation = Situation {
         },
         Row {
             id: RowId::GunStowedJumpHeld,
-            needs: &[Test::Gun(Gun::Stowed), Held(key::JUMP)],
+            needs: &[Test::Gun(Gun::Stowed), Test::Held(key::JUMP)],
             next: TO_JUMPING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::UpDownOrAnAimButtonHeld,
-            needs: &[Held(UDA)],
+            needs: &[Test::Held(UDA)],
             next: Next {
                 aim: AIR_AIM,
                 ..TO_JUMPING
@@ -783,9 +841,9 @@ static STRAIGHT_JUMP: Situation = Situation {
         },
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: TO_TURNING_IN_A_JUMP,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             beats: &[
                 RowId::ForwardHeld,
                 RowId::ShootHeld,
@@ -797,20 +855,24 @@ static STRAIGHT_JUMP: Situation = Situation {
             // held, unless jump is held too (with up or down held instead, forward wins by rank).
             beats_unless: &[Beat {
                 row: RowId::ForwardWithUpDownOrAnAimButtonHeld,
-                unless: &[&[Not(&Held(AIM))], &[Held(key::JUMP)]],
+                unless: &[&[Test::Not(&Test::Held(AIM))], &[Test::Held(key::JUMP)]],
             }],
             ..NO_CHANGE
         },
         Row {
             id: RowId::AimingDownJumpHeldAlone,
-            needs: &[Aimed(&[Aim::Down]), Held(key::JUMP), Not(&Held(NAMED))],
+            needs: &[
+                Test::Aimed(&[Aim::Down]),
+                Test::Held(key::JUMP),
+                Test::Not(&Test::Held(NAMED)),
+            ],
             beats: &[RowId::GunStowedJumpHeld],
             ..NO_CHANGE
         },
     ],
     last: Row {
         id: RowId::AnythingElse,
-        effects: &[AsRunning],
+        effects: &[Effect::AsRunning],
         ..NO_CHANGE
     },
 };
@@ -823,7 +885,7 @@ static SPINNING: Situation = Situation {
     rows: &[
         Row {
             id: RowId::ShootPressed,
-            needs: &[Pressed(SHOOT)],
+            needs: &[Test::Pressed(SHOOT)],
             next: Next {
                 gun: Some(Gun::Drawn),
                 ..TO_JUMPING
@@ -832,7 +894,7 @@ static SPINNING: Situation = Situation {
         },
         Row {
             id: RowId::ShootWithUpDownOrAnAimButtonHeld,
-            needs: &[Held(SHOOT), Held(UDA)],
+            needs: &[Test::Held(SHOOT), Test::Held(UDA)],
             next: Next {
                 aim: UP_DOWN_AIM,
                 ..TO_JUMPING
@@ -842,12 +904,12 @@ static SPINNING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardAndJumpHeld,
-            needs: &[Held(FORWARD), Held(key::JUMP)],
+            needs: &[Test::Held(FORWARD), Test::Held(key::JUMP)],
             ..NO_CHANGE
         },
         Row {
             id: RowId::UpDownOrAnAimButtonHeld,
-            needs: &[Held(UDA)],
+            needs: &[Test::Held(UDA)],
             next: Next {
                 aim: SPIN_AIM,
                 ..TO_JUMPING
@@ -857,17 +919,17 @@ static SPINNING: Situation = Situation {
         },
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: Next {
                 facing: NextFacing::Back,
                 ..TO_SPINNING
             },
-            effects: &[TurnRoundIfFacingChanges],
+            effects: &[Effect::TurnRoundIfFacingChanges],
             ..NO_CHANGE
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             beats: &[RowId::BackHeld],
             ..NO_CHANGE
         },
@@ -886,13 +948,13 @@ static FALLING: Situation = Situation {
     rows: &[
         Row {
             id: RowId::AimingDownDownPressed,
-            needs: &[Aimed(&[Aim::Down]), Pressed(DOWN)],
+            needs: &[Test::Aimed(&[Aim::Down]), Test::Pressed(DOWN)],
             next: TO_MORPHING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::ForwardWithUpOrDownHeld,
-            needs: &[Held(FORWARD), Held(UP_DOWN)],
+            needs: &[Test::Held(FORWARD), Test::Held(UP_DOWN)],
             next: Next {
                 aim: UP_ELSE_DOWN,
                 ..TO_FALLING
@@ -901,7 +963,7 @@ static FALLING: Situation = Situation {
         },
         Row {
             id: RowId::ShootHeld,
-            needs: &[Held(SHOOT)],
+            needs: &[Test::Held(SHOOT)],
             next: Next {
                 gun: Some(Gun::Drawn),
                 ..TO_FALLING
@@ -911,7 +973,7 @@ static FALLING: Situation = Situation {
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             next: Next {
                 gun: None,
                 ..TO_FALLING
@@ -920,7 +982,7 @@ static FALLING: Situation = Situation {
         },
         Row {
             id: RowId::UpDownOrAnAimButtonHeld,
-            needs: &[Held(UDA)],
+            needs: &[Test::Held(UDA)],
             next: Next {
                 aim: AIR_AIM,
                 ..TO_FALLING
@@ -932,15 +994,15 @@ static FALLING: Situation = Situation {
         // under which the row it beats beats it instead.
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: TO_TURNING_IN_A_FALL,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             beats: &[RowId::ShootHeld, RowId::ForwardHeld],
             beats_unless: &[Beat {
                 row: RowId::UpDownOrAnAimButtonHeld,
                 unless: &[
-                    &[Aimed(&[Aim::Down]), Held(UP_DOWN)],
-                    &[Test::Gun(Gun::Drawn), Held(UP_DOWN)],
+                    &[Test::Aimed(&[Aim::Down]), Test::Held(UP_DOWN)],
+                    &[Test::Gun(Gun::Drawn), Test::Held(UP_DOWN)],
                 ],
             }],
             ..NO_CHANGE
@@ -952,7 +1014,7 @@ static FALLING: Situation = Situation {
             aim: FORWARD_AIM,
             ..KEEP_POSE
         },
-        effects: &[LoseDash],
+        effects: &[Effect::LoseDash],
         ..NO_CHANGE
     },
 };
@@ -965,16 +1027,16 @@ static CROUCHED: Situation = Situation {
     rows: &[
         Row {
             id: RowId::DownPressed,
-            needs: &[Pressed(DOWN)],
+            needs: &[Test::Pressed(DOWN)],
             next: TO_MORPHING,
             beats: &[RowId::JumpPressed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::UpPressed,
-            needs: &[Pressed(UP)],
+            needs: &[Test::Pressed(UP)],
             next: Next {
-                action: Some(StandingUp),
+                action: Some(Action::StandingUp),
                 aim: CROUCH_AIM,
                 lower: LOWERS_NOTHING,
                 ..TO_STILL
@@ -984,32 +1046,33 @@ static CROUCHED: Situation = Situation {
         },
         Row {
             id: RowId::JumpPressed,
-            needs: &[Pressed(key::JUMP)],
+            needs: &[Test::Pressed(key::JUMP)],
             next: TO_TAKING_OFF,
-            effects: &[Rise, LiftIfUnaimed],
+            effects: &[Effect::Rise, Effect::LiftIfUnaimed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::BackPressed,
-            needs: &[Pressed(BACK)],
+            needs: &[Test::Pressed(BACK)],
             next: Next {
-                body: Some(Crouched),
+                body: Some(Body::Crouched),
                 ..TO_TURNING
             },
+            effects: &[Effect::TurnRound],
             beats: &[RowId::DownPressed, RowId::JumpPressed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::ForwardAndAnAimButtonHeld,
-            needs: &[Held(FORWARD), Held(AIM)],
+            needs: &[Test::Held(FORWARD), Test::Held(AIM)],
             next: TO_STILL,
             ..NO_CHANGE
         },
         Row {
             id: RowId::BothAimButtonsHeld,
-            needs: &[Held(AIM_UP), Held(AIM_DOWN)],
+            needs: &[Test::Held(AIM_UP), Test::Held(AIM_DOWN)],
             next: Next {
-                body: Some(Crouched),
+                body: Some(Body::Crouched),
                 aim: UP_AIM,
                 ..TO_STILL
             },
@@ -1018,15 +1081,15 @@ static CROUCHED: Situation = Situation {
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             next: TO_STILL,
             ..NO_CHANGE
         },
         Row {
             id: RowId::AimUpOrAimDownHeld,
-            needs: &[Held(AIM)],
+            needs: &[Test::Held(AIM)],
             next: Next {
-                body: Some(Crouched),
+                body: Some(Body::Crouched),
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_STILL
             },
@@ -1039,7 +1102,7 @@ static CROUCHED: Situation = Situation {
             aim: FORWARD_AIM,
             ..KEEP_POSE
         },
-        effects: &[EndSkid],
+        effects: &[Effect::EndSkid],
         ..NO_CHANGE
     },
 };
@@ -1048,7 +1111,7 @@ static CROUCHED: Situation = Situation {
 /// hop"; in the air, where there is no hop, the jump without the spring ball).
 const UP_PRESSED_UNMORPHS: Row = Row {
     id: RowId::UpPressed,
-    needs: &[Pressed(UP)],
+    needs: &[Test::Pressed(UP)],
     next: TO_UNMORPHING,
     beats: &[RowId::JumpPressedWithoutTheSpringBall],
     ..NO_CHANGE
@@ -1056,7 +1119,7 @@ const UP_PRESSED_UNMORPHS: Row = Row {
 /// A ball's "without the spring ball jump pressed" row.
 const JUMP_PRESSED_UNMORPHS: Row = Row {
     id: RowId::JumpPressedWithoutTheSpringBall,
-    needs: &[Pressed(key::JUMP), Test::Body(&[Ball])],
+    needs: &[Test::Pressed(key::JUMP), Test::Body(&[Body::Ball])],
     next: TO_UNMORPHING,
     ..NO_CHANGE
 };
@@ -1066,12 +1129,12 @@ const JUMP_PRESSED_UNMORPHS: Row = Row {
 const BALL_ON_GROUND: &[Row] = &[
     Row {
         id: RowId::JumpPressedWithTheSpringBall,
-        needs: &[Pressed(key::JUMP), Test::Body(&[SpringBall])],
+        needs: &[Test::Pressed(key::JUMP), Test::Body(&[Body::SpringBall])],
         next: Next {
             body: None,
             ..TO_JUMPING
         },
-        effects: &[Rise],
+        effects: &[Effect::Rise],
         ..NO_CHANGE
     },
     Row {
@@ -1084,23 +1147,23 @@ const BALL_ON_GROUND: &[Row] = &[
     JUMP_PRESSED_UNMORPHS,
     Row {
         id: RowId::RightHeld,
-        needs: &[Held(RIGHT)],
+        needs: &[Test::Held(RIGHT)],
         next: Next {
             facing: NextFacing::To(Facing::Right),
             ..TO_ROLLING
         },
-        effects: &[TurnRoundIfFacingChanges],
+        effects: &[Effect::TurnRoundIfFacingChanges],
         beats: &[RowId::LeftHeld],
         ..NO_CHANGE
     },
     Row {
         id: RowId::LeftHeld,
-        needs: &[Held(LEFT)],
+        needs: &[Test::Held(LEFT)],
         next: Next {
             facing: NextFacing::To(Facing::Left),
             ..TO_ROLLING
         },
-        effects: &[TurnRoundIfFacingChanges],
+        effects: &[Effect::TurnRoundIfFacingChanges],
         ..NO_CHANGE
     },
 ];
@@ -1115,35 +1178,35 @@ const BALL_IN_THE_AIR: &[Row] = &[
     JUMP_PRESSED_UNMORPHS,
     Row {
         id: RowId::RightHeld,
-        needs: &[Held(RIGHT)],
+        needs: &[Test::Held(RIGHT)],
         next: Next {
             facing: NextFacing::To(Facing::Right),
             ..KEEP_POSE
         },
-        effects: &[TurnRoundIfFacingChanges],
+        effects: &[Effect::TurnRoundIfFacingChanges],
         beats_unless: &[Beat {
             row: RowId::LeftHeld,
             unless: &[
-                &[Test::Body(&[Ball]), Faces(Side::Left)],
-                &[Test::Body(&[SpringBall]), Faces(Side::Right)],
+                &[Test::Body(&[Body::Ball]), Test::Faces(Side::Left)],
+                &[Test::Body(&[Body::SpringBall]), Test::Faces(Side::Right)],
             ],
         }],
         ..NO_CHANGE
     },
     Row {
         id: RowId::LeftHeld,
-        needs: &[Held(LEFT)],
+        needs: &[Test::Held(LEFT)],
         next: Next {
             facing: NextFacing::To(Facing::Left),
             ..KEEP_POSE
         },
-        effects: &[TurnRoundIfFacingChanges],
+        effects: &[Effect::TurnRoundIfFacingChanges],
         ..NO_CHANGE
     },
     Row {
         id: RowId::OffTheGroundWithTheSpringBall,
-        needs: &[Test::Body(&[SpringBall])],
-        effects: &[Halt],
+        needs: &[Test::Body(&[Body::SpringBall])],
+        effects: &[Effect::Halt],
         ..NO_CHANGE
     },
 ];
@@ -1157,23 +1220,23 @@ const BALL_ON_THE_HOP: &[Row] = &[
     },
     Row {
         id: RowId::RightHeld,
-        needs: &[Held(RIGHT)],
+        needs: &[Test::Held(RIGHT)],
         next: Next {
             facing: NextFacing::To(Facing::Right),
             ..KEEP_POSE
         },
-        effects: &[TurnRoundIfFacingChanges],
+        effects: &[Effect::TurnRoundIfFacingChanges],
         beats: &[RowId::LeftHeld],
         ..NO_CHANGE
     },
     Row {
         id: RowId::LeftHeld,
-        needs: &[Held(LEFT)],
+        needs: &[Test::Held(LEFT)],
         next: Next {
             facing: NextFacing::To(Facing::Left),
             ..KEEP_POSE
         },
-        effects: &[TurnRoundIfFacingChanges],
+        effects: &[Effect::TurnRoundIfFacingChanges],
         ..NO_CHANGE
     },
 ];
@@ -1185,21 +1248,21 @@ const BALL_COMES_TO_REST: Row = Row {
         body: None,
         ..TO_STILL
     },
-    effects: &[Halt],
+    effects: &[Effect::Halt],
     ..NO_CHANGE
 };
 
 /// The ball's last row in the air, without the spring ball: kept, as running.
 const BALL_KEEPS_ITS_POSE: Row = Row {
     id: RowId::InTheAirWithoutTheSpringBall,
-    effects: &[AsRunning],
+    effects: &[Effect::AsRunning],
     ..NO_CHANGE
 };
 
 /// The spring ball's last row off the ground: kept, halted.
 const SPRING_BALL_HALTS: Row = Row {
     id: RowId::OffTheGroundWithTheSpringBall,
-    effects: &[Halt],
+    effects: &[Effect::Halt],
     ..NO_CHANGE
 };
 
@@ -1248,38 +1311,42 @@ static TURNING: Situation = Situation {
         Row {
             id: RowId::AimedUpOrDownForwardForwardHeldAndJumpPressed,
             needs: &[
-                Aimed(&[Aim::Up, Aim::DownForward]),
-                Held(FORWARD),
-                Pressed(key::JUMP),
+                Test::Aimed(&[Aim::Up, Aim::DownForward]),
+                Test::Held(FORWARD),
+                Test::Pressed(key::JUMP),
             ],
             next: TO_SPINNING,
-            effects: &[Rise],
+            effects: &[Effect::Rise],
             ..NO_CHANGE
         },
         Row {
             id: RowId::JumpPressed,
-            needs: &[Pressed(key::JUMP)],
+            needs: &[Test::Pressed(key::JUMP)],
             next: TO_TAKING_OFF,
-            effects: &[Rise],
+            effects: &[Effect::Rise],
             ..NO_CHANGE
         },
         Row {
             id: RowId::AimedForwardForwardAndJumpHeld,
-            needs: &[Aimed(&[Aim::Forward]), Held(FORWARD), Held(key::JUMP)],
+            needs: &[
+                Test::Aimed(&[Aim::Forward]),
+                Test::Held(FORWARD),
+                Test::Held(key::JUMP),
+            ],
             next: TO_SPINNING,
-            effects: &[Rise],
+            effects: &[Effect::Rise],
             beats: &[RowId::JumpPressed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             ..NO_CHANGE
         },
     ],
     last: Row {
         id: RowId::AnythingElse,
-        effects: &[EndSkid],
+        effects: &[Effect::EndSkid],
         ..NO_CHANGE
     },
 };
@@ -1292,12 +1359,12 @@ static TURNING_ON: Situation = Situation {
     footing: Footing::Turning,
     rows: &[Row {
         id: RowId::AnyButtonHeld,
-        needs: &[Held(ANY_BUTTON)],
+        needs: &[Test::Held(ANY_BUTTON)],
         ..NO_CHANGE
     }],
     last: Row {
         id: RowId::NothingHeld,
-        effects: &[EndSkid],
+        effects: &[Effect::EndSkid],
         ..NO_CHANGE
     },
 };
@@ -1322,7 +1389,7 @@ static MOONWALKING: Situation = Situation {
     rows: &[
         Row {
             id: RowId::DownPressed,
-            needs: &[Pressed(DOWN)],
+            needs: &[Test::Pressed(DOWN)],
             next: Next {
                 facing: NextFacing::Back,
                 ..TO_CROUCHING
@@ -1330,21 +1397,21 @@ static MOONWALKING: Situation = Situation {
             beats: &[RowId::JumpPressed],
             ..NO_CHANGE
         },
-        // The moonwalk's jump: the one turn that keeps her facing, the way she walks.
+        // The moonwalk's two turns, its jump and the one holding the way she walks, keep her
+        // facing: it already points the way she walks.
         Row {
             id: RowId::JumpPressed,
-            needs: &[Pressed(key::JUMP)],
+            needs: &[Test::Pressed(key::JUMP)],
             next: Next {
-                action: Some(Turning(Turn::MoonwalkJump)),
-                facing: NextFacing::Kept,
-                ..TO_TURNING
+                action: Some(Action::Turning(Turn::MoonwalkJump)),
+                ..TO_MOONWALK_TURN
             },
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             ..NO_CHANGE
         },
         Row {
             id: RowId::WalksShootAndAnAimButtonHeld,
-            needs: &[Held(FORWARD), Held(SHOOT), Held(AIM)],
+            needs: &[Test::Held(FORWARD), Test::Held(SHOOT), Test::Held(AIM)],
             next: Next {
                 aim: MOON_AIM,
                 ..TO_MOONWALKING
@@ -1353,13 +1420,13 @@ static MOONWALKING: Situation = Situation {
         },
         Row {
             id: RowId::WalksAndShootHeld,
-            needs: &[Held(FORWARD), Held(SHOOT)],
+            needs: &[Test::Held(FORWARD), Test::Held(SHOOT)],
             next: TO_MOONWALKING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::LooksHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: Next {
                 facing: NextFacing::Back,
                 ..TO_RUNNING
@@ -1369,9 +1436,9 @@ static MOONWALKING: Situation = Situation {
         },
         Row {
             id: RowId::WalksHeld,
-            needs: &[Held(FORWARD)],
-            next: TO_TURNING,
-            effects: &[TurnRound],
+            needs: &[Test::Held(FORWARD)],
+            next: TO_MOONWALK_TURN,
+            effects: &[Effect::TurnRound],
             ..NO_CHANGE
         },
     ],
@@ -1381,7 +1448,7 @@ static MOONWALKING: Situation = Situation {
             facing: NextFacing::Back,
             ..TO_STILL
         },
-        effects: &[EndSkid],
+        effects: &[Effect::EndSkid],
         ..NO_CHANGE
     },
 };
@@ -1394,13 +1461,13 @@ static WALL_JUMPING: Situation = Situation {
     rows: &[
         Row {
             id: RowId::DownPressed,
-            needs: &[Pressed(DOWN)],
+            needs: &[Test::Pressed(DOWN)],
             next: TO_MORPHING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::ShootHeld,
-            needs: &[Held(SHOOT)],
+            needs: &[Test::Held(SHOOT)],
             next: Next {
                 gun: Some(Gun::Drawn),
                 ..TO_JUMPING
@@ -1410,7 +1477,7 @@ static WALL_JUMPING: Situation = Situation {
         },
         Row {
             id: RowId::AimUpOrAimDownHeld,
-            needs: &[Held(AIM)],
+            needs: &[Test::Held(AIM)],
             next: Next {
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_JUMPING
@@ -1420,18 +1487,18 @@ static WALL_JUMPING: Situation = Situation {
         },
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: Next {
                 facing: NextFacing::Back,
                 ..TO_SPINNING
             },
-            effects: &[TurnRoundIfFacingChanges],
+            effects: &[Effect::TurnRoundIfFacingChanges],
             beats: &[RowId::ShootHeld, RowId::AimUpOrAimDownHeld, RowId::JumpHeld],
             ..NO_CHANGE
         },
         Row {
             id: RowId::JumpHeld,
-            needs: &[Held(key::JUMP)],
+            needs: &[Test::Held(key::JUMP)],
             ..NO_CHANGE
         },
         // The chart's last row for wall jumping, with the screw attack or space jump switched
@@ -1448,7 +1515,7 @@ static WALL_JUMPING: Situation = Situation {
     last: Row {
         id: RowId::AnythingElse,
         next: TO_SPINNING,
-        effects: &[Halt],
+        effects: &[Effect::Halt],
         ..NO_CHANGE
     },
 };
@@ -1461,21 +1528,21 @@ static AGAINST_WALL: Situation = Situation {
     rows: &[
         Row {
             id: RowId::DownPressed,
-            needs: &[Pressed(DOWN)],
+            needs: &[Test::Pressed(DOWN)],
             next: TO_CROUCHING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::JumpPressed,
-            needs: &[Pressed(key::JUMP)],
+            needs: &[Test::Pressed(key::JUMP)],
             next: TO_TAKING_OFF,
-            effects: &[Rise],
+            effects: &[Effect::Rise],
             beats: &[RowId::DownPressed],
             ..NO_CHANGE
         },
         Row {
             id: RowId::BackAndAnAimButtonHeld,
-            needs: &[Held(BACK), Held(AIM)],
+            needs: &[Test::Held(BACK), Test::Held(AIM)],
             next: Next {
                 facing: NextFacing::Back,
                 aim: AIM_DOWN_ELSE_UP,
@@ -1485,7 +1552,7 @@ static AGAINST_WALL: Situation = Situation {
         },
         Row {
             id: RowId::ForwardWithUpOrDownHeld,
-            needs: &[Held(FORWARD), Held(UP_DOWN)],
+            needs: &[Test::Held(FORWARD), Test::Held(UP_DOWN)],
             next: Next {
                 aim: UP_ELSE_DOWN,
                 ..TO_RUNNING
@@ -1495,13 +1562,13 @@ static AGAINST_WALL: Situation = Situation {
         },
         Row {
             id: RowId::ForwardHeld,
-            needs: &[Held(FORWARD)],
+            needs: &[Test::Held(FORWARD)],
             next: TO_RUNNING,
             ..NO_CHANGE
         },
         Row {
             id: RowId::UpHeld,
-            needs: &[Held(UP)],
+            needs: &[Test::Held(UP)],
             next: Next {
                 aim: UP_AIM,
                 ..TO_STILL
@@ -1511,7 +1578,7 @@ static AGAINST_WALL: Situation = Situation {
         },
         Row {
             id: RowId::AimUpOrAimDownHeld,
-            needs: &[Held(AIM)],
+            needs: &[Test::Held(AIM)],
             next: Next {
                 aim: AIM_UP_ELSE_DOWN,
                 ..TO_STILL
@@ -1521,9 +1588,9 @@ static AGAINST_WALL: Situation = Situation {
         },
         Row {
             id: RowId::BackHeld,
-            needs: &[Held(BACK)],
+            needs: &[Test::Held(BACK)],
             next: TO_TURNING,
-            effects: &[TurnRound],
+            effects: &[Effect::TurnRound],
             beats: &[RowId::ForwardHeld],
             ..NO_CHANGE
         },
@@ -1534,7 +1601,7 @@ static AGAINST_WALL: Situation = Situation {
             aim: FORWARD_AIM,
             ..KEEP_POSE
         },
-        effects: &[EndSkid],
+        effects: &[Effect::EndSkid],
         ..NO_CHANGE
     },
 };

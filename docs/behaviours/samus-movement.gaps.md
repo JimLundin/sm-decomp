@@ -21,3 +21,16 @@ leaves this file; its text and answer are in git history.
     resolved to the cell it stands for, as for her touches (the inside handling follows stand-ins,
     `$94:9B40`). The blocks spec's vectors give `{ inside = [x, y], point }` requests in that
     shape.
+
+## The crouched turn aimed down-forward (filed by the observer, from Ceres's free run)
+
+37. **Which way the crouched turn aimed down-forward hands her over.** chain-any-0006-E0B5 534 to
+    541: crouched facing left aimed down-forward, right pressed, she turns (535: 9Ah) and skids at
+    0 (`TurningRound`, CE4), creeps 0.C000 right at 536 and 538, and on 538 → 539, the pad let
+    go, her animation's end hands her over the crouch facing left (539: 28h), not the new facing
+    `AnimationEnds` gives for a crouched turn (right, aim kept). The pad then aims (540: 74h) and
+    turns her again (541), so the run creeps right while she faces left. The original's crouched
+    aimed turns carry the jump turn's movement type (17h, decode notes "The pose map"), and the
+    hand-over of 9Ah with the pad let go reads 73h in the decode notes, not 28h; the frame's
+    hand-over isn't traced yet. It shows in the free run only once it carries her pose (decode
+    notes, "Ceres's free run"); settled by tracing `$91:EB88`'s hand-over for 9Ah on that frame.

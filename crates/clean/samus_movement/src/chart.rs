@@ -9,14 +9,10 @@ pub mod table;
 #[cfg(test)]
 mod tests;
 
-use crate::rows::Test::{
-    Action, Aimed, Airborne, Body, Doing, Faces, Gun, Held, Moving, Not, Pressed, With,
-};
 use crate::rows::{Effect, Met, Row, Situation, Test, seen};
 use crate::rules::Lowers;
 use crate::situation::{UnknownPose, classify};
-use types::Action::{Running, Spinning, TakingOff};
-use types::{Aim, Buttons, ClipEnd, Fixed, Item, Pose, Set, Side, ZERO};
+use types::{Action, Aim, Buttons, ClipEnd, Fixed, Item, Pose, Set, Side, ZERO};
 
 /// What the chart reads of a frame besides her pose.
 ///
@@ -82,7 +78,7 @@ impl Choice {
     /// with none of its row's effects; any other (an animation's end handed one over) stands.
     #[must_use]
     pub fn blocked(self) -> Self {
-        if self.pose.action == Running {
+        if self.pose.action == Action::Running {
             Self::instead(table::STEP_BLOCKED.pose_from(self.pose, None))
         } else {
             self
@@ -94,8 +90,10 @@ impl Choice {
 /// pose is a take-off aimed `Forward` or a spin: no animation ends then. A plain end never gives
 /// way.
 fn gives_way(end: ClipEnd, pad_chart: Pose) -> bool {
-    let jumps = matches!((pad_chart.action, pad_chart.aim), (TakingOff, Aim::Forward))
-        || pad_chart.action == Spinning;
+    let jumps = matches!(
+        (pad_chart.action, pad_chart.aim),
+        (Action::TakingOff, Aim::Forward)
+    ) || pad_chart.action == Action::Spinning;
     end == ClipEnd::EndUnlessJump && jumps
 }
 
@@ -104,8 +102,10 @@ fn gives_way(end: ClipEnd, pad_chart: Pose) -> bool {
 fn rank(row: &Row) -> (bool, usize) {
     let needs = row.needs.iter();
     (
-        needs.clone().any(|t| matches!(t, Pressed(_))),
-        needs.filter(|t| matches!(t, Held(_) | Pressed(_))).count(),
+        needs.clone().any(|t| matches!(t, Test::Pressed(_))),
+        needs
+            .filter(|t| matches!(t, Test::Held(_) | Test::Pressed(_)))
+            .count(),
     )
 }
 
@@ -168,18 +168,18 @@ impl Reading<'_> {
     fn passes(&self, test: &Test) -> bool {
         let (p, m) = (self.pose, self.moment);
         match *test {
-            Held(b) => seen(m.pad, p.facing).any(b),
-            Pressed(b) => seen(m.pressed, p.facing).any(b),
-            Not(t) => !self.passes(t),
-            Aimed(aims) => aims.contains(&p.aim),
-            Gun(gun) => p.gun == gun,
-            Faces(side) => Side::of(p.facing) == side,
-            Body(bodies) => bodies.contains(&p.body),
-            Action(actions) => actions.contains(&p.action),
-            Doing(doings) => doings.contains(&self.situation.doing),
-            Airborne => m.airborne,
-            With(items) => items.iter().any(|&i| m.items[i]),
-            Moving => m.speed != ZERO,
+            Test::Held(b) => seen(m.pad, p.facing).any(b),
+            Test::Pressed(b) => seen(m.pressed, p.facing).any(b),
+            Test::Not(t) => !self.passes(t),
+            Test::Aimed(aims) => aims.contains(&p.aim),
+            Test::Gun(gun) => p.gun == gun,
+            Test::Faces(side) => Side::of(p.facing) == side,
+            Test::Body(bodies) => bodies.contains(&p.body),
+            Test::Action(actions) => actions.contains(&p.action),
+            Test::Doing(doings) => doings.contains(&self.situation.doing),
+            Test::Airborne => m.airborne,
+            Test::With(items) => items.iter().any(|&i| m.items[i]),
+            Test::Moving => m.speed != ZERO,
             Test::Met(met) => m.met == Some(met),
         }
     }
@@ -198,7 +198,7 @@ impl Reading<'_> {
         Choice {
             pose,
             effects: row.effects,
-            aim_step: pose.action == Running && (pose != self.pose || row.aim_step),
+            aim_step: pose.action == Action::Running && (pose != self.pose || row.aim_step),
             lower: row.next.lower,
             handed_over: false,
         }

@@ -6,12 +6,9 @@
 //! kick does to it (`Landing`, `WallJump`, `Jumping`). Samus holds one; her moves read it. Each
 //! change names only the parts of it that it changes.
 
-use crate::rows::Doing::{self, Hop, Spinning, StraightJump, WallJumping};
-use crate::rows::Footing;
-use crate::rows::Met::{self, Ceiling, Floor, NoFloor, Wall, WallKick};
+use crate::rows::{Doing, Footing, Met};
 use crate::rules::{Bounce, Bounces, Rules};
 use crate::tick::Tick;
-use Phase::{Falling, Ground, GroundFalling, Moonfall, Rising};
 use types::button::JUMP;
 use types::{Buttons, Fixed, Item, Parts, ZERO};
 
@@ -92,22 +89,22 @@ impl Vertical {
     /// `FollowingTheGround`: whether she is on the ground, falling at 0 there included.
     #[must_use]
     pub const fn on_ground(self) -> bool {
-        matches!(self.phase, Ground | GroundFalling)
+        matches!(self.phase, Phase::Ground | Phase::GroundFalling)
     }
 
     /// `FollowingTheGround` (§1.2): a vertical motion, on the ground: a vertical speed other
     /// than 0, or falling at 0.
     pub(crate) fn has_motion(self) -> bool {
-        self.speed != ZERO || self.phase == GroundFalling
+        self.speed != ZERO || self.phase == Phase::GroundFalling
     }
 
     /// §1, `RisingAndFalling`: whether she is rising (`Outcome::rising`): a rise in the air, or
     /// an upward speed she keeps on the ground.
     pub(crate) fn rising(self) -> bool {
         match self.phase {
-            Rising => true,
-            Ground => self.speed.negative(),
-            GroundFalling | Falling | Moonfall => false,
+            Phase::Rising => true,
+            Phase::Ground => self.speed.negative(),
+            Phase::GroundFalling | Phase::Falling | Phase::Moonfall => false,
         }
     }
 
@@ -116,15 +113,15 @@ impl Vertical {
     /// the moonfall or with no vertical motion she isn't.
     pub(crate) fn heading_down(self) -> bool {
         match self.phase {
-            Falling | GroundFalling => true,
-            Ground => !self.speed.negative() && self.speed != ZERO,
-            Rising | Moonfall => false,
+            Phase::Falling | Phase::GroundFalling => true,
+            Phase::Ground => !self.speed.negative() && self.speed != ZERO,
+            Phase::Rising | Phase::Moonfall => false,
         }
     }
 
     /// `RisingAndFalling`, `Jumping`, `WallJump`: she starts rising at this speed.
     fn rise(&mut self, v: Fixed) {
-        self.phase = Rising;
+        self.phase = Phase::Rising;
         self.speed = -v;
     }
 
@@ -136,13 +133,13 @@ impl Vertical {
 
     /// `RisingAndFalling`, `WallsAndCeilings`: she falls from rest.
     const fn fall_from_rest(&mut self) {
-        self.phase = Falling;
+        self.phase = Phase::Falling;
         self.speed = ZERO;
     }
 
     /// `Landing`: she stands on the ground with no vertical motion.
     const fn stand(&mut self) {
-        self.phase = Ground;
+        self.phase = Phase::Ground;
         self.speed = ZERO;
     }
 
@@ -150,10 +147,13 @@ impl Vertical {
     /// spent it (her speed points down by even a subpixel), or with jump not held in a straight
     /// jump, a spin, a wall jump or the spring ball's hop (`doing`).
     pub(crate) fn end_rise(&mut self, doing: Doing, pad: Buttons) {
-        let lets_go =
-            !pad.any(JUMP) && matches!(doing, StraightJump | Spinning | WallJumping | Hop);
+        let lets_go = !pad.any(JUMP)
+            && matches!(
+                doing,
+                Doing::StraightJump | Doing::Spinning | Doing::WallJumping | Doing::Hop
+            );
         let spent = !self.speed.negative() && self.speed != ZERO;
-        if self.phase == Rising && (lets_go || spent) {
+        if self.phase == Phase::Rising && (lets_go || spent) {
             self.fall_from_rest();
         }
     }
@@ -163,8 +163,8 @@ impl Vertical {
     /// (`Moonfall`). `dash`: hers after the frame's horizontal move.
     pub(crate) fn space_jump(&mut self, doing: Doing, dash: Fixed, t: &Tick) {
         let (r, f) = (t.rules, t.frame);
-        if self.phase == Falling
-            && doing == Spinning
+        if self.phase == Phase::Falling
+            && doing == Doing::Spinning
             && f.pressed.any(JUMP)
             && f.items[Item::SpaceJump]
             && r.space_jump.contains(&self.speed.to_8_8().0)
@@ -179,7 +179,7 @@ impl Vertical {
         if t.frame.pressed.any(JUMP) {
             self.jump(dash, t);
         } else {
-            self.phase = Moonfall;
+            self.phase = Phase::Moonfall;
             self.speed = ZERO;
         }
     }
@@ -188,7 +188,7 @@ impl Vertical {
     /// air too: she is on the ground from then on, her vertical speed kept.
     pub(crate) const fn come_to_the_ground(&mut self) {
         if !self.on_ground() {
-            self.phase = Ground;
+            self.phase = Phase::Ground;
         }
     }
 
@@ -200,7 +200,7 @@ impl Vertical {
         let ground = self.on_ground();
         let moves_by_it =
             self.has_motion() && matches!(footing, Footing::ChangingShape | Footing::Ball);
-        if ground && !moves_by_it || self.phase == Moonfall && footing == Footing::Turning {
+        if ground && !moves_by_it || self.phase == Phase::Moonfall && footing == Footing::Turning {
             Course::Pulled
         } else if ground && footing == Footing::Ball {
             Course::BallMovesByIt
@@ -212,7 +212,7 @@ impl Vertical {
     /// `RisingAndFalling`: the pull grows her vertical speed, which stops growing at a pixel part
     /// of exactly 5 (a speed of 6 px or more grows on); `Moonfall`: with no limit.
     fn grow(&mut self, r: &Rules) {
-        if self.phase == Moonfall || self.speed.pixel() != r.fall_settle_px {
+        if self.phase == Phase::Moonfall || self.speed.pixel() != r.fall_settle_px {
             self.speed += r.gravity;
         }
     }
@@ -221,7 +221,7 @@ impl Vertical {
     /// kept on the ground rises on by it; bounces 0.
     fn walk_off(&mut self) {
         if self.speed.negative() {
-            self.phase = Rising;
+            self.phase = Phase::Rising;
         } else {
             self.fall_from_rest();
         }
@@ -251,16 +251,16 @@ impl Vertical {
         }
         let shaping = footing == Footing::ChangingShape;
         if stopped && by.negative() {
-            return (!shaping).then_some(Ceiling);
+            return (!shaping).then_some(Met::Ceiling);
         }
         match (course, stopped) {
             (Course::InTheAir, true) if shaping => {
                 self.stand();
-                Some(Floor)
+                Some(Met::Floor)
             }
-            (Course::InTheAir, true) => Some(Floor),
+            (Course::InTheAir, true) => Some(Met::Floor),
             (Course::Pulled, false) if footing == Footing::Turning => None,
-            (Course::Pulled | Course::BallMovesByIt, false) => Some(NoFloor),
+            (Course::Pulled | Course::BallMovesByIt, false) => Some(Met::NoFloor),
             (Course::Pulled | Course::BallMovesByIt, true) | (Course::InTheAir, false) => None,
         }
     }
@@ -270,9 +270,9 @@ impl Vertical {
     /// ledge she falls from rest, or rises on by an upward speed she kept.
     pub(crate) fn meet_in_moves(&mut self, met: Option<Met>) {
         match met {
-            Some(Ceiling) => self.fall_from_rest(),
-            Some(NoFloor) => self.walk_off(),
-            Some(Wall | WallKick | Floor) | None => {}
+            Some(Met::Ceiling) => self.fall_from_rest(),
+            Some(Met::NoFloor) => self.walk_off(),
+            Some(Met::Wall | Met::WallKick | Met::Floor) | None => {}
         }
     }
 
@@ -287,23 +287,26 @@ impl Vertical {
         r: &Rules,
     ) -> Option<Contact> {
         match (met?, footing) {
-            (WallKick, _) => Some(Contact::WallKick),
-            (Floor, Footing::OnHerFeet) => Some(Contact::Land),
-            (Floor, Footing::Ball) if springs => Some(Contact::Hop),
-            (Floor, Footing::Ball) => Some(self.bounce(r).map_or(Contact::Land, Contact::Bounce)),
-            (Floor, Footing::Turning | Footing::ChangingShape) | (Wall | NoFloor | Ceiling, _) => {
-                None
+            (Met::WallKick, _) => Some(Contact::WallKick),
+            (Met::Floor, Footing::OnHerFeet) => Some(Contact::Land),
+            (Met::Floor, Footing::Ball) if springs => Some(Contact::Hop),
+            (Met::Floor, Footing::Ball) => {
+                Some(self.bounce(r).map_or(Contact::Land, Contact::Bounce))
             }
+            (Met::Floor, Footing::Turning | Footing::ChangingShape)
+            | (Met::Wall | Met::NoFloor | Met::Ceiling, _) => None,
         }
     }
 
-    /// `Landing`: the ball's bounce a landing makes, if any: the one at the bounces she has had,
-    /// where her vertical speed after the frame's pull reaches it (its pixel part alone counts).
+    /// `Landing`: the ball's bounce a landing makes, if any: the one at the bounces she has had.
+    /// With no bounce yet, only a landing whose vertical speed after the frame's pull reaches the
+    /// bounce threshold (its pixel part alone counts) makes one; bounce 2 comes at any speed.
     fn bounce(self, r: &Rules) -> Option<Bounce> {
-        r.bounces
-            .iter()
-            .find(|b| b.at == self.bounces && self.speed.pixel() >= b.from_px)
-            .copied()
+        let gated = self.bounces == Bounces::None;
+        if gated && self.speed.pixel() < r.bounce_threshold {
+            return None;
+        }
+        r.bounces.iter().find(|b| b.at == self.bounces).copied()
     }
 
     /// `Landing`, `WallJump`: what her moves' contact does to her vertical motion. The kick and

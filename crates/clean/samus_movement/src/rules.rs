@@ -1,7 +1,6 @@
-//! The tuning parameters the model reads. `Rules::REFERENCE` holds the spec's vanilla numbers.
+//! The tuning parameters the model reads: one `Rules` a caller holds, whose `Default` is the
+//! vanilla game, the spec's numbers.
 
-use Gait::{Falling, Moonwalking, Rolling, Running, SpinJump, StraightJump, Turning};
-use Lowers::{Crouch, Morph, Nothing};
 use core::num::Wrapping;
 use core::ops::{Range, RangeInclusive};
 use types::{Fixed, Item, Parts, Px, Set, ZERO, fixed, part_below};
@@ -115,9 +114,6 @@ pub enum Bounces {
 pub struct Bounce {
     /// The bounces she has had when the landing that makes it comes.
     pub at: Bounces,
-    /// The slowest landing that makes it: the pixel part of her vertical speed after that frame's
-    /// pull.
-    pub from_px: Px,
     /// How much slower than the bounce speed (`Rules::bounce`) it rises, so that an adjusted
     /// bounce speed moves it too.
     pub slower: Fixed,
@@ -125,7 +121,8 @@ pub struct Bounce {
     pub then: Bounces,
 }
 
-/// The values the model reads.
+/// The values the model reads: every number a spec entry's `params` give, which an adjusted game
+/// may set to other values. Its `Default` is the vanilla game's, the spec's numbers.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rules {
     /// `WordwiseTopSpeed`: how the top speed is tested.
@@ -135,7 +132,7 @@ pub struct Rules {
     /// `SpeedBuildsAndBrakes`: lost a frame carrying on along the ground.
     pub brake: Fixed,
     /// `Dash`: gained a frame.
-    pub dash_step: Fixed,
+    pub dash_gain: Fixed,
     /// `Dash`: its cap, higher with the speed booster.
     pub dash_cap: WithItem,
     /// `Jumping`: a jump, faster with the hi-jump boots.
@@ -149,6 +146,9 @@ pub struct Rules {
     /// `Jumping`: a ball bounce. An adjusted one is never below its vanilla value, 1.0000: the
     /// rise after bounce 1 is it less 1 px (`Landing`).
     pub bounce: Fixed,
+    /// `Landing`: the pixel part of her vertical speed after the frame's pull from which a
+    /// landing with no bounce yet makes the ball's bounce 1. The gate is bounce 1's alone.
+    pub bounce_threshold: Px,
     /// `Landing`: the ball's bounces, the first and the second; after the second it comes to
     /// rest.
     pub bounces: [Bounce; 2],
@@ -172,120 +172,126 @@ pub struct Rules {
     /// `WallJump`: the near-wall test's reach.
     pub wall_reach: Fixed,
     /// `BlocksStopFlush`: the longest horizontal move, in px.
-    pub move_limit_px: Px,
+    pub move_limit: Px,
     /// `AimingAndShooting`: the step forward.
     pub aim_step: Fixed,
     /// `RidingTheElevator`: the descent a frame.
-    pub elevator: Fixed,
+    pub elevator_descent: Fixed,
     /// `PoseFitAfterMoves`: the long look, 8 px: a block look this long or longer is stopped by
     /// whatever a look of this length would stop.
     pub long_look: Fixed,
     /// `PoseFitAfterMoves`: with something above her and something below, a change from an old
     /// body under this half-height, 8 px (the ball), is refused; from one of this half-height or
     /// more she takes the crouch instead.
-    pub small_body_px: Px,
+    pub small_body: Px,
     /// `ShrinkingLowersHer`: the crouch's own distance.
     pub crouch_lowers: Fixed,
     /// `ShrinkingLowersHer`: the morph's own distance.
     pub morph_lowers: Fixed,
 }
 
-impl Rules {
-    /// The vanilla game, with the spec's numbers.
-    pub const REFERENCE: Self = Self {
-        speed_cap: SpeedCap::Wordwise,
-        speeds: Speeds {
-            running: Limits {
-                step: Wrapping(0x3000),
-                top: Wrapping(0x2_C000),
-            },
-            rolling: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x3_4000),
-            },
-            moonwalking: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x8000),
-            },
-            straight_jump: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x1_4000),
-            },
-            spin_jump: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x1_6000),
-            },
-            falling: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0x1_0000),
-            },
-            turning: Limits {
-                step: Wrapping(0xC000),
-                top: Wrapping(0),
-            },
+/// The vanilla game, with the spec's numbers: `Rules`' default.
+const VANILLA: Rules = Rules {
+    speed_cap: SpeedCap::Wordwise,
+    speeds: Speeds {
+        running: Limits {
+            step: Wrapping(0x3000),
+            top: Wrapping(0x2_C000),
         },
-        brake: Wrapping(0x8000),
-        dash_step: Wrapping(0x1000),
-        dash_cap: WithItem {
-            item: Item::SpeedBooster,
-            without: Wrapping(0x2_0000),
-            with: Wrapping(0x7_0000),
+        rolling: Limits {
+            step: Wrapping(0xC000),
+            top: Wrapping(0x3_4000),
         },
-        jump: WithItem {
-            item: Item::HiJumpBoots,
-            without: Wrapping(0x4_E000),
-            with: Wrapping(0x6_0000),
+        moonwalking: Limits {
+            step: Wrapping(0xC000),
+            top: Wrapping(0x8000),
         },
-        wall_jump: WithItem {
-            item: Item::HiJumpBoots,
-            without: Wrapping(0x4_A000),
-            with: Wrapping(0x5_8000),
+        straight_jump: Limits {
+            step: Wrapping(0xC000),
+            top: Wrapping(0x1_4000),
         },
-        booster_lifts_jumps: true,
-        bounce: Wrapping(0x1_0000),
-        bounces: [
-            Bounce {
-                at: Bounces::None,
-                from_px: Wrapping(3),
-                slower: Wrapping(0),
-                then: Bounces::Once,
-            },
-            Bounce {
-                at: Bounces::Once,
-                from_px: Wrapping(0),
-                slower: Wrapping(0x1_0000),
-                then: Bounces::Twice,
-            },
-        ],
-        crouch_lift: Wrapping(0xA_0000),
-        space_jump: 0x280..0x500,
-        held_through: 1..=8,
-        held_long: 32_777..=65_535,
-        gravity: Wrapping(0x1C00),
-        fall_settle_px: Wrapping(5),
-        ground_pull: Wrapping(0x1_0000),
-        wall_reach: Wrapping(0x8_0000),
-        move_limit_px: Wrapping(15),
-        aim_step: Wrapping(0x1_0000),
-        elevator: Wrapping(0x1_0000),
-        long_look: Wrapping(0x8_0000),
-        small_body_px: Wrapping(8),
-        crouch_lowers: Wrapping(0x5_0000),
-        morph_lowers: Wrapping(0x9_0000),
-    };
+        spin_jump: Limits {
+            step: Wrapping(0xC000),
+            top: Wrapping(0x1_6000),
+        },
+        falling: Limits {
+            step: Wrapping(0xC000),
+            top: Wrapping(0x1_0000),
+        },
+        turning: Limits {
+            step: Wrapping(0xC000),
+            top: Wrapping(0),
+        },
+    },
+    brake: Wrapping(0x8000),
+    dash_gain: Wrapping(0x1000),
+    dash_cap: WithItem {
+        item: Item::SpeedBooster,
+        without: Wrapping(0x2_0000),
+        with: Wrapping(0x7_0000),
+    },
+    jump: WithItem {
+        item: Item::HiJumpBoots,
+        without: Wrapping(0x4_E000),
+        with: Wrapping(0x6_0000),
+    },
+    wall_jump: WithItem {
+        item: Item::HiJumpBoots,
+        without: Wrapping(0x4_A000),
+        with: Wrapping(0x5_8000),
+    },
+    booster_lifts_jumps: true,
+    bounce: Wrapping(0x1_0000),
+    bounce_threshold: Wrapping(3),
+    bounces: [
+        Bounce {
+            at: Bounces::None,
+            slower: Wrapping(0),
+            then: Bounces::Once,
+        },
+        Bounce {
+            at: Bounces::Once,
+            slower: Wrapping(0x1_0000),
+            then: Bounces::Twice,
+        },
+    ],
+    crouch_lift: Wrapping(0xA_0000),
+    space_jump: 0x280..0x500,
+    held_through: 1..=8,
+    held_long: 32_777..=65_535,
+    gravity: Wrapping(0x1C00),
+    fall_settle_px: Wrapping(5),
+    ground_pull: Wrapping(0x1_0000),
+    wall_reach: Wrapping(0x8_0000),
+    move_limit: Wrapping(15),
+    aim_step: Wrapping(0x1_0000),
+    elevator_descent: Wrapping(0x1_0000),
+    long_look: Wrapping(0x8_0000),
+    small_body: Wrapping(8),
+    crouch_lowers: Wrapping(0x5_0000),
+    morph_lowers: Wrapping(0x9_0000),
+};
 
+impl Default for Rules {
+    /// The vanilla game, with the spec's numbers.
+    fn default() -> Self {
+        VANILLA
+    }
+}
+
+impl Rules {
     /// `SpeedBuildsAndBrakes`: the table's row for what she is doing.
     #[must_use]
     pub const fn limits(&self, gait: Gait) -> Limits {
         let s = &self.speeds;
         match gait {
-            Running => s.running,
-            Rolling => s.rolling,
-            Moonwalking => s.moonwalking,
-            StraightJump => s.straight_jump,
-            SpinJump => s.spin_jump,
-            Falling => s.falling,
-            Turning => s.turning,
+            Gait::Running => s.running,
+            Gait::Rolling => s.rolling,
+            Gait::Moonwalking => s.moonwalking,
+            Gait::StraightJump => s.straight_jump,
+            Gait::SpinJump => s.spin_jump,
+            Gait::Falling => s.falling,
+            Gait::Turning => s.turning,
         }
     }
 
@@ -293,9 +299,9 @@ impl Rules {
     #[must_use]
     pub const fn lowers(&self, by: Lowers) -> Fixed {
         match by {
-            Crouch => self.crouch_lowers,
-            Morph => self.morph_lowers,
-            Nothing => ZERO,
+            Lowers::Crouch => self.crouch_lowers,
+            Lowers::Morph => self.morph_lowers,
+            Lowers::Nothing => ZERO,
         }
     }
 
@@ -338,7 +344,7 @@ mod tests {
     /// the test short.
     #[test]
     fn the_reference_rules_agree() {
-        let r = Rules::REFERENCE;
+        let r = Rules::default();
         for bounce in r.bounces {
             assert!(
                 bounce.slower <= r.bounce,
@@ -347,7 +353,7 @@ mod tests {
                 r.bounce
             );
         }
-        let limit = fixed(r.move_limit_px, r.wall_reach.sub());
+        let limit = fixed(r.move_limit, r.wall_reach.sub());
         assert!(
             r.wall_reach <= limit,
             "the near-wall test's reach {:?} is beyond the move limit {limit:?}",

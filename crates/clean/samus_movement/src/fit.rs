@@ -4,17 +4,15 @@
 use crate::collide::{Bounds, Probe};
 use crate::samus::Samus;
 use crate::tick::Tick;
-use Probe::{Blocks, Enemies};
 use core::num::Wrapping;
-use types::Action::{Morphing, Still};
-use types::{Aim, Body, Facing, Gun, Item, Legs, Pose, Px, Radius, px};
+use types::{Action, Aim, Body, Facing, Gun, Item, Legs, Pose, Px, Radius, px};
 
 /// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
 /// as before the change).
 pub const fn crouched(facing: Facing) -> Pose {
     Pose {
         body: Body::Crouched,
-        action: Still,
+        action: Action::Still,
         facing,
         aim: Aim::Forward,
         gun: Gun::Stowed,
@@ -77,14 +75,14 @@ impl Samus {
     /// blocks up and down, then the block's far-side look. A far-side look stopped refuses the
     /// change. With something on one side only she is pushed away from it (a block's room before
     /// an enemy's on the same side), keeping the subpixel her looks left. With something on both,
-    /// the change from an old body under 8 px half-height (the ball, `Rules::small_body_px`) is
+    /// the change from an old body under 8 px half-height (the ball, `Rules::small_body`) is
     /// refused, and from one of 8 px or more she takes crouched `Still` instead, rising by the
     /// crouch's growth over her old body, her feet where they were.
     ///
     /// `PoseFollows`: a change into `Morphing` without the morph ball is refused as pose fit
     /// refuses one, before any look.
     pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Fitted {
-        let into_morph = chosen.action == Morphing && self.pose.action != Morphing;
+        let into_morph = chosen.action == Action::Morphing && self.pose.action != Action::Morphing;
         if into_morph && !t.frame.items[Item::MorphBall] {
             return Fitted::Refused;
         }
@@ -97,7 +95,7 @@ impl Samus {
         }
         let g = new.y - old.y;
         let mut found: Rooms = (None, None);
-        for (probe, far) in [(Enemies, new), (Blocks, old)] {
+        for (probe, far) in [(Probe::Enemies, new), (Probe::Blocks, old)] {
             let mut look = |by, r| self.look(t, by, r, probe);
             let here = (look(-g, old), look(g, old));
             if alone(here, g).is_some_and(|push| look(push, far).is_some()) {
@@ -112,7 +110,7 @@ impl Samus {
         let (Some(_), Some(_)) = found else {
             return Fitted::Taken;
         };
-        if old.y < t.rules.small_body_px {
+        if old.y < t.rules.small_body {
             return Fitted::Refused;
         }
         let rise = t.body(crouched(self.pose.facing)).y.max(old.y) - old.y;

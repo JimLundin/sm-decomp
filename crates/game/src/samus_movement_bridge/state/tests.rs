@@ -304,7 +304,7 @@ fn a_frame_on_the_floor_runs_her_right() {
         panic!("running is hers");
     };
     let start = model;
-    let Ok(outcome) = model.step(&frame, &world, &Rules::REFERENCE) else {
+    let Ok(outcome) = model.step(&frame, &world, &Rules::default()) else {
         panic!("running is a situation's");
     };
     write_back(&model, outcome.rising, &mut engine);

@@ -5,15 +5,10 @@
 //! frame's moves share their room, rules and cells in `Tick`, whose collision methods these are.
 
 use crate::tick::Tick;
-use Probe::{Blocks, Enemies, Move, NearWall, Walk};
-use Stop::{Enemy, Flat, Seats};
 use core::num::Wrapping;
-use types::Block::{self, Air, Answered, Solid, StandsFor, Stepped};
-use types::Heading::{self, Down, Right, Up};
-use types::Parity::Odd;
-use types::SlopeFaces::Floor;
 use types::{
-    Cell, Fixed, Hitbox, Pair, Parts, Position, Px, Radius, Slope, Touch, Way, ZERO, fixed, px,
+    Block, Cell, Fixed, Heading, Hitbox, Pair, Parity, Parts, Position, Px, Radius, Slope,
+    SlopeFaces, Touch, Way, ZERO, fixed, px,
 };
 
 /// `BlocksStopFlush`: one pixel.
@@ -88,7 +83,7 @@ pub struct Moved {
 
 /// `BlocksStopFlush`: whether a move goes right or down, the way positions grow.
 const fn grows(h: Heading) -> bool {
-    matches!(h, Right | Down)
+    matches!(h, Heading::Right | Heading::Down)
 }
 
 /// `BlocksStopFlush`: the cell a pixel is in, along one axis.
@@ -123,11 +118,11 @@ fn edge(p: Px, r: Px, h: Heading) -> Px {
 /// counted from the block's open side, so an empty column's air row is the block's far row, and
 /// a column far past is never reached.
 fn past(s: Slope, h: Heading, at: Pair<Px>) -> Option<Px> {
-    let floor = s.faces == Floor;
+    let floor = s.faces == SlopeFaces::Floor;
     let row = (if floor { at.y } else { !at.y }) & IN_CELL;
     let depth = s.depth.get(usize::from((at.x & IN_CELL).0));
     let past = row + ONE - depth.copied().unwrap_or(FAR_PAST);
-    (!below_zero(past) && floor == (h == Down)).then_some(past)
+    (!below_zero(past) && floor == (h == Heading::Down)).then_some(past)
 }
 
 /// `BlocksStopFlush`: one pixel on along a move heading `h`, as a signed pixel: +1 or −1.
@@ -163,7 +158,7 @@ impl Bounds {
     /// reports its cells with its direction, anything else with the way `Look`.
     pub const fn axis(self, heading: Heading, dist: Fixed, probe: Probe) -> Axis {
         let ((from, across), (ra, rc)) = (self.at.along(heading), self.r.along(heading));
-        let way = if matches!(probe, Walk | Move) {
+        let way = if matches!(probe, Probe::Walk | Probe::Move) {
             Way::Move(heading)
         } else {
             Way::Look
@@ -248,7 +243,7 @@ impl Axis {
         let reached = !below_zero(gap)
             && near(reach, ea, self.ra + era)
             && near(self.across.pixel(), ec, self.rc + erc);
-        let mut moved = self.put(gap, self.from.sub(), Some(Enemy));
+        let mut moved = self.put(gap, self.from.sub(), Some(Stop::Enemy));
         if gap == NONE {
             moved.to.y = moved.to.y.with_sub(0);
         }
@@ -260,13 +255,17 @@ impl Axis {
     /// against its quarter's (seating her, met downward), and a sloped surface at her centre
     /// column as `slope` says.
     fn stop(&self, block: Block, k: u16) -> Option<Moved> {
-        let seats = if self.heading == Down { Seats } else { Flat };
+        let seats = if self.heading == Heading::Down {
+            Stop::Seats
+        } else {
+            Stop::Flat
+        };
         let centre = self.heading.vertical() && k == cell(self.across.pixel());
         match block {
-            Solid | Answered => Some(self.flush(IN_CELL, Flat)),
-            Stepped(q) if self.stepped(q, k) => Some(self.flush(IN_QUARTER, seats)),
+            Block::Solid | Block::Answered => Some(self.flush(IN_CELL, Stop::Flat)),
+            Block::Stepped(q) if self.stepped(q, k) => Some(self.flush(IN_QUARTER, seats)),
             Block::Slope(s) if centre => self.slope(s),
-            Stepped(_) | Block::Slope(_) | Air | StandsFor(_) => None,
+            Block::Stepped(_) | Block::Slope(_) | Block::Air | Block::StandsFor(_) => None,
         }
     }
 
@@ -292,7 +291,7 @@ impl Axis {
     /// top edge reaches its first air row, with no move at all. A look up passes every sloped
     /// ceiling.
     fn slope(&self, s: Slope) -> Option<Moved> {
-        let floor = s.faces == Floor;
+        let floor = s.faces == SlopeFaces::Floor;
         let at = Pair {
             x: self.across.pixel(),
             y: self.lead(),
@@ -303,7 +302,7 @@ impl Axis {
         } else {
             NONE
         };
-        Some(self.put(by, self.from.sub(), Some(Flat)))
+        Some(self.put(by, self.from.sub(), Some(Stop::Flat)))
     }
 }
 
@@ -315,9 +314,9 @@ impl Tick<'_> {
     fn resolve(&self, cell: Cell) -> (Block, Cell) {
         let mut at = cell;
         let mut block = self.world.block(at);
-        while let StandsFor(names) = block {
+        while let Block::StandsFor(names) = block {
             let Some(next) = names else {
-                return (Air, at);
+                return (Block::Air, at);
             };
             at = next;
             block = self.world.block(at);
@@ -331,7 +330,7 @@ impl Tick<'_> {
     fn line(&self, a: &Axis) -> Vec<(u16, Cell)> {
         let ((lo, hi), lead) = (extent(a.across.pixel(), a.rc), cell(a.lead()));
         let mut line: Vec<u16> = (cell(lo)..=cell(hi)).collect();
-        if a.heading.vertical() && self.frame.parity == Odd {
+        if a.heading.vertical() && self.frame.parity == Parity::Odd {
             line.reverse();
         }
         line.into_iter()
@@ -387,7 +386,7 @@ impl Tick<'_> {
     fn shortened(&self, a: &Axis) -> Fixed {
         self.line(a).into_iter().fold(a.dist, |d, (_, at)| {
             if let (Block::Slope(s), _) = self.resolve(at)
-                && s.faces == Floor
+                && s.faces == SlopeFaces::Floor
             {
                 let cut = if grows(a.heading) {
                     d.to_8_8()
@@ -409,21 +408,22 @@ impl Tick<'_> {
     /// `BlocksStopFlush`, `SolidEnemies`, `TouchedCells`: a move along axis `a`, tested as its
     /// probe says: where it leaves her, and what stopped it; its cells go to the frame's report.
     /// A walk is shortened first (`SlopesSlowTheWalk`), and a horizontal move is limited to 15 px
-    /// either way, its subpixel kept. A move of exactly 0 is never stopped and reaches no cells.
-    /// A solid enemy in the move's path decides it alone, the first she reaches; blocks stop her
-    /// only on a path free of them.
+    /// either way, its subpixel kept. A solid enemy in the move's path decides it alone, the
+    /// first she reaches; blocks stop her only on a path free of them. A move of exactly 0 meets
+    /// a solid enemy she touches as any move does, and nothing else (`blocks`).
     pub fn go(&mut self, mut a: Axis) -> Moved {
-        if a.probe == Walk {
+        if a.probe == Probe::Walk {
             a.dist = self.shortened(&a);
         }
         if !a.heading.vertical() {
-            a.dist = a.dist.min(fixed(self.rules.move_limit_px, a.dist.sub()));
+            a.dist = a.dist.min(fixed(self.rules.move_limit, a.dist.sub()));
         }
         let stopped = match a.probe {
-            _ if a.dist == ZERO => None,
-            Enemies => self.enemies(&a),
-            Blocks => self.blocks(&a),
-            Walk | Move | NearWall => self.enemies(&a).or_else(|| self.blocks(&a)),
+            Probe::Enemies => self.enemies(&a),
+            Probe::Blocks => self.blocks(&a),
+            Probe::Walk | Probe::Move | Probe::NearWall => {
+                self.enemies(&a).or_else(|| self.blocks(&a))
+            }
         };
         stopped.unwrap_or_else(|| a.put(a.ahead(a.to().pixel()), a.to().sub(), None))
     }
@@ -433,8 +433,13 @@ impl Tick<'_> {
     /// is stopped by whatever the long look the same way would stop; only when nothing stops
     /// that is it the look of its own distance.
     pub fn vmove(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
-        let (heading, long_look) = (if by.negative() { Up } else { Down }, self.rules.long_look);
-        let first = (probe == Blocks && by.size() >= long_look)
+        let heading = if by.negative() {
+            Heading::Up
+        } else {
+            Heading::Down
+        };
+        let long_look = self.rules.long_look;
+        let first = (probe == Probe::Blocks && by.size() >= long_look)
             .then(|| self.go(b.axis(heading, long_look, probe)));
         first
             .filter(|m| m.stop.is_some())
@@ -444,15 +449,18 @@ impl Tick<'_> {
     /// `BlocksStopFlush`: the cells of her leading edge's line at the target; the first that
     /// stops her decides. `TouchedCells`: the cells it reaches, up to the one that stops it, with
     /// the way it reached them. `OtherBlockKinds`: an answered cell is air on a touch its reaction
-    /// lets through.
+    /// lets through. A move of exactly 0 reaches no cells, and blocks never stop it.
     fn blocks(&mut self, a: &Axis) -> Option<Moved> {
+        if a.dist == ZERO {
+            return None;
+        }
         self.line(a).into_iter().find_map(|(k, at)| {
             let (block, at) = self.resolve(at);
             self.reached.push(Touch {
                 cell: at,
                 way: a.way,
             });
-            let through = matches!(block, Answered) && self.world.lets_through(at, a.way);
+            let through = matches!(block, Block::Answered) && self.world.lets_through(at, a.way);
             a.stop(block, k).filter(|_| !through)
         })
     }
@@ -463,9 +471,9 @@ impl Tick<'_> {
     /// row, with that edge in its solid part or on the first air row under it, pushes her down
     /// onto that row. Either seats her: returns her y then, if she is seated.
     pub fn slope_checks(&self, mut b: Bounds) -> Option<Fixed> {
-        let lift = self.sloped(b, Down).filter(|p| *p != NONE);
+        let lift = self.sloped(b, Heading::Down).filter(|p| *p != NONE);
         b.at.y -= px(lift.unwrap_or(NONE));
-        let push = self.sloped(b, Up);
+        let push = self.sloped(b, Heading::Up);
         lift.or(push).map(|_| b.at.y + px(push.unwrap_or(NONE)))
     }
 }

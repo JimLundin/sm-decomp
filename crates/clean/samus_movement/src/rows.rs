@@ -147,6 +147,8 @@ pub struct Class {
     pub action: &'static [Action],
     /// Her aim one of these.
     pub aim: &'static [Aim],
+    /// Her facing one of these.
+    pub facing: &'static [Facing],
     /// The situation.
     pub is: &'static Situation,
 }
@@ -252,8 +254,10 @@ pub enum Effect {
     Rise,
     /// `Jumping`'s take-off from a crouch: she is also lifted, if she was crouched without aim.
     LiftIfUnaimed,
-    /// `TurningRound`: she turns round into a turn: her dash joins her speed and she skids
-    /// against her new facing. She goes on dashing until the turn's own moves (`Dashing`).
+    /// `TurningRound`: she goes into a turn, any turn (from the ground, the air, a crouch, facing
+    /// the screen, or the moonwalk's two, which keep her facing): her dash joins her speed and
+    /// she skids against the facing the turn shows, a skid of zero from a standstill. She goes
+    /// on dashing until the turn's own moves (`Dashing`).
     TurnRound,
     /// `TurningRound`, `Dashing`: where the pose chosen faces the other way (a spin reversed, a
     /// ball turning round), her dash joins her speed, she skids, and she stops dashing. A ball

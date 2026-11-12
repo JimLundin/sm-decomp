@@ -10,7 +10,8 @@
 //!
 //! A caller holds a `Samus`, every part of her state public (her `Run` with its `Dashing`,
 //! `Vertical`, pose, `Spin`, `Seat` and `JumpHeld`), and steps her a `Frame` at a time
-//! (`Samus::step`) in a `World` under `Rules`, reading the frame's `Outcome` (what it gives the
+//! (`Samus::step`) in a `World` under `Rules` (every tuning value the spec's entries list as a
+//! parameter, `Rules::default()` the vanilla game's), reading the frame's `Outcome` (what it gives the
 //! camera, the world and her animation, §1, §1.4 and `TouchedCells`, her sprite as the shared
 //! `types::Sprite`), or `UnknownPose` for a pose no situation names. The pose chart alone answers
 //! through `Moment::next_pose`.
