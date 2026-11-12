@@ -7,14 +7,14 @@ mod vectors {
     use std::collections::BTreeMap;
     use std::fmt::Debug;
 
-    use clean_model_samus_looks::{BehaviourId, Rules};
+    use clean_model_samus_looks::{Ahead, BehaviourId, Rules, SoundsWaiting};
     use clean_model_samus_looks::{
         Boost, Branch, CATALOGUE, Clip, Content, Control, Frames, Hold, Inputs, Instruction, Laps,
         Liquid, Move, Pace, Paces, Playhead, Pose, Slowdown, State, Step, update,
     };
     use clean_types::{
         Action, Aim, AnimationSound, Body, BoostStage, Checked, ClipEnd, Facing, Fixed, Gun, Item,
-        LandedFrom, Legs, Set, Sprite, Turn, fixed,
+        LandedFrom, Legs, Set, Sprite, Switch, Turn, fixed,
     };
     use enum_map::EnumMap;
     use serde::Deserialize;
@@ -52,9 +52,43 @@ mod vectors {
         id: String,
         source: String,
         entries: Vec<String>,
+        #[serde(default)]
+        rules: RulesTable,
         before: Before,
+        #[serde(default)]
+        ahead: AheadTable,
         inputs: VectorInputs,
         after: After,
+    }
+
+    /// A vector's own values of the spec's parameters; each it doesn't name is the game's.
+    #[derive(Deserialize, Default)]
+    #[serde(deny_unknown_fields, default)]
+    struct RulesTable {
+        breathing_threshold: Option<u16>,
+        restart_hold: Option<u8>,
+        fast_fall_speed: Option<String>,
+        fast_fall_hold: Option<u8>,
+        rising_hold: Option<u8>,
+        laps_per_stage: Option<[u8; 5]>,
+    }
+
+    /// What is known from the frame's start alone.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields, default)]
+    struct AheadTable {
+        end: String,
+        turned_far: bool,
+    }
+
+    /// The file header's defaults: no end, not turned far.
+    impl Default for AheadTable {
+        fn default() -> Self {
+            Self {
+                end: "None".to_owned(),
+                turned_far: false,
+            }
+        }
     }
 
     #[derive(Deserialize, Default)]
@@ -73,16 +107,8 @@ mod vectors {
         left: u8,
         stage: u8,
         laps: u8,
-        #[serde(default = "no_end")]
-        end: String,
-        #[serde(default)]
-        turned_far: bool,
         #[serde(default)]
         sounds: Vec<String>,
-    }
-
-    fn no_end() -> String {
-        "None".to_owned()
     }
 
     #[derive(Deserialize)]
@@ -270,27 +296,51 @@ mod vectors {
     /// The base the parts are written in.
     const HEX: u32 = 16;
 
-    /// The header's vertical speed, "+PPPP.SSSS" or "-PPPP.SSSS": a sign, then the pixel part and
-    /// the subpixel part, four hex digits each, downward positive; any other text fails the test.
-    fn vertical_speed(text: &str) -> Fixed {
+    /// A speed's size, "PPPP.SSSS": the pixel part and the subpixel part, four hex digits each;
+    /// any other text fails the test.
+    fn speed_size(text: &str) -> Fixed {
         let part = |digits: &str| {
-            assert_eq!(
-                digits.len(),
-                PART_DIGITS,
-                "unwritten vertical speed {text:?}"
-            );
-            u16::from_str_radix(digits, HEX)
-                .unwrap_or_else(|_| panic!("unwritten vertical speed {text:?}"))
+            assert_eq!(digits.len(), PART_DIGITS, "unwritten speed {text:?}");
+            u16::from_str_radix(digits, HEX).unwrap_or_else(|_| panic!("unwritten speed {text:?}"))
         };
         let (pixel, sub) = text
-            .get(1..)
-            .and_then(|digits| digits.split_once('.'))
+            .split_once('.')
+            .unwrap_or_else(|| panic!("unwritten speed {text:?}"));
+        fixed(Wrapping(part(pixel)), part(sub))
+    }
+
+    /// The header's vertical speed, "+PPPP.SSSS" or "-PPPP.SSSS": a sign, then its size, downward
+    /// positive; any other text fails the test.
+    fn vertical_speed(text: &str) -> Fixed {
+        let (sign, size) = text
+            .split_at_checked(1)
             .unwrap_or_else(|| panic!("unwritten vertical speed {text:?}"));
-        let size = fixed(Wrapping(part(pixel)), part(sub));
-        match text.get(..1) {
-            Some("+") => size,
-            Some("-") => -size,
+        match sign {
+            "+" => speed_size(size),
+            "-" => -speed_size(size),
             _ => panic!("unwritten vertical speed {text:?}"),
+        }
+    }
+
+    /// A vector's tuning: the game's, with the parameters its `rules` name set to its values.
+    fn rules(given: &RulesTable) -> Rules {
+        let game = Rules::VANILLA;
+        Rules {
+            breathing_threshold: given
+                .breathing_threshold
+                .unwrap_or(game.breathing_threshold),
+            restart_hold: given.restart_hold.map_or(game.restart_hold, hold),
+            fast_fall_speed: given
+                .fast_fall_speed
+                .as_deref()
+                .map_or(game.fast_fall_speed, speed_size),
+            fast_fall_hold: given.fast_fall_hold.map_or(game.fast_fall_hold, hold),
+            rising_hold: given.rising_hold.map_or(game.rising_hold, hold),
+            laps_per_stage: given.laps_per_stage.map_or(game.laps_per_stage, |laps| {
+                EnumMap::from_array(laps.map(|count| {
+                    Laps::new(count).unwrap_or_else(|| panic!("a stage of {count} laps"))
+                }))
+            }),
         }
     }
 
@@ -315,7 +365,8 @@ mod vectors {
             },
             boost: Boost {
                 stage: BoostStage::ALL[usize::from(stage)],
-                laps_left: Laps(laps),
+                // 0 laps left, as without the speed booster, is none.
+                laps_left: Laps::new(laps),
             },
         }
     }
@@ -369,7 +420,12 @@ mod vectors {
                 start_slowdown: slowdown(given.start_slowdown),
                 submerged: given.submerged,
             },
-            sounds_waiting: given.sounds_waiting,
+            sounds_waiting: SoundsWaiting::new(given.sounds_waiting).unwrap_or_else(|| {
+                panic!(
+                    "{} sounds waiting is outside the spec",
+                    given.sounds_waiting
+                )
+            }),
         }
     }
 
@@ -416,24 +472,22 @@ mod vectors {
         );
         let b = &vector.before;
         let before = state(b.step, b.left, b.stage, b.laps);
-        let (after, report) = update(before, &inputs, &content, &Rules::VANILLA);
+        let ahead = Ahead::of(before.playhead, content.clip);
+        let (after, sound) = update(before, &inputs, &content, &rules(&vector.rules));
 
         let a = &vector.after;
         let expected = (
+            Ahead {
+                end: end(&vector.ahead.end),
+                turned_far: vector.ahead.turned_far,
+            },
             state(a.step, a.left, a.stage, a.laps),
-            end(&a.end),
-            a.turned_far,
             a.sounds
                 .iter()
                 .map(|sound| named(SOUNDS, sound))
                 .collect::<Vec<_>>(),
         );
-        let actual = (
-            after,
-            report.end,
-            report.turned_far,
-            report.sound.into_iter().collect::<Vec<_>>(),
-        );
+        let actual = (ahead, after, sound.into_iter().collect::<Vec<_>>());
         (expected != actual).then(|| {
             format!(
                 "{} ({}):\n  expected {expected:?}\n  actual   {actual:?}",
@@ -462,6 +516,32 @@ mod vectors {
             file.vector.len(),
             failures.join("\n")
         );
+    }
+
+    /// A vector that adjusts the game exercises only entries whose switch is a parameter.
+    #[test]
+    fn every_adjusted_vector_exercises_parameters() {
+        let (file, _, _) = read_file();
+        let switch_of = |entry: &str| {
+            let id = behaviour(entry);
+            CATALOGUE
+                .iter()
+                .find(|behaviour| behaviour.id == id)
+                .map(|behaviour| behaviour.switch)
+        };
+        let fixed: Vec<String> = file
+            .vector
+            .iter()
+            .filter(|vector| rules(&vector.rules) != Rules::VANILLA)
+            .flat_map(|vector| {
+                vector
+                    .entries
+                    .iter()
+                    .filter(|entry| switch_of(entry) != Some(Switch::Parameter))
+                    .map(|entry| format!("{}: {entry}", vector.id))
+            })
+            .collect();
+        assert!(fixed.is_empty(), "adjusted, but not parameters: {fixed:?}");
     }
 
     #[test]

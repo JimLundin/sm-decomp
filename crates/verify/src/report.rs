@@ -243,30 +243,33 @@ const DOMAINS: &[Domain] = &[
             },
         ],
     },
-    // The inputs, the frame and its update, the State's shapes, the rules and the catalogue are
-    // the domain's shared code. The clip's format (§1.4), its playback and its start in a new
-    // pose are the clip's; her moves' writes and the run's pace and boost stages are the other
-    // two areas.
+    // The inputs, the frame and its update, the State's shapes, the one countdown rule, the
+    // rules and the catalogue are the domain's shared code. The clip's format (§1.4), the
+    // playhead, its playback and its start in a new pose are the clip's; her moves' writes and the
+    // run's pace and boost stages are the other two areas.
     Domain {
         name: "samus-looks",
         bridge: "samus_looks_world",
         areas: &[
-            ("clip", &["clip.rs", "playback.rs", "starting.rs"]),
+            (
+                "clip",
+                &["clip.rs", "playhead.rs", "playback.rs", "starting.rs"],
+            ),
             ("moves", &["moves.rs"]),
             ("run", &["run.rs"]),
         ],
         apart: &[
-            // `ClipPlays`: the time on her step runs down.
-            Apart {
-                file: "state.rs",
-                function: "run_down",
-                area: "clip",
-            },
             // `ClipEnds`: the end her clip reaches this frame.
             Apart {
-                file: "state.rs",
-                function: "end_ahead",
+                file: "ahead.rs",
+                function: "end",
                 area: "clip",
+            },
+            // `SpinTurnedFar`: her spin has turned far enough to kick off a wall.
+            Apart {
+                file: "ahead.rs",
+                function: "turned_far",
+                area: "moves",
             },
             // `BoostStages`: a stage's laps count down.
             Apart {

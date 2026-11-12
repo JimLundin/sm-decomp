@@ -2,10 +2,9 @@
 
 use clean_types::{Action, Aim, Body, LandedFrom, Turn};
 
-use crate::clip::{Frames, Hold, Slowdown, Step};
-use crate::inputs::Move;
-use crate::state::Playhead;
-use crate::update::Update;
+use crate::clip::{Clip, Slowdown, Step};
+use crate::inputs::{Inputs, Move};
+use crate::playhead::Playhead;
 
 /// The actions a side of a row names.
 enum Actions {
@@ -164,41 +163,33 @@ const TABLE: [Row; 7] = [
     },
 ];
 
-impl Update<'_> {
-    /// Spec: `StartingClip`. When she takes another pose and the table doesn't keep her clip
-    /// going, the clip of that pose starts from the step the table says, with its hold plus the
-    /// start's slowdown (and `HandOverSlowdown`).
-    #[must_use]
-    pub fn start(&self) -> Option<Playhead> {
-        let (from, takes) = (&self.inputs.pose, &self.inputs.pose_after);
-        if from == takes {
-            return None;
-        }
-        let row = TABLE
-            .iter()
-            .find(|row| row.takes.names(takes.motion) && row.from.names(from.motion));
-        let Start::At(step) = row.map_or(Start::At(Step::FIRST), |row| row.starts) else {
-            return None;
-        };
-        let hold = self
-            .clip_after
-            .hold(step)
-            .map_or(Frames::NONE, Hold::frames);
-        Some(Playhead {
-            step,
-            frames_left: hold
-                .slowed(self.inputs.liquid.start_slowdown)
-                .slowed(self.hand_over_slowdown()),
-        })
+/// Spec: `StartingClip`. When she takes another pose and the table doesn't keep her clip going,
+/// `clip_after`, the clip of that pose, starts from the step the table says, with its hold plus
+/// the start's slowdown (and `HandOverSlowdown`).
+#[must_use]
+pub fn start(inputs: &Inputs, clip_after: &Clip) -> Option<Playhead> {
+    let (from, takes) = (&inputs.pose, &inputs.pose_after);
+    if from == takes {
+        return None;
     }
+    let row = TABLE
+        .iter()
+        .find(|row| row.takes.names(takes.motion) && row.from.names(from.motion));
+    let Start::At(step) = row.map_or(Start::At(Step::FIRST), |row| row.starts) else {
+        return None;
+    };
+    let starts = Playhead::on(step, clip_after, None)
+        .slowed(inputs.liquid.start_slowdown)
+        .slowed(hand_over_slowdown(inputs));
+    Some(starts)
+}
 
-    /// Spec: `HandOverSlowdown` (a quirk). The first step of a pose her clip's end handed over is
-    /// slowed by the clip's slowdown as well as the start's; any other pose by the start's alone.
-    fn hand_over_slowdown(&self) -> Slowdown {
-        if self.inputs.moves[Move::HandedOver] {
-            self.inputs.liquid.slowdown
-        } else {
-            Slowdown::NONE
-        }
+/// Spec: `HandOverSlowdown` (a quirk). The first step of a pose her clip's end handed over is
+/// slowed by the clip's slowdown as well as the start's; any other pose by the start's alone.
+fn hand_over_slowdown(inputs: &Inputs) -> Slowdown {
+    if inputs.moves[Move::HandedOver] {
+        inputs.liquid.slowdown
+    } else {
+        Slowdown::NONE
     }
 }

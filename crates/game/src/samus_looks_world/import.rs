@@ -9,7 +9,7 @@
 use clean_model_samus_looks::{
     Branch, Clip, Content, Control, Hold, Instruction, Pace, Paces, Pose, Step,
 };
-use clean_types::{BoostStage, Sprite};
+use clean_types::Sprite;
 use data::assets::samus::import::map;
 use data::assets::samus::key::{Dress, SpinSprite, Suit};
 use data::pose::PoseId;
@@ -28,8 +28,6 @@ pub enum ImportError {
     /// a delay of 0 or past the longest hold, or an `again`, a `branch` or a mark on an operand
     /// byte or past the list.
     Unwritten(PoseId),
-    /// A clip has more steps than a step can number.
-    TooLong(PoseId),
     /// A pace holds a delay of 0 or past the longest hold.
     Pace,
 }
@@ -83,11 +81,35 @@ impl Imported {
 }
 
 /// Her clips by pose, and the run's paces: the model's content.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Clips {
     poses: Vec<Imported>,
     paces: Paces,
     none: Clip,
+}
+
+/// A clip with no steps, which leaves her where she is.
+const fn no_steps() -> Clip {
+    Clip {
+        instructions: Vec::new(),
+        kick: None,
+        fast_fall: None,
+        rising: None,
+    }
+}
+
+/// No clips and no paces: content with nothing imported.
+impl Default for Clips {
+    fn default() -> Self {
+        Self {
+            poses: Vec::new(),
+            paces: Paces {
+                plain: Pace(Vec::new()),
+                boosted: EnumMap::from_fn(|_| Pace(Vec::new())),
+            },
+            none: no_steps(),
+        }
+    }
 }
 
 impl Clips {
@@ -105,17 +127,16 @@ impl Clips {
                 imported(entry.id, list)
             })
             .collect::<Result<_, _>>()?;
-        let mut boosted = EnumMap::<BoostStage, Pace>::default();
-        for ((_, slot), holds) in boosted.iter_mut().zip(&paces.boosted) {
-            *slot = pace(holds)?;
-        }
+        // By stage, from the first, as `BoostStage` orders them.
+        let [first, second, third, fourth, boosting] =
+            paces.boosted.each_ref().map(|holds| pace(holds));
         Ok(Self {
             poses,
             paces: Paces {
                 plain: pace(&paces.plain)?,
-                boosted,
+                boosted: EnumMap::from_array([first?, second?, third?, fourth?, boosting?]),
             },
-            none: Clip::default(),
+            none: no_steps(),
         })
     }
 
@@ -165,21 +186,6 @@ pub fn pose_of(id: PoseId) -> Option<Pose> {
     })
 }
 
-/// The bytes an item takes: the instruction and its operands.
-const fn size(item: DelayItem) -> usize {
-    use animation::Instruction as I;
-    match item {
-        DelayItem::Delay(_)
-        | DelayItem::Instruction(
-            I::NoOp(_) | I::LoopIfHealthy | I::DrainedFalling | I::WallJump | I::Loop,
-        ) => 1,
-        DelayItem::Instruction(I::AutoJumpTransition(_) | I::Transition(_) | I::GoBack(_)) => 2,
-        DelayItem::Instruction(I::BySpeed(_)) => 3,
-        DelayItem::Instruction(I::ByItems { .. }) => 5,
-        DelayItem::Instruction(I::ByItemsAndSpeed { .. }) => 7,
-    }
-}
-
 /// A delay as the hold it is.
 fn hold(id: PoseId, delay: u8) -> Result<Hold, ImportError> {
     Hold::new(delay).ok_or(ImportError::Unwritten(id))
@@ -188,20 +194,7 @@ fn hold(id: PoseId, delay: u8) -> Result<Hold, ImportError> {
 /// Pose `id`'s clip from its delay list.
 fn imported(id: PoseId, list: &DelayList) -> Result<Imported, ImportError> {
     use animation::Instruction as I;
-    let mut items = Vec::new();
-    let mut at = 0_usize;
-    while let Some(item) = u16::try_from(at)
-        .ok()
-        .and_then(|frame| list.at(AnimationFrame(frame)))
-    {
-        items.push((at, item));
-        at = at.wrapping_add(size(item));
-    }
-    let frames: Vec<AnimationFrame> = items
-        .iter()
-        .map(|&(at, _)| u16::try_from(at).map(AnimationFrame))
-        .collect::<Result<_, _>>()
-        .map_err(|_| ImportError::TooLong(id))?;
+    let (frames, items): (Vec<AnimationFrame>, Vec<DelayItem>) = list.steps().unzip();
     let step_at = |at: Option<usize>| -> Result<Step, ImportError> {
         let frame = at.and_then(|at| u16::try_from(at).ok());
         let step = frames.iter().position(|each| Some(each.0) == frame);
@@ -209,9 +202,11 @@ fn imported(id: PoseId, list: &DelayList) -> Result<Imported, ImportError> {
             .map(Step)
             .ok_or(ImportError::Unwritten(id))
     };
-    let instructions = items
+    let instructions = frames
         .iter()
-        .map(|&(at, item)| {
+        .zip(&items)
+        .map(|(&frame, &item)| {
+            let at = usize::from(frame.0);
             let instruction = match item {
                 DelayItem::Delay(delay) => return Ok(Instruction::Show(hold(id, delay)?)),
                 DelayItem::Instruction(instruction) => instruction,

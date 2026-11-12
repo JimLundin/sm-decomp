@@ -3,9 +3,11 @@
 use clean_types::{BoostStage, ClipEnd};
 use enum_map::EnumMap;
 
+use crate::count::counted_down;
+
 /// A place in a clip, numbered from 0 as the spec's notation numbers them: her step is the one
 /// her clip is on, and each step holds one instruction.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Step(pub u8);
 
 impl Step {
@@ -32,12 +34,21 @@ impl Step {
 }
 
 /// A count of frames: the time her step has left (0 to 255, §1), or a hold the model sets.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Frames(pub u8);
 
 impl Frames {
     /// No frames.
     pub const NONE: Self = Self(0);
+    /// One frame left: the last frame of a step, which the time running down moves on from.
+    pub const LAST: Self = Self(1);
+
+    /// Spec: `ClipPlays`. The time left run down by a frame: what is left while that is above
+    /// 0; none once it has run out, and the clip moves on.
+    #[must_use]
+    pub fn counted_down(self) -> Option<Self> {
+        counted_down(self.0).map(Self)
+    }
 
     /// This hold lengthened by `slowdown`. The spec's bounds keep the sum in range: a hold is at
     /// most `Hold::LONGEST`, 127 frames (§1.5), and a slowdown at most `Slowdown::MOST`, 3
@@ -49,9 +60,10 @@ impl Frames {
     }
 }
 
-/// A shown step's hold (§1.4), 1 frame or more and at most `Hold::LONGEST`.
+/// A hold (§1.4): a shown step's, or one the tuning gives (the restart's, the fast fall's, the
+/// rising step's); 1 frame or more and at most `Hold::LONGEST`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Hold(u8);
+pub struct Hold(pub(crate) u8);
 
 impl Hold {
     /// Spec §1.5: a hold is at most 127 frames (the game's are at most 80), so a hold with both
@@ -74,7 +86,7 @@ impl Hold {
 }
 
 /// A slowdown (§1.3): frames a liquid adds to a hold, 0 to `Slowdown::MOST`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Slowdown(u8);
 
 impl Slowdown {
@@ -147,7 +159,7 @@ impl Control {
 /// is followed by a shown step, and the last step is not a shown one. Outside them the model
 /// stays total: a clip that would move on past its end leaves her where she is, and a step with
 /// no hold gives no time left.
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Clip {
     /// The instructions, one per step, in order from step 0.
     pub instructions: Vec<Instruction>,
@@ -178,7 +190,7 @@ impl Clip {
 
 /// One of the run's paces (§1.4): a hold for each shown step of her running clips, by step.
 /// Where a pace gives no hold for a step (outside §1.4's content), the clip's own hold shows.
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Pace(pub Vec<Hold>);
 
 impl Pace {
@@ -190,7 +202,7 @@ impl Pace {
 }
 
 /// The run's paces (§1.4): the plain pace, and a boosted pace for each boost stage.
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Paces {
     /// Her stride without the speed booster.
     pub plain: Pace,

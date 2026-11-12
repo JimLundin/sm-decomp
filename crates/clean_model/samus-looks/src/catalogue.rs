@@ -75,7 +75,7 @@ pub const CATALOGUE: [Behaviour; 15] = [
         summary: "standing or crouched still, she breathes in a loop while her energy is high, \
                   and goes on to breathe hard once it is low",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -116,7 +116,7 @@ pub const CATALOGUE: [Behaviour; 15] = [
         id: BehaviourId::StandingRestart,
         summary: "holding shoot while she stands unaimed starts her standing clip over",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
@@ -128,7 +128,8 @@ pub const CATALOGUE: [Behaviour; 15] = [
     },
     Behaviour {
         id: BehaviourId::SpinTurnedFar,
-        summary: "her spin has turned far enough to kick off a wall once it reaches its kick step",
+        summary: "her spin has turned far enough to kick off a wall once it is on its kick step \
+                  or past it, known as the frame starts",
         kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -138,14 +139,14 @@ pub const CATALOGUE: [Behaviour; 15] = [
         summary: "moving fast in a fall's pose, her fall jumps to its fast fall picture, \
                   whichever way she moves",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::RisingHold,
         summary: "a straight jump holds its rising picture for as long as she rises",
         kind: Kind::Mechanic,
-        switch: Switch::Fixed,
+        switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {

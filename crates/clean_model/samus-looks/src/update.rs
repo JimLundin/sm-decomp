@@ -1,85 +1,42 @@
 //! §6 A frame of her animation, in the order that matters.
 
-use crate::clip::{Clip, Frames, Hold, Pace, Paces, Step};
-use crate::inputs::{Content, Inputs, Report};
+use clean_types::AnimationSound;
+
+use crate::inputs::{Content, Inputs};
+use crate::moves::her_moves;
+use crate::playback::play_clip;
 use crate::rules::Rules;
-use crate::state::{Playhead, State};
+use crate::run::{dash_began, dash_lost};
+use crate::starting::start;
+use crate::state::State;
 
-/// One update, and what it reads: the frame's inputs (§1.3), the clip of her pose at the frame's
-/// start and of the pose she ends it in, the run's paces and the tuning. Her moves, her clip's
-/// playback, her run and the start of the pose she takes are each a step of it.
-pub struct Update<'a> {
-    /// The frame's inputs, each from the domain that owns it.
-    pub inputs: &'a Inputs,
-    /// The clip of her pose at the frame's start: the one that plays this frame.
-    pub clip: &'a Clip,
-    /// The clip of the pose she ends the frame in.
-    pub clip_after: &'a Clip,
-    /// The run's paces.
-    pub paces: &'a Paces,
-    /// The tuning.
-    pub rules: &'a Rules,
-}
-
-impl<'a> Update<'a> {
-    /// The update of `inputs`, with its clips and paces from `content`.
-    #[must_use]
-    pub fn new(inputs: &'a Inputs, content: &'a impl Content, rules: &'a Rules) -> Self {
-        Self {
-            inputs,
-            clip: content.clip(&inputs.pose),
-            clip_after: content.clip(&inputs.pose_after),
-            paces: content.paces(),
-            rules,
-        }
-    }
-
-    /// Spec: `ClipPlays`, `RunPace`. The clip goes on from `step`: its hold, or the pace's where
-    /// `pace` gives one, plus the slowdown, is the time left.
-    #[must_use]
-    pub fn goes_on(&self, step: Step, pace: Option<&Pace>) -> Playhead {
-        let hold = pace
-            .and_then(|pace| pace.hold(step))
-            .or_else(|| self.clip.hold(step));
-        Playhead {
-            step,
-            frames_left: hold
-                .map_or(Frames::NONE, Hold::frames)
-                .slowed(self.inputs.liquid.slowdown),
-        }
-    }
-}
-
-/// One frame of her animation: from the State the caller kept, the State to keep for the next
-/// frame, and what the frame reports.
+/// One frame of her animation, after samus-motion's step: the State to keep, and the sound asked.
 ///
-/// First, from the frame's start, the end her clip reaches (`ClipEnds`, which a caller reads
-/// ahead of samus-motion's step by `Playhead::end_ahead`). Then, with the pose she takes: her
-/// moves' changes (a dash's beginning among them), the rising hold, her clip playing from her
-/// pose at the frame's start, the start of the clip of the pose she takes, a dash's loss, and
-/// whether she has turned far, from the step and clip the frame ends on.
+/// From the State the caller kept, it gives the State to keep for the next frame and the sound
+/// asked for this frame, at most one: only a control asks for one (`WallJumpBranch`'s branch or
+/// `BoostStages`' lap end), and a frame passes one control at most.
+///
+/// What the frame's start alone tells, the end and whether her spin has turned far, the caller
+/// reads before samus-motion's step (`Ahead::of`). Then, with the pose she takes, in §6's order:
+/// her moves' changes (a dash's beginning among them), the rising hold, her clip playing from
+/// her pose at the frame's start, the start of the clip of the pose she takes, and a dash's
+/// loss.
 #[must_use]
 pub fn update(
     state: State,
     inputs: &Inputs,
     content: &impl Content,
     rules: &Rules,
-) -> (State, Report) {
-    let this = Update::new(inputs, content, rules);
-    let end = state.playhead.end_ahead(this.clip);
+) -> (State, Option<AnimationSound>) {
+    let clip = content.clip(&inputs.pose);
     let moved = State {
-        playhead: this.her_moves(state.playhead),
-        boost: this.dash_began().unwrap_or(state.boost),
+        playhead: her_moves(state.playhead, inputs, clip, rules),
+        boost: dash_began(inputs, rules).unwrap_or(state.boost),
     };
-    let (played, sound) = this.play_clip(moved);
+    let (played, sound) = play_clip(moved, inputs, clip, content.paces(), rules);
     let after = State {
-        playhead: this.start().unwrap_or(played.playhead),
-        boost: this.dash_lost().unwrap_or(played.boost),
+        playhead: start(inputs, content.clip(&inputs.pose_after)).unwrap_or(played.playhead),
+        boost: dash_lost(inputs).unwrap_or(played.boost),
     };
-    let report = Report {
-        end,
-        turned_far: this.turned_far(after.playhead),
-        sound,
-    };
-    (after, report)
+    (after, sound)
 }

@@ -12,16 +12,14 @@ use clean_model_samus_motion::{Outcome, Rules, Samus as Model, SpeedCap};
 use clean_types::{Action, ClipEnd, Parts, Pose, Radius};
 
 use super::frame::{FrameSource, body};
-use super::state::{clean_of, dress, pose_id, write_back};
+use super::state::{clean_of, pose_id, write_back};
 use super::{SamusFault, SamusWorld};
 use crate::collision::{Surroundings, Touches};
-use crate::pose::{Content, PoseRequests};
+use crate::pose::{Asked, Content, PoseRequests};
 use crate::session;
 use crate::state::Controller;
 use crate::state::room::ElevatorRide;
-use crate::state::samus::{PoseId, Samus, SuperSpecial, SuperSpecialCommand};
-use data::assets::samus::import::map;
-use data::assets::samus::key::{Dress, SpinSprite};
+use crate::state::samus::Samus;
 
 /// What the model's frame leaves for the pose change and her animation.
 #[derive(Clone, Debug)]
@@ -150,27 +148,10 @@ pub fn step(
             .copied(),
     );
     settle(samus, &ran);
-    if ran.outcome.handed_over {
-        samus.super_special = hand_over(samus, ran.after.pose);
-    }
     Ok(Some(Stepped {
         pose: ran.after.pose,
         outcome: ran.outcome,
     }))
-}
-
-/// The request her animation's end makes, which the pose change takes before any other
-/// (`$90:84B6`): the pose handed over, in her plain sprite as the end names it, with the command
-/// "transition animation finished". Her pose id itself is the one her dress shows (`next`).
-fn hand_over(samus: &Samus, pose: Pose) -> SuperSpecial {
-    let plain = Dress {
-        spin: SpinSprite::Plain,
-        ..dress(samus)
-    };
-    SuperSpecial {
-        pose: map::id_of(pose, plain),
-        command: SuperSpecialCommand::TransitionAnimationFinished,
-    }
 }
 
 /// The words the pose change leaves that the model doesn't hold.
@@ -195,15 +176,18 @@ pub fn settle(samus: &mut Samus, ran: &Ran) {
 /// The pose the frame's pose change is asked for, as the engine's pose id.
 ///
 /// `None` when the frame asks for none, so the change records no history. Where the model
-/// ran, the pose it chose: on a hand-over always, in the sprite her dress shows; otherwise
-/// asked when the pad asked for one or it differs from hers. Elsewhere the pad's request.
+/// ran, the pose it chose, in the sprite her dress shows: on a hand-over always, as the pose
+/// handed over (her animation's end, `$90:84B6`); otherwise asked when the pad asked for one or
+/// it differs from hers. Elsewhere the pad's request.
 #[must_use]
-pub fn next(samus: &Samus, stepped: Option<&Stepped>, requests: PoseRequests) -> Option<PoseId> {
+pub fn next(samus: &Samus, stepped: Option<&Stepped>, requests: PoseRequests) -> Option<Asked> {
     let Some(stepped) = stepped else {
-        return requests.ordinary;
+        return requests.ordinary.map(Asked::Pose);
     };
-    let handed_over = stepped.outcome.handed_over;
-    let asked = if handed_over { None } else { requests.ordinary };
-    let id = pose_id(stepped.pose, samus, asked).unwrap_or(samus.pose);
-    (handed_over || requests.ordinary.is_some() || id != samus.pose).then_some(id)
+    if stepped.outcome.handed_over {
+        let id = pose_id(stepped.pose, samus, None).unwrap_or(samus.pose);
+        return Some(Asked::HandedOver(id));
+    }
+    let id = pose_id(stepped.pose, samus, requests.ordinary).unwrap_or(samus.pose);
+    (requests.ordinary.is_some() || id != samus.pose).then_some(Asked::Pose(id))
 }

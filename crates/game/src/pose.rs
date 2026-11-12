@@ -21,7 +21,7 @@ use data::pose::{MovementType, PoseId, Poses};
 use crate::model::num::Fixed;
 use crate::plm::RoomPlms;
 use crate::state::room::{ElevatorRide, ElevatorStatus};
-use crate::state::samus::{PoseRecord, Samus, SuperSpecialCommand};
+use crate::state::samus::{PoseRecord, Samus};
 use crate::state::{Button, Buttons, Controller};
 
 /// The content the Session reads: the decoded tables its rules look up.
@@ -186,31 +186,41 @@ pub fn carried(samus: &Samus, ride: ElevatorRide) -> bool {
         && samus.movement == MovementType::Standing
 }
 
-/// The pose change (`$91:EB88`): the super special prospective pose first, else the pose
-/// asked for.
+/// The pose a frame's pose change is asked for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Asked {
+    /// The pose her clip's end handed over. The change takes it before any other request, as
+    /// the original's super special request (`$91:EB88`, command 3), and gives it its
+    /// definition's facing and movement type even when it is the pose she had.
+    HandedOver(PoseId),
+    /// A pose her moves or the pad asked for, which takes its definition's facing and movement
+    /// type when it differs from the last.
+    Pose(PoseId),
+}
+
+/// The pose change (`$91:EB88`): the pose `asked` for, then the history it records.
 ///
-/// The pose takes the facing and movement type its definition gives when it differs from
-/// the last; then the update records the history. The motion model has made the change's
-/// writes to her speeds and placed her: pose fit and the shrink are its. Where her clip
+/// No pose asked for changes nothing and records no history. The motion model has made the
+/// change's writes to her speeds and placed her: pose fit and the shrink are its. Where her clip
 /// starts is her animation's (`samus_looks_world`), after the change.
-// open: the special prospective pose between them joins with the
-// knockback and the grapple (C4); the super special pose with command 3 gives way to it
-// when its command is 9.
-pub fn change(samus: &mut Samus, asked: Option<PoseId>, content: &Content) {
-    if let Some(pose) = samus.super_special.pose {
-        if samus.super_special.command != SuperSpecialCommand::KnockbackFinished {
-            samus.pose = asked.unwrap_or(pose);
+///
+/// Nothing reads the original's request words (`0A2C`, `0A32`) after the frame that writes
+/// them, so they are no State (ARCHITECTURE §11.6).
+// open: the special prospective pose between the two joins with the knockback and the grapple
+// (C4).
+pub fn change(samus: &mut Samus, asked: Option<Asked>, content: &Content) {
+    match asked {
+        None => return,
+        Some(Asked::HandedOver(pose)) => {
+            samus.pose = pose;
             refresh(samus, content);
         }
-        record_history(samus);
-        return;
-    }
-    let Some(pose) = asked else {
-        return;
-    };
-    samus.pose = pose;
-    if pose != samus.previous.pose {
-        refresh(samus, content);
+        Some(Asked::Pose(pose)) => {
+            samus.pose = pose;
+            if pose != samus.previous.pose {
+                refresh(samus, content);
+            }
+        }
     }
     record_history(samus);
 }

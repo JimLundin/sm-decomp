@@ -635,8 +635,6 @@ const COMPARATORS: &[Comparator] = &[
         "samus.animation.boost.laps_left",
         samus.animation.boost.laps_left
     ),
-    field!("samus.super_special.pose", samus.super_special.pose),
-    field!("samus.super_special.command", samus.super_special.command),
     field!("samus.visor.shade", samus.visor.shade),
     field!("samus.visor.timer", samus.visor.timer),
     field!("samus.drawing", samus.drawing),

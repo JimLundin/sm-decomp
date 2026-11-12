@@ -78,17 +78,18 @@ impl FrameSource<'_> {
     #[must_use]
     pub fn frame<'b>(&self, body: &'b dyn Fn(Pose) -> Radius) -> Frame<'b> {
         let samus = self.samus;
+        let ahead = samus_looks_world::ahead(samus, &self.content.samus_clips);
         Frame {
             pad: pad(controls(self.controller.held)),
             pressed: pad(controls(self.controller.pressed)),
             items: progress_world::switched_on(&samus.equipment),
-            spin_turned_far: samus_looks_world::turned_far(samus, &self.content.samus_clips),
+            spin_turned_far: ahead.is_some_and(|ahead| ahead.turned_far),
             elevator_moving: self.ride.status != ElevatorStatus::Inactive,
             parity: match ScanOrder::of(self.completed) {
                 ScanOrder::LeftToRight => Parity::Even,
                 ScanOrder::RightToLeft => Parity::Odd,
             },
-            animation_ends: samus_looks_world::end_ahead(samus, &self.content.samus_clips),
+            animation_ends: ahead.and_then(|ahead| ahead.end),
             body,
         }
     }

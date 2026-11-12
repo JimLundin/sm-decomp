@@ -22,8 +22,7 @@ use game::state::room::{
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
     Animation, Boost, BoostStage, ClipStep, DrawingHandler, Facing, FrameBefore, JumpHeld,
-    MovementType, PoseId, PoseRecord, SuperSpecial, SuperSpecialCommand, Visor, VisorShade,
-    VisorTimer,
+    MovementType, PoseId, PoseRecord, Visor, VisorShade, VisorTimer,
 };
 use game::state::samus::{Dashing, SpeedMode, VerticalMotion};
 use game::state::samus::{Fixed, Point};
@@ -447,8 +446,6 @@ fn record() -> FrameRecord {
     put(&mut wram, 0x0A24, 0x0002); // SAMUS_LAST_DIFFERENT_POSE
     wram[0x0A26] = 0x04; // SAMUS_LAST_DIFFERENT_POSE_X_DIR: left
     wram[0x0A27] = 0x05; // SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE: crouching
-    put(&mut wram, 0x0A2C, 0x0002); // SAMUS_NEW_POSE_TRANSITIONAL
-    put(&mut wram, 0x0A32, 0x0003); // SAMUS_HURT_SWITCH_INDEX: transition animation finished
     put_ride(&mut wram);
     put_animation(&mut wram);
     put_samus_tiles(&mut wram);
@@ -511,7 +508,7 @@ fn record() -> FrameRecord {
     }
 }
 
-/// Samus's animation and super special request, as the synthetic record sets them.
+/// Samus's animation, as the synthetic record sets it.
 fn decodes_the_animation(state: &State) -> bool {
     state.samus.animation
         == Animation {
@@ -522,11 +519,6 @@ fn decodes_the_animation(state: &State) -> bool {
                 laps_left: 2,
             },
         }
-        && state.samus.super_special
-            == SuperSpecial {
-                pose: Some(PoseId(2)),
-                command: SuperSpecialCommand::TransitionAnimationFinished,
-            }
         && state.samus.drawing == DrawingHandler::UsingElevator
         && state.video.batch.samus_tiles
             == SamusTileUploads {
@@ -718,7 +710,7 @@ type WordRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramWord;
 type ByteRule = for<'r> fn(&'r mut Rules<'static>) -> &'r mut WramByte;
 
 /// Every word rule the synthetic record checks; `game_state` and `room` fail by error instead.
-const WORD_RULES: [(&str, WordRule); 82] = [
+const WORD_RULES: [(&str, WordRule); 80] = [
     ("nmi", |rules| &mut rules.nmi),
     ("completed", |rules| &mut rules.completed),
     ("hours", |rules| &mut rules.hours),
@@ -752,10 +744,6 @@ const WORD_RULES: [(&str, WordRule); 82] = [
     ("animation.frame", |rules| &mut rules.animation.frame),
     ("animation.timer", |rules| &mut rules.animation.timer),
     ("animation.boost", |rules| &mut rules.animation.boost),
-    ("super_special.pose", |rules| &mut rules.super_special.pose),
-    ("super_special.command", |rules| {
-        &mut rules.super_special.command
-    }),
     ("drawing", |rules| &mut rules.drawing),
     ("samus_tiles.halves", |rules| &mut rules.samus_tiles.halves),
     ("samus_tiles.top", |rules| &mut rules.samus_tiles.top),

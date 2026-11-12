@@ -17,7 +17,7 @@ use crate::scrolling;
 use crate::session::{Rules, SessionFault};
 use crate::state::atmospheric::Atmospherics;
 use crate::state::room::RoomScoped;
-use crate::state::samus::{Samus, SuperSpecial};
+use crate::state::samus::Samus;
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::video::SamusTileUploads;
 use crate::state::{GameMode, NmiTiming, State};
@@ -441,12 +441,11 @@ fn gameplay(
 }
 
 /// Samus's current state handler: the pose requests her input makes this frame, and her
-/// projectiles' pass. The frame starts with no super special request (`$90:E695`).
+/// projectiles' pass.
 fn samus_current_state(
     state: &mut State,
     content: &Content,
 ) -> Result<pose::PoseRequests, SessionFault> {
-    state.samus.super_special = SuperSpecial::default();
     // While the elevator carries her, the locked current state handler (`$90:E713`, from
     // `$91:E44D`) neither sets her radius nor runs the pose input handler, which would
     // return at once anyway (`$91:805C`).
@@ -483,7 +482,6 @@ fn gameplay_phase(
     pass: &mut Pass,
 ) -> Result<(), SessionFault> {
     match phase {
-        // The frame starts with no super special request (`$90:E695`).
         GameplayPhase::SamusCurrentState => pass.requests = samus_current_state(state, content)?,
         // The movement handler, the pose the moves ask for (`$91:E8B6`) and the pose update,
         // then her animation, whose model plays her clip and starts the one of the pose she
@@ -570,7 +568,7 @@ fn gameplay_phase(
 fn change_pose(
     samus: &mut Samus,
     atmospherics: &mut Atmospherics,
-    asked: Option<crate::state::samus::PoseId>,
+    asked: Option<pose::Asked>,
     content: &Content,
 ) {
     let history = samus.previous;

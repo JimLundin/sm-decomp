@@ -32,7 +32,7 @@ use game::state::room::{
 use game::state::samus::{
     Animation, AnimationFrame, Boost, BoostStage, ClipStep, DrawingHandler, Equipment, Facing,
     Fixed, FrameBefore, Gauge, Item, Items, JumpHeld, Point, PoseId, PoseRecord, ReserveMode,
-    Samus, SuperSpecial, SuperSpecialCommand, Visor, VisorShade, VisorTimer,
+    Samus, Visor, VisorShade, VisorTimer,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
@@ -437,8 +437,6 @@ pub struct Rules<'t> {
     pub enemies: EnemySources,
     /// `samus.animation`.
     pub animation: AnimationSources,
-    /// `samus.super_special`.
-    pub super_special: SuperSpecialSources,
     /// `samus.visor`: its timer and shade, a byte each.
     pub visor: WramWord,
     /// `room.layer_blending`.
@@ -848,15 +846,6 @@ pub struct AnimationSources {
     pub boost: WramWord,
 }
 
-/// Where the original keeps the super special prospective pose request.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct SuperSpecialSources {
-    /// `.pose`.
-    pub pose: WramWord,
-    /// `.command`.
-    pub command: WramWord,
-}
-
 /// Where the original keeps the HUD.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct HudSources {
@@ -1098,10 +1087,6 @@ impl Rules<'_> {
             frame: source::SAMUS_ANIM_FRAME,
             timer: source::SAMUS_ANIM_FRAME_TIMER,
             boost: source::SPEED_BOOSTER_LEVEL,
-        },
-        super_special: SuperSpecialSources {
-            pose: source::SAMUS_NEW_POSE_TRANSITIONAL,
-            command: source::SAMUS_HURT_SWITCH_INDEX,
         },
         visor: source::SAMUS_VISOR_PALETTE_TIMER_INDEX,
         layer_blending: source::FX_LAYER_BLENDING_CONFIG_A,
@@ -1345,7 +1330,6 @@ impl Rules<'_> {
             facing: pose.facing,
             movement: pose.movement,
             animation: self.animation.read(wram, pose.pose, clips)?,
-            super_special: self.super_special.read(wram)?,
             visor: visor(self.visor, wram)?,
             drawing: drawing_handler(self.drawing, wram)?,
             y_radius: self.y_radius.read(wram)?,
@@ -2094,42 +2078,6 @@ fn visor(source: WramWord, wram: &[u8]) -> Result<Visor, DecodeError> {
         shade,
         timer: VisorTimer(timer),
     })
-}
-
-/// The super special prospective pose word for none.
-const NO_POSE: u16 = 0xFFFF;
-
-impl SuperSpecialSources {
-    /// The request in `wram`.
-    ///
-    /// # Errors
-    ///
-    /// [`DecodeError::Unrepresentable`] for a pose past the definitions table but $FFFF,
-    /// or a command past the command table (`$91:EB88` jumps through it).
-    fn read(self, wram: &[u8]) -> Result<SuperSpecial, DecodeError> {
-        let unrepresentable = |source: WramWord, value| DecodeError::Unrepresentable {
-            source: source.name,
-            value,
-        };
-        let pose = match self.pose.read(wram)? {
-            NO_POSE => None,
-            pose if usize::from(pose) < POSE_COUNT => Some(PoseId(pose)),
-            value => return Err(unrepresentable(self.pose, value)),
-        };
-        let command = match self.command.read(wram)? {
-            0 => SuperSpecialCommand::None,
-            1 => SuperSpecialCommand::KnockbackFinished,
-            2 => SuperSpecialCommand::ShinesparkFinished,
-            3 => SuperSpecialCommand::TransitionAnimationFinished,
-            4 => SuperSpecialCommand::CentreOnScreen,
-            5 => SuperSpecialCommand::MoveDown,
-            6 => SuperSpecialCommand::StartGrappleWallJump,
-            7 => SuperSpecialCommand::StartReleaseFromGrappleSwing,
-            8 => SuperSpecialCommand::KnockbackAndTransitionAnimationFinished,
-            value => return Err(unrepresentable(self.command, value)),
-        };
-        Ok(SuperSpecial { pose, command })
-    }
 }
 
 /// Where Samus's tile uploads are: the two halves' flags, a byte each, then each half's

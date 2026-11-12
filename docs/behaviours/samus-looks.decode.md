@@ -25,7 +25,7 @@ the Budget section of [samus-looks.md](samus-looks.md). Bank logs:
   (`poses.py`, from `data::assets::samus::import::map`). Per frame over the cache
   (`cachecheck.py`): **18,233 of 18,233** frames of play in the domain match on all three words
   (`0A94`, `0A96` through the step map, `0B3E`); the null model (nothing changes) matches 506.
-  On the vectors (`vec.py`): 88 of 88.
+  On the vectors (`vec.py`): 98 of 98, the seven with adjusted rules included.
 - The scripts are in `$TEMP/collab/looks-spec/`; `cases.py` lists the recorded frames per rule.
 
 ## State
@@ -47,10 +47,24 @@ compared (ARCHITECTURE §11.6). For the record, it is 1 when the frame handed ov
 over`), her pose changed and her step after is 1 (a `StartingClip` row from step 1), else 0: over
 the cache's 23,432 `R` cuts in game state 8 that is right on every one, 346 hand-overs, one of
 them from step 1 (chain-0314-DAE1 139 → 140, 56h → 16h).
-The super special request, `0A2C` (its pose) and `0A32` (its command), is not State either:
-the frame's start resets it to none and 0 (`$90:E695`), and a clip's end writes it (`$90:84B6`,
-command 3, "transition animation finished"), which the pose change takes (`$91:EB88`). Lockstep
-compares both words, so the RAM translation writes them from the frame's outputs: on a frame that
+The super special request, `0A2C` (its pose) and `0A32` (its command), is not State either: no
+rule reads the value a frame leaves, so, as with `0A9A`, both words are out
+of State, the RAM translation and the lockstep comparator (ARCHITECTURE §11.6). A clip's end
+writes it (`$90:84B6`, command 3, "transition animation finished"). Its only readers are the
+pose change (`$91:EB8E`, `$91:EB94`, `$91:EBBB`) and the hit interruption's test of command 3
+(`$90:DE30`), both in the new state handler after the animation (`$90:E725`: `$90:E73B`
+animate, `$90:E73E`, `$90:E745`; the demos' `$90:E7F5` and `$90:E833` alike). The main loop runs
+the current state handler before it (`$82:8B58`, then `$82:8B69`), and that handler resets the
+request to none and 0 before anything reads it (`$90:E6A4`, `$90:E6AD` normal; `$90:E6D8`,
+`$90:E6E1` the demos'). The Samus command dispatcher (`$90:F084`) clears both too (`$90:F09E`,
+`$90:F0A7`) whenever a command returns carry set, as every unlock does, so a lock lifted within
+a frame hands on no request either. No other bank reads either word (every bank log searched for `$0A2C`,
+`$0A32` and their long forms: bank `$9B`'s grapple writes them, and a reader is in `$90` and
+`$91` only). The locked handler (`$90:E713`) doesn't reset it, but every new state handler set
+with it runs no reader (`$90:E8DC`, `$90:E8D6`, `$90:E8D9`, RTL), save the demo's end
+(`$91:8739`), which keeps the title demo's handler with her standing, a clip with no end, outside
+game state 8. Until the integrator takes them out, lockstep compares both words, so the RAM
+translation writes them from the frame's outputs: on a frame that
 handed over (`handed over`), `0A2C` the engine's pose id of the pose she took in the plain sprite
 (the end's own pose, before `HowSheIsDrawn` dresses it: chain-0232-D5A7 23 → 24 hands over 1Ah
 and she shows 82h, the screw attack's) and `0A32` 3; on any other frame of hers FFFFh and 0; and
@@ -103,7 +117,7 @@ Which inputs samus-motion's model doesn't yet report is §Requests to samus-moti
 | StartingClip | `$91:FB08`..`$91:FB8C` (pose = old pose: nothing; `0A9A` bit 15: kept; else frame and its byte plus the start's slowdown `$12`, `$91:FB0E`..`$91:FB56`), with `0A9A` from the pose's initialisation `$91:F468`'s table `$91:F4A2`: `$91:F4DC` (standing, shot direction up 0 or 9 from a previous pose's up: 1), `$91:F50C` (running from running: 8000h), `$91:F5AF` (15h/16h from 55h/56h: 1), `$91:F5EB` (85h/86h from F1h/F2h: 1), `$91:F624` (spin from spin or wall jump: 1), `$91:F9F4` (ball from types 4, 8: 8000h), `$91:FA56` (spring ball from 11h-13h: 8000h); the shot directions `$91:B629` byte 3 |
 | StandingRestart | `$90:A3AD`..`$90:A3C7` (in `$90:A383`: poses 1, 2 with shoot held, `0A94` = 10h, `0A96` = 0), then the countdown `$90:801E` the same frame |
 | WallJumpReady | `$90:9DB2`..`$90:9DD7` (in the wall jump check `$90:9D35`: `0A94` = 1, `0A96` = 0Ah, or 1Ah in 81h/82h), then the countdown `$90:8021` |
-| SpinTurnedFar | `$90:9D55`..`$90:9D68` (`0A96` − 0Bh, or − 1Bh in 81h/82h, `BMI`), read by `$90:9D35` on the next frame; the lists `$91:B384`, `$91:B391`, `$91:B39E`, `$91:B491` |
+| SpinTurnedFar | `$90:9D55`..`$90:9D68` (`0A96` − 0Bh, or − 1Bh in 81h/82h, `BMI`), inside the wall jump check `$90:9D35`, in the movement of the frame that reads it, from `0A96` and the pose `0A1C` as that frame starts (§Findings, "Turned far from the frame's start"); the lists `$91:B384`, `$91:B391`, `$91:B39E`, `$91:B491` |
 | FastFall | `$90:A5AC`..`$90:A5C5` (in `$90:A58D`, poses 29h, 2Ah, 67h, 68h: `0B2E` ≥ 5 signed, `0A96` < 5 signed: `0A94` = 8, `0A96` = 5); lists `$91:B34A`, `$91:B353` |
 | RisingHold | `$90:8011`..`$90:8050` (poses 4Dh, 4Eh: `0B36` ≠ 2, `0A96` = 1 and `0A94` = 1 → `0A94` = 4, then the countdown); list `$91:B326` |
 | RunPace | `$90:84EF`..`$90:851D` (`0B3C` ≠ 0, movement type 1: the delay from `$91:B5D3`, or `$91:B5DE`'s list for `0B3F` with the booster); `$90:8538`..`$90:857B` (an instruction byte with run held, no booster: frame 0, `$91:B5D3`'s first byte) |
@@ -169,6 +183,37 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   is the original's on all 350 end frames (151 `end`, 199 `end-unless-jump`, 9 of them given way),
   each with a pose change, and none elsewhere.
 
+- **Turned far from the frame's start** (adversary 101, F3). The original works it out in the
+  wall jump check (`$90:9D55`), inside the movement handler, before the frame's animation: from
+  `0A96` and the pose `0A1C` as they stand then. None of the domain's rules moves either before
+  the movement (the animation and the pose change follow it), so they are the State and her
+  pose at the frame's start, and the spec gives it ahead, as it gives the end. The step and clip
+  a frame ends on, read the next frame, are the same values; adversary 101's prototype of the
+  ahead read held the ratchet, the gate and every harness row. The compare is by step number
+  (`BMI` on `0A96` − kick), so a later branch's steps count as past the kick
+  (C-far-later-branch): in the wall jump `$91:B491` the space jump's and the screw attack's
+  frames follow the spin's FEh at 0Bh.
+- **The report's end** (adversary 101, F4). With the end and turned far both given ahead from
+  the State and her pose's clip, the frame's own report needs neither: the spec's outputs are
+  the State, the sound it asks for and the two values read ahead (spec §1.1), and the vectors
+  hold the two apart (`ahead`).
+- **One adjusted vector per parameter** (Jim, 2026-11-11). The domain's `Parameter` entries
+  are five, each with a vector of its own values in the vector file's `rules` (a vector's own
+  parameter values; the header gains it), worked by hand on invented clips:
+  - `Breathing`, the threshold (1Eh, `$90:8346`): C-breathe-adjusted at 50, energy 40 goes on
+    to step 3, held 9, where the game's 30 would loop;
+  - `StandingRestart`, the restart's hold (10h, `$90:A3AD`..`$90:A3C7`): C-restart-adjusted at
+    25, step 0 run down to 24;
+  - `FastFall`, the speed and the hold (5 and 8, `$90:A5AC`..`$90:A5C5`): C-fast-fall-adjusted at
+    3.0000 and 12, a fall at 3.8000 jumps to the fast fall step, run down to 11, where the
+    game's 5 would let the clip play on;
+  - `RisingHold`, the hold (4, `$90:8011`..`$90:8050`): C-rising-adjusted at 7, run down to 6;
+  - `BoostStages`, the laps each stage lasts (`$91:B61F`): C-laps-adjusted-began and
+    C-laps-adjusted-up and C-laps-adjusted-boosting at 3, 2, 4, 1 and 3 laps (a dash begun:
+    stage 0's 3 laps; stage 1's last lap ends: stage 2 with its 4; boosting, its last lap ends:
+    stage 4 with its 3).
+  The root made the first four parameters (2026-11-11): their numbers already sit in the model's
+  tuning, and the goal is that each behaviour can be adjusted.
 - **A dash lost after the animation.** `$91:DE53` is called from the movement handlers (before the
   animation: `$90:A3D0` standing, `$90:A551`.. the other halts, `$90:E5E9` the wall stop) and from
   the pose change's speed effects (`$91:EC76`, `$91:EC8E`, `$91:ECD3`, after it). On record every
@@ -215,8 +260,8 @@ and `branch` in the 253 lists lands on a delay byte (checked in
     start: her frame runs first, then the door, so it is compared: 8 on record), or the new state
     handler `0A44` at N not one that runs the animation (`$90:E725` normal, `$90:E7F5` and
     `$90:E833` the demos,
-    `$90:E8EC` the elevator, `$90:E8AA` the Ceres escape's timer, which runs the normal one first,
-    `$90:E8B0`) — 1,506;
+    `$90:E8EC` the elevator, and `$90:E8AA` the Ceres escape's, which calls the normal handler
+    (`JSL $90:E725` at `$90:E8B0`) and then runs the escape's timer) — 1,506;
   - the frame count stalled: `05B6` equal at N and N+1, unless it moved from N−1 to N (message
     boxes, the item fanfare) — 2,796. The pair where it first stalls is the frame a message box
     opens: her frame runs, then the box (the PLM's message box waits inside the frame), so it is
@@ -244,7 +289,7 @@ and `branch` in the 253 lists lands on a delay byte (checked in
   but that one.
 - **Outputs not compared yet:** the end's kind (samus-motion's harness reads it as
   `AnimationEnds`; on record it is checked against the hand-over above),
-  `turned far` (a function of the State; samus-motion reads it), the sounds (until the sound
+  `turned far` (read ahead from the State and her pose's clip; samus-motion reads it), the sounds (until the sound
   domain's request stream exists: spin 31h, space jump 3Eh, screw attack 33h on library 1;
   speed booster 3 on library 3).
 - **Per-behaviour attribution** (frames on record that take each rule, `cases.py`): the time runs
@@ -331,10 +376,11 @@ old figures and the commit.
 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-motion. An
 area's budget is k × its units. The old code (for reference, not a bound) is the `tools size`
-score at `f1df56ede` of `game/src/animation.rs` (1,245.5) and the animation's part of
-`game/src/pose.rs` (`reset_animation` and `run_super_special`, 197.75, measured as an extract
-alone): 1,443.25 together, not split by area (the old module interleaves the clip, her moves'
-writes and the run's pace in one handler). The few lines of `pose.rs`'s `refresh` and `change`
+score, under the tools at `5e2e4ee51` (score v2: lookups as data, duplication), of the files at
+`f1df56ede`: `game/src/animation.rs` (1,282.25) and the animation's part of `game/src/pose.rs`
+(`reset_animation` and `run_super_special`, an extract measured with `animation.rs`, whose code
+it repeats: 242.75, of which duplication 45; 197.75 alone): 1,525 together, not split by area
+(the old module interleaves the clip, her moves' writes and the run's pace in one handler). The few lines of `pose.rs`'s `refresh` and `change`
 that set and reset `new_pose_frame` are left out: a handful of tokens inside functions that do
 the pose's other work. The old code modelled neither the boost stages (`blocks_world.rs`: the
 engine keeps no speed booster's charge) nor any slowdown (`animation::frame_buffer` returns 0),
@@ -342,10 +388,10 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 37.7 units = 1,412 (clip 812, moves 225, run 375), 15 entries, 33 arms, 88 vectors
-(82 constructed, 6 recorded).
+Budget: 37.5 × 37.7 units = 1,412 (clip 812, moves 225, run 375), 15 entries, 33 arms, 98 vectors
+(92 constructed, 7 of them with adjusted rules, and 6 recorded).
 
-Old code (old 1,443): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
+Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.
 
 - Area clip: 1.4, ClipPlays, ClipControls, Breathing, ClipEnds, WallJumpBranch, HandOverSlowdown,

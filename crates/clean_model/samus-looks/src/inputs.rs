@@ -1,6 +1,6 @@
-//! §1.3 What a frame reads, each from the domain that owns it, and §1.1 what it reports.
+//! §1.3 What a frame reads, each from the domain that owns it.
 
-use clean_types::{AnimationSound, ClipEnd, Fixed, Item, Set, Sprite};
+use clean_types::{Fixed, Item, Set, Sprite};
 use enum_map::Enum;
 
 use crate::clip::{Clip, Paces, Slowdown};
@@ -39,7 +39,7 @@ pub enum Move {
 }
 
 /// What the liquid she is in does to her animation (the liquids).
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Liquid {
     /// Added to the holds her clip moves on to.
     pub slowdown: Slowdown,
@@ -75,21 +75,32 @@ pub struct Inputs {
     pub items: Set<Item>,
     /// The liquid's slowdowns, and whether she is submerged.
     pub liquid: Liquid,
-    /// The sounds waiting in the queue the speed booster's sound joins, 0 to 15 (`BoostingLap`).
-    pub sounds_waiting: u8,
+    /// The sounds waiting in the queue the speed booster's sound joins (`BoostingLap`).
+    pub sounds_waiting: SoundsWaiting,
 }
 
-/// What a frame reports (§1.1), in §6's order: the end, known from the frame's start, then what
-/// the pose she takes shows.
+/// How many sounds wait in the queue the speed booster's sound joins, before it (the sound
+/// domain): 0 to `SoundsWaiting::MOST`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Report {
-    /// The end her clip reaches this frame (`ClipEnds`); also given ahead by
-    /// `Playhead::end_ahead`.
-    pub end: Option<ClipEnd>,
-    /// Her spin has turned far enough to kick off a wall (`SpinTurnedFar`).
-    pub turned_far: bool,
-    /// The sound asked for this frame, at most one: only a control asks for one
-    /// (`WallJumpBranch`'s branch, `BoostStages`' lap end), and a frame meets one control at
-    /// most.
-    pub sound: Option<AnimationSound>,
+pub struct SoundsWaiting(u8);
+
+impl SoundsWaiting {
+    /// Spec §1.3: at most 15 sounds wait.
+    pub const MOST: u8 = 15;
+
+    /// The count of `waiting`, if the spec allows it: 0 to `MOST`.
+    #[must_use]
+    pub const fn new(waiting: u8) -> Option<Self> {
+        if waiting <= Self::MOST {
+            Some(Self(waiting))
+        } else {
+            None
+        }
+    }
+
+    /// How many wait.
+    #[must_use]
+    pub const fn count(self) -> u8 {
+        self.0
+    }
 }

@@ -40,22 +40,26 @@ after the one it is on. A hold is a number of frames.
 | her step | a step of her clip, from 0 | the picture she shows (part 2) | `ClipPlays`, `StartingClip`, `SpinTurnedFar`, `FastFall`, `RisingHold`; output (her sprite) |
 | the time left | frames, 0 to 255: how long her step still shows | when the picture changes | `ClipPlays`, `RisingHold`, `StartingClip` |
 | the boost stage | 0 to 4; 4 is boosting | her run's pace, and once boosting her glow and echoes | `RunPace`, `BoostStages`; output (the shinespark, the echoes, her glow, the blocks a boost breaks, her contact with enemies) |
-| the laps left | 0 to 2: the laps of her run the stage still lasts | when the pace next quickens | `BoostStages` |
+| the laps left | 0 to the most laps a stage lasts (2 in the game): the laps of her run the stage still lasts, the lap she is running included, so at 1 that lap is the stage's last | when the pace next quickens | `BoostStages` |
 
 These four are all the domain remembers; each is State a caller can set to any value the spec
 allows and read back. A caller keeps them from one frame to the next and gives them back as they
-were left: nothing else carries over, since the end, where the clip of the pose she takes starts,
-the slowdowns and what her moves did are each worked out within the frame. A vector gives them
-as `before` and compares them as `after`.
+were left: nothing else carries over, since the end, whether her spin has turned far, where the
+clip of the pose she takes starts, the slowdowns and what her moves did are each worked out
+within the frame. A vector gives them as `before` and compares them as `after`.
 
 ### 1.1 Outputs
 
 | Output | Type | Read by |
 | --- | --- | --- |
 | end | the end her clip reaches this frame (`ClipEnds`): none, an end, or an end unless a jump; known from the frame's start, before samus-motion picks her pose (§6) | samus-motion (`AnimationEnds`, where an end unless a jump gives way when its pad chart's pose that frame is a take-off aimed forward or a spin) |
-| turned far | `bool`, at the frame's end (`SpinTurnedFar`) | samus-motion (`WallJump`), the next frame |
+| turned far | `bool`: whether her spin has turned far enough to kick off a wall (`SpinTurnedFar`); known from the frame's start, before samus-motion's step (§6) | samus-motion (`WallJump`), that frame |
 | sounds | the sound asked for this frame, at most one (a frame passes at most one control): `PlainSpin`, `SpaceJump`, `ScrewAttack` (`WallJumpBranch`), `Boosting` (`BoostStages`) | the sound domain |
 | her step and the boost stage | as §1 | part 2 (her sprite, her glow), the shinespark, the echoes, the blocks, the enemies |
+
+The end and turned far are given ahead: each follows from the State and the clip of her pose at
+the frame's start alone, so a caller reads them before the frame, as samus-motion does. The frame
+itself then tells only what it alone can: the State it leaves and the sound it asks for.
 
 ### 1.2 Her pose
 
@@ -68,7 +72,7 @@ each pose and sprite has its own clip. She takes another pose when either part d
 | Input | Type | Read by |
 | --- | --- | --- |
 | her pose | §1.2, at the frame's start | every entry |
-| her pose after | §1.2: the pose she ends the frame in (samus-motion's choice) | `StartingClip`, `SpinTurnedFar` |
+| her pose after | §1.2: the pose she ends the frame in (samus-motion's choice) | `StartingClip` |
 | her clips | content, by pose (§1.4) | every entry |
 | the run's paces | content (§1.4) | `RunPace`, `BoostStages` |
 | energy | a count | `Breathing` |
@@ -83,7 +87,7 @@ each pose and sprite has its own clip. She takes another pose when either part d
 | standing restarts | `bool`: samus-motion's "the standing animation restarts" (`AimingAndShooting`) | `StandingRestart` |
 | wall jump readied | `bool`: samus-motion's near-wall test readied a wall jump (`WallJump`) | `WallJumpReady` |
 | her vertical speed | signed `P.S`, pixels a frame, downward positive: samus-motion's `vertical speed after her moves` (its §1.4), as her moves leave her, before what they met acts and before the pose change. An input of its own, apart from heading down: she can rise fast in a fall's pose, and the moonfall and a rise a ceiling stops are not heading down whatever the speed | `FastFall` |
-| heading down | `bool`: samus-motion's `heading down` (its §1.4), as her moves leave her, before what they met acts and before the pose change: she falls, a fall at 0 included, and not in the moonfall; a rise a ceiling stops this frame is not heading down | `RisingHold` |
+| heading down | `bool`: samus-motion's `heading down` (its §1.4), as her moves leave her, before what they met acts and before the pose change: she falls, a fall at 0 included, and not in the moonfall (samus-motion's `Moonfall`: the spin she enters as a turn ends, which drops with no rise); a rise a ceiling stops this frame is not heading down | `RisingHold` |
 | sounds waiting | 0 to 15: the sounds waiting in the queue the speed booster's sound joins, before it (the sound domain) | `BoostingLap` |
 
 ### 1.4 Her clips and the run's paces
@@ -110,7 +114,8 @@ A clip may also mark one step each as its **kick step** (`kick`, a spin's: `Wall
 (`rising`: `RisingHold`).
 
 The run's paces: the **plain pace**, a hold for every shown step of her running clips, and five
-**boosted paces**, one per boost stage 0 to 4, each a hold for the same steps.
+**boosted paces**, one per boost stage 0 to 4, each a hold for the same steps. A pace's holds go
+by step number: its hold `n` is for step `n`, which her running clips number alike.
 
 ### 1.5 The inputs' domain
 
@@ -130,7 +135,10 @@ this spec (stated simplifications, docs/LEGACY.md):
   within the time left's 0 to 255.
 - Not 5 sounds waiting when she starts boosting (`BoostingLap`): with 5 the game's behaviour is
   outside this spec (LEGACY).
-- The laps left are 1 or 2 with the speed booster, 0 without it.
+- The laps left are 1 to the stage's laps with the speed booster, 0 without it; each stage
+  lasts 1 lap or more.
+- A dash that begins this frame is dashing, and she is handed over a pose only on a frame whose
+  end (`ClipEnds`) is an end, or an end unless a jump that doesn't give way.
 
 ---
 
@@ -147,7 +155,7 @@ this spec (stated simplifications, docs/LEGACY.md):
 - The clip moving on to a shown step → its hold plus the slowdown is the time left,
   `hold + slowdown` [C-next, C-after-rest, C-slow-show]
 - So a hold of `n` shows its step for `n` frames, and a step with no time left (after a rest)
-  moves on the next frame.
+  moves on the next frame: 1 frame left and none move on alike.
 - checked: oracle (every recorded frame of play); constructed (C-count, C-next, C-after-rest,
   C-slow-show); recorded (R-count).
 
@@ -169,13 +177,13 @@ this spec (stated simplifications, docs/LEGACY.md):
 - summary: standing or crouched still, she breathes in a loop while her energy is high, and goes
   on to breathe hard once it is low.
 - params: the threshold, 30 energy.
-- switch: none.
-- The clip moving on to `breathe`, her energy at 30 or more → back to step 0, with its hold plus
-  the slowdown [C-breathe-loop]
-- The clip moving on to `breathe`, her energy below 30 → on to the next step, with its hold plus
-  the slowdown [C-breathe-on]
+- switch: parameter (the threshold).
+- The clip moving on to `breathe`, her energy at the threshold or more → back to step 0, with
+  its hold plus the slowdown [C-breathe-loop]
+- The clip moving on to `breathe`, her energy below the threshold → on to the next step, with its
+  hold plus the slowdown [C-breathe-on, C-breathe-adjusted]
 - checked: oracle (31 loops and 2 on to breathe hard, on record); constructed (C-breathe-loop,
-  C-breathe-on).
+  C-breathe-on); adjusted, the threshold at 50 (C-breathe-adjusted).
 
 ### ClipEnds
 - kind: output.
@@ -264,6 +272,8 @@ Cells: kept, step 1
 
 - So the ball `Morphing` is not one of the ball's rows (C-not-kept-morph), and a turn aimed up
   doesn't shoot, so it doesn't count as aimed up (C-stand-up-from-turn).
+- So, as the time runs down in the clip of her pose at the frame's start (§6), a kept row keeps
+  the hold that clip gave as it moved on (C-kept-ball: the ball's 9).
 - checked: oracle (1,964 kept, 102 from step 1 and 2,139 from step 0 on record); constructed
   (the vectors above).
 
@@ -275,12 +285,12 @@ Cells: kept, step 1
 - kind: mechanic.
 - summary: holding shoot while she stands unaimed starts her standing clip over.
 - params: the restart's hold, 16 frames, which no liquid slows.
-- switch: none.
-- Standing restarts → step 0 with 16 frames left, before the time runs down this frame
-  [C-restart, R-restart-a, R-restart-b]
+- switch: parameter (the restart's hold).
+- Standing restarts → step 0 with the restart's hold left, before the time runs down this frame
+  [C-restart, R-restart-a, R-restart-b, C-restart-adjusted]
 - So the frame ends on step 0 with 15 frames left (R-restart-a, from 1 frame left).
 - checked: oracle (29 restarts on record); constructed (C-restart); recorded (R-restart-a,
-  R-restart-b).
+  R-restart-b); adjusted, the restart's hold at 25 (C-restart-adjusted).
 
 ### WallJumpReady
 - kind: mechanic.
@@ -295,26 +305,35 @@ Cells: kept, step 1
 
 ### SpinTurnedFar
 - kind: output.
-- summary: her spin has turned far enough to kick off a wall once it reaches its kick step.
+- summary: her spin has turned far enough to kick off a wall once it is on its kick step or past
+  it, known as the frame starts.
 - params: none.
 - switch: none.
-- The clip she ends the frame on with a kick step, her step at it or past it → turned far
-  [C-far, C-ready, C-far-new-clip]
-- Her clip with a kick step, her step before it → not turned far [C-not-far]
-- Her clip with no kick step → not turned far [C-far-no-kick]
+- The clip of her pose at the frame's start with a kick step, her step at it or past it →
+  turned far [C-far, C-far-at-kick, C-far-leaving, C-far-later-branch]
+- Her clip with a kick step, her step before it → not turned far [C-not-far, C-ready]
+- Her clip with no kick step → not turned far [C-far-no-kick, C-far-taken-clip]
+- So it reads only the State and her pose's clip as the frame starts, as the end does (§6): the
+  frame's moves and the pose she takes change it from the next frame on. A readied wall jump
+  shows as turned far the frame after (C-ready, then C-far-at-kick), as does a clip she takes on
+  its kick step (C-far-taken-clip), and the pose she takes doesn't undo it that frame
+  (C-far-leaving).
+- So "past it" goes by step number: in a clip that branches, the steps of a branch numbered after
+  the kick step are past it (C-far-later-branch: the space jump's steps in a wall jump).
 - checked: oracle (every frame of a spin on record, through samus-motion's wall jumps);
-  constructed (C-far, C-not-far, C-far-no-kick, C-ready, C-far-new-clip).
+  constructed (C-far, C-far-at-kick, C-not-far, C-far-no-kick, C-ready, C-far-taken-clip,
+  C-far-leaving, C-far-later-branch).
 
 ### FastFall
 - kind: mechanic.
 - summary: moving fast in a fall's pose, her fall jumps to its fast fall picture, whichever way
   she moves.
 - params: the speed, 5 pixels a frame; the hold, 8 frames, which no liquid slows.
-- switch: none.
+- switch: parameter (the speed and the hold).
 - Her clip with a fast fall step, her step on any step before it, whatever the time left, her
-  vertical speed 5 pixels a frame or more either way (its size, rising or falling) → the fast
-  fall step with 8 frames left, before the time runs down this frame [C-fast-fall,
-  C-fast-fall-early, C-fast-fall-liquid, C-fast-fall-rising]
+  vertical speed at the speed or more either way (its size, rising or falling) → the fast fall
+  step with the hold left, before the time runs down this frame [C-fast-fall,
+  C-fast-fall-early, C-fast-fall-liquid, C-fast-fall-rising, C-fast-fall-adjusted]
 - So short of 5 pixels a frame either way (C-fast-fall-slow, C-fast-fall-rising-slow), or on the
   fast fall step or past it (C-fast-fall-on, C-fast-fall-past), the clip plays as it would.
 - So a fall's pose rising at 5 pixels a frame or more (an unmorph's end that carries such a rise
@@ -322,19 +341,20 @@ Cells: kept, step 1
   no record rises so fast in a fall's pose (the fastest is 2.4000).
 - checked: oracle (4 on record); constructed (C-fast-fall, C-fast-fall-early, C-fast-fall-liquid,
   C-fast-fall-slow, C-fast-fall-rising, C-fast-fall-rising-slow, C-fast-fall-on,
-  C-fast-fall-past).
+  C-fast-fall-past); adjusted, the speed at 3 pixels a frame and the hold at 12
+  (C-fast-fall-adjusted).
 
 ### RisingHold
 - kind: mechanic.
 - summary: a straight jump holds its rising picture for as long as she rises.
 - params: the hold, 4 frames, which no liquid slows.
-- switch: none.
-- Her clip with a rising step, on it with 1 frame left, not heading down → 4 frames left, before
-  the time runs down this frame [C-rising]
+- switch: parameter (the hold).
+- Her clip with a rising step, on it with 1 frame left, not heading down → the hold left, before
+  the time runs down this frame [C-rising, C-rising-adjusted]
 - So with more time left on it, it counts down as usual (C-rising-early).
 - So she stays on the rising step 3 frames at a time until she heads down, then the clip goes on
   (C-rising-down).
-- checked: oracle (20 on record); constructed (C-rising, C-rising-early, C-rising-down).
+- checked: oracle (20 on record); constructed (C-rising, C-rising-early, C-rising-down); adjusted, the hold at 7 (C-rising-adjusted).
 
 ---
 
@@ -354,6 +374,9 @@ Cells: kept, step 1
 - Running and dashing, run held, without the speed booster, the clip moving on to a control
   → the lap starts over: step 0, with the plain pace's first hold plus the slowdown [C-lap-plain,
   C-lap-again-mid, C-lap-at-rest]
+- So a lap is her running clip from step 0 to the first control the clip moves on to, whatever
+  control it is: a rest, or an `again` to any step, ends it alike (C-lap-at-rest,
+  C-lap-again-mid).
 - So dashing with run let go, a lap ends as the clip says, on the clip's own hold
   (C-lap-not-held), and not dashing her run shows the clip's holds (C-not-dashing).
 - checked: oracle (760 plain and 715 boosted holds, 58 laps on record); constructed (C-pace-plain,
@@ -363,26 +386,30 @@ Cells: kept, step 1
 - kind: mechanic.
 - summary: with the speed booster, every lap run with run held counts towards the next stage;
   four stages on she is boosting, and laps go on at the boosting pace.
-- params: the laps each stage lasts, 1 at stages 0 to 3 and 2 at stage 4.
+- params: the laps each stage lasts, 1 at stages 0 to 3 and 2 at stage 4; an adjusted game may
+  give each stage 1 lap or more.
 - switch: parameter (the laps per stage).
 - A dash began → stage 0, with stage 0's laps left with the speed booster, 0 without it
-  [C-began-booster, C-began-plain, R-began]
+  [C-began-booster, C-began-plain, R-began, C-laps-adjusted-began]
 - Running and dashing, run held, with the speed booster, the clip moving on to a control,
   the laps left less 1 above 0 → that is the laps left, and the control does as the clip says
   [C-lap-count]
+- So a lap only counted goes on with the clip's own hold for the step the control leads to, not
+  the pace's (C-lap-count: the clip's 6); the pace's hold returns with the next shown step.
 - So with run let go the laps left stay as they are, no stage goes up, and the control does as
   the clip says (C-lap-not-held-booster, C-stage-not-held).
 - The same, the laps left less 1 at 0, the stage below 4 → the stage goes up by 1, the laps left
   are the new stage's, and the lap starts over: step 0, with the new stage's pace's first hold
-  plus the slowdown [C-stage-up]
+  plus the slowdown [C-stage-up, C-laps-adjusted-up]
 - The same at stage 4 → the laps left are stage 4's, and the lap starts over: step 0, with the
-  boosting pace's first hold plus the slowdown [C-boosting-lap]
+  boosting pace's first hold plus the slowdown [C-boosting-lap, C-laps-adjusted-boosting]
 - The stage going up to 4 → asks for `Boosting` [C-boost-quirk-0]
 - A dash lost → stage 0, with 0 laps left, after the clip moves on [C-lost, C-dash-lost-moving-on,
   R-lost-a, R-lost-b]
 - checked: oracle (96 began, 50 stages up, 16 laps counted, 109 lost on record); constructed
   (C-began-booster, C-began-plain, C-lap-count, C-lap-not-held-booster, C-stage-not-held,
-  C-stage-up, C-boosting-lap, C-lost); recorded (R-began, R-lost-a, R-lost-b).
+  C-stage-up, C-boosting-lap, C-lost); adjusted, the laps per stage at 3, 2, 4, 1 and 3
+  (C-laps-adjusted-began, C-laps-adjusted-up, C-laps-adjusted-boosting); recorded (R-began, R-lost-a, R-lost-b).
 
 ### BoostingLap
 - kind: quirk.
@@ -395,6 +422,7 @@ Cells: kept, step 1
   `w`'s pace's, and the laps left are stage `w`'s [C-boost-quirk-0, C-boost-quirk-2,
   C-boost-quirk-4]
 - The same, 6 or more waiting → stage 3's [C-boost-quirk-6]
+- So 5 waiting is outside the inputs' domain, as §1.5 states (LEGACY).
 - So with no sound waiting, as on record, the first boosting lap starts on stage 0's first hold
   with stage 0's 1 lap; its other steps show the boosting pace, since her stage is 4
   (`RunPace`; C-boosting-first-lap), and its lap end starts the next at the boosting pace.
@@ -409,8 +437,9 @@ A frame has two halves, because samus-motion reads the end before it picks her p
 domain reads the pose it picks:
 
 - **First, before samus-motion's step:** the end (`ClipEnds`), from her step, the time left and
-  her clip at the frame's start. §1.5 makes this exact: no move of the frame can change
-  whether her clip ends.
+  her clip at the frame's start, and whether her spin has turned far (`SpinTurnedFar`), from her
+  step and that clip. §1.5 makes the end exact: no move of the frame can change whether her
+  clip ends; turned far reads nothing the frame changes.
 - **Then, with samus-motion's results and the pose she takes**, in this order, as the State at
   the frame's end shows:
 
@@ -420,7 +449,6 @@ domain reads the pose it picks:
 3. The time runs down and the clip moves on (§2, §5), from her pose at the frame's start.
 4. The start of the clip of the pose she takes (`StartingClip`, `HandOverSlowdown`).
 5. A dash's loss.
-6. Turned far, from the step and clip the frame ends on.
 
 So a restart from 1 frame left ends the frame on 15 (R-restart-a), a readied spin shows its kick
 step the same frame (C-ready), and a clip that ends hands over in the frame it ends (C-end).

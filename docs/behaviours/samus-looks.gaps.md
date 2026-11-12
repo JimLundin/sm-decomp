@@ -16,27 +16,22 @@ reads `0A96` through the step map of her pose's clip, `0A94` as is and `0B3E` as
 the laps; a frame on no step, a pose outside the domain, a time left past 255 or a stage past 4
 is a decode error. Each frame:
 
-- before samus-motion's step, the end her clip reaches (`Playhead::end_ahead`) and whether her
-  spin has turned far are read from the State the frame starts with;
+- before samus-motion's step, the end her clip reaches and whether her spin has turned far are
+  read from the State the frame starts with (`Ahead::of`);
 - samus-motion's step carries its whole `Outcome` (`samus_world::step::Stepped`); on a hand-over
-  the super special request is the pose she took in her plain sprite with command 3, and the
-  pose change takes samus-motion's pose in the sprite her dress shows (`samus_world::step::next`);
+  the pose change takes samus-motion's pose in the sprite her dress shows, as the handed-over
+  pose (`samus_world::step::next`, `pose::Asked`);
 - after the pose change, the update reads samus-motion's outputs (dashing after her moves, dash
   began and lost, handed over, heading down, vertical speed after her moves, the standing
-  animation's restart, the readied wall jump), her energy at the frame's start and her items;
+  animation's restart, the readied wall jump; `samus_looks_world::Moved`, which the harness reads
+  too), her energy at the frame's start and her items;
 
 Her sprite (`game::samus_drawing`, part 2, not yet a model) is drawn by the original's frame
 number, which the bridge gives from her step through the same step map until part 2 lands.
 
 ## What is left
 
-1. **Turned far as the frame starts.** The model reports `turned_far` at the end of a frame
-   (`Report`), but samus-motion's step reads it at the start of the next, and a frame that starts
-   from a seed has no frame before it. The bridge reads it again from the State
-   (`samus_looks_world::turned_far`: her clip's kick step, and her step at it or past it), which
-   restates `SpinTurnedFar`. For the model's next round: give it ahead from the playhead and her
-   pose's clip, as `Playhead::end_ahead` gives the end.
-2. **Poses outside the domain.** The model keeps a step only in the domain's poses; in another
+1. **Poses outside the domain.** The model keeps a step only in the domain's poses; in another
    pose (the shinespark's, the grapple's, the x-ray scope's, knockback, the drained fall) her
    animation stands still and has no frame to draw, and a record in one doesn't decode (LEGACY,
    "Samus's animation timing in the engine"). The engine reaches none of them: samus-motion's
@@ -61,8 +56,8 @@ animation timing in the engine"):
 ## What is compared
 
 Lockstep compares her step, the time left, the boost stage and the laps left
-(`samus.animation`) and the super special request (`0A2C`, `0A32`). `0A9A` is not State: every
-frame's start clears it before a rule reads it (ARCHITECTURE §11.6). item-morph-ball, a
+(`samus.animation`). `0A9A` and the super special request (`0A2C`, `0A32`) are not State: every
+frame's start clears them before a rule reads them (ARCHITECTURE §11.6). item-morph-ball, a
 gate row, hands over at 687, 1265, 1310 and 1312 and opens its message box at 816; its ratchet
 holds as it did before the wiring.
 

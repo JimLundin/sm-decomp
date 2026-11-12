@@ -467,9 +467,11 @@ Lockstep steps the engine one Tick from each decoded oracle cut and names the fi
   transfer (MODEL decision 3): not State, not decoded, not compared, each named here as it leaves.
 - **Words a frame clears before any rule reads them:** her new pose's frame (`0A9A`), which every
   frame's start clears (`$90:EB02`) and only the same frame's pose change reads, after its own
-  write. The super special request (`0A2C`, `0A32`), cleared at the frame's start (`$90:E6A4`,
-  `$90:E6AD`), is in the same class but is still State and compared, until a check of its readers
-  across frames decides it.
+  write; and the super special request (`0A2C`, `0A32`), which the frame's start clears
+  (`$90:E6A4`, `$90:E6AD`; the demos' `$90:E6D8`, `$90:E6E1`), as the Samus command dispatcher
+  does whenever a lock lifts (`$90:F09E`, `$90:F0A7`), and only the same frame's pose change and
+  hit interruption read, after her animation writes it. The engine hands the pose over to the
+  pose change within the frame (`pose::Asked`).
 - **The five `ppu` fields lsnes lacks:** `nmitimen`, `htime`, `vtime`, `hdmaen`, `memsel` (ORACLE Q4).
 - **WRAM scratch** no decode rule reads, from the nightly unowned-RAM report: named in LEGACY, or a
   field once a behaviour reads it.

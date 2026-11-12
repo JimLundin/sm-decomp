@@ -317,43 +317,6 @@ pub struct Animation {
     pub boost: Boost,
 }
 
-/// What the pose update does after it takes the super special prospective pose (bank $91
-/// log, the super special prospective pose change commands).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum SuperSpecialCommand {
-    /// Nothing (0).
-    #[default]
-    None,
-    /// 1 (`$91:F31D`): knockback finished.
-    KnockbackFinished,
-    /// 2 (`$91:F34E`): shinespark finished.
-    ShinesparkFinished,
-    /// 3 (`$91:F36E`): the transition animation finished.
-    TransitionAnimationFinished,
-    /// 4 (`$91:F37C`): Samus to the screen's centre.
-    CentreOnScreen,
-    /// 5 (`$91:F397`): Samus 5 pixels down.
-    MoveDown,
-    /// 6 (`$91:F3A5`): start the grapple wall jump.
-    StartGrappleWallJump,
-    /// 7 (`$91:F3AA`): start the release from the grapple swing.
-    StartReleaseFromGrappleSwing,
-    /// 8 (`$91:F3FD`): knockback and the transition animation both finished.
-    KnockbackAndTransitionAnimationFinished,
-}
-
-/// The super special prospective pose request the frame made.
-///
-/// The pose update takes it before every other (bank $91 log, `$91:EB88`). The original clears it at the start
-/// of every frame (`$90:E695`) and it keeps the last frame's until then.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct SuperSpecial {
-    /// The pose asked for.
-    pub pose: Option<PoseId>,
-    /// What the update does after taking it.
-    pub command: SuperSpecialCommand,
-}
-
 /// Which of the visor's cycle colours shows next (bank $91 log, handle visor palette
 /// `$91:D83F`): the cycle steps bright, dim, dark, then back to bright.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -488,8 +451,6 @@ pub struct Samus {
     pub invincibility: Frames,
     /// Her animation.
     pub animation: Animation,
-    /// The super special prospective pose request.
-    pub super_special: SuperSpecial,
     /// Her visor's colour cycle.
     pub visor: Visor,
     /// What draws her each frame.

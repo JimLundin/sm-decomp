@@ -487,14 +487,6 @@ pub const FIELDS: &[Field] = &[
         "samus.animation.boost.laps_left",
         source::SPEED_BOOSTER_LEVEL,
     ),
-    wram(
-        "samus.super_special.pose",
-        source::SAMUS_NEW_POSE_TRANSITIONAL,
-    ),
-    wram(
-        "samus.super_special.command",
-        source::SAMUS_HURT_SWITCH_INDEX,
-    ),
     wram("samus.visor.shade", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     wram("samus.visor.timer", source::SAMUS_VISOR_PALETTE_TIMER_INDEX),
     wram("samus.drawing", source::SAMUS_DRAW_HANDLER),
@@ -966,8 +958,6 @@ mod tests {
             rules.animation.frame,
             rules.animation.timer,
             rules.animation.boost,
-            rules.super_special.pose,
-            rules.super_special.command,
             rules.visor,
             rules.samus_tiles.halves,
             rules.samus_tiles.top,

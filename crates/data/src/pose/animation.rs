@@ -83,6 +83,31 @@ pub enum DelayItem {
     Instruction(Instruction),
 }
 
+impl DelayItem {
+    /// The bytes it takes: the instruction and its operands.
+    #[must_use]
+    pub const fn size(self) -> usize {
+        match self {
+            Self::Delay(_)
+            | Self::Instruction(
+                Instruction::NoOp(_)
+                | Instruction::LoopIfHealthy
+                | Instruction::DrainedFalling
+                | Instruction::WallJump
+                | Instruction::Loop,
+            ) => 1,
+            Self::Instruction(
+                Instruction::AutoJumpTransition(_)
+                | Instruction::Transition(_)
+                | Instruction::GoBack(_),
+            ) => 2,
+            Self::Instruction(Instruction::BySpeed(_)) => 3,
+            Self::Instruction(Instruction::ByItems { .. }) => 5,
+            Self::Instruction(Instruction::ByItemsAndSpeed { .. }) => 7,
+        }
+    }
+}
+
 impl Default for DelayItem {
     fn default() -> Self {
         Self::Delay(0)
@@ -186,6 +211,18 @@ impl DelayList {
         self.bytes.get(usize::from(frame.0)).copied()
     }
 
+    /// The items the list steps through from its start, each with its frame: an operand byte is
+    /// no item's.
+    pub fn steps(&self) -> impl Iterator<Item = (AnimationFrame, DelayItem)> + '_ {
+        let mut at = 0_usize;
+        core::iter::from_fn(move || {
+            let frame = AnimationFrame(u16::try_from(at).ok()?);
+            let item = self.at(frame)?;
+            at = at.wrapping_add(item.size());
+            Some((frame, item))
+        })
+    }
+
     /// The list's bytes as items, from `bytes` (which run on past its end): up to the
     /// instruction that ends it, past every byte a wall jump reaches; `None` when no
     /// instruction ends it within [`LIST_LIMIT`] bytes.
@@ -205,26 +242,20 @@ impl DelayList {
                 return None;
             }
             let item = item(bytes.get(at..)?)?;
-            let (ends, size) = match item {
+            if item == DelayItem::Instruction(Instruction::WallJump) {
+                reach = reach.max(at.wrapping_add(WALL_JUMP_REACH));
+            }
+            let ends = !matches!(
+                item,
                 DelayItem::Delay(_)
-                | DelayItem::Instruction(
-                    Instruction::NoOp(_) | Instruction::LoopIfHealthy | Instruction::DrainedFalling,
-                ) => (false, 1),
-                DelayItem::Instruction(Instruction::WallJump) => {
-                    reach = reach.max(at.wrapping_add(WALL_JUMP_REACH));
-                    (false, 1)
-                }
-                DelayItem::Instruction(Instruction::Loop) => (true, 1),
-                DelayItem::Instruction(
-                    Instruction::AutoJumpTransition(_)
-                    | Instruction::Transition(_)
-                    | Instruction::GoBack(_),
-                ) => (true, 2),
-                DelayItem::Instruction(Instruction::BySpeed(_)) => (true, 3),
-                DelayItem::Instruction(Instruction::ByItems { .. }) => (true, 5),
-                DelayItem::Instruction(Instruction::ByItemsAndSpeed { .. }) => (true, 7),
-            };
-            at = at.wrapping_add(size);
+                    | DelayItem::Instruction(
+                        Instruction::NoOp(_)
+                            | Instruction::LoopIfHealthy
+                            | Instruction::DrainedFalling
+                            | Instruction::WallJump
+                    )
+            );
+            at = at.wrapping_add(item.size());
             if ends && at >= reach {
                 break at;
             }
