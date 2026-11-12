@@ -17,6 +17,10 @@ use std::path::Path;
 
 use serde::Deserialize;
 
+mod graph;
+
+pub(super) use graph::{section as graph_section, undeclared};
+
 use super::timeline::{percent, seed_frame};
 use super::{COMMAND, Tree, fit, grouped, or_dash, read, table};
 use crate::gate::Ratchet;
@@ -24,7 +28,7 @@ use crate::lock::{Lock, RowId};
 use crate::ratchet;
 
 /// The whole-game plan as data, from the repository root.
-const PLAN: &str = "docs/architecture/domains.toml";
+pub(super) const PLAN: &str = "docs/architecture/domains.toml";
 /// The free-run gate's green (row, stream) pairs.
 pub(super) const GREEN: &str = "scenarios/locks/lsnes.green.txt";
 /// The lockstep ratchet.
@@ -90,6 +94,9 @@ struct PlanDomain {
     model: Option<String>,
     #[serde(default)]
     status: Stage,
+    /// The ids of the domains whose exports it reads.
+    #[serde(default)]
+    reads: Vec<String>,
 }
 
 /// The part of the game a domain belongs to, and the first word of its model's name.
@@ -108,6 +115,19 @@ enum Area {
 }
 
 impl Area {
+    /// Every area, in the plan's order.
+    const ALL: [Self; 9] = [
+        Self::Samus,
+        Self::Weapons,
+        Self::World,
+        Self::Enemy,
+        Self::Boss,
+        Self::Interface,
+        Self::Run,
+        Self::Screens,
+        Self::Audio,
+    ];
+
     /// The word a model of the area starts with.
     const fn word(self) -> &'static str {
         match self {
@@ -166,8 +186,8 @@ impl Stage {
 
 impl Plan {
     /// The plan in `text`, checked against the rebuilt domains: the models are the report's
-    /// domains, each domain's model is one of them and named in its area, and a started domain
-    /// names its model.
+    /// domains, each domain's model is one of them and named in its area, a started domain
+    /// names its model, and each domain reads only other domains of the plan.
     pub(super) fn parse(text: &str, rebuilt: &BTreeSet<&str>) -> Result<Self, String> {
         let plan: Self = toml::from_str(text).map_err(|e| format!("{PLAN}: {e}"))?;
         let listed: BTreeSet<&str> = plan.model.iter().map(|model| model.name.as_str()).collect();
@@ -196,6 +216,14 @@ impl Plan {
                     ));
                 }
                 (Some(_) | None, _) => {}
+            }
+            if let Some(read) = domain.reads.iter().find(|read| {
+                **read == domain.id || !plan.domain.iter().any(|other| other.id == **read)
+            }) {
+                return Err(format!(
+                    "{PLAN}: {} reads {read}, which is not another domain of the plan",
+                    domain.id
+                ));
             }
         }
         plan.milestone.end()?;
@@ -289,22 +317,16 @@ fn ids_by_stage<'a>(items: impl Iterator<Item = (&'a str, Stage)>) -> String {
 ///
 /// # Errors
 ///
-/// The path and the error when a file can't be read or parsed, or a plan that doesn't agree
-/// with the report's domains.
+/// The path and the error when a file can't be read.
 pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
-    let rebuilt: BTreeSet<&str> = tree
-        .domains
-        .iter()
-        .map(|domain| domain.domain.name)
-        .collect();
-    let plan = Plan::parse(&read(&root.join(PLAN))?, &rebuilt)?;
+    let plan = &tree.plan;
     let mut out = format!(
         "\n<!-- Generated with docs/REPORT.md by `{COMMAND}` (verify::report) from the tree; \
          `tools/check_report.sh` fails when it is stale. Never edit it by hand. -->\n"
     );
     out.push_str("\n## Where it stands\n");
-    milestone(&mut out, root, &plan, tree)?;
-    headline(&mut out, &plan);
+    milestone(&mut out, root, plan, tree)?;
+    headline(&mut out, plan);
     let _ = write!(
         out,
         "\n![How much of each movie the checks cover]({svg})\n\nHow much of each whole movie the \
@@ -312,8 +334,8 @@ pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
          frame; the figures are in [the report's timeline](docs/REPORT.md#timeline).\n",
         svg = super::timeline::SVG
     );
-    models(&mut out, &plan, tree);
-    waves(&mut out, &plan);
+    models(&mut out, plan, tree);
+    waves(&mut out, plan);
     engine(&mut out, tree);
     verification(&mut out, root, tree)?;
     out.push_str(

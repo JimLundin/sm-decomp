@@ -631,6 +631,192 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | free-run gate: green streams | 0 | 0.0 % |
 | lockstep: Ticks fully equal | 0 | 0.0 % |
 
+## Domain graph
+
+The plan's domains ([domains.toml](architecture/domains.toml)) by area, with an arrow from a domain to each domain that reads its exports; the domains whose work has started are filled. Audio's sound requests are a convention, not arrows. The report's tests fail when a clean crate or its bridge uses a clean crate its domains don't read.
+
+```mermaid
+flowchart LR
+  subgraph area_samus [samus]
+    S1["S1 Samus's motion: follow-ups"]
+    S2["S2 Liquids and pushes"]
+    S5["S5 How Samus looks"]
+    H1["H1 Energy, reserves and death"]
+    S4["S4 Hurt and knockback, bomb jumps"]
+    S3["S3 The shinespark and echoes"]
+    S6["S6 The grapple beam"]
+    S7["S7 The x-ray scope"]
+  end
+  subgraph area_weapons [weapons]
+    W1["W1 Beams, missiles and bombs"]
+  end
+  subgraph area_world [world]
+    CAM["CAM The camera"]
+    W2["W2 Blocks that react"]
+    R1["R1 Doors and elevators"]
+    R3["R3 Liquids and room weather"]
+    R4["R4 Room ambience"]
+    W3["W3 Items to pick up"]
+  end
+  subgraph area_enemy [enemy]
+    C1["C1 Fighting enemies"]
+    C2_C11["C2-C11 Enemy families"]
+  end
+  subgraph area_boss [boss]
+    B8["B8 Ceres Ridley and the escape"]
+    B1["B1 Spore Spawn"]
+    B2["B2 Bomb Torizo, Golden Torizo"]
+    B3["B3 Botwoon"]
+    B4["B4 Crocomire"]
+    B5["B5 Kraid"]
+    B6["B6 Phantoon"]
+    B7["B7 Draygon"]
+    B9["B9 Ridley"]
+    B10["B10 Mother Brain and the escape"]
+  end
+  subgraph area_interface [interface]
+    H2["H2 The HUD and the mini-map"]
+    H3["H3 Message boxes"]
+    F1["F1 The pause screen"]
+  end
+  subgraph area_run [run]
+    P1["P1 Progress"]
+    P2["P2 Saving, loading and stations"]
+  end
+  subgraph area_screens [screens]
+    F2["F2 Title, intro, file select, options"]
+    F4["F4 Cinematics and credits"]
+    F3["F3 Game over"]
+  end
+  subgraph area_audio [audio]
+    U1["U1 Audio, the CPU side"]
+  end
+  S5 --> S1
+  S6 --> S1
+  W3 --> S1
+  R1 --> S1
+  S1 --> CAM
+  S4 --> CAM
+  S7 --> CAM
+  W2 --> CAM
+  R1 --> CAM
+  R3 --> CAM
+  B1 --> CAM
+  B2 --> CAM
+  B3 --> CAM
+  B4 --> CAM
+  B5 --> CAM
+  B6 --> CAM
+  B7 --> CAM
+  B8 --> CAM
+  B9 --> CAM
+  B10 --> CAM
+  R3 --> S2
+  S1 --> S5
+  S3 --> S5
+  H1 --> S5
+  W3 --> H2
+  H1 --> H2
+  P1 --> H2
+  S1 --> W2
+  S5 --> W2
+  W1 --> W2
+  R1 --> W2
+  W3 --> P1
+  B1 --> P1
+  B2 --> P1
+  B3 --> P1
+  B4 --> P1
+  B5 --> P1
+  B6 --> P1
+  B7 --> P1
+  B8 --> P1
+  B9 --> P1
+  B10 --> P1
+  S1 --> R1
+  P1 --> R1
+  S1 --> W1
+  W3 --> W1
+  F1 --> W1
+  S1 --> C1
+  S5 --> C1
+  CAM --> C1
+  W1 --> C1
+  R1 --> C1
+  C2_C11 --> C1
+  B1 --> C1
+  B2 --> C1
+  B3 --> C1
+  B4 --> C1
+  B5 --> C1
+  B6 --> C1
+  B7 --> C1
+  B8 --> C1
+  B9 --> C1
+  B10 --> C1
+  W2 --> H1
+  R3 --> H1
+  C1 --> H1
+  P2 --> H1
+  W1 --> S4
+  C1 --> S4
+  S1 --> B8
+  CAM --> B8
+  C1 --> B8
+  S1 --> F2
+  S5 --> F2
+  W1 --> F2
+  P2 --> F2
+  B8 --> F4
+  R1 --> R3
+  S7 --> R4
+  R1 --> R4
+  H3 --> P2
+  P1 --> P2
+  F3 --> P2
+  R1 --> U1
+  W2 --> W3
+  W3 --> H3
+  S1 --> C2_C11
+  W2 --> C2_C11
+  C1 --> C2_C11
+  S1 --> B1
+  CAM --> B1
+  C1 --> B1
+  S1 --> B2
+  CAM --> B2
+  C1 --> B2
+  S1 --> B3
+  CAM --> B3
+  C1 --> B3
+  S1 --> B4
+  CAM --> B4
+  C1 --> B4
+  S1 --> B5
+  CAM --> B5
+  C1 --> B5
+  S1 --> B6
+  CAM --> B6
+  C1 --> B6
+  S1 --> B7
+  CAM --> B7
+  C1 --> B7
+  S1 --> B9
+  CAM --> B9
+  C1 --> B9
+  S1 --> B10
+  CAM --> B10
+  C1 --> B10
+  S5 --> S3
+  S2 --> S6
+  W2 --> S6
+  W3 --> F1
+  P1 --> F1
+  H1 --> F3
+  classDef started fill:#cde8c4,stroke:#3c7a2e
+  class S1,CAM,S2,S5,H2,W2,P1 started
+```
+
 ## Structure
 
 How the code is built, read from the tree (`verify::report::structure`, over the size lexer's outline): the crates, then per clean model its modules, the interface its crate root exports, the shared types it takes and which of its modules uses which, then the shared types and the engine files that adapt each model. A module's items are those it declares for others (`pub` or `pub(crate)`), an enum with its variant count and a type's functions as `Type::{...}`, and how many it keeps private; what its doc says it is is its module doc's first sentence.

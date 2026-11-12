@@ -1,5 +1,5 @@
 # The whole-game plan of domains.md (§3 the domains, §4 the waves) as data, for the status that
-# `verify::report` writes into README.md. The root changes it in the commit that lands a round:
+# `verify::report` writes into README.md and its domain graph. The root changes it in the commit that lands a round:
 # the model's `rounds` by one, and a domain's `status` when its work starts or its queue empties.
 #
 # [[model]]: a clean-room model crate, `crates/clean/<crate>` (its name with dashes as
@@ -11,6 +11,16 @@
 # its model's name; `rounds` is the plan's estimate of its rounds; `model` the model crate that
 # holds it, once one does; `status` is "not-started" (the default), "in-progress" or "done", and
 # a domain past "not-started" names its model.
+#
+# A domain's `reads` are the ids of the domains whose exports it reads: the domain graph, which
+# the report draws in docs/REPORT.md with an arrow from each exporter to its reader. Most are
+# stated in domains.md §3 (its Reads / exports column, a scope that names the other domain's
+# output, or the bosses' paragraph); a read the plan only implies, by a scope that needs the
+# other domain's output or a Depends entry, has an `# Inferred:` comment above it saying why.
+# Audio is one convention, not edges: any domain may send U1 a sound request, so none reads U1
+# for one and U1 reads none for them; U1 reads R1 for the room's track. The report's tests hold
+# the code to the graph: a clean crate, and its engine bridge `crates/game/src/<crate>_bridge`,
+# uses only `types` and the clean crates of its own domains and of the domains they read.
 #
 # [[platform]]: platform work outside the clean room (hardware formats, assets, timing, tools),
 # in lanes, not rounds.
@@ -47,6 +57,8 @@ name = "Samus's motion: follow-ups"
 area = "samus"
 wave = 0
 rounds = 1
+# Inferred: W3 for the equipment it exports.
+reads = ["S5", "S6", "W3", "R1"]
 model = "samus-movement"
 status = "in-progress"
 
@@ -56,6 +68,10 @@ name = "The camera"
 area = "world"
 wave = 0
 rounds = 1
+reads = [
+    "S1", "S4", "S7", "W2", "R1", "R3", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9",
+    "B10",
+]
 model = "world-camera"
 status = "in-progress"
 
@@ -73,6 +89,7 @@ name = "Liquids and pushes"
 area = "samus"
 wave = 1
 rounds = 4
+reads = ["R3"]
 model = "samus-movement"
 status = "in-progress"
 
@@ -82,6 +99,8 @@ name = "How Samus looks"
 area = "samus"
 wave = 1
 rounds = 3
+# Inferred: H1 for the hurt flash and i-frames.
+reads = ["S1", "S3", "H1"]
 model = "samus-appearance"
 status = "in-progress"
 
@@ -91,6 +110,8 @@ name = "The HUD and the mini-map"
 area = "interface"
 wave = 1
 rounds = 2
+# Inferred: W3 for item selection; P1 for map stations.
+reads = ["W3", "H1", "P1"]
 model = "interface-hud"
 status = "in-progress"
 
@@ -100,6 +121,7 @@ name = "Blocks that react"
 area = "world"
 wave = 1
 rounds = 5
+reads = ["S1", "S5", "W1", "R1"]
 model = "world-blocks"
 status = "in-progress"
 
@@ -109,6 +131,8 @@ name = "Progress"
 area = "run"
 wave = 1
 rounds = 1
+# Inferred: B1-B10 for boss flags.
+reads = ["W3", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10"]
 model = "run-progress"
 status = "in-progress"
 
@@ -140,6 +164,7 @@ name = "Doors and elevators"
 area = "world"
 wave = 2
 rounds = 6
+reads = ["S1", "P1"]
 
 [[domain]]
 id = "W1"
@@ -147,6 +172,8 @@ name = "Beams, missiles and bombs"
 area = "weapons"
 wave = 2
 rounds = 5
+# Inferred: F1 for the equipment screen's toggles.
+reads = ["S1", "W3", "F1"]
 
 [[domain]]
 id = "C1"
@@ -154,6 +181,11 @@ name = "Fighting enemies"
 area = "enemy"
 wave = 2
 rounds = 6
+# Inferred: CAM for the window of enemies that run.
+reads = [
+    "S1", "S5", "CAM", "W1", "R1", "C2-C11", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8",
+    "B9", "B10",
+]
 
 [[domain]]
 id = "H1"
@@ -161,6 +193,8 @@ name = "Energy, reserves and death"
 area = "samus"
 wave = 2
 rounds = 2
+# Inferred: P2 for refill stations.
+reads = ["W2", "R3", "C1", "P2"]
 
 [[domain]]
 id = "S4"
@@ -168,6 +202,7 @@ name = "Hurt and knockback, bomb jumps"
 area = "samus"
 wave = 2
 rounds = 2
+reads = ["W1", "C1"]
 model = "samus-movement"
 
 [[platform]]
@@ -196,6 +231,7 @@ name = "Ceres Ridley and the escape"
 area = "boss"
 wave = 3
 rounds = 4
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "F2"
@@ -203,6 +239,8 @@ name = "Title, intro, file select, options"
 area = "screens"
 wave = 3
 rounds = 8
+# Inferred: P2 for the file a file select loads.
+reads = ["S1", "S5", "W1", "P2"]
 
 [[domain]]
 id = "F4"
@@ -210,6 +248,8 @@ name = "Cinematics and credits"
 area = "screens"
 wave = 3
 rounds = 5
+# Inferred: B8 for the escape's end, Ceres's explosion.
+reads = ["B8"]
 
 [[domain]]
 id = "R3"
@@ -217,6 +257,7 @@ name = "Liquids and room weather"
 area = "world"
 wave = 3
 rounds = 4
+reads = ["R1"]
 
 [[domain]]
 id = "R4"
@@ -224,6 +265,7 @@ name = "Room ambience"
 area = "world"
 wave = 3
 rounds = 3
+reads = ["S7", "R1"]
 
 [[domain]]
 id = "P2"
@@ -231,6 +273,8 @@ name = "Saving, loading and stations"
 area = "run"
 wave = 3
 rounds = 3
+# Inferred: F3 for the continue.
+reads = ["H3", "P1", "F3"]
 
 [[domain]]
 id = "U1"
@@ -238,6 +282,7 @@ name = "Audio, the CPU side"
 area = "audio"
 wave = 3
 rounds = 3
+reads = ["R1"]
 
 [[platform]]
 id = "E3"
@@ -267,6 +312,7 @@ name = "Items to pick up"
 area = "world"
 wave = 4
 rounds = 2
+reads = ["W2"]
 
 [[domain]]
 id = "H3"
@@ -274,6 +320,7 @@ name = "Message boxes"
 area = "interface"
 wave = 4
 rounds = 2
+reads = ["W3"]
 
 [[domain]]
 id = "C2-C11"
@@ -281,6 +328,7 @@ name = "Enemy families"
 area = "enemy"
 wave = 4
 rounds = 27
+reads = ["S1", "W2", "C1"]
 
 [[domain]]
 id = "B1"
@@ -288,6 +336,7 @@ name = "Spore Spawn"
 area = "boss"
 wave = 4
 rounds = 2
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B2"
@@ -295,6 +344,7 @@ name = "Bomb Torizo, Golden Torizo"
 area = "boss"
 wave = 4
 rounds = 3
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B3"
@@ -302,6 +352,7 @@ name = "Botwoon"
 area = "boss"
 wave = 4
 rounds = 2
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B4"
@@ -309,6 +360,7 @@ name = "Crocomire"
 area = "boss"
 wave = 4
 rounds = 4
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B5"
@@ -316,6 +368,7 @@ name = "Kraid"
 area = "boss"
 wave = 4
 rounds = 4
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B6"
@@ -323,6 +376,7 @@ name = "Phantoon"
 area = "boss"
 wave = 4
 rounds = 4
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B7"
@@ -330,6 +384,7 @@ name = "Draygon"
 area = "boss"
 wave = 4
 rounds = 3
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B9"
@@ -337,6 +392,7 @@ name = "Ridley"
 area = "boss"
 wave = 4
 rounds = 5
+reads = ["S1", "CAM", "C1"]
 
 [[domain]]
 id = "B10"
@@ -344,6 +400,7 @@ name = "Mother Brain and the escape"
 area = "boss"
 wave = 4
 rounds = 8
+reads = ["S1", "CAM", "C1"]
 
 # Wave 5: the rest of Samus and the screens around play.
 
@@ -353,6 +410,7 @@ name = "The shinespark and echoes"
 area = "samus"
 wave = 5
 rounds = 2
+reads = ["S5"]
 model = "samus-movement"
 
 [[domain]]
@@ -361,6 +419,8 @@ name = "The grapple beam"
 area = "samus"
 wave = 5
 rounds = 3
+# Inferred: S2 for aiming from her pose (S6 depends on S2).
+reads = ["S2", "W2"]
 
 [[domain]]
 id = "S7"
@@ -368,6 +428,7 @@ name = "The x-ray scope"
 area = "samus"
 wave = 5
 rounds = 2
+reads = []
 
 [[domain]]
 id = "F1"
@@ -375,6 +436,8 @@ name = "The pause screen"
 area = "interface"
 wave = 5
 rounds = 5
+# Inferred: W3 for the equipment screen.
+reads = ["W3", "P1"]
 
 [[domain]]
 id = "F3"
@@ -382,6 +445,7 @@ name = "Game over"
 area = "screens"
 wave = 5
 rounds = 1
+reads = ["H1"]
 
 # The headline milestone (MODEL §1 decision 14): the engine replays the any% movie from
 # power-on to the frame of its seed any-opening:7, after the flight to Zebes and before the

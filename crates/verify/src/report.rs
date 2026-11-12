@@ -10,7 +10,8 @@
 //! harness floors and the vector counts; the harnesses' oracle coverage, unverified frames
 //! and per catalogue entry; the engine code not yet rebuilt, `crates/game`
 //! without the bridges; the timeline of each movie's cover by the checks ([`timeline`], also
-//! drawn as `docs/timeline.svg`); and how each clean model is built ([`structure`]).
+//! drawn as `docs/timeline.svg`); the domain graph, the plan's domains and their reads; and how
+//! each clean model is built ([`structure`]).
 //!
 //! The same measures, with the whole-game plan and the verification state, give the README's
 //! status ([`status`]), written between its markers.
@@ -777,6 +778,8 @@ struct Tree {
     timeline: timeline::Timeline,
     floors: BTreeMap<(String, String), usize>,
     coverage: BTreeMap<String, Coverage>,
+    /// The whole-game plan, checked against the rebuilt domains.
+    plan: status::Plan,
 }
 
 impl Tree {
@@ -803,6 +806,8 @@ impl Tree {
             .collect();
         let engine = measure(root, &engine)?;
         let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
+        let rebuilt = names.iter().copied().collect();
+        let plan = status::Plan::parse(&read(&root.join(status::PLAN))?, &rebuilt)?;
         let floors = floors(&read(&root.join(FLOORS))?)?;
         Ok(Self {
             shared_files,
@@ -812,6 +817,7 @@ impl Tree {
             timeline: timeline::Timeline::measure(root, &floors)?,
             floors,
             coverage: coverage(&read(&root.join(COVERAGE))?)?,
+            plan,
         })
     }
 
@@ -878,6 +884,7 @@ fn report(tree: &Tree) -> String {
     coverage_section(&mut out, domains, &tree.coverage);
     engine_section(&mut out, tree);
     tree.timeline.section(&mut out);
+    status::graph_section(&mut out, &tree.plan);
     structure::section(&mut out, tree);
     out
 }
@@ -1502,8 +1509,11 @@ struct Pages {
     svg: String,
 }
 
+/// The pages the tree at `root` generates; none while a clean crate or its bridge uses a clean
+/// crate its domains don't read (`status::undeclared`).
 fn pages(root: &Path) -> Result<Pages, String> {
     let tree = Tree::measure(root)?;
+    status::undeclared(root, &tree.plan)?;
     Ok(Pages {
         report: report(&tree),
         status: status::status(root, &tree)?,

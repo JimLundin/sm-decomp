@@ -1,11 +1,12 @@
 use std::collections::BTreeSet;
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 use super::lines::code_lines;
-use super::status::Plan;
+use super::status::{PLAN, Plan, undeclared};
 use super::{
-    Coverage, EntryCoverage, baseline, check, coverage, current, fit, floors, generate, grouped,
-    status_current, tables, with_status,
+    Coverage, DOMAINS, EntryCoverage, baseline, check, coverage, current, fit, floors, generate,
+    grouped, read, status_current, tables, with_status,
 };
 
 /// The repository root, from this crate's manifest.
@@ -173,4 +174,208 @@ fn the_plan_agrees_with_the_rebuilt_domains() {
     // Every rebuilt domain is a model of the plan, once.
     let others = BTreeSet::from(["world-camera", "interface-hud"]);
     assert!(Plan::parse(&plan(named), &others).is_err());
+}
+
+#[test]
+fn a_domain_reads_only_other_domains_of_the_plan() {
+    let rebuilt = BTreeSet::from(["world-camera"]);
+    let plan = |reads: &str| {
+        format!(
+            "platform = []
+[[model]]
+name = \"world-camera\"
+rounds = 5
+             [[domain]]
+id = \"CAM\"
+name = \"c\"
+area = \"world\"
+wave = 0
+rounds = 1
+{reads}             [[domain]]
+id = \"S1\"
+name = \"s\"
+area = \"samus\"
+wave = 0
+rounds = 1
+             [milestone]
+name = \"m\"
+movie = \"any\"
+ends = \"any:12\"
+needs = []
+"
+        )
+    };
+    let parse = |reads: &str| Plan::parse(&plan(reads), &rebuilt).map(|_| ());
+    assert_eq!(parse(""), Ok(()));
+    assert_eq!(
+        parse(
+            "reads = [\"S1\"]
+"
+        ),
+        Ok(())
+    );
+    assert!(
+        parse(
+            "reads = [\"S9\"]
+"
+        )
+        .is_err()
+    );
+    assert!(
+        parse(
+            "reads = [\"CAM\"]
+"
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn the_clean_crates_use_only_the_domains_they_read() {
+    let names: BTreeSet<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
+    let plan = read(&root().join(PLAN)).and_then(|text| Plan::parse(&text, &names));
+    assert_eq!(plan.and_then(|plan| undeclared(root(), &plan)), Ok(()));
+}
+
+/// A tree of two clean crates, `world_camera` and `samus_movement`, with `types` and a bridge
+/// each, under the system's temporary folder; its plan has the camera read `reads`.
+struct Fixture {
+    root: PathBuf,
+}
+
+impl Fixture {
+    fn new(name: &str) -> Self {
+        let root =
+            std::env::temp_dir().join(format!("verify-report-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        for krate in ["types", "world_camera", "samus_movement"] {
+            let dir = root.join("crates/clean").join(krate);
+            assert!(fs::create_dir_all(&dir).is_ok());
+            let types = if krate == "types" {
+                ""
+            } else {
+                "types = { path = \"../types\" }
+"
+            };
+            assert!(
+                fs::write(
+                    dir.join("Cargo.toml"),
+                    format!(
+                        "[dependencies]
+{types}"
+                    )
+                )
+                .is_ok()
+            );
+        }
+        let bridges = root.join("crates/game/src/world_camera_bridge");
+        assert!(fs::create_dir_all(&bridges).is_ok());
+        assert!(
+            fs::write(
+                bridges.with_extension("rs"),
+                "use types::Parity;
+"
+            )
+            .is_ok()
+        );
+        assert!(
+            fs::write(
+                bridges.join("tests.rs"),
+                "use world_camera::View;
+"
+            )
+            .is_ok()
+        );
+        Self { root }
+    }
+
+    fn write(&self, path: &str, text: &str) {
+        assert!(fs::write(self.root.join(path), text).is_ok());
+    }
+
+    fn check(&self, reads: &str) -> Result<(), String> {
+        let rebuilt = BTreeSet::from(["world-camera", "samus-movement"]);
+        let text = format!(
+            "platform = []
+[[model]]
+name = \"world-camera\"
+rounds = 1
+             [[model]]
+name = \"samus-movement\"
+rounds = 1
+             [[domain]]
+id = \"CAM\"
+name = \"c\"
+area = \"world\"
+wave = 0
+rounds = 1
+             model = \"world-camera\"
+{reads}             [[domain]]
+id = \"S1\"
+name = \"s\"
+area = \"samus\"
+wave = 0
+rounds = 1
+             model = \"samus-movement\"
+             [milestone]
+name = \"m\"
+movie = \"any\"
+ends = \"any:12\"
+needs = []
+"
+        );
+        undeclared(&self.root, &Plan::parse(&text, &rebuilt)?)
+    }
+}
+
+impl Drop for Fixture {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.root);
+    }
+}
+
+#[test]
+fn a_use_of_a_domain_not_read_is_found() {
+    let fixture = Fixture::new("uses");
+    let reads = "reads = [\"S1\"]
+";
+    // Its own crate and the shared types, in the bridge and its tests, need no read.
+    assert_eq!(fixture.check(""), Ok(()));
+    // A bridge's use of another domain's crate needs the read.
+    fixture.write(
+        "crates/game/src/world_camera_bridge/tests.rs",
+        "use samus_movement::Outcome;
+",
+    );
+    assert!(fixture.check("").is_err());
+    assert_eq!(fixture.check(reads), Ok(()));
+    // So does a crate's dependency, in any table of its manifest.
+    fixture.write(
+        "crates/clean/world_camera/Cargo.toml",
+        "[dev-dependencies]
+samus_movement = { path = \"../samus_movement\" }
+",
+    );
+    assert!(fixture.check("").is_err());
+    assert_eq!(fixture.check(reads), Ok(()));
+    // The read runs one way: the reader may use the read domain's crate, not the reverse.
+    fixture.write(
+        "crates/game/src/samus_movement_bridge.rs",
+        "use world_camera::View;
+",
+    );
+    assert!(fixture.check(reads).is_err());
+    // A clean crate whose model holds no domain of the plan is found too.
+    fixture.write(
+        "crates/game/src/samus_movement_bridge.rs",
+        "
+",
+    );
+    assert!(fs::create_dir_all(fixture.root.join("crates/clean/enemy_families")).is_ok());
+    fixture.write(
+        "crates/clean/enemy_families/Cargo.toml",
+        "[dependencies]
+",
+    );
+    assert!(fixture.check(reads).is_err());
 }
