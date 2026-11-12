@@ -30,6 +30,7 @@
 pub mod appearance;
 pub mod blocks;
 pub mod camera;
+pub mod free;
 pub mod game_time;
 pub mod hud;
 pub mod movement;
@@ -131,6 +132,12 @@ impl FieldSet {
     #[must_use]
     pub const fn is_empty(self) -> bool {
         self.0 == 0
+    }
+
+    /// The fields in `self` and not in `other`.
+    #[must_use]
+    pub const fn without(self, other: Self) -> Self {
+        Self(self.0 & !other.0)
     }
 
     /// Whether a field is in both `self` and `other`.
@@ -774,9 +781,34 @@ pub fn run<D: Domain, E>(
     records: impl IntoIterator<Item = Result<FrameRecord, E>>,
 ) -> Result<Report, E> {
     let mut report = Report::new(domain);
+    let mid_frame = frames(domain, records, |from, next| {
+        report.frames = report.frames.saturating_add(1);
+        if let Err(reason) = frame(domain, &mut report, from, next) {
+            report.uncompared(domain.uncompared(&reason));
+        }
+    })?;
+    if mid_frame {
+        report.frames = report.frames.saturating_add(1);
+        report.uncompared(Uncompared::Skip("the row ends mid-frame".to_owned()));
+    }
+    Ok(report)
+}
+
+/// Each frame of `records` as the pair of records (N, N+1) it runs between, in frame order, a
+/// record `domain` folds into the frame before it ([`Domain::folds`]) carrying its hits on to
+/// the next record that ends a frame. Whether the row ends mid-frame.
+///
+/// # Errors
+///
+/// The first record that couldn't be read.
+fn frames<D: Domain, E>(
+    domain: &D,
+    records: impl IntoIterator<Item = Result<FrameRecord, E>>,
+    mut visit: impl FnMut(&FrameRecord, &FrameRecord),
+) -> Result<bool, E> {
     let mut records = records.into_iter();
     let Some(first) = records.next() else {
-        return Ok(report);
+        return Ok(false);
     };
     let mut from = first?;
     let mut folded = Vec::new();
@@ -793,17 +825,10 @@ pub fn run<D: Domain, E>(
             folded.append(&mut next.hits);
             next.hits = core::mem::take(&mut folded);
         }
-        report.frames = report.frames.saturating_add(1);
-        if let Err(reason) = frame(domain, &mut report, &from, &next) {
-            report.uncompared(domain.uncompared(&reason));
-        }
+        visit(&from, &next);
         from = next;
     }
-    if mid_frame {
-        report.frames = report.frames.saturating_add(1);
-        report.uncompared(Uncompared::Skip("the row ends mid-frame".to_owned()));
-    }
-    Ok(report)
+    Ok(mid_frame)
 }
 
 /// Why a cached run couldn't start or finish.
@@ -846,6 +871,20 @@ pub fn run_cached<D: Domain>(
     cache: &Path,
     row: &str,
 ) -> Result<Report, HarnessError> {
+    let cache = open_cached(lock, cache, row)?;
+    let records = cache
+        .entries()
+        .iter()
+        .map(|entry| cache.record(entry).map_err(HarnessError::from));
+    run(domain, records)
+}
+
+/// Row `row`'s record cache under `cache`, checked against the lock at `lock`.
+///
+/// # Errors
+///
+/// A [`HarnessError`] when the lock, the row or its cache can't be read.
+fn open_cached(lock: &Path, cache: &Path, row: &str) -> Result<Cache, HarnessError> {
     let text = std::fs::read_to_string(lock)
         .map_err(|error| HarnessError::Lock(format!("{}: {error}", lock.display())))?;
     let parsed = Lock::parse(&text)
@@ -853,12 +892,7 @@ pub fn run_cached<D: Domain>(
     let row = parsed
         .row(&RowId(row.to_owned()))
         .ok_or_else(|| HarnessError::NoRow(row.to_owned()))?;
-    let cache = Cache::open(cache, row)?;
-    let records = cache
-        .entries()
-        .iter()
-        .map(|entry| cache.record(entry).map_err(HarnessError::from));
-    run(domain, records)
+    Ok(Cache::open(cache, row)?)
 }
 
 #[cfg(test)]

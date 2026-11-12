@@ -1,0 +1,4 @@
+# The domain free run's floors (verify::harness::free, MODEL §4 "The primary proof is a free
+# run"): `<domain> <row> <frames held>`, one line per domain and cached row. A row's held frames
+# never fall below its floor. A cached row with no line prints the line to add; the first run
+# over CI's cache sets them. Raise a floor with the change that raised it.

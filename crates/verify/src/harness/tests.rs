@@ -127,7 +127,7 @@ fn the_null_model_scores_the_frames_on_which_nothing_changes() {
 /// The clock, with the frames field masked out of scope and the seconds field copied from
 /// record N+1 by its stand-in: a domain that exercises the harness's masks and its unverified
 /// count.
-struct Copying;
+pub(super) struct Copying;
 
 impl Domain for Copying {
     const NAME: &'static str = "copying clock";
@@ -274,7 +274,7 @@ fn coverage(domain: &str) -> String {
 }
 
 /// The rows cached under `cache` (a directory with an `index.txt`), sorted.
-fn cached_rows(cache: &Path) -> Vec<String> {
+pub(super) fn cached_rows(cache: &Path) -> Vec<String> {
     let entries = match std::fs::read_dir(cache) {
         Ok(entries) => entries,
         Err(error) => panic!("SM_CACHE {}: {error}", cache.display()),
@@ -290,7 +290,7 @@ fn cached_rows(cache: &Path) -> Vec<String> {
 
 /// `SM_CACHE` and `SM_ROM`, or `None` (with a line saying so) when both are unset; one without
 /// the other, or a cache that isn't a directory, fails.
-fn environment() -> Option<(PathBuf, PathBuf)> {
+pub(super) fn environment() -> Option<(PathBuf, PathBuf)> {
     use std::io::Write as _;
     let (cache, rom) = match (std::env::var_os("SM_CACHE"), std::env::var_os("SM_ROM")) {
         (Some(cache), Some(rom)) => (PathBuf::from(cache), PathBuf::from(rom)),

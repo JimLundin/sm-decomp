@@ -166,10 +166,20 @@ jobs:
             cargo test --locked -p verify --profile verify floors_against_the_cache \
             | tee "$RUNNER_TEMP/floors.txt"
           for test in the_clock_holds_its movement_holds_its the_camera_holds_its \
-            progress_holds_its the_hud_holds_its the_blocks_hold_their; do
+            progress_holds_its appearance_holds_its the_hud_holds_its the_blocks_hold_their; do
             grep -q "^test harness::tests::${test}_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"
           done
+      - name: "Domain free run: every domain fed its own State over every cached row, against free_floors.txt"
+        run: |
+          # The primary proof (MODEL §4): each row's segments, first divergences and held frames
+          # print to the log. A renamed test would filter to nothing and pass, so require its totals.
+          set -o pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --profile verify every_domain_runs_free_against_the_cache -- --nocapture \
+            | tee "$RUNNER_TEMP/free.txt"
+          # One total per domain: the clock and the six models.
+          test "$(grep -c '^all rows: ' "$RUNNER_TEMP/free.txt")" -eq 7
       - name: "Progress's ROM checks: the harness cases, the rows' standing room states and the full percentage"
         run: |
           # Each test skips and passes only with both SM_CACHE and SM_ROM unset, which this step
