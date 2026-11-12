@@ -5,14 +5,13 @@
 //! returns a [`Next`]. The phases are in the original's call order; slice 0's are empty until
 //! their domain lanes fill them.
 
-use crate::camera_world;
 use crate::collision::solid_enemy::SolidEnemies;
 use crate::collision::{Room, Surroundings, Touches, inside};
-use crate::hud_world;
+use crate::interface_hud_bridge::{hud_turn, mini_map_turn};
 use crate::message_box;
 use crate::pose::{self, Content};
-use crate::samus_looks_world;
-use crate::samus_world;
+use crate::samus_appearance_bridge;
+use crate::samus_movement_bridge;
 use crate::scrolling;
 use crate::session::{Rules, SessionFault};
 use crate::state::atmospheric::Atmospherics;
@@ -21,6 +20,7 @@ use crate::state::samus::Samus;
 use crate::state::strand::{Condition, Frame, GameplayAt, MAIN_STRAND_DEPTH, MainLoopAt, Wait};
 use crate::state::video::SamusTileUploads;
 use crate::state::{GameMode, NmiTiming, State};
+use crate::world_camera_bridge;
 
 /// What a frame's step asks the dispatcher to do next.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -464,8 +464,8 @@ fn samus_current_state(
 }
 
 /// What the blocks read in `state`'s room: the content's blocks and the room's population.
-fn blocks<'a>(state: &State, content: &'a Content) -> crate::blocks_world::Reads<'a> {
-    crate::blocks_world::Reads {
+fn blocks<'a>(state: &State, content: &'a Content) -> crate::world_blocks_bridge::Reads<'a> {
+    crate::world_blocks_bridge::Reads {
         content: &content.blocks,
         population: content.room_plms.of(state.room.room),
     }
@@ -491,8 +491,8 @@ fn gameplay_phase(
             let surroundings = surroundings(&state.room, content, &pass.active);
             let reads = blocks(state, content);
             let mut touches = Touches::default();
-            let inputs = samus_world::step::Inputs {
-                reads: samus_world::step::Reads {
+            let inputs = samus_movement_bridge::step::Inputs {
+                reads: samus_movement_bridge::step::Reads {
                     controller: &state.controller,
                     ride: state.elevator,
                     completed,
@@ -501,13 +501,14 @@ fn gameplay_phase(
                 surroundings,
                 speed_cap: rules.switches.speed_cap,
             };
-            let start = samus_looks_world::Start::of(&state.samus);
-            let stepped = samus_world::step::step(&mut state.samus, inputs, &mut touches)
+            let start = samus_appearance_bridge::Start::of(&state.samus);
+            let stepped = samus_movement_bridge::step::step(&mut state.samus, inputs, &mut touches)
                 .map_err(SessionFault::Samus)?;
-            hud_world::mini_map_turn(state, content).map_err(SessionFault::Hud)?;
-            let next = samus_world::step::next(&state.samus, stepped.as_ref(), pass.requests);
+            mini_map_turn(state, content).map_err(SessionFault::Hud)?;
+            let next =
+                samus_movement_bridge::step::next(&state.samus, stepped.as_ref(), pass.requests);
             change_pose(&mut state.samus, &mut state.atmospherics, next, content);
-            samus_looks_world::animate(
+            samus_appearance_bridge::animate(
                 &mut state.samus,
                 start,
                 stepped.as_ref().map(|stepped| &stepped.outcome),
@@ -527,7 +528,7 @@ fn gameplay_phase(
         // with those game states. In game state 8 the clock still counts on that frame; it
         // stops only if an earlier phase this frame already left gameplay.
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
-        GameplayPhase::Hud => hud_world::hud_turn(state, content).map_err(SessionFault::Hud)?,
+        GameplayPhase::Hud => hud_turn(state, content).map_err(SessionFault::Hud)?,
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
         GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, content),
         // `$84:85B4`.
@@ -545,7 +546,8 @@ fn gameplay_phase(
             .map_err(SessionFault::Blocks)?;
         }
         GameplayPhase::Scrolling => {
-            camera_world::scroll(&mut state.room, &mut state.samus).map_err(SessionFault::Room)?;
+            world_camera_bridge::scroll(&mut state.room, &mut state.samus)
+                .map_err(SessionFault::Room)?;
         }
         GameplayPhase::Draw => crate::enemy::drawing::draw(state, content),
         GameplayPhase::BgScroll => bg_scroll(state, content),

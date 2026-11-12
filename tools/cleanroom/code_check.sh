@@ -2,7 +2,7 @@
 # code_check.sh [--import] DIR...: refuse clean-room crates whose code could reach outside its own
 # computation when `cargo test` or `cargo build` runs it (MODEL §5; launch.sh cannot confine
 # what cargo runs). Each DIR is a crate directory (it holds a Cargo.toml) or a root holding
-# crates/clean_types and crates/clean_model/*: an export, a git archive of one, or this
+# crates/clean/* (the shared types and the models): an export, a git archive of one, or this
 # repository. A root with no clean crate passes. Exit 1 prints one line per finding:
 #   code_check: PATH: TAG: DETAIL
 # A warning, which doesn't fail, is `code_check: warning: PATH: TAG: DETAIL`.
@@ -137,8 +137,7 @@ scan_source() { # FILE REL ROOT DOMAIN TEST
       # nothing from outside the clean room.
       if [[ $m == include_str!* && $target == *.rs ]]; then
         case $target in
-          "$(realpath -m "$root/crates/clean_types/src")"/* | \
-            "$(realpath -m "$root/crates/clean_model")"/*/src/*) continue ;;
+          "$(realpath -m "$root/crates/clean")"/*/src/*) continue ;;
         esac
       fi
       hit "$rel" include-path "\"$lit\" is not \"$domain\"'s vector file, its spec or a clean crate's source"
@@ -159,16 +158,16 @@ check_crate() { # CRATE_DIR
   local crate root domain rel f p t allowed
   crate=$(cd "$1" && pwd)
   case $crate in
-    */crates/clean_model/*) root=${crate%/crates/clean_model/*}; domain=${crate##*/} ;;
-    */crates/clean_types) root=${crate%/crates/clean_types}; domain="" ;;
+    */crates/clean/types) root=${crate%/crates/clean/types}; domain="" ;;
+    */crates/clean/*) root=${crate%/crates/clean/*}; domain=$(echo "${crate##*/}" | tr _ -) ;;
     *) root=$crate; domain="" ;;
   esac
   rel=${crate#"$root"/}; [ "$rel" = "$crate" ] && rel=$(basename "$crate")
   variants=0; variant_warn=0
   [ "$importing" -eq 0 ] && [ -f "$warn_list" ] &&
     grep -qxF "$rel" <(sed -E 's/[[:space:]]+$//' "$warn_list" | grep -v '^#') && variant_warn=1
-  allowed="$root/crates/clean_types"
-  [ -n "$domain" ] && allowed="$allowed|$root/crates/clean_model/$domain"
+  allowed="$root/crates/clean/types"
+  [ -n "$domain" ] && allowed="$allowed|$crate"
 
   [ -f "$crate/Cargo.toml" ] || hit "$rel" extra-file "no Cargo.toml"
   if [ -f "$crate/Cargo.toml" ]; then
@@ -212,8 +211,7 @@ for dir in "$@"; do
   if [ -f "$dir/Cargo.toml" ]; then
     check_crate "$dir"
   else
-    [ -d "$dir/crates/clean_types" ] && check_crate "$dir/crates/clean_types"
-    for m in "$dir"/crates/clean_model/*/; do
+    for m in "$dir"/crates/clean/*/; do
       [ -d "$m" ] && check_crate "$m"
     done
   fi

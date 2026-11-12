@@ -82,6 +82,7 @@ struct Model {
 struct PlanDomain {
     id: String,
     name: String,
+    area: Area,
     wave: u8,
     /// The plan's estimate of its rounds.
     rounds: usize,
@@ -89,6 +90,43 @@ struct PlanDomain {
     model: Option<String>,
     #[serde(default)]
     status: Stage,
+}
+
+/// The part of the game a domain belongs to, and the first word of its model's name.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+#[serde(rename_all = "kebab-case")]
+enum Area {
+    Samus,
+    Weapons,
+    World,
+    Enemy,
+    Boss,
+    Interface,
+    Run,
+    Screens,
+    Audio,
+}
+
+impl Area {
+    /// The word a model of the area starts with.
+    const fn word(self) -> &'static str {
+        match self {
+            Self::Samus => "samus",
+            Self::Weapons => "weapons",
+            Self::World => "world",
+            Self::Enemy => "enemy",
+            Self::Boss => "boss",
+            Self::Interface => "interface",
+            Self::Run => "run",
+            Self::Screens => "screens",
+            Self::Audio => "audio",
+        }
+    }
+
+    /// Whether `model` is named in this area: its first word is the area's.
+    fn names(self, model: &str) -> bool {
+        model.split('-').next() == Some(self.word())
+    }
 }
 
 /// Platform work of the plan, outside the clean room.
@@ -128,7 +166,8 @@ impl Stage {
 
 impl Plan {
     /// The plan in `text`, checked against the rebuilt domains: the models are the report's
-    /// domains, each domain's model is one of them, and a started domain names its model.
+    /// domains, each domain's model is one of them and named in its area, and a started domain
+    /// names its model.
     pub(super) fn parse(text: &str, rebuilt: &BTreeSet<&str>) -> Result<Self, String> {
         let plan: Self = toml::from_str(text).map_err(|e| format!("{PLAN}: {e}"))?;
         let listed: BTreeSet<&str> = plan.model.iter().map(|model| model.name.as_str()).collect();
@@ -141,6 +180,13 @@ impl Plan {
             match (&domain.model, domain.status) {
                 (Some(model), _) if !listed.contains(model.as_str()) => {
                     return Err(format!("{PLAN}: {}: no model {model}", domain.id));
+                }
+                (Some(model), _) if !domain.area.names(model) => {
+                    return Err(format!(
+                        "{PLAN}: {}: the model {model} is not in its area, {}",
+                        domain.id,
+                        domain.area.word()
+                    ));
                 }
                 (None, Stage::InProgress | Stage::Done) => {
                     return Err(format!(

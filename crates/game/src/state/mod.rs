@@ -239,7 +239,7 @@ pub const COLLECTED_ITEM_WORDS: usize = 32;
 ///
 /// Bit `n % 16` of word `n / 16` is place `n`, the item PLM's room argument (bank $84 log,
 /// `$84:8899`; `$84:887C` tests it). The progress model reads and writes it through
-/// `progress_world`.
+/// `run_progress_bridge`.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct CollectedItems(pub [u16; COLLECTED_ITEM_WORDS]);
 

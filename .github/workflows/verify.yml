@@ -148,7 +148,7 @@ jobs:
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
             cargo test --locked -p verify --profile verify floors_against_the_cache \
             | tee "$RUNNER_TEMP/floors.txt"
-          for test in the_clock_holds_its samus_motion_holds_its the_camera_holds_its \
+          for test in the_clock_holds_its movement_holds_its the_camera_holds_its \
             progress_holds_its the_hud_holds_its the_blocks_hold_their; do
             grep -q "^test harness::tests::${test}_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"

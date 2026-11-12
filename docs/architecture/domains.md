@@ -8,7 +8,7 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
 
 ## 0. The answer in three lines
 
-- Done: about 5% of the game's behaviour (samus-motion 7,160 + camera 1,506 weighted, about
+- Done: about 5% of the game's behaviour (samus-movement 7,160 + camera 1,506 weighted, about
   250 spec units). The remaining clean model is likely 120-170k weighted, about 3,500-4,500
   spec units at k = 36.
 - That is about 140-150 clean-room pipeline rounds (spec, adversary, implement, wire, gaps)
@@ -30,10 +30,10 @@ its item, message box and about 370 lag Ticks). Free-run gate green pairs: area-
 vram/cgram/oam/sram/ppu/timing, item-morph-ball sram/timing. Lockstep: area-brinstar 476/476,
 item-morph-ball 1372/1427 Ticks equal (54 video, 1 each elevator/projectiles/room). No doors,
 no second room in a run. `app` is an empty `main` (2.5). The **domain harnesses** (game-time,
-samus-motion, camera) run on oracle frames of any room, so the clean domains are proven far
+samus-movement, camera) run on oracle frames of any room, so the clean domains are proven far
 beyond the slice (32 rows, 18,331 frames), but only per frame, re-seeded.
 
-Totals: `game` 36,856, `data` 25,412, `runtime` 8,351, clean models 8,666, `clean_types` 467.
+Totals: `game` 36,856, `data` 25,412, `runtime` 8,351, clean models 8,666, `types` 467.
 
 ### `crates/game`
 
@@ -49,7 +49,7 @@ today, as code still to be rebuilt, bridges and rebuilt models, is in
 | `exact` (`oam`, `tilemap`, `ppu`) | the encoder from intents to the original's bytes: the OAM buffer; the VRAM write queue, the scrolling DMAs and the message box's direct overlay writes; the message box's PPU set-up |
 | `commit` | the NMI's video commit points |
 | `lines` | the scan-out skeleton (HUD split, HDMA not yet) |
-| `samus_world`, `camera_world`, `blocks_world`, `hud_world`, `progress_world` (bridges) | each clean model's contact with the engine's State |
+| `samus_movement_bridge`, `world_camera_bridge`, `world_blocks_bridge`, `interface_hud_bridge`, `run_progress_bridge` (bridges) | each clean model's contact with the engine's State |
 | `plm` (+draw, item_gfx) | spawning a room's PLMs, the items' triggers and the PLM pass; the PLM draw as `TileWrite` block rows; item GFX load. Slice 0's PLMs only |
 | `enemy` (+drawing, eye, face_block, instructions) | processing window and per-slot bookkeeping, the instruction-list runner, drawing by layer; species: the elevator, the Morph Ball Room's eye, the Blue Brinstar face block |
 | `projectile` | Samus's projectiles: cooldown, the power beam's flight and block checks, instruction lists. No other beam, missiles, bombs |
@@ -79,12 +79,12 @@ windows; between-line changes only. No sound backend, no storage.
 
 ### The clean models (8,666)
 
-`clean_model/samus-motion` 7,160 (+8,118 data), `clean_model/camera` 1,506 (+535 data).
+`clean/samus_movement` 7,160 (+8,118 data), `clean/world_camera` 1,506 (+535 data).
 
 ## 2. What the real game has that the engine lacks
 
 Sized by the whole-game port at `archive/old-engine` (`sm_game`, 1.04 M weighted, verbose and
-partly transpiled; it is an upper bound). Calibration: samus-motion's clean model is about 0.13
+partly transpiled; it is an upper bound). Calibration: samus-movement's clean model is about 0.13
 of that port's player movement, collision and transitions (57k), the camera 0.19 of its room
 scrolls (7.8k). So **clean ≈ 0.12-0.2 × old port**. Banks from the bank-log index.
 
@@ -131,10 +131,10 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | # | Domain (player terms) | Scope | Reads / exports | Old code, baseline | Rows | Depends | Rounds |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
 | S1 | **Samus's motion: follow-ups** | export `rising`; C2 (`camera_from` under a block-inside push); C3 (chain-0059-A293 400) | exports `rising` to the camera | none (fixes) | cached | none | 1 |
-| S2 | **Samus in water, lava and sand; pushes** (samus-motion rounds) | other speeds and gravity in liquids, the speed booster's dash cap and higher jump (the booster's stages are S5's), quicksand, conveyors, Ceres pushes, the steep blocks' corners | reads the liquid's level (R3) as an input; same speed quantities, so it extends samus-motion | in `samus_world`/model already; old port movement | cached (chain-0220/0224/0232, area-maridia, terrain-quicksand, samus-ceres-push) | S1 | 4 |
-| S3 | **The shinespark and echoes** (samus-motion rounds) | charge store, the spark's directions, its end, the echoes' positions | exports the echoes to S5 | none | cached (samus-shinespark-*) | S2 | 2 |
-| S4 | **Hurt and knockback; bomb jumps** (samus-motion rounds) | knockback motion and its turn of the camera lead (camera C4), bomb-jump launch | reads a hit event (C1) and a bomb blast (W1) | none | cached (chain-0106, samus-bomb-jump-vertical) | S2 | 2 |
-| S5 | **How Samus looks** | animation timing (`AnimationEnds` becomes an output; the run's pace and the speed booster's stages up to boosting, the clock the shinespark, the echoes, the glow, the blocks and the enemies read), her sprite (clips), palette (suits, visor, charge flash, screw attack, speed booster glow, hurt flash), atmospheric splashes and dust, the i-frame flicker | reads her pose; exports `SpriteDraw`, palette intents; samus-motion reads its "animation ended" | `animation` 1,246, `samus_drawing` 605, `samus_palette` 183, `atmospheric` 1,082 (3,116) | cached, OAM and CGRAM streams | E1 | 3 |
+| S2 | **Samus in water, lava and sand; pushes** (samus-movement rounds) | other speeds and gravity in liquids, the speed booster's dash cap and higher jump (the booster's stages are S5's), quicksand, conveyors, Ceres pushes, the steep blocks' corners | reads the liquid's level (R3) as an input; same speed quantities, so it extends samus-movement | in `samus_movement_bridge`/model already; old port movement | cached (chain-0220/0224/0232, area-maridia, terrain-quicksand, samus-ceres-push) | S1 | 4 |
+| S3 | **The shinespark and echoes** (samus-movement rounds) | charge store, the spark's directions, its end, the echoes' positions | exports the echoes to S5 | none | cached (samus-shinespark-*) | S2 | 2 |
+| S4 | **Hurt and knockback; bomb jumps** (samus-movement rounds) | knockback motion and its turn of the camera lead (camera C4), bomb-jump launch | reads a hit event (C1) and a bomb blast (W1) | none | cached (chain-0106, samus-bomb-jump-vertical) | S2 | 2 |
+| S5 | **How Samus looks** | animation timing (`AnimationEnds` becomes an output; the run's pace and the speed booster's stages up to boosting, the clock the shinespark, the echoes, the glow, the blocks and the enemies read), her sprite (clips), palette (suits, visor, charge flash, screw attack, speed booster glow, hurt flash), atmospheric splashes and dust, the i-frame flicker | reads her pose; exports `SpriteDraw`, palette intents; samus-movement reads its "animation ended" | `animation` 1,246, `samus_drawing` 605, `samus_palette` 183, `atmospheric` 1,082 (3,116) | cached, OAM and CGRAM streams | E1 | 3 |
 | S6 | **The grapple beam** | aim, fire, latch, swing (angle, length), release hand-off, grapple blocks | owns her position on attached frames; reads grapple block kinds; exports release speeds | none (old port 11k) | cached (samus-grapple-*); boss-draygon-grapple-* | S2, W2 | 3 |
 | S7 | **The x-ray scope** | the cone, its sweep, time stopped (camera's `TimeStopped`), revealed blocks | exports time-stopped and the cone to R4 | none | cache `xray-scan-*` (4 rows) | E2 | 2 |
 
@@ -143,7 +143,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | # | Domain | Scope | Reads / exports | Old code, baseline | Rows | Depends | Rounds |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
 | W1 | **Beams, missiles and bombs** | beam combinations, charge, cooldowns, flight shapes (wave, spazer, plasma, ice), missiles, supers, bombs and their blasts, power bombs and their expanding window, crystal flash | reads equipment, her pose; exports projectile hits on blocks (W2) and enemies (C1), blasts (S4) | `projectile` 2,551 | cache `special-beam-*`, `beam-reflect`, `power-bomb-*`, `samus-crystal-flash`; chains | E1 | 5 |
-| W2 | **Blocks that react** | shot, bomb, power bomb, super and speed blocks, crumble, respawn, grapple blocks, spikes (as a hurt event), the scroll cells that open and close screens (camera round 2), door caps as blocks | reads her touched cells (samus-motion `TouchedCells`) and W1's hits; writes the level's blocks; needs D13's `Program<F>` with PLM lists as imported assets | `plm` 4,705 (part), `collision/inside` | cached chains (crumble, scroll PLMs); more chain rows | A1 | 5 |
+| W2 | **Blocks that react** | shot, bomb, power bomb, super and speed blocks, crumble, respawn, grapple blocks, spikes (as a hurt event), the scroll cells that open and close screens (camera round 2), door caps as blocks | reads her touched cells (samus-movement `TouchedCells`) and W1's hits; writes the level's blocks; needs D13's `Program<F>` with PLM lists as imported assets | `plm` 4,705 (part), `collision/inside` | cached chains (crumble, scroll PLMs); more chain rows | A1 | 5 |
 | W3 | **Items to pick up** | item blocks, chozo balls, hidden items, the collected bit, what each item gives, reserve tanks' auto refill | reads W2's reach; exports the message (H2) and equipment | `plm` item path, `ItemStep` | cached (item-morph-ball); cache `item-wave`, chain rows with items | W2 | 2 |
 
 ### Rooms
@@ -242,9 +242,9 @@ The second lane carries, in this order:
    the kept draws, encoded again from an empty buffer, give the frame's OAM. *Risk:* draws are
    made per main-loop pass, not per Tick: a lag Tick has none and shows the previous; the view
    must say which pass a picture is from.
-2. **Samus-looks part 2's bridge (S5).** The clean model says which clip frame shows and where
+2. **Samus-appearance part 2's bridge (S5).** The clean model says which clip frame shows and where
    (and the flicker); the bridge turns it into the draw through the assets, as
-   `samus_drawing::body` does now, and `samus_drawing` goes. No sprite type joins `clean_types`:
+   `samus_drawing::body` does now, and `samus_drawing` goes. No sprite type joins `types`:
    a model names clips and frames, never sprites ([DESIGN](../cleanroom/DESIGN.md)). *Risk:*
    the chest sprite is her body's one `Lone` piece (`SamusAssets::chest`); the bridge keeps it
    between the top half and the bottom half, where the `oam` stream sees its entry.
@@ -275,7 +275,7 @@ upload read from the HUD's buffer. A block row is clipped to the blocks the ring
 placed in BG1's two screens, with the screen swap BG1's scroll offset makes. Its top cells are
 queued before its bottom cells, and a row that runs off its screen is split onto the other (the
 screen split of tilemap rows). It is read from the PLM draw's buffer, which a pass fills from
-its start. The queue's capacity drops a row whole. Its producers are the HUD (`hud_world`, the
+its start. The queue's capacity drops a row whole. Its producers are the HUD (`interface_hud_bridge`, the
 model's grid as the overlay's rows 1 to 3) and the PLM pass (`plm::draw::Drawing`, a changed
 block's look from `bg_graphics::block_look`). Each caller writes where the original queued, so
 the queue keeps the original's order.
@@ -367,7 +367,7 @@ outside Ceres's three species. 413 frames lag, 141 of them before the intro.
 
 | Item | For |
 | --- | --- |
-| S1, S5 (samus-motion, samus-looks) | her motion and looks in every room and in the intro's two demo scenes |
+| S1, S5 (samus-movement, samus-appearance) | her motion and looks in every room and in the intro's two demo scenes |
 | S2 | Ceres Ridley's getaway pushes her when she stands in his way (the 100% movie's `samus-ceres-push`); no liquid in the stretch |
 | S4 | her knockback: Ridley's five hits, the intro's one; no bomb |
 | CAM | the view in every room; while the mode 7 flag is set (the shaft, Ridley's getaway) the BG scroll doesn't follow it |
@@ -417,7 +417,7 @@ Each wave's domains are independent specs and run in parallel; a wave starts whe
 depends on has its model shape (decision 2).
 
 **Wave 0, now (small, queued):**
-- S1 samus-motion follow-ups: `rising`, C2, C3. 1 round.
+- S1 samus-movement follow-ups: `rising`, C2, C3. 1 round.
 - Camera round 2: C5's masks named in the harness note; the lead settings' vectors; the
   closed-screen cells' interface ready for W2. 1 round. (C4 waits for S4/H1/S7.)
 - V1 tooling: the domain free-run harness (the model fed its own State across a row, other
@@ -446,8 +446,8 @@ checked against the ROM by the importer. About 66 rounds.
 **Wave 5:** S3 (2), S6 (3), S7 (2), F1 (5), F3 (1). About 13 rounds.
 
 **Total:** about 145 clean-room rounds and 30-40 platform lanes, against about 13 done so far
-(samus-motion's 12, the camera's 1). Units per round need to average about 30 (the camera did
-42 in one round; samus-motion 17 a round while the method was settling). If the round's fixed
+(samus-movement's 12, the camera's 1). Units per round need to average about 30 (the camera did
+42 in one round; samus-movement 17 a round while the method was settling). If the round's fixed
 cost (export, adversary twice, canaries, landing one at a time) doesn't fall, root integration
 and review, not implementation, set the pace.
 

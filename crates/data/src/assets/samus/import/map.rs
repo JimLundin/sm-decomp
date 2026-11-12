@@ -1,7 +1,7 @@
 //! The pose map: which of the original's poses shows each pose as the player sees it.
 //!
 //! Nothing in the ROM names a pose by its parts, so the map is held here, once (the
-//! samus-motion decode notes, "The pose map"). Of the original's 253 poses, 164 are one of
+//! samus-movement decode notes, "The pose map"). Of the original's 253 poses, 164 are one of
 //! hers; the rest are another domain's or unused.
 
 use crate::assets::samus::key::{

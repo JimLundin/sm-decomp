@@ -18,7 +18,7 @@ need is in this repository; read nothing outside it.
 - **A table keyed by an enum** names each member once, in one of three forms: an exhaustive
   `match` from each variant (or a constant, or a literal) to its value, with no guard and no
   block arm; `enum_map!` rows; or a constant's rows, each naming its member, gathered with
-  `clean_types::by_member`. The compiler checks the first two for a missing or repeated
+  `types::by_member`. The compiler checks the first two for a missing or repeated
   member; the third needs a test that checks the set. Its values are values: literals,
   constants, variants and constructors given only values, never a local, a field or a
   computation. Choose the form that reads best where the table is used.
@@ -190,7 +190,7 @@ behaviour exact. Use enums with data and newtypes, never raw numbers for a mode 
 
 ## The rules of this repository
 
-- Write only in `crates/clean_model/<domain>` and `crates/clean_types`. They depend on each other,
+- Write only in `crates/clean/<crate>` and `crates/clean/types`. They depend on each other,
   the standard library and the crates their manifests name.
 - End every commit message with the trailer `Role: implementer`, and use the spec's words and entry
   ids in it.

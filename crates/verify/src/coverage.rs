@@ -386,7 +386,7 @@ pub const FIELDS: &[Field] = &[
         source::BG2_ROW_UPDATE.enable,
     ),
     wram_byte("video.nmi_requested", source::WAITING_FOR_NMI),
-    // Samus's motion State (`harness::samus_motion::decode`).
+    // Samus's motion State (`harness::movement::decode`).
     wram_fixed(
         "samus.motion.position.x",
         source::SAMUS_X_POS,
@@ -991,7 +991,7 @@ mod tests {
             rules.last_different_pose.pose,
         ]
         .into_iter()
-        .chain(crate::harness::samus_motion::SOURCES)
+        .chain(crate::harness::movement::SOURCES)
         .collect()
     }
 

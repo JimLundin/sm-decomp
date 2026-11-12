@@ -2,7 +2,7 @@
 //! 2026-11-08: the numbers observable at any commit, sizes also in lines).
 //!
 //! Per rebuilt domain ([`DOMAINS`]) and in total: the model's score (`size`) over
-//! `crates/clean_model/<domain>`, with `crates/clean_types` shared out; the spec's units and
+//! `crates/clean/<crate>` (the domain, dashes as underscores), with `crates/clean/types` shared out; the spec's units and
 //! budget by area (`spec_units` on `docs/behaviours/<domain>.md` and
 //! `scenarios/vectors/<domain>.toml`, k and the areas from the Budget section of
 //! `docs/behaviours/<domain>.decode.md`) and the fit, score ÷ budget; the old code's baseline as
@@ -48,7 +48,7 @@ const STATUS_BEGIN: &str = "<!-- status:begin -->";
 /// The line after the README's status.
 const STATUS_END: &str = "<!-- status:end -->";
 /// The old engine's density in weighted tokens per code line, which turns a score into lines:
-/// about 5.5 to 7, measured on samus-motion's old code at `c7f927ab6` and the camera's at
+/// about 5.5 to 7, measured on samus-movement's old code at `c7f927ab6` and the camera's at
 /// `cfa5b8144`.
 const TOKENS_PER_LINE: usize = 6;
 /// The share of a model's score, in percent, above which its shared code (in no area) is a
@@ -59,20 +59,22 @@ const FLOORS: &str = "crates/verify/src/harness/floors.txt";
 /// The harnesses' oracle coverage over every row, per domain and catalogue entry.
 const COVERAGE: &str = "crates/verify/src/harness/coverage.txt";
 /// The crate of types the clean models share.
-const SHARED_TYPES: &str = "crates/clean_types";
+const SHARED_TYPES: &str = "crates/clean/types";
 /// The engine crate, the bridges' home and the code not yet rebuilt.
 const ENGINE: &str = "crates/game";
 
 /// A rebuilt domain. Its spec is `docs/behaviours/<name>.md`, its budget the `## Budget`
 /// section of `docs/behaviours/<name>.decode.md`, its vectors
-/// `scenarios/vectors/<name>.toml`, its model `crates/clean_model/<name>`, its harness
-/// `crates/verify/src/harness/<name, snake case>*` and its floors the rows of `floors.txt` that
-/// name it.
+/// `scenarios/vectors/<name>.toml`, its model `crates/clean/<crate>` (the name with dashes as
+/// underscores) and its floors the rows of `floors.txt` that name it.
 struct Domain {
     /// The domain's name.
     name: &'static str,
     /// The bridge's files under `crates/game/src`: those whose names start with it.
     bridge: &'static str,
+    /// The harness's files under `crates/verify/src/harness`: those whose names start with it.
+    /// The harness module is named apart from the model crate, so neither hides the other.
+    harness: &'static str,
     /// The Budget section's areas, each with the model files (under the model's `src`) that
     /// hold it. A model file in no area is the domain's shared code: it counts in the domain's
     /// total only.
@@ -95,8 +97,9 @@ struct Apart {
 /// The rebuilt domains, in the report's order. Adding one is one entry.
 const DOMAINS: &[Domain] = &[
     Domain {
-        name: "samus-motion",
-        bridge: "samus_world",
+        name: "samus-movement",
+        bridge: "samus_movement_bridge",
+        harness: "movement",
         areas: &[
             (
                 "motion",
@@ -139,8 +142,9 @@ const DOMAINS: &[Domain] = &[
     // `rules.rs` is the lead's: its functions give a lead setting's lead for the way she travels,
     // and its other values (the push, the margin) are constants.
     Domain {
-        name: "camera",
-        bridge: "camera_world",
+        name: "world-camera",
+        bridge: "world_camera_bridge",
+        harness: "camera",
         areas: &[
             ("follow", &["follow.rs", "rules.rs"]),
             ("limits", &["axis.rs", "room.rs"]),
@@ -148,13 +152,14 @@ const DOMAINS: &[Domain] = &[
         apart: &[],
     },
     // The rules (equipment's beams and percentage's divisors) and the catalogue are the domain's
-    // shared code; the keyed tables and sets are `clean_types'`. `progress.rs` holds what has
+    // shared code; the keyed tables and sets are the shared `types`'. `progress.rs` holds what has
     // happened with the whole progress. The report handler is one function whose arms are
     // mostly the places' (emptied places, doors, maps, stations, items placed), so it counts
     // there.
     Domain {
-        name: "progress",
-        bridge: "progress_world",
+        name: "run-progress",
+        bridge: "run_progress_bridge",
+        harness: "progress",
         areas: &[
             ("happened", &["progress.rs"]),
             ("places", &["places.rs", "report.rs"]),
@@ -168,8 +173,9 @@ const DOMAINS: &[Domain] = &[
     // in the layout being constants. The frame's order, the grid, the inputs, the tiles, the
     // State, the flash's and blink's timing and the catalogue are the domain's shared code.
     Domain {
-        name: "hud",
-        bridge: "hud_world",
+        name: "interface-hud",
+        bridge: "interface_hud_bridge",
+        harness: "hud",
         areas: &[
             ("status", &["status_bar.rs", "pictures.rs", "layout.rs"]),
             ("selection", &["selection.rs", "item.rs"]),
@@ -197,8 +203,9 @@ const DOMAINS: &[Domain] = &[
     // by family, with the room's start beside them in the State, the breakables'. The scroll's
     // area has no file of its own.
     Domain {
-        name: "blocks",
-        bridge: "blocks_world",
+        name: "world-blocks",
+        bridge: "world_blocks_bridge",
+        harness: "blocks",
         areas: &[
             ("places", &["places.rs", "reactions.rs"]),
             ("scroll", &[]),
@@ -248,8 +255,9 @@ const DOMAINS: &[Domain] = &[
     // start tells, the playhead, the clip's play and its start in a new pose are the clip's; her
     // moves' writes and the run's pace and boost stages are the other two areas.
     Domain {
-        name: "samus-looks",
-        bridge: "samus_looks_world",
+        name: "samus-appearance",
+        bridge: "samus_appearance_bridge",
+        harness: "appearance",
         areas: &[
             ("clip", &["clip.rs", "ahead.rs", "play.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
@@ -629,9 +637,11 @@ fn floors(text: &str) -> Result<BTreeMap<(String, String), usize>, String> {
 
 /// Whether a model's manifest depends on the shared types.
 fn uses_shared_types(manifest: &str) -> bool {
-    manifest
-        .lines()
-        .any(|line| line.trim_start().starts_with("clean_types"))
+    manifest.lines().any(|line| {
+        line.split('=')
+            .next()
+            .is_some_and(|key| key.trim() == "types")
+    })
 }
 
 /// The model's parts with the functions counted apart: each taken out of its file's part and
@@ -686,7 +696,9 @@ fn with_apart(
 }
 
 fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, String> {
-    let model_dir = root.join("crates/clean_model").join(domain.name);
+    let model_dir = root
+        .join("crates/clean")
+        .join(domain.name.replace('-', "_"));
     let model_src = model_dir.join("src");
     let files = sources(std::slice::from_ref(&model_src))?;
     let model = measure(root, &files)?;
@@ -733,10 +745,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
             ));
         }
     }
-    let harness = prefixed(
-        &root.join("crates/verify/src/harness"),
-        &domain.name.replace('-', "_"),
-    )?;
+    let harness = prefixed(&root.join("crates/verify/src/harness"), domain.harness)?;
     let uses_shared = uses_shared_types(&read(&model_dir.join("Cargo.toml"))?);
     Ok(Measured {
         domain,
@@ -887,7 +896,7 @@ How it is counted:
   duplication parts it includes; **logic**, **types** and **data** are token counts, the last two
   not held against the budget. **Clumps** (Q2) is a diagnostic, not part of the score. Scores
   are rounded to whole tokens.
-- **Model** is the files a domain owns, `crates/clean_model/<domain>`; its score, fit and lines
+- **Model** is the files a domain owns, `crates/clean/<crate>`, its name with underscores for dashes; its score, fit and lines
   count those alone. `{SHARED_TYPES}` is a row of its own, **shared types**, with the domains
   whose model depends on it, and is counted once in the total.
 - **Budget** and **units** are `tools spec-units` (`verify::spec_units`) on the domain's spec and
@@ -908,7 +917,7 @@ How it is counted:
   `tests.rs` files and `#[cfg(test)]` items). A file holds **tables and types** when its type
   and data tokens outnumber its logic tokens, else **logic**. **Logic-equivalent lines** are
   score ÷ {TOKENS_PER_LINE}: the old engine's density, about 5.5 to 7 weighted tokens per line,
-  measured on samus-motion's old code at `c7f927ab6` and the camera's at `cfa5b8144`.
+  measured on samus-movement's old code at `c7f927ab6` and the camera's at `cfa5b8144`.
 "
     );
 }
@@ -1205,7 +1214,7 @@ fn areas(out: &mut String, domains: &[Measured]) {
 fn bridge_and_harness(out: &mut String, domains: &[Measured]) {
     out.push_str(
         "\n## Bridges and harnesses\n\nThe bridge (`crates/game/src/<bridge>*`) answers the \
-         model's world from the engine; the harness (`crates/verify/src/harness/<domain>*`) \
+         model's world from the engine; the harness (`crates/verify/src/harness/<harness>*`) \
          checks the model against the oracle. Neither is the model's.\n\n",
     );
     measure_table(out, 2, &["Domain", "Part", "Files"]);

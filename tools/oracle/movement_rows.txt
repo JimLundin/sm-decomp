@@ -1,0 +1,34 @@
+# Rows for the Samus-movement harness's record cache (tools/oracle/record_caches.sh), each under
+# 3,000 frames. The reason follows each row; frame counts are the lock's.
+area-brinstar              # 477: held row (CI cache); elevator ride, then a short walk
+item-morph-ball            # 1428: held row (CI cache); running, jumps, morphing, the message box
+samus-input-poses          # 560: Ceres, authored pads through the input poses (turns, crouch, aim) and a normal jump
+samus-walljump-16          # 158: wall jump, input on frame 16 of the wall contact (Landing Site)
+samus-walljump-22          # 164: wall jump at frame 22
+samus-walljump-28          # 170: wall jump at frame 28
+samus-space-jump-chain     # 384: chained spin jumps with space jump
+samus-screw-attack         # 946: spin jumps with screw attack (Crateria 93AA)
+samus-mockball             # 130: morph ball keeping run momentum (mockball)
+samus-bomb-jump-vertical   # 1059: morph ball, bomb jumps, falls in ball
+samus-shinespark-right     # 406: speed booster run, charge store, horizontal spark right
+samus-shinespark-left      # 419: the same facing left
+samus-shinespark-up        # 394: vertical spark
+samus-shinespark-up-left   # 419: diagonal spark
+samus-square-slope-reserve # 399: square slopes (Norfair AC83)
+samus-ceres-push           # 1778: forced fall and acceleration in the Ceres escape
+samus-grapple-release      # 489: falling after a grapple release (room D78F)
+samus-grapple-walljump     # 175: grapple release into a wall jump (room D72A)
+terrain-quicksand          # 457: quicksand
+chain-0012-91F8            # 1033: 100% route, Landing Site: long runs, jumps, falls
+chain-0013-92FD            # 600: Parlor: running down slopes, falls
+chain-0014-96BA            # 507: Climb: a long fall
+chain-0057-9FBA            # 550: Brinstar route room: platforming
+chain-0059-A293            # 778: Brinstar route room: longer platforming
+chain-0097-ACF0            # 819: Speed Booster Hall, before the booster
+chain-0100-B07A            # 286: Norfair route room after the speed booster (chain-0098 is its room)
+chain-0106-AD5E            # 783: Norfair route room with the speed booster equipped
+chain-0224-D0B9            # 513: Maridia Mt. Everest: underwater movement
+chain-0220-D017            # 539: Maridia route room: water
+chain-0232-D5A7            # 707: Maridia Aqueduct: water and sand
+area-maridia               # 429: Maridia from its area seed: water
+area-norfair               # 375: Norfair from its area seed

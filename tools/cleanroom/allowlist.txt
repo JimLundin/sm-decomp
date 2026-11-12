@@ -1,15 +1,16 @@
 # What a clean-room export holds (MODEL §5, "The clean room is enforced by construction").
 # export.sh copies [all] and [domain <name>] from the source commit, writes [generated] itself,
 # Nothing else enters the export.
-# `{domain}` is the domain's name. An entry ending in `/` is a directory.
+# `{domain}` is the domain's name and `{crate}` its model crate's, the domain with dashes as
+# underscores (lib.sh's model_package). An entry ending in `/` is a directory.
 # A change here widens what an implementer sees: the adversary reviews it like a brief.
 
 [all]
 # The clean crates (crates/README.md has the rest of the workspace). They depend on each other,
 # std and the registry crates of allowed_deps.txt. A crate absent from the source commit is
 # created empty.
-crates/clean_types/
-crates/clean_model/{domain}/
+crates/clean/types/
+crates/clean/{crate}/
 # The domain's spec and vectors, from the observer.
 docs/behaviours/{domain}.md
 scenarios/vectors/{domain}.toml
@@ -23,7 +24,7 @@ rust-toolchain.toml
 # manifest's [patch.crates-io] names them; export.sh drops those the export doesn't use.
 vendor/
 
-# Entries for one domain only, as `[domain samus-motion]`.
+# Entries for one domain only, as `[domain samus-movement]`.
 
 [generated]
 # Written by export.sh, not copied. Cargo.lock is the source commit's, pruned to the export;
@@ -39,5 +40,5 @@ clippy.toml
 
 [import]
 # The paths an implementer's patch may touch. import.sh refuses a patch outside them.
-crates/clean_types/
-crates/clean_model/{domain}/
+crates/clean/types/
+crates/clean/{crate}/

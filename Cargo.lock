@@ -23,77 +23,11 @@ name = "canonical_derive"
 version = "0.1.0"
 
 [[package]]
-name = "clean_model_blocks"
-version = "0.1.0"
-dependencies = [
- "clean_types",
- "enum-map",
- "serde",
- "toml 1.2.1+spec-1.1.0",
-]
-
-[[package]]
-name = "clean_model_camera"
-version = "0.1.0"
-dependencies = [
- "clean_types",
- "serde",
- "toml 1.2.1+spec-1.1.0",
-]
-
-[[package]]
-name = "clean_model_hud"
-version = "0.1.0"
-dependencies = [
- "clean_types",
- "enum-map",
- "serde",
- "toml 1.2.1+spec-1.1.0",
-]
-
-[[package]]
-name = "clean_model_progress"
-version = "0.1.0"
-dependencies = [
- "clean_types",
- "enum-map",
- "serde",
- "toml 1.2.1+spec-1.1.0",
-]
-
-[[package]]
-name = "clean_model_samus_looks"
-version = "0.1.0"
-dependencies = [
- "clean_types",
- "enum-map",
- "serde",
- "toml 1.2.1+spec-1.1.0",
-]
-
-[[package]]
-name = "clean_model_samus_motion"
-version = "0.1.0"
-dependencies = [
- "clean_types",
- "enum-map",
- "serde",
- "toml 1.2.1+spec-1.1.0",
-]
-
-[[package]]
-name = "clean_types"
-version = "0.1.0"
-dependencies = [
- "enum-map",
-]
-
-[[package]]
 name = "data"
 version = "0.1.0"
 dependencies = [
  "canonical",
- "clean_types",
+ "types",
 ]
 
 [[package]]
@@ -127,16 +61,16 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "canonical",
- "clean_model_blocks",
- "clean_model_camera",
- "clean_model_hud",
- "clean_model_progress",
- "clean_model_samus_looks",
- "clean_model_samus_motion",
- "clean_types",
  "data",
  "enum-map",
+ "interface_hud",
+ "run_progress",
+ "samus_appearance",
+ "samus_movement",
  "toml 0.8.23",
+ "types",
+ "world_blocks",
+ "world_camera",
 ]
 
 [[package]]
@@ -153,6 +87,16 @@ checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
 dependencies = [
  "equivalent",
  "hashbrown",
+]
+
+[[package]]
+name = "interface_hud"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
 ]
 
 [[package]]
@@ -188,10 +132,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "run_progress"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
+]
+
+[[package]]
 name = "runtime"
 version = "0.1.0"
 dependencies = [
  "data",
+]
+
+[[package]]
+name = "samus_appearance"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
+]
+
+[[package]]
+name = "samus_movement"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
 ]
 
 [[package]]
@@ -331,6 +305,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "types"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -341,20 +322,20 @@ name = "verify"
 version = "0.1.0"
 dependencies = [
  "canonical",
- "clean_model_blocks",
- "clean_model_camera",
- "clean_model_hud",
- "clean_model_progress",
- "clean_model_samus_looks",
- "clean_model_samus_motion",
- "clean_types",
  "data",
  "enum-map",
  "game",
+ "interface_hud",
  "oracle_record",
+ "run_progress",
  "runtime",
+ "samus_appearance",
+ "samus_movement",
  "serde",
  "toml 1.2.1+spec-1.1.0",
+ "types",
+ "world_blocks",
+ "world_camera",
 ]
 
 [[package]]
@@ -371,3 +352,22 @@ name = "winnow"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3b93199df0ab874cdf0c6a94f0a0dc3423fe41f1cafb62b8bd7b1deb277aef"
+
+[[package]]
+name = "world_blocks"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
+]
+
+[[package]]
+name = "world_camera"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
+]

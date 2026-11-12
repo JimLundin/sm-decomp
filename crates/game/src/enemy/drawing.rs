@@ -10,9 +10,9 @@
 
 use std::marker::PhantomData;
 
-use clean_types::Pair;
 use data::enemy::program::EnemyPrograms;
 use data::spritemap::SpriteAttributes;
+use types::Pair;
 
 use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;

@@ -1,0 +1,876 @@
+# Test vectors for docs/behaviours/run-progress.md.
+#
+# Format
+# - Each [[vector]] is either one frame of reports (before, reports, after) or a question other
+#   domains ask (before, asks, answers). Every vector has: id; source ("<row>:<frame>" for the
+#   record it comes from, or "constructed"); entries (the spec's behaviours it exercises); rules
+#   (optional, below); area
+#   (the area of the room she is in this frame, the new room's in a frame a door takes her into
+#   another area: "Brinstar", "Ceres", "Crateria", "Maridia", "Norfair", "Tourian" or
+#   "WreckedShip"; listed alphabetically, the order means nothing).
+# - before: the progress at the frame's start (spec §1). A field left out, in before or after, is
+#   at its start-of-game value (spec §1, The start of a run), and a reader fills it from this
+#   list, never from a model's own start:
+#   items = [], equipped = [], beams = [], beams_equipped = [],
+#   capacity = { energy = 99, reserve = 0, missiles = 0, super_missiles = 0, power_bombs = 0 },
+#   energy = 99, reserve_energy = 0, missiles = 0, super_missiles = 0, power_bombs = 0,
+#   reserve_mode = "None" (no reserve tank, the spec's `NoTank`), events = [], zebetites = 0,
+#   defeated = {}, emptied = [], opened = [], maps = {}, stations = {}, items_placed = 0.
+#   A capacity left out of a given capacity table is filled the same way.
+#   - items, equipped: the items that are hers, and those switched on (spec §1.1, Items); listed
+#     alphabetically. The key `equipped` means switched on.
+#   - beams, beams_equipped: the beams that are hers, and those switched on (Beams).
+#   - capacity = { energy, reserve, missiles, super_missiles, power_bombs }: the most each can
+#     hold; energy, reserve_energy, missiles, super_missiles, power_bombs: what she holds now,
+#     the key `reserve_energy` being the reserve.
+#   - reserve_mode: "None" (no reserve tank yet, the spec's `NoTank`), "Automatic" or "Manual".
+#   - events: the events that have happened (spec §1.1, Events); zebetites: how many of
+#     Tourian's zebetites are destroyed, 0 to 4.
+#   - defeated = { <area> = [kinds] }: the kinds of boss defeated in each area, "MainBoss",
+#     "MiniBoss" or "Torizo" (BossesDefeated).
+#   - emptied: the item locations whose item she has taken; opened: the doors that stay open. Both
+#     are the ids the room's population gives them, whole numbers from 0.
+#   - maps = { <area> = "Downloaded" or "OnArrival" }: the areas whose map she has (MapsByArea,
+#     MapOnArrival); an area not named is `Unmapped`.
+#   - stations = { <area> = [ids] }: the save stations she has saved at in each area, by
+#     their id in it.
+#   - items_placed: the count of items the game has placed in rooms (ItemsPlacedCount).
+# - rules (optional): the values of the adjustable rules this vector runs under; left out, the
+#   game's own (the reference). Two tables can be given; a vector that gives one leaves the
+#   other at the game's:
+#   - switches_off = { <beam> = [beams] }: for each beam she takes, the beams that taking it
+#     switches off (TakingBeams). The table given is the whole table: a beam not named in it
+#     switches none off. The game's is { Plasma = ["Spazer"], Spazer = ["Plasma"] }: taking
+#     plasma switches spazer off, and taking spazer switches plasma off.
+#   - divisors = { energy, reserve, missiles, super_missiles, power_bombs }: the capacity that
+#     counts one towards the item percentage, each a whole number from 1 (ItemPercentage); all
+#     five are given. The game's are energy 100, reserve 100, the others 5.
+# - reports: what other domains tell progress this frame, in order (spec §1.3). A report that
+#   concerns an area (Defeated, MapStation, MapOnArrival, LeftArea, Saved) may carry area, the
+#   area it concerns, named as the vector's area is; left out, it is the frame's area.
+#   - { report = "Happened", event }: an event happens;
+#   - { report = "ZebetiteDestroyed" };
+#   - { report = "Defeated", boss, area? }: a boss of that kind is defeated, in the area;
+#   - { report = "Taken", item, location?, amount? }: she takes an item, a beam or a tank
+#     ("EnergyTank", "MissileTank", "PowerBombTank", "ReserveTank", "SuperMissileTank", which carry
+#     an amount); location is left out for an item placed without one;
+#   - { report = "DoorOpened", door? }: a door that stays open is opened; door is left out for a
+#     door placed without an id;
+#   - { report = "MapStation", area? }: the map station of the area downloads;
+#   - { report = "MapOnArrival", area? }: she enters the room that hands out the map of the area;
+#   - { report = "LeftArea", area? }: a door takes her out of the area into another area;
+#   - { report = "Saved", station, area? }: she saves at a station of the area;
+#   - { report = "ItemsPlaced", count }: a room's loading places that many items.
+# - after: the progress at the frame's end, in before's layout; compared whole.
+# - asks: the questions; answers: what progress answers, compared whole.
+#   - room_states = [conditions], entered_by (optional): a room's states in its order, the last
+#     "Always", the default state the room loads in when no condition before it holds, and the
+#     entrance she came in by; answers room_state, the index of the state it
+#     loads, from 0 (RoomStates). A condition is { when = "Always" }, { when = "Happened", event },
+#     { when = "Defeated", bosses = [kinds] }, { when = "Has", item },
+#     { when = "MorphBallAndMissiles" }, { when = "PowerBombs" } or
+#     { when = "EnteredBy", entrance }. An entrance is the way she came into the room, a whole
+#     number from 0 in a space of its own: it is never one of opened's door ids.
+#   - percentage = true: answers percentage, the item percentage (ItemPercentage).
+#   - emptied = [location ids], opened = [door ids]: answers a list of bools, one per id asked;
+#     nothing is asked about an item or a door placed without an id (spec §1.2).
+#   - map_known = [areas]: answers a list of bools.
+#   - zebetites = true: answers zebetites.
+# - Recorded vectors (R): from the cached rows, holding only what the record shows of progress and
+#   reports that carry none of the game's content (a boss's kind, the gunship's station, an
+#   event); their before is record N-1's progress and their after record N's. Row ids r01 and
+#   e01 stand for rows whose names the spec doesn't use.
+# - Constructed vectors (C): their after and answers are worked from the spec's rules, each with
+#   its case in a comment. Their content is invented: the location, door and station ids, the
+#   tanks' amounts, the items a room places and the rooms' state lists are made up to tell the
+#   rules apart, and none is the game's. The frames that need the game's own content are checked
+#   by the domain's harness.
+
+[[vector]]
+# a new file, and the gunship first lands. Its entry is the gunship's station; what it checks
+# besides is the start of a run (spec §1.1), which no entry owns: before is left out, so a reader fills it with the
+# header's start-of-game values; after spells every one of them out (energy and its capacity 99,
+# everything else none or 0, but the station), so a start other than the header's fails here
+id = "C-new-file"
+source = "constructed"
+entries = ["StationsSavedAt"]
+area = "Crateria"
+before = {  }
+reports = [{ report = "Saved", station = 0 }]
+after = { items = [], equipped = [], beams = [], beams_equipped = [], capacity = { energy = 99, reserve = 0, missiles = 0, super_missiles = 0, power_bombs = 0 }, energy = 99, reserve_energy = 0, missiles = 0, super_missiles = 0, power_bombs = 0, reserve_mode = "None", events = [], zebetites = 0, defeated = {  }, emptied = [], opened = [], maps = {  }, stations = { Crateria = [0] }, items_placed = 0 }
+
+[[vector]]
+# an event happens and stays happened
+id = "C-event"
+source = "constructed"
+entries = ["EventsHappen"]
+area = "Crateria"
+before = {  }
+reports = [{ report = "Happened", event = "PlanetAwake" }]
+after = { events = ["PlanetAwake"] }
+
+[[vector]]
+# an event that has happened happens again: nothing more changes
+id = "C-event-again"
+source = "constructed"
+entries = ["EventsHappen"]
+area = "Norfair"
+before = { events = ["AcidReceded", "PlanetAwake"] }
+reports = [{ report = "Happened", event = "AcidReceded" }]
+after = { events = ["AcidReceded", "PlanetAwake"] }
+
+[[vector]]
+# the first zebetite
+id = "C-zebetite-first"
+source = "constructed"
+entries = ["ZebetitesCounted"]
+area = "Tourian"
+before = { events = ["TourianOpen"] }
+reports = [{ report = "ZebetiteDestroyed" }]
+after = { events = ["TourianOpen"], zebetites = 1 }
+
+[[vector]]
+# the fourth zebetite
+id = "C-zebetite-fourth"
+source = "constructed"
+entries = ["ZebetitesCounted"]
+area = "Tourian"
+before = { zebetites = 3 }
+reports = [{ report = "ZebetiteDestroyed" }]
+after = { zebetites = 4 }
+
+[[vector]]
+# the zebetites read the count back
+id = "C-zebetites-asked"
+source = "constructed"
+entries = ["ZebetitesCounted"]
+area = "Tourian"
+before = { zebetites = 2 }
+asks = { zebetites = true }
+answers = { zebetites = 2 }
+
+[[vector]]
+# Crocomire after Ridley: kinds add up in the area
+id = "C-boss-mini"
+source = "constructed"
+entries = ["BossesDefeated"]
+area = "Norfair"
+before = { defeated = { Norfair = ["MainBoss"] } }
+reports = [{ report = "Defeated", boss = "MiniBoss" }]
+after = { defeated = { Norfair = ["MainBoss", "MiniBoss"] } }
+
+[[vector]]
+# Bomb Torizo: a torizo defeated in Norfair doesn't count for Crateria
+id = "C-boss-torizo"
+source = "constructed"
+entries = ["BossesDefeated"]
+area = "Crateria"
+before = { defeated = { Norfair = ["Torizo"] } }
+reports = [{ report = "Defeated", boss = "Torizo" }]
+after = { defeated = { Norfair = ["Torizo"], Crateria = ["Torizo"] } }
+
+[[vector]]
+# an item taken while another is hers: both hers and switched on, its location emptied
+id = "C-item-beside-another"
+source = "constructed"
+entries = ["TakingItems", "EmptiedLocations"]
+area = "Maridia"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12] }
+reports = [{ report = "Taken", item = "GravitySuit", location = 57 }]
+after = { items = ["GravitySuit", "MorphBall"], equipped = ["GravitySuit", "MorphBall"], emptied = [12, 57] }
+
+[[vector]]
+# an item she has but switched off, taken again: switched back on
+id = "C-item-switched-off"
+source = "constructed"
+entries = ["TakingItems"]
+area = "Norfair"
+before = { items = ["MorphBall", "SpeedBooster"], equipped = ["MorphBall"] }
+reports = [{ report = "Taken", item = "SpeedBooster", location = 38 }]
+after = { items = ["MorphBall", "SpeedBooster"], equipped = ["MorphBall", "SpeedBooster"], emptied = [38] }
+
+[[vector]]
+# an item placed with no location: collected, but no location is emptied
+id = "C-no-location"
+source = "constructed"
+entries = ["EmptiedLocations", "TakingItems"]
+area = "Brinstar"
+before = {  }
+reports = [{ report = "Taken", item = "MorphBall" }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"] }
+
+[[vector]]
+# asked about locations by their ids: emptied, not emptied, and the lowest id, emptied
+id = "C-asked-locations"
+source = "constructed"
+entries = ["EmptiedLocations"]
+area = "Brinstar"
+before = { emptied = [0, 12] }
+asks = { emptied = [12, 13, 0] }
+answers = { emptied = [true, false, true] }
+
+[[vector]]
+# spazer taken with plasma on: plasma switches off
+id = "C-spazer-taken"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Norfair"
+before = { beams = ["Charge", "Plasma"], beams_equipped = ["Charge", "Plasma"] }
+reports = [{ report = "Taken", item = "Spazer", location = 29 }]
+after = { beams = ["Charge", "Plasma", "Spazer"], beams_equipped = ["Charge", "Spazer"], emptied = [29] }
+
+[[vector]]
+# plasma taken with spazer on: spazer switches off
+id = "C-plasma-taken"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Norfair"
+before = { beams = ["Ice", "Spazer", "Wave"], beams_equipped = ["Ice", "Spazer", "Wave"] }
+reports = [{ report = "Taken", item = "Plasma", location = 64 }]
+after = { beams = ["Ice", "Plasma", "Spazer", "Wave"], beams_equipped = ["Ice", "Plasma", "Wave"], emptied = [64] }
+
+[[vector]]
+# a beam other than spazer and plasma switches nothing off
+id = "C-beam-other"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Norfair"
+before = { beams = ["Spazer"], beams_equipped = ["Spazer"] }
+reports = [{ report = "Taken", item = "Wave", location = 46 }]
+after = { beams = ["Spazer", "Wave"], beams_equipped = ["Spazer", "Wave"], emptied = [46] }
+
+[[vector]]
+# plasma taken with spazer collected but off: spazer stays off, plasma on
+id = "C-plasma-taken-spazer-off"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Norfair"
+before = { beams = ["Spazer", "Wave"], beams_equipped = ["Wave"] }
+reports = [{ report = "Taken", item = "Plasma", location = 52 }]
+after = { beams = ["Plasma", "Spazer", "Wave"], beams_equipped = ["Plasma", "Wave"], emptied = [52] }
+
+[[vector]]
+# an energy tank: the capacity grows by its amount and she is filled
+id = "C-energy-tank"
+source = "constructed"
+entries = ["Tanks"]
+area = "Brinstar"
+before = { capacity = { energy = 199 }, energy = 30 }
+reports = [{ report = "Taken", item = "EnergyTank", amount = 50, location = 15 }]
+after = { capacity = { energy = 249 }, energy = 249, emptied = [15] }
+
+[[vector]]
+# the first reserve tank: the reserves refill automatically from now on, and stay empty
+id = "C-reserve-first"
+source = "constructed"
+entries = ["Tanks"]
+area = "Brinstar"
+before = { capacity = { energy = 299 }, energy = 299 }
+reports = [{ report = "Taken", item = "ReserveTank", amount = 75, location = 21 }]
+after = { capacity = { energy = 299, reserve = 75 }, energy = 299, reserve_mode = "Automatic", emptied = [21] }
+
+[[vector]]
+# a reserve tank when she set them to manual: they stay manual, and the energy in them doesn't grow
+id = "C-reserve-manual"
+source = "constructed"
+entries = ["Tanks"]
+area = "Norfair"
+before = { capacity = { energy = 599, reserve = 100 }, energy = 599, reserve_energy = 60, reserve_mode = "Manual" }
+reports = [{ report = "Taken", item = "ReserveTank", amount = 25, location = 70 }]
+after = { capacity = { energy = 599, reserve = 125 }, energy = 599, reserve_energy = 60, reserve_mode = "Manual", emptied = [70] }
+
+[[vector]]
+# a missile tank when she has fired some: the count grows by its amount, 4, not to the capacity
+id = "C-missile-not-full"
+source = "constructed"
+entries = ["Tanks"]
+area = "Brinstar"
+before = { capacity = { missiles = 20 }, missiles = 3 }
+reports = [{ report = "Taken", item = "MissileTank", amount = 4, location = 5 }]
+after = { capacity = { missiles = 24 }, missiles = 7, emptied = [5] }
+
+[[vector]]
+# the first super missile tank
+id = "C-super-tank"
+source = "constructed"
+entries = ["Tanks"]
+area = "Brinstar"
+before = {  }
+reports = [{ report = "Taken", item = "SuperMissileTank", amount = 2, location = 33 }]
+after = { capacity = { super_missiles = 2 }, super_missiles = 2, emptied = [33] }
+
+[[vector]]
+# a power bomb tank
+id = "C-power-bomb-tank"
+source = "constructed"
+entries = ["Tanks"]
+area = "Crateria"
+before = { capacity = { power_bombs = 5 }, power_bombs = 5 }
+reports = [{ report = "Taken", item = "PowerBombTank", amount = 3, location = 8 }]
+after = { capacity = { power_bombs = 8 }, power_bombs = 8, emptied = [8] }
+
+[[vector]]
+# a door placed with no id opens, but isn't remembered
+id = "C-door-no-id"
+source = "constructed"
+entries = ["DoorsStayOpen"]
+area = "Brinstar"
+before = { opened = [17] }
+reports = [{ report = "DoorOpened" }]
+after = { opened = [17] }
+
+[[vector]]
+# asked about doors by their ids: open, closed, and a door of a lower id, shut
+id = "C-asked-doors"
+source = "constructed"
+entries = ["DoorsStayOpen"]
+area = "Brinstar"
+before = { opened = [17] }
+asks = { opened = [17, 18, 16] }
+answers = { opened = [true, false, false] }
+
+[[vector]]
+# the map station: the map of the frame's area is downloaded
+id = "C-map-station"
+source = "constructed"
+entries = ["MapsByArea"]
+area = "Norfair"
+before = { maps = { Crateria = "Downloaded" } }
+reports = [{ report = "MapStation" }]
+after = { maps = { Crateria = "Downloaded", Norfair = "Downloaded" } }
+
+[[vector]]
+# the room that gives Tourian's map
+id = "C-map-on-arrival"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = {  }
+reports = [{ report = "MapOnArrival" }]
+after = { maps = { Tourian = "OnArrival" } }
+
+[[vector]]
+# the room that gives the map, the map already downloaded: it stays downloaded
+id = "C-map-on-arrival-had"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = { maps = { Tourian = "Downloaded" } }
+reports = [{ report = "MapOnArrival" }]
+after = { maps = { Tourian = "Downloaded" } }
+
+[[vector]]
+# a door takes her out of the area into another area: the map counts as downloaded
+id = "C-map-left"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = { maps = { Tourian = "OnArrival" } }
+reports = [{ report = "LeftArea" }]
+after = { maps = { Tourian = "Downloaded" } }
+
+[[vector]]
+# leaving an area without its map: still none
+id = "C-map-left-none"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Brinstar"
+before = {  }
+reports = [{ report = "LeftArea" }]
+after = {  }
+
+[[vector]]
+# a door takes her from Tourian, its map on arrival, into Crateria, whose map is on arrival too
+# (invented): the frame's area is the new room's, Crateria, but her leaving names Tourian, so
+# Tourian's map counts as downloaded and Crateria's stays on arrival
+id = "C-door-from-tourian"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Crateria"
+before = { maps = { Crateria = "OnArrival", Tourian = "OnArrival" } }
+reports = [{ report = "LeftArea", area = "Tourian" }]
+after = { maps = { Crateria = "OnArrival", Tourian = "Downloaded" } }
+
+[[vector]]
+# a door takes her from Crateria, its map on arrival (invented), into Tourian, its map on
+# arrival from an earlier visit (invented): the frame's area is Tourian, but her leaving names
+# Crateria, so Crateria's map counts as downloaded and Tourian's stays on arrival
+id = "C-door-into-tourian"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = { maps = { Crateria = "OnArrival", Tourian = "OnArrival" } }
+reports = [{ report = "LeftArea", area = "Crateria" }]
+after = { maps = { Crateria = "Downloaded", Tourian = "OnArrival" } }
+
+[[vector]]
+# a map got either way is known
+id = "C-map-known"
+source = "constructed"
+entries = ["MapsByArea", "MapOnArrival"]
+area = "Tourian"
+before = { maps = { Tourian = "OnArrival", Norfair = "Downloaded" } }
+asks = { map_known = ["Tourian", "Norfair", "Maridia"] }
+answers = { map_known = [true, true, false] }
+
+[[vector]]
+# a second save station in the area
+id = "C-save-station"
+source = "constructed"
+entries = ["StationsSavedAt"]
+area = "Maridia"
+before = { stations = { Crateria = [0], Maridia = [1] } }
+reports = [{ report = "Saved", station = 3 }]
+after = { stations = { Crateria = [0], Maridia = [1, 3] } }
+
+[[vector]]
+# the count wraps at 65536
+id = "C-placed-wraps"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Norfair"
+before = { items_placed = 65535 }
+reports = [{ report = "ItemsPlaced", count = 2 }]
+after = { items_placed = 1 }
+
+[[vector]]
+# a room's loading places several items
+id = "C-placed-several"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Norfair"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12], items_placed = 18 }
+reports = [{ report = "ItemsPlaced", count = 3 }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12], items_placed = 21 }
+
+[[vector]]
+# a room's loading places one item
+id = "C-placed-one"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Brinstar"
+before = { capacity = { missiles = 10 }, missiles = 4, items_placed = 21 }
+reports = [{ report = "ItemsPlaced", count = 1 }]
+after = { capacity = { missiles = 10 }, missiles = 4, items_placed = 22 }
+
+[[vector]]
+# the room's one item, at location 12, is already taken: it still counts, and nothing else changes
+id = "C-placed-taken"
+source = "constructed"
+entries = ["ItemsPlacedCount"]
+area = "Maridia"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12, 57], items_placed = 22 }
+reports = [{ report = "ItemsPlaced", count = 1 }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], emptied = [12, 57], items_placed = 23 }
+
+[[vector]]
+# her first item, with the rest of the run's start around it: it is hers and switched on, its
+# location emptied, and nothing else changes
+id = "C-item-first"
+source = "constructed"
+entries = ["EmptiedLocations", "TakingItems"]
+area = "Brinstar"
+before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] }, items_placed = 1 }
+reports = [{ report = "Taken", item = "MorphBall", location = 12 }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], defeated = { Ceres = ["MainBoss"] }, emptied = [12], stations = { Crateria = [0] }, items_placed = 1 }
+
+[[vector]]
+# a second item, its location below those already emptied
+id = "C-item-second"
+source = "constructed"
+entries = ["EmptiedLocations", "TakingItems"]
+area = "Crateria"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [12, 19], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 5 }
+reports = [{ report = "Taken", item = "Bombs", location = 3 }]
+after = { items = ["Bombs", "MorphBall"], equipped = ["Bombs", "MorphBall"], capacity = { missiles = 5 }, energy = 69, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [3, 12, 19], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 5 }
+
+[[vector]]
+# a missile tank late in a run, every other count below its capacity: only the missiles' capacity
+# and count grow, by its amount, and its location is emptied
+id = "C-missile-tank-stocked"
+source = "constructed"
+entries = ["EmptiedLocations", "Tanks"]
+area = "Norfair"
+before = { items = ["Bombs", "MorphBall", "VariaSuit"], equipped = ["Bombs", "MorphBall", "VariaSuit"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 399, reserve = 100, missiles = 30, super_missiles = 10, power_bombs = 5 }, energy = 350, reserve_energy = 4, missiles = 5, super_missiles = 7, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [3, 12, 19, 44], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 30 }
+reports = [{ report = "Taken", item = "MissileTank", location = 61, amount = 4 }]
+after = { items = ["Bombs", "MorphBall", "VariaSuit"], equipped = ["Bombs", "MorphBall", "VariaSuit"], beams = ["Charge"], beams_equipped = ["Charge"], capacity = { energy = 399, reserve = 100, missiles = 34, super_missiles = 10, power_bombs = 5 }, energy = 350, reserve_energy = 4, missiles = 9, super_missiles = 7, power_bombs = 1, reserve_mode = "Automatic", events = ["PlanetAwake"], defeated = { Brinstar = ["MainBoss"], Ceres = ["MainBoss"] }, emptied = [3, 12, 19, 44, 61], opened = [4, 9], stations = { Crateria = [0] }, items_placed = 30 }
+
+[[vector]]
+# a door opened among those already open
+id = "C-door-between"
+source = "constructed"
+entries = ["DoorsStayOpen"]
+area = "Brinstar"
+before = { emptied = [12], opened = [4, 9, 23] }
+reports = [{ report = "DoorOpened", door = 17 }]
+after = { emptied = [12], opened = [4, 9, 17, 23] }
+
+[[vector]]
+# a door opened past every one already open
+id = "C-door-last"
+source = "constructed"
+entries = ["DoorsStayOpen"]
+area = "Norfair"
+before = { opened = [4, 9, 17] }
+reports = [{ report = "DoorOpened", door = 60 }]
+after = { opened = [4, 9, 17, 60] }
+
+[[vector]]
+# an event's state, after two that don't hold; the event that holds is not the first named
+id = "C-state-event"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { events = ["ShaktoolPath"] }
+asks = { room_states = [{ when = "Happened", event = "AnimalsFreed" }, { when = "Has", item = "SpaceJump" }, { when = "Happened", event = "ShaktoolPath" }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# every state holds: the first wins
+id = "C-state-first-holds"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { items = ["GrappleBeam"], capacity = { power_bombs = 10 }, events = ["AcidReceded"] }
+asks = { room_states = [{ when = "Happened", event = "AcidReceded" }, { when = "PowerBombs" }, { when = "Has", item = "GrappleBeam" }, { when = "Always" }] }
+answers = { room_state = 0 }
+
+[[vector]]
+# the first fails (the screw attack isn't hers), and the second and third hold: the second wins
+# over the third
+id = "C-state-earlier-wins"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { capacity = { power_bombs = 20 }, power_bombs = 3, events = ["LavaQuakeOutrun"] }
+asks = { room_states = [{ when = "Has", item = "ScrewAttack" }, { when = "PowerBombs" }, { when = "Happened", event = "LavaQuakeOutrun" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# none of the conditions holds: the last state
+id = "C-state-none-hold"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { defeated = { Ceres = ["MainBoss"] } }
+asks = { room_states = [{ when = "Has", item = "ScrewAttack" }, { when = "PowerBombs" }, { when = "Happened", event = "LavaQuakeOutrun" }, { when = "Always" }] }
+answers = { room_state = 3 }
+
+[[vector]]
+# an event that hasn't happened yet
+id = "C-state-event-not-yet"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Brinstar"
+before = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] }, items_placed = 1 }
+asks = { room_states = [{ when = "Happened", event = "AcidReceded" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# another event has happened, not the one named
+id = "C-state-other-event"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Maridia"
+before = { events = ["KraidStatueGrey", "PlanetAwake"] }
+asks = { room_states = [{ when = "Happened", event = "DraygonStatueGrey" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# a torizo defeated in the room's area
+id = "C-state-boss"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Norfair"
+before = { defeated = { Norfair = ["Torizo"] } }
+asks = { room_states = [{ when = "Has", item = "VariaSuit" }, { when = "Defeated", bosses = ["Torizo"] }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# another kind defeated in the room's area doesn't count
+id = "C-state-boss-not-yet"
+source = "constructed"
+entries = ["RoomStates"]
+area = "WreckedShip"
+before = { defeated = { WreckedShip = ["MainBoss"] } }
+asks = { room_states = [{ when = "PowerBombs" }, { when = "Defeated", bosses = ["Torizo"] }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# nothing defeated anywhere: neither kind named holds
+id = "C-state-boss-alive"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Ceres"
+before = {  }
+asks = { room_states = [{ when = "Defeated", bosses = ["MiniBoss", "Torizo"] }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# a boss defeated in Norfair doesn't count in Brinstar: the room's own area is read
+id = "C-state-boss-other-area"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Brinstar"
+before = { defeated = { Norfair = ["MainBoss"] } }
+asks = { room_states = [{ when = "Defeated", bosses = ["MainBoss"] }, { when = "Has", item = "SpringBall" }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# any of the kinds named
+id = "C-state-any-kind"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Maridia"
+before = { defeated = { Maridia = ["MiniBoss"] } }
+asks = { room_states = [{ when = "Defeated", bosses = ["MainBoss", "MiniBoss"] }, { when = "Always" }] }
+answers = { room_state = 0 }
+
+[[vector]]
+# the morph ball and a missile tank, every missile fired: the capacity is read
+id = "C-state-morph-missiles"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Brinstar"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 } }
+asks = { room_states = [{ when = "Happened", event = "RidleyStatueGrey" }, { when = "MorphBallAndMissiles" }, { when = "Always" }] }
+answers = { room_state = 1 }
+
+[[vector]]
+# missiles without the morph ball
+id = "C-state-missiles-only"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Brinstar"
+before = { capacity = { missiles = 5 }, missiles = 5 }
+asks = { room_states = [{ when = "Happened", event = "RidleyStatueGrey" }, { when = "MorphBallAndMissiles" }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# the morph ball without missiles
+id = "C-state-morph-no-missiles"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] } }
+asks = { room_states = [{ when = "Happened", event = "RidleyStatueGrey" }, { when = "MorphBallAndMissiles" }, { when = "Always" }] }
+answers = { room_state = 2 }
+
+[[vector]]
+# power bombs all spent: the capacity is read
+id = "C-state-power-bombs-spent"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = { capacity = { power_bombs = 5 } }
+asks = { room_states = [{ when = "PowerBombs" }, { when = "Always" }] }
+answers = { room_state = 0 }
+
+[[vector]]
+# an item that is hers but switched off still counts
+id = "C-state-has"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Norfair"
+before = { items = ["SpeedBooster"] }
+asks = { room_states = [{ when = "Has", item = "SpeedBooster" }, { when = "Always" }] }
+answers = { room_state = 0 }
+
+[[vector]]
+# entered by the entrance named
+id = "C-state-entered-by"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = {  }
+asks = { room_states = [{ when = "EnteredBy", entrance = 7 }, { when = "Always" }], entered_by = 7 }
+answers = { room_state = 0 }
+
+[[vector]]
+# entered by another entrance
+id = "C-state-entered-other"
+source = "constructed"
+entries = ["RoomStates"]
+area = "Crateria"
+before = {  }
+asks = { room_states = [{ when = "EnteredBy", entrance = 7 }, { when = "Always" }], entered_by = 8 }
+answers = { room_state = 1 }
+
+[[vector]]
+# the start of a game: 99 energy is 0
+id = "C-percent-start"
+source = "constructed"
+entries = ["ItemPercentage"]
+area = "Crateria"
+before = {  }
+asks = { percentage = true }
+answers = { percentage = 0 }
+
+[[vector]]
+# every item and beam, and capacities that each round down: energy 999 / 100 = 9, reserve
+# 250 / 100 = 2, missiles 101 / 5 = 20, super missiles 7 / 5 = 1, power bombs 23 / 5 = 4; with
+# 11 items and 5 beams, 9 + 2 + 20 + 1 + 4 + 11 + 5 = 52
+id = "C-percent-many"
+source = "constructed"
+entries = ["ItemPercentage"]
+area = "Crateria"
+before = { items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpaceJump", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"], beams = ["Charge", "Ice", "Plasma", "Spazer", "Wave"], capacity = { energy = 999, reserve = 250, missiles = 101, super_missiles = 7, power_bombs = 23 } }
+asks = { percentage = true }
+answers = { percentage = 52 }
+
+[[vector]]
+# the divisions round down: 299 energy is 2, 24 missiles 4
+id = "C-percent-partial"
+source = "constructed"
+entries = ["ItemPercentage"]
+area = "Crateria"
+before = { items = ["Bombs", "MorphBall"], beams = ["Charge"], capacity = { energy = 299, missiles = 24, super_missiles = 5 } }
+asks = { percentage = true }
+answers = { percentage = 10 }
+
+[[vector]]
+# the rainbow beam switches on Charge, Plasma and Wave, and Plasma isn't hers: the percentage
+# counts her 4 beams (Charge, Ice, Spazer, Wave), not the 3 switched on or the 5 of both.
+# By hand: energy 99 / 100 = 0, the other capacities 0, no items, 4 beams; 0 + 0 + 4 = 4.
+id = "C-percent-rainbow"
+source = "constructed"
+entries = ["ItemPercentage"]
+area = "Tourian"
+before = { beams = ["Charge", "Ice", "Spazer", "Wave"], beams_equipped = ["Charge", "Plasma", "Wave"] }
+asks = { percentage = true }
+answers = { percentage = 4 }
+
+[[vector]]
+# an adjusted game in which taking ice switches charge and wave off, and nothing else switches a
+# beam off: she takes ice with charge and wave on, and both go off, hers still. Read the other
+# way (taking charge or wave switching ice off), nothing would go off here
+id = "C-switches-off-adjusted"
+source = "constructed"
+entries = ["TakingBeams"]
+rules = { switches_off = { Ice = ["Charge", "Wave"] } }
+area = "Brinstar"
+before = { beams = ["Charge", "Wave"], beams_equipped = ["Charge", "Wave"] }
+reports = [{ report = "Taken", item = "Ice", location = 21 }]
+after = { beams = ["Charge", "Ice", "Wave"], beams_equipped = ["Ice"], emptied = [21] }
+
+[[vector]]
+# the same adjusted game: she takes wave with ice on. Wave's row holds nothing, so ice stays on;
+# read the other way (wave's taking switching off the beams whose rows hold it), ice would go off
+id = "C-switches-off-adjusted-other"
+source = "constructed"
+entries = ["TakingBeams"]
+rules = { switches_off = { Ice = ["Charge", "Wave"] } }
+area = "Brinstar"
+before = { beams = ["Ice"], beams_equipped = ["Ice"] }
+reports = [{ report = "Taken", item = "Wave", location = 22 }]
+after = { beams = ["Ice", "Wave"], beams_equipped = ["Ice", "Wave"], emptied = [22] }
+
+[[vector]]
+# the same adjusted game: plasma's row holds nothing there, so taking plasma leaves spazer on,
+# which the game's own table would switch off
+id = "C-switches-off-adjusted-pair"
+source = "constructed"
+entries = ["TakingBeams"]
+rules = { switches_off = { Ice = ["Charge", "Wave"] } }
+area = "Norfair"
+before = { beams = ["Spazer"], beams_equipped = ["Spazer"] }
+reports = [{ report = "Taken", item = "Plasma", location = 23 }]
+after = { beams = ["Plasma", "Spazer"], beams_equipped = ["Plasma", "Spazer"], emptied = [23] }
+
+[[vector]]
+# two beams taken in one frame, spazer then plasma (no frame of the game does this: each beam
+# holds the game in its message box; spec §7): they apply in order, so plasma, the later, stays on
+id = "C-beams-in-order"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Norfair"
+before = { beams = ["Wave"], beams_equipped = ["Wave"] }
+reports = [{ report = "Taken", item = "Spazer", location = 31 }, { report = "Taken", item = "Plasma", location = 32 }]
+after = { beams = ["Plasma", "Spazer", "Wave"], beams_equipped = ["Plasma", "Wave"], emptied = [31, 32] }
+
+[[vector]]
+# the same two beams in the other order: plasma is taken first, and spazer, taken later,
+# stays on
+id = "C-beams-in-order-reversed"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Norfair"
+before = { beams = ["Wave"], beams_equipped = ["Wave"] }
+reports = [{ report = "Taken", item = "Plasma", location = 32 }, { report = "Taken", item = "Spazer", location = 31 }]
+after = { beams = ["Plasma", "Spazer", "Wave"], beams_equipped = ["Spazer", "Wave"], emptied = [31, 32] }
+
+[[vector]]
+# Tourian's map given on arrival and her leaving Tourian in one frame (no frame of the game does
+# this: the map on arrival comes some 30 to 40 frames after a door's frame, and a door's names
+# the area she leaves; spec §7), in that order: given, then left, so it counts as downloaded
+id = "C-arrival-then-leaving"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = {  }
+reports = [{ report = "MapOnArrival" }, { report = "LeftArea" }]
+after = { maps = { Tourian = "Downloaded" } }
+
+[[vector]]
+# the same two in the other order: left (no map on arrival yet, nothing changes), then given
+id = "C-leaving-then-arrival"
+source = "constructed"
+entries = ["MapOnArrival"]
+area = "Tourian"
+before = {  }
+reports = [{ report = "LeftArea" }, { report = "MapOnArrival" }]
+after = { maps = { Tourian = "OnArrival" } }
+
+[[vector]]
+# an adjusted game's divisors: energy 50, reserve 200, missiles 10, super missiles 2, power
+# bombs 3. By hand: energy 299 / 50 = 5, reserve 400 / 200 = 2, missiles 45 / 10 = 4, super
+# missiles 7 / 2 = 3, power bombs 10 / 3 = 3; with 2 items and 1 beam, 5 + 2 + 4 + 3 + 3 + 2 + 1
+# = 20. The game's divisors give 21 (2 + 4 + 9 + 1 + 2 + 3), and swapping any two divisors
+# gives another sum
+id = "C-percent-adjusted"
+source = "constructed"
+entries = ["ItemPercentage"]
+rules = { divisors = { energy = 50, reserve = 200, missiles = 10, super_missiles = 2, power_bombs = 3 } }
+area = "Crateria"
+before = { items = ["Bombs", "MorphBall"], beams = ["Charge"], capacity = { energy = 299, reserve = 400, missiles = 45, super_missiles = 7, power_bombs = 10 } }
+asks = { percentage = true }
+answers = { percentage = 20 }
+
+[[vector]]
+# spazer switched on but not hers (the rainbow beam's way, spec §1.1): she takes plasma, and
+# spazer goes off all the same, still not hers
+id = "C-plasma-taken-spazer-not-hers"
+source = "constructed"
+entries = ["TakingBeams"]
+area = "Tourian"
+before = { beams = ["Charge", "Wave"], beams_equipped = ["Charge", "Spazer", "Wave"] }
+reports = [{ report = "Taken", item = "Plasma", location = 41 }]
+after = { beams = ["Charge", "Plasma", "Wave"], beams_equipped = ["Charge", "Plasma", "Wave"], emptied = [41] }
+
+[[vector]]
+id = "R-ceres-boss"
+source = "samus-ceres-push:1586"
+entries = ["BossesDefeated"]
+area = "Ceres"
+before = { energy = 24 }
+reports = [{ report = "Defeated", boss = "MainBoss" }]
+after = { energy = 24, defeated = { Ceres = ["MainBoss"] } }
+
+[[vector]]
+id = "R-gunship-save"
+source = "r01:610"
+entries = ["StationsSavedAt"]
+area = "Crateria"
+before = { defeated = { Ceres = ["MainBoss"] } }
+reports = [{ report = "Saved", station = 0 }]
+after = { defeated = { Ceres = ["MainBoss"] }, stations = { Crateria = [0] } }
+
+[[vector]]
+# the planet wakes: two of the room's gates each report it in the same frame; it has happened
+id = "R-planet-awake"
+source = "e01:152"
+entries = ["EventsHappen"]
+area = "Crateria"
+before = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 }, energy = 69, missiles = 3, defeated = { Ceres = ["MainBoss"] }, emptied = [26, 34], stations = { Crateria = [0] }, items_placed = 4 }
+reports = [{ report = "Happened", event = "PlanetAwake" }, { report = "Happened", event = "PlanetAwake" }]
+after = { items = ["MorphBall"], equipped = ["MorphBall"], capacity = { missiles = 5 }, energy = 69, missiles = 3, events = ["PlanetAwake"], defeated = { Ceres = ["MainBoss"] }, emptied = [26, 34], stations = { Crateria = [0] }, items_placed = 4 }

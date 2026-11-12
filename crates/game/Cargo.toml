@@ -8,13 +8,13 @@ description = "The Session, its State and the Tick: every gameplay domain"
 
 [dependencies]
 canonical = { path = "../canonical" }
-clean_model_blocks = { path = "../clean_model/blocks" }
-clean_model_camera = { path = "../clean_model/camera" }
-clean_model_hud = { path = "../clean_model/hud" }
-clean_model_progress = { path = "../clean_model/progress" }
-clean_model_samus_looks = { path = "../clean_model/samus-looks" }
-clean_model_samus_motion = { path = "../clean_model/samus-motion" }
-clean_types = { path = "../clean_types" }
+world_blocks = { path = "../clean/world_blocks" }
+world_camera = { path = "../clean/world_camera" }
+interface_hud = { path = "../clean/interface_hud" }
+run_progress = { path = "../clean/run_progress" }
+samus_appearance = { path = "../clean/samus_appearance" }
+samus_movement = { path = "../clean/samus_movement" }
+types = { path = "../clean/types" }
 data = { path = "../data" }
 enum-map = "=3.1.0"
 

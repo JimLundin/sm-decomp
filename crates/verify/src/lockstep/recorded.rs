@@ -1,16 +1,16 @@
-//! The samus-motion model on recorded frames, through the engine's adapter: each frame decoded
+//! The samus-movement model on recorded frames, through the engine's adapter: each frame decoded
 //! from record N, stepped by the model over the engine's world, compared with record N+1 on
 //! her position and speeds. `SM_CACHE` and `SM_ROM`, as the harness tests read them.
 
 use std::path::{Path, PathBuf};
 
-use clean_model_samus_motion::Rules;
 use game::collision::Room;
 use game::collision::solid_enemy::SolidEnemies;
-use game::samus_world::SamusWorld;
-use game::samus_world::frame::{FrameSource, body};
-use game::samus_world::state::{clean_of, write_back};
+use game::samus_movement_bridge::SamusWorld;
+use game::samus_movement_bridge::frame::{FrameSource, body};
+use game::samus_movement_bridge::state::{clean_of, write_back};
 use game::state::State;
+use samus_movement::Rules;
 
 use crate::bundle::{content, rooms};
 use crate::cache::Cache;

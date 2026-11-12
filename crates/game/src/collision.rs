@@ -1,17 +1,17 @@
 //! The room Samus meets and what her moves start in it.
 //!
 //! The level's blocks, the solid enemies, and the cells her moves reach that react, which the
-//! blocks model and the items meet after the moves. The moves themselves are the samus-motion
-//! model's (`samus_world`); the cells she is inside are `inside`'s.
+//! blocks model and the items meet after the moves. The moves themselves are the samus-movement
+//! model's (`samus_movement_bridge`); the cells she is inside are `inside`'s.
 
 use data::id::RoomId;
 use data::level::slope::Slopes;
 use data::level::{BlockKind, DoorIndex};
 use data::room::Door;
 
-use crate::blocks_world::{self, BlocksFault, Reads};
 use crate::plm::{self, TouchFault};
 use crate::state::room::{Block, BlockColumns, BlockIndex, RoomScoped};
+use crate::world_blocks_bridge::{self, BlocksFault, Reads};
 
 pub mod inside;
 pub mod solid_enemy;
@@ -50,9 +50,9 @@ pub enum Touch {
     /// A cell of the blocks', and the way she reached it.
     Blocks {
         /// The cell, a stand-in followed to the cell it stands for.
-        cell: clean_types::Cell,
+        cell: types::Cell,
         /// The way she reached it.
-        way: clean_types::Way,
+        way: types::Way,
     },
     /// An item's block: the item collision detection PLM (`$84:EED3`).
     Item(BlockIndex),
@@ -63,13 +63,13 @@ impl core::fmt::Debug for Touch {
         match self {
             Self::Blocks { cell, way } => {
                 let way = match way {
-                    clean_types::Way::Move(heading) => match heading {
-                        clean_types::Heading::Down => "down",
-                        clean_types::Heading::Left => "left",
-                        clean_types::Heading::Right => "right",
-                        clean_types::Heading::Up => "up",
+                    types::Way::Move(heading) => match heading {
+                        types::Heading::Down => "down",
+                        types::Heading::Left => "left",
+                        types::Heading::Right => "right",
+                        types::Heading::Up => "up",
                     },
-                    clean_types::Way::Look => "look",
+                    types::Way::Look => "look",
                 };
                 write!(f, "Blocks({cell:?}, {way})")
             }
@@ -82,8 +82,8 @@ impl core::fmt::Debug for Touch {
 ///
 /// The collision reactions spawn their PLMs during the scan (`$94:906F`, `$94:909D` for special
 /// air, `$94:90CB`, `$94:9102` for special blocks, through `$84:84E7`). Her moves meet each cell
-/// by its body (`samus_world`), so the touches apply after the moves in the same order; the
-/// touch's answer to her motion is a hole until her moves ask the blocks (`blocks_world`).
+/// by its body (`samus_movement_bridge`), so the touches apply after the moves in the same order; the
+/// touch's answer to her motion is a hole until her moves ask the blocks (`world_blocks_bridge`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Touches(Vec<Touch>);
 
@@ -102,7 +102,7 @@ impl Touches {
     /// loading would refuse.
     pub fn apply(self, room: &mut RoomScoped, reads: Reads<'_>) -> Result<(), Fault> {
         let blocks = |touch: &Touch| match *touch {
-            Touch::Blocks { cell, way } => Some(clean_types::Touch { cell, way }),
+            Touch::Blocks { cell, way } => Some(types::Touch { cell, way }),
             Touch::Item(_) => None,
         };
         // Each run of the blocks' touches between two items' goes to the model at once.
@@ -111,8 +111,8 @@ impl Touches {
             if let [Touch::Item(block)] = *touches {
                 plm::touch_item_block(room, block).map_err(Fault::Item)?;
             } else {
-                let cells: Vec<clean_types::Touch> = touches.iter().filter_map(blocks).collect();
-                blocks_world::touches(room, reads, &cells).map_err(Fault::Blocks)?;
+                let cells: Vec<types::Touch> = touches.iter().filter_map(blocks).collect();
+                world_blocks_bridge::touches(room, reads, &cells).map_err(Fault::Blocks)?;
             }
         }
         Ok(())

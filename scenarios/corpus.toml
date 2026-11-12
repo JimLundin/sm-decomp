@@ -1304,7 +1304,7 @@ ticks = 513
 facts = ["room:9AD9", "probe:etecoon.look_right_run_left"]
 
 # The movie from a 100% seed for as many frames as reach one progress report and
-# the HUD's pickups (oracle rows for docs/behaviours/progress.decode.md and hud.decode.md).
+# the HUD's pickups (oracle rows for docs/behaviours/run-progress.decode.md and interface-hud.decode.md).
 # The event Zebes awake (0) at 152, a door opened at 169.
 [[scenario]]
 id = "event-zebes-awake"

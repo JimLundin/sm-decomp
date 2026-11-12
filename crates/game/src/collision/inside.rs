@@ -6,14 +6,14 @@
 //! then her centre if that is in another row, then her top if the original's chained XOR test
 //! lets it (`$94:9BEB`), and runs each block's inside reaction (`$94:9B40`). The extensions
 //! stand for the block they point at (`$94:9411`, `$94:9447`). What each cell then does with
-//! the point inside it is the blocks model's (`blocks_world::inside`).
+//! the point inside it is the blocks model's (`world_blocks_bridge::inside`).
 
-use clean_types::Point;
+use types::Point;
 
 use super::Room;
-use crate::blocks_world::{self, BlocksFault, Reads};
 use crate::state::room::{BlockIndex, BlockKind, RoomScoped};
 use crate::state::samus::Samus;
+use crate::world_blocks_bridge::{self, BlocksFault, Reads};
 use data::level::{StandInLoop, stand_in_end};
 
 /// The block lookup gives up from this position on, as it does for a negative one
@@ -88,7 +88,7 @@ pub fn handle(room: &mut RoomScoped, samus: &Samus, reads: Reads<'_>) -> Result<
     if rows != 0 && (rows ^ y) & 0xfff0 != 0 {
         points.extend(point(room, Point::Top, x, top)?);
     }
-    blocks_world::inside(room, reads, &points)
+    world_blocks_bridge::inside(room, reads, &points)
 }
 
 #[cfg(test)]

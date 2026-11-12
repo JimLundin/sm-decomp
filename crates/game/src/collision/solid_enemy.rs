@@ -1,7 +1,7 @@
 //! The solid enemies Samus's moves meet.
 //!
 //! Each interactive enemy (`$17EC`) that is frozen or whose hitbox is solid to her, as the
-//! samus-motion model's world gives them (`samus_world`); the model decides the contact.
+//! samus-movement model's world gives them (`samus_movement_bridge`); the model decides the contact.
 
 use crate::state::room::{Enemy, EnemyBody, EnemyCommon, EnemyProperty};
 use crate::state::samus::Point;

@@ -1,6 +1,6 @@
 //! The blocks' reactions as the game's content gives them, in the blocks spec's format.
 //!
-//! The format is `docs/behaviours/blocks.md` §2: each reaction's family, whole look, first wait
+//! The format is `docs/behaviours/world-blocks.md` §2: each reaction's family, whole look, first wait
 //! and its three scripts; and what each reacting cell's mark is, by its block type, BTS and area.
 //!
 //! This is the importer the spec names: it is the only code that knows the PLMs' layouts.
@@ -8,7 +8,7 @@
 //! is, are kept beside the reactions for the verification's record decoder.
 
 use canonical::Canonical;
-use clean_types::{Family, Flip, Look, MetAs, Pair, Picture, Script};
+use types::{Family, Flip, Look, MetAs, Pair, Picture, Script};
 
 use crate::level::{BlockKind, Bts};
 use crate::rom::{AddressError, Lorom, RomAddress};

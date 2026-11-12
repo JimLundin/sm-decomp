@@ -17,10 +17,10 @@ The engine has no RAM image, so where the original reads past a table it can't r
 there". Each case is listed until a check needs it; then it becomes a named behaviour with the
 original's bytes as data.
 
-- **Scroll areas past the room's table** (the camera domain, `docs/behaviours/camera.md`
+- **Scroll areas past the room's table** (the camera domain, `docs/behaviours/world-camera.md`
   `BelowTheRoom` and its open question 1, which reads the screens below the room as one run
   continuing the room's, as the room's loading left them, and past the run `Closed`; today
-  `game::camera_world` over the camera model, `$80:A528`, `$80:A731`, `$80:A8FC`): with the screen
+  `game::world_camera_bridge` over the camera model, `$80:A528`, `$80:A731`, `$80:A8FC`): with the screen
   below the camera past the room's last row, the scroll zone routines read the scroll buffer past
   the room's screens, as scrolling down does when the camera moves into the bottom row ahead of its
   ideal position (`area-brinstar` frame 414). Every read indexes the one buffer by row × width +
@@ -38,8 +38,8 @@ original's bytes as data.
   `$92:0000`, low work RAM; an index past the table reads a pointer from what follows. The engine draws
   nothing for either. No pose and frame an animation reaches selects one.
 - **Samus's animation timing spec's defined domain** (the clean-room spec
-  `docs/behaviours/samus-looks.md` §1.5; the original's reads in
-  `docs/behaviours/samus-looks.decode.md`, "Findings behind the spec's choices"): stated
+  `docs/behaviours/samus-appearance.md` §1.5; the original's reads in
+  `docs/behaviours/samus-appearance.decode.md`, "Findings behind the spec's choices"): stated
   simplifications. The first happens in vanilla; the others are unreachable there.
   - **Five sounds waiting** in library 3's queue as she starts boosting, the blue suit failing
     (the bank log's note at `$90:852C`: "sometimes (mostly in heated rooms)"). The original indexes
@@ -57,25 +57,25 @@ original's bytes as data.
   - An `again`, a `branch` or a rest leading to another control, a delay list's last byte a delay
     (the clip moving on past its list), and an ending clip with a mark, a running, standing or kept
     pose (spec §1.5, `ended` from the frame's start): none in the game's lists.
-- **Samus's motion in the demos** (the samus-motion domain, `docs/behaviours/samus-motion.md`
-  `AnimationEnds` and §10; `docs/behaviours/samus-motion.decode.md`, "Round 18's amendments"): the
+- **Samus's motion in the demos** (the samus-movement domain, `docs/behaviours/samus-movement.md`
+  `AnimationEnds` and §10; `docs/behaviours/samus-movement.decode.md`, "Round 18's amendments"): the
   spec covers play. While a demo plays (`0A60` = `$90:E91D`), the original's end unless a jump
   (`$90:8370`) hands over whatever the pad, where the spec's gives way to the pad's take-off or
-  spin. The engine's pose comes from samus-motion's hand-over (`game::samus_world::step`), so a
+  spin. The engine's pose comes from samus-movement's hand-over (`game::samus_movement_bridge::step`), so a
   demo pressing jump on a turn's or a landing's last frame would take off where the original
   stands. No recorded frame has one.
-- **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/hud.md` §1.5; the
-  original's reads in `docs/behaviours/hud.decode.md`, "Counts past their cells" and "The map's
+- **The HUD spec's defined domain** (the clean-room HUD, `docs/behaviours/interface-hud.md` §1.5; the
+  original's reads in `docs/behaviours/interface-hud.decode.md`, "Counts past their cells" and "The map's
   outer edge"): stated simplifications, each unreachable in vanilla.
   - Missiles are defined up to 999 and super missiles and power bombs up to 99; past that the
     original draws its digit table's neighbours and the code at `$80:9DE7` as tiles. Vanilla
-    capacities stop at 230, 50 and 50. The engine (`game::hud_world`) stops the Session with
+    capacities stop at 230, 50 and 50. The engine (`game::interface_hud_bridge`) stops the Session with
     `HudFault::CountPastCells` there.
   - An area with no map (the debug area, whose pointers name none: the engine shows a blank map
     that charts nothing), where the original reads what lies past its tables.
   - An auto-cancel item other than the selected one stops the Session
     (`HudFault::OneShotNotSelected`), and the harness counts a record holding one a defect. No
-    routine of the original writes one (`docs/behaviours/hud.decode.md`, "State").
+    routine of the original writes one (`docs/behaviours/interface-hud.decode.md`, "State").
   - A mini-map cell outside the 64 by 32 map (rows -1, 32 and 33, which the window reaches from her
     cell in row 31, in row 1 at columns 0-1, or in rows 30-31 at columns 62-63, and her own cell
     below the map) is unexplored, uncharted and the map's blank, and exploring it does nothing. The
@@ -98,25 +98,25 @@ original's bytes as data.
   them, which an earlier room or the boot left. The engine draws zero words. Vanilla rooms stay within
   their tables.
 
-- **Emptied item places past the engine's bits** (`game::progress_world`'s `store_emptied`,
+- **Emptied item places past the engine's bits** (`game::run_progress_bridge`'s `store_emptied`,
   `$84:8899`): the engine keeps the 512 bits of `$7E:D870`. A room argument past them makes the
   original set a bit in the work RAM that follows; the engine drops the place, so its item would
   come back. The release's 100 item PLMs name places 0 to 9Ah; a custom room's could name more.
-- **The debug area's item pickups** (`game::progress_world::take`): the progress model has no
+- **The debug area's item pickups** (`game::run_progress_bridge::take`): the progress model has no
   area for the debug rooms (area 7), so their item pickups report area 0's, Crateria. Taking an
   item reads no area (only a boss's, a map's and a station's reports do), so nothing differs; a
   report that reads one would have to name the debug area first.
-- **A scroll cell with no scroll reaction** (the blocks domain, `docs/behaviours/blocks.md`
+- **A scroll cell with no scroll reaction** (the blocks domain, `docs/behaviours/world-blocks.md`
   `ScrollCells`; `$84:B3A6`): when she touches a scroll cell whose block no scroll PLM sits on,
   the original searches the PLMs for one, finds none and loops for ever. The spec leaves such a
   cell to the room's loading, which is to refuse the room. No room of the game has one (the
   importer's scan of the 261 rooms the doors reach, 322 states, 265 scroll cells, and of the two
   rooms no door reaches, the unused room `$8F:B3E1` and the debug room `$8F:E82C`); a custom room
   could. The engine has no room loading to refuse it yet, so its Session stops with
-  `SessionFault::Blocks` when a touch meets such a cell (`game::blocks_world`), as it stopped at
+  `SessionFault::Blocks` when a touch meets such a cell (`game::world_blocks_bridge`), as it stopped at
   the hang before.
-- **A stand-in chain that loops** (the samus-motion domain, `docs/behaviours/samus-motion.md`
-  `OtherBlockKinds`; `data::level`, `game::samus_world`, `game::collision::inside`): when her
+- **A stand-in chain that loops** (the samus-movement domain, `docs/behaviours/samus-movement.md`
+  `OtherBlockKinds`; `data::level`, `game::samus_movement_bridge`, `game::collision::inside`): when her
   moves, her looks or her inside points meet an extension block whose chain of extensions comes
   back on itself, the original follows the chain for ever and hangs. The importer refuses a room
   state whose level has such a chain once its start has written its extensions' and scroll PLMs'
@@ -132,7 +132,7 @@ original's bytes as data.
   `SessionFault::Blocks(BlocksFault::StandInLoop)` at her inside point's. None of the 44 cached
   rows meets one.
 - **Reacting cells whose tables end before their mark** (the blocks domain,
-  `docs/behaviours/blocks.md` §1's marks; the decode notes' importer's scan): each asker of a
+  `docs/behaviours/world-blocks.md` §1's marks; the decode notes' importer's scan): each asker of a
   reacting cell (her touch, her inside points, a shot, a blast, the grapple) reads the cell's
   reaction from its own table by the cell's class and BTS, and some tables end before others: the
   special block's bombed table at BTS 10h (and 8 per area), the special touch, inside and
@@ -146,28 +146,28 @@ original's bytes as data.
   cells, so a power bomb set off in their rooms holds a place for each it reaches. No room of the
   game has a refused cell (the 261 rooms the doors reach and the two no door reaches, `$8F:B3E1`
   and `$8F:E82C`).
-- **A door block whose place is past its room's door list** (the samus-motion domain,
-  `docs/behaviours/samus-motion.md` `OtherBlockKinds`; `data::room::DoorList`,
-  `game::samus_world`; `$94:938B`, `$94:93CE`): a door block names its door by its BTS, the place
+- **A door block whose place is past its room's door list** (the samus-movement domain,
+  `docs/behaviours/samus-movement.md` `OtherBlockKinds`; `data::room::DoorList`,
+  `game::samus_movement_bridge`; `$94:938B`, `$94:93CE`): a door block names its door by its BTS, the place
   in the room's door list, and the list holds no count of its own. The importer reads one door for
   each place up to the last a door block of any of the room's states names, so every door block of
   the level data has its door. A block written as the room runs (a PLM's or a reaction's) could
   name a place past that, where the original reads the bytes after the list as a door header's
   pointer and goes where they lead. The engine answers such a door solid.
-- **Reactions the original would misread** (the blocks domain, `docs/behaviours/blocks.md` §2,
+- **Reactions the original would misread** (the blocks domain, `docs/behaviours/world-blocks.md` §2,
   `BombBlocks`; `$84:85E0`, `$84:CF0C`): a `Show` of 0 frames waits 65,536 frames in the original,
   one of 8000h or more is read as an instruction, and a bomb's blast skips the first three bytes of
   a bomb block's broken list whatever they hold. The importer refuses a reaction with a `Show`
   outside 1 to 32,767 frames, or a bomb block whose broken list doesn't begin with a sound; the
   game has none.
-- **Patterns past the room's edge** (the blocks domain, `docs/behaviours/blocks.md` §2;
+- **Patterns past the room's edge** (the blocks domain, `docs/behaviours/world-blocks.md` §2;
   `$84:861E`): a show draws by block index, so a pattern cell past the room's right or left edge is
   drawn on the next or the previous row, and one past the top or the bottom is written outside the
   room's cells. The spec states patterns in cells, and the room's loading refuses a room whose
   reacting cells' patterns reach past its edge; no room of the game has one. Until the engine's
-  room loading refuses it, the engine draws no such cell (`game::blocks_world`).
+  room loading refuses it, the engine draws no such cell (`game::world_blocks_bridge`).
 - **The grapple on a bomb, a super missile or a power bomb block** (the blocks domain,
-  `docs/behaviours/blocks.md` `BombBlocks`, `SuperMissileBlocks`, `PowerBombBlocks`; `$84:CEDA`,
+  `docs/behaviours/world-blocks.md` `BombBlocks`, `SuperMissileBlocks`, `PowerBombBlocks`; `$84:CEDA`,
   `$84:CF2E`, `$84:CF67`): these blocks decide by the weapon of the projectile last handled
   (`$0DDE`), which the grapple doesn't set, so the original may break one under the grapple as a
   bomb's, a super missile's or a power bomb's hit when that projectile's slot still holds one. The
@@ -175,8 +175,8 @@ original's bytes as data.
 
 ## The engine: memory a model keeps that the engine can't hold yet
 
-- **Samus's animation timing in the engine** (the samus-looks domain,
-  `docs/behaviours/samus-looks.md`; `game::samus_looks_world`): the engine runs the model, and
+- **Samus's animation timing in the engine** (the samus-appearance domain,
+  `docs/behaviours/samus-appearance.md`; `game::samus_appearance_bridge`): the engine runs the model, and
   gives it what the domains it lacks would: no slowdown, no start's slowdown and never submerged
   until the liquids join (R3, S2); the sounds the model asks for (the wall jump's spin, the boost)
   go nowhere and none wait, which every boosting lap on record had, until the sound queue joins
@@ -186,8 +186,8 @@ original's bytes as data.
   knockback, the drained fall), which the engine doesn't reach, her animation stands still, she
   is drawn with no frame, and the RAM translation refuses a record in one as undecodable.
 
-- **Jump held through outside her motion's poses** (the samus-motion domain,
-  `docs/behaviours/samus-motion.md` `Jumping`; `game::samus_world::state`; `$90:EB35` →
+- **Jump held through outside her motion's poses** (the samus-movement domain,
+  `docs/behaviours/samus-movement.md` `Jumping`; `game::samus_movement_bridge::state`; `$90:EB35` →
   `$90:EAB3`): the original counts how long jump has stayed held (`0AF4`) once each gameplay
   frame at the draw, whatever her pose. The engine counts it in the model's step, which runs only
   in the domain's poses, so in another pose (the knockback's, a shinespark's, the grapple's, the
@@ -199,18 +199,18 @@ original's bytes as data.
   (area-brinstar, item-morph-ball) have none. The entry goes when the count is the draw's, run
   every gameplay frame.
 
-- **The blocks' askers the engine doesn't have yet** (the blocks domain, `docs/behaviours/blocks.md`
-  §1.3; `game::blocks_world`): her moves meet each reacting cell by its body and the touches reach
+- **The blocks' askers the engine doesn't have yet** (the blocks domain, `docs/behaviours/world-blocks.md`
+  §1.3; `game::world_blocks_bridge`): her moves meet each reacting cell by its body and the touches reach
   the blocks after them, so a touch's answer (`AnswersToHerMotion`, `FullPlacesLetHerThrough`)
   changes nothing she does; the blocks read no boost stage her animation keeps, so to them she never
   dashes, shinesparks or screw attacks; her beam's hits reach only shootable blocks, and the bombs,
   power bombs, missiles and the grapple hit none; the run is never paused; and the sounds the
   scripts ask for go nowhere. Slice 0's rooms meet none of it: their reacting cells are scroll
   cells, which are air to her, the shot blocks her beam breaks, and the item. Each goes when its
-  asker joins: her motion asking the blocks (samus-motion), her weapons (W1), the grapple (S6),
+  asker joins: her motion asking the blocks (samus-movement), her weapons (W1), the grapple (S6),
   the room's loading and the doors (R1, R2), the sound queue (U1).
-- **Her passage through a door** (the samus-motion domain, `docs/behaviours/samus-motion.md`
-  `OtherBlockKinds`; `game::samus_world`; `$94:938B`, `$94:93CE`): a door that leads to a room
+- **Her passage through a door** (the samus-movement domain, `docs/behaviours/samus-movement.md`
+  `OtherBlockKinds`; `game::samus_movement_bridge`; `$94:938B`, `$94:93CE`): a door that leads to a room
   lets her move on, as in the original, but the engine has no doors yet, so it starts no passage
   (game state 9 and the door pointer `$078D`, set as she reaches the door): she moves on into the
   door's cells and the room goes on running. The harness compares the frame that reaches the door,
@@ -235,7 +235,7 @@ original's bytes as data.
   (above) or in room $ADAD's bottom row, whose four-byte table runs into the next room's header. The
   camera tests only for red and blue, so it reads one as green; the byte goes back out unchanged.
   A scroll change list keeps one too (`data::plm::scroll_changes`), but the blocks model holds
-  screens by kind, so `game::blocks_world`'s write-back compares and writes kinds: a change to a
+  screens by kind, so `game::world_blocks_bridge`'s write-back compares and writes kinds: a change to a
   byte no area has writes green, and a change to green over a screen holding one writes nothing,
   where the original writes the list's byte (`$84:8B68`). Vanilla reaches neither: of the 367
   changes in every room state's lists, none holds such a byte or changes a screen holding one.

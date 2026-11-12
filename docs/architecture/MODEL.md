@@ -170,15 +170,15 @@ code is organised.
 - `exact` runs where the original queued its uploads, so the batch order is unchanged.
 - The intents are also ARCHITECTURE D16's view: the wide and HD renderers read them, and the
   exact path and the intent path come from one source by construction.
-- A rebuilt domain's behaviour is a clean crate (`crates/clean_model/<domain>`, §5), which
+- A rebuilt domain's behaviour is a clean crate (`crates/clean/<crate>`, §5), which
   `game` calls through its bridge in `model`'s place.
 - The "never names" column is held by review; `tools/check_crate_rules.sh` gains a check for it
   with the reshape.
 
 ## 3. Behaviours are named, catalogued and switchable
 
-Each domain's clean model holds its catalogue (`crates/clean_model/<domain>/src/catalogue.rs`),
-one entry per spec entry, over the shared kinds in `clean_types`. Each entry has:
+Each domain's clean model holds its catalogue (`crates/clean/<crate>/src/catalogue.rs`),
+one entry per spec entry, over the shared kinds in `types`. Each entry has:
 
 ```rust
 pub struct Behaviour {
@@ -226,17 +226,17 @@ This domain was replaced first, end to end, so every later domain has a working 
 speed quantities has writers across all of it and the player sees one thing. It covers her speeds
 and position on the ground and in the air, how her pose follows from input and the world where
 that changes her speeds, and her collision with blocks, slopes and solid enemies. The spec,
-[samus-motion.md](../behaviours/samus-motion.md), states the scope and what is not in it yet.
+[samus-movement.md](../behaviours/samus-movement.md), states the scope and what is not in it yet.
 
 **Replace, never adapt.** The model is wired in and the old code it replaces is deleted in the
 same change. No `LEGACY` gate or compatibility shim keeps the old port's behaviour inside a new
 type. Where the model and the old engine disagree, the oracle decides, and a fall in the old
 numbers is recorded as a defect of the old port.
 
-**Shape.** The model is the clean crate `clean_model_samus_motion`
-(`crates/clean_model/samus-motion`): a character controller stepped one frame at a time, its
+**Shape.** The model is the clean crate `samus_movement`
+(`crates/clean/samus_movement`): a character controller stepped one frame at a time, its
 moves as table rows and its pose as a chart, over the shared types and the `World` trait in
-`clean_types`. `game::samus_world` is the integrator's bridge: it answers `World` from the
+`types`. `game::samus_movement_bridge` is the integrator's bridge: it answers `World` from the
 engine's level and solid enemies, maps the engine's State to the model's and back, and turns the
 cells the model reports into the engine's touches.
 
@@ -367,7 +367,7 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     taxed a shared helper; reported, they point a gate at values that travel together.
   - **The parameter count is not a term.** A struct of the arguments would game any count, and
     the call sites already price an interface's width.
-  - Measured on the old samus-motion code at `c7f927ab6` and its two cuts: 13,169.75, of which
+  - Measured on the old samus-movement code at `c7f927ab6` and its two cuts: 13,169.75, of which
     depth is 828.5 and duplication 1,220.75 (clumps would add 337).
 - **Gates refuse what no weight can price** (Jim, 2026-11-07): hard lints on the clean crates,
   ceilings that yield no score, so nothing is counted twice.
@@ -391,7 +391,7 @@ accumulate. It finds where a model goes wrong; it does not prove it right.
     refused, a child naming its parent while the parent reads the child included. It stops
     passing a whole owner (`&Samus`) down to a helper module to shorten its signatures.
 - **k is computed under this score** (decision 7): the old code's score (13,169.75 for
-  samus-motion, at `c7f927ab6`) per unit of the official `tools spec-units` count (193.3), times
+  samus-movement, at `c7f927ab6`) per unit of the official `tools spec-units` count (193.3), times
   0.55, is 37.47, and k is 37.5, to one decimal. The decode notes' Budget section states the
   value and its inputs (decision 10); it is then frozen, and every domain's budget uses it.
 - **Three lints close what no weight can** (Jim, 2026-11-07; L4, 2026-11-11), as
@@ -648,7 +648,7 @@ commit `c1b3ea3`, `docs/architecture/MODEL-REVIEW.md`.
   engine's docs and code; the history is in git (tag `archive/old-engine`).
 
 **From the first pilot (2026-11-07): the thesis's faulty assumptions.** The honest harness showed the
-first Samus-motion model was no better than a step that does nothing. These assumptions were wrong:
+first Samus-movement model was no better than a step that does nothing. These assumptions were wrong:
 
 | Assumption | Why it failed | Now |
 | --- | --- | --- |

@@ -1,6 +1,6 @@
 # The other parts' cell writers: every PLM of bank $84 outside the blocks that writes a cell other
 # than its own, with the cells it writes, the single source of the blocks harness's masks
-# (docs/behaviours/blocks.decode.md, "The other parts' cell writers", says how it was read). Every
+# (docs/behaviours/world-blocks.decode.md, "The other parts' cell writers", says how it was read). Every
 # other PLM, the items' included, writes only its own cell, or none.
 #
 # Each writer:

@@ -1,0 +1,828 @@
+# Test vectors for docs/behaviours/world-camera.md.
+#
+# Format
+# - Each [[vector]] is one frame of the camera, from its state at the frame's start to its state at
+#   the end: id; source ("constructed": every vector here is); entries (the spec's behaviours it
+#   exercises); room; lead (optional); time_stopped (optional); before; samus; after.
+# - A P.S quantity is "PPPP.SSSS": the pixel part and the subpixel part, both hex (spec, Notation).
+#   x grows rightward, y downward.
+# - room: the room's screens and heights (spec §1.3), invented: no room's screens, size or heights
+#   are the game's.
+#   - screens: one string a row of screens, top row first; one character a screen, left to right:
+#     "C" Closed, "O" Open, "S" Short (spec §1.3, Screen kinds). The room is as many screens across
+#     as a row's length (w) and as many down as there are rows (h).
+#   - below (optional, default none): one string, the run of screens the room's loading left after
+#     the room's last screen, in the same characters (spec `BelowTheRoom`). It continues the room's
+#     screens as one run: its first w screens are the row below the room's last row, left to right,
+#     the next w the row below that, and so on, so only its end can fall short of a whole row. A
+#     screen past its end is Closed. The screen right of a row's last column is the next in the
+#     run: the first of the row below, or from the room's last row the run's first (spec
+#     `ScreensRunOn`).
+#   - heights: [while she isn't rising, while she rises], in px (spec `AimingHeight`).
+# - lead (optional, default "Ahead"): the lead setting, "Ahead", "KeepLeft", "KeepRight" or "Near"
+#   (spec `LeadingHer`; listed alphabetically, the order means nothing).
+# - time_stopped (optional, default false): spec `TimeStopped`.
+# - before: the camera at the frame's start (spec §1): camera = [x, y], the view's top-left corner
+#   in the room; seen = [x, y], where it last saw her.
+# - samus: what the camera reads of her this frame (spec §1.3): position = [x, y], after everything
+#   that moved her this frame; facing, "Left", "Right" or "Screen"; backwards (optional, default
+#   none): "Knockback", "Moonwalk" or "Skid", why she is going backwards (the spec's input is
+#   the bool; each reason reads the same; listed alphabetically); rising (optional, default
+#   false); placed (optional, default none): the y a placement put her at this frame, a P.S
+#   quantity (spec §1.3 and `Remembering`); with none, the camera follows from where it last saw
+#   her.
+# - after: compared at the end of the frame: camera = [x, y] and seen = [x, y], as in before.
+# - The vectors hold the camera's and her positions and invented rooms only. The cases no record
+#   reaches (the lead settings other than Ahead, facing the screen, a placement and its pixel part,
+#   a rise at 0, the frame that spends a rise, every ease out of a closed screen, the screen after
+#   the last column, the back-offs short of a screen's edge, time stopped against a frame that would
+#   ease, the creep, the look ahead while going down, the run below the room, a camera left below
+#   the room going down, a camera outside the room or 8000 from what it compares with, a push that
+#   carries, the screens read 128 px past the view's near edge on either side of a screen's edge)
+#   come first, each worked from the spec's rules. The cases the game's frames show follow
+#   (from C-aim-above-top on): each is such a frame's positions, moved by whole screens into an
+#   invented room whose screens the frame reads are of the kinds it read, with her y moved by the
+#   change in the height she aims with; each gives its case in a comment.
+
+[[vector]]
+# Near, she faces right: aimed 64 px right of the view's left edge; the camera reaches the aim
+id = "C-lead-near-right"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer"]
+room = { screens = ["OOOO"], heights = [104, 150] }
+lead = "Near"
+before = { camera = ["0140.0000", "0010.0000"], seen = ["0180.0000", "0108.0000"] }
+samus = { position = ["0182.0000", "0108.0000"], facing = "Right" }
+after = { camera = ["0142.0000", "0010.0000"], seen = ["0182.0000", "0108.0000"] }
+[[vector]]
+# Near, she faces left: 80 px
+id = "C-lead-near-left"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer"]
+room = { screens = ["OOOO"], heights = [104, 150] }
+lead = "Near"
+before = { camera = ["0130.8000", "0010.0000"], seen = ["0180.0000", "0108.0000"] }
+samus = { position = ["0182.0000", "0108.0000"], facing = "Left" }
+after = { camera = ["0132.0000", "0010.0000"], seen = ["0182.0000", "0108.0000"] }
+[[vector]]
+# KeepLeft, she faces left: 32 px
+id = "C-lead-keep-left"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer"]
+room = { screens = ["OOOO"], heights = [104, 150] }
+lead = "KeepLeft"
+before = { camera = ["0160.0000", "0010.0000"], seen = ["0180.0000", "0108.0000"] }
+samus = { position = ["0182.0000", "0108.0000"], facing = "Left" }
+after = { camera = ["0162.0000", "0010.0000"], seen = ["0182.0000", "0108.0000"] }
+[[vector]]
+# KeepRight, she faces right: 224 px
+id = "C-lead-keep-right"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer"]
+room = { screens = ["OOOO"], heights = [104, 150] }
+lead = "KeepRight"
+before = { camera = ["00A4.0000", "0010.0000"], seen = ["0180.0000", "0108.0000"] }
+samus = { position = ["0182.0000", "0108.0000"], facing = "Right" }
+after = { camera = ["00A2.0000", "0010.0000"], seen = ["0182.0000", "0108.0000"] }
+[[vector]]
+# she faces the screen: the lead is the one when she faces right
+id = "C-facing-screen"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer"]
+room = { screens = ["OOOO"], heights = [104, 150] }
+before = { camera = ["0120.0000", "0010.0000"], seen = ["0180.0000", "0108.0000"] }
+samus = { position = ["0182.0000", "0108.0000"], facing = "Screen" }
+after = { camera = ["0122.0000", "0010.0000"], seen = ["0182.0000", "0108.0000"] }
+[[vector]]
+# pose fit placed her at her y: she did not move up for the camera
+id = "C-placed"
+source = "constructed"
+entries = ["Remembering", "Settling"]
+room = { screens = ["OO", "OO", "OO"], heights = [104, 150] }
+before = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "00F8.0000"] }
+samus = { position = ["0180.0000", "00F0.0000"], facing = "Right", placed = "00F0.0000" }
+after = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "00F0.0000"] }
+[[vector]]
+# the placement takes the pixel part only: the kept subpixel makes her creep up inside a pixel, so the ease is 2 px
+id = "C-placed-pixel"
+source = "constructed"
+entries = ["Remembering", "Settling", "CreepReadsRightward"]
+room = { screens = ["C", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00F0.0000"], seen = ["0080.0000", "0148.8000"] }
+samus = { position = ["0080.0000", "0144.4000"], facing = "Right", placed = "0144.0000" }
+after = { camera = ["0000.0000", "00F2.0000"], seen = ["0080.0000", "0144.4000"] }
+[[vector]]
+# she rose 3 px and her upward speed is now exactly 0, a rise at 0: the rising height
+id = "C-rise-at-0"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer"]
+room = { screens = ["O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00B0.0000"], seen = ["0080.0000", "0146.0000"] }
+samus = { position = ["0080.0000", "0143.0000"], facing = "Right", rising = true }
+after = { camera = ["0000.0000", "00AD.0000"], seen = ["0080.0000", "0143.0000"] }
+[[vector]]
+# the frame that spends her rise: her speed now points down but she is still rising, so the rising height
+id = "C-rise-spent"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer", "Remembering"]
+room = { screens = ["O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0080.0000"], seen = ["0080.0000", "00F6.0800"] }
+samus = { position = ["0080.0000", "00F5.F800"], facing = "Right", rising = true }
+after = { camera = ["0000.0000", "007E.F000"], seen = ["0080.0000", "00F5.F800"] }
+[[vector]]
+# the same move, not rising: the other height
+id = "C-not-rising"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer"]
+room = { screens = ["O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00B0.0000"], seen = ["0080.0000", "0148.0000"] }
+samus = { position = ["0080.0000", "0145.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00B4.0000"], seen = ["0080.0000", "0145.0000"] }
+[[vector]]
+# right of the last column the view reads the first screen of the row below, open here, so it eases past the room's right edge (and down out of the closed screen)
+id = "C-wrap"
+source = "constructed"
+entries = ["ScreensRunOn", "Settling"]
+room = { screens = ["OC", "OO", "SC"], heights = [104, 150] }
+before = { camera = ["0100.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+samus = { position = ["0150.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0103.0000", "0013.0000"], seen = ["0150.0000", "0088.0000"] }
+[[vector]]
+# the same frame with no placement: she moved up 8 px
+id = "C-unplaced"
+source = "constructed"
+entries = ["Remembering", "FollowingHer", "AimingHeight"]
+room = { screens = ["OO", "OO", "OO"], heights = [104, 150] }
+before = { camera = ["0100.0000", "0080.0000"], seen = ["0180.0000", "00F8.0000"] }
+samus = { position = ["0180.0000", "00F0.0000"], facing = "Right" }
+after = { camera = ["0100.0000", "0088.0000"], seen = ["0180.0000", "00F0.0000"] }
+[[vector]]
+# the screen holding the left edge is closed: 3 px right
+id = "C-ease-right"
+source = "constructed"
+entries = ["Settling", "ClosedScreens"]
+room = { screens = ["COO"], heights = [104, 150] }
+before = { camera = ["00F0.0000", "0010.0000"], seen = ["0150.8000", "0088.0000"] }
+samus = { position = ["0150.8000", "0088.0000"], facing = "Right" }
+after = { camera = ["00F3.0000", "0010.0000"], seen = ["0150.8000", "0088.0000"] }
+[[vector]]
+# as C-ease-right, but she crept left inside a pixel: 2 px
+id = "C-creep"
+source = "constructed"
+entries = ["CreepReadsRightward", "Settling"]
+room = { screens = ["COO"], heights = [104, 150] }
+before = { camera = ["00F0.0000", "0010.0000"], seen = ["0150.8000", "0088.0000"] }
+samus = { position = ["0150.4000", "0088.0000"], facing = "Right" }
+after = { camera = ["00F2.0000", "0010.0000"], seen = ["0150.4000", "0088.0000"] }
+[[vector]]
+# the ease reaches the next screen: it stops on its edge
+id = "C-ease-right-snap"
+source = "constructed"
+entries = ["Settling"]
+room = { screens = ["COO"], heights = [104, 150] }
+before = { camera = ["00FE.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+samus = { position = ["0150.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0100.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+[[vector]]
+# both screens closed: it drops to the edge of the screen its ease is in; down, nothing is given below the room, so it drops to 0 too
+id = "C-ease-both-closed"
+source = "constructed"
+entries = ["Settling"]
+room = { screens = ["CCO"], heights = [104, 150] }
+before = { camera = ["0010.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+samus = { position = ["0150.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "0000.0000"], seen = ["0150.0000", "0088.0000"] }
+[[vector]]
+# the screen right of it is closed: 3 px left
+id = "C-ease-left"
+source = "constructed"
+entries = ["Settling"]
+room = { screens = ["OCO"], heights = [104, 150] }
+before = { camera = ["0020.0000", "0010.0000"], seen = ["0050.0000", "0088.0000"] }
+samus = { position = ["0050.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["001D.0000", "0010.0000"], seen = ["0050.0000", "0088.0000"] }
+[[vector]]
+# the ease left passes the screen's edge: it stops on it
+id = "C-ease-left-snap"
+source = "constructed"
+entries = ["Settling"]
+room = { screens = ["OCO"], heights = [104, 150] }
+before = { camera = ["0001.0000", "0010.0000"], seen = ["0050.0000", "0088.0000"] }
+samus = { position = ["0050.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "0010.0000"], seen = ["0050.0000", "0088.0000"] }
+[[vector]]
+# as C-ease-right with time stopped: it holds
+id = "C-stopped"
+source = "constructed"
+entries = ["TimeStopped"]
+room = { screens = ["COO"], heights = [104, 150] }
+time_stopped = true
+before = { camera = ["00F0.0000", "0010.0000"], seen = ["0150.8000", "0088.0000"] }
+samus = { position = ["0150.8000", "0088.0000"], facing = "Right" }
+after = { camera = ["00F0.0000", "0010.0000"], seen = ["0150.8000", "0088.0000"] }
+[[vector]]
+# the screen holding its top is closed: 3 px down
+id = "C-ease-down"
+source = "constructed"
+entries = ["Settling"]
+room = { screens = ["C", "O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00F0.0000"], seen = ["0080.0000", "0148.0000"] }
+samus = { position = ["0080.0000", "0148.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00F3.0000"], seen = ["0080.0000", "0148.0000"] }
+[[vector]]
+# the screen below is closed, the top's screen open: up 3 px, no higher than 31 px below its edge
+id = "C-ease-up"
+source = "constructed"
+entries = ["Settling", "ShortScreens"]
+room = { screens = ["O", "C"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0030.0000"], seen = ["0080.0000", "0088.0000"] }
+samus = { position = ["0080.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "002D.0000"], seen = ["0080.0000", "0088.0000"] }
+[[vector]]
+# the top's screen short: up to its edge
+id = "C-ease-up-short"
+source = "constructed"
+entries = ["Settling", "ShortScreens"]
+room = { screens = ["S", "C"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0002.0000"], seen = ["0080.0000", "0088.0000"] }
+samus = { position = ["0080.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "0000.0000"], seen = ["0080.0000", "0088.0000"] }
+[[vector]]
+# the bottom screen became short: it settles 31 px up at once
+id = "C-settle-into-room-down"
+source = "constructed"
+entries = ["Settling", "ShortScreens", "RoomEdges"]
+room = { screens = ["O", "S"], heights = [104, 150] }
+before = { camera = ["0000.0000", "011F.0000"], seen = ["0080.0000", "0188.0000"] }
+samus = { position = ["0080.0000", "0188.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "0100.0000"], seen = ["0080.0000", "0188.0000"] }
+[[vector]]
+# running right towards a closed screen: it backs off 2 px
+id = "C-push-right-back"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["OOC"], heights = [104, 150] }
+before = { camera = ["0110.0000", "0010.0000"], seen = ["01A0.0000", "0088.0000"] }
+samus = { position = ["01A2.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["010E.0000", "0010.0000"], seen = ["01A2.0000", "0088.0000"] }
+[[vector]]
+# running left into a closed screen: it eases 2 px right
+id = "C-push-left-back"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["COO"], heights = [104, 150] }
+before = { camera = ["00F0.0000", "0010.0000"], seen = ["0180.0000", "0088.0000"] }
+samus = { position = ["017E.0000", "0088.0000"], facing = "Left" }
+after = { camera = ["00F2.0000", "0010.0000"], seen = ["017E.0000", "0088.0000"] }
+[[vector]]
+# rising into a closed screen above: it eases 2 px down
+id = "C-push-up-back"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "AimingHeight"]
+room = { screens = ["C", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00F0.0000"], seen = ["0100.0000", "014A.0000"] }
+samus = { position = ["0100.0000", "0146.0000"], facing = "Right", rising = true }
+after = { camera = ["0000.0000", "00F2.0000"], seen = ["0100.0000", "0146.0000"] }
+[[vector]]
+# falling towards a closed screen: it backs up 2 px, staying 31 px or more past its screen's top edge
+id = "C-push-down-back"
+source = "constructed"
+entries = ["ClosedScreens", "ShortScreens", "FollowingHer", "AimingHeight"]
+room = { screens = ["O", "O", "C"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0130.0000"], seen = ["0080.0000", "01D3.0000"] }
+samus = { position = ["0080.0000", "01D8.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "012E.0000"], seen = ["0080.0000", "01D8.0000"] }
+[[vector]]
+# the move down crosses into the next screen, whose next is closed: it backs up past the aim
+id = "C-ahead"
+source = "constructed"
+entries = ["DownwardLooksAhead", "ClosedScreens", "FollowingHer"]
+room = { screens = ["O", "O", "C"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00FA.0000"], seen = ["0080.0000", "0160.0000"] }
+samus = { position = ["0080.0000", "0166.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00F8.0000"], seen = ["0080.0000", "0166.0000"] }
+[[vector]]
+# the same move in a room two screens high, nothing given below it: closed
+id = "C-below-closed"
+source = "constructed"
+entries = ["BelowTheRoom", "DownwardLooksAhead"]
+room = { screens = ["O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "00FA.0000"], seen = ["0080.0000", "0160.0000"] }
+samus = { position = ["0080.0000", "0166.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00F8.0000"], seen = ["0080.0000", "0166.0000"] }
+[[vector]]
+# the same with an open screen left below the room: it stops on the aim
+id = "C-below-open"
+source = "constructed"
+entries = ["BelowTheRoom", "DownwardLooksAhead"]
+room = { screens = ["O", "O"], heights = [104, 150], below = "O" }
+before = { camera = ["0000.0000", "00FA.0000"], seen = ["0080.0000", "0160.0000"] }
+samus = { position = ["0080.0000", "0166.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00FE.0000"], seen = ["0080.0000", "0166.0000"] }
+[[vector]]
+# placed left of the room, she moves right: the move takes it to FFF3, which exceeds the room's
+# right edge 0100, so it stops there (by `before` FFF3 is left of it)
+id = "C-edge-right-from-left"
+source = "constructed"
+entries = ["RoomEdges", "FollowingHer"]
+room = { screens = ["OO"], heights = [104, 150] }
+before = { camera = ["FFF0.0000", "0010.0000"], seen = ["0100.0000", "0088.0000"] }
+samus = { position = ["0102.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0100.0000", "0010.0000"], seen = ["0102.0000", "0088.0000"] }
+[[vector]]
+# placed above the room, she moves down: FFF3 exceeds the room's bottom, so it backs up onto it,
+# 011F (the screen its top is in lies below the room's rows: Closed, so 31 rows)
+id = "C-edge-down-from-above"
+source = "constructed"
+entries = ["RoomEdges", "FollowingHer", "ShortScreens", "BelowTheRoom"]
+room = { screens = ["O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "FFF0.0000"], seen = ["0080.0000", "00F8.0000"] }
+samus = { position = ["0080.0000", "00FA.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "011F.0000"], seen = ["0080.0000", "00FA.0000"] }
+[[vector]]
+# left below the room, she moves down 2 px: speed 3, so the move takes it from 0150 to 0153 (her
+# aim 0192 is below that), which exceeds the room's bottom 011F (an open screen, 31 rows); it backs
+# up as from a closed screen, back(0153) = 0153 - 3 - 2 = 014E, which is after 011F, so the max is
+# 014E: it creeps up 2 px rather than going straight to the bottom
+id = "C-edge-down-from-below"
+source = "constructed"
+entries = ["RoomEdges", "FollowingHer"]
+room = { screens = ["O", "O"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0150.0000"], seen = ["0080.0000", "01F8.0000"] }
+samus = { position = ["0080.0000", "01FA.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "014E.0000"], seen = ["0080.0000", "01FA.0000"] }
+[[vector]]
+# placed left of the room, she still, the first screen closed: brought to 0, its ease from FFF0 is
+# FFF3, which exceeds the next screen's edge 0100, so it stops on that edge
+id = "C-settle-reach-from-left"
+source = "constructed"
+entries = ["Settling", "ClosedScreens"]
+room = { screens = ["CO"], heights = [104, 150] }
+before = { camera = ["FFF0.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+samus = { position = ["0150.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0100.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+[[vector]]
+# she moved 8000 px left, the camera far right of her aim: it moves left onto the aim 00FF, in a
+# closed screen; the push from where its move took it is 8100, which exceeds the edge 0100, so it
+# stops on the edge (by `before` it would take 8100)
+id = "C-push-left-far"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["CO"], heights = [104, 150] }
+before = { camera = ["80FE.0000", "0010.0000"], seen = ["815F.0000", "0088.0000"] }
+samus = { position = ["015F.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0100.0000", "0010.0000"], seen = ["015F.0000", "0088.0000"] }
+[[vector]]
+# the aim 8010 is exactly 8000 right of the camera: it is `before` it, so the camera moves left
+# by its speed of 2 px
+id = "C-aim-half-way"
+source = "constructed"
+entries = ["FollowingHer", "LeadingHer"]
+room = { screens = ["OO"], heights = [104, 150] }
+before = { camera = ["0010.0000", "0010.0000"], seen = ["806F.0000", "0088.0000"] }
+samus = { position = ["8070.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["000E.0000", "0010.0000"], seen = ["8070.0000", "0088.0000"] }
+[[vector]]
+# as C-below-open in a room two screens across, read in its right column: the run below the room
+# holds one screen, under the left column, so the one under the right column is past its end,
+# Closed, and it backs up 2 px
+id = "C-below-short-row"
+source = "constructed"
+entries = ["BelowTheRoom", "DownwardLooksAhead"]
+room = { screens = ["OO", "OO"], heights = [104, 150], below = "O" }
+before = { camera = ["0100.0000", "00FA.0000"], seen = ["0180.0000", "0160.0000"] }
+samus = { position = ["0180.0000", "0166.0000"], facing = "Right" }
+after = { camera = ["0100.0000", "00F8.0000"], seen = ["0180.0000", "0166.0000"] }
+[[vector]]
+# placed right of the room, she still, the next screen (past the room) Closed: brought to the
+# right edge 0100, it eases back from where the frame found it, 0150 − 3 = 014D, which is in an
+# open screen; the room's edge doesn't hold it
+id = "C-settle-back-right-of-room"
+source = "constructed"
+entries = ["Settling", "ClosedScreens", "ScreensRunOn"]
+room = { screens = ["OO"], heights = [104, 150] }
+before = { camera = ["0150.0000", "0010.0000"], seen = ["01A0.0000", "0088.0000"] }
+samus = { position = ["01A0.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["014D.0000", "0010.0000"], seen = ["01A0.0000", "0088.0000"] }
+[[vector]]
+# as C-settle-back-right-of-room from 0250: the ease back to 024D lands in the column after the
+# last, which runs on to the first screen of the row below, Closed, so it goes on to that column's next
+# edge, 0300; down, its column (3) runs on to the second screen of the row below, Open, and holds
+id = "C-settle-back-far-right"
+source = "constructed"
+entries = ["Settling", "ClosedScreens", "ScreensRunOn"]
+room = { screens = ["OO", "CO"], heights = [104, 150] }
+before = { camera = ["0250.0000", "0010.0000"], seen = ["01A0.0000", "0088.0000"] }
+samus = { position = ["01A0.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0300.0000", "0010.0000"], seen = ["01A0.0000", "0088.0000"] }
+[[vector]]
+# as C-edge-down-from-above in a room of short screens: the top FFF3 its move took it to is in
+# the 256th row, below the room and Closed, so rows is 31 and it stops on 011F; read as the
+# room's first row (Short) it would stop on 0100
+id = "C-edge-down-from-above-short"
+source = "constructed"
+entries = ["RoomEdges", "ShortScreens", "DownwardLooksAhead", "BelowTheRoom", "FollowingHer"]
+room = { screens = ["S", "S"], heights = [104, 150] }
+before = { camera = ["0000.0000", "FFF0.0000"], seen = ["0080.0000", "00F8.0000"] }
+samus = { position = ["0080.0000", "00FA.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "011F.0000"], seen = ["0080.0000", "00FA.0000"] }
+[[vector]]
+# placed at FFFF, she still, the first screen closed: brought to 0, its ease ahead(FFFF) passes
+# FFFF and carries, 0003 rather than 0002; down, its ease 0013 is followed by a screen below the
+# room, Closed, so it drops to 0000
+id = "C-push-carries"
+source = "constructed"
+entries = ["PushCarries", "Settling", "ClosedScreens"]
+room = { screens = ["CO"], heights = [104, 150] }
+before = { camera = ["FFFF.0000", "0010.0000"], seen = ["0150.0000", "0088.0000"] }
+samus = { position = ["0150.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0003.0000", "0000.0000"], seen = ["0150.0000", "0088.0000"] }
+[[vector]]
+# in the room, the first screen closed: she moves 4 px left, the camera 5 px from 0003 to FFFE,
+# and stops on its aim 0002; the push from FFFE carries, 0006 rather than 0005; down as in
+# C-push-carries
+id = "C-push-carries-move"
+source = "constructed"
+entries = ["PushCarries", "ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["CO"], heights = [104, 150] }
+before = { camera = ["0003.0000", "0010.0000"], seen = ["0066.0000", "0088.0000"] }
+samus = { position = ["0062.0000", "0088.0000"], facing = "Right" }
+after = { camera = ["0006.0000", "0000.0000"], seen = ["0062.0000", "0088.0000"] }
+[[vector]]
+# placed below the room, she still: the rows its top was in before it settles (2, below the room,
+# Closed) give rows 31, so it is brought to 0100 + 31 = 011F; the screen its top is then in is
+# Short and not closed, the one under it Closed, and 011F is not past 011F, so it holds (taking
+# rows from the Short screen it is brought into would give 0100)
+id = "C-settle-up-from-below-short"
+source = "constructed"
+entries = ["Settling", "ShortScreens", "RoomEdges", "BelowTheRoom"]
+room = { screens = ["O", "S"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0250.0000"], seen = ["0080.0000", "0188.0000"] }
+samus = { position = ["0080.0000", "0188.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "011F.0000"], seen = ["0080.0000", "0188.0000"] }
+[[vector]]
+# she falls 11F px, the aim 00F8: the move takes the camera's top from 00F0 to 0210, in the row
+# below the room (the run's first w, Open, so rows 31); the screen under it is the run's second w
+# (its third screen, Open), so it stops on the aim; read as Closed it would back up to 00EE
+id = "C-below-second-row"
+source = "constructed"
+entries = ["BelowTheRoom", "DownwardLooksAhead", "FollowingHer"]
+room = { screens = ["OO", "OO"], heights = [104, 150], below = "OOO" }
+before = { camera = ["0000.0000", "00F0.0000"], seen = ["0080.0000", "0041.0000"] }
+samus = { position = ["0080.0000", "0160.0000"], facing = "Right" }
+after = { camera = ["0000.0000", "00F8.0000"], seen = ["0080.0000", "0160.0000"] }
+[[vector]]
+# she still, the view on the right edge of the room's last row, in a closed screen: the screen
+# after it is the run's first, Open, so it eases 3 px right; read as Closed it would hold on 0100.
+# Down, its own screen is closed and the one under it past the run's end, Closed: it holds on 0100
+id = "C-wrap-into-below"
+source = "constructed"
+entries = ["ScreensRunOn", "BelowTheRoom", "Settling"]
+room = { screens = ["OO", "OC"], heights = [104, 150], below = "O" }
+before = { camera = ["0100.0000", "0100.0000"], seen = ["0180.0000", "0188.0000"] }
+samus = { position = ["0180.0000", "0188.0000"], facing = "Right" }
+after = { camera = ["0103.0000", "0100.0000"], seen = ["0180.0000", "0188.0000"] }
+[[vector]]
+# the read point across: the view's top is 80h px into its screen, so the point 128 px below it lies at the top of the screens below, where the next screen is closed: the view backs 2 px from its move right; the row above's next screen is open
+id = "C-read-point-across"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["OO", "OC"], heights = [104, 150] }
+before = { camera = ["0010.0000", "0080.0000"], seen = ["0080.0000", "0100.0000"] }
+samus = { position = ["0082.0000", "0100.0000"], facing = "Right" }
+after = { camera = ["000E.0000", "0080.0000"], seen = ["0082.0000", "0100.0000"] }
+[[vector]]
+# the read point down: the view's left edge is 80h px into its screen, so the point 128 px right of it lies at the left of the next column, whose screen below is closed: the view backs 2 px from its move down; the column before it is open below
+id = "C-read-point-down"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "AimingHeight"]
+room = { screens = ["OO", "OC"], heights = [104, 150] }
+before = { camera = ["0080.0000", "0040.0000"], seen = ["0100.0000", "0100.0000"] }
+samus = { position = ["0100.0000", "0102.0000"], facing = "Right" }
+after = { camera = ["0080.0000", "003E.0000"], seen = ["0100.0000", "0102.0000"] }
+[[vector]]
+# the read point across, a pixel higher: the view's top is 7Fh px into its screen, so the point 128 px below it lies at the bottom of the top row, whose next screen is closed: the view backs 2 px; the row below's next screen is open
+id = "C-read-point-across-7F"
+source = "constructed"
+entries = ["ClosedScreens", "FollowingHer", "LeadingHer"]
+room = { screens = ["OC", "OO"], heights = [104, 150] }
+before = { camera = ["0010.0000", "007F.0000"], seen = ["0080.0000", "0100.0000"] }
+samus = { position = ["0082.0000", "0100.0000"], facing = "Right" }
+after = { camera = ["000E.0000", "007F.0000"], seen = ["0082.0000", "0100.0000"] }
+[[vector]]
+# she moves down 2 px but her aim is above the room's top: the view moves up onto the aim and stops on the top, its subpixel 0; across she is still and the next screen is closed, so it holds on its screen's edge
+id = "C-aim-above-top"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "AimingHeight", "RoomEdges", "Remembering"]
+room = { screens = ["COCO", "OOCS"], heights = [104, 150] }
+before = { camera = ["0100.C000", "0000.FC01"], seen = ["0180.1000", "0064.0000"] }
+samus = { position = ["0180.1000", "0066.0000"], facing = "Screen" }
+after = { camera = ["0100.C000", "0000.0000"], seen = ["0180.1000", "0066.0000"] }
+[[vector]]
+# as C-aim-above-top, the view on the room's right edge: across, the screen after its last column is past the run below the room, closed, so it holds
+id = "C-aim-above-top-right-edge"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "AimingHeight", "RoomEdges", "Remembering"]
+room = { screens = ["CS"], heights = [104, 150] }
+before = { camera = ["0100.5000", "0000.0400"], seen = ["0195.0000", "0063.6BFF"] }
+samus = { position = ["0195.0000", "0066.7BFF"], facing = "Left" }
+after = { camera = ["0100.5000", "0000.0000"], seen = ["0195.0000", "0066.7BFF"] }
+[[vector]]
+# she moves down 2 px: the view moves down 1 px onto its aim; the screen below is closed, but the view is within 31 px of its screen's top edge, so it stays where the move put it
+id = "C-down-within-margin"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "ClosedScreens", "AimingHeight", "Remembering"]
+room = { screens = ["OOCS", "OCCO", "OCCC"], heights = [104, 150] }
+before = { camera = ["0100.C000", "0000.0000"], seen = ["0180.1000", "0067.0000"] }
+samus = { position = ["0180.1000", "0069.0000"], facing = "Screen" }
+after = { camera = ["0100.C000", "0001.0000"], seen = ["0180.1000", "0069.0000"] }
+[[vector]]
+# the move down crosses into the room's last row and stops on its aim; the screen under it, the second of the run below the room, is open, so it stays there
+id = "C-down-into-last-row"
+source = "constructed"
+entries = ["BelowTheRoom", "Settling", "FollowingHer", "AimingHeight", "Remembering"]
+room = { screens = ["CCCS", "CSOO", "SSSO"], heights = [104, 150], below = "CO" }
+before = { camera = ["0100.C000", "01FD.0000"], seen = ["0180.1000", "0265.0000"] }
+samus = { position = ["0180.1000", "0267.0000"], facing = "Screen" }
+after = { camera = ["0100.C000", "01FF.0000"], seen = ["0180.1000", "0267.0000"] }
+[[vector]]
+# as C-down-into-last-row, the screen under it short, which holds no more than an open one would; across the view moves left onto its aim
+id = "C-down-into-last-row-moving-left"
+source = "constructed"
+entries = ["BelowTheRoom", "LeadingHer", "FollowingHer", "AimingHeight", "Remembering"]
+room = { screens = ["COS", "COC", "SSO"], heights = [104, 150], below = "CS" }
+before = { camera = ["0163.0000", "01FE.8C00"], seen = ["0203.6800", "0266.A3FF"] }
+samus = { position = ["0200.9800", "0267.4BFF"], facing = "Left" }
+after = { camera = ["0160.0000", "01FF.0000"], seen = ["0200.9800", "0267.4BFF"] }
+[[vector]]
+# on the room's right edge she faces left and moves left, but her aim is 3 px right of the view: it moves right, the aim stops it, and the room's right edge brings it back to the edge, its subpixel 0
+id = "C-right-onto-edge"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "Settling", "ShortScreens", "Remembering"]
+room = { screens = ["OC", "CS", "CC"], heights = [104, 150] }
+before = { camera = ["0100.B000", "0100.2400"], seen = ["01AB.9FFF", "0183.FFFF"] }
+samus = { position = ["01A3.BFFF", "0183.FFFF"], facing = "Left" }
+after = { camera = ["0100.0000", "0100.2400"], seen = ["01A3.BFFF", "0183.FFFF"] }
+[[vector]]
+# she faces left at the room's left edge and her aim is left of the room: the view moves onto it and stops on the left edge
+id = "C-left-past-edge"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "Settling", "ShortScreens", "Remembering"]
+room = { screens = ["O", "S", "S", "C"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0200.2400"], seen = ["00A3.BFFF", "0283.FFFF"] }
+samus = { position = ["009B.CFFF", "0283.FFFF"], facing = "Left" }
+after = { camera = ["0000.0000", "0200.2400"], seen = ["009B.CFFF", "0283.FFFF"] }
+[[vector]]
+# she creeps left inside a pixel, still on both axes, the view on the room's right edge with the screens after it and below it closed: it holds on both
+id = "C-hold-creep"
+source = "constructed"
+entries = ["Settling", "Remembering"]
+room = { screens = ["OS"], heights = [104, 150] }
+before = { camera = ["0100.8000", "0000.2400"], seen = ["0184.4FFF", "0083.FFFF"] }
+samus = { position = ["0184.1FFF", "0083.FFFF"], facing = "Left" }
+after = { camera = ["0100.8000", "0000.2400"], seen = ["0184.1FFF", "0083.FFFF"] }
+[[vector]]
+# she creeps up inside a pixel, still on both axes, the screens after the view and below it closed: it holds on both
+id = "C-hold-creep-up"
+source = "constructed"
+entries = ["Settling", "Remembering"]
+room = { screens = ["CS"], heights = [104, 150] }
+before = { camera = ["0100.F000", "0000.F800"], seen = ["01BB.FFFF", "009D.C7FF"] }
+samus = { position = ["01BB.FFFF", "009D.37FF"], facing = "Right", rising = true }
+after = { camera = ["0100.F000", "0000.F800"], seen = ["01BB.FFFF", "009D.37FF"] }
+[[vector]]
+# time stopped and she is still: the view stays as it is
+id = "C-stopped-hold"
+source = "constructed"
+entries = ["TimeStopped", "Remembering"]
+room = { screens = ["CO"], heights = [104, 150] }
+time_stopped = true
+before = { camera = ["0100.E000", "0000.2400"], seen = ["0144.FFFF", "0088.FFFF"] }
+samus = { position = ["0144.FFFF", "0088.FFFF"], facing = "Left" }
+after = { camera = ["0100.E000", "0000.2400"], seen = ["0144.FFFF", "0088.FFFF"] }
+[[vector]]
+# as C-stopped-hold, in a room with the other heights
+id = "C-stopped-hold-other-heights"
+source = "constructed"
+entries = ["TimeStopped", "Remembering"]
+room = { screens = ["CC", "OS"], heights = [128, 150] }
+time_stopped = true
+before = { camera = ["0100.1000", "00FD.0000"], seen = ["01D4.3000", "017B.FFFF"] }
+samus = { position = ["01D4.3000", "017B.FFFF"], facing = "Left" }
+after = { camera = ["0100.1000", "00FD.0000"], seen = ["01D4.3000", "017B.FFFF"] }
+[[vector]]
+# rising, she moves left and up: across the view moves right onto its aim and the room's right edge stops it; down its aim is above the room, so it stops on the top, its subpixel kept
+id = "C-rise-into-corner"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "AimingHeight", "Remembering"]
+room = { screens = ["CO"], heights = [104, 150] }
+before = { camera = ["0100.9001", "0000.2800"], seen = ["01A4.A000", "005A.0FFF"] }
+samus = { position = ["01A2.5000", "0056.2BFF"], facing = "Left", rising = true }
+after = { camera = ["0100.0000", "0000.4400"], seen = ["01A2.5000", "0056.2BFF"] }
+[[vector]]
+# across the view is on its aim and stays; rising, her aim is above the room, so down it stops on the top, its subpixel kept
+id = "C-at-aim-across-rising"
+source = "constructed"
+entries = ["FollowingHer", "LeadingHer", "AimingHeight", "RoomEdges", "Remembering"]
+room = { screens = ["CO"], heights = [104, 150] }
+before = { camera = ["0100.0000", "0000.4400"], seen = ["01A2.5000", "0056.2BFF"] }
+samus = { position = ["01A0.0000", "0052.63FF"], facing = "Left", rising = true }
+after = { camera = ["0100.0000", "0000.7C00"], seen = ["01A0.0000", "0052.63FF"] }
+[[vector]]
+# across the view is on its aim and stays; down she is still and the screen below is closed, so it holds
+id = "C-at-aim-across"
+source = "constructed"
+entries = ["FollowingHer", "LeadingHer", "Settling", "ShortScreens", "Remembering"]
+room = { screens = ["SO"], heights = [104, 150] }
+before = { camera = ["0000.0000", "0000.3400"], seen = ["005D.FFFF", "00A3.FFFF"] }
+samus = { position = ["0060.FFFF", "00A3.FFFF"], facing = "Right" }
+after = { camera = ["0000.0000", "0000.3400"], seen = ["0060.FFFF", "00A3.FFFF"] }
+[[vector]]
+# she moves right, but her aim is left of the room: the view moves left past the room's left edge, which stops it on 0 with its subpixel kept; down the screen below is closed and the view stays within 31 px of its screen's top edge
+id = "C-left-edge-keeps-subpixel"
+source = "constructed"
+entries = ["LeadingHer", "RoomEdges", "FollowingHer", "ClosedScreens", "AimingHeight", "Remembering"]
+room = { screens = ["CO", "OC", "OO", "OS"], heights = [104, 150] }
+before = { camera = ["0000.4000", "0300.5800"], seen = ["0022.CFFF", "0383.FFFF"] }
+samus = { position = ["002A.8FFF", "0387.BFFF"], facing = "Right" }
+after = { camera = ["0000.8000", "0305.1800"], seen = ["002A.8FFF", "0387.BFFF"] }
+[[vector]]
+# the move down passes the room's bottom, its last row not short: the view backs up to 31 px below the last row's top edge
+id = "C-down-to-bottom-31"
+source = "constructed"
+entries = ["Settling", "RoomEdges", "ShortScreens", "FollowingHer", "AimingHeight", "Remembering"]
+room = { screens = ["OCO", "OOC"], heights = [104, 150] }
+before = { camera = ["0100.0000", "011E.5400"], seen = ["013B.FFFF", "0196.9FFF"] }
+samus = { position = ["013B.FFFF", "0198.7BFF"], facing = "Right" }
+after = { camera = ["0100.0000", "011F.3000"], seen = ["013B.FFFF", "0198.7BFF"] }
+[[vector]]
+# down the view is on its aim and stays; across she is still and neither screen it reads is closed, so it stays
+id = "C-at-aim-down"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "Remembering"]
+room = { screens = ["SSCO", "OSSC"], heights = [104, 150] }
+before = { camera = ["0100.C000", "0100.0000"], seen = ["0181.0000", "0169.8000"] }
+samus = { position = ["0181.0000", "0168.8000"], facing = "Screen" }
+after = { camera = ["0100.C000", "0100.0000"], seen = ["0181.0000", "0168.8000"] }
+[[vector]]
+# down the view is on its aim and stays; across she is still, the next screen closed, and the view holds on its screen's edge
+id = "C-at-aim-down-held-across"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "Remembering"]
+room = { screens = ["COC", "OCS"], heights = [104, 150] }
+before = { camera = ["0100.4000", "0000.0000"], seen = ["01AC.8000", "0066.B3FF"] }
+samus = { position = ["01AC.8000", "0068.C7FF"], facing = "Right" }
+after = { camera = ["0100.4000", "0000.0000"], seen = ["01AC.8000", "0068.C7FF"] }
+[[vector]]
+# she moves up 1 px: the view moves up onto its aim into an open screen
+id = "C-up-to-aim"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "AimingHeight", "Remembering"]
+room = { screens = ["OSCC", "COSO", "CSSC"], heights = [104, 150] }
+before = { camera = ["0100.C000", "0200.0000"], seen = ["0181.0000", "0268.8000"] }
+samus = { position = ["0181.0000", "0267.8000"], facing = "Screen" }
+after = { camera = ["0100.C000", "01FF.0000"], seen = ["0181.0000", "0267.8000"] }
+[[vector]]
+# she creeps left inside a pixel and is still down; the view partly shows no closed screen, so it stays
+id = "C-settle-open-creep"
+source = "constructed"
+entries = ["Settling", "Remembering"]
+room = { screens = ["CCSC", "CSOC", "OSSO"], heights = [104, 150] }
+before = { camera = ["01F9.8000", "01D3.C000"], seen = ["027D.C000", "023B.FFFF"] }
+samus = { position = ["027D.8000", "023B.FFFF"], facing = "Left" }
+after = { camera = ["01F9.8000", "01D3.C000"], seen = ["027D.8000", "023B.FFFF"] }
+[[vector]]
+# skidding, she faces right and goes left: the view moves left onto its aim; rising, the move down passes the room's bottom, its last row short, and the view backs up onto the last row's top edge
+id = "C-skid-rising-down-to-bottom"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "ShortScreens", "AimingHeight", "Remembering"]
+room = { screens = ["SOO", "SSC"], heights = [104, 150] }
+before = { camera = ["00F3.0000", "0100.1800"], seen = ["0193.2400", "019F.27FF"] }
+samus = { position = ["0192.E400", "019A.B7FF"], facing = "Right", backwards = "Skid", rising = true }
+after = { camera = ["00F2.0000", "0100.0000"], seen = ["0192.E400", "019A.B7FF"] }
+[[vector]]
+# rising, the view moves up onto its aim into a closed screen and is pushed back to its edge; across it moves right into a screen it may show
+id = "C-rise-up-to-closed-edge"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "AimingHeight", "ClosedScreens", "Remembering"]
+room = { screens = ["CCO", "SCC", "CSS"], heights = [104, 150] }
+before = { camera = ["00F2.0000", "0200.0000"], seen = ["0192.E400", "0296.63FF"] }
+samus = { position = ["0193.A400", "0292.2BFF"], facing = "Right", rising = true }
+after = { camera = ["00F3.C000", "0200.0000"], seen = ["0193.A400", "0292.2BFF"] }
+[[vector]]
+# as C-rise-up-to-closed-edge, going left across
+id = "C-rise-up-to-closed-edge-moving-left"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "AimingHeight", "ClosedScreens", "Remembering"]
+room = { screens = ["SSCC", "OOCO", "CSCO"], heights = [104, 150] }
+before = { camera = ["01A6.8000", "0200.0000"], seen = ["023D.D000", "0298.5BFF"] }
+samus = { position = ["023B.5000", "0293.B3FF"], facing = "Left", rising = true }
+after = { camera = ["01A3.0000", "0200.0000"], seen = ["023B.5000", "0293.B3FF"] }
+[[vector]]
+# the move down, from a short screen with a closed one below, is pushed back onto the short screen's top edge; across it moves right and the room's right edge stops it, its subpixel kept
+id = "C-down-short-closed-below"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "ClosedScreens", "ShortScreens", "AimingHeight", "Remembering"]
+room = { screens = ["CS", "CC", "SO"], heights = [104, 150] }
+before = { camera = ["0100.9000", "0000.1400"], seen = ["01B0.EC00", "0083.FFFF"] }
+samus = { position = ["01AB.6C00", "0086.FFFF"], facing = "Left" }
+after = { camera = ["0100.1000", "0000.1400"], seen = ["01AB.6C00", "0086.FFFF"] }
+[[vector]]
+# skidding, she faces right and goes left: the view moves left into a closed screen and is pushed back onto its edge
+id = "C-skid-left-to-closed-edge"
+source = "constructed"
+entries = ["LeadingHer", "ClosedScreens", "FollowingHer", "Settling", "Remembering"]
+room = { screens = ["COO", "COC", "CCO"], heights = [104, 150] }
+before = { camera = ["0100.8000", "0000.6800"], seen = ["019B.8000", "0053.FFFF"] }
+samus = { position = ["019C.0000", "0053.FFFF"], facing = "Right", backwards = "Skid" }
+after = { camera = ["0100.0000", "0000.6800"], seen = ["019C.0000", "0053.FFFF"] }
+[[vector]]
+# moonwalking, she faces left and goes right: the view moves right towards a closed screen and is pushed back onto its edge, its subpixel kept
+id = "C-moonwalk-right-to-closed-edge"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "ClosedScreens", "Settling", "Remembering"]
+room = { screens = ["OSO", "SSC"], heights = [104, 150] }
+before = { camera = ["0100.FFFF", "0100.5400"], seen = ["01DB.3FFF", "0183.FFFF"] }
+samus = { position = ["01DA.BFFF", "0183.FFFF"], facing = "Left", backwards = "Moonwalk" }
+after = { camera = ["0100.7FFF", "0100.5400"], seen = ["01DA.BFFF", "0183.FFFF"] }
+[[vector]]
+# moonwalking, she faces left and goes right, but her aim is left of the view: it moves left onto the aim
+id = "C-moonwalk-left-to-aim"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "Settling", "Remembering"]
+room = { screens = ["SSCO", "OOOC"], heights = [128, 150] }
+before = { camera = ["01AC.2000", "0101.7400"], seen = ["020C.7FFF", "017B.FFFF"] }
+samus = { position = ["020B.FFFF", "017B.FFFF"], facing = "Left", backwards = "Moonwalk" }
+after = { camera = ["01AB.0000", "0101.7400"], seen = ["020B.FFFF", "017B.FFFF"] }
+[[vector]]
+# a knockback while she faces right: the lead turns round, aiming as when she faces left, and the view moves left
+id = "C-knockback-left"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "Settling", "Remembering"]
+room = { screens = ["OSS"], heights = [104, 150] }
+before = { camera = ["0200.6000", "0000.E000"], seen = ["026F.5FFF", "00A1.FFFF"] }
+samus = { position = ["0273.9FFF", "00A1.FFFF"], facing = "Right", backwards = "Knockback", rising = true }
+after = { camera = ["01FB.2000", "0000.E000"], seen = ["0273.9FFF", "00A1.FFFF"] }
+[[vector]]
+# a knockback while she faces left, rising: across the lead turns round and the view moves right; down the move, from a short screen with a closed one below, is pushed back onto the short screen's top edge
+id = "C-knockback-rising-down-closed"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "ClosedScreens", "ShortScreens", "AimingHeight", "Remembering"]
+room = { screens = ["COS", "OSC"], heights = [128, 150] }
+before = { camera = ["01B1.4000", "0000.5000"], seen = ["024E.8FFF", "00A1.FFFF"] }
+samus = { position = ["024F.4FFF", "009C.FFFF"], facing = "Left", backwards = "Knockback", rising = true }
+after = { camera = ["01B3.0000", "0000.5000"], seen = ["024F.4FFF", "009C.FFFF"] }
+[[vector]]
+# the view moves right onto the edge of the screen after the row's last column, closed, and is held there; the move down passes the room's bottom, its last row short, and is brought back to that last row's top edge
+id = "C-right-to-closed-edge-down-to-bottom"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "ClosedScreens", "RoomEdges", "ShortScreens", "AimingHeight", "Remembering"]
+room = { screens = ["SCOS"], heights = [104, 150] }
+before = { camera = ["02FF.4000", "0000.0400"], seen = ["036C.FFFF", "0095.D3FF"] }
+samus = { position = ["036D.1FFF", "0096.0BFF"], facing = "Right" }
+after = { camera = ["0300.6000", "0000.3C00"], seen = ["036D.1FFF", "0096.0BFF"] }
+[[vector]]
+# in a room with the other heights: across the view moves right and the room's right edge stops it; down its aim is above the room, and it stops on the top, its subpixel kept
+id = "C-corner-other-heights"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "AimingHeight", "Remembering"]
+room = { screens = ["OC", "OC"], heights = [128, 150] }
+before = { camera = ["0100.8000", "0000.1000"], seen = ["01D7.1FFF", "0073.6FFF"] }
+samus = { position = ["01D5.DFFF", "0077.43FF"], facing = "Left" }
+after = { camera = ["0100.C000", "0000.3C00"], seen = ["01D5.DFFF", "0077.43FF"] }
+[[vector]]
+# in a room with the other heights: the view moves up through open screens; across the room's right edge stops it
+id = "C-up-other-heights"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "RoomEdges", "AimingHeight", "Remembering"]
+room = { screens = ["OO", "CO"], heights = [128, 150] }
+before = { camera = ["0100.1000", "00FA.D400"], seen = ["01D7.3000", "0176.FFFF"] }
+samus = { position = ["01D4.3000", "0172.1BFF"], facing = "Left" }
+after = { camera = ["0100.1000", "00F4.F000"], seen = ["01D4.3000", "0172.1BFF"] }
+[[vector]]
+# rising, the view moves up into an open screen; across she is still at the room's right edge, the screen after it closed, and the view holds
+id = "C-rise-up-free"
+source = "constructed"
+entries = ["Settling", "FollowingHer", "AimingHeight", "Remembering"]
+room = { screens = ["OO", "OS"], heights = [104, 150] }
+before = { camera = ["0100.4000", "0100.0000"], seen = ["01EB.79FF", "0181.FFFF"] }
+samus = { position = ["01EB.D9FF", "017B.FFFF"], facing = "Right", rising = true }
+after = { camera = ["0100.4000", "00F9.0000"], seen = ["01EB.D9FF", "017B.FFFF"] }
+[[vector]]
+# the view moves right through open screens; down she creeps up inside a pixel and the screen below is closed, so it holds
+id = "C-right-free-creep-up"
+source = "constructed"
+entries = ["LeadingHer", "FollowingHer", "Settling", "Remembering"]
+room = { screens = ["CCOO", "OCSO"], heights = [104, 150] }
+before = { camera = ["01E8.4000", "0100.DC00"], seen = ["027A.FFFF", "0193.9400"] }
+samus = { position = ["027C.3FFF", "0193.0000"], facing = "Right" }
+after = { camera = ["01EA.8000", "0100.DC00"], seen = ["027C.3FFF", "0193.0000"] }
+[[vector]]
+# a rise at 0: the view moves up onto its aim with the rising height; across it moves left through open screens
+id = "C-rise-at-0-to-aim"
+source = "constructed"
+entries = ["AimingHeight", "FollowingHer", "Remembering"]
+room = { screens = ["SOCC", "SSOC", "OSSO"], heights = [104, 150] }
+before = { camera = ["01E4.9900", "0200.0000"], seen = ["024A.58FF", "0298.F3FF"] }
+samus = { position = ["0241.CCFF", "0295.F3FF"], facing = "Left", rising = true }
+after = { camera = ["01DB.0D00", "01FF.0000"], seen = ["0241.CCFF", "0295.F3FF"] }

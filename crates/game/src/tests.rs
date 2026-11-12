@@ -518,7 +518,7 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     let mut state = State::default();
     state.room.width = crate::state::room::BlockColumns(16);
     state.room.blocks = vec![crate::state::room::Block::default(); 64];
-    let content = crate::blocks_world::fixture::content();
+    let content = crate::world_blocks_bridge::fixture::content();
     plm::spawn_population(&mut state.room, &content, &population).unwrap();
     let block = BlockIndex(2 * 16 + 4);
     let item = |state: &State| state.room.plms.slots[39].occupancy;
@@ -558,7 +558,7 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     assert_eq!(at, slot);
     assert_eq!(next, Next::Call(Frame::MessageBox(MessageBoxAt::Start)));
     assert_eq!(state.message, Message::MORPH_BALL);
-    assert!(crate::progress_world::is_emptied(
+    assert!(crate::run_progress_bridge::is_emptied(
         &state.collected_items,
         0x1a
     ));

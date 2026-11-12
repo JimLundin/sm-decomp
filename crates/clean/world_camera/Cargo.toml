@@ -1,0 +1,17 @@
+[package]
+name = "world_camera"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The camera model, built from its behaviour spec"
+
+[dependencies]
+types = { path = "../types" }
+
+[dev-dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+toml = "=1.2.1"
+
+[lints]
+workspace = true

@@ -25,7 +25,7 @@ fn content() -> Content {
     Content {
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
-        samus_clips: crate::samus_looks_world::Clips::default(),
+        samus_clips: crate::samus_appearance_bridge::Clips::default(),
         slopes: data::level::slope::Slopes::default(),
         enemy_programs: data::enemy::program::EnemyPrograms::default(),
         eye_lists: data::enemy::eye::EyeLists::default(),
@@ -38,8 +38,8 @@ fn content() -> Content {
         face_block_glow: data::enemy::face_block::GlowColours::default(),
         room_plms: crate::plm::RoomPlms::default(),
         room_doors: crate::collision::RoomDoors::default(),
-        blocks: crate::blocks_world::BlockContent::default(),
-        hud: crate::hud_world::HudContent::default(),
+        blocks: crate::world_blocks_bridge::BlockContent::default(),
+        hud: crate::interface_hud_bridge::HudContent::default(),
         tile_tables: data::tileset::TileTables::default(),
         message_boxes: data::message::MessageBoxes::default(),
     }

@@ -2,7 +2,7 @@
 //!
 //! Bank `$80` log, handle HUD tilemap `$80:9B44`: the HUD redraws a counter only when its
 //! value differs from the one it last drew, so the State keeps those values beside the
-//! tilemap they were drawn into. The HUD model (`hud_world`) draws them.
+//! tilemap they were drawn into. The HUD model (`interface_hud_bridge`) draws them.
 
 use canonical::Canonical;
 use data::map::MapCells;

@@ -161,18 +161,18 @@ pub enum SessionFault {
     Plm(TouchFault),
     /// The blocks met a cell the room's loading would refuse, or a place the model isn't
     /// defined on.
-    Blocks(crate::blocks_world::BlocksFault),
+    Blocks(crate::world_blocks_bridge::BlocksFault),
     /// A projectile reached a block whose reaction isn't modelled.
     Projectile(crate::projectile::ProjectileFault),
     /// Her motion met cells that stand for each other in a loop, where the original's never
     /// ends, or a pose the motion model names no situation for.
-    Samus(crate::samus_world::SamusFault),
+    Samus(crate::samus_movement_bridge::SamusFault),
     /// The room's scroll areas aren't a room the camera can read: a short last row, or more
     /// than 256 screens across or down.
-    Room(clean_model_camera::RoomError),
+    Room(world_camera::RoomError),
     /// The HUD's State holds what the HUD model isn't defined on: a count past its cells, a room
     /// off the map.
-    Hud(crate::hud_world::HudFault),
+    Hud(crate::interface_hud_bridge::HudFault),
 }
 
 /// Why a State can't open as a Session.

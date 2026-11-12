@@ -5,7 +5,7 @@ calculated from its spec, so that it follows the complexity of what is built rat
 reviewer chose?
 
 Inputs:
-- the spec: spine `eb5dc05ad`, `docs/behaviours/samus-motion.md`;
+- the spec: spine `eb5dc05ad`, `docs/behaviours/samus-movement.md`;
 - the model: `C:/cleanroom/samus-motion-7/crates`;
 - the score: S3' from `reviews/size-patterns.md`, mirrored by `sizepat/pat.py`.
 
@@ -17,7 +17,7 @@ The prototype scripts are in `$TEMP/collab/specbudget/`:
 - `specmeasure.py` counts the spec's structure, with a heuristic for its clauses.
 - `handcount.py` holds the hand count and computes the budgets.
 
-There is **no second data point**. `docs/behaviours/` holds only samus-motion, and the
+There is **no second data point**. `docs/behaviours/` holds only samus-movement, and the
 `game-time` harness domain has no behaviour spec. Only one constant can be identified, and the
 design below fits only one.
 
@@ -38,14 +38,14 @@ design below fits only one.
 | table rows | data. The old engine read them from the ROM. A row that hides a decision is a review stop (MODEL §4) |
 | parameters | data in `Rules`. Their reads sit inside the arms |
 | enumeration values | declarations, which are free. The arms that tell them apart already count |
-| quantities and Read-by edges | a field is a declaration. A read sits inside the arm that reads it. Reported as diagnostics only (samus-motion: 6 quantities, 17 Read-by edges) |
+| quantities and Read-by edges | a field is a declaration. A read sits inside the arm that reads it. Reported as diagnostics only (samus-movement: 6 quantities, 17 Read-by edges) |
 | inputs | an interface declaration plus the bridge (8 inputs, about 32 fields; reported only) |
 | prose, explanations, "So …" consequences, examples, vector ids, `checked:` lines, the vectors file | none of them holds behaviour |
 
 The weights of 1/3 come from the code's shape, not from fitting. With one domain they can't be
 fitted without circularity (§4).
 
-## 2. Counts for samus-motion
+## 2. Counts for samus-movement
 
 These come from a hand count by one reader under the convention of §5, with an uncertainty of
 about ±15 %. The heuristic counter on today's prose finds 146 clauses where the hand count finds
@@ -78,7 +78,7 @@ catalogue (5) is left out. The old code's areas:
 
 The budget is `k × U` per area, summed.
 
-| Option | k (weighted tokens per unit) | samus-motion budget | Note |
+| Option | k (weighted tokens per unit) | samus-movement budget | Note |
 | --- | ---: | ---: | --- |
 | A: fitted on round 7, then frozen | 27.9 | 7,561 | circular: the judged code sets its own bar. Usable only for later domains |
 | B: the old code × the required saving | 42.9 × s | s = 0.48: 5,568 (today's target); 0.55: 6,380; 0.60: 6,960; 0.70: 8,120 | not circular, but s is still a chosen ratio |
@@ -195,7 +195,7 @@ aren't mirrors, a mirror written with other names counts twice, an explanation t
 another word counts its formulas, and a null outcome phrased otherwise isn't flagged. The spec
 review catches these.
 
-**How far samus-motion follows it today:**
+**How far samus-movement follows it today:**
 
 | Part of the convention | Today |
 | --- | --- |
@@ -237,13 +237,13 @@ guards:
 ## 7. Open questions for Jim
 
 1. **Is k = 24 weighted tokens per spec unit the bar?** It equals the old code's density with a
-   45 % saving, and round 7's best areas already meet it. It gives samus-motion 6,500, against
+   45 % saving, and round 7's best areas already meet it. It gives samus-movement 6,500, against
    today's chosen target of about 5,570. The alternative is to keep a ratio of the old code as the
    rule (option B).
 2. **Should the budget move with the spec?** Under this measure every gap amendment raises it by k
    per unit. Today's target stayed put while the spec grew.
 3. **Should MODEL §5's template take the clause convention (§5)?** The cost falls on the observer:
-   one re-layout of samus-motion. Without it the measure can't be computed, and only a hand
+   one re-layout of samus-movement. Without it the measure can't be computed, and only a hand
    estimate of ±15 % is possible.
 4. **Should round 7 be held to it?** It is 116 % of budget, and the overrun is named by area: motion
    +742, collision +316; pose fit and the chart are on budget.

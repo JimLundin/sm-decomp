@@ -27,13 +27,13 @@
 //!
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
+pub mod appearance;
 pub mod blocks;
 pub mod camera;
 pub mod game_time;
 pub mod hud;
+pub mod movement;
 pub mod progress;
-pub mod samus_looks;
-pub mod samus_motion;
 
 use std::collections::BTreeMap;
 use std::fmt;

@@ -11,9 +11,9 @@
 
 use core::num::Wrapping;
 
-use clean_model_progress::{Pickup, Report, Supply};
-use clean_types::{Beam, DoorId, Item, LocationId};
 use oracle_record::FrameRecord;
+use run_progress::{Pickup, Report, Supply};
+use types::{Beam, DoorId, Item, LocationId};
 
 use super::{Held, ProgressDomain, Source, Standing};
 use crate::harness::Domain;

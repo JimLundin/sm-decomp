@@ -1,10 +1,10 @@
 use data::level::{Block, BlockKind, Bts};
 
 use super::*;
-use crate::blocks_world::fixture::{SHOT, content};
 use crate::state::projectile::{Damage, Heading, ProjectileCommon, Velocity};
 use crate::state::room::{BlockColumns, PlmBody, ReactionPlace, ReactionScript};
 use crate::state::samus::Point;
+use crate::world_blocks_bridge::fixture::{SHOT, content};
 
 /// The room's width: eight screens.
 const WIDTH: u16 = 128;

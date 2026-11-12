@@ -17,7 +17,7 @@ use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
 use data::tileset::{BlockTiles, TilesetId};
 use game::plm::item_gfx;
-use game::samus_looks_world::Clips;
+use game::samus_appearance_bridge::Clips;
 use game::state::atmospheric::{
     AtmosphericFrame, AtmosphericGraphic, AtmosphericKind, AtmosphericTimer, Atmospherics,
 };
@@ -1300,7 +1300,7 @@ impl Rules<'_> {
     pub fn samus(&self, wram: &[u8], clips: &Clips) -> Result<Samus, DecodeError> {
         let pose = self.pose.read(wram)?;
         Ok(Samus {
-            motion: crate::harness::samus_motion::decode(wram)?,
+            motion: crate::harness::movement::decode(wram)?,
             equipment: Equipment {
                 collected: items(self.collected, wram)?,
                 equipped: items(self.equipped, wram)?,

@@ -6,25 +6,38 @@ allowlist=${CLEANROOM_ALLOWLIST:-$cleanroom_dir/allowlist.txt}
 
 die() { echo "cleanroom: $*" >&2; exit 1; }
 
-# A domain is a lowercase kebab-case name: it becomes a path and a package name.
+# A domain is a lowercase kebab-case name: it becomes a path and a package name. `types` is the
+# shared crate's folder beside the models, so it names no domain.
 check_domain() {
   case $1 in
     ''|*[!a-z0-9-]*|-*|*-) die "domain '$1' must be lowercase letters, digits and inner dashes" ;;
+    types) die "domain '$1' is the shared crate's folder, crates/clean/types" ;;
   esac
 }
 
-# The package name of a domain's model crate: clean_model_<domain, dashes as underscores>.
-model_package() { echo "clean_model_$(echo "$1" | tr - _)"; }
+# The package name of a domain's model crate, and its folder under crates/clean: the domain,
+# dashes as underscores (`world-camera` is `world_camera`). A domain's name starts with its area.
+model_package() { echo "$1" | tr - _; }
+
+# The domain a model crate's folder under crates/clean holds: its name, underscores as dashes.
+domain_of() { echo "$1" | tr _ -; }
+
+# The model crates a listing of paths (one per line, on stdin) holds: each folder of
+# crates/clean/ with a Cargo.toml, but the shared types'.
+model_dirs() { sed -n 's#^\(crates/clean/[^/]*\)/Cargo\.toml$#\1#p' | grep -vx crates/clean/types || true; }
 
 # allowlist_section SECTION DOMAIN: the entries of [SECTION], comments and blanks dropped,
-# `{domain}` replaced by DOMAIN. A section header is `[name]`; `[domain NAME]` holds the
-# entries for one domain only.
+# `{domain}` replaced by DOMAIN and `{crate}` by its model_package. A section header is
+# `[name]`; `[domain NAME]` holds the entries for one domain only.
 allowlist_section() {
   [ -f "$allowlist" ] || die "no allowlist at $allowlist"
-  awk -v want="$1" -v domain="$2" '
+  awk -v want="$1" -v domain="$2" -v crate="$(model_package "$2")" '
     /^[ \t]*(#|$)/ { next }
     /^\[.*\]$/ { cur = substr($0, 2, length($0) - 2); next }
-    cur == want { line = $0; gsub(/\{domain\}/, domain, line); sub(/[ \t]+$/, "", line); print line }
+    cur == want {
+      line = $0; gsub(/\{domain\}/, domain, line); gsub(/\{crate\}/, crate, line)
+      sub(/[ \t]+$/, "", line); print line
+    }
   ' "$allowlist"
 }
 

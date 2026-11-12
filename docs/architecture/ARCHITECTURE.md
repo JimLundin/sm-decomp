@@ -84,7 +84,7 @@ amendments are applied here. The oracle and the lock are in [ORACLE.md](../ORACL
 | `oracle_record` | `FrameRecord` and its codec (`oracle::record`), so `verify` reads records without an emulator | link an emulator |
 | `verify` | the record → State decoder, projections, facts, digests, free-run and lockstep comparison | be depended on by an engine crate |
 | `tools` | the command line and the importers | hold comparison logic of its own |
-| `clean_types`, `clean_model/<domain>` | the clean room's crates (MODEL §5): the shared domain types and the `World` trait; each rebuilt domain's model and catalogue | depend on anything but each other, `std` and the registry crates of `tools/cleanroom/allowed_deps.txt`; hold an address, a bank reference or the original's names |
+| `clean/types`, `clean/<crate>` | the clean room's crates (MODEL §5): the shared domain types and the `World` trait; each rebuilt domain's model and catalogue | depend on anything but each other, `std` and the registry crates of `tools/cleanroom/allowed_deps.txt`; hold an address, a bank reference or the original's names |
 | `canonical`, `canonical_derive` | the `Canonical` trait (codec, diff, schema hash) and its derive over `proc_macro` alone (no `syn` or `quote`, whose build scripts Defender blocks); separate so `data` can derive it | hold State or rules |
 
 **D1.** The names say what each crate is. `verify` is apart from `tools` because the decoder and

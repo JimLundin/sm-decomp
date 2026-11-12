@@ -1,5 +1,5 @@
-use clean_types::Pair;
 use data::spritemap::{SpriteAttributes, SpriteSize, Spritemap, SpritemapEntry};
+use types::Pair;
 
 use super::HIDDEN_Y;
 use crate::intent::{Placing, SpriteDraw, SpritePiece};

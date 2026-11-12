@@ -23,7 +23,7 @@ done
 # crate with no variant import left.
 list=$(mktemp)
 trap 'rm -f "$list"' EXIT
-echo crates/clean_model/demo >"$list"
+echo crates/clean/demo >"$list"
 listed=$here/code_check_fixtures/variant-import__listed
 out=$(CODE_CHECK_VARIANT_WARN=$list bash "$here/code_check.sh" "$listed" 2>&1) || fail "a listed crate's variant import refused: $out"
 grep -q ': warning: .*: variant-import: ' <<<"$out" || fail "a listed crate's variant import not warned: $out"

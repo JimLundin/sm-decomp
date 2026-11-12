@@ -1,8 +1,8 @@
-//! Progress as a harness domain: the progress model (`clean_model_progress`) against the oracle.
+//! Progress as a harness domain: the progress model (`run_progress`) against the oracle.
 //!
 //! It is checked frame by frame on every quantity the spec's State holds
-//! (`docs/behaviours/progress.md`), by the decode notes' harness note
-//! (`docs/behaviours/progress.decode.md`, "The harness"). Progress is a store: other domains
+//! (`docs/behaviours/run-progress.md`), by the decode notes' harness note
+//! (`docs/behaviours/run-progress.decode.md`, "The harness"). Progress is a store: other domains
 //! report, and nothing of the same frame reads it back, so it is checked on its own. Its State is
 //! decoded from record N; the room load from record N+1, which other domains write; and the
 //! model's output is compared with record N+1.
@@ -37,18 +37,16 @@ use core::num::Wrapping;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
-use clean_model_progress::{
-    BehaviourId, Condition, Count, EnteredRoom, MapStatus, Pickup, Progress, Remembered, Report,
-    ReserveMode, RoomStates, Rules, Supplies, Supply, catalogue,
-};
-use clean_types::{
-    Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId,
-};
 use data::rom::{Lorom, RomAddress};
 use data::room::{RoomKey, decode as decode_room};
 use enum_map::{Enum, EnumMap};
-use game::progress_world;
+use game::run_progress_bridge;
 use oracle_record::FrameRecord;
+use run_progress::{
+    BehaviourId, Condition, Count, EnteredRoom, MapStatus, Pickup, Progress, Remembered, Report,
+    ReserveMode, RoomStates, Rules, Supplies, Supply, catalogue,
+};
+use types::{Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId};
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::decode::DecodeError;
@@ -598,7 +596,7 @@ impl RoomStatesAt {
         let states = RoomStates {
             conditional: &self.conditional,
         };
-        progress_world::state_place(states.choose(progress, entered), self.conditional.len())
+        run_progress_bridge::state_place(states.choose(progress, entered), self.conditional.len())
     }
 }
 
@@ -620,9 +618,9 @@ impl ProgressDomain {
         let failed = |error: String| Skip::Room(pointer, error);
         let decoded = decode_room(Lorom::new(&self.image), RoomKey::from_room_pointer(pointer))
             .map_err(|error| failed(format!("{error:?}")))?;
-        let conditional = progress_world::conditions(&decoded)
+        let conditional = run_progress_bridge::conditions(&decoded)
             .ok_or_else(|| failed("a condition the model can't read".to_owned()))?;
-        let area = progress_world::region(decoded.area)
+        let area = run_progress_bridge::region(decoded.area)
             .ok_or_else(|| failed("the debug area".to_owned()))?;
         let (headers, items) = decoded
             .states()
@@ -828,7 +826,7 @@ impl ProgressDomain {
             // stays a candidate, one that can't be heard: the frame's pickup is then stood in.
             let mut candidates: Vec<Option<Report>> = Vec::new();
             for (plm, argument) in item_plms(from)? {
-                let location = progress_world::place(argument);
+                let location = run_progress_bridge::place(argument);
                 if location.is_some_and(|place| was.emptied.contains(place)) {
                     continue;
                 }
@@ -1031,7 +1029,7 @@ fn mother_brain(record: &FrameRecord) -> Result<bool, Skip> {
 }
 
 impl Domain for ProgressDomain {
-    const NAME: &'static str = "progress";
+    const NAME: &'static str = "run-progress";
     type State = Held;
     type Inputs = ();
     type World = Upstream;

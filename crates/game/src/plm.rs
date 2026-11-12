@@ -1,7 +1,7 @@
 //! PLMs: spawning a room's population, the items' triggers and the PLM pass.
 //!
 //! Bank $84 log, <https://patrickjohnston.org/bank/84>. The items are slice 0's; the blocks'
-//! places, the scroll cells' and the reactions', are the blocks model's (`blocks_world`), and
+//! places, the scroll cells' and the reactions', are the blocks model's (`world_blocks_bridge`), and
 //! the pass runs them between the items'.
 
 use std::marker::PhantomData;
@@ -11,7 +11,6 @@ use data::level::{Tile, TileNumber};
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
 use data::tileset::TileTables;
 
-use crate::blocks_world::{self, BlockContent, BlocksFault, Reads};
 use crate::state::room::{
     Block, BlockIndex, BlockKind, Bts, ItemFrame, ItemGfxSlot, ItemStep, Plm, PlmBody, PlmChoice,
     PlmCommon, RoomScoped,
@@ -21,7 +20,8 @@ use crate::state::slots::{Frames, Occupancy, Slot, SlotIndex};
 use crate::state::strand::Message;
 use crate::state::{CollectedItems, State};
 use crate::tick::Next;
-use crate::{message_box, progress_world};
+use crate::world_blocks_bridge::{self, BlockContent, BlocksFault, Reads};
+use crate::{message_box, run_progress_bridge};
 
 use self::draw::Drawing;
 
@@ -177,7 +177,7 @@ pub fn spawn_population(
     content: &BlockContent,
     population: &PlmPopulation,
 ) -> Result<(), BlocksFault> {
-    let taken = blocks_world::start_room(
+    let taken = world_blocks_bridge::start_room(
         room,
         Reads {
             content,
@@ -352,7 +352,7 @@ pub fn resume(
                 let Pickup { item, message } = pickup(*item);
                 let place = *collected_bit;
                 *step = ItemStep::InBox;
-                progress_world::take(state, item, place);
+                run_progress_bridge::take(state, item, place);
                 // open: the room's music after 6 seconds (`$82:E118`) is C11's.
                 return Ok((at, message_box::display(state, message)));
             }
@@ -411,7 +411,7 @@ fn run_below(
     loop {
         let item = (0..top).rev().find(|&index| holds_item(room, index));
         let bottom = item.map_or(0, |index| index.wrapping_add(1));
-        blocks_world::run(
+        world_blocks_bridge::run(
             drawing,
             room,
             Reads {
@@ -469,7 +469,7 @@ fn run_item(
             // collected, else its link and pre-instruction and frame 0's draw.
             ItemStep::Spawned => {
                 let gfx_slot = item_gfx::load(&mut room.item_gfx, item);
-                let (step, delay) = if progress_world::is_emptied(collected, collected_bit) {
+                let (step, delay) = if run_progress_bridge::is_emptied(collected, collected_bit) {
                     (draw_empty(drawing, room, block), Frames(1))
                 } else {
                     (

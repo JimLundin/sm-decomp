@@ -4,10 +4,9 @@
 //! checks the blocks it reaches (bank $94 log, `$94:A23B`), then its instruction list (bank
 //! $93 log, `$93:81E9`).
 
-use clean_types::HitBy;
 use data::level::BlockKind;
+use types::HitBy;
 
-use crate::blocks_world::{self, BlocksFault, Reads};
 use crate::pose::FACING_FORWARD;
 use crate::state::State;
 use crate::state::projectile::{
@@ -17,6 +16,7 @@ use crate::state::projectile::{
 use crate::state::room::{BlockIndex, Camera, RoomScoped};
 use crate::state::samus::Fixed;
 use crate::state::slots::{Frames, Occupancy, Slot};
+use crate::world_blocks_bridge::{self, BlocksFault, Reads};
 
 /// The pixels a block spans, as a shift.
 const BLOCK_SHIFT: u32 = 4;
@@ -396,7 +396,8 @@ fn react(
         // `ShotBlocks`: the blocks model meets the beam's hit; the block stops the beam by its
         // body, as its kind is now.
         BlockKind::Shootable(_) => {
-            blocks_world::hit(room, reads, block, HitBy::Beam).map_err(ProjectileFault::Blocks)?;
+            world_blocks_bridge::hit(room, reads, block, HitBy::Beam)
+                .map_err(ProjectileFault::Blocks)?;
             true
         }
     })

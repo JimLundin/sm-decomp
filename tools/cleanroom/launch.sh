@@ -39,7 +39,7 @@
 #
 # A commit message passes the deny rules when each paragraph is its own `-m` and holds none of
 # ; & | < > $ ~ `..` ` /` `:/` (`git commit -m "Subject" -m "Body." -m "Role: implementer"`).
-# The samus-motion session's commits were refused for a `;` in the body and for `-F -` with a
+# The samus-movement session's commits were refused for a `;` in the body and for `-F -` with a
 # heredoc; CLEANROOM.md tells the implementer the form.
 #
 # Before the first real lane on a new CLI version, prove the confinement again:
@@ -102,9 +102,9 @@ fi
 root=$(git_isolated "$export_dir" rev-list --max-parents=0 HEAD) || die "$export_dir is not a repository"
 [ "$(echo "$root" | wc -l)" -eq 1 ] || die "$export_dir has more than one root commit"
 [ -z "$(git_isolated "$export_dir" remote)" ] || die "$export_dir has a remote"
-mapfile -t models < <(git_isolated "$export_dir" ls-tree --name-only "$root" crates/clean_model/)
+mapfile -t models < <(git_isolated "$export_dir" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
 [ ${#models[@]} -eq 1 ] || die "the export holds ${#models[@]} model crates, not one"
-domain=${models[0]#crates/clean_model/}
+domain=$(domain_of "${models[0]#crates/clean/}")
 check_domain "$domain"
 [ "$probe" = 0 ] || [ "$domain" = launch-probe ] || die "--probe runs only on an export of the domain launch-probe"
 

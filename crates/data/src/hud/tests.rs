@@ -1,4 +1,4 @@
-use clean_types::{Flip, Look, Picture};
+use types::{Flip, Look, Picture};
 
 use super::*;
 

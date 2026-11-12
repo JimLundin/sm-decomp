@@ -1,0 +1,18 @@
+[package]
+name = "samus_appearance"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The samus-appearance model, built from its behaviour spec"
+
+[dependencies]
+types = { path = "../types" }
+enum-map = "=3.1.0"
+
+[dev-dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+toml = "=1.2.1"
+
+[lints]
+workspace = true

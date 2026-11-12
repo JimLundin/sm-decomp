@@ -57,9 +57,9 @@ Model the domain with types, not raw numbers:
   original's value goes back out wherever it is observed.
 
 `cargo clippy --locked -p data -p game -p runtime -p app -p verify -p tools -p canonical -p
-canonical_derive -p oracle_record -p oracle -p clean_types -p clean_model_samus_motion -p
-clean_model_blocks -p clean_model_camera -p clean_model_hud -p clean_model_progress -p
-clean_model_samus_looks --all-targets --no-deps -- -D warnings` must pass, as `tools/lane/gate.sh` runs it, and
+canonical_derive -p oracle_record -p oracle -p types -p samus_movement -p
+world_blocks -p world_camera -p interface_hud -p run_progress -p
+samus_appearance --all-targets --no-deps -- -D warnings` must pass, as `tools/lane/gate.sh` runs it, and
 the clean crates pass it again under `tools/cleanroom/clippy.toml`. Fix findings; don't add
 `allow`s.
 

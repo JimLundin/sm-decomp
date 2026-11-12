@@ -1,8 +1,8 @@
 //! The per-Tick intents (MODEL §2): what the model shows, in its own terms. `exact` encodes
 //! them as the original's bytes; the wide and HD renderers read them as they are.
 
-use clean_types::Pair;
 use data::spritemap::{SpriteAttributes, SpriteSize, Spritemap};
+use types::Pair;
 
 use crate::state::room::BlockPoint;
 use crate::state::video::TilemapEntry;

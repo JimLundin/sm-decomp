@@ -5,13 +5,13 @@ use data::rom::RomAddress;
 use data::plm::{Extension, PlmEntry};
 
 use super::*;
-use crate::blocks_world::fixture::content;
 use crate::state::room::{
     BlockColumns, ItemGfx, ItemGfxSlot, ItemStep, PlmChoice, ScrollPlm, ScrollStep, Tile,
     TileNumber,
 };
 use crate::state::video::Video;
 use crate::state::{COLLECTED_ITEM_WORDS, CollectedItems};
+use crate::world_blocks_bridge::fixture::content;
 
 /// A two-screen-wide, one-screen-high room of solid blocks, its screens red.
 fn room() -> RoomScoped {

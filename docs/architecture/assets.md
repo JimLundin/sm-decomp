@@ -37,7 +37,7 @@ the map doesn't name), as `Unkeyed { id, frames }`. It is the one record that na
 original's pose id, so that the engine draws every pose from this format; an entry leaves it
 for a clip when its domain gives the pose a key.
 
-**The key** is the pose as the player sees it (`docs/behaviours/samus-motion.md` §2):
+**The key** is the pose as the player sees it (`docs/behaviours/samus-movement.md` §2):
 
 | Record | Holds |
 | --- | --- |
@@ -45,8 +45,8 @@ for a clip when its domain gives the pose a key.
 | `Dress` | what the sprite shows that the pose doesn't decide: how her spin is drawn (`SpinSprite`), her suit facing the screen (`Suit`) |
 | `Worn` | which dress a clip is the variant for: any, one spin sprite, or one suit |
 
-The key is the clean room's `clean_types::Pose`, which carries every part §2 lists;
-`data::assets::samus::key` re-exports it beside the dress, so `data` depends on `clean_types`
+The key is the clean room's `types::Pose`, which carries every part §2 lists;
+`data::assets::samus::key` re-exports it beside the dress, so `data` depends on `types`
 (`tools/check_crate_rules.sh`).
 
 `SamusAssets::clip(key, dress)` finds a pose's clip. A pose that has no sprites of its own is

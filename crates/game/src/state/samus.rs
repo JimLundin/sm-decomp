@@ -276,11 +276,11 @@ pub enum ReserveMode {
 pub use data::pose::animation::AnimationFrame;
 
 /// Her step in her pose's clip, numbered from 0 without the original's operand bytes
-/// (samus-looks §1.4); `samus_looks_world` gives the original's frame of it.
+/// (samus-appearance §1.4); `samus_appearance_bridge` gives the original's frame of it.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ClipStep(pub u8);
 
-/// Her run's speed booster stage (samus-looks §1).
+/// Her run's speed booster stage (samus-appearance §1).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum BoostStage {
     /// Stage 0, where every dash begins.
@@ -296,7 +296,7 @@ pub enum BoostStage {
     Boosting,
 }
 
-/// Her run's boost: its stage and the laps the stage still lasts (samus-looks §1).
+/// Her run's boost: its stage and the laps the stage still lasts (samus-appearance §1).
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Boost {
     /// The stage.
@@ -305,7 +305,7 @@ pub struct Boost {
     pub laps_left: u8,
 }
 
-/// Samus's animation (samus-looks §1): where her clip is and her run's boost, all it keeps
+/// Samus's animation (samus-appearance §1): where her clip is and her run's boost, all it keeps
 /// from one frame to the next.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Animation {
@@ -396,7 +396,7 @@ pub enum DrawingHandler {
     Hidden,
 }
 
-/// Jump held through (samus-motion `Jumping`): how long jump has stayed held since its press,
+/// Jump held through (samus-movement `Jumping`): how long jump has stayed held since its press,
 /// and what the frame before left her pose input.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct JumpHeld {

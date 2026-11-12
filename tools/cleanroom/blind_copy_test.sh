@@ -19,12 +19,12 @@ mkexport() { # DIR: an export of the dummy domain `demo`, as export.sh lays one 
   put "$1/.agents/skills/implementer/SKILL.md" "# Implement"
   put "$1/Cargo.toml" '[workspace]'
   put "$1/scenarios/vectors/demo.toml" '[[vector]]'
-  put "$1/crates/clean_types/src/lib.rs" '//! Shared types.'
-  put "$1/crates/clean_model/demo/Cargo.toml" '[package]'
-  put "$1/crates/clean_model/demo/src/lib.rs" '//! The model.'
-  put "$1/crates/clean_model/demo/tests/spec.rs" \
+  put "$1/crates/clean/types/src/lib.rs" '//! Shared types.'
+  put "$1/crates/clean/demo/Cargo.toml" '[package]'
+  put "$1/crates/clean/demo/src/lib.rs" '//! The model.'
+  put "$1/crates/clean/demo/tests/spec.rs" \
     'const SPEC: &str = include_str!("../../../../docs/behaviours/demo.md");'
-  put "$1/crates/clean_model/demo/tests/vectors.rs" \
+  put "$1/crates/clean/demo/tests/vectors.rs" \
     'const VECTORS: &str = include_str!("../../../../scenarios/vectors/demo.toml");'
   git -c core.autocrlf=false -C "$1" init -q -b main
   git -c core.autocrlf=false -C "$1" add -A
@@ -36,10 +36,10 @@ out=$(env -u CARGO bash "$here/blind_copy.sh" "$tmp/export" "$tmp/blind" 2>&1) |
 files=$(git -C "$tmp/blind" ls-files | sort)
 want=".agents/skills/blind-reviewer/SKILL.md
 Cargo.toml
-crates/clean_model/demo/Cargo.toml
-crates/clean_model/demo/src/lib.rs
-crates/clean_model/demo/tests/vectors.rs
-crates/clean_types/src/lib.rs
+crates/clean/demo/Cargo.toml
+crates/clean/demo/src/lib.rs
+crates/clean/demo/tests/vectors.rs
+crates/clean/types/src/lib.rs
 scenarios/vectors/demo.toml"
 [ "$files" = "$want" ] || fail "the copy holds: $files"
 [ "$(git -C "$tmp/blind" rev-list --count HEAD)" -eq 1 ] || fail "not one commit"
@@ -47,10 +47,10 @@ scenarios/vectors/demo.toml"
 [ -z "$(git -C "$tmp/blind" remote)" ] || fail "the copy has a remote"
 cmp -s "$tmp/blind/.agents/skills/blind-reviewer/SKILL.md" "$here/../../.agents/skills/blind-reviewer/SKILL.md" ||
   fail "the skill is not this repository's"
-grep -q 'left out crates/clean_model/demo/tests/spec.rs' <<<"$out" || fail "the left-out test not named: $out"
+grep -q 'left out crates/clean/demo/tests/spec.rs' <<<"$out" || fail "the left-out test not named: $out"
 
 mkexport "$tmp/leaky"
-put "$tmp/leaky/crates/clean_model/demo/src/spec.rs" 'const SPEC: &str = include_str!("../../../../docs/behaviours/demo.md");'
+put "$tmp/leaky/crates/clean/demo/src/spec.rs" 'const SPEC: &str = include_str!("../../../../docs/behaviours/demo.md");'
 git -c core.autocrlf=false -C "$tmp/leaky" add -A
 git -c core.autocrlf=false -C "$tmp/leaky" -c user.name=cleanroom -c user.email=cleanroom@invalid commit -q -m "Implement"
 env -u CARGO bash "$here/blind_copy.sh" "$tmp/leaky" "$tmp/leaky-blind" >/dev/null 2>&1 &&

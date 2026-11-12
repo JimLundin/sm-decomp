@@ -4,8 +4,8 @@
 //! slot) masks its own cell only, like every PLM the table doesn't name, so a cell it writes past
 //! that fails loudly as a mismatch.
 
-use clean_types::{Cell, Pair};
 use serde::Deserialize;
+use types::{Cell, Pair};
 
 /// The table.
 const TABLE: &str = include_str!("writers.toml");
@@ -151,7 +151,7 @@ impl Writers {
 #[cfg(test)]
 mod tests {
     use super::{TABLE, Table, Writers};
-    use clean_types::Cell;
+    use types::Cell;
 
     /// The table reads: its keys, its boxes, and no writer left out that the rows see write.
     #[test]

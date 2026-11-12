@@ -1,7 +1,7 @@
-//! What a Samus asset is keyed by: her pose as the player sees it (the samus-motion spec's §2
-//! Pose, `clean_types::Pose`), and what she wears.
+//! What a Samus asset is keyed by: her pose as the player sees it (the samus-movement spec's §2
+//! Pose, `types::Pose`), and what she wears.
 
-pub use clean_types::{Action, Aim, Body, Facing, Gun, LandedFrom, Legs, Pose, Turn};
+pub use types::{Action, Aim, Body, Facing, Gun, LandedFrom, Legs, Pose, Turn};
 
 /// The pose whose sprite shows `pose`. The air turns have one sprite for down-forward and
 /// down, the down one; the crouched turns the same sprite, which is down-forward.

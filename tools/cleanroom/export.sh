@@ -9,10 +9,11 @@
 #
 # The clean workspace shape, inside the export and in this repository alike:
 #   Cargo.toml                         generated: members below, the root's [workspace.lints]
-#   crates/clean_types/                package `clean_types`: the domain types an implementer
+#   crates/clean/types/                package `types`: the domain types an implementer
 #                                      needs (speeds, poses as enums, tables as typed records)
-#   crates/clean_model/DOMAIN/         package `clean_model_<domain>`: the domain's model,
-#                                      depending on clean_types, std and allowed_deps.txt
+#   crates/clean/CRATE/                package CRATE, the domain with dashes as underscores:
+#                                      the domain's model, depending on types, std and
+#                                      allowed_deps.txt
 #   docs/behaviours/DOMAIN.md          the spec;  scenarios/vectors/DOMAIN.toml  its vectors
 #   CLEANROOM.md                       how to work and commit in the export
 #   clippy.toml                        generated: tools/cleanroom/clippy.toml, the G5 ceilings
@@ -62,7 +63,7 @@ for entry in "${entries[@]}"; do
     present+=("${entry%/}")
   else
     case $entry in
-      crates/clean_*/) ;;
+      crates/clean/*/) ;;
       *) [ "${CLEANROOM_ALLOW_MISSING:-0}" = 1 ] || die "$entry is not in $sha"
          echo "export: $entry is not in $sha; skipped" ;;
     esac
@@ -84,23 +85,24 @@ scaffold() { # DIR PACKAGE DESCRIPTION DOC [DEPENDENCY_LINE [DEV_DEPENDENCY_LINE
   printf '//! %s\n' "$4" >"$dest/$1/src/lib.rs"
 }
 # A new model crate gets, at allowed_deps.txt's pins, enum-map for its own tables keyed by an
-# enum (so a key type needn't move into clean_types to be one), and the vector reader as
+# enum (so a key type needn't move into the shared types to be one), and the vector reader as
 # dev-dependencies: toml, and serde with its derive to declare the vectors' shape.
 enum_tables=$(awk '$1 == "enum-map" { printf "enum-map = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
 vector_parser=$(awk '$1 == "serde" { printf "serde = { version = \"%s\", features = [\"derive\"] }\n", $2 }
   $1 == "toml" { printf "toml = \"%s\"", $2 }' "$cleanroom_dir/allowed_deps.txt")
-scaffold crates/clean_types clean_types "The domain types the clean models share" \
+scaffold crates/clean/types types "The domain types the clean models share" \
   "The domain types the clean models share: quantities, poses and tables in player terms."
-scaffold "crates/clean_model/$domain" "$(model_package "$domain")" \
+crate=$(model_package "$domain")
+scaffold "crates/clean/$crate" "$crate" \
   "The $domain model, built from its behaviour spec" \
   "The $domain model, built from its behaviour spec alone." \
-  "clean_types = { path = \"../../clean_types\" }
+  "types = { path = \"../types\" }
 $enum_tables" "$vector_parser"
 
 # The workspace manifest: the clean crates and the root manifest's lint set, unchanged.
 {
   printf '[workspace]\nresolver = "3"\nexclude = ["vendor"]\n'
-  printf 'members = ["crates/clean_types", "crates/clean_model/%s"]\n\n' "$domain"
+  printf 'members = ["crates/clean/types", "crates/clean/%s"]\n\n' "$crate"
   # The lint sections alone. A comment after their last line heads the next section (the
   # release profile's), which the export doesn't have, so it goes too.
   git show "$sha:Cargo.toml" | awk '
@@ -157,8 +159,8 @@ directory: no other repository, worktree, temporary folder or web page about the
 Use nothing you remember about how the original game is programmed (its code, memory layout,
 disassemblies or annotated listings); if you recognise something from such a source, report it.
 
-- Write the model in \`crates/clean_model/$domain\` and the types it shares in
-  \`crates/clean_types\`. They depend on each other, std and the registry crates their
+- Write the model in \`crates/clean/$crate\` and the types it shares in
+  \`crates/clean/types\`. They depend on each other, std and the registry crates their
   manifests name. The manifests are not yours to edit: if a widely used crate would model the
   domain better, ask for it in your report. Cargo works offline here.
 - Every commit touches only those two directories, and its message ends with the trailer

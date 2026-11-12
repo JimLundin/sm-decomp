@@ -10,6 +10,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
+use std::fs;
 use std::path::Path;
 
 use serde::Deserialize;
@@ -28,7 +29,7 @@ const CODEC_CRATES: [&str; 2] = ["canonical", "canonical_derive"];
 /// What a clean crate's name starts with.
 const CLEAN_PREFIX: &str = "clean_";
 /// The shared types' crate name, as code names it.
-const SHARED_CRATE: &str = "clean_types";
+const SHARED_CRATE: &str = "types";
 
 /// A source read for the structure: its path from the root and its text.
 pub(super) struct Source {
@@ -101,15 +102,16 @@ impl Sources {
             .map(|name| {
                 read_sources(
                     root,
-                    &root.join("crates/clean_model").join(name).join("src"),
+                    &root
+                        .join("crates/clean")
+                        .join(name.replace('-', "_"))
+                        .join("src"),
                 )
             })
             .collect::<Result<Vec<_>, _>>()?;
         let workspace: RootManifest = toml::from_str(&read(&root.join(WORKSPACE))?)
             .map_err(|e| format!("{WORKSPACE}: {e}"))?;
-        let mut crates = workspace
-            .workspace
-            .members
+        let mut crates = member_folders(root, &workspace.workspace.members)?
             .iter()
             .map(|member| {
                 let path = format!("{member}/Cargo.toml");
@@ -135,6 +137,27 @@ impl Sources {
             crates,
         })
     }
+}
+
+/// The workspace's member folders, as cargo reads `members`: a `folder/*` member is each folder
+/// under `folder` that holds a manifest, in name order.
+fn member_folders(root: &Path, members: &[String]) -> Result<Vec<String>, String> {
+    let mut folders = Vec::new();
+    for member in members {
+        let Some(parent) = member.strip_suffix("/*") else {
+            folders.push(member.clone());
+            continue;
+        };
+        let entries = fs::read_dir(root.join(parent)).map_err(|e| format!("{parent}: {e}"))?;
+        let mut found: Vec<String> = entries
+            .filter_map(Result::ok)
+            .filter(|entry| entry.path().join("Cargo.toml").is_file())
+            .map(|entry| format!("{parent}/{}", entry.file_name().to_string_lossy()))
+            .collect();
+        found.sort();
+        folders.extend(found);
+    }
+    Ok(folders)
 }
 
 /// Whether a crate, by its name, is in a group of the crate diagram.
@@ -634,7 +657,7 @@ fn module_graph(out: &mut String, files: &[ModuleFile<'_>], modules: &BTreeSet<M
 
 fn shared_section(out: &mut String, shared: &[Source], uses: &BTreeMap<&str, BTreeSet<&str>>) {
     out.push_str(
-        "\n### Shared types by model\n\nThe public items of `crates/clean_types` the clean models share, \
+        "\n### Shared types by model\n\nThe public items of `crates/clean/types` the clean models share, \
          and the models that name each.\n\n",
     );
     super::table(out, 2, &["Item", "Used by"]);
@@ -682,7 +705,7 @@ fn bridges_section(out: &mut String, tree: &Tree) {
         .map(|source| (source, outline::of(&source.text)))
         .collect();
     for domain in &tree.domains {
-        let krate = format!("clean_model_{}", domain.domain.name.replace('-', "_"));
+        let krate = domain.domain.name.replace('-', "_");
         for (source, outline) in &outlines {
             let bridge = domain.bridge.iter().find(|file| file.path == source.path);
             let names = names_from(outline, &krate);

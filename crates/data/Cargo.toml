@@ -8,7 +8,7 @@ description = "IDs, the ROM decoder, typed content, profiles, the portable recor
 
 [dependencies]
 canonical = { path = "../canonical" }
-clean_types = { path = "../clean_types" }
+types = { path = "../clean/types" }
 
 [lints]
 workspace = true

@@ -7,32 +7,32 @@
 
 pub mod atmospheric;
 pub mod bg_graphics;
-pub mod blocks_world;
-pub mod camera_world;
 pub mod collision;
 pub mod commit;
 pub mod enemy;
 pub mod exact;
 pub mod game_time;
-pub mod hud_world;
 pub mod intent;
+pub mod interface_hud_bridge;
 pub mod lines;
 pub mod message_box;
 pub mod model;
 pub mod nmi;
 pub mod plm;
 pub mod pose;
-pub mod progress_world;
 pub mod projectile;
 pub mod rng;
+pub mod run_progress_bridge;
+pub mod samus_appearance_bridge;
 pub mod samus_drawing;
-pub mod samus_looks_world;
+pub mod samus_movement_bridge;
 pub mod samus_palette;
-pub mod samus_world;
 pub mod scrolling;
 pub mod session;
 pub mod state;
 pub mod tick;
+pub mod world_blocks_bridge;
+pub mod world_camera_bridge;
 
 #[cfg(test)]
 mod tests;

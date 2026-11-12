@@ -9,12 +9,13 @@
 # code_check.sh --import (no file, network, process or build-time reach, and no variant import
 # even in a crate whose old ones still only warn on the trunk), or nothing is applied. If BRANCH
 # lacks a clean crate the export started with, its empty scaffold is committed first (trailer
-# `Role: integrator`), so the patches
-# apply as they were made. Wiring the crates into the workspace is the integrator's next commit.
+# `Role: integrator`), so the patches apply as they were made. The workspace takes every folder
+# of crates/clean, so that commit also brings Cargo.lock up to the new crate. Wiring the model
+# into the engine is the integrator's next commit.
 #
 # Once applied, every clean crate in the workspace is linted with both clippy configurations of
 # tools/lane/gate.sh: the workspace's lints, and tools/cleanroom/clippy.toml. An export holds one
-# domain's model and clean_types, so a change to clean_types can break a crate its implementer
+# domain's model and the shared types, so a change to the types can break a crate its implementer
 # never saw. If either run fails, the import fails naming the run and the crates, with the patches
 # left applied: the root commits a mechanical fix itself, or resets and sends the change back
 # (PROCESS, the import step). Override: CARGO (the cargo to run).
@@ -28,9 +29,10 @@ dest=$1 branch=$2
 
 # The domain is the one model crate the export started with.
 root=$(git_isolated "$dest" rev-list --max-parents=0 HEAD)
-mapfile -t models < <(git_isolated "$dest" ls-tree --name-only "$root" crates/clean_model/)
+mapfile -t models < <(git_isolated "$dest" ls-tree -r --name-only "$root" crates/clean/ | model_dirs)
 [ ${#models[@]} -eq 1 ] || die "the export holds ${#models[@]} model crates, not one"
-domain=${models[0]#crates/clean_model/}
+model=${models[0]}
+domain=$(domain_of "${model#crates/clean/}")
 echo "import: $domain from $dest onto $branch"
 assert_isolated "$dest" "$domain" 1
 
@@ -61,17 +63,22 @@ trap 'rm -rf "$checked"' EXIT
 git_isolated "$dest" archive --format=tar HEAD -- crates | tar -x -m -C "$checked"
 bash "$cleanroom_dir/code_check.sh" --import "$checked" || die "code_check.sh refused the export's crates; nothing applied"
 
+cargo=${CARGO:-cargo}
 before=$(git rev-parse HEAD)
 missing=()
-for dir in crates/clean_types "crates/clean_model/$domain"; do
+for dir in crates/clean/types "$model"; do
   [ -n "$(git ls-tree --name-only HEAD -- "$dir")" ] || missing+=("$dir")
 done
 if [ ${#missing[@]} -gt 0 ]; then
   git_isolated "$dest" archive --format=tar "$root" -- "${missing[@]}" | tar -x -m
-  git add -- "${missing[@]}"
+  # A new crate is a workspace member at once: the lock takes it, offline, as the clippy runs
+  # below need it locked.
+  "$cargo" metadata -q --offline --format-version 1 >/dev/null || die "cargo can't lock the new crates"
+  git add -- "${missing[@]}" Cargo.lock
   git commit -q -m "Clean room: the empty clean crates for $domain, as exported [exact]" -m "Role: integrator"
   echo "import: scaffold committed for ${missing[*]}"
 fi
+scaffolded=$(git rev-parse HEAD)
 
 includes=()
 for w in "${writable[@]}"; do includes+=("--include=${w}*"); done
@@ -79,26 +86,22 @@ if ! git_isolated "$dest" format-patch --stdout "$root..HEAD" | git am -q --3way
   git am --abort 2>/dev/null || true
   die "a patch didn't apply; $branch is at $(git rev-parse --short HEAD), the scaffold (if any) kept"
 fi
-# Belt and braces: what landed is inside the writable paths.
-outside=$(git diff --name-only "$before" HEAD | while IFS= read -r p; do in_entries "$p" "${writable[@]}" || echo "$p"; done)
-[ -z "$outside" ] || die "applied changes outside the clean crates: $(echo $outside); inspect $before..HEAD"
+# Belt and braces: what the patches landed is inside the writable paths.
+outside=$(git diff --name-only "$scaffolded" HEAD | while IFS= read -r p; do in_entries "$p" "${writable[@]}" || echo "$p"; done)
+[ -z "$outside" ] || die "applied changes outside the clean crates: $(echo $outside); inspect $scaffolded..HEAD"
 applied="$(git rev-parse --short "$before")..$(git rev-parse --short HEAD)"
 
-# The clean crates the workspace lists, by package name. A crate not wired in yet is the
-# integrator's to wire; gate.sh lints it from then on.
+# The clean crates, by package name: the workspace takes every folder of crates/clean.
 packages=()
 while IFS= read -r dir; do
   name=$(sed -n 's/^name = "\(.*\)"$/\1/p' "$dir/Cargo.toml" | head -1)
   [ -n "$name" ] || die "no package name in $dir/Cargo.toml"
   packages+=("$name")
-done < <(grep -o '"crates/clean_[^"]*"' Cargo.toml | tr -d '"')
-[ ${#packages[@]} -gt 0 ] || die "the workspace lists no clean crate"
-grep -q "\"crates/clean_model/$domain\"" Cargo.toml \
-  || echo "import: crates/clean_model/$domain is not in the workspace yet, so not linted"
+done < <(for dir in crates/clean/*/; do [ -f "$dir/Cargo.toml" ] && echo "${dir%/}"; done)
+[ ${#packages[@]} -gt 0 ] || die "the workspace holds no clean crate"
 selected=()
 for p in "${packages[@]}"; do selected+=(-p "$p"); done
 
-cargo=${CARGO:-cargo}
 lint_failed=0
 clean_clippy() { # NAME [VAR=VALUE...]: one clippy run over the clean crates, naming those it fails
   name=$1; shift

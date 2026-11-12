@@ -59,7 +59,7 @@ target/verify/tools localise scenarios/locks/lsnes.toml BUNDLE CACHE rom/sm.smc 
 target/verify/tools harness game-time scenarios/locks/lsnes.toml CACHE area-brinstar item-morph-ball
 # The harness as tests, each domain held to its floors over every row cached in CACHE.
 SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify the_clock_holds_its_floors_against_the_cache
-SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify samus_motion_holds_its_floors_against_the_cache
+SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify movement_holds_its_floors_against_the_cache
 ```
 
 Commit a ratchet file only with the change that moved its numbers, and never edit a line by hand
@@ -80,6 +80,6 @@ frame); without them a frame is about 206 KB.
 8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
 passes `--watch-pcs` too, for the `hits.txt` the blocks, progress and HUD harnesses read.
 `ORACLE` names the oracle command (the Python DLL runner where Defender blocks executables).
-`tools/oracle/samus_motion_rows.txt` lists 32 rows (18,331 frames, about 3.8 GB, about 2 minutes
-on 14 cores) for the Samus-motion harness, whose test runs every row cached in `SM_CACHE` and
+`tools/oracle/movement_rows.txt` lists 32 rows (18,331 frames, about 3.8 GB, about 2 minutes
+on 14 cores) for the Samus-movement harness, whose test runs every row cached in `SM_CACHE` and
 holds the CI rows to their floors.

@@ -35,7 +35,7 @@ left=()
 while IFS= read -r f; do
   rel=${f#"$dest"/}
   case $rel in
-    crates/*/tests/*.rs | crates/clean_model/*/tests/*.rs) left+=("$rel") ;;
+    crates/*/tests/*.rs | crates/clean/*/tests/*.rs) left+=("$rel") ;;
     *) die "$rel includes a file from docs/ outside a tests/ directory; the copy can't build without it" ;;
   esac
 done < <(grep -rlE "$reads_docs" --include='*.rs' "$dest/crates" 2>/dev/null || true)

@@ -3,7 +3,6 @@ use data::plm::{Extension, PlmEntry, PlmKind, PlmPopulation, ScrollChange, Scrol
 use data::rom::RomAddress;
 
 use super::*;
-use crate::blocks_world::fixture::content;
 use crate::plm::spawn_population;
 use crate::state::CollectedItems;
 use crate::state::room::{
@@ -11,6 +10,7 @@ use crate::state::room::{
 };
 use crate::state::room::{Bts, Offset};
 use crate::state::slots::Occupancy;
+use crate::world_blocks_bridge::fixture::content;
 
 /// The scroll PLM's slot: the first spawn takes the highest.
 const SCROLL_SLOT: usize = 39;

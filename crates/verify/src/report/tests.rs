@@ -141,15 +141,15 @@ fn coverage_parses() {
 
 #[test]
 fn the_plan_agrees_with_the_rebuilt_domains() {
-    let rebuilt = BTreeSet::from(["camera"]);
+    let rebuilt = BTreeSet::from(["world-camera"]);
     let plan = |domain: &str| {
         format!(
-            "platform = []\n[[model]]\nname = \"camera\"\nrounds = 5\n[[domain]]\n{domain}\
+            "platform = []\n[[model]]\nname = \"world-camera\"\nrounds = 5\n[[domain]]\n{domain}\
              [milestone]\nname = \"m\"\nmovie = \"any\"\nends = \"any:12\"\nneeds = [\"CAM\"]\n"
         )
     };
     let parse = |domain: &str| Plan::parse(&plan(domain), &rebuilt).map(|_| ());
-    let named = "id = \"CAM\"\nname = \"The camera\"\nwave = 0\nrounds = 1\n";
+    let named = "id = \"CAM\"\nname = \"The camera\"\narea = \"world\"\nwave = 0\nrounds = 1\n";
     assert_eq!(parse(named), Ok(()));
     // The milestone needs plan items the plan holds, and ends at a seed.
     let other = |from: &str, to: &str| Plan::parse(&plan(named).replace(from, to), &rebuilt);
@@ -158,15 +158,19 @@ fn the_plan_agrees_with_the_rebuilt_domains() {
     assert!(other("any:12", "any:twelve").is_err());
     assert_eq!(
         parse(&format!(
-            "{named}model = \"camera\"\nstatus = \"in-progress\"\n"
+            "{named}model = \"world-camera\"\nstatus = \"in-progress\"\n"
         )),
         Ok(())
     );
+    // A domain's model is named in its area, and the area is one of the plan's.
+    let started = format!("{named}model = \"world-camera\"\n");
+    assert!(parse(&started.replace("\"world\"", "\"samus\"")).is_err());
+    assert!(parse(&named.replace("\"world\"", "\"rooms\"")).is_err());
     // A started domain names its model, and a named model is one the report rebuilds.
     assert!(parse(&format!("{named}status = \"in-progress\"\n")).is_err());
-    assert!(parse(&format!("{named}model = \"hud\"\n")).is_err());
+    assert!(parse(&format!("{named}model = \"interface-hud\"\n")).is_err());
     assert!(parse(&format!("{named}status = \"started\"\n")).is_err());
     // Every rebuilt domain is a model of the plan, once.
-    let others = BTreeSet::from(["camera", "hud"]);
+    let others = BTreeSet::from(["world-camera", "interface-hud"]);
     assert!(Plan::parse(&plan(named), &others).is_err());
 }

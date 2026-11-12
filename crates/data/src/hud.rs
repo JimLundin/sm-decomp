@@ -4,7 +4,7 @@
 //! HUD's rules, not content, so a look here is a picture and its flips only. The blank and the
 //! diagonal are pictures alone: the HUD tests the blank unflipped and the diagonal by its number.
 
-use clean_types::{Flip, Look, Picture};
+use types::{Flip, Look, Picture};
 
 use crate::rom::{AddressError, Lorom, RomAddress};
 

@@ -31,12 +31,12 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 18,195 of 36,311 | 8,926 | 8,823 | 1.01 |
-| camera | CAM (in progress) | in progress | 6 | 83 | 20,676 of 36,311 | 1,839 | 1,762 | 1.04 |
-| progress | P1 (in progress) | in progress | 8 | 76 | 35,919 of 36,311 | 819 | 1,061 | 0.77 |
-| hud | H2 (in progress) | in progress | 5 | 84 | 20,778 of 34,377 | 2,695 | 2,112 | 1.28 |
-| blocks | W2 (in progress) | in progress | 4 | 100 | 20,693 of 32,006 | 2,395 | 2,074 | 1.15 |
-| samus-looks | S5 (in progress) | in progress | 5 | 98 | 18,396 of 34,377 | 2,191 | 1,412 | 1.55 |
+| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 18,195 of 36,311 | 8,926 | 8,823 | 1.01 |
+| world-camera | CAM (in progress) | in progress | 6 | 83 | 20,676 of 36,311 | 1,839 | 1,762 | 1.04 |
+| run-progress | P1 (in progress) | in progress | 8 | 76 | 35,919 of 36,311 | 819 | 1,061 | 0.77 |
+| interface-hud | H2 (in progress) | in progress | 5 | 84 | 20,778 of 34,377 | 2,695 | 2,112 | 1.28 |
+| world-blocks | W2 (in progress) | in progress | 4 | 100 | 20,693 of 32,006 | 2,395 | 2,074 | 1.15 |
+| samus-appearance | S5 (in progress) | in progress | 5 | 98 | 18,396 of 34,377 | 2,191 | 1,412 | 1.55 |
 
 ### The whole-game plan
 
@@ -57,9 +57,9 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
-| not yet rebuilt | 48 | 4,832 | 28,993 | 6,784 |
+| not yet rebuilt | 48 | 4,831 | 28,988 | 6,787 |
 | bridges from the engine to the models | 10 | 2,670 | 16,020 | 2,762 |
-| rebuilt models, shared types included | 71 | 3,254 | 19,526 | 8,661 |
+| rebuilt models, shared types included | 71 | 3,254 | 19,526 | 8,657 |
 
 ### Verification
 

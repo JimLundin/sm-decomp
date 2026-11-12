@@ -13,13 +13,12 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use canonical::{Canonical, Difference, Segment};
-use clean_model_progress::Progress;
 use data::id::RoomId;
 use data::plm::PlmPopulation;
 use data::rom::Lorom;
 use data::room::{Door, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
 use data::tileset::TilesetId;
-use game::progress_world;
+use game::run_progress_bridge;
 use game::state::atmospheric::AtmosphericGraphic;
 use game::state::projectile::ProjectileBody;
 use game::state::room::{
@@ -30,6 +29,7 @@ use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, Switches, TickInput};
 use oracle_record::{Cut, FrameRecord};
+use run_progress::Progress;
 
 use crate::cache::{Cache, CacheError, CutKind};
 use crate::coverage::{FIELDS, Status};
@@ -58,7 +58,7 @@ pub fn slice_zero_rooms() -> RoomMap {
         species: data::enemy::SpeciesMap::slice_zero(),
         programs: data::enemy::program::EnemyPrograms::default(),
         samus_tiles: data::pose::tiles::SamusTiles::default(),
-        samus_clips: game::samus_looks_world::Clips::default(),
+        samus_clips: game::samus_appearance_bridge::Clips::default(),
         plms: Vec::new(),
         states: Vec::new(),
         reactions: data::blocks::Reactions::default(),
@@ -105,7 +105,7 @@ pub fn slice_zero_plms(image: &[u8]) -> Result<Vec<(RoomId, PlmPopulation)>, Roo
         .iter()
         .filter_map(|(_, id)| {
             let room = rooms.get(id)?;
-            let state = room.state(progress_world::room_state(
+            let state = room.state(run_progress_bridge::room_state(
                 room,
                 &Progress::default(),
                 None,
@@ -589,7 +589,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("video.batch.cgram", video.batch.cgram),
     field!("video.batch.vram", video.batch.vram),
     field!("video.nmi_requested", video.nmi_requested),
-    // Samus's motion State, the motion spec's declared fields (`samus-motion.md` §1.1).
+    // Samus's motion State, the motion spec's declared fields (`samus-movement.md` §1.1).
     field!("samus.motion.position.x", samus.motion.position.x),
     field!("samus.motion.position.y", samus.motion.position.y),
     field!("samus.motion.base_speed", samus.motion.base_speed),

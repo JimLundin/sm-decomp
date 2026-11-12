@@ -5,7 +5,7 @@ use data::blocks::ReactionId;
 use data::enemy::program::SpritemapId;
 use data::id::{DoorwayId, RoomId, SpeciesId};
 
-use crate::blocks_world::{BlockContent, BlocksFault};
+use crate::world_blocks_bridge::{BlockContent, BlocksFault};
 use data::plm::{ItemPlm, ScrollChangesId};
 use data::room::{Area, Room, RoomState};
 use data::tileset::TilesetId;
@@ -280,7 +280,7 @@ pub enum GrowsBackAs {
     Air,
 }
 
-/// One of the blocks' reactions running in a place (`blocks_world`).
+/// One of the blocks' reactions running in a place (`world_blocks_bridge`).
 ///
 /// Which imported reaction, which of its scripts, the step it runs next and what its cell grows
 /// back as; the place's block is its cell and its timer its wait.

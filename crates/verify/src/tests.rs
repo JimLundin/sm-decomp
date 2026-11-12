@@ -76,15 +76,18 @@ fn rooms() -> RoomMap {
 
 /// Every pose of hers with a clip of 28 shown steps of a frame each that starts over, so each
 /// of the first 28 frames is a step and every mark lands on one.
-fn samus_clips() -> game::samus_looks_world::Clips {
+fn samus_clips() -> game::samus_appearance_bridge::Clips {
     let bytes: Vec<u8> = [[1_u8; 0x1C].as_slice(), &[0xFF]].concat();
     let list = data::pose::animation::DelayList::decode(&bytes).unwrap();
     let delays = data::pose::animation::AnimationDelays::new(
         vec![list; data::pose::POSE_COUNT],
         data::pose::animation::DelayList::default(),
     );
-    game::samus_looks_world::Clips::import(&delays, &data::pose::animation::RunPaces::default())
-        .unwrap()
+    game::samus_appearance_bridge::Clips::import(
+        &delays,
+        &data::pose::animation::RunPaces::default(),
+    )
+    .unwrap()
 }
 
 /// Three tiles definitions, at pointers 0, 7 and 14.
@@ -2011,8 +2014,8 @@ struct CachedRows {
 /// Each row's frames decoded from `SM_CACHE`, with the Morph Ball Room's level as content
 /// loads it from `SM_ROM`; `None` where either isn't present (CI's Verify job has neither).
 fn cached_rows() -> Option<CachedRows> {
-    use clean_model_progress::Progress;
     use data::room::{RoomKey, Rooms, SLICE_ZERO_ROOMS};
+    use run_progress::Progress;
     let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
     let content = crate::bundle::content(image.clone()).unwrap();
@@ -2029,7 +2032,8 @@ fn cached_rows() -> Option<CachedRows> {
     let morph_ball_room = loaded_rooms.get(id).unwrap();
     let state = morph_ball_room
         .state(
-            game::progress_world::room_state(morph_ball_room, &Progress::default(), None).unwrap(),
+            game::run_progress_bridge::room_state(morph_ball_room, &Progress::default(), None)
+                .unwrap(),
         )
         .unwrap();
     let loaded =

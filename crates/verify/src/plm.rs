@@ -6,7 +6,6 @@
 //! detection PLM, which Samus's touches spawn wherever an item is, the ID names directly, and
 //! so does every reaction of the blocks' (`data::blocks`), whose list's place names its step.
 
-use clean_types::Script;
 use data::blocks::{Reactions, Runs, Step};
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
 use data::rom::RomAddress;
@@ -15,6 +14,7 @@ use game::state::room::{
     PlmCommon, ReactionPlace, ReactionScript, ScrollPlm, ScrollStep,
 };
 use game::state::slots::{Cursor, Frames, Generation, Occupancy, Slot, SlotStore};
+use types::Script;
 
 use crate::decode::DecodeError;
 use crate::source::{self, WramArray};

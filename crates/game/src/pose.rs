@@ -32,7 +32,7 @@ pub struct Content {
     /// Samus's pose transitions from input.
     pub transitions: PoseTransitions,
     /// Samus's clips and her run's paces, which her animation plays.
-    pub samus_clips: crate::samus_looks_world::Clips,
+    pub samus_clips: crate::samus_appearance_bridge::Clips,
     /// The slope shapes her block collision reads.
     pub slopes: Slopes,
     /// The loaded species' instruction lists.
@@ -58,9 +58,9 @@ pub struct Content {
     /// The rooms' door lists, which say where each door block leads.
     pub room_doors: crate::collision::RoomDoors,
     /// The blocks' reactions and what each reacting cell's mark is.
-    pub blocks: crate::blocks_world::BlockContent,
+    pub blocks: crate::world_blocks_bridge::BlockContent,
     /// The area maps and the pictures the HUD draws with.
-    pub hud: crate::hud_world::HudContent,
+    pub hud: crate::interface_hud_bridge::HudContent,
     /// The tilesets' tile tables, which draw the level's blocks.
     pub tile_tables: data::tileset::TileTables,
     /// The message boxes' borders, letters and messages.
@@ -202,7 +202,7 @@ pub enum Asked {
 ///
 /// No pose asked for changes nothing and records no history. The motion model has made the
 /// change's writes to her speeds and placed her: pose fit and the shrink are its. Where her clip
-/// starts is her animation's (`samus_looks_world`), after the change.
+/// starts is her animation's (`samus_appearance_bridge`), after the change.
 ///
 /// Nothing reads the original's request words (`0A2C`, `0A32`) after the frame that writes
 /// them, so they are no State (ARCHITECTURE §11.6).

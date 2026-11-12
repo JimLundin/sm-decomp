@@ -1,0 +1,21 @@
+[package]
+name = "demo"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+
+[dependencies]
+types = { path = "../types" }
+
+
+[dev-dependencies]
+toml = "=1.2.1"
+
+
+[lints]
+workspace = true
+
+[lib]
+proc-macro = true

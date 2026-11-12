@@ -6,9 +6,9 @@
 //! clip's, baked by the importer from the original's rules (docs/architecture/assets.md).
 //! Bank `$A0` log, `$A0:884D` draws her with enemy layer 3, after the enemies of layers 0 to 2.
 
-use clean_types::Pair;
 use data::assets::samus::Frame;
 use data::assets::samus::import::map;
+use types::Pair;
 
 use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;
@@ -69,7 +69,7 @@ pub fn draw(state: &mut State, content: &Content) {
 /// after its list, and no animation reaches one.
 fn queue_tiles(state: &mut State, content: &Content) {
     let samus = &state.samus;
-    let Some(frame) = crate::samus_looks_world::frame(samus, &content.samus_clips)
+    let Some(frame) = crate::samus_appearance_bridge::frame(samus, &content.samus_clips)
         .and_then(|frame| content.samus_tiles.frame(samus.pose, frame))
     else {
         return;
@@ -87,7 +87,7 @@ fn queue_tiles(state: &mut State, content: &Content) {
 fn clip_frame<'a>(samus: &Samus, content: &'a Content) -> Option<&'a Frame> {
     let (pose, dress) = map::shown(samus.pose)?;
     let frames = &content.samus_assets.clip(pose, dress)?.frames;
-    let frame = crate::samus_looks_world::frame(samus, &content.samus_clips)?;
+    let frame = crate::samus_appearance_bridge::frame(samus, &content.samus_clips)?;
     frames.get(usize::from(frame.0))
 }
 

@@ -9,14 +9,14 @@
 //! model over the importer's screens must match record N+1 on the camera's position. The
 //! constructed vectors carry the same rules over invented rooms.
 
-use clean_model_camera::Room;
-use clean_types::Pair;
 use data::level::{ScrollArea, names_scroll_table};
 use data::rom::Lorom;
 use data::room::{RoomKey, decode};
-use game::camera_world;
 use game::state::room::Scrollers;
+use game::world_camera_bridge;
 use oracle_record::FrameRecord;
+use types::Pair;
+use world_camera::Room;
 
 use super::{CAMERA, CameraDomain, Screens, Skip, Y, word};
 use crate::harness::{Domain, FieldSet, Interval};
@@ -110,7 +110,7 @@ const R11: &str = "chain-0232-D5A7";
 const MORPH_BALL: &str = "item-morph-ball";
 
 /// The decode notes' 35 cases. R24's y lies under the knockback's start, which places her y
-/// where samus-motion's model doesn't; its rule is on x, which is compared.
+/// where samus-movement's model doesn't; its rule is on x, which is compared.
 pub const CASES: [Case; 35] = [
     case("R1", (BRINSTAR, 72), 0x9E9F, Table, &[]),
     case("R2", (BRINSTAR, 74), 0x9E9F, Table, &[]),
@@ -297,13 +297,13 @@ impl CameraDomain {
             ));
         }
         let screens = Screens {
-            run: camera_world::run(&content.areas, &[]),
+            run: world_camera_bridge::run(&content.areas, &[]),
             size: content.size,
         };
         upstream.room = Room::new(
             screens.run.clone(),
             screens.size,
-            camera_world::heights(content.scrollers),
+            world_camera_bridge::heights(content.scrollers),
         )
         .map_err(|error| defect(Skip::Room(error)))?;
         upstream.screens = screens;

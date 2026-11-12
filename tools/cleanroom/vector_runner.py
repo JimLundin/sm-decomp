@@ -2,7 +2,7 @@
 
 Defender quarantines freshly linked test `.exe` files but loads DLLs, so `cargo test` cannot
 run in a clean-room session on Windows. This links each lib and integration-test target of the
-clean crates (`clean_types`, `clean_model_*`) in the current directory's workspace as a DLL and
+clean crates (those under `crates/clean/`) in the current directory's workspace as a DLL and
 calls its libtest `main` in a child interpreter, as tools/lane/test_dll.py does; libtest reads
 its arguments from `GetCommandLineW`, so the child rewrites that buffer first.
 
@@ -45,14 +45,12 @@ def clean_targets(cargo: str, workspace: Path) -> tuple[Path, list[tuple[str, st
             cwd=workspace,
         ).stdout
     )
-    crates = workspace / "crates"
+    clean = workspace / "crates" / "clean"
     found = []
     for package in meta["packages"]:
         name = package["name"]
         manifest = Path(package["manifest_path"]).resolve()
-        if not (name == "clean_types" or name.startswith("clean_model_")):
-            continue
-        if crates not in manifest.parents:
+        if clean not in manifest.parents:
             continue
         for target in package["targets"]:
             kinds = target["kind"]

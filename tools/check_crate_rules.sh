@@ -17,27 +17,27 @@ engine="data game runtime app"
 # `canonical` holds the codec trait so `data` can derive it; `canonical_derive` is its macro.
 allowed() {
   case $1 in
-    data) echo "canonical clean_types" ;;
-    game) echo "data canonical clean_types clean_model_samus_motion clean_model_blocks clean_model_camera clean_model_hud clean_model_progress clean_model_samus_looks" ;;
+    data) echo "canonical types" ;;
+    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance" ;;
     runtime) echo "data" ;;
     app) echo "data game runtime" ;;
     oracle) echo "data oracle_record" ;;
     oracle_record) echo "" ;;
-    verify) echo "data game runtime oracle_record canonical clean_types clean_model_samus_motion clean_model_blocks clean_model_camera clean_model_hud clean_model_progress clean_model_samus_looks" ;;
+    verify) echo "data game runtime oracle_record canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance" ;;
     tools) echo "verify oracle runtime" ;;
     canonical) echo "canonical_derive" ;;
     canonical_derive) echo "" ;;
     # The clean-room crates depend only on each other (MODEL §5).
-    clean_types) echo "" ;;
-    clean_model_samus_motion) echo "clean_types" ;;
-    clean_model_blocks) echo "clean_types" ;;
-    clean_model_camera) echo "clean_types" ;;
-    clean_model_hud) echo "clean_types" ;;
-    clean_model_progress) echo "clean_types" ;;
-    clean_model_samus_looks) echo "clean_types" ;;
+    types) echo "" ;;
+    samus_movement) echo "types" ;;
+    world_blocks) echo "types" ;;
+    world_camera) echo "types" ;;
+    interface_hud) echo "types" ;;
+    run_progress) echo "types" ;;
+    samus_appearance) echo "types" ;;
   esac
 }
-new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive clean_types clean_model_samus_motion clean_model_blocks clean_model_camera clean_model_hud clean_model_progress clean_model_samus_looks"
+new_crates="data game runtime app oracle oracle_record verify tools canonical canonical_derive types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {
@@ -103,8 +103,8 @@ hits=$(
 # The clean-room crates, where the spine has them: nothing in them reaches outside the process
 # when cargo runs it (tools/cleanroom/code_check.sh), and the check itself still catches its
 # fixtures.
-if [ -d crates/clean_types ] || [ -d crates/clean_model ]; then
-  out=$(bash tools/cleanroom/code_check.sh crates/clean_types crates/clean_model/* 2>&1) || fail "$out"
+if [ -d crates/clean ]; then
+  out=$(bash tools/cleanroom/code_check.sh crates/clean/* 2>&1) || fail "$out"
 fi
 out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"

@@ -384,7 +384,7 @@ fn the_clock_holds_its_floors_against_the_cache() {
 /// Samus's motion over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the
 /// clock's test reads them.
 #[test]
-fn samus_motion_holds_its_floors_against_the_cache() {
+fn movement_holds_its_floors_against_the_cache() {
     let Some((cache, rom)) = environment() else {
         return;
     };
@@ -392,17 +392,17 @@ fn samus_motion_holds_its_floors_against_the_cache() {
         Ok(image) => image,
         Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
     };
-    let domain = match super::samus_motion::SamusMotion::load(&image) {
+    let domain = match super::movement::Movement::load(&image) {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error:?}"),
     };
-    hold_floors(&domain, "samus-motion", &cache);
+    hold_floors(&domain, "samus-movement", &cache);
 }
 
-/// The samus-motion harness cases (the decode notes' "Room content: harness cases"), each over
+/// The samus-movement harness cases (the decode notes' "Room content: harness cases"), each over
 /// its row's records; a case whose row isn't cached is reported and not checked.
 #[test]
-fn samus_motions_harness_cases_hold_against_the_cache() {
+fn movement_harness_cases_hold_against_the_cache() {
     use std::io::Write as _;
     let Some((cache, rom)) = environment() else {
         return;
@@ -411,7 +411,7 @@ fn samus_motions_harness_cases_hold_against_the_cache() {
         Ok(image) => image,
         Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
     };
-    let domain = match super::samus_motion::SamusMotion::load(&image) {
+    let domain = match super::movement::Movement::load(&image) {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error:?}"),
     };
@@ -420,7 +420,7 @@ fn samus_motions_harness_cases_hold_against_the_cache() {
     let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
     let rows = cached_rows(&cache);
     let mut failures = Vec::new();
-    for case in &super::samus_motion::cases::CASES {
+    for case in &super::movement::cases::CASES {
         if !rows.iter().any(|row| row == case.row) {
             let _ = writeln!(std::io::stdout(), "{}: {} not cached", case.id, case.row);
             continue;
@@ -460,7 +460,7 @@ fn samus_motions_harness_cases_hold_against_the_cache() {
 }
 
 /// The camera over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
-/// test reads them (the ROM for samus-motion's model, which supplies the placement).
+/// test reads them (the ROM for samus-movement's model, which supplies the placement).
 #[test]
 fn the_camera_holds_its_floors_against_the_cache() {
     let Some((cache, rom)) = environment() else {
@@ -474,7 +474,7 @@ fn the_camera_holds_its_floors_against_the_cache() {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error:?}"),
     };
-    hold_floors(&domain, "camera", &cache);
+    hold_floors(&domain, "world-camera", &cache);
 }
 
 /// The camera's harness cases (the decode notes' "The harness cases"), each over its row's
@@ -545,7 +545,7 @@ fn the_cameras_harness_cases_hold_against_the_cache() {
 
 /// The blocks over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
 /// test reads them (the ROM for the reactions and the scroll lists). The cache's rows carry the
-/// blocks' watched instructions' hits (`docs/behaviours/blocks.decode.md`, "The harness").
+/// blocks' watched instructions' hits (`docs/behaviours/world-blocks.decode.md`, "The harness").
 #[test]
 fn the_blocks_hold_their_floors_against_the_cache() {
     let Some((cache, rom)) = environment() else {
@@ -559,7 +559,7 @@ fn the_blocks_hold_their_floors_against_the_cache() {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error}"),
     };
-    hold_floors(&domain, "blocks", &cache);
+    hold_floors(&domain, "world-blocks", &cache);
 }
 
 /// Progress over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the clock's
@@ -575,7 +575,7 @@ fn progress_holds_its_floors_against_the_cache() {
     };
     hold_floors(
         &super::progress::ProgressDomain::new(image),
-        "progress",
+        "run-progress",
         &cache,
     );
 }
@@ -583,7 +583,7 @@ fn progress_holds_its_floors_against_the_cache() {
 /// Her animation's timing over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as
 /// the clock's test reads them (the ROM for the importer's clips and paces).
 #[test]
-fn samus_looks_holds_its_floors_against_the_cache() {
+fn appearance_holds_its_floors_against_the_cache() {
     let Some((cache, rom)) = environment() else {
         return;
     };
@@ -591,19 +591,19 @@ fn samus_looks_holds_its_floors_against_the_cache() {
         Ok(image) => image,
         Err(error) => panic!("SM_ROM {}: {error}", rom.display()),
     };
-    let domain = match super::samus_looks::SamusLooks::load(&image) {
+    let domain = match super::appearance::Appearance::load(&image) {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error:?}"),
     };
-    hold_floors(&domain, "samus-looks", &cache);
+    hold_floors(&domain, "samus-appearance", &cache);
 }
 
-/// Samus-looks' harness cases (the decode notes' "The harness cases"), each the frame from its
+/// Samus-appearance's harness cases (the decode notes' "The harness cases"), each the frame from its
 /// record to the next quiescent one over the importer's clips; with `SM_CACHE` set, a case whose
 /// row isn't cached fails, as does one skipped, differing, or not bringing its entry into play
 /// with its fields compared.
 #[test]
-fn samus_looks_harness_cases_hold_against_the_cache() {
+fn appearance_harness_cases_hold_against_the_cache() {
     use crate::cache::CutKind;
     use std::io::Write as _;
     let Some((cache, rom)) = environment() else {
@@ -611,14 +611,14 @@ fn samus_looks_harness_cases_hold_against_the_cache() {
     };
     let image =
         std::fs::read(&rom).unwrap_or_else(|error| panic!("SM_ROM {}: {error}", rom.display()));
-    let domain = super::samus_looks::SamusLooks::load(&image)
+    let domain = super::appearance::Appearance::load(&image)
         .unwrap_or_else(|error| panic!("content: {error:?}"));
     let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let text = std::fs::read_to_string(&lock).unwrap_or_else(|error| panic!("{error}"));
     let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
     let rows = cached_rows(&cache);
     let mut failures = Vec::new();
-    for case in &super::samus_looks::cases::CASES {
+    for case in &super::appearance::cases::CASES {
         let name = format!("{:?} {} {}", case.entry, case.row, case.record);
         if !rows.iter().any(|row| row == case.row) {
             failures.push(format!("{name}: not cached"));
@@ -668,7 +668,7 @@ fn samus_looks_harness_cases_hold_against_the_cache() {
 /// only `SM_ROM`, and is skipped where it is unset.
 #[test]
 fn the_importer_gives_every_pose_of_hers_its_own_clip() {
-    use clean_model_samus_looks::{Control, Instruction};
+    use samus_appearance::{Control, Instruction};
     use std::io::Write as _;
     let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
         let _ = writeln!(std::io::stdout(), "skipped: SM_ROM unset");
@@ -690,7 +690,7 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
             .map(|other| other.id)
             .collect();
         assert!(twins.is_empty(), "{:?} is drawn as {twins:?}", imported.id);
-        let shown = |step: clean_model_samus_looks::Step| {
+        let shown = |step: samus_appearance::Step| {
             matches!(imported.clip.at(step), Some(Instruction::Show(_)))
         };
         for instruction in &imported.clip.instructions {
@@ -924,8 +924,8 @@ fn every_level_the_game_holds_loads() {
 /// It needs only `SM_ROM`, and is skipped where it is unset.
 #[test]
 fn every_item_the_game_places_counts_a_hundred_percent() {
-    use clean_model_progress::{Pickup, Supply};
     use core::num::Wrapping;
+    use run_progress::{Pickup, Supply};
     use std::collections::BTreeSet;
     use std::io::Write as _;
     let Some(rom) = std::env::var_os("SM_ROM").map(PathBuf::from) else {
@@ -988,7 +988,7 @@ fn the_hud_holds_its_floors_against_the_cache() {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error:?}"),
     };
-    hold_floors(&domain, "hud", &cache);
+    hold_floors(&domain, "interface-hud", &cache);
 }
 
 /// The HUD's harness cases (the decode notes' "The harness cases"), each over its row's records;

@@ -1,11 +1,11 @@
-//! The camera as a harness domain: the camera model (`clean_model_camera`) against the oracle.
+//! The camera as a harness domain: the camera model (`world_camera`) against the oracle.
 //!
-//! It is checked frame by frame on the spec's declared fields (`docs/behaviours/camera.md` §1),
-//! by the decode notes' harness note (`docs/behaviours/camera.decode.md`, "The harness").
+//! It is checked frame by frame on the spec's declared fields (`docs/behaviours/world-camera.md` §1),
+//! by the decode notes' harness note (`docs/behaviours/world-camera.decode.md`, "The harness").
 //! The camera is downstream of her motion and nothing upstream reads it, so it is checked on its
 //! own: its State (the camera position and where it last saw her) is decoded from record N, the
 //! inputs from record N+1 as the scroll read them (her position after everything moved her, her
-//! facing and state, the room's screens), and the y a placement put her at from samus-motion's
+//! facing and state, the room's screens), and the y a placement put her at from samus-movement's
 //! model run on the frame (its `placed`), never from record N+1's word, which is her y at the
 //! scroll by construction. The compared fields are the camera's position, pixel and subpixel parts. Where
 //! it last saw her is decoded from the same words as her position, so it is reported and masked,
@@ -15,18 +15,18 @@
 use core::fmt;
 use core::num::Wrapping;
 
-use clean_model_camera::{
+use data::level::ScrollArea;
+use game::model::num::Fixed as Exact;
+use game::state::room::Scrollers;
+use game::world_camera_bridge;
+use oracle_record::FrameRecord;
+use types::{Facing, Fixed, Pair, Parts, Px, ScreenKind, below, fixed};
+use world_camera::{
     BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules,
     Samus as Her,
 };
-use clean_types::{Facing, Fixed, Pair, Parts, Px, ScreenKind, below, fixed};
-use data::level::ScrollArea;
-use game::camera_world;
-use game::model::num::Fixed as Exact;
-use game::state::room::Scrollers;
-use oracle_record::FrameRecord;
 
-use super::samus_motion::{self, Ps, SamusMotion, Skip as Motion};
+use super::movement::{self, Movement, Ps, Skip as Motion};
 use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::decode::DecodeError;
@@ -267,7 +267,7 @@ fn screens(record: &FrameRecord) -> Result<Screens, Skip> {
     let run = source::SCROLLS
         .read(&record.wram)?
         .iter()
-        .map(|&area| camera_world::screen(ScrollArea::from(area)))
+        .map(|&area| world_camera_bridge::screen(ScrollArea::from(area)))
         .collect();
     Ok(Screens {
         run,
@@ -325,7 +325,7 @@ fn lead(record: &FrameRecord) -> Result<LeadSetting, Skip> {
 }
 
 /// What the camera read of her and the room at the scroll of the frame ending at `next`, but
-/// the y a placement put her at, which is samus-motion's: none until `step` fills it in.
+/// the y a placement put her at, which is samus-movement's: none until `step` fills it in.
 fn upstream(next: &FrameRecord) -> Result<Upstream, Skip> {
     let facing = match byte(next, source::SAMUS_POSE_X_DIR)? {
         FACING_LEFT => Facing::Left,
@@ -340,7 +340,7 @@ fn upstream(next: &FrameRecord) -> Result<Upstream, Skip> {
         up: word(next, source::UP_SCROLLER)?,
         down: word(next, source::DOWN_SCROLLER)?,
     };
-    let heights = camera_world::heights(scrollers);
+    let heights = world_camera_bridge::heights(scrollers);
     let room = Room::new(screens.run.clone(), screens.size, heights).map_err(Skip::Room)?;
     Ok(Upstream {
         samus: Her {
@@ -360,7 +360,7 @@ fn upstream(next: &FrameRecord) -> Result<Upstream, Skip> {
     })
 }
 
-/// The camera's inputs as the scroll read them, from record N+1 and samus-motion's model.
+/// The camera's inputs as the scroll read them, from record N+1 and samus-movement's model.
 pub struct Upstream {
     samus: Her,
     room: Room,
@@ -384,16 +384,16 @@ impl Upstream {
     }
 }
 
-/// What record N gives besides the State: where samus-motion's model placed the y the camera
+/// What record N gives besides the State: where samus-movement's model placed the y the camera
 /// follows her from.
 #[derive(Clone, Copy, Debug)]
 pub enum Placement {
-    /// Her motion's frame ran through samus-motion's model: the y it placed her at, if any.
+    /// Her motion's frame ran through samus-movement's model: the y it placed her at, if any.
     Model(Option<Fixed>),
     /// Her motion doesn't run in the frame (no gameplay pass, lag, a frame handler that runs no
     /// motion, the message box): nothing places her.
     NoMotion,
-    /// Her motion runs, but samus-motion's model doesn't cover the frame (a pose outside its
+    /// Her motion runs, but samus-movement's model doesn't cover the frame (a pose outside its
     /// domain, a deferred movement, a frame its adapter refuses or whose room doesn't decode): its
     /// placement is that model's to come.
     Uncovered,
@@ -402,7 +402,7 @@ pub enum Placement {
 impl TryFrom<Result<Option<Fixed>, Motion>> for Placement {
     type Error = Skip;
 
-    /// The frame's placement by samus-motion's answer; a decode failure is a harness defect.
+    /// The frame's placement by samus-movement's answer; a decode failure is a harness defect.
     fn try_from(answer: Result<Option<Fixed>, Motion>) -> Result<Self, Skip> {
         Ok(match answer {
             Ok(placed) => Self::Model(placed),
@@ -460,20 +460,20 @@ impl From<&Camera> for Declared {
     }
 }
 
-/// The camera domain, with the samus-motion model that supplies the placement.
+/// The camera domain, with the samus-movement model that supplies the placement.
 pub struct CameraDomain {
-    motion: SamusMotion,
+    motion: Movement,
 }
 
 impl CameraDomain {
-    /// The domain over the ROM `image`, which samus-motion's model reads.
+    /// The domain over the ROM `image`, which samus-movement's model reads.
     ///
     /// # Errors
     ///
     /// [`ContentError`] when the content can't be read.
     pub fn load(image: &[u8]) -> Result<Self, ContentError> {
         Ok(Self {
-            motion: SamusMotion::load(image)?,
+            motion: Movement::load(image)?,
         })
     }
 }
@@ -663,11 +663,11 @@ fn shinespark(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip>
     Ok(masks)
 }
 
-/// The masks of the frames on which samus-motion's harness defers her y to another domain
+/// The masks of the frames on which samus-movement's harness defers her y to another domain
 /// (adversary 42, C2 and M4, by its own predicates) and that deferral reaches what the camera
-/// reads (adversary 49, F1). The camera takes her position from record N+1; from samus-motion it
+/// reads (adversary 49, F1). The camera takes her position from record N+1; from samus-movement it
 /// takes only the y a placement put her at, which a pose change (camera.gaps C2) or a placement
-/// samus-motion's step reports (C3) gives. On a deferred frame with neither, nothing the camera
+/// samus-movement's step reports (C3) gives. On a deferred frame with neither, nothing the camera
 /// reads is unverified, so y stays compared. x stays compared throughout: the knockback's turn
 /// of the lead is the camera's own `LeadingHer`.
 fn deferred(
@@ -681,15 +681,15 @@ fn deferred(
     if !places {
         return Ok(masks);
     }
-    if samus_motion::pushed(next)? {
+    if movement::pushed(next)? {
         masks.push(Mask {
-            reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-motion defers, and her pose change or its step places the y the camera follows from",
+            reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-movement defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
         });
     }
-    if samus_motion::knockback_ends(from)? {
+    if movement::knockback_ends(from)? {
         masks.push(Mask {
-            reason: "another domain: the knockback's end (its time run out under the normal handler) decides her y, which samus-motion defers, and her pose change or its step places the y the camera follows from",
+            reason: "another domain: the knockback's end (its time run out under the normal handler) decides her y, which samus-movement defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
         });
     }
@@ -697,7 +697,7 @@ fn deferred(
 }
 
 impl Domain for CameraDomain {
-    const NAME: &'static str = "camera";
+    const NAME: &'static str = "world-camera";
     type State = Camera;
     type Inputs = Placement;
     type World = Upstream;
@@ -828,7 +828,7 @@ impl Domain for CameraDomain {
                     Y,
                 ),
                 Placement::Uncovered => mask(
-                    "the placement: samus-motion's model doesn't cover the frame (a pose outside its domain, a deferred movement), so where her pose change placed her is that model's to come",
+                    "the placement: samus-movement's model doesn't cover the frame (a pose outside its domain, a deferred movement), so where her pose change placed her is that model's to come",
                     Y,
                 ),
             }

@@ -1,7 +1,7 @@
-//! Blocks as a harness domain: the blocks model (`clean_model_blocks`) against the oracle.
+//! Blocks as a harness domain: the blocks model (`world_blocks`) against the oracle.
 //!
 //! It is checked frame by frame by the decode notes' harness note
-//! (`docs/behaviours/blocks.decode.md`, "The harness"). A frame runs from one commit to the next
+//! (`docs/behaviours/world-blocks.decode.md`, "The harness"). A frame runs from one commit to the next
 //! (records where the frame counter moved); a lag record between them folds into the frame, its
 //! cell changes already in the next commit's work RAM and its hits carried to it. Record N's
 //! State is decoded with the game's reactions, imported from the ROM (`data::blocks`): the
@@ -33,20 +33,20 @@ use core::fmt;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use clean_model_blocks::{
-    BehaviourId, CATALOGUE, CellKind, Frames, Grid, Mark, Meeting, OtherMetAs, Place, Places,
-    ReactingBody, ReactionName, Request, Rules, Run, Running, ScreenChange, ScrollReaction, State,
-    Step, Tile, Touched,
-};
-use clean_types::{Cell, Family, Heading, HitBy, Look, Motion, Pair, Point, ScreenKind, Script};
-use clean_types::{Set, Way};
 use data::blocks::{ReactionId, Reactions as Imported, Runs};
 use data::level::{Block, ScrollArea};
 use data::rom::{Lorom, RomAddress};
 use data::room::Area;
-use game::blocks_world::BlockContent;
-use game::camera_world;
+use game::world_blocks_bridge::BlockContent;
+use game::world_camera_bridge;
 use oracle_record::FrameRecord;
+use types::{Cell, Family, Heading, HitBy, Look, Motion, Pair, Point, ScreenKind, Script};
+use types::{Set, Way};
+use world_blocks::{
+    BehaviourId, CATALOGUE, CellKind, Frames, Grid, Mark, Meeting, OtherMetAs, Place, Places,
+    ReactingBody, ReactionName, Request, Rules, Run, Running, ScreenChange, ScrollReaction, State,
+    Step, Tile, Touched,
+};
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Uncompared};
 use crate::decode::{DecodeError, LevelSources};
@@ -417,7 +417,7 @@ impl BlocksDomain {
                         x: screen.checked_rem(across).unwrap_or(screen),
                         y: screen.checked_div(across).unwrap_or(0),
                     },
-                    becomes: camera_world::screen(change.area),
+                    becomes: world_camera_bridge::screen(change.area),
                 }
             })
             .collect();
@@ -563,7 +563,7 @@ impl BlocksDomain {
                             }))
                         }
                         area @ (ScrollArea::Red | ScrollArea::Blue | ScrollArea::Green) => {
-                            Ok(camera_world::screen(area))
+                            Ok(world_camera_bridge::screen(area))
                         }
                     })
                     .collect::<Result<Vec<_>, _>>()
@@ -781,7 +781,7 @@ fn named(requests: &[(Request, Source)]) -> impl Iterator<Item = Cell> + '_ {
 }
 
 impl Domain for BlocksDomain {
-    const NAME: &'static str = "blocks";
+    const NAME: &'static str = "world-blocks";
     type State = State;
     type Inputs = ();
     type World = Upstream;

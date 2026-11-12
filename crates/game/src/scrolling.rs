@@ -1,6 +1,6 @@
 //! The BG scrolls follow the camera, and the blocks they bring into view.
 //!
-//! Each frame, once the camera has followed Samus (`camera_world`), BG1 scrolls with layer 1 and
+//! Each frame, once the camera has followed Samus (`world_camera_bridge`), BG1 scrolls with layer 1 and
 //! layer 2 follows layer 1 at the room's rates (bank `$80` log, the BG scrolls `$80:A3AB`).
 //! A layer that has moved into another block column or row then exposes the line coming into
 //! view (`$80:A3DF`): moving right the column 16 blocks on, moving left the one at the left

@@ -6,10 +6,10 @@
 //! ends after its last; a graphic still in a frame moves as its kind does and is drawn,
 //! either as one sprite (`$90:8AC5`) or as one of Samus's spritemaps (`$90:8B74`).
 
-use clean_types::Pair;
 use data::pose::MovementType;
 use data::pose::spritemap::{SamusSpritemaps, SpritemapIndex};
 use data::spritemap::SpriteAttributes;
+use types::Pair;
 
 use crate::intent::{SpriteDraw, on_screen};
 use crate::pose::Content;

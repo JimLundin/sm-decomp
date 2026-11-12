@@ -10,7 +10,7 @@
 //! the dense [`RoomId`] the [`RoomMap`] gives it.
 
 use canonical::Canonical;
-use clean_types::Event;
+use types::Event;
 
 use crate::address_map::{AddressMap, Location, StatePart};
 use crate::compression::{DecompressError, decompress};

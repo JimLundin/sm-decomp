@@ -15,7 +15,7 @@ Your workspace is an export: a standalone repository holding everything you need
 - `CLEANROOM.md`: the commands and the commit form;
 - [DESIGN](../../../docs/cleanroom/DESIGN.md): the design and the coding standards;
 - your domain's spec in `docs/behaviours/` and its vectors in `scenarios/vectors/`;
-- the clean crates, `crates/clean_types` and `crates/clean_model/<domain>`, which you write.
+- the clean crates, `crates/clean/types` and `crates/clean/<crate>`, which you write.
 
 Work from this workspace alone, and from the spec as your only knowledge of the game. If you
 recognise something from how the original game is programmed, set it aside and say so in your
@@ -28,8 +28,8 @@ report.
 2. **Design the types.** A quantity whose **Read by** isn't "none" is state; everything else is
    computed. Use enums with the data each case carries, newtypes for quantities that must not
    mix, and constructors that keep values valid. Done when every spec quantity has its type.
-3. **Write the model** in `crates/clean_model/<domain>`, adding shared domain types to
-   `crates/clean_types`. Keep tables as data and the logic small. Name each quirk the spec states
+3. **Write the model** in `crates/clean/<crate>`, adding shared domain types to
+   `crates/clean/types`. Keep tables as data and the logic small. Name each quirk the spec states
    in one place, with a doc saying what it reproduces. Every number in the logic comes from `Rules`
    or a named constant holding a number the spec gives ([DESIGN](../../../docs/cleanroom/DESIGN.md)
    lists what the checks refuse). Done when the model compiles and every spec entry has code that

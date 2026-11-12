@@ -126,7 +126,7 @@ pub enum ContentError {
     /// Samus's animation delay lists don't decode.
     Delays(AnimationError),
     /// Her clips and her run's paces don't import.
-    SamusClips(game::samus_looks_world::ImportError),
+    SamusClips(game::samus_appearance_bridge::ImportError),
     /// The slope shapes aren't in the image.
     Slopes(AddressError),
     /// The enemies' instruction lists don't decode.
@@ -195,8 +195,8 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let room_plms = RoomPlms(populations.map_err(ContentError::Rooms)?);
     let room_doors = game::collision::RoomDoors(doors.map_err(ContentError::Rooms)?);
     let reactions = data::blocks::Reactions::load(rom.lorom()).map_err(ContentError::Blocks)?;
-    let blocks =
-        game::blocks_world::BlockContent::import(&reactions).map_err(ContentError::Reaction)?;
+    let blocks = game::world_blocks_bridge::BlockContent::import(&reactions)
+        .map_err(ContentError::Reaction)?;
     let enemy_programs =
         EnemyPrograms::slice_zero(rom.lorom()).map_err(ContentError::EnemyPrograms)?;
     let eye_lists = EyeLists::resolve(&enemy_programs).map_err(ContentError::EnemyPrograms)?;
@@ -219,7 +219,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         })
         .map_err(ContentError::SamusAssets)?;
     let paces = RunPaces::load(rom.lorom()).map_err(ContentError::Delays)?;
-    let samus_clips = game::samus_looks_world::Clips::import(&delays, &paces)
+    let samus_clips = game::samus_appearance_bridge::Clips::import(&delays, &paces)
         .map_err(ContentError::SamusClips)?;
     Ok(Content {
         poses,
@@ -238,7 +238,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         room_plms,
         room_doors,
         blocks,
-        hud: game::hud_world::HudContent::import(
+        hud: game::interface_hud_bridge::HudContent::import(
             &data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
             &data::hud::HudPictures::load(rom.lorom()).map_err(ContentError::HudPictures)?,
         ),

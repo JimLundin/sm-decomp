@@ -2,38 +2,41 @@
 # `verify::report` writes into README.md. The root changes it in the commit that lands a round:
 # the model's `rounds` by one, and a domain's `status` when its work starts or its queue empties.
 #
-# [[model]]: a clean-room model crate, `crates/clean_model/<name>`, with the rounds landed on
-# main. Every model of `verify::report::DOMAINS` has one, and only those.
+# [[model]]: a clean-room model crate, `crates/clean/<crate>` (its name with dashes as
+# underscores), with the rounds landed on main. Every model of `verify::report::DOMAINS` has one,
+# and only those.
 #
-# [[domain]]: a clean-room domain of the plan. `rounds` is the plan's estimate of its rounds;
-# `model` the model crate that holds it, once one does; `status` is "not-started" (the default),
-# "in-progress" or "done", and a domain past "not-started" names its model.
+# [[domain]]: a clean-room domain of the plan. `area` is the part of the game it belongs to:
+# samus, weapons, world, enemy, boss, interface, run, screens or audio, and the first word of
+# its model's name; `rounds` is the plan's estimate of its rounds; `model` the model crate that
+# holds it, once one does; `status` is "not-started" (the default), "in-progress" or "done", and
+# a domain past "not-started" names its model.
 #
 # [[platform]]: platform work outside the clean room (hardware formats, assets, timing, tools),
 # in lanes, not rounds.
 
 [[model]]
-name = "samus-motion"
+name = "samus-movement"
 rounds = 19
 
 [[model]]
-name = "camera"
+name = "world-camera"
 rounds = 6
 
 [[model]]
-name = "progress"
+name = "run-progress"
 rounds = 8
 
 [[model]]
-name = "hud"
+name = "interface-hud"
 rounds = 5
 
 [[model]]
-name = "blocks"
+name = "world-blocks"
 rounds = 4
 
 [[model]]
-name = "samus-looks"
+name = "samus-appearance"
 rounds = 5
 
 # Wave 0
@@ -41,17 +44,19 @@ rounds = 5
 [[domain]]
 id = "S1"
 name = "Samus's motion: follow-ups"
+area = "samus"
 wave = 0
 rounds = 1
-model = "samus-motion"
+model = "samus-movement"
 status = "in-progress"
 
 [[domain]]
 id = "CAM"
 name = "The camera"
+area = "world"
 wave = 0
 rounds = 1
-model = "camera"
+model = "world-camera"
 status = "in-progress"
 
 [[platform]]
@@ -65,41 +70,46 @@ lanes = 3
 [[domain]]
 id = "S2"
 name = "Liquids and pushes"
+area = "samus"
 wave = 1
 rounds = 4
-model = "samus-motion"
+model = "samus-movement"
 status = "in-progress"
 
 [[domain]]
 id = "S5"
 name = "How Samus looks"
+area = "samus"
 wave = 1
 rounds = 3
-model = "samus-looks"
+model = "samus-appearance"
 status = "in-progress"
 
 [[domain]]
 id = "H2"
 name = "The HUD and the mini-map"
+area = "interface"
 wave = 1
 rounds = 2
-model = "hud"
+model = "interface-hud"
 status = "in-progress"
 
 [[domain]]
 id = "W2"
 name = "Blocks that react"
+area = "world"
 wave = 1
 rounds = 5
-model = "blocks"
+model = "world-blocks"
 status = "in-progress"
 
 [[domain]]
 id = "P1"
 name = "Progress"
+area = "run"
 wave = 1
 rounds = 1
-model = "progress"
+model = "run-progress"
 status = "in-progress"
 
 [[platform]]
@@ -127,33 +137,38 @@ lanes = 3
 [[domain]]
 id = "R1"
 name = "Doors and elevators"
+area = "world"
 wave = 2
 rounds = 6
 
 [[domain]]
 id = "W1"
 name = "Beams, missiles and bombs"
+area = "weapons"
 wave = 2
 rounds = 5
 
 [[domain]]
 id = "C1"
 name = "Fighting enemies"
+area = "enemy"
 wave = 2
 rounds = 6
 
 [[domain]]
 id = "H1"
 name = "Energy, reserves and death"
+area = "samus"
 wave = 2
 rounds = 2
 
 [[domain]]
 id = "S4"
 name = "Hurt and knockback, bomb jumps"
+area = "samus"
 wave = 2
 rounds = 2
-model = "samus-motion"
+model = "samus-movement"
 
 [[platform]]
 id = "R2"
@@ -178,42 +193,49 @@ lanes = 2
 [[domain]]
 id = "B8"
 name = "Ceres Ridley and the escape"
+area = "boss"
 wave = 3
 rounds = 4
 
 [[domain]]
 id = "F2"
 name = "Title, intro, file select, options"
+area = "screens"
 wave = 3
 rounds = 8
 
 [[domain]]
 id = "F4"
 name = "Cinematics and credits"
+area = "screens"
 wave = 3
 rounds = 5
 
 [[domain]]
 id = "R3"
 name = "Liquids and room weather"
+area = "world"
 wave = 3
 rounds = 4
 
 [[domain]]
 id = "R4"
 name = "Room ambience"
+area = "world"
 wave = 3
 rounds = 3
 
 [[domain]]
 id = "P2"
 name = "Saving, loading and stations"
+area = "run"
 wave = 3
 rounds = 3
 
 [[domain]]
 id = "U1"
 name = "Audio, the CPU side"
+area = "audio"
 wave = 3
 rounds = 3
 
@@ -242,72 +264,84 @@ lanes = 6
 [[domain]]
 id = "W3"
 name = "Items to pick up"
+area = "world"
 wave = 4
 rounds = 2
 
 [[domain]]
 id = "H3"
 name = "Message boxes"
+area = "interface"
 wave = 4
 rounds = 2
 
 [[domain]]
 id = "C2-C11"
 name = "Enemy families"
+area = "enemy"
 wave = 4
 rounds = 27
 
 [[domain]]
 id = "B1"
 name = "Spore Spawn"
+area = "boss"
 wave = 4
 rounds = 2
 
 [[domain]]
 id = "B2"
 name = "Bomb Torizo, Golden Torizo"
+area = "boss"
 wave = 4
 rounds = 3
 
 [[domain]]
 id = "B3"
 name = "Botwoon"
+area = "boss"
 wave = 4
 rounds = 2
 
 [[domain]]
 id = "B4"
 name = "Crocomire"
+area = "boss"
 wave = 4
 rounds = 4
 
 [[domain]]
 id = "B5"
 name = "Kraid"
+area = "boss"
 wave = 4
 rounds = 4
 
 [[domain]]
 id = "B6"
 name = "Phantoon"
+area = "boss"
 wave = 4
 rounds = 4
 
 [[domain]]
 id = "B7"
 name = "Draygon"
+area = "boss"
 wave = 4
 rounds = 3
 
 [[domain]]
 id = "B9"
 name = "Ridley"
+area = "boss"
 wave = 4
 rounds = 5
 
 [[domain]]
 id = "B10"
 name = "Mother Brain and the escape"
+area = "boss"
 wave = 4
 rounds = 8
 
@@ -316,31 +350,36 @@ rounds = 8
 [[domain]]
 id = "S3"
 name = "The shinespark and echoes"
+area = "samus"
 wave = 5
 rounds = 2
-model = "samus-motion"
+model = "samus-movement"
 
 [[domain]]
 id = "S6"
 name = "The grapple beam"
+area = "samus"
 wave = 5
 rounds = 3
 
 [[domain]]
 id = "S7"
 name = "The x-ray scope"
+area = "samus"
 wave = 5
 rounds = 2
 
 [[domain]]
 id = "F1"
 name = "The pause screen"
+area = "interface"
 wave = 5
 rounds = 5
 
 [[domain]]
 id = "F3"
 name = "Game over"
+area = "screens"
 wave = 5
 rounds = 1
 

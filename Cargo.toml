@@ -3,7 +3,7 @@ resolver = "3"
 exclude = ["vendor"]
 members = [
     # The rebuild (docs/architecture/ARCHITECTURE.md §4, crates/README.md).
-    "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean_model/blocks", "crates/clean_model/camera", "crates/clean_model/hud", "crates/clean_model/progress", "crates/clean_model/samus-looks", "crates/clean_model/samus-motion", "crates/clean_types", "crates/data", "crates/game", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
+    "crates/app", "crates/canonical", "crates/canonical_derive", "crates/clean/*", "crates/data", "crates/game", "crates/oracle", "crates/oracle_record", "crates/runtime", "crates/tools", "crates/verify",
 ]
 
 # The new crates' lint set (PRINCIPLES K5, K7, K8), taken by each with `[lints] workspace = true`.

@@ -106,11 +106,11 @@ fn content() -> Content {
 
 /// Every pose of hers with a clip of 28 shown steps that starts over, so each step is the
 /// original's frame of the same number.
-fn clips() -> crate::samus_looks_world::Clips {
+fn clips() -> crate::samus_appearance_bridge::Clips {
     let bytes: Vec<u8> = [[1_u8; 0x1C].as_slice(), &[0xFF]].concat();
     let list = DelayList::decode(&bytes).unwrap();
     let delays = AnimationDelays::new(vec![list; data::pose::POSE_COUNT], DelayList::default());
-    crate::samus_looks_world::Clips::import(&delays, &RunPaces::default()).unwrap()
+    crate::samus_appearance_bridge::Clips::import(&delays, &RunPaces::default()).unwrap()
 }
 
 /// Samus at (0x150, 0x90) in pose `pose`, the camera at (0x100, 0x20).

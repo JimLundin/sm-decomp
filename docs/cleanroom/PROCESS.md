@@ -86,14 +86,16 @@ Each step names its owner, what it waits for, and its done-condition.
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
    model must do, so the model's own vector test fails on it until the round implements it.
 5. **Export and launch** (root): `canary.sh plant`, `export.sh -c COMMIT` with the spec's commit
-   on the round's branch, then `launch.sh`. Done on `LAUNCH OK` with a clean canary check.
+   on the round's branch, then `launch.sh`. Done on `LAUNCH OK` with a clean canary check. A new
+   domain is named `<area>-<name>`, its area from `domains.toml`, and its first export creates its
+   crate at `crates/clean/<area>_<name>`.
 6. **Implement** (implementer, confined). Done when every vector passes or is listed as a gap,
    and check, clippy and fmt are clean.
 7. **Import** (root): `import.sh` runs `code_check.sh --import`, which refuses a variant import
    (L4) even in a crate whose older ones still only warn on the trunk, applies the commits to a
    lane branch, then runs both clippy configurations of `tools/lane/gate.sh` over every clean
-   crate in the workspace: an export holds one domain's model and `clean_types`, so a change to
-   `clean_types` can break a crate its implementer never saw. Done when the import passes. A
+   crate in the workspace: an export holds one domain's model and `types`, so a change to
+   `types` can break a crate its implementer never saw. Done when the import passes. A
    refusal goes back to the same implementer's export as a short follow-up session: the brief
    quotes each finding (file, line, the rule it breaks) in the coding standards' words, and the
    import runs again.
@@ -102,7 +104,7 @@ Each step names its owner, what it waits for, and its done-condition.
      for `assert!(a == b)`, an import path; no item's logic changed) is the root's own commit,
      right after the import, titled `[exact]` with `Role: root` and the lint it answers. The
      round's squashed commit lists it under the root, and the round gate checks it;
-   - anything else goes back to an implementer: this domain's when its `clean_types` change
+   - anything else goes back to an implementer: this domain's when its `types` change
      wasn't needed, the broken crate's next round when it was;
    - an integrator never edits a clean crate. A fix it finds it needs is a finding for the root.
 8. **Blind review** (blind reviewer, confined), after 7. The root makes a code-only copy (the
@@ -170,7 +172,7 @@ N to land, so the implementer starts from the landed model.
 | --- | --- | --- |
 | observer | any step | reads the original and writes its own domain's files |
 | adversary | any step | one gate per subject |
-| implementer | any step | `crates/clean_types` is shared: two implementers in flight at once each add only new items there, and the second import rebases on the first |
+| implementer | any step | `crates/clean/types` is shared: two implementers in flight at once each add only new items there, and the second import rebases on the first |
 | blind reviewer | any step | none |
 | integrator | integration or gate | both touch the engine and `crates/verify`: the second rebases on the first, and re-proves the gates |
 | engineer | any step | its files lie outside every running round |

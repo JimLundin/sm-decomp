@@ -17,7 +17,7 @@ model needs a change, report it as a finding for the next round.
 1. **Read** the spec, its decode notes (the harness note above all) and the model's public
    interface. Done when you can map every input the model takes to where the engine holds it,
    and every output to where the engine uses it.
-2. **The adapter,** `crates/game/src/<domain>_world.rs`. It converts between the engine's state
+2. **The adapter,** `crates/game/src/<crate>_bridge.rs`. It converts between the engine's state
    and the model's types, at the edge and once, and calls the model each frame. Done when the
    engine builds and runs the model in place of the old code.
 3. **The harness,** `crates/verify/src/harness/<domain>.rs`. It decodes each recorded frame into the

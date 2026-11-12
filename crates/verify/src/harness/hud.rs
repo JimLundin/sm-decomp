@@ -1,6 +1,6 @@
-//! The HUD as a harness domain: the HUD model (`clean_model_hud`) against the oracle.
+//! The HUD as a harness domain: the HUD model (`interface_hud`) against the oracle.
 //!
-//! It is checked frame by frame by the decode notes' harness note (`docs/behaviours/hud.decode.md`,
+//! It is checked frame by frame by the decode notes' harness note (`docs/behaviours/interface-hud.decode.md`,
 //! "The harness"). The HUD is downstream of everything it shows and nothing of the same frame reads
 //! it back, so it is checked on its own: its State (the HUD's cells, the values last shown, the
 //! selection and the one-shot item, the explored cells, whether the mini-map is off) and the frame
@@ -24,7 +24,7 @@
 //! records allow and reported as masked, never passed: her position at the mini-map's turn: the pose change's placement (`$91:EB88`) runs after the
 //!   mini-map read her and can move her across a screen, so the window and the explored cells are
 //!   masked where her pose changed, the mini-map read her, and her position lies within the
-//!   placement's reach of a screen's edge. samus-motion's model, which the camera harness asks
+//!   placement's reach of a screen's edge. samus-movement's model, which the camera harness asks
 //!   for the y the camera follows her from, doesn't report where her moves left her, so it can't
 //!   yet decode her position at the mini-map's turn.
 //!
@@ -37,19 +37,19 @@ pub mod cases;
 
 use core::fmt;
 
-use clean_model_hud::{
+use data::map::{MAP_BIT_BYTES, MapCells};
+use data::room::Area;
+use enum_map::enum_map;
+use game::interface_hud_bridge::{self, HudContent};
+use game::state::video::TilemapEntry;
+use interface_hud::{
     Ammo, Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, FrameCount,
     FrameInputs, HerMap, HudEvent, HudGrid, HudState, MapCellSet, MiniMapInputs, MiniMapPower,
     Mute, Place, Reserve, ReserveMode, Room, RoomBoss, Rules, SelectButton, SelectableItem,
     Selection, Shown, Status, Stock, Tile,
 };
-use clean_types::Pair;
-use data::map::{MAP_BIT_BYTES, MapCells};
-use data::room::Area;
-use enum_map::enum_map;
-use game::hud_world::{self, HudContent};
-use game::state::video::TilemapEntry;
 use oracle_record::FrameRecord;
+use types::Pair;
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
@@ -125,7 +125,7 @@ const DIAGONAL_READ: u16 = 0x1FF;
 /// A screen is 256 px, a block 16.
 const SCREEN_PX: u16 = 256;
 const BLOCK_PX: u16 = 16;
-/// How far the pose change's placement can move her: samus-motion's pose fit, the shrink, the
+/// How far the pose change's placement can move her: samus-movement's pose fit, the shrink, the
 /// take-off's lift and the aim step each move her by less than this, and never together by more.
 const PLACEMENT_REACH: u16 = 32;
 /// The columns from which the window reads by the first or the last columns' rule.
@@ -311,7 +311,7 @@ fn tile(bytes: [u8; 2]) -> Result<Tile, Skip> {
     if raw & PRIORITY == 0 {
         return Err(Skip::NoPriority(raw));
     }
-    hud_world::tile(TilemapEntry::from_word(raw))
+    interface_hud_bridge::tile(TilemapEntry::from_word(raw))
         .map_err(|_| unnamed(source::HUD_TILEMAP.name, raw))
 }
 
@@ -356,7 +356,7 @@ fn hud(record: &FrameRecord) -> Result<HudState, Skip> {
             )?,
         },
         selection: selection(record)?,
-        explored: hud_world::explored(&MapCells::from_bitmap(bitmap)),
+        explored: interface_hud_bridge::explored(&MapCells::from_bitmap(bitmap)),
         mini_map: if word(record, source::DEBUG_DISABLE_MINIMAP)? == 0 {
             MiniMapPower::On
         } else {
@@ -750,7 +750,7 @@ fn in_play(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
 }
 
 impl Domain for HudDomain {
-    const NAME: &'static str = "hud";
+    const NAME: &'static str = "interface-hud";
     type State = HudState;
     type Inputs = Pad;
     type World = World;
@@ -842,7 +842,7 @@ impl Domain for HudDomain {
             && word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?
         {
             masks.push(Mask {
-                reason: "interim: her pose changed within its placement's reach of a screen's edge and the mini-map read her, so the placement ($91:EB88) may have moved her across after; no hit recorded, and samus-motion's model reports only the y the camera follows her from",
+                reason: "interim: her pose changed within its placement's reach of a screen's edge and the mini-map read her, so the placement ($91:EB88) may have moved her across after; no hit recorded, and samus-movement's model reports only the y the camera follows her from",
                 fields: WINDOW_TILES.union(EXPLORED),
             });
         }
