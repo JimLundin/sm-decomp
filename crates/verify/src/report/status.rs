@@ -183,6 +183,10 @@ struct Platform {
     lanes: usize,
     #[serde(default)]
     status: Stage,
+    /// The plan ids of the work that waits for it: the domains that consume its content. A
+    /// stretch that needs one of them needs this too.
+    #[serde(default)]
+    before: Vec<String>,
 }
 
 /// How far a domain's work has come.
@@ -211,7 +215,9 @@ impl Stage {
 impl Plan {
     /// The plan in `text`, checked against the rebuilt domains: the models are the report's
     /// domains, each domain's model is one of them and named in its area, a started domain
-    /// names its model, and each domain reads only other domains of the plan.
+    /// names its model, each domain reads only other domains of the plan, platform work comes
+    /// before only other work of the plan, and the milestone and each rung need plan items, with
+    /// the platform work that comes before them.
     pub(super) fn parse(text: &str, rebuilt: &BTreeSet<&str>) -> Result<Self, String> {
         let plan: Self = toml::from_str(text).map_err(|e| format!("{PLAN}: {e}"))?;
         let listed: BTreeSet<&str> = plan.model.iter().map(|model| model.name.as_str()).collect();
@@ -250,21 +256,33 @@ impl Plan {
                 ));
             }
         }
+        for platform in &plan.platform {
+            if let Some(after) = platform
+                .before
+                .iter()
+                .find(|after| **after == platform.id || plan.stage_of(after).is_none())
+            {
+                return Err(format!(
+                    "{PLAN}: {} comes before {after}, which is not other work of the plan",
+                    platform.id
+                ));
+            }
+        }
         plan.milestone.end()?;
-        let needs = plan
-            .milestone
-            .needs
-            .iter()
-            .map(|need| ("the milestone", need));
-        let rungs = plan
-            .rung
-            .iter()
-            .flat_map(|rung| rung.needs.iter().map(move |need| (rung.id.as_str(), need)));
-        if let Some((who, need)) = needs
-            .chain(rungs)
-            .find(|(_, need)| plan.stage_of(need).is_none())
-        {
-            return Err(format!("{PLAN}: {who} needs {need}, which the plan lacks"));
+        let stretches = std::iter::once(("the milestone", &plan.milestone.needs))
+            .chain(plan.rung.iter().map(|rung| (rung.id.as_str(), &rung.needs)));
+        for (who, needs) in stretches {
+            if let Some(need) = needs.iter().find(|need| plan.stage_of(need).is_none()) {
+                return Err(format!("{PLAN}: {who} needs {need}, which the plan lacks"));
+            }
+            if let Some((platform, need)) = plan.platform.iter().find_map(|platform| {
+                let need = platform.before.iter().find(|after| needs.contains(after))?;
+                (!needs.contains(&platform.id)).then_some((&platform.id, need))
+            }) {
+                return Err(format!(
+                    "{PLAN}: {who} needs {need} but not {platform}, which comes before it"
+                ));
+            }
         }
         for rung in &plan.rung {
             seed(&rung.starts)?;

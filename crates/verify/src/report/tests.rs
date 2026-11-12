@@ -172,6 +172,24 @@ fn the_plan_agrees_with_the_rebuilt_domains() {
     assert_eq!(rung("[\"CAM\"]", "any:1"), Ok(()));
     assert!(rung("[\"R1\"]", "any:1").is_err());
     assert!(rung("[\"CAM\"]", "any").is_err());
+    // Platform work comes before other work of the plan, and a stretch that needs that work
+    // needs the platform work too.
+    let before = |ids: &str, needs: &str| {
+        let platform = format!(
+            "[[platform]]\nid = \"AF1\"\nname = \"a\"\nwave = 0\nlanes = 1\nbefore = {ids}\n"
+        );
+        Plan::parse(
+            &plan(named)
+                .replace("platform = []\n", &platform)
+                .replace("needs = [\"CAM\"]", &format!("needs = {needs}")),
+            &rebuilt,
+        )
+        .map(|_| ())
+    };
+    assert_eq!(before("[\"CAM\"]", "[\"CAM\", \"AF1\"]"), Ok(()));
+    assert!(before("[\"CAM\"]", "[\"CAM\"]").is_err());
+    assert!(before("[\"R1\"]", "[\"CAM\", \"AF1\"]").is_err());
+    assert!(before("[\"AF1\"]", "[\"CAM\", \"AF1\"]").is_err());
     assert_eq!(
         parse(&format!(
             "{named}model = \"world-camera\"\nstatus = \"in-progress\"\n"

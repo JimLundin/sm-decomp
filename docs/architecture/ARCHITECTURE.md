@@ -331,13 +331,13 @@ Spawn and Bomb Torizo designed together.
 
 **D15.** `data` decodes the ROM at load into validated typed records: species, drop tables,
 `Programs<F>`, PLM and projectile headers, poses, animations, rooms and states, doorways, scroll data,
-enemy sets, tilesets and media references, HDMA, palette FX and animated tile programs, N-SPC banks,
-demos, cinematics. Each opcode is one table row; a raw value becomes an enum once (`TryFrom`), a
-tolerated invalid one a named variant and a LEGACY line. Inside the engine IDs are dense (`RoomId`,
-`DoorwayId`, `SpeciesId`); persisted data uses stable keys, `Vanilla(..)` or `Pack(pack, name)`.
-Checkpoints carry the content fingerprint. Content is the ROM plus overlays (a world, custom rooms and
-programs, media packs), validated after composition; new vocabulary is a new enum variant with its
-handler. The `AddressMap` (ROM address to step, state, room, doorway) is for verification only (K1).
+enemy sets, tilesets and media references, HDMA, palette FX and animated tile programs, song sets,
+instruments, samples (decoded to PCM) and sound effects, demos, cinematics. Each opcode is one table
+row; a raw value becomes an enum once (`TryFrom`), a tolerated invalid one a named variant and a
+LEGACY line. Inside the engine IDs are dense (`RoomId`, `DoorwayId`, `SpeciesId`); persisted data uses
+stable keys, `Vanilla(..)` or `Pack(pack, name)`. Checkpoints carry the content fingerprint. Content
+is the ROM plus overlays (a world, custom rooms and programs, media packs), validated after
+composition; new vocabulary is a new enum variant with its handler. The `AddressMap` (ROM address to step, state, room, doorway) is for verification only (K1).
 
 - `Room` is independent of where it sits; `Placement { room(s), map_area, map_x, map_y, .. }` puts it
   in a world. `Doorway { id, room, kind, arrival, exit side, lock }` owns its arrival data and typed
@@ -385,11 +385,14 @@ library handshakes (`LibraryState::{Idle, Writing(SoundId), Clearing { frames },
 16-deep queues, the original's caps, drops and lower-ID-wins), the downtime counter, and a **driver
 model** of what the driver echoes on each port and when, fitted by measurement (it answers in about
 half a frame). If echoes depend on sequencer state, the sequencer's control part joins the Session.
-`SoundFrame { ports, log, intent }` goes out; a `SoundBackend` in `runtime` plays it. The vanilla
-backend is the clean-room audio engine (MODEL §1 decision 23): our sequencer over the songs,
-samples and instruments imported from the ROM, and a DSP model, from a widely used crate where one
-fits; no code of the game runs. The driver program's upload bytes are not compared; the upload's
-time is a named cost (D9).
+`SoundFrame { ports, log, intent }` goes out. No code of the game runs, is emulated or is ported
+(MODEL §1 decision 23): the sequencer is a clean-room model (U2) over the songs, instruments, PCM
+samples and sound effects imported into our own format; its state is in the Session, and its
+events per Tick (which note of which instrument starts and stops on which voice) are compared
+exactly, as the ports' requests and replies are. A `SoundBackend` in `runtime` mixes those events
+over the samples with modern interpolation, envelopes and echo; its audio out is not compared
+(LEGACY). The driver program's upload bytes are not compared (§11.6); the upload's time is a named
+cost (D9).
 
 ### 9.5 Saves
 
@@ -468,6 +471,13 @@ Lockstep steps the engine one Tick from each decoded oracle cut and names the fi
 
 - **Hardware leftovers** no rule reads and no player sees, such as DMA channel registers after a
   transfer (MODEL decision 3): not State, not decoded, not compared, each named here as it leaves.
+- **The sound driver's uploads** through the APU ports, its program and its song sets at boot
+  and as areas and scenes change (MODEL decisions 3 and 23): no code of the game runs, so their
+  bytes are not compared; their time is T1's cost, and the replies the game reads stay compared on
+  the `apu` stream.
+- **The audio out** (D18, MODEL decision 23): sound is compared on the sequencer's events per Tick,
+  not on the samples the mixer makes, so interpolation, envelopes, echo and the output rate may
+  differ (LEGACY).
 - **Words a frame clears before any rule reads them:** her new pose's frame (`0A9A`), which every
   frame's start clears (`$90:EB02`) and only the same frame's pose change reads, after its own
   write; and the super special request (`0A2C`, `0A32`), which the frame's start clears

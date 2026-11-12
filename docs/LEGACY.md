@@ -216,6 +216,24 @@ original's bytes as data.
   door's cells and the room goes on running. The harness compares the frame that reaches the door,
   her move, and skips those after it, which aren't gameplay. The entry goes with the doors (R1, R2).
 
+## The engine: planned differences from the original
+
+Differences the plan keeps on purpose, listed ahead of the work that brings them.
+
+- **The sound driver's uploads** (the audio domains U1 and U2, the sound format A3,
+  [ARCHITECTURE §11.6](architecture/ARCHITECTURE.md#116-what-isnt-compared-by-name)): at power-on
+  the original uploads Nintendo's sound driver and its first song set to the sound chip through
+  the APU ports (115,715 port writes in `any-power-on`'s frames 0 to 270), and uploads song sets
+  the same way as areas and scenes change. The engine runs no code of the game (MODEL decision
+  23), so it makes none of those upload writes: their bytes are an uncompared leftover (decision
+  3), their time is T1's cost, and the replies the game reads stay compared on the `apu` stream.
+- **The audio out** (U2's sequencer, the mixer E6, ARCHITECTURE D18): the original's sound chip
+  mixes its voices with its own interpolation, envelope steps, echo and 32 kHz output; the
+  engine's mixer in `runtime` plays the sequencer's events over A3's PCM samples with modern
+  ones, so its audio out differs. Sound is compared on the game's sound requests and the
+  replies it reads through the ports, and on the sequencer's events per Tick (which sound or note
+  starts and stops when), never on the audio out (MODEL decision 23).
+
 ## Tolerated values kept as named variants
 
 - `data::room::Door::HeaderInRam(u16)`: the unused room `$8F:B3E1`'s door list names a door header

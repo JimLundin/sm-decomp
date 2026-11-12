@@ -11,8 +11,8 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
 - Done: about 5% of the game's behaviour (samus-movement 7,160 + camera 1,506 weighted, about
   250 spec units). The remaining clean model is likely 120-170k weighted, about 3,500-4,500
   spec units at k = 36.
-- That is about 140-150 clean-room pipeline rounds (spec, adversary, implement, wire, gaps)
-  plus 30-40 platform lanes (encoders, room loading, timing, renderer, audio backend, tooling).
+- That is about 150-160 clean-room pipeline rounds (spec, adversary, implement, wire, gaps)
+  plus 45-55 platform lanes (asset formats, encoders, room loading, timing, renderer, tooling).
   With 4-6 lanes in parallel at about 2.5 h a round it is 70-100 h of pipeline wall-clock in
   the best case. With review, Jim's gates and one-at-a-time landing, expect several weeks.
 - The order is toward the headline milestone (MODEL §1 decision 14), the engine replaying a
@@ -102,7 +102,7 @@ scrolls (7.8k). So **clean ≈ 0.12-0.2 × old port**. Banks from the bank-log i
 | Samus remaining (liquids, booster, shinespark, grapple, knockback, damage, death, palette, look) | 90, 91, 94, 9B | ~30k | 5-7k | animation, drawing, visor |
 | HUD, message boxes, dialogue | 80, 85 | ~15k | 2-3k | slice 0's |
 | Saves, progress, inventory | 81, 82 | ~9k | 1.5k | SRAM image |
-| Audio (CPU side; the old port emulated the SPC) | 80, CF-DF, the SPC driver | 3k CPU side | CPU 1k; driver a separate question | none |
+| Audio (CPU side; the old port emulated the SPC) | 80, CF-DF, the SPC driver | 3k CPU side | CPU 1k; the sequencer clean room (U2) | none |
 | Slowdown and loading time (the cost model, D9) | all | n/a | table-driven | recorded NMI timing |
 
 Infrastructure in the old port (encoding, checkpoints, owners, RAM views, ~110k) is not
@@ -151,7 +151,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | # | Domain | Scope | Reads / exports | Old code | Rows | Depends | Rounds |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
 | R1 | **Doors and elevators between rooms** | the door's passage (the screen scrolling over, the fade, the new room's placement of Samus and the view, the camera's `ScreensRunOn`), elevators between areas, the room state chosen by events (P1), loading time as a Timing behaviour | reads the door it entered; exports the new room, her and the view's placement, the spawn calls to each family | none in the clean sense; `state/room` reset | cached chains (each crosses a door), `door-transition`, `door-loading-lag-nmi`, `elevator-traversal` | E2, P1 | 6 |
-| R2 | **Room loading** (platform, not clean-room) | room headers, level decompression, tileset and palette upload, the population lists, as imported assets; the VRAM upload sequence and its cost | ROM → assets; outputs video writes | `data::room`, `level`, `compression` | as R1 | E2 | 4 lanes |
+| R2 | **Room loading** (platform, not clean-room) | the load sequence over AF1's rooms and AF2's tilesets: the VRAM and CGRAM uploads, the work RAM image of the level, each record's load cost | reads our room and tileset formats; outputs video writes | `data::room`, `level`, `compression` (their decoding moves to AF1 and AF2) | as R1 | E2, AF1, AF2 | 2 lanes |
 | R3 | **Liquids and room weather** | the liquid's level, its rise and fall (Tourian acid, lava quakes), rain, fog, heat, the room's quakes and the room code that moves the view (camera's "room rules") | exports the liquid level (S2), the view's shake | none | cache `area-maridia`, `volcano-room-lavaquake`, `terrain-*-hand`, chains | R1 | 4 |
 | R4 | **Room ambience** | animated tiles, palette cycles (palette FX objects), the sky's scroll, layer 2's own motion, HDMA visuals | output only (tile, palette, line intents) | `scrolling` 252, `bg_graphics` (part) | chains | E2, E3 | 3 |
 
@@ -159,7 +159,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 
 | # | Domain | Scope | Reads / exports | Old code | Rows | Depends | Rounds |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
-| C1 | **Fighting enemies** (the framework) | which enemies run (the window), contact with her (hurt, solid), with her projectiles (hit, vulnerability table, freeze with ice, frozen as platform), death explosion, drops (drop chance and RNG), corpses, respawn | reads enemy hitboxes and positions (species), W1's projectiles; exports hits to H1 and S4 and species | `enemy` 4,567 (part), `collision/solid_enemy` | cached chains (zoomers, wavers, fish); cache `enemy-*` (19 rows) | W1, A1, A2 | 6 |
+| C1 | **Fighting enemies** (the framework) | which enemies run (the window), contact with her (hurt, solid), with her projectiles (hit, vulnerability table, freeze with ice, frozen as platform), death explosion, drops (drop chance and RNG), corpses, respawn | reads enemy hitboxes and positions (species), W1's projectiles; exports hits to H1 and S4 and species | `enemy` 4,567 (part), `collision/solid_enemy` | cached chains (zoomers, wavers, fish); cache `enemy-*` (19 rows) | W1, A1, AF3 | 6 |
 | H1 | **Energy, reserves and death** | energy, tanks, reserves (auto and manual), suit damage reduction, i-frames, low-energy alarm, death and its sequence, game over hand-off | reads hits (C1, W2 spikes, R3 lava); exports values to H2, the death to F3 | none | cached (chain-0106 hits); cache `death`, `samus-square-slope-reserve` | C1 | 2 |
 | C2-C11 | **Enemy families**, about 10 domains by movement shape: crawlers (zoomer, geemer, wall crawlers), hoppers (sidehopper, dessgeega), fliers (waver, skree, mellow, fireflea), swimmers (Maridia fish, skultera, choot), turrets and spawners (pipes, rinka, cannons), space pirates and ki-hunters, metroids (latch, drain, ice shatter), friendly animals (etecoons, dachora), Wrecked Ship robots and shutters, room hazards (boulders, magdollite, lava-dwellers) | each its AI and its own projectiles; reads her position, the level | species `eye`, `face_block` | cache `enemy-*`, `coverage-metroid-*`, chain rows per area | C1, A1 | 25-30 total |
 
@@ -189,7 +189,7 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | H2 | **The HUD and the mini-map** | what the HUD shows (values, item selection and its cycling, auto reserve sign), the mini-map and exploration | `hud` 1,058, `mini_map` 1,146 | cached | E2 | 2 |
 | H3 | **Message boxes** | item texts, the save prompt's yes and no, their lag waits (C5's waits) | `message_box` 1,925 | cached (item-morph-ball, samus-square-slope-reserve) | E2 | 2 |
 | P1 | **Progress** | events, boss flags, collected items, map stations, the percentage; which room state a room loads | none | chains | none | 1 |
-| P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums, the load flow, energy and missile refill stations, map stations | `state/sram` | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |
+| P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums (its encoder, `exact::sram`, is a lane of P2's: [assets.md §3.8](assets.md#38-saves)), the load flow, energy and missile refill stations, map stations | `state/sram` | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |
 | F1 | **The pause screen** | map screen (scrolling, areas, explored), equipment screen (toggles), its fades and the unpause | none (old 49k with file select) | **new recording** (no `pause-menu-tour` in the lock; the 100% chains may pause for toggles: check) | P1, E2 | 5 |
 | F2 | **Title, intro and file select; options** | boot, title, the intro's text and pages, file select (copy, clear), options and controls, demos (a recorded input source) | none | `options-menu-tour`, `file-copy-clear`, `any-power-on`, the intro's `any-intro-*` (four rows); **new** for the attract demos | E2, E4 | 8 |
 | F3 | **Game over** | death's screen, continue | none | `death` | H1 | 1 |
@@ -204,12 +204,18 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | E3 | The line program (B6): HUD split, HDMA channels, windows | 3 |
 | E4 | Mode 7 and the renderer's remaining modes, mid-line writes | 2 |
 | A1 | `Program<F>` generalised from `enemy/instructions` and the instruction lists as imported assets (PLM, enemy, sprite object, HDMA, palette FX, animated tiles) | 3 |
-| A2 | The asset importers for enemies (headers, spritemaps, hitboxes, vulnerability, drops), rooms (R2) | 3 |
+| AF0 | Our own asset formats ([assets.md](assets.md)), before every AF item and A3: the shared shapes (tile sheets, palettes, cells, sprite sheets and clips, grids, object layers, the id registries), the `import` crate that `game` and `runtime` may not depend on, `ContentSet` with its fingerprint and the cache keyed by the ROM's hash, the round-trip check; Samus's importer moved into `import` | 2 |
+| AF1 | The world, before R1 and R2: rooms, their versions on progress's conditions, levels as tile layers, collision, doorways and topology, scroll maps, object and enemy layers, room effects, room rules; slice 0's and Ceres's rooms first | 3 |
+| AF2 | Tilesets, the shared elements, BG graphics, palettes, palette FX and animated tile programs, Samus's palettes, before R2, R4 and S5's palettes | 2 |
+| AF3 | Actors, before C1, W1 and B8: species, figures and hitboxes, vulnerability, drops, graphics sets, enemy projectiles, Samus's projectiles, effect sprites | 3 |
+| AF4a | HUD art and area maps, before H2's cutover | 1 |
+| AF4b | The font, messages and borders before H3; the pause screens before F1 | 2 |
+| AF5 | Scenes, before F2, F4 and E4: title, intro (text pages, demo input), file select and the start menu, the flights, the explosion, Mode 7 planes, line tables; later the ending, credits, game over, options and attract demos | 4 |
+| A3 | Sound in our own format ([assets.md §3.7](assets.md#37-sound-a3)), before U2: samples decoded at import to PCM, instruments, songs as tracks of typed events, song sets and sound effects; no SNES sound format leaves the importer | 3 |
 | T1 | **Slowdown and loading time** (D9): the cost model that replaces recorded NMI timing | 6+ |
-| U1 | **Audio**: CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks; 3 rounds, `apu` stream and `apu_log` in every record) | 3 rounds |
-| U2 | **The music and sound sequencer**, clean room (MODEL §1 decision 23): songs, sound effects and their voices as the player hears them, checked on the oracle's audio | 10 rounds |
-| A3 | The importer of songs, samples and instruments into our own format | 2 |
-| E6 | The sound chip's DSP in `runtime`: a widely used crate where one models it exactly, else built | 2 |
+| U1 | **Audio**: the CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks, and D18's driver model of the replies the game reads through the ports), compared exactly on the `apu` stream and `apu_log` in every record | 3 rounds |
+| U2 | **The music and sound sequencer**, clean room (MODEL §1 decision 23): which song and sound effect play, and which note of which instrument starts and stops on which voice at each tick, over A3's records; specced from the oracle's sound chip and compared exactly on those events per tick | 10 rounds |
+| E6 | The mixer in `runtime`: plays U2's events over A3's PCM samples with modern interpolation, envelopes, echo and output rate; its audio out is not compared ([LEGACY](../LEGACY.md#the-engine-planned-differences-from-the-original)) | 1 |
 | V1 | Tooling: a domain free-run harness; RNG draws per consumer from `hits`; a compressed record cache tier | 3 |
 | V2 | The whole-movie run: the engine from power-on through a movie's inputs alone, compared at sparse checkpoints, then at dense ones over the range they narrow a divergence to | 2 |
 
@@ -257,7 +263,7 @@ The second lane carries, in this order:
    `SpriteDraw`; none adds an encoder rule unless the original writes OAM another way.
 4. **The encoder's open rules**, each a named rule in `exact::oam` or a LEGACY entry: a lone
    sprite past the table's end (the original writes it into the high table; here it is
-   dropped), the enemies' extended spritemaps and graphical offsets (with A2), and margin draws
+   dropped), the enemies' extended spritemaps and graphical offsets (with AF3), and margin draws
    for the wide renderer (a producer that culls to the screen, as the atmospheric graphics do,
    draws past it on request; the encoder never sees those pieces).
 
@@ -376,7 +382,7 @@ outside Ceres's three species. 413 frames lag, 141 of them before the intro.
 | CAM | the view in every room; while the mode 7 flag is set (the shaft, Ridley's getaway) the BG scroll doesn't follow it |
 | W1 | her power beam at Ridley, her missiles in the intro's Mother Brain fight |
 | W2 | no reacting block: only the PLM runner's pieces the stretch spawns: the timer that enables sounds and the escape shaft's door turned to solid blocks (its boss-dead state's set-up) |
-| C1, A2 | the enemy framework (process, draw, contact, her shots' hits) and the enemy projectile runner, over Ceres's species and projectiles; their importers |
+| C1, AF3 | the enemy framework (process, draw, contact, her shots' hits) and the enemy projectile runner, over Ceres's species and projectiles in our format |
 | B8 | Ceres's own species and projectiles: Ceres Ridley and the getaway, the Ceres doors (and the shaft's platform), steam, the elevator pad, the falling debris, the dust; the shaft's rotation |
 | H1, H2 | her energy as Ridley hurts her; the HUD, the mini-map switched off, the escape's timer |
 | P1, P2 | Ceres's boss defeated and the boss-dead room states; SRAM at boot, the new file, the new game and Ceres's end |
@@ -385,8 +391,9 @@ outside Ceres's three species. 413 frames lag, 141 of them before the intro.
 | R4 | the palette FX runner, which the title, the intro and both flights use; no animated tiles, and Ceres's rooms have no palette FX |
 | F2 | boot, the title, file select, the start menu and the intro, its demo input included |
 | F4 | the flight to Ceres, the elevator's end, Ceres goes boom, the flight to Zebes |
-| U1 | the `apu` stream holds the CPU side of every exchange, the driver's uploads included (411,621 port writes over the stretch), so the driver's replies must be reproduced, not only the requests |
+| U1 | the sound requests of every stretch and the replies the game reads through the ports, compared on the `apu` stream; the driver's uploads (411,621 APU port writes over the stretch) are not compared, their time is T1's, and the music and effects they start are U2's (wave 5) |
 | E1, E2, A1 | sprites, tile writes, instruction lists as assets (PLM, enemy, projectile, palette FX, HDMA and cinematic object lists) |
+| AF0, AF1, AF2, AF4a, AF5 | the content in our own formats: Ceres's rooms and tilesets, the palettes, the HUD and mini-map art, the title, intro, file select, the flights and the explosion |
 | E3, E4 | HDMA objects in every stretch but boot, the shaft's and Ridley room's mode switch per line; mode 7 in the title, both flights, the shaft, Ridley's getaway and the explosion |
 | T1 | 413 lag frames: with nothing fed back, the recorded NMI timing can't stand in |
 | V2 | the whole-movie run: one free run from power-on, compared at sparse checkpoints, then dense ones |
@@ -399,16 +406,16 @@ README's first row, from `[milestone]` in [domains.toml](domains.toml): the stre
 many the engine plays alone today and which of these items are not done.
 
 **The ladder** (MODEL §1 decision 18). The milestone's number can't move until the opening's
-cinematics, the sound driver and modelled lag exist, so shorter stretches of the same movie
+cinematics, the CPU side of sound and modelled lag exist, so shorter stretches of the same movie
 come first, each played alone from its first seed, as `[[rung]]` in
 [domains.toml](domains.toml) and a table under the milestone's row in the README:
 
 | Rung | Stretch | Adds over the rung before |
 | --- | --- | --- |
-| M0 | Ceres's third room, across its door (any-boundary seeds 3 to 4) | her motion, looks, view, HUD and progress in a room; the Ceres door (B8 with C1, A2); a door passage (R1, R2); the gate starting Ceres's rows (V3) |
-| M1 | Ceres's rooms 1 to 5, down to Ridley's door (seeds 1 to 6) | the shaft's mode 7 and mode switch (E3, E4); the haze and FX (R3) |
+| M0 | Ceres's third room, across its door (any-boundary seeds 3 to 4) | her motion, looks, view, HUD and progress in a room; the Ceres door (B8 with C1, AF3) and the content it runs over in our formats (AF0 to AF4a); a door passage (R1, R2); the gate starting Ceres's rows (V3) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door (seeds 1 to 6) | the shaft's mode 7 and mode switch (E3, E4, with AF5's Mode 7 planes); the haze and FX (R3) |
 | M2 | Ceres with Ridley and the escape (seeds 1 to 11) | Ridley's fight and knockbacks (S4, H1, W1), his push (S2), the escape's PLMs (W2) |
-| the milestone | power-on through Ceres | boot, title, file select and intro (F2), the flights and explosion (F4), the palette FX runner (R4), SRAM (P2), the sound driver (U1), modelled lag (T1), the whole run (V2) |
+| the milestone | power-on through Ceres | boot, title, file select and intro (F2), the flights and explosion (F4), the palette FX runner (R4), SRAM (P2), the sound requests and their replies (U1), modelled lag (T1), the whole run (V2) |
 
 The rungs' needs are a first estimate from the table above; a session's planning corrects them
 from what each rung's rows show. Every rung runs with the lock's recorded timing, as the free-run
@@ -425,13 +432,14 @@ the first step whose prerequisites hold.
    decoder starts only main gameplay in rooms it knows, so the free-run gate starts none of
    them yet and lockstep compares none of their Ticks.
 2. Ceres's play, 8,538-13,235 (4,698 frames, 31%): the in-progress Samus, camera, HUD and
-   progress work; then R1 with R2, A1 and A2, C1 with its projectile runner, B8 (the Ceres doors
+   progress work; then AF0 to AF3, R1 with R2, A1, C1 with its projectile runner, B8 (the Ceres doors
    first, in every room), H1 with S4, W1's power beam, R3's FX and quakes, E3's mode switch and
    E4's shaft. Each lands on Ceres's chain rows.
-3. The run as a whole: T1's lag, U1's driver and uploads, V2's free run with checkpoints.
+3. The run as a whole: T1's lag, U1's sound requests and replies, V2's free run with
+   checkpoints.
 4. The cinematics and the front end, 0-8,537 and 13,236-15,195 (10,498 frames, 69%; the intro
-   alone is 46%): F4's flights and explosion, F2's boot, title, file select and intro (its demo
-   scenes reuse S1, S5 and W1), R4's palette FX runner, P2's four SRAM writes.
+   alone is 46%): AF5's scenes, F4's flights and explosion, F2's boot, title, file select and
+   intro (its demo scenes reuse S1, S5 and W1), R4's palette FX runner, P2's four SRAM writes.
 
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).
@@ -447,27 +455,30 @@ V3, the gate starting Ceres's rows, is every rung's first need.
   can be measured. 1 lane.
 
 **Wave 1 (on the cached rows, 4-5 lanes):** S2 (4), S5 (3) with E1, H2 (2) with E2, W2 (5)
-with A1, P1 (1). About 15 rounds plus 8 platform lanes.
+with A1, P1 (1); AF0, then AF1 and AF2, AF1 first converting slice 0's rooms with no change in
+behaviour. About 15 rounds plus 15 platform lanes.
 
-**Wave 2, the engine past slice 0, toward Ceres:** R1 (6) with R2, W1 (5), C1 (6) with A2, then
-H1 (2) and S4 (2) (camera C4 closes); V2, the whole-movie run. This is where the engine first
-runs a chain row across a door: value jumps, since every later domain is then proven in the
-engine's free run on hundreds of chain rows, not only the harness. About 21 rounds.
+**Wave 2, the engine past slice 0, toward Ceres:** R1 (6) with R2, W1 (5), C1 (6) with AF3,
+AF4a with H2's cutover, then H1 (2) and S4 (2) (camera C4 closes); V2, the whole-movie run.
+This is where the engine first runs a chain row across a door: value jumps, since every later
+domain is then proven in the engine's free run on hundreds of chain rows, not only the harness.
+About 21 rounds.
 
 **Wave 3, Ceres and the opening; the milestone closes with it:** B8 (4), F2 (8), F4 (5), R3 (4),
-R4 (3) with E3, P2 (3), U1 (3); E4 and T1 alongside. F4's Ceres scenes come first; its ending
-and credits can wait for the movie's end. About 30 rounds.
+R4 (3) with E3, P2 (3), U1 (3); AF5 first, then E4 and T1 alongside. F4's Ceres
+scenes come first; its ending and credits can wait for the movie's end. About 30 rounds.
 
-**Wave 4 (widest), the movie's next stretches:** W3 (2) and H3 (2), the first things after
-Ceres; the enemy families C2-C11 (25-30), up to 6 in parallel; B1+B2 together to fix the phase
+**Wave 4 (widest), the movie's next stretches:** W3 (2) and H3 (2) with AF4b, the first things
+after Ceres; the enemy families C2-C11 (25-30), up to 6 in parallel; B1+B2 together to fix the phase
 table shape (5), then the other bosses in size order (B3-B7, B9, B10, 30). An enemy species keeps
 its definition, its state, its AI and its animations together, in one place, as one family's
 member; its animations are typed programs (A1's instruction lists, in steps named by behaviour)
 checked against the ROM by the importer. About 66 rounds.
 
-**Wave 5:** S3 (2), S6 (3), S7 (2), F1 (5), F3 (1). About 13 rounds.
+**Wave 5:** U2 (10) over A3, with E6 to hear it; S3 (2), S6 (3), S7 (2), F1 (5), F3 (1). About
+23 rounds.
 
-**Total:** about 145 clean-room rounds and 30-40 platform lanes, against about 13 done so far
+**Total:** about 155 clean-room rounds and 45-55 platform lanes, against about 13 done so far
 (samus-movement's 12, the camera's 1). Units per round need to average about 30 (the camera did
 42 in one round; samus-movement 17 a round while the method was settling). If the round's fixed
 cost (export, adversary twice, canaries, landing one at a time) doesn't fall, root integration
@@ -479,14 +490,17 @@ and review, not implementation, set the pace.
    *Proposal:* batch arms per round (target 40-60 units); let adversaries gate a family's
    spec once, with per-species deltas; integrators land per wave, not per round.
 2. **Audio.** The music is played by the game's own sound driver on the sound chip. Settled
-   (MODEL §1 decision 23): no code of the game is reused; a clean-room sequencer (U2) plays
-   songs, samples and instruments imported as assets (A3) through a DSP model (E6), a widely
-   used crate where one fits. The CPU side (U1: requests, handshakes, queue) is verified on the
-   `apu` stream; the driver program's upload bytes are a leftover, not compared, and the
-   upload's time is T1's. *The risk:* a sequencer specced from port logs and the sound chip's
-   memory snapshots is a project of its own (perhaps 8-12 rounds), and a sample-exact check
-   needs the DSP exact; the sequencer's spec must name what it does with a song (tempo, notes,
-   envelopes, effects), never the driver's command bytes or routines.
+   (MODEL §1 decision 23): no code of the game runs, is emulated or is ported. The CPU side (U1:
+   requests, handshakes, the queue and the replies the game reads through the ports) is
+   compared exactly on the `apu` stream; the driver program's upload bytes are a leftover, not
+   compared, and the upload's time is T1's. A clean-room sequencer (U2) plays songs,
+   instruments, PCM samples and sound effects imported into our own format (A3), and is
+   compared exactly on its events per tick: which note of which instrument starts and stops on
+   which voice. A modern mixer in `runtime` (E6) plays them; the audio out is not compared.
+   *The risk:* a sequencer specced from port logs and the sound chip's key-on and key-off is a
+   project of its own (perhaps 8-12 rounds), and the oracle needs a stream of those events; the
+   sequencer's spec must name what it does with a song (tempo, notes, envelopes, effects),
+   never the driver's command bytes or routines.
 3. **Bosses and scripted behaviour.** Long instruction lists with many custom steps, multipart
    enemies, rare branches (Mother Brain's phases) and 65k of enemy-projectile code in the old
    port. Records reach few branches. *Proposal:* B1+B2 first to fix the phase table; record

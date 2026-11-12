@@ -23,7 +23,9 @@
 # uses only `types` and the clean crates of its own domains and of the domains they read.
 #
 # [[platform]]: platform work outside the clean room (hardware formats, assets, timing, tools),
-# in lanes, not rounds.
+# in lanes, not rounds. `before` names the plan items that wait for it: the asset formats
+# (docs/architecture/assets.md) come before the domains that consume their content, and the
+# milestone or a rung that needs one of those needs the format too.
 
 [[model]]
 name = "samus-movement"
@@ -172,6 +174,27 @@ name = "Instruction lists as assets"
 wave = 1
 lanes = 3
 
+[[platform]]
+id = "AF0"
+name = "Asset formats: the shared shapes, the import crate, the content cache"
+wave = 1
+lanes = 2
+before = ["AF1", "AF2", "AF3", "AF4a", "AF4b", "AF5", "A3"]
+
+[[platform]]
+id = "AF1"
+name = "Asset formats: the world, rooms, levels and doors"
+wave = 1
+lanes = 3
+before = ["R1", "R2"]
+
+[[platform]]
+id = "AF2"
+name = "Asset formats: tilesets and palettes"
+wave = 1
+lanes = 2
+before = ["R2", "R4", "S5"]
+
 # Wave 2: the engine past slice 0, toward the milestone: doors, rooms and the fight.
 
 [[domain]]
@@ -225,13 +248,22 @@ model = "samus-movement"
 id = "R2"
 name = "Room loading"
 wave = 2
-lanes = 4
+lanes = 2
+before = ["R1"]
 
 [[platform]]
-id = "A2"
-name = "Enemy and room importers"
+id = "AF3"
+name = "Asset formats: enemies, projectiles and sprite objects"
 wave = 2
 lanes = 3
+before = ["C1", "W1", "B8"]
+
+[[platform]]
+id = "AF4a"
+name = "Asset formats: HUD art and area maps"
+wave = 2
+lanes = 1
+before = ["H2"]
 
 [[platform]]
 id = "V2"
@@ -300,8 +332,9 @@ wave = 3
 rounds = 3
 reads = ["R1"]
 
-# MODEL §1 decision 23: audio reuses no code of the game. The sequencer is clean room over
-# songs, samples and instruments imported as assets, through a DSP model.
+# MODEL §1 decision 23: audio runs no code of the game. The sequencer is clean room over songs,
+# samples, instruments and sound effects imported into our own format (A3), compared on its
+# events per tick; a modern mixer (E6) plays them, its output not compared.
 [[domain]]
 id = "U2"
 name = "The music and sound sequencer"
@@ -312,15 +345,23 @@ reads = ["U1"]
 
 [[platform]]
 id = "A3"
-name = "Songs, samples and instruments as imported assets"
+name = "Asset formats: songs, instruments, PCM samples and sound effects"
 wave = 5
-lanes = 2
+lanes = 3
+before = ["U2"]
 
 [[platform]]
 id = "E6"
-name = "The sound chip's DSP, a widely used crate where one fits"
+name = "The audio mixer in runtime, not compared"
 wave = 5
-lanes = 2
+lanes = 1
+
+[[platform]]
+id = "AF5"
+name = "Asset formats: scenes and Mode 7"
+wave = 3
+lanes = 4
+before = ["F2", "F4", "E4"]
 
 [[platform]]
 id = "E3"
@@ -359,6 +400,13 @@ area = "interface"
 wave = 4
 rounds = 2
 reads = ["W3"]
+
+[[platform]]
+id = "AF4b"
+name = "Asset formats: the font, messages and the pause screens"
+wave = 4
+lanes = 2
+before = ["H3", "F1"]
 
 [[domain]]
 id = "C2-C11"
@@ -497,7 +545,8 @@ movie = "any"
 ends = "any-opening:7"
 needs = [
     "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "P2", "W1", "W2", "C1", "B8", "R1", "R3",
-    "R4", "F2", "F4", "U1", "E1", "E2", "E3", "E4", "A1", "A2", "R2", "T1", "V2",
+    "R4", "F2", "F4", "U1", "E1", "E2", "E3", "E4", "A1", "AF0", "AF1", "AF2", "AF3", "AF4a",
+    "AF5", "R2", "T1", "V2",
 ]
 
 # The ladder toward the milestone (domains.md §4): shorter stretches of the same movie, each
@@ -511,7 +560,8 @@ name = "Ceres's third room, across its door"
 starts = "any-boundary:3"
 ends = "any-boundary:4"
 needs = [
-    "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "E1", "E2", "A1", "A2", "V3",
+    "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "E1", "E2", "A1", "AF0", "AF1", "AF2",
+    "AF3", "AF4a", "V3",
 ]
 
 [[rung]]
@@ -521,7 +571,7 @@ starts = "any-boundary:1"
 ends = "any-boundary:6"
 needs = [
     "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "R3", "E1", "E2", "E3", "E4", "A1",
-    "A2", "V3",
+    "AF0", "AF1", "AF2", "AF3", "AF4a", "AF5", "V3",
 ]
 
 [[rung]]
@@ -531,5 +581,5 @@ starts = "any-boundary:1"
 ends = "any-boundary:11"
 needs = [
     "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "W1", "W2", "C1", "B8", "R1", "R2", "R3",
-    "E1", "E2", "E3", "E4", "A1", "A2", "V3",
+    "E1", "E2", "E3", "E4", "A1", "AF0", "AF1", "AF2", "AF3", "AF4a", "AF5", "V3",
 ]
