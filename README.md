@@ -31,12 +31,12 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 18,036 of 25,426 | 8,926 | 8,823 | 1.01 |
-| camera | CAM (in progress) | in progress | 6 | 83 | 20,513 of 25,426 | 1,839 | 1,762 | 1.04 |
-| progress | P1 (in progress) | in progress | 8 | 76 | 25,420 of 25,426 | 819 | 1,061 | 0.77 |
-| hud | H2 (in progress) | in progress | 5 | 84 | 20,615 of 24,230 | 2,695 | 2,112 | 1.28 |
-| blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,395 | 2,074 | 1.15 |
-| samus-looks | S5 (in progress) | in progress | 5 | 98 | 18,233 of 24,230 | 2,191 | 1,412 | 1.55 |
+| samus-motion | S1, S2 (in progress); S4, S3 (not started) | in progress | 19 | 326 | 18,195 of 36,311 | 8,926 | 8,823 | 1.01 |
+| camera | CAM (in progress) | in progress | 6 | 83 | 20,676 of 36,311 | 1,839 | 1,762 | 1.04 |
+| progress | P1 (in progress) | in progress | 8 | 76 | 35,919 of 36,311 | 819 | 1,061 | 0.77 |
+| hud | H2 (in progress) | in progress | 5 | 84 | 20,778 of 34,377 | 2,695 | 2,112 | 1.28 |
+| blocks | W2 (in progress) | in progress | 4 | 100 | 20,693 of 32,006 | 2,395 | 2,074 | 1.15 |
+| samus-looks | S5 (in progress) | in progress | 5 | 98 | 18,396 of 34,377 | 2,191 | 1,412 | 1.55 |
 
 ### The whole-game plan
 
@@ -70,7 +70,7 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 | the lock | 651 rows of play, 460,437 frames |
 | the free-run gate: the engine runs a row alone | 8 green (row, stream) pairs over 2 rows |
 | the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
-| the harnesses: each model on recorded frames | 44 rows cached, 25,470 frames |
+| the harnesses: each model on recorded frames | 53 rows cached, 36,364 frames |
 
 Every figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md); how each model is built, module by module, is in [its structure section](docs/REPORT.md#structure).
 <!-- status:end -->

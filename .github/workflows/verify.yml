@@ -102,8 +102,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      CACHE_ASSET: lockstep-cache-5e9b886cb06ca2de.tar.xz.enc
-      CACHE_SHA256: 3102c9aaadf86cfc8fc6aa8525aa9c549e172799c07861461cf6b42128124410
+      CACHE_ASSET: lockstep-cache-e59c25d39059593d.tar.xz.enc
+      CACHE_SHA256: a77f9800ea881eaa2b3b52477e96132c5e6945e863ad922b1d3fca01b4caacf2
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the record cache and check its pin

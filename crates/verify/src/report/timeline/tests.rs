@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
 use std::path::Path;
 
-use super::{GATE, Movie, Timeline, Track, percent, runs, seed_frame};
+use super::{GATE, Movie, Timeline, Track, percent, runs, seed_frame, start_in_movie};
+use crate::lock::Start;
 
 fn root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
@@ -97,4 +99,47 @@ fn a_seed_gives_its_movie_frame() {
     assert_eq!(seed_frame(root(), "any", 12), Ok(15_428));
     assert!(seed_frame(root(), "any", 100_000).is_err());
     assert!(seed_frame(root(), "no-such-capture", 1).is_err());
+}
+
+#[test]
+fn a_row_from_power_on_opens_the_movie_its_id_names() {
+    let seeds = BTreeMap::from([((String::from("any-opening"), 1), 568)]);
+    // A movie starts at power-on, so its power-on row covers it from frame 0.
+    assert_eq!(
+        start_in_movie("any-power-on", &Start::PowerOn, &seeds),
+        Some(("any", 0))
+    );
+    let seed = Start::Seed {
+        capture: String::from("any-opening"),
+        index: 1,
+    };
+    assert_eq!(
+        start_in_movie("any-intro-0568", &seed, &seeds),
+        Some(("any", 568))
+    );
+    // A seed the capture doesn't list places the row nowhere.
+    let unlisted = Start::Seed {
+        capture: String::from("any-opening"),
+        index: 2,
+    };
+    assert_eq!(start_in_movie("any-intro-2219", &unlisted, &seeds), None);
+}
+
+#[test]
+fn the_any_movie_counts_its_power_on_frames() {
+    let floors = super::super::floors(
+        &std::fs::read_to_string(root().join(super::super::FLOORS)).unwrap_or_default(),
+    );
+    let Ok(timeline) = floors.and_then(|floors| Timeline::measure(root(), &floors)) else {
+        panic!("the timeline doesn't measure");
+    };
+    let Some(any) = timeline.movies.iter().find(|movie| movie.key == "any") else {
+        panic!("no any% movie");
+    };
+    // `any-power-on`, from power-on, records the movie's first 568 frames.
+    let recorded = any
+        .tracks
+        .first()
+        .map(|track| track.cover.iter().take(568).all(|&cover| cover > 0));
+    assert_eq!(recorded, Some(true));
 }

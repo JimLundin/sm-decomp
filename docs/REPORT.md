@@ -36,14 +36,14 @@ How it is counted:
 
 | Domain | Model score | Budget | Fit | Area fit | Shared | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-motion | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,023 | 1,488 | 18,036 | 326 |
-| camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 20,513 | 83 |
-| progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 25,420 | 76 |
-| hud | 2,695 | 2,112 | 1.28 | 0.91 | 29 % (over 25 %) | 2,742 | 1,094 | 449 | 20,615 | 84 |
-| blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,078 | 399 | 20,530 | 100 |
-| samus-looks | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 18,233 | 98 |
+| samus-motion | 8,926 | 8,823 | 1.01 | 0.98 | 3 % | 12,724 | 4,023 | 1,488 | 18,195 | 326 |
+| camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 20,676 | 83 |
+| progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 35,919 | 76 |
+| hud | 2,695 | 2,112 | 1.28 | 0.91 | 29 % (over 25 %) | 2,742 | 1,094 | 449 | 20,778 | 84 |
+| blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,078 | 399 | 20,693 | 100 |
+| samus-looks | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 18,396 | 98 |
 | shared types (`crates/clean_types`, used by samus-motion, camera, progress, hud, blocks, samus-looks) | 662 | - | - | - | - | - | 519 | 110 | - | - |
-| total | 19,526 | 17,244 | 1.13 | 1.00 | 12 % | - | 8,661 | 3,254 | 123,347 | 767 |
+| total | 19,526 | 17,244 | 1.13 | 1.00 | 12 % | - | 8,661 | 3,254 | 134,657 | 767 |
 
 ## Models
 
@@ -299,6 +299,14 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 
 | Row | samus-motion | camera | progress | hud | blocks | samus-looks |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| any-ceres-arrival | 0 | 0 | 222 | 0 | 0 | 0 |
+| any-fly-to-ceres | 0 | 0 | 802 | 0 | 0 | 0 |
+| any-intro-0568 | 0 | 0 | 1,649 | 0 | 0 | 0 |
+| any-intro-2219 | 0 | 0 | 2,103 | 0 | 0 | 0 |
+| any-intro-4323 | 0 | 0 | 1,688 | 0 | 0 | 0 |
+| any-intro-6012 | 0 | 0 | 1,499 | 0 | 0 | 0 |
+| any-power-on | 0 | 0 | 182 | 0 | 0 | 0 |
+| any-zebes-arrival | 0 | 0 | 231 | 0 | 0 | 0 |
 | area-brinstar | 476 | 476 | 476 | 476 | 476 | 476 |
 | area-maridia | 252 | 257 | 428 | 257 | 254 | 255 |
 | area-norfair | 209 | 208 | 374 | 208 | 205 | 209 |
@@ -319,6 +327,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | chain-0232-D5A7 | 598 | 632 | 706 | 632 | 631 | 601 |
 | chain-0234-D51E | 145 | 152 | 153 | 152 | 152 | 153 |
 | chain-0314-DAE1 | 443 | 450 | 465 | 450 | 449 | 443 |
+| chain-any-0011-DF45 | 159 | 163 | 2,123 | 163 | 163 | 163 |
 | event-zebes-awake | 128 | 179 | 178 | 179 | 179 | 126 |
 | item-charge-beam | 469 | 479 | 919 | 479 | 477 | 480 |
 | item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 |
@@ -343,7 +352,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-walljump-22 | 162 | 163 | 163 | 163 | 162 | 163 |
 | samus-walljump-28 | 168 | 169 | 169 | 169 | 168 | 169 |
 | terrain-quicksand | 333 | 450 | 456 | 450 | 421 | 402 |
-| total | 18,036 in 44 rows | 20,513 in 44 rows | 25,420 in 44 rows | 20,615 in 44 rows | 20,530 in 44 rows | 18,233 in 44 rows |
+| total | 18,195 in 53 rows | 20,676 in 53 rows | 35,919 in 53 rows | 20,778 in 53 rows | 20,693 in 53 rows | 18,396 in 53 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
@@ -360,112 +369,112 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 
 | Domain | Frames | Matched and verified | Unverified | Null model |
 | --- | ---: | ---: | ---: | ---: |
-| samus-motion | 25,426 | 18,036 | 0 | 5,568 |
-| camera | 25,426 | 20,513 | 0 | 8,384 |
-| progress | 25,426 | 25,420 | 6 | 25,399 |
-| hud | 24,230 | 20,615 | 0 | 17,954 |
-| blocks | 21,857 | 20,530 | 85 | 19,928 |
-| samus-looks | 24,230 | 18,233 | 0 | 506 |
+| samus-motion | 36,311 | 18,195 | 0 | 5,568 |
+| camera | 36,311 | 20,676 | 0 | 8,406 |
+| progress | 36,311 | 35,919 | 6 | 35,896 |
+| hud | 34,377 | 20,778 | 0 | 18,096 |
+| blocks | 32,006 | 20,693 | 85 | 20,091 |
+| samus-looks | 34,377 | 18,396 | 0 | 516 |
 
 Per declared field, the compared frames on which it was compared and those on which a mask, by its named writer, put it out of scope. The summary's harness frames count a frame matched on its unmasked fields alone.
 
 | Domain | Field | Compared | Masked |
 | --- | --- | ---: | ---: |
-| samus-motion | position.x | 17,835 | 414 |
-| samus-motion | position.y | 16,929 | 1,320 |
-| samus-motion | base_speed | 17,829 | 420 |
-| samus-motion | extra_run | 17,829 | 420 |
-| samus-motion | dashing | 18,204 | 45 |
-| samus-motion | mode | 18,182 | 67 |
-| samus-motion | vertical_speed | 17,829 | 420 |
-| samus-motion | vertical | 18,198 | 51 |
-| samus-motion | bounce | 18,249 | 0 |
-| samus-motion | rising | 18,198 | 51 |
-| samus-motion | placed | 16,747 | 1,502 |
-| samus-motion | heading_down | 17,937 | 312 |
-| samus-motion | vertical_speed_after_moves | 17,703 | 546 |
-| samus-motion | handed_over | 18,249 | 0 |
-| camera | position.x | 20,496 | 119 |
-| camera | position.y | 20,209 | 406 |
-| camera | seen | 0 | 20,615 |
-| progress | items | 25,426 | 0 |
-| progress | items switched on | 25,426 | 0 |
-| progress | beams | 25,426 | 0 |
-| progress | beams switched on | 25,426 | 0 |
-| progress | capacities | 25,426 | 0 |
-| progress | what she holds | 24,727 | 699 |
-| progress | reserve mode | 25,426 | 0 |
-| progress | events | 25,426 | 0 |
-| progress | zebetites | 25,426 | 0 |
-| progress | bosses defeated | 25,426 | 0 |
-| progress | emptied places | 25,426 | 0 |
-| progress | open doors | 25,426 | 0 |
-| progress | maps | 25,426 | 0 |
-| progress | stations saved at | 25,426 | 0 |
-| progress | items placed | 25,426 | 0 |
-| progress | room state | 8 | 25,418 |
-| hud | status bar | 20,615 | 0 |
-| hud | values last shown | 20,615 | 0 |
-| hud | selected item | 20,615 | 0 |
-| hud | one-shot item | 20,615 | 0 |
-| hud | mini-map window | 19,729 | 886 |
-| hud | explored cells | 19,729 | 886 |
-| hud | mini-map off | 20,615 | 0 |
-| blocks | places | 20,615 | 0 |
-| blocks | cells | 20,615 | 0 |
-| blocks | screens | 20,615 | 0 |
-| samus-looks | step | 18,233 | 0 |
-| samus-looks | time_left | 18,233 | 0 |
-| samus-looks | stage | 18,232 | 1 |
-| samus-looks | laps_left | 18,232 | 1 |
+| samus-motion | position.x | 17,999 | 414 |
+| samus-motion | position.y | 17,093 | 1,320 |
+| samus-motion | base_speed | 17,993 | 420 |
+| samus-motion | extra_run | 17,993 | 420 |
+| samus-motion | dashing | 18,368 | 45 |
+| samus-motion | mode | 18,345 | 68 |
+| samus-motion | vertical_speed | 17,993 | 420 |
+| samus-motion | vertical | 18,362 | 51 |
+| samus-motion | bounce | 18,413 | 0 |
+| samus-motion | rising | 18,362 | 51 |
+| samus-motion | placed | 16,911 | 1,502 |
+| samus-motion | heading_down | 18,090 | 323 |
+| samus-motion | vertical_speed_after_moves | 17,852 | 561 |
+| samus-motion | handed_over | 18,413 | 0 |
+| camera | position.x | 20,659 | 119 |
+| camera | position.y | 20,372 | 406 |
+| camera | seen | 0 | 20,778 |
+| progress | items | 35,927 | 0 |
+| progress | items switched on | 35,927 | 0 |
+| progress | beams | 35,927 | 0 |
+| progress | beams switched on | 35,927 | 0 |
+| progress | capacities | 35,927 | 0 |
+| progress | what she holds | 35,221 | 706 |
+| progress | reserve mode | 35,927 | 0 |
+| progress | events | 35,927 | 0 |
+| progress | zebetites | 35,927 | 0 |
+| progress | bosses defeated | 35,927 | 0 |
+| progress | emptied places | 35,927 | 0 |
+| progress | open doors | 35,927 | 0 |
+| progress | maps | 35,927 | 0 |
+| progress | stations saved at | 35,927 | 0 |
+| progress | items placed | 35,927 | 0 |
+| progress | room state | 10 | 35,917 |
+| hud | status bar | 20,778 | 0 |
+| hud | values last shown | 20,778 | 0 |
+| hud | selected item | 20,778 | 0 |
+| hud | one-shot item | 20,778 | 0 |
+| hud | mini-map window | 19,882 | 896 |
+| hud | explored cells | 19,882 | 896 |
+| hud | mini-map off | 20,778 | 0 |
+| blocks | places | 20,778 | 0 |
+| blocks | cells | 20,778 | 0 |
+| blocks | screens | 20,778 | 0 |
+| samus-looks | step | 18,396 | 0 |
+| samus-looks | time_left | 18,396 | 0 |
+| samus-looks | stage | 18,395 | 1 |
+| samus-looks | laps_left | 18,395 | 1 |
 
 Per catalogue entry, the frames that exercised it with every field its output reaches compared, those of them matched and verified, those of them on which the null model matched every such field too, and the frames that exercised it unchecked: one of its fields masked, or an output (an event) the harness doesn't compare. An entry the null model matches on as many frames as the model is only weakly checked by the rows, since doing nothing would pass them too; an entry no frame verifies is checked by its vectors only.
 
 | Domain | Entry | Matched and verified | Null model | Exercised | Unchecked |
 | --- | --- | ---: | ---: | ---: | ---: |
-| samus-motion | Aiming | vectors only | - | 0 | 2,736 |
-| samus-motion | AimingAndShooting | 2,874 | 477 | 2,881 | 62 |
+| samus-motion | Aiming | vectors only | - | 0 | 2,754 |
+| samus-motion | AimingAndShooting | 2,896 | 480 | 2,903 | 62 |
 | samus-motion | AnimationEnds | 343 | 9 | 355 | 0 |
-| samus-motion | BlocksStopFlush | 10,981 | 4,859 | 11,052 | 155 |
-| samus-motion | Dash | 4,544 | 9 | 4,556 | 50 |
-| samus-motion | Dashing | 4,593 | 4,409 | 4,613 | 11 |
-| samus-motion | DriftInTheAir | 6,158 | 1,796 | 6,234 | 242 |
-| samus-motion | FollowingTheGround | 10,638 | 9,744 | 10,689 | 1,084 |
+| samus-motion | BlocksStopFlush | 11,028 | 4,862 | 11,100 | 155 |
+| samus-motion | Dash | 4,552 | 9 | 4,564 | 50 |
+| samus-motion | Dashing | 4,601 | 4,415 | 4,621 | 11 |
+| samus-motion | DriftInTheAir | 6,300 | 1,837 | 6,381 | 242 |
+| samus-motion | FollowingTheGround | 10,655 | 9,757 | 10,706 | 1,084 |
 | samus-motion | HowSheIsDrawn | vectors only | - | 0 | 0 |
-| samus-motion | Jumping | 243 | 3 | 245 | 10 |
-| samus-motion | Landing | 152 | 0 | 152 | 5 |
+| samus-motion | Jumping | 258 | 3 | 260 | 10 |
+| samus-motion | Landing | 157 | 0 | 157 | 5 |
 | samus-motion | Moonfall | 369 | 9 | 369 | 66 |
-| samus-motion | MovesAsShePosed | 16,797 | 5,259 | 16,929 | 1,320 |
+| samus-motion | MovesAsShePosed | 16,956 | 5,264 | 17,093 | 1,320 |
 | samus-motion | OtherBlockKinds | vectors only | - | 0 | 0 |
-| samus-motion | PadChart | vectors only | - | 0 | 18,249 |
-| samus-motion | PoseFitAfterMoves | 357 | 0 | 358 | 34 |
-| samus-motion | PoseFollows | vectors only | - | 0 | 18,249 |
+| samus-motion | PadChart | vectors only | - | 0 | 18,413 |
+| samus-motion | PoseFitAfterMoves | 373 | 0 | 374 | 34 |
+| samus-motion | PoseFollows | vectors only | - | 0 | 18,413 |
 | samus-motion | RidingTheElevator | vectors only | - | 0 | 906 |
-| samus-motion | RisingAndFalling | 5,955 | 60 | 6,029 | 447 |
+| samus-motion | RisingAndFalling | 6,086 | 60 | 6,165 | 458 |
 | samus-motion | ShrinkingLowersHer | 62 | 0 | 62 | 2 |
 | samus-motion | SlopesCarry | 80 | 3 | 80 | 1 |
 | samus-motion | SlopesSlowTheWalk | vectors only | - | 0 | 0 |
-| samus-motion | SolidEnemies | 4,451 | 2,034 | 4,466 | 435 |
-| samus-motion | SpeedBuildsAndBrakes | 11,523 | 5,589 | 11,574 | 199 |
-| samus-motion | TouchedCells | vectors only | - | 0 | 17,865 |
+| samus-motion | SolidEnemies | 4,610 | 2,039 | 4,630 | 435 |
+| samus-motion | SpeedBuildsAndBrakes | 11,539 | 5,589 | 11,590 | 200 |
+| samus-motion | TouchedCells | vectors only | - | 0 | 18,029 |
 | samus-motion | TurningRound | 1,191 | 17 | 1,246 | 11 |
-| samus-motion | WallJump | 234 | 0 | 253 | 2 |
-| samus-motion | WallsAndCeilings | 1,398 | 474 | 1,424 | 30 |
-| samus-motion | WhatHerMovesMet | vectors only | - | 0 | 1,854 |
+| samus-motion | WallJump | 277 | 0 | 298 | 2 |
+| samus-motion | WallsAndCeilings | 1,423 | 474 | 1,450 | 30 |
+| samus-motion | WhatHerMovesMet | vectors only | - | 0 | 1,889 |
 | samus-motion | WordwiseTopSpeed | vectors only | - | 0 | 0 |
-| camera | AimingHeight | 7,327 | 778 | 7,327 | 213 |
+| camera | AimingHeight | 7,452 | 779 | 7,452 | 213 |
 | camera | BelowTheRoom | 3,559 | 501 | 3,559 | 68 |
 | camera | ClosedScreens | 10,120 | 3,817 | 10,120 | 162 |
-| camera | CreepReadsRightward | 384 | 300 | 384 | 6 |
+| camera | CreepReadsRightward | 390 | 303 | 390 | 6 |
 | camera | DownwardLooksAhead | 1 | 0 | 1 | 0 |
-| camera | FollowingHer | 12,643 | 656 | 12,643 | 303 |
-| camera | LeadingHer | 9,524 | 497 | 9,524 | 50 |
+| camera | FollowingHer | 12,792 | 664 | 12,792 | 303 |
+| camera | LeadingHer | 9,616 | 511 | 9,616 | 50 |
 | camera | PushCarries | vectors only | - | 0 | 0 |
-| camera | Remembering | 20,192 | 8,205 | 20,192 | 423 |
-| camera | RoomEdges | 16,775 | 7,694 | 16,775 | 346 |
+| camera | Remembering | 20,355 | 8,227 | 20,355 | 423 |
+| camera | RoomEdges | 16,938 | 7,716 | 16,938 | 346 |
 | camera | ScreensRunOn | vectors only | - | 0 | 0 |
-| camera | Settling | 16,154 | 8,196 | 16,154 | 293 |
-| camera | ShortScreens | 18,980 | 12,742 | 18,980 | 386 |
+| camera | Settling | 16,249 | 8,218 | 16,249 | 293 |
+| camera | ShortScreens | 19,143 | 12,781 | 19,143 | 386 |
 | camera | TimeStopped | 113 | 113 | 113 | 6 |
 | progress | BossesDefeated | 0 | 0 | 3 | 0 |
 | progress | DoorsStayOpen | 2 | 0 | 5 | 0 |
@@ -475,7 +484,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | progress | ItemsPlacedCount | 3 | 0 | 3 | 0 |
 | progress | MapOnArrival | vectors only | - | 0 | 0 |
 | progress | MapsByArea | vectors only | - | 0 | 0 |
-| progress | RoomStates | 8 | 8 | 8 | 0 |
+| progress | RoomStates | 10 | 8 | 10 | 0 |
 | progress | StationsSavedAt | 1 | 0 | 1 | 0 |
 | progress | TakingBeams | 4 | 0 | 4 | 0 |
 | progress | TakingItems | 2 | 0 | 2 | 0 |
@@ -488,13 +497,13 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | hud | CyclingItems | 90 | 0 | 90 | 0 |
 | hud | DiagonalPicture | 68 | 68 | 68 | 23 |
 | hud | EnergyGauge | 647 | 0 | 647 | 0 |
-| hud | Exploring | 14,820 | 14,755 | 14,820 | 886 |
+| hud | Exploring | 14,973 | 14,908 | 14,973 | 896 |
 | hud | FirstColumnsShift | vectors only | - | 0 | 0 |
-| hud | HerBlink | 14,820 | 12,880 | 14,820 | 886 |
+| hud | HerBlink | 14,973 | 13,012 | 14,973 | 896 |
 | hud | IconsAppear | vectors only | - | 0 | 0 |
 | hud | LastColumnsShift | vectors only | - | 0 | 0 |
 | hud | MiniMapStill | 4,909 | 4,909 | 4,909 | 0 |
-| hud | MiniMapWindow | 14,820 | 12,880 | 14,820 | 886 |
+| hud | MiniMapWindow | 14,973 | 13,012 | 14,973 | 896 |
 | hud | OneShotFlash | 50 | 38 | 50 | 0 |
 | hud | OneShotItem | 90 | 85 | 90 | 0 |
 | hud | SelectionHighlight | 125 | 0 | 125 | 0 |
@@ -518,21 +527,21 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | blocks | SuperMissileBlocks | 1 | 0 | 1 | 0 |
 | blocks | TheScriptsRun | 595 | 0 | 596 | 0 |
 | blocks | WhatTheScreenRedraws | vectors only | - | 0 | 249 |
-| samus-looks | BoostStages | 272 | 4 | 272 | 0 |
+| samus-looks | BoostStages | 273 | 4 | 273 | 0 |
 | samus-looks | BoostingLap | 5 | 0 | 5 | 0 |
 | samus-looks | Breathing | 33 | 0 | 33 | 0 |
 | samus-looks | ClipControls | 493 | 1 | 493 | 0 |
 | samus-looks | ClipEnds | 350 | 0 | 350 | 0 |
-| samus-looks | ClipPlays | 18,233 | 506 | 18,233 | 0 |
+| samus-looks | ClipPlays | 18,396 | 516 | 18,396 | 0 |
 | samus-looks | FastFall | 6 | 0 | 6 | 0 |
 | samus-looks | HandOverSlowdown | vectors only | - | 0 | 0 |
 | samus-looks | RisingHold | 20 | 0 | 20 | 0 |
-| samus-looks | RunPace | 1,594 | 0 | 1,594 | 0 |
-| samus-looks | SpinTurnedFar | vectors only | - | 0 | 2,640 |
+| samus-looks | RunPace | 1,597 | 0 | 1,597 | 0 |
+| samus-looks | SpinTurnedFar | vectors only | - | 0 | 2,772 |
 | samus-looks | StandingRestart | 29 | 2 | 29 | 0 |
-| samus-looks | StartingClip | 4,205 | 504 | 4,205 | 0 |
-| samus-looks | WallJumpBranch | 13 | 3 | 13 | 0 |
-| samus-looks | WallJumpReady | 64 | 4 | 64 | 0 |
+| samus-looks | StartingClip | 4,256 | 514 | 4,256 | 0 |
+| samus-looks | WallJumpBranch | 14 | 3 | 14 | 0 |
+| samus-looks | WallJumpReady | 73 | 4 | 73 | 0 |
 
 ## Engine not yet rebuilt
 
@@ -548,23 +557,23 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 ![How much of each movie the checks cover](timeline.svg)
 
-For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's streams that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. 22 of the lock's rows (26,043 frames) start from power-on or a derived seed, in no movie, and are not drawn.
+For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's streams that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. A row from power-on covers, from frame 0, the movie its id's first word names. 21 of the lock's rows (25,475 frames) start from power-on or a derived seed in no movie, and are not drawn.
 
 ### The any% movie
 
-129,712 frames, 207 rows of the lock.
+129,712 frames, 208 rows of the lock.
 
 | Track | Frames covered | Share of the movie |
 | --- | ---: | ---: |
-| recorded: the lock's rows | 113,148 | 87.2 % |
-| cached for the harnesses | 2,110 | 1.6 % |
-| blocks model matches | 2,055 | 1.6 % |
-| camera model matches | 2,061 | 1.6 % |
-| game-time model matches | 2,061 | 1.6 % |
-| hud model matches | 2,061 | 1.6 % |
-| progress model matches | 2,108 | 1.6 % |
-| samus-looks model matches | 1,952 | 1.5 % |
-| samus-motion model matches | 1,901 | 1.5 % |
+| recorded: the lock's rows | 113,716 | 87.7 % |
+| cached for the harnesses | 13,004 | 10.0 % |
+| blocks model matches | 2,217 | 1.7 % |
+| camera model matches | 2,223 | 1.7 % |
+| game-time model matches | 12,806 | 9.9 % |
+| hud model matches | 2,223 | 1.7 % |
+| progress model matches | 12,601 | 9.7 % |
+| samus-looks model matches | 2,113 | 1.6 % |
+| samus-motion model matches | 2,058 | 1.6 % |
 | free-run gate: green streams | 0 | 0.0 % |
 | lockstep: Ticks fully equal | 0 | 0.0 % |
 

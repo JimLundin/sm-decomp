@@ -1,6 +1,14 @@
 # The domain harness floors (MODEL §4, "Every row has a floor"): per domain and row, the
 # frames matched and verified on every unmasked field. A row cached without a floor fails the
 # test; raise a floor when a change gains frames.
+game-time any-ceres-arrival 192
+game-time any-fly-to-ceres 802
+game-time any-intro-0568 1650
+game-time any-intro-2219 2103
+game-time any-intro-4323 1688
+game-time any-intro-6012 1499
+game-time any-power-on 566
+game-time any-zebes-arrival 201
 game-time area-brinstar 476
 game-time area-maridia 425
 game-time area-norfair 374
@@ -21,6 +29,7 @@ game-time chain-0224-D0B9 512
 game-time chain-0232-D5A7 632
 game-time chain-0234-D51E 152
 game-time chain-0314-DAE1 450
+game-time chain-any-0011-DF45 2048
 game-time event-zebes-awake 179
 game-time item-charge-beam 479
 game-time item-energy-tank 239
@@ -45,6 +54,14 @@ game-time samus-walljump-16 157
 game-time samus-walljump-22 163
 game-time samus-walljump-28 169
 game-time terrain-quicksand 450
+samus-motion any-ceres-arrival 0
+samus-motion any-fly-to-ceres 0
+samus-motion any-intro-0568 0
+samus-motion any-intro-2219 0
+samus-motion any-intro-4323 0
+samus-motion any-intro-6012 0
+samus-motion any-power-on 0
+samus-motion any-zebes-arrival 0
 samus-motion area-brinstar 476
 samus-motion area-maridia 252
 samus-motion area-norfair 209
@@ -65,6 +82,7 @@ samus-motion chain-0224-D0B9 154
 samus-motion chain-0232-D5A7 598
 samus-motion chain-0234-D51E 145
 samus-motion chain-0314-DAE1 443
+samus-motion chain-any-0011-DF45 159
 samus-motion event-zebes-awake 128
 samus-motion item-charge-beam 469
 samus-motion item-energy-tank 240
@@ -89,6 +107,14 @@ samus-motion samus-walljump-16 157
 samus-motion samus-walljump-22 162
 samus-motion samus-walljump-28 168
 samus-motion terrain-quicksand 333
+camera any-ceres-arrival 0
+camera any-fly-to-ceres 0
+camera any-intro-0568 0
+camera any-intro-2219 0
+camera any-intro-4323 0
+camera any-intro-6012 0
+camera any-power-on 0
+camera any-zebes-arrival 0
 camera area-brinstar 476
 camera area-maridia 257
 camera area-norfair 208
@@ -109,6 +135,7 @@ camera chain-0224-D0B9 335
 camera chain-0232-D5A7 632
 camera chain-0234-D51E 152
 camera chain-0314-DAE1 450
+camera chain-any-0011-DF45 163
 camera event-zebes-awake 179
 camera item-charge-beam 479
 camera item-energy-tank 239
@@ -133,6 +160,14 @@ camera samus-walljump-16 157
 camera samus-walljump-22 163
 camera samus-walljump-28 169
 camera terrain-quicksand 450
+progress any-ceres-arrival 222
+progress any-fly-to-ceres 802
+progress any-intro-0568 1649
+progress any-intro-2219 2103
+progress any-intro-4323 1688
+progress any-intro-6012 1499
+progress any-power-on 182
+progress any-zebes-arrival 231
 progress area-brinstar 476
 progress area-maridia 428
 progress area-norfair 374
@@ -153,6 +188,7 @@ progress chain-0224-D0B9 512
 progress chain-0232-D5A7 706
 progress chain-0234-D51E 153
 progress chain-0314-DAE1 465
+progress chain-any-0011-DF45 2123
 progress event-zebes-awake 178
 progress item-charge-beam 919
 progress item-energy-tank 259
@@ -177,6 +213,14 @@ progress samus-walljump-16 157
 progress samus-walljump-22 163
 progress samus-walljump-28 169
 progress terrain-quicksand 456
+hud any-ceres-arrival 0
+hud any-fly-to-ceres 0
+hud any-intro-0568 0
+hud any-intro-2219 0
+hud any-intro-4323 0
+hud any-intro-6012 0
+hud any-power-on 0
+hud any-zebes-arrival 0
 hud area-brinstar 476
 hud area-maridia 257
 hud area-norfair 208
@@ -197,6 +241,7 @@ hud chain-0224-D0B9 335
 hud chain-0232-D5A7 632
 hud chain-0234-D51E 152
 hud chain-0314-DAE1 450
+hud chain-any-0011-DF45 163
 hud event-zebes-awake 179
 hud item-charge-beam 479
 hud item-energy-tank 239
@@ -221,6 +266,14 @@ hud samus-walljump-16 157
 hud samus-walljump-22 163
 hud samus-walljump-28 169
 hud terrain-quicksand 450
+blocks any-ceres-arrival 0
+blocks any-fly-to-ceres 0
+blocks any-intro-0568 0
+blocks any-intro-2219 0
+blocks any-intro-4323 0
+blocks any-intro-6012 0
+blocks any-power-on 0
+blocks any-zebes-arrival 0
 blocks area-brinstar 476
 blocks area-maridia 254
 blocks area-norfair 205
@@ -241,6 +294,7 @@ blocks chain-0224-D0B9 332
 blocks chain-0232-D5A7 631
 blocks chain-0234-D51E 152
 blocks chain-0314-DAE1 449
+blocks chain-any-0011-DF45 163
 blocks event-zebes-awake 179
 blocks item-charge-beam 477
 blocks item-energy-tank 238
@@ -265,6 +319,14 @@ blocks samus-walljump-16 156
 blocks samus-walljump-22 162
 blocks samus-walljump-28 168
 blocks terrain-quicksand 421
+samus-looks any-ceres-arrival 0
+samus-looks any-fly-to-ceres 0
+samus-looks any-intro-0568 0
+samus-looks any-intro-2219 0
+samus-looks any-intro-4323 0
+samus-looks any-intro-6012 0
+samus-looks any-power-on 0
+samus-looks any-zebes-arrival 0
 samus-looks area-brinstar 476
 samus-looks area-maridia 255
 samus-looks area-norfair 209
@@ -285,6 +347,7 @@ samus-looks chain-0224-D0B9 159
 samus-looks chain-0232-D5A7 601
 samus-looks chain-0234-D51E 153
 samus-looks chain-0314-DAE1 443
+samus-looks chain-any-0011-DF45 163
 samus-looks event-zebes-awake 126
 samus-looks item-charge-beam 480
 samus-looks item-energy-tank 240

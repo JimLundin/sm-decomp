@@ -20,8 +20,9 @@ whole run exists, "plays alone" counts the stretch's frames inside rows of the m
 stream the free-run gate holds green, each row run from its own seed. The checks below serve it.
 [domains.md §4](architecture/domains.md#4-order) holds the stretch: its frame ranges, what each
 one runs, the lock rows that cover every frame of it and the order of work toward it. The
-`any-power-on` row starts from power-on, which the timeline places in no movie, so its 568
-frames don't count toward "plays alone" yet.
+`any-power-on` row starts from power-on, as the movie does, so the timeline places it at the
+movie's frame 0 (a power-on row belongs to the movie its id's first word names); its 568 frames
+count once the gate runs it, which today runs only from seeds.
 
 ## The ratchets and floors
 
@@ -76,7 +77,9 @@ the compositor's checks read. The two CI rows were made this way, with pictures 
 frame); without them a frame is about 206 KB.
 
 `tools/oracle/record_caches.sh ROWS BUNDLE DATA ROM CACHE [JOBS]` does it for a list of rows,
-8 lsnes at a time, skipping rows already cached, one log line per row. `ORACLE` names the oracle
-command (the Python DLL runner where Defender blocks executables). `tools/oracle/samus_motion_rows.txt`
-lists 32 rows (18,331 frames, about 3.8 GB, about 2 minutes on 14 cores) for the Samus-motion
-harness, whose test runs every row cached in `SM_CACHE` and holds the CI rows to their floors.
+8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
+passes `--watch-pcs` too, for the `hits.txt` the blocks, progress and HUD harnesses read.
+`ORACLE` names the oracle command (the Python DLL runner where Defender blocks executables).
+`tools/oracle/samus_motion_rows.txt` lists 32 rows (18,331 frames, about 3.8 GB, about 2 minutes
+on 14 cores) for the Samus-motion harness, whose test runs every row cached in `SM_CACHE` and
+holds the CI rows to their floors.

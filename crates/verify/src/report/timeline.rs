@@ -8,7 +8,9 @@
 //! lock's rows ([`LOCK`]), the harness floors, the free-run gate's green pairs ([`GREEN`]) and
 //! the lockstep ratchet ([`LOCKSTEP`]). A row cut from seed `CAPTURE:INDEX` covers the movie's
 //! frames from that seed's frame for the row's frames; its capture's movie is the capture
-//! name's first word (`100-input-phase` is the 100% movie's). What it writes is frame counts,
+//! name's first word (`100-input-phase` is the 100% movie's). A row that starts at power-on is
+//! the movie's own opening when its id's first word names the movie (`any-power-on`), since a
+//! movie starts at power-on too, and covers it from frame 0. What it writes is frame counts,
 //! row counts and the checks' names: nothing of the game.
 //!
 //! Each track is a row of the picture: per frame of the movie, how much of it the check covers,
@@ -205,6 +207,23 @@ fn seed_frames(
     Ok(frames)
 }
 
+/// The key of the movie row `id` is cut from and the movie frame it starts at: its seed's
+/// capture's first word and the seed's frame, or, for a row from power-on, its id's first word
+/// and frame 0. A key that names no movie leaves the row outside every movie.
+fn start_in_movie<'a>(
+    id: &'a str,
+    start: &'a Start,
+    seeds: &BTreeMap<(String, u32), usize>,
+) -> Option<(&'a str, usize)> {
+    let first_word = |name: &'a str| name.split('-').next().unwrap_or_default();
+    match start {
+        Start::Seed { capture, index } => seeds
+            .get(&(capture.clone(), *index))
+            .map(|&frame| (first_word(capture), frame)),
+        Start::PowerOn => Some((first_word(id), 0)),
+    }
+}
+
 /// Each movie of the manifest with its tracks, empty: the recorded and cached rows, each
 /// harness domain's model, the gate and lockstep.
 fn movies(manifest: &Manifest, domains: &BTreeSet<&str>) -> Vec<Movie> {
@@ -276,15 +295,9 @@ impl Timeline {
         let mut outside = (0usize, 0u64);
         for row in &lock.rows {
             let id = row.id.0.as_str();
-            let placed = match &row.start {
-                Start::Seed { capture, index } => {
-                    let key = capture.split('-').next().unwrap_or_default();
-                    seeds.get(&(capture.clone(), *index)).and_then(|&frame| {
-                        Some((movies.iter_mut().find(|movie| movie.key == key)?, frame))
-                    })
-                }
-                Start::PowerOn => None,
-            };
+            let placed = start_in_movie(id, &row.start, &seeds).and_then(|(key, frame)| {
+                Some((movies.iter_mut().find(|movie| movie.key == key)?, frame))
+            });
             let Some((movie, start)) = placed else {
                 outside = (
                     outside.0.saturating_add(1),
@@ -466,9 +479,10 @@ impl Timeline {
              of the row's frames its harness floor matches; the **free-run gate** the share of \
              the row's streams that are green; **lockstep** the share of its Ticks fully equal. \
              The picture shades a stretch by the mean over its frames; the figures are the \
-             frames covered, each weighed by its cover, and their share of the movie. \
-             {} of the lock's rows ({} frames) start from power-on or a derived seed, in no \
-             movie, and are not drawn.\n",
+             frames covered, each weighed by its cover, and their share of the movie. A row \
+             from power-on covers, from frame 0, the movie its id's first word names. {} of \
+             the lock's rows ({} frames) start from power-on or a derived seed in no movie, and \
+             are not drawn.\n",
             SEEDS.0,
             SEEDS.1,
             grouped(self.outside.0),

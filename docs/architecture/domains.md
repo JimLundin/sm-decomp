@@ -400,7 +400,10 @@ many the engine plays alone today and which of these items are not done.
 1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,195) are recorded
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock
    covers the whole stretch, one row run from its own seed at a time. `any-zebes-arrival`
-   (15,196-15,427) locks the Landing Site's load, the next milestone's first row.
+   (15,196-15,427) locks the Landing Site's load, the next milestone's first row. Their seeds
+   and pads are in the relock bundle and their records cached with floors, but the engine's
+   decoder starts only main gameplay in rooms it knows, so the free-run gate starts none of
+   them yet and lockstep compares none of their Ticks.
 2. Ceres's play, 8,538-13,235 (4,698 frames, 31%): the in-progress Samus, camera, HUD and
    progress work; then R1 with R2, A1 and A2, C1 with its projectile runner, B8 (the Ceres doors
    first, in every room), H1 with S4, W1's power beam, R3's FX and quakes, E3's mode switch and

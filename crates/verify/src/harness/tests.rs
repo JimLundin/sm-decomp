@@ -717,6 +717,9 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
 /// record's progress: the loads before the rows, which hold the states other than the default
 /// the rows' own loads never reach. Beside it the null model, always the default state. A room
 /// case the decode notes name at a row's first record is checked here by its name.
+/// The game state of main gameplay.
+const MAIN_GAMEPLAY: u16 = 8;
+
 #[test]
 fn progress_chooses_each_rows_standing_room_state() {
     use super::progress::cases::{Chosen, ROOMS};
@@ -747,9 +750,17 @@ fn progress_chooses_each_rows_standing_room_state() {
         let record = opened
             .record(entry)
             .unwrap_or_else(|error| panic!("{row}: {error}"));
-        let standing = domain
-            .standing_state(&record)
-            .unwrap_or_else(|error| panic!("{row}: {error}"));
+        // A row that starts outside play (power-on, the title, the intro, a flight) holds no
+        // room yet: its room pointer is uninitialised or stale, so it has no standing room
+        // state to choose. In play, a room that won't decode is a defect.
+        let in_play = crate::source::GAME_STATE
+            .read(&record.wram)
+            .is_ok_and(|state| state == MAIN_GAMEPLAY);
+        let standing = match domain.standing_state(&record) {
+            Ok(standing) => standing,
+            Err(super::progress::Skip::Room(..)) if !in_play => continue,
+            Err(error) => panic!("{row}: {error}"),
+        };
         if standing.held == standing.states.saturating_sub(1) {
             defaults += 1;
         }

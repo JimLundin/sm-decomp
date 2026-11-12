@@ -4,11 +4,10 @@
 <text x="10" y="20" font-size="13" font-weight="600" fill="#0b0b0b">How much of each movie the checks cover</text>
 <text x="10" y="34" fill="#52514e">Darker is more of a stretch's frames covered; one pixel is 319 frames; a tick every 36,000 frames, about 10 minutes.</text>
 <text x="10" y="48" fill="#52514e">A movie the harnesses run no row of shows only its first two tracks.</text>
-<text x="10" y="72" font-weight="600" fill="#0b0b0b">any% movie: 129,712 frames, 207 rows of the lock</text>
+<text x="10" y="72" font-weight="600" fill="#0b0b0b">any% movie: 129,712 frames, 208 rows of the lock</text>
 <text x="242" y="92" text-anchor="end" fill="#52514e">recorded: the lock's rows</text>
 <rect x="250" y="82" width="407" height="12" fill="#f0efec"/>
-<rect x="251" y="82" width="1" height="12" fill="#2a78d6" fill-opacity="0.2"/>
-<rect x="252" y="82" width="57" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="250" y="82" width="59" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="309" y="82" width="1" height="12" fill="#2a78d6" fill-opacity="0.3"/>
 <rect x="311" y="82" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <rect x="312" y="82" width="1" height="12" fill="#2a78d6" fill-opacity="0.2"/>
@@ -66,41 +65,64 @@
 <rect x="656" y="82" width="1" height="12" fill="#2a78d6" fill-opacity="0.7"/>
 <text x="242" y="108" text-anchor="end" fill="#52514e">cached for the harnesses</text>
 <rect x="250" y="98" width="407" height="12" fill="#f0efec"/>
+<rect x="250" y="98" width="26" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="276" y="98" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
+<rect x="290" y="98" width="1" height="12" fill="#2a78d6" fill-opacity="0.1"/>
+<rect x="291" y="98" width="7" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="298" y="98" width="1" height="12" fill="#2a78d6" fill-opacity="0.4"/>
 <rect x="567" y="98" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <rect x="568" y="98" width="5" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="573" y="98" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="124" text-anchor="end" fill="#52514e">blocks model matches</text>
 <rect x="250" y="114" width="407" height="12" fill="#f0efec"/>
+<rect x="290" y="114" width="8" height="12" fill="#2a78d6" fill-opacity="0.1"/>
 <rect x="567" y="114" width="1" height="12" fill="#2a78d6" fill-opacity="0.7"/>
 <rect x="568" y="114" width="5" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="573" y="114" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="140" text-anchor="end" fill="#52514e">camera model matches</text>
 <rect x="250" y="130" width="407" height="12" fill="#f0efec"/>
+<rect x="290" y="130" width="8" height="12" fill="#2a78d6" fill-opacity="0.1"/>
 <rect x="567" y="130" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <rect x="568" y="130" width="5" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="573" y="130" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="156" text-anchor="end" fill="#52514e">game-time model matches</text>
 <rect x="250" y="146" width="407" height="12" fill="#f0efec"/>
+<rect x="250" y="146" width="26" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="276" y="146" width="1" height="12" fill="#2a78d6" fill-opacity="0.7"/>
+<rect x="290" y="146" width="1" height="12" fill="#2a78d6" fill-opacity="0.1"/>
+<rect x="291" y="146" width="6" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="297" y="146" width="1" height="12" fill="#2a78d6" fill-opacity="0.9"/>
+<rect x="298" y="146" width="1" height="12" fill="#2a78d6" fill-opacity="0.3"/>
 <rect x="567" y="146" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <rect x="568" y="146" width="5" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="573" y="146" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="172" text-anchor="end" fill="#52514e">hud model matches</text>
 <rect x="250" y="162" width="407" height="12" fill="#f0efec"/>
+<rect x="290" y="162" width="8" height="12" fill="#2a78d6" fill-opacity="0.1"/>
 <rect x="567" y="162" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <rect x="568" y="162" width="5" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="573" y="162" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="188" text-anchor="end" fill="#52514e">progress model matches</text>
 <rect x="250" y="178" width="407" height="12" fill="#f0efec"/>
+<rect x="250" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.3"/>
+<rect x="251" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.5"/>
+<rect x="252" y="178" width="24" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="276" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
+<rect x="290" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.1"/>
+<rect x="291" y="178" width="7" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="298" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.4"/>
 <rect x="567" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <rect x="568" y="178" width="5" height="12" fill="#2a78d6" fill-opacity="1"/>
 <rect x="573" y="178" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="204" text-anchor="end" fill="#52514e">samus-looks model matches</text>
 <rect x="250" y="194" width="407" height="12" fill="#f0efec"/>
+<rect x="290" y="194" width="8" height="12" fill="#2a78d6" fill-opacity="0.1"/>
 <rect x="567" y="194" width="1" height="12" fill="#2a78d6" fill-opacity="0.7"/>
 <rect x="568" y="194" width="5" height="12" fill="#2a78d6" fill-opacity="0.9"/>
 <rect x="573" y="194" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <text x="242" y="220" text-anchor="end" fill="#52514e">samus-motion model matches</text>
 <rect x="250" y="210" width="407" height="12" fill="#f0efec"/>
+<rect x="290" y="210" width="8" height="12" fill="#2a78d6" fill-opacity="0.1"/>
 <rect x="567" y="210" width="1" height="12" fill="#2a78d6" fill-opacity="0.7"/>
 <rect x="568" y="210" width="5" height="12" fill="#2a78d6" fill-opacity="0.9"/>
 <rect x="573" y="210" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>

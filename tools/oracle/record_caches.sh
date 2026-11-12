@@ -23,6 +23,10 @@
 # ORACLE is the command that runs the oracle's command line, default `target/verify/oracle`.
 # Where Defender blocks fresh executables (docs/ORACLE.md §8), it is the Python DLL runner, for
 # example ORACLE="python $TEMP/collab/run.py $TEMP/collab/oracle_cache.dll".
+#
+# WATCH_PCS, when set, is the comma-separated list of instruction addresses passed to corpus as
+# `--watch-pcs`, so each row also gets its `hits.txt` (docs/ORACLE.md §6): the harnesses that hear
+# requests from hits (blocks, progress, the HUD) need it. The records are the same either way.
 set -euo pipefail
 
 if [ $# -lt 5 ] || [ $# -gt 6 ]; then
@@ -38,6 +42,10 @@ jobs=${6:-8}
 here=$(cd "$(dirname "$0")/../.." && pwd)
 lock=$here/scenarios/lock.toml
 read -r -a oracle <<<"${ORACLE:-$here/target/verify/oracle}"
+watch=()
+if [ -n "${WATCH_PCS:-}" ]; then
+  watch=(--watch-pcs "$WATCH_PCS")
+fi
 
 for directory in "$bundle/pads" "$bundle/seeds"; do
   if [ ! -d "$directory" ]; then
@@ -71,7 +79,7 @@ record() {
   cp "$pads" "$work/"
   local started=$SECONDS status=0
   "${oracle[@]}" corpus "$rom" "$lock" "$data" --oracle lsnes --native-seeds "$bundle/seeds" \
-    --from-frame-pads "$work" --cache "$cache" --only "$row" >"$log" 2>&1 || status=$?
+    --from-frame-pads "$work" --cache "$cache" --only "$row" "${watch[@]}" >"$log" 2>&1 || status=$?
   local seconds=$((SECONDS - started))
   local line
   line=$(grep -E "^  $row cache: " "$log" || true)

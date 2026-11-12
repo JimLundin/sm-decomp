@@ -291,7 +291,7 @@ them with `verify::decode`, every fact is `"unevaluated"` and doesn't block gree
 | b2 | frame pads for every row | done |
 | c | `corpus --record-v2`, the format-2 recorder | done, but facts, typed streams and row rungs (below) |
 | d | record every row twice, compare, merge | done: 635 rows in `lsnes.toml`, 642 with the seven movie rows of `scenes-v1` |
-| e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-7e76e077d5a1055a`) |
+| e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-6ead7227957a4a10`) |
 | f | `verify::lock`: the reader and the per-(row, stream) comparison | done |
 | g | the free-run gate: `tools gate`, ratcheting green pairs | done for `area-brinstar`, `item-morph-ball` |
 
@@ -429,14 +429,14 @@ echo "SHA256  b.enc" | sha256sum --check
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -in b.enc | tar -xz -C DATA
 ```
 
-- **The relock bundle** `relock-v2-lsnes-7e76e077d5a1055a.tar.gz.enc` (SHA-256
-  `acd6d6182d9b5f65e75339781c9fca59ade98872987f692700498548544bf11f`), pinned by the `bundles` line
+- **The relock bundle** `relock-v2-lsnes-6ead7227957a4a10.tar.gz.enc` (SHA-256
+  `41f0b2ed8da8d2fd87c18746f2f06c4f2c746e33ac6de91c72388d7ae5d9009e`), pinned by the `bundles` line
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
   `.lss` and `.words`, and the rows' `.pads` (`verify::bundle`).
-- **The lockstep record cache** `lockstep-cache-5e9b886cb06ca2de.tar.xz.enc` (SHA-256
-  `3102c9aaadf86cfc8fc6aa8525aa9c549e172799c07861461cf6b42128124410`), pinned in
+- **The lockstep record cache** `lockstep-cache-e59c25d39059593d.tar.xz.enc` (SHA-256
+  `a77f9800ea881eaa2b3b52477e96132c5e6945e863ad922b1d3fca01b4caacf2`), pinned in
   `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
-  5.2 GB). It holds the 44 rows `floors.txt` names, each with its `hits.txt` (the watched
+  7.7 GB). It holds the 53 rows `floors.txt` names, each with its `hits.txt` (the watched
   instructions of every domain, the blocks' scripts included), so CI holds the ratchet's rows and
   every domain's harness floors and coverage. Pack it with
   `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
