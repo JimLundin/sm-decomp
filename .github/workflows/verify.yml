@@ -118,8 +118,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      CACHE_ASSET: lockstep-cache-e59c25d39059593d.tar.xz.enc
-      CACHE_SHA256: a77f9800ea881eaa2b3b52477e96132c5e6945e863ad922b1d3fca01b4caacf2
+      CACHE_ASSET: lockstep-cache-898a5b01b4429e72.tar.xz.enc
+      CACHE_SHA256: 76a97379d35b4c7d529b43502cd78644bc56323e862847e25922160776da96a0
     steps:
       - uses: actions/checkout@v4
       - *cache

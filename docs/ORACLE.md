@@ -441,10 +441,10 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   `41f0b2ed8da8d2fd87c18746f2f06c4f2c746e33ac6de91c72388d7ae5d9009e`), pinned by the `bundles` line
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
   `.lss` and `.words`, and the rows' `.pads` (`verify::bundle`).
-- **The lockstep record cache** `lockstep-cache-e59c25d39059593d.tar.xz.enc` (SHA-256
-  `a77f9800ea881eaa2b3b52477e96132c5e6945e863ad922b1d3fca01b4caacf2`), pinned in
+- **The lockstep record cache** `lockstep-cache-898a5b01b4429e72.tar.xz.enc` (SHA-256
+  `76a97379d35b4c7d529b43502cd78644bc56323e862847e25922160776da96a0`), pinned in
   `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
-  7.7 GB). It holds the 53 rows `floors.txt` names, each with its `hits.txt` (the watched
+  81 MB, the lean tier). It holds the 53 rows `floors.txt` names, each with its `hits.txt` (the watched
   instructions of every domain, the blocks' scripts included), so CI holds the ratchet's rows and
   every domain's harness floors and coverage. Pack it with
   `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
