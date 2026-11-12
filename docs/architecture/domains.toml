@@ -80,6 +80,14 @@ id = "V1"
 name = "Tooling: domain free run, RNG per consumer, cache tier"
 wave = 0
 lanes = 3
+# The domain free run is verify::harness::free; the RNG split and the cache tier remain.
+status = "in-progress"
+
+[[platform]]
+id = "V3"
+name = "The free-run gate and lockstep start Ceres's chain rows"
+wave = 0
+lanes = 1
 
 # Wave 1
 
@@ -460,4 +468,38 @@ ends = "any-opening:7"
 needs = [
     "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "P2", "W1", "W2", "C1", "B8", "R1", "R3",
     "R4", "F2", "F4", "U1", "E1", "E2", "E3", "E4", "A1", "A2", "R2", "T1", "V2",
+]
+
+# The ladder toward the milestone (domains.md §4): shorter stretches of the same movie, each
+# played alone from its first seed, so the README shows a number that can move before the whole
+# stretch is reachable. Each rung's needs are a first estimate from domains.md §4's table; a
+# session's planning corrects them from what the stretch's rows show.
+
+[[rung]]
+id = "M0"
+name = "Ceres's third room, across its door"
+starts = "any-boundary:3"
+ends = "any-boundary:4"
+needs = [
+    "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "E1", "E2", "A1", "A2", "V3",
+]
+
+[[rung]]
+id = "M1"
+name = "Ceres's rooms 1 to 5, down to Ridley's door"
+starts = "any-boundary:1"
+ends = "any-boundary:6"
+needs = [
+    "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "R3", "E1", "E2", "E3", "E4", "A1",
+    "A2", "V3",
+]
+
+[[rung]]
+id = "M2"
+name = "Ceres with Ridley and the escape"
+starts = "any-boundary:1"
+ends = "any-boundary:11"
+needs = [
+    "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "W1", "W2", "C1", "B8", "R1", "R2", "R3",
+    "E1", "E2", "E3", "E4", "A1", "A2", "V3",
 ]

@@ -351,12 +351,24 @@ impl Timeline {
     /// first `frames` frames, those inside a row whose every stream the free-run gate holds
     /// green.
     pub(super) fn green_from_start(&self, movie: &str, frames: usize) -> Option<(&str, usize)> {
+        self.green_in(movie, 0..frames)
+    }
+
+    /// The movie `movie`'s category and how many of its frames in `span` lie inside rows whose
+    /// every stream the free-run gate holds green; `None` when no row of the lock is cut from
+    /// it.
+    pub(super) fn green_in(
+        &self,
+        movie: &str,
+        span: core::ops::Range<usize>,
+    ) -> Option<(&str, usize)> {
         let movie = self.movies.iter().find(|listed| listed.key == movie)?;
         let gate = movie.tracks.iter().find(|track| track.label == GATE)?;
         let green = gate
             .cover
             .iter()
-            .take(frames)
+            .skip(span.start)
+            .take(span.end.saturating_sub(span.start))
             .filter(|&&cover| u32::from(cover) >= WHOLE)
             .count();
         Some((&movie.category, green))

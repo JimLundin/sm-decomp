@@ -44,6 +44,33 @@ pub(super) struct Plan {
     domain: Vec<PlanDomain>,
     platform: Vec<Platform>,
     milestone: Milestone,
+    /// The ladder of rungs toward the milestone, in order.
+    #[serde(default)]
+    rung: Vec<Rung>,
+}
+
+/// A rung of the ladder toward the headline milestone: a shorter stretch of its movie, between
+/// two seeds, that the engine is to play alone first, and the plan items it needs.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Rung {
+    /// Its id, `M0` onwards.
+    id: String,
+    /// What the README calls it.
+    name: String,
+    /// The seed whose movie frame starts the stretch, `CAPTURE:INDEX`.
+    starts: String,
+    /// The seed whose movie frame ends it, `CAPTURE:INDEX`.
+    ends: String,
+    /// The plan ids of the domains and platform work the stretch needs.
+    needs: Vec<String>,
+}
+
+/// A seed named `CAPTURE:INDEX`: its capture and index.
+fn seed(name: &str) -> Result<(&str, u32), String> {
+    name.split_once(':')
+        .and_then(|(capture, index)| Some((capture, index.parse().ok()?)))
+        .ok_or_else(|| format!("{PLAN}: `{name}` is not a seed, CAPTURE:INDEX"))
 }
 
 /// The headline milestone: a stretch of a movie, from power-on, that the engine is to replay
@@ -65,10 +92,7 @@ struct Milestone {
 impl Milestone {
     /// The seed that ends the stretch: its capture and index.
     fn end(&self) -> Result<(&str, u32), String> {
-        self.ends
-            .split_once(':')
-            .and_then(|(capture, index)| Some((capture, index.parse().ok()?)))
-            .ok_or_else(|| format!("{PLAN}: milestone ends `{}`, not CAPTURE:INDEX", self.ends))
+        seed(&self.ends)
     }
 }
 
@@ -227,15 +251,24 @@ impl Plan {
             }
         }
         plan.milestone.end()?;
-        if let Some(need) = plan
+        let needs = plan
             .milestone
             .needs
             .iter()
-            .find(|need| plan.stage_of(need).is_none())
+            .map(|need| ("the milestone", need));
+        let rungs = plan
+            .rung
+            .iter()
+            .flat_map(|rung| rung.needs.iter().map(move |need| (rung.id.as_str(), need)));
+        if let Some((who, need)) = needs
+            .chain(rungs)
+            .find(|(_, need)| plan.stage_of(need).is_none())
         {
-            return Err(format!(
-                "{PLAN}: the milestone needs {need}, which the plan lacks"
-            ));
+            return Err(format!("{PLAN}: {who} needs {need}, which the plan lacks"));
+        }
+        for rung in &plan.rung {
+            seed(&rung.starts)?;
+            seed(&rung.ends)?;
         }
         Ok(plan)
     }
@@ -252,6 +285,26 @@ impl Plan {
             )
             .find(|(listed, _)| *listed == id)
             .map(|(_, stage)| stage)
+    }
+
+    /// The items of `needs` not done, by stage, with their count: "2 of 5: S1 (in progress);
+    /// R1 (not started)", or "nothing".
+    fn still_needed(&self, needs: &[String]) -> String {
+        let needed: Vec<(&str, Stage)> = needs
+            .iter()
+            .filter_map(|need| Some((need.as_str(), self.stage_of(need)?)))
+            .filter(|(_, stage)| *stage != Stage::Done)
+            .collect();
+        if needed.is_empty() {
+            String::from("nothing")
+        } else {
+            format!(
+                "{} of {}: {}",
+                needed.len(),
+                needs.len(),
+                ids_by_stage(needed.iter().copied())
+            )
+        }
     }
 
     /// The plan's domains a model holds.
@@ -326,6 +379,7 @@ pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
     );
     out.push_str("\n## Where it stands\n");
     milestone(&mut out, root, plan, tree)?;
+    ladder(&mut out, root, plan, tree)?;
     headline(&mut out, plan);
     let _ = write!(
         out,
@@ -361,22 +415,7 @@ fn milestone(out: &mut String, root: &Path, plan: &Plan, tree: &Tree) -> Result<
                 milestone.movie
             )
         })?;
-    let needed: Vec<(&str, Stage)> = milestone
-        .needs
-        .iter()
-        .filter_map(|need| Some((need.as_str(), plan.stage_of(need)?)))
-        .filter(|(_, stage)| *stage != Stage::Done)
-        .collect();
-    let still = if needed.is_empty() {
-        String::from("nothing")
-    } else {
-        format!(
-            "{} of {}: {}",
-            needed.len(),
-            milestone.needs.len(),
-            ids_by_stage(needed.iter().copied())
-        )
-    };
+    let still = plan.still_needed(&milestone.needs);
     // The last column is text, so it is aligned left as the first is.
     out.push_str(
         "\n| Milestone | Frames | The engine plays alone | Still needed |\n\
@@ -398,6 +437,56 @@ fn milestone(out: &mut String, root: &Path, plan: &Plan, tree: &Tree) -> Result<
          from its own seed. Still needed are the plan's domains and platform work the stretch \
          touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.\n",
     );
+    Ok(())
+}
+
+/// The ladder toward the milestone: each rung's stretch, the frames of it the engine plays
+/// alone today and the plan items it still needs.
+fn ladder(out: &mut String, root: &Path, plan: &Plan, tree: &Tree) -> Result<(), String> {
+    if plan.rung.is_empty() {
+        return Ok(());
+    }
+    out.push_str(
+        "\nThe ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter \
+         stretches of the same movie, each played alone from its first seed, in the order the \
+         work reaches them. A rung is reached when the engine plays every frame of it alone.\n\n\
+         | Rung | Stretch | Frames | The engine plays alone | Still needed |\n\
+         | --- | --- | ---: | ---: | --- |\n",
+    );
+    for rung in &plan.rung {
+        let (start_capture, start_index) = seed(&rung.starts)?;
+        let (end_capture, end_index) = seed(&rung.ends)?;
+        let start = seed_frame(root, start_capture, start_index)?;
+        let end = seed_frame(root, end_capture, end_index)?;
+        if end <= start {
+            return Err(format!(
+                "{PLAN}: {} ends at frame {end}, not after its start {start}",
+                rung.id
+            ));
+        }
+        let (_, alone) = tree
+            .timeline
+            .green_in(&plan.milestone.movie, start..end)
+            .ok_or_else(|| {
+                format!(
+                    "{PLAN}: the milestone's movie {} has no row of the lock",
+                    plan.milestone.movie
+                )
+            })?;
+        let frames = end.saturating_sub(start);
+        let _ = writeln!(
+            out,
+            "| {} | {}, frames {}-{} | {} | {} ({}) | {} |",
+            rung.id,
+            rung.name,
+            grouped(start),
+            grouped(end.saturating_sub(1)),
+            grouped(frames),
+            grouped(alone),
+            percent(alone, frames),
+            plan.still_needed(&rung.needs),
+        );
+    }
     Ok(())
 }
 

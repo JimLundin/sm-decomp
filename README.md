@@ -19,6 +19,14 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every stream the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
 
+The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter stretches of the same movie, each played alone from its first seed, in the order the work reaches them. A rung is reached when the engine plays every frame of it alone.
+
+| Rung | Stretch | Frames | The engine plays alone | Still needed |
+| --- | --- | ---: | ---: | --- |
+| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 14 of 14: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, A2, V3 (not started) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 17 of 17: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, A2, V3 (not started) |
+| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 22 of 22: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, A2, V3 (not started) |
+
 Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **47 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
@@ -44,7 +52,7 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 
 | Wave | Clean-room domains | Platform work | Started | Rounds planned |
 | --- | --- | --- | ---: | ---: |
-| 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3) | 2 of 2 | 2 |
+| 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3); V3 The free-run gate and lockstep start Ceres's chain rows (1) | 2 of 2 | 2 |
 | 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); A1 Instruction lists as assets (3) | 5 of 5 | 15 |
 | 2 | R1 Doors and elevators; W1 Beams, missiles and bombs; C1 Fighting enemies; H1 Energy, reserves and death; S4 Hurt and knockback, bomb jumps | R2 Room loading (4); A2 Enemy and room importers (3); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 0 of 5 | 21 |
 | 3 | B8 Ceres Ridley and the escape; F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; U1 Audio, the CPU side | E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 0 of 7 | 30 |

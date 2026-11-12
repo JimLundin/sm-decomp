@@ -157,6 +157,21 @@ fn the_plan_agrees_with_the_rebuilt_domains() {
     assert!(other("[\"CAM\"]", "[\"CAM\", \"R1\"]").is_err());
     assert!(other("any:12", "any").is_err());
     assert!(other("any:12", "any:twelve").is_err());
+    // A rung of the ladder needs plan items the plan holds, and runs between two seeds.
+    let rung = |needs: &str, starts: &str| {
+        Plan::parse(
+            &format!(
+                "{}[[rung]]\nid = \"M0\"\nname = \"r\"\nstarts = \"{starts}\"\n\
+                 ends = \"any:2\"\nneeds = {needs}\n",
+                plan(named)
+            ),
+            &rebuilt,
+        )
+        .map(|_| ())
+    };
+    assert_eq!(rung("[\"CAM\"]", "any:1"), Ok(()));
+    assert!(rung("[\"R1\"]", "any:1").is_err());
+    assert!(rung("[\"CAM\"]", "any").is_err());
     assert_eq!(
         parse(&format!(
             "{named}model = \"world-camera\"\nstatus = \"in-progress\"\n"
