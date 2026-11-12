@@ -3,6 +3,7 @@ use std::convert::Infallible;
 use oracle_record::FrameRecord;
 
 use super::{End, FreeReport, Segment, run};
+use crate::harness::Hides;
 use crate::harness::game_time::Clock;
 use crate::harness::tests::{Copying, record};
 use crate::lock::Frame;
@@ -72,12 +73,29 @@ fn the_free_run_steps_its_own_state_not_the_records() {
 #[test]
 fn a_mask_ends_the_segment_once_its_frame_is_held_on_the_other_fields() {
     let records = [record(0, 8, [0, 0, 0, 59]), record(1, 8, [0, 0, 1, 0])];
-    let Ok(report) = run(&Copying, records.map(Ok::<_, Infallible>));
+    let Ok(report) = run(
+        &Copying(Hides::AnotherWriter),
+        records.map(Ok::<_, Infallible>),
+    );
     assert_eq!((report.held, report.masked), (1, 1));
     assert!(matches!(
         report.longest.first().map(|segment| &segment.end),
         Some(End::Masked(Frame(1), fields)) if fields == &["frames"]
     ));
+}
+
+#[test]
+fn a_mask_no_writer_stands_behind_leaves_the_segment_running() {
+    // The frames word never moves as the model would move it, but the mask hides it and names
+    // no writer, so the carried State holds across both frames.
+    let records = [
+        record(0, 8, [0, 0, 0, 59]),
+        record(1, 8, [0, 0, 1, 7]),
+        record(2, 8, [0, 0, 2, 3]),
+    ];
+    let Ok(report) = run(&Copying(Hides::NoWriter), records.map(Ok::<_, Infallible>));
+    assert_eq!((report.held, report.masked, report.row_ends), (2, 0, 1));
+    assert_eq!(report.segments(), 1);
 }
 
 #[test]

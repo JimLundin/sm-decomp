@@ -1045,7 +1045,7 @@ impl Domain for Movement {
     ) -> Result<Vec<Mask>, Skip> {
         use Quantity as Q;
         let mut masks = Vec::new();
-        let mut mask = |reason, fields| masks.push(Mask { reason, fields });
+        let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
         if word(from, source::ELEVATOR_STATUS)? != 0 {
             mask(
                 "the elevator moves her: another domain writes y",

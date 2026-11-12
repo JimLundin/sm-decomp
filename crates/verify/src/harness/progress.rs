@@ -48,7 +48,7 @@ use run_progress::{
 };
 use types::{Area, Beam, BossKind, DoorId, Entrance, Event, Item, LocationId, Set, StationId};
 
-use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Hides, Interval, Mask, Uncompared};
 use crate::decode::DecodeError;
 use crate::domain_field;
 use crate::source::{self, WramArray, WramBlock, WramWord};
@@ -1097,7 +1097,7 @@ impl Domain for ProgressDomain {
         let (before, after) = (progress(from)?, progress(next)?);
         let (was, now) = (&before.inventory, &after.inventory);
         let mut masks = Vec::new();
-        let mut mask = |reason, fields| masks.push(Mask { reason, fields });
+        let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
         let tank = self.reports(from, next)?.iter().any(|(report, _)| {
             matches!(
                 report,
@@ -1142,7 +1142,11 @@ impl Domain for ProgressDomain {
             );
         }
         if !loads(from, next)? {
-            mask("no room loads in the frame: no state is chosen", ROOM_STATE);
+            masks.push(Mask {
+                reason: "no room loads in the frame: no state is chosen",
+                fields: ROOM_STATE,
+                hides: Hides::NoWriter,
+            });
         }
         Ok(masks)
     }

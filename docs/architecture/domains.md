@@ -449,8 +449,8 @@ V3, the gate starting Ceres's rows, is every rung's first need.
 - S1 samus-movement follow-ups: `rising`, C2, C3. 1 round.
 - Camera round 2: C5's masks named in the harness note; the lead settings' vectors; the
   closed-screen cells' interface ready for W2. 1 round. (C4 waits for S4/H1/S7.)
-- V1 tooling, what remains: the RNG consumer split; a compressed or WRAM-only cache tier. Its
-  domain free run landed; its floors are set by the first run over CI's cache.
+- V1 tooling, what remains: the RNG consumer split. Its domain free run holds its floors on
+  every cached row, and the lean cache tier is what CI reads.
 - V3: the free-run gate and lockstep start Ceres's chain rows from their seeds, so the rungs
   can be measured. 1 lane.
 

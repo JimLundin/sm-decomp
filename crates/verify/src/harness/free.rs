@@ -10,9 +10,11 @@
 //!
 //! A **segment** is one such run from a seed. It ends at:
 //! - the first frame on which an unmasked field differs (**diverged**): the measure;
-//! - a frame with a mask (**masked**): another domain's writer moved a declared field, which
-//!   the carried State can't follow, so the frame counts as held on its unmasked fields and
-//!   the next frame seeds afresh;
+//! - a frame on which another domain's writer moved a declared field (**masked**, a mask that
+//!   hides [`Hides::AnotherWriter`]): the carried State can't follow it, so the frame counts
+//!   as held on its unmasked fields and the next frame seeds afresh. A mask no writer stands
+//!   behind ([`Hides::NoWriter`]: a field reported and not counted, or one the frame doesn't
+//!   produce) leaves the field uncompared and the segment running;
 //! - a frame the domain doesn't run in or can't decode (**skipped**);
 //! - the row's end.
 //!
@@ -29,7 +31,9 @@ use std::path::Path;
 
 use oracle_record::FrameRecord;
 
-use super::{Domain, FieldSet, HarnessError, Interval, Mismatch, differing, frames, open_cached};
+use super::{
+    Domain, FieldSet, HarnessError, Hides, Interval, Mismatch, differing, frames, open_cached,
+};
 use crate::lock::Frame;
 
 /// The longest segments a report keeps.
@@ -40,7 +44,8 @@ pub const LONGEST: usize = 5;
 pub enum End {
     /// A declared field differed at this frame: the fields, with both values.
     Diverged(Frame, Vec<(&'static str, Mismatch)>),
-    /// A mask hid a field at this frame, which the carried State can't follow.
+    /// Another domain's writer moved these fields at this frame, which the carried State can't
+    /// follow.
     Masked(Frame, Vec<&'static str>),
     /// The domain doesn't run in, or couldn't decode, the frame ending here.
     Skipped(Frame),
@@ -250,9 +255,14 @@ fn step<D: Domain>(
     });
     domain.step(&mut state, &inputs, &mut world);
     let model = domain.fields(&state);
-    let masked = masks
-        .iter()
-        .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields));
+    let hidden = |hides| {
+        masks
+            .iter()
+            .filter(|mask| mask.hides == hides)
+            .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields))
+    };
+    let lost = hidden(Hides::AnotherWriter);
+    let masked = lost.union(hidden(Hides::NoWriter));
     let differs = differing::<D>(&model, &oracle).without(masked);
     let frame = Frame(next.index);
     if !differs.is_empty() {
@@ -278,13 +288,13 @@ fn step<D: Domain>(
         }));
     }
     let held = held.saturating_add(1);
-    if masked.is_empty() {
+    if lost.is_empty() {
         Some(Step::Held(Open { seed, held, state }))
     } else {
         Some(Step::Ended(Segment {
             seed,
             held,
-            end: End::Masked(frame, names::<D>(masked)),
+            end: End::Masked(frame, names::<D>(lost)),
         }))
     }
 }
