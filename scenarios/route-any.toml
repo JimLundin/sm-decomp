@@ -15,7 +15,7 @@ scenario = [
     { id = "chain-any-0008-E021", start = "seed:8347a63353366a9ea9fd4dfb309c2835685dce3d8471e1c624c2a032cecee3cc", ticks = 264, facts = ["room:DFD7"] },
     { id = "chain-any-0009-DFD7", start = "seed:d38f7d75fce24419f07b04de59ba3d27ee65719ccae16e47244879892350bd2a", ticks = 331, facts = ["room:DF8D"] },
     { id = "chain-any-0010-DF8D", start = "seed:ab271fc033732e4c0a4dfb3a5bb7ec59aee399a9e248348bf4326407413a1d47", ticks = 279, facts = ["room:DF45"] },
-    { id = "chain-any-0011-DF45", start = "seed:fd6b20c48145a8ea381208f8b4ac62fd9db514ee26b85851f079289481e9c339", ticks = 2356, facts = ["room:91F8"], unlocked = "a faithful-oracle known divergence" },
+    { id = "chain-any-0011-DF45", start = "seed:fd6b20c48145a8ea381208f8b4ac62fd9db514ee26b85851f079289481e9c339", ticks = 2124, facts = ["state:6"], unlocked = "a faithful-oracle known divergence" },
     { id = "chain-any-0012-91F8", start = "seed:6b128cc463f25d46e579cb39dabd091cf8462716c063d8aa71e6260bff9f6c95", ticks = 1031, facts = ["room:92FD"] },
     { id = "chain-any-0013-92FD", start = "seed:aeebfeb568314d3dfb05051e951064f36520feb8778b3e4b2a3a7b4145ab1f20", ticks = 599, facts = ["room:96BA"] },
     { id = "chain-any-0014-96BA", start = "seed:aa1fd1c8e77985bb6b81152b7c6ef307dcaffc23bffe30d335cad5eee70e7f68", ticks = 385, facts = ["room:975C"] },

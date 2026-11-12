@@ -15,7 +15,7 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 | Milestone | Frames | The engine plays alone | Still needed |
 | --- | ---: | ---: | --- |
-| **Power-on through Ceres**, the any% movie from power-on | 15,428 | 0 (0.0 %) | 28 of 28: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, P2, W1, C1, B8, R1, R3, R4, F2, F4, U1, E3, E4, A1, A2, R2, T1, V2 (not started) |
+| **Power-on through Ceres**, the any% movie from power-on | 15,196 | 0 (0.0 %) | 28 of 28: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, P2, W1, C1, B8, R1, R3, R4, F2, F4, U1, E3, E4, A1, A2, R2, T1, V2 (not started) |
 
 The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every stream the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
 
@@ -67,7 +67,7 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 
 | Check | State |
 | --- | --- |
-| the lock | 650 rows of play, 460,437 frames |
+| the lock | 651 rows of play, 460,437 frames |
 | the free-run gate: the engine runs a row alone | 8 green (row, stream) pairs over 2 rows |
 | the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
 | the harnesses: each model on recorded frames | 44 rows cached, 25,470 frames |

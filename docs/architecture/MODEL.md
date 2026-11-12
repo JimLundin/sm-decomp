@@ -135,8 +135,9 @@ Jim's decisions, 2026-11-11:
 14. **The headline milestone is whole-movie acceptance.** The engine replays a whole movie from
     one start state with nothing fed back: no re-seeding, no recorded state or timing from the
     oracle, only the movie's inputs, and every compared cut and output byte matches. The first
-    target is power-on through Ceres: the any% movie from power-on to the frame it reaches
-    Zebes. A divergence is localised by sparse checkpoints over the whole run, then dense ones
+    target is power-on through Ceres: the any% movie from power-on to frame 15,196, after the
+    flight to Zebes and before the Landing Site loads (Jim, 2026-11-12); the Landing Site starts
+    the next milestone. A divergence is localised by sparse checkpoints over the whole run, then dense ones
     over the range they narrow it to. The harnesses, the free-run gate's rows and lockstep serve
     this milestone; the plan's waves are ordered toward it
     ([domains.md §4](domains.md#4-order)), and `tools report` shows it as the first row of the

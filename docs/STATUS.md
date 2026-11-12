@@ -9,10 +9,10 @@ Read them, or rerun the checks below.
 Progress is measured first against whole-movie acceptance (MODEL §1 decision 14): the engine
 replays a whole movie from one start state with nothing fed back (no re-seeding, no recorded
 state or timing, only the movie's inputs), and every compared cut and output byte matches. The
-first target is power-on through Ceres: the any% movie from power-on to frame 15,428, where its
-seed `any:12` loads the first room on Zebes. A divergence is localised by sparse checkpoints over
-the whole run, then dense ones over the range they narrow it to; the run and its checkpoints are
-platform work V2 of the [plan](architecture/domains.md#4-order).
+first target is power-on through Ceres: the any% movie from power-on to frame 15,196, its seed
+`any-opening:7`, after the flight to Zebes and before the Landing Site loads. A divergence is
+localised by sparse checkpoints over the whole run, then dense ones over the range they narrow it
+to; the run and its checkpoints are platform work V2 of the [plan](architecture/domains.md#4-order).
 
 The README's first row is generated from `[milestone]` in `docs/architecture/domains.toml`: the
 stretch's frames, those the engine plays alone today, and the plan items still needed. Until the

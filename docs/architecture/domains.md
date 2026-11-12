@@ -332,16 +332,18 @@ pickup's resume (`plm::resume`'s open note).
 
 The waves are ordered toward the **headline milestone** (MODEL §1 decision 14): the engine
 replays a whole movie from one start state with nothing fed back. The first target is power-on
-through Ceres: the any% movie from power-on to its frame 15,428, where seed `any:12` loads the
-first room on Zebes. A divergence is localised by sparse checkpoints over the run, then dense ones
-over the range they narrow it to.
+through Ceres: the any% movie from power-on to its frame 15,196, where seed `any-opening:7` falls
+after the flight to Zebes and before the Landing Site loads (Jim, 2026-11-12); the Landing Site
+starts the next milestone. A divergence is localised by sparse checkpoints over the run, then
+dense ones over the range they narrow it to.
 
 **What the stretch holds.** Observed, not read off the game: lsnes played the any% movie from
 power-on to frame 15,500 and logged, per frame, the game state, the cinematic step, the room,
 each object list (enemies, enemy projectiles, PLMs, palette FX, animated tiles, HDMA objects,
 cinematic objects), the BG mode, the quake, the FX type, the music and sounds, the timer, the
 message box, energy, SRAM writes and the APU port writes; the bank logs name what each id is.
-A frame is a video frame of the movie, lag frames included; the stretch is frames 0 to 15,427.
+A frame is a video frame of the movie, lag frames included; the stretch is frames 0 to 15,195,
+and the table runs on to seed `any:12` (15,428) for the Landing Site's load that follows it.
 
 | Frames | What plays | What runs (evidence) | Lock rows (`lsnes.toml`) |
 | --- | --- | --- | --- |
@@ -353,14 +355,13 @@ A frame is a video frame of the movie, lag frames included; the stretch is frame
 | 8,538-10,160 | Ceres's rooms 1 to 5 and the five doors down to Ridley's room | her motion and looks, the view, the HUD; the Ceres doors (an enemy) in every room; FX: the elevator's mode switch, the haze; door transitions with their lag | `chain-any-0001-DF45` to `chain-any-0005-E06B` |
 | 10,161-11,771 | Ceres Ridley's room | Ceres Ridley: five contact hits (energy 99 to 24 by 15, five knockbacks), her power beam's hits; the mini-map off; the getaway in mode 7; quakes; the escape timer starts; no fireballs | `chain-any-0006-E0B5` |
 | 11,772-13,235 | the escape back up through rooms 5 to 1 | the timer; quakes in every room; steam (an enemy) in rooms 3 to 1; falling debris (enemy projectiles) in room 2, dust in rooms 2 and 1; the rooms' boss-dead states; the shaft rotating | `chain-any-0007-E06B` to `chain-any-0010-DF8D`, `chain-any-0011-DF45` |
-| 13,236-15,196 | made it to the elevator, the blackout, Ceres goes boom (SRAM written at 13,312), the flight to Zebes | mode 7; cinematic objects; HDMA; palette FX objects (the planet's name fading); music uploads | `chain-any-0011-DF45` |
-| 15,197-15,427 | the Landing Site loaded and faded in | room loading; its door caps (yellow, green) and scroll PLM; the rain FX, rain tiles, lightning and the gunship's glow; the gunship (an enemy); the Crateria music's upload; 40 lag frames | `chain-any-0011-DF45` |
+| 13,236-15,195 | made it to the elevator, the blackout, Ceres goes boom (SRAM written at 13,312), the flight to Zebes; at 15,195 the game turns to loading the next area | mode 7; cinematic objects; HDMA; palette FX objects (the planet's name fading); music uploads | `chain-any-0011-DF45` |
+| 15,196-15,427 | after the milestone: the Landing Site loaded and faded in | room loading; its door caps (yellow, green) and scroll PLM; the rain FX, rain tiles, lightning and the gunship's glow; the gunship (an enemy); the Crateria music's upload; 41 lag frames | `any-zebes-arrival` |
 
 What the stretch never shows: a block that reacts to her (Ceres's rooms have no PLMs, so no
 door caps, crumble, shot or scroll blocks), animated tiles or palette FX in Ceres's rooms, a
 liquid, an item, a message box (its index stays 0), a pause, a death, a sprite object, an enemy
-outside Ceres's three species and the Landing Site's gunship. 454 frames lag, 141 of them before
-the intro.
+outside Ceres's three species. 413 frames lag, 141 of them before the intro.
 
 **What the milestone needs**, each item for what the stretch shows of it:
 
@@ -371,44 +372,43 @@ the intro.
 | S4 | her knockback: Ridley's five hits, the intro's one; no bomb |
 | CAM | the view in every room; while the mode 7 flag is set (the shaft, Ridley's getaway) the BG scroll doesn't follow it |
 | W1 | her power beam at Ridley, her missiles in the intro's Mother Brain fight |
-| W2 | no reacting block: only the PLM runner's pieces the stretch spawns: the timer that enables sounds, the escape shaft's door turned to solid blocks (its boss-dead state's set-up), and the Landing Site's door caps and scroll PLM drawn at its load |
+| W2 | no reacting block: only the PLM runner's pieces the stretch spawns: the timer that enables sounds and the escape shaft's door turned to solid blocks (its boss-dead state's set-up) |
 | C1, A2 | the enemy framework (process, draw, contact, her shots' hits) and the enemy projectile runner, over Ceres's species and projectiles; their importers |
 | B8 | Ceres's own species and projectiles: Ceres Ridley and the getaway, the Ceres doors (and the shaft's platform), steam, the elevator pad, the falling debris, the dust; the shaft's rotation |
 | H1, H2 | her energy as Ridley hurts her; the HUD, the mini-map switched off, the escape's timer |
 | P1, P2 | Ceres's boss defeated and the boss-dead room states; SRAM at boot, the new file, the new game and Ceres's end |
-| R1, R2 | ten door passages and their lag; loading every room, the shaft at the new game and the Landing Site; no elevator ride |
-| R3 | quakes (Ridley's room, every escape room); the FX types of the shaft, Ridley's room and the haze; the Landing Site's rain |
-| R4 | the palette FX runner, which the title, the intro and both flights use; the Landing Site's rain tiles, lightning and the gunship's glow. Ceres's rooms have neither |
+| R1, R2 | ten door passages and their lag; loading every Ceres room, the shaft at the new game included; no elevator ride |
+| R3 | quakes (Ridley's room, every escape room); the FX types of the shaft, Ridley's room and the haze |
+| R4 | the palette FX runner, which the title, the intro and both flights use; no animated tiles, and Ceres's rooms have no palette FX |
 | F2 | boot, the title, file select, the start menu and the intro, its demo input included |
-| F4 | the flight to Ceres, the elevator's end, Ceres goes boom, the flight to Zebes, the gunship at the Landing Site |
-| U1 | the `apu` stream holds the CPU side of every exchange, the driver's uploads included (more than 400,000 port writes over the stretch), so the driver's replies must be reproduced, not only the requests |
+| F4 | the flight to Ceres, the elevator's end, Ceres goes boom, the flight to Zebes |
+| U1 | the `apu` stream holds the CPU side of every exchange, the driver's uploads included (411,621 port writes over the stretch), so the driver's replies must be reproduced, not only the requests |
 | E1, E2, A1 | sprites, tile writes, instruction lists as assets (PLM, enemy, projectile, palette FX, HDMA and cinematic object lists) |
 | E3, E4 | HDMA objects in every stretch but boot, the shaft's and Ridley room's mode switch per line; mode 7 in the title, both flights, the shaft, Ridley's getaway and the explosion |
-| T1 | 454 lag frames: with nothing fed back, the recorded NMI timing can't stand in |
+| T1 | 413 lag frames: with nothing fed back, the recorded NMI timing can't stand in |
 | V2 | the whole-movie run: one free run from power-on, compared at sparse checkpoints, then dense ones |
 
 Not needed for it: S3, S6, S7, W3, H3, F1, F3, the enemy families and the other bosses (Ceres
-Ridley shares Ridley's code; B9 may reuse B8's model, not the reverse). The last 231 frames
-(15,197-15,427) alone pull in the Landing Site's content: W2's door caps and scroll PLM, R3's
-rain, R4's room objects and the gunship. `tools report` shows the milestone as the README's first
-row, from `[milestone]` in [domains.toml](domains.toml): the stretch's frames, how many the engine
-plays alone today and which of these items are not done.
+Ridley shares Ridley's code; B9 may reuse B8's model, not the reverse). The Landing Site's
+content is the next milestone's: W2's door caps and scroll PLM, R3's rain, R4's rain tiles,
+lightning and the gunship's glow, F4's gunship. `tools report` shows the milestone as the
+README's first row, from `[milestone]` in [domains.toml](domains.toml): the stretch's frames, how
+many the engine plays alone today and which of these items are not done.
 
 **The milestone's order of work.** Each night picks the first step whose prerequisites hold.
 
-1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,427) are recorded
+1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,195) are recorded
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock
-   covers the whole stretch, one row run from its own seed at a time.
-2. Ceres's play, 8,538-13,235 (4,698 frames, 30%): the in-progress Samus, camera, HUD and
+   covers the whole stretch, one row run from its own seed at a time. `any-zebes-arrival`
+   (15,196-15,427) locks the Landing Site's load, the next milestone's first row.
+2. Ceres's play, 8,538-13,235 (4,698 frames, 31%): the in-progress Samus, camera, HUD and
    progress work; then R1 with R2, A1 and A2, C1 with its projectile runner, B8 (the Ceres doors
    first, in every room), H1 with S4, W1's power beam, R3's FX and quakes, E3's mode switch and
    E4's shaft. Each lands on Ceres's chain rows.
 3. The run as a whole: T1's lag, U1's driver and uploads, V2's free run with checkpoints.
-4. The cinematics and the front end, 0-8,537 and 13,236-15,196 (10,729 frames, 70%; the intro
-   alone is 45%): F4's flights and explosion, F2's boot, title, file select and intro (its demo
+4. The cinematics and the front end, 0-8,537 and 13,236-15,195 (10,498 frames, 69%; the intro
+   alone is 46%): F4's flights and explosion, F2's boot, title, file select and intro (its demo
    scenes reuse S1, S5 and W1), R4's palette FX runner, P2's four SRAM writes.
-5. The Landing Site's load, 15,197-15,427: R2 for its room, W2's door caps and scroll PLM, R3's
-   rain, R4's tiles and lightning, F4's gunship.
 
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).

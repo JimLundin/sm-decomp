@@ -554,7 +554,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 
 ### The any% movie
 
-129,712 frames, 206 rows of the lock.
+129,712 frames, 207 rows of the lock.
 
 | Track | Frames covered | Share of the movie |
 | --- | ---: | ---: |

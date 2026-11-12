@@ -1688,21 +1688,21 @@ streams.wram = ["c210d15aaa6979ee"]
 id = "chain-any-0011-DF45"
 start = "any-boundary:11"
 seed_record = "e7543f6624f5051f0049470600e2f7926c81732fdd42b9cf65e7cdcae3b4cbfd"
-pads = "bf4ebc08edce602e2cad410cfe215325b226b1f6c3d0801d449d70c24b2e0d87"
-frames = 2356
-ticks = 2161
-overruns = ["239-240", "251-280", "282", "306-332", "1005-1013", "2163", "2201-2236", "2314"]
-nmi_off = ["281", "2124-2162", "2184", "2241-2287"]
-facts = { "room:91F8" = "unevaluated" }
-streams.vram = ["a726ed8d6c89b15b", "d2e013c7c4846fdf", "787cfc46ef2912b1"]
-streams.cgram = ["7d35dc9660e37153", "9a61ce8035090544", "ea32e6d3e91e3d99"]
-streams.oam = ["1b25aa9e1f9e823c", "18d5ba568fc165b5", "fd2f59d329c625a3"]
-streams.sram = ["921c721deef8ebcc", "698b652c7db0483f", "15feb789dc0f4f36"]
-streams.ppu = ["b13f10030bd8762d", "340344af1af5d664", "3c54f727eed15fe5"]
-streams.apu = ["58f74601371f8c31", "56bb1f971bcdf7eb", "104f47a2db648078"]
-streams.video = ["7f309e08340316aa", "075a239a4781b2b8", "b1a765ddf8899cef"]
-streams.timing = ["1624cacc6418e5f2", "edbf33f16846b773", "3bc14e5860d5707a"]
-streams.wram = ["ea92834c3fc7660e", "c3fa4b644afb0ddb", "88ef5df544aa71f2"]
+pads = "790ece114a15f6adfa8964d3af8e6f961ff4e25238df8a90399e1dbb74f1a43c"
+frames = 2124
+ticks = 2054
+overruns = ["239-240", "251-280", "282", "306-332", "1005-1013"]
+nmi_off = ["281"]
+facts = { "state:6" = "unevaluated" }
+streams.vram = ["a726ed8d6c89b15b", "d2e013c7c4846fdf", "a34518e71873cfd7"]
+streams.cgram = ["7d35dc9660e37153", "9a61ce8035090544", "4006d900cf058271"]
+streams.oam = ["1b25aa9e1f9e823c", "18d5ba568fc165b5", "42986d186c6e3c5d"]
+streams.sram = ["921c721deef8ebcc", "698b652c7db0483f", "b3648fd645e5f02e"]
+streams.ppu = ["b13f10030bd8762d", "340344af1af5d664", "d523e4c3c635c04d"]
+streams.apu = ["58f74601371f8c31", "56bb1f971bcdf7eb", "db78e9e7eed76d85"]
+streams.video = ["7f309e08340316aa", "075a239a4781b2b8", "70ee5c120cfbff47"]
+streams.timing = ["1624cacc6418e5f2", "edbf33f16846b773", "636ce534d752d62b"]
+streams.wram = ["ea92834c3fc7660e", "c3fa4b644afb0ddb", "c9f25e43a9f9bf71"]
 
 [[row]]
 id = "chain-any-0023-975C"
@@ -13020,3 +13020,23 @@ streams.apu = ["06ee6a604173a66e"]
 streams.video = ["e32a59ec6bf25fb7"]
 streams.timing = ["66ae4287d8215d50"]
 streams.wram = ["bd226e1224b3c69a"]
+
+[[row]]
+id = "any-zebes-arrival"
+start = "any-opening:7"
+seed_record = "2e96c27cf94443b54014aa57c1b6bd35c1797e1ea1ac3e21581ccaa8bfcabcfa"
+pads = "34bd9857f31d208287b90825a3466c497c0735af9b40ac203351ad9e04e55411"
+frames = 232
+ticks = 107
+overruns = ["39", "77-112", "190"]
+nmi_off = ["0-38", "60", "117-163"]
+facts = { "room:91F8" = "unevaluated" }
+streams.vram = ["a81c2f3ff8e2c2fd"]
+streams.cgram = ["fc2dd6409f0df4ce"]
+streams.oam = ["3bbc661cbead28fd"]
+streams.sram = ["108d2f0d1bb71067"]
+streams.ppu = ["f91a8392c2c3d38d"]
+streams.apu = ["bdd62a02fba943c9"]
+streams.video = ["99fc348b4b4177fe"]
+streams.timing = ["92b0419ef3a7ba70"]
+streams.wram = ["9d2d39a12d2a920b"]

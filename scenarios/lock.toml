@@ -6,7 +6,7 @@
 
 bundles = [
     { name = "CONNECT-e5c5a415-9.tar.gz.enc", sha256 = "fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501" },
-    { name = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", sha256 = "5d7255b888f6ac477eacfb4352d650b948d32dc3a229d408eb1e9fe9dae503e2" },
+    { name = "ceres-v2-688e084d18f804f2.tar.gz.enc", sha256 = "18827e495fa9462f507993f6bd79706beb20cbdebfc3c873389d84c566cc428a" },
     { name = "coverage-v1-metroid-botwoon-82d7b3c1a2ef44f5.tar.gz.enc", sha256 = "82d7b3c1a2ef44f523c8177d760e4cfd07117813fc0b98f0177916a2be8e6449" },
     { name = "coverage-v2-metroid-interactions.tar.gz.enc", sha256 = "851545e4084779da2b662a4311c681a45d303bb66176dbd5fffbf09a68140d1b" },
     { name = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", sha256 = "5d139284193bc61443855b0fa82128abf44e66f2ad03a7dd5360bbbbef582f03" },
@@ -45,13 +45,14 @@ bundles = [
     { name = "seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc", sha256 = "9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc" },
 ]
 pins = [
-    { id = "any-ceres-arrival", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-opening:6", inputs = "any-ceres-arrival.inputs", input_sha256 = "98c90b2989a84c7ac744e656d9e0439e945c1bbe5122f5b4d9a25f0ccac84a17" },
-    { id = "any-fly-to-ceres", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-opening:5", inputs = "any-fly-to-ceres.inputs", input_sha256 = "6a3278770713e7a6b24c4882a89bd9512461961b659598d90b089980cdedcf5b" },
-    { id = "any-intro-0568", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-opening:1", inputs = "any-intro-0568.inputs", input_sha256 = "4bf7af65dc9a068fd93a205b5aa1c173e428ce6495b4caf4002da88d77a016a9" },
-    { id = "any-intro-2219", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-opening:2", inputs = "any-intro-2219.inputs", input_sha256 = "20d7b5982de9c4a11a5c89784affc73ee314b081cfe8d0a673bbee799431a9a9" },
-    { id = "any-intro-4323", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-opening:3", inputs = "any-intro-4323.inputs", input_sha256 = "0b9171bd75b6b011ddc616c57e7cc768d91cb214f3070c96288088c8762042ce" },
-    { id = "any-intro-6012", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-opening:4", inputs = "any-intro-6012.inputs", input_sha256 = "890b1d063cc369a64d40faa6f75847a308d7012d31f9a2cb4eb2047043eb66a9" },
-    { id = "any-power-on", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", inputs = "any-power-on.inputs", input_sha256 = "580259dd5dfea0b940e7130aa9548226d6eecc3e491e1b2ebd4e632b570ccbc1" },
+    { id = "any-ceres-arrival", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:6", inputs = "any-ceres-arrival.inputs", input_sha256 = "98c90b2989a84c7ac744e656d9e0439e945c1bbe5122f5b4d9a25f0ccac84a17" },
+    { id = "any-fly-to-ceres", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:5", inputs = "any-fly-to-ceres.inputs", input_sha256 = "6a3278770713e7a6b24c4882a89bd9512461961b659598d90b089980cdedcf5b" },
+    { id = "any-intro-0568", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:1", inputs = "any-intro-0568.inputs", input_sha256 = "4bf7af65dc9a068fd93a205b5aa1c173e428ce6495b4caf4002da88d77a016a9" },
+    { id = "any-intro-2219", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:2", inputs = "any-intro-2219.inputs", input_sha256 = "20d7b5982de9c4a11a5c89784affc73ee314b081cfe8d0a673bbee799431a9a9" },
+    { id = "any-intro-4323", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:3", inputs = "any-intro-4323.inputs", input_sha256 = "0b9171bd75b6b011ddc616c57e7cc768d91cb214f3070c96288088c8762042ce" },
+    { id = "any-intro-6012", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:4", inputs = "any-intro-6012.inputs", input_sha256 = "890b1d063cc369a64d40faa6f75847a308d7012d31f9a2cb4eb2047043eb66a9" },
+    { id = "any-power-on", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", inputs = "any-power-on.inputs", input_sha256 = "580259dd5dfea0b940e7130aa9548226d6eecc3e491e1b2ebd4e632b570ccbc1" },
+    { id = "any-zebes-arrival", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-opening:7", inputs = "any-zebes-arrival.inputs", input_sha256 = "f4c01487cb00461af9082ef0ddcccf70764e506f78574b8a1c7c4f83378f6c60" },
     { id = "area-brinstar", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:17", inputs = "seed-item-morph-ball.inputs", input_sha256 = "3091dcd8621efbdadf285cb42ba548d3eaae6d96bae5837c19d1f76fbafbb8e8" },
     { id = "area-ceres", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:1", inputs = "seed-area-ceres.inputs", input_sha256 = "5fbf2ad5cc5de49d15c0748cd380980786752ba7fa05bc68b8b42528e5eb647c" },
     { id = "area-crateria", bundle = "seeds-v1-six-3a87864fbffb215a.tar.gz.enc", seed = "100-input-phase:12", inputs = "seed-area-crateria.inputs", input_sha256 = "3d0413b939faefc465e96ea037b4c7a9bdc019cdd975562348be445e6631043d" },
@@ -426,7 +427,7 @@ pins = [
     { id = "chain-any-0008-E021", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:8", inputs = "chain-any-0008.inputs", input_sha256 = "e92f225a71a35e79e52e1db2a0c3871ba3779d85564d7da2944ddf72792e1121" },
     { id = "chain-any-0009-DFD7", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:9", inputs = "chain-any-0009.inputs", input_sha256 = "ffd8e80968504df8544828df1d9ae262f19ca6ee2da788e8d8256d38034f7b95" },
     { id = "chain-any-0010-DF8D", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:10", inputs = "chain-any-0010.inputs", input_sha256 = "8d7864814cf9e6bdcd1c7603291abf498d40446d15b0c3e300dd1ec8980a83f7" },
-    { id = "chain-any-0011-DF45", bundle = "ceres-v1-0bd1741d9a2cc1a5.tar.gz.enc", seed = "any-boundary:11", inputs = "chain-any-0011-DF45.inputs", input_sha256 = "e53ee82d5fab225388186a3eb91be65c19dc44be663aad0ade81f77364d125d5" },
+    { id = "chain-any-0011-DF45", bundle = "ceres-v2-688e084d18f804f2.tar.gz.enc", seed = "any-boundary:11", inputs = "chain-any-0011-DF45.inputs", input_sha256 = "5719d0b5247f5b8f563f2a5265f99da022b3bf7bc1ad396e21265a7e4d54571c" },
     { id = "chain-any-0012-91F8", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:12", inputs = "chain-any-0012.inputs", input_sha256 = "178abd387036794e906600cf723e27499bcfe4dc75503f60317baac33befc578" },
     { id = "chain-any-0013-92FD", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:13", inputs = "chain-any-0013.inputs", input_sha256 = "bb15b6a5070eda08deb090519195a24aee3e925039de4a273727bdad283a28a4" },
     { id = "chain-any-0014-96BA", bundle = "full-route-chain-any-v1-5d139284193bc614.tar.gz.enc", seed = "any-boundary:14", inputs = "chain-any-0014.inputs", input_sha256 = "b28984f878f875425276fc5cda87eface9d1ae3828245918e7c3749c77d0be99" },
@@ -8534,7 +8535,16 @@ ticks = 223
 id = "chain-any-0011-DF45"
 oracle = "faithful"
 start = "seed:fd6b20c48145a8ea381208f8b4ac62fd9db514ee26b85851f079289481e9c339"
-inputs = "e53ee82d5fab225388186a3eb91be65c19dc44be663aad0ade81f77364d125d5"
-frames = 2356
+inputs = "5719d0b5247f5b8f563f2a5265f99da022b3bf7bc1ad396e21265a7e4d54571c"
+frames = 2124
 format = 1
-ticks = 2356
+ticks = 2124
+
+[[scenario]]
+id = "any-zebes-arrival"
+oracle = "faithful"
+start = "seed:2e96c27cf94443b54014aa57c1b6bd35c1797e1ea1ac3e21581ccaa8bfcabcfa"
+inputs = "f4c01487cb00461af9082ef0ddcccf70764e506f78574b8a1c7c4f83378f6c60"
+frames = 232
+format = 1
+ticks = 232

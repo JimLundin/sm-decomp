@@ -1404,3 +1404,11 @@ id = "any-ceres-arrival"
 start = "seed:f7f09b237aed84c3816debd903244aab8086a197667a831e174849c5f30a99ba"
 ticks = 223
 facts = ["room:DF45"]
+
+# Movie frames 15196-15427. The Landing Site loaded and faded in, to seed any:12: the next
+# milestone's first row.
+[[scenario]]
+id = "any-zebes-arrival"
+start = "seed:2e96c27cf94443b54014aa57c1b6bd35c1797e1ea1ac3e21581ccaa8bfcabcfa"
+ticks = 232
+facts = ["room:91F8"]

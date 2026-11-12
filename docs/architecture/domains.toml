@@ -345,14 +345,15 @@ wave = 5
 rounds = 1
 
 # The headline milestone (MODEL §1 decision 14): the engine replays the any% movie from
-# power-on to the frame of its seed any:12, the first room on Zebes, with nothing fed back. The
-# plan items its stretch touches, each for what lsnes showed the stretch running (domains.md §4,
-# with the frames); Ceres's own enemies and enemy projectiles are B8's.
+# power-on to the frame of its seed any-opening:7, after the flight to Zebes and before the
+# Landing Site loads (Jim, 2026-11-12), with nothing fed back. The plan items its stretch
+# touches, each for what lsnes showed the stretch running (domains.md §4, with the frames);
+# Ceres's own enemies and enemy projectiles are B8's.
 
 [milestone]
 name = "Power-on through Ceres"
 movie = "any"
-ends = "any:12"
+ends = "any-opening:7"
 needs = [
     "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "P2", "W1", "W2", "C1", "B8", "R1", "R3",
     "R4", "F2", "F4", "U1", "E1", "E2", "E3", "E4", "A1", "A2", "R2", "T1", "V2",
