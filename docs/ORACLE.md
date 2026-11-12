@@ -293,7 +293,7 @@ them with `verify::decode`, every fact is `"unevaluated"` and doesn't block gree
 | d | record every row twice, compare, merge | done: 635 rows in `lsnes.toml`, 642 with the seven movie rows of `scenes-v1` |
 | e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-e307a7d520ec1ff6`) |
 | f | `verify::lock`: the reader and the per-(row, stream) comparison | done |
-| g | the free-run gate: `tools gate`, ratcheting green pairs | done for `area-brinstar`, `item-morph-ball` |
+| g | the free-run gate: `tools gate`, ratcheting the rows that start and their green pairs | done for `area-brinstar`, `item-morph-ball`; Ceres's `chain-any-0001` to `0011` run and are reported as not starting |
 
 ### Step a1: the cut plan
 

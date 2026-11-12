@@ -567,7 +567,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 ![How much of each movie the checks cover](timeline.svg)
 
-For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's streams that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. A row from power-on covers, from frame 0, the movie its id's first word names. 21 of the lock's rows (25,475 frames) start from power-on or a derived seed in no movie, and are not drawn.
+For each whole movie the lock's rows are cut from, which stretches of its frames each check covers (`verify::report::timeline`, `docs/timeline.svg`), from committed data alone: a row cut from a seed covers the movie from that seed's frame (`movies/room-seeds-<capture>.csv`) for its frames. Per frame a track's cover is from 0 to 1, the most any row gives it: **recorded** and **cached** give a row's frames 1 when the lock holds the row and when the harnesses run it (the rows the floors name); a **model** gives the share of the row's frames its harness floor matches; the **free-run gate** the share of the row's compared streams (all but `wram`) that are green; **lockstep** the share of its Ticks fully equal. The picture shades a stretch by the mean over its frames; the figures are the frames covered, each weighed by its cover, and their share of the movie. A row from power-on covers, from frame 0, the movie its id's first word names. 21 of the lock's rows (25,475 frames) start from power-on or a derived seed in no movie, and are not drawn.
 
 ### The any% movie
 
@@ -620,7 +620,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | samus-movement model matches | 14,015 | 6.3 % |
 | world-blocks model matches | 15,735 | 7.1 % |
 | world-camera model matches | 15,763 | 7.1 % |
-| free-run gate: green streams | 529 | 0.2 % |
+| free-run gate: green streams | 596 | 0.3 % |
 | lockstep: Ticks fully equal | 1,391 | 0.6 % |
 
 ### The Spore Spawn RTA movie
@@ -640,6 +640,26 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | world-camera model matches | 0 | 0.0 % |
 | free-run gate: green streams | 0 | 0.0 % |
 | lockstep: Ticks fully equal | 0 | 0.0 % |
+
+## The ladder
+
+Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/architecture/domains.toml`) over the lock's rows that start inside its stretch. A rung counts every compared stream but those `[[stream]]` gives through work it doesn't need; the milestone counts every one. **Rows start** are the rows the free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); **green pairs** their (row, stream) pairs green over the streams counted; the domain free run's frames are each domain's held frames over the rows (`crates/verify/src/harness/free_floors.txt`), which don't need the gate to start them.
+
+| Rung | Streams counted | Rows | Rows start | Green pairs |
+| --- | --- | ---: | ---: | ---: |
+| M0 | vram, cgram, oam, sram, ppu, timing | 1, 345 frames | 0 of 1 | 0 of 6 |
+| M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 0 of 5 | 0 of 35 |
+| M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 0 of 10 | 0 of 70 |
+
+| Domain free run | M0 | M1 | M2 |
+| --- | ---: | ---: | ---: |
+| game-time | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
+| interface-hud | 181 of 345 (52.5 %) | 744 of 1,624 (45.8 %) | 2,826 of 4,534 (62.3 %) |
+| run-progress | 344 of 345 (99.7 %) | 1,619 of 1,624 (99.7 %) | 4,524 of 4,534 (99.8 %) |
+| samus-appearance | 182 of 345 (52.8 %) | 647 of 1,624 (39.8 %) | 2,581 of 4,534 (56.9 %) |
+| samus-movement | 106 of 345 (30.7 %) | 366 of 1,624 (22.5 %) | 1,694 of 4,534 (37.4 %) |
+| world-blocks | 181 of 345 (52.5 %) | 743 of 1,624 (45.8 %) | 2,825 of 4,534 (62.3 %) |
+| world-camera | 181 of 345 (52.5 %) | 743 of 1,624 (45.8 %) | 2,825 of 4,534 (62.3 %) |
 
 ## Domain graph
 

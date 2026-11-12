@@ -64,15 +64,21 @@ jobs:
       - name: Test the rebuild's content decoders and importers against the ROM
         run: cargo test --locked -p data -p import --no-fail-fast
 
-  # The free-run gate (ARCHITECTURE D22) on the slice-0 rows: each row runs from its seed's
-  # record in the relock bundle on the content read from the ROM, and the job fails when a
-  # (row, stream) pair in scenarios/locks/lsnes.green.txt is no longer green. Never --update
-  # here: the ratchet grows by a commit. `tools` doesn't link the emulator.
+  # The free-run gate (ARCHITECTURE D22) on the slice-0 rows and the ladder's Ceres rows: each
+  # row runs from its seed's record in the relock bundle on the content read from the ROM. A row
+  # the engine can't start yet (a room it doesn't know) is reported as not starting; the job
+  # fails when a row scenarios/locks/lsnes.green.txt holds as starting doesn't start, or a
+  # (row, stream) pair it lists is no longer green. Never --update here: the ratchet grows by a
+  # commit. `tools` doesn't link the emulator.
   free-run-gate:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      ROWS: area-brinstar item-morph-ball
+      ROWS: >-
+        area-brinstar item-morph-ball
+        chain-any-0001-DF45 chain-any-0002-DF8D chain-any-0003-DFD7 chain-any-0004-E021
+        chain-any-0005-E06B chain-any-0006-E0B5 chain-any-0007-E06B chain-any-0008-E021
+        chain-any-0009-DFD7 chain-any-0010-DF8D chain-any-0011-DF45
     steps:
       - uses: actions/checkout@v4
       - *cache
@@ -102,7 +108,7 @@ jobs:
           rm "$RUNNER_TEMP/relock.tar.gz.enc"
       - name: Build tools
         run: cargo build --locked --profile verify -p tools
-      - name: "Free-run gate: slice-0 rows against the green ratchet"
+      - name: "Free-run gate: slice-0 and Ceres rows against the green ratchet"
         run: |
           # shellcheck disable=SC2086 # ROWS is a list of row ids.
           target/verify/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \

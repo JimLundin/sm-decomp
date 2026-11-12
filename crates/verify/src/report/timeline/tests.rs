@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use super::{GATE, Movie, Timeline, Track, percent, runs, seed_frame, start_in_movie};
-use crate::lock::Start;
+use super::{
+    GATE, Movie, Placed, Timeline, Track, per_mille, percent, runs, seed_frame, start_in_movie,
+};
+use crate::lock::{Start, Stream};
 
 fn root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
@@ -88,6 +90,7 @@ fn the_milestone_counts_the_frames_whose_every_stream_is_green() {
             tracks: vec![gate],
         }],
         outside: (0, 0),
+        placed: Vec::new(),
     };
     // Of the first five frames, the two whole ones and the first of the last two.
     assert_eq!(timeline.green_from_start("any", 5), Some(("any%", 3)));
@@ -142,4 +145,63 @@ fn the_any_movie_counts_its_power_on_frames() {
         .first()
         .map(|track| track.cover.iter().take(568).all(|&cover| cover > 0));
     assert_eq!(recorded, Some(true));
+}
+
+#[test]
+fn the_gate_shares_a_rows_green_over_its_compared_streams() {
+    let floors = super::super::floors(
+        &std::fs::read_to_string(root().join(super::super::FLOORS)).unwrap_or_default(),
+    );
+    let Ok(timeline) = floors.and_then(|floors| Timeline::measure(root(), &floors)) else {
+        panic!("the timeline doesn't measure");
+    };
+    let Some(row) = timeline.placed.iter().find(|row| row.id == "area-brinstar") else {
+        panic!("area-brinstar isn't placed");
+    };
+    // wram is recorded but never compared, so a row whose compared streams are all green
+    // covers its frames whole.
+    assert!(!row.compared.contains(&Stream::Wram));
+    let share = |count: usize| u64::try_from(count).unwrap_or_default();
+    let cover = timeline
+        .movies
+        .iter()
+        .find(|movie| movie.key == row.movie)
+        .and_then(|movie| movie.tracks.iter().find(|track| track.label == GATE))
+        .and_then(|track| track.cover.get(row.start))
+        .copied();
+    assert_eq!(
+        cover.map(u32::from),
+        Some(per_mille(share(row.green.len()), share(row.compared.len())))
+    );
+}
+
+#[test]
+fn a_rung_plays_alone_where_its_counted_streams_are_green() {
+    let row = |start: usize, compared: &[Stream], green: &[Stream]| Placed {
+        id: String::from("r"),
+        movie: String::from("any"),
+        start,
+        frames: 4,
+        starts: true,
+        compared: compared.iter().copied().collect(),
+        green: green.iter().copied().collect(),
+    };
+    let timeline = Timeline {
+        movies: Vec::new(),
+        outside: (0, 0),
+        placed: vec![
+            row(0, &[Stream::Vram, Stream::Video], &[Stream::Vram]),
+            row(3, &[Stream::Vram], &[]),
+            row(8, &[Stream::Video], &[]),
+        ],
+    };
+    let every = |_: Stream| true;
+    let without_video = |stream: Stream| stream != Stream::Video;
+    // The first row is green on vram alone: whole only when video doesn't count.
+    assert_eq!(timeline.alone_in("any", 0..10, every), Some(0));
+    assert_eq!(timeline.alone_in("any", 0..10, without_video), Some(4));
+    assert_eq!(timeline.alone_in("any", 2..10, without_video), Some(2));
+    // A row with no stream counted plays nothing alone.
+    assert_eq!(timeline.alone_in("any", 8..12, without_video), Some(0));
+    assert_eq!(timeline.alone_in("100", 0..10, every), None);
 }

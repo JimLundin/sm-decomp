@@ -2,15 +2,18 @@
 //! named rows. Each row starts from its seed's record in the relock bundle's directory
 //! `BUNDLE` (`seeds/<capture>/NNNN.record`), with `BUNDLE/pads/ROW.pads` checked against the
 //! row's pin, and runs on the content read from `ROM`. It prints every (row, stream) outcome
-//! and the row's green status, fails when a pair the ratchet file `GREEN` lists isn't green,
-//! and with `--update` adds the new green pairs to it.
+//! and the row's green status. A row the engine can't start (a seed in a room, with a species or
+//! in a game state it doesn't know, or a start the gate doesn't run from) prints why and the
+//! gate goes on to the next. It fails when a row the ratchet file `GREEN` holds as starting
+//! doesn't start or a pair it lists isn't green, never for a row that never started, and with
+//! `--update` adds the new rows that start and the new green pairs to it.
 
 use std::fmt::Write as _;
 use std::path::Path;
 use std::sync::Arc;
 
 use verify::bundle::{RowInputs, content, rooms};
-use verify::gate::{Ratchet, free_run};
+use verify::gate::{Ratchet, Stop, free_run};
 use verify::lock::{Lock, Outcome, RowId, Side};
 
 pub const USAGE: &str = "tools gate LOCK BUNDLE ROM GREEN [--update] ROW...";
@@ -50,13 +53,28 @@ pub fn run(args: &[String]) -> Result<String, String> {
     let rooms = rooms(&content, &image).map_err(|error| format!("{rom}: {error:?}"))?;
     let mut out = String::new();
     let mut reports = Vec::new();
+    let mut not_started = Vec::new();
     for id in rows {
         let row = lock
             .row(&RowId(id.clone()))
             .ok_or_else(|| format!("{id}: not in the lock"))?;
-        let inputs =
-            RowInputs::read(Path::new(bundle), row, &rooms).map_err(|error| error.to_string())?;
+        let inputs = match RowInputs::read(Path::new(bundle), row, &rooms) {
+            Ok(inputs) => inputs,
+            Err(error) => {
+                let why = error
+                    .why_it_cannot_start()
+                    .ok_or_else(|| error.to_string())?;
+                let _ = writeln!(out, "{id}: doesn't start: {why}");
+                not_started.push(row.id.clone());
+                continue;
+            }
+        };
         let run = free_run(row, inputs.seed, &inputs.pads, &content);
+        if let Some(Stop::Open(error)) = run.stop {
+            let _ = writeln!(out, "{id}: doesn't start: {error:?}");
+            not_started.push(row.id.clone());
+            continue;
+        }
         let green = if run.report.green() { "yes" } else { "no" };
         let _ = writeln!(out, "{id}: {} frames, green {green}", run.frames.0);
         if let Some(stop) = run.stop {
@@ -67,21 +85,38 @@ pub fn run(args: &[String]) -> Result<String, String> {
         }
         reports.push(run.report);
     }
-    let regressions = ratchet.regressions(&reports);
     let grown = ratchet.grown(&reports);
+    for row in ratchet.new_starts(&reports) {
+        let _ = writeln!(out, "new row that starts: {row}");
+    }
     for (row, stream) in ratchet.new_pairs(&reports) {
         let _ = writeln!(out, "new green pair: {row} {stream}");
     }
-    if !regressions.is_empty() {
-        let pairs: Vec<String> = regressions
-            .iter()
-            .map(|(row, stream)| format!("{row} {stream}"))
-            .collect();
-        return Err(format!("{out}green pairs turned red: {}", pairs.join(", ")));
+    let failures: Vec<String> = ratchet
+        .lost_starts(&not_started)
+        .iter()
+        .map(|row| format!("{row} doesn't start"))
+        .chain(
+            ratchet
+                .regressions(&reports)
+                .iter()
+                .map(|(row, stream)| format!("{row} {stream}")),
+        )
+        .collect();
+    if !failures.is_empty() {
+        return Err(format!(
+            "{out}the ratchet's rows and green pairs lost: {}",
+            failures.join(", ")
+        ));
     }
     if update && grown != ratchet {
         std::fs::write(green, grown.to_string()).map_err(|error| format!("{green}: {error}"))?;
-        let _ = writeln!(out, "{green}: {} green pairs", grown.pairs.len());
+        let _ = writeln!(
+            out,
+            "{green}: {} rows that start, {} green pairs",
+            grown.started.len(),
+            grown.pairs.len()
+        );
     }
     Ok(out)
 }

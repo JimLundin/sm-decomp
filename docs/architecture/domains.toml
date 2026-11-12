@@ -583,3 +583,15 @@ needs = [
     "S1", "S2", "S4", "S5", "CAM", "H1", "H2", "P1", "W1", "W2", "C1", "B8", "R1", "R2", "R3",
     "E1", "E2", "E3", "E4", "A1", "AF0", "AF1", "AF2", "AF3", "AF4a", "AF5", "V3",
 ]
+
+# The streams a rung counts only when it needs the work that gives the engine them: the shown
+# picture comes with the line program (E3), the APU port log with the sound requests (U1). A rung
+# without that work is measured on the other compared streams; the milestone needs every stream.
+
+[[stream]]
+name = "video"
+given_by = "E3"
+
+[[stream]]
+name = "apu"
+given_by = "U1"

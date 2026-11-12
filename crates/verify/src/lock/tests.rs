@@ -323,3 +323,18 @@ fn the_committed_lsnes_lock_reads() {
     assert!(lock.row(&RowId("area-brinstar".to_owned())).is_some());
     assert!(lock.row(&RowId("item-morph-ball".to_owned())).is_some());
 }
+
+#[test]
+fn a_rows_compared_streams_leave_out_wram_and_what_the_lock_lacks() {
+    let lock = fixture();
+    let [alpha, beta] = lock.rows.as_slice() else {
+        panic!("two rows");
+    };
+    let compared: Vec<Stream> = alpha.compared_streams().collect();
+    assert_eq!(compared.len(), 8);
+    assert!(!compared.contains(&Stream::Wram));
+    // beta's video is absent from the lock, so it can't be green and doesn't count.
+    let compared: Vec<Stream> = beta.compared_streams().collect();
+    assert_eq!(compared.len(), 7);
+    assert!(!compared.contains(&Stream::Video));
+}

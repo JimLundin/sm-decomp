@@ -17,26 +17,37 @@ to; the run and its checkpoints are platform work V2 of the [plan](architecture/
 The README's first row is generated from `[milestone]` in `docs/architecture/domains.toml`: the
 stretch's frames, those the engine plays alone today, and the plan items still needed. Under it,
 the ladder's rungs (`[[rung]]`, MODEL §1 decision 18) give the same three figures for shorter
-stretches of the movie, Ceres first. Until the
-whole run exists, "plays alone" counts the stretch's frames inside rows of the movie whose every
-stream the free-run gate holds green, each row run from its own seed. The checks below serve it.
-[domains.md §4](architecture/domains.md#4-order) holds the stretch: its frame ranges, what each
-one runs, the lock rows that cover every frame of it and the order of work toward it. The
-`any-power-on` row starts from power-on, as the movie does, so the timeline places it at the
-movie's frame 0 (a power-on row belongs to the movie its id's first word names); its 568 frames
-count once the gate runs it, which today runs only from seeds.
+stretches of the movie, Ceres first. Until the whole run exists, "plays alone" counts the
+stretch's frames inside rows of the movie whose every compared stream (all but `wram`, which is
+recorded, never compared) the free-run gate holds green, each row run from its own seed. A row
+the gate can't start yet (a room, species or game state the engine doesn't know) is reported as
+not starting and counts toward no pair.
+
+A rung counts only the streams its needs claim: `video` once it needs the line program (E3),
+`apu` once it needs the sound requests (U1), as `[[stream]]` in `domains.toml` lists them; a rung
+without that work is measured on the other compared streams. The milestone needs every stream.
+Beside "plays alone", each rung shows figures that move before it is reached, over the lock's
+rows that start inside its stretch: the rows the free-run gate starts, their green (row, stream)
+pairs over the streams the rung counts, and the frames of them the domain free run holds
+(`free_floors.txt`), for the domain that holds the fewest; the report's
+[ladder section](REPORT.md#the-ladder) gives every domain. The checks below serve the milestone
+and its rungs. [domains.md §4](architecture/domains.md#4-order) holds the stretch: its frame
+ranges, what each one runs, the lock rows that cover every frame of it and the order of work
+toward it. The `any-power-on` row starts from power-on, as the movie does, so the timeline
+places it at the movie's frame 0 (a power-on row belongs to the movie its id's first word names);
+its 568 frames count once the gate runs it, which today runs only from seeds.
 
 ## The ratchets and floors
 
 | File | Holds | Checked by |
 | --- | --- | --- |
 | `scenarios/locks/lockstep.ratchet.txt` | per row, Ticks fully equal in lockstep, and per field group the differing Ticks and first frame | CI `verify / lockstep-ratchet` |
-| `scenarios/locks/lsnes.green.txt` | the free-run gate's green (row, stream) pairs against `scenarios/locks/lsnes.toml` | CI `verify / free-run-gate` |
+| `scenarios/locks/lsnes.green.txt` | the rows the free-run gate starts (`ROW starts`) and its green (row, stream) pairs, against `scenarios/locks/lsnes.toml` | CI `verify / free-run-gate` |
 | `crates/verify/src/harness/floors.txt` | per domain harness and row, the frames matched on every unmasked field | `verify`'s harness tests, over the rows cached in `SM_CACHE` |
 | `crates/verify/src/harness/free_floors.txt` | per domain and row, the frames its free run holds from its seeds | `every_domain_runs_free_against_the_cache`, over the rows cached in `SM_CACHE` |
 
-Fully equal counts must not fall, differing counts must not rise, green pairs never go, and no
-harness row falls below its floor.
+Fully equal counts must not fall, differing counts must not rise, a row that starts keeps
+starting, green pairs never go, and no harness row falls below its floor.
 
 Each command needs the ROM (`rom/sm.smc`) and data from ci-data, decrypted as
 [ORACLE §7](ORACLE.md#7-data-the-rom-bundles-and-the-cipher) shows: `BUNDLE` is the relock bundle's

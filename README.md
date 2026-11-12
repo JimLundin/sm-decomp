@@ -17,15 +17,15 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 | --- | ---: | ---: | --- |
 | **Power-on through Ceres**, the any% movie from power-on | 15,196 | 0 (0.0 %) | 33 of 33: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, P2, W1, C1, B8, R1, R3, R4, F2, F4, U1, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, R2, T1, V2 (not started) |
 
-The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every stream the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
+The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every compared stream (all but `wram`) the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
 
-The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter stretches of the same movie, each played alone from its first seed, in the order the work reaches them. A rung is reached when the engine plays every frame of it alone.
+The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter stretches of the same movie, each played alone from its first seed, in the order the work reaches them. A rung is reached when the engine plays every frame of it alone, counted over the streams the rung claims: `video` only once it needs the line program, `apu` only once it needs the sound requests. Until then, over the lock's rows that start inside it: the rows the free-run gate starts, their green (row, stream) pairs over those streams, and the frames of them the domain free run holds for the domain that holds the fewest ([the report's ladder](docs/REPORT.md#the-ladder)).
 
-| Rung | Stretch | Frames | The engine plays alone | Still needed |
-| --- | --- | ---: | ---: | --- |
-| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 18 of 18: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
-| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 22 of 22: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
-| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held | Still needed |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 0 of 1 | 0 of 6 | 30.7 % (samus-movement) | 18 of 18: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 0 of 5 | 0 of 35 | 22.5 % (samus-movement) | 22 of 22: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 0 of 10 | 0 of 70 | 37.4 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
 Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 30 have not started. **47 rounds** have landed on 6 models; the plan estimates 157 rounds for the whole game.
 

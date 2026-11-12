@@ -57,6 +57,8 @@ const TOKENS_PER_LINE: usize = 6;
 const SHARED_FLAG: usize = 25;
 /// The harness floors, per domain and row.
 const FLOORS: &str = "crates/verify/src/harness/floors.txt";
+/// The domain free run's floors, per domain and row: the frames each domain holds fed its own State.
+const FREE_FLOORS: &str = "crates/verify/src/harness/free_floors.txt";
 /// The harnesses' oracle coverage over every row, per domain and catalogue entry.
 const COVERAGE: &str = "crates/verify/src/harness/coverage.txt";
 /// The crate of types the clean models share.
@@ -629,8 +631,8 @@ fn floors(text: &str) -> Result<BTreeMap<(String, String), usize>, String> {
                 [domain, row, frames] => frames
                     .parse()
                     .map(|frames| (((*domain).to_owned(), (*row).to_owned()), frames))
-                    .map_err(|e| format!("{FLOORS}: {line}: {e}")),
-                _ => Err(format!("{FLOORS}: {line}: not `domain row frames`")),
+                    .map_err(|e| format!("{line}: {e}")),
+                _ => Err(format!("{line}: not `domain row frames`")),
             },
         )
         .collect()
@@ -776,6 +778,8 @@ struct Tree {
     sources: structure::Sources,
     /// The movies' cover by the checks.
     timeline: timeline::Timeline,
+    /// The ladder's rungs, measured.
+    rungs: Vec<status::RungFigures>,
     floors: BTreeMap<(String, String), usize>,
     coverage: BTreeMap<String, Coverage>,
     /// The whole-game plan, checked against the rebuilt domains.
@@ -808,13 +812,18 @@ impl Tree {
         let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
         let rebuilt = names.iter().copied().collect();
         let plan = status::Plan::parse(&read(&root.join(status::PLAN))?, &rebuilt)?;
-        let floors = floors(&read(&root.join(FLOORS))?)?;
+        let free_floors =
+            floors(&read(&root.join(FREE_FLOORS))?).map_err(|e| format!("{FREE_FLOORS}: {e}"))?;
+        let floors = floors(&read(&root.join(FLOORS))?).map_err(|e| format!("{FLOORS}: {e}"))?;
+        let timeline = timeline::Timeline::measure(root, &floors)?;
+        let rungs = status::rungs(root, &plan, &timeline, &free_floors)?;
         Ok(Self {
             shared_files,
             domains,
             engine,
             sources: structure::Sources::read(root, &names)?,
-            timeline: timeline::Timeline::measure(root, &floors)?,
+            timeline,
+            rungs,
             floors,
             coverage: coverage(&read(&root.join(COVERAGE))?)?,
             plan,
@@ -884,6 +893,7 @@ fn report(tree: &Tree) -> String {
     coverage_section(&mut out, domains, &tree.coverage);
     engine_section(&mut out, tree);
     tree.timeline.section(&mut out);
+    status::ladder_section(&mut out, tree);
     status::graph_section(&mut out, &tree.plan);
     structure::section(&mut out, tree);
     out

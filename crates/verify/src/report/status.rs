@@ -21,10 +21,10 @@ mod graph;
 
 pub(super) use graph::{section as graph_section, undeclared};
 
-use super::timeline::{percent, seed_frame};
+use super::timeline::{Timeline, percent, seed_frame};
 use super::{COMMAND, Tree, fit, grouped, or_dash, read, table};
 use crate::gate::Ratchet;
-use crate::lock::{Lock, RowId};
+use crate::lock::{Lock, RowId, Stream};
 use crate::ratchet;
 
 /// The whole-game plan as data, from the repository root.
@@ -47,6 +47,33 @@ pub(super) struct Plan {
     /// The ladder of rungs toward the milestone, in order.
     #[serde(default)]
     rung: Vec<Rung>,
+    /// The streams a rung counts only when it needs the work that gives the engine them.
+    #[serde(default)]
+    stream: Vec<StreamClaim>,
+}
+
+/// A compared stream the engine gives only once a plan item is done: a rung counts it when its
+/// needs hold that item and is measured on the other streams when they don't (the root,
+/// 2026-11-12). The milestone needs every stream.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StreamClaim {
+    /// The stream's name in the lock.
+    name: String,
+    /// The plan id of the work that gives the engine the stream.
+    given_by: String,
+}
+
+impl Plan {
+    /// Whether rung `rung` counts `stream`: every compared stream but one a [`StreamClaim`]
+    /// gives through work the rung doesn't need.
+    fn claims(&self, rung: &Rung, stream: Stream) -> bool {
+        stream.compared()
+            && !self
+                .stream
+                .iter()
+                .any(|claim| claim.name == stream.name() && !rung.needs.contains(&claim.given_by))
+    }
 }
 
 /// A rung of the ladder toward the headline milestone: a shorter stretch of its movie, between
@@ -288,6 +315,17 @@ impl Plan {
             seed(&rung.starts)?;
             seed(&rung.ends)?;
         }
+        for claim in &plan.stream {
+            if !Stream::try_from(claim.name.as_str()).is_ok_and(Stream::compared) {
+                return Err(format!("{PLAN}: {} is not a compared stream", claim.name));
+            }
+            if plan.stage_of(&claim.given_by).is_none() {
+                return Err(format!(
+                    "{PLAN}: {} is given by {}, which the plan lacks",
+                    claim.name, claim.given_by
+                ));
+            }
+        }
         Ok(plan)
     }
 
@@ -397,7 +435,7 @@ pub(super) fn status(root: &Path, tree: &Tree) -> Result<String, String> {
     );
     out.push_str("\n## Where it stands\n");
     milestone(&mut out, root, plan, tree)?;
-    ladder(&mut out, root, plan, tree)?;
+    ladder(&mut out, tree);
     headline(&mut out, plan);
     let _ = write!(
         out,
@@ -451,61 +489,261 @@ fn milestone(out: &mut String, root: &Path, plan: &Plan, tree: &Tree) -> Result<
         "\nThe headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), \
          decision 14): the engine replays the stretch from power-on with nothing fed back, every \
          compared cut and byte matching. Until it does, the frames it plays alone are those \
-         inside the movie's rows whose every stream the free-run gate holds green, each row run \
-         from its own seed. Still needed are the plan's domains and platform work the stretch \
+         inside the movie's rows whose every compared stream (all but `wram`) the free-run gate \
+         holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch \
          touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.\n",
     );
     Ok(())
 }
 
+/// A rung measured: its stretch, the frames of it the engine plays alone, and, over the lock's
+/// rows that start inside it, what the free-run gate and the domain free run hold of them.
+pub(super) struct RungFigures {
+    id: String,
+    name: String,
+    /// The stretch's first movie frame and the frame after its last.
+    span: (usize, usize),
+    /// Of the stretch's frames, those inside rows whose every stream it counts is green.
+    alone: usize,
+    /// The plan items it needs that are not done.
+    still: String,
+    /// The streams it counts that its rows' locks hold.
+    claimed: BTreeSet<Stream>,
+    /// Its rows, and those the free-run gate starts.
+    rows: usize,
+    started: usize,
+    /// Of its rows' (row, stream) pairs over the streams it counts, the green and all.
+    green: usize,
+    pairs: usize,
+    /// Its rows' frames.
+    frames: u64,
+    /// Per domain, the frames its free run holds over the rows.
+    held: BTreeMap<String, u64>,
+}
+
+impl RungFigures {
+    /// The domain whose free run holds the fewest of the rows' frames, and those frames.
+    fn least_held(&self) -> Option<(&str, u64)> {
+        self.held
+            .iter()
+            .min_by_key(|(_, held)| **held)
+            .map(|(domain, held)| (domain.as_str(), *held))
+    }
+}
+
+/// Each rung of the plan measured against the tree at `root`: the timeline's rows and green
+/// frames and the domain free run's floors `free_floors`, by (domain, row).
+///
+/// # Errors
+///
+/// The path and the error when a rung's seeds aren't in their captures, or it ends before it
+/// starts.
+pub(super) fn rungs(
+    root: &Path,
+    plan: &Plan,
+    timeline: &Timeline,
+    free_floors: &BTreeMap<(String, String), usize>,
+) -> Result<Vec<RungFigures>, String> {
+    let domains: BTreeSet<&str> = free_floors
+        .keys()
+        .map(|(domain, _)| domain.as_str())
+        .collect();
+    plan.rung
+        .iter()
+        .map(|rung| {
+            let (start_capture, start_index) = seed(&rung.starts)?;
+            let (end_capture, end_index) = seed(&rung.ends)?;
+            let start = seed_frame(root, start_capture, start_index)?;
+            let end = seed_frame(root, end_capture, end_index)?;
+            if end <= start {
+                return Err(format!(
+                    "{PLAN}: {} ends at frame {end}, not after its start {start}",
+                    rung.id
+                ));
+            }
+            let movie = &plan.milestone.movie;
+            let alone = timeline
+                .alone_in(movie, start..end, |stream| plan.claims(rung, stream))
+                .ok_or_else(|| {
+                    format!("{PLAN}: the milestone's movie {movie} has no row of the lock")
+                })?;
+            let rows: Vec<_> = timeline.rows_in(movie, start..end).collect();
+            let counted = |row: &&super::timeline::Placed| -> Vec<Stream> {
+                row.compared
+                    .iter()
+                    .copied()
+                    .filter(|stream| plan.claims(rung, *stream))
+                    .collect()
+            };
+            let (green, pairs) = rows.iter().fold((0_usize, 0_usize), |(green, pairs), row| {
+                let counted = counted(row);
+                let green_here = counted
+                    .iter()
+                    .filter(|stream| row.green.contains(stream))
+                    .count();
+                (
+                    green.saturating_add(green_here),
+                    pairs.saturating_add(counted.len()),
+                )
+            });
+            let held = domains
+                .iter()
+                .map(|domain| {
+                    let held = rows
+                        .iter()
+                        .filter_map(|row| free_floors.get(&((*domain).to_owned(), row.id.clone())))
+                        .map(|&held| u64::try_from(held).unwrap_or_default())
+                        .fold(0_u64, u64::saturating_add);
+                    ((*domain).to_owned(), held)
+                })
+                .collect();
+            Ok(RungFigures {
+                id: rung.id.clone(),
+                name: rung.name.clone(),
+                span: (start, end),
+                alone,
+                still: plan.still_needed(&rung.needs),
+                claimed: rows.iter().flat_map(counted).collect(),
+                rows: rows.len(),
+                started: rows.iter().filter(|row| row.starts).count(),
+                green,
+                pairs,
+                frames: rows
+                    .iter()
+                    .map(|row| row.frames)
+                    .fold(0_u64, u64::saturating_add),
+                held,
+            })
+        })
+        .collect()
+}
+
+/// `n` grouped, or as it is when it doesn't fit a `usize`.
+fn figure(n: u64) -> String {
+    usize::try_from(n).map_or_else(|_| n.to_string(), grouped)
+}
+
+/// `part` of `whole` as a percentage, for frame counts.
+fn share(part: u64, whole: u64) -> String {
+    percent(
+        usize::try_from(part).unwrap_or(usize::MAX),
+        usize::try_from(whole).unwrap_or(usize::MAX),
+    )
+}
+
 /// The ladder toward the milestone: each rung's stretch, the frames of it the engine plays
-/// alone today and the plan items it still needs.
-fn ladder(out: &mut String, root: &Path, plan: &Plan, tree: &Tree) -> Result<(), String> {
-    if plan.rung.is_empty() {
-        return Ok(());
+/// alone today, what the free-run gate and the domain free run hold of its rows, and the plan
+/// items it still needs.
+fn ladder(out: &mut String, tree: &Tree) {
+    if tree.rungs.is_empty() {
+        return;
     }
     out.push_str(
         "\nThe ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter \
          stretches of the same movie, each played alone from its first seed, in the order the \
-         work reaches them. A rung is reached when the engine plays every frame of it alone.\n\n\
-         | Rung | Stretch | Frames | The engine plays alone | Still needed |\n\
-         | --- | --- | ---: | ---: | --- |\n",
+         work reaches them. A rung is reached when the engine plays every frame of it alone, \
+         counted over the streams the rung claims: `video` only once it needs the line program, \
+         `apu` only once it needs the sound requests. Until then, over the lock's rows that \
+         start inside it: the rows the free-run gate starts, their green (row, stream) pairs \
+         over those streams, and the frames of them the domain free run holds for the domain \
+         that holds the fewest ([the report's ladder](docs/REPORT.md#the-ladder)).\n\n\
+         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held | Still needed |\n\
+         | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n",
     );
-    for rung in &plan.rung {
-        let (start_capture, start_index) = seed(&rung.starts)?;
-        let (end_capture, end_index) = seed(&rung.ends)?;
-        let start = seed_frame(root, start_capture, start_index)?;
-        let end = seed_frame(root, end_capture, end_index)?;
-        if end <= start {
-            return Err(format!(
-                "{PLAN}: {} ends at frame {end}, not after its start {start}",
-                rung.id
-            ));
-        }
-        let (_, alone) = tree
-            .timeline
-            .green_in(&plan.milestone.movie, start..end)
-            .ok_or_else(|| {
-                format!(
-                    "{PLAN}: the milestone's movie {} has no row of the lock",
-                    plan.milestone.movie
-                )
-            })?;
-        let frames = end.saturating_sub(start);
+    for rung in &tree.rungs {
+        let frames = rung.span.1.saturating_sub(rung.span.0);
+        let least = rung.least_held().map_or_else(
+            || String::from("-"),
+            |(domain, held)| format!("{} ({domain})", share(held, rung.frames)),
+        );
         let _ = writeln!(
             out,
-            "| {} | {}, frames {}-{} | {} | {} ({}) | {} |",
+            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} of {} | {least} | {} |",
             rung.id,
             rung.name,
-            grouped(start),
-            grouped(end.saturating_sub(1)),
+            grouped(rung.span.0),
+            grouped(rung.span.1.saturating_sub(1)),
             grouped(frames),
-            grouped(alone),
-            percent(alone, frames),
-            plan.still_needed(&rung.needs),
+            grouped(rung.alone),
+            percent(rung.alone, frames),
+            rung.started,
+            rung.rows,
+            rung.green,
+            rung.pairs,
+            rung.still,
         );
     }
-    Ok(())
+}
+
+/// The report's ladder section: per rung, the streams it counts, its rows and what the free-run
+/// gate holds of them, and per domain the frames its free run holds over them.
+pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
+    if tree.rungs.is_empty() {
+        return;
+    }
+    out.push_str(
+        "\n## The ladder\n\nEach rung of the ladder toward the headline milestone \
+         (`[[rung]]` in `docs/architecture/domains.toml`) over the lock's rows that start inside \
+         its stretch. A rung counts every compared stream but those `[[stream]]` gives through \
+         work it doesn't need; the milestone counts every one. **Rows start** are the rows the \
+         free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); \
+         **green pairs** their (row, stream) pairs green over the streams counted; the domain \
+         free run's frames are each domain's held frames over the rows \
+         (`crates/verify/src/harness/free_floors.txt`), which don't need the gate to start them.\n\n",
+    );
+    table(
+        out,
+        2,
+        &[
+            "Rung",
+            "Streams counted",
+            "Rows",
+            "Rows start",
+            "Green pairs",
+        ],
+    );
+    for rung in &tree.rungs {
+        let streams: Vec<&str> = rung.claimed.iter().map(|stream| stream.name()).collect();
+        let _ = writeln!(
+            out,
+            "| {} | {} | {}, {} frames | {} of {} | {} of {} |",
+            rung.id,
+            streams.join(", "),
+            rung.rows,
+            figure(rung.frames),
+            rung.started,
+            rung.rows,
+            rung.green,
+            rung.pairs
+        );
+    }
+    out.push('\n');
+    let ids: Vec<&str> = tree.rungs.iter().map(|rung| rung.id.as_str()).collect();
+    let columns: Vec<&str> = std::iter::once("Domain free run")
+        .chain(ids.iter().copied())
+        .collect();
+    table(out, 1, &columns);
+    let domains: BTreeSet<&str> = tree
+        .rungs
+        .iter()
+        .flat_map(|rung| rung.held.keys().map(String::as_str))
+        .collect();
+    for domain in domains {
+        let cells: Vec<String> = tree
+            .rungs
+            .iter()
+            .map(|rung| {
+                let held = rung.held.get(domain).copied().unwrap_or_default();
+                format!(
+                    "{} of {} ({})",
+                    figure(held),
+                    figure(rung.frames),
+                    share(held, rung.frames)
+                )
+            })
+            .collect();
+        let _ = writeln!(out, "| {domain} | {} |", cells.join(" | "));
+    }
 }
 
 fn headline(out: &mut String, plan: &Plan) {
@@ -726,3 +964,6 @@ fn verification(out: &mut String, root: &Path, tree: &Tree) -> Result<(), String
     );
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

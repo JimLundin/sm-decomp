@@ -16,8 +16,9 @@
 //! Each track is a row of the picture: per frame of the movie, how much of it the check covers,
 //! from 0 to 1, the most any row gives it. The recorded and cached tracks give 1 to a row's
 //! frames; a model's track gives the share of the row's frames its harness floor matches; the
-//! gate's the share of the row's streams that are green; the ratchet's the share of its Ticks
-//! fully equal. The picture shades each pixel's stretch by the mean over its frames.
+//! gate's the share of the row's compared streams (all but `wram`) that are green; the
+//! ratchet's the share of its Ticks fully equal. The picture shades each pixel's stretch by the
+//! mean over its frames.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
@@ -28,7 +29,7 @@ use serde::Deserialize;
 use super::status::{GREEN, LOCK, LOCKSTEP};
 use super::{grouped, read, table};
 use crate::gate::Ratchet;
-use crate::lock::{Lock, Start};
+use crate::lock::{Lock, Start, Stream};
 use crate::ratchet;
 
 /// Where the picture is committed, from the repository root.
@@ -258,10 +259,28 @@ fn movies(manifest: &Manifest, domains: &BTreeSet<&str>) -> Vec<Movie> {
         .collect()
 }
 
+/// A row of the lock placed in its movie, with what the free-run gate holds of it.
+pub(super) struct Placed {
+    pub(super) id: String,
+    /// The key of the movie it is cut from.
+    movie: String,
+    /// The movie frame it starts at.
+    start: usize,
+    pub(super) frames: u64,
+    /// Whether the free-run gate starts it.
+    pub(super) starts: bool,
+    /// The streams that decide its green.
+    pub(super) compared: BTreeSet<Stream>,
+    /// Those the free-run gate holds green.
+    pub(super) green: BTreeSet<Stream>,
+}
+
 /// The movies' tracks and the lock's rows cut from no movie, with their frames.
 pub(super) struct Timeline {
     movies: Vec<Movie>,
     outside: (usize, u64),
+    /// The lock's rows placed in a movie, in the lock's order.
+    placed: Vec<Placed>,
 }
 
 impl Timeline {
@@ -293,12 +312,13 @@ impl Timeline {
         let domains: BTreeSet<&str> = floors.keys().map(|(domain, _)| domain.as_str()).collect();
         let mut movies = movies(&manifest, &domains);
         let mut outside = (0usize, 0u64);
+        let mut placed = Vec::new();
         for row in &lock.rows {
             let id = row.id.0.as_str();
-            let placed = start_in_movie(id, &row.start, &seeds).and_then(|(key, frame)| {
+            let in_movie = start_in_movie(id, &row.start, &seeds).and_then(|(key, frame)| {
                 Some((movies.iter_mut().find(|movie| movie.key == key)?, frame))
             });
-            let Some((movie, start)) = placed else {
+            let Some((movie, start)) = in_movie else {
                 outside = (
                     outside.0.saturating_add(1),
                     outside.1.saturating_add(row.frames.0),
@@ -307,12 +327,26 @@ impl Timeline {
             };
             movie.rows = movie.rows.saturating_add(1);
             let span = (start, usize::try_from(row.frames.0).unwrap_or_default());
-            let streams = u64::try_from(row.streams.len()).unwrap_or_default();
-            let green_streams = green
+            let compared: BTreeSet<Stream> = row.compared_streams().collect();
+            let green_streams: BTreeSet<Stream> = green
                 .pairs
                 .iter()
-                .filter(|(green, _)| green.0 == id)
-                .count();
+                .filter(|(green, stream)| green.0 == id && compared.contains(stream))
+                .map(|&(_, stream)| stream)
+                .collect();
+            let (green_count, streams) = (
+                u64::try_from(green_streams.len()).unwrap_or_default(),
+                u64::try_from(compared.len()).unwrap_or_default(),
+            );
+            placed.push(Placed {
+                id: id.to_owned(),
+                movie: movie.key.clone(),
+                start,
+                frames: row.frames.0,
+                starts: green.holds_start(&row.id),
+                compared,
+                green: green_streams,
+            });
             let floors: Vec<Option<u32>> = domains
                 .iter()
                 .map(|domain| {
@@ -332,9 +366,7 @@ impl Timeline {
                 .into_iter()
                 .chain(floors)
                 .chain([
-                    (green_streams > 0).then(|| {
-                        per_mille(u64::try_from(green_streams).unwrap_or_default(), streams)
-                    }),
+                    (green_count > 0).then(|| per_mille(green_count, streams)),
                     equal,
                 ]);
             for (track, share) in movie.tracks.iter_mut().zip(shares) {
@@ -344,19 +376,23 @@ impl Timeline {
             }
         }
         movies.retain(|movie| movie.rows > 0);
-        Ok(Self { movies, outside })
+        Ok(Self {
+            movies,
+            outside,
+            placed,
+        })
     }
 
     /// The movie whose key is `movie`, if the lock cuts a row from it: its category, and of its
-    /// first `frames` frames, those inside a row whose every stream the free-run gate holds
-    /// green.
+    /// first `frames` frames, those inside a row whose every compared stream the free-run gate
+    /// holds green.
     pub(super) fn green_from_start(&self, movie: &str, frames: usize) -> Option<(&str, usize)> {
         self.green_in(movie, 0..frames)
     }
 
     /// The movie `movie`'s category and how many of its frames in `span` lie inside rows whose
-    /// every stream the free-run gate holds green; `None` when no row of the lock is cut from
-    /// it.
+    /// every compared stream the free-run gate holds green; `None` when no row of the lock is
+    /// cut from it.
     pub(super) fn green_in(
         &self,
         movie: &str,
@@ -372,6 +408,54 @@ impl Timeline {
             .filter(|&&cover| u32::from(cover) >= WHOLE)
             .count();
         Some((&movie.category, green))
+    }
+
+    /// The rows of the movie `movie` that start inside `span`, in the lock's order.
+    pub(super) fn rows_in(
+        &self,
+        movie: &str,
+        span: core::ops::Range<usize>,
+    ) -> impl Iterator<Item = &Placed> {
+        self.placed
+            .iter()
+            .filter(move |row| row.movie == movie && span.contains(&row.start))
+    }
+
+    /// How many of the movie `movie`'s frames in `span` lie inside rows whose compared streams
+    /// that `counts` keeps are all green, and at least one is; `None` when no row of the lock is
+    /// cut from it.
+    pub(super) fn alone_in(
+        &self,
+        movie: &str,
+        span: core::ops::Range<usize>,
+        counts: impl Fn(Stream) -> bool,
+    ) -> Option<usize> {
+        let mut rows = self
+            .placed
+            .iter()
+            .filter(|row| row.movie == movie)
+            .peekable();
+        rows.peek()?;
+        let mut alone = vec![false; span.end.saturating_sub(span.start)];
+        for row in rows {
+            let mut counted = row.compared.iter().filter(|stream| counts(**stream));
+            let held = counted.clone().next().is_some()
+                && counted.all(|stream| row.green.contains(stream));
+            if !held {
+                continue;
+            }
+            let frames = usize::try_from(row.frames).unwrap_or(usize::MAX);
+            let first = row.start.max(span.start);
+            let end = row.start.saturating_add(frames).min(span.end);
+            for frame in alone
+                .iter_mut()
+                .skip(first.saturating_sub(span.start))
+                .take(end.saturating_sub(first))
+            {
+                *frame = true;
+            }
+        }
+        Some(alone.into_iter().filter(|&frame| frame).count())
     }
 
     /// The picture, as SVG text.
@@ -489,7 +573,8 @@ impl Timeline {
              **recorded** and **cached** give a row's frames 1 when the lock holds the row and \
              when the harnesses run it (the rows the floors name); a **model** gives the share \
              of the row's frames its harness floor matches; the **free-run gate** the share of \
-             the row's streams that are green; **lockstep** the share of its Ticks fully equal. \
+             the row's compared streams (all but `wram`) that are green; **lockstep** the share \
+             of its Ticks fully equal. \
              The picture shades a stretch by the mean over its frames; the figures are the \
              frames covered, each weighed by its cover, and their share of the movie. A row \
              from power-on covers, from frame 0, the movie its id's first word names. {} of \

@@ -366,6 +366,16 @@ impl Row {
     pub fn stream(&self, stream: Stream) -> Option<&StreamLock> {
         self.streams.get(&stream)
     }
+
+    /// The streams that decide the row's green (D22): those [`Stream::compared`] names that the
+    /// lock holds marks for. `wram` is recorded but never compared, and a stream the lock
+    /// lacks can't be equal, so neither counts toward a row's green.
+    pub fn compared_streams(&self) -> impl Iterator<Item = Stream> + '_ {
+        self.streams
+            .iter()
+            .filter(|(stream, lock)| stream.compared() && matches!(lock, StreamLock::Marks(_)))
+            .map(|(&stream, _)| stream)
+    }
 }
 
 /// A parsed format-2 lock.

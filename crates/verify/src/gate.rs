@@ -209,15 +209,22 @@ pub fn free_run(row: &Row, seed: Seed, pads: &[Buttons], content: &Arc<Content>)
     }
 }
 
-/// The ratchet of green (row, stream) pairs (D22): once a pair is green it stays green.
+/// The ratchet of the free-run gate (D22): the rows the engine starts and their green (row,
+/// stream) pairs. Once a row starts it keeps starting, and once a pair is green it stays green.
 ///
-/// Its text is one `ROW STREAM` line per pair, sorted, with `#` comments; the file sits
-/// beside the lock it was measured against (`scenarios/locks/lsnes.green.txt`).
+/// Its text is a `ROW starts` line per row the engine starts and a `ROW STREAM` line per green
+/// pair, sorted by row, with `#` comments; the file sits beside the lock it was measured against
+/// (`scenarios/locks/lsnes.green.txt`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Ratchet {
+    /// The rows the engine starts from their seeds.
+    pub started: BTreeSet<RowId>,
     /// The green pairs.
     pub pairs: BTreeSet<(RowId, Stream)>,
 }
+
+/// The word a ratchet line puts after a row the engine starts, where a pair puts its stream.
+const STARTS: &str = "starts";
 
 /// A ratchet line that doesn't read.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -228,7 +235,7 @@ pub struct RatchetError {
 
 impl fmt::Display for RatchetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "line {}: not `ROW STREAM`", self.line)
+        write!(f, "line {}: not `ROW STREAM` or `ROW {STARTS}`", self.line)
     }
 }
 
@@ -236,19 +243,26 @@ impl std::error::Error for RatchetError {}
 
 /// The ratchet file's head comment.
 const RATCHET_HEAD: &str = "\
-# The free-run gate's green (row, stream) pairs (ARCHITECTURE D22), against the lock beside
-# this file. `tools gate` fails when a listed pair isn't green and adds new ones with
-# `--update`; never remove a line by hand.
+# The free-run gate's ratchet (ARCHITECTURE D22), against the lock beside this file: `ROW starts`
+# for a row the engine starts from its seed, `ROW STREAM` for a green (row, stream) pair.
+# `tools gate` fails when a listed row doesn't start or a listed pair isn't green, and adds new
+# ones with `--update`; never remove a line by hand.
 ";
+
+/// A ratchet line's meaning.
+enum Entry {
+    Starts(RowId),
+    Green(RowId, Stream),
+}
 
 impl Ratchet {
     /// Reads a ratchet file's text.
     ///
     /// # Errors
     ///
-    /// A [`RatchetError`] for a line that isn't a row id and a stream name.
+    /// A [`RatchetError`] for a line that isn't a row id and a stream name or `starts`.
     pub fn parse(text: &str) -> Result<Self, RatchetError> {
-        let pairs = text
+        let entries = text
             .lines()
             .enumerate()
             .filter(|(_, line)| !line.trim().is_empty() && !line.starts_with('#'))
@@ -257,15 +271,37 @@ impl Ratchet {
                     line: number.saturating_add(1),
                 };
                 let mut words = line.split_whitespace();
-                let (Some(row), Some(stream), None) = (words.next(), words.next(), words.next())
+                let (Some(row), Some(word), None) = (words.next(), words.next(), words.next())
                 else {
                     return Err(error);
                 };
-                let stream = Stream::try_from(stream).map_err(|_| error)?;
-                Ok((RowId(row.to_owned()), stream))
+                let row = RowId(row.to_owned());
+                if word == STARTS {
+                    return Ok(Entry::Starts(row));
+                }
+                let stream = Stream::try_from(word).map_err(|_| error)?;
+                Ok(Entry::Green(row, stream))
             })
-            .collect::<Result<_, _>>()?;
-        Ok(Self { pairs })
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut ratchet = Self::default();
+        for entry in entries {
+            match entry {
+                Entry::Starts(row) => {
+                    ratchet.started.insert(row);
+                }
+                Entry::Green(row, stream) => {
+                    ratchet.pairs.insert((row, stream));
+                }
+            }
+        }
+        Ok(ratchet)
+    }
+
+    /// Whether the ratchet holds that `row` starts: a `starts` line, or a green pair, which only
+    /// a row that started can have.
+    #[must_use]
+    pub fn holds_start(&self, row: &RowId) -> bool {
+        self.started.contains(row) || self.pairs.iter().any(|(green, _)| green == row)
     }
 
     /// The listed pairs of the reported rows that aren't green: the gate's failures.
@@ -287,6 +323,17 @@ impl Ratchet {
             .collect()
     }
 
+    /// The rows of `not_started` the ratchet holds as starting: the gate's failures too. A row
+    /// that never started can't regress.
+    #[must_use]
+    pub fn lost_starts(&self, not_started: &[RowId]) -> Vec<RowId> {
+        not_started
+            .iter()
+            .filter(|row| self.holds_start(row))
+            .cloned()
+            .collect()
+    }
+
     /// The reported green pairs this ratchet doesn't list yet.
     #[must_use]
     pub fn new_pairs(&self, reports: &[RowReport]) -> Vec<(RowId, Stream)> {
@@ -301,21 +348,44 @@ impl Ratchet {
             .collect()
     }
 
-    /// This ratchet grown by every green pair of `reports`.
+    /// The reported rows, each of which started, that this ratchet doesn't list as starting.
+    #[must_use]
+    pub fn new_starts(&self, reports: &[RowReport]) -> Vec<RowId> {
+        reports
+            .iter()
+            .map(|report| &report.id)
+            .filter(|row| !self.started.contains(*row))
+            .cloned()
+            .collect()
+    }
+
+    /// This ratchet grown by every reported row, which started, and every green pair.
     #[must_use]
     pub fn grown(&self, reports: &[RowReport]) -> Self {
-        let mut pairs = self.pairs.clone();
-        pairs.extend(self.new_pairs(reports));
-        Self { pairs }
+        let mut grown = self.clone();
+        grown.started.extend(self.new_starts(reports));
+        grown.pairs.extend(self.new_pairs(reports));
+        grown
     }
 }
 
 impl fmt::Display for Ratchet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(RATCHET_HEAD)?;
-        self.pairs
+        let rows: BTreeSet<&RowId> = self
+            .started
             .iter()
-            .try_for_each(|(row, stream)| writeln!(f, "{row} {stream}"))
+            .chain(self.pairs.iter().map(|(row, _)| row))
+            .collect();
+        rows.into_iter().try_for_each(|row| {
+            if self.started.contains(row) {
+                writeln!(f, "{row} {STARTS}")?;
+            }
+            self.pairs
+                .iter()
+                .filter(|(green, _)| green == row)
+                .try_for_each(|(_, stream)| writeln!(f, "{row} {stream}"))
+        })
     }
 }
 
@@ -374,6 +444,33 @@ mod tests {
             [(RowId("row-a".to_owned()), Stream::Vram)]
         );
         assert_eq!(ratchet.grown(&reports).pairs.len(), 4);
+    }
+
+    #[test]
+    fn a_ratchet_keeps_the_rows_that_start() {
+        let text = "row-b starts\nrow-a timing\nrow-a starts\n";
+        let ratchet = Ratchet::parse(text).unwrap_or_default();
+        assert_eq!(ratchet.started.len(), 2);
+        let written = ratchet.to_string();
+        assert!(written.ends_with("row-a starts\nrow-a timing\nrow-b starts\n"));
+        assert_eq!(Ratchet::parse(&written), Ok(ratchet));
+    }
+
+    #[test]
+    fn only_a_row_that_started_can_stop_starting() {
+        let ratchet = Ratchet::parse("row-a starts\nrow-b apu\n").unwrap_or_default();
+        let id = |row: &str| RowId(row.to_owned());
+        // row-c never started, so its not starting is no failure; row-b's green pair says it
+        // started, so it is one.
+        assert_eq!(
+            ratchet.lost_starts(&[id("row-a"), id("row-b"), id("row-c")]),
+            [id("row-a"), id("row-b")]
+        );
+        let reports = [report("row-c", &[(Stream::Timing, Outcome::Equal)])];
+        assert_eq!(ratchet.new_starts(&reports), [id("row-c")]);
+        let grown = ratchet.grown(&reports);
+        assert!(grown.pairs.contains(&(id("row-c"), Stream::Timing)));
+        assert_eq!(grown.lost_starts(&[id("row-c")]), [id("row-c")]);
     }
 
     #[test]

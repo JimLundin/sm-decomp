@@ -67,6 +67,22 @@ impl fmt::Display for InputError {
 
 impl std::error::Error for InputError {}
 
+impl InputError {
+    /// Why the engine can't start the row, when that is what went wrong: a start the gate
+    /// doesn't run from (power-on, a derived seed) or a seed the decoder doesn't take (a room,
+    /// a species or a game state the engine doesn't know). `None` for a missing or wrong file,
+    /// which is a broken bundle rather than a row the engine can't start yet.
+    #[must_use]
+    pub fn why_it_cannot_start(&self) -> Option<String> {
+        match self {
+            Self::PowerOn(_) => Some(String::from("it starts at power-on, not from a seed")),
+            Self::SeedWords(_) => Some(String::from("its seed has WRAM edits")),
+            Self::Seed(_, error) => Some(format!("{error:?}")),
+            Self::Io(..) | Self::PadsPin(_) | Self::Pads(_) | Self::Record(..) => None,
+        }
+    }
+}
+
 /// A row's free-run inputs: its seed and its pad per frame.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RowInputs {

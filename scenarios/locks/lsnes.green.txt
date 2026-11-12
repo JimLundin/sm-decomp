@@ -1,11 +1,14 @@
-# The free-run gate's green (row, stream) pairs (ARCHITECTURE D22), against the lock beside
-# this file. `tools gate` fails when a listed pair isn't green and adds new ones with
-# `--update`; never remove a line by hand.
+# The free-run gate's ratchet (ARCHITECTURE D22), against the lock beside this file: `ROW starts`
+# for a row the engine starts from its seed, `ROW STREAM` for a green (row, stream) pair.
+# `tools gate` fails when a listed row doesn't start or a listed pair isn't green, and adds new
+# ones with `--update`; never remove a line by hand.
+area-brinstar starts
 area-brinstar vram
 area-brinstar cgram
 area-brinstar oam
 area-brinstar sram
 area-brinstar ppu
 area-brinstar timing
+item-morph-ball starts
 item-morph-ball sram
 item-morph-ball timing

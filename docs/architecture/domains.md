@@ -421,6 +421,16 @@ The rungs' needs are a first estimate from the table above; a session's planning
 from what each rung's rows show. Every rung runs with the lock's recorded timing, as the free-run
 gate does; only the milestone needs lag modelled.
 
+A rung is measured over the compared streams its needs claim: the shown picture (`video`) only
+once it needs the line program (E3), the APU port log (`apu`) only once it needs the sound
+requests (U1), as `[[stream]]` in [domains.toml](domains.toml) lists them; the milestone needs
+every stream. Until a rung is reached, the README gives three figures over the lock's rows that
+start inside it: the rows the free-run gate starts, their green (row, stream) pairs over the
+streams the rung counts, and the frames of them the domain free run holds for the domain that
+holds the fewest (each domain's in [the report](../REPORT.md#the-ladder)). The gate runs every
+Ceres chain row in CI and reports a row it can't start yet, with why, so a rung's rows count the
+moment they start.
+
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
 the first step whose prerequisites hold.
 
@@ -452,7 +462,8 @@ V3, the gate starting Ceres's rows, is every rung's first need.
 - V1 tooling, what remains: the RNG consumer split; a compressed or WRAM-only cache tier. Its
   domain free run landed; its floors are set by the first run over CI's cache.
 - V3: the free-run gate and lockstep start Ceres's chain rows from their seeds, so the rungs
-  can be measured. 1 lane.
+  can be measured. 1 lane. The gate already runs them in CI, reporting each as not starting
+  until the engine knows Ceres's rooms, and the README measures each rung over its rows.
 
 **Wave 1 (on the cached rows, 4-5 lanes):** S2 (4), S5 (3) with E1, H2 (2) with E2, W2 (5)
 with A1, P1 (1); AF0, then AF1 and AF2, AF1 first converting slice 0's rooms with no change in
