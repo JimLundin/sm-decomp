@@ -6,7 +6,7 @@ use enum_map::{Enum, EnumMap};
 
 /// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16.
 ///
-/// A signed one is held in two's complement: `-4.E000` is `FFFB.2000`. §9: a sum carries the
+/// A signed one is held in two's complement: `-4.E000` is `FFFB.2000`. A sum carries the
 /// subpixel into the pixel part, mod 2^16 on the pixel part, so `+`, `-` and negation are
 /// `Wrapping`'s.
 ///
@@ -18,28 +18,28 @@ pub type Fixed = Wrapping<u32>;
 /// A pixel part, or a whole number of pixels.
 ///
 /// A pixel of a position along one axis, a distance, a body's half-size. Its arithmetic wraps
-/// mod 2^16, as the pixel part of a position does (§9). Its comparisons are unsigned, as
+/// mod 2^16, as the pixel part of a position does. Its comparisons are unsigned, as
 /// `Fixed`'s are; read a signed difference by its `.0`'s `cast_signed`.
 pub type Px = Wrapping<u16>;
 
-/// §9, the header's notation: a `P.S` quantity from its pixel part and its subpixel part.
+/// The specs' `P.S` notation: a quantity from its pixel part and its subpixel part.
 #[must_use]
 pub fn fixed(pixel: Px, sub: u16) -> Fixed {
     Wrapping(u32::from(pixel.0) << PIXEL_BITS | u32::from(sub))
 }
 
-/// §9: a whole number of pixels, as a `P.S` quantity.
+/// A whole number of pixels, as a `P.S` quantity.
 #[must_use]
 pub fn px(pixel: Px) -> Fixed {
     fixed(pixel, 0)
 }
 
-/// §9: the pixel part is a quantity's high 16 bits.
+/// The pixel part is a quantity's high 16 bits.
 const PIXEL_BITS: u32 = 16;
 /// `Jumping`, `SlopesSlowTheWalk`: an 8.8 reading takes a byte from each part.
 const BYTE: u32 = 8;
 
-/// The parts of a `P.S` quantity (the header's notation), and its sign read signed (§1).
+/// The parts of a `P.S` quantity, and its sign read signed.
 pub trait Parts {
     /// The pixel part and the subpixel part.
     fn words(self) -> (u16, u16);
@@ -59,16 +59,16 @@ pub trait Parts {
 }
 
 impl Parts for Fixed {
-    /// `WordwiseTopSpeed`, `Dash` (§9): the two 16-bit parts, which their tests read apart.
+    /// `WordwiseTopSpeed`, `Dash`: the two 16-bit parts, which their tests read apart.
     fn words(self) -> (u16, u16) {
         let [a, b, c, d] = self.0.to_be_bytes();
         (u16::from_be_bytes([a, b]), u16::from_be_bytes([c, d]))
     }
-    /// §9: the pixel part, which `BlocksStopFlush` reads of a position.
+    /// The pixel part, which `BlocksStopFlush` reads of a position.
     fn pixel(self) -> Px {
         Wrapping(self.words().0)
     }
-    /// §9: the subpixel part, which `BlocksStopFlush` writes FFFF or 0.
+    /// The subpixel part, which `BlocksStopFlush` writes FFFF or 0.
     fn sub(self) -> u16 {
         self.words().1
     }
@@ -81,11 +81,11 @@ impl Parts for Fixed {
     fn with_sub(self, sub: u16) -> Fixed {
         fixed(self.pixel(), sub)
     }
-    /// §1: a signed speed or move pointing upward or leftward.
+    /// A signed speed or move pointing upward or leftward.
     fn negative(self) -> bool {
         self.0.cast_signed() < 0
     }
-    /// `WordwiseTopSpeed` (§9): the test is on the speed's size.
+    /// `WordwiseTopSpeed`: the test is on the speed's size.
     fn size(self) -> Fixed {
         if self.negative() { -self } else { self }
     }
@@ -185,7 +185,7 @@ pub enum Side {
 }
 
 impl Side {
-    /// §2 facing: the side she faces; facing the screen counts as `Right`.
+    /// The side she faces; facing the screen counts as `Right`.
     #[must_use]
     pub const fn of(facing: Facing) -> Self {
         if matches!(facing, Facing::Left) {
@@ -205,7 +205,7 @@ impl Side {
     }
 }
 
-/// Which way she faces (§2).
+/// Which way she faces: a part of her pose.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Facing {
     /// Facing left.
@@ -216,7 +216,7 @@ pub enum Facing {
     Screen,
 }
 
-/// §2 facing: forward is the side she faces (`Side::of`), back the other side.
+/// Forward is the side she faces (`Side::of`), back the other side.
 impl Facing {
     /// `PadChart`, `TurningRound`: the other side, back, as she faces.
     #[must_use]
@@ -229,7 +229,7 @@ impl Facing {
     }
 }
 
-/// §2 body.
+/// Her body: a part of her pose.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Body {
     /// Standing height.
@@ -242,7 +242,7 @@ pub enum Body {
     SpringBall,
 }
 
-/// §2 action.
+/// What she is doing: a part of her pose.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Action {
     /// Pressed to the wall she ran into.
@@ -279,7 +279,7 @@ pub enum Action {
     WallJumping,
 }
 
-/// §2 aim: the arm's direction.
+/// Her aim, the arm's direction: a part of her pose.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Aim {
     /// Unaimed.
@@ -294,7 +294,7 @@ pub enum Aim {
     Down,
 }
 
-/// §2 turn, for `Turning` only: the turn she is in. Its order means nothing.
+/// The turn she is in, for `Turning` only. Its order means nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Turn {
     /// In a fall.
@@ -307,7 +307,7 @@ pub enum Turn {
     MoonwalkJump,
 }
 
-/// §2 landed from, for `Landing` only. Its order means nothing.
+/// What she landed from, for `Landing` only. Its order means nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum LandedFrom {
     /// A straight jump or a fall, upright.
@@ -316,7 +316,7 @@ pub enum LandedFrom {
     Spin,
 }
 
-/// §2 gun. Its order means nothing.
+/// Her gun: a part of her pose. Its order means nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Gun {
     /// Held out in front, a sprite of its own.
@@ -325,7 +325,7 @@ pub enum Gun {
     Stowed,
 }
 
-/// §2 legs. Their order means nothing.
+/// Her legs: a part of her pose. Their order means nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Legs {
     /// Drawn moving forward.
@@ -334,7 +334,7 @@ pub enum Legs {
     Together,
 }
 
-/// Her pose as the player sees it (§2), every part it lists.
+/// Her pose as the player sees it, every part samus-motion lists.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Pose {
     /// Her body: while it changes shape, the body she changes into.
@@ -351,8 +351,8 @@ pub struct Pose {
     pub legs: Legs,
 }
 
-/// The sprite her pose is drawn in, as samus-motion's `HowSheIsDrawn` chooses it (samus-looks
-/// §1.2): each pose has a clip for each sprite. Its order means nothing.
+/// The sprite her pose is drawn in, as samus-motion's `HowSheIsDrawn` chooses it: in
+/// samus-looks each pose has a clip for each sprite. Its order means nothing.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Sprite {
     /// Her plain sprite.
@@ -375,8 +375,8 @@ pub enum ClipEnd {
     EndUnlessJump,
 }
 
-/// Her run's speed booster stage (samus-looks §1): 0 to 4, where 4 is boosting. The shinespark,
-/// the echoes, her glow, the blocks a boost breaks and the enemies she touches read it.
+/// Her run's speed booster stage (samus-looks `BoostStages`): 0 to 4, where 4 is boosting. The
+/// shinespark, the echoes, her glow, the blocks a boost breaks and the enemies she touches read it.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Enum)]
 pub enum BoostStage {
     /// Stage 0: where every dash begins.
@@ -403,7 +403,8 @@ impl BoostStage {
     ];
 }
 
-/// A sound her animation asks for (samus-looks §1.1), for the sound domain to play or not.
+/// A sound her animation asks for (samus-looks `WallJumpBranch`, `BoostStages`), for the sound
+/// domain to play or not.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum AnimationSound {
     /// A wall jump's plain spin.
@@ -416,7 +417,7 @@ pub enum AnimationSound {
     Boosting,
 }
 
-/// The pad (§1.3): a set of its buttons, the ones held or the ones just pressed, each a bit of
+/// The pad: a set of its buttons, the ones held or the ones just pressed, each a bit of
 /// `button`'s.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub struct Buttons(pub u16);
@@ -480,7 +481,7 @@ pub struct Touch {
     pub way: Way,
 }
 
-/// The kind of a 16 px cell (§8) as it meets her motion. `OtherBlockKinds`: the world answers
+/// The kind of a 16 px cell as it meets her motion. `OtherBlockKinds`: the world answers
 /// each kind of cell as one of these; what the kind then does is its own domain's.
 #[derive(Clone, Copy)]
 pub enum Block {

@@ -19,7 +19,7 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every stream the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
 
-Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **46 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
+Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **47 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
 
@@ -36,7 +36,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 | progress | P1 (in progress) | in progress | 8 | 76 | 25,420 of 25,426 | 819 | 1,061 | 0.77 |
 | hud | H2 (in progress) | in progress | 5 | 84 | 20,615 of 24,230 | 2,695 | 2,112 | 1.28 |
 | blocks | W2 (in progress) | in progress | 4 | 100 | 20,530 of 21,857 | 2,395 | 2,074 | 1.15 |
-| samus-looks | S5 (in progress) | in progress | 4 | 98 | 18,233 of 24,230 | 2,228 | 1,412 | 1.58 |
+| samus-looks | S5 (in progress) | in progress | 5 | 98 | 18,233 of 24,230 | 2,191 | 1,412 | 1.55 |
 
 ### The whole-game plan
 
@@ -58,8 +58,8 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
 | not yet rebuilt | 48 | 4,832 | 28,993 | 6,784 |
-| bridges from the engine to the models | 10 | 2,665 | 15,989 | 2,757 |
-| rebuilt models, shared types included | 73 | 3,260 | 19,563 | 8,704 |
+| bridges from the engine to the models | 10 | 2,670 | 16,020 | 2,762 |
+| rebuilt models, shared types included | 71 | 3,254 | 19,526 | 8,661 |
 
 ### Verification
 

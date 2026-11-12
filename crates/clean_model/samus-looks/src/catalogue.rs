@@ -6,35 +6,35 @@ use enum_map::Enum;
 /// One per entry of the spec, by the entry's name.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
 pub enum BehaviourId {
-    /// §2.
+    /// The time runs down, and the clip moves on.
     ClipPlays,
-    /// §2.
+    /// An `again` loops the clip, and a `rest` holds it one frame.
     ClipControls,
-    /// §2.
+    /// Standing or crouched still, she breathes, hard once her energy is low.
     Breathing,
-    /// §2.
+    /// A clip that reaches its end reports which end it is.
     ClipEnds,
-    /// §2.
+    /// A wall jump spins by her items, each spin with its sound.
     WallJumpBranch,
-    /// §2.
+    /// A pose an end handed over is slowed twice in a liquid.
     HandOverSlowdown,
-    /// §3.
+    /// Where the clip of the pose she takes starts.
     StartingClip,
-    /// §4.
+    /// Holding shoot standing unaimed starts her standing clip over.
     StandingRestart,
-    /// §4.
+    /// Readying a wall jump turns her spin to its kick step.
     WallJumpReady,
-    /// §4.
+    /// Her spin has turned far enough to kick off a wall.
     SpinTurnedFar,
-    /// §4.
+    /// Moving fast in a fall's pose jumps to its fast fall picture.
     FastFall,
-    /// §4.
+    /// A straight jump holds its rising picture while she rises.
     RisingHold,
-    /// §5.
+    /// Running while dashing, her stride takes the run's pace.
     RunPace,
-    /// §5.
+    /// The speed booster's stages, lap by lap, up to boosting.
     BoostStages,
-    /// §5.
+    /// The lap on which she starts boosting starts on a stage the sounds waiting name.
     BoostingLap,
 }
 

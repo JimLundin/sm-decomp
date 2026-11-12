@@ -9,8 +9,8 @@ mod vectors {
 
     use clean_model_samus_looks::{Ahead, BehaviourId, Rules, SoundsWaiting};
     use clean_model_samus_looks::{
-        Boost, Branch, CATALOGUE, Clip, Content, Control, Frames, Hold, Inputs, Instruction, Laps,
-        Liquid, Move, Pace, Paces, Playhead, Pose, Slowdown, State, Step, update,
+        Branch, CATALOGUE, Clip, Content, Control, Dash, Figure, Frames, Hold, Inputs, Instruction,
+        Laps, LapsLeft, Liquid, MoveEvent, Pace, Paces, Playhead, Slowdown, State, Step, update,
     };
     use clean_types::{
         Action, Aim, AnimationSound, Body, BoostStage, Checked, ClipEnd, Facing, Fixed, Gun, Item,
@@ -218,14 +218,15 @@ mod vectors {
             .unwrap_or_else(|| panic!("unknown name {name:?}"))
     }
 
-    /// "BODY ACTION FACING AIM", then "Drawn", "Striding" and a sprite, each if given.
-    fn pose(text: &str) -> Pose {
+    /// A pose with its sprite: "BODY ACTION FACING AIM", then "Drawn", "Striding" and a sprite,
+    /// each if given.
+    fn figure(text: &str) -> Figure {
         let words: Vec<&str> = text.split_whitespace().collect();
         let [body, action, facing, aim, rest @ ..] = words.as_slice() else {
             panic!("unwritten pose {text:?}");
         };
-        let mut pose = Pose {
-            motion: clean_types::Pose {
+        let mut figure = Figure {
+            pose: clean_types::Pose {
                 body: named(BODIES, body),
                 action: named(ACTIONS, action),
                 facing: named(FACINGS, facing),
@@ -237,12 +238,12 @@ mod vectors {
         };
         for word in rest {
             match *word {
-                "Drawn" => pose.motion.gun = Gun::Drawn,
-                "Striding" => pose.motion.legs = Legs::Striding,
-                sprite => pose.sprite = named(SPRITES, sprite),
+                "Drawn" => figure.pose.gun = Gun::Drawn,
+                "Striding" => figure.pose.legs = Legs::Striding,
+                sprite => figure.sprite = named(SPRITES, sprite),
             }
         }
-        pose
+        figure
     }
 
     /// A step's number, written in a cell.
@@ -253,8 +254,8 @@ mod vectors {
         )
     }
 
-    /// The spec's "Written" column (§1.4): `n` (1 or more), `rest`, `again s`, `breathe`, `end`,
-    /// `end-unless-jump`, `branch x y z`; any other cell fails the test.
+    /// The spec's "Written" column of a clip's steps: `n` (1 or more), `rest`, `again s`,
+    /// `breathe`, `end`, `end-unless-jump`, `branch x y z`; any other cell fails the test.
     fn instruction(cell: &str) -> Instruction {
         let words: Vec<&str> = cell.split_whitespace().collect();
         match words.as_slice() {
@@ -279,13 +280,13 @@ mod vectors {
         }
     }
 
-    /// A hold the content gives, a clip's or a pace's: 1 frame or more (§1.4), and at most
-    /// §1.5's bound, `Hold::LONGEST`; any other fails the test.
+    /// A hold the content gives, a clip's or a pace's: 1 frame or more, and at most the spec's
+    /// bound, `Hold::LONGEST`; any other fails the test.
     fn hold(frames: u8) -> Hold {
         Hold::new(frames).unwrap_or_else(|| panic!("a hold of {frames} frames is outside the spec"))
     }
 
-    /// A slowdown the file gives: 0 to 3 frames (§1.3); any other fails the test.
+    /// A slowdown the file gives: 0 to 3 frames; any other fails the test.
     fn slowdown(frames: u8) -> Slowdown {
         Slowdown::new(frames)
             .unwrap_or_else(|| panic!("a slowdown of {frames} frames is outside the spec"))
@@ -361,27 +362,25 @@ mod vectors {
         State {
             playhead: Playhead {
                 step: Step(step),
-                frames_left: Frames(left),
+                time_left: Frames(left),
             },
-            boost: Boost {
-                stage: BoostStage::ALL[usize::from(stage)],
-                // 0 laps left, as without the speed booster, is none.
-                laps_left: Laps::new(laps),
-            },
+            stage: BoostStage::ALL[usize::from(stage)],
+            // 0 laps left is her run without the speed booster.
+            laps_left: Laps::new(laps).map_or(LapsLeft::WithoutBooster, LapsLeft::WithBooster),
         }
     }
 
-    /// A vector's content: the clip of her pose and the clip of the pose she takes.
+    /// A vector's content: the clip of her figure and the clip of the figure she takes.
     struct VectorContent<'a> {
-        pose: Pose,
+        figure: Figure,
         clip: &'a Clip,
         clip_after: &'a Clip,
         paces: &'a Paces,
     }
 
     impl Content for VectorContent<'_> {
-        fn clip(&self, pose: &Pose) -> &Clip {
-            if *pose == self.pose {
+        fn clip(&self, figure: &Figure) -> &Clip {
+            if *figure == self.figure {
                 self.clip
             } else {
                 self.clip_after
@@ -393,23 +392,32 @@ mod vectors {
         }
     }
 
+    /// Whether she dashes as the clip moves on: a dash that began is dashing, whatever `dashing`
+    /// says.
+    const fn dash(given: &VectorInputs) -> Dash {
+        match (given.dash_began, given.dashing) {
+            (true, _) => Dash::Began,
+            (false, true) => Dash::On,
+            (false, false) => Dash::Off,
+        }
+    }
+
     fn inputs(given: &VectorInputs) -> Inputs {
-        let start = pose(&given.pose);
-        let mut moves = Set::<Move>::default();
-        moves[Move::DashBegan] = given.dash_began;
-        moves[Move::StandingRestart] = given.standing_restarts;
-        moves[Move::WallJumpReadied] = given.wall_jump_readied;
-        moves[Move::HandedOver] = given.handed_over;
-        moves[Move::DashLost] = given.dash_lost;
+        let start = figure(&given.pose);
+        let mut moves = Set::<MoveEvent>::default();
+        moves[MoveEvent::StandingRestart] = given.standing_restarts;
+        moves[MoveEvent::WallJumpReadied] = given.wall_jump_readied;
+        moves[MoveEvent::HandedOver] = given.handed_over;
+        moves[MoveEvent::DashLost] = given.dash_lost;
         let mut items = Set::<Item>::default();
         for item in &given.items {
             items[named(ITEMS, item)] = true;
         }
         Inputs {
-            pose: start,
-            pose_after: given.pose_after.as_deref().map_or(start, pose),
+            figure: start,
+            figure_after: given.pose_after.as_deref().map_or(start, figure),
             moves,
-            dashing: given.dashing || given.dash_began,
+            dash: dash(given),
             run_held: given.run_held,
             heading_down: given.heading_down,
             vertical_speed: vertical_speed(&given.vertical_speed),
@@ -460,13 +468,13 @@ mod vectors {
         let inputs = inputs(given);
         let clip_named = |name: &str| clips.get(name).unwrap_or_else(|| panic!("no clip {name}"));
         let content = VectorContent {
-            pose: inputs.pose,
+            figure: inputs.figure,
             clip: clip_named(&given.clip),
             clip_after: clip_named(given.clip_after.as_deref().unwrap_or(&given.clip)),
             paces,
         };
         assert!(
-            inputs.pose != inputs.pose_after || given.clip_after.is_none(),
+            inputs.figure != inputs.figure_after || given.clip_after.is_none(),
             "{}: another clip for the same pose",
             vector.id
         );

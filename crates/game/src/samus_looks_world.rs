@@ -12,7 +12,7 @@
 pub mod import;
 
 use clean_model_samus_looks::{
-    Ahead, Boost, Frames, Inputs, Laps, Liquid, Move, Playhead, Rules, Slowdown, SoundsWaiting,
+    Ahead, Dash, Frames, Inputs, Laps, LapsLeft, Liquid, MoveEvent, Playhead, Rules, SoundsWaiting,
     State, Step, update,
 };
 use clean_model_samus_motion::{Dashing, Outcome, StandingAnimation, WallTest};
@@ -20,7 +20,7 @@ use clean_types::{BoostStage, Fixed, Set};
 use data::pose::animation::AnimationFrame;
 use data::pose::transition::Control;
 
-pub use import::{Clips, ImportError, Imported, pose_of};
+pub use import::{Clips, ImportError, Imported, figure_of};
 
 use crate::pose::controls;
 use crate::progress_world;
@@ -49,14 +49,22 @@ const fn engine_stage(stage: BoostStage) -> samus::BoostStage {
     }
 }
 
-/// The model's State from the engine's animation: no laps left is the engine's 0.
-const fn state(animation: Animation) -> State {
+/// The engine's count of the model's laps left.
+const fn laps_count(laps_left: LapsLeft) -> u8 {
+    match laps_left {
+        LapsLeft::WithoutBooster => 0,
+        LapsLeft::WithBooster(laps) => laps.count(),
+    }
+}
+
+/// The model's State from the engine's animation: the engine's 0 laps left is her run without
+/// the speed booster.
+fn state(animation: Animation) -> State {
     State {
         playhead: playhead(animation),
-        boost: Boost {
-            stage: model_stage(animation.boost.stage),
-            laps_left: Laps::new(animation.boost.laps_left),
-        },
+        stage: model_stage(animation.boost.stage),
+        laps_left: Laps::new(animation.boost.laps_left)
+            .map_or(LapsLeft::WithoutBooster, LapsLeft::WithBooster),
     }
 }
 
@@ -64,7 +72,7 @@ const fn state(animation: Animation) -> State {
 const fn playhead(animation: Animation) -> Playhead {
     Playhead {
         step: Step(animation.step.0),
-        frames_left: Frames(animation.frames_left),
+        time_left: Frames(animation.frames_left),
     }
 }
 
@@ -113,11 +121,10 @@ impl Start {
 /// The model's inputs that samus-motion's step gives: what her moves did, and how they leave her.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Moved {
-    /// A wall jump readied, the standing restart, a dash begun or lost, the pose an end handed
-    /// over.
-    pub moves: Set<Move>,
-    /// She is dashing as her moves leave her.
-    pub dashing: bool,
+    /// A wall jump readied, the standing restart, a dash lost, the pose an end handed over.
+    pub moves: Set<MoveEvent>,
+    /// Whether she is dashing as her moves leave her, a dash begun this frame included.
+    pub dash: Dash,
     /// She is heading down as her moves leave her.
     pub heading_down: bool,
     /// Her vertical speed as her moves leave her, downward positive.
@@ -126,23 +133,25 @@ pub struct Moved {
 
 impl From<&Outcome> for Moved {
     fn from(outcome: &Outcome) -> Self {
-        let mut moves = Set::<Move>::default();
-        moves[Move::DashBegan] = outcome.dash_began;
-        moves[Move::StandingRestart] = outcome.standing_animation == StandingAnimation::Restarts;
-        moves[Move::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
-        moves[Move::HandedOver] = outcome.handed_over;
-        moves[Move::DashLost] = outcome.dash_lost;
+        let mut moves = Set::<MoveEvent>::default();
+        moves[MoveEvent::StandingRestart] =
+            outcome.standing_animation == StandingAnimation::Restarts;
+        moves[MoveEvent::WallJumpReadied] = outcome.wall_test == WallTest::Readied;
+        moves[MoveEvent::HandedOver] = outcome.handed_over;
+        moves[MoveEvent::DashLost] = outcome.dash_lost;
+        let dash = match (outcome.dash_began, outcome.dashing_after_moves) {
+            (true, _) => Dash::Began,
+            (false, Dashing::On) => Dash::On,
+            (false, Dashing::Off) => Dash::Off,
+        };
         Self {
             moves,
-            dashing: outcome.dashing_after_moves == Dashing::On,
+            dash,
             heading_down: outcome.heading_down,
             vertical_speed: outcome.vertical_speed_after_moves,
         }
     }
 }
-
-/// The sounds waiting in the engine's sound queue: it has none yet.
-const SOUNDS_WAITING: u8 = 0;
 
 /// The model's inputs for the frame Samus ends as `samus`, from her `start` and samus-motion's
 /// `outcome`; `None` when the pose she starts or ends in is outside her domain.
@@ -154,21 +163,17 @@ fn inputs(
 ) -> Option<Inputs> {
     let moved = Moved::from(outcome);
     Some(Inputs {
-        pose: pose_of(start.pose)?,
-        pose_after: pose_of(samus.pose)?,
+        figure: figure_of(start.pose)?,
+        figure_after: figure_of(samus.pose)?,
         moves: moved.moves,
-        dashing: moved.dashing,
+        dash: moved.dash,
         run_held: controls(controller.held).contains(Control::Run),
         heading_down: moved.heading_down,
         vertical_speed: moved.vertical_speed,
         energy: start.energy,
         items: progress_world::switched_on(&samus.equipment),
-        liquid: Liquid {
-            slowdown: Slowdown::NONE,
-            start_slowdown: Slowdown::NONE,
-            submerged: false,
-        },
-        sounds_waiting: SoundsWaiting::new(SOUNDS_WAITING)?,
+        liquid: Liquid::NONE,
+        sounds_waiting: SoundsWaiting::NONE,
     })
 }
 
@@ -189,10 +194,10 @@ pub fn animate(
     let (after, _sound) = update(state(samus.animation), &inputs, clips, &Rules::VANILLA);
     samus.animation = Animation {
         step: ClipStep(after.playhead.step.0),
-        frames_left: after.playhead.frames_left.0,
+        frames_left: after.playhead.time_left.0,
         boost: samus::Boost {
-            stage: engine_stage(after.boost.stage),
-            laps_left: after.boost.laps_left.map_or(0, Laps::count),
+            stage: engine_stage(after.stage),
+            laps_left: laps_count(after.laps_left),
         },
     };
 }

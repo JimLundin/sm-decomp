@@ -1,15 +1,15 @@
-//! §4 What her moves do to her clip, before the time runs down.
+//! What her moves do to her clip, before the time runs down.
 
 use clean_types::Parts;
 
 use crate::clip::{Clip, Frames, Step};
-use crate::inputs::{Inputs, Move};
-use crate::playhead::Playhead;
+use crate::inputs::{Inputs, MoveEvent};
 use crate::rules::Rules;
+use crate::state::Playhead;
 
-/// §6, 1 and 2: her moves' changes to `clip`, the clip of her pose at the frame's start, in this
-/// order: a standing restart, a readied wall jump and a fast fall, then the rising hold, before
-/// the time runs down. Each that acts sets the playhead the next one reads.
+/// Her moves' changes to `clip`, the clip of her figure at the frame's start, in the order that
+/// matters: a standing restart, a readied wall jump and a fast fall, then the rising hold, all
+/// before the time runs down. Each that acts sets the playhead the next one reads.
 #[must_use]
 pub fn her_moves(playhead: Playhead, inputs: &Inputs, clip: &Clip, rules: &Rules) -> Playhead {
     let playhead = standing_restart(inputs, rules).unwrap_or(playhead);
@@ -21,9 +21,9 @@ pub fn her_moves(playhead: Playhead, inputs: &Inputs, clip: &Clip, rules: &Rules
 /// Spec: `StandingRestart`. Holding shoot while she stands unaimed starts her standing clip
 /// over: step 0 with the restart's hold, which no liquid slows.
 fn standing_restart(inputs: &Inputs, rules: &Rules) -> Option<Playhead> {
-    inputs.moves[Move::StandingRestart].then_some(Playhead {
+    inputs.moves[MoveEvent::StandingRestart].then_some(Playhead {
         step: Step::FIRST,
-        frames_left: rules.restart_hold.frames(),
+        time_left: rules.restart_hold.frames(),
     })
 }
 
@@ -31,9 +31,9 @@ fn standing_restart(inputs: &Inputs, rules: &Rules) -> Option<Playhead> {
 /// before it, on its last frame, so the clip moves on to the kick step this frame.
 fn wall_jump_ready(inputs: &Inputs, clip: &Clip) -> Option<Playhead> {
     let step = clip.kick?.before()?;
-    inputs.moves[Move::WallJumpReadied].then_some(Playhead {
+    inputs.moves[MoveEvent::WallJumpReadied].then_some(Playhead {
         step,
-        frames_left: Frames::LAST,
+        time_left: Frames::LAST,
     })
 }
 
@@ -44,7 +44,7 @@ fn fast_fall(from: Step, inputs: &Inputs, clip: &Clip, rules: &Rules) -> Option<
     let fast = inputs.vertical_speed.size() >= rules.fast_fall_speed;
     fast.then_some(Playhead {
         step,
-        frames_left: rules.fast_fall_hold.frames(),
+        time_left: rules.fast_fall_hold.frames(),
     })
 }
 
@@ -59,9 +59,9 @@ fn rising_hold(
 ) -> Option<Playhead> {
     let holds = !inputs.heading_down
         && clip.rising == Some(playhead.step)
-        && playhead.frames_left == Frames::LAST;
+        && playhead.time_left == Frames::LAST;
     holds.then_some(Playhead {
-        frames_left: rules.rising_hold.frames(),
+        time_left: rules.rising_hold.frames(),
         ..playhead
     })
 }

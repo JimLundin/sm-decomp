@@ -1,11 +1,10 @@
-//! §1.1, §6: what a caller reads as the frame starts, before samus-motion's step: the end her
-//! clip reaches and whether her spin has turned far. Each follows from her playhead and the clip
-//! of her pose at the frame's start alone.
+//! What a caller reads as the frame starts, before samus-motion's step: the end her clip reaches
+//! and whether her spin has turned far.
 
 use clean_types::ClipEnd;
 
 use crate::clip::{Clip, Instruction};
-use crate::playhead::{Playhead, RunDown};
+use crate::state::{Playhead, RunDown};
 
 /// What is known of a frame from its start alone.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -20,34 +19,25 @@ pub struct Ahead {
 
 impl Ahead {
     /// What is known of the frame from `playhead`, as the caller kept it, and `clip`, the clip of
-    /// her pose at the frame's start.
+    /// her figure at the frame's start.
+    ///
+    /// Spec: `ClipEnds`. The end is the one the time running down moves her clip on to, if it
+    /// moves on to one. No move of the frame can change it: the spec's clips that end have no
+    /// kick, fast fall or rising step, and belong neither to her run, nor to her standing
+    /// unaimed, nor to a kept row of `StartingClip`.
+    ///
+    /// Spec: `SpinTurnedFar`. Her spin has turned far once her clip has a kick step and her step
+    /// is on it or past it by step number, so the steps of a branch numbered after the kick step
+    /// are past it. What the frame's moves and the pose she takes do shows from the next frame.
     #[must_use]
     pub fn of(playhead: Playhead, clip: &Clip) -> Self {
+        let end = match playhead.run_down(clip) {
+            RunDown::MovesOn(_, Instruction::Control(control)) => control.end(),
+            RunDown::MovesOn(_, Instruction::Show(_)) | RunDown::Stays(_) => None,
+        };
         Self {
-            end: end(playhead, clip),
-            turned_far: turned_far(playhead, clip),
+            end,
+            turned_far: clip.kick.is_some_and(|kick| playhead.step >= kick),
         }
     }
-}
-
-/// Spec: `ClipEnds`. The end her clip reaches this frame: the end the time running down moves it
-/// on to, if it moves on to one.
-///
-/// Nothing the frame does to her clip before the time runs down can change it, because no clip
-/// with an end is one a move acts on (§1.5): it has no kick step (a readied wall jump), no fast
-/// fall step and no rising step, and it is not her run's (a lap's end), her unaimed standing's
-/// (a standing restart) or a kept row's of `StartingClip`. So the clip runs down from the frame's
-/// start as it would have.
-fn end(playhead: Playhead, clip: &Clip) -> Option<ClipEnd> {
-    match playhead.run_down(clip) {
-        RunDown::MovesOn(_, Instruction::Control(control)) => control.end(),
-        RunDown::MovesOn(_, Instruction::Show(_)) | RunDown::Stays(_) => None,
-    }
-}
-
-/// Spec: `SpinTurnedFar`. Her spin has turned far once her clip has a kick step and her step is
-/// on it or past it, by step number, so the steps of a branch numbered after the kick step are
-/// past it. The frame's moves and the pose she takes show from the next frame on.
-fn turned_far(playhead: Playhead, clip: &Clip) -> bool {
-    clip.kick.is_some_and(|kick| playhead.step >= kick)
 }

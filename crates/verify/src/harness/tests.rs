@@ -686,7 +686,7 @@ fn the_importer_gives_every_pose_of_hers_its_own_clip() {
         let twins: Vec<_> = poses
             .iter()
             .skip(at + 1)
-            .filter(|other| other.pose == imported.pose)
+            .filter(|other| other.figure == imported.figure)
             .map(|other| other.id)
             .collect();
         assert!(twins.is_empty(), "{:?} is drawn as {twins:?}", imported.id);

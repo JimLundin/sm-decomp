@@ -7,7 +7,7 @@
 //! through it, and her sprite, drawn by the original's frame, looks her picture up through it.
 
 use clean_model_samus_looks::{
-    Branch, Clip, Content, Control, Hold, Instruction, Pace, Paces, Pose, Step,
+    Branch, Clip, Content, Control, Figure, Hold, Instruction, Pace, Paces, Step,
 };
 use clean_types::Sprite;
 use data::assets::samus::import::map;
@@ -56,8 +56,8 @@ const KICKS: [PoseId; 8] = [
 pub struct Imported {
     /// The original's pose.
     pub id: PoseId,
-    /// The pose and the sprite it is drawn in.
-    pub pose: Pose,
+    /// Her figure: the pose and the sprite it is drawn in.
+    pub figure: Figure,
     /// Its clip.
     pub clip: Clip,
     /// The original's frame of each step, by step.
@@ -155,10 +155,10 @@ impl Clips {
 
 impl Content for Clips {
     /// A pose no entry holds has no steps: the model leaves her where she is.
-    fn clip(&self, pose: &Pose) -> &Clip {
+    fn clip(&self, figure: &Figure) -> &Clip {
         self.poses
             .iter()
-            .find(|imported| imported.pose == *pose)
+            .find(|imported| imported.figure == *figure)
             .map_or(&self.none, |imported| &imported.clip)
     }
 
@@ -177,11 +177,11 @@ const fn sprite(dress: Dress) -> Sprite {
     }
 }
 
-/// The model's pose of the original's `id`; `None` outside her domain.
+/// The model's figure of the original's pose `id`; `None` outside her domain.
 #[must_use]
-pub fn pose_of(id: PoseId) -> Option<Pose> {
-    map::shown(id).map(|(motion, dress)| Pose {
-        motion,
+pub fn figure_of(id: PoseId) -> Option<Figure> {
+    map::shown(id).map(|(pose, dress)| Figure {
+        pose,
         sprite: sprite(dress),
     })
 }
@@ -236,10 +236,10 @@ fn imported(id: PoseId, list: &DelayList) -> Result<Imported, ImportError> {
             .map(|frame| step_at(Some(usize::from(frame.0))))
             .transpose()
     };
-    let pose = pose_of(id).ok_or(ImportError::NoList(id))?;
+    let figure = figure_of(id).ok_or(ImportError::NoList(id))?;
     Ok(Imported {
         id,
-        pose,
+        figure,
         clip: Clip {
             instructions,
             kick: mark(kick)?,

@@ -153,7 +153,7 @@ blocks entry TheScriptsRun 595 0 596 0
 blocks entry WhatTheScreenRedraws 0 0 0 249
 samus-looks frames 24230 18233 0 506
 samus-looks field 18233 0 step
-samus-looks field 18233 0 frames_left
+samus-looks field 18233 0 time_left
 samus-looks field 18232 1 stage
 samus-looks field 18232 1 laps_left
 samus-looks entry BoostStages 272 4 272 0

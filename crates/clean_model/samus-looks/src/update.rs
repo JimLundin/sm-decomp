@@ -1,10 +1,10 @@
-//! §6 A frame of her animation, in the order that matters.
+//! A frame of her animation, in the order that matters.
 
 use clean_types::AnimationSound;
 
 use crate::inputs::{Content, Inputs};
 use crate::moves::her_moves;
-use crate::playback::play_clip;
+use crate::play::play;
 use crate::rules::Rules;
 use crate::run::{dash_began, dash_lost};
 use crate::starting::start;
@@ -17,9 +17,9 @@ use crate::state::State;
 /// `BoostStages`' lap end), and a frame passes one control at most.
 ///
 /// What the frame's start alone tells, the end and whether her spin has turned far, the caller
-/// reads before samus-motion's step (`Ahead::of`). Then, with the pose she takes, in §6's order:
+/// reads before samus-motion's step (`Ahead::of`). Then, with the pose she takes, in this order:
 /// her moves' changes (a dash's beginning among them), the rising hold, her clip playing from
-/// her pose at the frame's start, the start of the clip of the pose she takes, and a dash's
+/// her figure at the frame's start, the start of the clip of the pose she takes, and a dash's
 /// loss.
 #[must_use]
 pub fn update(
@@ -28,15 +28,14 @@ pub fn update(
     content: &impl Content,
     rules: &Rules,
 ) -> (State, Option<AnimationSound>) {
-    let clip = content.clip(&inputs.pose);
     let moved = State {
-        playhead: her_moves(state.playhead, inputs, clip, rules),
-        boost: dash_began(inputs, rules).unwrap_or(state.boost),
+        playhead: her_moves(state.playhead, inputs, content.clip(&inputs.figure), rules),
+        ..dash_began(state, inputs, rules)
     };
-    let (played, sound) = play_clip(moved, inputs, clip, content.paces(), rules);
-    let after = State {
-        playhead: start(inputs, content.clip(&inputs.pose_after)).unwrap_or(played.playhead),
-        boost: dash_lost(inputs).unwrap_or(played.boost),
+    let (played, sound) = play(moved, inputs, content, rules);
+    let started = State {
+        playhead: start(inputs, content.clip(&inputs.figure_after)).unwrap_or(played.playhead),
+        ..played
     };
-    (after, sound)
+    (dash_lost(started, inputs), sound)
 }

@@ -1,33 +1,31 @@
-//! §1.3 What a frame reads, each from the domain that owns it.
+//! What a frame reads, each from the domain that owns it.
 
-use clean_types::{Fixed, Item, Set, Sprite};
+use clean_types::{Fixed, Item, Pose, Set, Sprite};
 use enum_map::Enum;
 
 use crate::clip::{Clip, Paces, Slowdown};
 
-/// §1.2 Her pose: samus-motion's pose with the sprite she is drawn in. Each pose and sprite has
-/// its own clip, and she takes another pose when either part differs.
+/// Her figure: samus-motion's pose with the sprite she is drawn in. Each pose and sprite has its
+/// own clip, and she takes another pose when either part differs.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Pose {
+pub struct Figure {
     /// Samus-motion's pose: body, action, facing, aim, gun, legs.
-    pub motion: clean_types::Pose,
+    pub pose: Pose,
     /// The sprite `HowSheIsDrawn` chooses for it.
     pub sprite: Sprite,
 }
 
-/// The content (§1.4): her clips, by pose, and the run's paces.
+/// The content: her clips, one for each pose and sprite, and the run's paces.
 pub trait Content {
-    /// The clip of a pose.
-    fn clip(&self, pose: &Pose) -> &Clip;
+    /// The clip of a pose drawn in its sprite.
+    fn clip(&self, figure: &Figure) -> &Clip;
     /// The run's paces.
     fn paces(&self) -> &Paces;
 }
 
 /// What samus-motion's step did this frame, that this domain reads. Listed in no order.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
-pub enum Move {
-    /// A dash began this frame, before the clip moves on (`BoostStages`).
-    DashBegan,
+pub enum MoveEvent {
     /// "The standing animation restarts" (`StandingRestart`).
     StandingRestart,
     /// Its near-wall test readied a wall jump (`WallJumpReady`).
@@ -36,6 +34,17 @@ pub enum Move {
     HandedOver,
     /// Her dash was lost this frame (`BoostStages`).
     DashLost,
+}
+
+/// Whether she is dashing as the clip moves on (`RunPace`, `BoostStages`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Dash {
+    /// She is not dashing.
+    Off,
+    /// She is dashing.
+    On,
+    /// A dash began this frame, before the clip moves on: she is dashing.
+    Began,
 }
 
 /// What the liquid she is in does to her animation (the liquids).
@@ -49,17 +58,26 @@ pub struct Liquid {
     pub submerged: bool,
 }
 
-/// The frame's inputs (§1.3).
+impl Liquid {
+    /// No liquid: out of one, nothing slows her and she is not submerged.
+    pub const NONE: Self = Self {
+        slowdown: Slowdown::NONE,
+        start_slowdown: Slowdown::NONE,
+        submerged: false,
+    };
+}
+
+/// The frame's inputs.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Inputs {
-    /// Her pose at the frame's start.
-    pub pose: Pose,
-    /// The pose she ends the frame in, samus-motion's choice.
-    pub pose_after: Pose,
+    /// Her figure at the frame's start.
+    pub figure: Figure,
+    /// The figure she ends the frame in: samus-motion's choice of pose, in its sprite.
+    pub figure_after: Figure,
     /// What her moves did this frame.
-    pub moves: Set<Move>,
-    /// She has a dash's momentum as the clip moves on (`RunPace`, `BoostStages`).
-    pub dashing: bool,
+    pub moves: Set<MoveEvent>,
+    /// Whether she is dashing as the clip moves on.
+    pub dash: Dash,
     /// The pad holds run this frame.
     pub run_held: bool,
     /// Heading down, as her moves leave her: she falls, a fall at 0 included, and not in the
@@ -85,8 +103,10 @@ pub struct Inputs {
 pub struct SoundsWaiting(u8);
 
 impl SoundsWaiting {
-    /// Spec §1.3: at most 15 sounds wait.
+    /// At most 15 sounds wait.
     pub const MOST: u8 = 15;
+    /// No sounds waiting, as on every record of her starting to boost.
+    pub const NONE: Self = Self(0);
 
     /// The count of `waiting`, if the spec allows it: 0 to `MOST`.
     #[must_use]

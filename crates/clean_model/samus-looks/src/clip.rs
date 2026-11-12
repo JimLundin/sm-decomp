@@ -1,12 +1,10 @@
-//! §1.4 Her clips and the run's paces: the content the importer supplies, as typed values.
+//! Her clips and the run's paces: the content the importer supplies, as typed values.
 
 use clean_types::{BoostStage, ClipEnd};
 use enum_map::EnumMap;
 
-use crate::count::counted_down;
-
-/// A place in a clip, numbered from 0 as the spec's notation numbers them: her step is the one
-/// her clip is on, and each step holds one instruction.
+/// A place in a clip, numbered from 0: her step is the one her clip is on, and each step holds
+/// one instruction.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Step(pub u8);
 
@@ -33,40 +31,33 @@ impl Step {
     }
 }
 
-/// A count of frames: the time her step has left (0 to 255, §1), or a hold the model sets.
+/// A number of frames: the time her step has left, 0 to 255, or a hold the model sets.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Frames(pub u8);
 
 impl Frames {
     /// No frames.
     pub const NONE: Self = Self(0);
-    /// One frame left: the last frame of a step, which the time running down moves on from.
+    /// One frame left: the last frame of a step, after which the clip moves on.
     pub const LAST: Self = Self(1);
 
-    /// Spec: `ClipPlays`. The time left run down by a frame: what is left while that is above
-    /// 0; none once it has run out, and the clip moves on.
-    #[must_use]
-    pub fn counted_down(self) -> Option<Self> {
-        counted_down(self.0).map(Self)
-    }
-
-    /// This hold lengthened by `slowdown`. The spec's bounds keep the sum in range: a hold is at
-    /// most `Hold::LONGEST`, 127 frames (§1.5), and a slowdown at most `Slowdown::MOST`, 3
-    /// (§1.3), so a hold slowed twice (`HandOverSlowdown`) is at most 133 frames, within the time
-    /// left's 0 to 255. The add saturates only where no value the spec allows reaches.
+    /// These frames lengthened by `slowdown`. The spec's bounds keep the sum in range: a hold is
+    /// at most `Hold::LONGEST`, 127 frames, and a slowdown at most `Slowdown::MOST`, 3, so a hold
+    /// slowed twice (`HandOverSlowdown`) is at most 133 frames, within the time left's 0 to 255.
+    /// The add saturates only where no value the spec allows reaches.
     #[must_use]
     pub const fn slowed(self, slowdown: Slowdown) -> Self {
         Self(self.0.saturating_add(slowdown.0))
     }
 }
 
-/// A hold (§1.4): a shown step's, or one the tuning gives (the restart's, the fast fall's, the
-/// rising step's); 1 frame or more and at most `Hold::LONGEST`.
+/// A hold: a shown step's, or one the tuning gives (the restart's, the fast fall's, the rising
+/// step's); 1 frame or more and at most `Hold::LONGEST`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Hold(pub(crate) u8);
 
 impl Hold {
-    /// Spec §1.5: a hold is at most 127 frames (the game's are at most 80), so a hold with both
+    /// The spec bounds a hold at 127 frames (the game's are at most 80), so a hold with both
     /// slowdowns stays within the time left's 0 to 255.
     pub const LONGEST: u8 = 127;
 
@@ -85,12 +76,12 @@ impl Hold {
     }
 }
 
-/// A slowdown (§1.3): frames a liquid adds to a hold, 0 to `Slowdown::MOST`.
+/// A slowdown: frames a liquid adds to a hold, 0 to `Slowdown::MOST`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Slowdown(u8);
 
 impl Slowdown {
-    /// Spec §1.3: a slowdown is at most 3 frames, in water.
+    /// A slowdown is at most 3 frames, in water.
     pub const MOST: u8 = 3;
     /// No slowdown: out of a liquid, or in one that doesn't slow her.
     pub const NONE: Self = Self(0);
@@ -113,7 +104,7 @@ pub struct Branch {
     pub screw_attack: Step,
 }
 
-/// What a step of a clip does when the clip reaches it (§1.4): show its picture for a hold, or a
+/// What a step of a clip does when the clip reaches it: show its picture for a hold, or a
 /// control.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Instruction {
@@ -123,7 +114,7 @@ pub enum Instruction {
     Control(Control),
 }
 
-/// A step that shows no picture of its own (§1.4): it says where the clip goes, or that it ends.
+/// A step that shows no picture of its own: it says where the clip goes, or that it ends.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Control {
     /// `rest`: she rests on it with no time left, and the clip moves on from it the next frame
@@ -153,12 +144,12 @@ impl Control {
     }
 }
 
-/// A clip (§1.4): its instructions from step 0, and the steps it marks.
+/// A clip: its instructions from step 0, and the steps it marks.
 ///
-/// §1.5 gives the clips the spec covers: an `again` or a `branch` goes to a shown step, a `rest`
-/// is followed by a shown step, and the last step is not a shown one. Outside them the model
-/// stays total: a clip that would move on past its end leaves her where she is, and a step with
-/// no hold gives no time left.
+/// The spec covers clips in which an `again` or a `branch` goes to a shown step, a `rest` is
+/// followed by a shown step, and the last step is not a shown one. Outside them the model stays
+/// total: a clip that would move on past its end leaves her where she is, and a step with no
+/// hold gives no time left.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Clip {
     /// The instructions, one per step, in order from step 0.
@@ -188,8 +179,8 @@ impl Clip {
     }
 }
 
-/// One of the run's paces (§1.4): a hold for each shown step of her running clips, by step.
-/// Where a pace gives no hold for a step (outside §1.4's content), the clip's own hold shows.
+/// One of the run's paces: a hold for each shown step of her running clips, by step number.
+/// Where a pace gives no hold for a step (outside the spec's content), the clip's own hold shows.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Pace(pub Vec<Hold>);
 
@@ -201,7 +192,7 @@ impl Pace {
     }
 }
 
-/// The run's paces (§1.4): the plain pace, and a boosted pace for each boost stage.
+/// The run's paces: the plain pace, and a boosted pace for each boost stage.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Paces {
     /// Her stride without the speed booster.

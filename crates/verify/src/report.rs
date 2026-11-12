@@ -244,37 +244,34 @@ const DOMAINS: &[Domain] = &[
         ],
     },
     // The inputs, the frame and its update, the State's shapes, the one countdown rule, the
-    // rules and the catalogue are the domain's shared code. The clip's format (§1.4), the
-    // playhead, its playback and its start in a new pose are the clip's; her moves' writes and the
-    // run's pace and boost stages are the other two areas.
+    // rules and the catalogue are the domain's shared code. The clip's format, what a frame's
+    // start tells, the playhead, the clip's play and its start in a new pose are the clip's; her
+    // moves' writes and the run's pace and boost stages are the other two areas.
     Domain {
         name: "samus-looks",
         bridge: "samus_looks_world",
         areas: &[
-            (
-                "clip",
-                &["clip.rs", "playhead.rs", "playback.rs", "starting.rs"],
-            ),
+            ("clip", &["clip.rs", "ahead.rs", "play.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
             ("run", &["run.rs"]),
         ],
         apart: &[
-            // `ClipEnds`: the end her clip reaches this frame.
+            // `ClipControls`: the playhead on a step, with its hold slowed.
             Apart {
-                file: "ahead.rs",
-                function: "end",
+                file: "state.rs",
+                function: "on",
                 area: "clip",
             },
-            // `SpinTurnedFar`: her spin has turned far enough to kick off a wall.
+            // `ClipPlays`: the time left runs down, and the clip moves on.
             Apart {
-                file: "ahead.rs",
-                function: "turned_far",
-                area: "moves",
+                file: "state.rs",
+                function: "run_down",
+                area: "clip",
             },
             // `BoostStages`: a stage's laps count down.
             Apart {
                 file: "state.rs",
-                function: "counted_down",
+                function: "after_lap",
                 area: "run",
             },
         ],

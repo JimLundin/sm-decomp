@@ -9,7 +9,7 @@
 //! through the step map of her pose's clip; the inputs from records N and N+1, at the
 //! animation's turn, as the decode notes give them; the State the model leaves is compared with
 //! record N+1's, her step through the step map of the clip of the pose she ends the frame in. A
-//! wall jump readied, the standing restart, dashing, a dash begun or lost, the pose an end handed
+//! wall jump readied, the standing restart, the dash, a dash lost, the pose an end handed
 //! over, heading down and her vertical speed are samus-motion's outputs, from its model over record
 //! N where that model runs the frame, through the engine's own mapping
 //! (`game::samus_looks_world::Moved`); elsewhere they are read off the records, and a wall jump
@@ -22,8 +22,8 @@ use core::cell::Cell;
 use core::fmt;
 
 use clean_model_samus_looks::{
-    BehaviourId, Boost, CATALOGUE, Content, Control, Frames, Inputs, Instruction, Laps, Liquid,
-    Move, Playhead, Rules, Slowdown, SoundsWaiting, State, Step, update,
+    BehaviourId, CATALOGUE, Content, Control, Dash, Frames, Inputs, Instruction, Laps, LapsLeft,
+    Liquid, MoveEvent, Playhead, Rules, RunDown, Slowdown, SoundsWaiting, State, Step, update,
 };
 use clean_types::{Action, BoostStage, Item, Parts as _, Set};
 use core::num::Wrapping;
@@ -200,20 +200,20 @@ pub struct Declared {
     /// Her step.
     pub step: Step,
     /// The time left.
-    pub frames_left: Frames,
+    pub time_left: Frames,
     /// The boost stage.
     pub stage: BoostStage,
     /// The laps left.
-    pub laps_left: Option<Laps>,
+    pub laps_left: LapsLeft,
 }
 
 impl From<&State> for Declared {
     fn from(state: &State) -> Self {
         Self {
             step: state.playhead.step,
-            frames_left: state.playhead.frames_left,
-            stage: state.boost.stage,
-            laps_left: state.boost.laps_left,
+            time_left: state.playhead.time_left,
+            stage: state.stage,
+            laps_left: state.laps_left,
         }
     }
 }
@@ -294,12 +294,11 @@ impl SamusLooks {
         Ok(State {
             playhead: Playhead {
                 step,
-                frames_left: Frames(left),
+                time_left: Frames(left),
             },
-            boost: Boost {
-                stage,
-                laps_left: Laps::new(laps),
-            },
+            stage,
+            // The counter's 0 laps are her run without the speed booster.
+            laps_left: Laps::new(laps).map_or(LapsLeft::WithoutBooster, LapsLeft::WithBooster),
         })
     }
 
@@ -319,7 +318,7 @@ impl SamusLooks {
                 (Moved::from(&outcome), false)
             } else {
                 let (mut moved, readied) = from_the_records(before, after, from, next)?;
-                moved.moves[Move::StandingRestart] = restarts;
+                moved.moves[MoveEvent::StandingRestart] = restarts;
                 (moved, readied)
             };
         let radius = (self.radius(before), self.radius(after));
@@ -332,10 +331,10 @@ impl SamusLooks {
         let slowdown = word(next, FRAME_BUFFER)?;
         Ok(Frame {
             inputs: Inputs {
-                pose: before.pose,
-                pose_after: after.pose,
+                figure: before.figure,
+                figure_after: after.figure,
                 moves: moved.moves,
-                dashing: moved.dashing,
+                dash: moved.dash,
                 run_held: pressing(source::BINDING_RUN)?,
                 heading_down: moved.heading_down,
                 vertical_speed: moved.vertical_speed,
@@ -356,8 +355,8 @@ impl SamusLooks {
 
 /// Her motion's outputs on a frame samus-motion's model doesn't run, from records `from` and
 /// `next`, all but the standing restart, and whether a wall jump was readied, which is read off
-/// record N+1's own step: dashing is `0B3C` at N or a dash begun, a dash begun or lost the flag's change from N
-/// to N+1, handed over the super special command at N+1, heading down her direction at N+1 and
+/// record N+1's own step: a dash begun or lost is the flag `0B3C`'s change from N to N+1, and
+/// otherwise the dash is the flag at N, handed over the super special command at N+1, heading down her direction at N+1 and
 /// her vertical speed record N+1's, read as signed and turned upward when she rises.
 fn from_the_records(
     before: &Imported,
@@ -367,11 +366,10 @@ fn from_the_records(
 ) -> Result<(Moved, bool), Skip> {
     let dash = [word(from, DASHING)? != 0, word(next, DASHING)? != 0];
     let readied = readied(before, after, from, next)?;
-    let mut moves = Set::<Move>::default();
-    moves[Move::WallJumpReadied] = readied;
-    moves[Move::DashBegan] = dash == [false, true];
-    moves[Move::DashLost] = dash == [true, false];
-    moves[Move::HandedOver] = word(next, POSE_CHANGE_COMMAND)? == ANIMATION_FINISHED
+    let mut moves = Set::<MoveEvent>::default();
+    moves[MoveEvent::WallJumpReadied] = readied;
+    moves[MoveEvent::DashLost] = dash == [true, false];
+    moves[MoveEvent::HandedOver] = word(next, POSE_CHANGE_COMMAND)? == ANIMATION_FINISHED
         && word(next, SUPER_SPECIAL_POSE)? & NO_POSE == 0;
     let direction = word(next, source::SAMUS_Y_DIR)?;
     let speed = Wrapping(
@@ -380,7 +378,11 @@ fn from_the_records(
     );
     let motion = Moved {
         moves,
-        dashing: dash[0] || dash == [false, true],
+        dash: match dash {
+            [false, true] => Dash::Began,
+            [true, _] => Dash::On,
+            [false, false] => Dash::Off,
+        },
         heading_down: direction == DOWN,
         vertical_speed: if direction == UP { -speed } else { speed },
     };
@@ -497,7 +499,7 @@ impl Domain for SamusLooks {
     type Skip = Skip;
     const FIELDS: &'static [Field<Declared>] = &[
         domain_field!("step", step),
-        domain_field!("frames_left", frames_left),
+        domain_field!("time_left", time_left),
         domain_field!("stage", stage),
         domain_field!("laps_left", laps_left),
     ];
@@ -570,7 +572,7 @@ impl Domain for SamusLooks {
     fn neutral(&self, frame: &Frame) -> Option<Frame> {
         frame.readied_from_the_record.then(|| {
             let mut inputs = frame.inputs;
-            inputs.moves[Move::WallJumpReadied] = false;
+            inputs.moves[MoveEvent::WallJumpReadied] = false;
             Frame {
                 inputs,
                 readied_from_the_record: false,
@@ -625,13 +627,13 @@ impl Domain for SamusLooks {
 /// takes.
 fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId> {
     use BehaviourId as B;
-    let clip = content.clip(&inputs.pose);
+    let clip = content.clip(&inputs.figure);
     let mut hit = vec![B::ClipPlays];
     let moves = &inputs.moves;
-    if moves[Move::StandingRestart] {
+    if moves[MoveEvent::StandingRestart] {
         hit.push(B::StandingRestart);
     }
-    if moves[Move::WallJumpReadied] && clip.kick.is_some() {
+    if moves[MoveEvent::WallJumpReadied] && clip.kick.is_some() {
         hit.push(B::WallJumpReady);
     }
     let fast = inputs.vertical_speed.size() >= Rules::VANILLA.fast_fall_speed;
@@ -642,29 +644,26 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
         hit.push(B::FastFall);
     }
     let rising = clip.rising == Some(state.playhead.step)
-        && state.playhead.frames_left == Frames(1)
+        && state.playhead.time_left == Frames(1)
         && !inputs.heading_down;
     if rising {
         hit.push(B::RisingHold);
     }
-    let running = inputs.dashing && inputs.pose.motion.action == Action::Running;
-    let played = !rising && !moves[Move::StandingRestart];
-    // The time left runs out this frame, and the clip moves on to the step after hers.
-    let runs_out = state.playhead.frames_left.counted_down().is_none();
-    let next = state.playhead.step.next().and_then(|to| clip.at(to));
-    if let (true, true, Some(next)) = (played, runs_out, next) {
-        hit.extend(moved_on(next, running, inputs, state.boost));
+    let running = inputs.dash != Dash::Off && inputs.figure.pose.action == Action::Running;
+    let played = !rising && !moves[MoveEvent::StandingRestart];
+    if let (true, RunDown::MovesOn(_, next)) = (played, state.playhead.run_down(clip)) {
+        hit.extend(moved_on(next, running, inputs, state));
     }
-    if moves[Move::DashBegan] || moves[Move::DashLost] {
+    if inputs.dash == Dash::Began || moves[MoveEvent::DashLost] {
         hit.push(B::BoostStages);
     }
-    if inputs.pose != inputs.pose_after {
+    if inputs.figure != inputs.figure_after {
         hit.push(B::StartingClip);
-        if moves[Move::HandedOver] && inputs.liquid.slowdown != Slowdown::NONE {
+        if moves[MoveEvent::HandedOver] && inputs.liquid.slowdown != Slowdown::NONE {
             hit.push(B::HandOverSlowdown);
         }
     }
-    if content.clip(&inputs.pose_after).kick.is_some() {
+    if content.clip(&inputs.figure_after).kick.is_some() {
         hit.push(B::SpinTurnedFar);
     }
     hit.sort_by_key(|id| CATALOGUE.iter().position(|entry| entry.id == *id));
@@ -673,7 +672,7 @@ fn exercised(state: State, inputs: &Inputs, content: &Clips) -> Vec<BehaviourId>
 }
 
 /// The entries the clip moving on to `next` brings into play.
-fn moved_on(next: Instruction, running: bool, inputs: &Inputs, boost: Boost) -> Vec<BehaviourId> {
+fn moved_on(next: Instruction, running: bool, inputs: &Inputs, state: State) -> Vec<BehaviourId> {
     use BehaviourId as B;
     let booster = inputs.items[Item::SpeedBooster];
     let control = match next {
@@ -684,8 +683,8 @@ fn moved_on(next: Instruction, running: bool, inputs: &Inputs, boost: Boost) -> 
     match control {
         _ if running && inputs.run_held && !booster => vec![B::RunPace],
         _ if running && inputs.run_held => {
-            let up_to_boosting = boost.laps_left.and_then(Laps::counted_down).is_none()
-                && boost.stage == BoostStage::Stage3;
+            let up_to_boosting =
+                state.laps_left.after_lap().is_none() && state.stage == BoostStage::Stage3;
             if up_to_boosting {
                 vec![B::RunPace, B::BoostStages, B::BoostingLap]
             } else {
@@ -710,7 +709,7 @@ mod tests {
             .iter()
             .map(|field| field.name)
             .collect();
-        assert_eq!(names, ["step", "frames_left", "stage", "laps_left"]);
+        assert_eq!(names, ["step", "time_left", "stage", "laps_left"]);
         assert!(PLAYHEAD.contains(0) && PLAYHEAD.contains(1) && !PLAYHEAD.contains(2));
         assert!(BOOST.contains(2) && BOOST.contains(3) && !BOOST.contains(1));
     }
