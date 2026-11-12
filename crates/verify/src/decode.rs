@@ -68,8 +68,8 @@ const OAM_LOW_BYTES: usize = 0x200;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RoomHeader(pub u16);
 
-/// The rooms the decoder knows: each room header with the content's ID for it, from
-/// `data::room::RoomMap`, and the species their enemies are (see
+/// The rooms the decoder knows: each room header with the room registry's ID for it (from
+/// `import::world`), and the species their enemies are (see
 /// `lockstep::slice_zero_rooms`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct RoomMap {

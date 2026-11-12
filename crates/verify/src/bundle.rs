@@ -24,12 +24,15 @@ use data::tileset::{TileTables, TilesetError};
 use game::Content;
 use game::plm::RoomPlms;
 use game::state::Buttons;
+use import::world::WorldError;
 use oracle_record::lsnes::RawError;
 
 use crate::decode::{DecodeError, RoomMap};
 use crate::gate::{Seed, buttons};
 use crate::lock::{Row, RowId, Sha256, Start};
-use crate::lockstep::{slice_zero_plms, slice_zero_rooms, slice_zero_states};
+use crate::lockstep::{
+    slice_zero_doors, slice_zero_plms, slice_zero_rooms, slice_zero_states, slice_zero_world,
+};
 
 /// Why a row's inputs can't be read from the bundle.
 #[derive(Debug)]
@@ -155,8 +158,8 @@ pub enum ContentError {
     SamusTiles(AddressError),
     /// Samus's assets don't import.
     SamusAssets(import::samus::ImportError),
-    /// Slice 0's rooms don't decode.
-    Rooms(data::room::RoomError),
+    /// Slice 0's rooms don't import.
+    Rooms(WorldError),
     /// The area maps are outside the image.
     AreaMaps(AddressError),
     /// The HUD's pictures are outside the image.
@@ -204,12 +207,12 @@ impl std::error::Error for ContentError {}
 ///
 /// A [`ContentError`] when the image isn't the release or a table doesn't decode.
 pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
-    // Decoded before the image moves into the ROM, reported after the ROM's own check.
-    let populations = crate::lockstep::slice_zero_plms(&image);
-    let doors = crate::lockstep::slice_zero_doors(&image);
+    // Imported before the image moves into the ROM, reported after the ROM's own check.
+    let world = slice_zero_world(&image);
     let rom = Rom::new(image).map_err(ContentError::Rom)?;
-    let room_plms = RoomPlms(populations.map_err(ContentError::Rooms)?);
-    let room_doors = game::collision::RoomDoors(doors.map_err(ContentError::Rooms)?);
+    let world = world.map_err(ContentError::Rooms)?;
+    let room_plms = RoomPlms(slice_zero_plms(&world));
+    let room_doors = game::collision::RoomDoors(slice_zero_doors(&world));
     let reactions = data::blocks::Reactions::load(rom.lorom()).map_err(ContentError::Blocks)?;
     let blocks = game::world_blocks_bridge::BlockContent::import(&reactions)
         .map_err(ContentError::Reaction)?;
@@ -271,13 +274,13 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
 /// can't drift.
 ///
 /// # Errors
-/// When a room's header or state doesn't decode from the image.
-pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, data::room::RoomError> {
+/// When a room doesn't import from the image.
+pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, WorldError> {
     Ok(slice_zero_rooms()
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
         .with_samus_clips(content.samus_clips.clone())
-        .with_plms(slice_zero_plms(image)?)
+        .with_plms(slice_zero_plms(&slice_zero_world(image)?))
         .with_states(slice_zero_states(image)?)
         .with_reactions(content.blocks.imported().clone()))
 }

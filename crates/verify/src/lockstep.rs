@@ -13,10 +13,11 @@ use std::ops::Range;
 use std::sync::{Arc, LazyLock};
 
 use canonical::{Canonical, Difference, Segment};
+use data::assets::world::World;
 use data::id::RoomId;
 use data::plm::PlmPopulation;
 use data::rom::Lorom;
-use data::room::{Door, RoomError, RoomKey, Rooms, SLICE_ZERO_ROOMS};
+use data::room::{Door, RoomKey};
 use data::tileset::TilesetId;
 use game::run_progress_bridge;
 use game::state::atmospheric::AtmosphericGraphic;
@@ -28,6 +29,7 @@ use game::state::room::{
 use game::state::slots::{Frames, Occupancy};
 use game::state::{NmiTiming, State};
 use game::{AutoRepeat, Content, OpenError, Rules, Session, SessionFault, Switches, TickInput};
+use import::world::WorldError;
 use oracle_record::{Cut, FrameRecord};
 use run_progress::Progress;
 
@@ -43,17 +45,20 @@ use crate::source::{self, WramWord};
 
 /// The rooms slice 0's rows play in and the species their enemies are.
 ///
-/// The rooms have the IDs the content gives them (`data::room::RoomMap::slice_zero`, the
-/// Morph Ball Room at `$8F:9E9F`), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
+/// The rooms have the IDs the room registry gives them (`import::world::SLICE_ZERO`, the
+/// Morph Ball Room), the species theirs (`data::enemy::SpeciesMap::slice_zero`).
 /// It holds no enemy programs, tiles definitions or PLM populations:
 /// [`RoomMap::with_programs`], [`RoomMap::with_samus_tiles`] and [`RoomMap::with_plms`] add
 /// them.
 #[must_use]
 pub fn slice_zero_rooms() -> RoomMap {
     RoomMap {
-        rooms: data::room::RoomMap::slice_zero()
+        rooms: import::world::SLICE_ZERO
             .iter()
-            .filter_map(|(key, id)| key.room_pointer().map(|pointer| (RoomHeader(pointer), id)))
+            .filter_map(|&id| {
+                let pointer = import::world::key(id)?.room_pointer()?;
+                Some((RoomHeader(pointer), id))
+            })
             .collect(),
         species: data::enemy::SpeciesMap::slice_zero(),
         programs: data::enemy::program::EnemyPrograms::default(),
@@ -65,20 +70,28 @@ pub fn slice_zero_rooms() -> RoomMap {
     }
 }
 
+/// The rooms slice 0 loads, imported from the ROM `image`.
+///
+/// # Errors
+///
+/// [`WorldError`] if a room doesn't import.
+pub fn slice_zero_world(image: &[u8]) -> Result<World, WorldError> {
+    import::world::import(Lorom::new(image), &import::world::SLICE_ZERO)
+}
+
 /// What each state of each room [`slice_zero_rooms`] holds loads that RAM doesn't keep, by
 /// its state header's pointer.
 ///
 /// # Errors
 ///
-/// [`RoomError`] if a room doesn't decode from `image`.
-pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>, RoomError> {
-    let (rooms, _) = Rooms::load(Lorom::new(image), &SLICE_ZERO_ROOMS)?;
-    Ok(rooms
-        .map()
-        .iter()
-        .filter_map(|(_, id)| rooms.get(id))
-        .flat_map(|room| room.states().map(|(_, state)| state))
-        .filter_map(|state| {
+/// [`WorldError`] if a room doesn't decode from `image`.
+pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>, WorldError> {
+    let mut states = Vec::new();
+    for id in import::world::SLICE_ZERO {
+        let key = import::world::key(id).ok_or(WorldError::Unregistered(id))?;
+        let room = data::room::decode(Lorom::new(image), key)
+            .map_err(|error| WorldError::Room { room: id, error })?;
+        states.extend(room.states().filter_map(|(_, state)| {
             // A state header sits in the room headers' bank, which a room key names.
             let pointer = RoomKey(state.at).room_pointer()?;
             Some((
@@ -88,45 +101,31 @@ pub fn slice_zero_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>,
                     layer2: state.layers.layer2.is_some(),
                 },
             ))
-        })
-        .collect())
+        }));
+    }
+    Ok(states)
 }
 
-/// The PLM population of each room [`slice_zero_rooms`] holds, as it loads on a new file
-/// entered by no door: the state slice 0's rows play in.
-///
-/// # Errors
-///
-/// [`RoomError`] if a room doesn't decode from `image`.
-pub fn slice_zero_plms(image: &[u8]) -> Result<Vec<(RoomId, PlmPopulation)>, RoomError> {
-    let (rooms, _) = Rooms::load(Lorom::new(image), &SLICE_ZERO_ROOMS)?;
-    Ok(rooms
-        .map()
-        .iter()
-        .filter_map(|(_, id)| {
-            let room = rooms.get(id)?;
-            let state = room.state(run_progress_bridge::room_state(
-                room,
-                &Progress::default(),
-                None,
-            )?)?;
-            Some((id, state.plms.clone()))
+/// The PLM population of each room of `world`, as it loads on a new file entered by no door:
+/// the version slice 0's rows play in.
+#[must_use]
+pub fn slice_zero_plms(world: &World) -> Vec<(RoomId, PlmPopulation)> {
+    world
+        .rooms()
+        .filter_map(|room| {
+            let version = run_progress_bridge::room_version(room, &Progress::default(), None)?;
+            Some((room.id, version.plms.clone()))
         })
-        .collect())
+        .collect()
 }
 
-/// The door list of each room [`slice_zero_rooms`] holds.
-///
-/// # Errors
-///
-/// [`RoomError`] if a room doesn't decode from `image`.
-pub fn slice_zero_doors(image: &[u8]) -> Result<Vec<(RoomId, Vec<Door>)>, RoomError> {
-    let (rooms, _) = Rooms::load(Lorom::new(image), &SLICE_ZERO_ROOMS)?;
-    Ok(rooms
-        .map()
-        .iter()
-        .filter_map(|(_, id)| Some((id, rooms.get(id)?.doors.doors.clone())))
-        .collect())
+/// The door list of each room of `world`.
+#[must_use]
+pub fn slice_zero_doors(world: &World) -> Vec<(RoomId, Vec<Door>)> {
+    world
+        .rooms()
+        .map(|room| (room.id, room.doors.clone()))
+        .collect()
 }
 
 /// One compared field: its coverage path and how to compare it.

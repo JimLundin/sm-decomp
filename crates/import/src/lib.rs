@@ -3,3 +3,4 @@
 //! formats, which `data` holds; `game` and `runtime` never depend on this crate.
 
 pub mod samus;
+pub mod world;

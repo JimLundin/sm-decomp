@@ -7,11 +7,12 @@ expects: tile sheets, palettes, sprite sheets with animation clips, tile maps wi
 (Tiled's shape), timelines, a sound bank. The assets come from the player's ROM and are never
 committed.
 
-Samus's sheet and clips (§4) are in this format today, and the blocks' reactions
+Samus's sheet and clips (§4) are in this format today, the blocks' reactions
 ([world-blocks.md §2](../behaviours/world-blocks.md)) are imported into the blocks model's own
-records. Everything else is still read through the ROM's layout (`data::room`, `level`,
-`tileset`, `enemy`, `plm`, `hud`, `map`, `message`, `palette`, `pose`, `spritemap`,
-`compression`), or not decoded at all because the oracle's seed holds it (BG graphics,
+records, and the rooms the engine loads come through the world's first records (§3.1).
+Everything else is still read through the ROM's layout (`data::room`, `level`, `tileset`,
+`enemy`, `plm`, `hud`, `map`, `message`, `palette`, `pose`, `spritemap`, `compression`), or
+not decoded at all because the oracle's seed holds it (BG graphics,
 palettes, palette FX, sound, scenes, Mode 7). The plan items AF0-AF5 and A3
 ([domains.md §3](domains.md#3-the-domains), the platform table) bring each family into this
 format ahead of the domain that consumes it.
@@ -92,6 +93,12 @@ are variants of it that share what they share.
 | `RoomEffects` | per entrance: liquid, weather, layer blending, palette effects and tile animations to run |
 | `Background` | a `TileLayer<Cell>` over the tileset's sheet, with its setup steps |
 | object and enemy layers | placed reactions, items, door caps, scroll cells, stations; placed species with their init, and the kill quota |
+
+Of these, `data::assets::world` holds today what the engine reads of a room: `World`, and
+`Room` with its place, size, scrollers and doors, and its versions with the PLMs each places.
+Room ids come from its registry, `rooms` (slice 0's room and Ceres's six); `import::world` maps
+the original's room headers to them and builds the records with `data::room`'s decoders. The
+conditions, the doors' destinations and the PLM population are still the decoders' types.
 
 Collision is a second tile layer, not a tile property: in Super Metroid a cell's kind is the
 cell's own, not its picture's. Room loading (R2) writes `Level` back into the original's work RAM

@@ -2014,7 +2014,7 @@ struct CachedRows {
 /// Each row's frames decoded from `SM_CACHE`, with the Morph Ball Room's level as content
 /// loads it from `SM_ROM`; `None` where either isn't present (CI's Verify job has neither).
 fn cached_rows() -> Option<CachedRows> {
-    use data::room::{RoomKey, Rooms, SLICE_ZERO_ROOMS};
+    use data::assets::world::rooms::MORPH_BALL_ROOM;
     use run_progress::Progress;
     let cache = std::path::PathBuf::from(std::env::var_os("SM_CACHE")?);
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
@@ -2023,13 +2023,15 @@ fn cached_rows() -> Option<CachedRows> {
         .with_programs(content.enemy_programs)
         .with_samus_tiles(content.samus_tiles)
         .with_samus_clips(content.samus_clips)
-        .with_plms(crate::lockstep::slice_zero_plms(&image).unwrap())
+        .with_plms(crate::lockstep::slice_zero_plms(
+            &crate::lockstep::slice_zero_world(&image).unwrap(),
+        ))
         .with_states(crate::lockstep::slice_zero_states(&image).unwrap())
         .with_reactions(content.blocks.imported().clone());
     let rom = data::rom::Rom::new(image).unwrap();
-    let (loaded_rooms, _) = Rooms::load(rom.lorom(), &SLICE_ZERO_ROOMS).unwrap();
-    let id = loaded_rooms.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
-    let morph_ball_room = loaded_rooms.get(id).unwrap();
+    let id = MORPH_BALL_ROOM;
+    let morph_ball_room =
+        &data::room::decode(rom.lorom(), import::world::key(id).unwrap()).unwrap();
     let state = morph_ball_room
         .state(
             game::run_progress_bridge::room_state(morph_ball_room, &Progress::default(), None)

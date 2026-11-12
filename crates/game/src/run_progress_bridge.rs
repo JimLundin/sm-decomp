@@ -12,6 +12,7 @@
 
 use core::num::Wrapping;
 
+use data::assets::world;
 use data::rom::RomAddress;
 use data::room::{self, Area, BossBits, Room, StateIndex};
 use enum_map::EnumMap;
@@ -299,26 +300,50 @@ pub const fn state_place(version: Version, conditional: usize) -> usize {
     }
 }
 
-/// The state `room` loads in for `progress`, entered by the door at `door` if any (`$8F:E5D2`);
-/// none when the model can't read its conditions.
+/// The place in a room's list of the version that loads for `progress` in a room of `area`
+/// with these conditions, entered by the door at `door` if any (`$8F:E5D2`); none when the
+/// model can't read its area or conditions.
+fn chosen_place(
+    area: Area,
+    conditions: impl Iterator<Item = room::Condition>,
+    progress: &Progress,
+    door: Option<RomAddress>,
+) -> Option<usize> {
+    let entered = EnteredRoom {
+        area: region(area)?,
+        entered_by: door.map(|door| Entrance(door.offset)),
+    };
+    let conditional = conditions.map(condition).collect::<Option<Vec<_>>>()?;
+    let version = RoomStates {
+        conditional: &conditional,
+    }
+    .choose(progress, entered);
+    Some(state_place(version, conditional.len()))
+}
+
+/// The state `room` loads in for `progress`, entered by the door at `door` if any; none when
+/// the model can't read its conditions.
 #[must_use]
 pub fn room_state(
     room: &Room,
     progress: &Progress,
     door: Option<RomAddress>,
 ) -> Option<StateIndex> {
-    let entered = EnteredRoom {
-        area: region(room.area)?,
-        entered_by: door.map(|door| Entrance(door.offset)),
-    };
-    let conditional = conditions(room)?;
-    let version = RoomStates {
-        conditional: &conditional,
-    }
-    .choose(progress, entered);
-    u8::try_from(state_place(version, conditional.len()))
-        .ok()
-        .map(StateIndex)
+    let conditions = room.conditional.iter().map(|entry| entry.condition);
+    let place = chosen_place(room.area, conditions, progress, door)?;
+    u8::try_from(place).ok().map(StateIndex)
+}
+
+/// The version `room` loads in for `progress`, entered by the door at `door` if any; none when
+/// the model can't read its conditions.
+#[must_use]
+pub fn room_version<'a>(
+    room: &'a world::Room,
+    progress: &Progress,
+    door: Option<RomAddress>,
+) -> Option<&'a world::Version> {
+    let conditions = room.conditional.iter().map(|entry| entry.condition);
+    room.version(chosen_place(room.place.area, conditions, progress, door)?)
 }
 
 #[cfg(test)]

@@ -54,9 +54,6 @@ impl RoomKey {
     }
 }
 
-/// The rooms slice 0 loads.
-pub const SLICE_ZERO_ROOMS: [RoomKey; 1] = [RoomKey::MORPH_BALL_ROOM];
-
 /// The dense IDs of the loaded rooms: each room's ID is its place in the load list.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RoomMap {
@@ -72,14 +69,6 @@ impl RoomMap {
             .enumerate()
             .all(|(index, key)| !keys.iter().take(index).any(|earlier| earlier == key));
         (distinct && u16::try_from(keys.len()).is_ok()).then_some(Self { keys })
-    }
-
-    /// The map of the rooms slice 0 loads.
-    #[must_use]
-    pub fn slice_zero() -> Self {
-        Self {
-            keys: SLICE_ZERO_ROOMS.to_vec(),
-        }
     }
 
     /// The ID of the room with `key`.

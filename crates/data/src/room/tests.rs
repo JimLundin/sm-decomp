@@ -214,10 +214,6 @@ fn the_room_map_gives_dense_ids_in_load_order() {
     assert_eq!(map.key(RoomId(1)), Some(other));
     assert_eq!(map.id(RoomKey::from_room_pointer(0x92fd)), None);
     assert_eq!(RoomMap::new(vec![other, other]), None);
-    assert_eq!(
-        RoomMap::slice_zero().id(RoomKey::MORPH_BALL_ROOM),
-        Some(RoomId(0))
-    );
     assert_eq!(RoomKey::MORPH_BALL_ROOM.room_pointer(), Some(0x9e9f));
 }
 
@@ -254,8 +250,8 @@ fn the_morph_ball_room_decodes_as_the_bank_log_says() {
     let Some(cartridge) = rom() else {
         return;
     };
-    let (loaded, addresses) = Rooms::load(cartridge.lorom(), &SLICE_ZERO_ROOMS).unwrap();
-    let id = RoomMap::slice_zero().id(RoomKey::MORPH_BALL_ROOM).unwrap();
+    let (loaded, addresses) = Rooms::load(cartridge.lorom(), &[RoomKey::MORPH_BALL_ROOM]).unwrap();
+    let id = loaded.map().id(RoomKey::MORPH_BALL_ROOM).unwrap();
     let room = loaded.get(id).unwrap();
     assert_eq!(room.area, Area::Brinstar);
     assert_eq!(
