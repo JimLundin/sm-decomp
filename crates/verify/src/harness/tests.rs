@@ -9,8 +9,8 @@ use super::game_time::Clock;
 use game::state::GameTime;
 
 use super::{
-    Behaviours, Coverage, Domain, Entry, Field, FieldSet, Interval, Mask, Mismatch, Report, Run,
-    run, run_cached,
+    Behaviours, Coverage, Domain, Entry, Field, FieldSet, Hides, Interval, Mask, Mismatch, Report,
+    Run, run, run_cached,
 };
 use crate::lock::Frame;
 use crate::source::{self, WramWord};
@@ -127,7 +127,7 @@ fn the_null_model_scores_the_frames_on_which_nothing_changes() {
 /// The clock, with the frames field masked out of scope and the seconds field copied from
 /// record N+1 by its stand-in: a domain that exercises the harness's masks and its unverified
 /// count.
-pub(super) struct Copying;
+pub(super) struct Copying(pub(super) Hides);
 
 impl Domain for Copying {
     const NAME: &'static str = "copying clock";
@@ -152,6 +152,7 @@ impl Domain for Copying {
         Ok(vec![Mask {
             reason: "frames out of scope",
             fields: FieldSet::single(3),
+            hides: self.0,
         }])
     }
 
@@ -194,7 +195,7 @@ impl Domain for Copying {
 
 #[test]
 fn a_masked_field_is_not_compared_and_a_copied_one_is_unverified() {
-    let Ok(report) = run(&Copying, two_frames([0, 0, 1, 0]));
+    let Ok(report) = run(&Copying(Hides::AnotherWriter), two_frames([0, 0, 1, 0]));
     assert_eq!(
         (report.compared, report.matched, report.unverified),
         (1, 0, 1)
@@ -208,7 +209,7 @@ fn a_masked_field_is_not_compared_and_a_copied_one_is_unverified() {
 
 #[test]
 fn an_entry_is_credited_only_where_its_fields_are_compared() {
-    let Ok(report) = run(&Copying, two_frames([0, 0, 1, 0]));
+    let Ok(report) = run(&Copying(Hides::AnotherWriter), two_frames([0, 0, 1, 0]));
     let counts: Vec<(&str, u64, u64, u64, u64)> = report
         .behaviours
         .iter()

@@ -82,7 +82,8 @@ id = "V1"
 name = "Tooling: domain free run, RNG per consumer, cache tier"
 wave = 0
 lanes = 3
-# The domain free run is verify::harness::free; the RNG split and the cache tier remain.
+# The domain free run is verify::harness::free and the lean cache tier oracle_record::lean; the
+# RNG split remains.
 status = "in-progress"
 
 [[platform]]

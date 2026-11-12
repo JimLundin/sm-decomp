@@ -321,7 +321,8 @@ frames, with no re-seeding, against the recorded game. Report the first differin
 per behaviour (the free-run localiser). The per-frame harness re-seeds every frame, so errors never
 accumulate. It finds where a model goes wrong; it does not prove it right. The domain free run is
 `verify::harness::free`, over the same `Domain` trait: it seeds once, carries the model's State,
-and ends a segment at the first difference, at a mask or at a frame the domain doesn't run in.
+and ends a segment at the first difference, at a mask another domain's writer stands behind or at
+a frame the domain doesn't run in.
 Its held frames per row are a round's measure (§1 decision 17).
 
 **The measure must be honest (Jim, 2026-11-07, after the second pilot review):**

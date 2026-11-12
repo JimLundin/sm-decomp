@@ -165,6 +165,32 @@ pub struct Mask {
     pub reason: &'static str,
     /// The fields.
     pub fields: FieldSet,
+    /// Whether a writer outside the domain moved them.
+    pub hides: Hides,
+}
+
+impl Mask {
+    /// A mask over `fields` that another domain's writer moved on the frame, for `reason`.
+    #[must_use]
+    pub const fn another(reason: &'static str, fields: FieldSet) -> Self {
+        Self {
+            reason,
+            fields,
+            hides: Hides::AnotherWriter,
+        }
+    }
+}
+
+/// What a [`Mask`] hides, which decides whether a free run's carried State still holds the
+/// masked fields ([`free`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Hides {
+    /// Another domain's writer moved the fields on the frame: the model's State can't follow
+    /// them, so a free run seeds afresh after it.
+    AnotherWriter,
+    /// No writer moved the fields against the model: they are reported and not counted, or the
+    /// frame doesn't produce them. The model's State holds, and a free run carries on.
+    NoWriter,
 }
 
 /// Why a frame pair isn't compared: the domain doesn't run in it, or its decode failed.

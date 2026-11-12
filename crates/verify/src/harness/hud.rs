@@ -51,7 +51,7 @@ use interface_hud::{
 use oracle_record::FrameRecord;
 use types::Pair;
 
-use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Hides, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::cache::CutKind;
 use crate::decode::DecodeError;
@@ -844,6 +844,7 @@ impl Domain for HudDomain {
             masks.push(Mask {
                 reason: "interim: her pose changed within its placement's reach of a screen's edge and the mini-map read her, so the placement ($91:EB88) may have moved her across after; no hit recorded, and samus-movement's model reports only the y the camera follows her from",
                 fields: WINDOW_TILES.union(EXPLORED),
+                hides: Hides::AnotherWriter,
             });
         }
         Ok(masks)

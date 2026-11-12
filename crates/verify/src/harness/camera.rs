@@ -27,7 +27,7 @@ use world_camera::{
 };
 
 use super::movement::{self, Movement, Ps, Skip as Motion};
-use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Hides, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::decode::DecodeError;
 use crate::domain_field;
@@ -511,6 +511,7 @@ fn kraid(
         masks.push(Mask {
             reason: "another domain: Kraid's body collision moves her and where the camera saw her ($A7:B0F3)",
             fields: CAMERA,
+            hides: Hides::AnotherWriter,
         });
     }
     let past = |record| Ok::<_, Skip>(!below(word(record, source::SAMUS_X_POS)?, KRAID_SCREEN_END));
@@ -518,6 +519,7 @@ fn kraid(
         masks.push(Mask {
             reason: "another domain: Kraid holds her x and where the camera saw her on the first screen ($A7:C9EE)",
             fields: X,
+            hides: Hides::AnotherWriter,
         });
     }
     Ok(masks)
@@ -587,7 +589,7 @@ fn slots(record: &FrameRecord) -> Result<Vec<Slot>, Skip> {
 fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
     let (before, after) = (slots(from)?, slots(next)?);
     let mut masks = kraid(from, next, (&before, &after))?;
-    let mut mask = |reason, fields| masks.push(Mask { reason, fields });
+    let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
     let live = |species: u16| {
         before
             .iter()
@@ -648,6 +650,7 @@ fn shinespark(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip>
         masks.push(Mask {
             reason: "another domain: the shinespark's clamp across moves where it saw her ($90:D1D6)",
             fields: X,
+            hides: Hides::AnotherWriter,
         });
     }
     if moved(source::SAMUS_PREV_Y_POS)?
@@ -658,6 +661,7 @@ fn shinespark(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip>
         masks.push(Mask {
             reason: "another domain: the shinespark's clamp down moves where it saw her ($90:D2A3)",
             fields: Y,
+            hides: Hides::AnotherWriter,
         });
     }
     Ok(masks)
@@ -685,12 +689,14 @@ fn deferred(
         masks.push(Mask {
             reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-movement defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
+            hides: Hides::AnotherWriter,
         });
     }
     if movement::knockback_ends(from)? {
         masks.push(Mask {
             reason: "another domain: the knockback's end (its time run out under the normal handler) decides her y, which samus-movement defers, and her pose change or its step places the y the camera follows from",
             fields: Y,
+            hides: Hides::AnotherWriter,
         });
     }
     Ok(masks)
@@ -748,6 +754,7 @@ impl Domain for CameraDomain {
         let mut masks = vec![Mask {
             reason: "reported, not counted: where it last saw her is her position's own words",
             fields: SEEN,
+            hides: Hides::NoWriter,
         }];
         masks.extend(enemies(from, next)?);
         masks.extend(deferred(from, next, *placement)?);
@@ -758,7 +765,7 @@ impl Domain for CameraDomain {
         if movement.contains(&SHINESPARKING) {
             masks.extend(shinespark(from, next)?);
         }
-        let mut mask = |reason, fields| masks.push(Mask { reason, fields });
+        let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
         if movement.contains(&GRAPPLING) {
             mask(
                 "another domain: the grapple beam's clamps move where it saw her",

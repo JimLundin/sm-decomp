@@ -280,18 +280,18 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-movement | bridge | 4 | 3,157 | 3,750 | 286 | 203 | 127 | 90 | 3 | 597 |
-| samus-movement | harness | 2 | 6,468 | 6,505 | 732 | 850 | 401 | 529 | 21 | 1,240 |
+| samus-movement | harness | 2 | 6,471 | 6,507 | 732 | 850 | 402 | 529 | 21 | 1,240 |
 | world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
-| world-camera | harness | 2 | 6,007 | 6,158 | 784 | 266 | 280 | 412 | 30 | 1,059 |
+| world-camera | harness | 2 | 6,082 | 6,206 | 784 | 266 | 290 | 432 | 30 | 1,066 |
 | run-progress | bridge | 1 | 1,217 | 1,446 | 60 | 217 | 42 | 33 | 0 | 246 |
-| run-progress | harness | 3 | 7,849 | 7,423 | 1,053 | 1,221 | 807 | 609 | 62 | 1,397 |
+| run-progress | harness | 3 | 7,869 | 7,442 | 1,053 | 1,221 | 811 | 609 | 62 | 1,401 |
 | interface-hud | bridge | 1 | 2,297 | 2,450 | 116 | 133 | 157 | 111 | 16 | 385 |
-| interface-hud | harness | 2 | 4,504 | 4,824 | 721 | 422 | 288 | 86 | 23 | 850 |
+| interface-hud | harness | 2 | 4,512 | 4,832 | 721 | 422 | 289 | 86 | 23 | 851 |
 | world-blocks | bridge | 1 | 7,101 | 6,883 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
-| samus-appearance | harness | 2 | 3,706 | 4,012 | 421 | 136 | 114 | 178 | 14 | 590 |
-| total | | | 51,226 | 52,241 | 5,667 | 4,151 | 3,860 | 3,066 | 285 | 8,880 |
+| samus-appearance | harness | 2 | 3,714 | 4,020 | 421 | 136 | 116 | 178 | 14 | 591 |
+| total | | | 51,339 | 52,326 | 5,667 | 4,151 | 3,878 | 3,085 | 285 | 8,893 |
 
 ## Harness floors and vectors
 

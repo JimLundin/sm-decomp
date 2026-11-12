@@ -33,7 +33,7 @@ use samus_appearance::{
 use types::{Action, BoostStage, Item, Parts as _, Set};
 
 use super::movement::Movement;
-use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
+use super::{Domain, Entry, Field, FieldSet, Hides, Interval, Mask, Uncompared};
 use crate::bundle::ContentError;
 use crate::cache::CutKind;
 use crate::decode::DecodeError;
@@ -563,6 +563,7 @@ impl Domain for Appearance {
             vec![Mask {
                 reason: "another domain: the boost changes with no dash, the shinespark's as its shine ends (S3)",
                 fields: BOOST,
+                hides: Hides::AnotherWriter,
             }]
         } else {
             Vec::new()
