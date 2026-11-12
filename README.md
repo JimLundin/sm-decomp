@@ -53,7 +53,7 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 | Wave | Clean-room domains | Platform work | Started | Rounds planned |
 | --- | --- | --- | ---: | ---: |
 | 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3); V3 The free-run gate and lockstep start Ceres's chain rows (1) | 2 of 2 | 2 |
-| 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); A1 Instruction lists as assets (3) | 5 of 5 | 15 |
+| 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); E5 The engine's State holds the models' States (3); A1 Instruction lists as assets (3) | 5 of 5 | 15 |
 | 2 | R1 Doors and elevators; W1 Beams, missiles and bombs; C1 Fighting enemies; H1 Energy, reserves and death; S4 Hurt and knockback, bomb jumps | R2 Room loading (4); A2 Enemy and room importers (3); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 0 of 5 | 21 |
 | 3 | B8 Ceres Ridley and the escape; F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; U1 Audio, the CPU side | E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 0 of 7 | 30 |
 | 4 | W3 Items to pick up; H3 Message boxes; C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B9 Ridley; B10 Mother Brain and the escape | - | 0 of 12 | 66 |
@@ -87,7 +87,7 @@ Every figure, file by file and area by area, is in [the rebuild report](docs/REP
 
 | Read | For |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | the rules every contributor and agent follows |
+| [AGENTS.md](AGENTS.md), [RULES](docs/RULES.md) | the rules every contributor and agent follows, and on one page |
 | [MODEL](docs/architecture/MODEL.md), [ARCHITECTURE](docs/architecture/ARCHITECTURE.md), [PRINCIPLES](docs/architecture/PRINCIPLES.md) | the design |
 | [the domain plan](docs/architecture/domains.md), [PROCESS](docs/cleanroom/PROCESS.md) | the whole game as clean-room domains; how a round runs |
 | [ORACLE](docs/ORACLE.md) | the oracle, the lock and the data bundles |

@@ -23,8 +23,10 @@ is wrong, not what code to write.
 
 ## Commit rules
 
-- One coherent change per commit. Its title says what is true afterwards and ends with its kind:
-  `[exact]` (behaviour unchanged) or `(behaviour: <what>)`.
+- One coherent change per commit. Its title starts with the domain or area it changes
+  (`samus-movement:`, `verify:`, `process:`), says in at most about 100 characters what is true
+  afterwards, and ends with its kind: `[exact]` (behaviour unchanged) or `(behaviour: <what>)`.
+  The detail goes in the body.
 - In a round, end each commit's message with `Role: <your role>`: a round lands on `main` as one
   commit (`tools/lane/squash.sh`), whose body lists your commits under that role, each with its
   own body indented under it, so explain the change in the body. Your branch keeps them.

@@ -158,6 +158,14 @@ wave = 1
 lanes = 3
 status = "in-progress"
 
+# MODEL §1 decision 21: the engine holds each model's State as is, and a bridge answers only
+# the traits its model asks; each existing bridge moves as its domain's next round touches it.
+[[platform]]
+id = "E5"
+name = "The engine's State holds the models' States"
+wave = 1
+lanes = 3
+
 [[platform]]
 id = "A1"
 name = "Instruction lists as assets"

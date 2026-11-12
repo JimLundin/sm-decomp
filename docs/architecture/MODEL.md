@@ -107,7 +107,7 @@ Jim's decisions, 2026-11-07:
     say how. It never carries the score, the budget, a ratio or a target. With it go a numberless
     standard in the design note (concise: the smallest clear code that models the spec, each rule
     stated once) and cut rounds (PROCESS, "The loop"): rounds whose brief is the verdict and the
-    shape findings alone, repeated until the gate is satisfied.
+    shape findings alone. Since decision 19 a cut round runs only on two blind reads' findings.
 
 Jim's decisions, 2026-11-09:
 
@@ -150,6 +150,45 @@ Jim's decisions, 2026-11-11:
 16. **Each adjustable behaviour proves it can be adjusted.** Every catalogue entry whose switch
     is `Parameter` has at least one vector at a value other than the reference one; the spec
     gate requires it ([PROCESS](../cleanroom/PROCESS.md#a-round), steps 1 and 3).
+
+Jim's decisions, 2026-11-12, on the review of the project's direction:
+
+17. **A round is judged by the domain free run.** The primary proof (§4) is a domain fed its own
+    State across a row, its neighbours from the records (`verify::harness::free`, platform work
+    V1). A round reports each row's held frames and first divergences beside the per-frame
+    harness, and the free run's floors (`crates/verify/src/harness/free_floors.txt`) never fall.
+    The per-frame harness stays as the localiser: it says where a model goes wrong, never that
+    it is right.
+18. **A ladder of rungs leads to the milestone.** The headline milestone (decision 14) stays the
+    goal, but its stretch is mostly cinematics, front end, lag and the sound driver, so its
+    number can't move for weeks. Rungs over shorter stretches of the same movie, Ceres first,
+    each played alone from its first seed (`[[rung]]` in [domains.toml](domains.toml)), give
+    the work a number that moves. A session's planning picks work for the lowest rung not yet
+    reached ([domains.md §4](domains.md#4-order)). Lag modelled rather than recorded (T1) is
+    needed only by the milestone itself.
+19. **The size score is frozen as a diagnostic.** Its weights, its rules and k stay as they are
+    (§4); a change needs a measured case where the score ranks a worse form above a better one,
+    and is a decision here. The fit is reported, never a verdict: a round is not held, and no
+    round is run, for size alone. The one size gate left is the strict one: a domain larger
+    than the old code it replaces is a failure (§4). A cut round runs only when two blind reads
+    name the same thing hard to read; it carries their findings as shapes.
+20. **A round's fixed cost is cut where automation already holds the barrier.** The export,
+    the scans, the canaries and `code_check.sh` hold the clean room on every round. The
+    adversary gates a domain's first spec, and later a spec delta that adds a mechanism (a
+    new table, interpreter or kind of state) or crosses into another domain; any other
+    amendment goes on the round gate's review. The blind review runs on a domain's first
+    round, then when the round gate asks for one. The round gate itself (PROCESS step 10)
+    stays on every round.
+21. **The engine's State holds the models' States.** A bridge that maps the engine's State to
+    a model's and back, every frame, costs nearly as much as the model and is thrown away when
+    only this engine runs. A new domain's model owns its State, which the engine holds as is;
+    its bridge answers only the traits the model asks (such as `World`) and turns its outputs
+    into the intents and reports the engine reads. The existing bridges move to this as their
+    domain's next round touches them (platform work E5).
+22. **Each rule is stated once.** A rule lives in one place: the decisions here, the round in
+    PROCESS, the coding standards in DESIGN. Skills and briefs link to it rather than restating
+    it. [RULES](../RULES.md) is the one-page index an agent reads first, with links to where
+    each rule lives.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
@@ -262,7 +301,10 @@ world decides where she ends up.
 **The primary proof is a free run, not a per-frame check.** Run the domain from a seed over many
 frames, with no re-seeding, against the recorded game. Report the first differing frame per field and
 per behaviour (the free-run localiser). The per-frame harness re-seeds every frame, so errors never
-accumulate. It finds where a model goes wrong; it does not prove it right.
+accumulate. It finds where a model goes wrong; it does not prove it right. The domain free run is
+`verify::harness::free`, over the same `Domain` trait: it seeds once, carries the model's State,
+and ends a segment at the first difference, at a mask or at a frame the domain doesn't run in.
+Its held frames per row are a round's measure (§1 decision 17).
 
 **The measure must be honest (Jim, 2026-11-07, after the second pilot review):**
 - Report over **all recorded frames** of every row, beside a **null model's** score (a step that
@@ -482,8 +524,9 @@ single source of truth for the order of the work. This section holds the rules a
 
 **An adversary gates the clean room (Jim, 2026-11-07).** An adversary agent reads both the original
 and everything an implementer will see, and tries to prove a leak. It succeeds by finding one. It
-runs before any implementer starts (on the spec, the vectors and the export) and before any model
-change merges. A leak it finds stops the work until it is removed; a reduced leak is not a fixed one.
+gates a domain's first spec and a spec delta that adds a mechanism (§1 decision 20), and every
+round before it merges. A leak it finds stops the work until it is removed; a reduced leak is not
+a fixed one.
 
 **The clean room is enforced by construction, not by trust (Jim, 2026-11-07).** Every leak in the
 pilot came from implementers having the whole repository and being trusted not to open files. A
@@ -617,8 +660,9 @@ function named after a routine is a review stop.
 
 Measured first (review R9; a raw behaviour count is easy to inflate by splitting entries, so it
 isn't a goal):
-- the headline milestone (§1 decision 14): of its stretch's frames, how many the engine plays
-  alone, and the plan domains it still needs;
+- the headline milestone (§1 decision 14) and the ladder's rungs (decision 18): of each stretch's
+  frames, how many the engine plays alone, and the plan items it still needs;
+- for each domain, its free run's held frames per row (decision 17);
 - the domains that meet §4's definition of done;
 - for each domain, its oracle-checked entries out of its total;
 - for each domain, the RAM-shape list (§5) and its size against budget.

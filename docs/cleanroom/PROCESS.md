@@ -8,7 +8,8 @@ who sees what. The rules it relies on live elsewhere, and are linked where they 
   template;
 - [DESIGN](DESIGN.md): the coding standards;
 - [MODEL §4](../architecture/MODEL.md#4-the-reference-domain-samuss-motion) and §1 decision 7: the
-  score and the budget; [size-budget](../architecture/size-budget.md), the study behind them.
+  score and the budget, a diagnostic since decision 19; [size-budget](../architecture/size-budget.md),
+  the study behind them.
 
 ## Roles
 
@@ -77,10 +78,14 @@ Each step names its owner, what it waits for, and its done-condition.
    - names only spec entries and shape findings;
    - carries the runner command;
    - passes `tools/cleanroom/scan_brief.sh` with 0.
-3. **Spec gate** (adversary), after 1 and 2: it gates the spec and the brief together, and
-   refuses a spec whose `Parameter` entries lack an adjusted vector (`adjusted_vectors.sh
-   --gate`). Done on a verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their
-   owners (the observer for the spec, the root for the brief), then a re-gate of the delta.
+3. **Spec gate** (adversary), after 1 and 2, on a domain's first spec and on a spec delta that
+   adds a mechanism (a new table, interpreter or kind of state) or crosses into another domain
+   (MODEL §1 decision 20). It gates the spec and the brief together, and refuses a spec whose
+   `Parameter` entries lack an adjusted vector (`adjusted_vectors.sh --gate`). Done on a
+   verdict of LAUNCH. LAUNCH AFTER FIXES sends numbered findings to their owners (the observer
+   for the spec, the root for the brief), then a re-gate of the delta. Any other amendment
+   skips this step: its scans and `adjusted_vectors.sh --gate` still pass before the launch,
+   and the round gate (step 10) reviews the spec delta with the code.
 4. **Hold the spec** (root). A round lands as one commit (step 11), so the spec stays on the
    round's branch, a new domain's first spec as much as an amendment, and the round exports from
    that branch's commit. An amendment couldn't land alone anyway: it changes what the landed
@@ -107,13 +112,17 @@ Each step names its owner, what it waits for, and its done-condition.
    - anything else goes back to an implementer: this domain's when its `types` change
      wasn't needed, the broken crate's next round when it was;
    - an integrator never edits a clean crate. A fix it finds it needs is a finding for the root.
-8. **Blind review** (blind reviewer, confined), after 7. The root makes a code-only copy (the
+8. **Blind review** (blind reviewer, confined), after 7, on a domain's first round and when the
+   last round gate asked for one (MODEL §1 decision 20). The root makes a code-only copy (the
    model, its tests and the vector file) with `tools/cleanroom/blind_copy.sh EXPORT DEST` and
    launches the review on it. Done on its report. The root compares the review's "what the code
    does" with the spec: where the reviewer misread the code, the code doesn't explain itself.
 9. **Integrate** (integrator), after 7. Done when:
-   - the engine runs the model through an adapter;
+   - the engine runs the model through an adapter, which holds the model's State as the
+     engine's (MODEL §1 decision 21) for a new domain, and moves toward it for an old one;
    - the honest harness compares it with the records, and its floors are committed;
+   - the domain free run (`every_domain_runs_free_against_the_cache`) holds its floors in
+     `crates/verify/src/harness/free_floors.txt`; a raise is committed with the round;
    - the old code it replaces is deleted;
    - `tools/lane/gate.sh` passes;
    - the free-run gate's green pairs and the lockstep ratchet hold.
@@ -122,17 +131,13 @@ Each step names its owner, what it waits for, and its done-condition.
    domain's model doesn't yet give, the round lands with the harness alone. The domain's gaps
    file names the missing inputs, and LEGACY lists what the old code lacks. The engine wiring,
    and the deletion of the old code, then land with the round that supplies those inputs.
-10. **Round gate** (adversary), after 8 and 9. It reads the leaks, the harness's honesty, the
-    score against the budget and the blind review. Done on a verdict of MERGE. Findings go to
-    the integrator (harness, adapter), or into the next round's queue (model shape, spec gaps).
-    How it measures size:
-    - A round's size delta is the model's, the bridge's and that of code moved into test
-      support, each shown; a move out of the model is no cut.
-    - It reads the area fit and the shared share (`tools report`) apart from the total fit; a
-      shared share over 25 % is a finding.
-    - A measured item under 1 % of its domain's score is **neutral**: it is judged on clarity
-      alone, and a brief may carry it as a shape without calling it growth. The round's total
-      stays measured.
+10. **Round gate** (adversary), after 8 (when it ran) and 9. It reads the leaks, the spec delta
+    when step 3 didn't gate it, the harness's honesty, the free run's held frames and first
+    divergences against `main`, and the blind review. It says whether the next round needs a
+    blind review. Done on a verdict of MERGE. Findings go to the integrator (harness, adapter),
+    or into the next round's queue (model shape, spec gaps). Size is a diagnostic (MODEL §1
+    decision 19): the gate reports the round's delta (model, bridge and code moved into test
+    support, each shown) and refuses only a domain larger than the old code it replaces.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
     in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
@@ -149,8 +154,8 @@ Each step names its owner, what it waits for, and its done-condition.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     So does every item two blind reads name, a zero-cost one (a name, a wrong doc, an
     unreachable arm) included.
-    The domain is done when the queue holds nothing that changes behaviour or shape enough to
-    be worth a round.
+    The domain is done when its free run holds every row it runs in to the row's end or to a
+    named mask, and the queue holds nothing that changes behaviour.
 
 ## What can run at once
 
@@ -188,7 +193,9 @@ Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 
 
 1. **Planning.** The root reads the last session's review, REPORT and the queue, chooses the
    session's rounds and lanes within the limits above, and writes the plan down before any lane
-   starts.
+   starts. Work goes first to the lowest rung of the ladder not yet reached (MODEL §1 decision
+   18): the items it still needs, then the free run's first divergences on its rows. A round
+   that adds no behaviour a rung's rows show waits.
 2. **Implementation.** The loop below runs the plan: rounds and lanes start, land and report as
    they do today.
 3. **Review.** No new lane starts in the last part of the session. The lanes in flight finish
@@ -202,16 +209,11 @@ fresh. Its work lands like any other change.
 
 ## The loop
 
-- **Cut rounds.** The aim is code that reads well without bloat, not the shortest code: a seam
-  that makes the code clearer can be worth its tokens, and growth that adds no clarity is bloat.
-  A round gate that finds bloat prototypes the cuts on the current model and measures each one,
-  every vector still passing. The next round of that domain is a cut round only when the measured
-  total is worth a round (about 3 % of the model, or an area brought back under its old code;
-  an item under 1 % counts as neutral, and the total is model, bridge and moved test code). Its
-  brief carries the coarse verdict and those measured cuts, as outcomes in words, and asks for no
-  new behaviour; a cut no gate has measured stays out of the brief. Smaller measured cuts ride
-  along with the domain's next round of behaviour. Cut rounds stop when the gate measures nothing
-  worth a round.
+- **Cut rounds.** The aim is code that reads well without bloat, not the shortest code. A cut
+  round, one that asks for no new behaviour, runs only when two blind reads name the same thing
+  hard to read, or the domain is larger than the old code it replaces (MODEL §1 decision 19).
+  Its brief carries those findings as shapes. Any other shape finding rides along with the
+  domain's next round of behaviour.
 
 - A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer
   records it, and the observer answers it in the spec. The model is never tuned to a record.

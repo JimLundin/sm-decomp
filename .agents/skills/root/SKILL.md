@@ -20,11 +20,10 @@ barrier; every other role does one step.
 4. **Check** the report against the step's done-condition: open the branch and run the cheap
    checks yourself (scan, doc links, the vector count, the gate line). Done when every claim you
    relay comes from output you saw.
-5. **Relay** to Jim: what the step found, what you decided, and what comes next. Give every size
-   as score, actual code lines and logic-equivalent lines (score ÷ 6), and cite `docs/REPORT.md`
-   once a change lands. A round's size is its model, bridge and moved test code together; an
-   item under 1 % of its domain is neutral, and the area fit and shared share go beside the
-   fit (PROCESS, the round gate).
+5. **Relay** to Jim: what the step found, what you decided, and what comes next. Lead with the
+   ladder (the lowest rung's frames played alone and what it still needs) and the free run's
+   held frames per row; give size as one line of the round's delta, a diagnostic (MODEL §1
+   decision 19), and cite `docs/REPORT.md` once a change lands.
 6. **Record** the step in the coordination log (`$TEMP/collab/reviews/coord-log.md`): heads,
    verdicts, and the queue. Done when a fresh root could resume from the log alone.
 
@@ -55,9 +54,8 @@ For the two confined roles, the brief is also part of the barrier:
   launch, the brief's gate works through each item under the checks.
 - **Coding standards, never measures.** The brief gives no score, budget, fit or size target. After
   a round gate it may give the coarse verdict in words (MODEL §1 decision 11).
-- **A cut round carries only measured cuts** (PROCESS, "Cut rounds"): shapes a gate prototyped and
-  measured to shrink, stated as outcomes. Four samus cut rounds grew the model under shape-only
-  briefs, while every cut a gate measured shrank it.
+- **A cut round runs only on two blind reads' findings** (PROCESS, "Cut rounds"; MODEL §1
+  decision 19). Never schedule one for size alone.
 - **A cut round asks for the outcome.** Each shape finding says what the code should have less of
   ("one decision per thing she meets", "the air's case decided once"), never the device that
   would get there ("a value decided before", "an enum of its cases", "no snapshot"). A named
@@ -91,7 +89,8 @@ From a checkout of `main`:
    Send anything that changes an item's logic back to an implementer
    ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round), step 7).
 
-The blind review uses the same launch, on a code-only copy that
+The blind review (a domain's first round, or when the last round gate asked for one) uses the
+same launch, on a code-only copy that
 `bash tools/cleanroom/blind_copy.sh EXPORT DEST` makes from the round's export: the model crate,
 its tests, the vector file and the [blind-reviewer](../blind-reviewer/SKILL.md) skill, without
 the spec, the design notes, `CLEANROOM.md` or a test that reads them. Its brief is one line: load

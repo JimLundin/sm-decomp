@@ -395,7 +395,24 @@ lightning and the gunship's glow, F4's gunship. `tools report` shows the milesto
 README's first row, from `[milestone]` in [domains.toml](domains.toml): the stretch's frames, how
 many the engine plays alone today and which of these items are not done.
 
-**The milestone's order of work.** Each night picks the first step whose prerequisites hold.
+**The ladder** (MODEL §1 decision 18). The milestone's number can't move until the opening's
+cinematics, the sound driver and modelled lag exist, so shorter stretches of the same movie
+come first, each played alone from its first seed, as `[[rung]]` in
+[domains.toml](domains.toml) and a table under the milestone's row in the README:
+
+| Rung | Stretch | Adds over the rung before |
+| --- | --- | --- |
+| M0 | Ceres's third room, across its door (any-boundary seeds 3 to 4) | her motion, looks, view, HUD and progress in a room; the Ceres door (B8 with C1, A2); a door passage (R1, R2); the gate starting Ceres's rows (V3) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door (seeds 1 to 6) | the shaft's mode 7 and mode switch (E3, E4); the haze and FX (R3) |
+| M2 | Ceres with Ridley and the escape (seeds 1 to 11) | Ridley's fight and knockbacks (S4, H1, W1), his push (S2), the escape's PLMs (W2) |
+| the milestone | power-on through Ceres | boot, title, file select and intro (F2), the flights and explosion (F4), the palette FX runner (R4), SRAM (P2), the sound driver (U1), modelled lag (T1), the whole run (V2) |
+
+The rungs' needs are a first estimate from the table above; a session's planning corrects them
+from what each rung's rows show. Every rung runs with the lock's recorded timing, as the free-run
+gate does; only the milestone needs lag modelled.
+
+**The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
+the first step whose prerequisites hold.
 
 1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,195) are recorded
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock
@@ -416,13 +433,15 @@ many the engine plays alone today and which of these items are not done.
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).
 
-**Wave 0, now (small, queued):**
+**Wave 0, now (small, queued).** V1's domain free run exists (`verify::harness::free`);
+V3, the gate starting Ceres's rows, is every rung's first need.
 - S1 samus-movement follow-ups: `rising`, C2, C3. 1 round.
 - Camera round 2: C5's masks named in the harness note; the lead settings' vectors; the
   closed-screen cells' interface ready for W2. 1 round. (C4 waits for S4/H1/S7.)
-- V1 tooling: the domain free-run harness (the model fed its own State across a row, other
-  domains' outputs from the records), so every domain has MODEL §4's primary proof before the
-  engine runs past slice 0; the RNG consumer split; a compressed or WRAM-only cache tier.
+- V1 tooling, what remains: the RNG consumer split; a compressed or WRAM-only cache tier. Its
+  domain free run landed; its floors are set by the first run over CI's cache.
+- V3: the free-run gate and lockstep start Ceres's chain rows from their seeds, so the rungs
+  can be measured. 1 lane.
 
 **Wave 1 (on the cached rows, 4-5 lanes):** S2 (4), S5 (3) with E1, H2 (2) with E2, W2 (5)
 with A1, P1 (1). About 15 rounds plus 8 platform lanes.

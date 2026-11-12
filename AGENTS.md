@@ -9,6 +9,7 @@ exact. Exact means every compared cut and every output byte, not the original's 
 
 | Doc | For |
 | --- | --- |
+| [RULES](docs/RULES.md) | the rules on one page, each linked to where it lives: read it first |
 | [MODEL](docs/architecture/MODEL.md) | the behaviour model: layers, the catalogue, the roles, the spec template, how work is planned. It wins over the others |
 | [ARCHITECTURE](docs/architecture/ARCHITECTURE.md), [PRINCIPLES](docs/architecture/PRINCIPLES.md) | the engine's decisions (D1-D26) and the principles they follow (P1-P20, K1-K10) |
 | [ORACLE](docs/ORACLE.md) | the emulators, the record, the lock, re-locking, data bundles, commands and pitfalls |

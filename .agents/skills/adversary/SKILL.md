@@ -8,7 +8,9 @@ description: The sm-decomp adversary role. Gate a spec before a clean-room round
 You read both the original and everything the implementer will see, and you try to **break**
 the work: prove a leak, a rule that differs from the game, a vector that is wrong, or a check that
 hides a failure. You succeed by finding one. You report findings; their owners fix them. These
-are steps 3 and 10 of [the round](../../../docs/cleanroom/PROCESS.md#a-round).
+are steps 3 and 10 of [the round](../../../docs/cleanroom/PROCESS.md#a-round); step 3 runs only
+on a domain's first spec and a spec delta that adds a mechanism, and otherwise the round gate
+reviews the spec delta too.
 
 Write your review to `$TEMP/collab/reviews/adversary-<n>.md`. Every finding is numbered and gives
 the evidence (record and frame, bank-log address, or hand case), a concrete fix, and its owner
@@ -54,23 +56,19 @@ Your brief names the import and integration branches, the blind review, and the 
 4. **The harness is honest.** Each skip and mask names its writer, and covers only that writer's
    frames. No decode error turns into "not compared". Its floors are committed and its baseline is
    cited. Re-run it, and confirm a one-line mutant in the model makes it fail.
-5. **Size.** Measure the model with `tools size` against the Budget section, by area, and say
-   where the size goes. Turn every size finding into **shape**: duplication, a decision that
-   could be a table row, a function doing two jobs. The implementer only ever sees the shape.
-   Judge bloat, not length: a seam that makes the code clearer can be worth its tokens. Prototype
-   each cut you propose on the current model, every vector passing, and measure it; give the root
-   the measured total. A cut you haven't measured is a note, not a brief item (PROCESS, "Cut
-   rounds"). Measure as PROCESS's round gate says:
-   - the round's delta is model + bridge + code moved into test support, each shown, so a move
-     out of the model is no cut;
-   - an item under 1 % of the domain's score is **neutral**, judged on clarity alone, never
-     reported as growth or as a cut; a cut round still needs about 3 %;
-   - read the area fit and the shared share (`tools report`) beside the total fit, and report
-     a shared share over 25 % as a finding;
-   - a `match` or `enum_map!` that is an exhaustive lookup is data (MODEL §4), so a brief may
-     ask for a table the compiler checks; the `Duplication` column shows a decision written
-     twice, and `Clumps` is only a hint at values that travel together.
-6. **The blind review.** Compare the reviewer's "what the code does" with the spec, and turn each
-   misreading into a finding about a name, a doc or a shape.
-7. **The old code** the model replaces is deleted, and the engine's gates hold.
-8. **Verdict:** MERGE, MERGE AFTER FIXES, or REWORK.
+5. **The free run** (`every_domain_runs_free_against_the_cache`, MODEL §1 decision 17). Its held
+   frames hold `free_floors.txt`; give each row's held frames and first divergences beside
+   `main`'s. A first divergence that moved earlier is a finding, even where the per-frame harness
+   rose.
+6. **Size, as a diagnostic** (MODEL §1 decision 19). Give the round's delta from `tools size`
+   (model, bridge and code moved into test support, each shown). Refuse only a domain larger
+   than the old code it replaces. Any shape you would change goes to the queue as **shape**
+   (duplication, a decision that could be a table row, a function doing two jobs), never as a
+   number, and never as a reason to hold the round.
+7. **The blind review**, when it ran. Compare the reviewer's "what the code does" with the spec,
+   and turn each misreading into a finding about a name, a doc or a shape. Say whether the next
+   round needs a blind review: the code changed shape enough that a cold read would find new
+   things.
+8. **The old code** the model replaces is deleted, and the engine's gates hold.
+9. **The spec delta**, when step 3 didn't gate it: the spec-gate checks 1 to 4 on what changed.
+10. **Verdict:** MERGE, MERGE AFTER FIXES, or REWORK.

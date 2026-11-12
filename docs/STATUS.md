@@ -15,7 +15,9 @@ localised by sparse checkpoints over the whole run, then dense ones over the ran
 to; the run and its checkpoints are platform work V2 of the [plan](architecture/domains.md#4-order).
 
 The README's first row is generated from `[milestone]` in `docs/architecture/domains.toml`: the
-stretch's frames, those the engine plays alone today, and the plan items still needed. Until the
+stretch's frames, those the engine plays alone today, and the plan items still needed. Under it,
+the ladder's rungs (`[[rung]]`, MODEL §1 decision 18) give the same three figures for shorter
+stretches of the movie, Ceres first. Until the
 whole run exists, "plays alone" counts the stretch's frames inside rows of the movie whose every
 stream the free-run gate holds green, each row run from its own seed. The checks below serve it.
 [domains.md §4](architecture/domains.md#4-order) holds the stretch: its frame ranges, what each
@@ -31,6 +33,7 @@ count once the gate runs it, which today runs only from seeds.
 | `scenarios/locks/lockstep.ratchet.txt` | per row, Ticks fully equal in lockstep, and per field group the differing Ticks and first frame | CI `verify / lockstep-ratchet` |
 | `scenarios/locks/lsnes.green.txt` | the free-run gate's green (row, stream) pairs against `scenarios/locks/lsnes.toml` | CI `verify / free-run-gate` |
 | `crates/verify/src/harness/floors.txt` | per domain harness and row, the frames matched on every unmasked field | `verify`'s harness tests, over the rows cached in `SM_CACHE` |
+| `crates/verify/src/harness/free_floors.txt` | per domain and row, the frames its free run holds from its seeds | `every_domain_runs_free_against_the_cache`, over the rows cached in `SM_CACHE` |
 
 Fully equal counts must not fall, differing counts must not rise, green pairs never go, and no
 harness row falls below its floor.
@@ -60,6 +63,9 @@ target/verify/tools harness game-time scenarios/locks/lsnes.toml CACHE area-brin
 # The harness as tests, each domain held to its floors over every row cached in CACHE.
 SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify the_clock_holds_its_floors_against_the_cache
 SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify movement_holds_its_floors_against_the_cache
+# The domain free run (MODEL §1 decision 17): every domain fed its own State over every cached
+# row, each row's segments and first divergences printed, held to free_floors.txt.
+SM_CACHE=CACHE SM_ROM=rom/sm.smc cargo test --profile verify -p verify every_domain_runs_free_against_the_cache -- --nocapture
 ```
 
 Commit a ratchet file only with the change that moved its numbers, and never edit a line by hand
