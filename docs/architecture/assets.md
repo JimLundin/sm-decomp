@@ -9,8 +9,9 @@ committed.
 
 Samus's sheet and clips (§4) are in this format today, the blocks' reactions
 ([world-blocks.md §2](../behaviours/world-blocks.md)) are imported into the blocks model's own
-records, and the rooms the engine loads come through the world's first records (§3.1).
-Everything else is still read through the ROM's layout (`data::room`, `level`, `tileset`,
+records, the rooms the engine loads come through the world's first records (§3.1), and their
+tilesets through the first tileset records (§3.2).
+Everything else is still read through the ROM's layout (`data::room`, `level`,
 `enemy`, `plm`, `hud`, `map`, `message`, `palette`, `pose`, `spritemap`, `compression`), or
 not decoded at all because the oracle's seed holds it (BG graphics,
 palettes, palette FX, sound, scenes, Mode 7). The plan items AF0-AF5 and A3
@@ -113,8 +114,8 @@ work RAM names by place. The world's `Condition` and progress's stay two types: 
 clean-room model whose crate depends only on `types`, so one type would live in `types`, a
 change for progress's own round; `game::run_progress_bridge` maps every variant meanwhile.
 Still to come: a doorway's side, arrival and partner, a PLM no model runs keeps its ID and room
-argument (`PlmKind::Unmodelled`), and the engine's tileset is still the original's index
-(`data::tileset::TilesetIndex`) until tilesets are in our format (AF2).
+argument (`PlmKind::Unmodelled`). The room's State names its tileset by `TilesetId`; the
+verifier's decoder takes it from the version's record, as the work RAM keeps no copy of it.
 
 Collision is a second tile layer, not a tile property: in Super Metroid a cell's kind is the
 cell's own, not its picture's. Room loading (R2) writes `Level` back into the original's work RAM
@@ -131,6 +132,19 @@ image, which encodes to the block words and BTS losslessly.
 | `SamusPalettes` | her palettes by suit, and colour sequences (visor, charge, screw attack, glow, hurt, shinespark) as holds of palettes |
 
 A block look is a 2x2 metatile, as Tiled builds 16x16 tiles of 8x8.
+
+`data::assets::tilesets` holds today the registered tilesets (those the loaded rooms' versions
+draw with) as `Tileset` records: a 4bpp `TileSheet`, the block looks, the `PaletteSet` and
+whether it uses the shared elements, beside `SharedElements` with the shared block looks; the
+shapes are `data::assets::art`'s (`TileSheet`, `Tile`, `Colour`, `Palette`, `PaletteSet`,
+`Cell`, `BlockLook`). `import::tileset` builds them, decompressing the tables at the edge, and
+says whether a tileset uses the shared elements from where the world's rooms draw with it (the
+original loads them outside Ceres). The engine draws the level's blocks from the records'
+looks; `game::exact::art` encodes looks, sheets and palettes back to the tile table's words,
+VRAM's planar tiles and colour RAM's words, and the verifier checks every record against the
+bytes it was imported from. Still to come: the shared elements' sheet, `TileQuirks`, the
+palette effects and tile animations, Samus's palettes, and the uploads themselves, which the
+oracle's seed holds until room loading (R2) makes them.
 
 ### 3.3 Programs (A1)
 

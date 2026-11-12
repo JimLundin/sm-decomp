@@ -61,8 +61,8 @@ pub struct Content {
     pub blocks: crate::world_blocks_bridge::BlockContent,
     /// The area maps and the pictures the HUD draws with.
     pub hud: crate::interface_hud_bridge::HudContent,
-    /// The tilesets' tile tables, which draw the level's blocks.
-    pub tile_tables: data::tileset::TileTables,
+    /// The tilesets, whose block looks draw the level's blocks.
+    pub tilesets: data::assets::tilesets::Tilesets,
     /// The message boxes' borders, letters and messages.
     pub message_boxes: data::message::MessageBoxes,
 }

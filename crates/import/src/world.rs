@@ -13,6 +13,7 @@
 
 use std::collections::BTreeMap;
 
+use crate::tileset::TilesetIndex;
 use data::assets::tilesets::{
     BRINSTAR, CERES, CERES_ELEVATOR, CERES_ELEVATOR_ESCAPE, CERES_ESCAPE, CERES_RIDLEY,
     CERES_RIDLEY_ESCAPE,
@@ -36,7 +37,6 @@ use data::id::{DoorwayId, RoomId, TilesetId};
 use data::plm::ScrollLists;
 use data::rom::{Lorom, RomAddress};
 use data::room::{self, BossBits, RoomError, RoomKey, RoomState};
-use data::tileset::TilesetIndex;
 
 /// The original's place for each registered room: its header's pointer in the room bank.
 const PLACES: [(RoomId, u16); 10] = [

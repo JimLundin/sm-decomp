@@ -206,14 +206,9 @@ fn step(
         // The PLM pass, called out of by an item's pickup.
         Frame::Plms { slot } => {
             let population = content.room_plms.of(state.room.room);
-            let (slot, next) = crate::plm::resume(
-                state,
-                &content.tile_tables,
-                &content.blocks,
-                population,
-                slot,
-            )
-            .map_err(SessionFault::Blocks)?;
+            let (slot, next) =
+                crate::plm::resume(state, &content.tilesets, &content.blocks, population, slot)
+                    .map_err(SessionFault::Blocks)?;
             (Frame::Plms { slot }, next)
         }
     })
@@ -534,8 +529,7 @@ fn gameplay_phase(
         // `$84:85B4`.
         GameplayPhase::Plms => {
             let population = content.room_plms.of(state.room.room);
-            let mut drawing =
-                crate::plm::draw::Drawing::new(&mut state.video, &content.tile_tables);
+            let mut drawing = crate::plm::draw::Drawing::new(&mut state.video, &content.tilesets);
             pass.callout = crate::plm::process(
                 &mut drawing,
                 &mut state.room,
@@ -606,7 +600,7 @@ fn bg_scroll(state: &mut State, content: &Content) {
     scrolling::scroll_backgrounds(&mut state.room.camera, registers);
     let room = &mut state.room;
     for exposure in scrolling::exposures(&mut room.camera, registers) {
-        let looks = crate::bg_graphics::exposed_looks(room, &content.tile_tables, &exposure);
+        let looks = crate::bg_graphics::exposed_looks(room, &content.tilesets, &exposure);
         crate::exact::tilemap::expose(
             &mut state.video.batch.level,
             &exposure,

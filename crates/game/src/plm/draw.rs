@@ -4,8 +4,8 @@
 // open: the draw instructions that draw a column (`$84:901F`) and the ones with more than one
 // row or column; slice 0's PLMs draw one row of blocks.
 
+use data::assets::tilesets::Tilesets;
 use data::level::Tile;
-use data::tileset::TileTables;
 
 use crate::bg_graphics::block_look;
 use crate::exact::tilemap::TileQueue;
@@ -13,19 +13,19 @@ use crate::intent::TileWrite;
 use crate::state::room::{BlockIndex, BlockPoint, RoomScoped};
 use crate::state::video::Video;
 
-/// A PLM pass's draws: the write queue they fill, and the tile tables blocks look up.
+/// A PLM pass's draws: the write queue they fill, and the tilesets blocks look up.
 #[derive(Debug)]
 pub struct Drawing<'a> {
     queue: TileQueue<'a>,
-    tables: &'a TileTables,
+    tilesets: &'a Tilesets,
 }
 
 impl<'a> Drawing<'a> {
     /// A pass's draws, the PLM draw's buffer at its start.
-    pub const fn new(video: &'a mut Video, tables: &'a TileTables) -> Self {
+    pub const fn new(video: &'a mut Video, tilesets: &'a Tilesets) -> Self {
         Self {
             queue: TileQueue::new(&mut video.batch),
-            tables,
+            tilesets,
         }
     }
 
@@ -37,7 +37,7 @@ impl<'a> Drawing<'a> {
             x: block.0.checked_rem(width).unwrap_or_default(),
             y: block.0.checked_div(width).unwrap_or_default(),
         };
-        let looks = vec![block_look(room, self.tables, tile)];
+        let looks = vec![block_look(room, self.tilesets, tile)];
         self.queue
             .write(&room.camera, &TileWrite::Blocks { at, looks });
     }

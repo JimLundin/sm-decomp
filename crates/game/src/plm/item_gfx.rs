@@ -7,10 +7,11 @@
 //! tiles each, top left, top right, bottom left, bottom right (the tables `$84:87CD`,
 //! `$84:87D5`, `$84:87DD`).
 
+use data::assets::art::{BlockLook, Cell};
 use data::plm::ItemPlm;
-use data::tileset::BlockTiles;
 
 use crate::state::room::{ITEM_GFX_SLOTS, ItemFrame, ItemGfx, ItemGfxSlot};
+use crate::state::video::TilemapEntry;
 
 /// The first block the item GFX slots rewrite, slot 0's first.
 const FIRST_BLOCK: u16 = 0x8e;
@@ -61,20 +62,16 @@ pub fn load(gfx: &mut ItemGfx, item: ItemPlm) -> ItemGfxSlot {
     slot
 }
 
-/// The tile table entries `item`'s load into `slot` writes: its first block's, then its
-/// second's.
+/// The block looks `item`'s load into `slot` writes: its first block's, then its second's.
 #[must_use]
-pub fn entries(slot: ItemGfxSlot, item: ItemPlm) -> [BlockTiles; 2] {
+pub fn entries(slot: ItemGfxSlot, item: ItemPlm) -> [BlockLook; 2] {
     let first = FIRST_TILE.wrapping_add(u16::from(slot.0).wrapping_mul(SLOT_STRIDE));
     let mut words = [0; SLOT_TILES];
     for ((word, palette), tile) in words.iter_mut().zip(palettes(item)).zip(first..) {
         *word = (u16::from(palette) << PALETTE_SHIFT).wrapping_add(tile);
     }
-    let block = |[top_left, top_right, bottom_left, bottom_right]: [u16; 4]| BlockTiles {
-        top_left,
-        top_right,
-        bottom_left,
-        bottom_right,
+    let block = |words: [u16; 4]| {
+        BlockLook::from_cells(words.map(|word| Cell::from(TilemapEntry::from_word(word))))
     };
     let [first_block, second_block] = [0, 4].map(|start| {
         let mut quarter = [0; 4];
@@ -89,7 +86,7 @@ pub fn entries(slot: ItemGfxSlot, item: ItemPlm) -> [BlockTiles; 2] {
 /// What block `number` draws if a loaded slot rewrote it; `None` for a block the loads don't
 /// reach or a slot nothing has loaded since the room loaded, which the tile table draws.
 #[must_use]
-pub fn block(gfx: &ItemGfx, number: u16) -> Option<BlockTiles> {
+pub fn block(gfx: &ItemGfx, number: u16) -> Option<BlockLook> {
     let past = number.checked_sub(FIRST_BLOCK)?;
     let slot = past / SLOT_BLOCKS;
     let item = (*gfx.loaded.get(usize::from(slot))?)?;
@@ -116,33 +113,22 @@ mod tests {
         assert_eq!(gfx.loaded, [Some(ItemPlm::MorphBall); ITEM_GFX_SLOTS]);
     }
 
+    /// The tilemap words of `look`'s cells in reading order.
+    fn words(look: BlockLook) -> [u16; 4] {
+        look.cells().map(|cell| TilemapEntry::from(cell).word())
+    }
+
     #[test]
     fn the_morph_balls_slot_0_entries_are_tiles_3e0_on_in_palette_0() {
         let [first, second] = entries(ItemGfxSlot(0), ItemPlm::MorphBall);
-        assert_eq!(
-            [
-                first.top_left,
-                first.top_right,
-                first.bottom_left,
-                first.bottom_right
-            ],
-            [0x3e0, 0x3e1, 0x3e2, 0x3e3]
-        );
-        assert_eq!(
-            [
-                second.top_left,
-                second.top_right,
-                second.bottom_left,
-                second.bottom_right
-            ],
-            [0x3e4, 0x3e5, 0x3e6, 0x3e7]
-        );
+        assert_eq!(words(first), [0x3e0, 0x3e1, 0x3e2, 0x3e3]);
+        assert_eq!(words(second), [0x3e4, 0x3e5, 0x3e6, 0x3e7]);
     }
 
     #[test]
     fn slot_3_holds_tiles_3f8_on() {
         let [first, _] = entries(ItemGfxSlot(3), ItemPlm::MorphBall);
-        assert_eq!(first.top_left, 0x3f8);
+        assert_eq!(words(first)[0], 0x3f8);
     }
 
     #[test]
@@ -151,8 +137,8 @@ mod tests {
         assert_eq!(block(&gfx, 0x8e), None);
         load(&mut gfx, ItemPlm::MorphBall);
         assert_eq!(block(&gfx, 0x8d), None);
-        assert_eq!(block(&gfx, 0x8e).map(|tiles| tiles.top_left), Some(0x3e0));
-        assert_eq!(block(&gfx, 0x8f).map(|tiles| tiles.top_left), Some(0x3e4));
+        assert_eq!(block(&gfx, 0x8e).map(|look| words(look)[0]), Some(0x3e0));
+        assert_eq!(block(&gfx, 0x8f).map(|look| words(look)[0]), Some(0x3e4));
         // Slot 1's blocks keep the tile table's until a second item loads.
         assert_eq!(block(&gfx, 0x90), None);
         assert_eq!(block(&gfx, 0x96), None);

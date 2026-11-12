@@ -65,7 +65,7 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
-| not yet rebuilt | 48 | 4,836 | 29,018 | 6,818 |
+| not yet rebuilt | 49 | 4,916 | 29,496 | 6,876 |
 | bridges from the engine to the models | 10 | 2,692 | 16,152 | 2,788 |
 | rebuilt models, shared types included | 71 | 3,254 | 19,526 | 8,657 |
 

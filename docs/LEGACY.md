@@ -93,9 +93,9 @@ original's bytes as data.
   engine reads the buffer as the original holds it up to its 3200h blocks (the BTS and layer 2 left
   after layer 1, then the `$8000` fill, `RoomScoped::level_tail`). Past those, or past layer 2's copy,
   the original reads what earlier rooms left in `$7F`, and the engine reads block word 0.
-- **Tile numbers past the tile tables** (`game::bg_graphics`, `data::tileset::TileTables`, `$82:E7D3`):
-  a block whose tile number is past what the CRE's and the tileset's tables fill reads `$7E:A000` past
-  them, which an earlier room or the boot left. The engine draws zero words. Vanilla rooms stay within
+- **Tile numbers past the tile tables** (`game::bg_graphics`, `data::assets::tilesets::Tilesets::block`,
+  `$82:E7D3`): a block whose tile number is past what the CRE's and the tileset's tables fill reads
+  `$7E:A000` past them, which an earlier room or the boot left. The engine draws blank cells. Vanilla rooms stay within
   their tables.
 
 - **Emptied item places past the engine's bits** (`game::run_progress_bridge`'s `store_emptied`,

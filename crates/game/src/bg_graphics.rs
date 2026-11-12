@@ -5,8 +5,9 @@
 //! down or 17 along, from the index the original's multiply gives the line's first block.
 //! Each block draws its tile table entry, or the one an item's GFX load rewrote, with its flips.
 
+use data::assets::art;
+use data::assets::tilesets::Tilesets;
 use data::level::Tile;
-use data::tileset::{BlockTiles, TileTables};
 
 use crate::intent::{BlockLine, BlockLook, LayerExposure, LevelLayer};
 use crate::state::room::{BlockPoint, RoomScoped};
@@ -20,11 +21,11 @@ const BANK_BLOCKS: u16 = 0x7FFF;
 /// The fill word's bytes, low then high.
 const FILL: [u8; 2] = [0x00, 0x80];
 
-/// What the backgrounds draw from: the room's level data and the tile tables.
+/// What the backgrounds draw from: the room's level data and the tilesets.
 #[derive(Clone, Copy, Debug)]
 struct Level<'a> {
     room: &'a RoomScoped,
-    tables: &'a TileTables,
+    tilesets: &'a Tilesets,
 }
 
 impl Level<'_> {
@@ -58,23 +59,23 @@ impl Level<'_> {
         }
     }
 
-    /// The four tilemap words the block at `index` draws, with its flips: the entry an item's
-    /// GFX load rewrote in the original's tile table, else the tileset's.
+    /// The four cells the block at `index` draws, with its flips: the look an item's GFX load
+    /// rewrote, else the tileset's.
     ///
-    /// A block word past the level data, or a tile number past what the tile tables fill,
-    /// reads stale RAM in the original; the engine draws tile 0's words or zero words there
+    /// A block word past the level data, or a tile number past what the tileset holds, reads
+    /// stale RAM in the original; the engine draws tile 0's look or blank cells there
     /// (docs/LEGACY.md).
     fn drawn(self, layer: LevelLayer, index: u16) -> BlockLook {
         self.drawn_tile(Tile::from_word(self.word(layer, index).unwrap_or_default()))
     }
 
-    /// The four tilemap words `tile` draws, with its flips.
+    /// The four cells `tile` draws, with its flips.
     fn drawn_tile(self, tile: Tile) -> BlockLook {
         let number = tile.number.0;
-        let tiles = crate::plm::item_gfx::block(&self.room.item_gfx, number)
-            .or_else(|| self.tables.block(self.room.area, self.room.tileset, number))
+        let look = crate::plm::item_gfx::block(&self.room.item_gfx, number)
+            .or_else(|| self.tilesets.block(self.room.tileset, number))
             .unwrap_or_default();
-        BlockLook::of(tiles, tile)
+        BlockLook::of(look, tile)
     }
 
     /// The level block index the original's multiply gives `block`: the row's low byte times
@@ -89,29 +90,23 @@ impl Level<'_> {
 }
 
 /// The look `tile` has in `room`, as the level draws it.
-pub(crate) fn block_look(room: &RoomScoped, tables: &TileTables, tile: Tile) -> BlockLook {
-    Level { room, tables }.drawn_tile(tile)
+pub(crate) fn block_look(room: &RoomScoped, tilesets: &Tilesets, tile: Tile) -> BlockLook {
+    Level { room, tilesets }.drawn_tile(tile)
 }
 
-/// A block's look is its tile table entry with its flips.
+/// A block's look is its tileset's look with its flips.
 impl BlockLook {
-    /// A block flipped across mirrors its quarters and flips each word the same way.
-    fn of(tiles: BlockTiles, tile: Tile) -> Self {
-        let entry = |word: u16| {
-            let entry = TilemapEntry::from_word(word);
+    /// A block flipped across mirrors its quarters and flips each cell the same way.
+    fn of(look: art::BlockLook, tile: Tile) -> Self {
+        let entry = |cell: art::Cell| {
+            let entry = TilemapEntry::from(cell);
             TilemapEntry {
                 flip_x: entry.flip_x != tile.x_flip,
                 flip_y: entry.flip_y != tile.y_flip,
                 ..entry
             }
         };
-        let [top_left, top_right, bottom_left, bottom_right] = [
-            tiles.top_left,
-            tiles.top_right,
-            tiles.bottom_left,
-            tiles.bottom_right,
-        ]
-        .map(entry);
+        let [top_left, top_right, bottom_left, bottom_right] = look.cells().map(entry);
         let unflipped = Self {
             top_left,
             top_right,
@@ -154,10 +149,10 @@ impl BlockLook {
 /// The looks of the blocks `exposure` brings into view, in its line's order.
 pub fn exposed_looks<'a>(
     room: &'a RoomScoped,
-    tables: &'a TileTables,
+    tilesets: &'a Tilesets,
     exposure: &LayerExposure,
 ) -> impl Iterator<Item = BlockLook> + 'a {
-    let level = Level { room, tables };
+    let level = Level { room, tilesets };
     let start = level.index(exposure.level);
     let stride = match exposure.line {
         BlockLine::Column => room.width.0,

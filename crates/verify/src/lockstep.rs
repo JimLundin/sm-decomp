@@ -100,7 +100,7 @@ pub fn loaded_states(
             Some((
                 StateHeader(pointer),
                 StateLevel {
-                    tileset: import::world::tileset_index(version.tileset)?,
+                    tileset: version.tileset,
                     layer2: version.back == Back::Level,
                 },
             ))
@@ -1394,10 +1394,10 @@ mod tests {
     #[test]
     fn each_loaded_state_reads_its_record_as_the_decoder_reads_the_rom() {
         use super::{loaded_scroll_lists, loaded_states, loaded_world};
-        use crate::decode::{StateHeader, StateLevel};
+        use crate::decode::StateHeader;
         use data::rom::Lorom;
         use data::room::RoomKey;
-        use data::tileset::TilesetIndex;
+        use import::tileset::TilesetIndex;
         let Some(image) = std::env::var_os("SM_ROM").and_then(|path| std::fs::read(path).ok())
         else {
             return;
@@ -1409,18 +1409,26 @@ mod tests {
             let key = import::world::key(id).unwrap();
             let room = data::room::decode(Lorom::new(&image), key).unwrap();
             decoded.extend(room.states().map(|(_, state)| {
-                let level = StateLevel {
-                    tileset: TilesetIndex(state.tileset),
-                    layer2: state.layers.layer2.is_some(),
-                };
                 (
                     StateHeader(RoomKey(state.at).room_pointer().unwrap()),
-                    level,
+                    Some(TilesetIndex(state.tileset)),
+                    state.layers.layer2.is_some(),
                 )
             }));
             lists.push((id, room.default.scroll_lists.clone()));
         }
-        assert_eq!(loaded_states(&world, &image).unwrap(), decoded);
+        let loaded: Vec<_> = loaded_states(&world, &image)
+            .unwrap()
+            .into_iter()
+            .map(|(header, level)| {
+                (
+                    header,
+                    import::world::tileset_index(level.tileset),
+                    level.layer2,
+                )
+            })
+            .collect();
+        assert_eq!(loaded, decoded);
         assert_eq!(loaded_scroll_lists(&world, &image).unwrap(), lists);
     }
 }

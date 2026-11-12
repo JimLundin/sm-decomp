@@ -54,7 +54,7 @@ const MORPH_BALL_ROOM_ID: RoomId = RoomId(7);
 /// The synthetic room's state header, and what the content says it loads.
 const MORPH_BALL_STATE: StateHeader = StateHeader(0x9ECB);
 const MORPH_BALL_LEVEL: StateLevel = StateLevel {
-    tileset: data::tileset::TilesetIndex(8),
+    tileset: data::assets::tilesets::CERES,
     layer2: true,
 };
 
@@ -2033,6 +2033,7 @@ fn cached_rows() -> Option<CachedRows> {
     let image = std::fs::read(std::env::var_os("SM_ROM")?).ok()?;
     let content = crate::bundle::content(image.clone()).unwrap();
     let rooms = crate::bundle::rooms(&content, &image).unwrap();
+    let world = crate::lockstep::loaded_world(&image).unwrap();
     let rom = data::rom::Rom::new(image).unwrap();
     let id = MORPH_BALL_ROOM;
     let morph_ball_room =
@@ -2043,8 +2044,16 @@ fn cached_rows() -> Option<CachedRows> {
                 .unwrap(),
         )
         .unwrap();
+    let tileset = game::run_progress_bridge::room_version(
+        world.room(id).unwrap(),
+        &Progress::default(),
+        None,
+    )
+    .unwrap()
+    .tileset;
     let loaded =
-        game::state::room::RoomScoped::load(id, morph_ball_room, state, &content.blocks).unwrap();
+        game::state::room::RoomScoped::load(id, morph_ball_room, state, tileset, &content.blocks)
+            .unwrap();
     let lock_path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let lock = crate::lock::Lock::parse(&std::fs::read_to_string(lock_path).unwrap()).unwrap();

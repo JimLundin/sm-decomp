@@ -20,10 +20,10 @@ use data::pose::tiles::{GRAPHICS_BANKS, Graphics, SamusTiles};
 use data::pose::transition::PoseTransitions;
 use data::pose::{PoseError, Poses};
 use data::rom::{AddressError, Rom, RomError};
-use data::tileset::{TileTables, TilesetError};
 use game::Content;
 use game::plm::RoomPlms;
 use game::state::Buttons;
+use import::tileset::TilesetError;
 use import::world::WorldError;
 use oracle_record::lsnes::RawError;
 
@@ -164,8 +164,8 @@ pub enum ContentError {
     AreaMaps(AddressError),
     /// The HUD's pictures are outside the image.
     HudPictures(AddressError),
-    /// The tile tables are outside the image or don't decompress.
-    TileTables(TilesetError),
+    /// The tilesets don't import.
+    Tilesets(TilesetError),
     /// The message boxes' tables are outside the image or name an unknown routine.
     MessageBoxes(data::message::MessageError),
     /// The blocks' reactions or their tables don't import.
@@ -191,7 +191,7 @@ impl fmt::Display for ContentError {
             Self::Rooms(error) => write!(f, "the rooms: {error:?}"),
             Self::AreaMaps(error) => write!(f, "the area maps: {error:?}"),
             Self::HudPictures(error) => write!(f, "the HUD's pictures: {error:?}"),
-            Self::TileTables(error) => write!(f, "the tile tables: {error:?}"),
+            Self::Tilesets(error) => write!(f, "the tilesets: {error:?}"),
             Self::MessageBoxes(error) => write!(f, "the message boxes: {error:?}"),
             Self::Blocks(error) => write!(f, "the blocks' reactions: {error:?}"),
             Self::Reaction(id) => write!(f, "the blocks' reaction {id:?}: a wait too long"),
@@ -260,7 +260,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
             &data::map::AreaMaps::load(rom.lorom()).map_err(ContentError::AreaMaps)?,
             &data::hud::HudPictures::load(rom.lorom()).map_err(ContentError::HudPictures)?,
         ),
-        tile_tables: TileTables::load(rom.lorom()).map_err(ContentError::TileTables)?,
+        tilesets: import::tileset::import(rom.lorom(), &world).map_err(ContentError::Tilesets)?,
         message_boxes: data::message::MessageBoxes::load(rom.lorom())
             .map_err(ContentError::MessageBoxes)?,
     })
@@ -285,4 +285,43 @@ pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, WorldError> {
         .with_scroll_lists(loaded_scroll_lists(&world, image)?)
         .with_states(loaded_states(&world, image)?)
         .with_reactions(content.blocks.imported().clone()))
+}
+
+#[cfg(test)]
+mod tests {
+    use data::assets::tilesets::TILESETS;
+    use data::rom::Lorom;
+    use game::exact::art::{colour_words, planar_4bpp, tile_table};
+
+    /// Each loaded tileset's record, and the shared elements', re-encode to the bytes the
+    /// original decompresses and uploads: the tile table's whole entries, the tiles in VRAM and
+    /// the palette in colour RAM (docs/architecture/assets.md §1 point 3).
+    #[test]
+    fn every_loaded_tileset_re_encodes_to_the_bytes_it_was_imported_from() {
+        let Some(image) = std::env::var_os("SM_ROM").and_then(|path| std::fs::read(path).ok())
+        else {
+            return;
+        };
+        let rom = Lorom::new(&image);
+        let content = super::content(image.clone()).unwrap();
+        let whole_entries = |bytes: &[u8]| bytes.as_chunks::<8>().0.as_flattened().to_vec();
+        let shared = import::tileset::raw_shared(rom).unwrap();
+        // Compared as bools, so a failure names the tileset and not the ROM's bytes.
+        let shared_holds = tile_table(&content.tilesets.shared.looks) == whole_entries(&shared);
+        assert!(shared_holds);
+        assert_eq!(content.tilesets.sets.len(), TILESETS.len());
+        for tileset in &content.tilesets.sets {
+            let raw = import::tileset::raw(rom, tileset.id).unwrap();
+            let holds = [
+                tile_table(&tileset.looks) == whole_entries(&raw.tile_table),
+                planar_4bpp(&tileset.sheet) == raw.tiles,
+                colour_words(&tileset.palettes) == raw.palette,
+            ];
+            assert_eq!(
+                holds, [true; 3],
+                "{:?}: tile table, tiles, palette",
+                tileset.id
+            );
+        }
+    }
 }

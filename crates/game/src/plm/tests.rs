@@ -319,10 +319,10 @@ fn an_on_screen_items_draws_queue_its_blocks_tiles() {
     // The item's column, 14h, is on screen once the camera is a screen across.
     room.camera.x.pixels = 0x100;
     let mut video = Video::default();
-    let tables = TileTables::default();
+    let tilesets = Tilesets::default();
     let pass = |room: &mut RoomScoped, video: &mut Video| {
         process(
-            &mut Drawing::new(video, &tables),
+            &mut Drawing::new(video, &tilesets),
             room,
             &CollectedItems::default(),
             &content(),

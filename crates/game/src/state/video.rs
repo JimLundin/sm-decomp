@@ -4,6 +4,7 @@
 //! image itself; meaning for widescreen and HD art travels in the intent output instead.
 
 use canonical::Canonical;
+use data::assets::art::{Cell, PaletteRow, TileRef};
 pub use data::dma::BusAddress;
 pub use data::pose::tiles::{GraphicsRef, TileDefinitionId};
 
@@ -97,6 +98,31 @@ impl TilemapEntry {
     #[must_use]
     pub const fn in_palette(self, palette: BgPalette) -> Self {
         Self { palette, ..self }
+    }
+}
+
+/// A content cell is the entry it places: the tilemap word is the cell's encoding.
+impl From<Cell> for TilemapEntry {
+    fn from(cell: Cell) -> Self {
+        Self {
+            tile: TileNumber(cell.tile.0),
+            palette: BgPalette(cell.palette.0),
+            priority: cell.priority,
+            flip_x: cell.flip_x,
+            flip_y: cell.flip_y,
+        }
+    }
+}
+
+impl From<TilemapEntry> for Cell {
+    fn from(entry: TilemapEntry) -> Self {
+        Self {
+            tile: TileRef(entry.tile.0),
+            palette: PaletteRow(entry.palette.0),
+            priority: entry.priority,
+            flip_x: entry.flip_x,
+            flip_y: entry.flip_y,
+        }
     }
 }
 

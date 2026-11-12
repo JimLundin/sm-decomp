@@ -40,7 +40,7 @@ fn content() -> Content {
         room_doors: crate::collision::RoomDoors::default(),
         blocks: crate::world_blocks_bridge::BlockContent::default(),
         hud: crate::interface_hud_bridge::HudContent::default(),
-        tile_tables: data::tileset::TileTables::default(),
+        tilesets: data::assets::tilesets::Tilesets::default(),
         message_boxes: data::message::MessageBoxes::default(),
     }
 }

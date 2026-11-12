@@ -7,15 +7,16 @@
 
 use std::fmt;
 
+use data::assets::art::BlockLook;
 use data::enemy::SpeciesMap;
 use data::enemy::program::EnemyPrograms;
+use data::id::TilesetId;
 use data::id::{Line, RoomId};
 use data::map::{MAP_BIT_BYTES, MapCells};
 use data::plm::{ItemPlm, PlmPopulation, ScrollLists};
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
-use data::tileset::{BlockTiles, TilesetIndex};
 use game::plm::item_gfx;
 use game::samus_appearance_bridge::Clips;
 use game::state::atmospheric::{
@@ -102,7 +103,7 @@ pub struct StateHeader(pub u16);
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct StateLevel {
     /// The state's tileset, whose tile table `$82:E7D3` decompresses.
-    pub tileset: TilesetIndex,
+    pub tileset: TilesetId,
     /// Whether its level data has layer 2 after the BTS.
     pub layer2: bool,
 }
@@ -545,18 +546,10 @@ impl ItemGfxSources {
 }
 
 /// Two blocks' tile table entries as the table's bytes hold them.
-fn block_bytes(blocks: [BlockTiles; 2]) -> [u8; 16] {
+fn block_bytes(blocks: [BlockLook; 2]) -> [u8; 16] {
     let mut bytes = [0; 16];
-    let words = blocks.iter().flat_map(|tiles| {
-        [
-            tiles.top_left,
-            tiles.top_right,
-            tiles.bottom_left,
-            tiles.bottom_right,
-        ]
-    });
-    for (pair, word) in bytes.as_chunks_mut::<2>().0.iter_mut().zip(words) {
-        *pair = word.to_le_bytes();
+    for (byte, encoded) in bytes.iter_mut().zip(game::exact::art::tile_table(&blocks)) {
+        *byte = encoded;
     }
     bytes
 }
@@ -743,7 +736,7 @@ struct Level {
     blocks: Vec<Block>,
     layer2: Option<Vec<Layer2Block>>,
     tail: Vec<u8>,
-    tileset: TilesetIndex,
+    tileset: TilesetId,
     scroll_areas: Vec<ScrollArea>,
     scrolls_below: Vec<ScrollArea>,
 }

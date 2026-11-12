@@ -6,10 +6,10 @@
 
 use std::marker::PhantomData;
 
+use data::assets::tilesets::Tilesets;
 use data::id::RoomId;
 use data::level::{Tile, TileNumber};
 use data::plm::{ItemPlm, PlmKind, PlmPopulation};
-use data::tileset::TileTables;
 
 use crate::state::room::{
     Block, BlockIndex, BlockKind, Bts, ItemFrame, ItemGfxSlot, ItemStep, Plm, PlmBody, PlmChoice,
@@ -305,9 +305,9 @@ pub(crate) fn process_unseen(
     population: &PlmPopulation,
 ) -> Result<Option<SlotIndex<Plm>>, BlocksFault> {
     let mut video = crate::state::video::Video::default();
-    let tables = TileTables::default();
+    let tilesets = Tilesets::default();
     process(
-        &mut Drawing::new(&mut video, &tables),
+        &mut Drawing::new(&mut video, &tilesets),
         room,
         collected,
         blocks,
@@ -331,13 +331,13 @@ pub(crate) fn process_unseen(
 // pass left it; it matters only when another PLM drew earlier in the same pass.
 pub fn resume(
     state: &mut State,
-    tables: &TileTables,
+    tilesets: &Tilesets,
     blocks: &BlockContent,
     population: &PlmPopulation,
     at: SlotIndex<Plm>,
 ) -> Result<(SlotIndex<Plm>, Next), BlocksFault> {
     let index = usize::from(at.0);
-    let mut drawing = Drawing::new(&mut state.video, tables);
+    let mut drawing = Drawing::new(&mut state.video, tilesets);
     let room = &mut state.room;
     if let Some(slot) = room.plms.slots.get_mut(index)
         && let Occupancy::Live(PlmBody::Item {

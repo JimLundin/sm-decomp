@@ -3,12 +3,11 @@
 use canonical::Canonical;
 use data::blocks::ReactionId;
 use data::enemy::program::SpritemapId;
-use data::id::{DoorwayId, RoomId, SpeciesId};
+use data::id::{DoorwayId, RoomId, SpeciesId, TilesetId};
 
 use crate::world_blocks_bridge::{BlockContent, BlocksFault};
 use data::plm::{ItemPlm, ScrollChangesId};
 use data::room::{Area, Room, RoomState};
-use data::tileset::TilesetIndex;
 
 pub use data::level::{
     Block, BlockKind, BombableBts, Bts, DoorIndex, Layer2Block, Offset, PlmChoice, ScrollArea,
@@ -872,8 +871,8 @@ pub struct RoomScoped {
     pub level_tail: Vec<u8>,
     /// The room's area, which says whether the common room elements' tiles are loaded.
     pub area: Area,
-    /// The room's tileset, whose tile table draws its blocks.
-    pub tileset: TilesetIndex,
+    /// The room's tileset, whose block looks draw its blocks.
+    pub tileset: TilesetId,
     /// How far below BG1's tilemap in VRAM BG2's lies (`$098E`, from the BG tilemap base
     /// registers as `$80:A176` displays the room).
     pub tilemap_gap: VramWord,
@@ -900,9 +899,10 @@ pub struct RoomScoped {
 }
 
 impl RoomScoped {
-    /// Room `room`, as it loads in `state`: its level's layer 1 blocks, its width in blocks,
-    /// its scroll areas and the run after them, the camera's scroll settings, its PLMs spawned
-    /// and set up, with no enemies yet and the camera at the top left.
+    /// Room `room`, as it loads in `state` drawing with `tileset`: its level's layer 1 blocks,
+    /// its width in blocks, its scroll areas and the run after them, the camera's scroll
+    /// settings, its PLMs spawned and set up, with no enemies yet and the camera at the top
+    /// left.
     ///
     /// # Errors
     ///
@@ -915,6 +915,7 @@ impl RoomScoped {
         room: RoomId,
         header: &Room,
         state: &RoomState,
+        tileset: TilesetId,
         blocks: &BlockContent,
     ) -> Result<Self, BlocksFault> {
         let [x, y] = state.layer2_scroll.map(Layer2Scroll::from);
@@ -930,7 +931,7 @@ impl RoomScoped {
             layer2: state.layers.layer2.clone(),
             level_tail: level_tail(&state.layers),
             area: header.area,
-            tileset: TilesetIndex(state.tileset),
+            tileset,
             width: BlockColumns(header.size.blocks_across()),
             height: BlockRows(u16::from(header.size.height).wrapping_mul(16)),
             scroll_areas: areas.to_vec(),

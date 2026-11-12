@@ -549,7 +549,7 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     // The pickup: the place emptied, the item equipped and collected, then the box.
     let (at, next) = plm::resume(
         &mut state,
-        &data::tileset::TileTables::default(),
+        &data::assets::tilesets::Tilesets::default(),
         &content,
         &population,
         slot,
@@ -577,7 +577,7 @@ fn the_morph_balls_pickup_equips_it_and_opens_its_message_box() {
     // Back from the box: the empty item drawn, the collision PLM deleted, the pass returns.
     let (_, next) = plm::resume(
         &mut state,
-        &data::tileset::TileTables::default(),
+        &data::assets::tilesets::Tilesets::default(),
         &content,
         &population,
         slot,

@@ -1,5 +1,7 @@
+use data::assets::art::Cell;
+use data::assets::tilesets::{SharedElements, Tileset};
+use data::id::TilesetId;
 use data::level::{Block, Layer2Block};
-use data::tileset::{TileTable, TilesetIndex};
 
 use super::*;
 use crate::state::room::BlockColumns;
@@ -14,23 +16,28 @@ fn number(index: u16) -> u16 {
     index % 0xFB
 }
 
-/// The tile words entry `number` holds: four in a row from four times it.
-fn tiles(number: u16) -> BlockTiles {
-    let first = number.wrapping_mul(4);
-    BlockTiles {
-        top_left: first,
-        top_right: first.wrapping_add(1),
-        bottom_left: first.wrapping_add(2),
-        bottom_right: first.wrapping_add(3),
-    }
+/// The look of the four tilemap words `words`, in reading order.
+fn look(words: [u16; 4]) -> art::BlockLook {
+    art::BlockLook::from_cells(words.map(|word| Cell::from(TilemapEntry::from_word(word))))
 }
 
-/// The CRE's table and one tileset's, every entry [`tiles`].
-fn tables() -> TileTables {
-    let table = || TileTable((0..0x100).map(tiles).collect());
-    TileTables {
-        cre: table(),
-        tilesets: vec![table()],
+/// The look block `number` has: four tile words in a row from four times it.
+fn tiles(number: u16) -> art::BlockLook {
+    let first = number.wrapping_mul(4);
+    look([0, 1, 2, 3].map(|quarter| first.wrapping_add(quarter)))
+}
+
+/// The shared elements and one tileset that uses them, every look [`tiles`].
+fn tables() -> Tilesets {
+    let looks = || (0..0x100).map(tiles).collect();
+    Tilesets {
+        shared: SharedElements { looks: looks() },
+        sets: vec![Tileset {
+            id: TilesetId(0),
+            looks: looks(),
+            uses_shared: true,
+            ..Tileset::default()
+        }],
     }
 }
 
@@ -52,7 +59,7 @@ fn room() -> RoomScoped {
         blocks,
         width: BlockColumns(WIDTH),
         area: data::room::Area::Brinstar,
-        tileset: TilesetIndex(0),
+        tileset: TilesetId(0),
         ..RoomScoped::default()
     }
 }
@@ -62,13 +69,14 @@ fn entry(word: u16) -> TilemapEntry {
     TilemapEntry::from_word(word)
 }
 
-/// The look of an unflipped block whose tile table entry is `tiles`.
-fn unflipped(tiles: BlockTiles) -> BlockLook {
+/// The look of an unflipped block whose tileset look is `tiles`.
+fn unflipped(tiles: art::BlockLook) -> BlockLook {
+    let [top_left, top_right, bottom_left, bottom_right] = tiles.cells().map(TilemapEntry::from);
     BlockLook {
-        top_left: entry(tiles.top_left),
-        top_right: entry(tiles.top_right),
-        bottom_left: entry(tiles.bottom_left),
-        bottom_right: entry(tiles.bottom_right),
+        top_left,
+        top_right,
+        bottom_left,
+        bottom_right,
     }
 }
 
@@ -117,12 +125,7 @@ fn a_row_past_the_last_block_reads_the_level_data_after_it() {
 
 #[test]
 fn flipped_blocks_mirror_their_quarters_and_flip_each_word() {
-    let tiles = BlockTiles {
-        top_left: 1,
-        top_right: 2,
-        bottom_left: 3,
-        bottom_right: 4,
-    };
+    let tiles = look([1, 2, 3, 4]);
     let words = |tile: Tile| {
         let drawn = BlockLook::of(tiles, tile);
         [
@@ -143,10 +146,7 @@ fn flipped_blocks_mirror_their_quarters_and_flip_each_word() {
     assert_eq!(words(tile(false, true)), [0x8003, 0x8004, 0x8001, 0x8002]);
     assert_eq!(words(tile(true, true)), [0xC004, 0xC003, 0xC002, 0xC001]);
     // A word already flipped flips back.
-    let flipped = BlockTiles {
-        top_left: 0x4001,
-        ..tiles
-    };
+    let flipped = look([0x4001, 2, 3, 4]);
     assert_eq!(
         BlockLook::of(flipped, tile(true, false)).top_right.word(),
         1
