@@ -54,7 +54,7 @@ const MORPH_BALL_ROOM_ID: RoomId = RoomId(7);
 /// The synthetic room's state header, and what the content says it loads.
 const MORPH_BALL_STATE: StateHeader = StateHeader(0x9ECB);
 const MORPH_BALL_LEVEL: StateLevel = StateLevel {
-    tileset: data::tileset::TilesetId(8),
+    tileset: data::tileset::TilesetIndex(8),
     layer2: true,
 };
 

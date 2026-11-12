@@ -49,7 +49,7 @@ fn an_entry_is_four_little_endian_words_in_reading_order() {
 #[test]
 fn outside_ceres_the_cre_draws_the_first_100h_blocks_and_the_tileset_the_rest() {
     let tables = tables();
-    let tileset = TilesetId(1);
+    let tileset = TilesetIndex(1);
     assert_eq!(
         tables.block(Area::Brinstar, tileset, 0xff),
         Some(tiles(1, 0xff))
@@ -67,8 +67,8 @@ fn outside_ceres_the_cre_draws_the_first_100h_blocks_and_the_tileset_the_rest() 
         Some(tiles(2, 0x10))
     );
     assert_eq!(tables.block(Area::Ceres, tileset, 0x300), None);
-    assert_eq!(tables.block(Area::Brinstar, TilesetId(0), 0x100), None);
-    assert_eq!(tables.block(Area::Brinstar, TilesetId(2), 0), None);
+    assert_eq!(tables.block(Area::Brinstar, TilesetIndex(0), 0x100), None);
+    assert_eq!(tables.block(Area::Brinstar, TilesetIndex(2), 0), None);
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn every_tile_table_decompresses_from_the_rom() {
         assert!(table.0.len() <= BLOCKS);
     }
     // Slice 0's Brinstar tileset fills every tile number outside Ceres.
-    let brinstar = TilesetId(6);
+    let brinstar = TilesetIndex(6);
     for number in 0..u16::try_from(BLOCKS).unwrap() {
         assert!(tables.block(Area::Brinstar, brinstar, number).is_some());
     }

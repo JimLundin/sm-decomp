@@ -12,7 +12,8 @@
 
 use core::num::Wrapping;
 
-use data::assets::world::{self, DoorwayId};
+use data::assets::world;
+use data::id::DoorwayId;
 use data::rom::RomAddress;
 use data::room::{self, Area, BossBits, Room, StateIndex};
 use enum_map::EnumMap;
@@ -254,7 +255,9 @@ fn condition(condition: room::Condition) -> Option<Condition> {
     })
 }
 
-/// The model's condition for a record's: the same terms, a doorway its entrance.
+/// The model's condition for a record's: the same terms, a doorway its entrance. The two are
+/// separate types (`data::assets::world::Condition` says why), so this match names every
+/// variant: a new one is a compile error here, not a condition read as another.
 const fn version_condition(condition: world::Condition) -> Condition {
     match condition {
         world::Condition::EnteredBy(doorway) => Condition::EnteredBy(entrance(doorway)),
@@ -322,6 +325,27 @@ pub fn room_state(
     u8::try_from(place).ok().map(StateIndex)
 }
 
+/// The place in `room`'s list of the version it loads in for `progress`, entered through
+/// `doorway` if any; none when the model can't read its area.
+#[must_use]
+pub fn version_place(
+    room: &world::Room,
+    progress: &Progress,
+    doorway: Option<DoorwayId>,
+) -> Option<usize> {
+    let conditional: Vec<_> = room
+        .conditional
+        .iter()
+        .map(|entry| version_condition(entry.condition))
+        .collect();
+    chosen_place(
+        room.place.area,
+        &conditional,
+        progress,
+        doorway.map(entrance),
+    )
+}
+
 /// The version `room` loads in for `progress`, entered through `doorway` if any; none when
 /// the model can't read its area.
 #[must_use]
@@ -330,18 +354,7 @@ pub fn room_version<'a>(
     progress: &Progress,
     doorway: Option<DoorwayId>,
 ) -> Option<&'a world::Version> {
-    let conditional: Vec<_> = room
-        .conditional
-        .iter()
-        .map(|entry| version_condition(entry.condition))
-        .collect();
-    let place = chosen_place(
-        room.place.area,
-        &conditional,
-        progress,
-        doorway.map(entrance),
-    )?;
-    room.version(place)
+    room.version(version_place(room, progress, doorway)?)
 }
 
 #[cfg(test)]

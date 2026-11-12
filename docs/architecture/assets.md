@@ -94,20 +94,27 @@ are variants of it that share what they share.
 | `Background` | a `TileLayer<Cell>` over the tileset's sheet, with its setup steps |
 | object and enemy layers | placed reactions, items, door caps, scroll cells, stations; placed species with their init, and the kill quota |
 
-Of these, `data::assets::world` holds today what the engine reads of a room: `World`, and `Room`
-with its place, size, scrollers and doors, and its versions with the PLMs each places. Room ids
-come from its registry, `rooms` (slice 0's room, Ceres's six and the rooms their doors lead to);
-`import::world` maps the original's room headers to them and builds the records with
-`data::room`'s decoders. Its doors, conditions and scroll changes hold no ROM address: a door
-names its destination's `RoomId`, a version's condition is the world's own `Condition` in
-progress's terms (a doorway by its `DoorwayId`), and a PLM population names its scroll change
-lists by their place in it. The importer refuses a room, doorway or boss bit no id stands for.
-The engine loads `import::world::LOADED`, slice 0's room and Ceres's six: their PLMs and doors
-come from the records; the state headers' tilesets and layer 2, and where the scroll change
-lists are, still come from the decoder (verification only); the level is read from work RAM.
-Still to come: the world's `Condition` and progress's are two types until the records can name
-progress's, a PLM no model runs keeps its ID and room argument (`PlmKind::Unmodelled`), and the
-verifier's state-header lookup still decodes the room directly.
+Of these, `data::assets::world` holds today what the engine reads of a room: `World`, with its
+rooms and the `Doorway`s their doors lead through (each names the room it leads into), and
+`Room` with its place, size, scrollers and doors, and its versions with the tileset, layer 2
+(`Back`) and PLMs of each. Ids come from registries: rooms from `world::rooms` (slice 0's room,
+Ceres's six and the rooms their doors lead to), doorways from `world::doorways` (every doorway
+those rooms' doors lead through), tilesets from `data::assets::tilesets` (those their versions
+draw from); `import::world` maps the original's room headers, door headers and tileset indices
+to them and builds the records with `data::room`'s decoders. Its doors, conditions and scroll
+changes hold no ROM address: a door names its `DoorwayId`, a version's condition is the world's
+own `Condition` in progress's terms (a doorway by its `DoorwayId`), and a PLM population names
+its scroll change lists by their place in it. The importer refuses a room, doorway, tileset or
+boss bit no id stands for. The engine loads `import::world::LOADED`, slice 0's room and
+Ceres's six: their PLMs and doors come from the records; the level is read from work RAM. The
+verifier reads a version's tileset and layer 2 from the records too, and asks the importer
+alone where the original keeps a version's state header and scroll change lists, which the
+work RAM names by place. The world's `Condition` and progress's stay two types: progress is a
+clean-room model whose crate depends only on `types`, so one type would live in `types`, a
+change for progress's own round; `game::run_progress_bridge` maps every variant meanwhile.
+Still to come: a doorway's side, arrival and partner, a PLM no model runs keeps its ID and room
+argument (`PlmKind::Unmodelled`), and the engine's tileset is still the original's index
+(`data::tileset::TilesetIndex`) until tilesets are in our format (AF2).
 
 Collision is a second tile layer, not a tile property: in Super Metroid a cell's kind is the
 cell's own, not its picture's. Room loading (R2) writes `Level` back into the original's work RAM

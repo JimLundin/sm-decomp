@@ -3,18 +3,40 @@
 //!
 //! It decodes each room's header, its states and its door list (`data::room`) and writes the
 //! records of `data::assets::world`, each room under the id the registry gives it. Where the
-//! original names other content by its place (a door's destination, the doorway a condition
-//! asks about), the importer names it by our id, and refuses a place no id stands for.
+//! original names other content by its place (a door's doorway and destination, the doorway a
+//! condition asks about, a version's tileset), the importer names it by our id, and refuses a
+//! place no id stands for.
+//!
+//! It is also the only code that knows where the original keeps what it imported: the
+//! verifier asks it ([`key`], [`version_places`], [`tileset_index`]) to read the work RAM's
+//! pointers (K1).
 
+use std::collections::BTreeMap;
+
+use data::assets::tilesets::{
+    BRINSTAR, CERES, CERES_ELEVATOR, CERES_ELEVATOR_ESCAPE, CERES_ESCAPE, CERES_RIDLEY,
+    CERES_RIDLEY_ESCAPE,
+};
+use data::assets::world::doorways::{
+    DEAD_SCIENTIST_TO_ESCAPE_58, DEAD_SCIENTIST_TO_MAGNET_STAIRS, ELEVATOR_TO_FALLING_TILE,
+    ESCAPE_58_TO_DEAD_SCIENTIST, ESCAPE_58_TO_RIDLEY, FALLING_TILE_TO_ELEVATOR,
+    FALLING_TILE_TO_MAGNET_STAIRS, MAGNET_STAIRS_TO_DEAD_SCIENTIST, MAGNET_STAIRS_TO_FALLING_TILE,
+    MORPH_BALL_TO_CONSTRUCTION, MORPH_BALL_TO_ELEVATOR, MORPH_BALL_TO_GREEN_HILL,
+    RIDLEY_TO_ESCAPE_58,
+};
 use data::assets::world::rooms::{
     BLUE_BRINSTAR_ELEVATOR_ROOM, CERES_ELEVATOR_ROOM, CERES_RIDLEY_ROOM, CONSTRUCTION_ZONE,
     DEAD_SCIENTIST_ROOM, ESCAPE_ROOM_58, FALLING_TILE_ROOM, GREEN_HILL_ZONE, MAGNET_STAIRS_ROOM,
     MORPH_BALL_ROOM,
 };
-use data::assets::world::{self, Conditional, DoorwayId, Item, MapPlace, Room, Version, World};
-use data::id::RoomId;
+use data::assets::world::{
+    self, Back, Conditional, Doorway, Inconsistent, Item, MapPlace, Room, Version, World,
+};
+use data::id::{DoorwayId, RoomId, TilesetId};
+use data::plm::ScrollLists;
 use data::rom::{Lorom, RomAddress};
 use data::room::{self, BossBits, RoomError, RoomKey, RoomState};
+use data::tileset::TilesetIndex;
 
 /// The original's place for each registered room: its header's pointer in the room bank.
 const PLACES: [(RoomId, u16); 10] = [
@@ -30,9 +52,38 @@ const PLACES: [(RoomId, u16); 10] = [
     (BLUE_BRINSTAR_ELEVATOR_ROOM, 0x97b5),
 ];
 
-/// The original's place for each registered doorway: its door header. None is registered yet,
-/// as no imported room has a version its entrance chooses.
-const DOORWAYS: [(DoorwayId, RomAddress); 0] = [];
+/// The bank of the door headers.
+const DOOR_BANK: u8 = 0x83;
+
+/// The original's place for each registered doorway: its door header's pointer in the door
+/// bank, which a door list and a doorway's condition name.
+const DOORWAYS: [(DoorwayId, u16); 13] = [
+    (MORPH_BALL_TO_GREEN_HILL, 0x8e9e),
+    (MORPH_BALL_TO_CONSTRUCTION, 0x8eaa),
+    (MORPH_BALL_TO_ELEVATOR, 0x8eb6),
+    (ELEVATOR_TO_FALLING_TILE, 0xab4c),
+    (FALLING_TILE_TO_ELEVATOR, 0xab58),
+    (FALLING_TILE_TO_MAGNET_STAIRS, 0xab64),
+    (MAGNET_STAIRS_TO_FALLING_TILE, 0xab70),
+    (MAGNET_STAIRS_TO_DEAD_SCIENTIST, 0xab7c),
+    (DEAD_SCIENTIST_TO_MAGNET_STAIRS, 0xab88),
+    (DEAD_SCIENTIST_TO_ESCAPE_58, 0xab94),
+    (ESCAPE_58_TO_DEAD_SCIENTIST, 0xaba0),
+    (ESCAPE_58_TO_RIDLEY, 0xabac),
+    (RIDLEY_TO_ESCAPE_58, 0xabb8),
+];
+
+/// The original's place for each registered tileset: its index in the tileset table, the byte
+/// a room state names it by.
+const TILESETS: [(TilesetId, TilesetIndex); 7] = [
+    (BRINSTAR, TilesetIndex(6)),
+    (CERES, TilesetIndex(15)),
+    (CERES_ESCAPE, TilesetIndex(16)),
+    (CERES_ELEVATOR, TilesetIndex(17)),
+    (CERES_ELEVATOR_ESCAPE, TilesetIndex(18)),
+    (CERES_RIDLEY, TilesetIndex(19)),
+    (CERES_RIDLEY_ESCAPE, TilesetIndex(20)),
+];
 
 /// The rooms the engine loads: slice 0's Morph Ball Room and Ceres's six.
 pub const LOADED: [RoomId; 7] = [
@@ -50,8 +101,8 @@ pub const LOADED: [RoomId; 7] = [
 pub enum WorldError {
     /// The registry has no room with this id.
     Unregistered(RoomId),
-    /// The list names a room twice.
-    Repeated(RoomId),
+    /// The rooms and their doorways don't make a world: an id repeats.
+    Inconsistent(Inconsistent),
     /// A room doesn't decode.
     Room {
         /// The room.
@@ -73,8 +124,11 @@ pub enum WorldError {
         /// The door's place in the room's door list.
         door: usize,
     },
-    /// A version of the room is chosen by a doorway the registry has no id for.
+    /// A door of the room leads through, or a version of it is chosen by, a doorway the
+    /// registry has no id for.
     UnregisteredDoorway(RoomId),
+    /// A version of the room draws from a tileset the registry has no id for.
+    UnregisteredTileset(RoomId),
     /// A version of the room is chosen by a boss bit that names no boss kind.
     UnknownBoss(RoomId),
 }
@@ -96,27 +150,89 @@ pub fn id(key: RoomKey) -> Option<RoomId> {
         .find_map(|&(id, pointer)| (RoomKey::from_room_pointer(pointer) == key).then_some(id))
 }
 
-/// The rooms `ids`, in order, from `rom`.
+/// The original's place for the registered tileset `id`: its index in the tileset table, which
+/// the work RAM's tileset and the tile tables name it by (verification only, K1).
+#[must_use]
+pub fn tileset_index(id: TilesetId) -> Option<TilesetIndex> {
+    TILESETS
+        .iter()
+        .find_map(|&(known, index)| (known == id).then_some(index))
+}
+
+/// The registered doorway whose door header is at `at`.
+fn doorway(at: RomAddress) -> Option<DoorwayId> {
+    DOORWAYS.iter().find_map(|&(doorway, pointer)| {
+        (RomAddress::new(DOOR_BANK, pointer) == at).then_some(doorway)
+    })
+}
+
+/// Where the original keeps what a version of a room loads that the work RAM names by its
+/// place.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct VersionPlaces {
+    /// Its state header, which the work RAM's room state pointer names.
+    pub state: RomAddress,
+    /// Its PLMs' scroll change lists, which their room arguments name.
+    pub scroll_lists: ScrollLists,
+}
+
+/// Where the original keeps each version of room `id`, in the record's order: the conditional
+/// versions, then the default (verification only, K1).
+///
+/// # Errors
+///
+/// [`WorldError`] if the room isn't registered or doesn't decode.
+pub fn version_places(rom: Lorom<'_>, id: RoomId) -> Result<Vec<VersionPlaces>, WorldError> {
+    let decoded = decode(rom, id)?;
+    Ok(decoded
+        .states()
+        .map(|(_, state)| VersionPlaces {
+            state: state.at,
+            scroll_lists: state.scroll_lists.clone(),
+        })
+        .collect())
+}
+
+/// Registered room `id`, decoded.
+fn decode(rom: Lorom<'_>, id: RoomId) -> Result<room::Room, WorldError> {
+    let key = key(id).ok_or(WorldError::Unregistered(id))?;
+    room::decode(rom, key).map_err(|error| WorldError::Room { room: id, error })
+}
+
+/// The rooms `ids`, in order, from `rom`, with the doorways their doors lead through.
 ///
 /// # Errors
 ///
 /// [`WorldError`] if an id isn't registered or repeats, or its room doesn't decode or names a
-/// room, a doorway or a boss we have no id for.
+/// room, a doorway, a tileset or a boss we have no id for.
 pub fn import(rom: Lorom<'_>, ids: &[RoomId]) -> Result<World, WorldError> {
+    let mut doorways = BTreeMap::new();
     let rooms = ids
         .iter()
-        .map(|&id| {
-            let key = key(id).ok_or(WorldError::Unregistered(id))?;
-            let decoded =
-                room::decode(rom, key).map_err(|error| WorldError::Room { room: id, error })?;
-            from_decoded(id, decoded)
-        })
+        .map(|&id| from_decoded(rom, id, decode(rom, id)?, &mut doorways))
         .collect::<Result<Vec<_>, _>>()?;
-    World::new(rooms).map_err(WorldError::Repeated)
+    World::new(rooms, doorways.into_values().collect()).map_err(WorldError::Inconsistent)
 }
 
-/// The record of the decoded room `decoded`, under `id`.
-fn from_decoded(id: RoomId, decoded: room::Room) -> Result<Room, WorldError> {
+/// The door header of the door at `place` in `list`: the list holds a word a door.
+fn door_header(rom: Lorom<'_>, list: &room::DoorList, place: usize) -> Option<RomAddress> {
+    let at = list.at.advance(place.checked_mul(2)?)?;
+    let word = rom.read(at, 2).ok()?;
+    let (pair, _) = word.as_chunks::<2>();
+    Some(RomAddress::new(
+        DOOR_BANK,
+        u16::from_le_bytes(*pair.first()?),
+    ))
+}
+
+/// The record of the decoded room `decoded`, under `id`, adding the doorways its doors lead
+/// through to `doorways`.
+fn from_decoded(
+    rom: Lorom<'_>,
+    id: RoomId,
+    decoded: room::Room,
+    doorways: &mut BTreeMap<DoorwayId, Doorway>,
+) -> Result<Room, WorldError> {
     let doors = decoded
         .doors
         .doors
@@ -124,12 +240,21 @@ fn from_decoded(id: RoomId, decoded: room::Room) -> Result<Room, WorldError> {
         .enumerate()
         .map(|(place, &door)| match door {
             room::Door::ToRoom(key) => {
-                self::id(key)
-                    .map(world::Door::To)
-                    .ok_or(WorldError::UnregisteredDestination {
-                        room: id,
-                        door: place,
-                    })
+                let destination = self::id(key).ok_or(WorldError::UnregisteredDestination {
+                    room: id,
+                    door: place,
+                })?;
+                let doorway = door_header(rom, &decoded.doors, place)
+                    .and_then(doorway)
+                    .ok_or(WorldError::UnregisteredDoorway(id))?;
+                doorways.insert(
+                    doorway,
+                    Doorway {
+                        id: doorway,
+                        room: destination,
+                    },
+                );
+                Ok(world::Door::To(doorway))
             }
             room::Door::Nowhere => Ok(world::Door::Nowhere),
             room::Door::HeaderInRam(_) => Err(WorldError::DoorHeaderInRam {
@@ -144,7 +269,7 @@ fn from_decoded(id: RoomId, decoded: room::Room) -> Result<Room, WorldError> {
         .map(|entry| {
             Ok(Conditional {
                 condition: condition(id, entry.condition)?,
-                version: version(entry.state),
+                version: version(id, entry.state)?,
             })
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -159,7 +284,7 @@ fn from_decoded(id: RoomId, decoded: room::Room) -> Result<Room, WorldError> {
         scrollers: decoded.scrollers,
         doors,
         conditional,
-        default: version(decoded.default),
+        default: version(id, decoded.default)?,
     })
 }
 
@@ -171,9 +296,7 @@ fn condition(room: RoomId, condition: room::Condition) -> Result<world::Conditio
             .ok_or(WorldError::UnknownBoss(room))
     };
     match condition {
-        room::Condition::Door(at) => DOORWAYS
-            .iter()
-            .find_map(|&(doorway, known)| (known == at).then_some(doorway))
+        room::Condition::Door(at) => doorway(at)
             .map(world::Condition::EnteredBy)
             .ok_or(WorldError::UnregisteredDoorway(room)),
         room::Condition::MainAreaBossDead => defeated(BossBits::MAIN_BOSS),
@@ -186,9 +309,23 @@ fn condition(room: RoomId, condition: room::Condition) -> Result<world::Conditio
     }
 }
 
-/// The version a decoded state loads.
-fn version(state: RoomState) -> Version {
-    Version { plms: state.plms }
+/// The version a decoded state of room `room` loads.
+fn version(room: RoomId, state: RoomState) -> Result<Version, WorldError> {
+    let index = TilesetIndex(state.tileset);
+    let tileset = TILESETS
+        .iter()
+        .find_map(|&(id, known)| (known == index).then_some(id))
+        .ok_or(WorldError::UnregisteredTileset(room))?;
+    let back = if state.layers.layer2.is_some() {
+        Back::Level
+    } else {
+        Back::Background
+    };
+    Ok(Version {
+        tileset,
+        back,
+        plms: state.plms,
+    })
 }
 
 #[cfg(test)]

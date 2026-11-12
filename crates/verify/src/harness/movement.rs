@@ -20,7 +20,7 @@ use core::fmt;
 use std::collections::BTreeMap;
 
 use data::assets::world::Door;
-use data::id::RoomId;
+use data::id::DoorwayId;
 use data::rom::Lorom;
 use data::room::{self, RoomError, RoomKey, decode as decode_room};
 use game::Content;
@@ -787,16 +787,16 @@ pub struct Movement {
     doors: RefCell<BTreeMap<u16, Vec<Door>>>,
 }
 
-/// The stand-in for a door's destination the room registry has no id for: her moves read only
-/// whether a door leads to a room, never which, and the rows cross rooms the registry doesn't
-/// hold yet.
-const UNREGISTERED_ROOM: RoomId = RoomId(u16::MAX);
+/// The stand-in for the doorway of a door that leads to a room: her moves read only whether a
+/// door leads to a room, never through which doorway, and the rows cross rooms the registry
+/// doesn't hold yet.
+const ANY_DOORWAY: DoorwayId = DoorwayId(u16::MAX);
 
 /// The engine's door for the decoder's `door`. A door whose header is in work RAM leads
 /// nowhere the engine can follow, so it is solid, as one that leads nowhere.
-fn engine_door(door: room::Door) -> Door {
+const fn engine_door(door: room::Door) -> Door {
     match door {
-        room::Door::ToRoom(key) => Door::To(import::world::id(key).unwrap_or(UNREGISTERED_ROOM)),
+        room::Door::ToRoom(_) => Door::To(ANY_DOORWAY),
         room::Door::Nowhere | room::Door::HeaderInRam(_) => Door::Nowhere,
     }
 }

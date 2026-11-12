@@ -1,4 +1,6 @@
 use super::*;
+use data::assets::tilesets::{TILESETS as REGISTERED_TILESETS, name as tileset_name};
+use data::assets::world::doorways::{DOORWAYS as REGISTERED_DOORWAYS, name as doorway_name};
 use data::assets::world::rooms::{ROOMS, name};
 use data::assets::world::{BossKind, Event, Set};
 use data::rom::Rom;
@@ -25,6 +27,31 @@ fn every_registered_room_has_one_place() {
                 .all(|&(_, other)| other != pointer)
         );
     }
+}
+
+#[test]
+fn every_registered_doorway_and_tileset_has_one_place() {
+    for entry in REGISTERED_DOORWAYS {
+        let places: Vec<_> = DOORWAYS.iter().filter(|&&(id, _)| id == entry.id).collect();
+        assert_eq!(places.len(), 1, "{}", entry.name);
+        assert_eq!(
+            doorway(RomAddress::new(DOOR_BANK, places[0].1)),
+            Some(entry.id)
+        );
+    }
+    assert_eq!(DOORWAYS.len(), REGISTERED_DOORWAYS.len());
+    for entry in REGISTERED_TILESETS {
+        let index = tileset_index(entry.id);
+        assert!(index.is_some(), "{}", entry.name);
+        assert_eq!(
+            TILESETS
+                .iter()
+                .filter(|&&(_, known)| Some(known) == index)
+                .count(),
+            1
+        );
+    }
+    assert_eq!(TILESETS.len(), REGISTERED_TILESETS.len());
 }
 
 #[test]
@@ -60,9 +87,10 @@ fn a_door_names_the_room_it_leads_to_by_id() {
             .unwrap()
             .doors
             .iter()
-            .map(|door| match door {
-                world::Door::To(to) => name(*to).unwrap(),
-                world::Door::Nowhere => "nowhere",
+            .map(|&door| {
+                world
+                    .leads_to(door)
+                    .map_or("nowhere", |to| name(to).unwrap())
             })
             .collect();
         names.sort_unstable();
@@ -119,6 +147,11 @@ fn a_condition_names_progress_terms_and_refuses_what_has_no_id() {
         condition(room, room::Condition::Door(RomAddress::new(0x83, 0x8000))),
         Err(WorldError::UnregisteredDoorway(room))
     );
+    let through = RomAddress::new(DOOR_BANK, DOORWAYS[0].1);
+    assert_eq!(
+        condition(room, room::Condition::Door(through)),
+        Ok(world::Condition::EnteredBy(DOORWAYS[0].0))
+    );
 }
 
 #[test]
@@ -142,18 +175,43 @@ fn each_room_holds_what_the_decoder_reads() {
         assert_eq!(room.doors.len(), decoded.doors.doors.len());
         for (&ours, &theirs) in room.doors.iter().zip(&decoded.doors.doors) {
             match (ours, theirs) {
-                (world::Door::To(to), room::Door::ToRoom(at)) => assert_eq!(key(to), Some(at)),
+                (world::Door::To(through), room::Door::ToRoom(at)) => {
+                    let into = world.leads_to(ours).unwrap();
+                    assert_eq!(key(into), Some(at));
+                    // The registry names a doorway by the rooms it joins, so a doorway given
+                    // another door's place reads as the wrong pair.
+                    assert_eq!(
+                        doorway_name(through),
+                        Some(format!("{} to {}", name(id).unwrap(), name(into).unwrap()).as_str())
+                    );
+                }
                 (world::Door::Nowhere, room::Door::Nowhere) => {}
                 pair => panic!("{pair:?}"),
             }
         }
         assert_eq!(room.conditional.len(), decoded.conditional.len());
-        for (place, (index, state)) in decoded.states().enumerate() {
+        let places = version_places(cartridge.lorom(), id).unwrap();
+        assert_eq!(places.len(), room.conditional.len() + 1);
+        for ((place, (index, state)), held) in decoded.states().enumerate().zip(&places) {
             assert_eq!(usize::from(index.0), place);
+            let version = room.version(place).unwrap();
+            assert_eq!(&version.plms, &state.plms);
             assert_eq!(
-                room.version(place).map(|version| &version.plms),
-                Some(&state.plms)
+                tileset_index(version.tileset),
+                Some(TilesetIndex(state.tileset))
             );
+            assert_eq!(version.back == Back::Level, state.layers.layer2.is_some());
+            assert_eq!(held.state, state.at);
+            assert_eq!(held.scroll_lists, state.scroll_lists);
+        }
+        if room.place.area == data::room::Area::Ceres {
+            // Ceres's rooms change for the escape once Ridley is defeated, their first
+            // condition, and draw from the escape's tilesets then.
+            let escape = |version: &Version| {
+                tileset_name(version.tileset).is_some_and(|name| name.ends_with(", escape"))
+            };
+            assert!(escape(&room.conditional[0].version), "{id:?}");
+            assert!(!escape(&room.default), "{id:?}");
         }
         for (ours, theirs) in room.conditional.iter().zip(&decoded.conditional) {
             assert_eq!(Ok(ours.condition), condition(id, theirs.condition));
@@ -161,6 +219,8 @@ fn each_room_holds_what_the_decoder_reads() {
     }
     assert_eq!(
         import(cartridge.lorom(), &[MORPH_BALL_ROOM, MORPH_BALL_ROOM]),
-        Err(WorldError::Repeated(MORPH_BALL_ROOM))
+        Err(WorldError::Inconsistent(Inconsistent::RepeatedRoom(
+            MORPH_BALL_ROOM
+        )))
     );
 }

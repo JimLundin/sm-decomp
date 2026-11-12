@@ -280,10 +280,10 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-movement | bridge | 4 | 3,157 | 3,752 | 286 | 197 | 127 | 90 | 3 | 597 |
-| samus-movement | harness | 2 | 6,536 | 6,594 | 738 | 855 | 402 | 529 | 21 | 1,249 |
+| samus-movement | harness | 2 | 6,495 | 6,553 | 738 | 887 | 402 | 529 | 21 | 1,249 |
 | world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
 | world-camera | harness | 2 | 6,082 | 6,206 | 784 | 266 | 290 | 432 | 30 | 1,066 |
-| run-progress | bridge | 1 | 1,327 | 1,601 | 51 | 195 | 31 | 45 | 17 | 264 |
+| run-progress | bridge | 1 | 1,343 | 1,634 | 54 | 195 | 31 | 45 | 22 | 272 |
 | run-progress | harness | 3 | 7,869 | 7,442 | 1,053 | 1,221 | 811 | 609 | 62 | 1,401 |
 | interface-hud | bridge | 1 | 2,297 | 2,450 | 116 | 133 | 157 | 111 | 16 | 385 |
 | interface-hud | harness | 2 | 4,512 | 4,832 | 721 | 422 | 289 | 86 | 23 | 851 |
@@ -291,7 +291,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
 | samus-appearance | harness | 2 | 3,714 | 4,020 | 421 | 136 | 116 | 178 | 14 | 591 |
-| total | | | 51,520 | 52,576 | 5,664 | 4,128 | 3,867 | 3,097 | 301 | 8,920 |
+| total | | | 51,495 | 52,568 | 5,667 | 4,160 | 3,867 | 3,097 | 307 | 8,928 |
 
 ## Harness floors and vectors
 
@@ -560,7 +560,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 48 | 4,836 | 29,018 | 30,766 | 10,225 | 1,910 | 2,171 | 2,623 | 629 | 6,818 |
-| bridges | 10 | 2,689 | 16,136 | 17,475 | 1,114 | 1,018 | 1,065 | 811 | 151 | 2,780 |
+| bridges | 10 | 2,692 | 16,152 | 17,508 | 1,117 | 1,018 | 1,065 | 811 | 157 | 2,788 |
 | rebuilt models, shared types included | 71 | 3,254 | 19,526 | 25,708 | 9,595 | 13,491 | 1,038 | 497 | 307 | 8,657 |
 
 ## Timeline
@@ -1678,7 +1678,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/samus_movement_bridge.rs` | bridge | - | 1,285 | 214 |
 | world-camera | `crates/game/src/session.rs` | names it | `RoomError` | 579 | 211 |
 | world-camera | `crates/game/src/world_camera_bridge.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `RoomError`, `Rules`, `Samus` | 505 | 120 |
-| run-progress | `crates/game/src/run_progress_bridge.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,327 | 264 |
+| run-progress | `crates/game/src/run_progress_bridge.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,343 | 272 |
 | interface-hud | `crates/game/src/interface_hud_bridge.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,297 | 385 |
 | world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,107 | 1,062 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,168 | 205 |

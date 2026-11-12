@@ -13,12 +13,11 @@ use std::ops::Range;
 use std::sync::{Arc, LazyLock};
 
 use canonical::{Canonical, Difference, Segment};
-use data::assets::world::{Door, World};
+use data::assets::world::{Back, Door, World};
 use data::id::RoomId;
 use data::plm::{PlmPopulation, ScrollLists};
 use data::rom::Lorom;
 use data::room::RoomKey;
-use data::tileset::TilesetId;
 use game::run_progress_bridge;
 use game::state::atmospheric::AtmosphericGraphic;
 use game::state::projectile::ProjectileBody;
@@ -81,26 +80,28 @@ pub fn loaded_world(image: &[u8]) -> Result<World, WorldError> {
     import::world::import(Lorom::new(image), &import::world::LOADED)
 }
 
-/// What each state of each room [`loaded_rooms`] holds loads that RAM doesn't keep, by
-/// its state header's pointer.
+/// What each version of each room of `world` loads that RAM doesn't keep, from its record,
+/// by its state header's pointer, which the importer says for the ROM `image`.
 ///
 /// # Errors
 ///
 /// [`WorldError`] if a room doesn't decode from `image`.
-pub fn loaded_states(image: &[u8]) -> Result<Vec<(StateHeader, StateLevel)>, WorldError> {
+pub fn loaded_states(
+    world: &World,
+    image: &[u8],
+) -> Result<Vec<(StateHeader, StateLevel)>, WorldError> {
     let mut states = Vec::new();
-    for id in import::world::LOADED {
-        let key = import::world::key(id).ok_or(WorldError::Unregistered(id))?;
-        let room = data::room::decode(Lorom::new(image), key)
-            .map_err(|error| WorldError::Room { room: id, error })?;
-        states.extend(room.states().filter_map(|(_, state)| {
+    for room in world.rooms() {
+        let places = import::world::version_places(Lorom::new(image), room.id)?;
+        states.extend(places.iter().enumerate().filter_map(|(place, held)| {
+            let version = room.version(place)?;
             // A state header sits in the room headers' bank, which a room key names.
-            let pointer = RoomKey(state.at).room_pointer()?;
+            let pointer = RoomKey(held.state).room_pointer()?;
             Some((
                 StateHeader(pointer),
                 StateLevel {
-                    tileset: TilesetId(state.tileset),
-                    layer2: state.layers.layer2.is_some(),
+                    tileset: import::world::tileset_index(version.tileset)?,
+                    layer2: version.back == Back::Level,
                 },
             ))
         }));
@@ -122,21 +123,24 @@ pub fn loaded_plms(world: &World) -> Vec<(RoomId, PlmPopulation)> {
 }
 
 /// Where the scroll change lists are that the PLMs of [`loaded_plms`] name, room by room:
-/// the decoder's, for the room arguments the work RAM holds (K1).
+/// the importer's, for the room arguments the work RAM holds (K1).
 ///
 /// # Errors
 ///
 /// [`WorldError`] if a room doesn't decode from `image`.
-pub fn loaded_scroll_lists(image: &[u8]) -> Result<Vec<(RoomId, ScrollLists)>, WorldError> {
+pub fn loaded_scroll_lists(
+    world: &World,
+    image: &[u8],
+) -> Result<Vec<(RoomId, ScrollLists)>, WorldError> {
     let mut lists = Vec::new();
-    for id in import::world::LOADED {
-        let key = import::world::key(id).ok_or(WorldError::Unregistered(id))?;
-        let room = data::room::decode(Lorom::new(image), key)
-            .map_err(|error| WorldError::Room { room: id, error })?;
-        let state = run_progress_bridge::room_state(&room, &Progress::default(), None)
-            .and_then(|index| room.state(index));
-        if let Some(state) = state {
-            lists.push((id, state.scroll_lists.clone()));
+    for room in world.rooms() {
+        let Some(place) = run_progress_bridge::version_place(room, &Progress::default(), None)
+        else {
+            continue;
+        };
+        let mut places = import::world::version_places(Lorom::new(image), room.id)?;
+        if place < places.len() {
+            lists.push((room.id, places.swap_remove(place).scroll_lists));
         }
     }
     Ok(lists)
@@ -1382,6 +1386,42 @@ mod tests {
         engine.main.frames.clear();
         assert_eq!(differences(&engine, &oracle, Quiescence::Busy).len(), 0);
         assert_eq!(differences(&engine, &oracle, Quiescence::Quiet).len(), 1);
+    }
+
+    /// The records' tileset and layer 2, by state header, are what the decoder reads from the
+    /// ROM for every state of every loaded room, and the scroll change lists are the default
+    /// version's, which every row plays.
+    #[test]
+    fn each_loaded_state_reads_its_record_as_the_decoder_reads_the_rom() {
+        use super::{loaded_scroll_lists, loaded_states, loaded_world};
+        use crate::decode::{StateHeader, StateLevel};
+        use data::rom::Lorom;
+        use data::room::RoomKey;
+        use data::tileset::TilesetIndex;
+        let Some(image) = std::env::var_os("SM_ROM").and_then(|path| std::fs::read(path).ok())
+        else {
+            return;
+        };
+        let world = loaded_world(&image).unwrap();
+        let mut decoded = Vec::new();
+        let mut lists = Vec::new();
+        for id in import::world::LOADED {
+            let key = import::world::key(id).unwrap();
+            let room = data::room::decode(Lorom::new(&image), key).unwrap();
+            decoded.extend(room.states().map(|(_, state)| {
+                let level = StateLevel {
+                    tileset: TilesetIndex(state.tileset),
+                    layer2: state.layers.layer2.is_some(),
+                };
+                (
+                    StateHeader(RoomKey(state.at).room_pointer().unwrap()),
+                    level,
+                )
+            }));
+            lists.push((id, room.default.scroll_lists.clone()));
+        }
+        assert_eq!(loaded_states(&world, &image).unwrap(), decoded);
+        assert_eq!(loaded_scroll_lists(&world, &image).unwrap(), lists);
     }
 }
 

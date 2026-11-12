@@ -1,6 +1,6 @@
 use core::num::Wrapping;
 use data::assets::world::Door;
-use data::assets::world::rooms::CONSTRUCTION_ZONE;
+use data::assets::world::doorways::MORPH_BALL_TO_CONSTRUCTION;
 use data::level::slope::{SHAPES, Slopes};
 use data::level::{BlockKind, Bts, DoorIndex, Offset, PlmChoice, Slope};
 use types::{Block, Cell, Heading, SlopeFaces, Way, World};
@@ -100,7 +100,7 @@ fn a_door_lets_her_through_where_its_door_leads_to_a_room() {
         ((2, 0), BlockKind::Door(DoorIndex(0x81))),
         ((3, 0), BlockKind::Door(DoorIndex(2))),
     ]);
-    let doors = [Door::Nowhere, Door::To(CONSTRUCTION_ZONE)];
+    let doors = [Door::Nowhere, Door::To(MORPH_BALL_TO_CONSTRUCTION)];
     let world = with_doors(&blocks, &slopes, &doors);
     assert!(matches!(world.block(at(0, 0)), Block::Solid));
     assert!(matches!(world.block(at(1, 0)), Block::Air));

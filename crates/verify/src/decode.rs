@@ -15,7 +15,7 @@ use data::plm::{ItemPlm, PlmPopulation, ScrollLists};
 use data::pose::tiles::SamusTiles;
 use data::pose::{MovementType, POSE_COUNT};
 use data::room::{Area, MapPosition};
-use data::tileset::{BlockTiles, TilesetId};
+use data::tileset::{BlockTiles, TilesetIndex};
 use game::plm::item_gfx;
 use game::samus_appearance_bridge::Clips;
 use game::state::atmospheric::{
@@ -102,7 +102,7 @@ pub struct StateHeader(pub u16);
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct StateLevel {
     /// The state's tileset, whose tile table `$82:E7D3` decompresses.
-    pub tileset: TilesetId,
+    pub tileset: TilesetIndex,
     /// Whether its level data has layer 2 after the BTS.
     pub layer2: bool,
 }
@@ -743,7 +743,7 @@ struct Level {
     blocks: Vec<Block>,
     layer2: Option<Vec<Layer2Block>>,
     tail: Vec<u8>,
-    tileset: TilesetId,
+    tileset: TilesetIndex,
     scroll_areas: Vec<ScrollArea>,
     scrolls_below: Vec<ScrollArea>,
 }

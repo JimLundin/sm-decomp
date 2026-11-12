@@ -165,3 +165,88 @@ fn a_boss_bit_no_kind_has_reads_no_states() {
     assert_eq!(conditions(&odd), None);
     assert_eq!(room_state(&odd, &Progress::default(), None), None);
 }
+
+#[test]
+fn a_record_s_condition_is_progress_s_in_the_same_terms() {
+    let mut defeated = Set::default();
+    defeated[BossKind::Torizo] = true;
+    let pairs = [
+        (
+            world::Condition::EnteredBy(DoorwayId(7)),
+            Condition::EnteredBy(Entrance(7)),
+        ),
+        (
+            world::Condition::Happened(Event::TimeBombSet),
+            Condition::Happened(Event::TimeBombSet),
+        ),
+        (
+            world::Condition::Defeated(defeated),
+            Condition::Defeated(defeated),
+        ),
+        (
+            world::Condition::Has(Piece::SpeedBooster),
+            Condition::Has(Piece::SpeedBooster),
+        ),
+        (
+            world::Condition::MorphBallAndMissiles,
+            Condition::MorphBallAndMissiles,
+        ),
+        (world::Condition::PowerBombs, Condition::PowerBombs),
+    ];
+    for (record, model) in pairs {
+        assert_eq!(version_condition(record), model);
+    }
+}
+
+/// A record of a Ceres room whose versions load on `conditions`, in order, then the default;
+/// each version draws from the tileset of its place in the list.
+fn record(conditions: &[world::Condition]) -> world::Room {
+    let version = |tileset| world::Version {
+        tileset: data::id::TilesetId(tileset),
+        back: world::Back::Background,
+        plms: PlmPopulation::default(),
+    };
+    world::Room {
+        id: data::id::RoomId(0),
+        place: world::MapPlace {
+            area: Area::Ceres,
+            x: 0,
+            y: 0,
+        },
+        size: Screens {
+            width: 1,
+            height: 1,
+        },
+        scrollers: Scrollers { up: 0, down: 0 },
+        doors: Vec::new(),
+        conditional: conditions
+            .iter()
+            .zip(0..)
+            .map(|(&condition, place)| world::Conditional {
+                condition,
+                version: version(place),
+            })
+            .collect(),
+        default: version(u16::try_from(conditions.len()).unwrap_or(u16::MAX)),
+    }
+}
+
+#[test]
+fn a_version_entered_through_its_doorway_loads() {
+    let through = DoorwayId(3);
+    let ceres = record(&[
+        world::Condition::Happened(Event::TimeBombSet),
+        world::Condition::EnteredBy(through),
+    ]);
+    let progress = Progress::default();
+    assert_eq!(version_place(&ceres, &progress, Some(through)), Some(1));
+    assert_eq!(
+        version_place(&ceres, &progress, Some(DoorwayId(4))),
+        Some(2)
+    );
+    assert_eq!(version_place(&ceres, &progress, None), Some(2));
+    assert_eq!(
+        room_version(&ceres, &progress, Some(through)).map(|version| version.tileset),
+        Some(data::id::TilesetId(1))
+    );
+}

@@ -276,12 +276,13 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
 /// # Errors
 /// When a room doesn't import from the image.
 pub fn rooms(content: &Content, image: &[u8]) -> Result<RoomMap, WorldError> {
+    let world = loaded_world(image)?;
     Ok(loaded_rooms()
         .with_programs(content.enemy_programs.clone())
         .with_samus_tiles(content.samus_tiles.clone())
         .with_samus_clips(content.samus_clips.clone())
-        .with_plms(loaded_plms(&loaded_world(image)?))
-        .with_scroll_lists(loaded_scroll_lists(image)?)
-        .with_states(loaded_states(image)?)
+        .with_plms(loaded_plms(&world))
+        .with_scroll_lists(loaded_scroll_lists(&world, image)?)
+        .with_states(loaded_states(&world, image)?)
         .with_reactions(content.blocks.imported().clone()))
 }

@@ -14,6 +14,10 @@ pub struct RoomId(pub u16);
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DoorwayId(pub u16);
 
+/// A tileset: the pictures a room's blocks draw from, and their palettes.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TilesetId(pub u16);
+
 /// An enemy species.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SpeciesId(pub u16);

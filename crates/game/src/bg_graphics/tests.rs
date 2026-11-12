@@ -1,5 +1,5 @@
 use data::level::{Block, Layer2Block};
-use data::tileset::{TileTable, TilesetId};
+use data::tileset::{TileTable, TilesetIndex};
 
 use super::*;
 use crate::state::room::BlockColumns;
@@ -52,7 +52,7 @@ fn room() -> RoomScoped {
         blocks,
         width: BlockColumns(WIDTH),
         area: data::room::Area::Brinstar,
-        tileset: TilesetId(0),
+        tileset: TilesetIndex(0),
         ..RoomScoped::default()
     }
 }

@@ -23,9 +23,11 @@ pub const CRE_BLOCKS: u16 = 0x100;
 /// The blocks a tile number reaches: ten bits.
 pub const BLOCKS: usize = 0x400;
 
-/// A tileset's index, the room state's tileset byte.
+/// A tileset's place in the original's tileset table, the room state's tileset byte: what the
+/// table lookups here read by, until tilesets are in our own format and named by
+/// [`crate::id::TilesetId`].
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub struct TilesetId(pub u8);
+pub struct TilesetIndex(pub u8);
 
 /// The four tilemap words a 16x16 block draws, unflipped, as the PPU reads them.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -118,7 +120,7 @@ impl TileTables {
     /// original's tile table holds it after the room loads; `None` past what the tables
     /// fill, where the RAM holds what an earlier room or the boot left (docs/LEGACY.md).
     #[must_use]
-    pub fn block(&self, area: Area, tileset: TilesetId, number: u16) -> Option<BlockTiles> {
+    pub fn block(&self, area: Area, tileset: TilesetIndex, number: u16) -> Option<BlockTiles> {
         let own = self.tilesets.get(usize::from(tileset.0))?;
         let (table, index) = if area == Area::Ceres {
             (own, number)

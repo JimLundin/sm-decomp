@@ -8,7 +8,7 @@ use data::id::{DoorwayId, RoomId, SpeciesId};
 use crate::world_blocks_bridge::{BlockContent, BlocksFault};
 use data::plm::{ItemPlm, ScrollChangesId};
 use data::room::{Area, Room, RoomState};
-use data::tileset::TilesetId;
+use data::tileset::TilesetIndex;
 
 pub use data::level::{
     Block, BlockKind, BombableBts, Bts, DoorIndex, Layer2Block, Offset, PlmChoice, ScrollArea,
@@ -873,7 +873,7 @@ pub struct RoomScoped {
     /// The room's area, which says whether the common room elements' tiles are loaded.
     pub area: Area,
     /// The room's tileset, whose tile table draws its blocks.
-    pub tileset: TilesetId,
+    pub tileset: TilesetIndex,
     /// How far below BG1's tilemap in VRAM BG2's lies (`$098E`, from the BG tilemap base
     /// registers as `$80:A176` displays the room).
     pub tilemap_gap: VramWord,
@@ -930,7 +930,7 @@ impl RoomScoped {
             layer2: state.layers.layer2.clone(),
             level_tail: level_tail(&state.layers),
             area: header.area,
-            tileset: TilesetId(state.tileset),
+            tileset: TilesetIndex(state.tileset),
             width: BlockColumns(header.size.blocks_across()),
             height: BlockRows(u16::from(header.size.height).wrapping_mul(16)),
             scroll_areas: areas.to_vec(),
