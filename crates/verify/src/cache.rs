@@ -4,7 +4,8 @@
 //! `records.bin`, the records in `oracle_record::codec`'s encoding one after another, and
 //! `index.txt`, the row's lock pins and one `frame offset length cut` line per frame. A
 //! [`Cache`] opens a row's directory, refuses it unless its pins are the lock row's, and
-//! gives its records in frame order. [`fold`] folds them through the recorder's span rules,
+//! gives its records in frame order, read from the file a record at a time: a row's records
+//! run to hundreds of megabytes. [`fold`] folds them through the recorder's span rules,
 //! so a cache can be checked against the lock it was taken for.
 //!
 //! A row recorded with watched instruction addresses also has `hits.txt` (a `# watched`
@@ -16,10 +17,13 @@ use crate::lock::{EngineRow, Frame, FrameCount, Row, Sha256, Stream};
 use core::fmt;
 use data::digest::Digest;
 use data::span::{self, PortAccess, PortDirection, SpanFold};
-use oracle_record::codec::{self, CodecError};
+use oracle_record::codec::{self, CodecError, PictureMode};
 use oracle_record::{ApuAccessKind, Beam, Cut, FrameRecord, Hit, NmiKind, PpuRegisters};
 use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, PoisonError};
 
 /// The index's first line: the layout's name and version, as `oracle::cache` writes it.
 pub const HEAD: &str = "# sm-decomp record cache 1";
@@ -152,7 +156,10 @@ pub struct Entry {
 pub struct Cache {
     entries: Vec<Entry>,
     pictures: bool,
-    records: Vec<u8>,
+    /// `records.bin`, its path for errors, and its length.
+    records: Mutex<File>,
+    records_path: PathBuf,
+    bytes: usize,
     /// The addresses `hits.txt` watched, and its hits by frame; empty without it.
     watched: Vec<u32>,
     hits: BTreeMap<u64, Vec<Hit>>,
@@ -315,7 +322,17 @@ impl Cache {
         if let Some((_, pin)) = pins.iter().find(|(same, _)| !same) {
             return Err(CacheError::Stale(*pin));
         }
-        let records = read(directory.join("records.bin"))?;
+        let records_path = directory.join("records.bin");
+        let io = |error| CacheError::Io {
+            path: records_path.clone(),
+            error,
+        };
+        let records = File::open(&records_path).map_err(io)?;
+        let bytes = records.metadata().map_err(io)?.len();
+        let bytes = usize::try_from(bytes).map_err(|_| CacheError::Io {
+            path: records_path.clone(),
+            error: std::io::ErrorKind::FileTooLarge.into(),
+        })?;
         let hits_path = directory.join("hits.txt");
         let (watched, hits) = match std::fs::read(&hits_path) {
             Ok(text) => parse_hits(&hits_path, &String::from_utf8_lossy(&text))?,
@@ -332,7 +349,9 @@ impl Cache {
         Ok(Self {
             entries: index.entries,
             pictures: index.pictures,
-            records,
+            records: Mutex::new(records),
+            records_path,
+            bytes,
             watched,
             hits,
         })
@@ -359,7 +378,7 @@ impl Cache {
     /// The bytes the records take.
     #[must_use]
     pub const fn bytes(&self) -> usize {
-        self.records.len()
+        self.bytes
     }
 
     /// The record of the frame `entry` indexes.
@@ -369,12 +388,66 @@ impl Cache {
     /// A [`CacheError`] when its bytes are outside the records, not a record, or not the
     /// record the index names.
     pub fn record(&self, entry: &Entry) -> Result<FrameRecord, CacheError> {
-        let bytes = entry
+        let mut bytes = Vec::new();
+        self.read_bytes(entry, &mut bytes)?;
+        self.decode(entry, &bytes, PictureMode::Keep)
+    }
+
+    /// Every frame's record, in frame order.
+    pub fn records(&self) -> impl Iterator<Item = Result<(Frame, FrameRecord), CacheError>> + '_ {
+        self.records_with(PictureMode::Keep)
+    }
+
+    /// Every frame's record without its picture, in frame order, for a reader that never
+    /// looks at one: the picture is a third of a record.
+    pub fn records_without_pictures(
+        &self,
+    ) -> impl Iterator<Item = Result<(Frame, FrameRecord), CacheError>> + '_ {
+        self.records_with(PictureMode::Drop)
+    }
+
+    fn records_with(
+        &self,
+        pictures: PictureMode,
+    ) -> impl Iterator<Item = Result<(Frame, FrameRecord), CacheError>> + '_ {
+        let mut bytes = Vec::new();
+        self.entries.iter().map(move |entry| {
+            self.read_bytes(entry, &mut bytes)?;
+            let record = self.decode(entry, &bytes, pictures)?;
+            Ok((entry.frame, record))
+        })
+    }
+
+    /// Reads the bytes of the record `entry` indexes into `bytes`, which keeps its allocation
+    /// from one record to the next.
+    fn read_bytes(&self, entry: &Entry, bytes: &mut Vec<u8>) -> Result<(), CacheError> {
+        let within = entry
             .offset
             .checked_add(entry.length)
-            .and_then(|end| self.records.get(entry.offset..end))
+            .is_some_and(|end| end <= self.bytes);
+        let start = u64::try_from(entry.offset)
+            .ok()
+            .filter(|_| within)
             .ok_or(CacheError::OutOfRange(entry.frame))?;
-        let record = codec::decode(bytes).map_err(|error| CacheError::Record {
+        bytes.resize(entry.length, 0);
+        // A poisoned lock only means another reader panicked; the file is still whole.
+        let mut file = self.records.lock().unwrap_or_else(PoisonError::into_inner);
+        file.seek(SeekFrom::Start(start))
+            .and_then(|_| file.read_exact(bytes))
+            .map_err(|error| CacheError::Io {
+                path: self.records_path.clone(),
+                error,
+            })
+    }
+
+    /// The record of `entry` that `bytes` encode, checked against the index, with its hits.
+    fn decode(
+        &self,
+        entry: &Entry,
+        bytes: &[u8],
+        pictures: PictureMode,
+    ) -> Result<FrameRecord, CacheError> {
+        let record = codec::decode_with(bytes, pictures).map_err(|error| CacheError::Record {
             frame: entry.frame,
             error,
         })?;
@@ -386,13 +459,6 @@ impl Cache {
             record.hits.clone_from(hits);
         }
         Ok(record)
-    }
-
-    /// Every frame's record, in frame order.
-    pub fn records(&self) -> impl Iterator<Item = Result<(Frame, FrameRecord), CacheError>> + '_ {
-        self.entries
-            .iter()
-            .map(|entry| self.record(entry).map(|record| (entry.frame, record)))
     }
 }
 

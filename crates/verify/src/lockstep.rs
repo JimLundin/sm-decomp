@@ -10,7 +10,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 use std::ops::Range;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use canonical::{Canonical, Difference, Segment};
 use data::id::RoomId;
@@ -888,6 +888,15 @@ fn decoded(path: &str) -> bool {
         .any(|field| field.path == path && matches!(field.status, Status::Decoded(_)))
 }
 
+/// The comparators of the fields the coverage table marks decoded, in its order. Both tables
+/// are constant, so the search by path runs once rather than on every Tick.
+static DECODED: LazyLock<Vec<&'static Comparator>> = LazyLock::new(|| {
+    COMPARATORS
+        .iter()
+        .filter(|comparator| decoded(comparator.path))
+        .collect()
+});
+
 /// Whether `path` compares at a cut of this quiescence. At a busy cut the NMI interrupted the
 /// main thread mid-routine, so no engine strand corresponds and the decoder leaves `main` at
 /// its default.
@@ -905,9 +914,9 @@ pub(crate) fn differences(
     oracle: &State,
     quiescence: Quiescence,
 ) -> Vec<Difference> {
-    COMPARATORS
+    DECODED
         .iter()
-        .filter(|comparator| decoded(comparator.path) && compared_at(comparator.path, quiescence))
+        .filter(|comparator| compared_at(comparator.path, quiescence))
         .filter_map(|comparator| {
             (comparator.compare)(engine, oracle).map(|difference| {
                 comparator
@@ -1058,9 +1067,8 @@ impl Report {
     /// Every compared field over the run, in the coverage table's order.
     #[must_use]
     pub fn fields(&self) -> Vec<FieldSummary> {
-        COMPARATORS
+        DECODED
             .iter()
-            .filter(|comparator| decoded(comparator.path))
             .map(|comparator| {
                 let mut summary = FieldSummary {
                     path: comparator.path,
@@ -1229,7 +1237,7 @@ pub fn lockstep(
         undecodable: BTreeMap::new(),
     };
     let mut previous: Option<Result<Decoded, ErrorKind>> = None;
-    for item in cache.records() {
+    for item in cache.records_without_pictures() {
         let (frame, record) = item?;
         let decoded = decode(&record, rooms).map_err(|error| ErrorKind::of(&error));
         match &decoded {
@@ -1240,15 +1248,16 @@ pub fn lockstep(
             }
             Err(kind) => count(&mut report.undecodable, *kind),
         }
-        let from = previous.replace(decoded.clone());
-        if !frames.contains(&frame.0) {
-            continue;
+        // The Session takes frame k's State and frame k+1's is kept for the next Tick, so
+        // neither is copied.
+        let from = previous.take();
+        if let Some(from) = from.filter(|_| frames.contains(&frame.0)) {
+            match step(from, &decoded, rules, content, CutKind::of(record.cut)) {
+                Ok(differences) => report.steps.push(Step { frame, differences }),
+                Err(skip) => tally(&mut report.skipped, skip),
+            }
         }
-        let Some(from) = from else { continue };
-        match step(from, decoded, rules, content, CutKind::of(record.cut)) {
-            Ok(differences) => report.steps.push(Step { frame, differences }),
-            Err(skip) => tally(&mut report.skipped, skip),
-        }
+        previous = Some(decoded);
     }
     Ok(report)
 }
@@ -1268,12 +1277,12 @@ fn count<K: Ord>(map: &mut BTreeMap<K, u64>, key: K) {
 /// One Tick from `from` compared with `to`, the decoded States of frames k and k+1.
 fn step(
     from: Result<Decoded, ErrorKind>,
-    to: Result<Decoded, ErrorKind>,
+    to: &Result<Decoded, ErrorKind>,
     rules: Rules,
     content: &Arc<Content>,
     cut: CutKind,
 ) -> Result<Vec<Difference>, Skip> {
-    let to = to.map_err(Skip::Undecodable)?;
+    let to = to.as_ref().map_err(|kind| Skip::Undecodable(*kind))?;
     let from = from.map_err(Skip::Undecodable)?;
     if from.quiescence == Quiescence::Busy {
         return Err(Skip::BusyStart);
