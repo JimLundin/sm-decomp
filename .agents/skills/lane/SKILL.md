@@ -42,7 +42,9 @@ is wrong, not what code to write.
 - Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]`. On Windows, Defender blocks
   fresh test executables (exit 126), so it links each test target as a DLL and runs it through
   Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`). This is
-  for local machines only, never CI; elsewhere it is `cargo test`. Doc tests run only in CI.
+  for local machines only, never CI; elsewhere it is `cargo test`. Doc tests run only in CI. The
+  harness tests replay recorded rows, so build them optimised: `CARGO_PROFILE_TEST_OPT_LEVEL=3`
+  takes `run_tests.sh verify` from about 2 minutes to under 30 seconds.
 - Behaviour: the lockstep ratchet, the free-run gate and the localiser, as
   [STATUS](../../../docs/STATUS.md) shows. CI runs the ratchet and the gate on every pull request.
 - A new check must catch a deliberate one-line bug: apply the mutant locally, confirm the check
