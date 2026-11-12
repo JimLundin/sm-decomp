@@ -300,6 +300,28 @@ wave = 3
 rounds = 3
 reads = ["R1"]
 
+# MODEL §1 decision 23: audio reuses no code of the game. The sequencer is clean room over
+# songs, samples and instruments imported as assets, through a DSP model.
+[[domain]]
+id = "U2"
+name = "The music and sound sequencer"
+area = "audio"
+wave = 5
+rounds = 10
+reads = ["U1"]
+
+[[platform]]
+id = "A3"
+name = "Songs, samples and instruments as imported assets"
+wave = 5
+lanes = 2
+
+[[platform]]
+id = "E6"
+name = "The sound chip's DSP, a widely used crate where one fits"
+wave = 5
+lanes = 2
+
 [[platform]]
 id = "E3"
 name = "The line program"

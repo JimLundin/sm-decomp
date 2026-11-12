@@ -27,7 +27,7 @@ The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): s
 | M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 17 of 17: S1, S5, CAM, H2, P1, E1, E2 (in progress); C1, B8, R1, R2, R3, E3, E4, A1, A2, V3 (not started) |
 | M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 22 of 22: S1, S2, S5, CAM, H2, P1, W2, E1, E2 (in progress); S4, H1, W1, C1, B8, R1, R2, R3, E3, E4, A1, A2, V3 (not started) |
 
-Of the 36 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 29 have not started. **47 rounds** have landed on 6 models; the plan estimates 147 rounds for the whole game.
+Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **7 are in progress** and **0 done**; 30 have not started. **47 rounds** have landed on 6 models; the plan estimates 157 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
 
@@ -57,7 +57,7 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 | 2 | R1 Doors and elevators; W1 Beams, missiles and bombs; C1 Fighting enemies; H1 Energy, reserves and death; S4 Hurt and knockback, bomb jumps | R2 Room loading (4); A2 Enemy and room importers (3); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 0 of 5 | 21 |
 | 3 | B8 Ceres Ridley and the escape; F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; U1 Audio, the CPU side | E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 0 of 7 | 30 |
 | 4 | W3 Items to pick up; H3 Message boxes; C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B9 Ridley; B10 Mother Brain and the escape | - | 0 of 12 | 66 |
-| 5 | S3 The shinespark and echoes; S6 The grapple beam; S7 The x-ray scope; F1 The pause screen; F3 Game over | - | 0 of 5 | 13 |
+| 5 | U2 The music and sound sequencer; S3 The shinespark and echoes; S6 The grapple beam; S7 The x-ray scope; F1 The pause screen; F3 Game over | A3 Songs, samples and instruments as imported assets (2); E6 The sound chip's DSP, a widely used crate where one fits (2) | 0 of 6 | 23 |
 
 ### The engine
 

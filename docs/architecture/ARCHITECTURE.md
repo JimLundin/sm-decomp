@@ -385,8 +385,11 @@ library handshakes (`LibraryState::{Idle, Writing(SoundId), Clearing { frames },
 16-deep queues, the original's caps, drops and lower-ID-wins), the downtime counter, and a **driver
 model** of what the driver echoes on each port and when, fitted by measurement (it answers in about
 half a frame). If echoes depend on sequencer state, the sequencer's control part joins the Session.
-`SoundFrame { ports, log, intent }` goes out; a `SoundBackend` in `runtime` plays it (vanilla: the
-N-SPC sequencer and DSP on the ROM's banks, checked sample-exact nightly).
+`SoundFrame { ports, log, intent }` goes out; a `SoundBackend` in `runtime` plays it. The vanilla
+backend is the clean-room audio engine (MODEL §1 decision 23): our sequencer over the songs,
+samples and instruments imported from the ROM, and a DSP model, from a widely used crate where one
+fits; no code of the game runs. The driver program's upload bytes are not compared; the upload's
+time is a named cost (D9).
 
 ### 9.5 Saves
 

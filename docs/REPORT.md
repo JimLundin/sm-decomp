@@ -690,6 +690,7 @@ flowchart LR
   end
   subgraph area_audio [audio]
     U1["U1 Audio, the CPU side"]
+    U2["U2 The music and sound sequencer"]
   end
   S5 --> S1
   S6 --> S1
@@ -775,6 +776,7 @@ flowchart LR
   P1 --> P2
   F3 --> P2
   R1 --> U1
+  U1 --> U2
   W2 --> W3
   W3 --> H3
   S1 --> C2_C11

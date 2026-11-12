@@ -26,7 +26,8 @@ decision in MODEL §1, or a change where it lives, then a line here.
 8. Every behaviour is a catalogue entry; switches stay Fixed until a use asks
    ([MODEL §3](architecture/MODEL.md#3-behaviours-are-named-catalogued-and-switchable)).
 9. Assets are our own format, imported from the player's ROM at the edge (decision 4).
-10. A model is total; content is checked by its importer (decision 15).
+10. A model is total; content is checked by its importer (decision 15). No code of the game
+    runs or is ported, audio included; only its assets are extracted (decision 23).
 11. The engine's State holds each model's State; bridges answer traits (decision 21).
 12. Idiomatic, typed Rust; the lints and ceilings are the coding standards
     ([AGENTS](../AGENTS.md#rust-style), [DESIGN](cleanroom/DESIGN.md)).

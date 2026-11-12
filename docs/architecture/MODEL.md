@@ -86,7 +86,7 @@ Jim's decisions, 2026-11-07:
 9. **Audio is rebuilt clean-room too** (Jim, 2026-11-08): a sequencer and a model of the sound
    chip's DSP, specced in behaviour and verified on the oracle's audio stream, scheduled late; the
    CPU side (which sound plays when) is modelled with the domains that trigger it. The plan of
-   domains is [domains.md](domains.md).
+   domains is [domains.md](domains.md). Decision 23 settles how.
 10. **The implementer is not told the score or the budget** (Jim, 2026-11-08). A score in front
     of the implementer becomes a clearer goal than modelling the spec well, and invites gaming.
     The score, k, the budgets, the fit and the old-code baselines are evaluation tools, for the
@@ -189,6 +189,16 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     PROCESS, the coding standards in DESIGN. Skills and briefs link to it rather than restating
     it. [RULES](../RULES.md) is the one-page index an agent reads first, with links to where
     each rule lives.
+23. **Audio reuses no code of the game; only its assets are extracted** (Jim, 2026-11-12). The
+    music and sound effects play on a clean-room audio engine: a sequencer specced in behaviour
+    from the oracle's audio and port logs, over songs, samples and instruments that an importer
+    reads from the player's ROM into our own format (decision 4). The sound chip's DSP is
+    hardware, not the game's code, so it may come from a widely used crate where one models it
+    well (decision 12), or be built. The ROM's sound driver program is never run, emulated as
+    the engine's backend or ported. So the bytes of the driver program the boot uploads through
+    the APU ports are a hardware leftover no player sees (decision 3): not compared; the upload's
+    time is a named cost (T1), and the requests and replies the game reads stay compared on the
+    `apu` stream.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs

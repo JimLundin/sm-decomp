@@ -206,7 +206,10 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | A1 | `Program<F>` generalised from `enemy/instructions` and the instruction lists as imported assets (PLM, enemy, sprite object, HDMA, palette FX, animated tiles) | 3 |
 | A2 | The asset importers for enemies (headers, spritemaps, hitboxes, vulnerability, drops), rooms (R2) | 3 |
 | T1 | **Slowdown and loading time** (D9): the cost model that replaces recorded NMI timing | 6+ |
-| U1 | **Audio**: CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks; 3 rounds, `apu` stream and `apu_log` in every record); the driver: see risks | 3 rounds + ? |
+| U1 | **Audio**: CPU side as a clean domain (sound requests, the three libraries' handshakes and drops, the music queue, per-room tracks; 3 rounds, `apu` stream and `apu_log` in every record) | 3 rounds |
+| U2 | **The music and sound sequencer**, clean room (MODEL §1 decision 23): songs, sound effects and their voices as the player hears them, checked on the oracle's audio | 10 rounds |
+| A3 | The importer of songs, samples and instruments into our own format | 2 |
+| E6 | The sound chip's DSP in `runtime`: a widely used crate where one models it exactly, else built | 2 |
 | V1 | Tooling: a domain free-run harness; RNG draws per consumer from `hits`; a compressed record cache tier | 3 |
 | V2 | The whole-movie run: the engine from power-on through a movie's inputs alone, compared at sparse checkpoints, then at dense ones over the range they narrow a divergence to | 2 |
 
@@ -475,14 +478,15 @@ and review, not implementation, set the pace.
 1. **Scale.** About 20 times what's done. The fixed cost per round is the bottleneck.
    *Proposal:* batch arms per round (target 40-60 units); let adversaries gate a family's
    spec once, with per-species deltas; integrators land per wave, not per round.
-2. **Audio.** The music is the N-SPC driver: SPC700 code and DSP on the ROM. A clean-room spec
-   of a sequencer from port logs and SPC snapshots is a project of its own, and a sample-exact
-   check needs the DSP modelled. *Proposal:* the CPU side (requests, handshakes, queue) is a
-   normal domain now, verified on the `apu` stream. The driver is a **goal question for Jim**:
-   (a) a clean-room N-SPC sequencer over imported songs plus a DSP model in `runtime`, the
-   thesis's way (perhaps 8-12 rounds plus a DSP), or (b) run the ROM's driver in a GPL SPC
-   emulator as the vanilla `SoundBackend` (Jim's "GPL emulator OK as binary"), so the engine
-   models only what the game observes (D18).
+2. **Audio.** The music is played by the game's own sound driver on the sound chip. Settled
+   (MODEL §1 decision 23): no code of the game is reused; a clean-room sequencer (U2) plays
+   songs, samples and instruments imported as assets (A3) through a DSP model (E6), a widely
+   used crate where one fits. The CPU side (U1: requests, handshakes, queue) is verified on the
+   `apu` stream; the driver program's upload bytes are a leftover, not compared, and the
+   upload's time is T1's. *The risk:* a sequencer specced from port logs and the sound chip's
+   memory snapshots is a project of its own (perhaps 8-12 rounds), and a sample-exact check
+   needs the DSP exact; the sequencer's spec must name what it does with a song (tempo, notes,
+   envelopes, effects), never the driver's command bytes or routines.
 3. **Bosses and scripted behaviour.** Long instruction lists with many custom steps, multipart
    enemies, rare branches (Mother Brain's phases) and 65k of enemy-projectile code in the old
    port. Records reach few branches. *Proposal:* B1+B2 first to fix the phase table; record
