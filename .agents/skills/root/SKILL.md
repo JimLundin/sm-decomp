@@ -63,6 +63,10 @@ For the two confined roles, the brief is also part of the barrier:
   would get there ("a value decided before", "an enum of its cases", "no snapshot"). A named
   device is followed even where it costs more than what it replaces: two cut rounds grew this
   way. The round's largest lever, when a gate names one, leads the brief.
+- **The shape to reach, not only what to remove.** Each outcome names the shape the code ends in
+  and where each answer then lives ("a new file's supplies are the table's default; Inventory
+  derives Default"). An outcome stated only as a removal ("no type that only carries a borrowed
+  pace", "no second way in") was read as removing what the shape needed, twice.
 - **What two blind reads name goes in.** An item named by two blind reads goes into the
   domain's next brief as an outcome, a zero-cost one (a rename, a wrong doc, an unreachable arm)
   included: nothing else carries those. An item one read names is optional.

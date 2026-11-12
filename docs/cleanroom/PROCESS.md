@@ -195,7 +195,10 @@ Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 
    and land, or stop with a handoff. The root writes the session's review: what landed, the
    figures before and after, what the gates found, and what the next session should take up.
 
-Outside working hours no lane runs.
+Outside working hours no round runs (Jim, 2026-11-12). The time goes to the project's structure:
+tooling, movie captures, optimisations, and long computations that don't fit a session. One
+agent runs at a time, on a short task it can finish, and stops with a handoff; the next starts
+fresh. Its work lands like any other change.
 
 ## The loop
 
