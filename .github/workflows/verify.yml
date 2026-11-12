@@ -24,6 +24,21 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      # The registry and the build, one entry per job (github.job): the key moves with the
+      # toolchain and Cargo.lock, and a new key starts from the newest entry for the job under
+      # the same toolchain. An exact hit saves nothing, which keeps the repository's caches under
+      # 10 GB. The build holds no ROM bytes: the ROM and the records are read at run time, from
+      # rom/ and $RUNNER_TEMP.
+      - &cache
+        name: Cache the cargo registry and the build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - &rom
         name: Fetch the encrypted ROM
         uses: actions/checkout@v4
@@ -60,6 +75,7 @@ jobs:
       ROWS: area-brinstar item-morph-ball
     steps:
       - uses: actions/checkout@v4
+      - *cache
       - *rom
       - *decrypt
       - name: Fetch the relock bundle and check its pin
@@ -106,6 +122,7 @@ jobs:
       CACHE_SHA256: a77f9800ea881eaa2b3b52477e96132c5e6945e863ad922b1d3fca01b4caacf2
     steps:
       - uses: actions/checkout@v4
+      - *cache
       - name: Fetch the record cache and check its pin
         run: |
           if ! grep -qE '^[0-9a-f]{64}$' <<<"$CACHE_SHA256"; then

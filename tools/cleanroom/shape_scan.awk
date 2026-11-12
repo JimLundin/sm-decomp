@@ -1,8 +1,8 @@
 # shape_scan.awk: code_check.sh's crate-wide shape rules over one clean crate's library sources,
-# each already stripped by strip_rust.awk and preceded by a line "\001FILE PATH", PATH relative
-# to the crate's src/. The caller leaves test files out (tests/, tests.rs); #[cfg(test)] items
-# are skipped here. Prints one "TAG<TAB>PATH<TAB>DETAIL" line per finding. A token lexer, not a
-# parser.
+# run as `awk -f strip_rust.awk -f shape_scan.awk src/PATH...` from the crate's directory. It
+# strips each file itself (strip_rust.awk). The caller leaves test files out (tests/, tests.rs);
+# #[cfg(test)] items are skipped here. Prints one "TAG<TAB>PATH<TAB>DETAIL" line per finding,
+# PATH relative to src/. A token lexer, not a parser.
 #
 # argument-object  (G6) a struct taken by exactly one signature and built only in the argument
 #                  lists of calls to that function, with no impl (no methods, no trait), and not
@@ -14,7 +14,7 @@
 #                  a/mod.rs and a.rs are `a`); a reference is a path through `crate::`,
 #                  `super::`, `self::` or a child module's name, `use` groups included.
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
-function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = FNR - fileline; fileof[n] = file }
+function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = shape_lineno; fileof[n] = file }
 function module_of(path,   m) {
   m = path; sub(/\.rs$/, "", m); sub(/(^|\/)(lib|main|mod)$/, "", m); gsub(/\//, "::", m)
   return m == "" ? "crate" : "crate::" m
@@ -24,13 +24,14 @@ BEGIN {
   nops = split("<<= >>= ... ..= :: -> => == != <= >= && || += -= *= /= %= ^= &= |= << >> ..", ops, " ")
   n = 0
 }
-/^\001FILE / {
-  file = substr($0, 7); fileline = FNR
+# A file starts: its path relative to the crate's src/ names its module.
+function shape_file(path) {
+  file = path; shape_lineno = 0
   modof[file] = module_of(file); ismod[modof[file]] = 1
-  next
 }
-{
-  line = $0; len = length(line); i = 1
+function shape_line(input) {
+  shape_lineno++
+  line = input; len = length(line); i = 1
   while (i <= len) {
     c = substr(line, i, 1)
     if (c ~ /[ \t\r]/) { i++; continue }
@@ -136,7 +137,7 @@ function call_of(a, b,   k, d) {
   if (text[k - 1] ~ /^(if|while|match|return|in|for|let|fn)$/ || text[k - 2] == "fn") return ""
   return text[k - 1]
 }
-END {
+function shape_report() {
   # Test items are not the crate's shape.
   for (a = 1; a <= n; a++) {
     if (text[a] == "#" && text[a + 1] == "[" && text[a + 2] == "cfg" && text[a + 3] == "(" && text[a + 4] == "test" \
@@ -212,4 +213,15 @@ END {
     printf "layering\t%s\tline %d: %s names %s, and %s reaches %s: modules import in one direction only\n", \
       efile[i], eline[i], efrom[i], eto[i], eto[i], efrom[i]
   }
+}
+# The driver: each argument is a library source, a path under src/, read here rather than as
+# awk's input so that an empty file still names its module.
+BEGIN {
+  for (shape_argi = 1; shape_argi < ARGC; shape_argi++) {
+    shape_path = ARGV[shape_argi]; strip_reset()
+    shape_rel = shape_path; sub(/^src\//, "", shape_rel); shape_file(shape_rel)
+    while ((getline shape_raw < shape_path) > 0) shape_line(strip_line(shape_raw, 0))
+    close(shape_path)
+  }
+  shape_report()
 }

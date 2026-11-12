@@ -1,8 +1,10 @@
-# lint_scan.awk: code_check.sh's style rules over one source, already stripped by strip_rust.awk
-# (comments gone, strings blanked to "", char literals to ''). Prints one "TAG<TAB>DETAIL" line
-# per finding. A token lexer and the size counter's regions, not a parser.
+# lint_scan.awk: a library of code_check.sh's style rules over one source at a time, loaded with
+# -f by source_scan.awk. lint_reset() starts a file, lint_line(LINE, LINENO) takes each of its
+# lines already stripped by strip_line (comments gone, strings blanked to "", char literals to
+# ''), and lint_file(TEST) reports, calling the host's finding(TAG, DETAIL) once per finding;
+# TEST is 1 when the whole file is test code (a tests/ directory or a tests.rs file). A token
+# lexer and the size counter's regions, not a parser.
 #   -v denied="..."  lints the workspace denies by name (and its denied groups), space-separated
-#   -v test=1        the whole file is test code (a tests/ directory or a tests.rs file)
 #
 # lint-attr      (L1) an #[allow] (the workspace denies clippy::allow_attributes), an
 #                #[expect]/#[allow]/#[warn] without reason = "...", or, outside test code, one
@@ -22,17 +24,24 @@
 #                segment followed by `::` names a type, and a variant is all a `use` can take
 #                from one. A group holding only `self` imports the enum itself and passes.
 function isid(ch) { return ch ~ /^[A-Za-z0-9_]$/ }
-function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = NR }
+function add(k, t) { n++; kind[n] = k; text[n] = t; lineof[n] = lint_lineno }
+# Every token array is emptied: the analysis reads a token or two past the last, which must not
+# be the previous file's.
+function lint_reset() {
+  n = 0; instr = 0; lint_lineno = 0
+  split("", kind); split("", text); split("", lineof); split("", region)
+}
 BEGIN {
   nops = split("<<= >>= ... ..= :: -> => == != <= >= && || += -= *= /= %= ^= &= |= << >> ..", ops, " ")
   nd = split(denied, dl, " ")
   for (i = 1; i <= nd; i++) refused[dl[i]] = 1
   n = 0
 }
-{
-  line = $0; len = length(line); i = 1
+function lint_line(input, lineno) {
+  lint_lineno = lineno
+  line = input; len = length(line); i = 1
   # A string that spans lines is one literal: its first line added it; its closing `"` ends it.
-  if (instr) { j = index(line, "\""); if (!j) next; instr = 0; i = j + 1 }
+  if (instr) { j = index(line, "\""); if (!j) return; instr = 0; i = j + 1 }
   while (i <= len) {
     c = substr(line, i, 1)
     if (c ~ /[ \t\r]/) { i++; continue }
@@ -285,16 +294,16 @@ function lint_attr(a, b, intest,   k, e, m, lint, why) {
   for (k = a; k < b; k++) {
     if (kind[k] != "word" || text[k] !~ /^(allow|expect|warn)$/ || text[k + 1] != "(") continue
     e = after_group(k + 1); why = 0
-    if (text[k] == "allow") printf "lint-attr\tline %d: allow (the workspace denies clippy::allow_attributes)\n", lineof[k]
+    if (text[k] == "allow") finding("lint-attr", sprintf("line %d: allow (the workspace denies clippy::allow_attributes)", lineof[k]))
     for (m = k + 2; m < e - 1; m++) {
       if (text[m] == "reason" && text[m + 1] == "=") { why = 1; m += 2; continue }
       if (kind[m] != "word") continue
       lint = text[m]
       if (text[m + 1] == "::" && kind[m + 2] == "word") { lint = lint "::" text[m + 2]; m += 2 }
       if (!intest && (lint in refused))
-        printf "lint-attr\tline %d: %s(%s) suppresses a lint the workspace denies\n", lineof[k], text[k], lint
+        finding("lint-attr", sprintf("line %d: %s(%s) suppresses a lint the workspace denies", lineof[k], text[k], lint))
     }
-    if (!why) printf "lint-attr\tline %d: %s without reason = \"...\"\n", lineof[k], text[k]
+    if (!why) finding("lint-attr", sprintf("line %d: %s without reason = \"...\"", lineof[k], text[k]))
     k = e - 1
   }
 }
@@ -320,7 +329,7 @@ function variant_imports(a,   e, k, t, g, m, d, names) {
       }
       if (names != "") names = "{" names "}"
     }
-    if (names != "") printf "variant-import\tline %d: %s::%s (name a variant through its enum)\n", lineof[k], text[k], names
+    if (names != "") finding("variant-import", sprintf("line %d: %s::%s (name a variant through its enum)", lineof[k], text[k], names))
   }
 }
 function zero_or_one(t,   v) {
@@ -329,7 +338,7 @@ function zero_or_one(t,   v) {
   sub(/([iu](8|16|32|64|128|size)|f32|f64)$/, "", v)
   return v ~ /^0*[01]?(\.0*)?$/ && v ~ /[0-9]/
 }
-END {
+function lint_file(test,   a, p, e, d, eq, k) {
   a = 1; p = 0
   while (a <= n) {
     if (text[a] == "#" && text[a + 1] == "[" && text[a + 2] == "cfg" && text[a + 3] == "(" && text[a + 4] == "test" \
@@ -369,6 +378,6 @@ END {
     if (!test && region[a] != "test" && kind[a] == "word" && text[a] == "use" && text[a + 1] != "<") variant_imports(a)
     if (test || region[a] != "logic" || kind[a] != "num" || zero_or_one(text[a])) continue
     if (text[a - 1] == ";" && text[a + 1] == "]") continue
-    printf "magic-literal\tline %d: %s\n", lineof[a], text[a]
+    finding("magic-literal", sprintf("line %d: %s", lineof[a], text[a]))
   }
 }

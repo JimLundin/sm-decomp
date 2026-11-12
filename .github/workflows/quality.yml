@@ -21,6 +21,18 @@ jobs:
           fetch-depth: 0
       - name: Install the repository toolchain
         run: rustup toolchain install
+      # The registry and the build, one entry per job: the key moves with the toolchain and
+      # Cargo.lock, and a new key starts from the newest entry for the job under the same
+      # toolchain. An exact hit saves nothing, which keeps the repository's caches under 10 GB.
+      - name: Cache the cargo registry and the build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Format
         run: cargo fmt --check
       - name: Keep committed text files on LF line endings

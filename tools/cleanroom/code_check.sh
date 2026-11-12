@@ -51,8 +51,14 @@
 # What it can't see: see the report of the lane that wrote it; in short, macro-generated paths
 # beyond `std::$x`, registry crates the allowlist admits (and their transitive build scripts),
 # and anything that runs outside cargo.
+#
+# Speed: process start-up is the cost on Windows (MSYS and an on-access scanner make each spawn
+# 50-500 ms), so a crate costs a handful of processes, not some per file: source_scan.awk runs
+# every per-source rule over all of a crate's sources in one awk, shape_scan.awk the shapes in
+# another, and the rest is shell built-ins.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
+start=$PWD
 importing=0
 [ "${1:-}" = --import ] && { importing=1; shift; }
 [ $# -ge 1 ] || { echo "usage: code_check.sh [--import] DIR..." >&2; exit 2; }
@@ -73,9 +79,6 @@ hit() { # REL TAG DETAIL
   bad=1; count=$((count + 1))
 }
 
-# Whitespace collapsed, and removed around punctuation, so `std ::\n fs` is `std::fs`.
-squash() { tr '\n\r\t' '   ' | sed -E 's/ +/ /g; s/ ?(::|[]{}(),;!#*[]) ?/\1/g'; }
-
 include_re='^include(_str)?![([{]"([^"]*)"[])}]'
 
 # The lints this repository denies or forbids by name (clippy's with their prefix), its denied
@@ -88,122 +91,96 @@ denied=$(awk '
   on && /=/ && /"(deny|forbid)"/ { name = $1; sub(/=.*/, "", name); printf "%s%s ", p, name }
   END { print "warnings" }' "$here/../../Cargo.toml")
 
-scan_source() { # FILE REL ROOT DOMAIN TEST
-  local f=$1 rel=$2 root=$3 domain=$4 test=$5 b k m g rest lit want tag detail
-  while IFS=$'\t' read -r tag detail; do hit "$rel" "$tag" "$detail"; done \
-    < <(awk -f "$here/strip_rust.awk" "$f" | awk -v denied="$denied" -v test="$test" -f "$here/lint_scan.awk")
-  b=$(awk -f "$here/strip_rust.awk" "$f" | squash)
-  k=$(awk -v keep=1 -f "$here/strip_rust.awk" "$f" | squash)
+# The warn list's crates, one per line, trailing blanks and # lines dropped.
+warned=()
+if [ "$importing" -eq 0 ] && [ -f "$warn_list" ]; then
+  while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%"${line##*[![:space:]]}"}
+    [[ $line == '#'* ]] || warned+=("$line")
+  done <"$warn_list"
+fi
 
-  while IFS= read -r m; do hit "$rel" "std-${m#std::}" "$m"; done \
-    < <(grep -oE 'std::(fs|net|process|env|os)\b' <<<"$b")
-  while IFS= read -r m; do
-    case ${m//,\}/\}} in
-      std::io::Write|'std::io::{Write}') ;;
-      *) hit "$rel" std-io "$m" ;;
-    esac
-  done < <(grep -oE 'std::io(::\{[^}]*\}|::[A-Za-z_*]+|[^A-Za-z0-9_]|$)' <<<"$b")
-  while IFS= read -r g; do
-    rest=$(sed -E 's/io::\{Write,?\}//g; s/io::Write\b//g' <<<"$g")
-    while IFS= read -r m; do hit "$rel" "std-${m//[^a-z*]/}" "$g"; done \
-      < <(grep -oE '[{,](fs|net|process|env|os|io|\*)([^A-Za-z0-9_]|$)' <<<"$rest")
-    grep -qE '[{,]self as ' <<<"$rest" && hit "$rel" std-alias "$g"
-  done < <(grep -oE 'std::\{[^;]*' <<<"$b")
-  while IFS= read -r m; do hit "$rel" std-glob "$m"; done < <(grep -oE 'std::\*' <<<"$b")
-  while IFS= read -r m; do hit "$rel" std-alias "$m"; done < <(grep -oE '\bstd as [A-Za-z_]+' <<<"$b")
-  while IFS= read -r m; do hit "$rel" std-macro-ident "$m"; done < <(grep -oE 'std::\$[A-Za-z_]+' <<<"$b")
-
-  while IFS= read -r m; do hit "$rel" "$m" "name used"; done \
-    < <(grep -oE '\b(File|TcpStream|UdpSocket|Command)\b' <<<"$b")
-
-  while IFS= read -r m; do hit "$rel" "$(tr _ - <<<"$m")" "$m"; done \
-    < <(grep -oE '\b(include_bytes|global_asm|option_env)\b' <<<"$b")
-  while IFS= read -r m; do hit "$rel" asm "$m"; done < <(grep -oE '[A-Za-z_]*asm!' <<<"$b")
-  while IFS= read -r m; do hit "$rel" env-macro "$m"; done < <(grep -oE '\benv!' <<<"$b")
-  while IFS= read -r m; do hit "$rel" macro-path "$m"; done \
-    < <(grep -oE '(std|core|alloc)::(include_str|include|asm)\b|core::env\b' <<<"$b")
-  want=""
+# An include!/include_str! call in FILE (the call and what follows it): allowed only with a
+# literal path to the domain's vector file, or, as text, its spec or a clean crate's source.
+check_include() { # FILE REL ROOT DOMAIN CALL
+  local f=$1 rel=$2 root=$3 domain=$4 m=$5 lit target want=""
   [ -n "$domain" ] && want=$(realpath -m "$root/scenarios/vectors/$domain.toml")
-  while IFS= read -r m; do
-    if [[ $m =~ $include_re ]]; then
-      lit=${BASH_REMATCH[2]}
-      target=$(realpath -m "$(dirname "$f")/$lit")
-      [ -n "$want" ] && [ "$target" = "$want" ] && continue
-      # A test may read its domain's spec as text (the catalogue's checked lines): the spec is
-      # the implementer's own input, exported to it.
-      [ -n "$domain" ] && [[ $m == include_str!* ]] &&
-        [ "$target" = "$(realpath -m "$root/docs/behaviours/$domain.md")" ] && continue
-      # A test may read the clean crates' own Rust sources as text (a size check): they hold
-      # nothing from outside the clean room.
-      if [[ $m == include_str!* && $target == *.rs ]]; then
-        case $target in
-          "$(realpath -m "$root/crates/clean")"/*/src/*) continue ;;
-        esac
-      fi
-      hit "$rel" include-path "\"$lit\" is not \"$domain\"'s vector file, its spec or a clean crate's source"
-    else
-      hit "$rel" include-path "${m:0:60} is not a literal path"
+  if [[ $m =~ $include_re ]]; then
+    lit=${BASH_REMATCH[2]}
+    target=$(realpath -m "${f%/*}/$lit")
+    [ -n "$want" ] && [ "$target" = "$want" ] && return
+    # A test may read its domain's spec as text (the catalogue's checked lines): the spec is
+    # the implementer's own input, exported to it.
+    [ -n "$domain" ] && [[ $m == include_str!* ]] &&
+      [ "$target" = "$(realpath -m "$root/docs/behaviours/$domain.md")" ] && return
+    # A test may read the clean crates' own Rust sources as text (a size check): they hold
+    # nothing from outside the clean room.
+    if [[ $m == include_str!* && $target == *.rs ]]; then
+      case $target in
+        "$(realpath -m "$root/crates/clean")"/*/src/*) return ;;
+      esac
     fi
-  done < <(grep -oE '\binclude(_str)?![(\[{].{0,200}' <<<"$k")
-
-  while IFS= read -r m; do hit "$rel" extern "$m"; done < <(grep -oE '\bextern\b' <<<"$b")
-  while IFS= read -r m; do hit "$rel" unsafe "$m"; done < <(grep -oE '\bunsafe\b' <<<"$b")
-  while IFS= read -r m; do hit "$rel" link "$m"; done \
-    < <(grep -oE '#!?\[[^]]*\blink\(|\blink_name\b|\blink_section\b|\bexport_name\b|\bno_mangle\b|#!?\[link\b' <<<"$b")
-  while IFS= read -r m; do hit "$rel" path-attr "$m"; done < <(grep -oE '#!?\[[^]]*\bpath ?=' <<<"$b")
-  while IFS= read -r m; do hit "$rel" proc-macro "$m"; done < <(grep -oE '\bproc[-_]macro\w*' <<<"$b")
+    hit "$rel" include-path "\"$lit\" is not \"$domain\"'s vector file, its spec or a clean crate's source"
+  else
+    hit "$rel" include-path "${m:0:60} is not a literal path"
+  fi
 }
 
 check_crate() { # CRATE_DIR
-  local crate root domain rel f p t allowed
-  crate=$(cd "$1" && pwd)
+  local crate root domain rel p t allowed w tag detail sources=() library=() paths=()
+  cd "$start" && cd "$1" && crate=$PWD
   case $crate in
     */crates/clean/types) root=${crate%/crates/clean/types}; domain="" ;;
-    */crates/clean/*) root=${crate%/crates/clean/*}; domain=$(echo "${crate##*/}" | tr _ -) ;;
+    */crates/clean/*) root=${crate%/crates/clean/*}; domain=${crate##*/}; domain=${domain//_/-} ;;
     *) root=$crate; domain="" ;;
   esac
-  rel=${crate#"$root"/}; [ "$rel" = "$crate" ] && rel=$(basename "$crate")
+  rel=${crate#"$root"/}; [ "$rel" = "$crate" ] && rel=${crate##*/}
   variants=0; variant_warn=0
-  [ "$importing" -eq 0 ] && [ -f "$warn_list" ] &&
-    grep -qxF "$rel" <(sed -E 's/[[:space:]]+$//' "$warn_list" | grep -v '^#') && variant_warn=1
+  for w in "${warned[@]}"; do [ "$w" = "$rel" ] && variant_warn=1; done
   allowed="$root/crates/clean/types"
   [ -n "$domain" ] && allowed="$allowed|$crate"
 
-  [ -f "$crate/Cargo.toml" ] || hit "$rel" extra-file "no Cargo.toml"
-  if [ -f "$crate/Cargo.toml" ]; then
+  [ -f Cargo.toml ] || hit "$rel" extra-file "no Cargo.toml"
+  if [ -f Cargo.toml ]; then
     while IFS=$'\t' read -r tag detail; do
       [ -n "$tag" ] && hit "$rel/Cargo.toml" "$tag" "$detail"
     done < <(awk -v crate="$crate" -v allowed="$allowed" -v allowfile="$here/allowed_deps.txt" \
-      -f "$here/check_manifest.awk" "$crate/Cargo.toml")
+      -f "$here/check_manifest.awk" Cargo.toml)
   fi
 
-  while IFS= read -r p; do
+  # One listing serves every rule below: what the crate holds, its sources and its library.
+  while IFS= read -r p; do paths+=("${p#./}"); done < <(find . \( -type f -o -type l \) | sort)
+  for p in "${paths[@]}"; do
     case $p in
       Cargo.toml|src/*|tests/*) ;;
       *) hit "$rel" extra-file "$p" ;;
     esac
-  done < <(cd "$crate" && find . \( -type f -o -type l \) | sed 's#^\./##' | sort)
-  while IFS= read -r p; do hit "$rel" extra-file "$p is a symlink"; done \
-    < <(cd "$crate" && find . -type l | sed 's#^\./##')
+  done
+  for p in "${paths[@]}"; do [ -L "$p" ] && hit "$rel" extra-file "$p is a symlink"; done
+  for p in "${paths[@]}"; do
+    [[ $p == src/*.rs || $p == tests/*.rs ]] && [ -f "$p" ] && [ ! -L "$p" ] || continue
+    sources+=("$p")
+    # Crate-wide shapes (G6, G7) are over the library's sources: test files are not its shape.
+    [[ $p == src/* && ${p##*/} != tests.rs && $p != */tests/* ]] && library+=("$p")
+  done
 
-  while IFS= read -r f; do
-    case $f in
-      tests/* | */tests/* | */tests.rs) t=1 ;;
-      *) t=0 ;;
-    esac
-    scan_source "$crate/$f" "$rel/$f" "$root" "$domain" "$t"
-  done < <(cd "$crate" && find src tests -type f -name '*.rs' 2>/dev/null | sort)
-
-  # Crate-wide shapes (G6, G7) over the library's sources: test files are not its shape.
-  while IFS=$'\t' read -r tag p detail; do
-    [ -n "$tag" ] && hit "$rel/src/$p" "$tag" "$detail"
-  done < <(cd "$crate" && find src -type f -name '*.rs' ! -name tests.rs ! -path '*/tests/*' 2>/dev/null | sort |
-    while IFS= read -r f; do printf '\001FILE %s\n' "${f#src/}"; awk -f "$here/strip_rust.awk" "$f"; done |
-    awk -f "$here/shape_scan.awk")
+  if [ "${#sources[@]}" -gt 0 ]; then
+    while IFS=$'\t' read -r p tag detail; do
+      if [ "$tag" = '?include' ]; then check_include "$crate/$p" "$rel/$p" "$root" "$domain" "$detail"
+      else hit "$rel/$p" "$tag" "$detail"; fi
+    done < <(awk -v denied="$denied" -f "$here/strip_rust.awk" -f "$here/lint_scan.awk" \
+      -f "$here/source_scan.awk" "${sources[@]}")
+  fi
+  if [ "${#library[@]}" -gt 0 ]; then
+    while IFS=$'\t' read -r tag p detail; do
+      [ -n "$tag" ] && hit "$rel/src/$p" "$tag" "$detail"
+    done < <(awk -f "$here/strip_rust.awk" -f "$here/shape_scan.awk" "${library[@]}")
+  fi
   if [ "$variant_warn" -eq 1 ] && [ "$variants" -eq 0 ]; then
     variant_warn=0
-    hit "$rel" variant-import "listed in $(basename "$warn_list") with no variant import left: delete its line"
+    hit "$rel" variant-import "listed in ${warn_list##*/} with no variant import left: delete its line"
   fi
+  cd "$start" || exit 2
 }
 
 for dir in "$@"; do
