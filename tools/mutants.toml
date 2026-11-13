@@ -27,3 +27,21 @@ after = "const REACH: u16 = 0;"
 test = "ratchet::tests::committed_ratchet_holds_against_the_cache"
 
 extra_tests = ["harness::tests::the_ceres_doors_hold_their_floors_against_the_cache", "harness::free::tests::the_ceres_doors_run_free_against_the_cache"]
+
+[[fault]]
+name = "clip-countdown-too-fast"
+domain = "samus-appearance"
+file = "crates/clean/samus_appearance/src/state.rs"
+before = "less_one(self.time_left.0)"
+after = "less_one(self.time_left.0.saturating_sub(1))"
+test = "harness::tests::appearance_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::appearance_runs_free_against_the_cache"]
+
+[[fault]]
+name = "slide-count-stalls"
+domain = "world-doors"
+file = "crates/clean/world_doors/src/step.rs"
+before = "self.slide_frames = self.slide_frames.saturating_add(1);"
+after = "self.slide_frames = self.slide_frames.saturating_add(0);"
+test = "harness::tests::the_door_passage_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::the_door_passage_runs_free_against_the_cache"]

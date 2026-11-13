@@ -129,8 +129,9 @@ time, with `SM_CACHE=CACHE SM_ROM=rom/sm.smc python3 tools/check_mutants.py`. It
 each fault's recorded floor or ratchet tests to pass on the unchanged model, then requires
 all its exact named tests to fail on the changed model. A missing test or a build failure
 cannot kill a fault. The source is restored byte-for-byte after each fault, and CI reports
-the killed faults per domain. Movement and camera each exercise their harness and an independent
-domain free-run test; the Ceres doors exercise both and the engine lockstep ratchet.
+the killed faults per domain. Movement, camera, appearance and door passage each exercise
+their harness and an independent domain free-run test; the Ceres doors exercise both and the
+engine lockstep ratchet.
 The runner prints M0 (`chain-any-0003-DFD7`) domain floor counts separately: `ok` means that
 row's held-frame floor survived, even when the test failed on another row or on accounting.
 Other domains' checks have no standing planted-fault coverage yet.
