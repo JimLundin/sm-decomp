@@ -2,7 +2,7 @@
 
 [tool.mypy]
 python_version = "3.11"
-files = ["tools/scenario_seeds.py", "tools/movie_inputs.py", "tools/lane/test_dll.py", "tools/check_mutants.py"]
+files = ["tools/scenario_seeds.py", "tools/movie_inputs.py", "tools/lane/test_dll.py", "tools/check_mutants.py", "tools/cleanroom/launch_stream.py"]
 mypy_path = ["tools"]
 strict = true
 warn_unreachable = true

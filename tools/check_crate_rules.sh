@@ -126,6 +126,7 @@ out=$(bash tools/lane/squash_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/adjusted_vectors_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/blind_copy_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/canary_test.sh 2>&1) || fail "$out"
+out=$(bash tools/cleanroom/launch_test.sh 2>&1) || fail "$out"
 
 # What an export of each specced domain would carry, and the blind reviewer's skill, mention no
 # score or budget (MODEL §1 decision 10); export.sh checks the export itself too.
