@@ -250,6 +250,25 @@ original's bytes as data.
   The loading writes sprite palettes 6 and 7 on frames in `Arriving`, not only the one it ends
   on; the harness takes them from the next record on every such frame, which counts the
   frame the colours change unverified.
+- **The HUD in the engine** (the interface-hud domain, `docs/behaviours/interface-hud.md` §1.3 and
+  `OutOfPlay`; `game::interface_hud_bridge`): the engine runs each frame of main gameplay as the
+  model's frame of play, and gives it what the domains it lacks would. It has no step outside
+  play (a door's passage, a load's other frames, a cinematic), so the mini-map's turn-on at a
+  door, a new area's explored cells (always "the same area") and the drops outside play (a door's
+  with the icon cancel option on, the station exploding with her aboard) never reach the model.
+  In a frame of play nothing drops the selection ("nothing dropped"): the engine has no rainbow
+  beam, no elevator's start, no death and no shot of ammunition. The harness compares each from
+  the records, but the rainbow beam's and the icon cancel option's drops, whose stores no row
+  watches and no cached row holds, and a new area's cells, which no cached row holds; the door's
+  turn-on, whose stores no row watches, is read from the compared field and counted unverified
+  (2 pairs). Each goes with its domain: the doors and room loading (R1, R2), the cinematics
+  (F4, B8's escape), Mother Brain (B10), the elevator (R1), her death (H1). The mini-map reads
+  her where samus-movement's step leaves her; on 10 recorded frames the original's read her in
+  another screen than the one she ends the frame in (`chain-any-0005-E06B` 37, `chain-0012-91F8`
+  769, `chain-0057-9FBA` 65, `chain-0059-A293` 263, `chain-0097-ACF0` 155, 429 and 518,
+  `event-zebes-awake` 68, `item-charge-beam` 202, `samus-screw-attack` 524), which the harness
+  masks until the read is decoded (the decode notes, "The harness", her position at the
+  mini-map's turn).
 
 ## The engine: slots it carries but doesn't run
 

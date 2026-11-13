@@ -35,8 +35,8 @@ other 3,019 pose-change frames are only consistent with the model, not proof of 
 them because it is keyed on `0A1C`, not on the writer (§Harness), so report them as masked.
 
 **The 20 count-fell pairs** (`why_shot.py`): in none of them did the weapons cancel the selection
-(chain-0059 431 and chain-0100 7 change it by Select; the other 18 keep it), so the shot's cancel
-is false on all 20. Run with it false, the model agrees on all 20: status bar 20, selection 20,
+(chain-0059 431 and chain-0100 7 change it by Select; the other 18 keep it), so the weapons' drop
+is none on all 20. Run with it none, the model agrees on all 20: status bar 20, selection 20,
 mini-map 20 (11 of them pose-change frames). A count also falls without a shot (a crystal flash),
 and a shot that doesn't cancel still fell under the old mask: the count is a proxy, which is why
 §Harness keys the cancel on its writers.
@@ -96,8 +96,8 @@ whose name is a lexicon match:
 | --- | --- | --- |
 | the HUD's cells | `$7E:C608`..`C6C7`, 3 rows of 32 words (BG3 tilemap rows 1 to 3; the top row, VRAM `$5800`, is uploaded only by the HUD's initialisation `$80:9A79` and isn't the domain's) | each word: picture bits 0-9, colour set bits 10-12, h-flip bit 14, v-flip bit 15; bit 13 (priority) is set in every word the HUD writes and in every recorded word: a word without it is a harness defect |
 | the values last shown | `0A06` energy, `0A08` missiles, `0A0A` super missiles, `0A0C` power bombs, `0A0E` the item | counts as is; the item as below |
-| the selected item | `09D2` (HUD item index) | 0 none, 1 missiles, 2 super missiles, 3 power bombs, 4 grapple, 5 x-ray |
-| the one-shot item | `0A04` (auto-cancel HUD item index) | the selection is the one-shot item when `0A04` = `09D2` ≠ 0; not when `0A04` = 0; any other value is a harness defect. The original keeps `0A04` 0 or equal to `09D2`: Select writes both (`$90:C50A`..`$90:C516`), item cancel and `$90:BF25`/`$90:C091` clear both, `$90:BF41`/`$90:C0A6` clear `09D2` only when `0A04` is 0 |
+| the selected item | `09D2` (HUD item index) | 0 none, 1 missiles, 2 super missiles, 3 power bombs, 4 grapple, 5 x-ray. Every store to it, with its owner and whether it lands in a compared pair: §The selection's writers |
+| the one-shot item | `0A04` (auto-cancel HUD item index) | the selection is the one-shot item when `0A04` = `09D2` ≠ 0; not when `0A04` = 0; any other value is a harness defect. The original keeps `0A04` 0 or equal to `09D2`: Select writes both (`$90:C50A`..`$90:C516`), item cancel and `$90:BF25`/`$90:C091` clear both, `$90:BF41`/`$90:C0A6` clear `09D2` only when `0A04` is 0; the rainbow beam clears `0A04` alone (§The selection's writers) |
 | the mini-map is off | `05F7` of record N | ≠ 0. Set only by `$90:A7E2` (the bosses; the cached samus-ceres-push starts with it set), cleared only by the writers of `the mini-map turned on` (§Inputs): this domain's own memory, so State, read by the mini-map on later frames |
 | the explored cells | `$7E:07F7`..`08F6` (the current area's map tiles explored) | bit `7 − c mod 8` of byte `page × 80h + y × 4 + (c mod 32) div 8` is cell `(page × 32 + c mod 32, y)`; the map's row 0 is the bitmap's row 0 (rooms start at row 1: `07A3 + 1`) |
 
@@ -125,12 +125,13 @@ the scratch `$12`..`$34`.
 | missiles, supers, power bombs | `09C6`/`09C8`, `09CA`/`09CC`, `09CE`/`09D0` of N+1 | count, capacity |
 | equipment | `09A2` (equipped items) | bit 4000h grapple, 8000h x-ray |
 | item select, item cancel | `8F` (newly pressed) and `8B` (held) of record N, against the bindings `09BA` (item select) and `09B8` (item cancel) | `Pressed` when `8F` has the binding; cancel `Held` when only `8B` has it |
-| can switch | `0A42` (Samus current state handler) and `0A1C` (pose) at N+1 | `0A42` = `$E695` (normal; the demo handler `$E6C9` belongs to the demos) and `0A1C` ∉ {0, 9Bh} (facing forward, `$90:DCE0`) |
-| the shot's cancel | the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6` | true when one of them is hit in frame N+1 (an instruction hit, as `collected` is named); cache-v2 watches all four on every row |
+| can switch | `0A42` (Samus current state handler) and `0A1C` (pose) at N+1 | `0A42` ∈ {`$E695` (normal), `$E6C9` (demo: the title's demos, `$91:8813`)} and `0A1C` ∉ {0, 9Bh} (facing forward, `$90:DCE0`). Both handlers call `$90:DCDD` (`$90:E6C0`, `$90:E70A`), which switches through `$90:DCED`. The opening's scenes set `$E6C9` too (`$8B:AF4A`, `$8B:AFF7`) and run it in game state 1Eh (`$8B:8E12` calls `$90:E692`): hits at `$90:C4BD` on any-intro-2219 (1,197 pairs) and any-intro-4323 (128). 1Eh is a step outside play (spec §1.3) all the same: the opening drives her with its own input, which never presses item select or item cancel (on both rows `09D2` moves only at `$8B:AF44` and `$8B:AFF1`), so its switch never acts, and the spec's can switch leaves the opening out |
+| the selection dropped | the stores of §The selection's writers owned by other domains, the weapons' among them | a hit in frame N+1 (an instruction hit, as `collected` is named). In a frame of play, before the status bar: the weapons' drop, `Selection`: their stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`, the special beam attack's `$90:CCE9`, the one-shot grapple beam put away, `$9B:C8BE`, `$9B:C9B3`, `$9B:CA5E`, `$9B:CBF4` (each reached only when `0A04` ≠ 0), and the one-shot x-ray scope put away, `$88:8A9C` (likewise); cache-v2 watches the first four on every row, not the other six (§The harness, what the integrator needs). Also before it: `$A9:C4E5`, `$A9:C512`, `$A9:C537` (the rainbow beam: `Selection`), `$A9:C4EB`, `$A9:C518`, `$A9:C53D` without one of those (`OneShot`), `$90:AD70` from `$A3:9548` (an elevator starting: `Selection`); a frame with drops of both kinds decodes as `Selection`; after it: `$82:DCCF` (game state 13h, after `$82:DC83`'s main gameplay: `Selection`). On a step outside play: `$90:AD70` from `$82:E4A9` (a door's passage), `$8B:C655` (game state 25h): `Selection`. `$90:AD70` is reached only with `09EA` (the icon cancel option) ≠ 0. None but the weapons' first four is watched: until they are, decode `$82:DCCF` from the pair's game states (N 13h: `09D2` and `0A04` read 0 at N+1 by that store) and treat any other unexplained clear of `09D2` as a harness defect |
+| a new area | `$82:DF99` and `$82:DFB6` in the door transition (`$82:E373`, `$82:E37C`, game state Bh) | when the door's properties (`$83:0002 + 078D`) have bit 40h (the area changes): `$80:85C6` saves `07F7`..`08F6` to the old area's `$7E:CD52 + area × 100h`, `$80:858C` loads the new area's (and `0789`). The new area's explored cells are `07F7`..`08F6` at the end of that step; Progress owns the per-area copies |
 | why no click | `0A1F` low byte, `0D32`, `0A78` at N+1 | 3 spin jumping, 14h wall jumping; `0D32` ≠ `$C4F0` the grapple beam is out; `0A78` ≠ 0 time stopped |
 | collected | the item PLM instructions | a hit at `$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E` or `$80:9A3E` in frame N+1 names it; cache-v2 watches all five on every row |
-| the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship). The title demos themselves are the demos' domain |
-| the mini-map turned on | the stores of 0 to `05F7` | true when one is hit in frame N+1; the writers: `$80:C4AF` (a load at a station), `$82:8767` (the demos' load), `$82:E1C4` (a door's start, before the new room's enemies load at `$82:E4D4`, so a boss of that room turns it off after), `$88:82F3` (the new room's effects setup), `$90:F233` (Samus command 8, called only in game states 6, 1Fh and 28h, before state 7: part of a new game or a load), `$A4:90C4` (Crocomire's skeleton flowing down the river). Only the last, `$A4:90C4`, can land in a compared pair; the others are a door's, a load's or a new game's, outside gameplay or in skipped pairs |
+| the mini-map runs | `0A44` (Samus new state handler) at N+1 | runs for `$E725` (normal), `$E7F5` (title demo, `$90:E801`), `$E86A` (appearance), `$E8DC` (locked), `$E8EC` (elevator), `$E8AA` (Ceres, which calls normal); not for `$E7D2` (debug), `$E833` (intro demo: the spec's "while the game's opening shows her"), `$E8D6` (station), `$E8D9` (drained), `$E902` (gunship), `$E8CD` (an RTL: her death, set by `$90:F305` in Samus command 11h; chain-0059-A293 from pair 584→585, chain-0220-D017 from 144→145, which decoded as an error before this row named it). The title demos themselves are the demos' domain |
+| the mini-map turned on | the stores of 0 to `05F7` | in a frame of play or a step outside play alike (spec `OutOfPlay`). Until the stores are watched, decode it from `05F7`: nonzero at N and 0 at N+1 (only these stores write 0 to it, and only `$90:A7E2` writes it nonzero); this misses a turn-on followed by a boss in the same frame, which no vanilla frame holds. Once watched: true when one is hit in frame N+1; the writers: `$80:C4AF` (a load at a station), `$82:8767` (the demos' load), `$82:E1C4` (a door's start, before the new room's enemies load at `$82:E4D4`, so a boss of that room turns it off after), `$88:82F3` (the new room's effects setup), `$90:F233` (Samus command 8, called only in game states 6, 1Fh and 28h, before state 7: part of a new game or a load), `$A4:90C4` (Crocomire's skeleton flowing down the river). Only the last, `$A4:90C4`, can land in a compared pair; the others are a door's, a load's or a new game's, outside gameplay or in skipped pairs |
 | a boss encountered | a call of `$90:A7E2` outside game state 8, with the boss `179C` (3 Kraid, 5 Ridley in Norfair, 6 Crocomire, 7 Phantoon, 8 Draygon; 1 Ridley in Ceres) | the calls: Crocomire `$A4:8A7F` (in its initialisation AI `$A4:8A5A`), Draygon `$A5:86F7` (`$A5:8687`), Ridley `$A6:A122` (`$A6:A0F5`, before its Ceres/Norfair branch, so Ceres Ridley too), Kraid `$A7:AA7C` (`$A7:A959`), Phantoon `$A7:CE24` (`$A7:CDF3`); these five run from Load enemies `$A0:8A1E`, called in the door transition (`$82:E4D4`) and at game load (`$80:A0CA`), never on a game-state-8 frame, so no gameplay pair can show them: the door and load domains supply the event, as a step outside a frame. Only while the boss lives: Kraid's initialisation returns at `$A7:A9DB` when he is dead (the test at `$A7:A976`), Crocomire's branches past the call when the area's mini-boss is dead (`$A4:8A7A`), Ridley's returns at `$A6:A10D` when the area's boss is dead (`$A6:A0F5`..`A0FF`); Draygon's and Phantoon's have no test, but their rooms (`$8F:DA60`, `$8F:CD13`) take the state for their boss dead (`$8F:DA8C`, `$8F:CD3F`, condition `$E629`), whose enemy population is empty (`roomstates.py` reads the ROM's room states), so neither runs. Ceres Ridley (`$A0:E13F`) shares Ridley's initialisation with boss id 1, which the table lacks: the map blanks and nothing is explored; Norfair Ridley (`$A0:E17F`) is id 5. Ceres's room state for Ridley dead (`$8F:E0E1`) has no `$E13F`. The screens from the table at `$90:A83A` (boss ids 3 Kraid, 5 Ridley, 6 Crocomire, 7 Phantoon, 8 Draygon, Ah Mother Brain); boss id 1 isn't in it, so Ceres Ridley's screens are none |
 | Mother Brain falls | a call of `$90:A7E2` in frame N+1 with `179C` = Ah | Mother Brain's `$A9:8809` is in her first phase's body function `$A9:87E1`, in gameplay: it runs once her glass is destroyed (`$80:8233` with 2), Samus's x is below ECh (`$A9:87F1`) and her brain's health is 0 (`$A9:87F9`), with the form set to fake death (`$A9:8805`), the music changed and her wall sealed: her first form falls, and the bosses' domain supplies the event |
 | the HUD's pictures | the importer (§The HUD's pictures) | by name; the clean model holds none |
@@ -151,13 +152,14 @@ the scratch `$12`..`$34`.
 | OneShotFlash | `$80:9C96`..`$80:9CA7` (`05B5` & 10h) |
 | IconsAppear | `$80:99CF` (missiles, tests `C61C` & 3FFh = 0Fh), `$80:9A0E`, `$80:9A1E`, `$80:9A2E`, `$80:9A3E` through `$80:9A4C` (the same test on its first cell); icons `$80:99A3`..`$80:99C7`; callers `$84:89A9`, `$84:89D2`, `$84:89FB`, `$84:891A`, `$84:8941` |
 | CyclingItems | `$90:C4B5`..`$90:C519` (`$90:C4D9` select, the loop `$90:C4EF`..`$90:C508` through the handlers `$90:C539`: `$90:C551`, `$90:C564`, `$90:C577` count = 0, `$90:C58A`, `$90:C5AE` not equipped); called from `$90:DCED` when the pose isn't facing forward (`$90:DCE0`), from the normal current state handler `$90:E6C0` |
-| CancellingTheItem | `$90:C4BD`..`$90:C4C7` (newly pressed cancel: `0A04` = 0, then `$90:C4E9`); the weapons' cancel `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6` |
+| CancellingTheItem | `$90:C4BD`..`$90:C4C7` (newly pressed cancel: `0A04` = 0, then `$90:C4E9`); the weapons' cancel `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`, `$90:CCE9`, the grapple's and the x-ray's (§Inputs); the drops of §The selection's writers, before the HUD routine `$80:9B44` (from `$82:8BA0`) or, for `$82:DCCF`, after it |
 | OneShotItem* | `$90:C4C9`..`$90:C4D7` (`$16` = holding cancel), `$90:C50A`..`$90:C516` |
 | Switching | the switched-to handlers `$90:C545`..`$90:C5C3` (clear the charge, reload the suit palette, the grapple's function); the arm cannon flag `0AAA` at `$90:C519`..`$90:C534` |
 | Exploring* | `$90:A943`..`$90:A984` |
 | MiniMapWindow | `$90:A98D`..`$90:AA41` (the window's bits), `$90:AA43`..`$90:AB46` (the tiles, the three rows, palette 3 or 2, `0789`) |
 | HerBlink* | `$90:AB4A`..`$90:AB59` (`05B5` & 8 = 0: `C680` \|= 1C00h) |
 | MiniMapStill* | `$90:A91E`..`$90:A940` (`05F7`, the room's width and height in blocks); the new state handlers that call `$90:A91B` (§Inputs) |
+| OutOfPlay | the game states whose routines don't call `$82:8B44` (§The harness): the HUD routine `$80:9B44` runs only from `$82:8BA0` and the pause's `$82:90F6`; the door's turn-on `$82:E1C4` (game state 9's frame in chain-any-0006-E0B5, and boss-kraid-defeated's pair 1090→1091); the new area's explored cells `$82:DF99`/`$82:DFB6`; the drops `$90:AD70` (from `$82:E4A9`) and `$8B:C655`/`$8B:C658` |
 | BossBlanksTheMap | `$90:A7E2`..`$90:A839` and `$90:A8A6` |
 | DiagonalPicture | `$90:AAF2`..`$90:AB05` (`$12` = 3 is the third column; `C67C + X` & 1FFh = 28h), `$90:AB5F`; the picture 028 is the importer's (§The HUD's pictures) |
 | FirstColumnsShift | `$90:A991`..`$90:A99A` (the origin a byte back), `$90:A9F9`..`$90:AA29` with `$90:AB75` (the 8-bit `ADC #$7D`), `$90:AA6A` (no page correction on the left page) |
@@ -485,6 +487,27 @@ Every other entry is a fixed rule.
 - **The re-measure** of the old code under score v2 is §Size baseline, and §Budget carries its
   figures and the whole-domain line.
 
+## The selection's writers
+
+Every store to `09D2` (the selection) in the banks, and to `0A04` (the one-shot item) beside it,
+by owner (bank logs, every bank searched; adversary 110's finding 7). "Compared" says whether the
+store can land in a compared pair (a frame of play, or a step outside play).
+
+| Store | What | Owner (spec) | Compared |
+| --- | --- | --- | --- |
+| `$90:C4C4`, `$90:C4EC`, `$90:C4FA`, `$90:C505`, `$90:C511`, `$90:C516` | Select and item cancel | this domain (`CyclingItems`, `CancellingTheItem`, `OneShotItem`) | yes |
+| `$90:BF25`/`BF28`, `$90:BF41`, `$90:C091`/`C094`, `$90:C0A6` | a shot of the one-shot item or the last of the selected ammunition | the weapons (`the selection dropped`, before the bar) | yes |
+| `$90:CCE9`/`CCEC` | firing a special beam attack | the weapons (`the selection dropped`, before the bar) | yes |
+| `$9B:C8BE`/`C8C1`, `$9B:C9B3`/`C9B6`, `$9B:CA5E`/`CA61`, `$9B:CBF4`/`CBF7` | the grapple beam let go (hit nothing or cancelled, dropped, wall jumping, released from a swing), only when `0A04` ≠ 0 | the weapons (`the selection dropped`, before the bar) | yes |
+| `$88:8A9C`/`8A9F` | the x-ray scope put away, only when `0A04` ≠ 0 | the weapons (`the selection dropped`, before the bar) | yes |
+| `$A9:C4E5`, `$A9:C512`, `$A9:C537`; `$A9:C4EB`, `$A9:C518`, `$A9:C53D` | Mother Brain's rainbow beam draining her ammunition every 4th enemy frame: emptying a kind clears `0A04`, and `09D2` too when that kind is selected | the bosses (`the selection dropped`, before the bar) | yes |
+| `$90:AD70`/`AD73` | reset projectile data with the icon cancel option (`09EA`) on: from `$A3:9548` (an elevator starting, a frame of play) and `$82:E4A9` (a door's passage) | the elevator, the doors (`the selection dropped`) | yes |
+| `$82:DCCF`/`DCD2` | game state 13h, after main gameplay: her death's first frame | the death sequence (`the selection dropped`, after the bar) | yes: chain-0059-A293 585→586, chain-0220-D017 145→146 |
+| `$8B:C655`/`C658` | game state 25h: the station explodes with her aboard (then `$8B:C695` sets 19h) | the cinematics (`the selection dropped`, outside play) | yes, as a step outside play; no cached row |
+| `$8B:AF44`, `$8B:AFF1` | the opening's Mother Brain scene (missiles), its hatching scene (none) | the cinematics (spec §6, §7 question 2) | no: the opening shows no HUD |
+| `$81:B2F1` | a new save file | the file select | no: before any HUD |
+| `$91:E147`/`E14A` | initialise Samus: from game states 6, 1Fh and 28h (`$82:8014`, `$82:8057`) and from the opening's scenes | the load flow, the cinematics | no: in the load flow's HUD initialisation (skipped) or before any HUD |
+
 ## The harness (for the integrator)
 
 The HUD is downstream of everything it shows: nothing in another domain reads its cells, and only
@@ -497,16 +520,45 @@ the records, with the other domains' values decoded as inputs.
   `V` (vblank with the NMI disabled) and `S` (vblank ended with the NMI still running) are
   mid-frame. Such a record is never a pair's end, and a pair spans it, with the hits of every
   interval between (frame N+1 is all of them). This is samus-appearance's rule (its `folds`).
-  Skipped, by name and never by outcome: game state other than 8 at N or
-  N+1 (the HUD routine runs only in gameplay and pause; pause is its own domain), `05B6` not
-  advanced by exactly one, a room change (`079B` differs: the door's domain). Counted as a
-  harness defect: a pair that doesn't decode, or a HUD word without its priority bit.
+  Each pair is one of, by record N's game state (`0998`), which picks the routine frame N+1 runs:
+  - **A frame of play** (spec §1.3): N's game state runs main gameplay `$82:8B44`, whose
+    `$82:8BA0` runs the HUD and whose Samus handlers run the switch and the mini-map: 7 (`$82:8B23`),
+    8, Ch (`$82:8CD2`), 12h (`$82:93A4`), 13h (`$82:DC83`), 14h (`$82:DCE3`), 1Bh (`$82:DC28`),
+    20h (`$82:8373`), 21h (`$82:8394`), 23h (`$82:8414`), 26h (`$82:84C0`), 29h (`$82:8530`)
+    and 2Ah (`$82:854B`). N+1's game state doesn't matter: the frame whose door collision sets
+    game state 9 ran in full (chain-any rows, every door). Skipped by name: `05B6` not advanced
+    by exactly one. A boss met in such a frame (`$90:A7E2` with a room boss's id) is a defect.
+  - **The load flow's HUD initialisation:** N's game state 6, 1Fh or 28h (the demos' load; all three run `$82:8000`), whose frames run `$80:9A79`
+    (the HUD's frame, icons and counts drawn, `0A06`..`0A0E` zeroed; any-zebes-arrival 40 and 184
+    change the values last shown and the status bar). Another domain's writer of every field:
+    skipped, and the next pair seeds afresh, until `$80:9A79` is watched (then mask on its hit).
+  - **A step outside play** (spec `OutOfPlay`): every other pair whose records both decode: the
+    door's game states 9, Ah and Bh, the cinematics (1Eh, 22h, 25h), the load's other states.
+    Its only inputs are the turn-on (§Inputs), a new area (§Inputs), the selection dropped
+    (§Inputs) and a boss met (`$90:A7E2` with a room boss's id, the `BossEvent` step). A room
+    change (`079B` differs) is no longer a skip: the HUD carries across a door, and so does the
+    free run.
+  - **No HUD yet:** a record whose HUD words lack the priority bit before the HUD's first
+    initialisation (power-on, the title, the opening, the flight to Ceres: the words are 0, or
+    5555h at power-on): skipped by name, not a defect. A word without its priority bit after
+    the HUD was initialised stays a harness defect.
+  - **The pause screen's frames:** N's game state Dh to 11h. Fh (`$82:90F6`) runs the HUD
+    routine `$80:9B44` without the switch or the mini-map: the pause screen's writer (spec §1.3,
+    §6), skipped, and the next pair seeds afresh. No cached row pauses (no Ch to 12h in the 63
+    rows): **the root's,** a pause row (pause, toggle the reserve tanks' mode on the equipment
+    screen, unpause) would check Ch, 12h and these skips.
+  Game states 13h and 14h (her death's first frames) decode once `the mini-map runs` names
+  `$E8CD`; before that every such pair was `Unrepresentable { FRAME_HANDLER_BETA, 59597 }`.
 - **Decoded from record N:** the State: the HUD's cells, the values last shown, `09D2`, `0A04`,
   the explored cells; the frame count and the pad (§Inputs).
 - **Decoded from record N+1:** every other input, at the HUD's turn; the HUD's pictures and
   her map's from the importer (§The HUD's pictures).
 - **Named cases:** R1 to R18 (§The harness cases) are compared by name, so their skip or mask
-  fails the harness.
+  fails the harness; so are the Ceres gate's three: chain-0059-A293 pair 585→586 and
+  chain-0220-D017 pair 145→146 (her death's first frame, game state 13h: the selection, 2 and 3,
+  dropped to none after the status bar; spec `CancellingTheItem`, twin C-death-drops), and
+  boss-kraid-defeated pair 1090→1091 (game state 9: the door's turn-on clears the mini-map's
+  off; spec `OutOfPlay`, twin C-out-of-play-kraid).
 - **Compared at N+1:** the HUD's 96 cells (picture, colour set, flips) and the values last shown;
   the selection and the one-shot item; the explored cells. The whole HUD tilemap is compared, not
   values: it is the output, and a stale cell is behaviour.
@@ -535,16 +587,42 @@ the records, with the other domains' values decoded as inputs.
     mini-map frames mismatch under both rules, every one inside the mask, as the first cache's 8
     were (§How the spec was made, where the mask was 669 frames on that cache; keyed on `0A1C` alone
     it was 3,039, and on `0A1C` with the mini-map reading her 2,705).
-  - **The shot's cancel** needs no mask: its writers, the weapons' four stores, `$90:BF25` and
+    On the Ceres rows it ends 147 segments for one real frame (§Ceres's free run). Off the
+    Ceres rows it hides more: retiring it must check every row below, not record 37 alone
+    (adversary 110's finding 9, `$TEMP/collab/adv110/proto_free_nomask.log`). With the mask off
+    and the prototype's frame rule, the window or the explored cells diverge on chain-any-0005-E06B
+    (37), chain-0012-91F8 (769), chain-0057-9FBA (65), chain-0059-A293 (263), chain-0097-ACF0
+    (155, 429, 518), event-zebes-awake (68), item-charge-beam (202), samus-grapple-walljump (53)
+    and samus-screw-attack (524); and chain-0043-9AD9 (417), chain-0234-D51E (153),
+    item-energy-tank and item-reserve-tank diverge at a message box under either rule (below,
+    the `05B6` skip). Those 13 rows are the retirement's check: each must hold, or its frame be
+    named.
+  - **The weapons' drop** needs no mask: its writers, the weapons' four stores, `$90:BF25` and
     `$90:C091` (clear `09D2` and `0A04`) and `$90:BF41` and `$90:C0A6` (clear `09D2`, reached
     only when `0A04` is 0), are decoded from their hits (§Inputs), and the selection is compared
     on those frames like any other.
   - **The click** (`Click`) isn't compared until the sound domain's request stream exists (U1);
     report the model's requests beside the APU port writes. Of the 22 recorded moves with no 39h
     in three records, each has a cause in the queue (§Findings, the click).
-- **What the integrator needs from the records.** cache-v2 watches the shot's cancel, the
-  pickups, `$90:A7E2`, `$90:A91B`, `$90:E734` and `$91:EB88` on every row. Still needed, at the
-  next re-record (then a ci-data bundle the root uploads):
+- **Keep the `05B6` skip and the spec's 13 states** (adversary 110's finding 8). The scratch
+  prototype (`hud_scratch.patch`) had 24h among its frames of play, against the spec and the
+  bank (`$82:8431` calls only the fade), and dropped the "`05B6` not advanced by exactly one"
+  skip. Without the skip, item-charge-beam diverges on 399 frames, item-energy-tank 20,
+  item-reserve-tank 816, samus-square-slope-reserve 362, chain-0043-9AD9 (frame 417) and
+  chain-0234-D51E (153) 1 each, from 0 on main: every one a message box (`05B6` held, game
+  state 8, nothing runs). The integration keeps the skip and leaves 24h out. Later, a message
+  box could fold into one frame of play rather than re-seed at every pickup.
+- **The vector test reads `rules`.** `crates/clean/interface_hud/tests/vectors.rs` runs every
+  vector under `Rules::reference()`. The three adjusted vectors (C-flash-adjusted,
+  C-blink-adjusted, C-mm-boss-adjusted) carry a `rules` table (the vector file's header gives
+  its form): **the implementer's** to read, as run_progress, samus_appearance and
+  samus_movement do, and to apply over the reference. Until then those three fail the test.
+  The test also learns the inputs `dropped` and `new_area`.
+- **What the integrator needs from the records.** cache-v2 watches the weapons' drop's first
+  four stores, the pickups, `$90:A7E2`, `$90:A91B`, `$90:E734` and `$91:EB88` on every row. Still
+  needed, at the next re-record (then a ci-data bundle the root uploads):
+  - the weapons' drop's other six stores and the other drops' (§Inputs, `the selection dropped`), so a
+    clear of the selection is decoded by its writer and not by the game state;
   - `0AF6`, `0AFA` peeked at the hit on `$90:A91B` (her position at the mini-map's turn; the
     hit's peek is empty today), or none if samus-movement's model supplies it;
   - the six stores of 0 to `05F7` (§Inputs, `the mini-map turned on`): none is watched, so
@@ -557,8 +635,130 @@ the records, with the other domains' values decoded as inputs.
   `entries_of` maps tags to entries.
 - **Free run:** from a seed frame, carry the HUD's own State forward and take only the inputs from
   the records; report the first differing frame per part (status bar, selection, mini-map).
-  Re-seed at a room change (the door's domain resets the frame count and redraws nothing of the
-  HUD, so the HUD carries over: a free run across doors is the better test once doors run).
+  Carry it across doors: a door's passage is steps outside play (the door's domain resets the
+  frame count, an input, and redraws nothing of the HUD). §Ceres's free run gives the figures.
+
+## Ceres's free run (2026-11-12)
+
+The free run (`verify::harness::free`, `every_domain_runs_free_against_the_cache`) over the
+cached Ceres rows and the opening's (main `4c20c8865`, the CI cache's rows; `$TEMP/collab/hud-ceres`:
+`free.log`, and `dump/` from a scratch test printing, per pair, the game states, the frame
+counter, `05F7`, the pose, the handlers, the selection, the hits and which declared fields moved).
+Frames are pairs after folding; no row diverged on any field:
+
+| Row | Frames | Held | Segments: masked, skipped |
+| --- | ---: | ---: | --- |
+| chain-any-0001-DF45 | 293 | 249 | 3: 3, 0 |
+| chain-any-0002-DF8D | 163 | 119 | 15: 15, 0 |
+| chain-any-0003-DFD7 (rung M0) | 225 | 181 | 18: 18, 0 |
+| chain-any-0004-E021 | 145 | 101 | 14: 14, 0 |
+| chain-any-0005-E06B | 161 | 94 | 14: 13, 1 |
+| chain-any-0006-E0B5 | 1,653 | 1,609 | 1: 0, 1 |
+| chain-any-0007-E06B | 139 | 95 | 13: 13, 0 |
+| chain-any-0008-E021 | 144 | 99 | 13: 13, 0 |
+| chain-any-0009-DFD7 | 212 | 168 | 36: 35, 1 |
+| chain-any-0010-DF8D | 157 | 111 | 14: 13, 1 |
+| chain-any-0011-DF45 | 2,053 | 163 | 11: 10, 1 |
+| any-power-on, any-intro-*, any-fly-to-ceres | | 0 | no HUD yet (words 0, or 5555h at power-on) |
+| any-ceres-arrival, any-zebes-arrival | | 0 | game states 1Fh, 6 and 7 only |
+
+**What the unheld frames are.** None is a rule's fault; each is the harness's frame rule:
+
+- **The door's passage** (game states 9, Ah, Bh): 44 frames of 0003 (records 181 to 344, 163
+  records), and the like in every chain-any row. The declared fields don't move in any of them,
+  but `05F7` cleared in the passage out of Ridley's room (0006, the door's start `$82:E1C4`).
+  Spec `OutOfPlay` states them; §The harness makes them steps outside play.
+- **The frame that ends with the door's start** (8 at N, 9 at N+1): a full frame of play the
+  harness skipped for N+1's game state; its blink moved the window in 0002, 0007 and 0010.
+- **Ceres's end** (0011): game states 20h and 21h run main gameplay (9 window changes, the
+  blink); 22h, Ceres going up, is a cinematic (1,814 frames, nothing moves).
+- **The game's start** (any-ceres-arrival, any-zebes-arrival): 7, the fade in, runs main gameplay
+  (the window and the explored cells move); 1Fh and 6 run the HUD's initialisation `$80:9A79`,
+  the load flow's.
+
+**The interim mask** (her position at the mini-map's turn) ended 147 of the 152 segments. With
+it off every row holds in one segment up to its door, but for one frame: chain-any-0005-E06B
+record 37, running right with her pose changing every frame, x 250 at N and 256 at N+1, where
+the window and the explored cells show the cell of her room's first screen: the mini-map read
+her before she crossed. So on these rows the mask hides one real frame and costs 146 re-seeds.
+samus-movement's free run now carries her pose through the engine's pose change; the decode that
+retires the mask (§The harness) takes her position from that model's step, where her moves left
+her before `$90:E738`..`$90:E745` run (the timer handler, her animation, the pose change), and
+record 37 is its check: there she must be in the first screen.
+
+**The fixes, measured.** A scratch prototype of §The harness's frame rule (by N's game state;
+steps outside play carrying the State, the turn-on from `05F7`'s edge; the demo handler
+switching) with the mask off, run over the same rows: every Ceres row held in one segment over
+all its frames (0001 293 of 293, 0003 225 of 225, 0006 1,653 of 1,653 with the passage out of
+Ridley's room, 0011 2,053 of 2,053), but 0005 160 of 161 (record 37); any-ceres-arrival 37 (the
+fade in after the new game's initialisation), any-zebes-arrival 105 of 107 (the load flow's two
+initialisation frames, 40 and 184, diverge, as they must until they are skipped).
+
+**The ladder's measure.** A rung's held share is held frames over the rung's records, and the
+HUD's frames are pairs after folding: on M0 its 225 frames span 344 of the 345 records, so a
+free run that holds every frame shows 65.2 %, as any domain that folds would. Counting the records
+a held frame spans would show it as held (the report's to change).
+
+**The opening.** No HUD is drawn (its words are 0), so no frame is compared. Its scenes write the
+selection (§State; any-intro-2219: missiles from the row's start, none at record 1297), and Samus
+switches under the demo handler there (§Inputs, can switch): spec §6, §7 question 2.
+
+**The escape's timer** is sprites (`$80:9F6C`, `$80:9FB3`, drawn from game states 8, 20h and 21h
+while the timer runs), not the HUD's cells; spec §7 question 3.
+
+## Adversary 110's fixes
+
+The spec gate of the Ceres delta (`$TEMP/collab/reviews/adversary-110.md`, its scratch evidence in
+`$TEMP/collab/adv110/`), by finding:
+
+1. **The load flow's and the pause screen's frames.** Spec §1.3 names them as other domains'
+   frames that replace the HUD's State, neither frames of play nor steps outside play; §6 says
+   the same. §The harness skips 6, 1Fh, 28h and Dh to 11h by name. The root's: a pause row.
+2. **An area change in a door's passage** (`$82:DF99`/`$82:DFB6`, door property bit 40h, game
+   state Bh) swaps the explored cells: input `a new area`, an `OutOfPlay` arm, the vector
+   C-out-of-play-new-area. No cached row crosses areas.
+3. **Game state 25h clears the selection:** input `the selection dropped`, outside play (spec §6,
+   who drops it), an `OutOfPlay` arm and C-out-of-play-dropped.
+4. **13h and 14h decode:** `the mini-map runs` names `$E8CD` (her death: doesn't run). 13h's
+   `$82:DCCF` is the selection dropped after the status bar: a `CancellingTheItem` arm, the
+   harness cases chain-0059-A293 585→586 and chain-0220-D017 145→146, the twin C-death-drops.
+5. **The opening's switch.** The switch runs in 1Eh, but the opening's own input never presses
+   item select or item cancel, so the opening stays outside play and can switch drops it (§Inputs,
+   can switch). The opening's selection stays §7 question 2.
+6. **Adjusted vectors:** C-flash-adjusted (`n` = 4), C-blink-adjusted (`n` = 4) and
+   C-mm-boss-adjusted (Kraid's screens (2, 0) and (0, 2)); `adjusted_vectors.sh --gate
+   interface-hud` passes 3 of 3. The vector test's `rules` is the implementer's (§The harness).
+7. **The selection's writers:** §The selection's writers lists every store with its owner and
+   whether it is compared. Its gameplay writers the spec lacked join `the selection dropped`: the
+   weapons' (the special beam attack, the one-shot grapple beam and x-ray scope put away), the
+   rainbow beam, an elevator or a door with the icon cancel option on, her death.
+8. **The `05B6` skip and 24h:** for the integrator, §The harness.
+9. **The interim mask's rows:** for the integrator, §The harness (13 rows).
+10. **No frame of play fades in after a door:** "or a door" is gone from §1.3.
+11. **A non-Ceres turn-on:** boss-kraid-defeated 1090→1091 is an `OutOfPlay` harness case, twin
+    C-out-of-play-kraid.
+
+The reference model (`$TEMP/collab/hud-fix/ref`: `model.py` with the vectors' `rules`,
+`dropped` and `new_area`) agrees on 95 of 95 vectors. Each new rule's mutant dies: the rules
+ignored (killed by the three adjusted vectors), each rule fixed at the reference (one each), the
+new area ignored or merged (C-out-of-play-new-area), the drop outside play ignored
+(C-out-of-play-dropped), the drop after the bar ignored or applied before it (C-death-drops), the
+drop before it ignored (C-dropped-before, C-one-shot-dropped), and the drop of the one-shot item
+taking the selection or leaving the one-shot item (C-one-shot-dropped).
+
+## Adversary 112's C3: the weapons' drop
+
+The weapons' clear of the selection after a shot had its own input beside `the selection
+dropped`, with the same timing (after the cycling, before the status bar) and the same effect
+(the selection and the one-shot item to none, whether or not she can switch). It is now one of
+that input's suppliers (spec §6, who drops the selection; §Inputs). The vectors C-shot-cancels
+and C-shot-cancels-cannot-switch carry `dropped = { what = "Selection" }`, their outcomes
+unchanged; the vector file has no other key for it. Two drops before the status bar in one frame
+give `Selection` when either is the selection's; under either input form the result is the
+same. The reference model (`$TEMP/collab/hud-fix/ref`) drops its separate branch and agrees on
+95 of 95 vectors; the mutant `shot_cancel_only_switching` now gates the drop before the status
+bar on can switch, and C-shot-cancels-cannot-switch still kills it alone (33 mutants, all
+killed).
 
 ## Size baseline (tokens, score v2, 2026-11-11)
 
@@ -659,8 +859,8 @@ as a wall; over an area's old code is a failure.
 - Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
   SwitchClick, OneShotFlash, IconsAppear
 - Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
-- Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, BossBlanksTheMap,
-  DiagonalPicture, FirstColumnsShift, LastColumnsShift
+- Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, OutOfPlay,
+  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift
 
 Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
 one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
@@ -675,4 +875,17 @@ Round 4 adds no arm and no operator: its three vectors are cited by arms that we
 Round 5 adds none either: its two vectors are cited by arms that were there, and its spec text
 (§1.4's two paragraphs, `SelectionHighlight`'s "So", the input row) is prose. 56.3 units.
 
-Budget: 37.5 × 56.3 units = 2,112 (status 787, selection 300, minimap 1,025)
+The Ceres free run's amendment (§Ceres's free run) adds `OutOfPlay`'s two arms, in the minimap
+area: 56.3 → 58.3 units. The §1.3 paragraph on frames of play and the input rows it changed are
+prose.
+
+The Ceres gate's answers (§Adversary 110's fixes) add four arms: `CancellingTheItem`'s drop of
+the one-shot item alone and its drop after the status bar (selection 8 → 10 arms), and
+`OutOfPlay`'s new area and its drop (minimap). The drop before the status bar joins the shot's
+cancel's arm, and `OneShotFlash`'s and `HerBlink`'s `2n` and `n` replace 32, 16 and 8 at the same
+operator count: 58.3 → 62.3 units.
+
+Adversary 112's C3 (§Adversary 112's C3) folds the shot's input into `CancellingTheItem`'s drop
+before the status bar, an arm that already named it: no arm or operator changes. 62.3 units.
+
+Budget: 37.5 × 62.3 units = 2,337 (status 787, selection 375, minimap 1,175)

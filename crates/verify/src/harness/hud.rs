@@ -1,37 +1,53 @@
 //! The HUD as a harness domain: the HUD model (`interface_hud`) against the oracle.
 //!
-//! It is checked frame by frame by the decode notes' harness note (`docs/behaviours/interface-hud.decode.md`,
-//! "The harness"). The HUD is downstream of everything it shows and nothing of the same frame reads
-//! it back, so it is checked on its own: its State (the HUD's cells, the values last shown, the
-//! selection and the one-shot item, the explored cells, whether the mini-map is off) and the frame
-//! count and pad are decoded from record N, every other input from record N+1 at the HUD's turn,
-//! and the model's output is compared with record N+1: the whole tilemap, not values, since a
-//! stale cell is behaviour. The HUD's pictures and her map's are the importer's.
+//! It is checked frame by frame by the decode notes' harness note
+//! (`docs/behaviours/interface-hud.decode.md`, "The harness"). The HUD is downstream of everything
+//! it shows and nothing of the same frame reads it back, so it is checked on its own: its State
+//! (the HUD's cells, the values last shown, the selection and the one-shot item, the explored
+//! cells, whether the mini-map is off) and the frame count and pad are decoded from record N,
+//! every other input from record N+1 at the HUD's turn, and the model's output is compared with
+//! record N+1: the whole tilemap, not values, since a stale cell is behaviour. The HUD's pictures
+//! and her map's are the importer's.
 //!
 //! A frame runs from cut to cut: from a record whose NMI returned to the main loop's wait (cut
 //! `R`) to the next such record. A record with any other cut is mid-frame (an overrun, vblank
 //! with the NMI disabled, or vblank ended with the NMI still running) and folds into its frame,
 //! its hits carried along, so a frame whose work straddles an overrun is paired whole.
 //!
+//! Record N's game state picks the step (spec §1.3): a frame of play where its routine runs main
+//! gameplay, skipped by name where the frame counter didn't advance by one (a message box); the
+//! load flow's start-up of the HUD and the pause screen's frames, skipped by name, so the next
+//! pair seeds afresh; and a step outside play for every other state (a door's passage, a load's
+//! other frames, the cinematics), which carries the HUD across a door. Before the HUD's first
+//! start-up no word holds its priority bit: no HUD yet, skipped by name.
+//!
 //! The inputs other domains' writers make are named by their instruction hits in frame N+1: the
-//! shot's cancel (the weapons' stores `$90:BF25`, `$90:BF41`, `$90:C091`, `$90:C0A6`), the item
-//! whose pickup draws its icon (`$80:99CF`, `$80:9A0E`, `$80:9A1E`, `$80:9A2E`, `$80:9A3E`), Mother
-//! Brain's fall (`$90:A7E2` with her boss id) and the mini-map turned on (the six stores of 0 to
-//! `05F7`). A boss met on entering its room calls `$90:A7E2` in a door's or a load's frame, outside
-//! gameplay: that pair is the model's boss step, not a frame of play.
+//! weapons' drop of the selection before the status bar (their stores `$90:BF25`, `$90:BF41`,
+//! `$90:C091`, `$90:C0A6`), the item whose pickup draws its icon (`$80:99CF`, `$80:9A0E`,
+//! `$80:9A1E`, `$80:9A2E`, `$80:9A3E`) and Mother Brain's fall (`$90:A7E2` with her boss id). A
+//! boss met on entering its room calls `$90:A7E2` outside play: that pair is the model's boss
+//! step. The other drops of the selection are decoded from the game state (her death's first
+//! frame, the station exploding), and a clear no decoded writer explains is a defect. A new
+//! area's explored cells are the copy Progress keeps for the area she enters in record N
+//! (`$7E:CD52`), which the door's transition loads (`$80:858C`): never the compared field.
+//!
+//! The mini-map's turn-on is its stores' hits, but no row watches them yet, so it is also decoded
+//! from `05F7`'s edge, which is the compared "mini-map off". A turn-on decoded from the edge alone
+//! is the stand-in's answer from record N+1: [`HudDomain`]'s neutral world drops it, so every
+//! field it reaches is unverified on that pair, never matched.
 //!
 //! One interim mask stands in for a writer the records don't yet decode, keyed as near it as the
-//! records allow and reported as masked, never passed: her position at the mini-map's turn: the pose change's placement (`$91:EB88`) runs after the
-//!   mini-map read her and can move her across a screen, so the window and the explored cells are
-//!   masked where her pose changed, the mini-map read her, and her position lies within the
-//!   placement's reach of a screen's edge. samus-movement's model, which the camera harness asks
-//!   for the y the camera follows her from, doesn't report where her moves left her, so it can't
-//!   yet decode her position at the mini-map's turn.
+//! records allow and reported as masked, never passed: her position at the mini-map's turn. Some
+//! writer after the mini-map's read can move her across a screen (the pose change's placement,
+//! `$91:EB88`, is one; samus-movement's step diverges on the same frames, so it isn't the only
+//! one), so the window and the explored cells are masked where her pose changed, the mini-map
+//! read her, and her position lies within 32 px of a screen's edge. No hit records her position
+//! where the mini-map read her, so nothing decodes it yet, and the frames it hides may only fall
+//! ([`POSITION_MASK_CEILING`]).
 //!
-//! The click and the switch aren't compared until the
-//! sound and the weapons' request streams exist, so their entries are credited nothing. Nothing
-//! answers from record N+1's HUD, so no field is unverified; the null model is the HUD left as
-//! record N has it.
+//! The click and the switch aren't compared until the sound and the weapons' request streams
+//! exist, so their entries are credited nothing. The null model is the HUD left as record N has
+//! it.
 
 pub mod cases;
 
@@ -43,10 +59,10 @@ use enum_map::enum_map;
 use game::interface_hud_bridge::{self, HudContent};
 use game::state::video::TilemapEntry;
 use interface_hud::{
-    Ammo, Ammunition, BehaviourId, CATALOGUE, CancelButton, Controls, Energy, Equipped, FrameCount,
-    FrameInputs, HerMap, HudEvent, HudGrid, HudState, MapCellSet, MiniMapInputs, MiniMapPower,
-    Mute, Place, Reserve, ReserveMode, Room, RoomBoss, Rules, SelectButton, SelectableItem,
-    Selection, Shown, Status, Stock, Tile,
+    Ammo, Ammunition, BehaviourId, Boss, CATALOGUE, CancelButton, Controls, Dropped, Energy,
+    Equipped, FrameCount, FrameInputs, HerMap, HudEvent, HudGrid, HudState, MapCellSet,
+    MiniMapInputs, MiniMapPower, Mute, NewArea, OutOfPlayInputs, Place, Reserve, ReserveMode, Room,
+    Rules, SelectButton, SelectableItem, Selection, Shown, Status, Stock, Tile,
 };
 use oracle_record::FrameRecord;
 use types::Pair;
@@ -56,10 +72,49 @@ use crate::bundle::ContentError;
 use crate::cache::CutKind;
 use crate::decode::DecodeError;
 use crate::domain_field;
-use crate::source::{self, WramWord};
+use crate::source::{self, WramBlock, WramWord};
 
-/// The game state the main loop runs gameplay in.
-const MAIN_GAMEPLAY: u16 = 8;
+/// What frame N+1 runs, by record N's game state (`0998`): the routine the main loop calls
+/// (the decode notes' harness note).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Routine {
+    /// Main gameplay (`$82:8B44`), whose `$82:8BA0` runs the HUD and whose Samus handlers run
+    /// the switch and the mini-map: a frame of play (spec §1.3).
+    Play,
+    /// The load flow's start-up of the HUD (`$80:9A79`, from `$82:8000`): the load flow's
+    /// frame, which sets the HUD's every field.
+    HudStartUp,
+    /// The pause screen's frames, whose `$82:90F6` runs the HUD routine without the switch or
+    /// the mini-map: the pause screen's.
+    Pause,
+    /// Every other routine: a door's passage, a load's other frames, the cinematics: a step
+    /// outside play (spec `OutOfPlay`).
+    OutsidePlay,
+}
+
+impl Routine {
+    /// The routine of game state `code`.
+    const fn of(code: u16) -> Self {
+        match code {
+            // The fade in after a load (7), gameplay (8), the pause's fades (Ch, 12h), her
+            // death's first frames (13h, 14h), the reserve tanks' refill (1Bh), Ceres's last
+            // frames at its elevator (20h, 21h), the time running out (23h), the escape from
+            // Zebes (26h) and the demos (29h, 2Ah). 24h runs only the fade.
+            0x07 | 0x08 | 0x0C | 0x12..=0x14 | 0x1B | 0x20 | 0x21 | 0x23 | 0x26 | 0x29 | 0x2A => {
+                Self::Play
+            }
+            0x06 | 0x1F | 0x28 => Self::HudStartUp,
+            0x0D..=0x11 => Self::Pause,
+            _ => Self::OutsidePlay,
+        }
+    }
+}
+
+/// Her death's first frame (game state 13h): `$82:DCCF` drops the selection after main
+/// gameplay's status bar.
+const DEATHS_FIRST_FRAME: u16 = 0x13;
+/// The station exploding with her aboard (game state 25h): `$8B:C655` drops the selection.
+const STATION_EXPLODES: u16 = 0x25;
 
 /// A work RAM word the harness reads that `source` doesn't name.
 const fn wram(name: &'static str, offset: u16) -> WramWord {
@@ -78,9 +133,17 @@ const GRAPPLE_FUNCTION: WramWord = wram("GRAPPLE_BEAM_FUNCTION", 0x0D32);
 const TIME_IS_FROZEN: WramWord = wram("TIME_IS_FROZEN", 0x0A78);
 /// Bank $A0 log: the boss id the room's boss enemy sets when it loads.
 const BOSS_ID: WramWord = wram("BOSS_ID", 0x179C);
+/// Bank $80 log, `$80:858C` and `$80:85C6`: Progress's copy of each area's explored cells, an
+/// area's 100h bytes laid out as the current area's, by the area's index.
+const EXPLORED_BY_AREA: WramBlock = WramBlock {
+    name: "MAP_TILES_EXPLORED_BY_AREA",
+    offset: 0xCD52,
+    len: 0x0800,
+};
 
-/// The normal current state handler, under which she can switch (`$90:E695`).
-const NORMAL_CURRENT: u16 = 0xE695;
+/// The current state handlers under which she can switch: the normal one (`$90:E695`) and the
+/// demo's (`$90:E6C9`, the title's demos), both calling the switch (`$90:DCDD`).
+const SWITCHING_CURRENT: [u16; 2] = [0xE695, 0xE6C9];
 /// The poses facing the screen, in which she can't switch (`$90:DCE0`).
 const FACING_FORWARD: [u16; 2] = [0x00, 0x9B];
 /// The grapple beam's function while it is put away.
@@ -89,9 +152,9 @@ const GRAPPLE_INACTIVE: u16 = 0xC4F0;
 const SPIN_JUMPING: u8 = 0x03;
 const WALL_JUMPING: u8 = 0x14;
 /// The new state handlers that run the mini-map (normal, title demo, appearance, locked, elevator,
-/// Ceres) and those that don't (debug, intro demo, station, drained, gunship).
+/// Ceres) and those that don't (debug, intro demo, station, drained, gunship, her death).
 const MINI_MAP_RUNS: [u16; 6] = [0xE725, 0xE7F5, 0xE86A, 0xE8DC, 0xE8EC, 0xE8AA];
-const MINI_MAP_STILL: [u16; 5] = [0xE7D2, 0xE833, 0xE8D6, 0xE8D9, 0xE902];
+const MINI_MAP_STILL: [u16; 6] = [0xE7D2, 0xE833, 0xE8D6, 0xE8D9, 0xE902, 0xE8CD];
 /// The equipment bits the HUD can select.
 const GRAPPLE_BEAM: u16 = 0x4000;
 const X_RAY_SCOPE: u16 = 0x8000;
@@ -142,10 +205,11 @@ const BOSS_BLANKS_THE_MAP: u32 = 0x90_A7E2;
 const TURNS_THE_MINI_MAP_ON: [u32; 6] = [
     0x80_C4AF, 0x82_8767, 0x82_E1C4, 0x88_82F3, 0x90_F233, 0xA4_90C4,
 ];
-/// The weapons' stores that cancel the selection after a shot: `$90:BF25` and `$90:C091` clear
-/// the selected and the one-shot item, `$90:BF41` and `$90:C0A6` the selected item when there is
-/// no one-shot item.
-const SHOT_CANCELS: [u32; 4] = [0x90_BF25, 0x90_BF41, 0x90_C091, 0x90_C0A6];
+/// The weapons' stores that drop the selection before the status bar, after a shot of the
+/// one-shot item or of the last of the selected ammunition: `$90:BF25` and `$90:C091` clear the
+/// selected and the one-shot item, `$90:BF41` and `$90:C0A6` the selected item when there is no
+/// one-shot item. The decode notes list six more stores no row watches yet.
+const WEAPONS_DROP: [u32; 4] = [0x90_BF25, 0x90_BF41, 0x90_C091, 0x90_C0A6];
 /// The entries that draw a picked-up item's icon, by its item.
 const PICKUPS: [(u32, SelectableItem); 5] = [
     (0x80_99CF, SelectableItem::Ammo(Ammo::Missiles)),
@@ -158,14 +222,20 @@ const PICKUPS: [(u32, SelectableItem); 5] = [
 const MOTHER_BRAIN: u16 = 0x0A;
 /// The boss ids of the bosses met on entering their rooms (`$90:A83A`; Ceres Ridley's id 1 isn't
 /// in that table).
-const ROOM_BOSSES: [(u16, RoomBoss); 6] = [
-    (0x01, RoomBoss::RidleyInCeres),
-    (0x03, RoomBoss::Kraid),
-    (0x05, RoomBoss::RidleyInNorfair),
-    (0x06, RoomBoss::Crocomire),
-    (0x07, RoomBoss::Phantoon),
-    (0x08, RoomBoss::Draygon),
+const ROOM_BOSSES: [(u16, Boss); 6] = [
+    (0x01, Boss::RidleyInCeres),
+    (0x03, Boss::Kraid),
+    (0x05, Boss::RidleyInNorfair),
+    (0x06, Boss::Crocomire),
+    (0x07, Boss::Phantoon),
+    (0x08, Boss::Draygon),
 ];
+/// The interim mask's reason, by which its frames are counted.
+pub const POSITION_MASK: &str = "interim: her pose changed within 32 px of a screen's edge and the mini-map read her, so a writer after its read (the pose change's placement $91:EB88 among them) may have moved her across; no hit records where the mini-map read her";
+/// The most frames the interim mask may hide over every cached row: the count may only fall,
+/// with the change that lowers it, until a recording of her position at the mini-map's read
+/// retires the mask.
+pub const POSITION_MASK_CEILING: u64 = 1_045;
 
 /// The declared fields by their places in [`HudDomain`]'s `FIELDS`.
 const STATUS_BAR: FieldSet = FieldSet::single(0);
@@ -192,6 +262,13 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         B::MiniMapWindow | B::HerBlink => WINDOW_TILES,
         B::FirstColumnsShift | B::LastColumnsShift => WINDOW_TILES.union(EXPLORED),
         B::MiniMapStill | B::BossBlanksTheMap => WINDOW_TILES.union(EXPLORED).union(MINI_MAP_OFF),
+        B::OutOfPlay => STATUS_BAR
+            .union(SHOWN)
+            .union(SELECTED)
+            .union(ONE_SHOT)
+            .union(WINDOW_TILES)
+            .union(EXPLORED)
+            .union(MINI_MAP_OFF),
     }
 }
 
@@ -213,13 +290,20 @@ pub enum Skip {
     /// A boss met on entering its room in a frame of play, which only a door or a load meets:
     /// a defect.
     BossInPlay(u16),
-    /// The main loop runs another game state: the HUD runs only in gameplay (pause is its own
-    /// domain).
-    GameState(u16),
-    /// The frame counter didn't advance by one: no main processing ran, or more than one frame.
+    /// The selection or the one-shot item cleared with no writer decoded for it: a drop whose
+    /// store no row watches yet (the rainbow beam, the icon cancel option's), a defect.
+    UndecodedDrop,
+    /// The load flow's start-up of the HUD (`$80:9A79`) in this game state: the load flow sets
+    /// every field.
+    HudStartUp(u16),
+    /// The pause screen's frame in this game state: the pause screen sets the HUD.
+    Paused(u16),
+    /// No HUD yet: no word of it holds its priority bit, before the HUD's first start-up
+    /// (power-on, the title, the opening, the flight to Ceres).
+    NoHudYet,
+    /// The frame counter didn't advance by one in a frame of play: no main processing ran (a
+    /// message box), or more than one frame.
     Frames(u16),
-    /// The room changed: the door's domain.
-    RoomChange,
 }
 
 impl fmt::Display for Skip {
@@ -232,9 +316,16 @@ impl fmt::Display for Skip {
                 "a one-shot item {one_shot} that is neither none nor the selected {selected}"
             ),
             Self::BossInPlay(id) => write!(f, "boss {id:#04X} met in a frame of play"),
-            Self::GameState(code) => write!(f, "game state {code:#04X}, not gameplay"),
+            Self::UndecodedDrop => f.write_str("the selection cleared by no decoded writer"),
+            Self::HudStartUp(code) => {
+                write!(
+                    f,
+                    "game state {code:#04X}: the load flow's start-up of the HUD"
+                )
+            }
+            Self::Paused(code) => write!(f, "game state {code:#04X}: the pause screen's"),
+            Self::NoHudYet => f.write_str("no HUD yet"),
             Self::Frames(count) => write!(f, "{count} frames ran, not one"),
-            Self::RoomChange => f.write_str("the room changed (the door's domain)"),
         }
     }
 }
@@ -315,9 +406,15 @@ fn tile(bytes: [u8; 2]) -> Result<Tile, Skip> {
         .map_err(|_| unnamed(source::HUD_TILEMAP.name, raw))
 }
 
-/// The HUD's cells `record` holds.
+/// The HUD's cells `record` holds, or [`Skip::NoHudYet`] when no word holds its priority bit.
 fn grid(record: &FrameRecord) -> Result<HudGrid, Skip> {
     let words = source::HUD_TILEMAP.read(&record.wram)?.as_chunks::<2>().0;
+    if words
+        .iter()
+        .all(|&bytes| u16::from_le_bytes(bytes) & PRIORITY == 0)
+    {
+        return Err(Skip::NoHudYet);
+    }
     let first = words
         .first()
         .ok_or(Skip::Unreadable(DecodeError::WramTooShort {
@@ -333,14 +430,31 @@ fn grid(record: &FrameRecord) -> Result<HudGrid, Skip> {
     Ok(grid)
 }
 
+/// The explored cells in `bytes`, laid out as the current area's, from `source`.
+fn cells(bytes: Option<&[u8]>, source: &'static str) -> Result<MapCellSet, Skip> {
+    let bitmap: &[u8; MAP_BIT_BYTES] = bytes
+        .and_then(<[u8]>::first_chunk)
+        .ok_or(Skip::Unreadable(DecodeError::WramTooShort { source }))?;
+    Ok(interface_hud_bridge::explored(&MapCells::from_bitmap(
+        bitmap,
+    )))
+}
+
+/// The explored cells of her area `record` holds.
+fn explored(record: &FrameRecord) -> Result<MapCellSet, Skip> {
+    let bytes = source::MAP_TILES_EXPLORED.read(&record.wram)?;
+    cells(Some(bytes), source::MAP_TILES_EXPLORED.name)
+}
+
+/// The explored cells Progress keeps for `area` in `record`.
+fn explored_kept(record: &FrameRecord, area: Area) -> Result<MapCellSet, Skip> {
+    let start = usize::from(u8::from(area)).saturating_mul(MAP_BIT_BYTES);
+    let bytes = EXPLORED_BY_AREA.read(&record.wram)?.get(start..);
+    cells(bytes, EXPLORED_BY_AREA.name)
+}
+
 /// The HUD's State `record` holds (the decode notes' State).
 fn hud(record: &FrameRecord) -> Result<HudState, Skip> {
-    let bitmap: &[u8; MAP_BIT_BYTES] = source::MAP_TILES_EXPLORED
-        .read(&record.wram)?
-        .first_chunk()
-        .ok_or(Skip::Unreadable(DecodeError::WramTooShort {
-            source: source::MAP_TILES_EXPLORED.name,
-        }))?;
     Ok(HudState {
         grid: grid(record)?,
         shown: Shown {
@@ -356,7 +470,7 @@ fn hud(record: &FrameRecord) -> Result<HudState, Skip> {
             )?,
         },
         selection: selection(record)?,
-        explored: interface_hud_bridge::explored(&MapCells::from_bitmap(bitmap)),
+        explored: explored(record)?,
         mini_map: if word(record, source::DEBUG_DISABLE_MINIMAP)? == 0 {
             MiniMapPower::On
         } else {
@@ -395,7 +509,8 @@ pub struct Upstream {
     can_switch: bool,
     muted_by: Option<Mute>,
     runs: bool,
-    shot_cancels: bool,
+    dropped_before: Dropped,
+    dropped_after: Dropped,
     collected: Option<SelectableItem>,
     power: PowerChanges,
     position: Pair<u16>,
@@ -403,39 +518,62 @@ pub struct Upstream {
     map: MapKey,
 }
 
+/// Whether the mini-map turned on in a frame, and how the harness knows.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TurnOn {
+    /// It didn't.
+    No,
+    /// One of its stores was hit.
+    Watched,
+    /// No store was hit, but `05F7` went from nonzero at N to 0 at N+1: read from the compared
+    /// field, so the fields it reaches are unverified.
+    AtTheEdge,
+}
+
+impl TurnOn {
+    /// Whether the mini-map turned on.
+    const fn on(self) -> bool {
+        !matches!(self, Self::No)
+    }
+}
+
 /// What turns the mini-map on or off in a frame, before its turn: other domains' writers.
 #[derive(Clone, Copy, Debug)]
 pub struct PowerChanges {
-    /// One of the stores of 0 to `05F7` ran.
-    turned_on: bool,
+    /// One of the stores of 0 to `05F7` ran ([`turned_on`]).
+    turned_on: TurnOn,
     /// Mother Brain's first form fell.
     mother_brain_falls: bool,
 }
 
+/// What a step outside play reads from its records (spec `OutOfPlay`).
+#[derive(Clone, Debug)]
+pub struct Outside {
+    /// The mini-map turned on in the step.
+    turned_on: TurnOn,
+    /// The explored cells Progress keeps for the area the step leads into, or `None` when she
+    /// stays in hers.
+    new_area: Option<Box<MapCellSet>>,
+    /// What another domain dropped in the step.
+    dropped: Dropped,
+}
+
 /// What a record pair is to the HUD.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum Turn {
     /// A frame of play.
     Frame(Upstream),
-    /// A door's or a load's frame in which a boss was met on entering its room.
+    /// A step outside play.
+    OutOfPlay(Outside),
+    /// A step outside play in which a boss was met on entering its room.
     BossMet {
         /// The boss.
-        boss: RoomBoss,
+        boss: Boss,
         /// Her room's top-left cell on her map.
         room: Place,
         /// Her area, whose map the HUD draws.
         area: Area,
     },
-}
-
-impl Turn {
-    /// Her area, whose map the HUD draws.
-    const fn area(&self) -> Area {
-        match self {
-            Self::Frame(upstream) => upstream.map.area,
-            Self::BossMet { area, .. } => *area,
-        }
-    }
 }
 
 /// The pair's turn and what the step reported, for the attribution.
@@ -555,7 +693,7 @@ enum BossCalled {
     /// Mother Brain's first form fell.
     MotherBrain,
     /// A boss met on entering its room.
-    InItsRoom(RoomBoss),
+    InItsRoom(Boss),
 }
 
 /// The boss that blanked the mini-map in `next`'s frame, or `None`.
@@ -582,18 +720,54 @@ fn area(record: &FrameRecord) -> Result<Area, Skip> {
         .ok_or_else(|| unnamed(source::AREA_INDEX.name, index))
 }
 
-/// Every input but the pad, from `next` at the HUD's turn; Mother Brain falls when
-/// `mother_brain_falls`.
-fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Skip> {
+/// Whether the mini-map turned on in the frame from `from` to `next`: one of the stores of 0 to
+/// `05F7` ran. No row watches them yet, so it is decoded from `05F7` too: nonzero at N and 0 at
+/// N+1, which only those stores make (only `$90:A7E2` writes it nonzero). That misses a turn-on
+/// a boss turns off again in the same frame, which no vanilla frame holds.
+fn turned_on(from: &FrameRecord, next: &FrameRecord) -> Result<TurnOn, Skip> {
+    let off = |record| Ok::<_, Skip>(word(record, source::DEBUG_DISABLE_MINIMAP)? != 0);
+    Ok(if TURNS_THE_MINI_MAP_ON.iter().any(|&pc| ran(next, pc)) {
+        TurnOn::Watched
+    } else if off(from)? && !off(next)? {
+        TurnOn::AtTheEdge
+    } else {
+        TurnOn::No
+    })
+}
+
+/// What another domain drops after the status bar in a frame of play run from game state
+/// `code`: her death's first frame drops the selection. The other drops in play (the rainbow
+/// beam, an elevator's start with the icon cancel option on) aren't watched, and their clears are
+/// defects ([`Skip::UndecodedDrop`]).
+const fn dropped_after_status_bar(code: u16) -> Dropped {
+    if code == DEATHS_FIRST_FRAME {
+        Dropped::Selection
+    } else {
+        Dropped::Nothing
+    }
+}
+
+/// Every input but the pad of the frame of play from `from` to `next`, at the HUD's turn in
+/// `next`; Mother Brain falls when `mother_brain_falls`.
+fn upstream(
+    from: &FrameRecord,
+    next: &FrameRecord,
+    mother_brain_falls: bool,
+) -> Result<Upstream, Skip> {
     Ok(Upstream {
         status: status(next)?,
         select: word(next, ITEM_SELECT_BINDING)?,
         cancel: word(next, ITEM_CANCEL_BINDING)?,
-        can_switch: word(next, CURRENT_STATE_HANDLER)? == NORMAL_CURRENT
+        can_switch: SWITCHING_CURRENT.contains(&word(next, CURRENT_STATE_HANDLER)?)
             && !FACING_FORWARD.contains(&word(next, source::SAMUS_POSE)?),
         muted_by: muted_by(next)?,
         runs: runs(next)?,
-        shot_cancels: SHOT_CANCELS.iter().any(|&pc| ran(next, pc)),
+        dropped_before: if WEAPONS_DROP.iter().any(|&pc| ran(next, pc)) {
+            Dropped::Selection
+        } else {
+            Dropped::Nothing
+        },
+        dropped_after: dropped_after_status_bar(game_state(from)?),
         collected: next.hits.iter().find_map(|hit| {
             PICKUPS
                 .iter()
@@ -601,7 +775,7 @@ fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Sk
                 .map(|&(_, item)| item)
         }),
         power: PowerChanges {
-            turned_on: TURNS_THE_MINI_MAP_ON.iter().any(|&pc| ran(next, pc)),
+            turned_on: turned_on(from, next)?,
             mother_brain_falls,
         },
         position: Pair {
@@ -617,7 +791,7 @@ fn upstream(next: &FrameRecord, mother_brain_falls: bool) -> Result<Upstream, Sk
 }
 
 impl Upstream {
-    /// The buttons under the bindings, and the shot's cancel.
+    /// The buttons under the bindings.
     const fn controls(&self, pad: Pad) -> Controls {
         Controls {
             select: if has(pad.pressed, self.select) {
@@ -633,7 +807,6 @@ impl Upstream {
                 CancelButton::NotPressed
             },
             can_switch: self.can_switch,
-            shot_cancels: self.shot_cancels,
             muted_by: self.muted_by,
         }
     }
@@ -644,11 +817,13 @@ impl Upstream {
             frame: pad.frame,
             status: self.status,
             controls: self.controls(pad),
+            dropped_before_status_bar: self.dropped_before,
+            dropped_after_status_bar: self.dropped_after,
             collected: self.collected,
             mother_brain_falls: self.power.mother_brain_falls,
             mini_map: MiniMapInputs {
                 runs: self.runs,
-                turned_on: self.power.turned_on,
+                turned_on: self.power.turned_on.on(),
                 position: self.position,
                 room: self.room,
                 map,
@@ -661,7 +836,7 @@ impl Upstream {
     /// the turn, and off after Mother Brain's fall (spec: `MiniMapStill`, `BossBlanksTheMap`).
     const fn off(&self, before: MiniMapPower) -> bool {
         self.power.mother_brain_falls
-            || (matches!(before, MiniMapPower::Off) && !self.power.turned_on)
+            || (matches!(before, MiniMapPower::Off) && !self.power.turned_on.on())
     }
 
     /// Whether the mini-map updates (spec: `MiniMapStill`).
@@ -744,9 +919,84 @@ fn game_state(record: &FrameRecord) -> Result<u16, Skip> {
     word(record, source::GAME_STATE)
 }
 
-/// Whether the main loop runs gameplay in both records of a pair.
-fn in_play(from: &FrameRecord, next: &FrameRecord) -> Result<bool, Skip> {
-    Ok(game_state(from)? == MAIN_GAMEPLAY && game_state(next)? == MAIN_GAMEPLAY)
+/// Whether the selection or the one-shot item cleared from `from` to `next` with none of the
+/// writers the harness decodes behind it (`explained`): a drop whose store isn't watched.
+fn undecoded_drop(from: &FrameRecord, next: &FrameRecord, explained: bool) -> Result<bool, Skip> {
+    let (before, after) = (selection(from)?, selection(next)?);
+    let cleared = (before.item().is_some() && after.item().is_none())
+        || (before.one_shot().is_some() && after.one_shot().is_none());
+    Ok(cleared && !explained)
+}
+
+/// The frame of play from `from` to `next`, in whose frame `called` blanked the mini-map.
+fn frame_of_play(
+    from: &FrameRecord,
+    next: &FrameRecord,
+    called: Option<BossCalled>,
+) -> Result<Upstream, Skip> {
+    let frames = word(next, source::NMI_FRAME_COUNTER_WORD)?
+        .wrapping_sub(word(from, source::NMI_FRAME_COUNTER_WORD)?);
+    if frames != 1 {
+        return Err(Skip::Frames(frames));
+    }
+    let mother_brain_falls = match called {
+        None => false,
+        Some(BossCalled::MotherBrain) => true,
+        Some(BossCalled::InItsRoom(_)) => return Err(Skip::BossInPlay(word(next, BOSS_ID)?)),
+    };
+    let upstream = upstream(from, next, mother_brain_falls)?;
+    let controls = upstream.controls(pad(from)?);
+    let switched = controls.can_switch
+        && (controls.select == SelectButton::Pressed
+            || controls.cancel != CancelButton::NotPressed);
+    let explained = switched
+        || upstream.dropped_before != Dropped::Nothing
+        || upstream.dropped_after != Dropped::Nothing;
+    if undecoded_drop(from, next, explained)? {
+        return Err(Skip::UndecodedDrop);
+    }
+    Ok(upstream)
+}
+
+/// The step outside play from `from`, in game state `code`, to `next`, in whose frame `called`
+/// blanked the mini-map.
+fn outside_play(
+    from: &FrameRecord,
+    next: &FrameRecord,
+    code: u16,
+    called: Option<BossCalled>,
+) -> Result<Turn, Skip> {
+    match called {
+        Some(BossCalled::InItsRoom(boss)) => {
+            return Ok(Turn::BossMet {
+                boss,
+                room: room_cell(next)?,
+                area: area(next)?,
+            });
+        }
+        // Mother Brain's fall is her first form's, in gameplay.
+        Some(BossCalled::MotherBrain) => return Err(unnamed(BOSS_ID.name, MOTHER_BRAIN)),
+        None => {}
+    }
+    let dropped = if code == STATION_EXPLODES {
+        Dropped::Selection
+    } else {
+        Dropped::Nothing
+    };
+    if undecoded_drop(from, next, dropped != Dropped::Nothing)? {
+        return Err(Skip::UndecodedDrop);
+    }
+    let entered = area(next)?;
+    let new_area = if area(from)? == entered {
+        None
+    } else {
+        Some(Box::new(explored_kept(from, entered)?))
+    };
+    Ok(Turn::OutOfPlay(Outside {
+        turned_on: turned_on(from, next)?,
+        new_area,
+        dropped,
+    }))
 }
 
 impl Domain for HudDomain {
@@ -776,64 +1026,41 @@ impl Domain for HudDomain {
             .collect()
     }
 
-    /// Outside gameplay the HUD is decoded too, for the boss step a door or a load makes; a
-    /// record there that doesn't decode is skipped for its game state, not a defect.
+    /// Record N's game state picks the routine: the load flow's start-up of the HUD and the
+    /// pause screen's frames are other domains', skipped by name, and the next frame seeds
+    /// afresh.
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(HudState, Pad), Skip> {
-        let state = game_state(from)?;
-        hud(from)
-            .and_then(|hud| Ok((hud, pad(from)?)))
-            .map_err(|skip| {
-                if state == MAIN_GAMEPLAY {
-                    skip
-                } else {
-                    Skip::GameState(state)
-                }
-            })
+        let code = game_state(from)?;
+        match Routine::of(code) {
+            Routine::HudStartUp => Err(Skip::HudStartUp(code)),
+            Routine::Pause => Err(Skip::Paused(code)),
+            Routine::Play | Routine::OutsidePlay => Ok((hud(from)?, pad(from)?)),
+        }
     }
 
     fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<World, Skip> {
+        let code = game_state(from)?;
         let called = boss_called(next)?;
-        let world = |turn| World {
+        let turn = match Routine::of(code) {
+            Routine::HudStartUp => return Err(Skip::HudStartUp(code)),
+            Routine::Pause => return Err(Skip::Paused(code)),
+            Routine::Play => Turn::Frame(frame_of_play(from, next, called)?),
+            Routine::OutsidePlay => outside_play(from, next, code, called)?,
+        };
+        Ok(World {
             turn,
             events: Vec::new(),
             her_tile: None,
-        };
-        for record in [from, next] {
-            match (game_state(record)?, called) {
-                (MAIN_GAMEPLAY, _) => {}
-                (_, Some(BossCalled::InItsRoom(boss))) => {
-                    return Ok(world(Turn::BossMet {
-                        boss,
-                        room: room_cell(next)?,
-                        area: area(next)?,
-                    }));
-                }
-                (state, _) => return Err(Skip::GameState(state)),
-            }
-        }
-        let frames = word(next, source::NMI_FRAME_COUNTER_WORD)?
-            .wrapping_sub(word(from, source::NMI_FRAME_COUNTER_WORD)?);
-        if frames != 1 {
-            return Err(Skip::Frames(frames));
-        }
-        if word(from, source::ROOM_PTR)? != word(next, source::ROOM_PTR)? {
-            return Err(Skip::RoomChange);
-        }
-        let mother_brain_falls = match called {
-            None => false,
-            Some(BossCalled::MotherBrain) => true,
-            Some(BossCalled::InItsRoom(_)) => return Err(Skip::BossInPlay(word(next, BOSS_ID)?)),
-        };
-        Ok(world(Turn::Frame(upstream(next, mother_brain_falls)?)))
+        })
     }
 
     fn masks(&self, from: &FrameRecord, next: &FrameRecord, _pad: &Pad) -> Result<Vec<Mask>, Skip> {
         let mut masks = Vec::new();
-        if !in_play(from, next)? {
+        if Routine::of(game_state(from)?) != Routine::Play {
             return Ok(masks);
         }
         let falls = boss_called(next)? == Some(BossCalled::MotherBrain);
-        let upstream = upstream(next, falls)?;
+        let upstream = upstream(from, next, falls)?;
         let read_her = upstream.runs && !upstream.off(hud(from)?.mini_map);
         let near_edge =
             near_screen_edge(upstream.position.x) || near_screen_edge(upstream.position.y);
@@ -842,7 +1069,7 @@ impl Domain for HudDomain {
             && word(from, source::SAMUS_POSE)? != word(next, source::SAMUS_POSE)?
         {
             masks.push(Mask {
-                reason: "interim: her pose changed within its placement's reach of a screen's edge and the mini-map read her, so the placement ($91:EB88) may have moved her across after; no hit recorded, and samus-movement's model reports only the y the camera follows her from",
+                reason: POSITION_MASK,
                 fields: WINDOW_TILES.union(EXPLORED),
                 hides: Hides::AnotherWriter,
             });
@@ -850,29 +1077,51 @@ impl Domain for HudDomain {
         Ok(masks)
     }
 
-    fn step(&self, state: &mut HudState, pad: &Pad, world: &mut World) {
-        let (map, pictures) = self.content.of(world.turn.area());
-        match world.turn {
-            Turn::Frame(upstream) => {
-                let outcome =
-                    state
-                        .clone()
-                        .frame(&self.rules, pictures, &upstream.model(*pad, map));
-                *state = outcome.state;
-                world.events = outcome.events;
-            }
-            Turn::BossMet { boss, room, .. } => {
-                *state = state
-                    .clone()
-                    .boss_encountered(&self.rules, pictures, boss, room);
-            }
+    /// The world without a turn-on decoded from `05F7`'s edge alone, which is the compared
+    /// "mini-map off" of record N+1: every field it reaches is unverified on the pair.
+    fn neutral(&self, world: &World) -> Option<World> {
+        let mut neutral = world.clone();
+        let turned_on = match &mut neutral.turn {
+            Turn::Frame(upstream) => &mut upstream.power.turned_on,
+            Turn::OutOfPlay(outside) => &mut outside.turned_on,
+            Turn::BossMet { .. } => return None,
+        };
+        if *turned_on != TurnOn::AtTheEdge {
+            return None;
         }
+        *turned_on = TurnOn::No;
+        Some(neutral)
+    }
+
+    fn step(&self, state: &mut HudState, pad: &Pad, world: &mut World) {
+        world.events = match &world.turn {
+            Turn::Frame(upstream) => {
+                let (map, pictures) = self.content.of(upstream.map.area);
+                state.frame_of_play(&self.rules, pictures, &upstream.model(*pad, map))
+            }
+            Turn::OutOfPlay(outside) => {
+                state.out_of_play(&OutOfPlayInputs {
+                    mini_map_turned_on: outside.turned_on.on(),
+                    new_area: outside
+                        .new_area
+                        .as_deref()
+                        .map_or(NewArea::SameArea, NewArea::Entered),
+                    dropped: outside.dropped,
+                });
+                Vec::new()
+            }
+            &Turn::BossMet { boss, room, area } => {
+                let (_, pictures) = self.content.of(area);
+                state.boss_blanks_the_map(&self.rules, pictures, boss, room);
+                Vec::new()
+            }
+        };
         world.her_tile = state.grid.get(HER_TILE);
     }
 
     fn exercised(&self, state: &HudState, pad: &Pad, world: &World) -> Vec<usize> {
-        let (_, pictures) = self.content.of(world.turn.area());
-        exercised(state, *pad, world, pictures.diagonal.index())
+        let diagonal = self.content.pictures().diagonal.index();
+        exercised(state, *pad, world, diagonal)
     }
 
     fn fields(&self, state: &HudState) -> Declared {
@@ -888,8 +1137,9 @@ impl Domain for HudDomain {
             Skip::Unreadable(_)
             | Skip::NoPriority(_)
             | Skip::OneShotNotSelected { .. }
-            | Skip::BossInPlay(_) => Uncompared::Defect(skip.to_string()),
-            Skip::GameState(_) | Skip::Frames(_) | Skip::RoomChange => {
+            | Skip::BossInPlay(_)
+            | Skip::UndecodedDrop => Uncompared::Defect(skip.to_string()),
+            Skip::HudStartUp(_) | Skip::Paused(_) | Skip::NoHudYet | Skip::Frames(_) => {
                 Uncompared::Skip(skip.to_string())
             }
         }
@@ -918,8 +1168,9 @@ fn places(ids: impl IntoIterator<Item = BehaviourId>) -> Vec<usize> {
 /// diagonal's picture number.
 fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<usize> {
     use BehaviourId as B;
-    let upstream = match world.turn {
-        Turn::Frame(upstream) => upstream,
+    let upstream = match &world.turn {
+        Turn::Frame(upstream) => *upstream,
+        Turn::OutOfPlay(_) => return places([B::OutOfPlay]),
         Turn::BossMet { .. } => return places([B::BossBlanksTheMap]),
     };
     let status = &upstream.status;
@@ -955,9 +1206,11 @@ fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<us
             selected = item;
         }
     }
-    // Each of the weapons' four stores clears the selected item.
-    if controls.shot_cancels {
+    // Another domain's drop; the highlight shows it only when it lands before the status bar.
+    if upstream.dropped_before != Dropped::Nothing || upstream.dropped_after != Dropped::Nothing {
         entries.push(B::CancellingTheItem);
+    }
+    if upstream.dropped_before == Dropped::Selection {
         selected = None;
     }
     if upstream.collected.is_some() {
@@ -972,7 +1225,7 @@ fn exercised(state: &HudState, pad: Pad, world: &World, diagonal: u16) -> Vec<us
     if upstream.power.mother_brain_falls {
         entries.push(B::BossBlanksTheMap);
     }
-    if upstream.power.turned_on {
+    if upstream.power.turned_on.on() {
         entries.push(B::MiniMapStill);
     }
     if upstream.updates(state.mini_map) {

@@ -3,7 +3,7 @@
 use enum_map::Enum;
 
 /// A kind of ammunition the HUD counts, in the HUD's order.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Enum)]
 pub enum Ammo {
     /// Missiles.
     Missiles,
@@ -15,7 +15,10 @@ pub enum Ammo {
 
 /// An item the HUD can select: one of its five icons (§1.1). Not the pickups other domains name
 /// items; only these five have an icon to highlight.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
+///
+/// Spec: CyclingItems. Items compare in the HUD's order, and as an `Option`, "none" comes
+/// before every item.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Enum)]
 pub enum SelectableItem {
     /// An ammunition, selected while she has some.
     Ammo(Ammo),

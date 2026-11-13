@@ -1,18 +1,47 @@
-//! How Select, item cancel and a shot change the selection (§3).
+//! How Select, item cancel and another domain's drop change the selection (spec:
+//! CyclingItems, CancellingTheItem, OneShotItem, Switching).
 
 use crate::events::HudEvent;
-use crate::inputs::{CancelButton, Controls, SelectButton, Status};
+use crate::inputs::{CancelButton, Controls, Dropped, SelectButton, Status};
 use crate::item::SelectableItem;
 use crate::state::{HudState, Selection};
+
+impl Selection {
+    /// Spec: CancellingTheItem. A drop, at the point of the step it lands: the selection dropped
+    /// leaves none, and with it no one-shot item; the one-shot item dropped alone keeps the item
+    /// selected, no longer the one-shot item. It holds whether or not she can switch.
+    pub(crate) const fn apply_drop(&mut self, dropped: Dropped) {
+        *self = match (dropped, *self) {
+            (Dropped::Selection, _) => Self::None,
+            (Dropped::OneShotItemAlone, Self::OneShot(item)) => Self::Item(item),
+            (Dropped::Nothing | Dropped::OneShotItemAlone, unchanged) => unchanged,
+        };
+    }
+
+    /// Spec: CyclingItems. Select moves the selection to the first item after it, in the HUD's
+    /// order, that she has (an ammunition with a count, an item she has on); with none left
+    /// before the end, past the x-ray scope, to none. Spec: OneShotItem. With item cancel held
+    /// the item it lands on is the one-shot item; otherwise it isn't (item cancel pressed drops
+    /// the selection instead of cycling).
+    fn cycle(&mut self, status: &Status, cancel: CancelButton) {
+        let current = self.item();
+        let next = SelectableItem::ORDER
+            .into_iter()
+            .find(|&item| Some(item) > current && status.has(item));
+        *self = match (next, cancel) {
+            (None, _) => Self::None,
+            (Some(item), CancelButton::Held) => Self::OneShot(item),
+            (Some(item), CancelButton::NotPressed | CancelButton::Pressed) => Self::Item(item),
+        };
+    }
+}
 
 impl HudState {
     /// The buttons change the selection, and report `Switched` when they act.
     ///
     /// Spec: CyclingItems. While she can't switch, nothing changes. Spec: CancellingTheItem. Item
-    /// cancel pressed clears the selection, and with it the one-shot item, whatever Select does.
-    /// Otherwise Select pressed moves to the next item she has; spec: OneShotItem, with item
-    /// cancel held the new selection is the one-shot item, without it it isn't. Spec: Switching.
-    /// Either acting reports the item it lands on.
+    /// cancel pressed drops the selection, whatever Select does. Otherwise Select pressed cycles.
+    /// Spec: Switching. Either acting reports the item it lands on.
     pub(crate) fn press_buttons(
         &mut self,
         controls: Controls,
@@ -21,41 +50,11 @@ impl HudState {
         if !controls.can_switch {
             return None;
         }
-        if controls.cancel == CancelButton::Pressed {
-            self.selection = Selection::None;
-            return Some(HudEvent::Switched(None));
+        match (controls.cancel, controls.select) {
+            (CancelButton::Pressed, _) => self.selection.apply_drop(Dropped::Selection),
+            (cancel, SelectButton::Pressed) => self.selection.cycle(status, cancel),
+            (_, SelectButton::NotPressed) => return None,
         }
-        if controls.select == SelectButton::NotPressed {
-            return None;
-        }
-        let next = next_item_she_has(self.selection.item(), status);
-        self.selection = match (next, controls.cancel) {
-            (None, _) => Selection::None,
-            (Some(item), CancelButton::Held) => Selection::OneShot(item),
-            (Some(item), CancelButton::NotPressed | CancelButton::Pressed) => Selection::Item(item),
-        };
-        Some(HudEvent::Switched(next))
+        Some(HudEvent::Switched(self.selection.item()))
     }
-
-    /// Spec: CancellingTheItem. After the buttons, a shot the weapons cancel clears the selection,
-    /// and with it the one-shot item.
-    pub(crate) const fn shot_cancels(&mut self, controls: Controls) {
-        if controls.shot_cancels {
-            self.selection = Selection::None;
-        }
-    }
-}
-
-/// Spec: CyclingItems. Searches the HUD's order after `current` for the first item she has (an
-/// ammunition with a count, an item she has on); `None` when none is left before the end, past
-/// the x-ray scope.
-fn next_item_she_has(current: Option<SelectableItem>, status: &Status) -> Option<SelectableItem> {
-    let mut after_current = SelectableItem::ORDER.into_iter();
-    if let Some(current) = current {
-        // Skips past every item up to the current one, the current one included; from none,
-        // nothing is skipped.
-        after_current.find(|&item| item == current);
-    }
-    // Skips past each item she lacks.
-    after_current.find(|&item| status.has(item))
 }

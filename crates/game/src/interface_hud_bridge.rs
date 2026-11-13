@@ -18,10 +18,10 @@ use data::pose::transition::Control;
 use data::room::Area;
 use enum_map::enum_map;
 use interface_hud::{
-    Ammo, Ammunition, CancelButton, ColourSet, Controls, Energy, Equipped, Flip, FrameCount,
-    FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, MapCellSet, MapPictures,
-    MiniMapInputs, MiniMapPower, Mute, Place, Reserve, ReserveMode, Room, Rules, SelectButton,
-    SelectableItem, Selection, Shown, Status, Stock, Tile,
+    Ammo, Ammunition, CancelButton, ColourSet, Controls, Dropped, Energy, Equipped, Flip,
+    FrameCount, FrameInputs, HerMap, HudGrid, HudPictures, HudState, Icons, MapCellSet,
+    MapPictures, MiniMapInputs, MiniMapPower, Mute, Place, Reserve, ReserveMode, Room, Rules,
+    SelectButton, SelectableItem, Selection, Shown, Status, Stock, Tile,
 };
 use types::{Look, Pair, Picture};
 
@@ -161,6 +161,12 @@ impl HudContent {
             .find(|(each, _)| *each == area)
             .map_or(&self.blank, |(_, map)| map);
         (map, &self.pictures)
+    }
+
+    /// The HUD's pictures.
+    #[must_use]
+    pub const fn pictures(&self) -> &HudPictures {
+        &self.pictures
     }
 }
 
@@ -362,9 +368,11 @@ fn muted_by(movement: MovementType) -> Option<Mute> {
 ///
 /// She can switch while the normal current state handler runs her (the elevator's locked
 /// handler doesn't) and she doesn't face the screen. The engine fires no missiles, super
-/// missiles or power bombs, so no shot cancels the selection; its one item, the morph ball,
+/// missiles or power bombs, so the weapons never drop the selection; its one item, the morph ball,
 /// draws no icon. Nothing in the engine turns the mini-map on or off: it enters no room by a
-/// door or a load, meets no boss, and Mother Brain doesn't fall.
+/// door or a load, meets no boss, and Mother Brain doesn't fall. Nothing drops the selection:
+/// the engine has no rainbow beam, no elevator's start and no death (docs/LEGACY.md, "The HUD
+/// in the engine").
 fn inputs<'map>(
     state: &State,
     map: &'map HerMap,
@@ -400,7 +408,6 @@ fn inputs<'map>(
         select: select(&state.controller),
         cancel: cancel(&state.controller),
         can_switch: !pose::carried(samus, state.elevator) && !FACING_FORWARD.contains(&samus.pose),
-        shot_cancels: false,
         muted_by: muted_by(samus.movement),
     };
     let mini_map = &state.hud.mini_map;
@@ -412,6 +419,8 @@ fn inputs<'map>(
         frame: FrameCount(state.clock.counters.requested_byte),
         status,
         controls,
+        dropped_before_status_bar: Dropped::Nothing,
+        dropped_after_status_bar: Dropped::Nothing,
         collected: None,
         mother_brain_falls: false,
         mini_map: MiniMapInputs {
@@ -438,16 +447,15 @@ fn inputs<'map>(
     })
 }
 
-/// The model's HUD before and after its frame over the engine's State, the mini-map running when
-/// `runs`.
+/// The model's HUD before and after its frame of play over the engine's State, the mini-map
+/// running when `runs`. Every frame the engine runs is a frame of play: it has no door's passage,
+/// load or cinematic, the HUD's steps outside play (docs/LEGACY.md, "The HUD in the engine").
 fn frame(state: &State, content: &Content, runs: bool) -> Result<(HudState, HudState), HudFault> {
     let (map, pictures) = content.hud.of(state.hud.mini_map.area);
     let before = model(&state.hud)?;
     let inputs = inputs(state, map, runs)?;
-    let after = before
-        .clone()
-        .frame(&Rules::reference(), pictures, &inputs)
-        .state;
+    let mut after = before.clone();
+    after.frame_of_play(&Rules::reference(), pictures, &inputs);
     Ok((before, after))
 }
 

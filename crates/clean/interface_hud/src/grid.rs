@@ -43,10 +43,9 @@ impl<T: Copy, const COLUMNS: usize, const ROWS: usize> Grid<T, COLUMNS, ROWS> {
 
     /// Puts `value` in the cell at `place`; outside the grid, nothing changes.
     pub fn set(&mut self, place: Place, value: T) {
-        let Some((x, y)) = index(place) else {
-            return;
-        };
-        if let Some(cell) = self.rows.get_mut(y).and_then(|row| row.get_mut(x)) {
+        if let Some((x, y)) = index(place)
+            && let Some(cell) = self.rows.get_mut(y).and_then(|row| row.get_mut(x))
+        {
             *cell = value;
         }
     }

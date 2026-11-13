@@ -41,7 +41,7 @@ rounds = 8
 
 [[model]]
 name = "interface-hud"
-rounds = 5
+rounds = 6
 
 [[model]]
 name = "world-blocks"

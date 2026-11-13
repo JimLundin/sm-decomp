@@ -16,7 +16,7 @@ values it shows from the domains that own them (§1.3), and draws pictures the i
 tanks, the items she has on, her room's place on her map and where she is, and the frame count.
 
 **What it leaves to others** (each an input where it feeds us, §6 names who supplies each): what a
-shot does to the selection (the weapons cancel it); the energy, ammunition and items themselves
+shot does to the selection (the weapons drop it); the energy, ammunition and items themselves
 (damage, pickups, the stations that refill her); the pictures of the HUD and of her map (the
 importer); when a sound request is heard (the sound
 domain's queue); the HUD's first contents when a game starts or the pause screen gives the HUD
@@ -42,7 +42,7 @@ division and its remainder.
 | the selected item | an item or none (§1.1) | its icon is highlighted; what she fires | `CyclingItems`, `SelectionHighlight`; output (the weapons) |
 | the one-shot item | the selected item or none: whether the selection is the one-shot item | its icon flashes; the weapons drop the selection after one shot of it | `OneShotFlash`, `CyclingItems`; output (the weapons) |
 | the explored cells | a set of her map's cells | the mini-map shows them, and so does the pause screen's map | `Exploring`, `MiniMapWindow`, `DiagonalPicture`; output (the pause screen, saves) |
-| the mini-map is off | `bool`: from when a boss turns it off until it is turned on | the mini-map stops changing, her cell's blink with it | `MiniMapStill` |
+| the mini-map is off | `bool`: from when a boss turns it off until it is turned on | the mini-map stops changing, her cell's blink with it | `MiniMapStill`, `OutOfPlay` |
 
 Every cell keeps what it shows until a rule of this spec draws it. Nothing else carries from one
 frame to the next.
@@ -80,18 +80,31 @@ when Select cycles.
 | missiles, super missiles, power bombs | each a count and a capacity | `AmmoCounts`, `CyclingItems` |
 | equipment | whether she has the grapple beam on, and the x-ray scope | `CyclingItems` |
 | item select, item cancel | each: pressed this frame (it went down), or (cancel) held from before | `CyclingItems`, `CancellingTheItem`, `OneShotItem` |
-| can switch | `bool`: the player controls her and she doesn't face the screen | `CyclingItems`, `CancellingTheItem` |
-| the shot's cancel | `bool`: the weapons cancelled the selection after a shot this frame | `CancellingTheItem` |
+| can switch | `bool`: the player controls her, or a demo that plays by itself moves her, and she doesn't face the screen. The opening's scenes aren't frames of play (below) | `CyclingItems`, `CancellingTheItem` |
+| the selection dropped | none, or what another domain drops this step, and when: the selection (and with it the one-shot item) or the one-shot item alone; in a frame of play, before the status bar is drawn or after it. §6 names who: the weapons drop the selection before the status bar after a shot. When two drops arrive in one frame, the selection's wins | `CancellingTheItem`, `OutOfPlay` |
 | why no click | none, or she spin jumps, she wall jumps, the grapple beam is out, time is stopped | `SwitchClick` |
 | collected | an item whose pickup this frame draws its icon, or none | `IconsAppear` |
-| the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
-| the mini-map turned on | `bool`, an event held until a frame reads it, not a state: true when something turned the mini-map on since the last frame of play and no boss was encountered after it, false on every other frame. A turn-on outside play (the next room, a load, a new game or the demos' load) reaches the frame of play that follows it; one during this frame before the mini-map's turn (Crocomire's fall into the acid) reaches this frame. Whether the mini-map is on is the State `the mini-map is off` (§1) | `MiniMapStill` |
+| the mini-map runs | `bool`: false while she is held at a station (save, refill, map), drained, entering or leaving the gunship, dying, or while the game's opening shows her (the title screen's demos still run it) | `MiniMapStill` |
+| the mini-map turned on | `bool`, an event, not a state: true on the step in which something turned the mini-map on, false on every other. A turn-on outside play (a door's passage to the next room, a load, a new game or the demos' load) is a step outside play (`OutOfPlay`); one during a frame of play comes before the mini-map's turn (Crocomire's fall into the acid). Whether the mini-map is on is the State `the mini-map is off` (§1) | `MiniMapStill`, `OutOfPlay` |
+| a new area | the explored cells Progress keeps for the area she enters, on a step outside play that leads into another area; or none | `OutOfPlay` |
 | a boss encountered | the boss she encounters: Kraid, Draygon, Crocomire, Phantoon, or Ridley in Norfair or in Ceres, on entering its room while it lives; a step of its own, outside a frame of play (supplied by the door and the load flow) | `BossBlanksTheMap` |
 | Mother Brain falls | `bool`: her first form falls this frame, her brain in the tank destroyed (supplied by her fight) | `BossBlanksTheMap` |
 | her position | x, y: whole pixels in her room, after this frame's moves and before a pose change places her | `Exploring`, `MiniMapStill` |
 | her room | its top-left cell on her map, and its size in 16 px blocks across and down | `Exploring`, `MiniMapStill` |
 | her map | each cell's picture with its flips; the cells it charts; whether she has collected it; its beyond pictures (`LastColumnsShift`) | `MiniMapWindow`, `DiagonalPicture` |
 | the HUD's pictures | content, by name (§1.4), from the importer | every entry that draws a cell |
+
+**Frames of play.** The HUD takes one frame of play for each frame the game plays her and the
+enemies: in a room, and also while the picture fades in after a load, while it fades out on
+the way to the pause menu and in again after it, while the reserve tanks refill, in her death's
+first frames, while the time runs out, on Ceres's last frames after she reaches its elevator, as
+she escapes Zebes, and in the demos that play by themselves. The frame on which she enters a
+door is one: the door's passage starts after it. Two other domains replace the HUD's State on
+frames of their own, which are neither frames of play nor steps outside play: the load flow's
+start-up of the HUD as a game starts or loads, and the pause screen's frames, on which it draws
+the status bar itself (§6). Every other frame of the running game, once the HUD is drawn, is a
+step outside play (`OutOfPlay`): a door's passage, a load's other frames, the cinematics (the
+opening's scenes among them).
 
 ### 1.4 The HUD's pictures
 
@@ -230,14 +243,14 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ### OneShotFlash
 - kind: mechanic.
-- summary: the icon of the one-shot item flashes, 16 frames plain, then 16 highlighted.
-- params: 16 frames each way.
+- summary: the icon of the one-shot item flashes, `n` frames plain, then `n` highlighted.
+- params: `n`, the frames each way: 16.
 - switch: **Parameter** (the frames each way; the reference rules hold 16).
-- Every frame, after the highlight, the selection the one-shot item, `frame mod 32 ≥ 16` →
+- Every frame, after the highlight, the selection the one-shot item, `frame mod 2n ≥ n` →
   its icon takes the highlighted colours [C-flash-on, C-one-shot-set]
-- Every frame, after the highlight, the selection the one-shot item, `frame mod 32 < 16` →
-  its icon takes the plain colours, though it is selected [C-flash-off]
-- checked: constructed (no recorded row sets the one-shot item).
+- Every frame, after the highlight, the selection the one-shot item, `frame mod 2n < n` →
+  its icon takes the plain colours, though it is selected [C-flash-off, C-flash-adjusted]
+- checked: constructed (no recorded row sets the one-shot item; C-flash-adjusted runs `n` = 4).
 
 ### IconsAppear
 - kind: mechanic.
@@ -274,16 +287,27 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ### CancellingTheItem
 - kind: mechanic.
-- summary: item cancel puts the selection back to none; so does a shot the weapons cancel.
+- summary: item cancel puts the selection back to none; so do other domains when they drop it,
+  the weapons after a shot among them.
 - params: none.
 - switch: none.
 - Item cancel pressed this frame, she can switch → the selection becomes none, and with it
   the one-shot item, whatever Select does [C-R13, C-R14, C-cancel-wins]
-- The shot's cancel, after the cycling → the selection becomes none, and with it the one-shot
-  item [C-shot-cancels, C-shot-cancels-cannot-switch]
-- So the shot's cancel holds whether or not she can switch (C-shot-cancels-cannot-switch).
-- checked: oracle (the harness cases R13, R14); constructed (C-R13, C-R14, C-cancel-wins,
-  C-shot-cancels, C-shot-cancels-cannot-switch).
+- The selection dropped before the status bar, after the cycling → the selection becomes
+  none, and with it the one-shot item [C-shot-cancels, C-shot-cancels-cannot-switch,
+  C-dropped-before]
+- The drop takes the one-shot item alone → the selection stays, and isn't the one-shot item
+  [C-one-shot-dropped]
+- The selection dropped after the status bar → the selection becomes none, and with it the
+  one-shot item, once the status bar is drawn [C-death-drops]
+- So a drop, the weapons' after a shot among them, holds whether or not she can switch
+  (C-shot-cancels-cannot-switch, C-death-drops).
+- So a drop after the status bar leaves the old item lit and last shown until the next frame of
+  play draws the bar (C-death-drops).
+- checked: oracle (the harness cases R13, R14; chain-0059-A293:585 and chain-0220-D017:145,
+  her death's first frame, the selection dropped after the bar); constructed (C-R13, C-R14,
+  C-cancel-wins, C-shot-cancels, C-shot-cancels-cannot-switch, C-dropped-before,
+  C-one-shot-dropped, C-death-drops, the death's twin).
 
 ### OneShotItem
 - kind: mechanic.
@@ -347,13 +371,14 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ### HerBlink
 - kind: mechanic.
-- summary: her cell blinks, 8 frames in the blink colours and 8 as drawn.
-- params: 8 frames each way.
+- summary: her cell blinks, `n` frames in the blink colours and `n` as drawn.
+- params: `n`, the frames each way: 8.
 - switch: **Parameter** (the frames each way; the reference rules hold 8).
-- After the window is drawn, `frame mod 16 < 8` → her window cell takes the blink colours [C-R1,
-  C-R2, C-mm-charted]
-- So with `frame mod 16 ≥ 8` it shows as `MiniMapWindow` drew it (C-R3, C-R16).
-- checked: oracle (every harness case with a mini-map); constructed (their twins).
+- After the window is drawn, `frame mod 2n < n` → her window cell takes the blink colours [C-R1,
+  C-R2, C-mm-charted, C-blink-adjusted]
+- So with `frame mod 2n ≥ n` it shows as `MiniMapWindow` drew it (C-R3, C-R16).
+- checked: oracle (every harness case with a mini-map); constructed (their twins;
+  C-blink-adjusted runs `n` = 4).
 
 ### MiniMapStill
 - kind: mechanic.
@@ -371,6 +396,33 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   (C-mm-turned-on-not-running).
 - checked: oracle (the harness case R18, a recorded frame with the mini-map off); constructed
   (the others, C-mm-turned-on, C-mm-turned-on-not-running, C-mm-outside-below).
+
+### OutOfPlay
+- kind: mechanic.
+- summary: between frames of play (a door's passage, a load's frames, the cinematics) the HUD
+  stands still: nothing it shows changes, but the mini-map can be turned on, a passage into
+  another area brings that area's explored cells, and the selection can be dropped.
+- params: none.
+- switch: none.
+- A step outside play → every cell and the values last shown stay as they are; so do the
+  selection, the one-shot item, the explored cells and the mini-map's off, but for the three
+  rules that follow [C-out-of-play-still]
+- A step outside play, the mini-map turned on → it isn't off [C-out-of-play-turned-on,
+  C-out-of-play-kraid]
+- A step outside play into a new area → the explored cells become the ones Progress keeps for
+  it [C-out-of-play-new-area]
+- A step outside play, the selection dropped → the selection becomes none, and with it the
+  one-shot item [C-out-of-play-dropped]
+- So leaving the room of a boss by a door turns the mini-map on during the passage: the next room's
+  first frame finds it on, and its window keeps the blank until that frame draws it
+  (C-out-of-play-turned-on, C-out-of-play-kraid).
+- So the window shows the old area's cells until the new area's first frame of play draws it
+  (C-out-of-play-new-area).
+- So entering the room of a boss is a step outside play of its own (`BossBlanksTheMap`).
+- checked: oracle (every door's passage and Ceres's last cinematic in the Ceres rows;
+  boss-kraid-defeated:1090, the passage out of Kraid's room turning the mini-map on);
+  constructed (C-out-of-play-still, C-out-of-play-turned-on, C-out-of-play-kraid, its twin,
+  C-out-of-play-new-area, C-out-of-play-dropped).
 
 ### BossBlanksTheMap
 - kind: mechanic.
@@ -391,13 +443,14 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   | Ridley, in Norfair | (0, 0), (0, 1) |
   | Ridley, in Ceres | none |
 
-- switch: **Parameter** (each boss's screens; the reference rules hold the table).
+- switch: **Parameter** (each boss's screens; the reference rules hold the table;
+  C-mm-boss-adjusted gives Kraid others).
 - A boss encountered, or Mother Brain falls → every cell of the window shows the map's blank
   in the charted colours, and the mini-map is off [C-mm-boss, C-mm-boss-across, C-mm-boss-alone,
   C-mm-turned-on-and-fall, C-mm-boss-not-running, C-mm-boss-while-off]
 - The same, a screen `(sx, sy)` the boss names → the map's cell `((rx + sx) mod 64, ry + sy)`
   joins the explored cells [C-mm-boss, C-mm-boss-across, C-mm-boss-alone, C-mm-boss-draygon,
-  C-mm-boss-phantoon, C-mm-boss-ridley, C-mm-boss-alone-none]
+  C-mm-boss-phantoon, C-mm-boss-ridley, C-mm-boss-alone-none, C-mm-boss-adjusted]
 - A boss encountered → the window, the explored cells and the mini-map's off as above; nothing
   else changes: the mini-map doesn't update or blink, the selection stays, and the status bar
   isn't drawn [C-mm-boss-alone, C-mm-boss-alone-none]
@@ -463,9 +516,10 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ## 5. Order that matters
 
-- The selection changes first (Select, item cancel), then the weapons may cancel it after a shot
-  and Mother Brain may fall, then the mini-map updates (unless she fell), then the status bar is
-  drawn from the selection as it then is.
+- The selection changes first (Select, item cancel), then another domain may drop it (the
+  weapons after a shot among them), and Mother Brain may fall, then the mini-map updates
+  (unless she fell), then the status bar is drawn from the selection as it then is; a drop after the status
+  bar comes last.
 - In the status bar: the icon a pickup draws comes before the highlight and the flash, so a
   selected item's new icon is lit; the flash has the last word on the colours of the one-shot
   item.
@@ -482,21 +536,24 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 
 ## 6. Out of scope, and who supplies it
 
-- **The weapons:** firing, and the shot's cancel: a shot of the one-shot item, or the
-  last of the selected ammunition, puts the selection back to none. They read the selection, the
-  one-shot item and `Switched` (a switch drops the charge).
+- **The weapons:** firing, and the drop of the selection after a shot (below). They read the
+  selection, the one-shot item and `Switched` (a switch drops the charge).
 - **Her look:** her gun opens or closes when the selection changes, and a switch reloads her
   suit's colours; they read the selection and `Switched`.
 - **Energy, reserves and pickups:** the values this domain shows, and the pickup that calls
   `IconsAppear`.
-- **Progress:** the area, the map collected, the explored cells of the other areas.
+- **Progress:** the area, the map collected, the explored cells of the other areas: those of the
+  area she enters on a step outside play that leads into another area (`a new area`); it keeps
+  the explored cells of the area she leaves.
 - **The load flow and the pause screen:** the HUD's first contents (the status bar's frame, the
-  icons she has, the counts).
+  icons she has, the counts), on their own frames (§1.3): the load flow's start-up of the HUD as
+  a game starts or loads, and the pause screen's frames, which draw the status bar themselves.
 - **Doors:** the frame count's reset at a door.
 - **Doors and the load flow:** `a boss encountered`, on entering the room of Kraid,
   Draygon, Crocomire, Phantoon or Ridley (Ceres's or Norfair's) while it lives, outside a frame
-  of play; and `the mini-map turned on`, at each new room ahead of its boss, at a load, at a
-  new game and at the demos' load.
+  of play; and `the mini-map turned on`, in each door's passage ahead of the next room's boss,
+  at a load, at a new game and at the demos' load, each a step outside play.
+- **The main loop:** which frames are frames of play and which are steps outside play (§1.3).
 - **The bosses' domain (Crocomire's fight):** `the mini-map turned on` when Crocomire falls into
   the acid, during a frame of play.
 - **Her control (samus-movement, the stations, cinematics and the intro):** `the mini-map runs`,
@@ -504,6 +561,19 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
   game's opening.
 - **The bosses' domain (the fight with Mother Brain):** `Mother Brain falls`, when her first
   form falls, her brain in the tank destroyed, during a frame of play.
+- **The opening's scenes (the cinematics):** the selection they give her: missiles as the
+  opening's Mother Brain scene starts, none as its hatching scene starts (§7). The opening
+  shows no HUD, and its scenes are steps outside play: her input there is the opening's own and
+  never presses item select or item cancel.
+- **Who drops the selection** (`the selection dropped`): the weapons, before the status bar,
+  the selection: after a shot of the one-shot item or of the last of the selected ammunition,
+  after a special beam attack, and as she puts away the x-ray scope or the grapple beam, being the
+  one-shot item; Mother Brain's rainbow beam, before the
+  status bar, as it empties her ammunition: the one-shot item whenever it empties a kind of
+  ammunition, and the selection with it when that kind is selected; an elevator starting, with
+  the game's drop-the-selection option on, before the status bar; her death, on its first frame, after
+  the status bar; and, on steps outside play, a door's passage with that option on,
+  and the station exploding with her aboard when the escape's time runs out.
 - **The importer:** the HUD's pictures (§1.4) and her map's.
 - **The video encoder:** moving the HUD's cells to the screen every frame.
 - **The sound domain:** when the `Click` request is heard, or dropped.
@@ -513,3 +583,11 @@ this spec chooses instead (stated simplifications, docs/LEGACY.md):
 1. Both of the mini-map's column rules, the diagonal picture, the bosses' blank, the one-shot item
    and a pickup's icon have constructed vectors only; a recording of a pickup, of a one-shot item
    and of Kraid's fight would give the harness cases for most of them.
+2. The opening's scenes set the selection (§6): the weapons fire missiles in its Mother Brain
+   scene. Whether a scene's selection is an input of this domain (the selection becomes it, not
+   the one-shot item) or the cinematics own the selection while the opening shows no HUD is the root's
+   to settle before the whole-movie run; no compared frame reaches it, since the opening shows
+   no HUD.
+3. The escape's timer in Ceres is drawn as sprites over the room, not in the status bar's cells:
+   this spec doesn't state it, though the plan lists it with the HUD (domains.md, the Ceres
+   stretch). Its owner and its spec are the root's to name.

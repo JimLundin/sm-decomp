@@ -4,7 +4,9 @@
 //! The file is read with `toml` and `serde` into the shape declared once below, every table of
 //! it closed to keys the file's header doesn't define, every name an enum of the names it does,
 //! and every "column,row" key a place on the grid it names; that shape is then turned into the
-//! model's own types.
+//! model's own types. Each vector runs under its rules (the game's, with each value the vector
+//! gives in its place), as the step it names, which refuses an input the header allows only in
+//! another step.
 
 #[cfg(test)]
 mod shape {
@@ -66,11 +68,13 @@ mod shape {
         #[serde(rename = "source")]
         pub _source: Source,
         pub entries: Vec<String>,
+        pub rules: Option<RulesIn>,
         #[serde(default)]
-        pub step: Step,
+        pub step: StepIn,
         pub frame: Option<u8>,
         #[serde(default)]
         pub before: BeforeIn,
+        #[serde(default)]
         pub inputs: InputsIn,
         pub after: AfterIn,
     }
@@ -84,10 +88,33 @@ mod shape {
 
     /// The step a vector takes.
     #[derive(Deserialize, Default, Clone, Copy)]
-    pub enum Step {
+    pub enum StepIn {
         #[default]
         Frame,
         BossEvent,
+        OutOfPlay,
+    }
+
+    /// `rules`: the adjustable rules a vector runs under; a key left out is the game's.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct RulesIn {
+        pub one_shot_flash: Option<u8>,
+        pub her_blink: Option<u8>,
+        pub boss_screens: Option<BossScreensIn>,
+    }
+
+    /// `boss_screens`: the screens each boss named explores, `[across, down]`.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields, rename_all = "PascalCase")]
+    pub struct BossScreensIn {
+        pub kraid: Option<Vec<[u16; 2]>>,
+        pub draygon: Option<Vec<[u16; 2]>>,
+        pub crocomire: Option<Vec<[u16; 2]>>,
+        pub phantoon: Option<Vec<[u16; 2]>>,
+        pub mother_brain: Option<Vec<[u16; 2]>>,
+        pub ridley_in_norfair: Option<Vec<[u16; 2]>>,
+        pub ridley_in_ceres: Option<Vec<[u16; 2]>>,
     }
 
     /// A vector's before.
@@ -134,7 +161,7 @@ mod shape {
     }
 
     /// A vector's inputs; which are allowed depends on the step.
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Default)]
     #[serde(deny_unknown_fields)]
     pub struct InputsIn {
         pub energy: Option<[u16; 2]>,
@@ -147,10 +174,40 @@ mod shape {
         pub select: Option<SelectIn>,
         pub cancel: Option<CancelIn>,
         pub can_switch: Option<bool>,
-        pub shot_cancels: Option<bool>,
         pub muted_by: Option<MuteIn>,
+        pub dropped: Option<DroppedIn>,
+        pub new_area: Option<NewAreaIn>,
         pub collected: Option<ItemName>,
         pub mini_map: Option<MiniMapIn>,
+    }
+
+    /// `dropped`: what another domain drops, and (a `Frame` step only) when.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct DroppedIn {
+        pub what: DropWhatIn,
+        pub when: Option<DropWhenIn>,
+    }
+
+    /// What a drop takes.
+    #[derive(Deserialize, Clone, Copy)]
+    pub enum DropWhatIn {
+        Selection,
+        OneShot,
+    }
+
+    /// When a drop lands in a frame of play.
+    #[derive(Deserialize, Clone, Copy)]
+    pub enum DropWhenIn {
+        BeforeStatusBar,
+        AfterStatusBar,
+    }
+
+    /// `new_area`: the explored cells Progress keeps for the area the step leads into.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct NewAreaIn {
+        pub explored: Vec<[i32; 2]>,
     }
 
     /// `mini_map`; which keys are allowed depends on the step.
@@ -161,7 +218,7 @@ mod shape {
         pub turned_on: Option<bool>,
         pub mother_brain_falls: Option<bool>,
         pub position: Option<[u16; 2]>,
-        pub room: RoomIn,
+        pub room: Option<RoomIn>,
         pub map: Option<MapIn>,
         pub boss: Option<BossName>,
     }
@@ -397,16 +454,17 @@ mod convert {
 
     use enum_map::enum_map;
     use interface_hud::{
-        Ammo, Ammunition, CancelButton, Controls, Energy, Equipped, FrameCount, FrameInputs,
-        HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look, MapCellSet, MapPictures,
-        MiniMapInputs, MiniMapPower, Mute, Pair, Place, Reserve, ReserveMode, Room, RoomBoss,
-        Rules, SelectButton, SelectableItem, Selection, Shown, Status, Stock,
+        Alternation, Ammo, Ammunition, Boss, CancelButton, Controls, Dropped, Energy, Equipped,
+        FrameCount, FrameInputs, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look,
+        MapCellSet, MapPictures, MiniMapInputs, MiniMapPower, Mute, NewArea, OutOfPlayInputs, Pair,
+        Place, Reserve, ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection,
+        Shown, Status, Stock,
     };
 
     use super::shape::{
-        AfterIn, BeforeIn, BossName, CancelIn, Equipment, IconsIn, InputsIn, ItemName, MapIn,
-        MiniMapIn, MuteIn, PictureIn, PicturesIn, PlaceIn, RoomIn, SelectIn, ShownIn, Step,
-        VectorFile, VectorIn,
+        AfterIn, BeforeIn, BossName, BossScreensIn, CancelIn, DropWhatIn, DropWhenIn, DroppedIn,
+        Equipment, IconsIn, InputsIn, ItemName, MapIn, MiniMapIn, MuteIn, PictureIn, PicturesIn,
+        PlaceIn, RoomIn, RulesIn, SelectIn, ShownIn, StepIn, VectorFile, VectorIn,
     };
 
     /// The vector file.
@@ -419,6 +477,40 @@ mod convert {
     const MAP_COLUMNS: i32 = 64;
     /// Her map's rows.
     const MAP_ROWS: i32 = 32;
+
+    /// The step a vector takes, with its inputs: the one entry point the vectors run through,
+    /// built here as the main loop would choose among the model's three.
+    enum Step<'a> {
+        /// A frame of play.
+        FrameOfPlay(FrameInputs<'a>),
+        /// A step outside play.
+        OutOfPlay(OutOfPlayInputs<'a>),
+        /// A boss met on entering its room, from her room's top-left cell.
+        BossEncountered(Boss, Place),
+    }
+
+    impl Step<'_> {
+        /// Takes the step on `state`, returning what it reports; only a frame of play reports
+        /// anything.
+        fn take(
+            &self,
+            state: &mut HudState,
+            rules: &Rules,
+            pictures: &HudPictures,
+        ) -> Vec<HudEvent> {
+            match self {
+                Self::FrameOfPlay(inputs) => state.frame_of_play(rules, pictures, inputs),
+                Self::OutOfPlay(inputs) => {
+                    state.out_of_play(inputs);
+                    Vec::new()
+                }
+                &Self::BossEncountered(boss, room) => {
+                    state.boss_blanks_the_map(rules, pictures, boss, room);
+                    Vec::new()
+                }
+            }
+        }
+    }
 
     /// The file, read.
     pub fn load() -> Result<VectorFile, String> {
@@ -476,34 +568,88 @@ mod convert {
         /// `Err` when the vector breaks the file's format.
         pub fn run(&self, pictures: &HudPictures) -> Result<Vec<String>, String> {
             let before = state(&self.before, pictures)?;
-            let rules = Rules::reference();
-            let (actual, events) = match self.step {
-                Step::Frame => {
-                    let frame = self.frame.ok_or("a Frame step has a frame")?;
-                    let map = her_map(self.inputs.mini_map.as_ref(), pictures)?;
-                    let inputs = frame_inputs(FrameCount(frame), &self.inputs, &map)?;
-                    let outcome = before.clone().frame(&rules, pictures, &inputs);
-                    (outcome.state, outcome.events)
-                }
-                Step::BossEvent => {
-                    if self.frame.is_some() {
-                        return Err("a BossEvent step has no frame".to_owned());
-                    }
-                    let (boss, room) = boss_event(&self.inputs)?;
-                    let state = before
-                        .clone()
-                        .boss_encountered(&rules, pictures, boss, room);
-                    (state, Vec::new())
-                }
-            };
+            let rules = self.rules.as_ref().map_or_else(Rules::reference, rules);
+            let map = her_map(self.inputs.mini_map.as_ref(), pictures)?;
+            let new_area = self
+                .inputs
+                .new_area
+                .as_ref()
+                .map(|area| cell_set(&area.explored))
+                .transpose()?;
+            let step = self.step(&map, new_area.as_ref())?;
+            let mut after = before.clone();
+            let events = step.take(&mut after, &rules, pictures);
             let expected = expected_state(&self.after, &before)?;
             let expected_events: Vec<HudEvent> = self.after.events.iter().map(|e| e.0).collect();
-            Ok(differences(&expected, &actual, &expected_events, &events))
+            Ok(differences(&expected, &after, &expected_events, &events))
+        }
+
+        /// The step the vector takes, with its inputs; only a `Frame` step has a frame count.
+        fn step<'a>(
+            &self,
+            map: &'a HerMap,
+            new_area: Option<&'a MapCellSet>,
+        ) -> Result<Step<'a>, String> {
+            match (self.step, self.frame) {
+                (StepIn::Frame, Some(frame)) => {
+                    frame_inputs(FrameCount(frame), &self.inputs, map).map(Step::FrameOfPlay)
+                }
+                (StepIn::Frame, None) => Err("a Frame step has a frame".to_owned()),
+                (StepIn::BossEvent, None) => boss_event(&self.inputs),
+                (StepIn::OutOfPlay, None) => {
+                    out_of_play(&self.inputs, new_area).map(Step::OutOfPlay)
+                }
+                (StepIn::BossEvent | StepIn::OutOfPlay, Some(_)) => {
+                    Err("only a Frame step has a frame".to_owned())
+                }
+            }
         }
     }
 
+    /// The rules a vector runs under: the game's, with each value the vector gives in its place.
+    fn rules(given: &RulesIn) -> Rules {
+        let mut rules = Rules::reference();
+        if let Some(frames_each_way) = given.one_shot_flash {
+            rules.one_shot_flash = Alternation { frames_each_way };
+        }
+        if let Some(frames_each_way) = given.her_blink {
+            rules.her_blink = Alternation { frames_each_way };
+        }
+        for (boss, screens) in given.boss_screens.iter().flat_map(boss_screens) {
+            rules.boss_screens[boss] = screens;
+        }
+        rules
+    }
+
+    /// Each boss `boss_screens` names, with its screens.
+    fn boss_screens(given: &BossScreensIn) -> impl Iterator<Item = (Boss, Vec<Screen>)> + '_ {
+        let BossScreensIn {
+            kraid,
+            draygon,
+            crocomire,
+            phantoon,
+            mother_brain,
+            ridley_in_norfair,
+            ridley_in_ceres,
+        } = given;
+        [
+            (Boss::Kraid, kraid),
+            (Boss::Draygon, draygon),
+            (Boss::Crocomire, crocomire),
+            (Boss::Phantoon, phantoon),
+            (Boss::MotherBrain, mother_brain),
+            (Boss::RidleyInNorfair, ridley_in_norfair),
+            (Boss::RidleyInCeres, ridley_in_ceres),
+        ]
+        .into_iter()
+        .filter_map(|(boss, screens)| {
+            let screens = screens.as_ref()?.iter().map(|&[x, y]| Screen { x, y });
+            Some((boss, screens.collect()))
+        })
+    }
+
     /// A `BossEvent`'s inputs: her room's cell and the boss, and nothing else.
-    fn boss_event(inputs: &InputsIn) -> Result<(RoomBoss, Place), String> {
+    fn boss_event(inputs: &InputsIn) -> Result<Step<'static>, String> {
         let InputsIn {
             energy: None,
             reserve: None,
@@ -515,8 +661,9 @@ mod convert {
             select: None,
             cancel: None,
             can_switch: None,
-            shot_cancels: None,
             muted_by: None,
+            dropped: None,
+            new_area: None,
             collected: None,
             mini_map:
                 Some(MiniMapIn {
@@ -524,7 +671,7 @@ mod convert {
                     turned_on: None,
                     mother_brain_falls: None,
                     position: None,
-                    room: RoomIn { cell, blocks: None },
+                    room: Some(RoomIn { cell, blocks: None }),
                     map: None,
                     boss: Some(boss),
                 }),
@@ -533,14 +680,94 @@ mod convert {
             return Err("a BossEvent's only inputs are mini_map's room cell and boss".to_owned());
         };
         let boss = match boss {
-            BossName::Kraid => RoomBoss::Kraid,
-            BossName::Draygon => RoomBoss::Draygon,
-            BossName::Crocomire => RoomBoss::Crocomire,
-            BossName::Phantoon => RoomBoss::Phantoon,
-            BossName::RidleyInNorfair => RoomBoss::RidleyInNorfair,
-            BossName::RidleyInCeres => RoomBoss::RidleyInCeres,
+            BossName::Kraid => Boss::Kraid,
+            BossName::Draygon => Boss::Draygon,
+            BossName::Crocomire => Boss::Crocomire,
+            BossName::Phantoon => Boss::Phantoon,
+            BossName::RidleyInNorfair => Boss::RidleyInNorfair,
+            BossName::RidleyInCeres => Boss::RidleyInCeres,
         };
-        Ok((boss, point(*cell)))
+        Ok(Step::BossEncountered(boss, point(*cell)))
+    }
+
+    /// An `OutOfPlay` step's inputs: `mini_map`'s `turned_on`, `new_area` and `dropped`
+    /// without its `when`, and nothing else.
+    fn out_of_play<'a>(
+        inputs: &InputsIn,
+        new_area: Option<&'a MapCellSet>,
+    ) -> Result<OutOfPlayInputs<'a>, String> {
+        let refused = || {
+            "an OutOfPlay step's only inputs are mini_map's turned_on, new_area and dropped \
+             without its when"
+                .to_owned()
+        };
+        let InputsIn {
+            energy: None,
+            reserve: None,
+            auto_reserve: None,
+            missiles: None,
+            super_missiles: None,
+            power_bombs: None,
+            equipped: None,
+            select: None,
+            cancel: None,
+            can_switch: None,
+            muted_by: None,
+            dropped,
+            new_area: _,
+            collected: None,
+            mini_map,
+        } = inputs
+        else {
+            return Err(refused());
+        };
+        let mini_map_turned_on = match mini_map {
+            None => false,
+            Some(MiniMapIn {
+                runs: None,
+                turned_on,
+                mother_brain_falls: None,
+                position: None,
+                room: None,
+                map: None,
+                boss: None,
+            }) => turned_on.unwrap_or(false),
+            Some(_) => return Err(refused()),
+        };
+        let dropped = match dropped {
+            None => Dropped::Nothing,
+            Some(DroppedIn { what, when: None }) => drop_of(*what),
+            Some(DroppedIn { when: Some(_), .. }) => return Err(refused()),
+        };
+        Ok(OutOfPlayInputs {
+            mini_map_turned_on,
+            new_area: new_area.map_or(NewArea::SameArea, NewArea::Entered),
+            dropped,
+        })
+    }
+
+    /// The drop of what a `dropped` takes.
+    const fn drop_of(what: DropWhatIn) -> Dropped {
+        match what {
+            DropWhatIn::Selection => Dropped::Selection,
+            DropWhatIn::OneShot => Dropped::OneShotItemAlone,
+        }
+    }
+
+    /// A `Frame` step's two drops, before the status bar and after it: its `dropped` lands at
+    /// its `when`, before the status bar if the vector doesn't say, and nothing at the other.
+    fn frame_drops(dropped: Option<&DroppedIn>) -> (Dropped, Dropped) {
+        match dropped {
+            None => (Dropped::Nothing, Dropped::Nothing),
+            Some(DroppedIn {
+                what,
+                when: None | Some(DropWhenIn::BeforeStatusBar),
+            }) => (drop_of(*what), Dropped::Nothing),
+            Some(DroppedIn {
+                what,
+                when: Some(DropWhenIn::AfterStatusBar),
+            }) => (Dropped::Nothing, drop_of(*what)),
+        }
     }
 
     /// A `Frame` step's inputs.
@@ -549,6 +776,9 @@ mod convert {
         inputs: &InputsIn,
         map: &'map HerMap,
     ) -> Result<FrameInputs<'map>, String> {
+        if inputs.new_area.is_some() {
+            return Err("only an OutOfPlay step has a new_area".to_owned());
+        }
         let [now, capacity] = inputs.energy.ok_or("a Frame step has an energy")?;
         let stock = |stock: Option<[u16; 2]>| {
             let [count, capacity] = stock.unwrap_or([0, 0]);
@@ -573,6 +803,8 @@ mod convert {
             ReserveMode::Manual
         };
         let (mini_map, mother_brain_falls) = mini_map_inputs(inputs.mini_map.as_ref(), map)?;
+        let (dropped_before_status_bar, dropped_after_status_bar) =
+            frame_drops(inputs.dropped.as_ref());
         Ok(FrameInputs {
             frame,
             status: Status {
@@ -585,6 +817,8 @@ mod convert {
                 equipped,
             },
             controls: controls(inputs),
+            dropped_before_status_bar,
+            dropped_after_status_bar,
             collected: inputs.collected.and_then(ItemName::item),
             mother_brain_falls,
             mini_map,
@@ -604,7 +838,6 @@ mod convert {
                 Some(CancelIn::Held) => CancelButton::Held,
             },
             can_switch: inputs.can_switch.unwrap_or(true),
-            shot_cancels: inputs.shot_cancels.unwrap_or(false),
             muted_by: inputs.muted_by.map(|mute| match mute {
                 MuteIn::Grapple => Mute::Grapple,
                 MuteIn::SpinJump => Mute::SpinJump,
@@ -616,44 +849,56 @@ mod convert {
 
     /// The mini-map's inputs and whether Mother Brain falls; with no `mini_map`, it has nothing
     /// to do: it doesn't run.
+    ///
+    /// A mini-map that runs reads where she is, her room's cell and blocks, and her map; her
+    /// fall reads her room's cell. An input no rule reads this step may be left out, and stands
+    /// at 0.
     fn mini_map_inputs<'map>(
         mini_map: Option<&MiniMapIn>,
         map: &'map HerMap,
     ) -> Result<(MiniMapInputs<'map>, bool), String> {
-        let Some(mini_map) = mini_map else {
-            let idle = MiniMapInputs {
-                runs: false,
-                turned_on: false,
-                position: Pair { x: 0, y: 0 },
-                room: Room {
-                    cell: Pair { x: 0, y: 0 },
-                    blocks: Pair { x: 0, y: 0 },
-                },
-                map,
-                map_collected: false,
-            };
-            return Ok((idle, false));
+        let idle = MiniMapIn {
+            runs: Some(false),
+            turned_on: None,
+            mother_brain_falls: None,
+            position: None,
+            room: None,
+            map: None,
+            boss: None,
         };
+        let mini_map = mini_map.unwrap_or(&idle);
         if mini_map.boss.is_some() {
             return Err("a Frame step names no boss".to_owned());
         }
-        let [x, y] = mini_map.position.ok_or("mini_map has a position")?;
-        let [across, down] = mini_map.room.blocks.ok_or("room has blocks")?;
+        let runs = mini_map.runs.unwrap_or(true);
+        let falls = mini_map.mother_brain_falls.unwrap_or(false);
+        let room = mini_map.room.as_ref();
+        let blocks = room.and_then(|room| room.blocks);
+        let reads_all = mini_map.position.is_some() && blocks.is_some() && mini_map.map.is_some();
+        if runs && !reads_all {
+            return Err("a running mini-map has a position, a room's blocks and a map".to_owned());
+        }
+        if falls && room.is_none() {
+            return Err("Mother Brain's fall reads her room's cell".to_owned());
+        }
+        let [x, y] = mini_map.position.unwrap_or([0, 0]);
+        let [across, down] = blocks.unwrap_or([0, 0]);
         let inputs = MiniMapInputs {
-            runs: mini_map.runs.unwrap_or(true),
+            runs,
             turned_on: mini_map.turned_on.unwrap_or(false),
             position: Pair { x, y },
             room: Room {
-                cell: point(mini_map.room.cell),
+                cell: point(room.map_or([0, 0], |room| room.cell)),
                 blocks: Pair { x: across, y: down },
             },
             map,
             map_collected: mini_map.map.as_ref().is_some_and(|map| map.collected),
         };
-        Ok((inputs, mini_map.mother_brain_falls.unwrap_or(false)))
+        Ok((inputs, falls))
     }
 
-    /// Her map: a cell not listed shows the map's blank, as does a beyond picture not listed.
+    /// Her map: a cell not listed shows the map's blank, as does a beyond picture not listed;
+    /// with no map given, every cell does.
     fn her_map(mini_map: Option<&MiniMapIn>, pictures: &HudPictures) -> Result<HerMap, String> {
         let mut map = HerMap {
             pictures: MapPictures::filled(pictures.map_blank),
@@ -666,10 +911,7 @@ mod convert {
             beyond,
         }) = mini_map.and_then(|mini_map| mini_map.map.as_ref())
         else {
-            return match mini_map {
-                Some(_) => Err("mini_map has a map".to_owned()),
-                None => Ok(map),
-            };
+            return Ok(map);
         };
         lay_pictures(&mut map.pictures, cells, 0);
         lay_pictures(&mut map.pictures, beyond, MAP_COLUMNS);
@@ -865,9 +1107,25 @@ mod tests {
     /// Changes to the file that each add a key or a name its header doesn't define: a key in
     /// each table, a place off its grid or not written "column,row" in each table keyed by
     /// places, and each kind of name.
-    const UNKNOWN: [(&str, &str); 30] = [
+    const UNKNOWN: [(&str, &str); 37] = [
         // A key in each table.
         ("[pictures]", "speed = 1\n[pictures]"),
+        (
+            "rules = { one_shot_flash = 4 }",
+            "rules = { one_shot_flash = 4, speed = 1 }",
+        ),
+        (
+            "{ Kraid = [[2, 0], [0, 2]] }",
+            "{ Kraid = [[2, 0], [0, 2]], speed = [] }",
+        ),
+        (
+            "[vector.inputs.new_area]",
+            "[vector.inputs.new_area]\nspeed = 1",
+        ),
+        (
+            "dropped = { what = \"OneShot\" }",
+            "dropped = { what = \"OneShot\", speed = 1 }",
+        ),
         ("diagonal = \"2E4\"", "diagonal = \"2E4\"\nspeed = \"000\""),
         ("[pictures.icons]", "[pictures.icons]\nSpeedBooster = []"),
         ("id = \"C-R1\"", "id = \"C-R1\"\nspeed = 1"),
@@ -877,6 +1135,11 @@ mod tests {
             "shown = { speed = 1, energy = 333,",
         ),
         ("can_switch = true", "can_switch = true\nspeed = 1"),
+        // The shot's cancel is no input of its own: it is the drop before the status bar.
+        (
+            "can_switch = true",
+            "can_switch = true\nshot_cancels = true",
+        ),
         ("runs = true", "runs = true\nspeed = 1"),
         ("blocks = [128, 32] }", "blocks = [128, 32], speed = 1 }"),
         ("collected = false", "collected = false\nspeed = 1"),
@@ -912,6 +1175,8 @@ mod tests {
         ("select = \"Pressed\"", "select = \"Held\""),
         ("cancel = \"Pressed\"", "cancel = \"Released\""),
         ("collected = \"Missiles\"", "collected = \"Bombs\""),
+        ("what = \"OneShot\"", "what = \"Everything\""),
+        ("when = \"AfterStatusBar\"", "when = \"Later\""),
         // A picture, a flip or a colour set the format lacks.
         ("full_tank = \"0A1\"", "full_tank = \"4A1\""),
         ("full_tank = \"0A1\"", "full_tank = \"0A1x\""),
@@ -922,6 +1187,40 @@ mod tests {
     fn an_unknown_key_or_name_fails_the_file() {
         for (from, to) in UNKNOWN {
             assert!(load_changed(from, to).is_err(), "{to} was read");
+        }
+    }
+
+    /// Changes to the file that each give a step an input its header allows only in another
+    /// step: a drop's when outside play, an input of a frame outside play, a mini-map that runs
+    /// outside play, and a new area in a frame.
+    const MISPLACED: [(&str, &str); 4] = [
+        (
+            "[vector.inputs]\ndropped = { what = \"Selection\" }",
+            "[vector.inputs]\ndropped = { what = \"Selection\", when = \"AfterStatusBar\" }",
+        ),
+        (
+            "[vector.inputs]\ndropped = { what = \"Selection\" }",
+            "[vector.inputs]\nenergy = [1, 1]\ndropped = { what = \"Selection\" }",
+        ),
+        (
+            "[vector.inputs.mini_map]\nturned_on = true\n[vector.after]",
+            "[vector.inputs.mini_map]\nturned_on = true\nruns = true\n[vector.after]",
+        ),
+        (
+            "muted_by = \"SpinJump\"\n[vector.inputs.mini_map]",
+            "muted_by = \"SpinJump\"\nnew_area = { explored = [] }\n[vector.inputs.mini_map]",
+        ),
+    ];
+
+    #[test]
+    fn an_input_outside_its_step_fails_a_vector() {
+        for (from, to) in MISPLACED {
+            let file = load_changed(from, to).unwrap();
+            let pictures = pictures(&file.pictures);
+            assert!(
+                file.vector.iter().any(|v| v.run(&pictures).is_err()),
+                "{to} was run"
+            );
         }
     }
 

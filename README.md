@@ -27,7 +27,7 @@ The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): s
 | M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 10 of 35 | 100.0 % (every domain) | 36.4 % (world-doors) | 22 of 22: S1, S5, CAM, H2, P1, B8, R1, E1, E2 (in progress); C1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 | M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 20 of 70 | 99.6 % (samus-movement) | 24.7 % (world-doors) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, B8, R1, E1, E2 (in progress); S4, H1, W1, C1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
-Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **9 are in progress** and **0 done**; 28 have not started. **50 rounds** have landed on 8 models; the plan estimates 157 rounds for the whole game.
+Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **9 are in progress** and **0 done**; 28 have not started. **51 rounds** have landed on 8 models; the plan estimates 157 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
 
@@ -42,7 +42,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 | samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 20 | 345 | 20,856 of 40,835 | 9,400 | 8,987 | 1.05 |
 | world-camera | CAM (in progress) | in progress | 6 | 83 | 23,501 of 40,835 | 1,839 | 1,762 | 1.04 |
 | run-progress | P1 (in progress) | in progress | 8 | 76 | 40,442 of 40,835 | 819 | 1,061 | 0.77 |
-| interface-hud | H2 (in progress) | in progress | 5 | 84 | 23,604 of 37,669 | 2,695 | 2,112 | 1.28 |
+| interface-hud | H2 (in progress) | in progress | 6 | 95 | 26,821 of 37,669 | 2,700 | 2,337 | 1.16 |
 | world-blocks | W2 (in progress) | in progress | 4 | 100 | 23,517 of 35,949 | 2,395 | 2,074 | 1.15 |
 | samus-appearance | S5 (in progress) | in progress | 5 | 98 | 20,977 of 37,669 | 2,191 | 1,412 | 1.55 |
 | boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 5,437 of 40,835 | 1,299 | 1,150 | 1.13 |
@@ -68,8 +68,8 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
 | not yet rebuilt | 49 | 4,981 | 29,887 | 6,920 |
-| bridges from the engine to the models | 11 | 2,878 | 17,271 | 3,010 |
-| rebuilt models, shared types included | 87 | 4,127 | 24,761 | 10,297 |
+| bridges from the engine to the models | 11 | 2,881 | 17,288 | 3,013 |
+| rebuilt models, shared types included | 87 | 4,128 | 24,766 | 10,290 |
 
 ### Verification
 

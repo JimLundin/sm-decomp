@@ -1,13 +1,19 @@
 //! The HUD model, built from its behaviour spec alone: the status bar at the top of the screen,
 //! the selected item and the mini-map.
 //!
-//! The HUD is a view of what the game holds, drawn into a grid of 32 × 3 cells. Each frame,
-//! `HudState::frame` takes the rules, the HUD's pictures (content the importer supplies), what
-//! other domains report (her energy, ammunition and reserve, the items she has on, the buttons,
-//! where she is on her map) and the HUD's state, and returns the state after the frame (its grid
-//! is the picture drawn) with the `HudEvent`s it reports: `Switched` for the weapons and her
-//! look, `Click` for the sound domain. Outside a frame, `HudState::boss_encountered` is a boss
-//! met on entering its room, which blanks the mini-map and turns it off.
+//! The HUD is a view of what the game holds, drawn into a grid of 32 × 3 cells. Its state,
+//! `HudState`, is changed in place by each step of the running game; its grid is the picture
+//! drawn. Which step a frame is, the main loop chooses, calling one of three entries:
+//!
+//! - `HudState::frame_of_play`, with the rules, the HUD's pictures (content the importer
+//!   supplies) and what other domains report (her energy, ammunition and reserve, the items she
+//!   has on, the buttons, the selection dropped before the status bar and after it, where she is
+//!   on her map). It returns the `HudEvent`s it reports: `Switched` for the weapons and her
+//!   look, `Click` for the sound domain.
+//! - `HudState::out_of_play`: a step between frames of play, where only the mini-map's turn-on,
+//!   a new area's explored cells and a drop of the selection change anything.
+//! - `HudState::boss_blanks_the_map`: a boss met on entering its room, which blanks the
+//!   mini-map and turns it off.
 //!
 //! The HUD's cells, her map's pictures and the sets of her map's cells are each a `Grid`, read
 //! and written at a `Place`, column first; a place outside a grid has no cell. A picture with
@@ -16,8 +22,8 @@
 //! each one's `Default` is an empty stand-in for a caller with nothing imported yet, which no
 //! rule reads.
 //!
-//! The values the rules read are in `Rules`; `Rules::reference` holds the spec's. `CATALOGUE`
-//! lists one behaviour per spec entry.
+//! The values the rules read, every Parameter the spec lists, are in `Rules`: `Rules::reference`,
+//! its default, holds the spec's. `CATALOGUE` lists one behaviour per spec entry.
 #![expect(
     clippy::doc_markdown,
     reason = "docs name a spec entry as the spec writes it, Spec: Name, keeping backticks for Rust items"
@@ -25,7 +31,6 @@
 
 mod catalogue;
 mod events;
-mod frame;
 mod grid;
 mod inputs;
 mod item;
@@ -37,20 +42,21 @@ mod rules;
 mod selection;
 mod state;
 mod status_bar;
+mod step;
 mod tile;
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use events::HudEvent;
-pub use frame::FrameOutcome;
 pub use grid::{Grid, Place};
 pub use inputs::{
-    Ammunition, CancelButton, Controls, Energy, Equipped, FrameCount, FrameInputs, MiniMapInputs,
-    Mute, Reserve, ReserveMode, Room, SelectButton, Status, Stock,
+    Ammunition, CancelButton, Controls, Dropped, Energy, Equipped, FrameCount, FrameInputs,
+    MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve, ReserveMode, Room, SelectButton,
+    Status, Stock,
 };
 pub use item::{Ammo, SelectableItem};
 pub use map::{HerMap, MapCellSet, MapPictures};
 pub use pictures::{HudPictures, Icons};
-pub use rules::{Alternation, Boss, RoomBoss, Rules};
+pub use rules::{Alternation, Boss, Rules};
 pub use state::{HudState, MiniMapPower, Selection, Shown};
 pub use tile::{ColourSet, HudGrid, Tile};
 pub use types::{Checked, Flip, Kind, Look, Pair, Picture, Screen, Switch};

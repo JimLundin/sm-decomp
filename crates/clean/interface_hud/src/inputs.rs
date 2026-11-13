@@ -1,12 +1,13 @@
-//! What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she
-//! is on her map.
+//! What the HUD reads each step (§1.3): in a frame of play, the values other domains own, the
+//! buttons, what other domains drop before the status bar and after it, and where she is on her
+//! map; outside play, the mini-map's turn-on, a new area and a drop.
 
 use enum_map::EnumMap;
 use types::Pair;
 
 use crate::grid::Place;
 use crate::item::{Ammo, SelectableItem};
-use crate::map::HerMap;
+use crate::map::{HerMap, MapCellSet};
 
 /// The count of frames the game has finished, mod 256, as this frame begins; a lag frame isn't
 /// one (§1.3).
@@ -74,13 +75,13 @@ impl Ammunition {
 
     /// Her stock of `ammo`.
     #[must_use]
-    pub fn of(&self, ammo: Ammo) -> Stock {
-        self.0[ammo]
+    pub fn of(&self, ammo: Ammo) -> &Stock {
+        &self.0[ammo]
     }
 
     /// Her stock of each ammunition, in the HUD's order.
-    pub fn stocks(&self) -> impl Iterator<Item = (Ammo, Stock)> + '_ {
-        self.0.iter().map(|(ammo, &stock)| (ammo, stock))
+    pub fn stocks(&self) -> impl Iterator<Item = (Ammo, &Stock)> {
+        self.0.iter()
     }
 }
 
@@ -160,10 +161,9 @@ pub struct Controls {
     pub select: SelectButton,
     /// Item cancel.
     pub cancel: CancelButton,
-    /// The player controls her and she doesn't face the screen.
+    /// The player controls her, or a demo that plays by itself moves her, and she doesn't face
+    /// the screen.
     pub can_switch: bool,
-    /// The weapons cancelled the selection after a shot this frame.
-    pub shot_cancels: bool,
     /// Why a switch makes no click, or `None`.
     pub muted_by: Option<Mute>,
 }
@@ -177,18 +177,16 @@ pub struct Room {
     pub blocks: Pair<u16>,
 }
 
-/// What the mini-map reads (§1.3).
+/// What the mini-map reads in a frame of play (§1.3).
 #[derive(Clone, Copy, Debug)]
 pub struct MiniMapInputs<'map> {
-    /// False while she is held at a station, drained, entering or leaving the gunship, or while
-    /// the game's opening shows her.
+    /// False while she is held at a station, drained, entering or leaving the gunship, dying, or
+    /// while the game's opening shows her (the title screen's demos still run it).
     pub runs: bool,
-    /// The mini-map turned on: an event the caller holds until a frame reads it, not a state.
-    /// True when something turned the mini-map on since the last frame of play and no boss was
-    /// encountered after it, false on every other frame. A turn-on outside play (the next room,
-    /// a load, a new game, the demos' load) reaches the frame of play that follows it; one
-    /// during this frame before the mini-map's turn (Crocomire's fall into the acid) reaches
-    /// this frame. Whether the mini-map is on is the state's (`HudState::mini_map`).
+    /// The mini-map turned on: an event of this step, not a state. True when something turned
+    /// it on during this frame, ahead of the mini-map's turn (Crocomire's fall into the acid).
+    /// A turn-on outside play is the step outside play's (`OutOfPlayInputs`). Whether the
+    /// mini-map is on is the state's (`HudState::mini_map`).
     pub turned_on: bool,
     /// Where she is: whole pixels in her room, after this frame's moves and before a pose change
     /// places her.
@@ -201,6 +199,19 @@ pub struct MiniMapInputs<'map> {
     pub map_collected: bool,
 }
 
+/// The selection dropped (§1.3): what another domain drops at one point of a step, if anything.
+///
+/// When two drops arrive at one point, the selection's wins: the caller gives `Selection`.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Dropped {
+    /// Nothing is dropped.
+    Nothing,
+    /// The selection: it becomes none, and with it the one-shot item.
+    Selection,
+    /// The one-shot item alone: the item stays selected, but isn't the one-shot item.
+    OneShotItemAlone,
+}
+
 /// Everything the HUD reads in one frame of play (§1.3).
 #[derive(Clone, Copy, Debug)]
 pub struct FrameInputs<'map> {
@@ -210,10 +221,40 @@ pub struct FrameInputs<'map> {
     pub status: Status,
     /// The buttons.
     pub controls: Controls,
+    /// The selection dropped before the status bar is drawn, so the bar shows the selection
+    /// after it: the weapons' drop after a shot, Mother Brain's rainbow beam, an elevator
+    /// starting with the game's drop-the-selection option on.
+    pub dropped_before_status_bar: Dropped,
+    /// The selection dropped after the status bar is drawn, so the bar shows the selection
+    /// before it until the next frame of play: her death, on its first frame.
+    pub dropped_after_status_bar: Dropped,
     /// The item whose pickup this frame draws its icon, or `None`.
     pub collected: Option<SelectableItem>,
     /// Mother Brain's first form falls this frame, her brain in the tank destroyed.
     pub mother_brain_falls: bool,
     /// What the mini-map reads.
     pub mini_map: MiniMapInputs<'map>,
+}
+
+/// A new area (§1.3): whether a step outside play leads into another area.
+#[derive(Clone, Copy, Debug)]
+pub enum NewArea<'cells> {
+    /// She stays in the area she is in.
+    SameArea,
+    /// The step leads into another area: the explored cells Progress keeps for it.
+    Entered(&'cells MapCellSet),
+}
+
+/// Everything the HUD reads in a step outside play (spec: OutOfPlay): a door's passage, a
+/// load's other frames, a cinematic.
+#[derive(Clone, Copy, Debug)]
+pub struct OutOfPlayInputs<'cells> {
+    /// The mini-map turned on in this step: a door's passage to the next room, a load, a new
+    /// game or the demos' load.
+    pub mini_map_turned_on: bool,
+    /// Whether the step leads into another area.
+    pub new_area: NewArea<'cells>,
+    /// The selection dropped in this step: a door's passage with the game's drop-the-selection
+    /// option on, the station exploding with her aboard.
+    pub dropped: Dropped,
 }

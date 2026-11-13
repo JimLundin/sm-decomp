@@ -12,12 +12,21 @@
 #   the map's blank, which are drawn with their flips.
 # - Each [[vector]] is one step of the HUD, from its state before the step to its state after:
 #   id; source ("constructed": every vector is); entries (the spec's behaviours it exercises);
-#   step (optional, default "Frame"); frame (the frame count mod 256 as the frame begins, spec
-#   §1.3; a "Frame" step only); before; inputs; after.
+#   rules (optional); step (optional, default "Frame"); frame (the frame count mod 256 as the
+#   frame begins, spec §1.3; a "Frame" step only); before; inputs; after.
+# - rules (optional): the values of the adjustable rules this vector runs under; left out, the
+#   game's own (the reference). Each key can be given alone; one left out is the game's:
+#   - one_shot_flash: the frames each way of the one-shot item's flash (spec OneShotFlash; the
+#     game's 16).
+#   - her_blink: the frames each way of her cell's blink (spec HerBlink; the game's 8).
+#   - boss_screens = { <boss> = [[across, down], ...] }: the screens a boss explores (spec
+#     BossBlanksTheMap), the boss named as in boss below or "MotherBrain"; a boss not named
+#     keeps the game's screens.
 # - step: "Frame" is one frame of play. "BossEvent" is the door or the load flow meeting a boss,
 #   on entering its room while it lives (spec `BossBlanksTheMap`): it has no `frame` key, and
 #   its only inputs are mini_map's room (its cell) and boss; its after is compared after the
-#   event alone.
+#   event alone. "OutOfPlay" is a step outside play (spec `OutOfPlay`): it has no `frame` key,
+#   and its only inputs are mini_map's turned_on, new_area and dropped (without its when).
 # - A cell is "PPP:c", then "h" and "v" for its flips as above: PPP its picture's number, c its
 #   colour set (spec §1.4). A HUD row is one string of its 32 cells, left to right, separated
 #   by spaces; hud is the three rows, top first. A map picture is a picture alone (its colour
@@ -41,12 +50,18 @@
 #   - select (optional): "Pressed" when item select goes down this frame; cancel (optional):
 #     "Pressed" when item cancel goes down this frame, "Held" when it is held from before.
 #   - can_switch (optional, default true): spec `CyclingItems`.
-#   - shot_cancels (optional, default false): the weapons cancelled the selection this frame.
 #   - muted_by (optional, default none): "SpinJump", "WallJump", "Grapple" or "TimeStopped", why a
 #     switch makes no click (spec `SwitchClick`; listed alphabetically, the order means nothing).
+#   - dropped (optional, default none): { what, when }, another domain drops the selection
+#     (spec CancellingTheItem; the weapons' drop after a shot among them): what is "Selection"
+#     (the selection becomes none, and with it the one-shot item) or "OneShot" (the one-shot item
+#     alone); when (a "Frame" step only, default "BeforeStatusBar") is "BeforeStatusBar" or
+#     "AfterStatusBar".
+#   - new_area (an "OutOfPlay" step only, optional): { explored }, the step leads into another
+#     area, and explored is the cells Progress keeps for it, [column, row] (spec OutOfPlay).
 #   - collected (optional, default none): the item whose icon a pickup this frame draws.
 #   - mini_map (optional, default: the mini-map has nothing to do): runs (default true);
-#     turned_on (default false, a "Frame" step only): the mini-map is turned on (spec
+#     turned_on (default false, a "Frame" or "OutOfPlay" step): the mini-map is turned on (spec
 #     `MiniMapStill`); mother_brain_falls (default false, a "Frame" step only): her first form
 #     falls this frame (spec `BossBlanksTheMap`); position = [x, y], her position in the room in
 #     pixels; room = { cell = [column, row], her room's top-left cell on her map, the map's top
@@ -68,10 +83,11 @@
 #   explored cells, with the scene four map rows down and invented pictures. Their after, and
 #   that of every other vector, is worked from the spec's rules.
 # - The other constructed vectors (C): cases no record reaches (skipping an item she lacks, the
-#   one-shot item and its flash, a shot's cancel, an icon appearing, a capacity of 0, more than
-#   fourteen tanks, the clicks' other mutes, a mini-map that doesn't update, a collected map, the
-#   diagonal picture, the map's first and last columns, cells outside the map, spec §1.5, each
-#   boss); each gives its case in a comment.
+#   one-shot item and its flash, a shot's cancel, a drop, an icon appearing, a capacity of 0,
+#   more than fourteen tanks, the clicks' other mutes, a mini-map that doesn't update, a
+#   collected map, the diagonal picture, the map's first and last columns, cells outside the
+#   map, spec §1.5, each boss, a step outside play, the adjusted rules); each gives its case in
+#   a comment.
 
 # The HUD's pictures: invented, in the importer's format.
 [pictures]
@@ -1062,7 +1078,7 @@ energy = [299, 299]
 missiles = [5, 5]
 super_missiles = [5, 5]
 power_bombs = [5, 5]
-shot_cancels = true
+dropped = { what = "Selection" }
 [vector.after]
 changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
@@ -1092,7 +1108,7 @@ missiles = [5, 5]
 super_missiles = [5, 5]
 power_bombs = [5, 5]
 can_switch = false
-shot_cancels = true
+dropped = { what = "Selection" }
 [vector.after]
 changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
 shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
@@ -2923,3 +2939,327 @@ shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selec
 selection = "None"
 one_shot = false
 explored = [[20, 31], [21, 31]]
+
+[[vector]]
+# A step outside play (a door's passage out of the room of a boss), the mini-map off and
+# nothing turning it on: every cell and value stays, and the mini-map stays off
+id = "C-out-of-play-still"
+source = "constructed"
+entries = ["OutOfPlay"]
+step = "OutOfPlay"
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+mini_map_off = true
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+mini_map_off = true
+explored = [[20, 10], [20, 11], [21, 10]]
+
+[[vector]]
+# A step outside play in which the mini-map is turned on (a door's passage out of the
+# room of a boss): it is no longer off, and its window keeps the blank until a frame of
+# play draws it
+id = "C-out-of-play-turned-on"
+source = "constructed"
+entries = ["OutOfPlay"]
+step = "OutOfPlay"
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+mini_map_off = true
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.inputs.mini_map]
+turned_on = true
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+mini_map_off = false
+explored = [[20, 10], [20, 11], [21, 10]]
+
+[[vector]]
+# OneShotFlash adjusted: 4 frames each way. The frame count 50 is 2 into its 8, so the one-shot
+# item's icon is plain (the reference's 16 would leave it highlighted, 50 mod 32 being 18)
+id = "C-flash-adjusted"
+source = "constructed"
+entries = ["OneShotFlash"]
+rules = { one_shot_flash = 4 }
+frame = 50
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+[vector.after]
+changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+
+[[vector]]
+# HerBlink adjusted: 4 frames each way, on C-R16's frame. The frame count 187 is 3 into its 8,
+# so her cell takes the blink colours (the reference's 8 leaves it as drawn, 187 mod 16 being 11)
+id = "C-blink-adjusted"
+source = "constructed"
+entries = ["HerBlink", "MiniMapWindow", "Exploring"]
+rules = { her_blink = 4 }
+frame = 187
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 09D:2 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
+selection = "None"
+one_shot = false
+explored = [[26, 13]]
+[vector.inputs]
+energy = [99, 99]
+reserve = 0
+auto_reserve = false
+missiles = [0, 0]
+super_missiles = [0, 0]
+power_bombs = [0, 0]
+can_switch = false
+[vector.inputs.mini_map]
+runs = true
+position = [1408, 257]
+room = { cell = [21, 13], blocks = [128, 48] }
+[vector.inputs.mini_map.map]
+collected = false
+pictures = { "24,13" = "0B9h", "24,14" = "044v", "24,15" = "099hv", "25,15" = "054v", "26,13" = "07Fhv", "26,14" = "09D", "26,15" = "185h", "27,15" = "0B2", "28,15" = "112hv" }
+charted = [[24, 14], [24, 15], [26, 13], [26, 15], [27, 15]]
+[vector.after]
+changed = { "28,0" = "07F:2hv", "28,1" = "09D:7" }
+shown = { energy = 99, missiles = 0, super_missiles = 0, power_bombs = 0, selection = "None" }
+selection = "None"
+one_shot = false
+explored = [[26, 13], [26, 14]]
+
+[[vector]]
+# BossBlanksTheMap adjusted: Kraid's screens are (2, 0) and (0, 2), the other bosses' the
+# reference's. Entering his room from cell (19, 9): the window blanks, and (21, 9) and (19, 11)
+# are explored, none of the reference's four
+id = "C-mm-boss-adjusted"
+source = "constructed"
+entries = ["BossBlanksTheMap"]
+rules = { boss_screens = { Kraid = [[2, 0], [0, 2]] } }
+step = "BossEvent"
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 0AF:2 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 11E:2h 042:7v 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.inputs.mini_map]
+room = { cell = [19, 9] }
+boss = "Kraid"
+[vector.after]
+changed = { "28,0" = "088:3h", "27,1" = "088:3h", "28,1" = "088:3h" }
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+mini_map_off = true
+explored = [[19, 11], [20, 10], [20, 11], [21, 9], [21, 10]]
+
+[[vector]]
+# The harness case boss-kraid-defeated:1090 (leaving Kraid's room: the door's passage turns
+# the mini-map on), over invented content: nothing selected, the mini-map off before the step
+# and on after it, every cell and value as it was
+id = "C-out-of-play-kraid"
+source = "constructed"
+entries = ["OutOfPlay"]
+step = "OutOfPlay"
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = true
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.inputs.mini_map]
+turned_on = true
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+mini_map_off = false
+explored = [[20, 10], [20, 11], [21, 10]]
+
+[[vector]]
+# A step outside play that leads into another area: the explored cells become the ones
+# Progress keeps for the new area; every cell and the selection stay, the window's included,
+# until a frame of play draws it
+id = "C-out-of-play-new-area"
+source = "constructed"
+entries = ["OutOfPlay"]
+step = "OutOfPlay"
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = false
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.inputs.new_area]
+explored = [[40, 5], [41, 5], [41, 6]]
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = false
+explored = [[40, 5], [41, 5], [41, 6]]
+
+[[vector]]
+# A step outside play that drops the selection (the station explodes with her aboard): the
+# selection becomes none, and with it the one-shot item; the cells and the item last shown
+# stay
+id = "C-out-of-play-dropped"
+source = "constructed"
+entries = ["OutOfPlay", "CancellingTheItem"]
+step = "OutOfPlay"
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = true
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.inputs]
+dropped = { what = "Selection" }
+[vector.after]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "None"
+one_shot = false
+explored = [[20, 10], [20, 11], [21, 10]]
+
+[[vector]]
+# The harness case chain-0059-A293:585 (her death's first frame) over invented content: its
+# frame count and selection. The selection is dropped after the status bar is drawn, so the
+# super missiles' icon stays lit and the item last shown stays; the mini-map doesn't run
+id = "C-death-drops"
+source = "constructed"
+entries = ["CancellingTheItem", "MiniMapStill"]
+frame = 3
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:4 106:4h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A2:5h 0A2:5h 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:4 0A8:4h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 097:3 097:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 0, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
+selection = "SuperMissiles"
+one_shot = false
+explored = [[20, 10], [20, 11], [21, 10]]
+[vector.inputs]
+energy = [0, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+can_switch = false
+dropped = { what = "Selection", when = "AfterStatusBar" }
+[vector.inputs.mini_map]
+runs = false
+[vector.after]
+shown = { energy = 0, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "SuperMissiles" }
+selection = "None"
+one_shot = false
+
+[[vector]]
+# A frame of play whose selection is dropped before the status bar is drawn (an elevator
+# starting with the game's drop-the-selection option on): the missiles' icon goes plain, nothing is
+# lit, and the highlight's move clicks
+id = "C-dropped-before"
+source = "constructed"
+entries = ["CancellingTheItem", "SelectionHighlight", "SwitchClick"]
+frame = 20
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:4 1F0:4 082:4h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:4 0E5:4 0AC:4h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "Missiles" }
+selection = "Missiles"
+one_shot = false
+[vector.inputs]
+energy = [299, 299]
+missiles = [5, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+dropped = { what = "Selection" }
+[vector.after]
+changed = { "10,0" = "082:5", "11,0" = "1F0:5", "12,0" = "082:5h", "10,1" = "0AC:5", "11,1" = "0E5:5", "12,1" = "0AC:5h" }
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "None" }
+selection = "None"
+one_shot = false
+events = ["Click"]
+
+[[vector]]
+# A frame of play that drops the one-shot item alone (Mother Brain's rainbow beam empties her
+# missiles while the grapple beam is the one-shot item): the grapple beam stays selected and
+# lit, though the frame count 3 would have flashed it plain; the missiles' count is drawn
+id = "C-one-shot-dropped"
+source = "constructed"
+entries = ["CancellingTheItem", "OneShotFlash", "AmmoCounts"]
+frame = 3
+[vector.before]
+hud = [
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 082:5 1F0:5 082:5h 0B4:3 106:5 106:5h 0B4:3 098:5 09E:5 0B4:3 040:4 040:4h 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0A1:2 0A1:2 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0AC:5 0E5:5 0AC:5h 0B4:3 0A8:5 0A8:5h 0B4:3 074:5v 18C:5 0B4:3 063:4 063:4h 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+  "0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 1AB:3 1AB:3 0B4:3 0B4:3 097:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 097:3 110:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 0B4:3 088:3h 088:3h 088:3h 088:3h 088:3h 0B4:3",
+]
+shown = { energy = 299, missiles = 5, super_missiles = 5, power_bombs = 5, selection = "GrappleBeam" }
+selection = "GrappleBeam"
+one_shot = true
+[vector.inputs]
+energy = [299, 299]
+missiles = [0, 5]
+super_missiles = [5, 5]
+power_bombs = [5, 5]
+equipped = ["GrappleBeam"]
+dropped = { what = "OneShot" }
+[vector.after]
+changed = { "12,2" = "097:3" }
+shown = { energy = 299, missiles = 0, super_missiles = 5, power_bombs = 5, selection = "GrappleBeam" }
+selection = "GrappleBeam"
+one_shot = false

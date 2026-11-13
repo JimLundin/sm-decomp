@@ -184,8 +184,12 @@ impl HudState {
 
     /// Spec: BossBlanksTheMap. A boss blanks the mini-map: every window cell shows the map's
     /// blank in the charted colours, each screen the boss names, from her room's top-left cell
-    /// `room`, joins the explored cells, and the mini-map is off.
-    pub(crate) fn blank_mini_map(
+    /// `room`, joins the explored cells, and the mini-map is off. Nothing else changes.
+    ///
+    /// A boss met on entering its room while it lives, from the door or the load flow, is this
+    /// step alone, outside a frame of play. Mother Brain's fall is the frame of play's
+    /// (`HudState::frame_of_play`), which calls this with `Boss::MotherBrain`.
+    pub fn boss_blanks_the_map(
         &mut self,
         rules: &Rules,
         pictures: &HudPictures,

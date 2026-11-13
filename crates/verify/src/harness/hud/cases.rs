@@ -27,8 +27,12 @@ const fn case(id: &'static str, row: &'static str, checked: u64) -> Case {
     Case { id, row, checked }
 }
 
-/// The decode notes' eighteen cases.
-pub const CASES: [Case; 18] = [
+/// The decode notes' cases.
+///
+/// The eighteen, then the Ceres gate's three: her death's first frame dropping
+/// the selection after the status bar (twin C-death-drops), and a door's turn-on outside play
+/// (twin C-out-of-play-kraid).
+pub const CASES: [Case; 21] = [
     case("R1", "chain-0059-A293", 228),
     case("R2", "chain-0100-B07A", 134),
     case("R3", "chain-0224-D0B9", 13),
@@ -47,17 +51,26 @@ pub const CASES: [Case; 18] = [
     case("R16", "area-brinstar", 170),
     case("R17", "chain-0012-91F8", 55),
     case("R18", "samus-ceres-push", 2),
+    case("death-drops-0059", "chain-0059-A293", 586),
+    case("death-drops-0220", "chain-0220-D017", 146),
+    case("out-of-play-kraid", "boss-kraid-defeated", 1091),
 ];
 
 impl HudDomain {
     /// `case` over its row's `records`: the pair ending at its checked record, decoded and
     /// stepped as the harness's frames are, compared with record N+1 on every declared field.
+    /// Returns the fields that matched only through an answer copied from record N+1 (a
+    /// turn-on read at `05F7`'s edge): unverified, which the caller reports.
     ///
     /// # Errors
     ///
     /// Each difference, naming the field with the model's value and the record's; or why the
     /// pair wasn't compared: a record missing, a skip, a defect or a mask.
-    pub fn case(&self, case: &Case, records: &[FrameRecord]) -> Result<(), Vec<String>> {
+    pub fn case(
+        &self,
+        case: &Case,
+        records: &[FrameRecord],
+    ) -> Result<Vec<&'static str>, Vec<String>> {
         let record = |index: u64| {
             records
                 .iter()
@@ -85,6 +98,11 @@ impl HudDomain {
                 .collect());
         }
         let oracle = self.expected(next).map_err(uncompared)?;
+        let alone = self.neutral(&world).map(|mut neutral| {
+            let mut alone = state.clone();
+            self.step(&mut alone, &pad, &mut neutral);
+            self.fields(&alone)
+        });
         self.step(&mut state, &pad, &mut world);
         let model = self.fields(&state);
         let differences: Vec<String> = Self::FIELDS
@@ -100,7 +118,13 @@ impl HudDomain {
             })
             .collect();
         if differences.is_empty() {
-            Ok(())
+            Ok(alone.map_or_else(Vec::new, |alone| {
+                Self::FIELDS
+                    .iter()
+                    .filter(|field| !(field.same)(&model, &alone))
+                    .map(|field| field.name)
+                    .collect()
+            }))
         } else {
             Err(differences)
         }

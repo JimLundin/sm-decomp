@@ -37,6 +37,8 @@ pub enum BehaviourId {
     HerBlink,
     /// Spec: MiniMapStill.
     MiniMapStill,
+    /// Spec: OutOfPlay.
+    OutOfPlay,
     /// Spec: BossBlanksTheMap.
     BossBlanksTheMap,
     /// Spec: DiagonalPicture.
@@ -63,7 +65,7 @@ pub struct Behaviour {
 
 /// Every behaviour of the HUD's spec, one row per entry, each naming its entry; listed in the
 /// spec's order, though the order means nothing.
-pub const CATALOGUE: [Behaviour; 19] = [
+pub const CATALOGUE: [Behaviour; 20] = [
     Behaviour {
         id: BehaviourId::EnergyGauge,
         summary: "Her energy's last two digits, and one tank per 100 of her capacity, full while \
@@ -108,7 +110,7 @@ pub const CATALOGUE: [Behaviour; 19] = [
     },
     Behaviour {
         id: BehaviourId::OneShotFlash,
-        summary: "The icon of the one-shot item flashes, 16 frames plain, then 16 highlighted.",
+        summary: "The icon of the one-shot item flashes, `n` frames plain, then `n` highlighted.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -131,8 +133,8 @@ pub const CATALOGUE: [Behaviour; 19] = [
     },
     Behaviour {
         id: BehaviourId::CancellingTheItem,
-        summary: "Item cancel puts the selection back to none; so does a shot the weapons \
-                  cancel.",
+        summary: "Item cancel puts the selection back to none; so do other domains when they \
+                  drop it, the weapons after a shot among them.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
@@ -169,7 +171,7 @@ pub const CATALOGUE: [Behaviour; 19] = [
     },
     Behaviour {
         id: BehaviourId::HerBlink,
-        summary: "Her cell blinks, 8 frames in the blink colours and 8 as drawn.",
+        summary: "Her cell blinks, `n` frames in the blink colours and `n` as drawn.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
@@ -178,6 +180,16 @@ pub const CATALOGUE: [Behaviour; 19] = [
         id: BehaviourId::MiniMapStill,
         summary: "Some frames the mini-map doesn't update: nothing is explored and its cells \
                   keep what they show, blink included.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::OutOfPlay,
+        summary: "Between frames of play (a door's passage, a load's frames, the cinematics) the \
+                  HUD stands still: nothing it shows changes, but the mini-map can be turned \
+                  on, a passage into another area brings that area's explored cells, and the \
+                  selection can be dropped.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

@@ -59,10 +59,11 @@ pub enum MiniMapPower {
     Off,
 }
 
-/// The HUD's state between frames, each of the spec's rules a step on it.
+/// The HUD's state between steps, each of the spec's rules a change to it.
 ///
-/// A caller may set each part at any value the spec allows; the HUD's first contents are the
-/// load flow's and the pause screen's to set.
+/// A caller may set each part at any value the spec allows. The load flow's start-up of the HUD
+/// and the pause screen's frames, neither a frame of play nor a step outside play, set it on
+/// frames of their own (§1.3).
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct HudState {
     /// The HUD's cells: the picture it draws.

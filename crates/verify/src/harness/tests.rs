@@ -314,7 +314,8 @@ pub(super) fn environment() -> Option<(PathBuf, PathBuf)> {
 /// cached (a partial local cache) is reported and not checked. With every row cached, the
 /// total's coverage must equal [`COVERAGE`]'s, so the report never shows a stale one. Prints
 /// each row's report, the total and the per-behaviour table; run with `--nocapture` to see them.
-fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
+/// Returns the total, for a domain's own checks over it.
+fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) -> Report {
     use std::io::Write as _;
     let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
     let floors = floors(name);
@@ -371,6 +372,7 @@ fn hold_floors<D: Domain>(domain: &D, name: &str, cache: &Path) {
         total.frames,
     );
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+    total
 }
 
 /// The clock domain over every cached row, held to its floors. Skipped only where `SM_CACHE`
@@ -1080,7 +1082,17 @@ fn the_hud_holds_its_floors_against_the_cache() {
         Ok(domain) => domain,
         Err(error) => panic!("content: {error:?}"),
     };
-    hold_floors(&domain, "interface-hud", &cache);
+    let total = hold_floors(&domain, "interface-hud", &cache);
+    let masked = total
+        .masked
+        .get(super::hud::POSITION_MASK)
+        .copied()
+        .unwrap_or(0);
+    assert!(
+        masked <= super::hud::POSITION_MASK_CEILING,
+        "the interim position mask hides {masked} frames, above its ceiling of {}",
+        super::hud::POSITION_MASK_CEILING
+    );
 }
 
 /// The HUD's harness cases (the decode notes' "The harness cases"), each over its row's records;
@@ -1124,8 +1136,16 @@ fn the_huds_harness_cases_hold_against_the_cache() {
             })
             .collect();
         match domain.case(case, &records) {
-            Ok(()) => {
+            Ok(unverified) if unverified.is_empty() => {
                 let _ = writeln!(std::io::stdout(), "{}: holds", case.id);
+            }
+            Ok(unverified) => {
+                let _ = writeln!(
+                    std::io::stdout(),
+                    "{}: holds, unverified: {}",
+                    case.id,
+                    unverified.join(", ")
+                );
             }
             Err(differences) => failures.push(format!("{}: {}", case.id, differences.join("; "))),
         }

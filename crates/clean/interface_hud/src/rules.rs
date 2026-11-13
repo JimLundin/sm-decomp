@@ -2,13 +2,16 @@
 //! adjusted game.
 
 use enum_map::{Enum, EnumMap};
-use types::{Screen, by_member};
+use types::Screen;
 
 use crate::inputs::FrameCount;
 
-/// A boss met on entering its room while it lives (spec: BossBlanksTheMap).
+/// A boss that blanks the mini-map and turns it off (spec: BossBlanksTheMap).
+///
+/// Each but Mother Brain is met on entering its room while it lives, a step of its own outside
+/// a frame of play; Mother Brain blanks it when her first form falls, during a frame.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
-pub enum RoomBoss {
+pub enum Boss {
     /// Kraid.
     Kraid,
     /// Draygon.
@@ -17,68 +20,40 @@ pub enum RoomBoss {
     Crocomire,
     /// Phantoon.
     Phantoon,
+    /// Mother Brain, her brain in the tank destroyed.
+    MotherBrain,
     /// Ridley, in Norfair.
     RidleyInNorfair,
     /// Ridley, in Ceres.
     RidleyInCeres,
 }
 
-/// A boss that blanks the mini-map and turns it off (spec: BossBlanksTheMap).
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
-pub enum Boss {
-    /// A boss met on entering its room, a step of its own.
-    InItsRoom(RoomBoss),
-    /// Mother Brain, when her first form falls during a frame (her brain in the tank destroyed).
-    MotherBrain,
+/// Spec: BossBlanksTheMap. The reference screens each boss counts as explored, across and down
+/// from its room's top-left cell: the spec's table.
+const fn reference_screens(boss: Boss) -> &'static [Screen] {
+    match boss {
+        Boss::Kraid | Boss::Draygon => &[
+            Screen { x: 0, y: 0 },
+            Screen { x: 1, y: 0 },
+            Screen { x: 0, y: 1 },
+            Screen { x: 1, y: 1 },
+        ],
+        Boss::Crocomire => &[
+            Screen { x: 3, y: 0 },
+            Screen { x: 4, y: 0 },
+            Screen { x: 5, y: 0 },
+        ],
+        Boss::Phantoon => &[Screen { x: 0, y: 0 }],
+        Boss::MotherBrain => &[
+            Screen { x: 0, y: 0 },
+            Screen { x: 1, y: 0 },
+            Screen { x: 2, y: 0 },
+            Screen { x: 3, y: 0 },
+        ],
+        Boss::RidleyInNorfair => &[Screen { x: 0, y: 0 }, Screen { x: 0, y: 1 }],
+        Boss::RidleyInCeres => &[],
+    }
 }
-
-/// A screen `x` across and `y` down from a room's top-left cell.
-const fn screen(x: u16, y: u16) -> Screen {
-    Screen { x, y }
-}
-
-/// A row of the spec's table of the bosses' screens.
-struct BossScreens {
-    /// The boss.
-    boss: Boss,
-    /// The screens of its room it counts as explored.
-    screens: &'static [Screen],
-}
-
-/// A room's top-left 2 by 2 screens: Kraid's and Draygon's.
-const TWO_BY_TWO: &[Screen] = &[screen(0, 0), screen(1, 0), screen(0, 1), screen(1, 1)];
-
-/// Spec: BossBlanksTheMap. The reference screens each boss counts as explored, the spec's table.
-const REFERENCE_BOSS_SCREENS: [BossScreens; 7] = [
-    BossScreens {
-        boss: Boss::InItsRoom(RoomBoss::Kraid),
-        screens: TWO_BY_TWO,
-    },
-    BossScreens {
-        boss: Boss::InItsRoom(RoomBoss::Draygon),
-        screens: TWO_BY_TWO,
-    },
-    BossScreens {
-        boss: Boss::InItsRoom(RoomBoss::Crocomire),
-        screens: &[screen(3, 0), screen(4, 0), screen(5, 0)],
-    },
-    BossScreens {
-        boss: Boss::InItsRoom(RoomBoss::Phantoon),
-        screens: &[screen(0, 0)],
-    },
-    BossScreens {
-        boss: Boss::MotherBrain,
-        screens: &[screen(0, 0), screen(1, 0), screen(2, 0), screen(3, 0)],
-    },
-    BossScreens {
-        boss: Boss::InItsRoom(RoomBoss::RidleyInNorfair),
-        screens: &[screen(0, 0), screen(0, 1)],
-    },
-    BossScreens {
-        boss: Boss::InItsRoom(RoomBoss::RidleyInCeres),
-        screens: &[],
-    },
-];
 
 /// A blink or a flash: so many frames one way, then as many the other, by the frame count.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -105,7 +80,11 @@ const REFERENCE_ONE_SHOT_FLASH_FRAMES: u8 = 16;
 /// Spec: HerBlink. The reference frames each way of her cell's blink.
 const REFERENCE_HER_BLINK_FRAMES: u8 = 8;
 
-/// The values the HUD's rules read.
+/// The values the HUD's rules read: every Parameter the spec lists.
+///
+/// They are the frames each way of the one-shot item's flash and of her cell's blink, and the
+/// screens each boss explores. Its default is the reference profile, the spec's values; a caller
+/// holds it and may adjust each.
 #[derive(Clone, Debug)]
 pub struct Rules {
     /// Spec: OneShotFlash. The one-shot item's flash.
@@ -129,8 +108,7 @@ impl Rules {
             her_blink: Alternation {
                 frames_each_way: REFERENCE_HER_BLINK_FRAMES,
             },
-            boss_screens: by_member(REFERENCE_BOSS_SCREENS, |row| row.boss)
-                .map(|_, row| row.screens.to_vec()),
+            boss_screens: EnumMap::from_fn(|boss| reference_screens(boss).to_vec()),
         }
     }
 }
@@ -138,19 +116,5 @@ impl Rules {
 impl Default for Rules {
     fn default() -> Self {
         Self::reference()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Boss, REFERENCE_BOSS_SCREENS};
-    use crate::tests::names_each_member_once;
-
-    #[test]
-    fn the_boss_table_names_each_boss_once() {
-        assert!(names_each_member_once::<Boss, _>(
-            &REFERENCE_BOSS_SCREENS,
-            |row| row.boss
-        ));
     }
 }

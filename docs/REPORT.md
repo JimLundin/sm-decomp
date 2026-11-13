@@ -39,13 +39,13 @@ How it is counted:
 | samus-movement | 9,400 | 8,987 | 1.05 | 1.01 | 3 % | 12,724 | 4,084 | 1,567 | 20,856 | 345 |
 | world-camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 23,501 | 83 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 40,442 | 76 |
-| interface-hud | 2,695 | 2,112 | 1.28 | 0.91 | 29 % (over 25 %) | 2,742 | 1,094 | 449 | 23,604 | 84 |
+| interface-hud | 2,700 | 2,337 | 1.16 | 0.82 | 29 % (over 25 %) | 2,742 | 1,087 | 450 | 26,821 | 95 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 399 | 23,517 | 100 |
 | samus-appearance | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 20,977 | 98 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 216 | 5,437 | 56 |
 | world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 562 | 1,863 | 70 |
 | shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 552 | 125 | - | - |
-| total | 24,761 | 21,470 | 1.15 | 1.03 | 11 % | - | 10,297 | 4,127 | 160,197 | 912 |
+| total | 24,766 | 21,695 | 1.14 | 1.02 | 11 % | - | 10,290 | 4,128 | 163,414 | 923 |
 
 ## Models
 
@@ -106,25 +106,25 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean/interface_hud/src/catalogue.rs` | - | tables and types | 0 | 18 | 95 | 590 | 0 | 0 | 0 | 187 |
+| `crates/clean/interface_hud/src/catalogue.rs` | - | tables and types | 0 | 18 | 97 | 621 | 0 | 0 | 0 | 198 |
 | `crates/clean/interface_hud/src/events.rs` | - | tables and types | 0 | 8 | 25 | 0 | 0 | 0 | 0 | 6 |
-| `crates/clean/interface_hud/src/frame.rs` | - | logic | 280 | 350 | 33 | 0 | 15 | 0 | 14 | 66 |
-| `crates/clean/interface_hud/src/grid.rs` | - | logic | 224 | 363 | 56 | 0 | 3 | 0 | 0 | 55 |
-| `crates/clean/interface_hud/src/inputs.rs` | - | tables and types | 95 | 176 | 427 | 16 | 4 | 0 | 0 | 115 |
+| `crates/clean/interface_hud/src/grid.rs` | - | logic | 220 | 359 | 56 | 0 | 3 | 0 | 0 | 54 |
+| `crates/clean/interface_hud/src/inputs.rs` | - | tables and types | 81 | 169 | 510 | 16 | 3 | 0 | 0 | 133 |
 | `crates/clean/interface_hud/src/inputs.rs` `fn has` | selection | logic | 47 | 54 | 0 | 0 | 0 | 0 | 0 | 7 |
-| `crates/clean/interface_hud/src/item.rs` | selection | tables and types | 0 | 11 | 59 | 33 | 0 | 0 | 0 | 22 |
+| `crates/clean/interface_hud/src/item.rs` | selection | tables and types | 0 | 11 | 67 | 33 | 0 | 0 | 0 | 22 |
 | `crates/clean/interface_hud/src/layout.rs` | status | tables and types | 94 | 147 | 63 | 237 | 11 | 0 | 0 | 52 |
-| `crates/clean/interface_hud/src/lib.rs` | - | logic | 0 | 200 | 12 | 0 | 0 | 0 | 0 | 34 |
+| `crates/clean/interface_hud/src/lib.rs` | - | logic | 0 | 198 | 12 | 0 | 0 | 0 | 0 | 34 |
 | `crates/clean/interface_hud/src/map.rs` | minimap | tables and types | 0 | 15 | 50 | 0 | 0 | 0 | 0 | 9 |
-| `crates/clean/interface_hud/src/mini_map.rs` | minimap | logic | 654 | 797 | 116 | 59 | 36 | 13 | 16 | 153 |
+| `crates/clean/interface_hud/src/mini_map.rs` | minimap | logic | 654 | 795 | 116 | 59 | 36 | 13 | 16 | 153 |
 | `crates/clean/interface_hud/src/pictures.rs` | status | logic | 127 | 196 | 146 | 0 | 0 | 0 | 0 | 45 |
-| `crates/clean/interface_hud/src/rules.rs` | - | tables and types | 61 | 114 | 156 | 204 | 1 | 0 | 0 | 84 |
-| `crates/clean/interface_hud/src/rules.rs` `fn reference` | minimap | logic | 50 | 54 | 0 | 0 | 2 | 0 | 0 | 12 |
-| `crates/clean/interface_hud/src/selection.rs` | selection | logic | 220 | 282 | 0 | 0 | 13 | 0 | 0 | 41 |
+| `crates/clean/interface_hud/src/rules.rs` | - | tables and types | 59 | 107 | 103 | 186 | 1 | 0 | 0 | 66 |
+| `crates/clean/interface_hud/src/rules.rs` `fn reference` | minimap | logic | 38 | 43 | 0 | 0 | 2 | 0 | 0 | 11 |
+| `crates/clean/interface_hud/src/selection.rs` | selection | logic | 242 | 318 | 0 | 0 | 4 | 0 | 0 | 41 |
 | `crates/clean/interface_hud/src/state.rs` | - | tables and types | 59 | 110 | 132 | 0 | 0 | 0 | 0 | 45 |
-| `crates/clean/interface_hud/src/status_bar.rs` | status | logic | 730 | 835 | 12 | 2 | 78 | 22 | 13 | 115 |
+| `crates/clean/interface_hud/src/status_bar.rs` | status | logic | 709 | 858 | 12 | 2 | 60 | 0 | 11 | 109 |
+| `crates/clean/interface_hud/src/step.rs` | - | logic | 317 | 381 | 0 | 0 | 17 | 0 | 7 | 56 |
 | `crates/clean/interface_hud/src/tile.rs` | - | tables and types | 55 | 113 | 140 | 34 | 2 | 0 | 0 | 46 |
-| total | | | 2,695 | 3,843 | 1,522 | 1,175 | 164 | 35 | 42 | 1,094 |
+| total | | | 2,700 | 3,900 | 1,529 | 1,188 | 137 | 13 | 33 | 1,087 |
 
 ### world-blocks
 
@@ -212,13 +212,13 @@ How it is counted:
 | samus-movement | 4,084 | 2,619 | 1,465 | 1,567 |
 | world-camera | 631 | 226 | 405 | 306 |
 | run-progress | 437 | 182 | 255 | 136 |
-| interface-hud | 1,094 | 566 | 528 | 449 |
+| interface-hud | 1,087 | 577 | 510 | 450 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
 | samus-appearance | 879 | 559 | 320 | 365 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 978 | 402 | 576 | 562 |
 | shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 552 | 552 | 0 | 125 |
-| total | 10,297 | 6,038 | 4,259 | 4,127 |
+| total | 10,290 | 6,049 | 4,241 | 4,128 |
 
 ## Spec, budget and fit by area
 
@@ -272,13 +272,13 @@ Spec [`docs/behaviours/interface-hud.md`](behaviours/interface-hud.md), k = 37.5
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| status | 7 | 21.0 | 787 | 1,069 | 950 | 1.21 |
-| selection | 4 | 8.0 | 300 | - | 267 | 0.89 |
-| minimap | 8 | 27.3 | 1,025 | 1,673 | 704 | 0.69 |
-| shared (in no area) | | | | | 774 | |
-| total | 19 | 56.3 | 2,112 | 2,742 | 2,695 | 1.28 |
+| status | 7 | 21.0 | 787 | 1,069 | 929 | 1.18 |
+| selection | 4 | 10.0 | 375 | - | 289 | 0.77 |
+| minimap | 9 | 31.3 | 1,175 | 1,673 | 692 | 0.59 |
+| shared (in no area) | | | | | 790 | |
+| total | 20 | 62.3 | 2,337 | 2,742 | 2,700 | 1.16 |
 
-Area fit 0.91: the areas' score, 1,921, ÷ the budget. Shared code 774, its share of the model 29 % (over 25 %).
+Area fit 0.82: the areas' score, 1,910, ÷ the budget. Shared code 790, its share of the model 29 % (over 25 %).
 
 ### world-blocks
 
@@ -345,8 +345,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | world-camera | harness | 2 | 6,082 | 6,206 | 784 | 266 | 290 | 432 | 30 | 1,066 |
 | run-progress | bridge | 1 | 1,343 | 1,634 | 54 | 195 | 31 | 45 | 22 | 272 |
 | run-progress | harness | 3 | 7,869 | 7,442 | 1,053 | 1,221 | 811 | 609 | 62 | 1,401 |
-| interface-hud | bridge | 1 | 2,297 | 2,450 | 116 | 133 | 157 | 111 | 16 | 385 |
-| interface-hud | harness | 2 | 4,512 | 4,832 | 721 | 422 | 289 | 86 | 23 | 851 |
+| interface-hud | bridge | 1 | 2,314 | 2,476 | 119 | 133 | 157 | 111 | 16 | 388 |
+| interface-hud | harness | 2 | 5,590 | 5,849 | 834 | 468 | 326 | 223 | 30 | 1,034 |
 | world-blocks | bridge | 1 | 7,107 | 6,889 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
@@ -355,7 +355,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | boss-ceres-ridley | harness | 1 | 3,328 | 3,084 | 561 | 96 | 317 | 344 | 7 | 556 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | harness | 1 | 6,207 | 5,883 | 1,195 | 438 | 342 | 622 | 31 | 1,081 |
-| total | | | 62,477 | 63,159 | 7,516 | 4,878 | 4,564 | 4,126 | 346 | 10,837 |
+| total | | | 63,573 | 64,202 | 7,632 | 4,924 | 4,601 | 4,263 | 353 | 11,023 |
 
 ## Harness floors and vectors
 
@@ -363,45 +363,45 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 
 | Row | samus-movement | world-camera | run-progress | interface-hud | world-blocks | samus-appearance | boss-ceres-ridley | world-doors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| any-ceres-arrival | 0 | 0 | 222 | 0 | 0 | 0 | 32 | 0 |
+| any-ceres-arrival | 0 | 0 | 222 | 30 | 0 | 0 | 32 | 0 |
 | any-fly-to-ceres | 0 | 0 | 802 | 0 | 0 | 0 | 0 | 0 |
 | any-intro-0568 | 0 | 0 | 1,649 | 0 | 0 | 0 | 0 | 0 |
 | any-intro-2219 | 0 | 0 | 2,103 | 0 | 0 | 0 | 0 | 0 |
 | any-intro-4323 | 0 | 0 | 1,688 | 0 | 0 | 0 | 0 | 0 |
 | any-intro-6012 | 0 | 0 | 1,499 | 0 | 0 | 0 | 0 | 0 |
 | any-power-on | 0 | 0 | 182 | 0 | 0 | 0 | 0 | 0 |
-| any-zebes-arrival | 0 | 0 | 231 | 0 | 0 | 0 | 59 | 0 |
+| any-zebes-arrival | 0 | 0 | 231 | 30 | 0 | 0 | 59 | 0 |
 | area-brinstar | 476 | 476 | 476 | 476 | 476 | 476 | 0 | 0 |
-| area-maridia | 252 | 257 | 428 | 257 | 254 | 255 | 0 | 104 |
-| area-norfair | 209 | 208 | 374 | 208 | 205 | 209 | 0 | 104 |
-| boss-kraid-defeated | 1,024 | 1,068 | 1,137 | 1,070 | 1,068 | 1,023 | 0 | 20 |
+| area-maridia | 252 | 257 | 428 | 301 | 254 | 255 | 0 | 104 |
+| area-norfair | 209 | 208 | 374 | 252 | 205 | 209 | 0 | 104 |
+| boss-kraid-defeated | 1,024 | 1,068 | 1,137 | 1,090 | 1,068 | 1,023 | 0 | 20 |
 | boss-phantoon | 1,920 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 | 0 | 0 |
 | chain-0012-91F8 | 421 | 1,031 | 1,032 | 1,031 | 1,030 | 421 | 0 | 0 |
 | chain-0013-92FD | 598 | 599 | 599 | 599 | 598 | 599 | 0 | 0 |
-| chain-0014-96BA | 343 | 342 | 506 | 342 | 340 | 343 | 0 | 104 |
+| chain-0014-96BA | 343 | 342 | 506 | 386 | 340 | 343 | 0 | 104 |
 | chain-0043-9AD9 | 417 | 416 | 417 | 416 | 415 | 417 | 0 | 0 |
 | chain-0057-9FBA | 537 | 549 | 549 | 549 | 547 | 535 | 0 | 0 |
-| chain-0059-A293 | 519 | 584 | 777 | 584 | 583 | 512 | 0 | 0 |
-| chain-0097-ACF0 | 663 | 662 | 817 | 662 | 660 | 663 | 0 | 111 |
+| chain-0059-A293 | 519 | 584 | 777 | 736 | 583 | 512 | 0 | 0 |
+| chain-0097-ACF0 | 663 | 662 | 817 | 713 | 660 | 663 | 0 | 111 |
 | chain-0100-B07A | 277 | 284 | 285 | 284 | 283 | 277 | 0 | 0 |
-| chain-0106-AD5E | 496 | 600 | 782 | 600 | 597 | 487 | 0 | 104 |
+| chain-0106-AD5E | 496 | 600 | 782 | 649 | 597 | 487 | 0 | 104 |
 | chain-0163-A890 | 28 | 27 | 30 | 27 | 26 | 28 | 0 | 0 |
-| chain-0220-D017 | 145 | 144 | 538 | 144 | 143 | 144 | 0 | 0 |
-| chain-0224-D0B9 | 159 | 335 | 512 | 335 | 332 | 159 | 0 | 104 |
+| chain-0220-D017 | 145 | 144 | 538 | 454 | 143 | 144 | 0 | 0 |
+| chain-0224-D0B9 | 159 | 335 | 512 | 379 | 332 | 159 | 0 | 104 |
 | chain-0232-D5A7 | 599 | 632 | 706 | 632 | 631 | 601 | 0 | 0 |
 | chain-0234-D51E | 145 | 152 | 153 | 152 | 152 | 153 | 0 | 0 |
 | chain-0314-DAE1 | 444 | 450 | 465 | 450 | 449 | 443 | 0 | 0 |
-| chain-any-0001-DF45 | 149 | 249 | 411 | 249 | 248 | 149 | 408 | 104 |
-| chain-any-0002-DF8D | 120 | 119 | 281 | 119 | 119 | 120 | 278 | 104 |
-| chain-any-0003-DFD7 | 182 | 181 | 344 | 181 | 181 | 182 | 341 | 104 |
-| chain-any-0004-E021 | 102 | 101 | 263 | 101 | 101 | 102 | 260 | 104 |
-| chain-any-0005-E06B | 94 | 93 | 320 | 94 | 93 | 94 | 178 | 169 |
-| chain-any-0006-E0B5 | 1,491 | 1,609 | 1,775 | 1,609 | 1,609 | 1,486 | 84 | 104 |
-| chain-any-0007-E06B | 96 | 95 | 258 | 95 | 95 | 96 | 255 | 104 |
-| chain-any-0008-E021 | 100 | 99 | 263 | 99 | 99 | 100 | 260 | 105 |
-| chain-any-0009-DFD7 | 163 | 168 | 330 | 168 | 168 | 162 | 327 | 104 |
-| chain-any-0010-DF8D | 91 | 111 | 278 | 111 | 111 | 90 | 276 | 106 |
-| chain-any-0011-DF45 | 164 | 163 | 2,123 | 163 | 163 | 163 | 2,123 | 0 |
+| chain-any-0001-DF45 | 149 | 249 | 411 | 293 | 248 | 149 | 408 | 104 |
+| chain-any-0002-DF8D | 120 | 119 | 281 | 163 | 119 | 120 | 278 | 104 |
+| chain-any-0003-DFD7 | 182 | 181 | 344 | 225 | 181 | 182 | 341 | 104 |
+| chain-any-0004-E021 | 102 | 101 | 263 | 145 | 101 | 102 | 260 | 104 |
+| chain-any-0005-E06B | 94 | 93 | 320 | 161 | 93 | 94 | 178 | 169 |
+| chain-any-0006-E0B5 | 1,491 | 1,609 | 1,775 | 1,652 | 1,609 | 1,486 | 84 | 104 |
+| chain-any-0007-E06B | 96 | 95 | 258 | 139 | 95 | 96 | 255 | 104 |
+| chain-any-0008-E021 | 100 | 99 | 263 | 144 | 99 | 100 | 260 | 105 |
+| chain-any-0009-DFD7 | 163 | 168 | 330 | 212 | 168 | 162 | 327 | 104 |
+| chain-any-0010-DF8D | 91 | 111 | 278 | 157 | 111 | 90 | 276 | 106 |
+| chain-any-0011-DF45 | 164 | 163 | 2,123 | 2,053 | 163 | 163 | 2,123 | 0 |
 | event-zebes-awake | 128 | 179 | 178 | 179 | 179 | 126 | 0 | 0 |
 | item-charge-beam | 469 | 479 | 919 | 479 | 477 | 480 | 0 | 0 |
 | item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 | 0 | 0 |
@@ -413,7 +413,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-ceres-push | 1,710 | 1,777 | 1,776 | 1,777 | 1,777 | 1,705 | 0 | 0 |
 | samus-grapple-release | 243 | 448 | 488 | 488 | 487 | 248 | 0 | 0 |
 | samus-grapple-walljump | 114 | 114 | 174 | 174 | 173 | 114 | 0 | 0 |
-| samus-input-poses | 297 | 397 | 559 | 397 | 396 | 297 | 556 | 104 |
+| samus-input-poses | 297 | 397 | 559 | 441 | 396 | 297 | 556 | 104 |
 | samus-mockball | 129 | 129 | 129 | 129 | 128 | 129 | 0 | 0 |
 | samus-screw-attack | 862 | 945 | 945 | 945 | 944 | 859 | 0 | 0 |
 | samus-shinespark-left | 316 | 418 | 418 | 418 | 417 | 316 | 0 | 0 |
@@ -426,14 +426,14 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | samus-walljump-22 | 163 | 163 | 163 | 163 | 162 | 163 | 0 | 0 |
 | samus-walljump-28 | 169 | 169 | 169 | 169 | 168 | 169 | 0 | 0 |
 | terrain-quicksand | 334 | 450 | 456 | 450 | 421 | 402 | 0 | 0 |
-| total | 20,856 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 23,604 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows | 5,437 in 63 rows | 1,863 in 63 rows |
+| total | 20,856 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 26,821 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows | 5,437 in 63 rows | 1,863 in 63 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
 | samus-movement | 345 | 64 |
 | world-camera | 83 | 0 |
 | run-progress | 76 | 0 |
-| interface-hud | 84 | 0 |
+| interface-hud | 95 | 0 |
 | world-blocks | 100 | 0 |
 | samus-appearance | 98 | 0 |
 | boss-ceres-ridley | 56 | 0 |
@@ -448,7 +448,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 | samus-movement | 40,835 | 20,856 | 0 | 5,600 |
 | world-camera | 40,835 | 23,501 | 0 | 9,168 |
 | run-progress | 40,835 | 40,442 | 7 | 40,414 |
-| interface-hud | 37,669 | 23,604 | 0 | 20,782 |
+| interface-hud | 37,669 | 26,821 | 2 | 23,968 |
 | world-blocks | 35,949 | 23,517 | 86 | 22,915 |
 | samus-appearance | 37,669 | 20,977 | 0 | 557 |
 | boss-ceres-ridley | 40,835 | 5,437 | 0 | 3,233 |
@@ -491,13 +491,13 @@ Per declared field, the compared frames on which it was compared and those on wh
 | run-progress | stations saved at | 40,451 | 0 |
 | run-progress | items placed | 40,451 | 0 |
 | run-progress | room state | 20 | 40,431 |
-| interface-hud | status bar | 23,604 | 0 |
-| interface-hud | values last shown | 23,604 | 0 |
-| interface-hud | selected item | 23,604 | 0 |
-| interface-hud | one-shot item | 23,604 | 0 |
-| interface-hud | mini-map window | 22,571 | 1,033 |
-| interface-hud | explored cells | 22,571 | 1,033 |
-| interface-hud | mini-map off | 23,604 | 0 |
+| interface-hud | status bar | 26,823 | 0 |
+| interface-hud | values last shown | 26,823 | 0 |
+| interface-hud | selected item | 26,823 | 0 |
+| interface-hud | one-shot item | 26,823 | 0 |
+| interface-hud | mini-map window | 25,778 | 1,045 |
+| interface-hud | explored cells | 25,778 | 1,045 |
+| interface-hud | mini-map off | 26,823 | 0 |
 | world-blocks | places | 23,603 | 0 |
 | world-blocks | cells | 23,603 | 0 |
 | world-blocks | screens | 23,603 | 0 |
@@ -592,23 +592,24 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | run-progress | Tanks | 8 | 0 | 8 | 0 |
 | run-progress | ZebetitesCounted | vectors only | - | 0 | 0 |
 | interface-hud | AmmoCounts | 50 | 0 | 50 | 0 |
-| interface-hud | AutoReserveSign | 13,820 | 13,024 | 13,820 | 0 |
+| interface-hud | AutoReserveSign | 13,853 | 13,048 | 13,853 | 0 |
 | interface-hud | BossBlanksTheMap | 1 | 0 | 1 | 0 |
-| interface-hud | CancellingTheItem | 51 | 16 | 51 | 0 |
+| interface-hud | CancellingTheItem | 53 | 16 | 53 | 0 |
 | interface-hud | CyclingItems | 90 | 0 | 90 | 0 |
 | interface-hud | DiagonalPicture | 68 | 68 | 68 | 23 |
-| interface-hud | EnergyGauge | 652 | 0 | 652 | 0 |
-| interface-hud | Exploring | 16,052 | 15,985 | 16,052 | 1,033 |
+| interface-hud | EnergyGauge | 659 | 0 | 659 | 0 |
+| interface-hud | Exploring | 16,197 | 16,127 | 16,197 | 1,045 |
 | interface-hud | FirstColumnsShift | vectors only | - | 0 | 0 |
-| interface-hud | HerBlink | 16,052 | 13,957 | 16,052 | 1,033 |
+| interface-hud | HerBlink | 16,197 | 14,081 | 16,197 | 1,045 |
 | interface-hud | IconsAppear | vectors only | - | 0 | 0 |
 | interface-hud | LastColumnsShift | vectors only | - | 0 | 0 |
-| interface-hud | MiniMapStill | 6,518 | 6,518 | 6,518 | 0 |
-| interface-hud | MiniMapWindow | 16,052 | 13,957 | 16,052 | 1,033 |
+| interface-hud | MiniMapStill | 6,542 | 6,542 | 6,542 | 0 |
+| interface-hud | MiniMapWindow | 16,197 | 14,081 | 16,197 | 1,045 |
 | interface-hud | OneShotFlash | 50 | 38 | 50 | 0 |
 | interface-hud | OneShotItem | 90 | 85 | 90 | 0 |
-| interface-hud | SelectionHighlight | 125 | 0 | 125 | 0 |
-| interface-hud | SwitchClick | vectors only | - | 0 | 125 |
+| interface-hud | OutOfPlay | 3,036 | 3,036 | 3,038 | 0 |
+| interface-hud | SelectionHighlight | 127 | 0 | 127 | 0 |
+| interface-hud | SwitchClick | vectors only | - | 0 | 127 |
 | interface-hud | Switching | vectors only | - | 0 | 139 |
 | world-blocks | AnswersToHerMotion | vectors only | - | 0 | 293 |
 | world-blocks | BlocksMarkedNothing | vectors only | - | 0 | 0 |
@@ -678,8 +679,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 49 | 4,981 | 29,887 | 31,503 | 10,292 | 1,912 | 2,323 | 2,768 | 629 | 6,920 |
-| bridges | 11 | 2,878 | 17,271 | 18,795 | 1,188 | 1,199 | 1,076 | 874 | 157 | 3,010 |
-| rebuilt models, shared types included | 87 | 4,127 | 24,761 | 31,287 | 11,440 | 15,506 | 1,333 | 755 | 481 | 10,297 |
+| bridges | 11 | 2,881 | 17,288 | 18,821 | 1,191 | 1,199 | 1,076 | 874 | 157 | 3,013 |
+| rebuilt models, shared types included | 87 | 4,128 | 24,766 | 31,344 | 11,447 | 15,519 | 1,305 | 733 | 472 | 10,290 |
 
 ## Timeline
 
@@ -697,7 +698,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | cached for the harnesses | 17,538 | 13.5 % |
 | boss-ceres-ridley model matches | 4,878 | 3.8 % |
 | game-time model matches | 17,328 | 13.4 % |
-| interface-hud model matches | 5,046 | 3.9 % |
+| interface-hud model matches | 7,462 | 5.8 % |
 | run-progress model matches | 17,121 | 13.2 % |
 | samus-appearance model matches | 4,692 | 3.6 % |
 | samus-movement model matches | 4,668 | 3.6 % |
@@ -737,7 +738,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | cached for the harnesses | 20,480 | 9.2 % |
 | boss-ceres-ridley model matches | 556 | 0.2 % |
 | game-time model matches | 17,605 | 7.9 % |
-| interface-hud model matches | 15,805 | 7.1 % |
+| interface-hud model matches | 16,607 | 7.5 % |
 | run-progress model matches | 20,432 | 9.2 % |
 | samus-appearance model matches | 14,157 | 6.4 % |
 | samus-movement model matches | 14,062 | 6.3 % |
@@ -785,7 +786,7 @@ The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't
 | --- | ---: | ---: | ---: | ---: |
 | boss-ceres-ridley | 341 of 341 (100.0 %) | 0 | 3 | 0 |
 | game-time | 344 of 344 (100.0 %) | 0 | 0 | 0 |
-| interface-hud | 181 of 181 (100.0 %) | 18 | 44 | 119 |
+| interface-hud | 225 of 225 (100.0 %) | 19 | 0 | 119 |
 | run-progress | 344 of 344 (100.0 %) | 0 | 0 | 0 |
 | samus-appearance | 182 of 182 (100.0 %) | 0 | 43 | 119 |
 | samus-movement | 182 of 182 (100.0 %) | 5 | 162 | 0 |
@@ -799,7 +800,7 @@ The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't
 | --- | ---: | ---: | ---: | ---: |
 | boss-ceres-ridley | 1,465 of 1,465 (100.0 %) | 0 | 154 | 0 |
 | game-time | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 |
-| interface-hud | 744 of 744 (100.0 %) | 63 | 243 | 632 |
+| interface-hud | 987 of 987 (100.0 %) | 68 | 0 | 632 |
 | run-progress | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 |
 | samus-appearance | 647 of 647 (100.0 %) | 0 | 340 | 632 |
 | samus-movement | 647 of 647 (100.0 %) | 13 | 972 | 0 |
@@ -813,7 +814,7 @@ The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't
 | --- | ---: | ---: | ---: | ---: |
 | boss-ceres-ridley | 2,667 of 2,667 (100.0 %) | 0 | 1,857 | 0 |
 | game-time | 4,524 of 4,524 (100.0 %) | 0 | 0 | 0 |
-| interface-hud | 2,826 of 2,826 (100.0 %) | 137 | 466 | 1,232 |
+| interface-hud | 3,292 of 3,292 (100.0 %) | 145 | 0 | 1,232 |
 | run-progress | 4,524 of 4,524 (100.0 %) | 5 | 0 | 0 |
 | samus-appearance | 2,581 of 2,581 (100.0 %) | 0 | 711 | 1,232 |
 | samus-movement | 2,577 of 2,588 (99.6 %) | 82 | 1,936 | 0 |
@@ -1403,34 +1404,33 @@ graph LR
 
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| `catalogue.rs` | - | The catalogue: one behaviour per entry of the HUD's spec, with its kind, its switch and how the spec checks it. | `enum BehaviourId (19)`, `struct Behaviour`, `const CATALOGUE` | 0 | 187 |
+| `catalogue.rs` | - | The catalogue: one behaviour per entry of the HUD's spec, with its kind, its switch and how the spec checks it. | `enum BehaviourId (20)`, `struct Behaviour`, `const CATALOGUE` | 0 | 198 |
 | `events.rs` | - | What a frame reports for other domains to act on. | `enum HudEvent (2)` | 0 | 6 |
-| `frame.rs` | - | One frame of the HUD, and a boss met outside a frame (§5: the order that matters). | `struct FrameOutcome`, `HudState::{frame, boss_encountered}` | 280 | 66 |
-| `grid.rs` | - | A grid of cells, each holding a value: the HUD's cells, her map's pictures and the sets of her map's cells are each one. | `type Place`, `fn at`, `fn plus`, `struct Grid`, `Grid::{filled, get, set, contains, insert}`, `impl Default for Grid<T, COLUMNS, ROWS>`, 1 private | 224 | 55 |
-| `inputs.rs` | -; `fn has` in selection | What the HUD reads each frame (§1.3): the values other domains own, the buttons, and where she is on her map. | `struct FrameCount`, `struct Energy`, `enum ReserveMode (2)`, `struct Reserve`, `struct Stock`, `struct Ammunition`, `struct Equipped`, `struct Status`, `enum SelectButton (2)`, `enum CancelButton (3)`, `enum Mute (4)`, `struct Controls`, `struct Room`, `struct MiniMapInputs`, `struct FrameInputs`, `Ammunition::{new, of, stocks}`, `Status::has`, 1 private | 141 | 122 |
+| `grid.rs` | - | A grid of cells, each holding a value: the HUD's cells, her map's pictures and the sets of her map's cells are each one. | `type Place`, `fn at`, `fn plus`, `struct Grid`, `Grid::{filled, get, set, contains, insert}`, `impl Default for Grid<T, COLUMNS, ROWS>`, 1 private | 220 | 54 |
+| `inputs.rs` | -; `fn has` in selection | What the HUD reads each step (§1.3): in a frame of play, the values other domains own, the buttons, what other domains drop before the status bar and after it, and where she is on her map; outside play, the mini-map's turn-on, a new area and a drop. | `struct FrameCount`, `struct Energy`, `enum ReserveMode (2)`, `struct Reserve`, `struct Stock`, `struct Ammunition`, `struct Equipped`, `struct Status`, `enum SelectButton (2)`, `enum CancelButton (3)`, `enum Mute (4)`, `struct Controls`, `struct Room`, `struct MiniMapInputs`, `enum Dropped (3)`, `struct FrameInputs`, `enum NewArea (2)`, `struct OutOfPlayInputs`, `Ammunition::{new, of, stocks}`, `Status::has`, 1 private | 127 | 140 |
 | `item.rs` | selection | The items the HUD can select (§1.1). | `enum Ammo (3)`, `enum SelectableItem (3)`, `SelectableItem::ORDER` | 0 | 22 |
 | `layout.rs` | status | Where things sit on the HUD (§1.2), as places on its grid: column across, row down. | `const TANKS`, `const ENERGY_DIGITS`, `fn ammo_digits`, `const RESERVE_SIGN`, `fn icon_top_left`, `const HER_CELL`, `const WINDOW_REACH`, `fn laid`, 3 private | 94 | 52 |
 | `lib.rs` | - | The HUD model, built from its behaviour spec alone: the status bar at the top of the screen, the selected item and the mini-map. | - | 0 | 34 |
 | `map.rs` | minimap | Her map, as the mini-map reads it (§1.3): 64 columns by 32 rows of cells, each cell's picture with its flips, its beyond pictures, and the cells it charts; and the sets of its cells. | `type MapCellSet`, `type MapPictures`, `struct HerMap` | 0 | 9 |
-| `mini_map.rs` | minimap | The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own cell blinking, the bosses that blank it, and the quirks at the map's first and last columns. | `HudState::{mini_map_updates, explore_and_draw_mini_map, blank_mini_map}`, 22 private | 654 | 153 |
+| `mini_map.rs` | minimap | The mini-map (§4): the 5 × 3 cells of her map around hers, the ones she has explored, her own cell blinking, the bosses that blank it, and the quirks at the map's first and last columns. | `HudState::{mini_map_updates, explore_and_draw_mini_map, boss_blanks_the_map}`, 22 private | 654 | 153 |
 | `pictures.rs` | status | The HUD's pictures (§1.4): content the importer supplies by name, which the caller gives each step. | `struct Icons`, `fn rows`, `struct HudPictures`, `Icons::of`, `HudPictures::blank_cell` | 127 | 45 |
-| `rules.rs` | -; `fn reference` in minimap | The values the HUD's rules read: the reference profile holds the spec's; another `Rules` is an adjusted game. | `enum RoomBoss (6)`, `enum Boss (2)`, `struct Alternation`, `struct Rules`, `Alternation::first_half`, `Rules::reference`, `impl Default for Rules`, 6 private | 111 | 96 |
-| `selection.rs` | selection | How Select, item cancel and a shot change the selection (§3). | `HudState::{press_buttons, shot_cancels}`, 1 private | 220 | 41 |
+| `rules.rs` | -; `fn reference` in minimap | The values the HUD's rules read: the reference profile holds the spec's; another `Rules` is an adjusted game. | `enum Boss (7)`, `struct Alternation`, `struct Rules`, `Alternation::first_half`, `Rules::reference`, `impl Default for Rules`, 3 private | 97 | 77 |
+| `selection.rs` | selection | How Select, item cancel and another domain's drop change the selection (spec: CyclingItems, CancellingTheItem, OneShotItem, Switching). | `Selection::apply_drop`, `HudState::press_buttons`, 1 private | 242 | 41 |
 | `state.rs` | - | What the HUD keeps from one frame to the next (§1): its cells, the values last shown, the selection, the explored cells and whether the mini-map is off. | `struct Shown`, `enum Selection (3)`, `enum MiniMapPower (2)`, `struct HudState`, `Selection::{item, one_shot}` | 59 | 45 |
-| `status_bar.rs` | status | The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the items' icons with the selection's highlight. | `HudState::{energy_gauge, ammo_counts, reserve_sign, icon_appears, highlight, one_shot_flash}`, 5 private | 730 | 115 |
+| `status_bar.rs` | status | The status bar (§2): the energy and its tanks, the ammunition counts, the reserve sign, and the items' icons with the selection's highlight. | `HudState::{energy_gauge, ammo_counts, reserve_sign, icon_appears, highlight, one_shot_flash}`, 5 private | 709 | 109 |
+| `step.rs` | - | The steps of the HUD, each its own entry on its state (§1.3; §5: the order that matters). | `HudState::{frame_of_play, out_of_play}`, 1 private | 317 | 56 |
 | `tile.rs` | - | What a cell of the HUD shows (§1.4): a picture with its flips (the shared `Look`), in one of the HUD's eight colour sets; and the colour sets by the role the spec gives each. | `struct ColourSet`, `struct Tile`, `type HudGrid`, `const BLANK_COLOURS`, `const DIGIT_COLOURS`, `const FULL_TANK_COLOURS`, `const EMPTY_TANK_COLOURS`, `const SIGN_LIT`, `const SIGN_DIM`, `const PLAIN`, `const HIGHLIGHTED`, `const EXPLORED`, `const CHARTED`, `const BLINK`, `ColourSet::{new, number}`, `Tile::{new, in_colours}`, 1 private | 55 | 46 |
 
 Its crate root exports:
 
 - from `catalogue`: `Behaviour`, `BehaviourId`, `CATALOGUE`
 - from `events`: `HudEvent`
-- from `frame`: `FrameOutcome`
 - from `grid`: `Grid`, `Place`
-- from `inputs`: `Ammunition`, `CancelButton`, `Controls`, `Energy`, `Equipped`, `FrameCount`, `FrameInputs`, `MiniMapInputs`, `Mute`, `Reserve`, `ReserveMode`, `Room`, `SelectButton`, `Status`, `Stock`
+- from `inputs`: `Ammunition`, `CancelButton`, `Controls`, `Dropped`, `Energy`, `Equipped`, `FrameCount`, `FrameInputs`, `MiniMapInputs`, `Mute`, `NewArea`, `OutOfPlayInputs`, `Reserve`, `ReserveMode`, `Room`, `SelectButton`, `Status`, `Stock`
 - from `item`: `Ammo`, `SelectableItem`
 - from `map`: `HerMap`, `MapCellSet`, `MapPictures`
 - from `pictures`: `HudPictures`, `Icons`
-- from `rules`: `Alternation`, `Boss`, `RoomBoss`, `Rules`
+- from `rules`: `Alternation`, `Boss`, `Rules`
 - from `state`: `HudState`, `MiniMapPower`, `Selection`, `Shown`
 - from `tile`: `ColourSet`, `HudGrid`, `Tile`
 - from `types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`
@@ -1438,30 +1438,31 @@ Its crate root exports:
 The public functions a caller reaches through them:
 
 ```rust
-HudState::frame(mut self, rules: &Rules, pictures: &HudPictures, inputs: &FrameInputs<'_>) -> FrameOutcome
-HudState::boss_encountered(mut self, rules: &Rules, pictures: &HudPictures, boss: RoomBoss, room: Place) -> Self
 Grid::filled(value: T) -> Self
 Grid::get(&self, place: Place) -> Option<T>
 Grid::set(&mut self, place: Place, value: T)
 Grid::contains(&self, place: Place) -> bool
 Grid::insert(&mut self, place: Place)
 Ammunition::new(stocks: EnumMap<Ammo, Stock>) -> Option<Self>
-Ammunition::of(&self, ammo: Ammo) -> Stock
-Ammunition::stocks(&self) -> impl Iterator<Item = (Ammo, Stock)> + '_
+Ammunition::of(&self, ammo: Ammo) -> &Stock
+Ammunition::stocks(&self) -> impl Iterator<Item = (Ammo, &Stock)>
 Status::has(&self, item: SelectableItem) -> bool
+HudState::boss_blanks_the_map(&mut self, rules: &Rules, pictures: &HudPictures, boss: Boss, room: Place)
 Icons::of(&self, item: SelectableItem) -> [&[Look]; 2]
 HudPictures::blank_cell(&self) -> Tile
 Alternation::first_half(self, frame: FrameCount) -> bool
 Rules::reference() -> Self
 Selection::item(self) -> Option<SelectableItem>
 Selection::one_shot(self) -> Option<SelectableItem>
+HudState::frame_of_play(&mut self, rules: &Rules, pictures: &HudPictures, inputs: &FrameInputs<'_>) -> Vec<HudEvent>
+HudState::out_of_play(&mut self, inputs: &OutOfPlayInputs<'_>)
 ColourSet::new(number: u8) -> Option<Self>
 ColourSet::number(self) -> u8
 Tile::new(look: Look, colours: ColourSet) -> Self
 Tile::in_colours(self, colours: ColourSet) -> Self
 ```
 
-Shared types it takes from `types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`, `by_member`. Other crates it uses: `enum_map`.
+Shared types it takes from `types`: `Checked`, `Flip`, `Kind`, `Look`, `Pair`, `Picture`, `Screen`, `Switch`. Other crates it uses: `enum_map`, `std`.
 
 Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
 
@@ -1470,12 +1471,12 @@ graph LR
   subgraph a_in_no_area["in no area"]
     m_catalogue["catalogue"]
     m_events["events"]
-    m_frame["frame"]
     m_grid["grid"]
     m_inputs["inputs"]
     m_lib["lib"]
     m_rules["rules"]
     m_state["state"]
+    m_step["step"]
     m_tile["tile"]
   end
   subgraph a_minimap["minimap"]
@@ -1492,12 +1493,6 @@ graph LR
     m_status_bar["status_bar"]
   end
   m_events --> m_item
-  m_frame --> m_events
-  m_frame --> m_grid
-  m_frame --> m_inputs
-  m_frame --> m_pictures
-  m_frame --> m_rules
-  m_frame --> m_state
   m_inputs --> m_grid
   m_inputs --> m_item
   m_inputs --> m_map
@@ -1505,7 +1500,6 @@ graph LR
   m_layout --> m_item
   m_lib --> m_catalogue
   m_lib --> m_events
-  m_lib --> m_frame
   m_lib --> m_grid
   m_lib --> m_inputs
   m_lib --> m_item
@@ -1540,6 +1534,11 @@ graph LR
   m_status_bar --> m_rules
   m_status_bar --> m_state
   m_status_bar --> m_tile
+  m_step --> m_events
+  m_step --> m_inputs
+  m_step --> m_pictures
+  m_step --> m_rules
+  m_step --> m_state
   m_tile --> m_grid
 ```
 
@@ -1968,7 +1967,7 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `type Set` | run-progress, samus-appearance, samus-movement, world-blocks, world-doors |
 | `fn set_of` | world-doors |
 | `trait Members` | run-progress |
-| `fn by_member` | interface-hud, world-blocks, world-doors |
+| `fn by_member` | world-blocks, world-doors |
 | `enum Area (7)` | run-progress |
 | `enum Item (11)` | run-progress, samus-appearance, samus-movement |
 | `enum Beam (5)` | run-progress |
@@ -2005,7 +2004,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-camera | `crates/game/src/session.rs` | names it | `RoomError` | 579 | 211 |
 | world-camera | `crates/game/src/world_camera_bridge.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `RoomError`, `Rules`, `Samus` | 505 | 120 |
 | run-progress | `crates/game/src/run_progress_bridge.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,343 | 272 |
-| interface-hud | `crates/game/src/interface_hud_bridge.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,297 | 385 |
+| interface-hud | `crates/game/src/interface_hud_bridge.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Dropped`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,314 | 388 |
 | world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,107 | 1,062 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,168 | 205 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | `Ahead`, `Dash`, `Frames`, `Inputs`, `Laps`, `LapsLeft`, `Liquid`, `MoveEvent`, `Playhead`, `Rules`, `SoundsWaiting`, `State`, `Step`, `update` | 575 | 147 |
