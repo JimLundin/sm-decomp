@@ -7,6 +7,7 @@ file = "crates/clean/samus_movement/src/vertical.rs"
 before = "self.speed += r.gravity;"
 after = "self.speed -= r.gravity;"
 test = "harness::tests::movement_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::movement_runs_free_against_the_cache"]
 
 [[fault]]
 name = "camera-extra-omitted"
@@ -15,6 +16,7 @@ file = "crates/clean/world_camera/src/follow.rs"
 before = "moved + rules.extra"
 after = "moved + (rules.extra - rules.extra)"
 test = "harness::tests::the_camera_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::the_camera_runs_free_against_the_cache"]
 
 [[fault]]
 name = "ceres-door-does-not-see-her"
@@ -23,3 +25,5 @@ file = "crates/clean/boss_ceres_ridley/src/rules.rs"
 before = "const REACH: u16 = 48;"
 after = "const REACH: u16 = 0;"
 test = "ratchet::tests::committed_ratchet_holds_against_the_cache"
+
+extra_tests = ["harness::tests::the_ceres_doors_hold_their_floors_against_the_cache", "harness::free::tests::the_ceres_doors_run_free_against_the_cache"]

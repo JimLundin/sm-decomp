@@ -211,6 +211,19 @@ impl Held<'_> {
                 .unwrap_or_else(|error| panic!("{row}: {error}"));
             let _ = write!(std::io::stdout(), "{row}: {report}");
             let ran = Accounting::of(&report);
+            if let Some(floor) = self.floors.domains.get(&(name.to_owned(), row.clone())) {
+                let status = if ran.held >= floor.held {
+                    "ok"
+                } else {
+                    "FAILED"
+                };
+                let _ = writeln!(
+                    std::io::stdout(),
+                    "FLOOR free {name} {row} {} {} {status}",
+                    ran.held,
+                    floor.held
+                );
+            }
             match self.floors.domains.get(&(name.to_owned(), row.clone())) {
                 Some(floor) if ran.held < floor.held => self.failures.push(format!(
                     "{name} {row}: {} held < floor {}",
@@ -252,6 +265,49 @@ fn cache_and_image() -> Option<(std::path::PathBuf, Vec<u8>)> {
     let image =
         std::fs::read(&rom).unwrap_or_else(|error| panic!("SM_ROM {}: {error}", rom.display()));
     Some((cache, image))
+}
+
+/// A single domain's free-run floors, independent of failures in its neighbours.
+fn hold_domain<D: crate::harness::Domain>(domain: &D, name: &str, cache: &std::path::Path) {
+    let floors = Floors::parse(FLOORS).unwrap_or_else(|error| panic!("free_floors.txt: {error}"));
+    let mut held = Held {
+        cache,
+        floors: &floors,
+        reach: Reach::new(),
+        failures: Vec::new(),
+    };
+    held.hold(domain, name);
+    assert!(held.failures.is_empty(), "{}", held.failures.join("\n"));
+}
+
+#[test]
+fn movement_runs_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::movement::Movement::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    hold_domain(&domain, "samus-movement", &cache);
+}
+
+#[test]
+fn the_camera_runs_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::camera::CameraDomain::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    hold_domain(&domain, "world-camera", &cache);
+}
+
+#[test]
+fn the_ceres_doors_run_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::ceres::CeresDomain::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    hold_domain(&domain, "boss-ceres-ridley", &cache);
 }
 
 /// Every domain's free run over every cached row, held to `free_floors.txt`, and each row's

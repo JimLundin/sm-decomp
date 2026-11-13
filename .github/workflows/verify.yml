@@ -203,7 +203,7 @@ jobs:
             every_item_the_game_places_counts_a_hundred_percent; do
             grep -q "^test harness::tests::${test} \.\.\. ok$" "$RUNNER_TEMP/progress.txt"
           done
-      - name: "Planted faults: floors and the Ceres ratchet must reject wrong models"
+      - name: "Planted faults: domain harnesses, free runs and the Ceres ratchet reject wrong models"
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
             python3 tools/check_mutants.py
