@@ -18,6 +18,10 @@ decision in MODEL §1, or a change where it lives, then a line here.
 5. Green pairs, the lockstep ratchet, harness floors and free-run floors never fall
    ([STATUS](STATUS.md)).
 6. Size is a diagnostic; only a domain larger than the old code it replaces fails (decision 19).
+6a. The lowest rung's needs list is a limit: nothing outside it starts (decision 24).
+6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
+    planted fault makes it fail (decisions 24, 25). The process freezes once that holds (26).
+6c. Each session's plan and review is an issue (decision 27).
 
 ## The shape of the code
 

@@ -207,6 +207,23 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     timing"; LEGACY lists it. The driver program's bytes the boot uploads through the APU ports
     are a hardware leftover no player sees (decision 3): not compared; the upload's time is a
     named cost (T1).
+24. **The lowest rung is a limit, not a preference** (Jim, 2026-11-12). While a rung of the
+    ladder (decision 18) is the slice, a session starts no round or lane outside its needs list:
+    work spread to other parts would only game the measure the slice exists to give. The work
+    that makes the checks trustworthy runs alongside, since the rung's number is read through it:
+    a model's headline is its gain over a step that does nothing, and planted faults show each
+    check can fail (decision 25).
+25. **A check is trusted once it is shown to fail** (Jim, 2026-11-12). Each domain's harness and
+    free run are run against planted one-line faults in its model, and a fault no floor, vector
+    or case catches is a finding against the harness or the rows. This runs in parallel with the
+    rung's work, not ahead of it.
+26. **The process freezes once the checks are shown to work** (Jim, 2026-11-12). When decision
+    25's planted faults are caught on the rung's rows for the domains it needs, and the gain over
+    the null model is the headline, the process freezes until the rung is reached: no new rule
+    or role. A check found unable to fail, or a breach of the clean room, still changes it.
+27. **Session plans and reviews are issues** (Jim, 2026-11-12). The root posts each session's
+    plan as an issue at its start and the review on it at its end, so a fresh root or a reviewer
+    can resume or audit a session from the repository and its issues alone.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs

@@ -193,17 +193,20 @@ Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 
 
 1. **Planning.** The root reads the last session's review, REPORT and the queue, chooses the
    session's rounds and lanes within the limits above, and writes the plan down before any lane
-   starts. Work goes first to the lowest rung of the ladder not yet reached (MODEL §1 decision
-   18): the items it still needs, then the free run's first divergences on its rows. A round
-   that adds no behaviour a rung's rows show waits.
+   starts, as an issue (MODEL §1 decision 27). Work goes only to the lowest rung of the ladder
+   not yet reached (decisions 18 and 24): the items it still needs, then the free run's first
+   divergences on its rows. A round or lane outside the rung's needs list doesn't start; the
+   planted faults and the gain over null (decisions 24 and 25) run alongside.
 2. **Implementation.** The loop below runs the plan: rounds and lanes start, land and report as
    they do today.
 3. **Review.** No new lane starts in the last part of the session. The lanes in flight finish
-   and land, or stop with a handoff. The root writes the session's review: what landed, the
-   figures before and after, what the gates found, and what the next session should take up.
+   and land, or stop with a handoff. The root writes the session's review on the plan's issue:
+   what landed, the figures before and after, what the gates found, and what the next session
+   should take up.
 
 Outside working hours no round runs (Jim, 2026-11-12). The time goes to the project's structure:
-tooling, movie captures, optimisations, and long computations that don't fit a session. One
+tooling, movie captures, optimisations, and long computations that don't fit a session, all within
+the rung's needs (decision 24). One
 agent runs at a time, on a short task it can finish, and stops with a handoff; the next starts
 fresh. Its work lands like any other change.
 

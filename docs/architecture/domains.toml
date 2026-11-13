@@ -574,7 +574,7 @@ name = "Ceres's third room, across its door"
 starts = "any-boundary:3"
 ends = "any-boundary:4"
 needs = [
-    "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "E1", "E2", "A1", "AF0", "AF1", "AF2",
+    "S1", "W1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "E1", "E2", "A1", "AF0", "AF1", "AF2",
     "AF3", "AF4a", "V3",
 ]
 
@@ -584,7 +584,7 @@ name = "Ceres's rooms 1 to 5, down to Ridley's door"
 starts = "any-boundary:1"
 ends = "any-boundary:6"
 needs = [
-    "S1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "R3", "E1", "E2", "E3", "E4", "A1",
+    "S1", "W1", "S5", "CAM", "H2", "P1", "C1", "B8", "R1", "R2", "R3", "E1", "E2", "E3", "E4", "A1",
     "AF0", "AF1", "AF2", "AF3", "AF4a", "AF5", "V3",
 ]
 
