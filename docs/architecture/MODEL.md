@@ -224,6 +224,9 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
 27. **Session plans and reviews are issues** (Jim, 2026-11-12). The root posts each session's
     plan as an issue at its start and the review on it at its end, so a fresh root or a reviewer
     can resume or audit a session from the repository and its issues alone.
+28. **Off-hours tasks may run in parallel under root supervision** (Jim, 2026-11-13).
+    Independent structural tasks use the existing three-lane limit; the root supervises their
+    work, reviews the evidence and lands one change at a time (PROCESS, "Working hours").
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs

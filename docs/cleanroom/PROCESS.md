@@ -206,9 +206,9 @@ Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 
 
 Outside working hours no round runs (Jim, 2026-11-12). The time goes to the project's structure:
 tooling, movie captures, optimisations, and long computations that don't fit a session, all within
-the rung's needs (decision 24). One
-agent runs at a time, on a short task it can finish, and stops with a handoff; the next starts
-fresh. Its work lands like any other change.
+the rung's needs (decision 24). Independent short tasks may run in parallel within the
+three-lane limit, supervised by the root (Jim, 2026-11-13). Each task starts fresh, finishes
+with a handoff and lands like any other change; the root reviews and lands one change at a time.
 
 ## The loop
 
