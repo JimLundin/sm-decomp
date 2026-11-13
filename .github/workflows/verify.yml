@@ -156,6 +156,15 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
             -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
+      - name: "Corpus preflight: every committed floor row is readable before replay"
+        run: |
+          set -o pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" \
+            cargo test --locked -p verify --profile verify \
+            harness::corpus::committed_corpus_is_complete_before_replay -- --exact --nocapture \
+            | tee "$RUNNER_TEMP/corpus.txt"
+          grep -q '^corpus preflight holds: [1-9][0-9]* required rows$' "$RUNNER_TEMP/corpus.txt"
+          grep -q '^test harness::corpus::committed_corpus_is_complete_before_replay \.\.\. ok$' "$RUNNER_TEMP/corpus.txt"
       - name: "Lockstep ratchet: the record cache against scenarios/locks/lockstep.ratchet.txt"
         run: |
           # A renamed test would filter to nothing and pass, so require its report.

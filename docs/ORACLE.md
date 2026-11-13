@@ -448,7 +448,12 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
   92 MB, the lean tier). It holds the 63 rows `floors.txt` names, each with its `hits.txt` (the watched
   instructions of every domain, the blocks' scripts included), so CI holds the ratchet's rows and
-  every domain's harness floors and coverage. Pack it with
+  every domain's harness floors and coverage. Before replay, CI's
+  `harness::corpus::committed_corpus_is_complete_before_replay` test requires the union of rows
+  named in `floors.txt` and `free_floors.txt`, opens each against the lock's pins and checks its
+  record byte ranges. Replay checks payload decoding. Local harness runs can use partial caches;
+  run that exact preflight test with `SM_CACHE` set to require the complete corpus locally.
+  Pack it with
   `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
   repins it.
 - Only the root uploads (`timeout 600 gh release upload ci-data FILE`). Nothing unencrypted and

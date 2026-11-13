@@ -946,3 +946,6 @@ fn open_cached(lock: &Path, cache: &Path, row: &str) -> Result<Cache, HarnessErr
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod corpus;

@@ -80,6 +80,15 @@ don't move that domain's fields, not that its model is proven.
 
 ## The ratchets and floors
 
+Before replay, CI requires every row named by either harness floor file. Its shared corpus
+preflight opens each row against the lock's pins, requires readable index and record files,
+and checks record byte ranges; replay checks payload decoding. Targeted local harness commands
+remain usable with partial caches. To require the complete corpus locally:
+
+```sh
+SM_CACHE=CACHE cargo test --locked --profile verify -p verify harness::corpus::committed_corpus_is_complete_before_replay -- --exact --nocapture
+```
+
 | File | Holds | Checked by |
 | --- | --- | --- |
 | `scenarios/locks/lockstep.ratchet.txt` | per row, Ticks fully equal in lockstep, and per field group the differing Ticks and first frame | CI `verify / lockstep-ratchet` |
