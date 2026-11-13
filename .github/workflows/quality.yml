@@ -64,3 +64,5 @@ jobs:
       - name: Type-check the Python tooling
         # pyproject.toml's [tool.mypy] sets strict mode and the files.
         run: pipx run --spec mypy==2.4.1 mypy
+      - name: Test the planted-fault runner
+        run: python3 -m unittest discover -s tools -p test_check_mutants.py

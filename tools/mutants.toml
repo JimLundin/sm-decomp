@@ -1,0 +1,17 @@
+# Invented faults in named behaviours, never oracle bytes. Each must compile and
+# fail its exact recorded floor test; a build failure or an absent test is invalid.
+[[fault]]
+name = "gravity-reversed"
+domain = "samus-movement"
+file = "crates/clean/samus_movement/src/vertical.rs"
+before = "self.speed += r.gravity;"
+after = "self.speed -= r.gravity;"
+test = "harness::tests::movement_holds_its_floors_against_the_cache"
+
+[[fault]]
+name = "camera-extra-omitted"
+domain = "world-camera"
+file = "crates/clean/world_camera/src/follow.rs"
+before = "moved + rules.extra"
+after = "moved + (rules.extra - rules.extra)"
+test = "harness::tests::the_camera_holds_its_floors_against_the_cache"
