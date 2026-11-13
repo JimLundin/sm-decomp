@@ -1,5 +1,6 @@
 # Vectors for adjusted_vectors_test.sh: Inline is adjusted by an inline table, Table by a
-# [vector.rules] table over entries on two lines, Missing only at the reference rules.
+# [vector.rules] table over entries on two lines and after another of the vector's tables,
+# Missing only at the reference rules, EmptyInline and EmptyTable by tables that hold no rule.
 
 [[vector]]
 id = "reference"
@@ -16,5 +17,23 @@ entries = [
   "Table",
 ]
 
+[vector.before]
+rules = {}
+
 [vector.rules]
+margin = 4
+
+[[vector]]
+id = "empty-inline"
+entries = ["EmptyInline"]
+rules = {}
+
+[[vector]]
+id = "empty-table"
+entries = ["EmptyTable"]
+
+[vector.rules]
+# no rule
+
+[vector.before]
 margin = 4

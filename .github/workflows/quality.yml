@@ -66,3 +66,9 @@ jobs:
         run: pipx run --spec mypy==2.4.1 mypy
       - name: Test the planted-fault runner
         run: python3 -m unittest discover -s tools -p test_check_mutants.py
+      - name: Test the adjusted-vector prover
+        run: python3 -m unittest discover -s tools/cleanroom -p test_adjusted_vectors_run.py
+      - name: Require each adjusted vector to fail at the reference rules
+        # MODEL §1 decision 16: a Parameter entry's adjusted vector proves nothing unless its
+        # answer depends on the value it changes.
+        run: python3 tools/cleanroom/adjusted_vectors_run.py

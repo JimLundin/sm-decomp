@@ -4,9 +4,10 @@
 # gate). Reads committed files only: the spec, docs/behaviours/DOMAIN.md, where an entry is a
 # `### Name` heading and its switch a `- switch: parameter` line (any case, emphasis allowed);
 # and the vectors, scenarios/vectors/DOMAIN.toml, where a vector runs an entry adjusted when its
-# `entries` name it and it carries a `rules` table (`rules = { ... }` or `[vector.rules]`), the
-# observer's per-vector overrides of the reference rules. With no DOMAIN, every spec that has a
-# vector file.
+# `entries` name it and it carries a `rules` table (`rules = { ... }` or `[vector.rules]`) that
+# holds at least one rule, the observer's per-vector overrides of the reference rules. With no
+# DOMAIN, every spec that has a vector file. Whether a vector's answer depends on its rules is
+# adjusted_vectors_run.py's to say, once the domain has a model to run it.
 #
 # Prints one line per entry without one, `adjusted: DOMAIN: ENTRY has no adjusted vector`, then a
 # count per domain. Advisory, exit 0, unless --gate: then exit 1 when any entry lacks one. The
@@ -39,14 +40,17 @@ for d in "${domains[@]}"; do
   mapfile -t params < <(awk '
     /^### / { entry = $2 }
     tolower($0) ~ /^- switch: *\**parameter/ && entry != "" { print entry; entry = "" }' "$spec")
-  # The entries of every vector that carries a `rules` table, one per line.
+  # The entries of every vector whose `rules` table holds a rule, one per line. `top` is set
+  # among a vector's own keys, `table` among those of its rules.
   adjusted=$(awk '
-    function flush() { if (rules) printf "%s", names; names = ""; rules = 0; inv = 0 }
-    /^\[\[vector\]\]/ { flush(); inv = 1; next }
-    /^\[vector\.rules\]/ { rules = 1; next }
+    function flush() { if (rules) printf "%s", names; names = ""; rules = 0; top = 0; table = 0 }
+    /^\[\[vector\]\]/ { flush(); top = 1; next }
+    /^\[vector\.rules[].]/ { table = 1; top = 0; next }
+    /^\[vector\./ { table = 0; top = 0; next }
     /^\[/ { flush(); next }
-    inv && /^rules *=/ { rules = 1 }
-    inv && /^entries *=/ { collecting = 1 }
+    table && /^[^#[:space:]][^=]*=/ { rules = 1 }
+    top && /^rules *=/ && $0 !~ /^rules *= *\{ *\} *(#.*)?$/ { rules = 1 }
+    top && /^entries *=/ { collecting = 1 }
     collecting {
       line = $0; sub(/^entries *= */, "", line)
       while (match(line, /"[^"]*"/)) { names = names substr(line, RSTART + 1, RLENGTH - 2) "\n"; line = substr(line, RSTART + RLENGTH) }

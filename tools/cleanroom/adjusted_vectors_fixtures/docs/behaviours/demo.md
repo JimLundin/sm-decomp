@@ -15,3 +15,11 @@
 ### Missing
 
 - switch: Parameter.
+
+### EmptyInline
+
+- switch: Parameter.
+
+### EmptyTable
+
+- switch: Parameter.
