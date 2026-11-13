@@ -56,6 +56,10 @@ const TOKENS_PER_LINE: usize = 6;
 /// The share of a model's score, in percent, above which its shared code (in no area) is a
 /// finding (Jim, 2026-11-11): no spec unit pays for it, so it bends the fit.
 const SHARED_FLAG: usize = 25;
+/// The gain over the null model, in percent of a domain's compared frames, under which the
+/// README flags a domain in progress: its rows barely tell the model from a step that
+/// does nothing.
+const GAIN_FLAG: usize = 10;
 /// The harness floors, per domain and row.
 const FLOORS: &str = "crates/verify/src/harness/floors.txt";
 /// The domain free run's floors, per domain and row: the frames each domain holds fed its own State.
@@ -1353,12 +1357,64 @@ fn floors_section(
 /// A domain's oracle coverage over every row, as `coverage.txt` commits it.
 #[derive(Default, Debug, PartialEq, Eq)]
 struct Coverage {
-    /// Frames, matched and verified, unverified and the null model's matched.
-    frames: Option<[usize; 4]>,
+    /// Its frames and how the model and the null model met them.
+    frames: Option<Frames>,
     /// Each declared field: its name, the frames it was compared on, the frames it was masked on.
     fields: Vec<(String, usize, usize)>,
     /// Each catalogue entry: its name and its counts.
     entries: Vec<EntryCoverage>,
+}
+
+/// A domain's frames over every row, as its `frames` line in `coverage.txt` gives them.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+struct Frames {
+    /// The frames the harness ran over.
+    ran: usize,
+    /// Those it compared: run, not skipped and not a harness defect.
+    compared: usize,
+    /// The compared frames the model matched on every unmasked field, verified.
+    matched: usize,
+    /// The compared frames it matched only through a stand-in's answer.
+    unverified: usize,
+    /// The compared frames the null model matched on every unmasked field.
+    null_matched: usize,
+}
+
+impl Frames {
+    /// The frames the model matched beyond those a step that does nothing matches, none where
+    /// it matches fewer.
+    const fn gain(self) -> usize {
+        self.matched.saturating_sub(self.null_matched)
+    }
+
+    /// Whether the gain is under [`GAIN_FLAG`] percent of the compared frames: the rows barely
+    /// tell the model from one that does nothing.
+    const fn weak(self) -> bool {
+        self.gain().saturating_mul(100) < self.compared.saturating_mul(GAIN_FLAG)
+    }
+}
+
+/// How the rows prove a catalogue entry.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Proof {
+    /// No frame exercised it with its fields compared: its vectors alone check it.
+    VectorsOnly,
+    /// The null model matched it on as many of its frames as the model, so the rows would pass
+    /// a step that does nothing too.
+    Unproven,
+    /// The model matched it on this many more frames than the null model.
+    Gain(usize),
+}
+
+impl Proof {
+    /// Its cell in the report's entry table.
+    fn cell(self) -> String {
+        match self {
+            Self::VectorsOnly => String::from("vectors only"),
+            Self::Unproven => String::from("unproven"),
+            Self::Gain(gain) => format!("gain {}", grouped(gain)),
+        }
+    }
 }
 
 /// A catalogue entry's oracle coverage over every row.
@@ -1376,7 +1432,20 @@ struct EntryCoverage {
     unchecked: usize,
 }
 
-/// The coverage by domain: `domain frames <4 counts>`, `domain field <2 counts> <name>` and
+impl EntryCoverage {
+    /// How the rows prove it: by the frames the model matched beyond the null model's.
+    const fn proof(&self) -> Proof {
+        if self.exercised == 0 {
+            Proof::VectorsOnly
+        } else if self.matched > self.null_matched {
+            Proof::Gain(self.matched.saturating_sub(self.null_matched))
+        } else {
+            Proof::Unproven
+        }
+    }
+}
+
+/// The coverage by domain: `domain frames <5 counts>`, `domain field <2 counts> <name>` and
 /// `domain entry <name> <4 counts>` lines, `#` comments skipped.
 fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
     let mut domains: BTreeMap<String, Coverage> = BTreeMap::new();
@@ -1390,11 +1459,22 @@ fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
     {
         match line.split_whitespace().collect::<Vec<_>>().as_slice() {
-            [domain, "frames", counts @ ..] if counts.len() == 4 => {
-                let mut frames = [0; 4];
-                for (slot, word) in frames.iter_mut().zip(counts) {
-                    *slot = number(line, word)?;
-                }
+            [
+                domain,
+                "frames",
+                frames,
+                compared,
+                matched,
+                unverified,
+                null_matched,
+            ] => {
+                let frames = Frames {
+                    ran: number(line, frames)?,
+                    compared: number(line, compared)?,
+                    matched: number(line, matched)?,
+                    unverified: number(line, unverified)?,
+                    null_matched: number(line, null_matched)?,
+                };
                 domains.entry((*domain).to_owned()).or_default().frames = Some(frames);
             }
             [domain, "field", compared, masked, name @ ..] if !name.is_empty() => {
@@ -1437,23 +1517,37 @@ fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
     Ok(domains)
 }
 
+/// A domain's gain over the null model and its share of the compared frames, as a table cell.
+fn gain_cell(frames: Frames) -> String {
+    format!(
+        "{} ({})",
+        grouped(frames.gain()),
+        timeline::percent(frames.gain(), frames.compared)
+    )
+}
+
 fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<String, Coverage>) {
     out.push_str(
         "\n## Oracle coverage\n\nOver every row the floors name \
          (`crates/verify/src/harness/coverage.txt`, which the floor tests hold equal to a run over \
-         every row). A frame is matched and verified when every unmasked field matched the \
+         every row). A frame is compared unless the domain doesn't run in it or the harness \
+         couldn't decode it; it is matched and verified when every unmasked field matched the \
          oracle, and unverified when it matched only through a stand-in's answer copied from the \
-         next record; the null model is a step that does nothing.\n\n",
+         next record. The null model is a step that does nothing, on the same frames; a model's \
+         **gain** is the frames it matched beyond the null model's, what the rows prove of it \
+         (MODEL §4).\n\n",
     );
     table(
         out,
         1,
         &[
             "Domain",
-            "Frames",
+            "Gain over null",
             "Matched and verified",
-            "Unverified",
             "Null model",
+            "Compared",
+            "Unverified",
+            "Frames",
         ],
     );
     for domain in domains {
@@ -1462,8 +1556,18 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
             .get(name)
             .and_then(|coverage| coverage.frames)
             .map_or_else(
-                || String::from("- | - | - | -"),
-                |frames| frames.map(grouped).join(" | "),
+                || String::from("- | - | - | - | - | -"),
+                |frames| {
+                    format!(
+                        "{} | {} | {} | {} | {} | {}",
+                        gain_cell(frames),
+                        grouped(frames.matched),
+                        grouped(frames.null_matched),
+                        grouped(frames.compared),
+                        grouped(frames.unverified),
+                        grouped(frames.ran)
+                    )
+                },
             );
         let _ = writeln!(out, "| {name} | {cells} |");
     }
@@ -1488,14 +1592,19 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
             );
         }
     }
+    entries_table(out, domains, coverage);
+}
+
+/// The coverage section's table of catalogue entries, each with its proof.
+fn entries_table(out: &mut String, domains: &[Measured], coverage: &BTreeMap<String, Coverage>) {
     out.push_str(
         "\nPer catalogue entry, the frames that exercised it with every field its output reaches \
          compared, those of them matched and verified, those of them on which the null model \
          matched every such field too, and the frames that exercised it unchecked: one of its \
-         fields masked, or an output (an event) the harness doesn't compare. An entry the null \
-         model matches on as many frames as the model is only weakly checked by the rows, since \
-         doing nothing would pass them too; an entry no frame verifies is checked by its vectors \
-         only.\n\n",
+         fields masked, or an output (an event) the harness doesn't compare. Its proof is the \
+         rows' **gain** over the null model; an entry the null model matches on as many frames \
+         as the model is **unproven** by the rows, since doing nothing would pass them too, and \
+         one no frame exercises with its fields compared is checked by its **vectors only**.\n\n",
     );
     table(
         out,
@@ -1503,6 +1612,7 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
         &[
             "Domain",
             "Entry",
+            "Proof",
             "Matched and verified",
             "Null model",
             "Exercised",
@@ -1516,15 +1626,17 @@ fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<
             .map(|coverage| coverage.entries.as_slice())
             .unwrap_or_default()
         {
-            let (matched, null) = if entry.exercised == 0 {
-                (String::from("vectors only"), String::from("-"))
+            let proof = entry.proof();
+            let (matched, null) = if proof == Proof::VectorsOnly {
+                (String::from("-"), String::from("-"))
             } else {
                 (grouped(entry.matched), grouped(entry.null_matched))
             };
             let _ = writeln!(
                 out,
-                "| {name} | {} | {matched} | {null} | {} | {} |",
+                "| {name} | {} | {} | {matched} | {null} | {} | {} |",
                 entry.name,
+                proof.cell(),
                 grouped(entry.exercised),
                 grouped(entry.unchecked)
             );

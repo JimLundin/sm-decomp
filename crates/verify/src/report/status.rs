@@ -22,7 +22,7 @@ mod graph;
 pub(super) use graph::{section as graph_section, undeclared};
 
 use super::timeline::{Timeline, percent, seed_frame};
-use super::{COMMAND, Tree, fit, grouped, or_dash, read, table};
+use super::{COMMAND, GAIN_FLAG, Tree, fit, gain_cell, grouped, or_dash, read, table};
 use crate::gate::Ratchet;
 use crate::harness::free::{Accounting, Floors};
 use crate::lock::{Lock, RowId, Stream};
@@ -554,6 +554,13 @@ impl RungFigures {
         self.least(|held| (held.held, held.compared))
     }
 
+    /// The domains whose free runs hold the smallest share of the frames they compare beyond
+    /// those the null model's free run holds: what the rows prove of the model. A domain that
+    /// holds no more than the null model gains nothing.
+    fn least_gain(&self) -> Option<Least<'_>> {
+        self.least(|held| (held.held.saturating_sub(held.null_held), held.compared))
+    }
+
     /// The domains whose free runs compare the smallest share of the frames in their scope:
     /// those they answer for, not the ones another domain owns, so a domain that exists for a
     /// few frames (the door passage) is measured over those. A domain with no frame in scope
@@ -724,13 +731,15 @@ fn ladder(out: &mut String, tree: &Tree) {
          counted over the streams the rung claims: `video` only once it needs the line program, \
          `apu` only once it needs the sound requests. Until then, over the lock's rows that \
          start inside it: the rows the free-run gate starts, their green (row, stream) pairs \
-         over those streams, and the domain free run's two figures: the domain that holds the \
-         smallest share of the frames it compares, and the domain that compares the smallest \
-         share of the frames in its scope, those of the rows' frames after their seeds it answers \
-         for ([the report's ladder](docs/REPORT.md#the-ladder) gives every domain, its frames in \
+         over those streams, and the domain free run's three figures: the domain that holds the \
+         smallest share of the frames it compares; the domain whose hold gains the smallest share \
+         of them over the null model's free run, a step that does nothing carried from the same \
+         seeds; and the domain that compares the smallest share of the frames in its scope, \
+         those of the rows' frames after their seeds it answers for \
+         ([the report's ladder](docs/REPORT.md#the-ladder) gives every domain, its frames in \
          and out of scope, and the frames no model domain compares).\n\n\
-         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least compared of its scope | Still needed |\n\
-         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
+         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least gain over the null model | Free run, least compared of its scope | Still needed |\n\
+         | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
     );
     for rung in &tree.rungs {
         let frames = rung.span.1.saturating_sub(rung.span.0);
@@ -739,7 +748,7 @@ fn ladder(out: &mut String, tree: &Tree) {
         };
         let _ = writeln!(
             out,
-            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} of {} | {} | {} | {} |",
+            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} of {} | {} | {} | {} | {} |",
             rung.id,
             rung.name,
             grouped(rung.span.0),
@@ -752,6 +761,7 @@ fn ladder(out: &mut String, tree: &Tree) {
             rung.green,
             rung.pairs,
             cell(rung.least_held()),
+            cell(rung.least_gain()),
             cell(rung.least_compared()),
             rung.still,
         );
@@ -810,9 +820,12 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
          yet or the harness can't decode it; or **folded**, a record the domain folds into the \
          frame before it, such as a lag record. A domain's **scope** is its compared and \
          unreached frames. The share held is of the frames compared, so it reads the same for \
-         a domain that compares every frame and one that compares a few; the share compared is \
-         of the frames in scope. The frames no model domain compares are the rung's gap; \
-         game-time, the clock, compares every frame and is left out of it.\n",
+         a domain that compares every frame and one that compares a few; the **null model** \
+         held is what a step that does nothing, carried from the same seeds and ending its \
+         segments at its own divergences, holds of those frames, the baseline the held frames \
+         are read against; the share compared is of the frames in scope. The frames no model \
+         domain compares are the rung's gap; game-time, the clock, compares every frame and is \
+         left out of it.\n",
     );
     for rung in &tree.rungs {
         let _ = writeln!(
@@ -829,6 +842,7 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
             &[
                 "Domain free run",
                 "Held of compared",
+                "Null model held",
                 "Compared of in scope",
                 "Masked",
                 "Unreached",
@@ -839,10 +853,12 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
         for (domain, held) in &rung.held {
             let _ = writeln!(
                 out,
-                "| {domain} | {} of {} ({}) | {} of {} ({}) | {} | {} | {} | {} |",
+                "| {domain} | {} of {} ({}) | {} ({}) | {} of {} ({}) | {} | {} | {} | {} |",
                 figure(held.held),
                 figure(held.compared),
                 share(held.held, held.compared),
+                figure(held.null_held),
+                share(held.null_held, held.compared),
                 figure(held.compared),
                 figure(held.in_scope()),
                 share(held.compared, held.in_scope()),
@@ -877,9 +893,13 @@ fn headline(out: &mut String, plan: &Plan) {
 fn models(out: &mut String, plan: &Plan, tree: &Tree) {
     out.push_str(
         "\n### The models\n\nEach model is built in the clean room from its spec alone, then \
-         checked frame by frame against the original game: its harness frames are the recorded \
-         frames on which it matched the original on every compared field, of the frames it ran \
-         over. Score and budget are weighted tokens; fit is score over budget.\n\n",
+         checked frame by frame against the original game. Its headline is its **gain over the \
+         null model**: of the recorded frames its harness compares, those on which it matched \
+         the original on every compared field, less those on which a step that does nothing \
+         matched too, as a share of the compared frames. A frame the null model matches proves \
+         nothing about the model, so a model whose gain is small is barely checked by the rows, \
+         however many frames it matches ([STATUS](docs/STATUS.md#the-models-gain-over-the-null-model)). \
+         Score and budget are weighted tokens; fit is score over budget.\n\n",
     );
     table(
         out,
@@ -890,36 +910,66 @@ fn models(out: &mut String, plan: &Plan, tree: &Tree) {
             "Status",
             "Rounds",
             "Vectors",
-            "Harness frames",
+            "Gain over null",
+            "Matched",
+            "Null model",
+            "Compared",
             "Score",
             "Budget",
             "Fit",
         ],
     );
+    let mut weak = Vec::new();
     for domain in &tree.domains {
         let name = domain.domain.name;
-        let frames = tree
-            .coverage
-            .get(name)
-            .and_then(|coverage| coverage.frames)
-            .map_or_else(
-                || String::from("-"),
-                |[compared, matched, ..]| format!("{} of {}", grouped(matched), grouped(compared)),
-            );
+        let frames = tree.coverage.get(name).and_then(|coverage| coverage.frames);
+        let stage = plan.stage(name);
+        if let Some(frames) = frames.filter(|frames| stage == Stage::InProgress && frames.weak()) {
+            weak.push(format!(
+                "{name} ({})",
+                percent(frames.gain(), frames.compared)
+            ));
+        }
+        let cells = frames.map_or_else(
+            || String::from("- | - | - | -"),
+            |frames| {
+                format!(
+                    "{} | {} | {} | {}",
+                    gain_cell(frames),
+                    grouped(frames.matched),
+                    grouped(frames.null_matched),
+                    grouped(frames.compared)
+                )
+            },
+        );
         let model = domain.model_total();
         let _ = writeln!(
             out,
-            "| {name} | {} | {} | {} | {} | {frames} | {} | {} | {} |",
+            "| {name} | {} | {} | {} | {} | {cells} | {} | {} | {} |",
             ids_by_stage(
                 plan.holding(name)
                     .map(|domain| (domain.id.as_str(), domain.status))
             ),
-            plan.stage(name).label(),
+            stage.label(),
             grouped(plan.rounds(name)),
             grouped(domain.vectors),
             model.score(),
             or_dash(domain.count.budget()),
             fit(model.score, domain.count.budget()),
+        );
+    }
+    if weak.is_empty() {
+        let _ = writeln!(
+            out,
+            "\nEvery model in progress gains at least {GAIN_FLAG} % of the frames it compares \
+             over the null model."
+        );
+    } else {
+        let _ = writeln!(
+            out,
+            "\n**Flagged**, in progress with a gain under {GAIN_FLAG} % of the frames compared, \
+             so the rows barely tell the model from a step that does nothing: {}.",
+            weak.join(", ")
         );
     }
 }

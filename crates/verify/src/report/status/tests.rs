@@ -109,6 +109,38 @@ fn the_least_held_domain_holds_the_smallest_share_of_what_it_compares() {
 }
 
 #[test]
+fn the_least_gain_is_the_held_share_beyond_what_the_null_model_holds() {
+    let held = |held, null_held, compared| Accounting {
+        held,
+        null_held,
+        compared,
+        ..Accounting::default()
+    };
+    let rung = figures([
+        // Holds every frame, but so would a step that does nothing on nearly all of them.
+        (String::from("still"), held(100, 98, 100)),
+        // Holds fewer frames, most of which only the model holds.
+        (String::from("moving"), held(90, 10, 100)),
+        // Holds fewer than the null model, so gains nothing.
+        (String::from("behind"), held(5, 50, 100)),
+    ]);
+    assert_eq!(
+        rung.least_gain(),
+        Some(Least {
+            domains: vec!["behind"],
+            share: (0, 100),
+            every: false,
+        })
+    );
+    let mut ahead = rung;
+    ahead.held.remove("behind");
+    assert_eq!(
+        ahead.least_gain().map(|least| least.cell()),
+        Some(String::from("2.0 % (still)"))
+    );
+}
+
+#[test]
 fn the_least_compared_domain_compares_the_smallest_share_of_its_scope() {
     let accounted = |compared, unreached, out_of_scope| Accounting {
         compared,

@@ -1,582 +1,584 @@
 # The domain free run's floors (verify::harness::free, MODEL §4 "The primary proof is a free
 # run"), one line per domain and cached row:
-#   `<domain> <row> <held> <compared> <masked> <out-of-scope> <unreached> <folded>`
+#   `<domain> <row> <held> <null-held> <compared> <masked> <out-of-scope> <unreached> <folded>`
 # held is a floor: a row's held frames never fall below it; raise it with the change that raised
-# it. The rest say how the run accounts for each of the row's records after its seed, and hold
-# exactly: compared (held or diverged), of them masked (compared on the fields no other writer
-# moved), out of scope (a frame the domain doesn't run in or another domain owns), unreached (a
-# frame the domain answers for and doesn't compare: its model doesn't take it yet, or the harness
-# can't decode it) and folded (a record the domain folds into the frame before it). A domain's
-# scope on a row is its compared and unreached frames. Per row, `uncompared <row> <frames>` holds exactly the
-# frames after its seed no model domain (all but game-time, the clock) compares. A cached row
-# with no line prints the line to add; the first run over CI's cache sets them.
-game-time any-ceres-arrival 192 222 0 0 0 0
-game-time any-fly-to-ceres 802 802 0 0 0 0
-game-time any-intro-0568 1650 1650 0 0 0 0
-game-time any-intro-2219 2103 2103 0 0 0 0
-game-time any-intro-4323 1688 1688 0 0 0 0
-game-time any-intro-6012 1499 1499 0 0 0 0
-game-time any-power-on 566 567 0 0 0 0
-game-time any-zebes-arrival 201 231 0 0 0 0
-game-time area-brinstar 476 476 0 0 0 0
-game-time area-maridia 425 428 0 0 0 0
-game-time area-norfair 374 374 0 0 0 0
-game-time boss-kraid-defeated 1120 1139 0 0 0 0
-game-time boss-phantoon 2062 2109 0 0 0 0
-game-time chain-0012-91F8 1031 1032 0 0 0 0
-game-time chain-0013-92FD 599 599 0 0 0 0
-game-time chain-0014-96BA 506 506 0 0 0 0
-game-time chain-0043-9AD9 416 417 0 0 0 0
-game-time chain-0057-9FBA 549 549 0 0 0 0
-game-time chain-0059-A293 777 777 0 0 0 0
-game-time chain-0097-ACF0 818 818 0 0 0 0
-game-time chain-0100-B07A 284 285 0 0 0 0
-game-time chain-0106-AD5E 770 782 0 0 0 0
-game-time chain-0163-A890 27 30 0 0 0 0
-game-time chain-0220-D017 538 538 0 0 0 0
-game-time chain-0224-D0B9 512 512 0 0 0 0
-game-time chain-0232-D5A7 632 706 0 0 0 0
-game-time chain-0234-D51E 152 153 0 0 0 0
-game-time chain-0314-DAE1 450 465 0 0 0 0
-game-time chain-any-0001-DF45 411 411 0 0 0 0
-game-time chain-any-0002-DF8D 281 281 0 0 0 0
-game-time chain-any-0003-DFD7 344 344 0 0 0 0
-game-time chain-any-0004-E021 263 263 0 0 0 0
-game-time chain-any-0005-E06B 320 320 0 0 0 0
-game-time chain-any-0006-E0B5 1776 1776 0 0 0 0
-game-time chain-any-0007-E06B 258 258 0 0 0 0
-game-time chain-any-0008-E021 263 263 0 0 0 0
-game-time chain-any-0009-DFD7 330 330 0 0 0 0
-game-time chain-any-0010-DF8D 278 278 0 0 0 0
-game-time chain-any-0011-DF45 2048 2123 0 0 0 0
-game-time event-zebes-awake 179 179 0 0 0 0
-game-time item-charge-beam 479 919 0 0 0 0
-game-time item-energy-tank 239 259 0 0 0 0
-game-time item-morph-ball 1028 1427 0 0 0 0
-game-time item-plasma-beam 145 169 0 0 0 0
-game-time item-reserve-tank 413 1229 0 0 0 0
-game-time item-wave-beam 36 59 0 0 0 0
-game-time samus-bomb-jump-vertical 314 1058 0 0 0 0
-game-time samus-ceres-push 1777 1777 0 0 0 0
-game-time samus-grapple-release 488 488 0 0 0 0
-game-time samus-grapple-walljump 174 174 0 0 0 0
-game-time samus-input-poses 559 559 0 0 0 0
-game-time samus-mockball 129 129 0 0 0 0
-game-time samus-screw-attack 945 945 0 0 0 0
-game-time samus-shinespark-left 418 418 0 0 0 0
-game-time samus-shinespark-right 405 405 0 0 0 0
-game-time samus-shinespark-up 393 393 0 0 0 0
-game-time samus-shinespark-up-left 418 418 0 0 0 0
-game-time samus-space-jump-chain 383 383 0 0 0 0
-game-time samus-square-slope-reserve 36 398 0 0 0 0
-game-time samus-walljump-16 157 157 0 0 0 0
-game-time samus-walljump-22 163 163 0 0 0 0
-game-time samus-walljump-28 169 169 0 0 0 0
-game-time terrain-quicksand 450 456 0 0 0 0
-samus-movement any-ceres-arrival 0 0 0 222 0 0
-samus-movement any-fly-to-ceres 0 0 0 802 0 0
-samus-movement any-intro-0568 0 0 0 1650 0 0
-samus-movement any-intro-2219 0 0 0 2103 0 0
-samus-movement any-intro-4323 0 0 0 1688 0 0
-samus-movement any-intro-6012 0 0 0 1499 0 0
-samus-movement any-power-on 0 0 0 567 0 0
-samus-movement any-zebes-arrival 0 0 0 231 0 0
-samus-movement area-brinstar 476 476 453 0 0 0
-samus-movement area-maridia 252 252 3 176 0 0
-samus-movement area-norfair 209 209 4 165 0 0
-samus-movement boss-kraid-defeated 1023 1026 50 98 15 0
-samus-movement boss-phantoon 1915 1956 90 72 81 0
-samus-movement chain-0012-91F8 421 421 13 611 0 0
-samus-movement chain-0013-92FD 598 599 13 0 0 0
-samus-movement chain-0014-96BA 343 343 4 163 0 0
-samus-movement chain-0043-9AD9 417 417 27 0 0 0
-samus-movement chain-0057-9FBA 536 537 14 2 10 0
-samus-movement chain-0059-A293 519 519 25 199 59 0
-samus-movement chain-0097-ACF0 662 663 2 155 0 0
-samus-movement chain-0100-B07A 277 278 11 2 5 0
-samus-movement chain-0106-AD5E 496 497 41 222 63 0
-samus-movement chain-0163-A890 28 28 1 2 0 0
-samus-movement chain-0220-D017 145 145 6 393 0 0
-samus-movement chain-0224-D0B9 159 159 8 176 177 0
-samus-movement chain-0232-D5A7 599 603 80 99 4 0
-samus-movement chain-0234-D51E 145 153 82 0 0 0
-samus-movement chain-0314-DAE1 443 444 22 16 5 0
-samus-movement chain-any-0001-DF45 149 149 3 262 0 0
-samus-movement chain-any-0002-DF8D 120 120 4 161 0 0
-samus-movement chain-any-0003-DFD7 182 182 5 162 0 0
-samus-movement chain-any-0004-E021 102 102 0 161 0 0
-samus-movement chain-any-0005-E06B 94 94 1 226 0 0
-samus-movement chain-any-0006-E0B5 1480 1491 57 267 18 0
-samus-movement chain-any-0007-E06B 96 96 1 162 0 0
-samus-movement chain-any-0008-E021 100 100 0 163 0 0
-samus-movement chain-any-0009-DFD7 163 163 6 162 5 0
-samus-movement chain-any-0010-DF8D 91 91 5 184 3 0
-samus-movement chain-any-0011-DF45 164 164 16 1959 0 0
-samus-movement event-zebes-awake 128 128 7 45 6 0
-samus-movement item-charge-beam 468 480 35 439 0 0
-samus-movement item-energy-tank 240 240 1 19 0 0
-samus-movement item-morph-ball 1028 1028 464 399 0 0
-samus-movement item-plasma-beam 145 146 3 23 0 0
-samus-movement item-reserve-tank 413 414 13 815 0 0
-samus-movement item-wave-beam 37 37 2 22 0 0
-samus-movement samus-bomb-jump-vertical 286 286 3 744 28 0
-samus-movement samus-ceres-push 1704 1710 39 47 20 0
-samus-movement samus-grapple-release 243 245 4 37 206 0
-samus-movement samus-grapple-walljump 114 115 1 59 0 0
-samus-movement samus-input-poses 297 297 8 262 0 0
-samus-movement samus-mockball 129 129 1 0 0 0
-samus-movement samus-screw-attack 862 862 40 59 24 0
-samus-movement samus-shinespark-left 316 317 4 0 101 0
-samus-movement samus-shinespark-right 293 294 4 0 111 0
-samus-movement samus-shinespark-up 212 213 3 0 180 0
-samus-movement samus-shinespark-up-left 267 268 4 0 150 0
-samus-movement samus-space-jump-chain 383 383 4 0 0 0
-samus-movement samus-square-slope-reserve 37 37 2 361 0 0
-samus-movement samus-walljump-16 157 157 6 0 0 0
-samus-movement samus-walljump-22 163 163 6 0 0 0
-samus-movement samus-walljump-28 169 169 6 0 0 0
-samus-movement terrain-quicksand 334 406 297 44 6 0
-samus-appearance any-ceres-arrival 0 0 0 99 0 123
-samus-appearance any-fly-to-ceres 0 0 0 743 0 59
-samus-appearance any-intro-0568 0 0 0 1504 0 146
-samus-appearance any-intro-2219 0 0 0 2097 0 6
-samus-appearance any-intro-4323 0 0 0 1685 0 3
-samus-appearance any-intro-6012 0 0 0 1497 0 2
-samus-appearance any-power-on 0 0 0 362 0 205
-samus-appearance any-zebes-arrival 0 0 0 107 0 124
-samus-appearance area-brinstar 476 476 0 0 0 0
-samus-appearance area-maridia 255 255 0 46 0 127
-samus-appearance area-norfair 209 209 0 43 0 122
-samus-appearance boss-kraid-defeated 1023 1023 0 68 0 48
-samus-appearance boss-phantoon 1952 1952 0 110 0 47
-samus-appearance chain-0012-91F8 421 421 0 610 0 1
-samus-appearance chain-0013-92FD 599 599 0 0 0 0
-samus-appearance chain-0014-96BA 343 343 0 43 0 120
-samus-appearance chain-0043-9AD9 417 417 0 0 0 0
-samus-appearance chain-0057-9FBA 535 535 0 14 0 0
-samus-appearance chain-0059-A293 512 512 0 224 0 41
-samus-appearance chain-0097-ACF0 663 663 0 50 0 105
-samus-appearance chain-0100-B07A 277 277 0 7 0 1
-samus-appearance chain-0106-AD5E 487 487 0 162 0 133
-samus-appearance chain-0163-A890 28 28 0 2 0 0
-samus-appearance chain-0220-D017 144 144 0 310 0 84
-samus-appearance chain-0224-D0B9 159 159 0 220 0 133
-samus-appearance chain-0232-D5A7 601 601 0 31 0 74
-samus-appearance chain-0234-D51E 153 153 0 0 0 0
-samus-appearance chain-0314-DAE1 443 443 0 7 0 15
-samus-appearance chain-any-0001-DF45 149 149 0 144 0 118
-samus-appearance chain-any-0002-DF8D 120 120 0 43 0 118
-samus-appearance chain-any-0003-DFD7 182 182 0 43 0 119
-samus-appearance chain-any-0004-E021 102 102 0 43 0 118
-samus-appearance chain-any-0005-E06B 94 94 0 67 0 159
-samus-appearance chain-any-0006-E0B5 1486 1486 0 167 0 123
-samus-appearance chain-any-0007-E06B 96 96 0 43 0 119
-samus-appearance chain-any-0008-E021 100 100 0 44 0 119
-samus-appearance chain-any-0009-DFD7 162 162 0 50 0 118
-samus-appearance chain-any-0010-DF8D 90 90 0 67 0 121
-samus-appearance chain-any-0011-DF45 163 163 0 1890 0 70
-samus-appearance event-zebes-awake 126 126 0 53 0 0
-samus-appearance item-charge-beam 480 480 0 416 0 23
-samus-appearance item-energy-tank 240 240 0 19 0 0
-samus-appearance item-morph-ball 1028 1028 0 399 0 0
-samus-appearance item-plasma-beam 146 146 0 23 0 0
-samus-appearance item-reserve-tank 414 414 0 815 0 0
-samus-appearance item-wave-beam 37 37 0 22 0 0
-samus-appearance samus-bomb-jump-vertical 314 314 0 744 0 0
-samus-appearance samus-ceres-push 1705 1705 0 72 0 0
-samus-appearance samus-grapple-release 248 248 0 240 0 0
-samus-appearance samus-grapple-walljump 114 114 0 60 0 0
-samus-appearance samus-input-poses 297 297 0 144 0 118
-samus-appearance samus-mockball 129 129 0 0 0 0
-samus-appearance samus-screw-attack 859 859 0 86 0 0
-samus-appearance samus-shinespark-left 316 316 0 102 0 0
-samus-appearance samus-shinespark-right 293 293 0 112 0 0
-samus-appearance samus-shinespark-up 212 212 0 181 0 0
-samus-appearance samus-shinespark-up-left 267 267 0 151 0 0
-samus-appearance samus-space-jump-chain 383 383 0 0 0 0
-samus-appearance samus-square-slope-reserve 37 37 0 361 0 0
-samus-appearance samus-walljump-16 157 157 0 0 0 0
-samus-appearance samus-walljump-22 163 163 0 0 0 0
-samus-appearance samus-walljump-28 169 169 0 0 0 0
-samus-appearance terrain-quicksand 402 402 1 48 0 6
-world-camera any-ceres-arrival 0 0 0 222 0 0
-world-camera any-fly-to-ceres 0 0 0 802 0 0
-world-camera any-intro-0568 0 0 0 1650 0 0
-world-camera any-intro-2219 0 0 0 2103 0 0
-world-camera any-intro-4323 0 0 0 1688 0 0
-world-camera any-intro-6012 0 0 0 1499 0 0
-world-camera any-power-on 0 0 0 567 0 0
-world-camera any-zebes-arrival 0 0 0 231 0 0
-world-camera area-brinstar 476 476 0 0 0 0
-world-camera area-maridia 257 257 2 171 0 0
-world-camera area-norfair 208 208 0 166 0 0
-world-camera boss-kraid-defeated 1070 1070 14 69 0 0
-world-camera boss-phantoon 2062 2062 6 47 0 0
-world-camera chain-0012-91F8 1031 1031 17 1 0 0
-world-camera chain-0013-92FD 599 599 0 0 0 0
-world-camera chain-0014-96BA 342 342 0 164 0 0
-world-camera chain-0043-9AD9 416 416 0 1 0 0
-world-camera chain-0057-9FBA 549 549 4 0 0 0
-world-camera chain-0059-A293 584 584 15 193 0 0
-world-camera chain-0097-ACF0 662 662 0 156 0 0
-world-camera chain-0100-B07A 284 284 2 1 0 0
-world-camera chain-0106-AD5E 600 600 31 182 0 0
-world-camera chain-0163-A890 27 27 0 3 0 0
-world-camera chain-0220-D017 144 144 0 394 0 0
-world-camera chain-0224-D0B9 335 335 1 177 0 0
-world-camera chain-0232-D5A7 632 632 3 74 0 0
-world-camera chain-0234-D51E 152 152 12 1 0 0
-world-camera chain-0314-DAE1 450 450 2 15 0 0
-world-camera chain-any-0001-DF45 249 249 0 162 0 0
-world-camera chain-any-0002-DF8D 119 119 0 162 0 0
-world-camera chain-any-0003-DFD7 181 181 0 163 0 0
-world-camera chain-any-0004-E021 101 101 0 162 0 0
-world-camera chain-any-0005-E06B 93 93 0 227 0 0
-world-camera chain-any-0006-E0B5 1609 1609 16 167 0 0
-world-camera chain-any-0007-E06B 95 95 0 163 0 0
-world-camera chain-any-0008-E021 99 99 0 164 0 0
-world-camera chain-any-0009-DFD7 168 168 2 162 0 0
-world-camera chain-any-0010-DF8D 111 111 3 167 0 0
-world-camera chain-any-0011-DF45 163 163 0 1960 0 0
-world-camera event-zebes-awake 179 179 6 0 0 0
-world-camera item-charge-beam 479 479 0 440 0 0
-world-camera item-energy-tank 239 239 0 20 0 0
-world-camera item-morph-ball 1028 1028 0 399 0 0
-world-camera item-plasma-beam 145 145 0 24 0 0
-world-camera item-reserve-tank 413 413 0 816 0 0
-world-camera item-wave-beam 36 36 0 23 0 0
-world-camera samus-bomb-jump-vertical 314 314 0 744 0 0
-world-camera samus-ceres-push 1777 1777 15 0 0 0
-world-camera samus-grapple-release 488 488 43 0 0 0
-world-camera samus-grapple-walljump 174 174 60 0 0 0
-world-camera samus-input-poses 397 397 0 162 0 0
-world-camera samus-mockball 129 129 0 0 0 0
-world-camera samus-screw-attack 945 945 8 0 0 0
-world-camera samus-shinespark-left 418 418 2 0 0 0
-world-camera samus-shinespark-right 405 405 2 0 0 0
-world-camera samus-shinespark-up 393 393 41 0 0 0
-world-camera samus-shinespark-up-left 418 418 35 0 0 0
-world-camera samus-space-jump-chain 383 383 0 0 0 0
-world-camera samus-square-slope-reserve 36 36 0 362 0 0
-world-camera samus-walljump-16 157 157 0 0 0 0
-world-camera samus-walljump-22 163 163 0 0 0 0
-world-camera samus-walljump-28 169 169 0 0 0 0
-world-camera terrain-quicksand 450 450 102 6 0 0
-interface-hud any-ceres-arrival 30 30 0 69 0 123
-interface-hud any-fly-to-ceres 0 0 0 743 0 59
-interface-hud any-intro-0568 0 0 0 1504 0 146
-interface-hud any-intro-2219 0 0 0 2097 0 6
-interface-hud any-intro-4323 0 0 0 1685 0 3
-interface-hud any-intro-6012 0 0 0 1497 0 2
-interface-hud any-power-on 0 0 0 362 0 205
-interface-hud any-zebes-arrival 30 30 0 77 0 124
-interface-hud area-brinstar 476 476 0 0 0 0
-interface-hud area-maridia 301 301 2 0 0 127
-interface-hud area-norfair 252 252 0 0 0 122
-interface-hud boss-kraid-defeated 1091 1091 0 0 0 48
-interface-hud boss-phantoon 2062 2062 0 0 0 47
-interface-hud chain-0012-91F8 1031 1031 40 0 0 1
-interface-hud chain-0013-92FD 599 599 0 0 0 0
-interface-hud chain-0014-96BA 386 386 9 0 0 120
-interface-hud chain-0043-9AD9 416 416 17 1 0 0
-interface-hud chain-0057-9FBA 549 549 57 0 0 0
-interface-hud chain-0059-A293 736 736 43 0 0 41
-interface-hud chain-0097-ACF0 713 713 213 0 0 105
-interface-hud chain-0100-B07A 284 284 0 0 0 1
-interface-hud chain-0106-AD5E 649 649 162 0 0 133
-interface-hud chain-0163-A890 27 27 0 3 0 0
-interface-hud chain-0220-D017 454 454 13 0 0 84
-interface-hud chain-0224-D0B9 379 379 7 0 0 133
-interface-hud chain-0232-D5A7 632 632 64 0 0 74
-interface-hud chain-0234-D51E 152 152 1 1 0 0
-interface-hud chain-0314-DAE1 450 450 42 0 0 15
-interface-hud chain-any-0001-DF45 293 293 4 0 0 118
-interface-hud chain-any-0002-DF8D 163 163 16 0 0 118
-interface-hud chain-any-0003-DFD7 225 225 19 0 0 119
-interface-hud chain-any-0004-E021 145 145 15 0 0 118
-interface-hud chain-any-0005-E06B 161 161 14 0 0 159
-interface-hud chain-any-0006-E0B5 1653 1653 0 0 0 123
-interface-hud chain-any-0007-E06B 139 139 14 0 0 119
-interface-hud chain-any-0008-E021 144 144 14 0 0 119
-interface-hud chain-any-0009-DFD7 212 212 35 0 0 118
-interface-hud chain-any-0010-DF8D 157 157 14 0 0 121
-interface-hud chain-any-0011-DF45 2053 2053 10 0 0 70
-interface-hud event-zebes-awake 179 179 34 0 0 0
-interface-hud item-charge-beam 479 479 18 417 0 23
-interface-hud item-energy-tank 239 239 96 20 0 0
-interface-hud item-morph-ball 1028 1028 13 399 0 0
-interface-hud item-plasma-beam 145 145 2 24 0 0
-interface-hud item-reserve-tank 413 413 7 816 0 0
-interface-hud item-wave-beam 36 36 0 23 0 0
-interface-hud samus-bomb-jump-vertical 314 314 0 744 0 0
-interface-hud samus-ceres-push 1777 1777 0 0 0 0
-interface-hud samus-grapple-release 488 488 6 0 0 0
-interface-hud samus-grapple-walljump 174 174 6 0 0 0
-interface-hud samus-input-poses 441 441 4 0 0 118
-interface-hud samus-mockball 129 129 4 0 0 0
-interface-hud samus-screw-attack 945 945 30 0 0 0
-interface-hud samus-shinespark-left 418 418 0 0 0 0
-interface-hud samus-shinespark-right 405 405 0 0 0 0
-interface-hud samus-shinespark-up 393 393 0 0 0 0
-interface-hud samus-shinespark-up-left 418 418 0 0 0 0
-interface-hud samus-space-jump-chain 383 383 0 0 0 0
-interface-hud samus-square-slope-reserve 36 36 0 362 0 0
-interface-hud samus-walljump-16 157 157 0 0 0 0
-interface-hud samus-walljump-22 163 163 0 0 0 0
-interface-hud samus-walljump-28 169 169 0 0 0 0
-interface-hud terrain-quicksand 450 450 0 0 0 6
-run-progress any-ceres-arrival 222 222 0 0 0 0
-run-progress any-fly-to-ceres 802 802 0 0 0 0
-run-progress any-intro-0568 1649 1650 1 0 0 0
-run-progress any-intro-2219 2103 2103 4 0 0 0
-run-progress any-intro-4323 1688 1688 0 0 0 0
-run-progress any-intro-6012 1499 1499 0 0 0 0
-run-progress any-power-on 182 183 1 0 384 0
-run-progress any-zebes-arrival 231 231 0 0 0 0
-run-progress area-brinstar 476 476 0 0 0 0
-run-progress area-maridia 428 428 0 0 0 0
-run-progress area-norfair 374 374 0 0 0 0
-run-progress boss-kraid-defeated 1139 1139 11 0 0 0
-run-progress boss-phantoon 2109 2109 9 0 0 0
-run-progress chain-0012-91F8 1032 1032 0 0 0 0
-run-progress chain-0013-92FD 599 599 0 0 0 0
-run-progress chain-0014-96BA 506 506 0 0 0 0
-run-progress chain-0043-9AD9 417 417 0 0 0 0
-run-progress chain-0057-9FBA 549 549 3 0 0 0
-run-progress chain-0059-A293 777 777 14 0 0 0
-run-progress chain-0097-ACF0 818 818 1 0 0 0
-run-progress chain-0100-B07A 285 285 4 0 0 0
-run-progress chain-0106-AD5E 782 782 22 0 0 0
-run-progress chain-0163-A890 30 30 0 0 0 0
-run-progress chain-0220-D017 538 538 1 0 0 0
-run-progress chain-0224-D0B9 512 512 107 0 0 0
-run-progress chain-0232-D5A7 706 706 4 0 0 0
-run-progress chain-0234-D51E 153 153 0 0 0 0
-run-progress chain-0314-DAE1 465 465 122 0 0 0
-run-progress chain-any-0001-DF45 411 411 0 0 0 0
-run-progress chain-any-0002-DF8D 281 281 0 0 0 0
-run-progress chain-any-0003-DFD7 344 344 0 0 0 0
-run-progress chain-any-0004-E021 263 263 0 0 0 0
-run-progress chain-any-0005-E06B 320 320 0 0 0 0
-run-progress chain-any-0006-E0B5 1776 1776 5 0 0 0
-run-progress chain-any-0007-E06B 258 258 0 0 0 0
-run-progress chain-any-0008-E021 263 263 0 0 0 0
-run-progress chain-any-0009-DFD7 330 330 0 0 0 0
-run-progress chain-any-0010-DF8D 278 278 0 0 0 0
-run-progress chain-any-0011-DF45 2123 2123 1 0 0 0
-run-progress event-zebes-awake 179 179 3 0 0 0
-run-progress item-charge-beam 919 919 3 0 0 0
-run-progress item-energy-tank 259 259 2 0 0 0
-run-progress item-morph-ball 1427 1427 0 0 0 0
-run-progress item-plasma-beam 169 169 0 0 0 0
-run-progress item-reserve-tank 1229 1229 0 0 0 0
-run-progress item-wave-beam 59 59 0 0 0 0
-run-progress samus-bomb-jump-vertical 1058 1058 0 0 0 0
-run-progress samus-ceres-push 1777 1777 5 0 0 0
-run-progress samus-grapple-release 488 488 129 0 0 0
-run-progress samus-grapple-walljump 174 174 0 0 0 0
-run-progress samus-input-poses 559 559 0 0 0 0
-run-progress samus-mockball 129 129 0 0 0 0
-run-progress samus-screw-attack 945 945 56 0 0 0
-run-progress samus-shinespark-left 418 418 19 0 0 0
-run-progress samus-shinespark-right 405 405 29 0 0 0
-run-progress samus-shinespark-up 393 393 79 0 0 0
-run-progress samus-shinespark-up-left 418 418 68 0 0 0
-run-progress samus-space-jump-chain 383 383 0 0 0 0
-run-progress samus-square-slope-reserve 398 398 1 0 0 0
-run-progress samus-walljump-16 157 157 0 0 0 0
-run-progress samus-walljump-22 163 163 0 0 0 0
-run-progress samus-walljump-28 169 169 0 0 0 0
-run-progress terrain-quicksand 456 456 7 0 0 0
-world-blocks any-ceres-arrival 0 0 0 99 0 123
-world-blocks any-fly-to-ceres 0 0 0 743 0 59
-world-blocks any-intro-0568 0 0 0 1504 0 146
-world-blocks any-intro-2219 0 0 0 2097 0 6
-world-blocks any-intro-4323 0 0 0 1685 0 3
-world-blocks any-intro-6012 0 0 0 1497 0 2
-world-blocks any-power-on 0 0 0 364 0 203
-world-blocks any-zebes-arrival 0 0 0 107 0 124
-world-blocks area-brinstar 476 476 0 0 0 0
-world-blocks area-maridia 255 257 0 105 0 66
-world-blocks area-norfair 206 208 0 105 0 61
-world-blocks boss-kraid-defeated 1051 1070 0 21 0 48
-world-blocks boss-phantoon 2059 2062 0 0 0 47
-world-blocks chain-0012-91F8 1031 1031 0 0 0 1
-world-blocks chain-0013-92FD 598 599 0 0 0 0
-world-blocks chain-0014-96BA 341 342 0 105 0 59
-world-blocks chain-0043-9AD9 415 416 0 0 0 1
-world-blocks chain-0057-9FBA 547 549 0 0 0 0
-world-blocks chain-0059-A293 583 584 0 152 0 41
-world-blocks chain-0097-ACF0 660 662 0 112 0 44
-world-blocks chain-0100-B07A 283 284 0 0 0 1
-world-blocks chain-0106-AD5E 598 600 0 110 0 72
-world-blocks chain-0163-A890 26 27 0 0 0 3
-world-blocks chain-0220-D017 143 144 0 311 0 83
-world-blocks chain-0224-D0B9 333 335 0 105 0 72
-world-blocks chain-0232-D5A7 631 632 0 0 0 74
-world-blocks chain-0234-D51E 152 152 0 0 0 1
-world-blocks chain-0314-DAE1 449 450 0 0 0 15
-world-blocks chain-any-0001-DF45 249 249 0 105 0 57
-world-blocks chain-any-0002-DF8D 119 119 0 105 0 57
-world-blocks chain-any-0003-DFD7 181 181 0 105 0 58
-world-blocks chain-any-0004-E021 101 101 0 105 0 57
-world-blocks chain-any-0005-E06B 93 93 0 170 0 57
-world-blocks chain-any-0006-E0B5 1609 1609 0 105 0 62
-world-blocks chain-any-0007-E06B 95 95 0 105 0 58
-world-blocks chain-any-0008-E021 99 99 0 106 0 58
-world-blocks chain-any-0009-DFD7 168 168 0 105 0 57
-world-blocks chain-any-0010-DF8D 111 111 0 107 0 60
-world-blocks chain-any-0011-DF45 163 163 0 1890 0 70
-world-blocks event-zebes-awake 179 179 0 0 0 0
-world-blocks item-charge-beam 477 479 0 0 0 440
-world-blocks item-energy-tank 238 239 0 0 0 20
-world-blocks item-morph-ball 1027 1028 0 0 0 399
-world-blocks item-plasma-beam 145 145 0 0 0 24
-world-blocks item-reserve-tank 411 413 0 0 0 816
-world-blocks item-wave-beam 35 36 0 0 0 23
-world-blocks samus-bomb-jump-vertical 314 314 0 0 0 744
-world-blocks samus-ceres-push 1777 1777 0 0 0 0
-world-blocks samus-grapple-release 487 488 0 0 0 0
-world-blocks samus-grapple-walljump 173 174 0 0 0 0
-world-blocks samus-input-poses 397 397 0 105 0 57
-world-blocks samus-mockball 128 129 0 0 0 0
-world-blocks samus-screw-attack 944 945 0 0 0 0
-world-blocks samus-shinespark-left 417 418 0 0 0 0
-world-blocks samus-shinespark-right 404 405 0 0 0 0
-world-blocks samus-shinespark-up 392 393 0 0 0 0
-world-blocks samus-shinespark-up-left 417 418 0 0 0 0
-world-blocks samus-space-jump-chain 382 383 0 0 0 0
-world-blocks samus-square-slope-reserve 35 36 0 0 0 362
-world-blocks samus-walljump-16 156 157 0 0 0 0
-world-blocks samus-walljump-22 162 163 0 0 0 0
-world-blocks samus-walljump-28 168 169 0 0 0 0
-world-blocks terrain-quicksand 449 450 0 0 0 6
-boss-ceres-ridley any-ceres-arrival 32 32 0 190 0 0
-boss-ceres-ridley any-fly-to-ceres 0 0 0 802 0 0
-boss-ceres-ridley any-intro-0568 0 0 0 1650 0 0
-boss-ceres-ridley any-intro-2219 0 0 0 2103 0 0
-boss-ceres-ridley any-intro-4323 0 0 0 1688 0 0
-boss-ceres-ridley any-intro-6012 0 0 0 1499 0 0
-boss-ceres-ridley any-power-on 0 0 0 567 0 0
-boss-ceres-ridley any-zebes-arrival 59 59 0 172 0 0
-boss-ceres-ridley area-brinstar 0 0 0 476 0 0
-boss-ceres-ridley area-maridia 0 0 0 428 0 0
-boss-ceres-ridley area-norfair 0 0 0 374 0 0
-boss-ceres-ridley boss-kraid-defeated 0 0 0 1139 0 0
-boss-ceres-ridley boss-phantoon 0 0 0 2109 0 0
-boss-ceres-ridley chain-0012-91F8 0 0 0 1032 0 0
-boss-ceres-ridley chain-0013-92FD 0 0 0 599 0 0
-boss-ceres-ridley chain-0014-96BA 0 0 0 506 0 0
-boss-ceres-ridley chain-0043-9AD9 0 0 0 417 0 0
-boss-ceres-ridley chain-0057-9FBA 0 0 0 549 0 0
-boss-ceres-ridley chain-0059-A293 0 0 0 777 0 0
-boss-ceres-ridley chain-0097-ACF0 0 0 0 818 0 0
-boss-ceres-ridley chain-0100-B07A 0 0 0 285 0 0
-boss-ceres-ridley chain-0106-AD5E 0 0 0 782 0 0
-boss-ceres-ridley chain-0163-A890 0 0 0 30 0 0
-boss-ceres-ridley chain-0220-D017 0 0 0 538 0 0
-boss-ceres-ridley chain-0224-D0B9 0 0 0 512 0 0
-boss-ceres-ridley chain-0232-D5A7 0 0 0 706 0 0
-boss-ceres-ridley chain-0234-D51E 0 0 0 153 0 0
-boss-ceres-ridley chain-0314-DAE1 0 0 0 465 0 0
-boss-ceres-ridley chain-any-0001-DF45 408 408 0 3 0 0
-boss-ceres-ridley chain-any-0002-DF8D 278 278 0 3 0 0
-boss-ceres-ridley chain-any-0003-DFD7 341 341 0 3 0 0
-boss-ceres-ridley chain-any-0004-E021 260 260 0 3 0 0
-boss-ceres-ridley chain-any-0005-E06B 178 178 0 142 0 0
-boss-ceres-ridley chain-any-0006-E0B5 84 84 0 1692 0 0
-boss-ceres-ridley chain-any-0007-E06B 255 255 0 3 0 0
-boss-ceres-ridley chain-any-0008-E021 260 260 0 3 0 0
-boss-ceres-ridley chain-any-0009-DFD7 327 327 0 3 0 0
-boss-ceres-ridley chain-any-0010-DF8D 276 276 0 2 0 0
-boss-ceres-ridley chain-any-0011-DF45 2123 2123 0 0 0 0
-boss-ceres-ridley event-zebes-awake 0 0 0 179 0 0
-boss-ceres-ridley item-charge-beam 0 0 0 919 0 0
-boss-ceres-ridley item-energy-tank 0 0 0 259 0 0
-boss-ceres-ridley item-morph-ball 0 0 0 1427 0 0
-boss-ceres-ridley item-plasma-beam 0 0 0 169 0 0
-boss-ceres-ridley item-reserve-tank 0 0 0 1229 0 0
-boss-ceres-ridley item-wave-beam 0 0 0 59 0 0
-boss-ceres-ridley samus-bomb-jump-vertical 0 0 0 1058 0 0
-boss-ceres-ridley samus-ceres-push 0 0 0 1777 0 0
-boss-ceres-ridley samus-grapple-release 0 0 0 488 0 0
-boss-ceres-ridley samus-grapple-walljump 0 0 0 174 0 0
-boss-ceres-ridley samus-input-poses 556 556 0 3 0 0
-boss-ceres-ridley samus-mockball 0 0 0 129 0 0
-boss-ceres-ridley samus-screw-attack 0 0 0 945 0 0
-boss-ceres-ridley samus-shinespark-left 0 0 0 418 0 0
-boss-ceres-ridley samus-shinespark-right 0 0 0 405 0 0
-boss-ceres-ridley samus-shinespark-up 0 0 0 393 0 0
-boss-ceres-ridley samus-shinespark-up-left 0 0 0 418 0 0
-boss-ceres-ridley samus-space-jump-chain 0 0 0 383 0 0
-boss-ceres-ridley samus-square-slope-reserve 0 0 0 398 0 0
-boss-ceres-ridley samus-walljump-16 0 0 0 157 0 0
-boss-ceres-ridley samus-walljump-22 0 0 0 163 0 0
-boss-ceres-ridley samus-walljump-28 0 0 0 169 0 0
-boss-ceres-ridley terrain-quicksand 0 0 0 456 0 0
-world-doors any-ceres-arrival 0 0 0 222 0 0
-world-doors any-fly-to-ceres 0 0 0 802 0 0
-world-doors any-intro-0568 0 0 0 1650 0 0
-world-doors any-intro-2219 0 0 0 2103 0 0
-world-doors any-intro-4323 0 0 0 1688 0 0
-world-doors any-intro-6012 0 0 0 1499 0 0
-world-doors any-power-on 0 0 0 567 0 0
-world-doors any-zebes-arrival 0 0 0 231 0 0
-world-doors area-brinstar 0 0 0 476 0 0
-world-doors area-maridia 105 105 0 261 0 62
-world-doors area-norfair 105 105 0 209 0 60
-world-doors boss-kraid-defeated 20 20 16 1090 0 29
-world-doors boss-phantoon 0 0 0 2109 0 0
-world-doors chain-0012-91F8 0 0 0 1032 0 0
-world-doors chain-0013-92FD 0 0 0 599 0 0
-world-doors chain-0014-96BA 105 105 0 343 0 58
-world-doors chain-0043-9AD9 0 0 0 417 0 0
-world-doors chain-0057-9FBA 0 0 0 549 0 0
-world-doors chain-0059-A293 0 0 0 777 0 0
-world-doors chain-0097-ACF0 112 112 0 663 0 43
-world-doors chain-0100-B07A 0 0 0 285 0 0
-world-doors chain-0106-AD5E 105 105 0 614 0 63
-world-doors chain-0163-A890 0 0 0 30 0 0
-world-doors chain-0220-D017 0 0 0 538 0 0
-world-doors chain-0224-D0B9 105 105 0 336 0 71
-world-doors chain-0232-D5A7 0 0 0 706 0 0
-world-doors chain-0234-D51E 0 0 0 153 0 0
-world-doors chain-0314-DAE1 0 0 0 465 0 0
-world-doors chain-any-0001-DF45 105 105 0 250 0 56
-world-doors chain-any-0002-DF8D 105 105 0 120 0 56
-world-doors chain-any-0003-DFD7 105 105 0 182 0 57
-world-doors chain-any-0004-E021 105 105 0 102 0 56
-world-doors chain-any-0005-E06B 170 170 0 94 0 56
-world-doors chain-any-0006-E0B5 105 105 0 1610 0 61
-world-doors chain-any-0007-E06B 105 105 0 96 0 57
-world-doors chain-any-0008-E021 106 106 0 100 0 57
-world-doors chain-any-0009-DFD7 105 105 0 169 0 56
-world-doors chain-any-0010-DF8D 107 107 1 112 0 59
-world-doors chain-any-0011-DF45 0 0 0 2123 0 0
-world-doors event-zebes-awake 0 0 0 179 0 0
-world-doors item-charge-beam 0 0 0 919 0 0
-world-doors item-energy-tank 0 0 0 259 0 0
-world-doors item-morph-ball 0 0 0 1427 0 0
-world-doors item-plasma-beam 0 0 0 169 0 0
-world-doors item-reserve-tank 0 0 0 1229 0 0
-world-doors item-wave-beam 0 0 0 59 0 0
-world-doors samus-bomb-jump-vertical 0 0 0 1058 0 0
-world-doors samus-ceres-push 0 0 0 1777 0 0
-world-doors samus-grapple-release 0 0 0 488 0 0
-world-doors samus-grapple-walljump 0 0 0 174 0 0
-world-doors samus-input-poses 105 105 0 398 0 56
-world-doors samus-mockball 0 0 0 129 0 0
-world-doors samus-screw-attack 0 0 0 945 0 0
-world-doors samus-shinespark-left 0 0 0 418 0 0
-world-doors samus-shinespark-right 0 0 0 405 0 0
-world-doors samus-shinespark-up 0 0 0 393 0 0
-world-doors samus-shinespark-up-left 0 0 0 418 0 0
-world-doors samus-space-jump-chain 0 0 0 383 0 0
-world-doors samus-square-slope-reserve 0 0 0 398 0 0
-world-doors samus-walljump-16 0 0 0 157 0 0
-world-doors samus-walljump-22 0 0 0 163 0 0
-world-doors samus-walljump-28 0 0 0 169 0 0
-world-doors terrain-quicksand 0 0 0 456 0 0
+# it. The rest hold exactly: null-held, the compared frames the null model's free run (a step
+# that does nothing, carried from the same seeds) holds; then how the run accounts for each of
+# the row's records after its seed: compared (held or diverged), of them masked (compared on the
+# fields no other writer moved), out of scope (a frame the domain doesn't run in or another
+# domain owns), unreached (a frame the domain answers for and doesn't compare: its model doesn't
+# take it yet, or the harness can't decode it) and folded (a record the domain folds into the
+# frame before it). A domain's scope on a row is its compared and unreached frames. Per row,
+# `uncompared <row> <frames>` holds exactly the frames after its seed no model domain (all but
+# game-time, the clock) compares. A cached row with no line prints the line to add; the first
+# run over CI's cache sets them.
+game-time any-ceres-arrival 192 192 222 0 0 0 0
+game-time any-fly-to-ceres 802 802 802 0 0 0 0
+game-time any-intro-0568 1650 1650 1650 0 0 0 0
+game-time any-intro-2219 2103 2103 2103 0 0 0 0
+game-time any-intro-4323 1688 1688 1688 0 0 0 0
+game-time any-intro-6012 1499 1499 1499 0 0 0 0
+game-time any-power-on 566 566 567 0 0 0 0
+game-time any-zebes-arrival 201 201 231 0 0 0 0
+game-time area-brinstar 476 0 476 0 0 0 0
+game-time area-maridia 425 170 428 0 0 0 0
+game-time area-norfair 374 165 374 0 0 0 0
+game-time boss-kraid-defeated 1120 68 1139 0 0 0 0
+game-time boss-phantoon 2062 47 2109 0 0 0 0
+game-time chain-0012-91F8 1031 1 1032 0 0 0 0
+game-time chain-0013-92FD 599 0 599 0 0 0 0
+game-time chain-0014-96BA 506 163 506 0 0 0 0
+game-time chain-0043-9AD9 416 1 417 0 0 0 0
+game-time chain-0057-9FBA 549 0 549 0 0 0 0
+game-time chain-0059-A293 777 192 777 0 0 0 0
+game-time chain-0097-ACF0 818 155 818 0 0 0 0
+game-time chain-0100-B07A 284 1 285 0 0 0 0
+game-time chain-0106-AD5E 770 176 782 0 0 0 0
+game-time chain-0163-A890 27 3 30 0 0 0 0
+game-time chain-0220-D017 538 393 538 0 0 0 0
+game-time chain-0224-D0B9 512 176 512 0 0 0 0
+game-time chain-0232-D5A7 632 74 706 0 0 0 0
+game-time chain-0234-D51E 152 1 153 0 0 0 0
+game-time chain-0314-DAE1 450 15 465 0 0 0 0
+game-time chain-any-0001-DF45 411 161 411 0 0 0 0
+game-time chain-any-0002-DF8D 281 161 281 0 0 0 0
+game-time chain-any-0003-DFD7 344 162 344 0 0 0 0
+game-time chain-any-0004-E021 263 161 263 0 0 0 0
+game-time chain-any-0005-E06B 320 226 320 0 0 0 0
+game-time chain-any-0006-E0B5 1776 166 1776 0 0 0 0
+game-time chain-any-0007-E06B 258 162 258 0 0 0 0
+game-time chain-any-0008-E021 263 163 263 0 0 0 0
+game-time chain-any-0009-DFD7 330 161 330 0 0 0 0
+game-time chain-any-0010-DF8D 278 166 278 0 0 0 0
+game-time chain-any-0011-DF45 2048 1884 2123 0 0 0 0
+game-time event-zebes-awake 179 0 179 0 0 0 0
+game-time item-charge-beam 479 440 919 0 0 0 0
+game-time item-energy-tank 239 20 259 0 0 0 0
+game-time item-morph-ball 1028 399 1427 0 0 0 0
+game-time item-plasma-beam 145 24 169 0 0 0 0
+game-time item-reserve-tank 413 816 1229 0 0 0 0
+game-time item-wave-beam 36 23 59 0 0 0 0
+game-time samus-bomb-jump-vertical 314 744 1058 0 0 0 0
+game-time samus-ceres-push 1777 0 1777 0 0 0 0
+game-time samus-grapple-release 488 0 488 0 0 0 0
+game-time samus-grapple-walljump 174 0 174 0 0 0 0
+game-time samus-input-poses 559 161 559 0 0 0 0
+game-time samus-mockball 129 0 129 0 0 0 0
+game-time samus-screw-attack 945 0 945 0 0 0 0
+game-time samus-shinespark-left 418 0 418 0 0 0 0
+game-time samus-shinespark-right 405 0 405 0 0 0 0
+game-time samus-shinespark-up 393 0 393 0 0 0 0
+game-time samus-shinespark-up-left 418 0 418 0 0 0 0
+game-time samus-space-jump-chain 383 0 383 0 0 0 0
+game-time samus-square-slope-reserve 36 362 398 0 0 0 0
+game-time samus-walljump-16 157 0 157 0 0 0 0
+game-time samus-walljump-22 163 0 163 0 0 0 0
+game-time samus-walljump-28 169 0 169 0 0 0 0
+game-time terrain-quicksand 450 6 456 0 0 0 0
+samus-movement any-ceres-arrival 0 0 0 0 222 0 0
+samus-movement any-fly-to-ceres 0 0 0 0 802 0 0
+samus-movement any-intro-0568 0 0 0 0 1650 0 0
+samus-movement any-intro-2219 0 0 0 0 2103 0 0
+samus-movement any-intro-4323 0 0 0 0 1688 0 0
+samus-movement any-intro-6012 0 0 0 0 1499 0 0
+samus-movement any-power-on 0 0 0 0 567 0 0
+samus-movement any-zebes-arrival 0 0 0 0 231 0 0
+samus-movement area-brinstar 476 476 476 453 0 0 0
+samus-movement area-maridia 252 164 252 3 176 0 0
+samus-movement area-norfair 209 53 209 4 165 0 0
+samus-movement boss-kraid-defeated 1023 219 1026 50 98 15 0
+samus-movement boss-phantoon 1915 362 1956 90 72 81 0
+samus-movement chain-0012-91F8 421 96 421 13 611 0 0
+samus-movement chain-0013-92FD 598 315 599 13 0 0 0
+samus-movement chain-0014-96BA 343 56 343 4 163 0 0
+samus-movement chain-0043-9AD9 417 1 417 27 0 0 0
+samus-movement chain-0057-9FBA 536 139 537 14 2 10 0
+samus-movement chain-0059-A293 519 121 519 25 199 59 0
+samus-movement chain-0097-ACF0 662 90 663 2 155 0 0
+samus-movement chain-0100-B07A 277 79 278 11 2 5 0
+samus-movement chain-0106-AD5E 496 103 497 41 222 63 0
+samus-movement chain-0163-A890 28 0 28 1 2 0 0
+samus-movement chain-0220-D017 145 1 145 6 393 0 0
+samus-movement chain-0224-D0B9 159 55 159 8 176 177 0
+samus-movement chain-0232-D5A7 599 105 603 80 99 4 0
+samus-movement chain-0234-D51E 145 71 153 82 0 0 0
+samus-movement chain-0314-DAE1 443 127 444 22 16 5 0
+samus-movement chain-any-0001-DF45 149 2 149 3 262 0 0
+samus-movement chain-any-0002-DF8D 120 0 120 4 161 0 0
+samus-movement chain-any-0003-DFD7 182 0 182 5 162 0 0
+samus-movement chain-any-0004-E021 102 0 102 0 161 0 0
+samus-movement chain-any-0005-E06B 94 0 94 1 226 0 0
+samus-movement chain-any-0006-E0B5 1480 28 1491 57 267 18 0
+samus-movement chain-any-0007-E06B 96 0 96 1 162 0 0
+samus-movement chain-any-0008-E021 100 0 100 0 163 0 0
+samus-movement chain-any-0009-DFD7 163 1 163 6 162 5 0
+samus-movement chain-any-0010-DF8D 91 1 91 5 184 3 0
+samus-movement chain-any-0011-DF45 164 0 164 16 1959 0 0
+samus-movement event-zebes-awake 128 1 128 7 45 6 0
+samus-movement item-charge-beam 468 5 480 35 439 0 0
+samus-movement item-energy-tank 240 0 240 1 19 0 0
+samus-movement item-morph-ball 1028 779 1028 464 399 0 0
+samus-movement item-plasma-beam 145 0 146 3 23 0 0
+samus-movement item-reserve-tank 413 54 414 13 815 0 0
+samus-movement item-wave-beam 37 0 37 2 22 0 0
+samus-movement samus-bomb-jump-vertical 286 204 286 3 744 28 0
+samus-movement samus-ceres-push 1704 785 1710 39 47 20 0
+samus-movement samus-grapple-release 243 119 245 4 37 206 0
+samus-movement samus-grapple-walljump 114 0 115 1 59 0 0
+samus-movement samus-input-poses 297 52 297 8 262 0 0
+samus-movement samus-mockball 129 19 129 1 0 0 0
+samus-movement samus-screw-attack 862 79 862 40 59 24 0
+samus-movement samus-shinespark-left 316 122 317 4 0 101 0
+samus-movement samus-shinespark-right 293 109 294 4 0 111 0
+samus-movement samus-shinespark-up 212 27 213 3 0 180 0
+samus-movement samus-shinespark-up-left 267 46 268 4 0 150 0
+samus-movement samus-space-jump-chain 383 100 383 4 0 0 0
+samus-movement samus-square-slope-reserve 37 0 37 2 361 0 0
+samus-movement samus-walljump-16 157 73 157 6 0 0 0
+samus-movement samus-walljump-22 163 74 163 6 0 0 0
+samus-movement samus-walljump-28 169 73 169 6 0 0 0
+samus-movement terrain-quicksand 334 214 406 297 44 6 0
+samus-appearance any-ceres-arrival 0 0 0 0 99 0 123
+samus-appearance any-fly-to-ceres 0 0 0 0 743 0 59
+samus-appearance any-intro-0568 0 0 0 0 1504 0 146
+samus-appearance any-intro-2219 0 0 0 0 2097 0 6
+samus-appearance any-intro-4323 0 0 0 0 1685 0 3
+samus-appearance any-intro-6012 0 0 0 0 1497 0 2
+samus-appearance any-power-on 0 0 0 0 362 0 205
+samus-appearance any-zebes-arrival 0 0 0 0 107 0 124
+samus-appearance area-brinstar 476 0 476 0 0 0 0
+samus-appearance area-maridia 255 0 255 0 46 0 127
+samus-appearance area-norfair 209 2 209 0 43 0 122
+samus-appearance boss-kraid-defeated 1023 4 1023 0 68 0 48
+samus-appearance boss-phantoon 1952 22 1952 0 110 0 47
+samus-appearance chain-0012-91F8 421 21 421 0 610 0 1
+samus-appearance chain-0013-92FD 599 85 599 0 0 0 0
+samus-appearance chain-0014-96BA 343 2 343 0 43 0 120
+samus-appearance chain-0043-9AD9 417 15 417 0 0 0 0
+samus-appearance chain-0057-9FBA 535 2 535 0 14 0 0
+samus-appearance chain-0059-A293 512 95 512 0 224 0 41
+samus-appearance chain-0097-ACF0 663 1 663 0 50 0 105
+samus-appearance chain-0100-B07A 277 11 277 0 7 0 1
+samus-appearance chain-0106-AD5E 487 21 487 0 162 0 133
+samus-appearance chain-0163-A890 28 0 28 0 2 0 0
+samus-appearance chain-0220-D017 144 0 144 0 310 0 84
+samus-appearance chain-0224-D0B9 159 5 159 0 220 0 133
+samus-appearance chain-0232-D5A7 601 19 601 0 31 0 74
+samus-appearance chain-0234-D51E 153 4 153 0 0 0 0
+samus-appearance chain-0314-DAE1 443 9 443 0 7 0 15
+samus-appearance chain-any-0001-DF45 149 1 149 0 144 0 118
+samus-appearance chain-any-0002-DF8D 120 0 120 0 43 0 118
+samus-appearance chain-any-0003-DFD7 182 6 182 0 43 0 119
+samus-appearance chain-any-0004-E021 102 0 102 0 43 0 118
+samus-appearance chain-any-0005-E06B 94 1 94 0 67 0 159
+samus-appearance chain-any-0006-E0B5 1486 28 1486 0 167 0 123
+samus-appearance chain-any-0007-E06B 96 0 96 0 43 0 119
+samus-appearance chain-any-0008-E021 100 0 100 0 44 0 119
+samus-appearance chain-any-0009-DFD7 162 4 162 0 50 0 118
+samus-appearance chain-any-0010-DF8D 90 1 90 0 67 0 121
+samus-appearance chain-any-0011-DF45 163 10 163 0 1890 0 70
+samus-appearance event-zebes-awake 126 1 126 0 53 0 0
+samus-appearance item-charge-beam 480 5 480 0 416 0 23
+samus-appearance item-energy-tank 240 0 240 0 19 0 0
+samus-appearance item-morph-ball 1028 93 1028 0 399 0 0
+samus-appearance item-plasma-beam 146 1 146 0 23 0 0
+samus-appearance item-reserve-tank 414 8 414 0 815 0 0
+samus-appearance item-wave-beam 37 1 37 0 22 0 0
+samus-appearance samus-bomb-jump-vertical 314 1 314 0 744 0 0
+samus-appearance samus-ceres-push 1705 34 1705 0 72 0 0
+samus-appearance samus-grapple-release 248 22 248 0 240 0 0
+samus-appearance samus-grapple-walljump 114 1 114 0 60 0 0
+samus-appearance samus-input-poses 297 1 297 0 144 0 118
+samus-appearance samus-mockball 129 0 129 0 0 0 0
+samus-appearance samus-screw-attack 859 0 859 0 86 0 0
+samus-appearance samus-shinespark-left 316 0 316 0 102 0 0
+samus-appearance samus-shinespark-right 293 0 293 0 112 0 0
+samus-appearance samus-shinespark-up 212 0 212 0 181 0 0
+samus-appearance samus-shinespark-up-left 267 0 267 0 151 0 0
+samus-appearance samus-space-jump-chain 383 1 383 0 0 0 0
+samus-appearance samus-square-slope-reserve 37 0 37 0 361 0 0
+samus-appearance samus-walljump-16 157 2 157 0 0 0 0
+samus-appearance samus-walljump-22 163 2 163 0 0 0 0
+samus-appearance samus-walljump-28 169 2 169 0 0 0 0
+samus-appearance terrain-quicksand 402 13 402 1 48 0 6
+world-camera any-ceres-arrival 0 0 0 0 222 0 0
+world-camera any-fly-to-ceres 0 0 0 0 802 0 0
+world-camera any-intro-0568 0 0 0 0 1650 0 0
+world-camera any-intro-2219 0 0 0 0 2103 0 0
+world-camera any-intro-4323 0 0 0 0 1688 0 0
+world-camera any-intro-6012 0 0 0 0 1499 0 0
+world-camera any-power-on 0 0 0 0 567 0 0
+world-camera any-zebes-arrival 0 0 0 0 231 0 0
+world-camera area-brinstar 476 133 476 0 0 0 0
+world-camera area-maridia 257 196 257 2 171 0 0
+world-camera area-norfair 208 73 208 0 166 0 0
+world-camera boss-kraid-defeated 1070 530 1070 14 69 0 0
+world-camera boss-phantoon 2062 1152 2062 6 47 0 0
+world-camera chain-0012-91F8 1031 414 1031 17 1 0 0
+world-camera chain-0013-92FD 599 456 599 0 0 0 0
+world-camera chain-0014-96BA 342 70 342 0 164 0 0
+world-camera chain-0043-9AD9 416 43 416 0 1 0 0
+world-camera chain-0057-9FBA 549 186 549 4 0 0 0
+world-camera chain-0059-A293 584 170 584 15 193 0 0
+world-camera chain-0097-ACF0 662 102 662 0 156 0 0
+world-camera chain-0100-B07A 284 138 284 2 1 0 0
+world-camera chain-0106-AD5E 600 223 600 31 182 0 0
+world-camera chain-0163-A890 27 4 27 0 3 0 0
+world-camera chain-0220-D017 144 3 144 0 394 0 0
+world-camera chain-0224-D0B9 335 149 335 1 177 0 0
+world-camera chain-0232-D5A7 632 350 632 3 74 0 0
+world-camera chain-0234-D51E 152 8 152 12 1 0 0
+world-camera chain-0314-DAE1 450 197 450 2 15 0 0
+world-camera chain-any-0001-DF45 249 112 249 0 162 0 0
+world-camera chain-any-0002-DF8D 119 5 119 0 162 0 0
+world-camera chain-any-0003-DFD7 181 13 181 0 163 0 0
+world-camera chain-any-0004-E021 101 5 101 0 162 0 0
+world-camera chain-any-0005-E06B 93 6 93 0 227 0 0
+world-camera chain-any-0006-E0B5 1609 582 1609 16 167 0 0
+world-camera chain-any-0007-E06B 95 9 95 0 163 0 0
+world-camera chain-any-0008-E021 99 3 99 0 164 0 0
+world-camera chain-any-0009-DFD7 168 19 168 2 162 0 0
+world-camera chain-any-0010-DF8D 111 8 111 3 167 0 0
+world-camera chain-any-0011-DF45 163 22 163 0 1960 0 0
+world-camera event-zebes-awake 179 4 179 6 0 0 0
+world-camera item-charge-beam 479 62 479 0 440 0 0
+world-camera item-energy-tank 239 0 239 0 20 0 0
+world-camera item-morph-ball 1028 447 1028 0 399 0 0
+world-camera item-plasma-beam 145 0 145 0 24 0 0
+world-camera item-reserve-tank 413 96 413 0 816 0 0
+world-camera item-wave-beam 36 0 36 0 23 0 0
+world-camera samus-bomb-jump-vertical 314 227 314 0 744 0 0
+world-camera samus-ceres-push 1777 1044 1777 15 0 0 0
+world-camera samus-grapple-release 488 263 488 43 0 0 0
+world-camera samus-grapple-walljump 174 67 174 60 0 0 0
+world-camera samus-input-poses 397 187 397 0 162 0 0
+world-camera samus-mockball 129 19 129 0 0 0 0
+world-camera samus-screw-attack 945 153 945 8 0 0 0
+world-camera samus-shinespark-left 418 219 418 2 0 0 0
+world-camera samus-shinespark-right 405 201 405 2 0 0 0
+world-camera samus-shinespark-up 393 175 393 41 0 0 0
+world-camera samus-shinespark-up-left 418 146 418 35 0 0 0
+world-camera samus-space-jump-chain 383 111 383 0 0 0 0
+world-camera samus-square-slope-reserve 36 0 36 0 362 0 0
+world-camera samus-walljump-16 157 87 157 0 0 0 0
+world-camera samus-walljump-22 163 88 163 0 0 0 0
+world-camera samus-walljump-28 169 86 169 0 0 0 0
+world-camera terrain-quicksand 450 207 450 102 6 0 0
+interface-hud any-ceres-arrival 30 26 30 0 69 0 123
+interface-hud any-fly-to-ceres 0 0 0 0 743 0 59
+interface-hud any-intro-0568 0 0 0 0 1504 0 146
+interface-hud any-intro-2219 0 0 0 0 2097 0 6
+interface-hud any-intro-4323 0 0 0 0 1685 0 3
+interface-hud any-intro-6012 0 0 0 0 1497 0 2
+interface-hud any-power-on 0 0 0 0 362 0 205
+interface-hud any-zebes-arrival 30 25 30 0 77 0 124
+interface-hud area-brinstar 476 415 476 0 0 0 0
+interface-hud area-maridia 301 263 301 2 0 0 127
+interface-hud area-norfair 252 225 252 0 0 0 122
+interface-hud boss-kraid-defeated 1091 1077 1091 0 0 0 48
+interface-hud boss-phantoon 2062 2044 2062 0 0 0 47
+interface-hud chain-0012-91F8 1031 906 1031 40 0 0 1
+interface-hud chain-0013-92FD 599 525 599 0 0 0 0
+interface-hud chain-0014-96BA 386 335 386 9 0 0 120
+interface-hud chain-0043-9AD9 416 361 416 17 1 0 0
+interface-hud chain-0057-9FBA 549 481 549 57 0 0 0
+interface-hud chain-0059-A293 736 646 736 43 0 0 41
+interface-hud chain-0097-ACF0 713 652 713 213 0 0 105
+interface-hud chain-0100-B07A 284 243 284 0 0 0 1
+interface-hud chain-0106-AD5E 649 561 649 162 0 0 133
+interface-hud chain-0163-A890 27 20 27 0 3 0 0
+interface-hud chain-0220-D017 454 430 454 13 0 0 84
+interface-hud chain-0224-D0B9 379 243 379 7 0 0 133
+interface-hud chain-0232-D5A7 632 548 632 64 0 0 74
+interface-hud chain-0234-D51E 152 132 152 1 1 0 0
+interface-hud chain-0314-DAE1 450 268 450 42 0 0 15
+interface-hud chain-any-0001-DF45 293 262 293 4 0 0 118
+interface-hud chain-any-0002-DF8D 163 151 163 16 0 0 118
+interface-hud chain-any-0003-DFD7 225 204 225 19 0 0 119
+interface-hud chain-any-0004-E021 145 134 145 15 0 0 118
+interface-hud chain-any-0005-E06B 161 151 161 14 0 0 159
+interface-hud chain-any-0006-E0B5 1653 1647 1653 0 0 0 123
+interface-hud chain-any-0007-E06B 139 129 139 14 0 0 119
+interface-hud chain-any-0008-E021 144 133 144 14 0 0 119
+interface-hud chain-any-0009-DFD7 212 195 212 35 0 0 118
+interface-hud chain-any-0010-DF8D 157 145 157 14 0 0 121
+interface-hud chain-any-0011-DF45 2053 2023 2053 10 0 0 70
+interface-hud event-zebes-awake 179 156 179 34 0 0 0
+interface-hud item-charge-beam 479 408 479 18 417 0 23
+interface-hud item-energy-tank 239 218 239 96 20 0 0
+interface-hud item-morph-ball 1028 899 1028 13 399 0 0
+interface-hud item-plasma-beam 145 124 145 2 24 0 0
+interface-hud item-reserve-tank 413 360 413 7 816 0 0
+interface-hud item-wave-beam 36 32 36 0 23 0 0
+interface-hud samus-bomb-jump-vertical 314 275 314 0 744 0 0
+interface-hud samus-ceres-push 1777 1772 1777 0 0 0 0
+interface-hud samus-grapple-release 488 302 488 6 0 0 0
+interface-hud samus-grapple-walljump 174 148 174 6 0 0 0
+interface-hud samus-input-poses 441 389 441 4 0 0 118
+interface-hud samus-mockball 129 110 129 4 0 0 0
+interface-hud samus-screw-attack 945 769 945 30 0 0 0
+interface-hud samus-shinespark-left 418 344 418 0 0 0 0
+interface-hud samus-shinespark-right 405 325 405 0 0 0 0
+interface-hud samus-shinespark-up 393 270 393 0 0 0 0
+interface-hud samus-shinespark-up-left 418 300 418 0 0 0 0
+interface-hud samus-space-jump-chain 383 335 383 0 0 0 0
+interface-hud samus-square-slope-reserve 36 30 36 0 362 0 0
+interface-hud samus-walljump-16 157 138 157 0 0 0 0
+interface-hud samus-walljump-22 163 143 163 0 0 0 0
+interface-hud samus-walljump-28 169 148 169 0 0 0 0
+interface-hud terrain-quicksand 450 373 450 0 0 0 6
+run-progress any-ceres-arrival 222 221 222 0 0 0 0
+run-progress any-fly-to-ceres 802 802 802 0 0 0 0
+run-progress any-intro-0568 1649 1649 1650 1 0 0 0
+run-progress any-intro-2219 2103 2103 2103 4 0 0 0
+run-progress any-intro-4323 1688 1688 1688 0 0 0 0
+run-progress any-intro-6012 1499 1499 1499 0 0 0 0
+run-progress any-power-on 182 182 183 1 0 384 0
+run-progress any-zebes-arrival 231 230 231 0 0 0 0
+run-progress area-brinstar 476 476 476 0 0 0 0
+run-progress area-maridia 428 427 428 0 0 0 0
+run-progress area-norfair 374 373 374 0 0 0 0
+run-progress boss-kraid-defeated 1139 1136 1139 11 0 0 0
+run-progress boss-phantoon 2109 2107 2109 9 0 0 0
+run-progress chain-0012-91F8 1032 1031 1032 0 0 0 0
+run-progress chain-0013-92FD 599 599 599 0 0 0 0
+run-progress chain-0014-96BA 506 505 506 0 0 0 0
+run-progress chain-0043-9AD9 417 416 417 0 0 0 0
+run-progress chain-0057-9FBA 549 548 549 3 0 0 0
+run-progress chain-0059-A293 777 777 777 14 0 0 0
+run-progress chain-0097-ACF0 818 816 818 1 0 0 0
+run-progress chain-0100-B07A 285 285 285 4 0 0 0
+run-progress chain-0106-AD5E 782 781 782 22 0 0 0
+run-progress chain-0163-A890 30 29 30 0 0 0 0
+run-progress chain-0220-D017 538 538 538 1 0 0 0
+run-progress chain-0224-D0B9 512 512 512 107 0 0 0
+run-progress chain-0232-D5A7 706 706 706 4 0 0 0
+run-progress chain-0234-D51E 153 152 153 0 0 0 0
+run-progress chain-0314-DAE1 465 465 465 122 0 0 0
+run-progress chain-any-0001-DF45 411 411 411 0 0 0 0
+run-progress chain-any-0002-DF8D 281 281 281 0 0 0 0
+run-progress chain-any-0003-DFD7 344 344 344 0 0 0 0
+run-progress chain-any-0004-E021 263 263 263 0 0 0 0
+run-progress chain-any-0005-E06B 320 320 320 0 0 0 0
+run-progress chain-any-0006-E0B5 1776 1774 1776 5 0 0 0
+run-progress chain-any-0007-E06B 258 257 258 0 0 0 0
+run-progress chain-any-0008-E021 263 262 263 0 0 0 0
+run-progress chain-any-0009-DFD7 330 329 330 0 0 0 0
+run-progress chain-any-0010-DF8D 278 277 278 0 0 0 0
+run-progress chain-any-0011-DF45 2123 2123 2123 1 0 0 0
+run-progress event-zebes-awake 179 177 179 3 0 0 0
+run-progress item-charge-beam 919 917 919 3 0 0 0
+run-progress item-energy-tank 259 258 259 2 0 0 0
+run-progress item-morph-ball 1427 1426 1427 0 0 0 0
+run-progress item-plasma-beam 169 168 169 0 0 0 0
+run-progress item-reserve-tank 1229 1226 1229 0 0 0 0
+run-progress item-wave-beam 59 58 59 0 0 0 0
+run-progress samus-bomb-jump-vertical 1058 1057 1058 0 0 0 0
+run-progress samus-ceres-push 1777 1776 1777 5 0 0 0
+run-progress samus-grapple-release 488 488 488 129 0 0 0
+run-progress samus-grapple-walljump 174 174 174 0 0 0 0
+run-progress samus-input-poses 559 559 559 0 0 0 0
+run-progress samus-mockball 129 129 129 0 0 0 0
+run-progress samus-screw-attack 945 945 945 56 0 0 0
+run-progress samus-shinespark-left 418 418 418 19 0 0 0
+run-progress samus-shinespark-right 405 405 405 29 0 0 0
+run-progress samus-shinespark-up 393 393 393 79 0 0 0
+run-progress samus-shinespark-up-left 418 418 418 68 0 0 0
+run-progress samus-space-jump-chain 383 383 383 0 0 0 0
+run-progress samus-square-slope-reserve 398 397 398 1 0 0 0
+run-progress samus-walljump-16 157 157 157 0 0 0 0
+run-progress samus-walljump-22 163 163 163 0 0 0 0
+run-progress samus-walljump-28 169 169 169 0 0 0 0
+run-progress terrain-quicksand 456 456 456 7 0 0 0
+world-blocks any-ceres-arrival 0 0 0 0 99 0 123
+world-blocks any-fly-to-ceres 0 0 0 0 743 0 59
+world-blocks any-intro-0568 0 0 0 0 1504 0 146
+world-blocks any-intro-2219 0 0 0 0 2097 0 6
+world-blocks any-intro-4323 0 0 0 0 1685 0 3
+world-blocks any-intro-6012 0 0 0 0 1497 0 2
+world-blocks any-power-on 0 0 0 0 364 0 203
+world-blocks any-zebes-arrival 0 0 0 0 107 0 124
+world-blocks area-brinstar 476 474 476 0 0 0 0
+world-blocks area-maridia 255 254 257 0 105 0 66
+world-blocks area-norfair 206 191 208 0 105 0 61
+world-blocks boss-kraid-defeated 1051 1050 1070 0 21 0 48
+world-blocks boss-phantoon 2059 2057 2062 0 0 0 47
+world-blocks chain-0012-91F8 1031 1030 1031 0 0 0 1
+world-blocks chain-0013-92FD 598 598 599 0 0 0 0
+world-blocks chain-0014-96BA 341 340 342 0 105 0 59
+world-blocks chain-0043-9AD9 415 415 416 0 0 0 1
+world-blocks chain-0057-9FBA 547 424 549 0 0 0 0
+world-blocks chain-0059-A293 583 583 584 0 152 0 41
+world-blocks chain-0097-ACF0 660 304 662 0 112 0 44
+world-blocks chain-0100-B07A 283 283 284 0 0 0 1
+world-blocks chain-0106-AD5E 598 597 600 0 110 0 72
+world-blocks chain-0163-A890 26 26 27 0 0 0 3
+world-blocks chain-0220-D017 143 143 144 0 311 0 83
+world-blocks chain-0224-D0B9 333 332 335 0 105 0 72
+world-blocks chain-0232-D5A7 631 615 632 0 0 0 74
+world-blocks chain-0234-D51E 152 152 152 0 0 0 1
+world-blocks chain-0314-DAE1 449 449 450 0 0 0 15
+world-blocks chain-any-0001-DF45 249 248 249 0 105 0 57
+world-blocks chain-any-0002-DF8D 119 119 119 0 105 0 57
+world-blocks chain-any-0003-DFD7 181 181 181 0 105 0 58
+world-blocks chain-any-0004-E021 101 101 101 0 105 0 57
+world-blocks chain-any-0005-E06B 93 93 93 0 170 0 57
+world-blocks chain-any-0006-E0B5 1609 1609 1609 0 105 0 62
+world-blocks chain-any-0007-E06B 95 95 95 0 105 0 58
+world-blocks chain-any-0008-E021 99 99 99 0 106 0 58
+world-blocks chain-any-0009-DFD7 168 168 168 0 105 0 57
+world-blocks chain-any-0010-DF8D 111 111 111 0 107 0 60
+world-blocks chain-any-0011-DF45 163 163 163 0 1890 0 70
+world-blocks event-zebes-awake 179 179 179 0 0 0 0
+world-blocks item-charge-beam 477 431 479 0 0 0 440
+world-blocks item-energy-tank 238 238 239 0 0 0 20
+world-blocks item-morph-ball 1027 1011 1028 0 0 0 399
+world-blocks item-plasma-beam 145 145 145 0 0 0 24
+world-blocks item-reserve-tank 411 382 413 0 0 0 816
+world-blocks item-wave-beam 35 35 36 0 0 0 23
+world-blocks samus-bomb-jump-vertical 314 313 314 0 0 0 744
+world-blocks samus-ceres-push 1777 1777 1777 0 0 0 0
+world-blocks samus-grapple-release 487 487 488 0 0 0 0
+world-blocks samus-grapple-walljump 173 173 174 0 0 0 0
+world-blocks samus-input-poses 397 396 397 0 105 0 57
+world-blocks samus-mockball 128 128 129 0 0 0 0
+world-blocks samus-screw-attack 944 944 945 0 0 0 0
+world-blocks samus-shinespark-left 417 417 418 0 0 0 0
+world-blocks samus-shinespark-right 404 404 405 0 0 0 0
+world-blocks samus-shinespark-up 392 392 393 0 0 0 0
+world-blocks samus-shinespark-up-left 417 417 418 0 0 0 0
+world-blocks samus-space-jump-chain 382 382 383 0 0 0 0
+world-blocks samus-square-slope-reserve 35 35 36 0 0 0 362
+world-blocks samus-walljump-16 156 156 157 0 0 0 0
+world-blocks samus-walljump-22 162 162 163 0 0 0 0
+world-blocks samus-walljump-28 168 168 169 0 0 0 0
+world-blocks terrain-quicksand 449 421 450 0 0 0 6
+boss-ceres-ridley any-ceres-arrival 32 1 32 0 190 0 0
+boss-ceres-ridley any-fly-to-ceres 0 0 0 0 802 0 0
+boss-ceres-ridley any-intro-0568 0 0 0 0 1650 0 0
+boss-ceres-ridley any-intro-2219 0 0 0 0 2103 0 0
+boss-ceres-ridley any-intro-4323 0 0 0 0 1688 0 0
+boss-ceres-ridley any-intro-6012 0 0 0 0 1499 0 0
+boss-ceres-ridley any-power-on 0 0 0 0 567 0 0
+boss-ceres-ridley any-zebes-arrival 59 59 59 0 172 0 0
+boss-ceres-ridley area-brinstar 0 0 0 0 476 0 0
+boss-ceres-ridley area-maridia 0 0 0 0 428 0 0
+boss-ceres-ridley area-norfair 0 0 0 0 374 0 0
+boss-ceres-ridley boss-kraid-defeated 0 0 0 0 1139 0 0
+boss-ceres-ridley boss-phantoon 0 0 0 0 2109 0 0
+boss-ceres-ridley chain-0012-91F8 0 0 0 0 1032 0 0
+boss-ceres-ridley chain-0013-92FD 0 0 0 0 599 0 0
+boss-ceres-ridley chain-0014-96BA 0 0 0 0 506 0 0
+boss-ceres-ridley chain-0043-9AD9 0 0 0 0 417 0 0
+boss-ceres-ridley chain-0057-9FBA 0 0 0 0 549 0 0
+boss-ceres-ridley chain-0059-A293 0 0 0 0 777 0 0
+boss-ceres-ridley chain-0097-ACF0 0 0 0 0 818 0 0
+boss-ceres-ridley chain-0100-B07A 0 0 0 0 285 0 0
+boss-ceres-ridley chain-0106-AD5E 0 0 0 0 782 0 0
+boss-ceres-ridley chain-0163-A890 0 0 0 0 30 0 0
+boss-ceres-ridley chain-0220-D017 0 0 0 0 538 0 0
+boss-ceres-ridley chain-0224-D0B9 0 0 0 0 512 0 0
+boss-ceres-ridley chain-0232-D5A7 0 0 0 0 706 0 0
+boss-ceres-ridley chain-0234-D51E 0 0 0 0 153 0 0
+boss-ceres-ridley chain-0314-DAE1 0 0 0 0 465 0 0
+boss-ceres-ridley chain-any-0001-DF45 408 126 408 0 3 0 0
+boss-ceres-ridley chain-any-0002-DF8D 278 126 278 0 3 0 0
+boss-ceres-ridley chain-any-0003-DFD7 341 127 341 0 3 0 0
+boss-ceres-ridley chain-any-0004-E021 260 126 260 0 3 0 0
+boss-ceres-ridley chain-any-0005-E06B 178 68 178 0 142 0 0
+boss-ceres-ridley chain-any-0006-E0B5 84 68 84 0 1692 0 0
+boss-ceres-ridley chain-any-0007-E06B 255 126 255 0 3 0 0
+boss-ceres-ridley chain-any-0008-E021 260 125 260 0 3 0 0
+boss-ceres-ridley chain-any-0009-DFD7 327 124 327 0 3 0 0
+boss-ceres-ridley chain-any-0010-DF8D 276 143 276 0 2 0 0
+boss-ceres-ridley chain-any-0011-DF45 2123 1884 2123 0 0 0 0
+boss-ceres-ridley event-zebes-awake 0 0 0 0 179 0 0
+boss-ceres-ridley item-charge-beam 0 0 0 0 919 0 0
+boss-ceres-ridley item-energy-tank 0 0 0 0 259 0 0
+boss-ceres-ridley item-morph-ball 0 0 0 0 1427 0 0
+boss-ceres-ridley item-plasma-beam 0 0 0 0 169 0 0
+boss-ceres-ridley item-reserve-tank 0 0 0 0 1229 0 0
+boss-ceres-ridley item-wave-beam 0 0 0 0 59 0 0
+boss-ceres-ridley samus-bomb-jump-vertical 0 0 0 0 1058 0 0
+boss-ceres-ridley samus-ceres-push 0 0 0 0 1777 0 0
+boss-ceres-ridley samus-grapple-release 0 0 0 0 488 0 0
+boss-ceres-ridley samus-grapple-walljump 0 0 0 0 174 0 0
+boss-ceres-ridley samus-input-poses 556 126 556 0 3 0 0
+boss-ceres-ridley samus-mockball 0 0 0 0 129 0 0
+boss-ceres-ridley samus-screw-attack 0 0 0 0 945 0 0
+boss-ceres-ridley samus-shinespark-left 0 0 0 0 418 0 0
+boss-ceres-ridley samus-shinespark-right 0 0 0 0 405 0 0
+boss-ceres-ridley samus-shinespark-up 0 0 0 0 393 0 0
+boss-ceres-ridley samus-shinespark-up-left 0 0 0 0 418 0 0
+boss-ceres-ridley samus-space-jump-chain 0 0 0 0 383 0 0
+boss-ceres-ridley samus-square-slope-reserve 0 0 0 0 398 0 0
+boss-ceres-ridley samus-walljump-16 0 0 0 0 157 0 0
+boss-ceres-ridley samus-walljump-22 0 0 0 0 163 0 0
+boss-ceres-ridley samus-walljump-28 0 0 0 0 169 0 0
+boss-ceres-ridley terrain-quicksand 0 0 0 0 456 0 0
+world-doors any-ceres-arrival 0 0 0 0 222 0 0
+world-doors any-fly-to-ceres 0 0 0 0 802 0 0
+world-doors any-intro-0568 0 0 0 0 1650 0 0
+world-doors any-intro-2219 0 0 0 0 2103 0 0
+world-doors any-intro-4323 0 0 0 0 1688 0 0
+world-doors any-intro-6012 0 0 0 0 1499 0 0
+world-doors any-power-on 0 0 0 0 567 0 0
+world-doors any-zebes-arrival 0 0 0 0 231 0 0
+world-doors area-brinstar 0 0 0 0 476 0 0
+world-doors area-maridia 105 0 105 0 261 0 62
+world-doors area-norfair 105 0 105 0 209 0 60
+world-doors boss-kraid-defeated 20 0 20 16 1090 0 29
+world-doors boss-phantoon 0 0 0 0 2109 0 0
+world-doors chain-0012-91F8 0 0 0 0 1032 0 0
+world-doors chain-0013-92FD 0 0 0 0 599 0 0
+world-doors chain-0014-96BA 105 0 105 0 343 0 58
+world-doors chain-0043-9AD9 0 0 0 0 417 0 0
+world-doors chain-0057-9FBA 0 0 0 0 549 0 0
+world-doors chain-0059-A293 0 0 0 0 777 0 0
+world-doors chain-0097-ACF0 112 0 112 0 663 0 43
+world-doors chain-0100-B07A 0 0 0 0 285 0 0
+world-doors chain-0106-AD5E 105 0 105 0 614 0 63
+world-doors chain-0163-A890 0 0 0 0 30 0 0
+world-doors chain-0220-D017 0 0 0 0 538 0 0
+world-doors chain-0224-D0B9 105 0 105 0 336 0 71
+world-doors chain-0232-D5A7 0 0 0 0 706 0 0
+world-doors chain-0234-D51E 0 0 0 0 153 0 0
+world-doors chain-0314-DAE1 0 0 0 0 465 0 0
+world-doors chain-any-0001-DF45 105 0 105 0 250 0 56
+world-doors chain-any-0002-DF8D 105 0 105 0 120 0 56
+world-doors chain-any-0003-DFD7 105 0 105 0 182 0 57
+world-doors chain-any-0004-E021 105 0 105 0 102 0 56
+world-doors chain-any-0005-E06B 170 0 170 0 94 0 56
+world-doors chain-any-0006-E0B5 105 0 105 0 1610 0 61
+world-doors chain-any-0007-E06B 105 0 105 0 96 0 57
+world-doors chain-any-0008-E021 106 0 106 0 100 0 57
+world-doors chain-any-0009-DFD7 105 0 105 0 169 0 56
+world-doors chain-any-0010-DF8D 107 0 107 1 112 0 59
+world-doors chain-any-0011-DF45 0 0 0 0 2123 0 0
+world-doors event-zebes-awake 0 0 0 0 179 0 0
+world-doors item-charge-beam 0 0 0 0 919 0 0
+world-doors item-energy-tank 0 0 0 0 259 0 0
+world-doors item-morph-ball 0 0 0 0 1427 0 0
+world-doors item-plasma-beam 0 0 0 0 169 0 0
+world-doors item-reserve-tank 0 0 0 0 1229 0 0
+world-doors item-wave-beam 0 0 0 0 59 0 0
+world-doors samus-bomb-jump-vertical 0 0 0 0 1058 0 0
+world-doors samus-ceres-push 0 0 0 0 1777 0 0
+world-doors samus-grapple-release 0 0 0 0 488 0 0
+world-doors samus-grapple-walljump 0 0 0 0 174 0 0
+world-doors samus-input-poses 105 0 105 0 398 0 56
+world-doors samus-mockball 0 0 0 0 129 0 0
+world-doors samus-screw-attack 0 0 0 0 945 0 0
+world-doors samus-shinespark-left 0 0 0 0 418 0 0
+world-doors samus-shinespark-right 0 0 0 0 405 0 0
+world-doors samus-shinespark-up 0 0 0 0 393 0 0
+world-doors samus-shinespark-up-left 0 0 0 0 418 0 0
+world-doors samus-space-jump-chain 0 0 0 0 383 0 0
+world-doors samus-square-slope-reserve 0 0 0 0 398 0 0
+world-doors samus-walljump-16 0 0 0 0 157 0 0
+world-doors samus-walljump-22 0 0 0 0 163 0 0
+world-doors samus-walljump-28 0 0 0 0 169 0 0
+world-doors terrain-quicksand 0 0 0 0 456 0 0
 uncompared any-ceres-arrival 0
 uncompared any-fly-to-ceres 0
 uncompared any-intro-0568 0

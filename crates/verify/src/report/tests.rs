@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use super::lines::code_lines;
 use super::status::{PLAN, Plan, undeclared};
 use super::{
-    Coverage, DOMAINS, EntryCoverage, baseline, check, coverage, current, fit, floors, generate,
-    grouped, read, status_current, tables, with_status,
+    Coverage, DOMAINS, EntryCoverage, Frames, Proof, baseline, check, coverage, current, fit,
+    floors, generate, grouped, read, status_current, tables, with_status,
 };
 
 /// The repository root, from this crate's manifest.
@@ -116,11 +116,17 @@ fn floors_and_tables_parse() {
 #[test]
 fn coverage_parses() {
     let parsed = coverage(
-        "# coverage\ncamera frames 10 8 1 5\ncamera field 9 1 position x\n\
+        "# coverage\ncamera frames 12 10 8 1 5\ncamera field 9 1 position x\n\
          camera entry Follow 3 1 4 2\n",
     );
     let camera = Coverage {
-        frames: Some([10, 8, 1, 5]),
+        frames: Some(Frames {
+            ran: 12,
+            compared: 10,
+            matched: 8,
+            unverified: 1,
+            null_matched: 5,
+        }),
         fields: vec![("position x".to_owned(), 9, 1)],
         entries: vec![EntryCoverage {
             name: "Follow".to_owned(),
@@ -134,10 +140,39 @@ fn coverage_parses() {
         parsed.map(|domains| domains.get("camera") == Some(&camera)),
         Ok(true)
     );
-    assert!(coverage("camera frames 10 8 1\n").is_err());
+    assert!(coverage("camera frames 10 8 1 5\n").is_err());
     assert!(coverage("camera entry Follow x 0 4 0\n").is_err());
     assert!(coverage("camera entry Follow 3 4 2\n").is_err());
     assert!(coverage("camera field 9 1\n").is_err());
+}
+
+#[test]
+fn a_models_headline_is_its_gain_over_the_null_model() {
+    let frames = |matched, null_matched| Frames {
+        ran: 120,
+        compared: 100,
+        matched,
+        unverified: 0,
+        null_matched,
+    };
+    assert_eq!(frames(80, 30).gain(), 50);
+    // Matching fewer frames than doing nothing gains nothing.
+    assert_eq!(frames(30, 80).gain(), 0);
+    // Under a tenth of the compared frames is flagged; a tenth is not.
+    assert!(frames(99, 90).weak());
+    assert!(!frames(100, 90).weak());
+    let entry = |matched, null_matched, exercised| EntryCoverage {
+        name: String::from("Follow"),
+        matched,
+        null_matched,
+        exercised,
+        unchecked: 0,
+    };
+    assert_eq!(entry(5, 2, 6).proof(), Proof::Gain(3));
+    // The null model passing as often as the model leaves the entry unproven, not matched.
+    assert_eq!(entry(5, 5, 6).proof(), Proof::Unproven);
+    assert_eq!(entry(0, 0, 6).proof(), Proof::Unproven);
+    assert_eq!(entry(0, 0, 0).proof(), Proof::VectorsOnly);
 }
 
 #[test]

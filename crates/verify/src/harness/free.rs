@@ -32,6 +32,11 @@
 //! the longest, and each field's first divergence. A model that holds a row in one segment
 //! plays that row alone, as far as its fields go; a row of many short segments ending in masks
 //! says the domain's boundary, not its model, limits the proof.
+//!
+//! Beside the model, the run carries the **null model** over the same frames (MODEL §4): a step
+//! that does nothing, its seed's fields carried unchanged, its segments ending as the model's
+//! do but at its own divergences. Its held frames are the baseline the model's are read
+//! against: a model that holds no more than the null model shows nothing the rows prove.
 
 use core::fmt;
 use std::collections::{BTreeMap, BTreeSet};
@@ -94,6 +99,8 @@ pub struct FreeReport {
     pub compared_at: BTreeSet<u64>,
     /// The frames held: run from a seed and matching on every unmasked field.
     pub held: u64,
+    /// The compared frames the null model's own free run holds.
+    pub null_held: u64,
     /// The segments that ended in a divergence.
     pub diverged: u64,
     /// The segments that ended at a mask.
@@ -191,6 +198,7 @@ impl FreeReport {
         self.unreached_frames = self.unreached_frames.saturating_add(other.unreached_frames);
         self.masked_frames = self.masked_frames.saturating_add(other.masked_frames);
         self.held = self.held.saturating_add(other.held);
+        self.null_held = self.null_held.saturating_add(other.null_held);
         self.diverged = self.diverged.saturating_add(other.diverged);
         self.masked = self.masked.saturating_add(other.masked);
         self.skipped = self.skipped.saturating_add(other.skipped);
@@ -206,12 +214,13 @@ impl fmt::Display for FreeReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "{} free run: {} frames compared, {} held, {} masked; {} skipped out of scope, \
-             {} unreached, {} folded; {} segments: {} diverged, {} masked, {} skipped, {} to the \
-             row's end",
+            "{} free run: {} frames compared, {} held (null model {}), {} masked; {} skipped out \
+             of scope, {} unreached, {} folded; {} segments: {} diverged, {} masked, {} skipped, \
+             {} to the row's end",
             self.domain,
             self.compared(),
             self.held,
+            self.null_held,
             self.masked_frames,
             self.out_of_scope_frames,
             self.unreached_frames,
@@ -259,6 +268,27 @@ struct Open<S> {
     state: S,
 }
 
+/// What one compared frame gave the model and the null model.
+struct Stepped<S, F> {
+    /// The model's frame.
+    step: Step<S>,
+    /// Whether another writer moved a declared field in it.
+    lost: bool,
+    /// The null model's frame.
+    null: NullStep<F>,
+}
+
+/// What one frame of the null model's free run gave: it carries its seed's fields, never a
+/// State of its own.
+enum NullStep<F> {
+    /// The frame matched and the null model's segment runs on with these fields.
+    Held(F),
+    /// The frame matched on the fields no other writer moved, and the move ends the segment.
+    HeldToMask,
+    /// A field differed, ending the segment.
+    Diverged,
+}
+
 /// What one frame of a free run gave.
 enum Step<S> {
     /// The frame matched and the segment runs on with this State.
@@ -277,8 +307,8 @@ fn names<D: Domain>(set: FieldSet) -> Vec<&'static str> {
         .collect()
 }
 
-/// One frame from `from` to `next`, stepping the segment in progress or seeding one, and
-/// whether another writer moved a declared field in it.
+/// One frame from `from` to `next`, stepping the segment in progress or seeding one, beside
+/// the null model's segment in progress (its seed's fields) or one it seeds.
 ///
 /// # Errors
 ///
@@ -286,9 +316,10 @@ fn names<D: Domain>(set: FieldSet) -> Vec<&'static str> {
 fn step<D: Domain>(
     domain: &D,
     open: Option<Open<D::State>>,
+    null: Option<D::Fields>,
     from: &FrameRecord,
     next: &FrameRecord,
-) -> Result<(Step<D::State>, bool), Uncompared> {
+) -> Result<Stepped<D::State, D::Fields>, Uncompared> {
     let skipped = |skip: D::Skip| domain.uncompared(&skip);
     let (seeded, inputs) = domain
         .decode(from, Interval::ending_at(next))
@@ -296,6 +327,7 @@ fn step<D: Domain>(
     let mut world = domain.world(from, next).map_err(skipped)?;
     let masks = domain.masks(from, next, &inputs).map_err(skipped)?;
     let oracle = domain.expected(next).map_err(skipped)?;
+    let null = null.unwrap_or_else(|| domain.fields(&seeded));
     let Open {
         seed,
         held,
@@ -316,6 +348,13 @@ fn step<D: Domain>(
     let lost = hidden(Hides::AnotherWriter);
     let masked = lost.union(hidden(Hides::NoWriter));
     let differs = differing::<D>(&model, &oracle).without(masked);
+    let null = if !differing::<D>(&null, &oracle).without(masked).is_empty() {
+        NullStep::Diverged
+    } else if lost.is_empty() {
+        NullStep::Held(null)
+    } else {
+        NullStep::HeldToMask
+    };
     let frame = Frame(next.index);
     if !differs.is_empty() {
         let fields = D::FIELDS
@@ -338,19 +377,27 @@ fn step<D: Domain>(
             held,
             end: End::Diverged(frame, fields),
         });
-        return Ok((ended, !lost.is_empty()));
+        return Ok(Stepped {
+            step: ended,
+            lost: !lost.is_empty(),
+            null,
+        });
     }
     let held = held.saturating_add(1);
-    if lost.is_empty() {
-        Ok((Step::Held(Open { seed, held, state }), false))
+    let step = if lost.is_empty() {
+        Step::Held(Open { seed, held, state })
     } else {
-        let ended = Step::Ended(Segment {
+        Step::Ended(Segment {
             seed,
             held,
             end: End::Masked(frame, names::<D>(lost)),
-        });
-        Ok((ended, true))
-    }
+        })
+    };
+    Ok(Stepped {
+        step,
+        lost: !lost.is_empty(),
+        null,
+    })
 }
 
 /// `domain` run free over `records`, a scenario's records in frame order.
@@ -364,6 +411,7 @@ pub fn run<D: Domain, E>(
 ) -> Result<FreeReport, E> {
     let mut report = FreeReport::new::<D>();
     let mut open: Option<Open<D::State>> = None;
+    let mut null: Option<D::Fields> = None;
     let mut read = 0_u64;
     let records = records
         .into_iter()
@@ -374,7 +422,7 @@ pub fn run<D: Domain, E>(
         let (seed, held) = carried
             .as_ref()
             .map_or((Frame(from.index), 0), |open| (open.seed, open.held));
-        let (stepped, masked) = match step(domain, carried, from, next) {
+        let stepped = match step(domain, carried, null.take(), from, next) {
             Ok(stepped) => stepped,
             Err(why) => {
                 let skipped = if why.in_scope() {
@@ -394,10 +442,18 @@ pub fn run<D: Domain, E>(
             }
         };
         report.compared_at.insert(next.index);
-        if masked {
+        if stepped.lost {
             report.masked_frames = report.masked_frames.saturating_add(1);
         }
-        match stepped {
+        match stepped.null {
+            NullStep::Held(fields) => {
+                report.null_held = report.null_held.saturating_add(1);
+                null = Some(fields);
+            }
+            NullStep::HeldToMask => report.null_held = report.null_held.saturating_add(1),
+            NullStep::Diverged => {}
+        }
+        match stepped.step {
             Step::Held(running) => open = Some(running),
             Step::Ended(segment) => report.close(segment),
         }
@@ -440,6 +496,9 @@ pub fn run_cached<D: Domain>(
 pub struct Accounting {
     /// The frames held, a floor.
     pub held: u64,
+    /// The compared frames the null model's free run holds, the baseline `held` is read
+    /// against.
+    pub null_held: u64,
     /// The frames compared, held or diverged.
     pub compared: u64,
     /// Of those, the frames another writer moved a declared field in, compared on the rest.
@@ -459,6 +518,7 @@ impl Accounting {
     pub const fn of(report: &FreeReport) -> Self {
         Self {
             held: report.held,
+            null_held: report.null_held,
             compared: report.compared(),
             masked: report.masked_frames,
             out_of_scope: report.out_of_scope_frames,
@@ -470,7 +530,8 @@ impl Accounting {
     /// Whether `self` accounts for the records as `other` does, whatever each holds.
     #[must_use]
     pub const fn same_records(&self, other: &Self) -> bool {
-        self.compared == other.compared
+        self.null_held == other.null_held
+            && self.compared == other.compared
             && self.masked == other.masked
             && self.out_of_scope == other.out_of_scope
             && self.unreached == other.unreached
@@ -494,6 +555,7 @@ impl Accounting {
     /// `other`'s figures added to `self`'s, a total over rows.
     pub const fn add(&mut self, other: &Self) {
         self.held = self.held.saturating_add(other.held);
+        self.null_held = self.null_held.saturating_add(other.null_held);
         self.compared = self.compared.saturating_add(other.compared);
         self.masked = self.masked.saturating_add(other.masked);
         self.out_of_scope = self.out_of_scope.saturating_add(other.out_of_scope);
@@ -505,8 +567,14 @@ impl Accounting {
     #[must_use]
     pub fn line(&self, domain: &str, row: &str) -> String {
         format!(
-            "{domain} {row} {} {} {} {} {} {}",
-            self.held, self.compared, self.masked, self.out_of_scope, self.unreached, self.folded
+            "{domain} {row} {} {} {} {} {} {} {}",
+            self.held,
+            self.null_held,
+            self.compared,
+            self.masked,
+            self.out_of_scope,
+            self.unreached,
+            self.folded
         )
     }
 }
@@ -525,8 +593,8 @@ pub struct Floors {
 
 impl Floors {
     /// The floors in `text`:
-    /// `<domain> <row> <held> <compared> <masked> <out-of-scope> <unreached> <folded>` and
-    /// `uncompared <row> <frames>` lines, `#` comments skipped.
+    /// `<domain> <row> <held> <null-held> <compared> <masked> <out-of-scope> <unreached>
+    /// <folded>` and `uncompared <row> <frames>` lines, `#` comments skipped.
     ///
     /// # Errors
     ///
@@ -547,6 +615,7 @@ impl Floors {
                     domain,
                     row,
                     held,
+                    null_held,
                     compared,
                     masked,
                     out_of_scope,
@@ -555,6 +624,7 @@ impl Floors {
                 ] => {
                     let accounting = Accounting {
                         held: number(held)?,
+                        null_held: number(null_held)?,
                         compared: number(compared)?,
                         masked: number(masked)?,
                         out_of_scope: number(out_of_scope)?,
@@ -567,9 +637,8 @@ impl Floors {
                 }
                 _ => {
                     return Err(format!(
-                        "{line}: not `domain row held compared masked out-of-scope unreached \
-                         folded` nor \
-                         `{UNCOMPARED} row frames`"
+                        "{line}: not `domain row held null-held compared masked out-of-scope \
+                         unreached folded` nor `{UNCOMPARED} row frames`"
                     ));
                 }
             }

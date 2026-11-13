@@ -19,13 +19,13 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every compared stream (all but `wram`) the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
 
-The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter stretches of the same movie, each played alone from its first seed, in the order the work reaches them. A rung is reached when the engine plays every frame of it alone, counted over the streams the rung claims: `video` only once it needs the line program, `apu` only once it needs the sound requests. Until then, over the lock's rows that start inside it: the rows the free-run gate starts, their green (row, stream) pairs over those streams, and the domain free run's two figures: the domain that holds the smallest share of the frames it compares, and the domain that compares the smallest share of the frames in its scope, those of the rows' frames after their seeds it answers for ([the report's ladder](docs/REPORT.md#the-ladder) gives every domain, its frames in and out of scope, and the frames no model domain compares).
+The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): shorter stretches of the same movie, each played alone from its first seed, in the order the work reaches them. A rung is reached when the engine plays every frame of it alone, counted over the streams the rung claims: `video` only once it needs the line program, `apu` only once it needs the sound requests. Until then, over the lock's rows that start inside it: the rows the free-run gate starts, their green (row, stream) pairs over those streams, and the domain free run's three figures: the domain that holds the smallest share of the frames it compares; the domain whose hold gains the smallest share of them over the null model's free run, a step that does nothing carried from the same seeds; and the domain that compares the smallest share of the frames in its scope, those of the rows' frames after their seeds it answers for ([the report's ladder](docs/REPORT.md#the-ladder) gives every domain, its frames in and out of scope, and the frames no model domain compares).
 
-| Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least compared of its scope | Still needed |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 2 of 6 | 100.0 % (every domain) | 100.0 % (every domain) | 19 of 19: S1, S5, CAM, H2, P1, B8, R1, E1, E2 (in progress); W1, C1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
-| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 10 of 35 | 100.0 % (every domain) | 100.0 % (every domain) | 23 of 23: S1, S5, CAM, H2, P1, B8, R1, E1, E2 (in progress); W1, C1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
-| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 20 of 70 | 99.6 % (samus-movement) | 99.0 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, B8, R1, E1, E2 (in progress); S4, H1, W1, C1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least gain over the null model | Free run, least compared of its scope | Still needed |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 2 of 6 | 100.0 % (every domain) | 0.0 % (run-progress, world-blocks) | 100.0 % (every domain) | 19 of 19: S1, S5, CAM, H2, P1, B8, R1, E1, E2 (in progress); W1, C1, R2, A1, AF0, AF1, AF2, AF3, AF4a, V3 (not started) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 10 of 35 | 100.0 % (every domain) | 0.0 % (run-progress) | 100.0 % (every domain) | 23 of 23: S1, S5, CAM, H2, P1, B8, R1, E1, E2 (in progress); W1, C1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 20 of 70 | 99.6 % (samus-movement) | 0.0 % (world-blocks) | 99.0 % (samus-movement) | 27 of 27: S1, S2, S5, CAM, H2, P1, W2, B8, R1, E1, E2 (in progress); S4, H1, W1, C1, R2, R3, E3, E4, A1, AF0, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
 Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **9 are in progress** and **0 done**; 28 have not started. **51 rounds** have landed on 8 models; the plan estimates 157 rounds for the whole game.
 
@@ -35,18 +35,20 @@ How much of each whole movie the lock's rows, the harnesses, the models, the fre
 
 ### The models
 
-Each model is built in the clean room from its spec alone, then checked frame by frame against the original game: its harness frames are the recorded frames on which it matched the original on every compared field, of the frames it ran over. Score and budget are weighted tokens; fit is score over budget.
+Each model is built in the clean room from its spec alone, then checked frame by frame against the original game. Its headline is its **gain over the null model**: of the recorded frames its harness compares, those on which it matched the original on every compared field, less those on which a step that does nothing matched too, as a share of the compared frames. A frame the null model matches proves nothing about the model, so a model whose gain is small is barely checked by the rows, however many frames it matches ([STATUS](docs/STATUS.md#the-models-gain-over-the-null-model)). Score and budget are weighted tokens; fit is score over budget.
 
-| Model | Plan | Status | Rounds | Vectors | Harness frames | Score | Budget | Fit |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 20 | 345 | 20,856 of 40,835 | 9,400 | 8,987 | 1.05 |
-| world-camera | CAM (in progress) | in progress | 6 | 83 | 23,501 of 40,835 | 1,839 | 1,762 | 1.04 |
-| run-progress | P1 (in progress) | in progress | 8 | 76 | 40,442 of 40,835 | 819 | 1,061 | 0.77 |
-| interface-hud | H2 (in progress) | in progress | 6 | 95 | 26,821 of 37,669 | 2,700 | 2,337 | 1.16 |
-| world-blocks | W2 (in progress) | in progress | 4 | 100 | 23,517 of 35,949 | 2,395 | 2,074 | 1.15 |
-| samus-appearance | S5 (in progress) | in progress | 5 | 98 | 20,977 of 37,669 | 2,191 | 1,412 | 1.55 |
-| boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 5,437 of 40,835 | 1,299 | 1,150 | 1.13 |
-| world-doors | R1 (in progress) | in progress | 1 | 70 | 1,863 of 39,824 | 3,374 | 2,912 | 1.16 |
+| Model | Plan | Status | Rounds | Vectors | Gain over null | Matched | Null model | Compared | Score | Budget | Fit |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 20 | 345 | 15,256 (72.6 %) | 20,856 | 5,600 | 21,001 | 9,400 | 8,987 | 1.05 |
+| world-camera | CAM (in progress) | in progress | 6 | 83 | 14,333 (60.7 %) | 23,501 | 9,168 | 23,603 | 1,839 | 1,762 | 1.04 |
+| run-progress | P1 (in progress) | in progress | 8 | 76 | 28 (0.1 %) | 40,442 | 40,414 | 40,451 | 819 | 1,061 | 0.77 |
+| interface-hud | H2 (in progress) | in progress | 6 | 95 | 2,853 (10.6 %) | 26,821 | 23,968 | 26,823 | 2,700 | 2,337 | 1.16 |
+| world-blocks | W2 (in progress) | in progress | 4 | 100 | 602 (2.6 %) | 23,517 | 22,915 | 23,603 | 2,395 | 2,074 | 1.15 |
+| samus-appearance | S5 (in progress) | in progress | 5 | 98 | 20,420 (97.3 %) | 20,977 | 557 | 20,977 | 2,191 | 1,412 | 1.55 |
+| boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 2,204 (40.5 %) | 5,437 | 3,233 | 5,437 | 1,299 | 1,150 | 1.13 |
+| world-doors | R1 (in progress) | in progress | 1 | 70 | 1,863 (99.1 %) | 1,863 | 0 | 1,880 | 3,374 | 2,912 | 1.16 |
+
+**Flagged**, in progress with a gain under 10 % of the frames compared, so the rows barely tell the model from a step that does nothing: run-progress (0.1 %), world-blocks (2.6 %).
 
 ### The whole-game plan
 

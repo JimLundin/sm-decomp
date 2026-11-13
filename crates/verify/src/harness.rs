@@ -720,10 +720,10 @@ impl fmt::Display for Behaviours<'_> {
 
 /// A report's oracle coverage as `coverage.txt` commits it.
 ///
-/// One line each, under the domain's name: `<domain> frames <frames> <matched and verified>
-/// <unverified> <null model matched>`, then `<domain> field <compared> <masked> <field>` per
-/// declared field, then `<domain> entry <entry> <matched and verified> <null model matched>
-/// <exercised> <unchecked>` per catalogue entry, by the entry's name: the order a model
+/// One line each, under the domain's name: `<domain> frames <frames> <compared> <matched and
+/// verified> <unverified> <null model matched>`, then `<domain> field <compared> <masked>
+/// <field>` per declared field, then `<domain> entry <entry> <matched and verified> <null model
+/// matched> <exercised> <unchecked>` per catalogue entry, by the entry's name: the order a model
 /// declares its entries in changes no line.
 pub struct Coverage<'a> {
     /// The domain's name in `floors.txt`.
@@ -737,8 +737,8 @@ impl fmt::Display for Coverage<'_> {
         let Self { name, report } = self;
         writeln!(
             f,
-            "{name} frames {} {} {} {}",
-            report.frames, report.matched, report.unverified, report.null_matched
+            "{name} frames {} {} {} {} {}",
+            report.frames, report.compared, report.matched, report.unverified, report.null_matched
         )?;
         for field in &report.fields {
             writeln!(

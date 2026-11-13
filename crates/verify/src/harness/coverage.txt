@@ -1,14 +1,14 @@
 # The harnesses' oracle coverage over every cached row (MODEL §4), for docs/REPORT.md beside the
-# floors: `<domain> frames <frames> <matched and verified> <unverified> <null model matched>`,
-# then `<domain> field <compared> <masked> <field>` per declared field, then `<domain> entry
+# floors: `<domain> frames <frames> <compared> <matched and verified> <unverified> <null model
+# matched>`, then `<domain> field <compared> <masked> <field>` per declared field, then `<domain> entry
 # <entry> <matched and verified> <null model matched> <exercised> <unchecked>` per catalogue
 # entry. The floor tests fail when a run over every row in floors.txt gives other lines.
-game-time frames 40835 37688 0 17070
+game-time frames 40835 40835 37688 0 17070
 game-time field 40835 0 hours
 game-time field 40835 0 minutes
 game-time field 40835 0 seconds
 game-time field 40835 0 frames
-samus-movement frames 40835 20856 0 5600
+samus-movement frames 40835 21001 20856 0 5600
 samus-movement field 20580 421 position.x
 samus-movement field 19674 1327 position.y
 samus-movement field 20574 427 base_speed
@@ -53,7 +53,7 @@ samus-movement entry WallJump 281 0 281 23
 samus-movement entry WallsAndCeilings 1656 474 1682 31
 samus-movement entry WhatHerMovesMet 0 0 0 2196
 samus-movement entry WordwiseTopSpeed 0 0 0 0
-world-camera frames 40835 23501 0 9168
+world-camera frames 40835 23603 23501 0 9168
 world-camera field 23484 119 position.x
 world-camera field 23176 427 position.y
 world-camera field 0 23603 seen
@@ -71,7 +71,7 @@ world-camera entry ScreensRunOn 0 0 0 0
 world-camera entry Settling 18384 8962 18384 304
 world-camera entry ShortScreens 21947 14825 21947 407
 world-camera entry TimeStopped 113 113 113 6
-run-progress frames 40835 40442 7 40414
+run-progress frames 40835 40451 40442 7 40414
 run-progress field 40451 0 items
 run-progress field 40451 0 items switched on
 run-progress field 40451 0 beams
@@ -102,7 +102,7 @@ run-progress entry TakingBeams 4 0 4 0
 run-progress entry TakingItems 2 0 2 0
 run-progress entry Tanks 8 0 8 0
 run-progress entry ZebetitesCounted 0 0 0 0
-interface-hud frames 37669 26821 2 23968
+interface-hud frames 37669 26823 26821 2 23968
 interface-hud field 26823 0 status bar
 interface-hud field 26823 0 values last shown
 interface-hud field 26823 0 selected item
@@ -130,7 +130,7 @@ interface-hud entry OutOfPlay 3036 3036 3038 0
 interface-hud entry SelectionHighlight 127 0 127 0
 interface-hud entry SwitchClick 0 0 0 127
 interface-hud entry Switching 0 0 0 139
-world-blocks frames 35949 23517 86 22915
+world-blocks frames 35949 23603 23517 86 22915
 world-blocks field 23603 0 places
 world-blocks field 23603 0 cells
 world-blocks field 23603 0 screens
@@ -152,7 +152,7 @@ world-blocks entry SpeedBlocks 0 0 0 0
 world-blocks entry SuperMissileBlocks 1 0 1 0
 world-blocks entry TheScriptsRun 595 0 596 0
 world-blocks entry WhatTheScreenRedraws 0 0 0 249
-samus-appearance frames 37669 20977 0 557
+samus-appearance frames 37669 20977 20977 0 557
 samus-appearance field 20977 0 step
 samus-appearance field 20977 0 time_left
 samus-appearance field 20976 1 stage
@@ -172,7 +172,7 @@ samus-appearance entry StandingRestart 32 2 32 0
 samus-appearance entry StartingClip 5260 555 5260 0
 samus-appearance entry WallJumpBranch 14 3 14 0
 samus-appearance entry WallJumpReady 77 4 77 0
-boss-ceres-ridley frames 40835 5437 0 3233
+boss-ceres-ridley frames 40835 5437 5437 0 3233
 boss-ceres-ridley field 5437 0 phase
 boss-ceres-ridley field 5437 0 figure
 boss-ceres-ridley field 5437 0 shown
@@ -192,7 +192,7 @@ boss-ceres-ridley entry Shown 2218 2167 2218 0
 boss-ceres-ridley entry Solid 2218 2168 2218 0
 boss-ceres-ridley entry TheDoorsColours 11 0 11 0
 boss-ceres-ridley entry Waiting 2207 253 2207 0
-world-doors frames 39824 1863 17 0
+world-doors frames 39824 1880 1863 17 0
 world-doors field 1880 0 her
 world-doors field 1880 0 seen
 world-doors field 1880 0 camera

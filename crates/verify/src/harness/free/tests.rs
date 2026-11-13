@@ -136,7 +136,7 @@ fn a_rows_records_are_each_compared_skipped_or_folded_once() {
 
 #[test]
 fn the_floors_parse_each_domains_accounting_and_each_rows_gap() {
-    let parsed = Floors::parse("# floors\ngame-time r1 5 6 1 2 7 3\nuncompared r1 4\n");
+    let parsed = Floors::parse("# floors\ngame-time r1 5 4 6 1 2 7 3\nuncompared r1 4\n");
     let Ok(floors) = parsed else {
         panic!("the floors don't parse: {parsed:?}");
     };
@@ -147,10 +147,22 @@ fn the_floors_parse_each_domains_accounting_and_each_rows_gap() {
         accounting.map(|accounting| (accounting.held, accounting.in_scope(), accounting.frames())),
         Some((5, 13, 18))
     );
+    assert_eq!(accounting.map(|accounting| accounting.null_held), Some(4));
     assert_eq!(floors.uncompared.get("r1"), Some(&4));
     assert!(Floors::parse("game-time r1 5\n").is_err());
-    assert!(Floors::parse("game-time r1 5 6 1 2 3\n").is_err());
+    assert!(Floors::parse("game-time r1 5 6 1 2 7 3\n").is_err());
     assert!(Floors::parse("uncompared r1\n").is_err());
+}
+
+#[test]
+fn the_null_models_free_run_holds_the_frames_on_which_nothing_moves() {
+    // The clock stalls for two frames: the null model, which carries its seed's count, holds
+    // them; the model, which ticks, diverges on them and on the jump after.
+    let report = free(clock(&[0, 1, 1, 1, 5]));
+    assert_eq!((report.held, report.null_held), (1, 2));
+    // A clock that ticks every frame leaves the null model nothing to hold.
+    assert_eq!(free(clock(&[0, 1, 2, 3])).null_held, 0);
+    assert_eq!(Accounting::of(&report).null_held, 2);
 }
 
 #[test]

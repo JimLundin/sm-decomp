@@ -28,7 +28,7 @@ A rung counts only the streams its needs claim: `video` once it needs the line p
 without that work is measured on the other compared streams. The milestone needs every stream.
 Beside "plays alone", each rung shows figures that move before it is reached, over the lock's
 rows that start inside its stretch: the rows the free-run gate starts, their green (row, stream)
-pairs over the streams the rung counts, and two figures from the domain free run
+pairs over the streams the rung counts, and three figures from the domain free run
 (`free_floors.txt`). It accounts for each of a row's frames after its seed once, per domain:
 **compared** (run from a seed, held or diverged; **masked** when another writer moved some of
 its fields, compared on the rest), **out of scope** (the domain doesn't run in it, or another
@@ -40,7 +40,9 @@ it, such as lag). Each harness names which of its skips are out of scope (`Uncom
 "Least held" is the domain that holds the smallest share of the frames it compares, so a domain
 that skips or folds frames isn't capped by them; "least compared" is the domain that compares
 the smallest share of its scope, so the frames a domain's proof doesn't reach yet stay in view
-and a domain that exists for a few frames is measured over those.
+and a domain that exists for a few frames is measured over those. "Least gain over the null
+model" is the domain whose held frames exceed those the null model's free run holds by the
+smallest share of the frames it compares ([below](#the-models-gain-over-the-null-model)).
 The report's [ladder section](REPORT.md#the-ladder) gives every domain's figures by reason and
 the frames no model domain compares, its gap: game-time, the clock, compares every frame, so it
 is left out of the gap, which would otherwise always be empty. The checks below serve the milestone
@@ -50,6 +52,32 @@ toward it. The `any-power-on` row starts from power-on, as the movie does, so th
 places it at the movie's frame 0 (a power-on row belongs to the movie its id's first word names);
 its 568 frames count once the gate runs it, which today runs only from seeds.
 
+## The models' gain over the null model
+
+A match rate means only what it gains over a null model, a step that does nothing (MODEL §4):
+on a frame where the domain's fields don't move, doing nothing matches the original as well as
+a correct model does, so the frame proves nothing. The README's models table therefore
+headlines each model's **gain over null**: of the frames its per-frame harness compares, those
+it matched on every unmasked field and verified, less those the null model matched, with that
+gain as a share of the compared frames. Matched, null and compared stand beside it, from
+`crates/verify/src/harness/coverage.txt` (the report's
+[oracle coverage](REPORT.md#oracle-coverage)). A model in progress whose gain is under 10 %
+of its compared frames is flagged under the table: its rows hardly exercise it, so its floors
+can't tell it from an absent model.
+
+Per catalogue entry the report says the same: an entry is proven by the rows only by its gain,
+the frames that exercised it and matched beyond those the null model matched; an entry the
+null model matches as often as the model is **unproven**, however many frames it matched, and
+one no compared frame exercises is checked by its **vectors only**.
+
+The ladder reads the domain free run the same way. Beside each domain's free run the test runs
+the null model free from the same seeds, carrying the seed's fields unchanged and ending its
+segments at its own divergences, masks and skips, and `free_floors.txt` holds its held frames
+exactly (`null-held`). A rung's "least gain over the null model" is the domain whose held
+frames exceed the null model's by the smallest share of what it compares; a domain that holds
+no more than the null model gains nothing. So "100 % held" beside a small gain says the rows
+don't move that domain's fields, not that its model is proven.
+
 ## The ratchets and floors
 
 | File | Holds | Checked by |
@@ -57,7 +85,7 @@ its 568 frames count once the gate runs it, which today runs only from seeds.
 | `scenarios/locks/lockstep.ratchet.txt` | per row, Ticks fully equal in lockstep, and per field group the differing Ticks and first frame | CI `verify / lockstep-ratchet` |
 | `scenarios/locks/lsnes.green.txt` | the rows the free-run gate starts (`ROW starts`) and its green (row, stream) pairs, against `scenarios/locks/lsnes.toml` | CI `verify / free-run-gate` |
 | `crates/verify/src/harness/floors.txt` | per domain harness and row, the frames matched on every unmasked field | `verify`'s harness tests, over the rows cached in `SM_CACHE` |
-| `crates/verify/src/harness/free_floors.txt` | per domain and row, the frames its free run holds from its seeds (a floor) and how it accounts for the rest, in and out of its scope (exact); per row, the frames no model domain (all but game-time) compares (exact) | `every_domain_runs_free_against_the_cache`, over the rows cached in `SM_CACHE` |
+| `crates/verify/src/harness/free_floors.txt` | per domain and row, the frames its free run holds from its seeds (a floor), those the null model's free run holds (exact), and how it accounts for the rest, in and out of its scope (exact); per row, the frames no model domain (all but game-time) compares (exact) | `every_domain_runs_free_against_the_cache`, over the rows cached in `SM_CACHE` |
 
 Fully equal counts must not fall, differing counts must not rise, a row that starts keeps
 starting, green pairs never go, and no harness row falls below its floor.
