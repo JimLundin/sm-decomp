@@ -10,6 +10,8 @@
 //! shared elements draws its first [`SHARED_BLOCKS`] blocks from them and its own looks after
 //! them; one that doesn't draws its own from block 0.
 
+use canonical::Canonical;
+
 use crate::assets::art::{BlockLook, PaletteSet, TileSheet};
 use crate::id::TilesetId;
 
@@ -18,14 +20,14 @@ use crate::id::TilesetId;
 pub const SHARED_BLOCKS: u16 = 0x100;
 
 /// The common room elements, which every tileset that uses them draws its first blocks from.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
 pub struct SharedElements {
     /// The looks of the first blocks, from block 0.
     pub looks: Vec<BlockLook>,
 }
 
 /// A tileset: the tiles, block looks and palette rows a room's level draws with.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
 pub struct Tileset {
     /// Its id.
     pub id: TilesetId,
@@ -40,7 +42,7 @@ pub struct Tileset {
 }
 
 /// The registered tilesets and the shared elements.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
 pub struct Tilesets {
     /// The shared elements.
     pub shared: SharedElements,

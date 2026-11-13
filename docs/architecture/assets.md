@@ -72,7 +72,10 @@ format ahead of the domain that consumes it.
 | `Registry<K>` | our typed ids for one content type, with their labels | asset names in an editor | every keyed record |
 
 `ContentSet` is the whole: every record set, its fingerprint (the `Canonical` digest of its
-encoding) and overlays by stable key (D15's packs).
+encoding) and overlays by stable key (D15's packs). A record set's fingerprint is
+`data::assets::fingerprint::ContentFingerprint`, which mixes the format's schema hash into the
+digest. The picture shapes and the tileset records derive `Canonical` today; a record set
+joins `ContentSet` as its format gains the codec.
 
 ## 3. The formats
 
@@ -337,6 +340,13 @@ directory and keyed by the ROM's SHA-256, the format's schema hash and the impor
 only saves time: any change to one of the three rebuilds it, and the content fingerprint checks
 it. The cache holds only the vanilla import; overlays (D15's packs) apply after it loads. It is
 never committed, and the Quality check that refuses ROM bytes covers it.
+
+`import::cache::Cache` is that cache, one file per record set and ROM. A set names its file
+and its importer's revision (`Cached`); a file written from another ROM, by another revision or
+in another shape of the format, or whose records no longer have the fingerprint it was written
+with, is a miss, and the set is imported and the file replaced. A cache that can't be read or
+written never fails a load. The tilesets are the first set it keeps
+(`import::tileset::cached`). The verifier always imports, so no check reads a cached record.
 
 Loading time (T1) stays exact for vanilla content without the compressed layout leaving the
 edge: the importer gives each record a named load cost from the original's streams, and an

@@ -3,6 +3,7 @@
 //! Each asset's importer, which reads the ROM's layout once, sits beside its records.
 
 pub mod art;
+pub mod fingerprint;
 pub mod samus;
 pub mod tilesets;
 pub mod world;

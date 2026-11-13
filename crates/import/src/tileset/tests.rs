@@ -80,3 +80,62 @@ fn every_registered_tileset_imports_from_the_rom() {
     let drawn_first = tilesets.block(CERES, 0) == first;
     assert!(drawn_first);
 }
+
+#[test]
+fn tilesets_come_back_from_the_content_codec_as_they_went_in() {
+    let mut tile = Tile::default();
+    tile.0[2][5] = 15;
+    let look = BlockLook::from_cells(
+        [Cell {
+            tile: TileRef(0x3ff),
+            palette: PaletteRow(7),
+            priority: true,
+            flip_x: false,
+            flip_y: true,
+        }; 4],
+    );
+    let mut palette = Palette::default();
+    palette.0[ROW_COLOURS - 1] = Colour(0x801f);
+    let tilesets = Tilesets {
+        shared: SharedElements { looks: vec![look] },
+        sets: vec![
+            Tileset::default(),
+            Tileset {
+                id: CERES,
+                sheet: TileSheet(vec![tile, Tile::default()]),
+                looks: vec![BlockLook::default(), look],
+                palettes: PaletteSet(vec![palette]),
+                uses_shared: true,
+            },
+        ],
+    };
+    let encoding = canonical::to_bytes(&tilesets);
+    assert_eq!(canonical::from_bytes(&encoding), Ok(tilesets));
+}
+
+#[test]
+fn the_cached_tilesets_are_the_imported_ones_and_the_second_load_reads_them() {
+    use crate::cache::Source;
+    let path = std::env::var_os("SM_ROM").map_or_else(
+        || std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../rom/sm.smc"),
+        std::path::PathBuf::from,
+    );
+    let Ok(image) = std::fs::read(path) else {
+        return;
+    };
+    let world = crate::world::import(Lorom::new(&image), &crate::world::LOADED).unwrap();
+    let imported = import(Lorom::new(&image), &world).unwrap();
+    // Outside the checkout: the files hold the ROM's content.
+    let dir = std::env::temp_dir().join(format!("sm-tileset-cache-{}", std::process::id()));
+    let cache = Cache::new(&dir);
+    let first = cached(&cache, &image, &world).unwrap();
+    let second = cached(&cache, &image, &world).unwrap();
+    std::fs::remove_dir_all(&dir).unwrap();
+    // Compared as bools, so a failure shows no imported content.
+    let (built_alike, read_alike) = (first.content == imported, second.content == imported);
+    assert!(built_alike);
+    assert!(read_alike);
+    assert!(matches!(first.source, Source::Built { .. }));
+    assert_eq!(second.source, Source::Cache);
+    assert_eq!(first.fingerprint, second.fingerprint);
+}

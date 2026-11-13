@@ -26,7 +26,7 @@ allowed() {
     verify) echo "data import game runtime oracle_record canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors" ;;
     tools) echo "verify oracle runtime import" ;;
     # The importers (docs/architecture/assets.md §5): game and runtime never list it.
-    import) echo "data" ;;
+    import) echo "data canonical" ;;
     canonical) echo "canonical_derive" ;;
     canonical_derive) echo "" ;;
     # The clean-room crates depend only on each other (MODEL §5).

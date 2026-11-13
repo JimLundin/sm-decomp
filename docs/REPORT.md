@@ -1066,6 +1066,7 @@ graph LR
   c_game --> c_types
   c_game --> c_world_blocks
   c_game --> c_world_camera
+  c_import --> c_canonical
   c_import --> c_data
   c_interface_hud --> c_types
   c_oracle --> c_data

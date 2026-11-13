@@ -20,6 +20,7 @@ use data::id::TilesetId;
 use data::rom::{AddressError, Lorom, RomAddress};
 use data::room::Area;
 
+use crate::cache::{Cache, Cached, Loaded, Revision};
 use crate::world::tileset_index;
 
 /// The tileset pointers: a word per tileset.
@@ -107,6 +108,28 @@ pub fn raw(rom: Lorom<'_>, id: TilesetId) -> Result<Raw, TilesetError> {
         tiles: tiles?,
         palette: palette?,
     })
+}
+
+impl Cached for Tilesets {
+    const NAME: &'static str = "tilesets";
+    const REVISION: Revision = Revision(1);
+}
+
+/// [`import`]'s tilesets for the ROM `image`, from `cache` where it holds them.
+///
+/// The records depend on `world` only through the registered rooms' tilesets, which come
+/// from the same image and from `world`'s registry: a change to that registry that changes a
+/// tileset's records raises the [`Cached::REVISION`] here.
+///
+/// # Errors
+///
+/// [`import`]'s, when the tilesets had to be imported.
+pub fn cached(
+    cache: &Cache,
+    image: &[u8],
+    world: &World,
+) -> Result<Loaded<Tilesets>, TilesetError> {
+    cache.load(image, || import(Lorom::new(image), world))
 }
 
 /// Every registered tileset and the shared elements, from the ROM; whether a tileset uses

@@ -189,6 +189,9 @@ name = "Asset formats: the shared shapes, the import crate, the content cache"
 wave = 1
 lanes = 2
 before = ["AF1", "AF2", "AF3", "AF4a", "AF4b", "AF5", "A3"]
+# The import crate, the picture shapes, the content fingerprint and the cache exist; the other
+# shapes, the registries and ContentSet as the whole remain.
+status = "in-progress"
 
 [[platform]]
 id = "AF1"

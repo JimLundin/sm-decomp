@@ -4,46 +4,48 @@
 //! They hold pixels, colours and choices, not the hardware's encodings of them: the planar
 //! tile bytes, the colour words in colour RAM and the tilemap word are `game::exact`'s.
 
+use canonical::Canonical;
+
 /// A tile's side in pixels.
 pub const TILE_SIDE: usize = 8;
 
 /// A colour as the console shows it: five bits each of red, green and blue, blue highest
 /// (BGR555). The top bit is kept as the content holds it, so the colour round-trips; the
 /// console ignores it.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Colour(pub u16);
 
 /// The colours a palette row holds.
 pub const ROW_COLOURS: usize = 16;
 
 /// A row of 16 colours, which a 4bpp tile's pixels index; colour 0 is transparent.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Palette(pub [Colour; ROW_COLOURS]);
 
 /// Palette rows in order: a cell's palette row picks one.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PaletteSet(pub Vec<Palette>);
 
 /// An 8x8 tile of indexed pixels, row by row from the top, each a colour's place in a palette
 /// row: 0 to 15 in a 4bpp sheet.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Tile(pub [[u8; TILE_SIDE]; TILE_SIDE]);
 
 /// Tiles in order, as an indexed image cut into 8x8 tiles; a [`TileRef`] counts from the first.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct TileSheet(pub Vec<Tile>);
 
 /// A tile's place among the tiles a background draws from: ten bits.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct TileRef(pub u16);
 
 /// Which of a background's eight palette rows a cell draws with.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PaletteRow(pub u8);
 
 /// A tile placed in a layer: which tile, in which palette row, whether it draws above the
 /// layer's low-priority cells, and its mirrorings.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Cell {
     /// The tile.
     pub tile: TileRef,
@@ -58,7 +60,7 @@ pub struct Cell {
 }
 
 /// A 16x16 block's picture: four cells, as Tiled builds a 16x16 tile of 8x8s.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct BlockLook {
     /// The top-left cell.
     pub top_left: Cell,
