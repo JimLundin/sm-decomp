@@ -14,7 +14,7 @@ The rebuild's crates, as planned in
 | `oracle_record` | `FrameRecord` and the types in it, the lsnes raw record decoder, the wait sites and the pad file reader, with no emulator: linking `oracle` needs the emulator archive. | none |
 | `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `import` (it builds the content from the ROM), `game`, `runtime`, `oracle_record`, `canonical` (lockstep names differences with `Canonical::diff`), `types` and the six clean models (the domain harnesses run them) |
 | `tools` | the command line over the above. No comparison logic of its own. | `verify`, `oracle`, `runtime`, `import` |
-| `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. | `canonical_derive` |
+| `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. `canonical::model` holds a clean model's State, which derives serde's traits, by the same codec (MODEL §1 decision 29). | `canonical_derive` |
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
 | `types` | the clean room's shared domain types (`crates/clean/types`, MODEL §5): `P.S` quantities, poses, cells, the `World` trait, the catalogue's kinds. No address or original name. | none |
 | `samus_movement` | Samus moving through the world (`crates/clean/samus_movement`), built from its spec in the clean room, and its catalogue. | `types` |

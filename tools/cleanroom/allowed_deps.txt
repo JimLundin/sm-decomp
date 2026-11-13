@@ -11,9 +11,11 @@
 # allowed (normal, dev, comma-separated); the features `features = [...]` may switch on beyond
 # the crate's defaults (comma-separated, `-` for none). `default-features` may take either value.
 
-# Maps and sets keyed by an enum: one entry per variant, which the compiler checks.
-enum-map =3.1.0 normal,dev -
-# Typed records read from text: a table or a vector file deserialised into the domain's types.
+# Maps and sets keyed by an enum: one entry per variant, which the compiler checks. `serde`
+# lets a State that holds one derive serde's traits (MODEL §1 decision 29).
+enum-map =3.1.0 normal,dev serde
+# Typed records read from text: a table or a vector file deserialised into the domain's types;
+# and the model's State, which derives its traits so the engine can hold it (decision 29).
 serde =1.0.229 normal,dev derive
 # The vector files' format.
 toml =1.2.1 dev -

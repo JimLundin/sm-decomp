@@ -8,6 +8,12 @@ description = "The one canonical codec, diff and schema hash of every State type
 
 [dependencies]
 canonical_derive = { path = "../canonical_derive" }
+# A clean model's State reaches the codec through serde (src/model.rs).
+serde = "=1.0.229"
+
+[dev-dependencies]
+enum-map = { version = "=3.1.0", features = ["serde"] }
+serde = { version = "=1.0.229", features = ["derive"] }
 
 [lints]
 workspace = true

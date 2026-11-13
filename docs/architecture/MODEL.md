@@ -227,6 +227,15 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
 28. **Off-hours tasks may run in parallel under root supervision** (Jim, 2026-11-13).
     Independent structural tasks use the existing three-lane limit; the root supervises their
     work, reviews the evidence and lands one change at a time (PROCESS, "Working hours").
+29. **A model's State is serialisable, and the engine holds it through serde** (Jim,
+    2026-11-13: "allow the clean state to be serialized"). A clean crate can't derive the
+    engine's codec, so each model's State derives serde's `Serialize` and `Deserialize`, which
+    the clean room already allows ([DESIGN](../cleanroom/DESIGN.md), "State a caller can
+    hold"), and the engine holds it as `canonical::model::Model`, which encodes, decodes and
+    diffs it by the codec's own rules. serde shows a type's shape only by reading a value, so
+    the engine pins each State's shape and a test holds the pin to the shape traced from the
+    type: a State that changes shape fails it until the pin moves. This is how decision 21's
+    "the engine's State holds the models' States" is done.
 
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs

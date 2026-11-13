@@ -119,7 +119,9 @@ Each step names its owner, what it waits for, and its done-condition.
    does" with the spec: where the reviewer misread the code, the code doesn't explain itself.
 9. **Integrate** (integrator), after 7. Done when:
    - the engine runs the model through an adapter, which holds the model's State as the
-     engine's (MODEL §1 decision 21) for a new domain, and moves toward it for an old one;
+     engine's (MODEL §1 decision 21) for a new domain, and moves toward it for an old one: a
+     `canonical::model::Model<P>` in the engine's State, `P` pinning the State's shape, with a
+     test that `canonical::model::pin_holds::<P>()` (decision 29);
    - the honest harness compares it with the records, and its floors are committed;
    - the domain free run (`every_domain_runs_free_against_the_cache`) holds its floors in
      `crates/verify/src/harness/free_floors.txt`; a raise is committed with the round;

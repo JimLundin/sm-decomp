@@ -18,6 +18,8 @@ use std::marker::PhantomData;
 
 pub use canonical_derive::Canonical;
 
+pub mod model;
+
 /// A type with one canonical encoding, a fallible decoder, a field-path diff and a schema.
 pub trait Canonical: Sized {
     /// A hash of this type's structure: its kind and name, its variants' and fields' names in
@@ -75,6 +77,9 @@ pub enum DecodeError {
     ArrayLength,
     /// Bytes left over after a whole value.
     TrailingBytes(usize),
+    /// Bytes a model's own serde code refused, or a model's State the codec couldn't
+    /// write ([`model`]).
+    Refused,
     /// An envelope written by a different shape of the type it holds.
     SchemaMismatch {
         /// This build's schema.
@@ -94,6 +99,7 @@ impl fmt::Display for DecodeError {
             }
             Self::ArrayLength => write!(f, "an array's elements don't fill it"),
             Self::TrailingBytes(count) => write!(f, "{count} bytes after the value"),
+            Self::Refused => write!(f, "a model's State refused the bytes"),
             Self::SchemaMismatch { expected, found } => {
                 write!(
                     f,
@@ -246,6 +252,19 @@ impl<'a> Reader<'a> {
             .ok_or(DecodeError::UnexpectedEnd)?;
         self.rest = rest;
         Ok(*bytes)
+    }
+
+    /// Takes the next `len` bytes.
+    ///
+    /// # Errors
+    /// [`DecodeError::UnexpectedEnd`] when fewer than `len` are left.
+    pub fn take_slice(&mut self, len: usize) -> Result<&'a [u8], DecodeError> {
+        let (bytes, rest) = self
+            .rest
+            .split_at_checked(len)
+            .ok_or(DecodeError::UnexpectedEnd)?;
+        self.rest = rest;
+        Ok(bytes)
     }
 }
 

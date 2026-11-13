@@ -28,7 +28,10 @@ need is in this repository; read nothing outside it.
 - **State a caller can hold.** Everything the spec lists as what the model remembers from one
   frame to the next is state another part of the game carries between frames, saves and restores,
   and sets when play starts part-way. So a caller can build each part of the state at any value
-  the spec allows, and read each part back.
+  the spec allows, and read each part back. The State derives serde's `Serialize` and
+  `Deserialize` (a normal dependency), so the game can save it as it is: every field is
+  written, in order, so no `skip`, `flatten`, `untagged` or `default` on it, no custom serde
+  code, and a table by enum is an `EnumMap` with enum-map's `serde` feature on.
 - **Concise.** Write the smallest clear code that models the spec. Each rule is stated once.
   Where two things run the same steps, write the steps once and let each supply only what
   differs. Every type, function and module carries a rule or a concept of the spec; a value is
