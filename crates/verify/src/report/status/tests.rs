@@ -47,7 +47,7 @@ fn a_rung_counts_a_claimed_stream_only_when_it_needs_its_work() {
 
 #[test]
 fn a_steady_stream_is_a_compared_one_and_its_pairs_are_shown_apart() {
-    let steady = "[[steady]]\nname = \"sram\"\nwhy = \"saves\"\n";
+    let steady = "[[steady]]\nname = \"sram\"\n";
     let Ok(parsed) = plan("[]", steady) else {
         panic!("a steady compared stream doesn't parse");
     };
@@ -55,7 +55,7 @@ fn a_steady_stream_is_a_compared_one_and_its_pairs_are_shown_apart() {
     assert!(!parsed.steady(Stream::Vram));
     assert!(plan("[]", &steady.replace("sram", "wram")).is_err());
     assert!(plan("[]", &steady.replace("sram", "saves")).is_err());
-    assert!(plan("[]", &steady.replace("why = \"saves\"\n", "")).is_err());
+    assert!(plan("[]", &format!("{steady}why = \"saves\"\n")).is_err());
 
     let mut rung = figures([]);
     (rung.green, rung.pairs) = (1, 4);

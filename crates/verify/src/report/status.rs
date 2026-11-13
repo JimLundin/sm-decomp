@@ -62,11 +62,9 @@ pub(super) struct Plan {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Steady {
-    /// The stream's name in the lock.
+    /// The stream's name in the lock; the plan says above it why its pairs are green without
+    /// play.
     name: String,
-    /// Why its pairs are green without play: a sentence for the reader of the plan.
-    #[expect(dead_code, reason = "read by the plan's reader, not the report")]
-    why: String,
 }
 
 /// A compared stream the engine gives only once a plan item is done: a rung counts it when its

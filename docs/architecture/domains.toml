@@ -621,10 +621,10 @@ given_by = "U1"
 # pairs say nothing about play: the README shows them apart from the others (#402). A rung still
 # needs them green to be reached.
 
+# Every rung runs on the lock's recorded frame timing (domains.md §4), not on modelled lag.
 [[steady]]
 name = "timing"
-why = "every rung runs on the lock's recorded frame timing (domains.md §4), not on modelled lag"
 
+# Save RAM changes only when the game saves, which no Ceres room's play does.
 [[steady]]
 name = "sram"
-why = "save RAM changes only when the game saves, which no Ceres room's play does"
