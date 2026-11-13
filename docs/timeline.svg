@@ -201,6 +201,9 @@
 <rect x="291" y="258" width="7" height="12" fill="#2a78d6" fill-opacity="0.1"/>
 <text x="242" y="284" text-anchor="end" fill="#52514e">lockstep: Ticks fully equal</text>
 <rect x="250" y="274" width="407" height="12" fill="#f0efec"/>
+<rect x="278" y="274" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
+<rect x="279" y="274" width="2" height="12" fill="#2a78d6" fill-opacity="1"/>
+<rect x="281" y="274" width="1" height="12" fill="#2a78d6" fill-opacity="0.8"/>
 <line x1="250" y1="290" x2="250" y2="294" stroke="#52514e"/>
 <text x="250" y="304" text-anchor="middle" font-size="9" fill="#52514e">0</text>
 <line x1="362" y1="290" x2="362" y2="294" stroke="#52514e"/>

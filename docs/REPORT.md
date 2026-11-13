@@ -706,7 +706,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | world-camera model matches | 5,045 | 3.9 % |
 | world-doors model matches | 1,105 | 0.9 % |
 | free-run gate: green streams | 1,399 | 1.1 % |
-| lockstep: Ticks fully equal | 0 | 0.0 % |
+| lockstep: Ticks fully equal | 1,153 | 0.9 % |
 
 ### The low% (13%) movie
 

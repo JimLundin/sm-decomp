@@ -126,10 +126,11 @@ to make a check pass. Speed: `cargo run --profile verify -p game --example empty
 
 The same CI job plants the faults in [`tools/mutants.toml`](../tools/mutants.toml), one at a
 time, with `SM_CACHE=CACHE SM_ROM=rom/sm.smc python3 tools/check_mutants.py`. It first requires
-each fault's recorded floor test to pass on the unchanged model, then requires that exact test
-to fail on the changed model. A missing test or a build failure cannot kill a fault. The source
-is restored after each run, and CI reports the killed faults per domain. Movement and camera
-have one fault each; other domains' checks have no standing planted-fault coverage yet.
+each fault's recorded floor or ratchet test to pass on the unchanged model, then requires that
+exact test to fail on the changed model. A missing test or a build failure cannot kill a fault. The source
+is restored after each run, and CI reports the killed faults per domain. Movement, camera and
+the Ceres doors have one fault each; other domains' checks have no standing planted-fault
+coverage yet.
 
 ## Making the record cache
 

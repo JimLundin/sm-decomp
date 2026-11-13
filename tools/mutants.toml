@@ -1,5 +1,5 @@
 # Invented faults in named behaviours, never oracle bytes. Each must compile and
-# fail its exact recorded floor test; a build failure or an absent test is invalid.
+# fail its exact recorded floor or ratchet test; a build failure or an absent test is invalid.
 [[fault]]
 name = "gravity-reversed"
 domain = "samus-movement"
@@ -15,3 +15,11 @@ file = "crates/clean/world_camera/src/follow.rs"
 before = "moved + rules.extra"
 after = "moved + (rules.extra - rules.extra)"
 test = "harness::tests::the_camera_holds_its_floors_against_the_cache"
+
+[[fault]]
+name = "ceres-door-does-not-see-her"
+domain = "boss-ceres-ridley"
+file = "crates/clean/boss_ceres_ridley/src/rules.rs"
+before = "const REACH: u16 = 48;"
+after = "const REACH: u16 = 0;"
+test = "ratchet::tests::committed_ratchet_holds_against_the_cache"

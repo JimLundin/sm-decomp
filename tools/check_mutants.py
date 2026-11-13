@@ -1,4 +1,4 @@
-"""Require the recorded floor checks to reject each planted model fault.
+"""Require the recorded floor and ratchet checks to reject each planted model fault.
 
 Run with SM_CACHE and SM_ROM set, as for the harness tests. Faults are applied one
 at a time and restored even when a test, build or source check fails. Only libtest

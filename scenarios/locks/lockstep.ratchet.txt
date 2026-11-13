@@ -7,3 +7,44 @@ diff item-morph-ball elevator 1 688
 diff item-morph-ball projectiles 1 1217
 diff item-morph-ball room 1 1250
 diff item-morph-ball video 54 741
+row chain-any-0001-DF45 ticks 249 equal 0
+diff chain-any-0001-DF45 projectiles 3 117
+diff chain-any-0001-DF45 room 249 1
+diff chain-any-0001-DF45 samus 101 1
+diff chain-any-0001-DF45 video 212 1
+row chain-any-0002-DF8D ticks 119 equal 101
+diff chain-any-0002-DF8D projectiles 1 94
+diff chain-any-0002-DF8D video 18 94
+row chain-any-0003-DFD7 ticks 181 equal 178
+diff chain-any-0003-DFD7 projectiles 2 157
+diff chain-any-0003-DFD7 video 2 157
+row chain-any-0004-E021 ticks 101 equal 101
+row chain-any-0005-E06B ticks 93 equal 90
+diff chain-any-0005-E06B hud 1 37
+diff chain-any-0005-E06B projectiles 2 69
+diff chain-any-0005-E06B video 3 37
+row chain-any-0006-E0B5 ticks 576 equal 0
+diff chain-any-0006-E0B5 projectiles 12 37
+diff chain-any-0006-E0B5 room 576 1
+diff chain-any-0006-E0B5 samus 22 10
+diff chain-any-0006-E0B5 video 576 1
+row chain-any-0007-E06B ticks 95 equal 0
+diff chain-any-0007-E06B room 52 9
+diff chain-any-0007-E06B video 95 1
+row chain-any-0008-E021 ticks 99 equal 0
+diff chain-any-0008-E021 projectiles 1 96
+diff chain-any-0008-E021 room 56 9
+diff chain-any-0008-E021 video 99 1
+row chain-any-0009-DFD7 ticks 161 equal 0
+diff chain-any-0009-DFD7 projectiles 2 144
+diff chain-any-0009-DFD7 room 161 1
+diff chain-any-0009-DFD7 video 161 1
+row chain-any-0010-DF8D ticks 89 equal 0
+diff chain-any-0010-DF8D room 89 1
+diff chain-any-0010-DF8D video 89 1
+row chain-any-0011-DF45 ticks 163 equal 0
+diff chain-any-0011-DF45 atmospherics 5 45
+diff chain-any-0011-DF45 rng 7 1
+diff chain-any-0011-DF45 room 163 1
+diff chain-any-0011-DF45 samus 4 38
+diff chain-any-0011-DF45 video 163 1

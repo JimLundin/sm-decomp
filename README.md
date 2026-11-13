@@ -81,7 +81,7 @@ The original game on an emulator (the oracle) recorded the lock's rows; the engi
 | --- | --- |
 | the lock | 651 rows of play, 459,806 frames |
 | the free-run gate: the engine runs a row alone | 29 green (row, stream) pairs over 13 rows |
-| the lockstep ratchet: the engine re-seeded each Tick | 1,848 of 1,903 Ticks fully equal over 2 rows |
+| the lockstep ratchet: the engine re-seeded each Tick | 2,318 of 3,829 Ticks fully equal over 13 rows |
 | the harnesses: each model on recorded frames | 63 rows cached, 40,898 frames |
 
 Every figure, file by file and area by area, is in [the rebuild report](docs/REPORT.md); how each model is built, module by module, is in [its structure section](docs/REPORT.md#structure).
