@@ -22,6 +22,10 @@
 # the code to the graph: a clean crate, and its engine bridge `crates/game/src/<crate>_bridge`,
 # uses only `types` and the clean crates of its own domains and of the domains they read.
 #
+# A rung's order (the README, under the ladder) comes from these edges, within its needs: an
+# item waits on the platform work whose `before` names it and on the domains it `reads`, while
+# they have not started.
+#
 # [[platform]]: platform work outside the clean room (hardware formats, assets, timing, tools),
 # in lanes, not rounds. `before` names the plan items that wait for it: the asset formats
 # (docs/architecture/assets.md) come before the domains that consume their content, and the
@@ -612,3 +616,15 @@ given_by = "E3"
 [[stream]]
 name = "apu"
 given_by = "U1"
+
+# The streams a rung's rows hold green whether or not the engine plays them, so their green
+# pairs say nothing about play: the README shows them apart from the others (#402). A rung still
+# needs them green to be reached.
+
+[[steady]]
+name = "timing"
+why = "every rung runs on the lock's recorded frame timing (domains.md §4), not on modelled lag"
+
+[[steady]]
+name = "sram"
+why = "save RAM changes only when the game saves, which no Ceres room's play does"

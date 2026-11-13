@@ -770,13 +770,13 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 
 ## The ladder
 
-Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/architecture/domains.toml`) over the lock's rows that start inside its stretch. A rung counts every compared stream but those `[[stream]]` gives through work it doesn't need; the milestone counts every one. **Rows start** are the rows the free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); **green pairs** their (row, stream) pairs green over the streams counted.
+Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/architecture/domains.toml`) over the lock's rows that start inside its stretch. A rung counts every compared stream but those `[[stream]]` gives through work it doesn't need; the milestone counts every one. **Rows start** are the rows the free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); **green pairs** their (row, stream) pairs green over the streams counted, those on a steady stream (`[[steady]]`), which the rows hold green whether or not the engine plays them, in brackets apart.
 
 | Rung | Streams counted | Rows | Rows start | Green pairs |
 | --- | --- | ---: | ---: | ---: |
-| M0 | vram, cgram, oam, sram, ppu, timing | 1, 345 frames | 1 of 1 | 2 of 6 |
-| M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 5 of 5 | 10 of 35 |
-| M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 10 of 10 | 20 of 70 |
+| M0 | vram, cgram, oam, sram, ppu, timing | 1, 345 frames | 1 of 1 | 0 of 4 (and 2 of 2 on sram, timing) |
+| M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 5 of 5 | 0 of 25 (and 10 of 10 on sram, timing) |
+| M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 10 of 10 | 0 of 50 (and 20 of 20 on sram, timing) |
 
 The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't need the gate to start a row, accounts for each of a row's frames after its seed once: **compared**, run from a seed and held or diverged, **held** being a floor under those that matched (a **masked** one is compared on the fields no other writer moved); **out of scope**, a frame the domain doesn't run in or another domain owns, such as a door passage for every domain but world-doors and play for world-doors; **unreached**, a frame the domain answers for but doesn't compare, because its model doesn't take it yet or the harness can't decode it; or **folded**, a record the domain folds into the frame before it, such as a lag record. A domain's **scope** is its compared and unreached frames. The share held is of the frames compared, so it reads the same for a domain that compares every frame and one that compares a few; the **null model** held is what a step that does nothing, carried from the same seeds and ending its segments at its own divergences, holds of those frames, the baseline the held frames are read against; the share compared is of the frames in scope. The frames no model domain compares are the rung's gap; game-time, the clock, compares every frame and is left out of it.
 

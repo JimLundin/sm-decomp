@@ -46,6 +46,25 @@ fn a_rung_counts_a_claimed_stream_only_when_it_needs_its_work() {
 }
 
 #[test]
+fn a_steady_stream_is_a_compared_one_and_its_pairs_are_shown_apart() {
+    let steady = "[[steady]]\nname = \"sram\"\nwhy = \"saves\"\n";
+    let Ok(parsed) = plan("[]", steady) else {
+        panic!("a steady compared stream doesn't parse");
+    };
+    assert!(parsed.steady(Stream::Sram));
+    assert!(!parsed.steady(Stream::Vram));
+    assert!(plan("[]", &steady.replace("sram", "wram")).is_err());
+    assert!(plan("[]", &steady.replace("sram", "saves")).is_err());
+    assert!(plan("[]", &steady.replace("why = \"saves\"\n", "")).is_err());
+
+    let mut rung = figures([]);
+    (rung.green, rung.pairs) = (1, 4);
+    assert_eq!(rung.green_cell(), "1 of 4");
+    (rung.steady_green, rung.steady_pairs, rung.steady) = (2, 2, vec!["sram", "timing"]);
+    assert_eq!(rung.green_cell(), "1 of 4 (and 2 of 2 on sram, timing)");
+}
+
+#[test]
 fn the_first_rung_is_measured_over_its_rows_and_claimed_streams() {
     let tree = Tree::measure(root());
     let free = read(&root().join(FREE_FLOORS)).and_then(|text| Floors::parse(&text));
@@ -60,10 +79,13 @@ fn the_first_rung_is_measured_over_its_rows_and_claimed_streams() {
     for stream in [Stream::Video, Stream::Apu, Stream::Wram] {
         assert!(!m0.claimed.contains(&stream));
     }
-    // Its one row, any-boundary:3's, is locked on the six streams it counts.
+    // Its one row, any-boundary:3's, is locked on the six streams it counts, two of them
+    // steady and counted apart.
     let row = "chain-any-0003-DFD7";
-    assert_eq!((m0.rows, m0.pairs), (1, 6));
-    assert!(m0.green <= m0.pairs && m0.started <= m0.rows);
+    assert_eq!((m0.rows, m0.pairs, m0.steady_pairs), (1, 4, 2));
+    assert_eq!(m0.steady, ["sram", "timing"]);
+    assert!(m0.green <= m0.pairs && m0.steady_green <= m0.steady_pairs);
+    assert!(m0.started <= m0.rows);
     // Each domain accounts for every frame of it after its seed, as its line holds.
     for (domain, held) in &m0.held {
         let line = free.domains.get(&(domain.clone(), row.to_owned()));
@@ -174,6 +196,10 @@ fn figures<const N: usize>(held: [(String, Accounting); N]) -> RungFigures {
         span: (0, 101),
         alone: 0,
         still: String::new(),
+        order: String::new(),
+        steady_green: 0,
+        steady_pairs: 0,
+        steady: Vec::new(),
         claimed: BTreeSet::new(),
         rows: 1,
         started: 1,

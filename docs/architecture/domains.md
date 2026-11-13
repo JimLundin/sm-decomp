@@ -433,7 +433,11 @@ Ceres chain row in CI and reports a row it can't start yet, with why, so a rung'
 moment they start.
 
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
-the first step whose prerequisites hold.
+the first step whose prerequisites hold. The README, under the ladder, gives that rung's
+order from [domains.toml](domains.toml)'s edges: what can start, what waits on which unstarted
+work, and what runs ahead of work it needs. The edges are platform work's `before` and the
+domains a domain reads, within the rung's needs; work outside them doesn't count, since nothing
+outside the needs starts (MODEL §1 decision 24).
 
 1. Rows for every frame: the opening (0-8,537) and the escape's end (13,072-15,195) are recorded
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock

@@ -28,7 +28,9 @@ A rung counts only the streams its needs claim: `video` once it needs the line p
 without that work is measured on the other compared streams. The milestone needs every stream.
 Beside "plays alone", each rung shows figures that move before it is reached, over the lock's
 rows that start inside its stretch: the rows the free-run gate starts, their green (row, stream)
-pairs over the streams the rung counts, and three figures from the domain free run
+pairs over the streams the rung counts, with those on a steady stream (`[[steady]]`: the
+recorded frame timing the rungs run on, and save RAM, which a room's play doesn't write) in
+brackets apart, since the rows hold them green whether or not the engine plays them, and three figures from the domain free run
 (`free_floors.txt`). It accounts for each of a row's frames after its seed once, per domain:
 **compared** (run from a seed, held or diverged; **masked** when another writer moved some of
 its fields, compared on the rest), **out of scope** (the domain doesn't run in it, or another

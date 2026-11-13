@@ -447,3 +447,60 @@ samus_movement = { path = \"../samus_movement\" }
     );
     assert!(fixture.check(reads).is_err());
 }
+
+#[test]
+fn a_rungs_work_waits_only_on_unstarted_work_it_needs_before_it() {
+    let rebuilt = BTreeSet::from(["world-camera"]);
+    let domain = |id: &str, extra: &str| {
+        format!(
+            "[[domain]]\nid = \"{id}\"\nname = \"d\"\narea = \"world\"\nwave = 0\nrounds = 1\n{extra}"
+        )
+    };
+    let platform = |id: &str, extra: &str| {
+        format!("[[platform]]\nid = \"{id}\"\nname = \"p\"\nwave = 0\nlanes = 1\n{extra}")
+    };
+    let text = [
+        String::from("[[model]]\nname = \"world-camera\"\nrounds = 1\n"),
+        // CAM is under way, though the format before it hasn't started.
+        domain(
+            "CAM",
+            "model = \"world-camera\"\nstatus = \"in-progress\"\nreads = [\"R1\", \"W3\"]\n",
+        ),
+        // R1 reads CAM, which has started, and waits for AF1; W1 reads R1 and waits for it.
+        domain("R1", "reads = [\"CAM\"]\n"),
+        domain("W1", "reads = [\"R1\", \"W3\"]\n"),
+        // W3 is outside the rung, so nothing waits on it.
+        domain("W3", ""),
+        platform("AF0", "status = \"in-progress\"\nbefore = [\"AF1\"]\n"),
+        platform("AF1", "before = [\"R1\", \"CAM\"]\n"),
+        platform("V3", ""),
+        platform("E1", "status = \"done\"\n"),
+        String::from(
+            "[milestone]\nname = \"m\"\nmovie = \"any\"\nends = \"any:12\"\n\
+             needs = [\"CAM\", \"R1\", \"W1\", \"W3\", \"AF0\", \"AF1\", \"V3\", \"E1\"]\n",
+        ),
+    ]
+    .concat();
+    let plan = Plan::parse(&text, &rebuilt).unwrap();
+    let needs: Vec<String> = ["CAM", "R1", "W1", "AF0", "AF1", "V3", "E1"]
+        .map(String::from)
+        .to_vec();
+    assert_eq!(
+        plan.order(&needs).sentence(),
+        "**can start:** AF1, V3. **waiting:** R1 on AF1; W1 on R1. \
+         **in progress ahead of work it needs:** CAM on AF1, R1"
+    );
+    // Once AF1 starts, R1 can start, and W1 still waits for it.
+    let started = text.replace(
+        "before = [\"R1\", \"CAM\"]\n",
+        "before = [\"R1\", \"CAM\"]\nstatus = \"in-progress\"\n",
+    );
+    let plan = Plan::parse(&started, &rebuilt).unwrap();
+    assert_eq!(
+        plan.order(&needs).sentence(),
+        "**can start:** R1, V3. **waiting:** W1 on R1. \
+         **in progress ahead of work it needs:** CAM on R1"
+    );
+    let done: Vec<String> = vec![String::from("E1")];
+    assert_eq!(plan.order(&done).sentence(), "nothing left to start");
+}

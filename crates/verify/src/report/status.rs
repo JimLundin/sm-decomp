@@ -51,6 +51,22 @@ pub(super) struct Plan {
     /// The streams a rung counts only when it needs the work that gives the engine them.
     #[serde(default)]
     stream: Vec<StreamClaim>,
+    /// The streams a rung's rows hold green whether or not the engine plays them, whose green
+    /// pairs are counted apart.
+    #[serde(default)]
+    steady: Vec<Steady>,
+}
+
+/// A compared stream a rung's rows can hold green without the engine playing them (#402): its
+/// green pairs are shown apart from the others', so they don't stand for play.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Steady {
+    /// The stream's name in the lock.
+    name: String,
+    /// Why its pairs are green without play: a sentence for the reader of the plan.
+    #[expect(dead_code, reason = "read by the plan's reader, not the report")]
+    why: String,
 }
 
 /// A compared stream the engine gives only once a plan item is done: a rung counts it when its
@@ -66,6 +82,39 @@ struct StreamClaim {
 }
 
 impl Plan {
+    /// Whether `stream` is steady: green on a rung's rows whether or not the engine plays them.
+    fn steady(&self, stream: Stream) -> bool {
+        self.steady
+            .iter()
+            .any(|steady| steady.name == stream.name())
+    }
+
+    /// Of `rows`' (row, stream) pairs over the streams `rung` counts that are steady or, with
+    /// `steady` false, aren't: the green and all.
+    fn pairs(
+        &self,
+        rung: &Rung,
+        rows: &[&super::timeline::Placed],
+        steady: bool,
+    ) -> (usize, usize) {
+        rows.iter().fold((0_usize, 0_usize), |(green, pairs), row| {
+            let counted: Vec<Stream> = row
+                .compared
+                .iter()
+                .copied()
+                .filter(|stream| self.claims(rung, *stream) && self.steady(*stream) == steady)
+                .collect();
+            let green_here = counted
+                .iter()
+                .filter(|stream| row.green.contains(stream))
+                .count();
+            (
+                green.saturating_add(green_here),
+                pairs.saturating_add(counted.len()),
+            )
+        })
+    }
+
     /// Whether rung `rung` counts `stream`: every compared stream but one a [`StreamClaim`]
     /// gives through work the rung doesn't need.
     fn claims(&self, rung: &Rung, stream: Stream) -> bool {
@@ -316,6 +365,11 @@ impl Plan {
             seed(&rung.starts)?;
             seed(&rung.ends)?;
         }
+        for steady in &plan.steady {
+            if !Stream::try_from(steady.name.as_str()).is_ok_and(Stream::compared) {
+                return Err(format!("{PLAN}: {} is not a compared stream", steady.name));
+            }
+        }
         for claim in &plan.stream {
             if !Stream::try_from(claim.name.as_str()).is_ok_and(Stream::compared) {
                 return Err(format!("{PLAN}: {} is not a compared stream", claim.name));
@@ -364,6 +418,52 @@ impl Plan {
         }
     }
 
+    /// The items of `needs` that must come before `item`, as the plan records it: platform
+    /// work whose `before` names it, and, for a domain, the domains it reads from, since a
+    /// reader's round waits until the domain it reads has landed (PROCESS, "What can run at
+    /// once"). Work outside `needs` doesn't count: while a stretch is the slice nothing outside
+    /// its needs starts (MODEL §1 decision 24), so the item takes that neighbour from the
+    /// records.
+    fn prerequisites<'a>(&'a self, item: &str, needs: &'a [String]) -> BTreeSet<&'a str> {
+        let platforms = self
+            .platform
+            .iter()
+            .filter(|platform| platform.before.iter().any(|after| after == item))
+            .map(|platform| platform.id.as_str());
+        let reads = self
+            .domain
+            .iter()
+            .filter(|domain| domain.id == item)
+            .flat_map(|domain| domain.reads.iter().map(String::as_str));
+        platforms
+            .chain(reads)
+            .filter(|id| needs.iter().any(|need| need == id))
+            .collect()
+    }
+
+    /// The order of the work `needs` still holds: each item not done and the items of `needs`
+    /// not started that must come before it.
+    pub(super) fn order<'a>(&'a self, needs: &'a [String]) -> Order<'a> {
+        let mut order = Order::default();
+        for need in needs {
+            let Some(stage) = self.stage_of(need).filter(|stage| *stage != Stage::Done) else {
+                continue;
+            };
+            let waits: Vec<&str> = self
+                .prerequisites(need, needs)
+                .into_iter()
+                .filter(|id| self.stage_of(id) == Some(Stage::NotStarted))
+                .collect();
+            match (stage, waits.is_empty()) {
+                (Stage::NotStarted, true) => order.ready.push(need),
+                (Stage::NotStarted, false) => order.waiting.push((need, waits)),
+                (Stage::InProgress, false) => order.ahead.push((need, waits)),
+                (Stage::InProgress | Stage::Done, true) | (Stage::Done, false) => {}
+            }
+        }
+        order
+    }
+
     /// The plan's domains a model holds.
     fn holding<'a>(&'a self, model: &'a str) -> impl Iterator<Item = &'a PlanDomain> {
         self.domain
@@ -403,6 +503,50 @@ impl Plan {
             .iter()
             .filter(|domain| domain.status == stage)
             .count()
+    }
+}
+
+/// The order of a stretch's remaining work, from the plan's edges ([`Plan::order`]).
+#[derive(Debug, Default, PartialEq, Eq)]
+pub(super) struct Order<'a> {
+    /// Not started, and nothing the stretch needs before it is unstarted: work that can start.
+    ready: Vec<&'a str>,
+    /// Not started, with the unstarted work that must come first.
+    waiting: Vec<(&'a str, Vec<&'a str>)>,
+    /// In progress though work that comes before it hasn't started: it runs on the records or
+    /// the original's layout until that work lands.
+    ahead: Vec<(&'a str, Vec<&'a str>)>,
+}
+
+impl Order<'_> {
+    /// The order as the README's sentence: what can start, what waits on what, and what runs
+    /// ahead of work it needs.
+    pub(super) fn sentence(&self) -> String {
+        let list = |items: &[(&str, Vec<&str>)]| {
+            items
+                .iter()
+                .map(|(item, on)| format!("{item} on {}", on.join(", ")))
+                .collect::<Vec<_>>()
+                .join("; ")
+        };
+        let mut parts = Vec::new();
+        if !self.ready.is_empty() {
+            parts.push(format!("**can start:** {}", self.ready.join(", ")));
+        }
+        if !self.waiting.is_empty() {
+            parts.push(format!("**waiting:** {}", list(&self.waiting)));
+        }
+        if !self.ahead.is_empty() {
+            parts.push(format!(
+                "**in progress ahead of work it needs:** {}",
+                list(&self.ahead)
+            ));
+        }
+        if parts.is_empty() {
+            String::from("nothing left to start")
+        } else {
+            parts.join(". ")
+        }
     }
 }
 
@@ -508,14 +652,21 @@ pub(super) struct RungFigures {
     alone: usize,
     /// The plan items it needs that are not done.
     still: String,
+    /// The order of that work ([`Order::sentence`]).
+    order: String,
     /// The streams it counts that its rows' locks hold.
     claimed: BTreeSet<Stream>,
     /// Its rows, and those the free-run gate starts.
     rows: usize,
     started: usize,
-    /// Of its rows' (row, stream) pairs over the streams it counts, the green and all.
+    /// Of its rows' (row, stream) pairs over the streams it counts but the steady ones, the
+    /// green and all.
     green: usize,
     pairs: usize,
+    /// The same over the steady streams it counts, and those streams' names.
+    steady_green: usize,
+    steady_pairs: usize,
+    steady: Vec<&'static str>,
     /// Its rows' frames.
     frames: u64,
     /// Per domain, how its free run accounts for the rows' frames after their seeds: those it
@@ -523,6 +674,23 @@ pub(super) struct RungFigures {
     held: BTreeMap<String, Accounting>,
     /// The rows' frames after their seeds that no model domain's free run compares.
     uncompared: u64,
+}
+
+impl RungFigures {
+    /// Its green pairs, the steady streams' apart: "0 of 4 (and 2 of 2 on sram, timing)".
+    fn green_cell(&self) -> String {
+        let play = format!("{} of {}", grouped(self.green), grouped(self.pairs));
+        if self.steady_pairs == 0 {
+            play
+        } else {
+            format!(
+                "{play} (and {} of {} on {})",
+                grouped(self.steady_green),
+                grouped(self.steady_pairs),
+                self.steady.join(", ")
+            )
+        }
+    }
 }
 
 /// The domains a rung's free-run figure is least for, and that share.
@@ -650,17 +818,14 @@ pub(super) fn rungs(
                     .filter(|stream| plan.claims(rung, *stream))
                     .collect()
             };
-            let (green, pairs) = rows.iter().fold((0_usize, 0_usize), |(green, pairs), row| {
-                let counted = counted(row);
-                let green_here = counted
-                    .iter()
-                    .filter(|stream| row.green.contains(stream))
-                    .count();
-                (
-                    green.saturating_add(green_here),
-                    pairs.saturating_add(counted.len()),
-                )
-            });
+            let (green, pairs) = plan.pairs(rung, &rows, false);
+            let (steady_green, steady_pairs) = plan.pairs(rung, &rows, true);
+            let steady: BTreeSet<&'static str> = rows
+                .iter()
+                .flat_map(|row| row.compared.iter().copied())
+                .filter(|stream| plan.claims(rung, *stream) && plan.steady(*stream))
+                .map(Stream::name)
+                .collect();
             let held = domains
                 .iter()
                 .map(|domain| {
@@ -688,11 +853,15 @@ pub(super) fn rungs(
                 span: (start, end),
                 alone,
                 still: plan.still_needed(&rung.needs),
+                order: plan.order(&rung.needs).sentence(),
                 claimed: rows.iter().flat_map(counted).collect(),
                 rows: rows.len(),
                 started: rows.iter().filter(|row| row.starts).count(),
                 green,
                 pairs,
+                steady_green,
+                steady_pairs,
+                steady: steady.into_iter().collect(),
                 frames: rows
                     .iter()
                     .map(|row| row.frames)
@@ -731,7 +900,9 @@ fn ladder(out: &mut String, tree: &Tree) {
          counted over the streams the rung claims: `video` only once it needs the line program, \
          `apu` only once it needs the sound requests. Until then, over the lock's rows that \
          start inside it: the rows the free-run gate starts, their green (row, stream) pairs \
-         over those streams, and the domain free run's three figures: the domain that holds the \
+         over those streams (in brackets, apart, those on the streams the rows hold green \
+         whether or not the engine plays them: the recorded frame timing the rungs run on, and \
+         save RAM, which a room's play doesn't write), and the domain free run's three figures: the domain that holds the \
          smallest share of the frames it compares; the domain whose hold gains the smallest share \
          of them over the null model's free run, a step that does nothing carried from the same \
          seeds; and the domain that compares the smallest share of the frames in its scope, \
@@ -748,7 +919,7 @@ fn ladder(out: &mut String, tree: &Tree) {
         };
         let _ = writeln!(
             out,
-            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} of {} | {} | {} | {} | {} |",
+            "| {} | {}, frames {}-{} | {} | {} ({}) | {} of {} | {} | {} | {} | {} | {} |",
             rung.id,
             rung.name,
             grouped(rung.span.0),
@@ -758,12 +929,26 @@ fn ladder(out: &mut String, tree: &Tree) {
             percent(rung.alone, frames),
             rung.started,
             rung.rows,
-            rung.green,
-            rung.pairs,
+            rung.green_cell(),
             cell(rung.least_held()),
             cell(rung.least_gain()),
             cell(rung.least_compared()),
             rung.still,
+        );
+    }
+    let lowest = tree
+        .rungs
+        .iter()
+        .find(|rung| rung.alone < rung.span.1.saturating_sub(rung.span.0));
+    if let Some(rung) = lowest {
+        let _ = writeln!(
+            out,
+            "\nThe lowest rung not yet reached is {}, and the work starts only from its needs \
+             ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision \
+             24). Their order, from the plan's edges (platform work's `before`, and the domains \
+             a domain reads, within the rung's needs; an item waits only on work not started): \
+             {}.",
+            rung.id, rung.order
         );
     }
 }
@@ -781,7 +966,9 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
          its stretch. A rung counts every compared stream but those `[[stream]]` gives through \
          work it doesn't need; the milestone counts every one. **Rows start** are the rows the \
          free-run gate starts from their seeds (`ROW starts` in `scenarios/locks/lsnes.green.txt`); \
-         **green pairs** their (row, stream) pairs green over the streams counted.\n\n",
+         **green pairs** their (row, stream) pairs green over the streams counted, those on a \
+         steady stream (`[[steady]]`), which the rows hold green whether or not the engine \
+         plays them, in brackets apart.\n\n",
     );
     table(
         out,
@@ -798,15 +985,14 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
         let streams: Vec<&str> = rung.claimed.iter().map(|stream| stream.name()).collect();
         let _ = writeln!(
             out,
-            "| {} | {} | {}, {} frames | {} of {} | {} of {} |",
+            "| {} | {} | {}, {} frames | {} of {} | {} |",
             rung.id,
             streams.join(", "),
             rung.rows,
             figure(rung.frames),
             rung.started,
             rung.rows,
-            rung.green,
-            rung.pairs
+            rung.green_cell()
         );
     }
     out.push_str(
