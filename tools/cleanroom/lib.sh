@@ -57,11 +57,14 @@ in_entries() {
   return 1
 }
 
-# A git command that sees only the repository at $1: no inherited GIT_* overrides.
+# A git command that sees only the repository at $1: no inherited GIT_* overrides, and no
+# configuration the caller's environment carries (GIT_CONFIG_COUNT and its keys, or `git -c` of
+# a parent git), which belongs to the caller's session and not to the repository.
 git_isolated() {
   dir=$1; shift
   env -u GIT_DIR -u GIT_WORK_TREE -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
     -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u GIT_NAMESPACE -u GIT_CEILING_DIRECTORIES \
+    -u GIT_CONFIG_COUNT -u GIT_CONFIG_PARAMETERS \
     git -C "$dir" "$@"
 }
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # import_check_test.sh: import.sh refuses a patch that adds std::fs::read to a test, leaving the
-# branch where it was; imports a harmless one, which passes both clippy runs; and fails an import
-# whose change to the shared types breaks another clean crate, naming that crate. Builds throwaway
+# branch where it was; refuses an export whose own configuration rewrites URLs; imports a
+# harmless one, which passes both clippy runs, though the caller's environment carries such a
+# rewrite; and fails an import whose change to the shared types breaks another clean crate,
+# naming that crate. Builds throwaway
 # exports of the dummy domain `import-test` and a throwaway worktree; run from a checkout of this
 # repository. The clippy runs build in CARGO_TARGET_DIR if set, else in the throwaway worktree.
 set -u
@@ -61,7 +63,20 @@ else
 fi
 [ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused import moved the branch"
 
-out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/fine" "$branch" 2>&1) || fail "harmless import refused: $out"
+# A URL rewrite in the export's own configuration is refused; the same rewrite in the caller's
+# environment is the caller's, and a clean export imports under it.
+mkexport "$tmp/rewired"
+git -C "$tmp/rewired" config url.https://elsewhere.invalid/.insteadOf cleanroom-test:
+if out=$(cd "$tmp/wt" && bash tools/cleanroom/import.sh "$tmp/rewired" "$branch" 2>&1); then
+  fail "import accepted an export that rewrites URLs: $out"
+else
+  grep -q 'remote or url config present' <<<"$out" || fail "refusal did not name the url config: $out"
+fi
+[ "$(git -C "$tmp/wt" rev-parse HEAD)" = "$before" ] || fail "the refused export moved the branch"
+
+out=$(cd "$tmp/wt" && GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://elsewhere.invalid/.insteadOf \
+  GIT_CONFIG_VALUE_0=cleanroom-test: bash tools/cleanroom/import.sh "$tmp/fine" "$branch" 2>&1) \
+  || fail "harmless import refused: $out"
 grep -q 'IMPORT OK' <<<"$out" || fail "harmless import did not finish: $out"
 grep -q 'import: workspace clippy clean' <<<"$out" || fail "harmless import ran no workspace clippy: $out"
 grep -q 'import: clean-room clippy clean' <<<"$out" || fail "harmless import ran no clean-room clippy: $out"
@@ -75,5 +90,5 @@ else
     || fail "the clean-room run did not name world_blocks: $out"
   ! grep -q 'IMPORT OK' <<<"$out" || fail "the failing import said IMPORT OK: $out"
 fi
-[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: std::fs::read refused with the branch untouched, a harmless patch imported, a change to the shared types that breaks another clean crate failed naming it"
+[ "$bad" -eq 0 ] && echo "IMPORT CHECK OK: std::fs::read and an export that rewrites URLs refused with the branch untouched, a harmless patch imported under a caller whose environment rewrites them, a change to the shared types that breaks another clean crate failed naming it"
 exit $bad
