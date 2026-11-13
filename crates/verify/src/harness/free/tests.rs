@@ -329,6 +329,25 @@ fn the_door_passage_runs_free_against_the_cache() {
     hold_domain(&domain, "world-doors", &cache);
 }
 
+#[test]
+fn the_hud_runs_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::hud::HudDomain::load(&image)
+        .unwrap_or_else(|error| panic!("content: {error:?}"));
+    hold_domain(&domain, "interface-hud", &cache);
+}
+
+#[test]
+fn progress_runs_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::progress::ProgressDomain::new(image);
+    hold_domain(&domain, "run-progress", &cache);
+}
+
 /// Every domain's free run over every cached row, held to `free_floors.txt`, and each row's
 /// frames no model domain compares to its `uncompared` line; `SM_CACHE` and `SM_ROM` as the
 /// per-frame harness's tests read them. Run with `--nocapture` to see each row's segments and

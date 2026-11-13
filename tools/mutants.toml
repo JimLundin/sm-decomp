@@ -45,3 +45,21 @@ before = "self.slide_frames = self.slide_frames.saturating_add(1);"
 after = "self.slide_frames = self.slide_frames.saturating_add(0);"
 test = "harness::tests::the_door_passage_holds_its_floors_against_the_cache"
 extra_tests = ["harness::free::tests::the_door_passage_runs_free_against_the_cache"]
+
+[[fault]]
+name = "her-blink-phase-reversed"
+domain = "interface-hud"
+file = "crates/clean/interface_hud/src/mini_map.rs"
+before = "let in_blink_colours = rules.her_blink.first_half(frame);"
+after = "let in_blink_colours = !rules.her_blink.first_half(frame);"
+test = "harness::tests::the_hud_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::the_hud_runs_free_against_the_cache"]
+
+[[fault]]
+name = "events-do-not-happen"
+domain = "run-progress"
+file = "crates/clean/run_progress/src/report.rs"
+before = "Report::Happened(event) => self.events[event] = true,"
+after = "Report::Happened(event) => self.events[event] = false,"
+test = "harness::tests::progress_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::progress_runs_free_against_the_cache"]
