@@ -16,6 +16,14 @@ on:
 permissions:
   contents: read
 
+# Cargo's checksum freshness is unstable, so the pinned stable toolchain needs RUSTC_BOOTSTRAP
+# to accept it. It changes how cargo decides to rebuild, not what is built: no package the
+# workspace builds runs a build script, which is what could read RUSTC_BOOTSTRAP and turn
+# something on, because vendor/ bakes their outputs in (quality.yml's vendor step).
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
+
 jobs:
   # The rebuild's content tests read the real ROM (data::room's Morph Ball Room test returns
   # early without it), so they run here, where the ROM is decrypted.
@@ -24,21 +32,28 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      # The registry and the build, one entry per job (github.job): the key moves with the
-      # toolchain and Cargo.lock, and a new key starts from the newest entry for the job under
-      # the same toolchain. An exact hit saves nothing, which keeps the repository's caches under
-      # 10 GB. The build holds no ROM bytes: the ROM and the records are read at run time, from
-      # rom/ and $RUNNER_TEMP.
+      # The registry and the build, per job (github.job). The nightly and dispatched runs on main
+      # restore nothing, build from an empty target and save it as one entry a job, keyed by its
+      # commit: storage grows by one clean build a job a night, and GitHub drops the entries no run
+      # has read for a week. Every other run restores the newest entry for its toolchain, its
+      # Cargo.lock first. Cargo then judges each crate by the checksums of its sources (the
+      # workflow's env), not by file times, which a fresh checkout resets: a pull request compiles
+      # its own changes and the day's landings, not the workspace.
+      # The build holds no ROM bytes: the ROM and the records are read at run time, from rom/ and
+      # $RUNNER_TEMP.
       - &cache
-        name: Cache the cargo registry and the build
-        uses: actions/cache@v4
+        name: Restore the cargo registry and the build
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - &rom
         name: Fetch the encrypted ROM
         uses: actions/checkout@v4
@@ -63,6 +78,16 @@ jobs:
           rm -rf .ci-data
       - name: Test the rebuild's content decoders and importers against the ROM
         run: cargo test --locked -p data -p import --no-fail-fast
+      - &cache_save
+        name: Save the cargo registry and the build
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
 
   # The free-run gate (ARCHITECTURE D22) on the slice-0 rows and the ladder's Ceres rows: each
   # row runs from its seed's record in the relock bundle on the content read from the ROM. A row
@@ -113,6 +138,7 @@ jobs:
           # shellcheck disable=SC2086 # ROWS is a list of row ids.
           target/verify/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \
             rom/sm.smc scenarios/locks/lsnes.green.txt $ROWS
+      - *cache_save
 
   # The lockstep ratchet (scenarios/locks/lockstep.ratchet.txt): each row's record cache
   # (A2) replays engine-only in lockstep, and the job fails when a row's fully equal Ticks
@@ -212,6 +238,7 @@ jobs:
             every_item_the_game_places_counts_a_hundred_percent; do
             grep -q "^test harness::tests::${test} \.\.\. ok$" "$RUNNER_TEMP/progress.txt"
           done
+      - *cache_save
       - name: "Planted faults: domain harnesses, free runs and the Ceres ratchet reject wrong models"
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \

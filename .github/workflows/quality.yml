@@ -9,6 +9,14 @@ on:
 permissions:
   contents: read
 
+# Cargo's checksum freshness is unstable, so the pinned stable toolchain needs RUSTC_BOOTSTRAP
+# to accept it. It changes how cargo decides to rebuild, not what is built: no package the
+# workspace builds runs a build script, which is what could read RUSTC_BOOTSTRAP and turn
+# something on, because vendor/ bakes their outputs in (see the vendor step).
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
+
 jobs:
   quality:
     name: Quality
@@ -21,18 +29,25 @@ jobs:
           fetch-depth: 0
       - name: Install the repository toolchain
         run: rustup toolchain install
-      # The registry and the build, one entry per job: the key moves with the toolchain and
-      # Cargo.lock, and a new key starts from the newest entry for the job under the same
-      # toolchain. An exact hit saves nothing, which keeps the repository's caches under 10 GB.
-      - name: Cache the cargo registry and the build
-        uses: actions/cache@v4
+      # The registry and the build, per job (github.job). The nightly and dispatched runs on main
+      # restore nothing, build from an empty target and save it as one entry a job, keyed by its
+      # commit: storage grows by one clean build a job a night, and GitHub drops the entries no run
+      # has read for a week. Every other run restores the newest entry for its toolchain, its
+      # Cargo.lock first. Cargo then judges each crate by the checksums of its sources (the
+      # workflow's env), not by file times, which a fresh checkout resets: a pull request compiles
+      # its own changes and the day's landings, not the workspace.
+      - name: Restore the cargo registry and the build
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Format
         run: cargo fmt --check
       - name: Keep committed text files on LF line endings
@@ -56,7 +71,9 @@ jobs:
         run: bash tools/check_crate_rules.sh
       - name: Hold the crates in vendor/ to their real build scripts
         # tools/vendor_nobuild.sh bakes each script's output in, for a machine that can't run it; here it runs.
-        run: bash tools/vendor_nobuild_check.sh
+        # Without the workflow's RUSTC_BOOTSTRAP: a published build script that finds it turns on
+        # what the stable toolchain doesn't have, and the copies bake the stable answer.
+        run: env -u RUSTC_BOOTSTRAP -u CARGO_UNSTABLE_CHECKSUM_FRESHNESS bash tools/vendor_nobuild_check.sh
       - name: Keep every relative Markdown link and anchor valid
         run: sh tools/check_doc_links.sh
       - name: Keep docs/REPORT.md what tools report generates
@@ -66,6 +83,15 @@ jobs:
         run: pipx run --spec mypy==2.4.1 mypy
       - name: Test the planted-fault runner
         run: python3 -m unittest discover -s tools -p test_check_mutants.py
+      - name: Save the cargo registry and the build
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
       - name: Test the adjusted-vector prover
         run: python3 -m unittest discover -s tools/cleanroom -p test_adjusted_vectors_run.py
       - name: Require each adjusted vector to fail at the reference rules
