@@ -55,6 +55,10 @@ rounds = 5
 name = "boss-ceres-ridley"
 rounds = 1
 
+[[model]]
+name = "world-doors"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -208,7 +212,10 @@ name = "Doors and elevators"
 area = "world"
 wave = 2
 rounds = 6
-reads = ["S1", "P1"]
+# Inferred: H2 for the HUD's colour groups the passage's fades keep lit.
+reads = ["S1", "P1", "H2"]
+model = "world-doors"
+status = "in-progress"
 
 [[domain]]
 id = "W1"

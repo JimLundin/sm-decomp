@@ -249,7 +249,7 @@ fn cache_and_image() -> Option<(std::path::PathBuf, Vec<u8>)> {
 fn every_domain_runs_free_against_the_cache() {
     use std::io::Write as _;
 
-    use crate::harness::{appearance, blocks, camera, ceres, hud, movement, progress};
+    use crate::harness::{appearance, blocks, camera, ceres, doors, hud, movement, progress};
     let Some((cache, image)) = cache_and_image() else {
         return;
     };
@@ -274,6 +274,8 @@ fn every_domain_runs_free_against_the_cache() {
     held.hold(&hud, "interface-hud");
     let progress = progress::ProgressDomain::new(image.clone());
     held.hold(&progress, "run-progress");
+    let passage = doors::DoorsDomain::new(image.clone());
+    held.hold(&passage, "world-doors");
     let doors =
         ceres::CeresDomain::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
     let blocks =

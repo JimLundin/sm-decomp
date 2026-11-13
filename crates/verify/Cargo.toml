@@ -15,6 +15,7 @@ interface_hud = { path = "../clean/interface_hud" }
 run_progress = { path = "../clean/run_progress" }
 samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
+world_doors = { path = "../clean/world_doors" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 import = { path = "../import" }

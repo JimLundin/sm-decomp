@@ -233,6 +233,23 @@ original's bytes as data.
   the doors' colours (`TheDoorsColours`) are the seed's; the harness compares the model's
   placing, colours included, on the 11 frames a room places its doors (H1 and H2 among them). Each
   goes with the domain named: R3, U1, B8's later pieces, C1, R2.
+- **The door passage in the engine** (the world-doors domain, `docs/behaviours/world-doors.md`;
+  no bridge yet): the engine runs no passage. Its only game state is gameplay, so the seed
+  decoder refuses a record in a passage (game states 9, Ah and Bh), and a row's frames from her
+  touch of a door until play goes on in the next room are not started by the free-run gate or
+  lockstep. The model is proven on its own: the harness (`verify::harness::doors`) and its free
+  run hold every passage frame of the cache. The engine runs it once the domains it asks join:
+  R2's room loading (the next room built, its tiles, contents, target colours and the enemies'
+  colours it writes, its CRE bits and the doorway's arrival in the World's records), T1's cost
+  per event (until then the harness takes a frame of work done when its cut is `R`, and the
+  contents' fetch done at once, which the records bound only by the slide's end) and U1's
+  answers (every sound request sent, the music ready); the passage's room calls, sound requests
+  and her sounds have no engine reader until then. Kraid's corpse (C1) and the Ceres elevator's
+  beacon (B8) write colours during the fades, which the harness masks by name: Kraid's on each
+  frame the enemies run, the beacon's on the `Brightening` frame of work at the fade's step 0.
+  The loading writes sprite palettes 6 and 7 on frames in `Arriving`, not only the one it ends
+  on; the harness takes them from the next record on every such frame, which counts the
+  frame the colours change unverified.
 
 ## The engine: slots it carries but doesn't run
 

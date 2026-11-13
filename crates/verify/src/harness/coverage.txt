@@ -191,3 +191,35 @@ boss-ceres-ridley entry Shown 2218 2167 2218 0
 boss-ceres-ridley entry Solid 2218 2168 2218 0
 boss-ceres-ridley entry TheDoorsColours 11 0 11 0
 boss-ceres-ridley entry Waiting 2207 253 2207 0
+world-doors frames 39824 1863 17 0
+world-doors field 1880 0 her
+world-doors field 1880 0 seen
+world-doors field 1880 0 camera
+world-doors field 1880 0 motion
+world-doors field 1880 0 finished
+world-doors field 1880 0 hud count
+world-doors field 1880 0 phase
+world-doors field 1880 0 colours
+world-doors field 1879 1 colours.bg2_9_14
+world-doors field 1864 16 colours.bg7_sp7_1_14
+world-doors field 1880 0 silence
+world-doors field 1880 0 sounds held
+world-doors field 18 1862 mini-map
+world-doors field 1341 539 enemies
+world-doors field 1880 0 her sound
+world-doors entry Arriving 1071 0 1088 0
+world-doors entry Building 52 0 52 0
+world-doors entry Carrying 1071 0 1088 0
+world-doors entry Fading 500 100 500 15
+world-doors entry FinishedFrames 1863 17 1880 0
+world-doors entry Landing 92 24 92 0
+world-doors entry PassageTime 1863 1139 1880 0
+world-doors entry Quieting 18 0 18 24
+world-doors entry SettingOff 17 0 17 0
+world-doors entry SheKeepsHerMotion 1863 1880 1880 0
+world-doors entry Sliding 1071 0 1088 0
+world-doors entry Squaring 50 0 50 0
+world-doors entry TheFades 540 107 540 17
+world-doors entry TheTouch 0 0 0 0
+world-doors entry WhatRuns 18 18 18 497
+world-doors entry WhereSheLands 109 74 109 0

@@ -1,0 +1,871 @@
+# Test vectors for docs/behaviours/world-doors.md (part 1, the passage).
+#
+# Format
+# - Each [[vector]] is one frame of the passage, from its state at the frame's start to its state
+#   at the end: id; source ("constructed": every vector here is); entries (the spec's behaviours
+#   it exercises); rules (optional); before; her; seen; camera; colours (optional); inputs
+#   (optional); after.
+# - rules (optional): the reference rules this vector overrides (spec, each Parameter entry's
+#   params): steps (Fading's d); slide = { step (px), across, down_up (frames) } (Sliding);
+#   speeds = { across, down_up } (Carrying, P.S a frame). A vector without rules runs the
+#   reference ones: steps 12, slide { step = 4, across = 64, down_up = 57 }, speeds
+#   { across = "0000.C800", down_up = "0001.8000" }; a rules table names only what it changes.
+# - A P.S quantity is "PPPP.SSSS", the pixel part and the subpixel part, both hex; a pixel
+#   quantity is "PPPP" (spec, Notation). x grows rightward, y downward.
+# - before: phase, one of "Arriving", "BeforeTheSlide", "Brightening", "Darkening", "Landing",
+#   "Music", "Play", "Quieting", "Squaring" (spec §1, Phases; listed alphabetically, the order
+#   means nothing; "Play" is no passage), with its data: asked, for "Quieting"; t, 0 to 14, for
+#   "Darkening" and "Brightening"; n, the frames of work since the view was squared, for
+#   "BeforeTheSlide" (0 to 2), or since the slide ended, for "Landing" (0 to 1); started, for
+#   "Music"; placed and fetching ("Contents", "Done" or "Tiles"), for "Arriving"; arrival
+#   (absent before it is taken): { way, "Down", "Left", "Right" or "Up"; view = [x, y], the
+#   view's place in the next room, px; speed (optional), her speed in the slide, P.S }; slide
+#   (absent before it starts): the slide's frames so far.
+# - her: [x, y], P.S, her position (samus-movement's) at the frame's start. seen: [x, y], px,
+#   where the camera last saw her. camera: [x, y], P.S, the camera's position.
+# - colours (optional): some of the screen's colours, each { now, the colour as it stands; goal,
+#   the colour the fade heads for; group, "Icon", "Lit", "Other", "Timer" or "Visor" (spec
+#   TheFades: the HUD's icon, always-lit and escape timer colours, her visor's, any other) },
+#   each a 15-bit colour in hex.
+# - inputs (optional; spec §1.3): touched (default false, she touched a door to a room this
+#   frame); done (default true, T1: the work of the frame of work in progress is done by this
+#   frame's end); sounds_sent (default true); music_ready (default true); timer, items_dark
+#   (default false); doorway (for "Squaring" before the arrival is taken: the arrival the doorway
+#   gives, as arrival above).
+# - after, compared at the frame's end: the phase and its data, arrival and slide, as in before;
+#   her, seen, camera; colours, each { now, goal }, in before's order; runs, what runs or is
+#   drawn this frame, sorted ("blocks"; "drawn", she, her shots, the enemies and their shots
+#   drawn, still, where they are; "enemies"; "projectiles", the enemies' shots run; "tiles", the animated
+#   tiles; "timer", the escape's timer drawn); calls, the room's calls this frame (spec §1.5);
+#   sounds, the room's sound requests ("held", sounds held off; "let through"; "silence");
+#   her_sounds, the requests to her sounds ("at the door"; "spin again"); cost (absent when T1 is
+#   asked nothing: the passage's own wait), the cost event of the frame's work ("BuildRoom",
+#   "FadeStep", "FetchContents", "FetchTiles", "Other", or "Play" in play); finished (the frame is
+#   a finished frame); restart (the HUD's frame count restarts this frame); screen (only on the
+#   frames that restart it: "FrontAndSprites" or "Sprites", what is shown below the HUD);
+#   minimap_on (true when it turns the mini-map on).
+# - The vectors hold positions, colours and arrivals, all invented: no room's, doorway's or
+#   colour's value is the game's. The cases the records show are each such a frame moved to
+#   invented values (recorded cases R1 to R18). The rest (doors up and down, a
+#   doorway's own speed, every adjusted rule) are worked from the spec's rules.
+
+[[vector]]
+# a frame she touches a door to a room: the passage starts quieting on the next
+id = "touch"
+source = "constructed"
+entries = ["TheTouch"]
+before = { phase = "Play" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { touched = true }
+after = { phase = "Quieting", asked = false, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Play", finished = true, restart = false }
+
+[[vector]]
+# a touch while passing is not read
+id = "touch-passing"
+source = "constructed"
+entries = ["TheTouch", "Squaring"]
+before = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0100.2400"]
+inputs = { touched = true }
+after = { phase = "BeforeTheSlide", n = 0, arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0100.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# a frame whose work is not done: the phase stays, the frame is not finished
+id = "work-pending"
+source = "constructed"
+entries = ["PassageTime"]
+before = { phase = "Darkening", t = 5 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+inputs = { done = false }
+after = { phase = "Darkening", t = 5, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+# the contents still being fetched: the slide moves, the frame is finished anyway
+id = "work-pending-slide"
+source = "constructed"
+entries = ["PassageTime", "Sliding", "FinishedFrames"]
+before = { phase = "Arriving", placed = true, fetching = "Contents", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 10 }
+her = ["FFF8.6400", "0094.FFFF"]
+seen = ["FFF8", "0094"]
+camera = ["FF2C.8000", "0000.2400"]
+inputs = { done = false }
+after = { phase = "Arriving", placed = true, fetching = "Contents", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 11, her = ["FFF9.2C00", "0094.FFFF"], seen = ["FFF9", "0094"], camera = ["FF30.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FetchContents", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the first frame of work: the dark colours set, the room silenced, her door sound asked for
+id = "leaving"
+source = "constructed"
+entries = ["Quieting", "TheFades", "WhatRuns"]
+before = { phase = "Quieting", asked = false }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }, { now = "3DEF", goal = "3DEF", group = "Icon" }, { now = "0210", goal = "0210", group = "Timer" }]
+inputs = { timer = false }
+after = { phase = "Quieting", asked = true, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "5EF7", goal = "5EF7" }, { now = "3DEF", goal = "3DEF" }, { now = "0210", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = ["silence", "held"], her_sounds = ["at the door"], cost = "Other", finished = true, restart = false, minimap_on = true }
+
+[[vector]]
+# the escape timer running, neither room keeps the icons dark: its colours stay lit, it is drawn
+id = "dark-timer"
+source = "constructed"
+entries = ["TheFades", "WhatRuns"]
+before = { phase = "Quieting", asked = false }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }, { now = "3DEF", goal = "3DEF", group = "Icon" }, { now = "0210", goal = "0210", group = "Timer" }]
+inputs = { timer = true }
+after = { phase = "Quieting", asked = true, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "5EF7", goal = "5EF7" }, { now = "3DEF", goal = "3DEF" }, { now = "0210", goal = "0210" }], runs = ["drawn", "enemies", "timer"], calls = [], sounds = ["silence", "held"], her_sounds = ["at the door"], cost = "Other", finished = true, restart = false, minimap_on = true }
+
+[[vector]]
+# a room keeps the icons dark: only the always-lit colours stay
+id = "dark-items"
+source = "constructed"
+entries = ["TheFades"]
+before = { phase = "Quieting", asked = false }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }, { now = "3DEF", goal = "3DEF", group = "Icon" }, { now = "0210", goal = "0210", group = "Timer" }]
+inputs = { items_dark = true }
+after = { phase = "Quieting", asked = true, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "5EF7", goal = "5EF7" }, { now = "3DEF", goal = "0000" }, { now = "0210", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = ["silence", "held"], her_sounds = ["at the door"], cost = "Other", finished = true, restart = false, minimap_on = true }
+
+[[vector]]
+# a room keeps the icons dark, the timer running: the timer goes dark too, and is left off
+id = "dark-timer-dark"
+source = "constructed"
+entries = ["TheFades", "WhatRuns"]
+before = { phase = "Quieting", asked = false }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "5EF7", goal = "5EF7", group = "Lit" }, { now = "3DEF", goal = "3DEF", group = "Icon" }, { now = "0210", goal = "0210", group = "Timer" }]
+inputs = { timer = true, items_dark = true }
+after = { phase = "Quieting", asked = true, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "5EF7", goal = "5EF7" }, { now = "3DEF", goal = "0000" }, { now = "0210", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = ["silence", "held"], her_sounds = ["at the door"], cost = "Other", finished = true, restart = false, minimap_on = true }
+
+[[vector]]
+# the sounds are sent: the screen starts to darken
+id = "silence-sent"
+source = "constructed"
+entries = ["Quieting"]
+before = { phase = "Quieting", asked = true }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { sounds_sent = true }
+after = { phase = "Darkening", t = 0, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# sounds still to send: it waits, the enemies run
+id = "silence-waits"
+source = "constructed"
+entries = ["Quieting", "WhatRuns"]
+before = { phase = "Quieting", asked = true }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { sounds_sent = false }
+after = { phase = "Quieting", asked = true, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# the fade step 0 changes nothing
+id = "dark-first"
+source = "constructed"
+entries = ["TheFades", "Fading"]
+before = { phase = "Darkening", t = 0 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+after = { phase = "Darkening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# step 1: each channel 1/13 of the way, rounded toward black; a colour at its goal stays
+id = "dark-step"
+source = "constructed"
+entries = ["TheFades", "Fading", "WhatRuns"]
+before = { phase = "Darkening", t = 1 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "0380", goal = "0000" }, { now = "0C63", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# step 7 of a colour part way: the divisor is 6
+id = "fade-half"
+source = "constructed"
+entries = ["Fading"]
+before = { phase = "Darkening", t = 7 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "1A6B", goal = "0000", group = "Other" }, { now = "0421", goal = "7FFF", group = "Other" }]
+after = { phase = "Darkening", t = 8, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "15E9", goal = "0000" }, { now = "18C6", goal = "7FFF" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# step 13: every colour is its goal
+id = "dark-last"
+source = "constructed"
+entries = ["TheFades", "Fading"]
+before = { phase = "Darkening", t = 13 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0842", goal = "0000", group = "Other" }, { now = "0421", goal = "0000", group = "Other" }]
+after = { phase = "Darkening", t = 14, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "0000", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# step 14 changes nothing, the enemies stop, the view squares next
+id = "dark-end"
+source = "constructed"
+entries = ["TheFades", "Fading", "WhatRuns"]
+before = { phase = "Darkening", t = 14 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+after = { phase = "Squaring", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# the fade in, step 0
+id = "bright-first"
+source = "constructed"
+entries = ["TheFades"]
+before = { phase = "Brightening", t = 0 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "7FFF", group = "Other" }, { now = "0000", goal = "03E0", group = "Other" }, { now = "1084", goal = "1084", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+after = { phase = "Brightening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "03E0" }, { now = "1084", goal = "1084" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# the fade in, step 5: toward the new room's colours; the tiles, enemies and projectiles run
+id = "bright-step"
+source = "constructed"
+entries = ["TheFades", "Fading", "WhatRuns"]
+before = { phase = "Brightening", t = 5 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "2108", goal = "7FFF", group = "Other" }, { now = "00A0", goal = "03E0", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+after = { phase = "Brightening", t = 6, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "294A", goal = "7FFF" }, { now = "0100", goal = "03E0" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# the last step: play goes on, sounds let through, her spin's sound asked for again
+id = "bright-end"
+source = "constructed"
+entries = ["TheFades", "Fading"]
+before = { phase = "Brightening", t = 14 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }]
+after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# a fade in of 6 steps ends at step 8: play goes on
+id = "bright-steps-adjusted-end"
+source = "constructed"
+entries = ["Fading", "TheFades"]
+rules = { steps = 6 }
+before = { phase = "Brightening", t = 8 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }]
+after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# the fade in's work not done: not a finished frame, the count goes on
+id = "bright-pending"
+source = "constructed"
+entries = ["FinishedFrames", "PassageTime"]
+before = { phase = "Brightening", t = 3 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { done = false }
+after = { phase = "Brightening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+# a fade of 6 steps: step 2 divides by 5
+id = "steps-adjusted"
+source = "constructed"
+entries = ["Fading"]
+rules = { steps = 6 }
+before = { phase = "Darkening", t = 2 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "1084", goal = "0C63", group = "Other" }]
+after = { phase = "Darkening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "6318", goal = "0000" }, { now = "0C63", goal = "0C63" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# a fade of 6 steps: step 7 lands every colour on its goal
+id = "steps-adjusted-last"
+source = "constructed"
+entries = ["Fading"]
+rules = { steps = 6 }
+before = { phase = "Darkening", t = 7 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0842", goal = "0000", group = "Other" }]
+after = { phase = "Darkening", t = 8, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# a fade of 6 steps ends at step 8
+id = "steps-adjusted-end"
+source = "constructed"
+entries = ["Fading", "TheFades"]
+rules = { steps = 6 }
+before = { phase = "Darkening", t = 8 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "0000", group = "Other" }]
+after = { phase = "Squaring", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+# the doorway's arrival is taken
+id = "reading"
+source = "constructed"
+entries = ["Squaring"]
+before = { phase = "Squaring" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0100.2400"]
+inputs = { doorway = { way = "Right", view = ["0100", "0000"] } }
+after = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0100.2400"], runs = [], calls = ["LeaveRoom"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# the view on a screen edge: done, nothing moves
+id = "square-done"
+source = "constructed"
+entries = ["Squaring", "WhatRuns"]
+before = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0100.2400"]
+after = { phase = "BeforeTheSlide", n = 0, arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0100.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# y mod 256 = 0x80: down a pixel
+id = "square-down"
+source = "constructed"
+entries = ["Squaring"]
+before = { phase = "Squaring", arrival = { way = "Left", view = ["0000", "0200"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0300.8000", "0280.2400"]
+after = { phase = "Squaring", arrival = { way = "Left", view = ["0000", "0200"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0300.8000", "0281.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# y mod 256 = 0x0E: up a pixel
+id = "square-up"
+source = "constructed"
+entries = ["Squaring"]
+before = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "010E.2400"]
+after = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "010D.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# a door down: x squares, here up from 0x7F
+id = "square-x"
+source = "constructed"
+entries = ["Squaring"]
+before = { phase = "Squaring", arrival = { way = "Down", view = ["0200", "0300"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["017F.8000", "0200.2400"]
+after = { phase = "Squaring", arrival = { way = "Down", view = ["0200", "0300"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["017E.8000", "0200.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# the escape timer running: drawn on a frame of work of the squaring
+id = "timer-drawn"
+source = "constructed"
+entries = ["WhatRuns"]
+before = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0101.2400"]
+inputs = { timer = true }
+after = { phase = "Squaring", arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0100.2400"], runs = ["timer"], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# a door up: the slide's frame 0 is made a frame early, and moves nothing
+id = "prepare-up"
+source = "constructed"
+entries = ["Building", "SettingOff", "Sliding"]
+before = { phase = "BeforeTheSlide", n = 0, arrival = { way = "Up", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0200.2400"]
+after = { phase = "BeforeTheSlide", n = 1, arrival = { way = "Up", view = ["0100", "0000"] }, slide = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0200.2400"], runs = [], calls = ["DrawTopRow"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# a door right: the first frame of work only passes on
+id = "prepare"
+source = "constructed"
+entries = ["Building"]
+before = { phase = "BeforeTheSlide", n = 0, arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0200.2400"]
+after = { phase = "BeforeTheSlide", n = 1, arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0200.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# the next room is built
+id = "building"
+source = "constructed"
+entries = ["Building", "PassageTime"]
+before = { phase = "BeforeTheSlide", n = 1, arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "BeforeTheSlide", n = 2, arrival = { way = "Right", view = ["0100", "0000"] }, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["BuildRoom"], sounds = [], her_sounds = [], cost = "BuildRoom", finished = true, restart = false }
+
+[[vector]]
+# right: one screen back, the first step made
+id = "set-off-right"
+source = "constructed"
+entries = ["SettingOff", "Sliding", "Carrying"]
+before = { phase = "BeforeTheSlide", n = 2, arrival = { way = "Right", view = ["0100", "0000"] } }
+her = ["00EC.0000", "0194.FFFF"]
+seen = ["00EC", "0194"]
+camera = ["0000.D900", "0100.A400"]
+after = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 1, her = ["00EC.C800", "0194.FFFF"], seen = ["00EC", "0194"], camera = ["0004.D900", "0000.A400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# left: one screen on, the first step made
+id = "set-off-left"
+source = "constructed"
+entries = ["SettingOff", "Sliding", "Carrying"]
+before = { phase = "BeforeTheSlide", n = 2, arrival = { way = "Left", view = ["0000", "0200"] } }
+her = ["0024.D000", "0075.A7FF"]
+seen = ["0024", "0075"]
+camera = ["0000.4000", "0000.6800"]
+after = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 1, her = ["0024.0800", "0075.A7FF"], seen = ["0024", "0075"], camera = ["00FC.4000", "0200.6800"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# down: 224 back, the first frame moves nothing
+id = "set-off-down"
+source = "constructed"
+entries = ["SettingOff", "Sliding"]
+before = { phase = "BeforeTheSlide", n = 2, arrival = { way = "Down", view = ["0200", "0300"] } }
+her = ["0270.0000", "01D8.8000"]
+seen = ["0270", "01D8"]
+camera = ["0200.0000", "0100.0000"]
+after = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 1, her = ["0270.0000", "01D8.8000"], seen = ["0270", "01D8"], camera = ["0200.0000", "0220.0000"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# up: 255 on, the arrival 32 lower, its second frame moves
+id = "set-off-up"
+source = "constructed"
+entries = ["SettingOff", "Sliding", "Carrying"]
+before = { phase = "BeforeTheSlide", n = 2, arrival = { way = "Up", view = ["0100", "0000"] }, slide = 1 }
+her = ["0170.0000", "0228.8000"]
+seen = ["0170", "0228"]
+camera = ["0100.0000", "0200.0000"]
+after = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 2, her = ["0170.0000", "0227.0000"], seen = ["0170", "0227"], camera = ["0100.0000", "00FB.0000"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# placed: the view's pixel plus her old pixel mod 256; the tiles fetched
+id = "place-right"
+source = "constructed"
+entries = ["WhereSheLands", "Arriving"]
+before = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 1 }
+her = ["00EC.C800", "0194.FFFF"]
+seen = ["00EC", "0194"]
+camera = ["0004.D900", "0000.A400"]
+after = { phase = "Arriving", placed = true, fetching = "Contents", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 1, her = ["00F0.C800", "0094.FFFF"], seen = ["00F0", "0094"], camera = ["0004.D900", "0000.A400"], runs = [], calls = ["FetchTiles"], sounds = [], her_sounds = [], cost = "FetchTiles", finished = true, restart = false }
+
+[[vector]]
+# placed after a door left
+id = "place-left"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 1 }
+her = ["0024.0800", "0075.A7FF"]
+seen = ["0024", "0075"]
+camera = ["00FC.4000", "0200.6800"]
+after = { phase = "Arriving", placed = true, fetching = "Contents", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 1, her = ["0120.0800", "0275.A7FF"], seen = ["0120", "0275"], camera = ["00FC.4000", "0200.6800"], runs = [], calls = ["FetchTiles"], sounds = [], her_sounds = [], cost = "FetchTiles", finished = true, restart = false }
+
+[[vector]]
+# placed though the frame's work isn't done; not yet a finished frame
+id = "place-pending"
+source = "constructed"
+entries = ["WhereSheLands", "PassageTime", "FinishedFrames"]
+before = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 1 }
+her = ["00EC.C800", "0194.FFFF"]
+seen = ["00EC", "0194"]
+camera = ["0004.D900", "0000.A400"]
+inputs = { done = false }
+after = { phase = "Arriving", placed = true, fetching = "Tiles", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 1, her = ["00F0.C800", "0094.FFFF"], seen = ["00F0", "0094"], camera = ["0004.D900", "0000.A400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FetchTiles", finished = false, restart = false }
+
+[[vector]]
+# a slide frame right: view +4, she +0.C800, seen follows; a finished frame
+id = "slide-right"
+source = "constructed"
+entries = ["Sliding", "Carrying", "FinishedFrames"]
+before = { phase = "Arriving", placed = true, fetching = "Tiles", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 1 }
+her = ["FFF0.C800", "0094.FFFF"]
+seen = ["FFF0", "0094"]
+camera = ["FF04.D900", "0000.A400"]
+inputs = { done = false }
+after = { phase = "Arriving", placed = true, fetching = "Tiles", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 2, her = ["FFF1.9000", "0094.FFFF"], seen = ["FFF1", "0094"], camera = ["FF08.D900", "0000.A400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FetchTiles", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide frame left
+id = "slide-left"
+source = "constructed"
+entries = ["Sliding", "Carrying"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 30 }
+her = ["0100.9800", "0275.A7FF"]
+seen = ["0100", "0275"]
+camera = ["0084.4000", "0200.6800"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 31, her = ["00FF.D000", "0275.A7FF"], seen = ["00FF", "0275"], camera = ["0080.4000", "0200.6800"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# down, the slide's frame 0 (made on setting off): no move
+id = "slide-down-first"
+source = "constructed"
+entries = ["Sliding", "SettingOff"]
+before = { phase = "BeforeTheSlide", n = 2, arrival = { way = "Down", view = ["0200", "0300"] } }
+her = ["0270.0000", "01D8.8000"]
+seen = ["0270", "01D8"]
+camera = ["0200.0000", "0100.0000"]
+after = { phase = "Arriving", placed = false, fetching = "Tiles", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 1, her = ["0270.0000", "01D8.8000"], seen = ["0270", "01D8"], camera = ["0200.0000", "0220.0000"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = false }
+
+[[vector]]
+# a slide frame down: view +4, she +1.8000
+id = "slide-down"
+source = "constructed"
+entries = ["Sliding", "Carrying"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 20 }
+her = ["0270.0000", "0240.8000"]
+seen = ["0270", "0240"]
+camera = ["0200.0000", "0250.0000"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 21, her = ["0270.0000", "0242.0000"], seen = ["0270", "0242"], camera = ["0200.0000", "0254.0000"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide frame up: view -4, she -1.8000
+id = "slide-up"
+source = "constructed"
+entries = ["Sliding", "Carrying"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 20 }
+her = ["0170.0000", "0084.4000"]
+seen = ["0170", "0084"]
+camera = ["0100.0000", "0080.0000"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 21, her = ["0170.0000", "0082.C000"], seen = ["0170", "0082"], camera = ["0100.0000", "007C.0000"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the 64th frame lands the view on the arrival; the contents are fetched, so she lands
+id = "slide-end"
+source = "constructed"
+entries = ["Sliding", "Carrying", "Arriving"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 63 }
+her = ["0121.3800", "0094.FFFF"]
+seen = ["0121", "0094"]
+camera = ["00FC.D900", "0000.A400"]
+after = { phase = "Landing", n = 0, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0122.0000", "0094.FFFF"], seen = ["0122", "0094"], camera = ["0100.D900", "0000.A400"], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# up, the 57th frame: the view from 31 below to the arrival taken 32 lower
+id = "slide-up-end"
+source = "constructed"
+entries = ["Sliding"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 56 }
+her = ["0170.0000", "0064.4000"]
+seen = ["0170", "0064"]
+camera = ["0100.0000", "0023.0000"]
+after = { phase = "Landing", n = 0, arrival = { way = "Up", view = ["0100", "0020"] }, slide = 57, her = ["0170.0000", "0062.C000"], seen = ["0170", "0062"], camera = ["0100.0000", "0020.0000"], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide of 8 px steps and 32 frames: view +8
+id = "slide-adjusted"
+source = "constructed"
+entries = ["Sliding"]
+rules = { slide = { step = 8, across = 32 } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 10 }
+her = ["FFF8.6400", "0094.FFFF"]
+seen = ["FFF8", "0094"]
+camera = ["FF50.D900", "0000.A400"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 11, her = ["FFF9.2C00", "0094.FFFF"], seen = ["FFF9", "0094"], camera = ["FF58.D900", "0000.A400"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide of 32 frames ends at its 32nd: the view, 8 short, snaps onto the arrival and she lands
+id = "slide-adjusted-end"
+source = "constructed"
+entries = ["Sliding", "Arriving"]
+rules = { slide = { step = 8, across = 32 } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 31 }
+her = ["0010.0000", "0094.FFFF"]
+seen = ["0010", "0094"]
+camera = ["00F0.D900", "0000.A400"]
+after = { phase = "Landing", n = 0, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 32, her = ["0010.C800", "0094.FFFF"], seen = ["0010", "0094"], camera = ["0100.D900", "0000.A400"], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide down of 41 frames ends at its 41st: the view, 64 short, snaps onto the arrival
+id = "slide-adjusted-down-end"
+source = "constructed"
+entries = ["Sliding", "Arriving"]
+rules = { slide = { down_up = 41 } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 40 }
+her = ["0270.0000", "0280.8000"]
+seen = ["0270", "0280"]
+camera = ["0200.0000", "02BC.0000"]
+after = { phase = "Landing", n = 0, arrival = { way = "Down", view = ["0200", "0300"] }, slide = 41, her = ["0270.0000", "0282.0000"], seen = ["0270", "0282"], camera = ["0200.0000", "0300.0000"], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide up of 8 px steps and 41 frames ends at its 41st: the view, 24 short, snaps onto the arrival
+id = "slide-adjusted-up-end"
+source = "constructed"
+entries = ["Sliding", "Arriving"]
+rules = { slide = { step = 8, down_up = 41 } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 40 }
+her = ["0170.0000", "0072.4000"]
+seen = ["0170", "0072"]
+camera = ["0100.0000", "0040.0000"]
+after = { phase = "Landing", n = 0, arrival = { way = "Up", view = ["0100", "0020"] }, slide = 41, her = ["0170.0000", "0070.C000"], seen = ["0170", "0070"], camera = ["0100.0000", "0020.0000"], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide left of 32 frames at 1.0000 a frame ends at its 32nd: the view, 8 short, snaps onto the arrival
+id = "slide-adjusted-left-end"
+source = "constructed"
+entries = ["Sliding", "Carrying", "Arriving"]
+rules = { slide = { across = 32 }, speeds = { across = "0001.0000" } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 31 }
+her = ["0108.9800", "0275.A7FF"]
+seen = ["0108", "0275"]
+camera = ["000C.4000", "0200.6800"]
+after = { phase = "Landing", n = 0, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 32, her = ["0107.9800", "0275.A7FF"], seen = ["0107", "0275"], camera = ["0000.4000", "0200.6800"], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a doorway with its own speed: 2.0000 a frame
+id = "carry-own"
+source = "constructed"
+entries = ["Carrying"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"], speed = "0002.0000" }, slide = 10 }
+her = ["FFF8.6400", "0094.FFFF"]
+seen = ["FFF8", "0094"]
+camera = ["FF2C.8000", "0000.2400"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"], speed = "0002.0000" }, slide = 11, her = ["FFFA.6400", "0094.FFFF"], seen = ["FFFA", "0094"], camera = ["FF30.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the passage's own speed adjusted to 1.0000 across
+id = "carry-adjusted"
+source = "constructed"
+entries = ["Carrying"]
+rules = { speeds = { across = "0001.0000" } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 10 }
+her = ["FFF8.6400", "0094.FFFF"]
+seen = ["FFF8", "0094"]
+camera = ["FF2C.8000", "0000.2400"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 11, her = ["FFF9.6400", "0094.FFFF"], seen = ["FFF9", "0094"], camera = ["FF30.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the passage's own speed adjusted to 2.4000 up or down
+id = "carry-adjusted-down"
+source = "constructed"
+entries = ["Carrying"]
+rules = { speeds = { down_up = "0002.4000" } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 20 }
+her = ["0270.0000", "0240.8000"]
+seen = ["0270", "0240"]
+camera = ["0200.0000", "0250.0000"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Down", view = ["0200", "0300"] }, slide = 21, her = ["0270.0000", "0242.C000"], seen = ["0270", "0242"], camera = ["0200.0000", "0254.0000"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the passage's own speed adjusted to 2.4000 up or down, the step to 8 px, on a slide up
+id = "carry-adjusted-up"
+source = "constructed"
+entries = ["Carrying", "Sliding"]
+rules = { slide = { step = 8 }, speeds = { down_up = "0002.4000" } }
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 20 }
+her = ["0170.0000", "0084.4000"]
+seen = ["0170", "0084"]
+camera = ["0100.0000", "0080.0000"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Up", view = ["0100", "0020"] }, slide = 21, her = ["0170.0000", "0082.0000"], seen = ["0170", "0082"], camera = ["0100.0000", "0078.0000"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# a slide frame while a room keeps the items dark: only the sprites are shown below the HUD
+id = "slide-dark-items"
+source = "constructed"
+entries = ["FinishedFrames"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 30 }
+her = ["0100.9800", "0275.A7FF"]
+seen = ["0100", "0275"]
+camera = ["0084.4000", "0200.6800"]
+inputs = { items_dark = true }
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Left", view = ["0000", "0200"] }, slide = 31, her = ["00FF.D000", "0275.A7FF"], seen = ["00FF", "0275"], camera = ["0080.4000", "0200.6800"], runs = [], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "Sprites" }
+
+[[vector]]
+# the contents fetched, the slide still running: she waits for it
+id = "loading-waits"
+source = "constructed"
+entries = ["Arriving", "PassageTime"]
+before = { phase = "Arriving", placed = true, fetching = "Contents", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 21 }
+her = ["0000.6800", "0094.FFFF"]
+seen = ["0000", "0094"]
+camera = ["FF54.D900", "0000.A400"]
+after = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 22, her = ["0001.3000", "0094.FFFF"], seen = ["0001", "0094"], camera = ["FF58.D900", "0000.A400"], runs = [], calls = ["FetchContents"], sounds = [], her_sounds = [], cost = "FetchContents", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the slide ends this frame: she lands next, the visor lit, the blocks run once
+id = "loading-done"
+source = "constructed"
+entries = ["Arriving", "WhatRuns", "WhereSheLands"]
+before = { phase = "Arriving", placed = true, fetching = "Done", arrival = { way = "Right", view = ["0100", "0000"] }, slide = 63 }
+her = ["0021.3800", "0094.FFFF"]
+seen = ["0021", "0094"]
+camera = ["FFFC.D900", "0000.A400"]
+colours = [{ now = "0000", goal = "3BE0", group = "Visor" }, { now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { timer = true }
+after = { phase = "Landing", n = 0, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0022.0000", "0094.FFFF"], seen = ["0022", "0094"], camera = ["0100.D900", "0000.A400"], colours = [{ now = "3BE0", goal = "3BE0" }, { now = "0000", goal = "7FFF" }], runs = ["blocks"], calls = [], sounds = [], her_sounds = [], finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# right: x | 7; seen stays; the timer drawn
+id = "land-right"
+source = "constructed"
+entries = ["WhereSheLands", "WhatRuns"]
+before = { phase = "Landing", n = 0, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64 }
+her = ["0022.0000", "0094.FFFF"]
+seen = ["0022", "0094"]
+camera = ["0000.D900", "0000.A400"]
+inputs = { timer = true }
+after = { phase = "Landing", n = 1, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0027.0000", "0094.FFFF"], seen = ["0022", "0094"], camera = ["0000.D900", "0000.A400"], runs = ["timer"], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# left: x & ~7
+id = "land-left"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Landing", n = 0, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 64 }
+her = ["01E6.D000", "0275.A7FF"]
+seen = ["01E6", "0275"]
+camera = ["0000.4000", "0200.6800"]
+after = { phase = "Landing", n = 1, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 64, her = ["01E0.D000", "0275.A7FF"], seen = ["01E6", "0275"], camera = ["0000.4000", "0200.6800"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# down: she stays
+id = "land-down"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Landing", n = 0, arrival = { way = "Down", view = ["0200", "0300"] }, slide = 57 }
+her = ["0273.0000", "0324.8000"]
+seen = ["0273", "0324"]
+camera = ["0200.0000", "0300.0000"]
+after = { phase = "Landing", n = 1, arrival = { way = "Down", view = ["0200", "0300"] }, slide = 57, her = ["0273.0000", "0324.8000"], seen = ["0273", "0324"], camera = ["0200.0000", "0300.0000"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the animated tiles run once
+id = "settle"
+source = "constructed"
+entries = ["Landing", "WhatRuns"]
+before = { phase = "Landing", n = 1, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "Music", started = false, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = ["tiles"], calls = ["AnimateTiles"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the music not ready: it waits
+id = "music-waits"
+source = "constructed"
+entries = ["Landing"]
+before = { phase = "Music", started = false, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { music_ready = false }
+after = { phase = "Music", started = false, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# the music ready: its track is played
+id = "music-ready"
+source = "constructed"
+entries = ["Landing"]
+before = { phase = "Music", started = false, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { music_ready = true }
+after = { phase = "Music", started = true, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["PlayMusic"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# waiting for the music, the work not done: still a finished frame, the count restarted
+id = "forced-wait"
+source = "constructed"
+entries = ["FinishedFrames"]
+before = { phase = "Music", started = false, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+inputs = { done = false, music_ready = false }
+after = { phase = "Music", started = false, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# x mod 256 = 0x13: to 0x27; the last finished frame of the landing
+id = "clear-right"
+source = "constructed"
+entries = ["WhereSheLands", "FinishedFrames"]
+before = { phase = "Music", started = true, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 64 }
+her = ["0113.0000", "0094.FFFF"]
+seen = ["0113", "0094"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "Brightening", t = 0, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 64, her = ["0127.0000", "0094.FFFF"], seen = ["0113", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# x mod 256 = 0xE3: to 0xD8
+id = "clear-left"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Music", started = true, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 64 }
+her = ["01E3.D000", "0275.A7FF"]
+seen = ["01E3", "0275"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "Brightening", t = 0, arrival = { way = "Left", view = ["0000", "0200"] }, slide = 64, her = ["01D8.D000", "0275.A7FF"], seen = ["01E3", "0275"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# y mod 256 = 0x1C: to 0x27
+id = "clear-down"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Music", started = true, arrival = { way = "Down", view = ["0200", "0300"] }, slide = 57 }
+her = ["0273.0000", "031C.8000"]
+seen = ["0273", "031C"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "Brightening", t = 0, arrival = { way = "Down", view = ["0200", "0300"] }, slide = 57, her = ["0273.0000", "0327.8000"], seen = ["0273", "031C"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# x mod 256 = 0x27, y mod 256 = 0x94: stays
+id = "clear-none"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Music", started = true, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64 }
+her = ["0027.0000", "0094.FFFF"]
+seen = ["0027", "0094"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "Brightening", t = 0, arrival = { way = "Right", view = ["0100", "0000"] }, slide = 64, her = ["0027.0000", "0094.FFFF"], seen = ["0027", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+# y mod 256 = 0xE4: never stepped up
+id = "clear-bottom"
+source = "constructed"
+entries = ["WhereSheLands"]
+before = { phase = "Music", started = true, arrival = { way = "Up", view = ["0100", "0000"] }, slide = 57 }
+her = ["0170.0000", "00E4.8000"]
+seen = ["0170", "00E4"]
+camera = ["0000.8000", "0000.2400"]
+after = { phase = "Brightening", t = 0, arrival = { way = "Up", view = ["0100", "0000"] }, slide = 57, her = ["0170.0000", "00E4.8000"], seen = ["0170", "00E4"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }

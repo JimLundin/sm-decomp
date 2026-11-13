@@ -581,6 +581,22 @@ fn progress_holds_its_floors_against_the_cache() {
     );
 }
 
+/// The door passage over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the
+/// clock's test reads them (the ROM for the doorways' arrivals and their rooms' CRE bits).
+#[test]
+fn the_door_passage_holds_its_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image =
+        std::fs::read(&rom).unwrap_or_else(|error| panic!("SM_ROM {}: {error}", rom.display()));
+    hold_floors(
+        &super::doors::DoorsDomain::new(image),
+        "world-doors",
+        &cache,
+    );
+}
+
 /// The Ceres doors over every cached row, held to their floors; `SM_CACHE` and `SM_ROM` as the
 /// clock's test reads them (the ROM for the doors' colour sets).
 #[test]

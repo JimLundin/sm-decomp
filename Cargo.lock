@@ -356,6 +356,7 @@ dependencies = [
  "types",
  "world_blocks",
  "world_camera",
+ "world_doors",
 ]
 
 [[package]]
@@ -387,6 +388,16 @@ dependencies = [
 name = "world_camera"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
+]
+
+[[package]]
+name = "world_doors"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
  "serde",
  "toml 1.2.1+spec-1.1.0",
  "types",

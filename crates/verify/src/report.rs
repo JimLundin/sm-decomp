@@ -319,6 +319,19 @@ const DOMAINS: &[Domain] = &[
             },
         ],
     },
+    // The passage is one area: its State and phases, the step, the view's moves and the
+    // colours' fades. What a frame brings and answers, the rules and the catalogue are the
+    // domain's shared code. The engine has no bridge yet: it runs no passage.
+    Domain {
+        name: "world-doors",
+        bridge: "world_doors_bridge",
+        harness: "doors",
+        areas: &[(
+            "passage",
+            &["passage.rs", "step.rs", "view.rs", "colours.rs"],
+        )],
+        apart: &[],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.
