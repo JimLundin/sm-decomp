@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Local source gate: the formatting, lint, crate-rule, doc-link and report checks of Quality. Only
 # the report check links (verify's lib test, tools/check_report.sh); CI runs the other tests.
-# Overrides: SM_RUST_BIN (toolchain bin), SM_GATE_DIR.
+# Overrides: SM_RUST_BIN (toolchain bin), SM_GATE_DIR. Off Windows the toolchain is the cargo on
+# PATH, which rustup points at rust-toolchain.toml's channel.
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
-R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/$CHANNEL-x86_64-pc-windows-gnu/bin}"
-O="${SM_GATE_DIR:-$TEMP/sm-gate}/$(git rev-parse --short HEAD)-$$"
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*) R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/$CHANNEL-x86_64-pc-windows-gnu/bin}" ;;
+  *) R="${SM_RUST_BIN:-$(dirname "$(command -v cargo)")}" ;;
+esac
+O="${SM_GATE_DIR:-${TEMP:-${TMPDIR:-/tmp}}/sm-gate}/$(git rev-parse --short HEAD)-$$"
 mkdir -p "$O"; ok=1
 trap 'rm -f -- "$O/check.log"; rmdir -- "$O" 2>/dev/null || true' EXIT
 fail() { echo "$1"; ok=0; }
