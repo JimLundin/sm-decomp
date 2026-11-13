@@ -1,7 +1,8 @@
 //! `tools cache-lean LOCK FROM TO ROW...`: each row's record cache under `FROM`, checked
 //! against the lock at `LOCK`, written again as the lean tier under `TO`
 //! (`verify::cache::Cache::write_lean`), with each row's bytes in both tiers. A cache taken
-//! before the lean tier existed becomes one without playing its rows again.
+//! before the lean tier existed becomes one without playing its rows again. Existing lean
+//! destinations are refused without changing them; full tiers can be converted in place.
 
 use std::fmt::Write as _;
 use std::path::Path;

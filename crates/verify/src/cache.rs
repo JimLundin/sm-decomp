@@ -31,6 +31,7 @@ use std::fmt::Write as _;
 use std::fs::File;
 use std::io::{BufWriter, Read, Seek, SeekFrom, Write as _};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, PoisonError};
 
 /// The index's first line: the layout's name and version, as `oracle::cache` writes it.
@@ -351,6 +352,60 @@ fn read(path: PathBuf) -> Result<Vec<u8>, CacheError> {
     std::fs::read(&path).map_err(|error| CacheError::Io { path, error })
 }
 
+/// Files staged on the destination volume, removed on every exit path.
+struct LeanWrite {
+    staging: PathBuf,
+    installed: Vec<PathBuf>,
+}
+
+impl LeanWrite {
+    fn new(directory: &Path) -> Result<Self, CacheError> {
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        loop {
+            let staging = directory.join(format!(
+                ".lean-write-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            match std::fs::create_dir(&staging) {
+                Ok(()) => {
+                    return Ok(Self {
+                        staging,
+                        installed: Vec::new(),
+                    });
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
+                Err(error) => {
+                    return Err(CacheError::Io {
+                        path: staging,
+                        error,
+                    });
+                }
+            }
+        }
+    }
+
+    /// A hard link publishes a whole file without replacing any existing path.
+    fn install(&mut self, directory: &Path, name: &str) -> Result<(), CacheError> {
+        let path = directory.join(name);
+        std::fs::hard_link(self.staging.join(name), &path).map_err(|error| CacheError::Io {
+            path: path.clone(),
+            error,
+        })?;
+        self.installed.push(path);
+        Ok(())
+    }
+}
+
+impl Drop for LeanWrite {
+    fn drop(&mut self) {
+        for path in &self.installed {
+            let _ = std::fs::remove_file(path);
+        }
+        let _ = std::fs::remove_dir_all(&self.staging);
+    }
+}
+
 impl Cache {
     /// Row `row`'s cache under `root` (`root/<row>/`), checked against the row's pins.
     ///
@@ -590,12 +645,15 @@ impl Cache {
     }
 
     /// Writes this cache's lean tier for `row` under `root` (`root/<row>/`, with `hits.txt`
-    /// copied beside it), the index last so a row that fails part way has none; the bytes
-    /// the lean records take.
+    /// copied beside it); returns the bytes the lean records take. Existing lean files
+    /// are refused, including an in-place retry and path aliases. Conversion is staged
+    /// before publishing the index last, preserving an existing full tier on failure.
     ///
     /// # Errors
     ///
-    /// A [`CacheError`] when a record can't be read or a file can't be written.
+    /// A [`CacheError`] when a record can't be read, a file can't be written, lean files
+    /// already exist, or the destination has different instruction hits. The destination
+    /// filesystem must support hard links; otherwise publication fails without replacing files.
     pub fn write_lean(&self, row: &Row, root: &Path) -> Result<usize, CacheError> {
         let directory = root.join(&row.id.0);
         let io = |path: &Path| {
@@ -603,15 +661,31 @@ impl Cache {
             move |error| CacheError::Io { path, error }
         };
         std::fs::create_dir_all(&directory).map_err(io(&directory))?;
-        let (index_name, records_name) = LEAN_FILES;
-        let index_path = directory.join(index_name);
-        match std::fs::remove_file(&index_path) {
-            Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
-                return Err(io(&index_path)(error));
+        for name in <[&str; 2]>::from(LEAN_FILES) {
+            let path = directory.join(name);
+            match std::fs::symlink_metadata(&path) {
+                Ok(_) => return Err(io(&path)(std::io::ErrorKind::AlreadyExists.into())),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(io(&path)(error)),
             }
-            Ok(()) | Err(_) => {}
         }
-        let records_path = directory.join(records_name);
+        let hits_path = self.directory.join("hits.txt");
+        let optional_hits = |path: &Path| match std::fs::read(path) {
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(io(path)(error)),
+        };
+        let hits = optional_hits(&hits_path)?;
+        let destination_hits = directory.join("hits.txt");
+        let existing_hits = optional_hits(&destination_hits)?;
+        if existing_hits.is_some() && existing_hits != hits {
+            return Err(io(&destination_hits)(
+                std::io::ErrorKind::AlreadyExists.into(),
+            ));
+        }
+        let mut pending = LeanWrite::new(&directory)?;
+        let index_path = pending.staging.join(LEAN_FILES.0);
+        let records_path = pending.staging.join(LEAN_FILES.1);
         let mut records = BufWriter::new(File::create(&records_path).map_err(io(&records_path))?);
         let none = || "-".to_owned();
         let shown = |pin: Option<Sha256>| pin.as_ref().map_or_else(none, ToString::to_string);
@@ -640,11 +714,18 @@ impl Cache {
             offset = offset.saturating_add(bytes.len());
         }
         records.flush().map_err(io(&records_path))?;
-        let hits = self.directory.join("hits.txt");
-        if hits.is_file() && directory != self.directory {
-            std::fs::copy(&hits, directory.join("hits.txt")).map_err(io(&hits))?;
+        drop(records);
+        if let Some(hits) = &hits {
+            let path = pending.staging.join("hits.txt");
+            std::fs::write(&path, hits).map_err(io(&path))?;
         }
         std::fs::write(&index_path, index).map_err(io(&index_path))?;
+        pending.install(&directory, LEAN_FILES.1)?;
+        if hits.is_some() && existing_hits.is_none() {
+            pending.install(&directory, "hits.txt")?;
+        }
+        pending.install(&directory, LEAN_FILES.0)?;
+        pending.installed.clear();
         Ok(offset)
     }
 }
@@ -938,6 +1019,246 @@ mod tests {
             assert!(same, "frame {position}");
         }
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn retrying_a_lean_conversion_preserves_the_existing_tier() {
+        let row = row(3).expect("invented row pins");
+        let root = std::env::temp_dir().join(format!("verify-lean-retry-{}", std::process::id()));
+        let full_root = root.join("full");
+        let lean_root = root.join("lean");
+        full_tier(&full_root, &row, 3).expect("invented full records");
+        Cache::open(&full_root, &row)
+            .expect("full cache")
+            .write_lean(&row, &lean_root)
+            .expect("first conversion");
+        let directory = lean_root.join(&row.id.0);
+        let before = <[&str; 2]>::from(LEAN_FILES)
+            .map(|name| std::fs::read(directory.join(name)).expect("lean file"));
+        let cache = Cache::open(&lean_root, &row).expect("lean cache");
+        std::fs::create_dir(lean_root.join("alias")).expect("alias directory");
+        for destination in [
+            lean_root.clone(),
+            lean_root.join("."),
+            lean_root.join("alias/.."),
+        ] {
+            assert!(
+                matches!(cache.write_lean(&row, &destination), Err(CacheError::Io { error, .. }) if error.kind() == std::io::ErrorKind::AlreadyExists)
+            );
+        }
+        let after = <[&str; 2]>::from(LEAN_FILES).map(|name| std::fs::read(directory.join(name)));
+        assert!(
+            after
+                .iter()
+                .zip(&before)
+                .all(|(after, before)| after.as_ref().is_ok_and(|after| after == before)),
+            "retry preserves lean files"
+        );
+        let reopened = Cache::open(&lean_root, &row).expect("preserved lean cache");
+        assert!(
+            reopened
+                .records()
+                .enumerate()
+                .all(|(number, record)| record.is_ok_and(|(_, record)| same(
+                    &record,
+                    &frame(u64::try_from(number).expect("frame"))
+                )))
+        );
+        drop((cache, reopened));
+        std::fs::remove_dir_all(root).expect("fixture cleanup");
+    }
+
+    #[test]
+    fn a_full_tier_converts_in_place_and_its_lean_tier_converts_elsewhere() {
+        let row = row(3).expect("invented row pins");
+        let root =
+            std::env::temp_dir().join(format!("verify-lean-in-place-{}", std::process::id()));
+        let full_root = root.join("full");
+        full_tier(&full_root, &row, 3).expect("invented full records");
+        let directory = full_root.join(&row.id.0);
+        let full_before = <[&str; 2]>::from(FULL_FILES)
+            .map(|name| std::fs::read(directory.join(name)).expect("full file"));
+        let hits = b"# watched 90bf25\n1 90bf25 40 512 0000a201\n";
+        std::fs::write(directory.join("hits.txt"), hits).expect("invented hits");
+        let full = Cache::open(&full_root, &row).expect("full cache");
+        full.write_lean(&row, &full_root)
+            .expect("in-place conversion");
+        for (name, before) in <[&str; 2]>::from(FULL_FILES).iter().zip(&full_before) {
+            assert_eq!(
+                std::fs::read(directory.join(name)).expect("full file"),
+                *before
+            );
+        }
+        let lean = Cache::open(&full_root, &row).expect("lean cache");
+        let other_root = root.join("other");
+        lean.write_lean(&row, &other_root)
+            .expect("lean to other directory");
+        let other = Cache::open(&other_root, &row).expect("other cache");
+        let expected = lean
+            .records()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("lean records");
+        let actual = other
+            .records()
+            .collect::<Result<Vec<_>, _>>()
+            .expect("copied records");
+        assert_eq!(actual.len(), 3);
+        for ((_, actual), (_, expected)) in actual.iter().zip(&expected) {
+            let mut a = Vec::new();
+            let mut b = Vec::new();
+            codec::encode(actual, PictureMode::Keep, &mut a);
+            codec::encode(expected, PictureMode::Keep, &mut b);
+            assert_eq!(a, b);
+            assert_eq!(actual.hits, expected.hits);
+        }
+        assert_eq!(
+            std::fs::read(other_root.join(&row.id.0).join("hits.txt")).expect("copied hits"),
+            hits
+        );
+        drop((full, lean, other));
+        std::fs::remove_dir_all(root).expect("fixture cleanup");
+    }
+
+    #[test]
+    fn a_decode_failure_preserves_an_existing_full_destination() {
+        let row = row(3).expect("invented row pins");
+        let root = std::env::temp_dir().join(format!("verify-lean-failure-{}", std::process::id()));
+        let source = root.join("source");
+        let destination = root.join("destination");
+        full_tier(&source, &row, 3).expect("source records");
+        full_tier(&destination, &row, 3).expect("destination records");
+        let hits = b"# watched 90bf25\n1 90bf25 40 512 0000a201\n";
+        for directory in [&source, &destination] {
+            std::fs::write(directory.join(&row.id.0).join("hits.txt"), hits).expect("hits");
+        }
+        let cache = Cache::open(&source, &row).expect("source cache");
+        let second = cache.entries().get(1).expect("second frame");
+        let mut damaged = std::fs::OpenOptions::new()
+            .write(true)
+            .open(source.join(&row.id.0).join(FULL_FILES.1))
+            .expect("source file");
+        damaged
+            .seek(SeekFrom::Start(
+                u64::try_from(second.offset).expect("offset"),
+            ))
+            .expect("second record");
+        damaged.write_all(&[0; 8]).expect("invalid record header");
+        drop(damaged);
+        let directory = destination.join(&row.id.0);
+        let names = [FULL_FILES.0, FULL_FILES.1, "hits.txt"];
+        let before =
+            names.map(|name| std::fs::read(directory.join(name)).expect("destination file"));
+        assert!(matches!(
+            cache.write_lean(&row, &destination),
+            Err(CacheError::Record {
+                frame: Frame(1),
+                ..
+            })
+        ));
+        for (name, before) in names.iter().zip(&before) {
+            assert_eq!(
+                std::fs::read(directory.join(name)).expect("preserved file"),
+                *before
+            );
+        }
+        assert_eq!(
+            std::fs::read_dir(&directory)
+                .expect("destination directory")
+                .count(),
+            3
+        );
+        let preserved = Cache::open(&destination, &row).expect("destination cache");
+        assert_eq!(
+            preserved
+                .records()
+                .collect::<Result<Vec<_>, _>>()
+                .expect("preserved records")
+                .len(),
+            3
+        );
+        drop((cache, preserved));
+        std::fs::remove_dir_all(root).expect("fixture cleanup");
+    }
+
+    #[test]
+    fn an_incomplete_lean_destination_is_preserved() {
+        let row = row(3).expect("invented row pins");
+        let root =
+            std::env::temp_dir().join(format!("verify-lean-incomplete-{}", std::process::id()));
+        let source = root.join("source");
+        full_tier(&source, &row, 3).expect("source records");
+        let cache = Cache::open(&source, &row).expect("source cache");
+        for name in <[&str; 2]>::from(LEAN_FILES) {
+            let destination = root.join(name);
+            let directory = destination.join(&row.id.0);
+            std::fs::create_dir_all(&directory).expect("destination directory");
+            std::fs::write(directory.join(name), b"existing evidence").expect("existing file");
+            assert!(
+                matches!(cache.write_lean(&row, &destination), Err(CacheError::Io { error, .. }) if error.kind() == std::io::ErrorKind::AlreadyExists)
+            );
+            assert_eq!(
+                std::fs::read(directory.join(name)).expect("preserved file"),
+                b"existing evidence"
+            );
+            assert_eq!(
+                std::fs::read_dir(directory)
+                    .expect("destination directory")
+                    .count(),
+                1
+            );
+        }
+        drop(cache);
+        std::fs::remove_dir_all(root).expect("fixture cleanup");
+    }
+
+    #[test]
+    fn a_publication_collision_rolls_back_only_new_files() {
+        let row = row(3).expect("invented row pins");
+        let root =
+            std::env::temp_dir().join(format!("verify-lean-publication-{}", std::process::id()));
+        full_tier(&root, &row, 3).expect("full destination");
+        let directory = root.join(&row.id.0);
+        let index = b"existing index";
+        let hits = b"# watched 90bf25\n";
+        let staging;
+        {
+            let mut pending = LeanWrite::new(&directory).expect("staging directory");
+            staging = pending.staging.clone();
+            std::fs::write(staging.join(LEAN_FILES.1), b"new records").expect("staged records");
+            std::fs::write(staging.join(LEAN_FILES.0), b"new index").expect("staged index");
+            pending
+                .install(&directory, LEAN_FILES.1)
+                .expect("published records");
+            // Another writer claims the index before this writer can publish it.
+            std::fs::write(directory.join(LEAN_FILES.0), index).expect("existing index");
+            std::fs::write(directory.join("hits.txt"), hits).expect("existing hits");
+            assert!(
+                matches!(pending.install(&directory, LEAN_FILES.0), Err(CacheError::Io { error, .. }) if error.kind() == std::io::ErrorKind::AlreadyExists)
+            );
+        }
+        assert!(!staging.exists());
+        assert!(!directory.join(LEAN_FILES.1).exists());
+        assert_eq!(
+            std::fs::read(directory.join(LEAN_FILES.0)).expect("preserved index"),
+            index
+        );
+        assert_eq!(
+            std::fs::read(directory.join("hits.txt")).expect("preserved hits"),
+            hits
+        );
+        // The colliding writer owns its index; removing it reveals the unchanged full tier.
+        std::fs::remove_file(directory.join(LEAN_FILES.0)).expect("collision cleanup");
+        let preserved = Cache::open(&root, &row).expect("preserved full destination");
+        assert_eq!(
+            preserved
+                .records()
+                .collect::<Result<Vec<_>, _>>()
+                .expect("full records")
+                .len(),
+            3
+        );
+        drop(preserved);
+        std::fs::remove_dir_all(root).expect("fixture cleanup");
     }
 
     fn index(pictures: &str) -> String {
