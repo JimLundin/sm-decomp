@@ -148,54 +148,107 @@ plant() {
   echo "canary: $(active | wc -l) sources planted; record in $private"
 }
 
-check() {
+# Planting rewrites several related records. Hold the lock only while taking a check's
+# snapshot; scans of separate exports can then run together using their own immutable records.
+lock_records() {
+  local deadline=$((SECONDS + 5))
+  mkdir -p "$private"
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    if mkdir "$private/.record-lock" 2>/dev/null; then
+      locked=1
+      return 0
+    fi
+    sleep 0.05
+  done
+  die "record is busy: $private/.record-lock"
+}
+release_records() {
+  if [ "$locked" -eq 1 ]; then
+    rmdir "$private/.record-lock"
+    locked=0
+  fi
+}
+with_record_lock() (
+  locked=0
+  trap 'release_records' EXIT
+  lock_records
+  "$@"
+)
+
+# grep's status 1 means no matches; all other failures must stop the check. Keeping this
+# inside each pipeline preserves pipefail for sort and the other producers as well.
+matches() {
+  local status=0
+  grep "$@" || status=$?
+  [ "$status" -le 1 ] || return "$status"
+}
+
+check() (
   [ $# -ge 1 ] || die "usage: canary.sh check TRANSCRIPT_OR_DIR..."
+  work=$(mktemp -d) || die "cannot create check scratch directory"
+  locked=0
+  trap 'release_records; rm -rf -- "$work"' EXIT
+  lock_records
   [ -s "$private/tokens.tsv" ] || die "nothing planted: no $private/tokens.tsv"
-  cut -f1 "$private/tokens.tsv" | sort -u >"$private/.patterns"
-  if [ -f "$private/fingerprints.txt" ]; then
-    # A fingerprint is a line of a forbidden file. One that also stands, as a line or inside one,
-    # in what an export was given (its first commit: the round's own spec and vectors) is shared
-    # text, not a leak, so it is dropped before the search. Tokens are never dropped.
-    cp "$private/fingerprints.txt" "$private/.fingerprints"
+  cp "$private/tokens.tsv" "$work/tokens.tsv"
+  for record in fingerprints.txt fingerprints.tsv; do
+    if [ -f "$private/$record" ]; then cp "$private/$record" "$work/$record"; fi
+  done
+  release_records
+  cut -f1 "$work/tokens.tsv" | sort -u >"$work/patterns"
+  if [ -f "$work/fingerprints.txt" ]; then
+    # Shared text in an export's first commit is not a leak. Tokens are never excluded.
+    LC_ALL=C sort -u "$work/fingerprints.txt" >"$work/fingerprints"
     for p in "$@"; do
-      if [ -d "$p/.git" ]; then
-        root=$(git -C "$p" rev-list --max-parents=0 HEAD | head -1)
-        git -C "$p" grep -hoIF -f "$private/.fingerprints" "$root" -- . 2>/dev/null | LC_ALL=C sort -u >"$private/.given" || true
-        LC_ALL=C sort -u "$private/.fingerprints" | LC_ALL=C comm -23 - "$private/.given" >"$private/.kept"
-        mv "$private/.kept" "$private/.fingerprints"
-        rm -f "$private/.given"
+      if [ -e "$p/.git" ]; then
+        git -C "$p" rev-list --max-parents=0 HEAD >"$work/roots"
+        root=$(head -1 "$work/roots")
+        [ -n "$root" ] || die "no export root in $p"
+        matches_git=0
+        git -C "$p" grep -hoIF -f "$work/fingerprints" "$root" -- . >"$work/given.raw" || matches_git=$?
+        [ "$matches_git" -le 1 ] || die "cannot scan export root in $p"
+        LC_ALL=C sort -u "$work/given.raw" >"$work/given"
+        LC_ALL=C comm -23 "$work/fingerprints" "$work/given" >"$work/kept"
+        mv "$work/kept" "$work/fingerprints"
       fi
     done
-    cat "$private/.fingerprints" >>"$private/.patterns"
-    rm -f "$private/.fingerprints"
+    cat "$work/fingerprints" >>"$work/patterns"
   fi
   hits=0
-  report() { # LABEL: each matched string with its source
+  report() {
     while IFS= read -r m; do
-      src=$(grep -F -- "$m" "$private/tokens.tsv" | head -1 | cut -f2 || true)
-      [ -n "$src" ] && kind=token || { kind=fingerprint; src=$(grep -F -- "$m" "$private/fingerprints.tsv" | head -1 | cut -f3 || true); }
+      src=$(awk -F '\t' -v m="$m" '$1 == m { print $2; exit }' "$work/tokens.tsv")
+      if [ -n "$src" ]; then
+        kind=token
+      else
+        kind=fingerprint
+        src=unknown
+        if [ -f "$work/fingerprints.tsv" ]; then
+          src=$(awk -F '\t' -v m="$m" '$1 == m { print $3; exit }' "$work/fingerprints.tsv")
+        fi
+      fi
       echo "BREACH $kind from $src in $1: ${m:0:80}"
     done
   }
   for p in "$@"; do
     [ -e "$p" ] || die "$p does not exist"
-    found=$(grep -rhoIF -f "$private/.patterns" -- "$p" | sort -u || true)
-    [ -n "$found" ] && { hits=1; echo "$found" | report "$p"; }
-    if [ -d "$p/.git" ]; then
-      # The export's commits, messages and diffs included.
-      found=$(git -C "$p" log --all -p --format=fuller | grep -hoIF -f "$private/.patterns" | sort -u || true)
-      [ -n "$found" ] && { hits=1; echo "$found" | report "$p (history)"; }
+    found=$(matches -rhoIF -f "$work/patterns" -- "$p" | sort -u)
+    if [ -n "$found" ]; then hits=1; report "$p" <<<"$found"; fi
+    if [ -e "$p/.git" ]; then
+      # Materialize history so git failure cannot become a grep no-match verdict.
+      git -C "$p" log --all -p --format=fuller >"$work/history"
+      found=$(matches -hoIF -f "$work/patterns" "$work/history" | sort -u)
+      if [ -n "$found" ]; then hits=1; report "$p (history)" <<<"$found"; fi
     fi
   done
-  rm -f "$private/.patterns"
-  [ "$hits" -eq 0 ] && echo "CANARY CLEAN $*"
+  if [ "$hits" -eq 0 ]; then echo "CANARY CLEAN $*"; fi
   return "$hits"
-}
+)
 
 case ${1:-} in
-  plant) plant ;;
+  plant) with_record_lock plant ;;
   check) shift; check "$@" ;;
-  unplant) unplant; echo "canary: unplanted" ;;
+  unplant) with_record_lock unplant; echo "canary: unplanted" ;;
   list) active | cut -f2,3 ;;
   *) die "usage: canary.sh plant | check PATH... | unplant | list" ;;
 esac
