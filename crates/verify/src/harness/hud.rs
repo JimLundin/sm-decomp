@@ -1140,7 +1140,7 @@ impl Domain for HudDomain {
             | Skip::BossInPlay(_)
             | Skip::UndecodedDrop => Uncompared::Defect(skip.to_string()),
             Skip::HudStartUp(_) | Skip::Paused(_) | Skip::NoHudYet | Skip::Frames(_) => {
-                Uncompared::Skip(skip.to_string())
+                Uncompared::OutOfScope(skip.to_string())
             }
         }
     }

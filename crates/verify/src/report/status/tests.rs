@@ -76,13 +76,67 @@ fn the_first_rung_is_measured_over_its_rows_and_claimed_streams() {
 
 #[test]
 fn the_least_held_domain_holds_the_smallest_share_of_what_it_compares() {
-    let held = |held, compared, skipped| Accounting {
+    let held = |held, compared, out_of_scope| Accounting {
         held,
         compared,
-        skipped,
+        out_of_scope,
         ..Accounting::default()
     };
-    let rung = RungFigures {
+    let rung = figures([
+        // Holds every frame it compares, though most of the row is out of its scope.
+        (String::from("folds"), held(40, 40, 60)),
+        // Holds more frames, but not all it compares.
+        (String::from("misses"), held(90, 100, 0)),
+        // Compares nothing, so holds no share.
+        (String::from("absent"), held(0, 0, 100)),
+    ]);
+    assert_eq!(
+        rung.least_held(),
+        Some(Least {
+            domains: vec!["misses"],
+            share: (90, 100),
+            every: false,
+        })
+    );
+    assert_eq!(rung.after_seeds(), 100);
+    // Two domains that each hold all they compare tie, and are every domain that compares.
+    let mut whole = rung;
+    whole.held.insert(String::from("misses"), held(100, 100, 0));
+    assert_eq!(
+        whole.least_held().map(|least| least.cell()),
+        Some(String::from("100.0 % (every domain)"))
+    );
+}
+
+#[test]
+fn the_least_compared_domain_compares_the_smallest_share_of_its_scope() {
+    let accounted = |compared, unreached, out_of_scope| Accounting {
+        compared,
+        out_of_scope,
+        unreached,
+        ..Accounting::default()
+    };
+    let rung = figures([
+        // A passage-only domain: most of the row isn't its, and it compares all that is.
+        (String::from("passage"), accounted(30, 0, 70)),
+        // Answers for every frame and doesn't reach a tenth of them.
+        (String::from("short"), accounted(90, 10, 0)),
+        // Answers for none of the row's frames, so has no share.
+        (String::from("elsewhere"), accounted(0, 0, 100)),
+    ]);
+    assert_eq!(
+        rung.least_compared(),
+        Some(Least {
+            domains: vec!["short"],
+            share: (90, 100),
+            every: false,
+        })
+    );
+}
+
+/// A one-row rung of 101 frames whose domains account for its frames as `held` says.
+fn figures<const N: usize>(held: [(String, Accounting); N]) -> RungFigures {
+    RungFigures {
         id: String::from("M0"),
         name: String::from("r"),
         span: (0, 101),
@@ -94,37 +148,7 @@ fn the_least_held_domain_holds_the_smallest_share_of_what_it_compares() {
         green: 0,
         pairs: 0,
         frames: 101,
-        held: [
-            // Holds every frame it compares, though it skips most of the row.
-            (String::from("folds"), held(40, 40, 60)),
-            // Holds more frames, but not all it compares.
-            (String::from("misses"), held(90, 100, 0)),
-            // Compares nothing, so holds no share.
-            (String::from("absent"), held(0, 0, 100)),
-        ]
-        .into_iter()
-        .collect(),
+        held: held.into_iter().collect(),
         uncompared: 0,
-    };
-    assert_eq!(
-        rung.least_held(),
-        Some(Least {
-            domains: vec!["misses"],
-            share: (90, 100),
-            every: false,
-        })
-    );
-    // The domain that compares least is the one that skips most of the row.
-    assert_eq!(
-        rung.least_compared().map(|least| least.domains),
-        Some(vec!["absent"])
-    );
-    assert_eq!(rung.after_seeds(), 100);
-    // Two domains that each hold all they compare tie, and are every domain that compares.
-    let mut whole = rung;
-    whole.held.insert(String::from("misses"), held(100, 100, 0));
-    assert_eq!(
-        whole.least_held().map(|least| least.cell()),
-        Some(String::from("100.0 % (every domain)"))
-    );
+    }
 }

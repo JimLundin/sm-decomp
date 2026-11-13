@@ -554,10 +554,12 @@ impl RungFigures {
         self.least(|held| (held.held, held.compared))
     }
 
-    /// The domains whose free runs compare the smallest share of the rows' frames after their
-    /// seeds.
+    /// The domains whose free runs compare the smallest share of the frames in their scope:
+    /// those they answer for, not the ones another domain owns, so a domain that exists for a
+    /// few frames (the door passage) is measured over those. A domain with no frame in scope
+    /// holds no share.
     fn least_compared(&self) -> Option<Least<'_>> {
-        self.least(|held| (held.compared, held.frames()))
+        self.least(|held| (held.compared, held.in_scope()))
     }
 
     /// The domains with the smallest share `part` gives, of those whose share has a whole.
@@ -724,9 +726,10 @@ fn ladder(out: &mut String, tree: &Tree) {
          start inside it: the rows the free-run gate starts, their green (row, stream) pairs \
          over those streams, and the domain free run's two figures: the domain that holds the \
          smallest share of the frames it compares, and the domain that compares the smallest \
-         share of the rows' frames after their seeds ([the report's ladder](docs/REPORT.md#the-ladder) \
-         gives every domain, why it doesn't compare the rest, and the frames no model domain compares).\n\n\
-         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least compared | Still needed |\n\
+         share of the frames in its scope, those of the rows' frames after their seeds it answers \
+         for ([the report's ladder](docs/REPORT.md#the-ladder) gives every domain, its frames in \
+         and out of scope, and the frames no model domain compares).\n\n\
+         | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least compared of its scope | Still needed |\n\
          | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n",
     );
     for rung in &tree.rungs {
@@ -801,10 +804,14 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
          the gate to start a row, accounts for each of a row's frames after its seed once: \
          **compared**, run from a seed and held or diverged, **held** being a floor under those \
          that matched (a **masked** one is compared on the fields no other writer moved); \
-         **skipped**, a frame the domain doesn't run in or can't decode; or **folded**, a record \
-         the domain folds into the frame before it, such as a lag record. The share held is of \
-         the frames compared, so it reads the same for a domain that compares every frame and \
-         one that compares a few. The frames no model domain compares are the rung's gap; \
+         **out of scope**, a frame the domain doesn't run in or another domain owns, such as a \
+         door passage for every domain but world-doors and play for world-doors; **unreached**, \
+         a frame the domain answers for but doesn't compare, because its model doesn't take it \
+         yet or the harness can't decode it; or **folded**, a record the domain folds into the \
+         frame before it, such as a lag record. A domain's **scope** is its compared and \
+         unreached frames. The share held is of the frames compared, so it reads the same for \
+         a domain that compares every frame and one that compares a few; the share compared is \
+         of the frames in scope. The frames no model domain compares are the rung's gap; \
          game-time, the clock, compares every frame and is left out of it.\n",
     );
     for rung in &tree.rungs {
@@ -822,20 +829,26 @@ pub(super) fn ladder_section(out: &mut String, tree: &Tree) {
             &[
                 "Domain free run",
                 "Held of compared",
+                "Compared of in scope",
                 "Masked",
-                "Skipped",
+                "Unreached",
+                "Out of scope",
                 "Folded",
             ],
         );
         for (domain, held) in &rung.held {
             let _ = writeln!(
                 out,
-                "| {domain} | {} of {} ({}) | {} | {} | {} |",
+                "| {domain} | {} of {} ({}) | {} of {} ({}) | {} | {} | {} | {} |",
                 figure(held.held),
                 figure(held.compared),
                 share(held.held, held.compared),
+                figure(held.compared),
+                figure(held.in_scope()),
+                share(held.compared, held.in_scope()),
                 figure(held.masked),
-                figure(held.skipped),
+                figure(held.unreached),
+                figure(held.out_of_scope),
                 figure(held.folded),
             );
         }

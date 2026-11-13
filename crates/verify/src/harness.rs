@@ -8,9 +8,9 @@
 //! cache.
 //!
 //! The measure is honest (MODEL §4, "The measure must be honest"). The [`Report`] counts every
-//! recorded frame pair, M, and splits it into frames the domain doesn't run in (skipped, by
-//! reason), frames the decode failed on (harness defects) and compared frames. On a compared
-//! frame a field out of the domain's scope is masked, by reason, and the rest are compared. A
+//! recorded frame pair, M, and splits it into frames the domain doesn't run in or take yet
+//! (skipped, by reason), frames the decode failed on (harness defects) and compared frames. On a
+//! compared frame a field out of the domain's scope is masked, by reason, the rest compared. A
 //! field whose value depends on what the domain's stand-in for its neighbours copied from
 //! record N+1 is unverified, not matched: the harness steps the frame a second time against
 //! [`Domain::neutral`]'s stand-in, which copies nothing, and a field whose value differs
@@ -195,13 +195,31 @@ pub enum Hides {
     NoWriter,
 }
 
-/// Why a frame pair isn't compared: the domain doesn't run in it, or its decode failed.
+/// Why a frame pair isn't compared: the frame isn't the domain's, its model doesn't take it
+/// yet, or its decode failed.
+///
+/// Only the first is out of the domain's scope: the others are frames it answers for and
+/// doesn't reach.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Uncompared {
-    /// The domain doesn't run in the frame, for this named reason.
-    Skip(String),
+    /// The domain doesn't run in the frame, or another domain owns it, for this named reason.
+    OutOfScope(String),
+    /// The frame is the domain's, but a behaviour its model doesn't take yet runs in it, for
+    /// this named reason.
+    NotYet(String),
     /// The harness couldn't decode the frame: a defect of the harness, never a scope call.
     Defect(String),
+}
+
+impl Uncompared {
+    /// Whether the frame is one the domain answers for.
+    #[must_use]
+    pub const fn in_scope(&self) -> bool {
+        match self {
+            Self::OutOfScope(_) => false,
+            Self::NotYet(_) | Self::Defect(_) => true,
+        }
+    }
 }
 
 /// A domain of the engine as the harness checks it.
@@ -298,9 +316,10 @@ pub trait Domain {
     /// The reason the record isn't one the domain covers, or the decode's failure.
     fn expected(&self, next: &FrameRecord) -> Result<Self::Fields, Self::Skip>;
 
-    /// Whether `skip` is a frame the domain doesn't run in, or a decode failure.
+    /// Whether `skip` is a frame out of the domain's scope, one its model doesn't take yet, or
+    /// a decode failure.
     fn uncompared(&self, skip: &Self::Skip) -> Uncompared {
-        Uncompared::Skip(skip.to_string())
+        Uncompared::OutOfScope(skip.to_string())
     }
 
     /// Whether record `next` falls inside the frame that began at record `from`, so the frame
@@ -435,7 +454,7 @@ pub struct Report {
     pub masked_whole: u64,
     /// The compared frames on which the null model matched every unmasked field.
     pub null_matched: u64,
-    /// The frames the domain doesn't run in, by reason.
+    /// The frames the domain doesn't run in or its model doesn't take yet, by reason.
     pub skipped: BTreeMap<String, u64>,
     /// The frames the harness couldn't decode, by failure: harness defects.
     pub defects: BTreeMap<String, u64>,
@@ -488,14 +507,16 @@ impl Report {
 
     fn uncompared(&mut self, reason: Uncompared) {
         let (counts, reason) = match reason {
-            Uncompared::Skip(reason) => (&mut self.skipped, reason),
+            Uncompared::OutOfScope(reason) | Uncompared::NotYet(reason) => {
+                (&mut self.skipped, reason)
+            }
             Uncompared::Defect(reason) => (&mut self.defects, reason),
         };
         let count = counts.entry(reason).or_default();
         *count = count.saturating_add(1);
     }
 
-    /// The frames the domain doesn't run in.
+    /// The frames the domain doesn't run in or its model doesn't take yet.
     #[must_use]
     pub fn skipped_frames(&self) -> u64 {
         self.skipped.values().sum()
@@ -817,7 +838,7 @@ pub fn run<D: Domain, E>(
     })?;
     if mid_frame {
         report.frames = report.frames.saturating_add(1);
-        report.uncompared(Uncompared::Skip("the row ends mid-frame".to_owned()));
+        report.uncompared(Uncompared::OutOfScope("the row ends mid-frame".to_owned()));
     }
     Ok(report)
 }

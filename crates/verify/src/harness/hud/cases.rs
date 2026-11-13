@@ -81,7 +81,9 @@ impl HudDomain {
         let from = record(case.checked.saturating_sub(1))?;
         let uncompared = |skip| {
             let why = match self.uncompared(&skip) {
-                Uncompared::Skip(why) => format!("skipped: {why}"),
+                Uncompared::OutOfScope(why) | Uncompared::NotYet(why) => {
+                    format!("skipped: {why}")
+                }
                 Uncompared::Defect(why) => format!("a defect: {why}"),
             };
             vec![why]

@@ -864,7 +864,7 @@ impl Domain for CameraDomain {
         match skip {
             Skip::Unreadable(_) | Skip::Room(_) => Uncompared::Defect(skip.to_string()),
             Skip::GameState(_) | Skip::Frames(_) | Skip::RoomChange => {
-                Uncompared::Skip(skip.to_string())
+                Uncompared::OutOfScope(skip.to_string())
             }
         }
     }

@@ -15,15 +15,19 @@
 //!   as held on its unmasked fields and the next frame seeds afresh. A mask no writer stands
 //!   behind ([`Hides::NoWriter`]: a field reported and not counted, or one the frame doesn't
 //!   produce) leaves the field uncompared and the segment running;
-//! - a frame the domain doesn't run in or can't decode (**skipped**);
+//! - a frame the domain doesn't run in, doesn't take yet or can't decode (**skipped**);
 //! - the row's end.
 //!
 //! The next segment seeds from the next frame the domain runs in. A segment's **held** frames
 //! are those it ran before it ended, all matching. Each of a row's records but its first, which
 //! only seeds, is one of: **folded**, a record the domain folds into the frame before it, so it
-//! ends no frame of its own; **skipped**, ending a frame the domain doesn't run in or can't
-//! decode; or **compared**, ending a frame held or diverged. A compared frame on which another
-//! writer moved a declared field is compared on the rest (**masked**). The report gives, per
+//! ends no frame of its own; **skipped**, ending a frame the domain doesn't compare; or
+//! **compared**, ending a frame held or diverged. A compared frame on which another writer moved
+//! a declared field is compared on the rest (**masked**). A skipped frame is **out of scope**
+//! when it isn't the domain's ([`Uncompared::OutOfScope`]), and otherwise **unreached**: one its
+//! model doesn't take yet or the harness can't decode, which the domain answers for. A domain's
+//! **scope** on a row is its compared and unreached frames, so a domain that exists only for
+//! some frames (the door passage) isn't measured over the rest. The report gives, per
 //! row, the frames held and how its records are accounted for, the segments by how they ended,
 //! the longest, and each field's first divergence. A model that holds a row in one segment
 //! plays that row alone, as far as its fields go; a row of many short segments ending in masks
@@ -36,7 +40,8 @@ use std::path::Path;
 use oracle_record::FrameRecord;
 
 use super::{
-    Domain, FieldSet, HarnessError, Hides, Interval, Mismatch, differing, frames, open_cached,
+    Domain, FieldSet, HarnessError, Hides, Interval, Mismatch, Uncompared, differing, frames,
+    open_cached,
 };
 use crate::lock::Frame;
 
@@ -77,8 +82,11 @@ pub struct FreeReport {
     pub frames: u64,
     /// The records folded into the frame before them, ending no frame of their own.
     pub folded: u64,
-    /// The frames the domain doesn't run in or couldn't decode, so never compared.
-    pub skipped_frames: u64,
+    /// The frames skipped as not the domain's ([`Uncompared::OutOfScope`]).
+    pub out_of_scope_frames: u64,
+    /// The frames skipped that are the domain's: its model doesn't take them yet, or the harness
+    /// couldn't decode them.
+    pub unreached_frames: u64,
     /// The compared frames on which another domain's writer moved a declared field, compared on
     /// the others.
     pub masked_frames: u64,
@@ -114,10 +122,17 @@ impl FreeReport {
         }
     }
 
+    /// The frames skipped, out of scope or unreached, so never compared.
+    #[must_use]
+    pub const fn skipped_frames(&self) -> u64 {
+        self.out_of_scope_frames
+            .saturating_add(self.unreached_frames)
+    }
+
     /// The frames compared: run from a seed, held or diverged.
     #[must_use]
     pub const fn compared(&self) -> u64 {
-        self.frames.saturating_sub(self.skipped_frames)
+        self.frames.saturating_sub(self.skipped_frames())
     }
 
     /// The segments, of every kind.
@@ -170,7 +185,10 @@ impl FreeReport {
         self.domain = other.domain;
         self.frames = self.frames.saturating_add(other.frames);
         self.folded = self.folded.saturating_add(other.folded);
-        self.skipped_frames = self.skipped_frames.saturating_add(other.skipped_frames);
+        self.out_of_scope_frames = self
+            .out_of_scope_frames
+            .saturating_add(other.out_of_scope_frames);
+        self.unreached_frames = self.unreached_frames.saturating_add(other.unreached_frames);
         self.masked_frames = self.masked_frames.saturating_add(other.masked_frames);
         self.held = self.held.saturating_add(other.held);
         self.diverged = self.diverged.saturating_add(other.diverged);
@@ -188,13 +206,15 @@ impl fmt::Display for FreeReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
-            "{} free run: {} frames compared, {} held, {} masked; {} skipped, {} folded; \
-             {} segments: {} diverged, {} masked, {} skipped, {} to the row's end",
+            "{} free run: {} frames compared, {} held, {} masked; {} skipped out of scope, \
+             {} unreached, {} folded; {} segments: {} diverged, {} masked, {} skipped, {} to the \
+             row's end",
             self.domain,
             self.compared(),
             self.held,
             self.masked_frames,
-            self.skipped_frames,
+            self.out_of_scope_frames,
+            self.unreached_frames,
             self.folded,
             self.segments(),
             self.diverged,
@@ -258,18 +278,24 @@ fn names<D: Domain>(set: FieldSet) -> Vec<&'static str> {
 }
 
 /// One frame from `from` to `next`, stepping the segment in progress or seeding one, and
-/// whether another writer moved a declared field in it; `None` when the domain doesn't run in
-/// the frame or can't decode it.
+/// whether another writer moved a declared field in it.
+///
+/// # Errors
+///
+/// Why the frame isn't compared, as the domain classes its skip.
 fn step<D: Domain>(
     domain: &D,
     open: Option<Open<D::State>>,
     from: &FrameRecord,
     next: &FrameRecord,
-) -> Option<(Step<D::State>, bool)> {
-    let (seeded, inputs) = domain.decode(from, Interval::ending_at(next)).ok()?;
-    let mut world = domain.world(from, next).ok()?;
-    let masks = domain.masks(from, next, &inputs).ok()?;
-    let oracle = domain.expected(next).ok()?;
+) -> Result<(Step<D::State>, bool), Uncompared> {
+    let skipped = |skip: D::Skip| domain.uncompared(&skip);
+    let (seeded, inputs) = domain
+        .decode(from, Interval::ending_at(next))
+        .map_err(skipped)?;
+    let mut world = domain.world(from, next).map_err(skipped)?;
+    let masks = domain.masks(from, next, &inputs).map_err(skipped)?;
+    let oracle = domain.expected(next).map_err(skipped)?;
     let Open {
         seed,
         held,
@@ -312,18 +338,18 @@ fn step<D: Domain>(
             held,
             end: End::Diverged(frame, fields),
         });
-        return Some((ended, !lost.is_empty()));
+        return Ok((ended, !lost.is_empty()));
     }
     let held = held.saturating_add(1);
     if lost.is_empty() {
-        Some((Step::Held(Open { seed, held, state }), false))
+        Ok((Step::Held(Open { seed, held, state }), false))
     } else {
         let ended = Step::Ended(Segment {
             seed,
             held,
             end: End::Masked(frame, names::<D>(lost)),
         });
-        Some((ended, true))
+        Ok((ended, true))
     }
 }
 
@@ -348,16 +374,24 @@ pub fn run<D: Domain, E>(
         let (seed, held) = carried
             .as_ref()
             .map_or((Frame(from.index), 0), |open| (open.seed, open.held));
-        let Some((stepped, masked)) = step(domain, carried, from, next) else {
-            report.skipped_frames = report.skipped_frames.saturating_add(1);
-            if held > 0 {
-                report.close(Segment {
-                    seed,
-                    held,
-                    end: End::Skipped(Frame(next.index)),
-                });
+        let (stepped, masked) = match step(domain, carried, from, next) {
+            Ok(stepped) => stepped,
+            Err(why) => {
+                let skipped = if why.in_scope() {
+                    &mut report.unreached_frames
+                } else {
+                    &mut report.out_of_scope_frames
+                };
+                *skipped = skipped.saturating_add(1);
+                if held > 0 {
+                    report.close(Segment {
+                        seed,
+                        held,
+                        end: End::Skipped(Frame(next.index)),
+                    });
+                }
+                return;
             }
-            return;
         };
         report.compared_at.insert(next.index);
         if masked {
@@ -410,8 +444,11 @@ pub struct Accounting {
     pub compared: u64,
     /// Of those, the frames another writer moved a declared field in, compared on the rest.
     pub masked: u64,
-    /// The frames the domain doesn't run in or can't decode.
-    pub skipped: u64,
+    /// The frames skipped as not the domain's.
+    pub out_of_scope: u64,
+    /// The frames skipped that are the domain's: its model doesn't take them yet, or the harness
+    /// can't decode them.
+    pub unreached: u64,
     /// The records folded into the frame before them.
     pub folded: u64,
 }
@@ -424,7 +461,8 @@ impl Accounting {
             held: report.held,
             compared: report.compared(),
             masked: report.masked_frames,
-            skipped: report.skipped_frames,
+            out_of_scope: report.out_of_scope_frames,
+            unreached: report.unreached_frames,
             folded: report.folded,
         }
     }
@@ -434,16 +472,23 @@ impl Accounting {
     pub const fn same_records(&self, other: &Self) -> bool {
         self.compared == other.compared
             && self.masked == other.masked
-            && self.skipped == other.skipped
+            && self.out_of_scope == other.out_of_scope
+            && self.unreached == other.unreached
             && self.folded == other.folded
     }
 
     /// The records after the rows' seeds: compared, skipped or folded.
     #[must_use]
     pub const fn frames(&self) -> u64 {
-        self.compared
-            .saturating_add(self.skipped)
+        self.in_scope()
+            .saturating_add(self.out_of_scope)
             .saturating_add(self.folded)
+    }
+
+    /// The frames the domain answers for: compared or unreached.
+    #[must_use]
+    pub const fn in_scope(&self) -> u64 {
+        self.compared.saturating_add(self.unreached)
     }
 
     /// `other`'s figures added to `self`'s, a total over rows.
@@ -451,7 +496,8 @@ impl Accounting {
         self.held = self.held.saturating_add(other.held);
         self.compared = self.compared.saturating_add(other.compared);
         self.masked = self.masked.saturating_add(other.masked);
-        self.skipped = self.skipped.saturating_add(other.skipped);
+        self.out_of_scope = self.out_of_scope.saturating_add(other.out_of_scope);
+        self.unreached = self.unreached.saturating_add(other.unreached);
         self.folded = self.folded.saturating_add(other.folded);
     }
 
@@ -459,8 +505,8 @@ impl Accounting {
     #[must_use]
     pub fn line(&self, domain: &str, row: &str) -> String {
         format!(
-            "{domain} {row} {} {} {} {} {}",
-            self.held, self.compared, self.masked, self.skipped, self.folded
+            "{domain} {row} {} {} {} {} {} {}",
+            self.held, self.compared, self.masked, self.out_of_scope, self.unreached, self.folded
         )
     }
 }
@@ -478,7 +524,8 @@ pub struct Floors {
 }
 
 impl Floors {
-    /// The floors in `text`: `<domain> <row> <held> <compared> <masked> <skipped> <folded>` and
+    /// The floors in `text`:
+    /// `<domain> <row> <held> <compared> <masked> <out-of-scope> <unreached> <folded>` and
     /// `uncompared <row> <frames>` lines, `#` comments skipped.
     ///
     /// # Errors
@@ -496,12 +543,22 @@ impl Floors {
                 [UNCOMPARED, row, frames] => {
                     floors.uncompared.insert((*row).to_owned(), number(frames)?);
                 }
-                [domain, row, held, compared, masked, skipped, folded] => {
+                [
+                    domain,
+                    row,
+                    held,
+                    compared,
+                    masked,
+                    out_of_scope,
+                    unreached,
+                    folded,
+                ] => {
                     let accounting = Accounting {
                         held: number(held)?,
                         compared: number(compared)?,
                         masked: number(masked)?,
-                        skipped: number(skipped)?,
+                        out_of_scope: number(out_of_scope)?,
+                        unreached: number(unreached)?,
                         folded: number(folded)?,
                     };
                     floors
@@ -510,7 +567,8 @@ impl Floors {
                 }
                 _ => {
                     return Err(format!(
-                        "{line}: not `domain row held compared masked skipped folded` nor \
+                        "{line}: not `domain row held compared masked out-of-scope unreached \
+                         folded` nor \
                          `{UNCOMPARED} row frames`"
                     ));
                 }

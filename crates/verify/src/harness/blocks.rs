@@ -1035,7 +1035,7 @@ impl Domain for BlocksDomain {
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
             Skip::NotGameplay | Skip::Frames(_) | Skip::RoomChanged => {
-                Uncompared::Skip(skip.to_string())
+                Uncompared::OutOfScope(skip.to_string())
             }
             Skip::Unreadable(_)
             | Skip::Refused(_)

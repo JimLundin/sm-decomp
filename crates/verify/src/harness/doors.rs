@@ -1372,7 +1372,7 @@ impl Domain for DoorsDomain {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Play => Uncompared::Skip(skip.to_string()),
+            Skip::Play => Uncompared::OutOfScope(skip.to_string()),
             Skip::Unreadable(_)
             | Skip::UnknownFunction(_)
             | Skip::NotAColour(_)

@@ -608,7 +608,7 @@ impl Domain for Appearance {
             | Skip::NotAnimating(_)
             | Skip::Stalled
             | Skip::MessageBoxEnded
-            | Skip::Pose(_) => Uncompared::Skip(skip.to_string()),
+            | Skip::Pose(_) => Uncompared::OutOfScope(skip.to_string()),
         }
     }
 

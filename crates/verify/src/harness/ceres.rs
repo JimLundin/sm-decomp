@@ -710,7 +710,7 @@ impl Domain for CeresDomain {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::NoDoors | Skip::RoomChanges => Uncompared::Skip(skip.to_string()),
+            Skip::NoDoors | Skip::RoomChanges => Uncompared::OutOfScope(skip.to_string()),
             Skip::Unreadable(_)
             | Skip::UnknownDoor(..)
             | Skip::UnknownFigure(..)

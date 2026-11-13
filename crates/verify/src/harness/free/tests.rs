@@ -126,7 +126,7 @@ fn a_rows_records_are_each_compared_skipped_or_folded_once() {
     }
     let report = free(records);
     assert_eq!(
-        (report.compared(), report.skipped_frames, report.folded),
+        (report.compared(), report.skipped_frames(), report.folded),
         (2, 2, 0)
     );
     assert_eq!(report.compared_at, BTreeSet::from([1, 4]));
@@ -136,7 +136,7 @@ fn a_rows_records_are_each_compared_skipped_or_folded_once() {
 
 #[test]
 fn the_floors_parse_each_domains_accounting_and_each_rows_gap() {
-    let parsed = Floors::parse("# floors\ngame-time r1 5 6 1 2 3\nuncompared r1 4\n");
+    let parsed = Floors::parse("# floors\ngame-time r1 5 6 1 2 7 3\nuncompared r1 4\n");
     let Ok(floors) = parsed else {
         panic!("the floors don't parse: {parsed:?}");
     };
@@ -144,11 +144,12 @@ fn the_floors_parse_each_domains_accounting_and_each_rows_gap() {
         .domains
         .get(&("game-time".to_owned(), "r1".to_owned()));
     assert_eq!(
-        accounting.map(|accounting| (accounting.held, accounting.frames())),
-        Some((5, 11))
+        accounting.map(|accounting| (accounting.held, accounting.in_scope(), accounting.frames())),
+        Some((5, 13, 18))
     );
     assert_eq!(floors.uncompared.get("r1"), Some(&4));
     assert!(Floors::parse("game-time r1 5\n").is_err());
+    assert!(Floors::parse("game-time r1 5 6 1 2 3\n").is_err());
     assert!(Floors::parse("uncompared r1\n").is_err());
 }
 
@@ -299,4 +300,36 @@ fn every_domain_runs_free_against_the_cache() {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn a_skip_counts_in_scope_unless_the_domain_names_it_out_of_scope() {
+    // The same unreadable record: the clock calls it a defect, a frame it answers for and
+    // doesn't reach; the copying clock names every skip out of its scope.
+    let records = || {
+        let mut records = clock(&[0, 1, 2, 3]);
+        let mut short = record(2, 8, [0; 4]);
+        short.wram = Box::default();
+        if let Some(slot) = records.get_mut(2) {
+            *slot = Ok(short);
+        }
+        records
+    };
+    let defect = Accounting::of(&free(records()));
+    assert_eq!(
+        (defect.compared, defect.unreached, defect.out_of_scope),
+        (1, 2, 0)
+    );
+    assert_eq!(defect.in_scope(), 3);
+    let Ok(report) = run(&Copying(Hides::NoWriter), records());
+    let elsewhere = Accounting::of(&report);
+    assert_eq!(
+        (
+            elsewhere.compared,
+            elsewhere.unreached,
+            elsewhere.out_of_scope
+        ),
+        (1, 0, 2)
+    );
+    assert_eq!(elsewhere.in_scope(), 1);
 }

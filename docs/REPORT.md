@@ -340,13 +340,13 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | samus-movement | bridge | 4 | 3,158 | 3,753 | 286 | 197 | 127 | 90 | 3 | 597 |
-| samus-movement | harness | 2 | 6,824 | 6,890 | 760 | 890 | 429 | 529 | 22 | 1,299 |
+| samus-movement | harness | 2 | 6,833 | 6,899 | 760 | 890 | 429 | 529 | 22 | 1,298 |
 | world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
 | world-camera | harness | 2 | 6,082 | 6,206 | 784 | 266 | 290 | 432 | 30 | 1,066 |
 | run-progress | bridge | 1 | 1,343 | 1,634 | 54 | 195 | 31 | 45 | 22 | 272 |
 | run-progress | harness | 3 | 7,869 | 7,442 | 1,053 | 1,221 | 811 | 609 | 62 | 1,401 |
 | interface-hud | bridge | 1 | 2,314 | 2,476 | 119 | 133 | 157 | 111 | 16 | 388 |
-| interface-hud | harness | 2 | 5,590 | 5,849 | 834 | 468 | 326 | 223 | 30 | 1,034 |
+| interface-hud | harness | 2 | 5,599 | 5,855 | 834 | 468 | 329 | 223 | 30 | 1,036 |
 | world-blocks | bridge | 1 | 7,107 | 6,889 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
 | samus-appearance | bridge | 2 | 1,743 | 2,087 | 201 | 136 | 89 | 50 | 19 | 352 |
@@ -355,7 +355,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | boss-ceres-ridley | harness | 1 | 3,328 | 3,084 | 561 | 96 | 317 | 344 | 7 | 556 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | harness | 1 | 6,207 | 5,883 | 1,195 | 438 | 342 | 622 | 31 | 1,081 |
-| total | | | 63,573 | 64,202 | 7,632 | 4,924 | 4,601 | 4,263 | 353 | 11,023 |
+| total | | | 63,590 | 64,217 | 7,632 | 4,924 | 4,604 | 4,263 | 353 | 11,024 |
 
 ## Harness floors and vectors
 
@@ -778,49 +778,49 @@ Each rung of the ladder toward the headline milestone (`[[rung]]` in `docs/archi
 | M1 | vram, cgram, oam, sram, ppu, video, timing | 5, 1,624 frames | 5 of 5 | 10 of 35 |
 | M2 | vram, cgram, oam, sram, ppu, video, timing | 10, 4,534 frames | 10 of 10 | 20 of 70 |
 
-The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't need the gate to start a row, accounts for each of a row's frames after its seed once: **compared**, run from a seed and held or diverged, **held** being a floor under those that matched (a **masked** one is compared on the fields no other writer moved); **skipped**, a frame the domain doesn't run in or can't decode; or **folded**, a record the domain folds into the frame before it, such as a lag record. The share held is of the frames compared, so it reads the same for a domain that compares every frame and one that compares a few. The frames no model domain compares are the rung's gap; game-time, the clock, compares every frame and is left out of it.
+The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't need the gate to start a row, accounts for each of a row's frames after its seed once: **compared**, run from a seed and held or diverged, **held** being a floor under those that matched (a **masked** one is compared on the fields no other writer moved); **out of scope**, a frame the domain doesn't run in or another domain owns, such as a door passage for every domain but world-doors and play for world-doors; **unreached**, a frame the domain answers for but doesn't compare, because its model doesn't take it yet or the harness can't decode it; or **folded**, a record the domain folds into the frame before it, such as a lag record. A domain's **scope** is its compared and unreached frames. The share held is of the frames compared, so it reads the same for a domain that compares every frame and one that compares a few; the share compared is of the frames in scope. The frames no model domain compares are the rung's gap; game-time, the clock, compares every frame and is left out of it.
 
 **M0**: 344 frames after its rows' seeds, 0 (0.0 %) compared by no model domain.
 
-| Domain free run | Held of compared | Masked | Skipped | Folded |
-| --- | ---: | ---: | ---: | ---: |
-| boss-ceres-ridley | 341 of 341 (100.0 %) | 0 | 3 | 0 |
-| game-time | 344 of 344 (100.0 %) | 0 | 0 | 0 |
-| interface-hud | 225 of 225 (100.0 %) | 19 | 0 | 119 |
-| run-progress | 344 of 344 (100.0 %) | 0 | 0 | 0 |
-| samus-appearance | 182 of 182 (100.0 %) | 0 | 43 | 119 |
-| samus-movement | 182 of 182 (100.0 %) | 5 | 162 | 0 |
-| world-blocks | 181 of 181 (100.0 %) | 0 | 105 | 58 |
-| world-camera | 181 of 181 (100.0 %) | 0 | 163 | 0 |
-| world-doors | 105 of 105 (100.0 %) | 0 | 182 | 57 |
+| Domain free run | Held of compared | Compared of in scope | Masked | Unreached | Out of scope | Folded |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| boss-ceres-ridley | 341 of 341 (100.0 %) | 341 of 341 (100.0 %) | 0 | 0 | 3 | 0 |
+| game-time | 344 of 344 (100.0 %) | 344 of 344 (100.0 %) | 0 | 0 | 0 | 0 |
+| interface-hud | 225 of 225 (100.0 %) | 225 of 225 (100.0 %) | 19 | 0 | 0 | 119 |
+| run-progress | 344 of 344 (100.0 %) | 344 of 344 (100.0 %) | 0 | 0 | 0 | 0 |
+| samus-appearance | 182 of 182 (100.0 %) | 182 of 182 (100.0 %) | 0 | 0 | 43 | 119 |
+| samus-movement | 182 of 182 (100.0 %) | 182 of 182 (100.0 %) | 5 | 0 | 162 | 0 |
+| world-blocks | 181 of 181 (100.0 %) | 181 of 181 (100.0 %) | 0 | 0 | 105 | 58 |
+| world-camera | 181 of 181 (100.0 %) | 181 of 181 (100.0 %) | 0 | 0 | 163 | 0 |
+| world-doors | 105 of 105 (100.0 %) | 105 of 105 (100.0 %) | 0 | 0 | 182 | 57 |
 
 **M1**: 1,619 frames after its rows' seeds, 0 (0.0 %) compared by no model domain.
 
-| Domain free run | Held of compared | Masked | Skipped | Folded |
-| --- | ---: | ---: | ---: | ---: |
-| boss-ceres-ridley | 1,465 of 1,465 (100.0 %) | 0 | 154 | 0 |
-| game-time | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 |
-| interface-hud | 987 of 987 (100.0 %) | 68 | 0 | 632 |
-| run-progress | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 |
-| samus-appearance | 647 of 647 (100.0 %) | 0 | 340 | 632 |
-| samus-movement | 647 of 647 (100.0 %) | 13 | 972 | 0 |
-| world-blocks | 743 of 743 (100.0 %) | 0 | 590 | 286 |
-| world-camera | 743 of 743 (100.0 %) | 0 | 876 | 0 |
-| world-doors | 590 of 590 (100.0 %) | 0 | 748 | 281 |
+| Domain free run | Held of compared | Compared of in scope | Masked | Unreached | Out of scope | Folded |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| boss-ceres-ridley | 1,465 of 1,465 (100.0 %) | 1,465 of 1,465 (100.0 %) | 0 | 0 | 154 | 0 |
+| game-time | 1,619 of 1,619 (100.0 %) | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 | 0 |
+| interface-hud | 987 of 987 (100.0 %) | 987 of 987 (100.0 %) | 68 | 0 | 0 | 632 |
+| run-progress | 1,619 of 1,619 (100.0 %) | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 | 0 |
+| samus-appearance | 647 of 647 (100.0 %) | 647 of 647 (100.0 %) | 0 | 0 | 340 | 632 |
+| samus-movement | 647 of 647 (100.0 %) | 647 of 647 (100.0 %) | 13 | 0 | 972 | 0 |
+| world-blocks | 743 of 743 (100.0 %) | 743 of 743 (100.0 %) | 0 | 0 | 590 | 286 |
+| world-camera | 743 of 743 (100.0 %) | 743 of 743 (100.0 %) | 0 | 0 | 876 | 0 |
+| world-doors | 590 of 590 (100.0 %) | 590 of 590 (100.0 %) | 0 | 0 | 748 | 281 |
 
 **M2**: 4,524 frames after its rows' seeds, 0 (0.0 %) compared by no model domain.
 
-| Domain free run | Held of compared | Masked | Skipped | Folded |
-| --- | ---: | ---: | ---: | ---: |
-| boss-ceres-ridley | 2,667 of 2,667 (100.0 %) | 0 | 1,857 | 0 |
-| game-time | 4,524 of 4,524 (100.0 %) | 0 | 0 | 0 |
-| interface-hud | 3,292 of 3,292 (100.0 %) | 145 | 0 | 1,232 |
-| run-progress | 4,524 of 4,524 (100.0 %) | 5 | 0 | 0 |
-| samus-appearance | 2,581 of 2,581 (100.0 %) | 0 | 711 | 1,232 |
-| samus-movement | 2,577 of 2,588 (99.6 %) | 82 | 1,936 | 0 |
-| world-blocks | 2,825 of 2,825 (100.0 %) | 0 | 1,118 | 581 |
-| world-camera | 2,825 of 2,825 (100.0 %) | 21 | 1,699 | 0 |
-| world-doors | 1,118 of 1,118 (100.0 %) | 1 | 2,835 | 571 |
+| Domain free run | Held of compared | Compared of in scope | Masked | Unreached | Out of scope | Folded |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| boss-ceres-ridley | 2,667 of 2,667 (100.0 %) | 2,667 of 2,667 (100.0 %) | 0 | 0 | 1,857 | 0 |
+| game-time | 4,524 of 4,524 (100.0 %) | 4,524 of 4,524 (100.0 %) | 0 | 0 | 0 | 0 |
+| interface-hud | 3,292 of 3,292 (100.0 %) | 3,292 of 3,292 (100.0 %) | 145 | 0 | 0 | 1,232 |
+| run-progress | 4,524 of 4,524 (100.0 %) | 4,524 of 4,524 (100.0 %) | 5 | 0 | 0 | 0 |
+| samus-appearance | 2,581 of 2,581 (100.0 %) | 2,581 of 2,581 (100.0 %) | 0 | 0 | 711 | 1,232 |
+| samus-movement | 2,577 of 2,588 (99.6 %) | 2,588 of 2,614 (99.0 %) | 82 | 26 | 1,910 | 0 |
+| world-blocks | 2,825 of 2,825 (100.0 %) | 2,825 of 2,825 (100.0 %) | 0 | 0 | 1,118 | 581 |
+| world-camera | 2,825 of 2,825 (100.0 %) | 2,825 of 2,825 (100.0 %) | 21 | 0 | 1,699 | 0 |
+| world-doors | 1,118 of 1,118 (100.0 %) | 1,118 of 1,118 (100.0 %) | 1 | 0 | 2,835 | 571 |
 
 ## Domain graph
 

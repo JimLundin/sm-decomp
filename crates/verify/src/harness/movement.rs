@@ -1314,9 +1314,8 @@ impl Domain for Movement {
             | Skip::NotAtFrameEnd
             | Skip::Waiting(_)
             | Skip::Pose(_)
-            | Skip::NotRunning(_)
-            | Skip::MovementHandler(_)
-            | Skip::Deferred(_) => Uncompared::Skip(skip.to_string()),
+            | Skip::NotRunning(_) => Uncompared::OutOfScope(skip.to_string()),
+            Skip::MovementHandler(_) | Skip::Deferred(_) => Uncompared::NotYet(skip.to_string()),
         }
     }
 }
