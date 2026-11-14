@@ -61,17 +61,33 @@ main_checkout() {
   echo "$(dirname "$common")"
 }
 
-active() { [ -f "$private/active.tsv" ] && cat "$private/active.tsv"; return 0; }
+active() { if [ -f "$private/active.tsv" ]; then cat "$private/active.tsv"; fi; }
+
+# A NUL anywhere marks binary data. Read the whole file before deciding: an early
+# grep match can overlook a binary tail, and an unreadable file must never look like text.
+text_file() {
+  local nul_count
+  nul_count=$(LC_ALL=C tr -cd '\000' <"$1" | wc -c) || die "cannot read $1"
+  [ "$nul_count" -eq 0 ]
+}
+
+strip_token() {
+  local status=0
+  grep -vF "$1" "$2" || status=$?
+  [ "$status" -le 1 ] || die "cannot read $2"
+}
 
 unplant() {
   active | while IFS=$'\t' read -r token kind path; do
     case $kind in
       file) [ -f "$path" ] || continue
-            { grep -vF "$token" "$path" || true; } >"$path.canary-tmp" && mv "$path.canary-tmp" "$path" ;;
+            if ! text_file "$path"; then continue; fi
+            strip_token "$token" "$path" >"$path.canary-tmp" || die "cannot unplant $path"
+            mv "$path.canary-tmp" "$path" || die "cannot replace $path" ;;
       glossary) rm -f "$path" ;;
     esac
   done
-  : >"$private/active.tsv" 2>/dev/null || true
+  : >"$private/active.tsv"
 }
 
 record_token() { # TOKEN KIND PATH
@@ -80,12 +96,16 @@ record_token() { # TOKEN KIND PATH
 }
 
 plant_file() {
+  if ! text_file "$1"; then return 0; fi
   # A file under 20 lines is a state file some tool reads (a hash, a pointer), not a source.
-  [ "$(wc -l <"$1")" -ge 20 ] || return 0
+  local lines
+  lines=$(wc -l <"$1") || die "cannot read $1"
+  [ "$lines" -ge 20 ] || return 0
   token=$(new_token)
   line=$(comment_for "$1" "$token")
   awk -v c="$line" 'NR == 1 { print c } { print } NR % 400 == 0 { print c } END { print c }' \
-    "$1" >"$1.canary-tmp" && mv "$1.canary-tmp" "$1"
+    "$1" >"$1.canary-tmp" || die "cannot read $1"
+  mv "$1.canary-tmp" "$1" || die "cannot replace $1"
   record_token "$token" file "$1"
 }
 plant_glossary() { # DIR FILENAME

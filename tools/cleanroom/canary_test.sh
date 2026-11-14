@@ -147,3 +147,4 @@ expect 2 busy-record canary "$tmp/clean"
 rmdir "$CLEANROOM_PRIVATE/.record-lock"
 [ -z "$(find "$CLEANROOM_PRIVATE" -name '.*' -print)" ] || fail 'shared scratch left behind'
 echo 'CANARY CHECK OK: clean, leaks, scanner/git errors, snapshots and overlapping exclusions'
+bash "$here/canary_plant_test.sh"
