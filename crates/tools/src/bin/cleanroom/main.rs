@@ -32,13 +32,18 @@ const USAGE: &str = "usage: cleanroom scan [--lexicon DIR] [--allow FILE] PATH..
 const DEFAULT_LEXICON: &str = "tools/cleanroom/scan_lexicon";
 const DEFAULT_ALLOW: &str = "tools/cleanroom/scan_allow.txt";
 
-/// Text files under `path`, or `path` itself.
+/// All files under `path`, or `path` itself; acquisition errors are never exclusions.
 fn files(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
-    if path.is_dir() {
-        let mut entries: Vec<PathBuf> = fs::read_dir(path)
-            .map_err(|e| format!("{}: {e}", path.display()))?
-            .filter_map(|e| e.ok().map(|e| e.path()))
-            .collect();
+    if fs::metadata(path)
+        .map_err(|e| format!("{}: {e}", path.display()))?
+        .is_dir()
+    {
+        let mut entries = directory_entries(
+            fs::read_dir(path)
+                .map_err(|e| format!("{}: {e}", path.display()))?
+                .map(|entry| entry.map(|entry| entry.path())),
+        )
+        .map_err(|e| format!("{}: {e}", path.display()))?;
         entries.sort();
         for entry in entries {
             files(&entry, out)?;
@@ -47,6 +52,33 @@ fn files(path: &Path, out: &mut Vec<PathBuf>) -> Result<(), String> {
         out.push(path.to_owned());
     }
     Ok(())
+}
+
+fn directory_entries(
+    entries: impl Iterator<Item = std::io::Result<PathBuf>>,
+) -> std::io::Result<Vec<PathBuf>> {
+    entries.collect()
+}
+
+/// Only directory-discovered non-source binary members are deliberately excluded.
+fn source_text(
+    path: &Path,
+    explicit: bool,
+    bytes: std::io::Result<Vec<u8>>,
+) -> Result<Option<String>, String> {
+    let bytes = bytes.map_err(|e| format!("{}: {e}", path.display()))?;
+    match String::from_utf8(bytes) {
+        Ok(src) => Ok(Some(src)),
+        Err(e)
+            if explicit
+                || path
+                    .extension()
+                    .is_some_and(|e| matches!(e.to_str(), Some("rs" | "md" | "toml"))) =>
+        {
+            Err(format!("{}: {e}", path.display()))
+        }
+        Err(_) => Ok(None),
+    }
 }
 
 fn read(path: &str) -> Result<String, String> {
@@ -61,16 +93,25 @@ fn read(path: &str) -> Result<String, String> {
 }
 
 /// `--flag VALUE` pairs at the front of `args`, then the rest.
-fn options<'a>(args: &'a [String], flags: &[&str]) -> (Vec<(&'a str, &'a str)>, &'a [String]) {
+type Options<'a> = (Vec<(&'a str, &'a str)>, &'a [String]);
+
+fn options<'a>(args: &'a [String], flags: &[&str]) -> Result<Options<'a>, String> {
     let mut found = Vec::new();
     let mut rest = args;
-    while let [flag, value, tail @ ..] = rest
-        && flags.contains(&flag.as_str())
-    {
+    while let Some(flag) = rest.first().filter(|flag| flag.starts_with("--")) {
+        let [_, value, tail @ ..] = rest else {
+            return Err(USAGE.to_owned());
+        };
+        if !flags.contains(&flag.as_str()) || value.starts_with("--") {
+            return Err(USAGE.to_owned());
+        }
         found.push((flag.as_str(), value.as_str()));
         rest = tail;
     }
-    (found, rest)
+    if rest.iter().any(|arg| arg.starts_with("--")) {
+        return Err(USAGE.to_owned());
+    }
+    Ok((found, rest))
 }
 
 fn option<'a>(found: &[(&str, &'a str)], flag: &str, default: &'a str) -> &'a str {
@@ -97,7 +138,7 @@ fn report(findings: &[Finding], out: &mut String) {
 }
 
 fn run_scan(args: &[String]) -> Result<(String, bool), String> {
-    let (opts, paths) = options(args, &["--lexicon", "--allow"]);
+    let (opts, paths) = options(args, &["--lexicon", "--allow"])?;
     if paths.is_empty() {
         return Err(USAGE.to_owned());
     }
@@ -112,8 +153,7 @@ fn run_scan(args: &[String]) -> Result<(String, bool), String> {
         let mut list = Vec::new();
         files(Path::new(path), &mut list)?;
         for file in list {
-            // A binary file is not text an implementer reads.
-            let Ok(src) = fs::read_to_string(&file) else {
+            let Some(src) = source_text(&file, file == Path::new(path), fs::read(&file))? else {
                 continue;
             };
             scan::file(
@@ -131,7 +171,7 @@ fn run_scan(args: &[String]) -> Result<(String, bool), String> {
 }
 
 fn run_mirror(args: &[String]) -> Result<(String, bool), String> {
-    let (opts, rest) = options(args, &["--lexicon"]);
+    let (opts, rest) = options(args, &["--lexicon"])?;
     let [spec, decode, model @ ..] = rest else {
         return Err(USAGE.to_owned());
     };
@@ -168,6 +208,22 @@ fn run_lexicon(args: &[String]) -> Result<(String, bool), String> {
     let [out_dir, salt, rest @ ..] = args else {
         return Err(USAGE.to_owned());
     };
+    let mut awaiting_input = false;
+    for arg in rest {
+        if arg.starts_with("--") {
+            if awaiting_input
+                || !matches!(arg.as_str(), "--logs" | "--rust" | "--notes" | "--words")
+            {
+                return Err(USAGE.to_owned());
+            }
+            awaiting_input = true;
+        } else {
+            awaiting_input = false;
+        }
+    }
+    if awaiting_input {
+        return Err(USAGE.to_owned());
+    }
     let mut plain = Plain::default();
     let mut mode = "";
     for arg in rest {
@@ -219,7 +275,10 @@ fn main() -> ExitCode {
 mod tests {
     use std::path::Path;
 
-    use super::{DEFAULT_ALLOW, DEFAULT_LEXICON, files, scan};
+    use super::{
+        DEFAULT_ALLOW, DEFAULT_LEXICON, directory_entries, files, options, run_lexicon, run_scan,
+        scan, source_text,
+    };
     use crate::lexicon::Lexicon;
     use crate::scan::{Allow, Class};
 
@@ -267,5 +326,82 @@ mod tests {
     #[test]
     fn routes_are_caught() {
         assert_eq!(findings("x.md", "read the bank logs"), [Class::Route]);
+    }
+
+    #[test]
+    fn acquisition_errors_cannot_certify_clean_inputs() {
+        let missing = root().join("missing-scanner-input.rs");
+        assert!(files(&missing, &mut Vec::new()).is_err());
+        let entries = [
+            Ok(missing),
+            Err(std::io::Error::from(std::io::ErrorKind::PermissionDenied)),
+        ];
+        assert!(directory_entries(entries.into_iter()).is_err());
+        for explicit in [false, true] {
+            assert!(
+                source_text(
+                    Path::new("input.bin"),
+                    explicit,
+                    Err(std::io::Error::from(std::io::ErrorKind::PermissionDenied))
+                )
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn binary_exclusion_is_only_for_discovered_non_source_members() {
+        assert_eq!(
+            source_text(Path::new("asset.bin"), false, Ok(vec![255])).unwrap(),
+            None
+        );
+        assert!(source_text(Path::new("asset.bin"), true, Ok(vec![255])).is_err());
+        for name in ["input.rs", "input.md", "input.toml"] {
+            assert!(source_text(Path::new(name), false, Ok(vec![255])).is_err());
+        }
+        let text = source_text(
+            Path::new("input.md"),
+            false,
+            Ok(b"read the bank logs".to_vec()),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(findings("input.md", &text), [Class::Route]);
+    }
+
+    #[test]
+    fn options_require_operands() {
+        for args in [
+            vec!["--lexicon"],
+            vec!["--allow", "--lexicon"],
+            vec!["input.md", "--allow"],
+            vec!["--unknown", "value"],
+        ] {
+            let args: Vec<String> = args.into_iter().map(str::to_owned).collect();
+            assert!(options(&args, &["--lexicon", "--allow"]).is_err());
+        }
+        for flag in ["--logs", "--rust", "--notes", "--words", "--unknown"] {
+            let args = [
+                "unused-output".to_owned(),
+                "salt".to_owned(),
+                flag.to_owned(),
+            ];
+            assert!(run_lexicon(&args).is_err());
+        }
+    }
+
+    #[test]
+    fn an_explicit_missing_input_fails_the_command() {
+        let args = [
+            "--lexicon".to_owned(),
+            root().join(DEFAULT_LEXICON).display().to_string(),
+            "--allow".to_owned(),
+            root().join(DEFAULT_ALLOW).display().to_string(),
+            root()
+                .join("missing-scanner-input.rs")
+                .display()
+                .to_string(),
+        ];
+        assert!(run_scan(&args).is_err());
     }
 }
