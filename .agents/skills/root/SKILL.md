@@ -52,10 +52,13 @@ For the two confined roles, the brief is also part of the barrier:
   gate names the way out of a trap ("constant rows, each naming its member"), the brief carries
   that shape; a release alone ("need not be a constant") leaves the costly encoding open. Before
   launch, the brief's gate works through each item under the checks.
-- **Coding standards, never measures.** The brief gives no score, budget, fit or size target. After
-  a round gate it may give the coarse verdict in words (MODEL §1 decision 11).
-- **A cut round runs only on two blind reads' findings** (PROCESS, "Cut rounds"; MODEL §1
-  decision 19). Never schedule one for size alone.
+- **Coding standards and shape outcomes.** The brief follows MODEL §1 decisions 10 and 11:
+  implementation and independent review stay blind to size measurements and verdicts.
+- **Decide cuts after independent review** (PROCESS, "Cut rounds"; MODEL §1 decision 19).
+  Keep size reports and decode Budget sections out of reviewer material. Count size after the
+  reports and complete
+  [the coordinator size assessment](../../../docs/cleanroom/PROCESS.md#coordinator-size-assessment)
+  before landing; send shape outcomes only.
 - **A cut round asks for the outcome.** Each shape finding says what the code should have less of
   ("one decision per thing she meets", "the air's case decided once"), never the device that
   would get there ("a value decided before", "an enum of its cases", "no snapshot"). A named

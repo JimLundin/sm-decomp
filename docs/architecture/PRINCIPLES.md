@@ -91,7 +91,8 @@ renderer and headless replay, green, before a second cluster; one lane builds th
 mechanism over per-case code. A generic layer is built when its second real user exists. Each domain
 has a budget from its spec (MODEL §1 decision 7).
 *How we know:* each trait and generic layer names its users in ARCHITECTURE; `tools size` reports
-each domain's fit to its budget. A domain over the old code it replaces stops for a design review.
+each domain's fit to its budget. The root uses that guideline after independent review to
+decide whether a cut would improve the code (MODEL §1 decision 19).
 
 **P17. Vanilla is one configuration, and options enter at named seams.** Gameplay, timing,
 presentation, content and input are profiles resolved when the Session opens, never forks spread

@@ -2118,7 +2118,7 @@ times 0.55 is 37.47, which is 37.5 to one decimal. An area's budget is k × its 
 data, duplication was priced and visibility and impl headers were free) is for reference and
 doesn't bound it. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
-as a wall; over an area's old code is a failure.
+as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,

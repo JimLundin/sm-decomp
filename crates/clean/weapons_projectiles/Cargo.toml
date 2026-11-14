@@ -1,0 +1,18 @@
+[package]
+name = "weapons_projectiles"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The weapons-projectiles model, built from its behaviour spec"
+
+[dependencies]
+types = { path = "../types" }
+enum-map = { version = "=3.1.0", features = ["serde"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+
+[dev-dependencies]
+toml = "=1.2.1"
+
+[lints]
+workspace = true

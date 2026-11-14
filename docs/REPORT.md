@@ -36,6 +36,7 @@ How it is counted:
 
 | Domain | Model score | Budget | Fit | Area fit | Shared | Old code | Model lines | Logic-equivalent lines | Harness frames | Vectors |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| weapons-projectiles | 4,035 | 2,062 | 1.96 | 1.94 | 1 % | 2,605 | 1,081 | 673 | 22,290 | 81 |
 | samus-movement | 9,400 | 8,987 | 1.05 | 1.01 | 3 % | 12,724 | 4,084 | 1,567 | 20,856 | 345 |
 | world-camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 23,501 | 83 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 40,442 | 76 |
@@ -44,10 +45,19 @@ How it is counted:
 | samus-appearance | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 20,977 | 98 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 216 | 5,437 | 56 |
 | world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 562 | 1,863 | 70 |
-| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 552 | 125 | - | - |
-| total | 24,766 | 21,695 | 1.14 | 1.02 | 11 % | - | 10,290 | 4,128 | 163,414 | 923 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 552 | 125 | - | - |
+| total | 28,801 | 23,757 | 1.21 | 1.10 | 9 % | - | 11,371 | 4,800 | 185,704 | 1,004 |
 
 ## Models
+
+### weapons-projectiles
+
+| File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `crates/clean/weapons_projectiles/src/catalogue.rs` | - | tables and types | 36 | 80 | 86 | 264 | 0 | 0 | 12 | 53 |
+| `crates/clean/weapons_projectiles/src/domain.rs` | shots | tables and types | 376 | 556 | 1,385 | 148 | 8 | 28 | 0 | 365 |
+| `crates/clean/weapons_projectiles/src/lib.rs` | shots | logic | 3,624 | 3,630 | 301 | 41 | 129 | 262 | 123 | 663 |
+| total | | | 4,035 | 4,266 | 1,772 | 453 | 136 | 290 | 135 | 1,081 |
 
 ### samus-movement
 
@@ -203,12 +213,13 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | 1,140 | 1,527 | 107 | 17 | 0 | 0 | 552 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | 1,140 | 1,527 | 107 | 17 | 0 | 0 | 552 |
 
 ## Lines
 
 | Domain | Model lines | Tables-and-types files | Logic files | Logic-equivalent lines (score ÷ 6) |
 | --- | ---: | ---: | ---: | ---: |
+| weapons-projectiles | 1,081 | 418 | 663 | 673 |
 | samus-movement | 4,084 | 2,619 | 1,465 | 1,567 |
 | world-camera | 631 | 226 | 405 | 306 |
 | run-progress | 437 | 182 | 255 | 136 |
@@ -217,10 +228,22 @@ How it is counted:
 | samus-appearance | 879 | 559 | 320 | 365 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 978 | 402 | 576 | 562 |
-| shared types (`crates/clean/types`, used by samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 552 | 552 | 0 | 125 |
-| total | 10,290 | 6,049 | 4,241 | 4,128 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 552 | 552 | 0 | 125 |
+| total | 11,371 | 6,467 | 4,904 | 4,800 |
 
 ## Spec, budget and fit by area
+
+### weapons-projectiles
+
+Spec [`docs/behaviours/weapons-projectiles.md`](behaviours/weapons-projectiles.md), k = 37.5. Old code 2,605, at `-` as its decode notes' Budget section states.
+
+| Area | Entries | Units | Budget | Old code | Model score | Fit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| shots | 12 | 55.0 | 2,062 | 2,605 | 3,999 | 1.94 |
+| shared (in no area) | | | | | 36 | |
+| total | 12 | 55.0 | 2,062 | 2,605 | 4,035 | 1.96 |
+
+Area fit 1.94: the areas' score, 3,999, ÷ the budget. Shared code 36, its share of the model 1 %.
 
 ### samus-movement
 
@@ -339,6 +362,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| weapons-projectiles | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| weapons-projectiles | harness | 1 | 6,084 | 5,183 | 191 | 223 | 890 | 405 | 0 | 824 |
 | samus-movement | bridge | 4 | 3,158 | 3,753 | 286 | 197 | 127 | 90 | 3 | 597 |
 | samus-movement | harness | 2 | 6,833 | 6,899 | 760 | 890 | 429 | 529 | 22 | 1,298 |
 | world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
@@ -355,81 +380,82 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | boss-ceres-ridley | harness | 1 | 3,328 | 3,084 | 561 | 96 | 317 | 344 | 7 | 556 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | harness | 1 | 6,207 | 5,883 | 1,195 | 438 | 342 | 622 | 31 | 1,081 |
-| total | | | 63,590 | 64,217 | 7,632 | 4,924 | 4,604 | 4,263 | 353 | 11,024 |
+| total | | | 69,674 | 69,400 | 7,823 | 5,147 | 5,493 | 4,668 | 353 | 11,848 |
 
 ## Harness floors and vectors
 
 Frames matched and verified on every unmasked field, per row (`crates/verify/src/harness/floors.txt`).
 
-| Row | samus-movement | world-camera | run-progress | interface-hud | world-blocks | samus-appearance | boss-ceres-ridley | world-doors |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| any-ceres-arrival | 0 | 0 | 222 | 30 | 0 | 0 | 32 | 0 |
-| any-fly-to-ceres | 0 | 0 | 802 | 0 | 0 | 0 | 0 | 0 |
-| any-intro-0568 | 0 | 0 | 1,649 | 0 | 0 | 0 | 0 | 0 |
-| any-intro-2219 | 0 | 0 | 2,103 | 0 | 0 | 0 | 0 | 0 |
-| any-intro-4323 | 0 | 0 | 1,688 | 0 | 0 | 0 | 0 | 0 |
-| any-intro-6012 | 0 | 0 | 1,499 | 0 | 0 | 0 | 0 | 0 |
-| any-power-on | 0 | 0 | 182 | 0 | 0 | 0 | 0 | 0 |
-| any-zebes-arrival | 0 | 0 | 231 | 30 | 0 | 0 | 59 | 0 |
-| area-brinstar | 476 | 476 | 476 | 476 | 476 | 476 | 0 | 0 |
-| area-maridia | 252 | 257 | 428 | 301 | 254 | 255 | 0 | 104 |
-| area-norfair | 209 | 208 | 374 | 252 | 205 | 209 | 0 | 104 |
-| boss-kraid-defeated | 1,024 | 1,068 | 1,137 | 1,090 | 1,068 | 1,023 | 0 | 20 |
-| boss-phantoon | 1,920 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 | 0 | 0 |
-| chain-0012-91F8 | 421 | 1,031 | 1,032 | 1,031 | 1,030 | 421 | 0 | 0 |
-| chain-0013-92FD | 598 | 599 | 599 | 599 | 598 | 599 | 0 | 0 |
-| chain-0014-96BA | 343 | 342 | 506 | 386 | 340 | 343 | 0 | 104 |
-| chain-0043-9AD9 | 417 | 416 | 417 | 416 | 415 | 417 | 0 | 0 |
-| chain-0057-9FBA | 537 | 549 | 549 | 549 | 547 | 535 | 0 | 0 |
-| chain-0059-A293 | 519 | 584 | 777 | 736 | 583 | 512 | 0 | 0 |
-| chain-0097-ACF0 | 663 | 662 | 817 | 713 | 660 | 663 | 0 | 111 |
-| chain-0100-B07A | 277 | 284 | 285 | 284 | 283 | 277 | 0 | 0 |
-| chain-0106-AD5E | 496 | 600 | 782 | 649 | 597 | 487 | 0 | 104 |
-| chain-0163-A890 | 28 | 27 | 30 | 27 | 26 | 28 | 0 | 0 |
-| chain-0220-D017 | 145 | 144 | 538 | 454 | 143 | 144 | 0 | 0 |
-| chain-0224-D0B9 | 159 | 335 | 512 | 379 | 332 | 159 | 0 | 104 |
-| chain-0232-D5A7 | 599 | 632 | 706 | 632 | 631 | 601 | 0 | 0 |
-| chain-0234-D51E | 145 | 152 | 153 | 152 | 152 | 153 | 0 | 0 |
-| chain-0314-DAE1 | 444 | 450 | 465 | 450 | 449 | 443 | 0 | 0 |
-| chain-any-0001-DF45 | 149 | 249 | 411 | 293 | 248 | 149 | 408 | 104 |
-| chain-any-0002-DF8D | 120 | 119 | 281 | 163 | 119 | 120 | 278 | 104 |
-| chain-any-0003-DFD7 | 182 | 181 | 344 | 225 | 181 | 182 | 341 | 104 |
-| chain-any-0004-E021 | 102 | 101 | 263 | 145 | 101 | 102 | 260 | 104 |
-| chain-any-0005-E06B | 94 | 93 | 320 | 161 | 93 | 94 | 178 | 169 |
-| chain-any-0006-E0B5 | 1,491 | 1,609 | 1,775 | 1,652 | 1,609 | 1,486 | 84 | 104 |
-| chain-any-0007-E06B | 96 | 95 | 258 | 139 | 95 | 96 | 255 | 104 |
-| chain-any-0008-E021 | 100 | 99 | 263 | 144 | 99 | 100 | 260 | 105 |
-| chain-any-0009-DFD7 | 163 | 168 | 330 | 212 | 168 | 162 | 327 | 104 |
-| chain-any-0010-DF8D | 91 | 111 | 278 | 157 | 111 | 90 | 276 | 106 |
-| chain-any-0011-DF45 | 164 | 163 | 2,123 | 2,053 | 163 | 163 | 2,123 | 0 |
-| event-zebes-awake | 128 | 179 | 178 | 179 | 179 | 126 | 0 | 0 |
-| item-charge-beam | 469 | 479 | 919 | 479 | 477 | 480 | 0 | 0 |
-| item-energy-tank | 240 | 239 | 259 | 239 | 238 | 240 | 0 | 0 |
-| item-morph-ball | 1,028 | 1,028 | 1,427 | 1,028 | 1,027 | 1,028 | 0 | 0 |
-| item-plasma-beam | 145 | 145 | 169 | 145 | 145 | 146 | 0 | 0 |
-| item-reserve-tank | 413 | 413 | 1,229 | 413 | 411 | 414 | 0 | 0 |
-| item-wave-beam | 37 | 36 | 59 | 36 | 35 | 37 | 0 | 0 |
-| samus-bomb-jump-vertical | 286 | 314 | 1,058 | 314 | 313 | 314 | 0 | 0 |
-| samus-ceres-push | 1,710 | 1,777 | 1,776 | 1,777 | 1,777 | 1,705 | 0 | 0 |
-| samus-grapple-release | 243 | 448 | 488 | 488 | 487 | 248 | 0 | 0 |
-| samus-grapple-walljump | 114 | 114 | 174 | 174 | 173 | 114 | 0 | 0 |
-| samus-input-poses | 297 | 397 | 559 | 441 | 396 | 297 | 556 | 104 |
-| samus-mockball | 129 | 129 | 129 | 129 | 128 | 129 | 0 | 0 |
-| samus-screw-attack | 862 | 945 | 945 | 945 | 944 | 859 | 0 | 0 |
-| samus-shinespark-left | 316 | 418 | 418 | 418 | 417 | 316 | 0 | 0 |
-| samus-shinespark-right | 293 | 405 | 405 | 405 | 404 | 293 | 0 | 0 |
-| samus-shinespark-up | 212 | 393 | 393 | 393 | 392 | 212 | 0 | 0 |
-| samus-shinespark-up-left | 267 | 418 | 418 | 418 | 417 | 267 | 0 | 0 |
-| samus-space-jump-chain | 383 | 383 | 383 | 383 | 382 | 383 | 0 | 0 |
-| samus-square-slope-reserve | 37 | 36 | 398 | 36 | 35 | 37 | 0 | 0 |
-| samus-walljump-16 | 157 | 157 | 157 | 157 | 156 | 157 | 0 | 0 |
-| samus-walljump-22 | 163 | 163 | 163 | 163 | 162 | 163 | 0 | 0 |
-| samus-walljump-28 | 169 | 169 | 169 | 169 | 168 | 169 | 0 | 0 |
-| terrain-quicksand | 334 | 450 | 456 | 450 | 421 | 402 | 0 | 0 |
-| total | 20,856 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 26,821 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows | 5,437 in 63 rows | 1,863 in 63 rows |
+| Row | weapons-projectiles | samus-movement | world-camera | run-progress | interface-hud | world-blocks | samus-appearance | boss-ceres-ridley | world-doors |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| any-ceres-arrival | 0 | 0 | 0 | 222 | 30 | 0 | 0 | 32 | 0 |
+| any-fly-to-ceres | 0 | 0 | 0 | 802 | 0 | 0 | 0 | 0 | 0 |
+| any-intro-0568 | 0 | 0 | 0 | 1,649 | 0 | 0 | 0 | 0 | 0 |
+| any-intro-2219 | 0 | 0 | 0 | 2,103 | 0 | 0 | 0 | 0 | 0 |
+| any-intro-4323 | 0 | 0 | 0 | 1,688 | 0 | 0 | 0 | 0 | 0 |
+| any-intro-6012 | 0 | 0 | 0 | 1,499 | 0 | 0 | 0 | 0 | 0 |
+| any-power-on | 0 | 0 | 0 | 182 | 0 | 0 | 0 | 0 | 0 |
+| any-zebes-arrival | 0 | 0 | 0 | 231 | 30 | 0 | 0 | 59 | 0 |
+| area-brinstar | 476 | 476 | 476 | 476 | 476 | 476 | 476 | 0 | 0 |
+| area-maridia | 391 | 252 | 257 | 428 | 301 | 254 | 255 | 0 | 104 |
+| area-norfair | 309 | 209 | 208 | 374 | 252 | 205 | 209 | 0 | 104 |
+| boss-kraid-defeated | 728 | 1,024 | 1,068 | 1,137 | 1,090 | 1,068 | 1,023 | 0 | 20 |
+| boss-phantoon | 1,648 | 1,920 | 2,062 | 2,108 | 2,062 | 2,057 | 1,952 | 0 | 0 |
+| chain-0012-91F8 | 421 | 421 | 1,031 | 1,032 | 1,031 | 1,030 | 421 | 0 | 0 |
+| chain-0013-92FD | 594 | 598 | 599 | 599 | 599 | 598 | 599 | 0 | 0 |
+| chain-0014-96BA | 322 | 343 | 342 | 506 | 386 | 340 | 343 | 0 | 104 |
+| chain-0043-9AD9 | 400 | 417 | 416 | 417 | 416 | 415 | 417 | 0 | 0 |
+| chain-0057-9FBA | 409 | 537 | 549 | 549 | 549 | 547 | 535 | 0 | 0 |
+| chain-0059-A293 | 367 | 519 | 584 | 777 | 736 | 583 | 512 | 0 | 0 |
+| chain-0097-ACF0 | 792 | 663 | 662 | 817 | 713 | 660 | 663 | 0 | 111 |
+| chain-0100-B07A | 179 | 277 | 284 | 285 | 284 | 283 | 277 | 0 | 0 |
+| chain-0106-AD5E | 587 | 496 | 600 | 782 | 649 | 597 | 487 | 0 | 104 |
+| chain-0163-A890 | 0 | 28 | 27 | 30 | 27 | 26 | 28 | 0 | 0 |
+| chain-0220-D017 | 141 | 145 | 144 | 538 | 454 | 143 | 144 | 0 | 0 |
+| chain-0224-D0B9 | 316 | 159 | 335 | 512 | 379 | 332 | 159 | 0 | 104 |
+| chain-0232-D5A7 | 578 | 599 | 632 | 706 | 632 | 631 | 601 | 0 | 0 |
+| chain-0234-D51E | 153 | 145 | 152 | 153 | 152 | 152 | 153 | 0 | 0 |
+| chain-0314-DAE1 | 126 | 444 | 450 | 465 | 450 | 449 | 443 | 0 | 0 |
+| chain-any-0001-DF45 | 301 | 149 | 249 | 411 | 293 | 248 | 149 | 408 | 104 |
+| chain-any-0002-DF8D | 280 | 120 | 119 | 281 | 163 | 119 | 120 | 278 | 104 |
+| chain-any-0003-DFD7 | 344 | 182 | 181 | 344 | 225 | 181 | 182 | 341 | 104 |
+| chain-any-0004-E021 | 263 | 102 | 101 | 263 | 145 | 101 | 102 | 260 | 104 |
+| chain-any-0005-E06B | 316 | 94 | 93 | 320 | 161 | 93 | 94 | 178 | 169 |
+| chain-any-0006-E0B5 | 1,404 | 1,491 | 1,609 | 1,775 | 1,652 | 1,609 | 1,486 | 84 | 104 |
+| chain-any-0007-E06B | 258 | 96 | 95 | 258 | 139 | 95 | 96 | 255 | 104 |
+| chain-any-0008-E021 | 182 | 100 | 99 | 263 | 144 | 99 | 100 | 260 | 105 |
+| chain-any-0009-DFD7 | 319 | 163 | 168 | 330 | 212 | 168 | 162 | 327 | 104 |
+| chain-any-0010-DF8D | 256 | 91 | 111 | 278 | 157 | 111 | 90 | 276 | 106 |
+| chain-any-0011-DF45 | 162 | 164 | 163 | 2,123 | 2,053 | 163 | 163 | 2,123 | 0 |
+| event-zebes-awake | 76 | 128 | 179 | 178 | 179 | 179 | 126 | 0 | 0 |
+| item-charge-beam | 808 | 469 | 479 | 919 | 479 | 477 | 480 | 0 | 0 |
+| item-energy-tank | 113 | 240 | 239 | 259 | 239 | 238 | 240 | 0 | 0 |
+| item-morph-ball | 1,407 | 1,028 | 1,028 | 1,427 | 1,028 | 1,027 | 1,028 | 0 | 0 |
+| item-plasma-beam | 69 | 145 | 145 | 169 | 145 | 145 | 146 | 0 | 0 |
+| item-reserve-tank | 787 | 413 | 413 | 1,229 | 413 | 411 | 414 | 0 | 0 |
+| item-wave-beam | 13 | 37 | 36 | 59 | 36 | 35 | 37 | 0 | 0 |
+| samus-bomb-jump-vertical | 285 | 286 | 314 | 1,058 | 314 | 313 | 314 | 0 | 0 |
+| samus-ceres-push | 1,466 | 1,710 | 1,777 | 1,776 | 1,777 | 1,777 | 1,705 | 0 | 0 |
+| samus-grapple-release | 154 | 243 | 448 | 488 | 488 | 487 | 248 | 0 | 0 |
+| samus-grapple-walljump | 103 | 114 | 114 | 174 | 174 | 173 | 114 | 0 | 0 |
+| samus-input-poses | 448 | 297 | 397 | 559 | 441 | 396 | 297 | 556 | 104 |
+| samus-mockball | 129 | 129 | 129 | 129 | 129 | 128 | 129 | 0 | 0 |
+| samus-screw-attack | 859 | 862 | 945 | 945 | 945 | 944 | 859 | 0 | 0 |
+| samus-shinespark-left | 294 | 316 | 418 | 418 | 418 | 417 | 316 | 0 | 0 |
+| samus-shinespark-right | 270 | 293 | 405 | 405 | 405 | 404 | 293 | 0 | 0 |
+| samus-shinespark-up | 193 | 212 | 393 | 393 | 393 | 392 | 212 | 0 | 0 |
+| samus-shinespark-up-left | 246 | 267 | 418 | 418 | 418 | 417 | 267 | 0 | 0 |
+| samus-space-jump-chain | 383 | 383 | 383 | 383 | 383 | 382 | 383 | 0 | 0 |
+| samus-square-slope-reserve | 392 | 37 | 36 | 398 | 36 | 35 | 37 | 0 | 0 |
+| samus-walljump-16 | 157 | 157 | 157 | 157 | 157 | 156 | 157 | 0 | 0 |
+| samus-walljump-22 | 163 | 163 | 163 | 163 | 163 | 162 | 163 | 0 | 0 |
+| samus-walljump-28 | 169 | 169 | 169 | 169 | 169 | 168 | 169 | 0 | 0 |
+| terrain-quicksand | 284 | 334 | 450 | 456 | 450 | 421 | 402 | 0 | 0 |
+| total | 22,290 in 63 rows | 20,856 in 63 rows | 23,501 in 63 rows | 40,442 in 63 rows | 26,821 in 63 rows | 23,517 in 63 rows | 20,977 in 63 rows | 5,437 in 63 rows | 1,863 in 63 rows |
 
 | Domain | Vectors | Pose steps |
 | --- | ---: | ---: |
+| weapons-projectiles | 81 | 0 |
 | samus-movement | 345 | 64 |
 | world-camera | 83 | 0 |
 | run-progress | 76 | 0 |
@@ -445,6 +471,7 @@ Over every row the floors name (`crates/verify/src/harness/coverage.txt`, which 
 
 | Domain | Gain over null | Matched and verified | Null model | Compared | Unverified | Frames |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| weapons-projectiles | 124 (0.5 %) | 22,290 | 22,166 | 23,468 | 0 | 40,835 |
 | samus-movement | 15,256 (72.6 %) | 20,856 | 5,600 | 21,001 | 0 | 40,835 |
 | world-camera | 14,333 (60.7 %) | 23,501 | 9,168 | 23,603 | 0 | 40,835 |
 | run-progress | 28 (0.1 %) | 40,442 | 40,414 | 40,451 | 7 | 40,835 |
@@ -458,6 +485,22 @@ Per declared field, the compared frames on which it was compared and those on wh
 
 | Domain | Field | Compared | Masked |
 | --- | --- | ---: | ---: |
+| weapons-projectiles | phase | 23,468 | 0 |
+| weapons-projectiles | free-trails | 20,754 | 2,714 |
+| weapons-projectiles | cooldown | 23,468 | 0 |
+| weapons-projectiles | count | 23,468 | 0 |
+| weapons-projectiles | consumed | 23,468 | 0 |
+| weapons-projectiles | retained-fractions | 23,468 | 0 |
+| weapons-projectiles | position | 23,468 | 0 |
+| weapons-projectiles | heading | 23,468 | 0 |
+| weapons-projectiles | speed | 23,468 | 0 |
+| weapons-projectiles | radius | 23,468 | 0 |
+| weapons-projectiles | damage | 23,468 | 0 |
+| weapons-projectiles | live-trail | 23,468 | 0 |
+| weapons-projectiles | clip | 23,468 | 0 |
+| weapons-projectiles | cursor | 23,468 | 0 |
+| weapons-projectiles | hold | 23,468 | 0 |
+| weapons-projectiles | picture | 23,468 | 0 |
 | samus-movement | position.x | 20,580 | 421 |
 | samus-movement | position.y | 19,674 | 1,327 |
 | samus-movement | base_speed | 20,574 | 427 |
@@ -533,6 +576,18 @@ Per catalogue entry, the frames that exercised it with every field its output re
 
 | Domain | Entry | Proof | Matched and verified | Null model | Exercised | Unchecked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| weapons-projectiles | BeamPictures | unproven | 528 | 1,177 | 1,705 | 0 |
+| weapons-projectiles | BeamTrail | gain 4 | 4 | 0 | 4 | 0 |
+| weapons-projectiles | BeamVisibility | vectors only | - | - | 0 | 0 |
+| weapons-projectiles | CannonOrigin | gain 1 | 1 | 0 | 1 | 0 |
+| weapons-projectiles | EndingShot | unproven | 527 | 1,647 | 1,704 | 0 |
+| weapons-projectiles | FlyingBeam | gain 4 | 4 | 0 | 4 | 0 |
+| weapons-projectiles | HoldingShoot | unproven | 96 | 744 | 840 | 0 |
+| weapons-projectiles | InheritedMotion | gain 1 | 1 | 0 | 1 | 0 |
+| weapons-projectiles | LeavingView | gain 1 | 4 | 3 | 4 | 0 |
+| weapons-projectiles | MuzzleContact | gain 1 | 1 | 0 | 1 | 0 |
+| weapons-projectiles | ShotContact | gain 4 | 4 | 0 | 4 | 0 |
+| weapons-projectiles | ShotSpacing | unproven | 21,112 | 21,135 | 22,290 | 0 |
 | samus-movement | Aiming | vectors only | - | - | 0 | 3,473 |
 | samus-movement | AimingAndShooting | gain 3,127 | 3,632 | 505 | 3,638 | 62 |
 | samus-movement | AnimationEnds | gain 401 | 410 | 9 | 422 | 0 |
@@ -680,7 +735,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | engine, not yet rebuilt | 49 | 4,981 | 29,887 | 31,503 | 10,292 | 1,912 | 2,323 | 2,768 | 629 | 6,920 |
 | bridges | 11 | 2,881 | 17,288 | 18,821 | 1,191 | 1,199 | 1,076 | 874 | 157 | 3,013 |
-| rebuilt models, shared types included | 87 | 4,128 | 24,766 | 31,344 | 11,447 | 15,519 | 1,305 | 733 | 472 | 10,290 |
+| rebuilt models, shared types included | 90 | 4,800 | 28,801 | 35,610 | 13,219 | 15,972 | 1,442 | 1,022 | 607 | 11,371 |
 
 ## Timeline
 
@@ -702,6 +757,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | run-progress model matches | 17,121 | 13.2 % |
 | samus-appearance model matches | 4,692 | 3.6 % |
 | samus-movement model matches | 4,668 | 3.6 % |
+| weapons-projectiles model matches | 5,731 | 4.4 % |
 | world-blocks model matches | 5,038 | 3.9 % |
 | world-camera model matches | 5,045 | 3.9 % |
 | world-doors model matches | 1,105 | 0.9 % |
@@ -722,6 +778,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | run-progress model matches | 0 | 0.0 % |
 | samus-appearance model matches | 0 | 0.0 % |
 | samus-movement model matches | 0 | 0.0 % |
+| weapons-projectiles model matches | 0 | 0.0 % |
 | world-blocks model matches | 0 | 0.0 % |
 | world-camera model matches | 0 | 0.0 % |
 | world-doors model matches | 0 | 0.0 % |
@@ -742,6 +799,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | run-progress model matches | 20,432 | 9.2 % |
 | samus-appearance model matches | 14,157 | 6.4 % |
 | samus-movement model matches | 14,062 | 6.3 % |
+| weapons-projectiles model matches | 14,425 | 6.5 % |
 | world-blocks model matches | 15,735 | 7.1 % |
 | world-camera model matches | 15,763 | 7.1 % |
 | world-doors model matches | 752 | 0.3 % |
@@ -762,6 +820,7 @@ For each whole movie the lock's rows are cut from, which stretches of its frames
 | run-progress model matches | 0 | 0.0 % |
 | samus-appearance model matches | 0 | 0.0 % |
 | samus-movement model matches | 0 | 0.0 % |
+| weapons-projectiles model matches | 0 | 0.0 % |
 | world-blocks model matches | 0 | 0.0 % |
 | world-camera model matches | 0 | 0.0 % |
 | world-doors model matches | 0 | 0.0 % |
@@ -790,6 +849,7 @@ The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't
 | run-progress | 344 of 344 (100.0 %) | 344 (100.0 %) | 344 of 344 (100.0 %) | 0 | 0 | 0 | 0 |
 | samus-appearance | 182 of 182 (100.0 %) | 6 (3.3 %) | 182 of 182 (100.0 %) | 0 | 0 | 43 | 119 |
 | samus-movement | 182 of 182 (100.0 %) | 0 (0.0 %) | 182 of 182 (100.0 %) | 5 | 0 | 162 | 0 |
+| weapons-projectiles | 344 of 344 (100.0 %) | 328 (95.3 %) | 344 of 344 (100.0 %) | 161 | 0 | 0 | 0 |
 | world-blocks | 181 of 181 (100.0 %) | 181 (100.0 %) | 181 of 181 (100.0 %) | 0 | 0 | 105 | 58 |
 | world-camera | 181 of 181 (100.0 %) | 13 (7.2 %) | 181 of 181 (100.0 %) | 0 | 0 | 163 | 0 |
 | world-doors | 105 of 105 (100.0 %) | 0 (0.0 %) | 105 of 105 (100.0 %) | 0 | 0 | 182 | 57 |
@@ -804,6 +864,7 @@ The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't
 | run-progress | 1,619 of 1,619 (100.0 %) | 1,619 (100.0 %) | 1,619 of 1,619 (100.0 %) | 0 | 0 | 0 | 0 |
 | samus-appearance | 647 of 647 (100.0 %) | 8 (1.2 %) | 647 of 647 (100.0 %) | 0 | 0 | 340 | 632 |
 | samus-movement | 647 of 647 (100.0 %) | 2 (0.3 %) | 647 of 647 (100.0 %) | 13 | 0 | 972 | 0 |
+| weapons-projectiles | 1,504 of 1,504 (100.0 %) | 1,425 (94.7 %) | 1,504 of 1,619 (92.9 %) | 866 | 115 | 0 | 0 |
 | world-blocks | 743 of 743 (100.0 %) | 742 (99.9 %) | 743 of 743 (100.0 %) | 0 | 0 | 590 | 286 |
 | world-camera | 743 of 743 (100.0 %) | 141 (19.0 %) | 743 of 743 (100.0 %) | 0 | 0 | 876 | 0 |
 | world-doors | 590 of 590 (100.0 %) | 0 (0.0 %) | 590 of 590 (100.0 %) | 0 | 0 | 748 | 281 |
@@ -818,6 +879,7 @@ The domain free run (`crates/verify/src/harness/free_floors.txt`), which doesn't
 | run-progress | 4,524 of 4,524 (100.0 %) | 4,518 (99.9 %) | 4,524 of 4,524 (100.0 %) | 5 | 0 | 0 | 0 |
 | samus-appearance | 2,581 of 2,581 (100.0 %) | 41 (1.6 %) | 2,581 of 2,581 (100.0 %) | 0 | 0 | 711 | 1,232 |
 | samus-movement | 2,577 of 2,588 (99.6 %) | 32 (1.2 %) | 2,588 of 2,614 (99.0 %) | 82 | 26 | 1,910 | 0 |
+| weapons-projectiles | 3,923 of 3,923 (100.0 %) | 3,609 (92.0 %) | 3,923 of 4,524 (86.7 %) | 1,600 | 601 | 0 | 0 |
 | world-blocks | 2,825 of 2,825 (100.0 %) | 2,824 (100.0 %) | 2,825 of 2,825 (100.0 %) | 0 | 0 | 1,118 | 581 |
 | world-camera | 2,825 of 2,825 (100.0 %) | 762 (27.0 %) | 2,825 of 2,825 (100.0 %) | 21 | 0 | 1,699 | 0 |
 | world-doors | 1,118 of 1,118 (100.0 %) | 0 (0.0 %) | 1,118 of 1,118 (100.0 %) | 1 | 0 | 2,835 | 571 |
@@ -1008,7 +1070,7 @@ flowchart LR
   P1 --> F1
   H1 --> F3
   classDef started fill:#cde8c4,stroke:#3c7a2e
-  class S1,CAM,S2,S5,H2,W2,P1,R1,B8 started
+  class S1,CAM,S2,S5,H2,W2,P1,R1,W1,B8 started
 ```
 
 ## Structure
@@ -1045,6 +1107,7 @@ graph LR
     c_tools["tools"]
     c_types["types"]
     c_verify["verify"]
+    c_weapons_projectiles["weapons_projectiles"]
     c_world_blocks["world_blocks"]
     c_world_camera["world_camera"]
     c_world_doors["world_doors"]
@@ -1089,12 +1152,82 @@ graph LR
   c_verify --> c_samus_appearance
   c_verify --> c_samus_movement
   c_verify --> c_types
+  c_verify --> c_weapons_projectiles
   c_verify --> c_world_blocks
   c_verify --> c_world_camera
   c_verify --> c_world_doors
+  c_weapons_projectiles --> c_types
   c_world_blocks --> c_types
   c_world_camera --> c_types
   c_world_doors --> c_types
+```
+
+### weapons-projectiles
+
+`crates/clean/weapons_projectiles`, 3 modules.
+
+| Module | Area | Says it is | Items | Score | Lines |
+| --- | --- | --- | --- | ---: | ---: |
+| `catalogue.rs` | - | One entry for each named behaviour in the supplied specification. | `enum BehaviourId (12)`, `struct Behaviour`, `fn catalogue`, 1 private | 36 | 53 |
+| `domain.rs` | shots | Quantities and caller contracts for the uncharged power beam. | `enum ShotSlot (5)`, `enum Heading (10)`, `struct Axes`, `struct FrameWord`, `struct ShotCount`, `struct FixedPosition`, `struct PixelFraction`, `struct BeamSpeed`, `struct Radius`, `struct Damage`, `struct FrameHold`, `struct ClipId`, `struct PictureId`, `struct TrailAppearanceId`, `struct ClipFrame`, `struct Frame`, `enum ClipEnding (2)`, `struct Clip`, `struct PowerBeam`, `struct Offset`, `enum MuzzleAim (3)`, `struct Muzzle`, `struct SamusCentre`, `struct ScreenOrigin`, `struct ScreenCentre`, `struct MovementDistance`, `struct Inheritance`, `enum UpdateMode (2)`, `struct CannonInput`, `struct RoomScreens`, `struct UpdateInput`, `struct ShotBody`, `enum ShotState (3)`, `struct State`, `enum Axis (2)`, `struct Contact`, `enum ContactResponse (2)`, `trait World`, `enum Event (5)`, `enum FlickerPhase (2)`, `enum DrawView (2)`, `struct PictureIntent`, `struct PictureIntents`, `ShotSlot::{DESCENDING, even}`, `Heading::axes`, `ClipFrame::{new, index, at}`, `Inheritance::stationary`, `ShotState::{body, body_mut}`, `State::{reset, consume}`, 1 private | 376 | 365 |
+| `lib.rs` | shots | Uncharged power beam model. | `struct Rules`, `fn update_spacing`, `fn cannon_origin`, `fn inherited_motion`, `fn prepare_shot`, `fn accelerate`, `struct EdgeGeometry`, `fn edge_geometry`, `fn contact_edge`, `fn burst`, `fn muzzle_contact`, `fn update_trail`, `fn within_lifetime_view`, `fn inside_view`, `fn remove_shot`, `fn update_clip`, `fn update`, `fn pictures`, `Rules::REFERENCE`, `FixedPosition::{integer, fraction, from_parts, move_by}`, 35 private | 3,624 | 663 |
+
+Its crate root exports:
+
+- from `catalogue`: `*`
+- from `domain`: `*`
+- the module `catalogue`
+- the module `domain`
+
+The public functions a caller reaches through them:
+
+```rust
+catalogue() -> EnumMap<BehaviourId, Behaviour>
+ShotSlot::even(self) -> bool
+Heading::axes(self) -> Axes<i16>
+ClipFrame::new(index: usize, frame_count: usize) -> Option<Self>
+ClipFrame::index(self) -> usize
+Inheritance::stationary() -> Self
+ShotState::body(&self) -> Option<&ShotBody>
+State::reset(fractions: EnumMap<ShotSlot, Axes<PixelFraction>>) -> Self
+State::consume(&mut self, slot: ShotSlot)
+FixedPosition::integer(self) -> u16
+FixedPosition::fraction(self) -> PixelFraction
+FixedPosition::from_parts(integer: u16, fraction: PixelFraction) -> Self
+FixedPosition::move_by(&mut self, speed: BeamSpeed)
+update_spacing(cooldown: &mut FrameWord, mode: UpdateMode, time_stopped: bool)
+cannon_origin(input: &CannonInput) -> Option<(Heading, SamusCentre)>
+inherited_motion(heading: Heading, movement: Inheritance) -> Axes<BeamSpeed>
+prepare_shot(state: &mut State, input: &CannonInput, content: &PowerBeam, events: &mut Vec<Event>) -> Option<ShotSlot>
+accelerate(body: &mut ShotBody, rules: Rules)
+edge_geometry(centre: Axes<u16>, radius: Axes<Radius>, speed: BeamSpeed, axis: Axis, screens: u16) -> EdgeGeometry
+contact_edge(body: &ShotBody, slot: ShotSlot, axis: Axis, room: RoomScreens, world: &mut impl World) -> bool
+burst(shot: &mut ShotState, slot: ShotSlot, impact_clip: &ClipId, events: &mut Vec<Event>)
+muzzle_contact(shot: &mut ShotState, slot: ShotSlot, input: &UpdateInput, content: &PowerBeam, world: &mut impl World, events: &mut Vec<Event>)
+update_trail(body: &mut ShotBody, slot: ShotSlot, rules: Rules, events: &mut Vec<Event>)
+within_lifetime_view(centre: Axes<u16>, camera: ScreenOrigin) -> bool
+inside_view(centre: Axes<u16>, camera: ScreenOrigin) -> bool
+remove_shot(shot: &mut ShotState, count: &mut ShotCount)
+update_clip(body: &mut ShotBody, content: &PowerBeam) -> bool
+update(state: &mut State, input: &UpdateInput, content: &PowerBeam, rules: Rules, world: &mut impl World) -> Vec<Event>
+pictures(state: &State, phase: FlickerPhase, view: &DrawView) -> PictureIntents
+```
+
+Shared types it takes from `types`: `Checked`, `Kind`, `Switch`. Other crates it uses: `enum_map`, `serde`, `std`.
+
+Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
+
+```mermaid
+graph LR
+  subgraph a_in_no_area["in no area"]
+    m_catalogue["catalogue"]
+  end
+  subgraph a_shots["shots"]
+    m_domain["domain"]
+    m_lib["lib"]
+  end
+  m_lib --> m_catalogue
+  m_lib --> m_domain
 ```
 
 ### samus-movement
@@ -1962,9 +2095,9 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `struct Slope` | samus-movement |
 | `struct Hitbox` | boss-ceres-ridley, samus-movement |
 | `trait World` | samus-movement |
-| `enum Kind (5)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera, world-doors |
-| `enum Switch (3)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera, world-doors |
-| `enum Checked (2)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, world-blocks, world-camera, world-doors |
+| `enum Kind (5)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, weapons-projectiles, world-blocks, world-camera, world-doors |
+| `enum Switch (3)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, weapons-projectiles, world-blocks, world-camera, world-doors |
+| `enum Checked (2)` | boss-ceres-ridley, interface-hud, run-progress, samus-appearance, samus-movement, weapons-projectiles, world-blocks, world-camera, world-doors |
 | `type Set` | run-progress, samus-appearance, samus-movement, world-blocks, world-doors |
 | `fn set_of` | world-doors |
 | `trait Members` | run-progress |

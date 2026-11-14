@@ -1,0 +1,679 @@
+# update operations call the ordinary full frame update; before contains state, input,
+# content and ordered World response sequences; after contains complete state/events/contacts.
+# heading_clips maps every Heading to ClipId; absent map assigns Power to every heading.
+# offsets/moving_offsets maps every Heading to its offset; absent maps use the common flat
+# offset/moving_offset shorthand. Impact is the common burst clip. Inactive appearance means
+# None (channel unchanged); prior meaningful appearance is retained. None is no retained id.
+# scenario/step links consecutive frames. Observation operations do not prescribe public APIs.
+# Constructed RAM-quantity observations with wholly invented content.
+# Each vector tests one named observation operation in isolation: spacing, spawn (availability
+# through initial body, before contact/flight), origin, drift, probe (initial motion, no world
+# response), flight, contact (world requests), diagonal (axis order and burst), trail, view,
+# end, consume (later actor event), or clip. Entries identify the catalogue rules exercised.
+# before/after use decimal quantities in the spec's units. Words are unsigned encodings of
+# signed values; positions are 32-bit fixed-point integers. Frame/clip/picture identifiers
+# here are invented. responses are ordered World answers: true Blocks, false Passes;
+# absent responses are all Passes. visited lists the request ordinals, not content indices.
+# Each expected result
+# is calculated by hand from the cited rule. rules overrides acceleration or trail_interval
+# for this vector only, in the same units as the reference values. No ROM content is present.
+
+[[vector]]
+id = "W-cool-frozen"
+source = "constructed"
+entries = ["ShotSpacing"]
+operation = "spacing"
+before = { "cooldown" = 1, "frozen" = true }
+after = { "cooldown" = 32 }
+
+[[vector]]
+id = "W-cool-positive"
+source = "constructed"
+entries = ["ShotSpacing"]
+operation = "spacing"
+before = { "cooldown" = 2, "frozen" = false }
+after = { "cooldown" = 1 }
+
+[[vector]]
+id = "W-cool-negative"
+source = "constructed"
+entries = ["ShotSpacing"]
+operation = "spacing"
+before = { "cooldown" = 32768, "frozen" = false }
+after = { "cooldown" = 0 }
+
+[[vector]]
+id = "W-shots-only"
+source = "constructed"
+entries = ["ShotSpacing"]
+operation = "mode"
+before = { "cooldown" = 5, "frozen" = true }
+after = { "cooldown" = 5, "shots_updated" = true, "shoot" = false }
+
+[[vector]]
+id = "W-spawn-press"
+source = "constructed"
+entries = ["HoldingShoot", "ShotSpacing", "CannonOrigin"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 0, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = true, "count" = 1, "cooldown" = 15, "slot" = 0, "heading" = "Right", "centre" = [107, 202], "pending_used" = false, "trail" = 4, "damage" = 12, "remaining" = 1, "next" = 0, "radius" = [3, 2], "fire_sound" = true, "invincibility" = 10 }
+
+[[vector]]
+id = "W-spawn-previous"
+source = "constructed"
+entries = ["ShotSpacing"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 0, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = false, "previous_new" = true }
+after = { "spawned" = true, "count" = 1, "cooldown" = 15, "slot" = 0, "heading" = "Right", "centre" = [107, 202], "pending_used" = false, "trail" = 4, "damage" = 12, "remaining" = 1, "next" = 0, "radius" = [3, 2], "fire_sound" = true, "invincibility" = 10 }
+
+[[vector]]
+id = "W-spawn-held"
+source = "constructed"
+entries = ["ShotSpacing"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 0, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = false }
+after = { "spawned" = true, "count" = 1, "cooldown" = 25, "slot" = 0, "heading" = "Right", "centre" = [107, 202], "pending_used" = false, "trail" = 4, "damage" = 12, "remaining" = 1, "next" = 0, "radius" = [3, 2], "fire_sound" = true, "invincibility" = 10 }
+
+[[vector]]
+id = "W-no-shoot"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 0, "shoot" = false, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = false, "count" = 0, "cooldown" = 0 }
+
+[[vector]]
+id = "W-full"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 5, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = false, "count" = 5, "cooldown" = 0 }
+
+[[vector]]
+id = "W-cooling"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 2, "count" = 0, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = false, "count" = 0, "cooldown" = 1 }
+
+[[vector]]
+id = "W-slot-zero"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 3, "shoot" = true, "damages" = [7, 0, 9, 0, 1], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = true, "count" = 4, "cooldown" = 15, "slot" = 1, "heading" = "Right", "centre" = [107, 202], "pending_used" = false, "trail" = 4, "damage" = 12, "remaining" = 1, "next" = 0, "radius" = [3, 2], "fire_sound" = true, "invincibility" = 10 }
+
+[[vector]]
+id = "W-slot-last"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 4, "shoot" = true, "damages" = [7, 7, 7, 7, 7], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = true, "count" = 5, "cooldown" = 15, "slot" = 4, "heading" = "Right", "centre" = [107, 202], "pending_used" = false, "trail" = 4, "damage" = 12, "remaining" = 1, "next" = 0, "radius" = [3, 2], "fire_sound" = true, "invincibility" = 10 }
+
+[[vector]]
+id = "W-forbidden"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "Forbidden", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 0, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = true }
+after = { "spawned" = false, "count" = 0, "cooldown" = 1 }
+
+[[vector]]
+id = "W-previous-forbidden"
+source = "constructed"
+entries = ["HoldingShoot"]
+operation = "spawn"
+before = { "aim" = "PreviousAim", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "cooldown" = 0, "count" = 0, "shoot" = true, "damages" = [0, 0, 0, 0, 0], "damage" = 12, "radius" = [3, 2], "new" = true, "previous" = "Forbidden" }
+after = { "spawned" = false, "count" = 0, "cooldown" = 1 }
+
+[[vector]]
+id = "W-pending"
+source = "constructed"
+entries = ["CannonOrigin"]
+operation = "origin"
+before = { "aim" = "Forbidden", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "pending" = "UpRight" }
+after = { "valid" = true, "pending_used" = true, "heading" = "UpRight", "centre" = [107, 202] }
+
+[[vector]]
+id = "W-previous"
+source = "constructed"
+entries = ["CannonOrigin"]
+operation = "origin"
+before = { "aim" = "PreviousAim", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "previous" = "Left" }
+after = { "valid" = true, "pending_used" = false, "heading" = "Left", "centre" = [107, 202] }
+
+[[vector]]
+id = "W-moving"
+source = "constructed"
+entries = ["CannonOrigin"]
+operation = "origin"
+before = { "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "moving" = true }
+after = { "valid" = true, "pending_used" = false, "heading" = "Right", "centre" = [111, 206] }
+
+[[vector]]
+id = "W-drift-right"
+source = "constructed"
+entries = ["InheritedMotion"]
+operation = "drift"
+before = { "heading" = "Right", "whole" = [65534, 3, 65532, 2], "fraction" = [32768, 16384, 49152, 0], "camera_fraction" = 8192 }
+after = { "speed" = [1920, 0] }
+
+[[vector]]
+id = "W-drift-left"
+source = "constructed"
+entries = ["InheritedMotion"]
+operation = "drift"
+before = { "heading" = "Left", "whole" = [65534, 3, 65532, 2], "fraction" = [32768, 16384, 49152, 0], "camera_fraction" = 8192 }
+after = { "speed" = [64032, 0] }
+
+[[vector]]
+id = "W-drift-down"
+source = "constructed"
+entries = ["InheritedMotion"]
+operation = "drift"
+before = { "heading" = "DownFacingRight", "whole" = [65534, 3, 65532, 2], "fraction" = [32768, 16384, 49152, 0], "camera_fraction" = 8192 }
+after = { "speed" = [0, 1728] }
+
+[[vector]]
+id = "W-drift-up"
+source = "constructed"
+entries = ["InheritedMotion"]
+operation = "drift"
+before = { "heading" = "UpFacingLeft", "whole" = [65534, 3, 65532, 2], "fraction" = [32768, 16384, 49152, 0], "camera_fraction" = 8192 }
+after = { "speed" = [0, 64272] }
+
+[[vector]]
+id = "W-drift-diagonal"
+source = "constructed"
+entries = ["InheritedMotion"]
+operation = "drift"
+before = { "heading" = "UpLeft", "whole" = [65534, 3, 65532, 2], "fraction" = [32768, 16384, 49152, 0], "camera_fraction" = 8192 }
+after = { "speed" = [64373, 64613] }
+
+[[vector]]
+id = "W-drift-up-zero"
+source = "constructed"
+entries = ["InheritedMotion"]
+operation = "drift"
+before = { "heading" = "UpFacingRight", "whole" = [0, 0, 0, 0], "fraction" = [32768, 16384, 49152, 0], "camera_fraction" = 8192 }
+after = { "speed" = [0, 64512] }
+
+[[vector]]
+id = "W-flight-right"
+source = "constructed"
+entries = ["FlyingBeam"]
+operation = "flight"
+before = { "heading" = "Right", "position" = [6553600, 13107200], "speed" = [1024, 0] }
+after = { "position" = [6819840, 13107200], "speed" = [1040, 0] }
+
+[[vector]]
+id = "W-flight-left"
+source = "constructed"
+entries = ["FlyingBeam"]
+operation = "flight"
+before = { "heading" = "Left", "position" = [6553600, 13107200], "speed" = [64512, 0] }
+after = { "position" = [6287360, 13107200], "speed" = [64496, 0] }
+
+[[vector]]
+id = "W-flight-wrap"
+source = "constructed"
+entries = ["FlyingBeam"]
+operation = "flight"
+before = { "heading" = "Right", "position" = [4294963200, 0], "speed" = [32760, 0] }
+after = { "position" = [4286576640, 0], "speed" = [32776, 0] }
+
+[[vector]]
+id = "W-flight-adjusted"
+source = "constructed"
+entries = ["FlyingBeam"]
+operation = "flight"
+before = { "heading" = "Right", "position" = [6553600, 13107200], "speed" = [1024, 0] }
+after = { "position" = [6828032, 13107200], "speed" = [1072, 0] }
+rules = { "acceleration" = 48 }
+
+[[vector]]
+id = "W-muzzle-left"
+source = "constructed"
+entries = ["MuzzleContact"]
+operation = "probe"
+before = { "heading" = "Left", "position" = [6553600, 13107200] }
+after = { "position" = [6488064, 13107200], "speed" = [64512, 0], "contact_axes" = ["Horizontal"] }
+
+[[vector]]
+id = "W-muzzle-left-fraction"
+source = "constructed"
+entries = ["MuzzleContact"]
+operation = "probe"
+before = { "heading" = "Left", "position" = [6586368, 13107200] }
+after = { "position" = [6553600, 13107200], "speed" = [64512, 0], "contact_axes" = ["Horizontal"] }
+
+[[vector]]
+id = "W-muzzle-up"
+source = "constructed"
+entries = ["MuzzleContact"]
+operation = "probe"
+before = { "heading" = "UpFacingRight", "position" = [6553600, 13107200] }
+after = { "position" = [6553600, 13107200], "speed" = [0, 64512], "contact_axes" = ["Vertical"] }
+
+[[vector]]
+id = "W-muzzle-impact"
+source = "constructed"
+entries = ["MuzzleContact"]
+operation = "probe"
+before = { "heading" = "Left", "position" = [6553600, 13107200], "blocked" = true }
+after = { "position" = [6553344, 13107200], "speed" = [65535, 0], "contact_axes" = ["Horizontal"] }
+
+[[vector]]
+id = "W-burst"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "burst"
+before = { "heading" = "Left", "position" = [6553344, 13107200], "speed" = [65535, 0], "radius" = [3, 2] }
+after = { "position" = [6356736, 13107200], "speed" = [65535, 0], "damage" = 8, "phase" = "Impact", "remaining" = 1, "next" = 0, "impact_sound" = true }
+
+[[vector]]
+id = "W-edge-positive"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 32, "radius" = 3, "perpendicular" = 32, "perpendicular_radius" = 3, "speed" = 1024, "screens" = 4 }
+after = { "leading" = 34, "start" = 29, "span" = 1, "visited" = [0, 1], "blocked" = false }
+
+[[vector]]
+id = "W-edge-negative"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 32, "radius" = 3, "perpendicular" = 32, "perpendicular_radius" = 3, "speed" = 65535, "screens" = 4 }
+after = { "leading" = 29, "start" = 29, "span" = 1, "visited" = [0, 1], "blocked" = false }
+
+[[vector]]
+id = "W-contact-partial"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 32, "radius" = 3, "perpendicular" = 32, "perpendicular_radius" = 3, "speed" = 1024, "screens" = 4, "responses" = [true, false] }
+after = { "leading" = 34, "start" = 29, "span" = 1, "visited" = [0, 1], "blocked" = false }
+
+[[vector]]
+id = "W-contact-all"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 32, "radius" = 3, "perpendicular" = 32, "perpendicular_radius" = 3, "speed" = 1024, "screens" = 4, "responses" = [true, true] }
+after = { "leading" = 34, "start" = 29, "span" = 1, "visited" = [0, 1], "blocked" = true }
+
+[[vector]]
+id = "W-contact-wide"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 32, "radius" = 3, "perpendicular" = 256, "perpendicular_radius" = 129, "speed" = 1024, "screens" = 4 }
+after = { "leading" = 34, "start" = 127, "span" = 17, "visited" = [], "blocked" = false }
+
+[[vector]]
+id = "W-contact-outside"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 1022, "radius" = 3, "perpendicular" = 32, "perpendicular_radius" = 3, "speed" = 1024, "screens" = 4 }
+after = { "leading" = 1024, "start" = 29, "span" = 1, "visited" = [], "blocked" = false }
+
+[[vector]]
+id = "W-world-visits-all"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "contact"
+before = { "axis" = "Horizontal", "centre" = 32, "radius" = 3, "perpendicular" = 32, "perpendicular_radius" = 20, "speed" = 1024, "screens" = 4, "responses" = [false, true, true, true] }
+after = { "leading" = 34, "start" = 12, "span" = 3, "visited" = [0, 1, 2, 3], "blocked" = false }
+
+[[vector]]
+id = "W-diagonal-stop"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "diagonal"
+before = { "heading" = "DownRight", "position" = [6553600, 13107200], "speed" = [683, 683], "radius" = [3, 2], "stopped_horizontally" = true }
+after = { "position" = [6929152, 13238272], "speed" = [699, 699], "damage" = 8, "phase" = "Impact", "remaining" = 1, "next" = 0, "impact_sound" = true, "vertical_checked" = false }
+
+[[vector]]
+id = "W-diagonal-pass"
+source = "constructed"
+entries = ["ShotContact"]
+operation = "diagonal"
+before = { "heading" = "DownRight", "position" = [6553600, 13107200], "speed" = [683, 683], "radius" = [3, 2], "stopped_horizontally" = false }
+after = { "position" = [6732544, 13286144], "speed" = [699, 699], "vertical_checked" = true }
+
+[[vector]]
+id = "W-trail"
+source = "constructed"
+entries = ["BeamTrail"]
+operation = "trail"
+before = { "trail" = 1 }
+after = { "trail" = 4, "emitted" = true }
+
+[[vector]]
+id = "W-trail-wrap"
+source = "constructed"
+entries = ["BeamTrail"]
+operation = "trail"
+before = { "trail" = 0 }
+after = { "trail" = 65535, "emitted" = false }
+
+[[vector]]
+id = "W-trail-adjusted"
+source = "constructed"
+entries = ["BeamTrail"]
+operation = "trail"
+before = { "trail" = 1 }
+after = { "trail" = 7, "emitted" = true }
+rules = { "trail_interval" = 7 }
+
+[[vector]]
+id = "W-view-low"
+source = "constructed"
+entries = ["LeavingView"]
+operation = "view"
+before = { "centre" = [35, 100], "camera" = [100, 100] }
+after = { "visible" = false }
+
+[[vector]]
+id = "W-view-high"
+source = "constructed"
+entries = ["LeavingView"]
+operation = "view"
+before = { "centre" = [420, 100], "camera" = [100, 100] }
+after = { "visible" = false }
+
+[[vector]]
+id = "W-view-inside"
+source = "constructed"
+entries = ["LeavingView"]
+operation = "view"
+before = { "centre" = [36, 419], "camera" = [100, 100] }
+after = { "visible" = true }
+
+[[vector]]
+id = "W-view-wrap"
+source = "constructed"
+entries = ["LeavingView"]
+operation = "view"
+before = { "centre" = [65520, 32], "camera" = [16, 32] }
+after = { "visible" = true }
+
+[[vector]]
+id = "W-consumed"
+source = "constructed"
+entries = ["EndingShot"]
+operation = "end"
+before = { "phase" = "Flying", "consumed" = true, "count" = 1, "trail" = 3 }
+after = { "phase" = "Free", "count" = 0, "trail" = 3 }
+
+[[vector]]
+id = "W-remove-empty-counter"
+source = "constructed"
+entries = ["EndingShot"]
+operation = "end"
+before = { "phase" = "Flying", "consumed" = true, "count" = 0, "trail" = 3 }
+after = { "phase" = "Free", "count" = 0, "trail" = 3 }
+
+[[vector]]
+id = "W-consume-late"
+source = "constructed"
+entries = ["EndingShot"]
+operation = "consume"
+before = { "phase" = "Flying", "consumed" = false }
+after = { "phase" = "Flying", "consumed" = true }
+
+[[vector]]
+id = "W-consume-free"
+source = "constructed"
+entries = ["EndingShot"]
+operation = "consume"
+before = { "phase" = "Free", "consumed" = false }
+after = { "phase" = "Free", "consumed" = false }
+
+[[vector]]
+id = "W-consume-impact"
+source = "constructed"
+entries = ["EndingShot"]
+operation = "consume"
+before = { "phase" = "Impact", "consumed" = false }
+after = { "phase" = "Impact", "consumed" = false }
+
+[[vector]]
+id = "W-clip-wait"
+source = "constructed"
+entries = ["BeamPictures"]
+operation = "clip"
+before = { "remaining" = 2, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots", "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }
+after = { "remaining" = 1, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }
+
+[[vector]]
+id = "W-clip-zero"
+source = "constructed"
+entries = ["BeamPictures"]
+operation = "clip"
+before = { "remaining" = 0, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots", "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }
+after = { "remaining" = 65535, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }
+
+[[vector]]
+id = "W-clip-next"
+source = "constructed"
+entries = ["BeamPictures"]
+operation = "clip"
+before = { "remaining" = 1, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots", "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }
+after = { "remaining" = 5, "next" = 2, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }
+
+[[vector]]
+id = "W-spawn-picture"
+source = "constructed"
+entries = ["BeamPictures"]
+operation = "clip"
+before = { "remaining" = 1, "next" = 0, "picture" = "Old", "radius" = [9, 7], "appearance" = "Dots", "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }
+after = { "remaining" = 2, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }
+
+[[vector]]
+id = "W-clip-repeat"
+source = "constructed"
+entries = ["BeamPictures"]
+operation = "clip"
+before = { "remaining" = 1, "next" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots", "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }
+after = { "remaining" = 2, "next" = 1, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }
+
+[[vector]]
+id = "W-clip-remove"
+source = "constructed"
+entries = ["BeamPictures", "EndingShot"]
+operation = "clip"
+before = { "remaining" = 1, "next" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots", "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "Remove", "repeat" = 0 }
+after = { "removed" = true }
+
+[[vector]]
+id = "W-whole-spawn"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 0, "count" = 0, "slots" = [{ "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = true, "new" = true, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false], [false]] }
+after = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7278592, 13238272], "speed" = [1040, 0], "radius" = [3, 2], "damage" = 12, "trail" = 3, "clip" = "Power", "remaining" = 2, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [{ "kind" = "FireSound", "slot" = 0 }, { "kind" = "Protection", "updates" = 10 }], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [107, 202], "radius" = [3, 2], "leading" = 109, "start" = 200, "count" = 1, "visited" = [0] }, { "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [111, 202], "radius" = [3, 2], "leading" = 113, "start" = 200, "count" = 1, "visited" = [0] }] }
+scenario = "W-shot-sequence"
+step = 1
+
+[[vector]]
+id = "W-whole-flight-2"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7278592, 13238272], "speed" = [1040, 0], "radius" = [3, 2], "damage" = 12, "trail" = 3, "clip" = "Power", "remaining" = 2, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = false, "new" = false, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false]] }
+after = { "state" = { "cooldown" = 14, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7548928, 13238272], "speed" = [1056, 0], "radius" = [3, 2], "damage" = 12, "trail" = 2, "clip" = "Power", "remaining" = 1, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [115, 202], "radius" = [3, 2], "leading" = 117, "start" = 200, "count" = 1, "visited" = [0] }] }
+scenario = "W-shot-sequence"
+step = 2
+
+[[vector]]
+id = "W-whole-flight-3"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 14, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7548928, 13238272], "speed" = [1056, 0], "radius" = [3, 2], "damage" = 12, "trail" = 2, "clip" = "Power", "remaining" = 1, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = false, "new" = false, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false]] }
+after = { "state" = { "cooldown" = 13, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7823360, 13238272], "speed" = [1072, 0], "radius" = [4, 1], "damage" = 12, "trail" = 1, "clip" = "Power", "remaining" = 5, "next" = 2, "picture" = "Cloud", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [119, 202], "radius" = [3, 2], "leading" = 121, "start" = 200, "count" = 1, "visited" = [0] }] }
+scenario = "W-shot-sequence"
+step = 3
+
+[[vector]]
+id = "W-whole-trail-and-consume"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 13, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7823360, 13238272], "speed" = [1072, 0], "radius" = [4, 1], "damage" = 12, "trail" = 1, "clip" = "Power", "remaining" = 5, "next" = 2, "picture" = "Cloud", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = false, "new" = false, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4], "consumed_slots" = [0] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false]] }
+after = { "state" = { "cooldown" = 12, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = true, "position" = [8101888, 13238272], "speed" = [1088, 0], "radius" = [4, 1], "damage" = 12, "trail" = 4, "clip" = "Power", "remaining" = 4, "next" = 2, "picture" = "Cloud", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [{ "kind" = "Trail", "slot" = 0, "position" = [7823360, 13238272], "picture" = "Cloud", "appearance" = "Mist" }], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [123, 202], "radius" = [4, 1], "leading" = 126, "start" = 201, "count" = 1, "visited" = [0] }] }
+scenario = "W-shot-sequence"
+step = 4
+
+[[vector]]
+id = "W-whole-consumed-removal"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 12, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = true, "position" = [8101888, 13238272], "speed" = [1088, 0], "radius" = [4, 1], "damage" = 12, "trail" = 4, "clip" = "Power", "remaining" = 4, "next" = 2, "picture" = "Cloud", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = false, "new" = false, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [] }
+after = { "state" = { "cooldown" = 11, "count" = 0, "slots" = [{ "phase" = "Free", "trail" = 4, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [], "contacts" = [] }
+scenario = "W-shot-sequence"
+step = 5
+
+[[vector]]
+id = "W-whole-frozen-shots-only"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7278592, 13238272], "speed" = [1040, 0], "radius" = [3, 2], "damage" = 12, "trail" = 3, "clip" = "Power", "remaining" = 2, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "ShotsOnly", "frozen" = true, "shoot" = true, "new" = true, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false]] }
+after = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7548928, 13238272], "speed" = [1056, 0], "radius" = [3, 2], "damage" = 12, "trail" = 2, "clip" = "Power", "remaining" = 1, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [115, 202], "radius" = [3, 2], "leading" = 117, "start" = 200, "count" = 1, "visited" = [0] }] }
+
+[[vector]]
+id = "W-whole-contact-burst"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 0, "count" = 0, "slots" = [{ "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = true, "new" = true, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 9], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false, true], [true, true]] }
+after = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Impact", "heading" = "Right", "position" = [7475200, 13238272], "speed" = [1040, 0], "radius" = [5, 5], "damage" = 8, "trail" = 3, "clip" = "Impact", "remaining" = 3, "next" = 1, "picture" = "Burst", "appearance" = "None" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [{ "kind" = "FireSound", "slot" = 0 }, { "kind" = "Protection", "updates" = 10 }, { "kind" = "ImpactSound", "slot" = 0 }], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [107, 202], "radius" = [3, 9], "leading" = 109, "start" = 193, "count" = 2, "visited" = [0, 1] }, { "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [111, 202], "radius" = [3, 9], "leading" = 113, "start" = 193, "count" = 2, "visited" = [0, 1] }] }
+
+[[vector]]
+id = "W-whole-heading-right"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 0, "count" = 0, "slots" = [{ "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = true, "new" = true, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4], "offsets" = { "DownLeft" = [5, 3], "DownRight" = [5, 3], "DownFacingLeft" = [5, 3], "DownFacingRight" = [5, 3], "Left" = [-9, 7], "Right" = [5, 3], "UpLeft" = [5, 3], "UpRight" = [5, 3], "UpFacingLeft" = [5, 3], "UpFacingRight" = [5, 3] }, "moving_offsets" = { "DownLeft" = [5, 3], "DownRight" = [5, 3], "DownFacingLeft" = [5, 3], "DownFacingRight" = [5, 3], "Left" = [-9, 7], "Right" = [5, 3], "UpLeft" = [5, 3], "UpRight" = [5, 3], "UpFacingLeft" = [5, 3], "UpFacingRight" = [5, 3] } }, "content" = { "damage" = 12, "heading_clips" = { "DownLeft" = "East", "DownRight" = "East", "DownFacingLeft" = "East", "DownFacingRight" = "East", "Left" = "West", "Right" = "East", "UpLeft" = "East", "UpRight" = "East", "UpFacingLeft" = "East", "UpFacingRight" = "East" }, "clips" = { "East" = { "frames" = [{ "hold" = 2, "picture" = "EastSpark", "radius" = [3, 2], "appearance" = "EastDots" }], "ending" = "RepeatFrom", "repeat" = 0 }, "West" = { "frames" = [{ "hold" = 7, "picture" = "WestNeedle", "radius" = [2, 5], "appearance" = "WestDots" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false], [false]] }
+after = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [7147520, 13107200], "speed" = [1040, 0], "radius" = [3, 2], "damage" = 12, "trail" = 3, "clip" = "East", "remaining" = 2, "next" = 1, "picture" = "EastSpark", "appearance" = "EastDots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [{ "kind" = "FireSound", "slot" = 0 }, { "kind" = "Protection", "updates" = 10 }], "contacts" = [{ "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [105, 200], "radius" = [3, 2], "leading" = 107, "start" = 198, "count" = 1, "visited" = [0] }, { "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [109, 200], "radius" = [3, 2], "leading" = 111, "start" = 198, "count" = 1, "visited" = [0] }] }
+
+[[vector]]
+id = "W-whole-heading-left"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 0, "count" = 0, "slots" = [{ "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = true, "new" = true, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4], "offsets" = { "DownLeft" = [5, 3], "DownRight" = [5, 3], "DownFacingLeft" = [5, 3], "DownFacingRight" = [5, 3], "Left" = [-9, 7], "Right" = [5, 3], "UpLeft" = [5, 3], "UpRight" = [5, 3], "UpFacingLeft" = [5, 3], "UpFacingRight" = [5, 3] }, "moving_offsets" = { "DownLeft" = [5, 3], "DownRight" = [5, 3], "DownFacingLeft" = [5, 3], "DownFacingRight" = [5, 3], "Left" = [-9, 7], "Right" = [5, 3], "UpLeft" = [5, 3], "UpRight" = [5, 3], "UpFacingLeft" = [5, 3], "UpFacingRight" = [5, 3] }, "pending" = "Left" }, "content" = { "damage" = 12, "heading_clips" = { "DownLeft" = "East", "DownRight" = "East", "DownFacingLeft" = "East", "DownFacingRight" = "East", "Left" = "West", "Right" = "East", "UpLeft" = "East", "UpRight" = "East", "UpFacingLeft" = "East", "UpFacingRight" = "East" }, "clips" = { "East" = { "frames" = [{ "hold" = 2, "picture" = "EastSpark", "radius" = [3, 2], "appearance" = "EastDots" }], "ending" = "RepeatFrom", "repeat" = 0 }, "West" = { "frames" = [{ "hold" = 7, "picture" = "WestNeedle", "radius" = [2, 5], "appearance" = "WestDots" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[false, false], [false, false]] }
+after = { "state" = { "cooldown" = 15, "count" = 1, "slots" = [{ "phase" = "Flying", "heading" = "Left", "consumed" = false, "position" = [5632000, 13369344], "speed" = [64496, 0], "radius" = [2, 5], "damage" = 12, "trail" = 3, "clip" = "West", "remaining" = 7, "next" = 1, "picture" = "WestNeedle", "appearance" = "WestDots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [{ "kind" = "FireSound", "slot" = 0 }, { "kind" = "Protection", "updates" = 10 }, { "kind" = "PendingAimConsumed" }], "contacts" = [{ "slot" = 0, "heading" = "Left", "axis" = "Horizontal", "centre" = [90, 204], "radius" = [2, 5], "leading" = 88, "start" = 199, "count" = 2, "visited" = [0, 1] }, { "slot" = 0, "heading" = "Left", "axis" = "Horizontal", "centre" = [85, 204], "radius" = [2, 5], "leading" = 83, "start" = 199, "count" = 2, "visited" = [0, 1] }] }
+
+[[vector]]
+id = "W-whole-reverse-slots"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 1, "count" = 2, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [6553600, 13238272], "speed" = [1024, 0], "radius" = [3, 2], "damage" = 12, "trail" = 1, "clip" = "Power", "remaining" = 1, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [9830400, 13238272], "speed" = [1024, 0], "radius" = [3, 2], "damage" = 12, "trail" = 1, "clip" = "Power", "remaining" = 1, "next" = 1, "picture" = "Spark", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = false, "new" = false, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [[true], [false]] }
+after = { "state" = { "cooldown" = 0, "count" = 2, "slots" = [{ "phase" = "Flying", "heading" = "Right", "consumed" = false, "position" = [6819840, 13238272], "speed" = [1040, 0], "radius" = [4, 1], "damage" = 12, "trail" = 4, "clip" = "Power", "remaining" = 5, "next" = 2, "picture" = "Cloud", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Impact", "heading" = "Right", "position" = [10293248, 13238272], "speed" = [1040, 0], "radius" = [5, 5], "damage" = 8, "trail" = 4, "clip" = "Impact", "remaining" = 3, "next" = 1, "picture" = "Burst", "appearance" = "Dots" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [{ "kind" = "Trail", "slot" = 3, "position" = [9830400, 13238272], "picture" = "Spark", "appearance" = "Dots" }, { "kind" = "ImpactSound", "slot" = 3 }, { "kind" = "Trail", "slot" = 0, "position" = [6553600, 13238272], "picture" = "Spark", "appearance" = "Dots" }], "contacts" = [{ "slot" = 3, "heading" = "Right", "axis" = "Horizontal", "centre" = [154, 202], "radius" = [3, 2], "leading" = 156, "start" = 200, "count" = 1, "visited" = [0] }, { "slot" = 0, "heading" = "Right", "axis" = "Horizontal", "centre" = [104, 202], "radius" = [3, 2], "leading" = 106, "start" = 200, "count" = 1, "visited" = [0] }] }
+
+[[vector]]
+id = "W-whole-impact-inactive"
+source = "constructed"
+entries = ["ShotSpacing", "HoldingShoot", "CannonOrigin", "InheritedMotion", "MuzzleContact", "FlyingBeam", "ShotContact", "BeamTrail", "LeavingView", "BeamPictures", "EndingShot"]
+operation = "update"
+before = { "state" = { "cooldown" = 13, "count" = 1, "slots" = [{ "phase" = "Impact", "heading" = "Right", "position" = [7823360, 13238272], "speed" = [1072, 0], "radius" = [5, 5], "damage" = 8, "trail" = 1, "clip" = "Impact", "remaining" = 1, "next" = 1, "picture" = "Burst", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "input" = { "mode" = "CannonAndShots", "frozen" = false, "shoot" = false, "new" = false, "aim" = "Right", "centre" = [100, 200], "offset" = [7, 5], "moving_offset" = [11, 9], "lift" = 3, "camera" = [0, 0], "room_screens" = [4, 4] }, "content" = { "damage" = 12, "clips" = { "Power" = { "frames" = [{ "hold" = 2, "picture" = "Spark", "radius" = [3, 2], "appearance" = "Dots" }, { "hold" = 5, "picture" = "Cloud", "radius" = [4, 1], "appearance" = "Mist" }], "ending" = "RepeatFrom", "repeat" = 0 }, "Impact" = { "frames" = [{ "hold" = 3, "picture" = "Burst", "radius" = [5, 5], "appearance" = "Inactive" }, { "hold" = 4, "picture" = "Cloud", "radius" = [6, 6], "appearance" = "Inactive" }], "ending" = "Remove" } } }, "world" = [] }
+after = { "state" = { "cooldown" = 12, "count" = 1, "slots" = [{ "phase" = "Impact", "heading" = "Right", "position" = [7823360, 13238272], "speed" = [1072, 0], "radius" = [6, 6], "damage" = 8, "trail" = 1, "clip" = "Impact", "remaining" = 4, "next" = 2, "picture" = "Cloud", "appearance" = "Mist" }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }, { "phase" = "Free", "trail" = 0, "retained_fraction" = [0, 0] }] }, "events" = [], "contacts" = [] }
+
+[[vector]]
+id = "W-draw-even"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Even", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 1, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 2, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 3, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 4, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [{ "slot" = 3, "picture" = "Spark", "screen" = [80, 180] }, { "slot" = 1, "picture" = "Spark", "screen" = [80, 180] }], "impact" = [] }
+
+[[vector]]
+id = "W-draw-odd"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Odd", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 1, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 2, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 3, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 4, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [{ "slot" = 4, "picture" = "Spark", "screen" = [80, 180] }, { "slot" = 2, "picture" = "Spark", "screen" = [80, 180] }, { "slot" = 0, "picture" = "Spark", "screen" = [80, 180] }], "impact" = [] }
+
+[[vector]]
+id = "W-draw-consumed"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Odd", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Flying", "centre" = [100, 200], "picture" = "Spark", "consumed" = true }] }
+after = { "flying" = [{ "slot" = 0, "picture" = "Spark", "screen" = [80, 180] }], "impact" = [] }
+
+[[vector]]
+id = "W-draw-absent"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Odd", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Free", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 2, "phase" = "Flying", "centre" = [100, 200], "picture" = "None", "consumed" = false }] }
+after = { "flying" = [], "impact" = [] }
+
+[[vector]]
+id = "W-draw-view"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Odd", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Flying", "centre" = [20, 19], "picture" = "Spark", "consumed" = false }, { "slot" = 2, "phase" = "Flying", "centre" = [20, 276], "picture" = "Spark", "consumed" = false }, { "slot" = 4, "phase" = "Flying", "centre" = [65530, 275], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [{ "slot" = 4, "picture" = "Spark", "screen" = [65510, 255] }], "impact" = [] }
+
+[[vector]]
+id = "W-draw-impact-even"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Even", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Impact", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [], "impact" = [{ "slot" = 0, "picture" = "Spark", "screen" = [80, 180] }] }
+
+[[vector]]
+id = "W-draw-impact-odd"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Odd", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Impact", "centre" = [100, 200], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [], "impact" = [{ "slot" = 0, "picture" = "Spark", "screen" = [80, 180] }] }
+
+[[vector]]
+id = "W-draw-impact-edge"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Even", "view_origin" = [20, 20], "slots" = [{ "slot" = 0, "phase" = "Impact", "centre" = [65508, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 1, "phase" = "Impact", "centre" = [65507, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 2, "phase" = "Impact", "centre" = [323, 200], "picture" = "Spark", "consumed" = false }, { "slot" = 3, "phase" = "Impact", "centre" = [324, 200], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [], "impact" = [{ "slot" = 2, "picture" = "Spark", "screen" = [303, 180] }, { "slot" = 0, "picture" = "Spark", "screen" = [65488, 180] }] }
+
+[[vector]]
+id = "W-draw-rotating"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { "flicker" = "Odd", "view" = "Rotating", "view_origin" = [25, 25], "screen_centres" = { "0" = [400, 40] }, "slots" = [{ "slot" = 0, "phase" = "Impact", "centre" = [400, 40], "picture" = "Spark", "consumed" = false }] }
+after = { "flying" = [], "impact" = [{ "slot" = 0, "picture" = "Spark", "screen" = [400, 40] }] }
+
+[[vector]]
+id = "W-draw-producers"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { flicker = "Odd", view_origin = [20, 20], slots = [{slot = 0, phase = "Flying", centre = [100, 200], picture = "Spark", consumed = false}, {slot = 1, phase = "Impact", centre = [90, 190], picture = "Cloud", consumed = false}, {slot = 2, phase = "Flying", centre = [80, 180], picture = "Dots", consumed = false}, {slot = 3, phase = "Impact", centre = [70, 170], picture = "Mist", consumed = false}] }
+after = { flying = [{slot = 2, picture = "Dots", screen = [60, 160]}, {slot = 0, picture = "Spark", screen = [80, 180]}], impact = [{slot = 3, picture = "Mist", screen = [50, 150]}, {slot = 1, picture = "Cloud", screen = [70, 170]}] }
+
+[[vector]]
+id = "W-draw-rotating-flying"
+source = "constructed"
+entries = ["BeamVisibility"]
+operation = "draw"
+before = { flicker = "Odd", view = "Rotating", view_origin = [25, 25], screen_centres = { "0" = [500, 40] }, slots = [{slot = 0, phase = "Flying", centre = [100, 300], picture = "Spark", consumed = false}] }
+after = { flying = [{slot = 0, picture = "Spark", screen = [500, 40]}], impact = [] }

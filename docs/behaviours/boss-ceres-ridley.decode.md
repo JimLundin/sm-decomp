@@ -219,7 +219,7 @@ the budget. `tools spec-units` reads k and the areas here.
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on
 samus-movement. There is no old code: the engine carries the doors unrun
 (`EnemyBody::Unmodelled`, LEGACY "slots it carries but doesn't run"), so no area has `old`, and
-the strict size gate (a domain larger than the old code it replaces) doesn't apply.
+there is no old-code guideline to compare (MODEL §1 decision 19).
 
 - Area doors: 1, Waiting, SheIsNear, RoomStart, Polling, Opening, Closing, ShaftWall, Solid, Shown
 - Area station: EscapeShakes, TheDoorsColours

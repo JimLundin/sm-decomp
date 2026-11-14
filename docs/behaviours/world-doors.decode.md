@@ -314,7 +314,7 @@ the budget. `tools spec-units` reads k and the areas here.
 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on
 samus-movement. There is no old code: the engine has no passage (its only game mode is
-gameplay), so no area has `old`, and the strict size gate doesn't apply.
+gameplay), so no area has `old` for the guideline comparison (MODEL §1 decision 19).
 
 - Area passage: TheTouch, PassageTime, FinishedFrames, Quieting, TheFades, Fading, Squaring, Building, SettingOff, Sliding, Carrying, Arriving, WhereSheLands, Landing, SheKeepsHerMotion, WhatRuns
 

@@ -540,8 +540,7 @@ not a bound) is the `tools size` score of the old code that area replaces: `game
 without its layer 2 and background scroll, and the lead distances' function in `state/room.rs`, at
 spine `cc505407c`. The old code lacks two of this spec's rules, the knockback's turn of the lead and time
 stopped, so `old` slightly understates the domain. The budget is an indicator: the fit is score ÷
-budget, and being over it costs in proportion to how far over, never as a wall; over an area's old
-code is a failure.
+budget, and being over it costs in proportion to how far over, never as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area follow (old 715): FollowingHer, LeadingHer, AimingHeight, Remembering, CreepReadsRightward
 - Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
