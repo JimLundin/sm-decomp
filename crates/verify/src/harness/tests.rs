@@ -239,6 +239,201 @@ fn an_entry_is_credited_only_where_its_fields_are_compared() {
 /// The committed floors: `<domain> <row> <frames matched and verified>` a line, `#` comments.
 const FLOORS: &str = include_str!("floors.txt");
 
+#[test]
+fn weapons_hold_their_floors_against_the_cache() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = std::fs::read(rom).unwrap();
+    let domain = super::weapons::Weapons::load(&image).unwrap();
+    hold_floors(&domain, "weapons-projectiles", &cache);
+}
+
+#[test]
+fn weapons_flight_check_catches_adjusted_acceleration_without_expected_inputs() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = std::fs::read(rom).unwrap();
+    let mut domain = super::weapons::Weapons::load(&image).unwrap();
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let reference = run_cached(&domain, &lock, &cache, "chain-any-0003-DFD7").unwrap();
+    assert_eq!(
+        reference
+            .fields
+            .iter()
+            .find(|field| field.name == "speed")
+            .unwrap()
+            .first,
+        []
+    );
+    domain.rules.acceleration = weapons_projectiles::BeamSpeed(15);
+    let mutant = run_cached(&domain, &lock, &cache, "chain-any-0003-DFD7").unwrap();
+    let speed = mutant
+        .fields
+        .iter()
+        .find(|field| field.name == "speed")
+        .unwrap();
+    assert_eq!(speed.first.first().unwrap().frame, Frame(157));
+    assert!(mutant.matched < reference.matched);
+    let free = super::free::run_cached(&domain, &lock, &cache, "chain-any-0003-DFD7").unwrap();
+    assert!(free.held < reference.matched);
+    assert_eq!(
+        free.first
+            .iter()
+            .find(|(name, _)| *name == "speed")
+            .unwrap()
+            .1
+            .as_ref()
+            .unwrap()
+            .frame,
+        Frame(157)
+    );
+    let _ = writeln!(
+        std::io::stdout(),
+        "M0 acceleration15 mutant: per-frame {}/{} (null {}); free held {}/{} (null {}); first speed157",
+        mutant.matched,
+        mutant.frames,
+        mutant.null_matched,
+        free.held,
+        free.frames,
+        free.null_held
+    );
+}
+
+#[test]
+fn weapons_m0_runs_with_validated_inputs_and_own_state() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let image = std::fs::read(rom).unwrap();
+    let domain = super::weapons::Weapons::load(&image).unwrap();
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let row = "chain-any-0003-DFD7";
+    let reference = run_cached(&domain, &lock, &cache, row).unwrap();
+    let free = super::free::run_cached(&domain, &lock, &cache, row).unwrap();
+    let _ = write!(
+        std::io::stdout(),
+        "M0 validated inputs: {reference}\nM0 own State: {free}\n"
+    );
+    assert_eq!(
+        (
+            reference.frames,
+            reference.compared,
+            reference.matched,
+            reference.null_matched
+        ),
+        (344, 344, 344, 328)
+    );
+    assert_eq!(reference.defects.values().sum::<u64>(), 0);
+    assert_eq!((free.held, free.unreached_frames), (344, 0));
+    let cached = super::open_cached(&lock, &cache, row).unwrap();
+    let records = cached
+        .records_without_pictures()
+        .map(|record| record.unwrap().1)
+        .collect::<Vec<_>>();
+    for record in records
+        .iter()
+        .filter(|record| (156..=160).contains(&record.index))
+    {
+        let world = domain.world(record, record).unwrap();
+        assert_eq!(world.active_enemy_slots(), [0, 1]);
+    }
+}
+
+#[test]
+fn weapons_c1_admission_uses_preceding_inputs_and_never_expected_outputs() {
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let domain = super::weapons::Weapons::load(&std::fs::read(rom).unwrap()).unwrap();
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let cached = super::open_cached(&lock, &cache, "chain-any-0003-DFD7").unwrap();
+    let records = cached
+        .records_without_pictures()
+        .map(|record| record.unwrap().1)
+        .filter(|record| (156..=157).contains(&record.index))
+        .collect::<Vec<_>>();
+    let [from, next] = records.as_slice() else {
+        panic!("the two receipt records must be present");
+    };
+    let pair = |from: &FrameRecord, next: &FrameRecord| {
+        [from.clone(), next.clone()].map(Ok::<_, Infallible>)
+    };
+    let reference = run(&domain, pair(from, next)).unwrap();
+    assert_eq!((reference.compared, reference.matched), (1, 1));
+
+    // Expected cooldown changes the comparison, never the pre-AI authorization.
+    let mut changed_expected = next.clone();
+    let cooldown =
+        u16::from_le_bytes([changed_expected.wram[0x0ccc], changed_expected.wram[0x0ccd]]);
+    changed_expected.wram[0x0ccc..0x0cce].copy_from_slice(&cooldown.wrapping_add(1).to_le_bytes());
+    let differing_expected = run(&domain, pair(from, &changed_expected)).unwrap();
+    assert_eq!(
+        (differing_expected.compared, differing_expected.matched),
+        (1, 0)
+    );
+    assert_eq!(differing_expected.defects.values().sum::<u64>(), 0);
+
+    // A previously unwatched enemy position cannot inherit the receipt's authority.
+    let mut changed_input = from.clone();
+    changed_input.wram[0x0f7a] ^= 1;
+    for expected in [next, &changed_expected] {
+        let rejected = run(&domain, pair(&changed_input, expected)).unwrap();
+        assert_eq!(rejected.compared, 0);
+        assert_eq!(rejected.defects.values().sum::<u64>(), 1);
+        let free = super::free::run(&domain, pair(&changed_input, expected)).unwrap();
+        assert_eq!((free.compared(), free.unreached_frames), (0, 1));
+    }
+}
+
+struct MissingReaction;
+impl Domain for MissingReaction {
+    const NAME: &'static str = "missing-reaction";
+    type State = ();
+    type Inputs = ();
+    type World = ();
+    type Fields = ();
+    type Skip = &'static str;
+    const FIELDS: &'static [Field<()>] = &[Field {
+        name: "state",
+        same: |(), ()| true,
+        show: |()| String::new(),
+    }];
+    fn decode(&self, _: &FrameRecord, _: Interval) -> Result<((), ()), &'static str> {
+        Ok(((), ()))
+    }
+    fn world(&self, _: &FrameRecord, _: &FrameRecord) -> Result<(), &'static str> {
+        Ok(())
+    }
+    fn step(&self, (): &mut (), (): &(), (): &mut ()) {}
+    fn checked_step(&self, (): &()) -> Result<(), &'static str> {
+        Err("missing neighboring reaction")
+    }
+    fn fields(&self, (): &()) {}
+    fn expected(&self, _: &FrameRecord) -> Result<(), &'static str> {
+        Ok(())
+    }
+    fn uncompared(&self, skip: &&'static str) -> super::Uncompared {
+        super::Uncompared::Defect((*skip).to_owned())
+    }
+}
+
+#[test]
+fn a_missing_reaction_is_a_defect_after_the_actual_per_frame_and_free_steps() {
+    let records = || [record(0, 8, [0; 4]), record(1, 8, [0; 4])].map(Ok::<_, Infallible>);
+    let Ok(per_frame) = run(&MissingReaction, records());
+    assert_eq!((per_frame.compared, per_frame.matched), (0, 0));
+    assert_eq!(per_frame.defects.values().sum::<u64>(), 1);
+    let Ok(free) = super::free::run(&MissingReaction, records());
+    assert_eq!(
+        (free.compared(), free.held, free.unreached_frames),
+        (0, 0, 1)
+    );
+}
+
 /// The floor of `domain` on each row, from [`FLOORS`].
 fn floors(domain: &str) -> BTreeMap<&'static str, u64> {
     FLOORS

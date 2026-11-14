@@ -94,7 +94,8 @@ best two already are.
 
 The 70 % cap per area was to keep the "significant saving" rule against an inflated spec. Jim
 dropped it (2026-11-10, MODEL §1 decision 7): it gave new behaviour no budget, so the budget is
-k × units in every area, with the old code beside it. Over the old code stays a strict failure.
+k × units in every area, with the old code beside it. The comparison is advisory under
+MODEL §1 decision 19.
 
 **Circularity.** Fitting k, or any weight, on round 7 makes the budget describe round 7. Fitting on
 the old code inherits its port's verbosity: old collision runs at 54.7 per unit against motion's
@@ -229,10 +230,10 @@ guards:
 4. **The budget freezes at the export.** The implementer's round is judged against the spec in its
    export. Arms added later count only with a `gaps.md` entry and a vector. That stops units being
    added after the observer sees that a model is over.
-5. **Over the old code is a strict failure**, shown by area beside the budget. The per-area cap
-   at 70 % of the old code is dropped (MODEL §1 decision 7).
+5. **The old code is an advisory comparison**, shown by area beside the budget. The root
+   considers it after independent review (MODEL §1 decision 19).
 6. **k is frozen.** Nobody chooses a ratio per domain. The only lever left is units, and guards 1-4
-   cover units. Every spec commit shows its Δbudget to the spec reviewer.
+   cover units. The root checks each spec commit's budget after independent review.
 
 ## 7. Open questions for Jim
 

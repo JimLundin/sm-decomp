@@ -4,10 +4,12 @@ import tempfile
 import tomllib
 import unittest
 from collections.abc import Callable
+from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  parameter_entries, prove)
+                                  candidates, parameter_entries, probe, prove, test_command)
 
 SPEC = """\
 ### Fixed
@@ -113,6 +115,77 @@ class AdjustedVectors(unittest.TestCase):
         strict = strict.replace('id = "x-d"\nentries = ["Step"]', 'id = "y-d"\nentries = ["Step"]')
         with self.assertRaises(CannotProbe):
             self.proof(strict, id_ends="-d")
+
+    def test_a_fixed_count_adapter_accepts_control_and_refutes_reference(self) -> None:
+        text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                      "before = 2\nafter = 5\n")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.toml"
+            original = text.encode("utf-8")
+            path.write_bytes(original)
+            run_model = model(path)
+            observed: list[tuple[list[str], bool]] = []
+
+            def fixed_count_adapter() -> bool:
+                rows = tomllib.loads(path.read_text(encoding="utf-8"))["vector"]
+                passed = len(rows) == 2 and run_model()
+                observed.append(([row["id"] for row in rows], passed))
+                return passed
+
+            self.assertEqual(prove(path, ["Step"], fixed_count_adapter),
+                             {"Step": Proven("adjusted", ())})
+            self.assertEqual(observed, [(["reference", "adjusted"], True),
+                                        (["reference", "adjusted-probe"], False),
+                                        (["reference", "adjusted-probe"], True)])
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_replacement_preserves_all_other_parsed_content(self) -> None:
+        for rules in ('rules = { step = 3 }\n', '[vector.rules]\nstep = 3\n'):
+            text = ('title = "globals"\n[settings]\ncount = 7\n'
+                    '[[annotation]]\nid = "before"\n' + REFERENCE
+                    + '\n[[vector]]\nid = "adjusted"\nentries = ["Step"]\n'
+                    'before = 2\nafter = 5\n' + rules
+                    + '[vector.note]\nid = "nested-id"\ntext = "keep"\n'
+                    '[[annotation]]\nid = "between"\n'
+                    '[[vector]]\nid = "later"\nentries = ["Fixed"]\n'
+                    'before = 5\nafter = 6\n'
+                    '[[annotation]]\nid = "after"\n')
+            original = tomllib.loads(text)
+            candidate = candidates(text)[0]
+            for keep_rules in (False, True):
+                with self.subTest(rules=rules, keep_rules=keep_rules):
+                    expected = deepcopy(original)
+                    expected["vector"][1]["id"] = "adjusted-probe"
+                    if not keep_rules:
+                        del expected["vector"][1]["rules"]
+                    self.assertEqual(tomllib.loads(probe(text, candidate, keep_rules)), expected)
+
+    def test_a_probe_id_collision_is_refused_and_restored(self) -> None:
+        text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                      "before = 2\nafter = 5\n").replace('"reference"', '"adjusted-probe"')
+        with self.assertRaises(CannotProbe):
+            self.proof(text)
+
+    def test_linux_selects_dedicated_vectors_or_library_adapter(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tests = root / "crates/clean/demo/tests"
+            tests.mkdir(parents=True)
+            with patch("adjusted_vectors_run.os.name", "posix"):
+                self.assertEqual(test_command("demo", root),
+                                 ["cargo", "test", "--locked", "-p", "demo", "--lib"])
+                # An unrelated integration target doesn't replace a unit-based adapter.
+                (tests / "other.rs").write_text("// Invented target.\n", encoding="utf-8")
+                self.assertEqual(test_command("demo", root)[-1], "--lib")
+                (tests / "vectors.rs").write_text("// Invented vector adapter.\n", encoding="utf-8")
+                self.assertEqual(test_command("demo", root),
+                                 ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
+            with patch("adjusted_vectors_run.os.name", "nt"):
+                self.assertEqual(test_command("demo", root),
+                                 ["bash", "tools/lane/run_tests.sh", "demo"])
+                (tests / "vectors.rs").unlink()
+                self.assertEqual(test_command("demo", root),
+                                 ["bash", "tools/lane/run_tests.sh", "demo"])
 
 
 if __name__ == "__main__":

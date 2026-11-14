@@ -270,6 +270,40 @@ original's bytes as data.
   masks until the read is decoded (the decode notes, "The harness", her position at the
   mini-map's turn).
 
+## The engine: uncharged power beam awaiting integration
+
+- **Uncharged power-beam integration** (W1,
+  [the spec](behaviours/weapons-projectiles.md) and
+  [decode notes](behaviours/weapons-projectiles.decode.md)): the clean model is checked by
+  `verify::harness::weapons`, but the engine still runs `game::projectile`. It does not fire
+  shots or draw their imported pictures. AF3's `import::projectile::import` supplies complete
+  content; `game::pose::Content` does not yet carry it. `game::state::Samus` does not retain
+  the directional motion receipts W1 inherits, pending firing aim or preceding shoot press.
+  `samus_movement::Outcome` supplies contacts and placement, while the bridge's `Ran` supplies
+  before/after motion; the directional receipt contract must be established before persisting
+  either as W1 input. These are the most recent per-direction collision-returned whole and
+  fractional distances, rather than net centre displacement; the clean collision receipt's
+  whole-pixel `Moved::gone` cannot reconstruct their fractions. Camera also lacks the retained
+  fractional receipt of Samus's vertical distance from the remembered centre, which W1 reads
+  independently of the camera's clamped travel. Pending aim needs the pose change's named
+  output, and preceding shoot press needs the drawing phase's history update. C1 does not
+  supply player-owned shot contact before each enemy's AI in
+  `game::enemy::run`, so it cannot consume a Flying shot after W1's update (the observed
+  consumption at `chain-any-0003-DFD7` frame 160). The next wiring must install that
+  independent actor event at the per-enemy pre-AI boundary,
+  persist the validated neighbor inputs, hold W1's State through `canonical::model::Model`,
+  and send its separately ordered pictures through the sprite encoder at the presentation
+  camera origin and preceding-cut flicker phase. Until then no W1 whole-engine gain is claimed.
+- **Shot ContactContinuation** (W2,
+  [the W1 decode contract](behaviours/weapons-projectiles.decode.md#world-capability-contactcontinuation)):
+  `game::projectile::check_blocks` answers contacts past the level as passing and reads an odd
+  byte offset as the preceding whole cell. Its horizontal step omits the carry that can create
+  overlapping words. Those answers do not establish the original's continuation, aliases or
+  reaction order. W2 must supply validated continuation content and an ordered reaction for
+  every visit before this adapter can claim the complete World capability. The W1 harness
+  accepts only independently decoded unconditional Air responses; other reactions or unreadable
+  continuation words are defects, including when reached by the free run's carried State.
+
 ## The engine: slots it carries but doesn't run
 
 A stop-gap so Ceres's seeds start: the decoder admits an enemy or PLM slot of the ids below,

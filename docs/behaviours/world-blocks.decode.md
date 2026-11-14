@@ -617,7 +617,7 @@ score of the old code that area replaces, at spine `387640758`. The old code cov
 the scroll cells, but of the blocks that break only the start of one shot block (175.5), so
 breakables has no `old`. The budget
 is an indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over,
-never as a wall; over an area's old code is a failure.
+never as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area places (old 1,252): 2, Places, TheScriptsRun, PatternCells, Regrowing, RoomStart,
   WhatTheScreenRedraws, Sounds
