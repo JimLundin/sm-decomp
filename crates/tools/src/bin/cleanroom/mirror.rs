@@ -143,6 +143,7 @@ fn public_fns(src: &str) -> Vec<(String, usize, String)> {
         let mut angles = 0usize;
         let mut body = None;
         let mut depth = 0usize;
+        let mut previous = None;
         for current in tokens.iter().skip(index.saturating_add(2)) {
             if let Some(open) = body {
                 match current.token {
@@ -166,15 +167,30 @@ fn public_fns(src: &str) -> Vec<(String, usize, String)> {
                     Tok::Punct(')') => parens = parens.saturating_sub(1),
                     Tok::Punct('[') => brackets = brackets.saturating_add(1),
                     Tok::Punct(']') => brackets = brackets.saturating_sub(1),
-                    Tok::Punct('<') => angles = angles.saturating_add(1),
-                    Tok::Punct('>') => angles = angles.saturating_sub(1),
+                    // Comparisons in const expressions and arrows in bounds are not generic delimiters.
+                    Tok::Punct('<') if parens == 0 && brackets == 0 && depth == 0 => {
+                        angles = angles.saturating_add(1);
+                    }
+                    Tok::Punct('>')
+                        if parens == 0
+                            && brackets == 0
+                            && depth == 0
+                            && previous != Some(&Tok::Punct('-')) =>
+                    {
+                        angles = angles.saturating_sub(1);
+                    }
                     Tok::Punct(';') if parens == 0 && brackets == 0 && angles == 0 => break,
-                    Tok::Punct('{') if parens == 0 && brackets == 0 && angles == 0 => {
+                    Tok::Punct('{')
+                        if parens == 0 && brackets == 0 && angles == 0 && depth == 0 =>
+                    {
                         body = Some(current.start);
                         depth = 1;
                     }
+                    Tok::Punct('{') => depth = depth.saturating_add(1),
+                    Tok::Punct('}') => depth = depth.saturating_sub(1),
                     _ => {}
                 }
+                previous = Some(&current.token);
             }
         }
     }
@@ -372,5 +388,23 @@ pub (in crate::scope)
 "###;
         assert_eq!(names(model), ["real"]);
         assert_eq!(gate(model), (1, true));
+    }
+
+    #[test]
+    fn signature_const_comparisons_do_not_hide_function_bodies() {
+        for signature in [
+            "pub fn step(value: [u8; if 1 < 2 { 1 } else { 2 }])",
+            "pub fn step(value: [u8; if 2 > 1 { 1 } else { 2 }])",
+            "pub fn step() -> Wrap<{ if 1 < 2 { 1 } else { 2 } }>",
+            "pub fn step<F: Fn() -> Wrap<{ if 2 > 1 { 1 } else { 2 } }>>()",
+        ] {
+            let model = format!("{signature} {{ /* Rolling */ }}");
+            assert_eq!(names(&model), ["step"], "{signature}");
+            assert_eq!(gate(&model), (1, true), "{signature}");
+            assert_eq!(
+                public_fns(&model).first().map(|(_, _, body)| body.as_str()),
+                Some("{ /* Rolling */ }")
+            );
+        }
     }
 }

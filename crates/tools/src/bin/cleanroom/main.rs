@@ -71,9 +71,11 @@ fn source_text(
         Ok(src) => Ok(Some(src)),
         Err(e)
             if explicit
-                || path
-                    .extension()
-                    .is_some_and(|e| matches!(e.to_str(), Some("rs" | "md" | "toml"))) =>
+                || path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
+                    ["rs", "md", "toml"]
+                        .iter()
+                        .any(|source| e.eq_ignore_ascii_case(source))
+                }) =>
         {
             Err(format!("{}: {e}", path.display()))
         }
@@ -367,6 +369,13 @@ mod tests {
         .unwrap()
         .unwrap();
         assert_eq!(findings("input.md", &text), [Class::Route]);
+    }
+
+    #[test]
+    fn discovered_source_extensions_are_case_insensitive() {
+        for name in ["input.RS", "input.Md", "input.ToMl"] {
+            assert!(source_text(Path::new(name), false, Ok(vec![255])).is_err());
+        }
     }
 
     #[test]
