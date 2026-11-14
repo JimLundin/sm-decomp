@@ -63,6 +63,83 @@ fn an_unregistered_room_is_refused() {
     );
 }
 
+#[test]
+fn arrival_names_each_way_and_keeps_screen_coordinates_and_fractional_speed() {
+    let at = RomAddress::new(0x80, 0x8000);
+    for (direction, way) in [
+        (0, Heading::Right),
+        (1, Heading::Left),
+        (2, Heading::Down),
+        (3, Heading::Up),
+    ] {
+        for cap in [0, 4] {
+            let header = [0, 0, 0, direction | cap, 0, 0, 7, 13, 0x45, 0x23];
+            let found = arrival(Lorom::new(&header), at).unwrap();
+            assert_eq!(found.way, way);
+            assert_eq!(found.view.x.pixels().0, 7 * 256);
+            assert_eq!(found.view.y.pixels().0, 13 * 256);
+            assert_eq!(found.speed, Some(core::num::Wrapping(0x0023_4500)));
+        }
+    }
+}
+
+#[test]
+fn arrival_distinguishes_zero_speed_from_the_passages_default() {
+    let at = RomAddress::new(0x80, 0x8000);
+    for (speed, expected) in [
+        (0_i16, Some(0)),
+        (i16::MAX, Some(0x007f_ff00)),
+        (-1, None),
+        (i16::MIN, None),
+    ] {
+        let [low, high] = speed.to_le_bytes();
+        let header = [0, 0, 0, 3, 0, 0, 0xff, 0, low, high];
+        let found = arrival(Lorom::new(&header), at).unwrap();
+        assert_eq!(found.speed.map(|speed| speed.0), expected);
+        assert_eq!(found.view.x.pixels().0, 0xff00);
+        assert_eq!(found.view.y.pixels().0, 0);
+    }
+}
+
+#[test]
+fn a_partial_arrival_record_is_refused() {
+    let at = RomAddress::new(0x80, 0x8000);
+    for length in 0..10 {
+        assert_eq!(
+            arrival(Lorom::new(&[0; 10][..length]), at),
+            Err(AddressError::PastEnd(at))
+        );
+    }
+}
+
+#[test]
+fn every_loaded_doorway_preserves_its_arrival_content() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let image = cartridge.lorom();
+    let world = import(image, &LOADED).unwrap();
+    for (id, pointer) in DOORWAYS {
+        let header = image.read(RomAddress::new(DOOR_BANK, pointer), 10).unwrap();
+        let held = world.doorway(id).unwrap().arrival;
+        let direction = match held.way {
+            Heading::Right => 0,
+            Heading::Left => 1,
+            Heading::Down => 2,
+            Heading::Up => 3,
+        };
+        // Only the passage's fields are compared, and never printed from the cartridge.
+        assert!(direction == header[3] % 4, "{id:?}: way");
+        assert!(held.view.x.0 == header[6], "{id:?}: view.x");
+        assert!(held.view.y.0 == header[7], "{id:?}: view.y");
+        let speed = i16::from_le_bytes([header[8], header[9]]);
+        let same_speed = held.speed.map_or(speed < 0, |held| {
+            i64::from(held.0) == i64::from(speed) * 256
+        });
+        assert!(same_speed, "{id:?}: speed");
+    }
+}
+
 /// The rooms the engine loads or will: slice 0's and Ceres's, whose doors lead only to
 /// registered rooms.
 const LOADED: [RoomId; 7] = [

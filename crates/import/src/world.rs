@@ -31,11 +31,12 @@ use data::assets::world::rooms::{
     MORPH_BALL_ROOM,
 };
 use data::assets::world::{
-    self, Back, Conditional, Doorway, Inconsistent, Item, MapPlace, Room, Version, World,
+    self, Arrival, Back, Conditional, Doorway, Heading, Inconsistent, Item, MapPlace, Pair, Room,
+    ScreenCoordinate, Version, World,
 };
 use data::id::{DoorwayId, RoomId, TilesetId};
 use data::plm::ScrollLists;
-use data::rom::{Lorom, RomAddress};
+use data::rom::{AddressError, Lorom, RomAddress};
 use data::room::{self, BossBits, RoomError, RoomKey, RoomState};
 
 /// The original's place for each registered room: its header's pointer in the room bank.
@@ -131,6 +132,13 @@ pub enum WorldError {
     UnregisteredTileset(RoomId),
     /// A version of the room is chosen by a boss bit that names no boss kind.
     UnknownBoss(RoomId),
+    /// A doorway's arrival record isn't fully present in the image.
+    Arrival {
+        /// The doorway.
+        doorway: DoorwayId,
+        /// The failed read.
+        error: AddressError,
+    },
 }
 
 /// Where the original keeps room `id`: its header, the key the decoders and the work RAM's
@@ -225,6 +233,41 @@ fn door_header(rom: Lorom<'_>, list: &room::DoorList, place: usize) -> Option<Ro
     ))
 }
 
+/// The passage's content in a door header: direction, destination screens and speed in
+/// 1/256 pixels per frame. A negative speed leaves the passage's own speed in use.
+fn arrival(rom: Lorom<'_>, at: RomAddress) -> Result<Arrival, AddressError> {
+    let [
+        _,
+        _,
+        _,
+        direction,
+        _,
+        _,
+        screen_x,
+        screen_y,
+        speed_low,
+        speed_high,
+    ] = *<&[u8; 10]>::try_from(rom.read(at, 10)?).map_err(|_| AddressError::PastEnd(at))?;
+    // Only the low two bits choose the way; the closing cap is a separate owner's flag.
+    let way = match (direction & 1 != 0, direction & 2 != 0) {
+        (false, false) => Heading::Right,
+        (true, false) => Heading::Left,
+        (false, true) => Heading::Down,
+        (true, true) => Heading::Up,
+    };
+    let speed = i16::from_le_bytes([speed_low, speed_high]);
+    Ok(Arrival {
+        way,
+        view: Pair {
+            x: ScreenCoordinate(screen_x),
+            y: ScreenCoordinate(screen_y),
+        },
+        speed: u32::try_from(speed)
+            .ok()
+            .map(|speed| core::num::Wrapping(speed << 8)),
+    })
+}
+
 /// The record of the decoded room `decoded`, under `id`, adding the doorways its doors lead
 /// through to `doorways`.
 fn from_decoded(
@@ -244,14 +287,16 @@ fn from_decoded(
                     room: id,
                     door: place,
                 })?;
-                let doorway = door_header(rom, &decoded.doors, place)
-                    .and_then(doorway)
+                let at = door_header(rom, &decoded.doors, place)
                     .ok_or(WorldError::UnregisteredDoorway(id))?;
+                let doorway = doorway(at).ok_or(WorldError::UnregisteredDoorway(id))?;
                 doorways.insert(
                     doorway,
                     Doorway {
                         id: doorway,
                         room: destination,
+                        arrival: arrival(rom, at)
+                            .map_err(|error| WorldError::Arrival { doorway, error })?,
                     },
                 );
                 Ok(world::Door::To(doorway))

@@ -116,7 +116,12 @@ alone where the original keeps a version's state header and scroll change lists,
 work RAM names by place. The world's `Condition` and progress's stay two types: progress is a
 clean-room model whose crate depends only on `types`, so one type would live in `types`, a
 change for progress's own round; `game::run_progress_bridge` maps every variant meanwhile.
-Still to come: a doorway's side, arrival and partner, a PLM no model runs keeps its ID and room
+Each doorway also holds its arrival: the shared `Heading`, the view's screen coordinates and
+an optional speed in pixels and subpixels per frame. A negative speed in the source means the
+passage supplies its own; zero is an explicit speed. The arrival's view stays screen-aligned;
+the passage owns any adjustment for the way she leaves. The importer reads these fields once,
+and its checks reconstruct their observed values for every loaded doorway.
+Still to come: a doorway's cap, area change and partner; a PLM no model runs keeps its ID and room
 argument (`PlmKind::Unmodelled`). The room's State names its tileset by `TilesetId`; the
 verifier's decoder takes it from the version's record, as the work RAM keeps no copy of it.
 

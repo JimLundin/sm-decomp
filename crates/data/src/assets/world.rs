@@ -11,7 +11,7 @@
 pub mod doorways;
 pub mod rooms;
 
-pub use types::{BossKind, Event, Item, Set};
+pub use types::{BossKind, Event, Fixed, Heading, Item, Pair, Px, Set};
 
 use crate::id::{DoorwayId, RoomId, TilesetId};
 use crate::plm::PlmPopulation;
@@ -29,12 +29,37 @@ pub enum Door {
 
 /// A doorway: one way into a room. Leaving a room through a door is arriving through the
 /// door's doorway (D15).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Doorway {
     /// Our id.
     pub id: DoorwayId,
     /// The room it leads into.
     pub room: RoomId,
+    /// Where the view arrives and how the passage carries her into the room.
+    pub arrival: Arrival,
+}
+
+/// A coordinate on a room's grid of 256-pixel screens.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ScreenCoordinate(pub u8);
+
+impl ScreenCoordinate {
+    /// The screen's leading edge, in pixels.
+    #[must_use]
+    pub fn pixels(self) -> Px {
+        core::num::Wrapping(u16::from(self.0) << 8)
+    }
+}
+
+/// A doorway's arrival, before the passage adjusts the view for the way she leaves.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Arrival {
+    /// The way she leaves by: the way the view and she move.
+    pub way: Heading,
+    /// The view's place in the next room, aligned to its grid of screens.
+    pub view: Pair<ScreenCoordinate>,
+    /// Her speed in pixels and subpixels per frame, or the passage's own speed when absent.
+    pub speed: Option<Fixed>,
 }
 
 /// What chooses a conditional version.
@@ -266,6 +291,14 @@ mod tests {
     const INTO_FALLING_TILE: Doorway = Doorway {
         id: doorways::ELEVATOR_TO_FALLING_TILE,
         room: rooms::FALLING_TILE_ROOM,
+        arrival: Arrival {
+            way: Heading::Right,
+            view: Pair {
+                x: ScreenCoordinate(2),
+                y: ScreenCoordinate(3),
+            },
+            speed: None,
+        },
     };
 
     #[test]
