@@ -220,73 +220,197 @@ pub enum Tok {
     Str,
 }
 
-/// Rust source as tokens with their lines; comments and string contents are dropped.
+/// A token's original byte span, retained for slicing bodies without losing entry comments.
+#[derive(Clone, Debug)]
+pub struct SpannedToken {
+    /// The code token; literal contents are opaque.
+    pub token: Tok,
+    /// Its opening line, one-based.
+    pub line: usize,
+    /// Inclusive byte offset in the source.
+    pub start: usize,
+    /// Exclusive byte offset in the source.
+    pub end: usize,
+}
+
+/// Rust source as tokens with their lines; comments and literal contents are dropped.
 pub fn rust_tokens(src: &str) -> Vec<(Tok, usize)> {
+    rust_spans(src)
+        .into_iter()
+        .map(|t| (t.token, t.line))
+        .collect()
+}
+
+/// Lexical tokens and byte spans. Braces inside literals and nested comments are not code.
+pub fn rust_spans(src: &str) -> Vec<SpannedToken> {
     let chars: Vec<char> = src.chars().collect();
+    let offsets: Vec<usize> = src
+        .char_indices()
+        .map(|(offset, _)| offset)
+        .chain(std::iter::once(src.len()))
+        .collect();
     let mut out = Vec::new();
     let mut i = 0usize;
     let mut line = 1usize;
     let at = |i: usize| chars.get(i).copied();
+    let offset = |i: usize| offsets.get(i).copied().unwrap_or(src.len());
     while let Some(c) = at(i) {
+        let start = i;
+        let token_line = line;
         let next = at(i.saturating_add(1));
-        if c == '\n' {
-            line = line.saturating_add(1);
+        if c.is_whitespace() {
+            if c == '\n' {
+                line = line.saturating_add(1);
+            }
             i = i.saturating_add(1);
-        } else if c == '/' && next == Some('/') {
+            continue;
+        }
+        if c == '/' && next == Some('/') {
             while at(i).is_some_and(|c| c != '\n') {
                 i = i.saturating_add(1);
             }
-        } else if c == '/' && next == Some('*') {
-            while let Some(c) = at(i) {
-                if c == '\n' {
-                    line = line.saturating_add(1);
-                }
-                if c == '*' && at(i.saturating_add(1)) == Some('/') {
-                    i = i.saturating_add(2);
-                    break;
-                }
-                i = i.saturating_add(1);
-            }
-        } else if c == '"' {
-            i = i.saturating_add(1);
-            while let Some(c) = at(i) {
-                i = i.saturating_add(1);
-                match c {
-                    '\\' => i = i.saturating_add(1),
-                    '"' => break,
-                    '\n' => line = line.saturating_add(1),
-                    _ => {}
-                }
-            }
-            out.push((Tok::Str, line));
-        } else if c == '\'' && at(i.saturating_add(2)) == Some('\'') {
-            i = i.saturating_add(3);
-        } else if c.is_alphabetic() || c == '_' {
-            let start = i;
-            while at(i).is_some_and(|c| c.is_alphanumeric() || c == '_') {
-                i = i.saturating_add(1);
-            }
-            out.push((
-                Tok::Ident(chars.get(start..i).unwrap_or_default().iter().collect()),
-                line,
-            ));
-        } else if c.is_ascii_digit() {
-            let start = i;
-            while at(i).is_some_and(|c| c.is_alphanumeric() || c == '_') {
-                i = i.saturating_add(1);
-            }
-            out.push((
-                Tok::Num(chars.get(start..i).unwrap_or_default().iter().collect()),
-                line,
-            ));
-        } else {
-            if !c.is_whitespace() {
-                out.push((Tok::Punct(c), line));
-            }
-            i = i.saturating_add(1);
+            continue;
         }
+        if c == '/' && next == Some('*') {
+            i = i.saturating_add(2);
+            let mut depth = 1usize;
+            while let Some(c) = at(i) {
+                if c == '/' && at(i.saturating_add(1)) == Some('*') {
+                    depth = depth.saturating_add(1);
+                    i = i.saturating_add(2);
+                } else if c == '*' && at(i.saturating_add(1)) == Some('/') {
+                    depth = depth.saturating_sub(1);
+                    i = i.saturating_add(2);
+                    if depth == 0 {
+                        break;
+                    }
+                } else {
+                    if c == '\n' {
+                        line = line.saturating_add(1);
+                    }
+                    i = i.saturating_add(1);
+                }
+            }
+            continue;
+        }
+        let token = if let Some(end) = string_literal_end(&chars, i) {
+            line = line.saturating_add(
+                chars
+                    .get(i..end)
+                    .unwrap_or_default()
+                    .iter()
+                    .filter(|c| **c == '\n')
+                    .count(),
+            );
+            i = end;
+            Tok::Str
+        } else if let Some(end) = char_literal_end(&chars, i) {
+            i = end;
+            continue;
+        } else if c.is_alphabetic() || c == '_' || c.is_ascii_digit() {
+            i = i.saturating_add(1);
+            while at(i).is_some_and(|c| c.is_alphanumeric() || c == '_') {
+                i = i.saturating_add(1);
+            }
+            let text = src
+                .get(offset(start)..offset(i))
+                .unwrap_or_default()
+                .to_owned();
+            if c.is_ascii_digit() {
+                Tok::Num(text)
+            } else {
+                Tok::Ident(text)
+            }
+        } else {
+            i = i.saturating_add(1);
+            Tok::Punct(c)
+        };
+        out.push(SpannedToken {
+            token,
+            line: token_line,
+            start: offset(start),
+            end: offset(i),
+        });
     }
     out
+}
+
+/// The end of an ordinary or raw string, with its byte/C prefix when present.
+fn string_literal_end(chars: &[char], start: usize) -> Option<usize> {
+    let at = |i: usize| chars.get(i).copied();
+    let c = at(start)?;
+    let next = at(start.saturating_add(1));
+    let raw_start = if matches!(c, 'b' | 'c') && next == Some('r') {
+        start.saturating_add(1)
+    } else {
+        start
+    };
+    let mut quote = raw_start.saturating_add(1);
+    if at(raw_start) == Some('r') {
+        while at(quote) == Some('#') {
+            quote = quote.saturating_add(1);
+        }
+    }
+    let raw = at(raw_start) == Some('r') && at(quote) == Some('"');
+    let ordinary_quote = if matches!(c, 'b' | 'c') && next == Some('"') {
+        start.saturating_add(1)
+    } else {
+        start
+    };
+    if raw {
+        let hashes = quote.saturating_sub(raw_start.saturating_add(1));
+        let mut end = quote.saturating_add(1);
+        while let Some(c) = at(end) {
+            if c == '"' && (1..=hashes).all(|n| at(end.saturating_add(n)) == Some('#')) {
+                return Some(end.saturating_add(hashes.saturating_add(1)));
+            }
+            end = end.saturating_add(1);
+        }
+        Some(chars.len())
+    } else if at(ordinary_quote) == Some('"') {
+        let mut end = ordinary_quote.saturating_add(1);
+        while let Some(c) = at(end) {
+            end = end.saturating_add(1);
+            if c == '\\' {
+                end = end.saturating_add(1);
+            } else if c == '"' {
+                return Some(end);
+            }
+        }
+        Some(chars.len())
+    } else {
+        None
+    }
+}
+
+/// A character literal consumes one scalar or one escape; a lifetime is not a literal.
+fn char_literal_end(chars: &[char], start: usize) -> Option<usize> {
+    let quote = if chars.get(start) == Some(&'b') {
+        start.checked_add(1)?
+    } else {
+        start
+    };
+    if chars.get(quote) != Some(&'\'') {
+        return None;
+    }
+    let value = quote.checked_add(1)?;
+    let end = if chars.get(value) == Some(&'\\') {
+        let escape = value.checked_add(1)?;
+        match chars.get(escape)? {
+            'x' => escape.checked_add(3)?,
+            'u' if chars.get(escape.checked_add(1)?) == Some(&'{') => {
+                let close = chars
+                    .get(escape.checked_add(2)?..)?
+                    .iter()
+                    .position(|c| *c == '}')?;
+                escape.checked_add(close)?.checked_add(3)?
+            }
+            _ => escape.checked_add(1)?,
+        }
+    } else {
+        value.checked_add(1)?
+    };
+    (chars.get(end) == Some(&'\'')).then(|| end.saturating_add(1))
 }
 
 /// The value of an integer literal: decimal, `0x` hex or `0b` binary, with `_` and a type
@@ -303,4 +427,40 @@ pub fn literal(text: &str) -> Option<u32> {
     );
     let end = digits.find(['u', 'i']).unwrap_or(digits.len());
     u32::from_str_radix(digits.get(..end)?, radix).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Tok, rust_spans, rust_tokens};
+
+    #[test]
+    fn nested_comments_and_raw_literals_do_not_emit_code_tokens() {
+        let src = "/* outer /* nested */ fake } */\nr###\"text \"## }\nfn fake() {}\"###\nvisible";
+        assert_eq!(
+            rust_tokens(src),
+            [(Tok::Str, 2), (Tok::Ident("visible".to_owned()), 4)]
+        );
+    }
+
+    #[test]
+    fn spans_slice_original_unicode_source_and_track_lines() {
+        let src = "/* é */\npub fn café() { let x = \"escaped\\\" }\"; }";
+        let tokens = rust_spans(src);
+        for token in &tokens {
+            let original = src.get(token.start..token.end).unwrap();
+            match &token.token {
+                Tok::Ident(name) | Tok::Num(name) => assert_eq!(original, name),
+                Tok::Punct(c) => assert_eq!(original, c.to_string()),
+                Tok::Str => assert!(original.starts_with('"')),
+            }
+            assert_eq!(token.line, 2);
+        }
+        assert_eq!(
+            tokens
+                .iter()
+                .filter(|t| matches!(t.token, Tok::Punct('{' | '}')))
+                .count(),
+            2
+        );
+    }
 }

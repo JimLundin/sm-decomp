@@ -79,57 +79,104 @@ fn idents(text: &str) -> impl Iterator<Item = &str> {
         .filter(|w| !w.is_empty())
 }
 
-/// Whether the text before an `fn` keyword ends in a visibility: `pub`, or `pub(crate)`,
-/// `pub(super)` and the other restricted forms, with any of `const`, `async` and `unsafe`
-/// between. A model's steps are often `pub(crate)`, and they are its entry points as much as
-/// its `pub` functions are.
-fn is_visible(before: &str) -> bool {
-    let line = before.rsplit('\n').next().unwrap_or_default();
-    line.split_whitespace()
-        .rev()
-        .find(|w| !matches!(*w, "const" | "async" | "unsafe"))
-        .is_some_and(|w| w == "pub" || w.starts_with("pub("))
-}
-
-/// The bodies of a Rust file's non-private functions, by brace matching on the raw text, so
-/// that the comments naming entries stay in.
-fn public_fns(src: &str) -> Vec<(String, usize, String)> {
-    let mut out = Vec::new();
-    for (start, _) in src.match_indices("fn ") {
-        let before = src.get(..start).unwrap_or_default();
-        let at_word = before.chars().next_back().is_none_or(char::is_whitespace);
-        if !at_word || !is_visible(before) {
-            continue;
+/// Visibility immediately before a function, allowing qualifiers and restricted paths.
+fn is_visible(before: &[crate::text::SpannedToken]) -> bool {
+    use crate::text::Tok;
+    let mut end = before.len();
+    while let Some(token) = before.get(end.saturating_sub(1)).filter(|_| end > 0) {
+        match &token.token {
+            Tok::Ident(word)
+                if matches!(word.as_str(), "const" | "async" | "unsafe" | "extern") =>
+            {
+                end = end.saturating_sub(1);
+            }
+            Tok::Str => end = end.saturating_sub(1),
+            _ => break,
         }
-        let rest = src.get(start..).unwrap_or_default();
-        let after = rest.get("fn ".len()..).unwrap_or_default();
-        let name: String = after
-            .chars()
-            .take_while(|c| c.is_alphanumeric() || *c == '_')
-            .collect();
-        // Counted by newlines: `lines()` would count an indented method's own partial line.
-        let line = before.matches('\n').count().saturating_add(1);
-        let Some(open) = rest.find('{') else { continue };
-        let mut depth = 0usize;
-        let mut end = open;
-        for (k, c) in rest.char_indices().skip_while(|(k, _)| *k < open) {
-            match c {
-                '{' => depth = depth.saturating_add(1),
-                '}' => {
+    }
+    if before
+        .get(end.saturating_sub(1))
+        .is_some_and(|t| t.token == Tok::Punct(')'))
+    {
+        let mut depth = 1usize;
+        end = end.saturating_sub(1);
+        while end > 0 {
+            end = end.saturating_sub(1);
+            match before.get(end).map(|t| &t.token) {
+                Some(Tok::Punct(')')) => depth = depth.saturating_add(1),
+                Some(Tok::Punct('(')) => {
                     depth = depth.saturating_sub(1);
                     if depth == 0 {
-                        end = k;
                         break;
                     }
                 }
                 _ => {}
             }
         }
-        out.push((
-            name,
-            line,
-            rest.get(open..end).unwrap_or_default().to_owned(),
-        ));
+    }
+    end > 0
+        && before
+            .get(end.saturating_sub(1))
+            .is_some_and(|t| t.token == Tok::Ident("pub".to_owned()))
+}
+
+/// Match code braces using lexical spans, then slice the original text to retain entry tags.
+fn public_fns(src: &str) -> Vec<(String, usize, String)> {
+    use crate::text::{Tok, rust_spans};
+    let tokens = rust_spans(src);
+    let mut out = Vec::new();
+    for (index, token) in tokens.iter().enumerate() {
+        if token.token != Tok::Ident("fn".to_owned())
+            || !is_visible(tokens.get(..index).unwrap_or_default())
+        {
+            continue;
+        }
+        let Some(crate::text::SpannedToken {
+            token: Tok::Ident(name),
+            ..
+        }) = tokens.get(index.saturating_add(1))
+        else {
+            continue;
+        };
+        let mut parens = 0usize;
+        let mut brackets = 0usize;
+        let mut angles = 0usize;
+        let mut body = None;
+        let mut depth = 0usize;
+        for current in tokens.iter().skip(index.saturating_add(2)) {
+            if let Some(open) = body {
+                match current.token {
+                    Tok::Punct('{') => depth = depth.saturating_add(1),
+                    Tok::Punct('}') => {
+                        depth = depth.saturating_sub(1);
+                        if depth == 0 {
+                            out.push((
+                                name.clone(),
+                                token.line,
+                                src.get(open..current.end).unwrap_or_default().to_owned(),
+                            ));
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            } else {
+                match current.token {
+                    Tok::Punct('(') => parens = parens.saturating_add(1),
+                    Tok::Punct(')') => parens = parens.saturating_sub(1),
+                    Tok::Punct('[') => brackets = brackets.saturating_add(1),
+                    Tok::Punct(']') => brackets = brackets.saturating_sub(1),
+                    Tok::Punct('<') => angles = angles.saturating_add(1),
+                    Tok::Punct('>') => angles = angles.saturating_sub(1),
+                    Tok::Punct(';') if parens == 0 && brackets == 0 && angles == 0 => break,
+                    Tok::Punct('{') if parens == 0 && brackets == 0 && angles == 0 => {
+                        body = Some(current.start);
+                        depth = 1;
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
     out
 }
@@ -286,5 +333,44 @@ mod tests {
             assert_eq!(gate(&model), (1, true), "{visibility}");
         }
         assert_eq!(gate("fn step() { Rolling }"), (0, true));
+    }
+
+    #[test]
+    fn literal_and_comment_braces_leave_entry_comments_in_the_body() {
+        for literal in [
+            r#""}""#,
+            r#""escaped \" }""#,
+            "\"multiline\n}\"",
+            r###"r##"} "# pub fn fake() {"##"###,
+            r#"b"}""#,
+            r#"c"}""#,
+            r##"br#"}"#"##,
+            r##"cr#"}"#"##,
+            "'}'",
+            r"'\u{7d}'",
+            r"'\x7d'",
+            r"'\\'",
+        ] {
+            let model = format!(
+                "pub fn step() {{ let value = {literal}; /* }} /* nested */ }} */ // }}\n/* Rolling */ }}"
+            );
+            assert_eq!(names(&model), ["step"], "{literal}");
+            assert_eq!(gate(&model), (1, true), "{literal}");
+        }
+    }
+
+    #[test]
+    fn fake_functions_and_declarations_do_not_acquire_bodies() {
+        let model = r###"
+// pub fn line_fake() { Rolling }
+/* /* nested */ pub fn block_fake() { Rolling } */
+const TEXT: &str = r##"pub fn string_fake() { Rolling }"##;
+pub fn declaration();
+fn private() { Rolling }
+pub (in crate::scope)
+    async unsafe fn real<'a>(value: &'a [u8; { 2 }]) { /* Rolling */ }
+"###;
+        assert_eq!(names(model), ["real"]);
+        assert_eq!(gate(model), (1, true));
     }
 }
