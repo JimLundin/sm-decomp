@@ -173,6 +173,39 @@ class Contract(unittest.TestCase):
         self.assertTrue(limited["truncated"])
         self.assertLessEqual(len(limited["matches"]), 1000)
 
+    def test_invalid_utf8_search_discloses_incomplete_files(self) -> None:
+        rel = "crates/clean/demo/tests/invalid.rs"
+        path = self.root / rel
+        path.write_bytes(b"prefix sentinel\n" + b"ordinary line\n" * 1500 + b"\xffsuffix sentinel\n")
+        result = json.loads(self.call("search", path=rel, text="sentinel"))
+        self.assertTrue(result["truncated"])
+        self.assertEqual(result["incomplete_files"], [rel])
+        self.assertEqual(result["matches"], [rel + ":1:prefix sentinel"])
+        path.write_bytes(b"\xff")
+        empty = json.loads(self.call("search", path=rel, text="sentinel"))
+        self.assertTrue(empty["truncated"])
+        self.assertEqual(empty["incomplete_files"], [rel])
+        self.assertEqual(empty["matches"], [])
+
+    def test_invalid_utf8_search_metadata_is_bounded(self) -> None:
+        folder = self.root / "crates/clean/demo/tests"
+        for number in range(1005):
+            (folder / f"invalid_{number:04}.rs").write_bytes(b"\xff")
+        result = json.loads(self.call("search", path="crates/clean/demo/tests", text="sentinel"))
+        self.assertTrue(result["truncated"])
+        self.assertLessEqual(len(result["incomplete_files"]), 1000)
+        self.assertLessEqual(sum(map(len, result["incomplete_files"])), 100000)
+        long_rel = "crates/clean/demo/tests/" + "x" * 100
+        long_folder = self.root / long_rel
+        long_folder.mkdir()
+        for number in range(850):
+            (long_folder / f"invalid_{number:04}.rs").write_bytes(b"\xff")
+        by_characters = json.loads(self.call("search", path=long_rel, text="sentinel"))
+        self.assertTrue(by_characters["truncated"])
+        self.assertGreater(len(by_characters["incomplete_files"]), 0)
+        self.assertLess(len(by_characters["incomplete_files"]), 850)
+        self.assertLessEqual(sum(map(len, by_characters["incomplete_files"])), 100000)
+
     def test_duplicate_and_tool_mutants(self) -> None:
         with self.assertRaises(Refused):
             json.loads('{"action":"read","action":"write"}', object_pairs_hook=unique_object)

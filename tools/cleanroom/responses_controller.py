@@ -38,7 +38,10 @@ TOOL = {
     "read returns a JSON page with text, offset, next_offset and eof. "
     "offset is a zero-based Unicode character offset (default 0); limit is 1..25000 characters "
     "(default 25000). Continue with next_offset until eof. Search scans large UTF-8 files "
-    "and returns JSON matches/truncated metadata; use paged read for full content. "
+    "and returns JSON matches/truncated/incomplete_files metadata. truncated means an output "
+    "cap or incomplete UTF-8 decoding; incomplete_files lists affected relative paths, "
+    "whose valid-prefix matches may appear. Matches and paths share a 1000-item/100000-character "
+    "budget. Use paged read for full content. "
     "write/edit/delete modify only Rust src/tests. edit replaces exactly one old string. "
     "Fixed commands accept no arguments; add stages all permitted changes. "
     "commit takes text paragraphs; Role: implementer is appended. runner runs vectors.",
@@ -272,6 +275,7 @@ class Broker:
                         dirs[:] = sorted(d for d in dirs if d.casefold() not in (".git", "target"))
                         paths += [Path(directory) / name for name in dirs + sorted(names)]
                 result = []
+                incomplete_files: list[str] = []
                 truncated = False
                 characters = 0
                 for item in paths:
@@ -295,17 +299,25 @@ class Broker:
                                         if len(match) > remaining:
                                             truncated = True
                                             break
-                                    if len(result) >= 1000 or characters >= 100000:
+                                    if len(result) + len(incomplete_files) >= 1000 or characters >= 100000:
                                         truncated = True
                                         break
                         except UnicodeError:
+                            truncated = True
+                            if len(rel) > 100000 - characters:
+                                break
+                            incomplete_files.append(rel)
+                            characters += len(rel)
+                            if len(result) + len(incomplete_files) >= 1000 or characters >= 100000:
+                                break
                             continue
-                    if len(result) >= 1000 or characters >= 100000:
+                    if len(result) + len(incomplete_files) >= 1000 or characters >= 100000:
                         truncated = True
                         break
                 rendered = "\n".join(result)
                 if action == "search":
-                    return json.dumps({"matches": result, "truncated": truncated}, ensure_ascii=False)
+                    return json.dumps({"matches": result, "truncated": truncated,
+                                       "incomplete_files": incomplete_files}, ensure_ascii=False)
                 if truncated or len(rendered) > 100000:
                     return rendered[:99900] + "\n[output truncated; use paged read for full content]"
                 return rendered
