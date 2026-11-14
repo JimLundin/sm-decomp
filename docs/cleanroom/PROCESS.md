@@ -41,16 +41,17 @@ repository.
 | the original (bank logs, ROM, records, decode notes, `verify`'s addresses) | yes | yes | - | - | yes | yes |
 | the spec and its vectors | yes | yes | yes | vectors only | yes | yes |
 | the clean model's code and tests | after import | yes | writes it | yes | yes | yes |
-| the score, budget, k, fit, old-code baselines | yes | yes | - | - | yes | yes |
+| the score, budget, k, fit, old-code baselines and size verdicts | yes | - | - | - | yes | after review |
 | the old engine code | yes | yes | - | - | deletes it | yes |
 
-The score is an **evaluation** tool: the root and the adversary use it to compare spec and code
-after a round. The implementer's goal is to model the spec well, and its material states coding
-standards only. A size finding reaches the implementer as a **shape** finding: duplication, a
-decision that could be a table row, a function doing two jobs. It never arrives as a number.
-After a round gate, the next brief may also give a **coarse verdict** in words: that the model is
-much larger than the behaviour needs, and in which files and items (MODEL §1 decision 11). No
-score, budget, ratio or target goes with it.
+Independent review judges behaviour and code before the root counts size (MODEL §1 decisions
+10 and 11). The root provides adversaries with review copies of decode notes and evidence that
+preserve source citations and harness notes, and omit size material wherever it appears,
+including Budget sections, reports and size verdicts; their briefs assign no size assessment.
+Blind reviewers receive their code-only export. Reviewers return their independent findings
+without receiving size material or assessments. The implementer's material states coding standards only;
+feedback carries concrete shape findings from review, with size numbers and coarse verdicts
+withheld. The root keeps the subsequent assessment in the coordination log and landing report.
 
 ## A round
 
@@ -137,9 +138,9 @@ Each step names its owner, what it waits for, and its done-condition.
     when step 3 didn't gate it, the harness's honesty, the free run's held frames and first
     divergences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (harness, adapter),
-    or into the next round's queue (model shape, spec gaps). Size is a diagnostic (MODEL §1
-    decision 19): the gate reports the round's delta (model, bridge and code moved into test
-    support, each shown) and refuses only a domain larger than the old code it replaces.
+    or into the next round's queue (model shape, spec gaps). Independent review excludes size
+    measurements. After the reports, the root completes the coordinator size assessment below.
+    Size does not change the adversary's verdict; every non-size gate remains mandatory.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
     in [`docs/architecture/domains.toml`](../architecture/domains.toml) (and moves a plan
@@ -158,6 +159,20 @@ Each step names its owner, what it waits for, and its done-condition.
     unreachable arm) included.
     The domain is done when its free run holds every row it runs in to the row's end or to a
     named mask, and the queue holds nothing that changes behaviour.
+
+## Coordinator size assessment
+
+After independent review (step 10), and before landing, the root runs the official counters
+(`tools spec-units`, `tools size`) and checks the decode notes' Budget section. It records the
+score, budget, fit and old-code baseline, and the round's delta for model, bridge and code moved
+into test support separately. The counters, weights and k are unchanged (MODEL §1 decision 19).
+
+The root records **cut** or **proceed**, with a rationale relating the behaviour scope, code
+quality and independent findings to whether a cut would improve the model's fit, considering
+its cost and risk. Exceeding the old-code guideline alone fails no gate and starts no cut.
+Proceeding above it needs an explicit reason in the coordination log and landing report.
+A cut uses concrete review findings under "The loop"; its brief carries those shapes, with all
+size material withheld. It aims to improve the model, rather than shave a number.
 
 ## What can run at once
 
@@ -214,11 +229,10 @@ with a handoff and lands like any other change; the root reviews and lands one c
 
 ## The loop
 
-- **Cut rounds.** The aim is code that reads well without bloat, not the shortest code. A cut
-  round, one that asks for no new behaviour, runs only when two blind reads name the same thing
-  hard to read, or the domain is larger than the old code it replaces (MODEL §1 decision 19).
-  Its brief carries those findings as shapes. Any other shape finding rides along with the
-  domain's next round of behaviour.
+- **Cut rounds.** The root applies MODEL §1 decision 19 after independent review and records
+  whether the expected improvement warrants a round with no new behaviour. The brief carries
+  concrete shape findings, without size numbers or targets. Findings that do not justify a cut
+  accompany the domain's next behaviour round.
 
 - A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer
   records it, and the observer answers it in the spec. The model is never tuned to a record.

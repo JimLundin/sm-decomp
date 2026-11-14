@@ -17,7 +17,7 @@ decision in MODEL §1, or a change where it lives, then a line here.
    localises (decision 17, [MODEL §4](architecture/MODEL.md#4-the-reference-domain-samuss-motion)).
 5. Green pairs, the lockstep ratchet, harness floors and free-run floors never fall
    ([STATUS](STATUS.md)).
-6. Size is a diagnostic; only a domain larger than the old code it replaces fails (decision 19).
+6. Size is counted as a guideline; the root records cut or proceed after review (decision 19).
 6a. The lowest rung's needs list is a limit: nothing outside it starts (decision 24).
 6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
     planted fault makes it fail (decisions 24, 25). The process freezes once that holds (26).
@@ -42,7 +42,7 @@ decision in MODEL §1, or a change where it lives, then a line here.
 13. Implementers never see the original; the export, scans and canaries enforce it
     ([MODEL §5](architecture/MODEL.md#5-how-the-work-is-planned)).
 14. Structure leaks, perceivable quantities don't (MODEL §5, "What counts as a leak").
-15. The implementer is never told a score, budget or size target (decision 10).
+15. Implementers and independent reviewers are blind to size (decisions 10 and 11).
 16. Vectors hold RAM observations and invented content only (decision 13).
 
 ## The round and the day
@@ -54,7 +54,7 @@ decision in MODEL §1, or a change where it lives, then a line here.
     ([PROCESS](cleanroom/PROCESS.md#what-can-run-at-once)).
 19. Rounds run in the nightly session; outside it short structural tasks may run in parallel
     ([PROCESS](cleanroom/PROCESS.md#working-hours)).
-20. A cut round runs only on two blind reads' findings (decision 19,
+20. The root decides a cut from independent findings and the size guideline (decision 19,
     [PROCESS](cleanroom/PROCESS.md#the-loop)).
 21. The root alone lands on `main`, by fast-forward through `tools/lane/land.sh`
     ([AGENTS](../AGENTS.md), [lane](../.agents/skills/lane/SKILL.md#land-root-only)).

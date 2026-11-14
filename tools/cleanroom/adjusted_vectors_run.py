@@ -3,8 +3,8 @@
 adjusted_vectors.sh reads the vector file alone, so it can say only that a vector names an
 entry and carries rules. This runs the domain's own vector test (MODEL §1 decision 16): an
 adjusted vector proves its entry can be adjusted when the same case, run at the reference
-rules, no longer gives the vector's answer. For each candidate vector it appends two probes to
-the vector file, one at a time, and runs the test on each:
+rules, no longer gives the vector's answer. For each candidate vector it replaces that case
+with two probes, one at a time, and runs the test on each:
 
 - the control, a copy of the vector under another id: the test must still pass, so a failure
   of the other probe is the model's answer and not the copy's;
@@ -83,14 +83,14 @@ def candidates(text: str) -> list[Candidate]:
     ]
 
 
-def block(text: str, index: int) -> list[str]:
-    """The lines of the index-th `[[vector]]`, up to the next array's table."""
+def block_bounds(text: str, index: int) -> tuple[int, int]:
+    """The line range of the index-th `[[vector]]`, up to the next array's table."""
     lines = text.splitlines()
     starts = [n for n, line in enumerate(lines) if line.startswith("[[vector]]")]
     start = starts[index]
     end = next((n for n in range(start + 1, len(lines)) if lines[n].startswith("[[")),
                len(lines))
-    return lines[start:end]
+    return start, end
 
 
 def without_rules(lines: list[str]) -> list[str]:
@@ -108,24 +108,42 @@ def without_rules(lines: list[str]) -> list[str]:
 
 
 def probe(text: str, candidate: Candidate, keep_rules: bool) -> str:
-    """The file with a copy of the candidate appended under a probe id.
+    """The file with the candidate replaced under a unique probe id.
 
-    The copy is checked as TOML against the vector it copies, so the text edit can't pass for
-    a different case.
+    The entire parsed file is checked against the expected replacement, so other vectors,
+    globals and arrays cannot change as a side effect of the text edit.
     """
-    lines = block(text, candidate.index)
+    original = tomllib.loads(text)
+    original_rows = vectors(text)
+    probe_id = candidate.id + PROBE_SUFFIX
+    ids = [row.get("id") for row in original_rows]
+    if len(set(ids)) != len(ids) or probe_id in ids:
+        raise CannotProbe(f"{candidate.id}: vector ids must stay unique")
+    if original_rows[candidate.index].get("id") != candidate.id:
+        raise CannotProbe(f"{candidate.id}: candidate doesn't identify its vector")
+    start, end = block_bounds(text, candidate.index)
+    all_lines = text.splitlines()
+    lines = all_lines[start:end]
     if not keep_rules:
         lines = without_rules(lines)
-    probe_id = candidate.id + PROBE_SUFFIX
-    renamed = [re.sub(r'^(id\s*=\s*)"[^"]*"', lambda m: f'{m.group(1)}"{probe_id}"', line)
-               for line in lines]
-    probed = text.rstrip("\n") + "\n\n" + "\n".join(renamed) + "\n"
-    expected = dict(vectors(text)[candidate.index], id=probe_id)
+    renamed: list[str] = []
+    table = ""
+    for line in lines:
+        if line.startswith("["):
+            table = line.strip()
+        if table == "[[vector]]":
+            line = re.sub(r'^(id\s*=\s*)"[^"]*"',
+                          lambda m: f'{m.group(1)}"{probe_id}"', line)
+        renamed.append(line)
+    probed = "\n".join(all_lines[:start] + renamed + all_lines[end:]) + "\n"
+    expected = dict(original_rows[candidate.index], id=probe_id)
     if not keep_rules:
         del expected["rules"]
-    rows = vectors(probed)
-    if len(rows) != len(vectors(text)) + 1 or rows[-1] != expected:
-        raise CannotProbe(f"{candidate.id}: its copy doesn't read as the vector it copies")
+    expected_rows = original_rows.copy()
+    expected_rows[candidate.index] = expected
+    expected_file = dict(original, vector=expected_rows)
+    if tomllib.loads(probed) != expected_file:
+        raise CannotProbe(f"{candidate.id}: replacement changes the case or unrelated content")
     return probed
 
 
@@ -186,10 +204,15 @@ def prove(path: Path, entries: list[str], run: Callable[[], bool]) -> dict[str, 
         path.write_bytes(original)
 
 
-def test_command(crate: str) -> list[str]:
+def test_command(crate: str, root: Path) -> list[str]:
     if os.name == "nt":
         return ["bash", "tools/lane/run_tests.sh", crate]
-    return ["cargo", "test", "--locked", "-p", crate, "--test", "vectors"]
+    command = ["cargo", "test", "--locked", "-p", crate]
+    # Dedicated vector adapters avoid repeating unrelated, expensive library tests for
+    # every probe. Domains with unit-based adapters use their library test target.
+    if (root / "crates/clean" / crate / "tests/vectors.rs").is_file():
+        return command + ["--test", "vectors"]
+    return command + ["--lib"]
 
 
 def check_domain(root: Path, domain: str) -> int:
@@ -198,7 +221,7 @@ def check_domain(root: Path, domain: str) -> int:
     crate = domain.replace("-", "_")
 
     def run() -> bool:
-        return subprocess.run(test_command(crate), cwd=root, capture_output=True,
+        return subprocess.run(test_command(crate, root), cwd=root, capture_output=True,
                               check=False).returncode == 0
 
     entries = parameter_entries(spec)

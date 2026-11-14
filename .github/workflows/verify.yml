@@ -208,7 +208,7 @@ jobs:
             | tee "$RUNNER_TEMP/floors.txt"
           for test in the_clock_holds_its movement_holds_its the_camera_holds_its \
             progress_holds_its appearance_holds_its the_hud_holds_its the_blocks_hold_their \
-            the_ceres_doors_hold_their the_door_passage_holds_its; do
+            the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their; do
             grep -q "^test harness::tests::${test}_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"
           done
@@ -220,8 +220,8 @@ jobs:
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
             cargo test --locked -p verify --profile verify every_domain_runs_free_against_the_cache -- --nocapture \
             | tee "$RUNNER_TEMP/free.txt"
-          # One total per domain: the clock and the eight models.
-          test "$(grep -c '^all rows: ' "$RUNNER_TEMP/free.txt")" -eq 9
+          # One total per domain: the clock and the nine models.
+          test "$(grep -c '^all rows: ' "$RUNNER_TEMP/free.txt")" -eq 10
       - name: "Progress's ROM checks: the harness cases, the rows' standing room states and the full percentage"
         run: |
           # Each test skips and passes only with both SM_CACHE and SM_ROM unset, which this step

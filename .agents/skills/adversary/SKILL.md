@@ -32,8 +32,8 @@ findings it resolves. For a re-gate, review the delta, and check each earlier fi
    flags and modes, enum orders that follow RAM codes, table indexing (the rule is in
    [MODEL §5](../../../docs/architecture/MODEL.md#5-how-the-work-is-planned)). Review every phrase
    the observer added to the scan's allow list. Done when every entry has been read for structure.
-4. **Form and units.** Every rule is an arm citing vectors that exist, with no padding. Run the
-   official counter (`tools spec-units`) and check the decode notes' Budget section against it.
+4. **Form and coverage.** Every rule is an arm citing vectors that exist, with no padding.
+   Use size-redacted decode notes; the root checks the unit count and budget after your report.
    Every `Parameter` entry has a vector at a value other than the reference one
    (`tools/cleanroom/adjusted_vectors.sh --gate <domain>`); re-derive a sample of those values
    as you would a constructed vector's. A missing one stops the spec.
@@ -60,11 +60,10 @@ Your brief names the import and integration branches, the blind review, and the 
    frames hold `free_floors.txt`; give each row's held frames and first divergences beside
    `main`'s. A first divergence that moved earlier is a finding, even where the per-frame harness
    rose.
-6. **Size, as a diagnostic** (MODEL §1 decision 19). Give the round's delta from `tools size`
-   (model, bridge and code moved into test support, each shown). Refuse only a domain larger
-   than the old code it replaces. Any shape you would change goes to the queue as **shape**
-   (duplication, a decision that could be a table row, a function doing two jobs), never as a
-   number, and never as a reason to hold the round.
+6. **Shape, independently of size** (MODEL §1 decision 19). Review without size scores,
+   budgets or old-code baselines. Give concrete findings such as duplication or a function
+   doing two jobs. The root measures size and decides whether a cut is worthwhile after your
+   report; your verdict covers the behavioural, barrier and engineering requirements.
 7. **The blind review**, when it ran. Compare the reviewer's "what the code does" with the spec,
    and turn each misreading into a finding about a name, a doc or a shape. Say whether the next
    round needs a blind review: the code changed shape enough that a cold read would find new

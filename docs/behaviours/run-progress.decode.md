@@ -562,7 +562,7 @@ places and percentage have no complete old code. The counter takes the old code 
 **Budget (MODEL §1 decision 7).** k = 37.5 weighted tokens per spec unit, frozen on samus-movement
 and tested on the camera. An area's budget is k × its units; its old code (`old`), where it has
 one, is for reference and doesn't bound it. The budget is an indicator: the fit is score ÷ budget, and being over it
-costs in proportion to how far over, never as a wall; over an area's old code is a failure.
+costs in proportion to how far over, never as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area happened: EventsHappen, ZebetitesCounted, BossesDefeated
 - Area places: EmptiedLocations, DoorsStayOpen, MapsByArea, MapOnArrival, StationsSavedAt,

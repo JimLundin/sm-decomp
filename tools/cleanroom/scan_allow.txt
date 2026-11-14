@@ -22,6 +22,7 @@ charge beam          # item
 ice beam             # item
 wave beam            # item
 plasma beam          # item
+power beam           # the manual's starting beam
 power bomb           # item
 super missile        # item
 energy tank          # item
@@ -36,6 +37,15 @@ moon walk            # move
 turn around          # what a player sees her do
 aim up               # the pad's aim, as a player holds it
 aim down             # the pad's aim, as a player holds it
+up left              # diagonal aim direction
+up right             # diagonal aim direction
+down left            # diagonal aim direction
+down right           # diagonal aim direction
+beam speed           # the visible speed of a fired beam
+beam trail           # the visible trail left by a beam
+x offset             # horizontal distance between Samus and the cannon muzzle
+y offset             # vertical distance between Samus and the cannon muzzle
+radius               # extent of the shot's visible contact shape
 
 # Single words of play: directions, the body, the room, the pad and plain motion.
 left
@@ -190,3 +200,9 @@ closed door          # plain English: a door that is shut
 random number        # the game's dice; a player calls it RNG
 screen shake         # what the player sees during the escape: the screen shakes
 during escape        # plain English: while the timed escape runs
+
+# Generic model arithmetic and collection terms; each phrase has no original-specific meaning.
+sign extend          # widen a signed integer while preserving its value
+zero based           # ordinal convention: the first cell has ordinal zero
+upward extension     # high bits used by the specified upward inheritance arithmetic
+reserve slot         # allocate one of the model's finite shot slots

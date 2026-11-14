@@ -331,6 +331,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "enum-map",
+ "serde",
 ]
 
 [[package]]
@@ -358,9 +359,20 @@ dependencies = [
  "serde",
  "toml 1.2.1+spec-1.1.0",
  "types",
+ "weapons_projectiles",
  "world_blocks",
  "world_camera",
  "world_doors",
+]
+
+[[package]]
+name = "weapons_projectiles"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+ "types",
 ]
 
 [[package]]

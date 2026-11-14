@@ -71,7 +71,7 @@ Jim's decisions, 2026-11-07:
    how far over, as a penalty for comparing alternatives and rounds, never as a gate. We look for
    a reasonable optimum of logic against specification, and stop compacting when a round's gain
    in fit is small beside its cost and risk; a form that is worse only to get under the line is
-   not wanted. Over the old code is still a failure: it means the design is wrong. The study is
+   not wanted. The old code is a guideline assessed after independent review (decision 19). The study is
    [size-budget.md](size-budget.md); the weights are §4's, and the template convention that
    makes the count exact is in §5.
    Code in no area (state types, inputs, the frame's order, the catalogue) has no units of its
@@ -88,27 +88,23 @@ Jim's decisions, 2026-11-07:
    CPU side (which sound plays when) is modelled with the domains that trigger it. The plan of
    domains is [domains.md](domains.md). Decision 23 settles how, with a modern mixer in place of
    the DSP model and sound compared on its timing.
-10. **The implementer is not told the score or the budget** (Jim, 2026-11-08). A score in front
-    of the implementer becomes a clearer goal than modelling the spec well, and invites gaming.
-    The score, k, the budgets, the fit and the old-code baselines are evaluation tools, for the
-    root, the observers and the adversaries comparing spec and code. Implementer-facing material
-    (the export: its design note, its skill, the spec and the vectors; and every brief) states
-    code rules only: the lints and ceilings (L1, L2, G5 to G7) as coding standards, never as parts
-    of a measure. Feedback from a size review reaches the implementer as shape findings
-    (duplication, a table that could be data, a function doing two things), never as a number or
-    a target. The budget lives in the Budget section of the decode notes
+10. **Implementers and independent reviewers are blind to size** (Jim, 2026-11-14).
+    Scores, k, budgets, fit, old-code baselines and size verdicts cloud judgement of the model.
+    The root counts after independent review; observers maintain the decode notes' Budget
+    section. Implementer-facing material (the export, its design note and skill, the spec,
+    vectors and every brief) states coding standards only: the lints and ceilings (L1, L2,
+    G5 to G7), never measures. Independent reviewers receive the evidence their role needs,
+    with size material withheld (PROCESS, "Who sees what").
+    The budget lives in the Budget section of the decode notes
     (`tools/cleanroom/move_budget.sh` moves a spec header's there), and
     `tools/cleanroom/score_scan.sh`, with its word list `score_words.txt`, refuses an export
     (`export.sh`), a brief (`scan_brief.sh`) or a trunk file an export would carry
     (`check_crate_rules.sh`) that mentions any of it.
-11. **A coarse verdict on size may reach the implementer** (Jim, 2026-11-09). Two rounds without
-    the score came out far larger than their behaviour needed (camera round 2, progress round 1).
-    So after a round gate, the next brief may say, in words only, that the model is much larger
-    than the behaviour needs, and in which files and items, alongside the shape findings that
-    say how. It never carries the score, the budget, a ratio or a target. With it go a numberless
-    standard in the design note (concise: the smallest clear code that models the spec, each rule
-    stated once) and cut rounds (PROCESS, "The loop"): rounds whose brief is the verdict and the
-    shape findings alone. Since decision 19 a cut round runs only on two blind reads' findings.
+11. **Feedback carries independent review findings, not size verdicts** (Jim, 2026-11-14).
+    The implementer receives concrete shape findings: duplication, a decision that could be
+    a table row, a function doing two jobs, or a misleading name. A coarse size verdict is
+    withheld along with the numbers. A cut brief asks for clearer modelling of the behaviour,
+    with each rule stated once; the root records the cut's rationale separately (decision 19).
 
 Jim's decisions, 2026-11-09:
 
@@ -167,12 +163,17 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     the work a number that moves. A session's planning picks work for the lowest rung not yet
     reached ([domains.md §4](domains.md#4-order)). Lag modelled rather than recorded (T1) is
     needed only by the milestone itself.
-19. **The size score is frozen as a diagnostic.** Its weights, its rules and k stay as they are
-    (§4); a change needs a measured case where the score ranks a worse form above a better one,
-    and is a decision here. The fit is reported, never a verdict: a round is not held, and no
-    round is run, for size alone. The one size gate left is the strict one: a domain larger
-    than the old code it replaces is a failure (§4). A cut round runs only when two blind reads
-    name the same thing hard to read; it carries their findings as shapes.
+19. **Size is counted as a guideline, and reviewed after independent judgement** (Jim,
+    2026-11-14). Its weights, rules and k stay frozen (§4); changing them needs a measured
+    case where the score ranks a worse form above a better one, and a decision here. The old
+    code's size is a guideline rather than a cap. Every round still reports its score, fit
+    and delta. After independent review, the root counts and records whether a cut would
+    improve the model's fit to its behaviour scope, code quality and review findings, or
+    whether to proceed. Proceeding above the guideline needs a recorded reason. Size alone
+    neither holds a round nor starts a cut. The root decides cuts from independent findings
+    and records why the expected improvement warrants the cost and risk; a cut brief carries
+    concrete shape outcomes, not numeric shaving.
+    Exactness, the clean-room barrier, Quality and every non-size gate remain mandatory.
 20. **A round's fixed cost is cut where automation already holds the barrier.** The export,
     the scans, the canaries and `code_check.sh` hold the clean room on every round. The
     adversary gates a domain's first spec, and later a spec delta that adds a mechanism (a
@@ -522,13 +523,12 @@ localiser show any change against today's engine. Each change is either a fix or
   - `SpeedCap::Exact` is the corrected rule.
   - A unit test shows the two differ on exactly that case, and the Reference profile stays
     exact.
-- It's smaller (Jim, 2026-11-06). **A domain that is larger than the old code it replaces is a
-  strict failure.** A domain must save significantly over the old code, unless the spec gives a
-  clear, substantiated reason why this domain can't. The decode notes' Budget section holds the
-  baseline (the old code's tokens, by area, at a commit) and the budget; neither reaches the
-  implementer (decision 10). The budget is k × units even where that is over the baseline: an area
-  whose spec holds more than its old code did grows its budget (Jim, 2026-11-10, dropping the
-  caps). A scope change still goes to Jim with the numbers, and the lane stops until he answers.
+- **Size is still counted** (decision 19). The decode notes' Budget section holds the
+  baseline (the old code's tokens, by area, at a commit) and the budget. The budget is k ×
+  units even where it exceeds the baseline: behaviour beyond the old code's scope grows its
+  budget. After independent review the root assesses the guideline and records cut or proceed
+  with the rationale (PROCESS, "Coordinator size assessment"). A scope change still goes to
+  Jim with the numbers, and the lane stops until he answers.
 
 **Done means:**
 - A movement kind is a row, a parameter is a table entry or a rule, and collision is one sweep.
@@ -540,7 +540,7 @@ localiser show any change against today's engine. Each change is either a fix or
 2. No asm address appears in the domain's clean model.
 3. The domain's RAM-shape list (§5) is short and every item on it is justified.
 4. The domain harness matches the oracle on the declared fields; the vector tests pass; and the
-   domain is significantly smaller than the old code it replaces.
+   root records the size assessment under decision 19.
 5. At least one gap from an unmatched oracle frame went from the implementer to the observer and
    back, and was fixed by amending the spec, not by patching the code.
 6. The implementer never read the bank logs, `verify`'s address files or the old module.
