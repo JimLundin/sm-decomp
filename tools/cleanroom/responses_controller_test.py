@@ -391,6 +391,35 @@ class Contract(unittest.TestCase):
             self.call("status")
         self.assertIs(caught.exception.category, RefusalCategory.INTEGRITY)
 
+    def test_uncertified_command_stops_before_reading_unavailable_artifacts(self) -> None:
+        self.config["commands"]["status"] = [sys.executable, "-I", "invented.py"]
+        for unavailable in ("missing", "unreadable"):
+            requests = []
+            def send(request: dict[str, Any]) -> dict[str, Any]:
+                requests.append(request)
+                return {"model": OBSERVED_MODEL, "status": "completed", "output": [
+                    {"type": "function_call", "status": "completed", "name": "cleanroom",
+                     "call_id": "c1", "arguments": '{"action":"status"}'}]}
+            def capture_result(*args: Any, **kwargs: Any) -> int:
+                if unavailable == "unreadable":
+                    Path(args[2]).write_text("", encoding="utf-8")
+                    Path(args[3]).write_text("", encoding="utf-8")
+                return 124
+            with self.subTest(unavailable=unavailable), patch("launch_stream.capture", side_effect=capture_result):
+                if unavailable == "unreadable":
+                    with patch.object(Path, "read_text", side_effect=OSError("host-secret")) as read:
+                        with self.assertRaises(Refused) as caught:
+                            response_loop(self.broker, "Invented", send, self.lane / "transcript")
+                        read.assert_not_called()
+                else:
+                    with self.assertRaises(Refused) as caught:
+                        response_loop(self.broker, "Invented", send, self.lane / "transcript")
+                self.assertIs(caught.exception.category, RefusalCategory.UNCERTIFIED)
+                self.assertEqual(len(requests), 1)
+                transcript = (self.lane / "transcript").read_text(encoding="utf-8")
+                self.assertEqual(len(transcript.splitlines()), 1)
+                self.assertNotIn("host-secret", transcript)
+
     def test_response_identity_completion_reasoning(self) -> None:
         final = {"model": OBSERVED_MODEL, "status": "completed", "output": [
             {"type": "message", "role": "assistant", "status": "completed", "content": [{"type": "output_text", "text": "Done"}]}]}

@@ -262,9 +262,9 @@ class Broker:
                          float(self.config.get("completion_seconds", 60)), validate_result=False,
                          environment=self.env, runtime_timeout=float(self.config.get("command_seconds", 300)))
         self.audit()
-        output = out.read_text(encoding="utf-8", errors="replace") + errors.read_text(encoding="utf-8", errors="replace")
         if status == 124:
             raise Refused("command completion uncertified", RefusalCategory.UNCERTIFIED)
+        output = out.read_text(encoding="utf-8", errors="replace") + errors.read_text(encoding="utf-8", errors="replace")
         return json.dumps({"exit_code": status, "output": output[:100000]})
 
     def dispatch(self, name: str, args: object) -> str:
