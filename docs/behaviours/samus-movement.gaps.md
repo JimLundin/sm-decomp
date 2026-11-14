@@ -34,3 +34,15 @@ leaves this file; its text and answer are in git history.
     hand-over of 9Ah with the pad let go reads 73h in the decode notes, not 28h; the frame's
     hand-over isn't traced yet. It shows in the free run only once it carries her pose (decode
     notes, "Ceres's free run"); settled by tracing `$91:EB88`'s hand-over for 9Ah on that frame.
+
+## Directional travel outside the normal interval
+
+38. **A skipped PRE needs independent receipt-write information.** Normal PRE runs the projectile
+    pass, then clears the interval; normal POST stores the complete fresh `Outcome::travelled`.
+    The engine retains caller-held `TravelledDistances` as a pinned model State. The fresh map
+    gives zero both for an unwritten direction and an ordinary move that accepted zero. A caller
+    that runs movement without PRE therefore cannot merge it into a retained interval honestly.
+    Such a caller needs the set of ordinary directions written, including zero writes, or a
+    movement entry point taking the retained interval. No recorded skipped-PRE sequence is
+    claimed here. Weapon inheritance and the caller variants outside the engine's normal and
+    elevator-carried PRE paths remain unwired; the directional harness checks named end cuts.

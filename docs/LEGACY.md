@@ -277,13 +277,12 @@ original's bytes as data.
   [decode notes](behaviours/weapons-projectiles.decode.md)): the clean model is checked by
   `verify::harness::weapons`, but the engine still runs `game::projectile`. It does not fire
   shots or draw their imported pictures. AF3's `import::projectile::import` supplies complete
-  content; `game::pose::Content` does not yet carry it. `game::state::Samus` does not retain
-  the directional motion receipts W1 inherits, pending firing aim or preceding shoot press.
-  `samus_movement::Outcome` supplies contacts and placement, while the bridge's `Ran` supplies
-  before/after motion; the directional receipt contract must be established before persisting
-  either as W1 input. These are the most recent per-direction collision-returned whole and
-  fractional distances, rather than net centre displacement; the clean collision receipt's
-  whole-pixel `Moved::gone` cannot reconstruct their fractions. Camera also lacks the retained
+  content; `game::pose::Content` does not yet carry it. `samus_movement::Outcome::travelled`
+  supplies exact directional receipts, retained in the pinned `State.movement_travel` across
+  checkpoints. These are per-direction collision-returned whole and fractional distances.
+  Their write semantics when PRE is skipped remain unproved, and W1 cannon consumption of
+  the retained interval remains unwired. Pending firing aim and preceding shoot press are
+  also missing inputs. Camera also lacks the retained
   fractional receipt of Samus's vertical distance from the remembered centre, which W1 reads
   independently of the camera's clamped travel. Pending aim needs the pose change's named
   output, and preceding shoot press needs the drawing phase's history update. C1 does not
@@ -409,3 +408,9 @@ Differences the plan keeps on purpose, listed ahead of the work that brings them
   not compared (ORACLE Q4).
 - **A one-frame lag shift after an APU upload** between oracles is an oracle difference, not engine
   behaviour; the lag pattern is pinned to lsnes ([ORACLE appendix B](ORACLE.md#appendix-b-emulator-accuracy-accuracy)).
+
+- **Directional travel under callers outside the normal interval** (`TravelledDistances`,
+  `docs/behaviours/samus-movement.gaps.md`, gap 38): the engine retains exact signed accepted
+  travel, clears it after the normal or elevator-carried projectile pass, and fills it from
+  normal movement. The fresh output cannot merge unwritten directions into a retained interval
+  when PRE is skipped. Those caller variants and weapon inheritance still need their wiring.

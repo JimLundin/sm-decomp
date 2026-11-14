@@ -12,7 +12,7 @@ use types::{Set, Sprite, Touch, button::SHOOT};
 
 /// `WallJump` (§1.2 a spin carried on): how long she has been in this spin, counted at each
 /// frame's start up to the spin carried on, where it stays.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Spin {
     /// Not spinning.
     Off,
@@ -40,7 +40,7 @@ impl Spin {
 
 /// `SlopesCarry`: whether she is seated on a slope, until her next vertical move of more than 0
 /// starts.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Seat {
     /// She is not on a slope.
     Unseated,
@@ -116,6 +116,9 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
 )]
 pub struct Outcome {
+    /// Spec: `TravelledDistances`. Fresh complete signed ordinary travels after collision.
+    /// Save this set for the next firing opportunity; aim steps and placements are excluded.
+    pub travelled: types::DirectionalTravels,
     /// `WallJump`: the near-wall test's outcome.
     pub wall_test: WallTest,
     /// `AimingAndShooting`: what the standing animation does.
@@ -159,9 +162,13 @@ pub struct Outcome {
 
 /// Samus as the player can tell her, and what she remembers.
 ///
+/// Caller-held State: every public field and nested value is serialized and deserialized by
+/// serde's derives, in declaration order. Restore the complete value before stepping a frame;
+/// the caller separately preserves `TravelledDistances` for the firing interval.
+///
 /// Her body's size is not hers to remember: it is the game's data for her pose (§1.3,
 /// `Frame::body`), and a frame's moves use the body of the pose she starts it in.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Samus {
     /// Where she is: her body's centre.
     pub position: Position,

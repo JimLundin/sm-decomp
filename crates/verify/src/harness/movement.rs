@@ -715,7 +715,9 @@ fn shown_by(id: BehaviourId) -> FieldSet {
         | B::PadChart
         | B::Aiming
         | B::WhatHerMovesMet
-        | B::TouchedCells => FieldSet::EMPTY,
+        | B::TouchedCells
+        // Travel receipts are compared only by the named cases, not credited as broad fields.
+        | B::TravelledDistances => FieldSet::EMPTY,
         B::AnimationEnds => Q::HandedOver.set(),
         B::Dashing => Q::Dashing.set(),
         B::SpeedBuildsAndBrakes | B::DriftInTheAir => {

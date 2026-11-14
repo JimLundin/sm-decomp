@@ -1248,6 +1248,9 @@ impl Rules<'_> {
             },
             video: self.video(record, rooms)?,
             samus: self.samus(wram, &rooms.samus_clips)?,
+            movement_travel: canonical::model::Model(samus_movement::TravelledDistances {
+                travels: directional_travel(wram)?,
+            }),
             atmospherics: self.atmospherics.read(wram)?,
             room: self.room(wram, rooms, room)?,
             elevator: self.elevator.read(wram)?,
@@ -2392,4 +2395,19 @@ pub const fn ceres_stage(status: u16) -> CeresStage {
         1 => CeresStage::Getaway,
         _ => CeresStage::Escape,
     }
+}
+
+/// Decode the four signed accepted ordinary travels without losing fractional borrow.
+///
+/// # Errors
+/// A missing directional travel word in the recorded work RAM.
+pub fn directional_travel(wram: &[u8]) -> Result<types::DirectionalTravels, DecodeError> {
+    let mut travels = samus_movement::TravelledDistances::fresh().travels;
+    for (direction, [whole, fraction]) in source::SAMUS_DIRECTIONAL_TRAVEL {
+        travels[direction] = types::TravelDistance(types::fixed(
+            core::num::Wrapping(whole.read(wram)?),
+            fraction.read(wram)?,
+        ));
+    }
+    Ok(travels)
 }

@@ -610,7 +610,8 @@ fn movement_holds_its_floors_against_the_cache() {
 }
 
 /// The samus-movement harness cases (the decode notes' "Room content: harness cases"), each over
-/// its row's records; a case whose row isn't cached is reported and not checked.
+/// its row's records; room-content cases absent from a partial cache are reported. All seven
+/// directional-travel witnesses must be cached and checked, including their zero-output nulls.
 #[test]
 fn movement_harness_cases_hold_against_the_cache() {
     use std::io::Write as _;
@@ -630,8 +631,12 @@ fn movement_harness_cases_hold_against_the_cache() {
     let parsed = crate::lock::Lock::parse(&text).unwrap_or_else(|error| panic!("{error:?}"));
     let rows = cached_rows(&cache);
     let mut failures = Vec::new();
+    let mut directional_compared = 0;
     for case in &super::movement::cases::CASES {
         if !rows.iter().any(|row| row == case.row) {
+            if case.distances {
+                failures.push(format!("{}: directional witness not cached", case.id));
+            }
             let _ = writeln!(std::io::stdout(), "{}: {} not cached", case.id, case.row);
             continue;
         }
@@ -654,11 +659,18 @@ fn movement_harness_cases_hold_against_the_cache() {
             .collect();
         match domain.case(case, &records) {
             Ok(()) => {
+                if case.distances {
+                    directional_compared += 1;
+                }
                 let _ = writeln!(std::io::stdout(), "{}: holds", case.id);
             }
             Err(differences) => failures.push(format!("{}: {}", case.id, differences.join("; "))),
         }
     }
+    let _ = writeln!(
+        std::io::stdout(),
+        "directional travel: {directional_compared}/7 compared and matched; zero-output null 0/{directional_compared}"
+    );
     assert!(
         failures.is_empty(),
         "{}",
@@ -666,6 +678,10 @@ fn movement_harness_cases_hold_against_the_cache() {
             "
 "
         )
+    );
+    assert_eq!(
+        directional_compared, 7,
+        "all directional witnesses must be checked"
     );
 }
 

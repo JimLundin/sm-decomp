@@ -43,6 +43,7 @@ impl Samus {
             world,
             rules,
             reached: Vec::new(),
+            travelled: crate::travel::TravelledDistances::fresh(),
         };
         let inside = t.inside(self.bounds(&t));
         let start = *self;
@@ -75,6 +76,7 @@ impl Samus {
         self.jump_held = start.jump_held.then(rules, frame, left_behind);
         let was_dashing = start.run.dashing == Dashing::On;
         Ok(Outcome {
+            travelled: t.travelled.travels,
             wall_test: meeting.wall_test,
             standing_animation: StandingAnimation::of(start.pose, frame.pad),
             sprite: sprite(self.pose, &frame.items),

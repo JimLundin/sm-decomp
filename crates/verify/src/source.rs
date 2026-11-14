@@ -1626,3 +1626,60 @@ pub const BINDING_RUN: WramWord = WramWord {
     name: "BUTTON_CONFIG_RUN_B",
     offset: 0x09B6,
 };
+
+/// Ordinary collision-returned signed travels, before independent position snapping
+/// (samus-movement decode notes, Directional travel outputs).
+pub const SAMUS_DIRECTIONAL_TRAVEL: [(types::Direction, [WramWord; 2]); 4] = [
+    (
+        types::Direction::Left,
+        [
+            WramWord {
+                name: "SAMUS_LEFT_TRAVEL",
+                offset: 0x0DAA,
+            },
+            WramWord {
+                name: "SAMUS_LEFT_TRAVEL_FRACTION",
+                offset: 0x0DAC,
+            },
+        ],
+    ),
+    (
+        types::Direction::Right,
+        [
+            WramWord {
+                name: "SAMUS_RIGHT_TRAVEL",
+                offset: 0x0DAE,
+            },
+            WramWord {
+                name: "SAMUS_RIGHT_TRAVEL_FRACTION",
+                offset: 0x0DB0,
+            },
+        ],
+    ),
+    (
+        types::Direction::Up,
+        [
+            WramWord {
+                name: "SAMUS_UP_TRAVEL",
+                offset: 0x0DB2,
+            },
+            WramWord {
+                name: "SAMUS_UP_TRAVEL_FRACTION",
+                offset: 0x0DB4,
+            },
+        ],
+    ),
+    (
+        types::Direction::Down,
+        [
+            WramWord {
+                name: "SAMUS_DOWN_TRAVEL",
+                offset: 0x0DB6,
+            },
+            WramWord {
+                name: "SAMUS_DOWN_TRAVEL_FRACTION",
+                offset: 0x0DB8,
+            },
+        ],
+    ),
+];

@@ -164,7 +164,7 @@ impl Colour {
 }
 
 /// A value for each axis: x rightward, y downward.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Pair<T> {
     /// Rightward.
     pub x: T,
@@ -205,7 +205,7 @@ pub type Radius = Pair<Px>;
 
 /// A direction: the way a move goes (`TouchedCells`), or the way a speed points. Listed
 /// alphabetically, as the spec lists them; the order means nothing.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, serde::Serialize, serde::Deserialize)]
 pub enum Heading {
     /// Downward.
     Down,
@@ -225,9 +225,27 @@ impl Heading {
     }
 }
 
+/// Spec: `TravelledDistances`. Named directions use the movement headings; their order means nothing.
+pub type Direction = Heading;
+
+/// Spec: `TravelledDistances`. Signed accepted travel in wrapping P.S, not a length or a position.
+///
+/// Every wrapping value is permitted, including restored values unrelated to the current pose.
+/// Its default is zero, the value at the start of a fresh movement interval.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub struct TravelDistance(pub Fixed);
+
+impl TravelDistance {
+    /// Spec: `TravelledDistances`. No accepted travel, including a completely blocked move.
+    pub const ZERO: Self = Self(ZERO);
+}
+
+/// Spec: `TravelledDistances`. The complete set of latest signed travels, indexed by named direction.
+pub type DirectionalTravels = EnumMap<Direction, TravelDistance>;
+
 /// One of her two sides along x: the way she faces, or the way her horizontal speed points. Listed
 /// alphabetically; the order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Side {
     /// Leftward.
     Left,
@@ -257,7 +275,7 @@ impl Side {
 }
 
 /// Which way she faces: a part of her pose.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Facing {
     /// Facing left.
     Left,
@@ -281,7 +299,7 @@ impl Facing {
 }
 
 /// Her body: a part of her pose.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Body {
     /// Standing height.
     Upright,
@@ -294,7 +312,7 @@ pub enum Body {
 }
 
 /// What she is doing: a part of her pose.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Action {
     /// Pressed to the wall she ran into.
     AgainstWall,
@@ -331,7 +349,7 @@ pub enum Action {
 }
 
 /// Her aim, the arm's direction: a part of her pose.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Aim {
     /// Unaimed.
     Forward,
@@ -346,7 +364,7 @@ pub enum Aim {
 }
 
 /// The turn she is in, for `Turning` only. Its order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Turn {
     /// In a fall.
     Fall,
@@ -359,7 +377,7 @@ pub enum Turn {
 }
 
 /// What she landed from, for `Landing` only. Its order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum LandedFrom {
     /// A straight jump or a fall, upright.
     Jump,
@@ -368,7 +386,7 @@ pub enum LandedFrom {
 }
 
 /// Her gun: a part of her pose. Its order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Gun {
     /// Held out in front, a sprite of its own.
     Drawn,
@@ -377,7 +395,7 @@ pub enum Gun {
 }
 
 /// Her legs: a part of her pose. Their order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Legs {
     /// Drawn moving forward.
     Striding,
@@ -386,7 +404,7 @@ pub enum Legs {
 }
 
 /// Her pose as the player sees it, every part samus-movement lists.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Pose {
     /// Her body: while it changes shape, the body she changes into.
     pub body: Body,

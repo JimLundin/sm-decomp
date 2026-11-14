@@ -11,7 +11,7 @@ use game::samus_movement_bridge::step::{Ran, settle};
 use game::state::samus::PoseId;
 use oracle_record::FrameRecord;
 use samus_movement::WallTest;
-use types::{Heading, Way};
+use types::{DirectionalTravels, Heading, Way};
 
 use super::{Hers, Movement, Quantity};
 use crate::harness::{Domain, Interval};
@@ -45,6 +45,8 @@ pub struct Case {
     pose: bool,
     /// The near-wall test and the cells reached, where the case compares them.
     touches: Option<Touches>,
+    /// Compare all four signed receipts, with a zero-travel null contrast.
+    pub distances: bool,
 }
 
 use Quantity as Q;
@@ -63,8 +65,8 @@ const W15_REACHED: [Reached; 10] = [
     ([1136, 672], Way::Look),
 ];
 
-/// The decode notes' six cases.
-pub const CASES: [Case; 6] = [
+/// Room-content cases and the decode notes' seven directional-travel witnesses.
+pub const CASES: [Case; 13] = [
     Case {
         id: "S1",
         row: "samus-input-poses",
@@ -73,6 +75,7 @@ pub const CASES: [Case; 6] = [
         compared: &[Q::X, Q::Y, Q::BaseSpeed, Q::ExtraRun],
         pose: false,
         touches: None,
+        distances: false,
     },
     Case {
         id: "S2",
@@ -82,6 +85,7 @@ pub const CASES: [Case; 6] = [
         compared: &[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed],
         pose: false,
         touches: None,
+        distances: false,
     },
     Case {
         id: "SL1",
@@ -91,6 +95,7 @@ pub const CASES: [Case; 6] = [
         compared: &[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed, Q::ExtraRun],
         pose: false,
         touches: None,
+        distances: false,
     },
     Case {
         id: "SL2",
@@ -100,6 +105,7 @@ pub const CASES: [Case; 6] = [
         compared: &[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed, Q::ExtraRun],
         pose: false,
         touches: None,
+        distances: false,
     },
     Case {
         id: "SL3",
@@ -109,6 +115,7 @@ pub const CASES: [Case; 6] = [
         compared: &[Q::X, Q::Y, Q::BaseSpeed, Q::VerticalSpeed, Q::ExtraRun],
         pose: true,
         touches: None,
+        distances: false,
     },
     Case {
         id: "W15",
@@ -121,6 +128,77 @@ pub const CASES: [Case; 6] = [
             wall_test: WallTest::Neither,
             reached: &W15_REACHED,
         }),
+        distances: false,
+    },
+    Case {
+        id: "D-R2",
+        row: "item-morph-ball",
+        checked: 704,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
+    },
+    Case {
+        id: "D-R61",
+        row: "samus-grapple-release",
+        checked: 2,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
+    },
+    Case {
+        id: "D-R144",
+        row: "area-norfair",
+        checked: 2,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
+    },
+    Case {
+        id: "D-W11",
+        row: "item-morph-ball",
+        checked: 683,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
+    },
+    Case {
+        id: "D-W13",
+        row: "item-morph-ball",
+        checked: 1228,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
+    },
+    Case {
+        id: "D-W20",
+        row: "item-morph-ball",
+        checked: 1230,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
+    },
+    Case {
+        id: "D-inherited-cut",
+        row: "chain-any-0003-DFD7",
+        checked: 156,
+        lead_in: 0,
+        compared: &[],
+        pose: false,
+        touches: None,
+        distances: true,
     },
 ];
 
@@ -143,6 +221,15 @@ fn shown(([x, y], way): Reached) -> String {
         Way::Look => "look",
     };
     format!("[{x}, {y}] {way}")
+}
+
+/// The same complete signed comparison for the model and the zero-output null.
+fn travel_differences(model: &DirectionalTravels, oracle: &DirectionalTravels) -> Vec<String> {
+    oracle
+        .iter()
+        .filter(|(direction, accepted)| model[*direction] != **accepted)
+        .map(|(direction, _)| format!("travel {direction:?}: differs from record"))
+        .collect()
 }
 
 impl Movement {
@@ -213,6 +300,19 @@ impl Movement {
                 )
             })
             .collect();
+        if case.distances {
+            let expected = crate::decode::directional_travel(&next.wram)
+                .map_err(|error| vec![format!("record {}: {error:?}", next.index)])?;
+            let zero = samus_movement::TravelledDistances::fresh().travels;
+            differences.extend(
+                travel_differences(&ran.outcome.travelled, &expected)
+                    .into_iter()
+                    .map(|difference| format!("record {}: {difference}", next.index)),
+            );
+            if travel_differences(&zero, &expected).is_empty() {
+                differences.push("zero-travel null also passes this witness".to_owned());
+            }
+        }
         if case.pose {
             let pose = source::SAMUS_POSE
                 .read(&next.wram)

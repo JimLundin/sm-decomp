@@ -2,6 +2,7 @@
 //! the rules and the cells reached that the frame's moves and looks share (`TouchedCells`).
 
 use crate::rules::Rules;
+use crate::travel::TravelledDistances;
 use types::{Buttons, ClipEnd, Item, Parity, Pose, Radius, Set, Touch, World};
 
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
@@ -45,6 +46,8 @@ pub struct Tick<'a> {
     pub rules: &'a Rules,
     /// The cells her moves and looks reach, in order.
     pub reached: Vec<Touch>,
+    /// Spec: `TravelledDistances`. Fresh ordinary travel, unaffected by later looks or placements.
+    pub travelled: TravelledDistances,
 }
 
 impl Tick<'_> {

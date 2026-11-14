@@ -98,7 +98,7 @@ impl WithItem {
 }
 
 /// `Landing`: how many times the ball has bounced since it last rested.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Bounces {
     /// It hasn't bounced since it last rested.
     None,

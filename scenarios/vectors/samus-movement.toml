@@ -166,30 +166,41 @@
 #   C-slope-fall-walk, C-slope-roll-carry, C-slope-roll-carry-next, C-slope-run-off,
 #   C-near-wall-item).
 
+# - after.travelled (optional): all four signed P.S quantities of TravelledDistances,
+#   named left/right/up/down. Their signed representation is the accepted travel, so
+#   -0000.4000 encodes whole FFFF and fraction C000. A fresh movement step starts them at zero.
+# - [[distance_history]]: isolated caller-memory observations for TravelledDistances.
+#   before/after: complete signed distance maps; refresh: whether a new movement interval
+#   starts after the old distances were available to firing; travels: measured travels in
+#   chronological order, { kind, direction, accepted }. kind is Walk, Vertical, AimStep,
+#   Placement or Look; direction is Down, Left, Right or Up. accepted is signed P.S and
+#   excludes the independent subpixel snapping done by collision. No room content is needed.
+#   These check lifetime/selection only; full [[vector]] cases check collision arithmetic.
+
 # Constructed vectors: cases no record reaches, and the Exact variant.
 
 [[vector]]
 id = "C-cap"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "BlocksStopFlush", "AimingAndShooting"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "BlocksStopFlush", "AimingAndShooting"]
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.E000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0102.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000" }
+after = { position = ["0102.C000", "010B.FFFF"], speed_x = "+0002.C000", dash = "0000.0000", travelled = { left = "+0000.0000", right = "+0002.C000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-cap-exact"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed"]
 rules = { speed_cap = "Exact" }
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0001.E000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0102.1000", "010B.FFFF"], speed_x = "+0002.1000" }
+after = { position = ["0102.1000", "010B.FFFF"], speed_x = "+0002.1000", travelled = { left = "+0000.0000", right = "+0002.1000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-dashcap-a"
@@ -285,13 +296,13 @@ after = { position = ["057E.9000", "02AB.FFFF"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "R2"
 source = "item-morph-ball:704"
-entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
 world = { floor_top = 704 }
 before = { position = ["054E.4000", "02AB.FFFF"], speed_x = "-0002.C000", dash = "0000.F000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
 pad = ["run", "left"]
 jump_pressed = false
-after = { position = ["054A.8000", "02AB.FFFF"], speed_x = "-0002.C000", dash = "0001.0000", speed_y = "+0000.0000", dashing = true, heading_down = false }
+after = { position = ["054A.8000", "02AB.FFFF"], speed_x = "-0002.C000", dash = "0001.0000", speed_y = "+0000.0000", dashing = true, heading_down = false, travelled = { left = "-0003.C000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "R3"
@@ -1076,14 +1087,14 @@ after = { position = ["0247.BFFF", "00D2.1C00"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "R61"
 source = "samus-grapple-release:2"
-entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
 items = ["Bombs", "GrappleBeam", "GravitySuit", "HiJumpBoots", "MorphBall", "ScrewAttack", "SpeedBooster", "SpringBall", "VariaSuit", "XRayScope"]
 world = { floor_top = 160 }
 before = { position = ["0031.AFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.3000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
 jump_pressed = false
-after = { position = ["0035.AFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.4000", speed_y = "+0000.0000", dashing = true, heading_down = false }
+after = { position = ["0035.AFFF", "008B.FFFF"], speed_x = "+0002.C000", dash = "0001.4000", speed_y = "+0000.0000", dashing = true, heading_down = false, travelled = { left = "+0000.0000", right = "+0004.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "R62"
@@ -1860,14 +1871,14 @@ after = { position = ["00C4.BC00", "020B.FFFF"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "R144"
 source = "area-norfair:2"
-entries = ["SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "WordwiseTopSpeed", "FollowingTheGround", "Dash"]
 items = ["Bombs", "MorphBall", "VariaSuit", "XRayScope"]
 world = { floor_top = 160 }
 before = { position = ["00D1.C000", "008B.FFFF"], speed_x = "-0001.B000", dash = "0000.9000", speed_y = "+0000.0000", dashing = true }
 pose = { body = "Upright", action = "Running", facing = "Left", radius = [5, 21] }
 pad = ["run", "left"]
 jump_pressed = false
-after = { position = ["00CF.4000", "008B.FFFF"], speed_x = "-0001.E000", dash = "0000.A000", speed_y = "+0000.0000", dashing = true, heading_down = false }
+after = { position = ["00CF.4000", "008B.FFFF"], speed_x = "-0001.E000", dash = "0000.A000", speed_y = "+0000.0000", dashing = true, heading_down = false, travelled = { left = "-0002.8000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "R145"
@@ -2215,60 +2226,60 @@ after = { position = ["0100.0000", "0101.4000"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "C-screen-skid"
 source = "constructed"
-entries = ["SpeedBuildsAndBrakes", "PadChart"]
+entries = ["TravelledDistances", "SpeedBuildsAndBrakes", "PadChart"]
 world = { floor_top = 288 }
 before = { position = ["0100.0000", "0108.FFFF"], speed_x = "-0001.0000" }
 pose = { body = "Upright", action = "Still", facing = "Screen", radius = [5, 24] }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "0108.FFFF"], speed_x = "+0001.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false }
+after = { position = ["0100.0000", "0108.FFFF"], speed_x = "+0001.0000", dash = "0000.0000", speed_y = "+0000.0000", skidding = false, travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-enemy-ahead"
 source = "constructed"
-entries = ["SolidEnemies", "WallsAndCeilings", "FollowingTheGround"]
+entries = ["TravelledDistances", "SolidEnemies", "WallsAndCeilings", "FollowingTheGround"]
 world = { floor_top = 288, enemy = { centre = [271, 256], radius = [8, 16] } }
 before = { position = ["0100.4000", "010B.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0102.4000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000" }
+after = { position = ["0102.4000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", travelled = { left = "+0000.0000", right = "+0002.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-enemy-adjacent"
 source = "constructed"
-entries = ["SolidEnemies", "WallsAndCeilings", "DriftInTheAir", "RisingAndFalling"]
+entries = ["TravelledDistances", "SolidEnemies", "WallsAndCeilings", "DriftInTheAir", "RisingAndFalling"]
 world = { enemy = { centre = [269, 256], radius = [8, 16] } }
 before = { position = ["0100.4000", "0100.8000"], speed_y = "+0001.0000" }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position = ["0100.4000", "0101.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.1C00" }
+after = { position = ["0100.4000", "0101.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0001.1C00", travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0001.0000" } }
 
 [[vector]]
 id = "C-enemy-down"
 source = "constructed"
-entries = ["SolidEnemies", "Landing"]
+entries = ["TravelledDistances", "SolidEnemies", "Landing"]
 world = { enemy = { centre = [256, 295], radius = [8, 8] } }
 before = { position = ["0100.0000", "0108.8000"], speed_y = "+0003.0000" }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "010A.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0100.0000", "010A.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000", travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0002.0000" } }
 
 [[vector]]
 id = "C-enemy-overlap"
 source = "constructed"
-entries = ["SolidEnemies", "BlocksStopFlush", "Landing"]
+entries = ["TravelledDistances", "SolidEnemies", "BlocksStopFlush", "Landing"]
 world = { solid_block = [256, 288], enemy = { centre = [256, 288], radius = [8, 8] } }
 before = { position = ["0100.0000", "010A.0000"], speed_y = "+0005.0000" }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
 pad = []
 jump_pressed = false
-after = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0100.0000", "010B.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000", travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0001.0000" } }
 
 [[vector]]
 id = "C-step-far"
@@ -2378,13 +2389,13 @@ after = { position = ["0108.0000", "0103.2000"], speed_x = "+0000.0000", speed_y
 [[vector]]
 id = "C-slope-ceiling-edge"
 source = "constructed"
-entries = ["SlopesCarry", "WallsAndCeilings", "RisingAndFalling"]
+entries = ["TravelledDistances", "SlopesCarry", "WallsAndCeilings", "RisingAndFalling"]
 world = { slope_ceiling = { block = [256, 48], surface = [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7] } }
 before = { position = ["0108.0000", "0048.8000"], speed_y = "-0004.0000" }
 pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
 pad = ["jump"]
 jump_pressed = false
-after = { position = ["0108.0000", "0048.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+after = { position = ["0108.0000", "0048.8000"], speed_x = "+0000.0000", speed_y = "+0000.0000", travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-slope-ceiling-empty"
@@ -2468,14 +2479,14 @@ after = { position = ["0103.C000", "010B.FFFF"], speed_x = "+0002.C000" }
 [[vector]]
 id = "C-aim-short"
 source = "constructed"
-entries = ["AimingAndShooting", "BlocksStopFlush", "MovesAsShePosed"]
+entries = ["TravelledDistances", "AimingAndShooting", "BlocksStopFlush", "MovesAsShePosed"]
 world = { floor_top = 288, wall_right = 272 }
 before = { position = ["0108.C000", "010B.FFFF"], speed_x = "+0002.C000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21], aim = "DownForward" }
 pad = ["right", "aim_down"]
 jump_pressed = false
-after = { position = ["010B.FFFF", "010B.FFFF"] }
+after = { position = ["010B.FFFF", "010B.FFFF"], travelled = { left = "+0000.0000", right = "+0002.C000", up = "+0000.0000", down = "+0000.0000" } }
 
 # C-aim-enemy: running at 1.0000 (0.D000 grown by 0.3000, below the top speed), she runs free to a
 # solid enemy: her right side 273 meets its left side 273, and the move ends no closer than the
@@ -2485,14 +2496,14 @@ after = { position = ["010B.FFFF", "010B.FFFF"] }
 [[vector]]
 id = "C-aim-enemy"
 source = "constructed"
-entries = ["AimingAndShooting", "SolidEnemies", "MovesAsShePosed", "WordwiseTopSpeed"]
+entries = ["TravelledDistances", "AimingAndShooting", "SolidEnemies", "MovesAsShePosed", "WordwiseTopSpeed"]
 world = { floor_top = 288, enemy = { centre = [281, 256], radius = [8, 16] } }
 before = { position = ["010B.0000", "010B.FFFF"], speed_x = "+0000.D000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21], aim = "DownForward" }
 pad = ["right", "aim_down"]
 jump_pressed = false
-after = { position = ["010C.0000", "010B.0000"] }
+after = { position = ["010C.0000", "010B.0000"], travelled = { left = "+0000.0000", right = "+0001.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 # C-aim-enemy-stop: the same enemy 2 px ahead, but the run is 2.C000 (1.D000 grown to 2.0000, which
 # the top speed's part-by-part test snaps up to 2.C000), so the run itself reaches the enemy and
@@ -2502,14 +2513,14 @@ after = { position = ["010C.0000", "010B.0000"] }
 [[vector]]
 id = "C-aim-enemy-stop"
 source = "constructed"
-entries = ["AimingAndShooting", "SolidEnemies", "WhatHerMovesMet", "WordwiseTopSpeed"]
+entries = ["TravelledDistances", "AimingAndShooting", "SolidEnemies", "WhatHerMovesMet", "WordwiseTopSpeed"]
 world = { floor_top = 288, enemy = { centre = [281, 256], radius = [8, 16] } }
 before = { position = ["010A.0000", "010B.FFFF"], speed_x = "+0001.D000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
 pad = ["right", "aim_down"]
 jump_pressed = false
-after = { position = ["010C.0000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000" }
+after = { position = ["010C.0000", "010B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", travelled = { left = "+0000.0000", right = "+0002.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-aim-slope"
@@ -3956,13 +3967,13 @@ after = { position = ["003B.0000", "044C.DFFF"], speed_x = "-0000.E000", dash = 
 [[vector]]
 id = "W11"
 source = "item-morph-ball:683"
-entries = ["FollowingTheGround", "TurningRound", "PoseFitAfterMoves"]
+entries = ["TravelledDistances", "FollowingTheGround", "TurningRound", "PoseFitAfterMoves"]
 world = { floor_top = 704 }
 before = { position = ["0580.1000", "02A9.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Turning", facing = "Left", radius = [5, 21], turn = "Ground" }
 pad = ["run", "left"]
 jump_pressed = false
-after = { position = ["057F.5000", "02AA.C000"], speed_x = "-0000.C000", dash = "0000.0000", placed = "none", dashing = false, heading_down = false }
+after = { position = ["057F.5000", "02AA.C000"], speed_x = "-0000.C000", dash = "0000.0000", placed = "none", dashing = false, heading_down = false, travelled = { left = "-0000.C000", right = "+0000.0000", up = "+0000.0000", down = "+0001.C000" } }
 
 # W12-W19: the aim change's step whenever a running pose other than hers is chosen: from
 # standing, from a landing, and from standing against a wall, which puts her against it.
@@ -4028,7 +4039,7 @@ after = { position = ["053B.FFFF", "02BB.FFFF"], speed_x = "+0000.0000", dash = 
 [[vector]]
 id = "W13"
 source = "item-morph-ball:1228"
-entries = ["SolidEnemies", "Landing", "PoseFitAfterMoves", "DriftInTheAir"]
+entries = ["TravelledDistances", "SolidEnemies", "Landing", "PoseFitAfterMoves", "DriftInTheAir"]
 items = ["MorphBall"]
 world = { enemy = { centre = [1160, 696], radius = [8, 8] } }
 before = { position = ["047A.FFFF", "029B.9400"], speed_x = "+0001.4000", dash = "0000.0000", speed_y = "+0001.DC00" }
@@ -4036,19 +4047,19 @@ pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19
 next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], aim = "DownForward", landed_from = "Jump" }
 pad = ["run", "right", "aim_down"]
 jump_pressed = false
-after = { position = ["047C.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "029B.9400", dashing = false, heading_down = true, speed_y_after_moves = "+0001.F800" }
+after = { position = ["047C.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000", placed = "029B.9400", dashing = false, heading_down = true, speed_y_after_moves = "+0001.F800", travelled = { left = "+0000.0000", right = "+0001.4000", up = "+0000.0000", down = "+0002.0000" } }
 
 [[vector]]
 id = "W20"
 source = "item-morph-ball:1230"
-entries = ["SolidEnemies", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
+entries = ["TravelledDistances", "SolidEnemies", "FollowingTheGround", "SpeedBuildsAndBrakes", "Dash"]
 items = ["MorphBall"]
 world = { enemy = { centre = [1160, 696], radius = [8, 8] } }
 before = { position = ["047D.3FFF", "029B.0000"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
 pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21] }
 pad = ["run", "right"]
 jump_pressed = false
-after = { position = ["047D.7FFF", "029B.0000"], speed_x = "+0000.3000", dash = "0000.1000", speed_y = "+0000.0000", dashing = true, heading_down = false, dash_began = true }
+after = { position = ["047D.7FFF", "029B.0000"], speed_x = "+0000.3000", dash = "0000.1000", speed_y = "+0000.0000", dashing = true, heading_down = false, dash_began = true, travelled = { left = "+0000.0000", right = "+0000.4000", up = "+0000.0000", down = "+0000.0000" } }
 
 # W14: a spin reversed while skidding: she moves the old way this frame (braked to 1.B000), and her
 # speed then points against her new facing, rightward (the next record moves her right).
@@ -5848,7 +5859,7 @@ after = { position = ["0103.E000", "010B.FFFF"], speed_x = "+0002.C000", dash = 
 [[vector]]
 id = "C-adj-aim-step"
 source = "constructed"
-entries = ["AimingAndShooting"]
+entries = ["TravelledDistances", "AimingAndShooting"]
 rules = { aim_step = "0003.0000" }
 world = { floor_top = 288 }
 before = { position = ["0100.4000", "010B.FFFF"], speed_x = "-0002.C000" }
@@ -5857,7 +5868,7 @@ next_pose = { body = "Upright", action = "Running", facing = "Left", radius = [5
 pad = ["left", "aim_down"]
 jump_pressed = false
 pressed = ["aim_down"]
-after = { position = ["00FA.8000", "010B.FFFF"], speed_x = "-0002.C000", dash = "0000.0000" }
+after = { position = ["00FA.8000", "010B.FFFF"], speed_x = "-0002.C000", dash = "0000.0000", travelled = { left = "-0002.C000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
 
 [[vector]]
 id = "C-adj-elevator"
@@ -5967,11 +5978,155 @@ after = { position = ["0100.0000", "0119.FFFF"], speed_y = "-0001.0000", bounces
 [[vector]]
 id = "C-adj-move-limit"
 source = "constructed"
-entries = ["BlocksStopFlush"]
+entries = ["TravelledDistances", "BlocksStopFlush"]
 rules = { move_limit = 8 }
 world = {}
 before = { position = ["0100.0000", "0080.0000"], dash = "0011.0000", dashing = true }
 pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
 pad = ["right"]
 jump_pressed = false
-after = { position_x = "0108.C000", speed_x = "+0000.C000", dash = "0011.0000" }
+after = { position_x = "0108.C000", speed_x = "+0000.C000", dash = "0011.0000", travelled = { left = "+0000.0000", right = "+0008.C000", up = "+0000.0000", down = "+0000.0000" } }
+
+[[vector]]
+id = "C-distance-up-fraction"
+source = "constructed"
+entries = ["TravelledDistances", "RisingAndFalling", "DriftInTheAir"]
+world = {}
+before = { position = ["0100.8000", "0100.8000"], speed_y = "-0000.4000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.8000", "0100.4000"], travelled = { left = "+0000.0000", right = "+0000.0000", up = "-0000.4000", down = "+0000.0000" } }
+
+[[vector]]
+id = "C-distance-up-wrap"
+source = "constructed"
+entries = ["TravelledDistances", "RisingAndFalling", "DriftInTheAir"]
+world = {}
+before = { position = ["0100.8000", "0000.1000"], speed_y = "-0000.4000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.8000", "FFFF.D000"], travelled = { left = "+0000.0000", right = "+0000.0000", up = "-0000.4000", down = "+0000.0000" } }
+
+[[vector]]
+id = "C-distance-zero"
+source = "constructed"
+entries = ["TravelledDistances", "RisingAndFalling", "DriftInTheAir"]
+world = {}
+before = { position = ["0100.8000", "0100.8000"], speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.8000", "0100.8000"], travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
+
+[[distance_history]]
+id = "D-clear"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = true
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+travels = [  ]
+after = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" }
+
+[[distance_history]]
+id = "D-retain"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = false
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+travels = [  ]
+after = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+
+[[distance_history]]
+id = "D-latest"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = true
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+travels = [ { kind = "Walk", direction = "Right", accepted = "+0003.E000" }, { kind = "Walk", direction = "Right", accepted = "+0000.8000" } ]
+after = { left = "+0000.0000", right = "+0000.8000", up = "+0000.0000", down = "+0000.0000" }
+
+[[distance_history]]
+id = "D-zero-replaces"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = false
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+travels = [ { kind = "Walk", direction = "Right", accepted = "+0000.0000" } ]
+after = { left = "-0000.4000", right = "+0000.0000", up = "-0002.8000", down = "+0001.2000" }
+
+[[distance_history]]
+id = "D-opposing"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = true
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+travels = [ { kind = "Walk", direction = "Right", accepted = "+0002.0000" }, { kind = "Walk", direction = "Left", accepted = "-0001.4000" } ]
+after = { left = "-0001.4000", right = "+0002.0000", up = "+0000.0000", down = "+0000.0000" }
+
+[[distance_history]]
+id = "D-other-motion"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = false
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+travels = [ { kind = "AimStep", direction = "Right", accepted = "+0001.0000" }, { kind = "Placement", direction = "Up", accepted = "-0005.0000" }, { kind = "Look", direction = "Down", accepted = "+0000.0000" } ]
+after = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000" }
+
+[[distance_history]]
+id = "D-inherited-cut"
+source = "r10:156"
+entries = ["TravelledDistances"]
+refresh = true
+before = { left = "+0000.0000", right = "+0004.6000", up = "+0000.0000", down = "+0000.0000" }
+travels = [{ kind = "Walk", direction = "Right", accepted = "+0003.E000" }]
+after = { left = "+0000.0000", right = "+0003.E000", up = "+0000.0000", down = "+0000.0000" }
+
+[[vector]]
+id = "C-distance-left-block"
+source = "constructed"
+entries = ["TravelledDistances", "BlocksStopFlush", "SolidEnemies", "WallsAndCeilings"]
+world = { solid_block = [240, 256] }
+before = { position = ["0106.8000", "0100.8000"], speed_x = "-0002.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0105.8000", "0100.8000"], travelled = { left = "-0001.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
+
+[[vector]]
+id = "C-distance-up-block"
+source = "constructed"
+entries = ["TravelledDistances", "BlocksStopFlush", "SolidEnemies", "WallsAndCeilings"]
+world = { ceiling_bottom = 256 }
+before = { position = ["0100.8000", "0118.8000"], speed_x = "+0000.0000", speed_y = "-0005.C000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.8000", "0115.0000"], travelled = { left = "+0000.0000", right = "+0000.0000", up = "-0003.0000", down = "+0000.0000" } }
+
+[[vector]]
+id = "C-distance-up-enemy"
+source = "constructed"
+entries = ["TravelledDistances", "BlocksStopFlush", "SolidEnemies", "WallsAndCeilings"]
+world = { enemy = { centre = [256, 240], radius = [8, 8] } }
+before = { position = ["0100.8000", "0110.8000"], speed_x = "+0000.0000", speed_y = "-0004.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { position = ["0100.8000", "010D.8000"], travelled = { left = "+0000.0000", right = "+0000.0000", up = "-0003.0000", down = "+0000.0000" } }
+
+# Falling builds 2.0000 by 0.C000, then caps it to 1.0000. With the retained
+# dash of 1.0000, the requested left move is 2.0000: the target leading pixel
+# is 255 and meets the supplied block. The stop accepts -1.0000 and separately
+# clears x's fraction, ending at 0105.0000 rather than 0105.8000.
+[[vector]]
+id = "C-distance-left-block-stopped"
+source = "constructed"
+entries = ["TravelledDistances", "BlocksStopFlush", "WallsAndCeilings", "Dash", "WordwiseTopSpeed"]
+world = { solid_block = [240, 256] }
+before = { position = ["0106.8000", "0100.8000"], speed_x = "-0002.0000", dash = "0001.0000", dashing = true, speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21] }
+pad = ["left"]
+jump_pressed = false
+after = { position = ["0105.0000", "0100.8000"], travelled = { left = "-0001.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }

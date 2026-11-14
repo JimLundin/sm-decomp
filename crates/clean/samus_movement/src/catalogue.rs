@@ -49,6 +49,8 @@ pub enum BehaviourId {
     WhatHerMovesMet,
     /// The poses that last as long as their animation, and what their end hands over (§7).
     AnimationEnds,
+    /// Latest signed ordinary travel, retained for firing and refreshed by the caller (§8).
+    TravelledDistances,
     /// How a move into a solid block stops her flush against its face (§8).
     BlocksStopFlush,
     /// How a wall halts her and a ceiling ends her rise, but for a change of shape's (§8).
@@ -84,7 +86,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 30] = [
+pub const CATALOGUE: [Behaviour; 31] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -235,6 +237,13 @@ pub const CATALOGUE: [Behaviour; 30] = [
     Behaviour {
         id: BehaviourId::AnimationEnds,
         summary: "the poses that last as long as their animation, and what their end hands over.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TravelledDistances,
+        summary: "shots inherit the latest ordinary travel in each direction, including the fraction.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

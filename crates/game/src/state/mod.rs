@@ -8,6 +8,7 @@
 
 pub mod atmospheric;
 pub mod hud;
+pub mod movement_travel;
 pub mod projectile;
 pub mod room;
 pub mod samus;
@@ -212,6 +213,8 @@ pub struct State {
     pub video: Video,
     /// Samus.
     pub samus: Samus,
+    /// The accepted directional travels available to the next projectile pass.
+    pub movement_travel: canonical::model::Model<movement_travel::TravelPin>,
     /// The splashes, bubbles and dust around her.
     pub atmospherics: Atmospherics,
     /// The current room.

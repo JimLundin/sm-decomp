@@ -8,10 +8,10 @@ description = "The samus-movement model, built from its behaviour spec"
 
 [dependencies]
 types = { path = "../types" }
-enum-map = "=3.1.0"
+enum-map = { version = "=3.1.0", features = ["serde"] }
+serde = { version = "=1.0.229", features = ["derive"] }
 
 [dev-dependencies]
-serde = { version = "=1.0.229", features = ["derive"] }
 toml = "=1.2.1"
 
 [lints]

@@ -447,6 +447,7 @@ fn samus_current_state(
     let reads = blocks(state, content);
     if pose::carried(&state.samus, state.elevator) {
         crate::projectile::handle(state, reads).map_err(SessionFault::Projectile)?;
+        state.movement_travel.0.refresh();
         return Ok(pose::PoseRequests::default());
     }
     pose::set_radius(&mut state.samus, content);
@@ -455,6 +456,8 @@ fn samus_current_state(
     // between the input handler and the inside handling.
     inside::handle(&mut state.room, &state.samus, reads).map_err(SessionFault::Blocks)?;
     crate::projectile::current_state(state, reads).map_err(SessionFault::Projectile)?;
+    // Normal PRE clears only after the projectile pass consumed the preceding interval.
+    state.movement_travel.0.refresh();
     Ok(requests)
 }
 
@@ -499,6 +502,9 @@ fn gameplay_phase(
             let start = samus_appearance_bridge::Start::of(&state.samus);
             let stepped = samus_movement_bridge::step::step(&mut state.samus, inputs, &mut touches)
                 .map_err(SessionFault::Samus)?;
+            if let Some(stepped) = &stepped {
+                state.movement_travel.0.travels = stepped.outcome.travelled;
+            }
             mini_map_turn(state, content).map_err(SessionFault::Hud)?;
             let next =
                 samus_movement_bridge::step::next(&state.samus, stepped.as_ref(), pass.requests);

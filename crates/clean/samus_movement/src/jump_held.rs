@@ -10,7 +10,7 @@ use types::button::JUMP;
 use types::{Action, Buttons, Pose};
 
 /// §1.2 landed or ended the frame before: what a frame leaves the next one, for that frame alone.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum FrameBefore {
     /// She landed from a straight jump, a fall, a spin or a wall jump, or the animation of a turn
     /// or of a landing ended and handed over its pose.
@@ -24,7 +24,7 @@ pub enum FrameBefore {
 ///
 /// State a caller gives and reads back: any count and either frame before, in any pose. Each
 /// frame starts from them and leaves them for the next.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct JumpHeld {
     /// The frames jump has stayed held since its press, 0 to 65,535; from 65,535 it goes to 0.
     pub frames: Wrapping<u16>,

@@ -28,6 +28,7 @@ name carries a room header's address:
 | r07 | chain-0100-B07A |
 | r08 | chain-0106-AD5E |
 | r09 | chain-0314-DAE1 |
+| r10 | chain-any-0003-DFD7 |
 
 **Frame selection for recorded vectors.** Record N is the State before, record N+1 after; the pad
 is record N's. Taken when: the frame counter `05B6` advances by one (no lag); `0A66` is 0; the
@@ -121,6 +122,7 @@ and `scan.sh --mirror` agrees.
 | Moonfall | `$91:EBAF`, `$91:F36E` (the hand-over), `$90:913A` (no limit with direction 0), `$90:9D35` (the wall-jump test reads no direction), `$90:99CD` (the kick sets direction up); the turn in it: `$90:A790` and `$90:A7AD` (turning in a jump, in a fall) call `$90:92B8`, which with `0B36` = 0 returns carry clear, so `$90:923F` (the ground pull) runs and `0B2C`/`0B2E` are not touched; `$90:E65A`/`$90:E676` give 04 (no change) for movement types 17h and 18h |
 | WallJump | `$90:9D35` (arming and kick test), `$90:90B3` (one distance, `$90:9E9F` = 8, for both), `$91:FA0F` (kick), `$94:967F` (the probe) |
 | Landing | `$91:F010`, `$90:A640` (upright and changing), `$91:F1FC`, `$91:F25E` (the ball): by `0B20`, `$91:F20A` (not bouncing: `0B2E` `CMP #3`, read after `$90:90E2` grew it, since `$90:90E2` copies the speed to `$12.$14`, grows `0B2C`/`0B2E`, then moves by the copy), `$91:F22B` (first bounce: any speed, rises at `$90:9EB5` − 1 = 0.0), `$91:F245` (second bounce: rests); spring ball `$91:F27F`, `$91:F2A3`, `$91:F2C0` alike |
+| TravelledDistances | `$90:9373`..`$90:946D` (ordinary move results), `$90:9826`..`$90:98BB` (enemy-shortened moves), `$94:971E`..`$94:97BE` (signed block-adjusted travel), `$90:EB02`..`$90:EB1A` (interval clear); `$90:B218`..`$90:B2F5` (W1 inheritance) |
 | BlocksStopFlush | `$94:9722`, `$94:976B` (a 0.0 move skips block collision), `$94:8F49`, `$94:8F82` (horizontal and vertical block collision), `$94:8D2B`, `$94:8DBD` (stepped), `$94:9543`, `$94:959E`, `$94:95F5` (the order), `$90:E4AD` (the limit) |
 | WallsAndCeilings | `$90:E5CE` (wall), `$90:E606` and `$91:EFDF` (ceiling) |
 | SolidEnemies | `$A0:AAC8`, `$A0:AA53`, `$A0:AABC` (overlapped: next enemy, then 0 so blocks run), `$90:9D80`, `$90:9DF8`, `$90:93B1`, `$90:93EC` and `$90:9440` (enemy test first; on a hit the move skips block collision, as the bank log's zebetite-skip note says) |
@@ -2097,6 +2099,154 @@ The new code at the same commit, round 5:
 The pose map (`samus_movement_bridge/pose.rs`, 3,610 of data) is which sprite shows each pose: the drawing
 domain's data, held in the bridge until the engine draws from the pose itself.
 
+## Directional travel outputs
+
+`TravelledDistances` supplies W1 `InheritedMotion` with the last collision-returned signed
+additive travel for each direction. The quantity is not the magnitude of a left/up move.
+
+| Quantity | RAM | Decode and encode |
+| --- | --- | --- |
+| left travel | `0DAA`.`0DAC` | join whole/fraction as a wrapping signed 32-bit quantity |
+| right travel | `0DAE`.`0DB0` | join whole/fraction as a wrapping signed 32-bit quantity |
+| up travel | `0DB2`.`0DB4` | join whole/fraction as a wrapping signed 32-bit quantity |
+| down travel | `0DB6`.`0DB8` | join whole/fraction as a wrapping signed 32-bit quantity |
+
+Two words represent one measured distance, so none adds a one-word RAM-shape item. For example,
+left/up travel `-0.4000` encodes FFFF.C000, not 0000.4000. Negation borrows between the two words.
+
+The writers after the block sweeps copy `$12`.`$14` without taking its magnitude: left
+`$90:9393`..`$90:939A`, right `$90:93CE`..`$90:93D5`, up `$90:9431`..`$90:9438`, down
+`$90:945F`..`$90:9466`. Enemy detection returns a nonnegative whole distance and zero fraction
+on collision (`$A0:A8F0`..`$A0:AB44`); the direct movement helpers apply that distance and store
+it, negating it for left/up (`$90:9842`..`$90:9870`, `$90:988D`..`$90:98BB`). Right/down store
+it unchanged (`$90:9826`..`$90:9841`, `$90:9871`..`$90:988C`). They assign, never accumulate.
+An accepted zero still replaces the previous value in that direction.
+
+Flat stops `$94:8F49`..`$94:8FBA` and stepped stops `$94:8D2B`..`$94:8EF7` clear `$14`, clamp
+`$12` in its signed direction, and independently snap the movement-axis subposition. Thus a
+right/down stop may put her at fraction FFFF but reports fraction zero; a left/up stop reports
+negative whole travel and fraction zero even if her old position had a fraction. Enemy contact
+can clear y subposition independently (`$A0:AAC8`), including on a horizontal move. This is why
+subtracting centres, even before/after a single collision, is not the receipt. A contact one
+pixel beyond the nominal whole reach can report that integer distance as `SolidEnemies` says:
+W13's downward distance is 2.0000 although its start speed is 1.DC00.
+
+A non-square slope walk changes `$12`.`$14` before the ordinary horizontal writer
+(`$94:84D6`..`$94:8585`). Its fractional result is reported. Non-square vertical stops
+`$94:876D`..`$94:877A` and `$94:87E4`..`$94:87F1` set fraction zero; floor correction and
+ceiling cancellation give the whole travel specified by `SlopesCarry`. The separate alignment
+`$94:87F4`..`$94:8919` writes position, not these distances. The near-wall look and pose-fit/
+shrink tests likewise never reach these writers. The aim-change step `$91:EADE`..`$91:EB6F`
+uses `$94:971E` directly, without the ordinary directional writer: neither a successful aim
+step nor its blocked result replaces the earlier ordinary travel. Pose-fit pushes, shrinking
+and the take-off lift also leave it alone.
+
+### Lifetime and the integration boundary
+
+`$90:EB05`..`$90:EB1A` clears all eight words. Normal PRE `$90:E695` and its `$90:E6C9` variant
+call W1 first, then this clear; `$90:E713` runs existing shots before the same clear. Normal POST
+`$90:E725` supplies movement after that. A skipped clear retains the words, and a skipped move
+without a clear retains each unmodified direction. Do not infer either operation from lag,
+a position change, a stored handler pointer or the final speed. The surrounding caller decides
+which interval starts; movement itself must expose its accepted fractional results.
+
+The source boundary watch in `$TEMP/collab/night-20261113/w1-observer/input-boundary-check.py`
+and its log establishes preceding-cut inputs at the cannon: five active transitions match
+all watched inputs, including the distances, and the spawn boundary reads cut 156. The full
+instrumented replay matches all 345 cached cuts. `D-inherited-cut` uses only RAM observations
+from r10 155 and 156: the right distance changes from 4.6000 to 3.E000, as a braking run loses
+0.8000, and the other distances are zero. W1 consumes 3 whole / 57344 fraction before the
+interval clear. Its own `InheritedMotion` deliberately combines bytes from different named
+distance parts; this amendment preserves all parts and does not change that arithmetic.
+
+`samus_movement::Outcome::travelled`, available through bridge `Ran::outcome`, reports the
+complete fresh signed accepted travels, including their fractions. The engine keeps the
+caller-held `TravelledDistances` in `State::movement_travel`, a pinned canonical model State.
+Normal and elevator-carried PRE run the projectile pass before refreshing it; normal POST
+stores the fresh output. The decoder reads all four paired signed quantities directly.
+The named harness witnesses R2, R61, R144, W11, W13, W20 and the inherited cut compare all four
+against their recorded end cuts with the same comparator used for a zero-travel null.
+This is a bounded output proof: gap 38 names the missing receipt-write information needed for
+movement under a skipped PRE. Weapon inheritance and broader caller variants remain unwired.
+`after.travelled` checks the fresh normal-step results. `distance_history` checks only isolated
+caller lifetime and selection of measured travels; it is not a replacement collision harness.
+
+### Reference and proof boundary
+
+The private Python reference is `$TEMP/collab/night-20261113/s1-vector-fix/reference.py`. It
+recomputes the new accepted travels from the existing movement rules and invented geometry,
+then independently compares the six recorded movement cases with their cached RAM. The
+seventh recorded case is the boundary-watched inherited distance. It agrees with 26/26
+movement expectation deltas and 7/7 lifetime histories; recorded distance agreement is 7/7
+against a zero-distance null model's 0/7. The reference preserves
+every original observation in 345 movement vectors and 64 pose steps, and the unchanged
+landed-model baseline suite passes 15 tests. Its focused reference does not claim a new
+movement free-run or wider weapon integration. Those need the next confined model and adapter.
+The mutation probes for net displacement, fractional snapping, unsigned lengths, aim-step
+replacement and accumulation each fail the focused reference. This proof covers the bounded
+output delta, not all cached transitions; source-pinned interval guards and the next model
+are required before a distance free-run score can be claimed.
+The registered vector decoder accepts `after.travelled` and `distance_history`, requires each
+directional expectation to name all four directions, and compares the model's movement outputs
+and isolated caller histories separately.
+
+**Units.** The official counter adds six arms: 239.7 to 245.7 units, with collision
+62.0 to 68.0 and the other areas unchanged. Its 423 vector ids comprise 352 movement vectors,
+64 pose steps and seven distance histories. The 19 existing cases given new expectations and
+seven additional movement cases contain no changes to the original observations.
+
+### Leftward travel beside a block
+
+`C-distance-left-block` starts falling left at speed 2.0000 and x 0106.8000.
+`SpeedBuildsAndBrakes` gains 0.C000 in a fall, and `WordwiseTopSpeed` replaces
+2.C000 with the falling cap 1.0000. Source `$90:9B1F`..`$90:9B50` performs
+that gain and cap; the falling row is selected by `$90:9BD1`, as in the existing
+speed table's decode. With no dash, the left move is -1.0000. Its target centre
+is 0105.8000 and leading pixel is 0100 (256), outside the invented solid block
+whose horizontal extent is 240..255. `$94:9543` sees the leading column at 256,
+so `$94:8F6B`'s stop and fraction clear are not reached; `$94:974B` adds the
+unstopped move, retaining fraction 8000. The observed distance is -1.0000 and
+position is 0105.8000. A block nearby does not imply collision.
+
+`C-distance-left-block-stopped` keeps the same geometry and adds a retained dash
+of 1.0000. The capped speed remains 1.0000, so its left request is -2.0000.
+Its target leading pixel is 255, inside the block. `$94:8F6B`..`$94:8F81` accepts
+signed whole travel -1, clears both the accepted fraction and position fraction,
+and `$94:9730` applies that travel. Its distance is also -1.0000, but its position
+is 0105.0000. This pair checks the difference between an unstopped whole-pixel
+move and a blocked move with the same accepted travel.
+
+The private reference is `$TEMP/collab/night-20261113/s1-vector-fix/reference.py`.
+It derives the gain and cap before collision and checks position.x for both
+constructed cases. Every other observation of the amended spec is preserved.
+The focused proof has 26 movement distance checks and seven lifetime histories;
+352 movement vectors, 64 pose steps and seven histories give 423 vector ids.
+The spec's six distance arms and its 245.7 units are unchanged. Setting the unstopped case's expected fraction to 0000 fails this position check,
+even though its distance remains -1.0000.
+
+### Vocabulary review
+
+The following exact phrase additions to `scan_allow.txt` resolve inherited false positives.
+Each is player vocabulary or existing recorded provenance, not an original routine name.
+They add no single-word or broad-stem exemption. Their lexical scope is the exact normalised
+phrase, so the adversary must review these additions before export.
+
+| Phrase | Existing context | Why it is player vocabulary |
+| --- | --- | --- |
+| slope solid | header: blocks, slopes and solid enemies | two adjacent obstacles, coordinated in prose |
+| pose turn | `TurningRound`: samus-input-poses turns | an existing record row followed by the visible turns it covers |
+| change pose | `MovesAsShePosed`: she changes pose | a visible change of body and action |
+| new pose | `PoseFitAfterMoves`: new pose's body and speeds | the visible pose chosen this frame |
+| above below | `PoseFitAfterMoves`: what is above or below her | spatial relations of the obstacles around her |
+| grapple walljump | samus-grapple-walljump, in the spec and eight vector sources | an existing recorded row id naming player actions; its identity stays intact |
+| no block | `SolidEnemies`: an enemy decides the move and no block | the consequence of hitting a solid enemy |
+| block below | `SlopesSlowTheWalk`: a solid block below a column | the obstacle underneath a surface |
+| air spikes | `OtherBlockKinds` and vector kind `AirWithSpikes` | passable cells carrying a visible hazard |
+| block shots | `OtherBlockKinds`: a block her shots break | the player's way to break it |
+| block grapple | `OtherBlockKinds`: a block her grapple holds | a visible grapple anchor |
+| no solid | vector header: a slope column has no solid pixel | the column's measurable shape |
+| frame pose | vector header: a lead-in frame's pose | the visible pose in that frame |
+
 ## Budget
 
 Moved from the spec's header (MODEL §1 decision 10): the implementer is not told the score or
@@ -2126,10 +2276,10 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
 - Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
 - Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
   AnimationEnds
-- Area collision (old 4,893): BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
+- Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
   SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
 
-Budget: 37.5 × 239.7 units = 8,987 (motion 3,600, pose fit 687, pose chart 2,375, collision 2,325)
+Budget: 37.5 × 245.7 units = 9,212 (motion 3,600, pose fit 687, pose chart 2,375, collision 2,550)
 
 From the spec's §7 (the pose chart), moved with the header's:
 

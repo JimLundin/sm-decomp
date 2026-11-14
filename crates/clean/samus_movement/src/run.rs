@@ -12,7 +12,7 @@ use types::button::{RUN, SIDES};
 use types::{Buttons, Facing, Fixed, Parts, Side, ZERO, part_below};
 
 /// §1.2 carrying on: how her horizontal motion goes.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Carry {
     /// It follows the pad.
     FollowsPad,
@@ -28,7 +28,7 @@ pub enum Carry {
 /// it. It is also what keeps her dash hers: a dash she has while not dashing is lost the next
 /// frame she moves (`Dash`). State a caller gives and reads back; samus-appearance reads it for her
 /// run's pace and its stages towards boosting.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Dashing {
     /// She is not dashing.
     Off,
@@ -56,7 +56,7 @@ pub fn running_with_run_held(gait: Gait, pad: Buttons) -> bool {
 
 /// Her horizontal motion: her speed's size and the way it points, whether it carries on, her
 /// dash, added the way she moves, and whether she is dashing.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Run {
     /// Her horizontal speed's size.
     pub speed: Fixed,

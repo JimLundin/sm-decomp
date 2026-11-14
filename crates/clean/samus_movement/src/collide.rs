@@ -8,7 +8,7 @@ use crate::tick::Tick;
 use core::num::Wrapping;
 use types::{
     Block, Cell, Fixed, Heading, Hitbox, Pair, Parity, Parts, Position, Px, Radius, Slope,
-    SlopeFaces, Touch, Way, ZERO, fixed, px,
+    SlopeFaces, Touch, TravelDistance, Way, ZERO, fixed, px,
 };
 
 /// `BlocksStopFlush`: one pixel.
@@ -79,6 +79,8 @@ pub struct Moved {
     pub stop: Option<Stop>,
     /// How far it went along its way, in whole px.
     pub gone: Px,
+    /// Spec: `TravelledDistances`. Signed accepted travel before independent subpixel snapping.
+    pub accepted: TravelDistance,
 }
 
 /// `BlocksStopFlush`: whether a move goes right or down, the way positions grow.
@@ -177,6 +179,15 @@ impl Bounds {
 }
 
 impl Axis {
+    /// Spec: `TravelledDistances`. Keep signed travel's fractional borrow, left and up negative.
+    fn signed_travel(&self, distance: Fixed) -> TravelDistance {
+        TravelDistance(if grows(self.heading) {
+            distance
+        } else {
+            -distance
+        })
+    }
+
     /// `BlocksStopFlush`: her centre along the axis at the move's target, the move added.
     fn to(&self) -> Fixed {
         if grows(self.heading) {
@@ -208,6 +219,7 @@ impl Axis {
             to: Pair::from_along(self.heading, along, self.across),
             stop,
             gone,
+            accepted: self.signed_travel(px(gone)),
         }
     }
 
@@ -425,7 +437,13 @@ impl Tick<'_> {
                 self.enemies(&a).or_else(|| self.blocks(&a))
             }
         };
-        stopped.unwrap_or_else(|| a.put(a.ahead(a.to().pixel()), a.to().sub(), None))
+        stopped.unwrap_or_else(|| {
+            let mut moved = a.put(a.ahead(a.to().pixel()), a.to().sub(), None);
+            // Spec: TravelledDistances. No stop: the limit and walk factors already determined
+            // the complete accepted travel, independently of position wrapping or alignment.
+            moved.accepted = a.signed_travel(a.dist);
+            moved
+        })
     }
 
     /// `BlocksStopFlush`, `PoseFitAfterMoves`, `ShrinkingLowersHer`: a vertical move or look by

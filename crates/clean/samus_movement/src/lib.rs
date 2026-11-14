@@ -15,6 +15,13 @@
 //! camera, the world and her animation, §1, §1.4 and `TouchedCells`, her sprite as the shared
 //! `types::Sprite`), or `UnknownPose` for a pose no situation names. The pose chart alone answers
 //! through `Moment::next_pose`.
+//!
+//! Spec: `TravelledDistances`. `Outcome::travelled` directly reports a fresh complete
+//! `DirectionalTravels` map of signed `TravelDistance`s after collision. A caller retains
+//! these in `TravelledDistances::travels`, reads them for firing before refreshing the interval,
+//! and can replace the complete map or any named direction with any wrapping signed value.
+//! `TravelledDistances::record` replaces ordinary travels while ignoring adjustments and looks;
+//! `refresh` clears every direction. Skipping movement does not require a refresh.
 
 pub mod catalogue;
 mod change;
@@ -30,7 +37,11 @@ mod samus;
 mod situation;
 mod step;
 mod tick;
+mod travel;
 mod vertical;
+
+pub use travel::{TravelKind, TravelledDistances};
+pub use types::{Direction, DirectionalTravels, TravelDistance};
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use chart::Moment;

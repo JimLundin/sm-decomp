@@ -212,6 +212,17 @@ jobs:
             grep -q "^test harness::tests::${test}_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"
           done
+      - name: "Directional travel: named recorded receipts and zero-output contrast"
+        run: |
+          set -euo pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --profile verify \
+              harness::tests::movement_harness_cases_hold_against_the_cache -- --exact --nocapture \
+            | tee "$RUNNER_TEMP/directional-travel.txt"
+          grep -Fxq 'test harness::tests::movement_harness_cases_hold_against_the_cache ... ok' \
+            "$RUNNER_TEMP/directional-travel.txt"
+          grep -Fxq 'directional travel: 7/7 compared and matched; zero-output null 0/7' \
+            "$RUNNER_TEMP/directional-travel.txt"
       - name: "Domain free run: every domain fed its own State over every cached row, against free_floors.txt"
         run: |
           # The primary proof (MODEL §4): each row's segments, first divergences and held frames

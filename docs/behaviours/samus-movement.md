@@ -38,6 +38,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
+| latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
 | dash | `P.S` ≥ 0 | the extra speed from holding run, added the way she is moving (her facing when her horizontal speed is 0); it carries into a jump or the ball (the mockball), and with the speed booster her jumps start faster by it | `Dash`, `TurningRound`, `Jumping` |
@@ -1486,6 +1487,55 @@ surface has a floor or a ceiling whose height changes column by column (its shap
 at positions. Her body is a box of half-width `radius.x` and half-height `radius.y` around her
 centre. Each move meets the cells her body's leading edge reaches (`TouchedCells`), and each kind
 acts on her motion as below. These rules are Samus's; other actors get their own when their domains are written.
+
+### TravelledDistances
+- kind: mechanic and timing.
+- summary: shots inherit the latest ordinary travel in each direction, including the fraction.
+- params: none.
+- switch: none.
+- An ordinary horizontal move, or a vertical move by speed, ground pull or elevator descent
+  completes → its direction's distance becomes its signed accepted travel after collision,
+  replacing the earlier distance in that direction [C-cap, C-enemy-ahead, C-enemy-down,
+  C-distance-up-fraction, C-adj-move-limit, W11, D-latest, D-opposing, D-inherited-cut]
+- An ordinary move is completely blocked, or accepts zero travel → its direction's distance
+  becomes zero [C-enemy-adjacent, C-distance-zero, D-zero-replaces]
+- A flat or stepped block stops an ordinary move → the distance is the signed whole pixels
+  allowed by `BlocksStopFlush`, with fraction zero; the separate snapping of her position's
+  subpixel is excluded [C-enemy-overlap, C-aim-short, C-distance-left-block-stopped, C-distance-up-block]
+- A solid enemy stops an ordinary move → the distance is the signed whole pixels allowed by
+  `SolidEnemies`, with fraction zero, including when that contact separately clears her y
+  subpixel [C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-distance-up-enemy, W13, W20]
+- A new movement interval begins after firing had access to the previous distances → all four
+  distances start at zero, including directions in which she makes no ordinary move [D-clear,
+  C-screen-skid]
+- A caller preserves the movement interval while no ordinary move replaces a distance → that
+  distance remains available at its previous value [D-retain, D-other-motion]
+- These are four signed travels, not unsigned lengths. x grows rightward and y downward:
+  left and up travel is negative. `-0.4000` represents a quarter-pixel left/up, whose whole
+  word is FFFF and fractional word C000. Their parts are the two halves of the wrapping
+  signed quantity, never the magnitude's parts. Wrapping a position past zero does not change
+  the travel's sign or fraction (C-distance-up-wrap).
+- An unstopped ordinary move reports its complete travel after the horizontal limit and any
+  slope walk factor. Sloped vertical stops report the signed travel `SlopesCarry` allows,
+  excluding separate seating or alignment of the body. The completed travel remains available after
+  later decisions about speed and pose (R2, R61, R144, W13).
+- Aim changes' forward steps (`AimingAndShooting`), near-wall and pose-fit looks, shrinking,
+  pose-fit pushes, take-off lifts and slope seating or alignment preserve these distances.
+  They can alter her position independently (C-aim-short, C-aim-enemy, C-adj-aim-step,
+  D-other-motion).
+- The four distances are caller-held memory, all serialisable and independently restorable
+  as `TravelDistance` values. A normal movement step reports a fresh complete set; when a
+  surrounding mode skips the new interval, the caller preserves the set. A caller may restore
+  any wrapping signed value; the next replacing travel or new interval applies as above.
+  The model must expose the exact accepted fractional travel: net centre displacement, its
+  whole-pixel room alone and the final speed do not determine it.
+- **Order that matters.** Firing reads the preceding interval's distances before the new
+  interval starts. Ordinary movement then supplies the distances read by the next firing
+  opportunity. A lag or surrounding mode does not by itself imply a new interval.
+- checked: oracle (R2, R61, R144, W11, W13, W20, D-inherited-cut); constructed (C-cap, C-cap-exact,
+  C-enemy-ahead, C-enemy-adjacent, C-enemy-down, C-enemy-overlap, C-aim-short, C-aim-enemy,
+  C-aim-enemy-stop, C-screen-skid, C-distance-up-fraction, C-distance-up-wrap,
+  C-slope-ceiling-edge, C-adj-aim-step, C-adj-move-limit, C-distance-zero, C-distance-left-block, C-distance-left-block-stopped, C-distance-up-block, C-distance-up-enemy, D-clear, D-retain, D-latest, D-zero-replaces, D-opposing, D-other-motion).
 
 ### BlocksStopFlush
 - kind: mechanic.

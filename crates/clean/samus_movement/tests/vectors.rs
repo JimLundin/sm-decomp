@@ -12,8 +12,9 @@
 use core::cell::RefCell;
 use core::num::Wrapping;
 use samus_movement::{
-    Bounces, CATALOGUE, Carry, Dashing, Frame, FrameBefore, JumpHeld, Met, Moment, Outcome, Phase,
-    Rules, Run, Samus, Seat, SpeedCap, Spin, Vertical, WallTest,
+    Bounces, CATALOGUE, Carry, Dashing, Direction, DirectionalTravels, Frame, FrameBefore,
+    JumpHeld, Met, Moment, Outcome, Phase, Rules, Run, Samus, Seat, SpeedCap, Spin, TravelDistance,
+    TravelKind, TravelledDistances, Vertical, WallTest,
 };
 use serde::Deserialize;
 use types::{
@@ -32,6 +33,8 @@ const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-movement
 struct VectorFile {
     /// The vectors.
     vector: Vec<Vector>,
+    /// Isolated observations of caller-held `TravelledDistances`.
+    distance_history: Vec<DistanceHistory>,
     /// The pose steps.
     pose_step: Vec<PoseStep>,
 }
@@ -410,6 +413,8 @@ struct Before {
 struct After {
     /// Her position, `[x, y]`.
     position: Option<[Quantity; 2]>,
+    /// Complete latest signed ordinary distances, checked from movement's output.
+    travelled: Option<DistanceMap>,
     /// Her x alone.
     position_x: Option<Quantity>,
     /// Her horizontal speed.
@@ -462,6 +467,92 @@ struct TouchTable {
     cell: [u16; 2],
     /// The way it was reached.
     way: WayName,
+}
+
+/// A complete signed distance map: no missing direction or unknown key is accepted.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DistanceMap {
+    left: Signed,
+    right: Signed,
+    up: Signed,
+    down: Signed,
+}
+
+impl DistanceMap {
+    fn model(&self) -> DirectionalTravels {
+        [
+            (Direction::Left, self.left),
+            (Direction::Right, self.right),
+            (Direction::Up, self.up),
+            (Direction::Down, self.down),
+        ]
+        .into_iter()
+        .map(|(d, s)| (d, TravelDistance(s.value())))
+        .collect()
+    }
+}
+
+/// One isolated lifetime/selection case; collision is checked by full movement vectors.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DistanceHistory {
+    id: String,
+    source: String,
+    entries: Vec<String>,
+    before: DistanceMap,
+    refresh: bool,
+    travels: Vec<MeasuredTravel>,
+    after: DistanceMap,
+}
+
+/// A measured travel, already excluding independent collision snapping.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MeasuredTravel {
+    kind: TravelKindName,
+    direction: DirectionName,
+    accepted: Signed,
+}
+
+#[derive(Deserialize)]
+enum TravelKindName {
+    Walk,
+    Vertical,
+    AimStep,
+    Placement,
+    Look,
+}
+
+impl TravelKindName {
+    fn model(&self) -> TravelKind {
+        match self {
+            Self::Walk => TravelKind::Walk,
+            Self::Vertical => TravelKind::Vertical,
+            Self::AimStep => TravelKind::AimStep,
+            Self::Placement => TravelKind::Placement,
+            Self::Look => TravelKind::Look,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+enum DirectionName {
+    Down,
+    Left,
+    Right,
+    Up,
+}
+
+impl DirectionName {
+    fn model(&self) -> Direction {
+        match self {
+            Self::Down => Direction::Down,
+            Self::Left => Direction::Left,
+            Self::Right => Direction::Right,
+            Self::Up => Direction::Up,
+        }
+    }
 }
 
 // ---- Quantities, as the vectors write them.
@@ -1605,7 +1696,68 @@ fn compared(after: &After, samus: &Samus, outcome: &Outcome) -> Vec<Compared> {
     let mut fields = hers(after, samus);
     fields.extend(outputs(after, outcome));
     fields.extend(for_her_animation(after, outcome));
+    fields.extend(compared_travels(
+        after.travelled.as_ref(),
+        &outcome.travelled,
+    ));
     fields
+}
+
+/// Compare each named distance, using signed magnitude only for displaying vector notation.
+fn compared_travels(expected: Option<&DistanceMap>, actual: &DirectionalTravels) -> Vec<Compared> {
+    let expected = expected.map(DistanceMap::model);
+    [
+        ("travelled.left", Direction::Left),
+        ("travelled.right", Direction::Right),
+        ("travelled.up", Direction::Up),
+        ("travelled.down", Direction::Down),
+    ]
+    .into_iter()
+    .map(|(name, direction)| {
+        (
+            name,
+            expected.as_ref().map(|e| speed_y(e[direction].0).show()),
+            speed_y(actual[direction].0).show(),
+        )
+    })
+    .collect()
+}
+
+#[test]
+fn every_distance_history() {
+    let histories = file().distance_history;
+    assert!(!histories.is_empty(), "no distance histories");
+    let mut misses = Vec::new();
+    for history in &histories {
+        let mut memory = TravelledDistances {
+            travels: history.before.model(),
+        };
+        if history.refresh {
+            memory.refresh();
+        }
+        for travel in &history.travels {
+            memory.record(
+                travel.kind.model(),
+                travel.direction.model(),
+                TravelDistance(travel.accepted.value()),
+            );
+        }
+        for (field, expected, actual) in compared_travels(Some(&history.after), &memory.travels) {
+            if expected.as_ref() != Some(&actual) {
+                misses.push(format!(
+                    "{} ({}): {field} expected {expected:?}, actual {actual}",
+                    history.id, history.source
+                ));
+            }
+        }
+    }
+    assert!(
+        misses.is_empty(),
+        "{} of {} histories fail:\n{}",
+        misses.len(),
+        histories.len(),
+        misses.join("\n")
+    );
 }
 
 /// The vector file, read into its shape: a key or a name the shape doesn't know fails here.
@@ -1743,11 +1895,11 @@ pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%
 next_pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21]%11% }
 pad = []
 jump_pressed = false
-after = { reached = [{ cell = [0, 0], way = "Down"%12% }], pose = { body = "Upright", action = "Still", facing = "Right"%13% }%14% }
+after = { reached = [{ cell = [0, 0], way = "Down"%12% }], pose = { body = "Upright", action = "Still", facing = "Right"%13% }, travelled = { left = "+0000.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000"%15% }%14% }
 "#;
 
 /// How many marks `EVERY_TABLE` has.
-const TABLES: usize = 15;
+const TABLES: usize = 16;
 
 /// A pose step whose own pose, `after` and `after.pose` each have a mark, as `EVERY_TABLE`'s.
 const STEP_TABLES: &str = r#"
@@ -1797,7 +1949,10 @@ fn an_unknown_key_or_name_is_refused() {
         "a pose step's"
     );
     assert!(
-        toml::from_str::<VectorFile>("vector = []\npose_step = []\nbogus = 1\n").is_err(),
+        toml::from_str::<VectorFile>(
+            "vector = []\npose_step = []\ndistance_history = []\nbogus = 1\n"
+        )
+        .is_err(),
         "the file's key"
     );
     let known = with_unknown_key_in(EVERY_TABLE, TABLES, None);
@@ -1826,6 +1981,67 @@ fn an_unknown_key_or_name_is_refused() {
     let step = with_unknown_key_in(STEP_TABLES, STEP_MARKS, None);
     let met = step.replace("\"nothing\"", "\"nothing_at_all\"");
     assert!(toml::from_str::<PoseStep>(&met).is_err(), "a met read");
+}
+
+/// A history with a mark in each nested table and an after.travelled-shaped map.
+const HISTORY_TABLES: &str = r#"
+id = "history-tables"
+source = "constructed"
+entries = ["TravelledDistances"]
+refresh = false
+before = { left = "-0000.4000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000"%0% }
+travels = [{ kind = "Walk", direction = "Left", accepted = "-0000.8000"%1% }]
+after = { left = "-0000.8000", right = "+0003.E000", up = "-0002.8000", down = "+0001.2000"%2% }
+"#;
+
+#[test]
+fn distance_tables_refuse_unknown_or_missing_values() {
+    assert!(refuses_every_unknown_key::<DistanceHistory>(
+        HISTORY_TABLES,
+        STEP_MARKS
+    ));
+    let known = with_unknown_key_in(HISTORY_TABLES, STEP_MARKS, None);
+    for (from, to) in [
+        ("kind = \"Walk\"", "kind = \"Teleport\""),
+        ("direction = \"Left\"", "direction = \"West\""),
+        ("accepted = \"-0000.8000\"", "accepted = \"0000.8000\""),
+        (", down = \"+0001.2000\"", ""),
+    ] {
+        let unknown = known.replace(from, to);
+        assert_ne!(unknown, known);
+        assert!(
+            toml::from_str::<DistanceHistory>(&unknown).is_err(),
+            "{unknown}"
+        );
+    }
+    let movement = with_unknown_key_in(EVERY_TABLE, TABLES, None);
+    let missing = movement.replace(", down = \"+0000.0000\"", "");
+    assert!(toml::from_str::<Vector>(&missing).is_err());
+}
+
+/// Every signed wrapping value is restorable, independently of its direction or a pose.
+#[test]
+fn caller_memory_preserves_complete_wrapping_values() {
+    let values = [0_u32, 1, 0xFFFF_C000, 0x8000_0000, u32::MAX];
+    for bits in values {
+        let travels = DirectionalTravels::from_fn(|_| TravelDistance(Wrapping(bits)));
+        let mut memory = TravelledDistances { travels };
+        let saved = memory;
+        memory.refresh();
+        memory = saved;
+        assert_eq!(memory.travels, travels);
+        memory.record(TravelKind::Walk, Direction::Right, TravelDistance::ZERO);
+        for direction in [Direction::Left, Direction::Up, Direction::Down] {
+            assert_eq!(memory.travels[direction].0.0, bits);
+        }
+        assert_eq!(memory.travels[Direction::Right], TravelDistance::ZERO);
+    }
+    let negative_fraction = TravelDistance(
+        Signed::try_from("-0000.4000".to_owned())
+            .expect("signed fraction")
+            .value(),
+    );
+    assert_eq!(negative_fraction.0.words(), (0xFFFF, 0xC000));
 }
 
 /// A pose step's frame reads no body, so a pose step that gives one is refused.
@@ -1862,6 +2078,7 @@ fn catalogue_matches_the_vectors() {
         .iter()
         .flat_map(|v| &v.entries)
         .chain(file.pose_step.iter().flat_map(|s| &s.entries))
+        .chain(file.distance_history.iter().flat_map(|h| &h.entries))
         .map(String::as_str)
         .collect();
     for entry in &exercised {

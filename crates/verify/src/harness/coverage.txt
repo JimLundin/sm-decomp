@@ -48,6 +48,7 @@ samus-movement entry SlopesSlowTheWalk 0 0 0 0
 samus-movement entry SolidEnemies 7198 2273 7203 442
 samus-movement entry SpeedBuildsAndBrakes 13108 5652 13131 205
 samus-movement entry TouchedCells 0 0 0 20518
+samus-movement entry TravelledDistances 0 0 0 0
 samus-movement entry TurningRound 1565 17 1593 11
 samus-movement entry WallJump 281 0 281 23
 samus-movement entry WallsAndCeilings 1656 474 1682 31

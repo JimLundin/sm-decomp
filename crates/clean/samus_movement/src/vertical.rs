@@ -13,7 +13,7 @@ use types::button::JUMP;
 use types::{Buttons, Fixed, Item, Parts, ZERO};
 
 /// Her vertical motion's phase.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Phase {
     /// On the ground, keeping the vertical speed she brought with her, downward or upward
     /// (`FollowingTheGround`); an upward one is a rise she keeps there (`RisingAndFalling`).
@@ -33,7 +33,7 @@ pub enum Phase {
 }
 
 /// Her vertical motion: her vertical speed, its phase, and the ball's bounces.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Vertical {
     /// Her vertical speed, signed, downward positive.
     pub speed: Fixed,

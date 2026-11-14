@@ -4,14 +4,15 @@
 //! (`Dashing`).
 
 use crate::chart::Choice;
-use crate::collide::{Probe, Stop};
+use crate::collide::{Moved, Probe, Stop};
 use crate::rows::{Doing, Footing, Met, Moves, Situation};
 use crate::run::{Dashing, Stride, running_with_run_held};
 use crate::samus::{Samus, Seat, Spin, WallTest};
 use crate::tick::Tick;
+use crate::travel::TravelKind;
 use crate::vertical::Course;
 use types::button::{JUMP, LEFT, SIDES};
-use types::{Facing, Fixed, Side, ZERO};
+use types::{Direction, Facing, Fixed, Parts, Side, TravelDistance, ZERO};
 
 /// `WhatHerMovesMet`: what a frame's moves met, and what else the step reports of them.
 #[derive(Default)]
@@ -73,6 +74,13 @@ impl Samus {
             if self.rides_the_elevator(t.frame) {
                 let ride = t.vmove(self.bounds(t), t.rules.elevator_descent, Probe::Move);
                 self.position = ride.to;
+                let direction = if t.rules.elevator_descent.negative() {
+                    Direction::Up
+                } else {
+                    Direction::Down
+                };
+                t.travelled
+                    .record(TravelKind::Vertical, direction, ride.accepted);
             }
             return Meeting {
                 heading_down: self.vertical.heading_down(),
@@ -128,7 +136,11 @@ impl Samus {
         } else {
             self.run.dash
         };
-        let stop = self.hmove(self.run.moving(facing), by, t);
+        let way = self.run.moving(facing);
+        let moved = self.hmove(way, by, t);
+        t.travelled
+            .record(TravelKind::Walk, way.heading(), moved.accepted);
+        let stop = moved.stop;
         if let Some(y) = t.slope_checks(self.bounds(t)) {
             self.position.y = y;
             self.seat = Seat::Seated;
@@ -149,8 +161,8 @@ impl Samus {
     }
 
     /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, a walk when it is made with
-    /// her vertical speed exactly 0. Returns what stopped it.
-    fn hmove(&mut self, way: Side, d: Fixed, t: &mut Tick) -> Option<Stop> {
+    /// her vertical speed exactly 0. Returns its collision result and signed accepted travel.
+    fn hmove(&mut self, way: Side, d: Fixed, t: &mut Tick) -> Moved {
         let probe = if self.vertical.speed == ZERO {
             Probe::Walk
         } else {
@@ -158,7 +170,7 @@ impl Samus {
         };
         let moved = t.go(self.bounds(t).axis(way.heading(), d, probe));
         self.position = moved.to;
-        moved.stop
+        moved
     }
 
     /// `AimingAndShooting`: a frame whose chosen pose brings the step moves her 1 px forward, by
@@ -171,7 +183,9 @@ impl Samus {
             return chosen;
         }
         let x = self.position.x;
-        let stop = self.hmove(Side::of(self.pose.facing), t.rules.aim_step, t);
+        let stop = self
+            .hmove(Side::of(self.pose.facing), t.rules.aim_step, t)
+            .stop;
         if stop == Some(Stop::Enemy) {
             self.position.x = x;
         }
@@ -233,9 +247,18 @@ impl Samus {
             self.seat = Seat::Unseated;
         }
         let stopped = moved.stop.is_some();
+        let direction = if by.negative() {
+            Direction::Up
+        } else {
+            Direction::Down
+        };
         if course == Course::Pulled && footing == Footing::ChangingShape && !stopped {
+            t.travelled
+                .record(TravelKind::Vertical, direction, TravelDistance::ZERO);
             return None;
         }
+        t.travelled
+            .record(TravelKind::Vertical, direction, moved.accepted);
         self.take_result(&moved);
         self.vertical.end_move(course, by, stopped, footing, r)
     }

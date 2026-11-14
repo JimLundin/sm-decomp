@@ -206,3 +206,17 @@ sign extend          # widen a signed integer while preserving its value
 zero based           # ordinal convention: the first cell has ordinal zero
 upward extension     # high bits used by the specified upward inheritance arithmetic
 reserve slot         # allocate one of the model's finite shot slots
+# Existing movement-spec vocabulary; contexts reviewed in samus-movement.decode.md.
+slope solid          # adjacent names of the world's obstacles: slopes and solid enemies
+pose turn            # a recorded row's input poses, followed by its turns
+change pose          # Samus visibly changes her pose
+new pose             # the pose she grows into, with its own body and speeds
+above below          # obstacles above or below her body
+grapple walljump      # the recorded samus-grapple-walljump row's player actions
+no block             # an enemy stop excludes the blocks from that move
+block below          # a solid block underneath a slope's air column
+air spikes           # hazards in an otherwise passable cell
+block shots          # a block her shots break
+block grapple        # a block her grapple holds
+no solid             # a slope column without a solid pixel
+frame pose           # the pose at a lead-in frame's start
