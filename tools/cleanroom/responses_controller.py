@@ -21,6 +21,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 MODEL = "gpt-6.1-sol"
 OBSERVED_MODEL = "global.openai.gpt-6.1-sol"
+# This provider returns either the canonical identifier or its deployment label for
+# the same fixed Sol request. No other label, request model or route is accepted.
+OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-1-sol-dz"})
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",
            "fmt", "fmtcheck", "test", "runner", "status", "diff", "log", "add", "commit")
 FIELDS = {
@@ -53,6 +56,12 @@ def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise Refused("duplicate argument key")
         result[key] = value
     return result
+
+
+def safe_label(value: object) -> str:
+    if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", value):
+        return value
+    return "<invalid>"
 
 
 def digest(path: Path) -> str:
@@ -293,7 +302,12 @@ def response_loop(broker: Broker, brief: str, send: Any, transcript: Path) -> No
             result = send({"model": MODEL, "input": history, "tools": [TOOL], "store": False,
                            "include": ["reasoning.encrypted_content"],
                            "parallel_tool_calls": False, "max_output_tokens": 16000})
-            if not isinstance(result, dict) or result.get("model") != OBSERVED_MODEL or result.get("status") != "completed" or result.get("error"):
+            if (not isinstance(result, dict) or not isinstance(result.get("model"), str) or
+                    result.get("model") not in OBSERVED_MODELS or
+                    result.get("status") != "completed" or result.get("error")):
+                metadata = result if isinstance(result, dict) else {}
+                print("response_model: " + safe_label(metadata.get("model")), file=sys.stderr)
+                print("response_status: " + safe_label(metadata.get("status")), file=sys.stderr)
                 raise Refused("response identity or completion failed")
             output = result.get("output")
             if not isinstance(output, list) or not output:

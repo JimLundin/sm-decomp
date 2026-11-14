@@ -1,6 +1,8 @@
 """Synthetic closed-tool acceptance checks; no API, credentials or game material."""
 
 import json
+import io
+from contextlib import redirect_stderr
 import os
 import shutil
 import sys
@@ -178,13 +180,21 @@ class Contract(unittest.TestCase):
         self.assertEqual(requests[0]["include"], ["reasoning.encrypted_content"])
         self.assertEqual(len(requests[0]["tools"]), 1)
         self.assertFalse(requests[0]["store"])
-        for mutant in [dict(final, model="other"), dict(final, status="incomplete"),
+        for label in (OBSERVED_MODEL, "gpt-6-1-sol-dz"):
+            response_loop(self.broker, "Invented", lambda _: dict(final, model=label), self.lane / "transcript")
+        for mutant in [dict(final, model="other"), dict(final, model="gpt-6-1-sol-dz-other"),
+                       dict(final, model="global.openai.gpt-6-sol"), dict(final, model="gpt-6.1-sol"),
+                       dict(final, status="incomplete"),
                        dict(final, error={"code": "failed"}), dict(final, output=[]),
                        dict(final, output=[{"type": "web_search_call"}]),
                        dict(final, output=[{"type": "message", "status": "completed", "role": "assistant",
                                             "content": [{"type": "refusal"}]}])]:
             with self.subTest(mutant=mutant), self.assertRaises(Refused):
                 response_loop(self.broker, "Invented", lambda _: mutant, self.lane / "transcript")
+        diagnostics = io.StringIO()
+        with redirect_stderr(diagnostics), self.assertRaises(Refused):
+            response_loop(self.broker, "Invented", lambda _: dict(final, model="invalid\nbody"), self.lane / "transcript")
+        self.assertNotIn("body", diagnostics.getvalue())
 
 
 class Streams(unittest.TestCase):
