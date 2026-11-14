@@ -91,7 +91,7 @@ fn is_visible(before: &[crate::text::SpannedToken]) -> bool {
                 end = end.saturating_sub(1);
             }
             Tok::Str => end = end.saturating_sub(1),
-            _ => break,
+            Tok::Ident(_) | Tok::Num(_) | Tok::Punct(_) => break,
         }
     }
     if before
@@ -110,7 +110,7 @@ fn is_visible(before: &[crate::text::SpannedToken]) -> bool {
                         break;
                     }
                 }
-                _ => {}
+                Some(Tok::Ident(_) | Tok::Num(_) | Tok::Punct(_) | Tok::Str) | None => {}
             }
         }
     }
@@ -159,7 +159,7 @@ fn public_fns(src: &str) -> Vec<(String, usize, String)> {
                             break;
                         }
                     }
-                    _ => {}
+                    Tok::Ident(_) | Tok::Num(_) | Tok::Punct(_) | Tok::Str => {}
                 }
             } else {
                 match current.token {
@@ -188,7 +188,7 @@ fn public_fns(src: &str) -> Vec<(String, usize, String)> {
                     }
                     Tok::Punct('{') => depth = depth.saturating_add(1),
                     Tok::Punct('}') => depth = depth.saturating_sub(1),
-                    _ => {}
+                    Tok::Ident(_) | Tok::Num(_) | Tok::Punct(_) | Tok::Str => {}
                 }
                 previous = Some(&current.token);
             }
