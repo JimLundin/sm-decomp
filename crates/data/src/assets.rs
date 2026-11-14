@@ -4,6 +4,7 @@
 
 pub mod art;
 pub mod fingerprint;
+pub mod projectile;
 pub mod samus;
 pub mod tilesets;
 pub mod world;

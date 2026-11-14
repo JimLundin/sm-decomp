@@ -3,6 +3,7 @@
 //! formats, which `data` holds; `game` and `runtime` never depend on this crate.
 
 pub mod cache;
+pub mod projectile;
 pub mod samus;
 pub mod tileset;
 pub mod world;

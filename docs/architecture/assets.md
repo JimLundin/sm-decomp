@@ -174,6 +174,26 @@ family. The importer maps each opcode to a step, and a pointer argument to a typ
 A species is an Aseprite file (sheet, tags, slices for hitboxes) with its numbers beside it.
 Figures keep the piece order the OAM stream sees.
 
+`data::assets::projectile` holds the uncharged power beam's content. `PowerBeam` owns the
+shared `samus::SpriteSheet` shape, a complete typed heading map of flight clips, a common
+finite impact clip, nonnegative damage and a pool of trail appearances. Vertical headings
+preserve facing. A projectile `Frame` holds a checked 16-bit duration, a `SpriteId`, unsigned
+pixel radii and a `TrailAppearanceId`; its clip ends with `Remove` or `RepeatFrom` an existing
+`samus::FrameNumber`. The projectile frame and ending differ from Samus's animation: they
+have collision radii and trail origins, and never run animation control words.
+
+`import::projectile` builds these records and each named pose's `Muzzle`: its aim descriptor
+(`Aimed`, `Forbidden` or `PreviousAim`), unsigned vertical lift, and complete stationary and
+moving heading maps of signed offsets. Muzzles reuse `samus::map`'s pose keys; dress variants
+must agree before they share a descriptor. Selecting a descriptor, resolving its previous
+aim or pending aim, and choosing its moving offsets belong to the weapons model. Flight
+trail selectors become owned left/right origin offsets relative to the shot centre. Impact
+pictures have an inactive trail appearance because their animation never emits a flying trail.
+The importer keeps the original clip and picture places beside the records for verification
+only, and checks content references, clip endings and pose coverage. The format covers this
+starting weapon's pictures and origins; other weapons and trail effect animations are separate
+content families.
+
 ### 3.5 HUD, maps, text and pause screens (AF4a, AF4b)
 
 | Record | Holds |
