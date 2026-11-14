@@ -5,6 +5,8 @@ Adapted from crates/movie in archive/pre-transpile-2026-10-17.
 """
 import argparse
 import csv
+from dataclasses import dataclass
+from enum import Enum, auto
 import hashlib
 import json
 import struct
@@ -248,52 +250,125 @@ def aligned_wait_prefix(source: list[int], path: Path, count: int | None, after_
     raise ValueError('capture ends before the requested aligned prefix')
 
 
-def mapped_work_events(video: Video, events: Iterable[Row], after_event: int = 0,
-                       previous: Event | None = None, frame_start: int = 1,
-                       native_read_start: int = 0) -> Iterator[dict[str, Any]]:
-    """Map contiguous original event ranges; unsupported cadence never makes a step.
 
-    Event/video endpoints are inclusive. Native read endpoints are zero-based,
-    half-open original ordinals. No captured events or input words are rewritten.
+@dataclass
+class PendingWork:
+    """Observed boundaries whose completion is required before a span settles.
+
+    Door placement survives individual settled suspension boundaries until more_exit.
     """
-    last_frame = 0
-    first: Event | None = None
-    last: Event | None = None
-    reads = read_begin = native_read_start
-    step = 0
-    blocked = False
-    wait_word: int | None = None
-    gap_read = False
-
-    def span(boundary: str, word: int | None = None, incomplete: bool = False) -> dict[str, Any]:
-        nonlocal first, read_begin, step, blocked
-        # Every span follows at least one event, which set both.
-        assert first is not None and last is not None
-        gap = boundary == 'requested_nmi_work' or incomplete
-        blocked |= gap
-        supported = word is not None and not gap
-        row: dict[str, Any] = dict(event_begin=first['event'], event_end=last['event'],
-                   video_begin=first['movie_frame'], video_end=last['movie_frame'],
-                   native_read_begin=read_begin, native_read_end=reads,
-                   boundary=boundary, status=('incomplete' if incomplete else
-                       'gap' if gap else 'blocked' if blocked else
-                       'supported' if supported else 'evidence'),
-                   verifier_step=step if supported and not blocked else '',
-                   settled=all(value is None for value in
-                               (read, wait, lag, vblank, irq, no_update)))
-        if supported and not blocked:
-            row['word'] = word
-            step += 1
-        first, read_begin = None, reads
-        return row
     read: Event | None = None
     wait: Event | None = None
     lag: Event | None = None
     vblank: Event | None = None
     irq: Event | None = None
     no_update: Event | None = None
-    no_update_nmis = 0
-    door = False
+    wait_word: int | None = None
+    no_update_nmis: int = 0
+    door: bool = False
+    gap_read: bool = False
+
+    @property
+    def settled(self) -> bool:
+        return all(value is None for value in
+                   (self.read, self.wait, self.lag, self.vblank, self.irq, self.no_update))
+
+    @property
+    def pending(self) -> bool:
+        return not self.settled or self.door
+
+
+class WorkStatus(Enum):
+    INCOMPLETE = 'incomplete'
+    GAP = 'gap'
+    BLOCKED = 'blocked'
+    SUPPORTED = 'supported'
+    EVIDENCE = 'evidence'
+
+    @property
+    def rejects_prefix(self) -> bool:
+        return self in (WorkStatus.GAP, WorkStatus.BLOCKED, WorkStatus.INCOMPLETE)
+
+
+@dataclass(frozen=True)
+class WorkSpan:
+    """Inclusive event/video ranges and half-open native read ordinals.
+
+    A word and verifier ordinal exist only within the uninterrupted qualified prefix.
+    """
+    event_begin: int
+    event_end: int
+    video_begin: int
+    video_end: int
+    native_read_begin: int
+    native_read_end: int
+    boundary: str
+    status: WorkStatus
+    verifier_step: int | None
+    settled: bool
+    word: int | None
+
+    def as_row(self) -> dict[str, Any]:
+        row: dict[str, Any] = dict(
+            event_begin=self.event_begin, event_end=self.event_end,
+            video_begin=self.video_begin, video_end=self.video_end,
+            native_read_begin=self.native_read_begin, native_read_end=self.native_read_end,
+            boundary=self.boundary, status=self.status.value,
+            verifier_step='' if self.verifier_step is None else self.verifier_step,
+            settled=self.settled)
+        if self.word is not None:
+            row['word'] = self.word
+        return row
+
+
+@dataclass
+class WorkRanges:
+    """Own the un-emitted range and the irreversible supported-prefix frontier."""
+    reads: int = 0
+    read_begin: int = 0
+    first: Event | None = None
+    last: Event | None = None
+    step: int = 0
+    blocked: bool = False
+
+    def observe(self, event: Event, controller_read: bool) -> None:
+        self.last = event
+        if self.first is None:
+            self.first = event
+        self.reads += controller_read
+
+    def span(self, boundary: str, settled: bool, word: int | None = None,
+             incomplete: bool = False) -> WorkSpan:
+        assert self.first is not None and self.last is not None
+        gap = boundary == 'requested_nmi_work' or incomplete
+        self.blocked |= gap
+        supported = word is not None and not gap
+        qualified = supported and not self.blocked
+        status = (WorkStatus.INCOMPLETE if incomplete else WorkStatus.GAP if gap else
+                  WorkStatus.BLOCKED if self.blocked else
+                  WorkStatus.SUPPORTED if supported else WorkStatus.EVIDENCE)
+        result = WorkSpan(
+            self.first['event'], self.last['event'],
+            self.first['movie_frame'], self.last['movie_frame'],
+            self.read_begin, self.reads, boundary, status,
+            self.step if qualified else None, settled, word if qualified else None)
+        if qualified:
+            self.step += 1
+        self.first, self.read_begin = None, self.reads
+        return result
+
+
+def mapped_work_spans(video: Video, events: Iterable[Row], after_event: int = 0,
+                       previous: Event | None = None, frame_start: int = 1,
+                       native_read_start: int = 0) -> Iterator[WorkSpan]:
+    """Map contiguous original event ranges; unsupported cadence never makes a step.
+
+    Event/video endpoints are inclusive. Native read endpoints are zero-based,
+    half-open original ordinals. No captured events or input words are rewritten.
+    """
+    last_frame = 0
+    pending = PendingWork()
+    ranges = WorkRanges(reads=native_read_start, read_begin=native_read_start)
     for number, raw in enumerate(events, after_event + 1):
         kind = raw['kind']
         event = {key: int(value) for key, value in raw.items() if key != 'kind'}
@@ -302,50 +377,46 @@ def mapped_work_events(video: Video, events: Iterable[Row], after_event: int = 0
                 or frame < frame_start):
             raise ValueError('nonsequential work-boundary capture')
         last_frame = frame
-        last = event
-        if first is None:
-            first = event
-        if kind == 'joypad_read':
-            reads += 1
+        ranges.observe(event, kind == 'joypad_read')
         if not 0 <= event['joypad'] <= 0xffff:
             raise ValueError('invalid observed input')
-        if kind == 'no_update_enter' and not door and wait is None and no_update is None:
-            no_update, no_update_nmis = event, 0
-        elif kind == 'lag_nmi' and no_update is not None:
-            no_update_nmis += 1
-        elif kind == 'no_update_exit' and no_update is not None:
-            if (no_update_nmis != 1
-                    or any(event[key] != no_update[key] for key in ('nmi', 'state', 'room', 'joypad'))
-                    or (event['including_lag'] - no_update['including_lag']) % 65536 != 1):
+        if kind == 'no_update_enter' and not pending.door and pending.wait is None and pending.no_update is None:
+            pending.no_update, pending.no_update_nmis = event, 0
+        elif kind == 'lag_nmi' and pending.no_update is not None:
+            pending.no_update_nmis += 1
+        elif kind == 'no_update_exit' and pending.no_update is not None:
+            if (pending.no_update_nmis != 1
+                    or any(event[key] != pending.no_update[key] for key in ('nmi', 'state', 'room', 'joypad'))
+                    or (event['including_lag'] - pending.no_update['including_lag']) % 65536 != 1):
                 raise ValueError('no-update wait did not contain one unchanged-input lag NMI')
-            word, no_update = no_update['joypad'], None
-            yield span('no_update', word)
+            word, pending.no_update = pending.no_update['joypad'], None
+            yield ranges.span('no_update', pending.settled, word)
         elif kind in ('irq_enter', 'lag_nmi', 'door_dma', 'cre_decode_enter', 'cre_decode_exit',
                     'tiles_decode_enter', 'tiles_decode_exit', 'palette_decode_enter', 'palette_decode_exit'):
             pass  # Read-only ordering evidence; these hooks do not define input consumption.
-        elif kind == 'wait_enter' and wait is None and read is None and no_update is None:
-            wait, wait_word = event, None
-        elif kind == 'wait_exit' and wait is not None:
-            if (event['nmi'] != (wait['nmi'] + 1) % 65536
-                    or read is not None or wait_word is None):
+        elif kind == 'wait_enter' and pending.wait is None and pending.read is None and pending.no_update is None:
+            pending.wait, pending.wait_word = event, None
+        elif kind == 'wait_exit' and pending.wait is not None:
+            if (event['nmi'] != (pending.wait['nmi'] + 1) % 65536
+                    or pending.read is not None or pending.wait_word is None):
                 raise ValueError('normal wait did not contain one complete NMI')
-            word, wait, wait_word = wait_word, None, None
-            yield span('normal_wait', word)
-        elif kind == 'place_enter' and not door and wait is None:
+            word, pending.wait, pending.wait_word = pending.wait_word, None, None
+            yield ranges.span('normal_wait', pending.settled, word)
+        elif kind == 'place_enter' and not pending.door and pending.wait is None:
             if event['state'] != 11:
                 raise ValueError('placement outside door transition')
-            door = True
-        elif kind == 'vblank_wait_enter' and door and vblank is None and wait is None:
-            vblank = event
-        elif kind == 'vblank_wait_exit' and vblank is not None:
-            if any(event[key] != vblank[key] for key in ('nmi', 'including_lag', 'joypad')):
+            pending.door = True
+        elif kind == 'vblank_wait_enter' and pending.door and pending.vblank is None and pending.wait is None:
+            pending.vblank = event
+        elif kind == 'vblank_wait_exit' and pending.vblank is not None:
+            if any(event[key] != pending.vblank[key] for key in ('nmi', 'including_lag', 'joypad')):
                 raise ValueError('unsupported vblank wait timing')
-            lag, vblank = event, None
-            yield span('door_vblank', event['joypad'])
+            pending.lag, pending.vblank = event, None
+            yield ranges.span('door_vblank', pending.settled, event['joypad'])
         # Requested NMIs outside supported suspension boundaries are work gaps.
-        elif kind == 'joypad_begin' and read is None and (
-                wait is not None or door
-                or all(value is None for value in (lag, vblank, irq, no_update))):
+        elif kind == 'joypad_begin' and pending.read is None and (
+                pending.wait is not None or pending.door
+                or all(value is None for value in (pending.lag, pending.vblank, pending.irq, pending.no_update))):
             continuous = previous is None and event['nmi'] == 0 and event['state'] == 0
             if previous is not None:
                 continuous = event['nmi'] == (previous['nmi'] + 1) % 65536
@@ -353,71 +424,79 @@ def mapped_work_events(video: Video, events: Iterable[Row], after_event: int = 0
                                and event['nmi'] == 0
                                and any(int(row['nmi_after']) < int(row['nmi_before'])
                                        for row in video[previous['movie_frame'] - frame_start:frame - frame_start + 1]))
-            if (not continuous or lag is not None
-                    or (wait is not None and event['joypad'] != wait['joypad'])):
+            if (not continuous or pending.lag is not None
+                    or (pending.wait is not None and event['joypad'] != pending.wait['joypad'])):
                 raise ValueError('unobserved NMI or input change')
-            gap_read = wait is None and not door
-            read = event
-        elif kind == 'joypad_read' and read is not None:
+            pending.gap_read = pending.wait is None and not pending.door
+            pending.read = event
+        elif kind == 'joypad_read' and pending.read is not None:
             # A video boundary can split one uninterrupted controller read.
-            crossed = frame == read['movie_frame'] + 1
-            if (any(event[key] != read[key] for key in ('nmi', 'including_lag'))
-                    or frame not in (read['movie_frame'], read['movie_frame'] + 1)
-                    or (crossed and event['event'] != read['event'] + 1)):
+            crossed = frame == pending.read['movie_frame'] + 1
+            if (any(event[key] != pending.read[key] for key in ('nmi', 'including_lag'))
+                    or frame not in (pending.read['movie_frame'], pending.read['movie_frame'] + 1)
+                    or (crossed and event['event'] != pending.read['event'] + 1)):
                 raise ValueError('incomplete controller read')
-            word = read['joypad']
-            previous, read = event, None
-            if gap_read:
-                yield span('requested_nmi_work')
-            elif wait is not None:
-                if wait_word is not None:
+            word = pending.read['joypad']
+            previous, pending.read = event, None
+            if pending.gap_read:
+                yield ranges.span('requested_nmi_work', pending.settled)
+            elif pending.wait is not None:
+                if pending.wait_word is not None:
                     raise ValueError('normal wait contains multiple controller reads')
-                wait_word = word
+                pending.wait_word = word
             else:
-                yield span('door_controller', word)
-        elif kind == 'scroll_irq_enter' and door and irq is None:
-            if lag is not None:
-                if (any(event[key] != lag[key] for key in ('nmi', 'x', 'y', 'joypad'))
-                        or (event['including_lag'] - lag['including_lag']) % 65536 != 1):
+                yield ranges.span('door_controller', pending.settled, word)
+        elif kind == 'scroll_irq_enter' and pending.door and pending.irq is None:
+            if pending.lag is not None:
+                if (any(event[key] != pending.lag[key] for key in ('nmi', 'x', 'y', 'joypad'))
+                        or (event['including_lag'] - pending.lag['including_lag']) % 65536 != 1):
                     raise ValueError('loading did not contain exactly one lag NMI')
-                lag = None
-            irq = event
-        elif kind == 'scroll_irq_exit' and irq is not None:
-            if event['scroll_frame'] != (irq['scroll_frame'] + 1) % 65536:
+                pending.lag = None
+            pending.irq = event
+        elif kind == 'scroll_irq_exit' and pending.irq is not None:
+            if event['scroll_frame'] != (pending.irq['scroll_frame'] + 1) % 65536:
                 raise ValueError('unsupported door scrolling update')
-            irq = None
-        elif kind in ('place_exit', 'more_enter', 'scroll_wait_enter', 'scroll_wait_exit') and door:
+            pending.irq = None
+        elif kind in ('place_exit', 'more_enter', 'scroll_wait_enter', 'scroll_wait_exit') and pending.door:
             pass
-        elif kind == 'more_exit' and door and lag is None and irq is None:
-            door = False
+        elif kind == 'more_exit' and pending.door and pending.lag is None and pending.irq is None:
+            pending.door = False
         else:
             raise ValueError(f'unsupported work boundary {kind}')
-        if (first is not None and kind == 'scroll_irq_exit'
-                and all(value is None for value in (read, wait, lag, vblank, irq, no_update))):
-            yield span('door_settlement')
-    pending = any(value is not None for value in (read, wait, lag, vblank, irq, no_update)) or door
-    if first is None and pending:
+        if (ranges.first is not None and kind == 'scroll_irq_exit'
+                and pending.settled):
+            yield ranges.span('door_settlement', pending.settled)
+    if ranges.first is None and pending.pending:
         # A terminal marker owns no events when EOF immediately follows a
         # supported suspension boundary; its range is explicitly empty.
         # Something is pending only after an event, so `last` is set.
-        assert last is not None
-        first = dict(last, event=last['event'] + 1)
-    if first is not None:
-        yield span('pending_eof' if pending else 'evidence', incomplete=pending)
+        assert ranges.last is not None
+        ranges.first = dict(ranges.last, event=ranges.last['event'] + 1)
+    if ranges.first is not None:
+        yield ranges.span('pending_eof' if pending.pending else 'evidence', pending.settled, incomplete=pending.pending)
+
+
+def mapped_work_events(video: Video, events: Iterable[Row], after_event: int = 0,
+                       previous: Event | None = None, frame_start: int = 1,
+                       native_read_start: int = 0) -> Iterator[dict[str, Any]]:
+    """Compatibility rows for callers of the capture mapper."""
+    for span in mapped_work_spans(video, events, after_event, previous,
+                                  frame_start, native_read_start):
+        yield span.as_row()
 
 
 def aligned_work_prefix(video: Video, events: Iterable[Row], count: int, after_event: int = 0,
                         previous: Event | None = None, frame_start: int = 1) -> list[int]:
     """Publish only complete supported steps before the first native work gap."""
     result: list[int] = []
-    for row in mapped_work_events(video, events, after_event, previous, frame_start):
-        if row['status'] in ('gap', 'blocked', 'incomplete'):
-            raise ValueError(f"unsupported native cadence at events {row['event_begin']}.."
-                             f"{row['event_end']}, video {row['video_begin']}..{row['video_end']}; "
+    for span in mapped_work_spans(video, events, after_event, previous, frame_start):
+        if span.status.rejects_prefix:
+            raise ValueError(f"unsupported native cadence at events {span.event_begin}.."
+                             f"{span.event_end}, video {span.video_begin}..{span.video_end}; "
                              f"qualified prefix has {len(result)} steps")
-        if 'word' in row:
-            result.append(row['word'])
-        if len(result) >= count and row['settled']:
+        if span.word is not None:
+            result.append(span.word)
+        if len(result) >= count and span.settled:
             return result[:count]
     raise ValueError('capture ends before the requested complete work prefix')
 
@@ -450,7 +529,7 @@ def write_work_event_map(video: Video, events: Iterable[Row], path: Path, output
     pending_prefix = prefix.copy()
     pending_steps = 0
     steps = reads = event_end = 0
-    first_gap: dict[str, Any] | None = None
+    first_gap: WorkSpan | None = None
     fields = ('event_begin', 'event_end', 'video_begin', 'video_end',
               'native_read_begin', 'native_read_end', 'boundary', 'status',
               'verifier_step', 'settled')
@@ -460,17 +539,17 @@ def write_work_event_map(video: Video, events: Iterable[Row], path: Path, output
         with temporary.open('w', encoding='ascii', newline='') as stream:
             writer = csv.DictWriter(stream, fields, extrasaction='ignore', lineterminator='\n')
             writer.writeheader()
-            for row in mapped_work_events(video, events):
-                if row['event_begin'] != event_end + 1 or row['native_read_begin'] != reads:
+            for span in mapped_work_spans(video, events):
+                if span.event_begin != event_end + 1 or span.native_read_begin != reads:
                     raise ValueError('event map omits an original event or controller read')
-                writer.writerow(row)
-                event_end, reads = row['event_end'], row['native_read_end']
-                if 'word' in row:
-                    pending_prefix.update(f"{row['word']:04X}\r\n".encode('ascii'))
+                writer.writerow(span.as_row())
+                event_end, reads = span.event_end, span.native_read_end
+                if span.word is not None:
+                    pending_prefix.update(f"{span.word:04X}\r\n".encode('ascii'))
                     pending_steps += 1
-                if first_gap is None and row['status'] in ('gap', 'incomplete'):
-                    first_gap = row
-                if first_gap is None and row['settled']:
+                if first_gap is None and span.status in (WorkStatus.GAP, WorkStatus.INCOMPLETE):
+                    first_gap = span
+                if first_gap is None and span.settled:
                     prefix, steps = pending_prefix.copy(), pending_steps
         if any(file_sha256(value) != pins[key + '_sha256'] for key, value in files.items()):
             raise ValueError('original capture changed during event map generation')
@@ -482,7 +561,7 @@ def write_work_event_map(video: Video, events: Iterable[Row], path: Path, output
                  f'complete = {str(first_gap is None).lower()}']
         lines += [f'{key} = "{value}"' for key, value in pins.items()]
         if first_gap is not None:
-            lines += [f'first_gap_{key} = {first_gap[key]}' for key in
+            lines += [f'first_gap_{key} = {getattr(first_gap, key)}' for key in
                       ('event_begin', 'event_end', 'video_begin', 'video_end',
                        'native_read_begin', 'native_read_end')]
         output.with_suffix(output.suffix + '.toml').write_text('\n'.join(lines) + '\n',
@@ -1686,7 +1765,16 @@ def check_native_phase_capture(receipt: Path, receipt_sha256: str, movie: Path, 
                 physical_plan_admitted=False)
 
 
-if __name__ == '__main__':
+class MovieOperation(Enum):
+    NATIVE_PHASE = auto()
+    SNES9X = auto()
+    EVENT_MAP = auto()
+    ALIGN = auto()
+    ROUTE = auto()
+    IMPORT = auto()
+
+
+def movie_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('movie', type=Path)
     parser.add_argument('output', type=Path)
@@ -1710,7 +1798,11 @@ if __name__ == '__main__':
     parser.add_argument('--native-phase-stdout', type=Path)
     parser.add_argument('--native-phase-logger', type=Path)
     parser.add_argument('--native-phase-predecessor', type=Path)
-    args = parser.parse_args()
+    return parser
+
+
+def movie_operation(args: argparse.Namespace, parser: argparse.ArgumentParser) -> MovieOperation:
+    """Resolve one operation after checking the existing CLI admission contract."""
     if args.native_phase_receipt:
         if (not all((args.native_phase_receipt_sha256, args.native_phase_inputs,
                      args.native_phase_stdout, args.native_phase_logger,
@@ -1719,13 +1811,7 @@ if __name__ == '__main__':
                 or args.seed or args.eof_capture or args.eof_capture_sha256
                 or args.snes9x_capture or args.snes9x_capture_sha256):
             parser.error('--native-phase-receipt requires actual closed native/source/input/output handles only')
-        result = check_native_phase_capture(args.native_phase_receipt, args.native_phase_receipt_sha256,
-            args.movie, args.native_phase_inputs, args.rom, args.native, args.native_source,
-            args.output, args.native_phase_stdout, args.native_phase_logger, args.native_phase_predecessor)
-        print(f"Native observation checked: {result['original_input_words']} original inputs; "
-              f"{result['selected_native_events']} selected events; "
-              f"{result['complete_two_port_latches']} actual two-port latches; physical plan not admitted")
-        raise SystemExit(0)
+        return MovieOperation.NATIVE_PHASE
     if any((args.native_phase_receipt_sha256, args.native_phase_inputs, args.native_phase_stdout,
             args.native_phase_logger, args.native_phase_predecessor)):
         parser.error('native phase options require --native-phase-receipt')
@@ -1741,12 +1827,7 @@ if __name__ == '__main__':
                 or args.frames is None or args.lag_log or args.route or args.eof_capture
                 or args.eof_capture_sha256):
             parser.error('--snes9x-capture requires its SHA-256, --seed and --frames only')
-        frames = snes9x_capture_inputs(args.movie, args.rom, args.snes9x_capture,
-                                      args.snes9x_capture_sha256, args.seed, args.frames)
-        args.output.write_text(''.join(f'{word:04X}\n' for word in frames),
-                               encoding='ascii', newline='\r\n')
-        print(f'Imported {len(frames)} observed controller frames from the five-port SMV')
-        raise SystemExit(0)
+        return MovieOperation.SNES9X
     if bool(args.eof_capture) != bool(args.eof_capture_sha256) or (args.eof_capture and not args.lag_log):
         parser.error('--eof-capture requires --eof-capture-sha256 and --lag-log')
     if args.seed and not args.lag_log:
@@ -1754,21 +1835,48 @@ if __name__ == '__main__':
     if ((args.lag_log and (args.route or (args.frames is None and not args.event_map_only)))
             or (args.frames is not None and not args.lag_log)):
         parser.error('--lag-log requires --frames and cannot combine with --route')
+    if args.event_map_only:
+        return MovieOperation.EVENT_MAP
+    if args.lag_log:
+        return MovieOperation.ALIGN
+    if args.route:
+        return MovieOperation.ROUTE
+    return MovieOperation.IMPORT
+
+
+def run_movie_operation(operation: MovieOperation, args: argparse.Namespace,
+                        parser: argparse.ArgumentParser) -> None:
+    """Execute an admitted request; parsing and flag conflicts require no file reads."""
+    if operation is MovieOperation.NATIVE_PHASE:
+        result = check_native_phase_capture(args.native_phase_receipt, args.native_phase_receipt_sha256,
+            args.movie, args.native_phase_inputs, args.rom, args.native, args.native_source,
+            args.output, args.native_phase_stdout, args.native_phase_logger, args.native_phase_predecessor)
+        print(f"Native observation checked: {result['original_input_words']} original inputs; "
+              f"{result['selected_native_events']} selected events; "
+              f"{result['complete_two_port_latches']} actual two-port latches; physical plan not admitted")
+        return
+    if operation is MovieOperation.SNES9X:
+        frames = snes9x_capture_inputs(args.movie, args.rom, args.snes9x_capture,
+                                      args.snes9x_capture_sha256, args.seed, args.frames)
+        args.output.write_text(''.join(f'{word:04X}\n' for word in frames),
+                               encoding='ascii', newline='\r\n')
+        print(f'Imported {len(frames)} observed controller frames from the five-port SMV')
+        return
     if args.route and hashlib.sha256(args.movie.read_bytes()).hexdigest() != ROUTE_SOURCE_SHA256:
         parser.error('--route requires the original any% movie from movies/manifest.toml')
     frames = load(args.movie, args.rom)
     continuation = (recorded_eof(args.movie, frames, args.lag_log, args.eof_capture, args.eof_capture_sha256)
                     if args.eof_capture else None)
-    if args.event_map_only:
+    if operation is MovieOperation.EVENT_MAP:
         steps = aligned_wait_prefix(frames, args.lag_log, None, continuation=continuation,
             map_output=args.output, provenance=dict(movie=args.movie, rom=args.rom,
                                                    native=args.native, native_source=args.native_source))
         print(f'Mapped original capture; supported input prefix has {steps} steps; no inputs emitted')
-        raise SystemExit(0)
-    if args.lag_log:
+        return
+    if operation is MovieOperation.ALIGN:
         frames = (seeded_wait_slice(frames, args.lag_log, args.seed, args.frames, continuation)
                   if args.seed else aligned_wait_prefix(frames, args.lag_log, args.frames, continuation=continuation))
-    if args.route:
+    if operation is MovieOperation.ROUTE:
         frames = route_frames(frames, args.route)
         data = ''.join(f'{word:04X}\r\n' for word in frames).encode('ascii')
         count, expected = ROUTES[args.route]
@@ -1779,3 +1887,14 @@ if __name__ == '__main__':
         args.output.write_text(''.join(f'{word:04X}\n' for word in frames),
                                encoding='ascii', newline='\r\n')
     print(f'Imported {len(frames)} controller frames')
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    parser = movie_parser()
+    args = parser.parse_args(argv)
+    operation = movie_operation(args, parser)
+    run_movie_operation(operation, args, parser)
+
+
+if __name__ == '__main__':
+    main()
