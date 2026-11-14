@@ -1,6 +1,6 @@
 """Run crates' libtest suites as DLLs, for Windows machines that block test executables.
 
-Defender quarantines freshly linked test `.exe` files but loads DLLs. Each lib and
+Defender quarantines freshly linked test `.exe` files but loads DLLs. Each enabled unit and
 integration-test target is linked with `-shared`, so the generated libtest `main`
 is an export of a DLL, and a child Python calls it through ctypes. libtest reads
 its arguments from `GetCommandLineW`, so the child rewrites that buffer in place
@@ -55,13 +55,27 @@ def targets(cargo: str, crates: list[str]) -> list[tuple[str, str, str, Path]]:
             sys.exit(f"test_dll: no package {crate}")
         package = packages[crate]
         root = Path(package["manifest_path"]).parent
+        before = len(found)
         for target in package["targets"]:
+            if not target.get("test", True):
+                continue
             kinds = target["kind"]
             if "test" in kinds:
                 found.append((crate, "--test", target["name"], root))
-            elif "lib" in kinds and target.get("test", True):
+            elif "lib" in kinds or "proc-macro" in kinds:
                 found.append((crate, "--lib", "", root))
+            elif "bin" in kinds:
+                found.append((crate, "--bin", target["name"], root))
+        if len(found) == before:
+            sys.exit(f"test_dll: no enabled test targets for {crate}")
     return found
+
+
+def build_command(cargo: str, crate: str, kind: str, name: str, dll: Path) -> list[str]:
+    build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
+    build += [name] if name else []
+    build += ["--"]
+    return build + ["-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}"]
 
 
 def main() -> int:
@@ -71,14 +85,14 @@ def main() -> int:
     rest = sys.argv[3:]
     split = rest.index("--") if "--" in rest else len(rest)
     crates, libtest = rest[:split], rest[split + 1 :]
+    if not crates:
+        sys.exit("test_dll: name at least one package")
     out.mkdir(parents=True, exist_ok=True)
     failed = []
     for crate, kind, name, root in targets(cargo, crates):
         label = f"{crate} {kind} {name}".strip()
         dll = out / f"{crate}-{name or 'lib'}.dll"
-        build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
-        build += [name] if name else []
-        build += ["--", "-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}"]
+        build = build_command(cargo, crate, kind, name, dll)
         print(f"     Running {label} ({dll.name})", flush=True)
         if subprocess.run(build).returncode != 0:
             failed.append(f"{label} (build)")
