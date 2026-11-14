@@ -1,0 +1,9 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# Fading: docs/behaviours/world-doors.md:266; crates/clean/world_doors/tests/vectors.rs:453
+steps = ["Fading"]
+# Sliding: docs/behaviours/world-doors.md:335; crates/clean/world_doors/tests/vectors.rs:453
+slide = ["Sliding"]
+# Carrying: docs/behaviours/world-doors.md:360; crates/clean/world_doors/tests/vectors.rs:453
+speeds = ["Carrying"]

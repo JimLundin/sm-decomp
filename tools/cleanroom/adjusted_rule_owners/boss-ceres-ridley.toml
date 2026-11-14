@@ -1,0 +1,16 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# SheIsNear: docs/behaviours/boss-ceres-ridley.md:158; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+reach = ["SheIsNear"]
+# Polling: docs/behaviours/boss-ceres-ridley.md:195; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+poll = ["Polling"]
+# Opening: docs/behaviours/boss-ceres-ridley.md:204; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+# Closing: docs/behaviours/boss-ceres-ridley.md:221; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+hold = ["Opening", "Closing"]
+# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+strong_below = ["EscapeShakes"]
+# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+small = ["EscapeShakes"]
+# EscapeShakes: docs/behaviours/boss-ceres-ridley.md:278; crates/clean/boss_ceres_ridley/tests/vectors.rs:314
+strong = ["EscapeShakes"]

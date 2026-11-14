@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  candidates, parameter_entries, probe, prove, test_command)
+                                  candidates, parameter_entries, probe, prove, rule_owners, test_command)
 
 SPEC = """\
 ### Fixed
@@ -58,7 +58,8 @@ class AdjustedVectors(unittest.TestCase):
             path = Path(directory) / "demo.toml"
             path.write_text(vectors, encoding="utf-8", newline="\n")
             try:
-                return prove(path, parameter_entries(SPEC), model(path, step_rule, id_ends))
+                return prove(path, parameter_entries(SPEC), model(path, step_rule, id_ends),
+                             {"step": frozenset({"Step"}), "margin": frozenset({"Margin"})})
             finally:
                 self.assertEqual(path.read_text(encoding="utf-8"), vectors)
 
@@ -101,7 +102,7 @@ class AdjustedVectors(unittest.TestCase):
                         'id = "own"\nentries = ["Fixed", "Step"]\nrules = { step = 4 }\n'
                         "before = 2\nafter = 6\n")
         self.assertEqual(self.proof(shared), {"Step": Proven("own", ()),
-                                              "Margin": Proven("shared", ("Step",))})
+                                              "Margin": Unproven()})
 
     def test_a_model_that_ignores_the_rule_fails_before_any_probe(self) -> None:
         adjusted = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
@@ -132,7 +133,7 @@ class AdjustedVectors(unittest.TestCase):
                 observed.append(([row["id"] for row in rows], passed))
                 return passed
 
-            self.assertEqual(prove(path, ["Step"], fixed_count_adapter),
+            self.assertEqual(prove(path, ["Step"], fixed_count_adapter, {"step": frozenset({"Step"})}),
                              {"Step": Proven("adjusted", ())})
             self.assertEqual(observed, [(["reference", "adjusted"], True),
                                         (["reference", "adjusted-probe"], False),
@@ -165,6 +166,109 @@ class AdjustedVectors(unittest.TestCase):
                       "before = 2\nafter = 5\n").replace('"reference"', '"adjusted-probe"')
         with self.assertRaises(CannotProbe):
             self.proof(text)
+
+    def test_two_overrides_do_not_credit_an_ignored_parameter(self) -> None:
+        text = vector('id = "shared"\nentries = ["Step", "Margin"]\n'
+                      'rules = { step = 3, margin = 9 }\nbefore = 2\nafter = 5\n')
+        self.assertEqual(self.proof(text), {"Step": Proven("shared", ("Margin",)),
+                                           "Margin": Unproven()})
+
+    def test_shared_vector_proves_each_executed_parameter_separately(self) -> None:
+        text = vector('id = "shared"\nentries = ["Step", "Margin"]\n'
+                      'rules = { step = 3, margin = 9 }\nbefore = 2\nafter = 14\n')
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.toml"
+            path.write_text(text, encoding="utf-8", newline="\n")
+            probes: list[dict[str, int]] = []
+
+            def run() -> bool:
+                rows = tomllib.loads(path.read_text(encoding="utf-8"))["vector"]
+                rules = rows[1].get("rules", {})
+                probes.append(rules)
+                return len(rows) == 2 and all(
+                    row["after"] == row["before"] + row.get("rules", {}).get("step", 1)
+                    + row.get("rules", {}).get("margin", 0) for row in rows)
+
+            self.assertEqual(prove(path, ["Step", "Margin"], run,
+                                   {"step": frozenset({"Step"}), "margin": frozenset({"Margin"})}),
+                             {"Step": Proven("shared", ("Margin",)),
+                              "Margin": Proven("shared", ("Step",))})
+            self.assertIn({"margin": 9}, probes)
+            self.assertIn({"step": 3}, probes)
+            self.assertEqual(path.read_text(encoding="utf-8"), text)
+
+    def test_missing_unknown_or_ambiguous_ownership_refuses_and_restores(self) -> None:
+        text = vector('id = "shared"\nentries = ["Step", "Margin"]\n'
+                      'rules = { step = 3, margin = 9 }\nbefore = 2\nafter = 5\n')
+        for owners in ({}, {"step": frozenset({"Step"}), "margin": frozenset({"Unknown"})},
+                       {"step": frozenset({"Step"}), "margin": frozenset({"Step", "Margin"})}):
+            with self.subTest(owners=owners), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "demo.toml"
+                original = text.encode("utf-8")
+                path.write_bytes(original)
+                with self.assertRaises(CannotProbe):
+                    prove(path, ["Step", "Margin"], model(path), owners)
+                self.assertEqual(path.read_bytes(), original)
+
+    def test_a_shared_rule_owner_is_proven_only_by_separate_entry_witnesses(self) -> None:
+        text = vector('id = "step"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                      'before = 2\nafter = 5\n\n[[vector]]\n'
+                      'id = "margin"\nentries = ["Margin"]\nrules = { step = 4 }\n'
+                      'before = 2\nafter = 6\n')
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.toml"
+            original = text.encode("utf-8")
+            path.write_bytes(original)
+            self.assertEqual(prove(path, ["Step", "Margin"], model(path),
+                                   {"step": frozenset({"Step", "Margin"})}),
+                             {"Step": Proven("step", ()), "Margin": Proven("margin", ())})
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_runner_error_after_a_probe_propagates_and_restores(self) -> None:
+        text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                      'before = 2\nafter = 5\n')
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.toml"
+            original = text.encode("utf-8")
+            path.write_bytes(original)
+            calls = 0
+
+            def run() -> bool:
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError()
+                return True
+
+            with self.assertRaises(OSError):
+                prove(path, ["Step"], run, {"step": frozenset({"Step"})})
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_selective_replacement_preserves_nested_unrelated_overrides(self) -> None:
+        for rules in ('rules = { step = 3, margin = { values = [9, 8] } }\n',
+                      '[vector.rules]\nstep = 3\n[vector.rules.margin]\nvalues = [9, 8]\n'):
+            text = vector('id = "adjusted"\nentries = ["Step", "Margin"]\n'
+                          'before = 2\nafter = 5\n' + rules)
+            expected = deepcopy(tomllib.loads(text))
+            expected["vector"][1]["id"] = "adjusted-probe"
+            del expected["vector"][1]["rules"]["step"]
+            self.assertEqual(tomllib.loads(probe(text, candidates(text)[0], False,
+                                                frozenset({"step"}))), expected)
+
+    def test_ownership_metadata_is_required_only_when_adjusted_candidates_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertEqual(rule_owners(root, "demo", False), {})
+            with self.assertRaises(CannotProbe):
+                rule_owners(root, "demo", True)
+            metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
+            metadata.parent.mkdir(parents=True)
+            for text in ('[owners]\nstep = "Step"\n', '[owners]\nstep = [3]\n'):
+                metadata.write_text(text, encoding="utf-8", newline="\n")
+                with self.assertRaises(CannotProbe):
+                    rule_owners(root, "demo", True)
+            metadata.write_text('[owners]\nstep = ["Step"]\n', encoding="utf-8", newline="\n")
+            self.assertEqual(rule_owners(root, "demo", True), {"step": frozenset({"Step"})})
 
     def test_linux_selects_dedicated_vectors_or_library_adapter(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

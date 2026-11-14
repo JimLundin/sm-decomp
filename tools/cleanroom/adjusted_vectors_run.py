@@ -8,17 +8,21 @@ with two probes, one at a time, and runs the test on each:
 
 - the control, a copy of the vector under another id: the test must still pass, so a failure
   of the other probe is the model's answer and not the copy's;
-- the reference probe, the same copy without its rules: the test must fail.
+- the reference probe, the same copy without its owned overrides: the test must fail.
 
 A rules table that is empty, repeats the reference values or changes something the case
 doesn't reach leaves the reference probe passing, and the entry stays unproven. So a model
 that ignores an adjusted value fails that entry's vector in the domain's test. The vector file
 is restored whatever happens.
 
-It can't tell which of a vector's entries its rules belong to: a vector proven to depend on
-its rules counts for every Parameter entry it names. So an entry is tried first on the vectors
-that name no other Parameter entry, and a proof by a vector that names others says which, for
-a reader to judge.
+tools/cleanroom/adjusted_rule_owners/DOMAIN.toml maps each vector-format rule subtree to
+its reviewed Parameter entry owners: [owners], rule = ["Entry"]. Ownership means the
+entry's declared Parameter, not a parameter consumed by a downstream behavior. A probe
+removes only that entry's overrides, keeping every unrelated override fixed. Missing or
+unknown ownership refuses a probe. If multiple owners of an overridden rule co-occur in
+a candidate's entries, that witness is ambiguous and is refused. Separate witnesses can
+prove entries that share a parameter. This proves entry adjustability, not each knob.
+
 
 Usage: adjusted_vectors_run.py [DOMAIN...], from the repository root; with no DOMAIN, every
 spec with a vector file and a clean crate. Exit 1 when an entry has adjusted vectors and none
@@ -100,14 +104,35 @@ def without_rules(lines: list[str]) -> list[str]:
     for line in lines:
         if line.startswith("["):
             table = line.strip()
-        if table == "[vector.rules]" or (table == "[[vector]]"
-                                         and re.match(r"rules\s*=", line)):
+        in_rules_table = (table == "[vector.rules]" or table.startswith("[vector.rules.")
+                          or table.startswith("[[vector.rules."))
+        inline_rules = table == "[[vector]]" and re.match(r"rules\s*=", line)
+        if in_rules_table or inline_rules:
             continue
         kept.append(line)
     return kept
 
 
-def probe(text: str, candidate: Candidate, keep_rules: bool) -> str:
+def inline_toml(value: Any) -> str:
+    """Encode parsed rule values as TOML; unsupported values refuse rather than drift."""
+    import json
+
+    if isinstance(value, dict):
+        return "{ " + ", ".join(json.dumps(k) + " = " + inline_toml(v)
+                                for k, v in value.items()) + " }"
+    if isinstance(value, list):
+        return "[" + ", ".join(inline_toml(v) for v in value) + "]"
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    raise CannotProbe("unsupported rule value")
+
+
+def probe(text: str, candidate: Candidate, keep_rules: bool,
+          remove_rules: frozenset[str] | None = None) -> str:
     """The file with the candidate replaced under a unique probe id.
 
     The entire parsed file is checked against the expected replacement, so other vectors,
@@ -124,8 +149,17 @@ def probe(text: str, candidate: Candidate, keep_rules: bool) -> str:
     start, end = block_bounds(text, candidate.index)
     all_lines = text.splitlines()
     lines = all_lines[start:end]
+    replacement_rules = dict(original_rows[candidate.index].get("rules", {}))
     if not keep_rules:
+        for rule in remove_rules if remove_rules is not None else tuple(replacement_rules):
+            if rule not in replacement_rules:
+                raise CannotProbe(f"{candidate.id}: unknown override {rule}")
+            del replacement_rules[rule]
         lines = without_rules(lines)
+        # Insert an inline table immediately after the array heading. Values are copied
+        # from the parsed original; a complete semantic comparison below checks the edit.
+        if replacement_rules:
+            lines.insert(1, "rules = " + inline_toml(replacement_rules))
     renamed: list[str] = []
     table = ""
     for line in lines:
@@ -138,7 +172,10 @@ def probe(text: str, candidate: Candidate, keep_rules: bool) -> str:
     probed = "\n".join(all_lines[:start] + renamed + all_lines[end:]) + "\n"
     expected = dict(original_rows[candidate.index], id=probe_id)
     if not keep_rules:
-        del expected["rules"]
+        if replacement_rules:
+            expected["rules"] = replacement_rules
+        else:
+            del expected["rules"]
     expected_rows = original_rows.copy()
     expected_rows[candidate.index] = expected
     expected_file = dict(original, vector=expected_rows)
@@ -149,7 +186,7 @@ def probe(text: str, candidate: Candidate, keep_rules: bool) -> str:
 
 @dataclass(frozen=True)
 class Proven:
-    """A vector that fails at the reference rules, and the other Parameter entries it names."""
+    """A vector that fails when this entry alone uses its reference rules."""
 
     vector: str
     shared_with: tuple[str, ...]
@@ -157,7 +194,7 @@ class Proven:
 
 @dataclass(frozen=True)
 class Unproven:
-    """Vectors adjust the entry, and each still passes at the reference rules."""
+    """No named vector depends on overrides owned by this entry."""
 
 
 @dataclass(frozen=True)
@@ -168,34 +205,48 @@ class Unadjusted:
 Verdict = Proven | Unproven | Unadjusted
 
 
-def prove(path: Path, entries: list[str], run: Callable[[], bool]) -> dict[str, Verdict]:
+def prove(path: Path, entries: list[str], run: Callable[[], bool],
+          owners: dict[str, frozenset[str]]) -> dict[str, Verdict]:
     """Each Parameter entry's verdict, from probes of the vectors that adjust it."""
     original = path.read_bytes()
     text = original.decode("utf-8")
     if not run():
         raise CannotProbe("the vector test fails on the committed vectors")
-    depending: dict[str, bool] = {}
+    adjusting_candidates = candidates(text)
+    for candidate in adjusting_candidates:
+        for rule in vectors(text)[candidate.index]["rules"]:
+            if rule not in owners or not owners[rule] or not owners[rule].issubset(entries):
+                raise CannotProbe(f"{candidate.id}: missing or unknown owner for {rule}")
+            if len(owners[rule].intersection(candidate.entries)) > 1:
+                raise CannotProbe(f"{candidate.id}: ambiguous owners for {rule}")
+    depending: dict[tuple[str, str], bool] = {}
 
-    def depends(candidate: Candidate) -> bool:
-        if candidate.id not in depending:
-            path.write_bytes(probe(text, candidate, keep_rules=False).encode("utf-8"))
+    def depends(candidate: Candidate, entry: str) -> bool:
+        key = (candidate.id, entry)
+        removed = frozenset(rule for rule in vectors(text)[candidate.index]["rules"]
+                            if entry in owners[rule])
+        if not removed:
+            return False
+        if key not in depending:
+            path.write_bytes(probe(text, candidate, keep_rules=False,
+                                   remove_rules=removed).encode("utf-8"))
             fails_at_reference = not run()
             if fails_at_reference:
                 path.write_bytes(probe(text, candidate, keep_rules=True).encode("utf-8"))
                 if not run():
                     raise CannotProbe(f"{candidate.id}: the test refuses a copy of it")
-            depending[candidate.id] = fails_at_reference
-        return depending[candidate.id]
+            depending[key] = fails_at_reference
+        return depending[key]
 
     def others(candidate: Candidate, entry: str) -> tuple[str, ...]:
         return tuple(e for e in entries if e != entry and e in candidate.entries)
 
     def verdict(entry: str) -> Verdict:
-        adjusting = sorted((c for c in candidates(text) if entry in c.entries),
+        adjusting = sorted((c for c in adjusting_candidates if entry in c.entries),
                            key=lambda c: len(others(c, entry)))
         if not adjusting:
             return Unadjusted()
-        return next((Proven(c.id, others(c, entry)) for c in adjusting if depends(c)),
+        return next((Proven(c.id, others(c, entry)) for c in adjusting if depends(c, entry)),
                     Unproven())
 
     try:
@@ -215,6 +266,25 @@ def test_command(crate: str, root: Path) -> list[str]:
     return command + ["--lib"]
 
 
+def rule_owners(root: Path, domain: str, required: bool) -> dict[str, frozenset[str]]:
+    """Reviewed ownership uses vector-format top-level rule subtrees, not model names.
+
+    An entry with no adjusted candidates stays advisory. An existing candidate may never
+    fall back to removing unrelated rules because its ownership metadata is missing.
+    """
+    ownership = root / "tools/cleanroom/adjusted_rule_owners" / f"{domain}.toml"
+    if not ownership.is_file():
+        if not required:
+            return {}
+        raise CannotProbe(f"{domain}: missing reviewed rule ownership")
+    raw_owners = tomllib.loads(ownership.read_text(encoding="utf-8")).get("owners")
+    if not isinstance(raw_owners, dict) or not all(
+            isinstance(k, str) and isinstance(v, list) and all(isinstance(e, str) for e in v)
+            for k, v in raw_owners.items()):
+        raise CannotProbe(f"{domain}: owners must map rules to arrays of Parameter entries")
+    return {rule: frozenset(names) for rule, names in raw_owners.items()}
+
+
 def check_domain(root: Path, domain: str) -> int:
     """Print the domain's verdicts; the number of entries whose adjusted vectors prove nothing."""
     spec = (root / "docs/behaviours" / f"{domain}.md").read_text(encoding="utf-8")
@@ -225,14 +295,16 @@ def check_domain(root: Path, domain: str) -> int:
                               check=False).returncode == 0
 
     entries = parameter_entries(spec)
-    verdicts = prove(root / "scenarios/vectors" / f"{domain}.toml", entries, run)
+    vector_path = root / "scenarios/vectors" / f"{domain}.toml"
+    owners = rule_owners(root, domain, bool(candidates(vector_path.read_text(encoding="utf-8"))))
+    verdicts = prove(vector_path, entries, run, owners)
     for entry, verdict in verdicts.items():
         match verdict:
             case Unadjusted():
                 print(f"adjusted: {domain}: {entry} has no adjusted vector")
             case Unproven():
-                print(f"adjusted: {domain}: {entry}'s adjusted vectors all pass at the "
-                      "reference rules")
+                print(f"adjusted: {domain}: no named vector depends on {entry}'s "
+                      "owned rule overrides")
             case Proven(vector, ()):
                 print(f"adjusted: {domain}: {entry} depends on its rules in {vector}")
             case Proven(vector, shared_with):
@@ -240,7 +312,7 @@ def check_domain(root: Path, domain: str) -> int:
                       f"also names {', '.join(shared_with)}")
     proven = sum(1 for verdict in verdicts.values() if isinstance(verdict, Proven))
     print(f"adjusted: {domain}: {proven} of {len(entries)} Parameter entries have a vector "
-          "that fails at the reference rules")
+          "that fails when its owned overrides are removed")
     return sum(1 for verdict in verdicts.values() if isinstance(verdict, Unproven))
 
 

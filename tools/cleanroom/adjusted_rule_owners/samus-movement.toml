@@ -1,0 +1,27 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# SpeedBuildsAndBrakes: docs/behaviours/samus-movement.md:218; crates/clean/samus_movement/tests/vectors.rs:184
+speed_cap = ["SpeedBuildsAndBrakes"]
+# Dash: docs/behaviours/samus-movement.md:270; crates/clean/samus_movement/tests/vectors.rs:184
+dash_gain = ["Dash"]
+# AimingAndShooting: docs/behaviours/samus-movement.md:421; crates/clean/samus_movement/tests/vectors.rs:184
+aim_step = ["AimingAndShooting"]
+# RidingTheElevator: docs/behaviours/samus-movement.md:461; crates/clean/samus_movement/tests/vectors.rs:184
+elevator_descent = ["RidingTheElevator"]
+# Jumping: docs/behaviours/samus-movement.md:484; crates/clean/samus_movement/tests/vectors.rs:184
+jump_speed = ["Jumping"]
+# FollowingTheGround: docs/behaviours/samus-movement.md:571; crates/clean/samus_movement/tests/vectors.rs:184
+ground_pull = ["FollowingTheGround"]
+# PoseFitAfterMoves: docs/behaviours/samus-movement.md:641; crates/clean/samus_movement/tests/vectors.rs:184
+small_body = ["PoseFitAfterMoves"]
+# ShrinkingLowersHer: docs/behaviours/samus-movement.md:761; crates/clean/samus_movement/tests/vectors.rs:184
+crouch_lowers = ["ShrinkingLowersHer"]
+# RisingAndFalling: docs/behaviours/samus-movement.md:818; crates/clean/samus_movement/tests/vectors.rs:184
+gravity = ["RisingAndFalling"]
+# WallJump: docs/behaviours/samus-movement.md:966; crates/clean/samus_movement/tests/vectors.rs:184
+wall_reach = ["WallJump"]
+# Landing: docs/behaviours/samus-movement.md:1017; crates/clean/samus_movement/tests/vectors.rs:184
+bounce_threshold = ["Landing"]
+# BlocksStopFlush: docs/behaviours/samus-movement.md:1540; crates/clean/samus_movement/tests/vectors.rs:184
+move_limit = ["BlocksStopFlush"]

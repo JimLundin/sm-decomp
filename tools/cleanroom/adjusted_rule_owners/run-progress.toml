@@ -1,0 +1,7 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# TakingBeams: docs/behaviours/run-progress.md:283; crates/clean/run_progress/tests/support/mod.rs:74
+switches_off = ["TakingBeams"]
+# ItemPercentage: docs/behaviours/run-progress.md:369; crates/clean/run_progress/tests/support/mod.rs:74
+divisors = ["ItemPercentage"]

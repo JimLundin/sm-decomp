@@ -1,0 +1,7 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# FlyingBeam: docs/behaviours/weapons-projectiles.md:194; crates/clean/weapons_projectiles/src/tests.rs:922
+acceleration = ["FlyingBeam"]
+# BeamTrail: docs/behaviours/weapons-projectiles.md:217; crates/clean/weapons_projectiles/src/tests.rs:922
+trail_interval = ["BeamTrail"]

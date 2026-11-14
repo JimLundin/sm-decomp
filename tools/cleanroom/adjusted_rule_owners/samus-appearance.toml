@@ -1,0 +1,15 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# Breathing: docs/behaviours/samus-appearance.md:175; crates/clean/samus_appearance/tests/vectors.rs:327
+breathing_threshold = ["Breathing"]
+# StandingRestart: docs/behaviours/samus-appearance.md:284; crates/clean/samus_appearance/tests/vectors.rs:327
+restart_hold = ["StandingRestart"]
+# FastFall: docs/behaviours/samus-appearance.md:327; crates/clean/samus_appearance/tests/vectors.rs:327
+fast_fall_speed = ["FastFall"]
+# FastFall: docs/behaviours/samus-appearance.md:327; crates/clean/samus_appearance/tests/vectors.rs:327
+fast_fall_hold = ["FastFall"]
+# RisingHold: docs/behaviours/samus-appearance.md:347; crates/clean/samus_appearance/tests/vectors.rs:327
+rising_hold = ["RisingHold"]
+# BoostStages: docs/behaviours/samus-appearance.md:385; crates/clean/samus_appearance/tests/vectors.rs:327
+laps_per_stage = ["BoostStages"]

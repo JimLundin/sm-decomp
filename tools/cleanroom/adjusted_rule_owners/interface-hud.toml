@@ -1,0 +1,9 @@
+# Reviewed ownership of vector-format rule subtrees by Parameter entry.
+# Remove the whole subtree to restore reference semantics at the vector adapter.
+[owners]
+# OneShotFlash: docs/behaviours/interface-hud.md:248; crates/clean/interface_hud/tests/vectors.rs:610
+one_shot_flash = ["OneShotFlash"]
+# HerBlink: docs/behaviours/interface-hud.md:376; crates/clean/interface_hud/tests/vectors.rs:610
+her_blink = ["HerBlink"]
+# BossBlanksTheMap: docs/behaviours/interface-hud.md:446; crates/clean/interface_hud/tests/vectors.rs:610
+boss_screens = ["BossBlanksTheMap"]
