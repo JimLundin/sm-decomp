@@ -13,6 +13,7 @@ import sys
 import tomllib
 import urllib.request
 import urllib.error
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -55,8 +56,22 @@ TOOL = {
 }
 
 
+class RefusalCategory(Enum):
+    REQUEST = "request"
+    INTEGRITY = "integrity"
+    UNCERTIFIED = "uncertified"
+
+
 class Refused(ValueError):
-    """A request exceeds the closed tool contract."""
+    """A fixed public diagnostic with an explicit session disposition."""
+
+    def __init__(self, diagnostic: str, category: RefusalCategory = RefusalCategory.REQUEST) -> None:
+        super().__init__(diagnostic)
+        self.category = category
+
+    @property
+    def terminal(self) -> bool:
+        return self.category is not RefusalCategory.REQUEST
 
 
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -208,20 +223,27 @@ class Broker:
         return current
 
     def audit(self) -> None:
-        root_plain(self.root)
-        root_plain(self.lane)
-        inventory = set()
-        for path in self.files():
-            plain(path)
-            rel = path.relative_to(self.root).as_posix()
-            if path.is_file() and not rel.startswith((".git/", "target/")) and not self.mutable(rel):
-                inventory.add(rel)
-        if inventory != self.inventory:
-            raise Refused("protected inventory changed")
-        for path, value in self.frozen.items():
-            root_plain(path)
-            if not path.is_file() or digest(path) != value:
-                raise Refused("immutable file changed")
+        # Every failure here invalidates the session, including linked or missing files.
+        # A caller may recover from an invalid tool path, never from a failed audit.
+        try:
+            root_plain(self.root)
+            root_plain(self.lane)
+            inventory = set()
+            for path in self.files():
+                plain(path)
+                rel = path.relative_to(self.root).as_posix()
+                if path.is_file() and not rel.startswith((".git/", "target/")) and not self.mutable(rel):
+                    inventory.add(rel)
+            if inventory != self.inventory:
+                raise Refused("protected inventory changed")
+            for path, value in self.frozen.items():
+                root_plain(path)
+                if not path.is_file() or digest(path) != value:
+                    raise Refused("immutable file changed")
+        except Refused as error:
+            raise Refused(str(error), RefusalCategory.INTEGRITY) from None
+        except (OSError, UnicodeError):
+            raise Refused("unavailable file or invalid text", RefusalCategory.INTEGRITY) from None
 
     def run(self, name: str, suffix: list[str] | None = None) -> str:
         self.audit()
@@ -242,7 +264,7 @@ class Broker:
         self.audit()
         output = out.read_text(encoding="utf-8", errors="replace") + errors.read_text(encoding="utf-8", errors="replace")
         if status == 124:
-            raise Refused("command completion uncertified")
+            raise Refused("command completion uncertified", RefusalCategory.UNCERTIFIED)
         return json.dumps({"exit_code": status, "output": output[:100000]})
 
     def dispatch(self, name: str, args: object) -> str:
@@ -353,6 +375,22 @@ class Broker:
         return self.run(action)
 
 
+def call_result(broker: Broker, call: dict[str, Any]) -> str:
+    """Translate recoverable call failures without exposing host exception details."""
+    try:
+        args = json.loads(call["arguments"], object_pairs_hook=unique_object)
+        return broker.dispatch(call["name"], args)
+    except Refused as error:
+        value = "refused: " + str(error)
+        if error.terminal:
+            raise Refused(value, error.category) from None
+        return value
+    except (KeyError, TypeError, json.JSONDecodeError):
+        return "refused: malformed call"
+    except (OSError, UnicodeError):
+        return "refused: unavailable file or invalid text"
+
+
 def response_loop(broker: Broker, brief: str, send: Any, transcript: Path) -> None:
     history: list[dict[str, Any]] = [{"role": "user", "content": brief +
         "\nUse only the cleanroom function. Run runner for vector tests. Finish with a report."}]
@@ -400,16 +438,7 @@ def response_loop(broker: Broker, brief: str, send: Any, transcript: Path) -> No
                 broker.audit()
                 return
             for call in calls:
-                try:
-                    args = json.loads(call["arguments"], object_pairs_hook=unique_object)
-                    value = broker.dispatch(call["name"], args)
-                except (KeyError, TypeError, json.JSONDecodeError, Refused) as error:
-                    # Only fixed broker refusal messages are exposed, never host exceptions.
-                    value = "refused: " + (str(error) if isinstance(error, Refused) else "malformed call")
-                    if "uncertified" in value or "immutable" in value or "inventory" in value:
-                        raise Refused(value) from None
-                except (OSError, UnicodeError):
-                    value = "refused: unavailable file or invalid text"
+                value = call_result(broker, call)
                 event = {"type": "function_call_output", "call_id": call["call_id"], "output": value}
                 stream.write(json.dumps(event) + "\n")
                 stream.flush()

@@ -18,7 +18,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from launch_stream import capture
-from responses_controller import Broker, Refused, OBSERVED_MODEL, prepare, response_loop, unique_object
+from responses_controller import Broker, Refused, RefusalCategory, OBSERVED_MODEL, prepare, response_loop, unique_object
 
 
 class Contract(unittest.TestCase):
@@ -259,6 +259,137 @@ class Contract(unittest.TestCase):
                 env = json.loads(result["output"])
                 self.assertNotIn("FOUNDRY_LMS_TOKEN", env)
                 self.assertNotIn("HTTP_PROXY", env)
+
+    def scripted_calls(self, dispatch: Any, arguments: object = '{"action":"status"}') -> list[dict[str, Any]]:
+        requests: list[dict[str, Any]] = []
+        def send(request: dict[str, Any]) -> dict[str, Any]:
+            requests.append(json.loads(json.dumps(request)))
+            output = [{"type": "function_call", "status": "completed", "name": "cleanroom",
+                       "call_id": "c1", "arguments": arguments}] if len(requests) == 1 else [
+                {"type": "message", "role": "assistant", "status": "completed",
+                 "content": [{"type": "output_text", "text": "Done"}]}]
+            return {"model": OBSERVED_MODEL, "status": "completed", "output": output}
+        with patch.object(self.broker, "dispatch", dispatch):
+            response_loop(self.broker, "Invented", send, self.lane / "transcript")
+        return requests
+
+    def test_refusal_disposition_is_independent_of_diagnostic(self) -> None:
+        # Diagnostic words cannot turn a recoverable request into a session failure.
+        for diagnostic in ("immutable", "inventory", "uncertified"):
+            with self.subTest(diagnostic=diagnostic):
+                requests = self.scripted_calls(
+                    unittest.mock.Mock(side_effect=Refused(diagnostic)))
+                self.assertEqual(len(requests), 2)
+                self.assertEqual(requests[1]["input"][-1]["type"], "function_call_output")
+        # A terminal category stops before another response, even with neutral wording.
+        for category in (RefusalCategory.INTEGRITY, RefusalCategory.UNCERTIFIED):
+            with self.subTest(category=category), self.assertRaises(Refused) as caught:
+                self.scripted_calls(unittest.mock.Mock(side_effect=Refused("stopped", category)))
+            self.assertIs(caught.exception.category, category)
+            records = (self.lane / "transcript").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(records), 1)
+
+    def test_malformed_calls_and_host_failures_are_recoverable_and_private(self) -> None:
+        for arguments in (None, "{", '{"action":"read","action":"write"}'):
+            dispatch = unittest.mock.Mock()
+            with self.subTest(arguments=arguments):
+                requests = self.scripted_calls(dispatch, arguments)
+                self.assertEqual(len(requests), 2)
+                dispatch.assert_not_called()
+        for error in (KeyError("host-secret"), TypeError("host-secret"),
+                      OSError("host-secret"), UnicodeError("host-secret")):
+            with self.subTest(error=type(error)):
+                requests = self.scripted_calls(unittest.mock.Mock(side_effect=error))
+                self.assertEqual(len(requests), 2)
+                self.assertNotIn("host-secret", json.dumps(requests))
+                self.assertNotIn("host-secret", (self.lane / "transcript").read_text(encoding="utf-8"))
+
+    def test_failed_integrity_audit_stops_before_dispatch(self) -> None:
+        for change in ("inventory", "immutable", "linked", "missing"):
+            with self.subTest(change=change):
+                protected = self.root / "Cargo.toml"
+                original = protected.read_bytes()
+                extra = self.root / "unexpected.txt"
+                outside = self.base / "outside"
+                try:
+                    if change == "inventory":
+                        extra.write_text("Invented", encoding="utf-8")
+                    elif change == "immutable":
+                        protected.write_text("Changed", encoding="utf-8")
+                    elif change == "missing":
+                        protected.unlink()
+                    else:
+                        outside.write_bytes(original)
+                        protected.unlink()
+                        os.link(outside, protected)
+                    with self.assertRaises(Refused) as caught:
+                        self.call("write", path="crates/clean/demo/tests/new.rs", text="//! Test.\n")
+                    self.assertIs(caught.exception.category, RefusalCategory.INTEGRITY)
+                    self.assertFalse((self.root / "crates/clean/demo/tests/new.rs").exists())
+                finally:
+                    if extra.exists():
+                        extra.unlink()
+                    protected.unlink(missing_ok=True)
+                    protected.write_bytes(original)
+                    outside.unlink(missing_ok=True)
+
+    def test_integrity_failure_during_response_stops_without_another_send(self) -> None:
+        protected = self.root / "Cargo.toml"
+        original = protected.read_bytes()
+        for change in ("inventory", "immutable", "linked", "unavailable"):
+            calls = []
+            extra = self.root / "extra.txt"
+            outside = self.base / "outside"
+            def send(request: dict[str, Any]) -> dict[str, Any]:
+                calls.append(request)
+                if change == "inventory":
+                    extra.write_text("Invented", encoding="utf-8")
+                elif change == "immutable":
+                    protected.write_text("Changed", encoding="utf-8")
+                elif change == "linked":
+                    outside.write_bytes(original)
+                    protected.unlink()
+                    os.link(outside, protected)
+                return {"model": OBSERVED_MODEL, "status": "completed", "output": [
+                    {"type": "function_call", "status": "completed", "name": "cleanroom",
+                     "call_id": "c1", "arguments": '{"action":"read","path":"Cargo.toml"}'}]}
+            try:
+                # The first audit precedes send; the second happens inside dispatch.
+                real_files = self.broker.files
+                def files() -> list[Path]:
+                    if calls and change == "unavailable":
+                        raise OSError("host-secret")
+                    return real_files()
+                with self.subTest(change=change), patch.object(self.broker, "files", side_effect=files):
+                    with self.assertRaises(Refused) as caught:
+                        response_loop(self.broker, "Invented", send, self.lane / "transcript")
+                    self.assertIs(caught.exception.category, RefusalCategory.INTEGRITY)
+                    self.assertEqual(len(calls), 1)
+                    transcript = (self.lane / "transcript").read_text(encoding="utf-8")
+                    self.assertEqual(len(transcript.splitlines()), 1)
+                    self.assertNotIn("host-secret", transcript)
+            finally:
+                extra.unlink(missing_ok=True)
+                protected.unlink(missing_ok=True)
+                protected.write_bytes(original)
+                outside.unlink(missing_ok=True)
+
+    def test_commands_audit_after_execution_and_certify_completion(self) -> None:
+        self.config["commands"]["status"] = [sys.executable, "-I", "invented.py"]
+        def capture_result(*args: Any, **kwargs: Any) -> int:
+            Path(args[2]).write_text("", encoding="utf-8")
+            Path(args[3]).write_text("", encoding="utf-8")
+            return 124
+        with patch("launch_stream.capture", side_effect=capture_result), self.assertRaises(Refused) as caught:
+            self.call("status")
+        self.assertIs(caught.exception.category, RefusalCategory.UNCERTIFIED)
+        def corrupt(*args: Any, **kwargs: Any) -> int:
+            capture_result(*args, **kwargs)
+            (self.root / "Cargo.toml").write_text("Changed", encoding="utf-8")
+            return 0
+        with patch("launch_stream.capture", side_effect=corrupt), self.assertRaises(Refused) as caught:
+            self.call("status")
+        self.assertIs(caught.exception.category, RefusalCategory.INTEGRITY)
 
     def test_response_identity_completion_reasoning(self) -> None:
         final = {"model": OBSERVED_MODEL, "status": "completed", "output": [
