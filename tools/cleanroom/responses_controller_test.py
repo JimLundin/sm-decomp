@@ -110,6 +110,69 @@ class Contract(unittest.TestCase):
         self.call("delete", path=path)
         self.assertFalse((self.root / path).exists())
 
+    def test_large_utf8_read_pages_are_exact_and_read_only(self) -> None:
+        rel = "crates/clean/demo/tests/large.rs"
+        path = self.root / rel
+        content = "é漢😀\r\n" * 35000 + "Final page.\n"
+        path.write_text(content, encoding="utf-8", newline="")
+        self.assertGreater(path.stat().st_size, 100000)
+        self.config["mode"] = "blind-reviewer"
+        self.broker = Broker(self.root, self.lane, self.config)
+        before = path.read_bytes()
+        original_open = Path.open
+        def read_only_open(item: Path, mode: str = "r", *args: Any, **kwargs: Any) -> Any:
+            self.assertFalse(any(flag in mode for flag in "wax+"))
+            return original_open(item, mode, *args, **kwargs)
+        pages = []
+        offset = 0
+        with patch.object(Path, "open", read_only_open):
+            # The default first call works for large files, without a prior size probe.
+            page = json.loads(self.broker.dispatch("cleanroom", {"action": "read", "path": rel}))
+            while True:
+                self.assertEqual(page["offset"], offset)
+                self.assertLessEqual(len(page["text"].encode("utf-8")), 100000)
+                self.assertEqual(page["next_offset"], offset + len(page["text"]))
+                pages.append(page["text"])
+                if page["eof"]:
+                    break
+                self.assertGreater(page["next_offset"], offset)
+                offset = page["next_offset"]
+                page = json.loads(self.broker.dispatch("cleanroom", {
+                    "action": "read", "path": rel, "offset": offset, "limit": 12345}))
+        self.assertEqual("".join(pages), content)
+        self.assertEqual(path.read_bytes(), before)
+        eof = json.loads(self.broker.dispatch("cleanroom", {
+            "action": "read", "path": rel, "offset": len(content), "limit": 1}))
+        self.assertTrue(eof["eof"])
+        self.assertEqual(eof["text"], "")
+
+    def test_page_bounds_and_paths_are_refused(self) -> None:
+        rel = "crates/clean/types/src/lib.rs"
+        bounds: list[dict[str, object]] = [
+            {"offset": -1}, {"limit": 0}, {"limit": 25001}, {"offset": True},
+            {"offset": "0"}, {"limit": 1.5}, {"offset": 1000000}, {"limit": None}]
+        for fields in bounds:
+            with self.subTest(fields=fields), self.assertRaises(Refused):
+                request: dict[str, object] = {"action": "read", "path": rel, **fields}
+                self.broker.dispatch("cleanroom", request)
+        for path in ("../private", ".GIT/config", "target/output", "file:stream", "C:/outside"):
+            with self.subTest(path=path), self.assertRaises(Refused):
+                self.broker.dispatch("cleanroom", {"action": "read", "path": path, "offset": 0, "limit": 1})
+        with self.assertRaises(Refused):
+            self.broker.dispatch("cleanroom", {"action": "status", "offset": 0})
+
+    def test_large_file_search_finds_tail_and_reports_limits(self) -> None:
+        rel = "crates/clean/demo/tests/search.rs"
+        path = self.root / rel
+        path.write_text("ordinary line\n" * 15000 + "tail sentinel\n", encoding="utf-8")
+        self.assertGreater(path.stat().st_size, 100000)
+        result = json.loads(self.call("search", path=rel, text="tail sentinel"))
+        self.assertFalse(result["truncated"])
+        self.assertEqual(result["matches"], [rel + ":15001:tail sentinel"])
+        limited = json.loads(self.call("search", path=rel, text="ordinary"))
+        self.assertTrue(limited["truncated"])
+        self.assertLessEqual(len(limited["matches"]), 1000)
+
     def test_duplicate_and_tool_mutants(self) -> None:
         with self.assertRaises(Refused):
             json.loads('{"action":"read","action":"write"}', object_pairs_hook=unique_object)

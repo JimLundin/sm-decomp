@@ -24,6 +24,7 @@ OBSERVED_MODEL = "global.openai.gpt-6.1-sol"
 # This provider returns either the canonical identifier or its deployment labels for
 # the same fixed Sol request. No other label, request model or route is accepted.
 OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-1-sol-dz", "gpt-6-1-sol-gs"})
+PAGE_CHARACTERS = 25000
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",
            "fmt", "fmtcheck", "test", "runner", "status", "diff", "log", "add", "commit")
 FIELDS = {
@@ -34,6 +35,10 @@ FIELDS = {
 TOOL = {
     "type": "function", "name": "cleanroom", "description":
     "Export-only tools. read/list/search take a relative path (list/search may use '.'). "
+    "read returns a JSON page with text, offset, next_offset and eof. "
+    "offset is a zero-based Unicode character offset (default 0); limit is 1..25000 characters "
+    "(default 25000). Continue with next_offset until eof. Search scans large UTF-8 files "
+    "and returns JSON matches/truncated metadata; use paged read for full content. "
     "write/edit/delete modify only Rust src/tests. edit replaces exactly one old string. "
     "Fixed commands accept no arguments; add stages all permitted changes. "
     "commit takes text paragraphs; Role: implementer is appended. runner runs vectors.",
@@ -41,6 +46,8 @@ TOOL = {
     "parameters": {"type": "object", "properties": {
         "action": {"type": "string", "enum": list(ACTIONS)},
         "path": {"type": "string"}, "text": {"type": "string"},
+        "offset": {"type": "integer", "minimum": 0},
+        "limit": {"type": "integer", "minimum": 1, "maximum": PAGE_CHARACTERS},
         "old": {"type": "string"}}, "required": ["action"], "additionalProperties": False},
 }
 
@@ -62,6 +69,23 @@ def safe_label(value: object) -> str:
     if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", value):
         return value
     return "<invalid>"
+
+
+def read_page(path: Path, offset: int, limit: int) -> str:
+    # Text offsets avoid splitting UTF-8 code points. Discard in bounded chunks rather
+    # than loading a whole vector file just to read its final page. Keep CRLF bytes' text
+    # representation intact so successive pages reconstruct the source exactly.
+    with path.open("r", encoding="utf-8", newline="") as stream:
+        remaining = offset
+        while remaining:
+            chunk = stream.read(min(remaining, PAGE_CHARACTERS))
+            if not chunk:
+                raise Refused("offset beyond end of file")
+            remaining -= len(chunk)
+        text = stream.read(limit)
+        eof = not stream.read(1)
+    return json.dumps({"text": text, "offset": offset, "next_offset": offset + len(text), "eof": eof},
+                      ensure_ascii=False)
 
 
 def digest(path: Path) -> str:
@@ -225,16 +249,22 @@ class Broker:
         action = args.get("action")
         if not isinstance(action, str) or action not in ACTIONS:
             raise Refused("unknown action")
-        if set(args) != {"action"} | FIELDS.get(action, set()) or any(not isinstance(v, str) for v in args.values()):
+        required = {"action"} | FIELDS.get(action, set())
+        optional = {"offset", "limit"} if action == "read" else set()
+        if (not required <= set(args) or set(args) - required - optional or
+                any(not isinstance(v, str) for key, v in args.items() if key not in optional)):
             raise Refused("malformed arguments")
+        if action == "read":
+            offset = args.get("offset", 0)
+            limit = args.get("limit", PAGE_CHARACTERS)
+            if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= PAGE_CHARACTERS:
+                raise Refused("invalid page bounds")
         if self.mode == "blind-reviewer" and action in ("write", "edit", "delete", "fmt", "add", "commit"):
             raise Refused("reviewer is read-only")
         if action in ("read", "list", "search", "write", "edit", "delete"):
             path = self.path(args["path"], action in ("write", "edit", "delete"))
             if action == "read":
-                if path.stat().st_size > 100000:
-                    raise Refused("file too large")
-                return path.read_text(encoding="utf-8")
+                return read_page(path, offset, limit)
             if action in ("list", "search"):
                 paths = [path] if path.is_file() else []
                 if path.is_dir():
@@ -242,6 +272,8 @@ class Broker:
                         dirs[:] = sorted(d for d in dirs if d.casefold() not in (".git", "target"))
                         paths += [Path(directory) / name for name in dirs + sorted(names)]
                 result = []
+                truncated = False
+                characters = 0
                 for item in paths:
                     rel = item.relative_to(self.root).as_posix()
                     try:
@@ -250,16 +282,33 @@ class Broker:
                         continue
                     if action == "list":
                         result.append(rel)
-                    elif item.is_file() and item.stat().st_size <= 100000:
+                    elif item.is_file():
                         try:
-                            for number, line in enumerate(item.read_text(encoding="utf-8").splitlines(), 1):
-                                if args["text"] in line:
-                                    result.append(f"{rel}:{number}:{line}")
+                            with item.open("r", encoding="utf-8") as stream:
+                                for number, line in enumerate(stream, 1):
+                                    if args["text"] in line:
+                                        matched = line.rstrip("\r\n")
+                                        match = f"{rel}:{number}:{matched}"
+                                        remaining = 100000 - characters
+                                        result.append(match[:remaining])
+                                        characters += len(result[-1])
+                                        if len(match) > remaining:
+                                            truncated = True
+                                            break
+                                    if len(result) >= 1000 or characters >= 100000:
+                                        truncated = True
+                                        break
                         except UnicodeError:
                             continue
-                    if len(result) >= 1000:
+                    if len(result) >= 1000 or characters >= 100000:
+                        truncated = True
                         break
-                return "\n".join(result)[:100000]
+                rendered = "\n".join(result)
+                if action == "search":
+                    return json.dumps({"matches": result, "truncated": truncated}, ensure_ascii=False)
+                if truncated or len(rendered) > 100000:
+                    return rendered[:99900] + "\n[output truncated; use paged read for full content]"
+                return rendered
             if action == "delete":
                 path.unlink()
             else:
