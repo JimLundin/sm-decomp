@@ -6,7 +6,7 @@ is an export of a DLL, and a child Python calls it through ctypes. libtest reads
 its arguments from `GetCommandLineW`, so the child rewrites that buffer in place
 before calling `main`.
 
-    python test_dll.py <cargo> <out-dir> <crate>... [-- <libtest args>]
+    python test_dll.py <cargo> <out-dir> [--suite lib|test:NAME] <crate>... [-- <libtest args>]
     python test_dll.py --run <dll> [<libtest args>]
 """
 
@@ -39,7 +39,7 @@ def run_dll(dll: str, args: list[str]) -> int:
     return status
 
 
-def targets(cargo: str, crates: list[str]) -> list[tuple[str, str, str, Path]]:
+def targets(cargo: str, crates: list[str], suite: str | None = None) -> list[tuple[str, str, str, Path]]:
     meta = json.loads(
         subprocess.run(
             [cargo, "metadata", "--no-deps", "--format-version", "1"],
@@ -68,6 +68,15 @@ def targets(cargo: str, crates: list[str]) -> list[tuple[str, str, str, Path]]:
                 found.append((crate, "--bin", target["name"], root))
         if len(found) == before:
             sys.exit(f"test_dll: no enabled test targets for {crate}")
+    if suite is not None:
+        if len(crates) != 1:
+            sys.exit("test_dll: a selected suite requires one package")
+        kind, name = ("--lib", "") if suite == "lib" else ("--test", suite.removeprefix("test:"))
+        if suite != "lib" and (not suite.startswith("test:") or not name):
+            sys.exit("test_dll: suite must be lib or test:NAME")
+        found = [target for target in found if target[1:3] == (kind, name)]
+        if len(found) != 1:
+            sys.exit("test_dll: selected suite is absent, disabled or ambiguous")
     return found
 
 
@@ -83,13 +92,18 @@ def main() -> int:
         return run_dll(sys.argv[2], sys.argv[3:])
     cargo, out = sys.argv[1], Path(sys.argv[2])
     rest = sys.argv[3:]
+    suite = None
+    if rest and rest[0] == "--suite":
+        if len(rest) < 3:
+            sys.exit("test_dll: --suite needs a selector and package")
+        suite, rest = rest[1], rest[2:]
     split = rest.index("--") if "--" in rest else len(rest)
     crates, libtest = rest[:split], rest[split + 1 :]
     if not crates:
         sys.exit("test_dll: name at least one package")
     out.mkdir(parents=True, exist_ok=True)
     failed = []
-    for crate, kind, name, root in targets(cargo, crates):
+    for crate, kind, name, root in targets(cargo, crates, suite):
         label = f"{crate} {kind} {name}".strip()
         dll = out / f"{crate}-{name or 'lib'}.dll"
         build = build_command(cargo, crate, kind, name, dll)

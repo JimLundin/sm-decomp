@@ -255,15 +255,41 @@ def prove(path: Path, entries: list[str], run: Callable[[], bool],
         path.write_bytes(original)
 
 
+SUMMARY = re.compile(
+    r"^test result: (ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; "
+    r"(\d+) measured; (\d+) filtered out; finished in .+$", re.MULTILINE)
+RUNNING = re.compile(r"^running (\d+) tests?$", re.MULTILINE)
+
+
+def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int) -> bool:
+    """Only a completed nonempty libtest suite can pass or refute a vector.
+
+    Build errors, tool failures, crashes and empty/ignored suites are not model answers.
+    Exactly one selected test target must complete and agree with its process status.
+    """
+    output = result.stdout.decode("utf-8", errors="replace")
+    summaries = SUMMARY.findall(output)
+    running = RUNNING.findall(output)
+    if len(summaries) != 1 or len(running) != 1:
+        raise CannotProbe("the runner did not complete exactly one test suite")
+    status, *counts = summaries[0]
+    passed, failed, ignored, measured, _filtered = map(int, counts)
+    if passed + failed == 0 or int(running[0]) != passed + failed + ignored + measured:
+        raise CannotProbe("the runner did not execute a nonempty consistent test suite")
+    if status == "ok" and failed == 0 and result.returncode == 0:
+        return True
+    if status == "FAILED" and failed > 0 and result.returncode == failure_code:
+        return False
+    raise CannotProbe("test completion and process status disagree")
+
+
 def test_command(crate: str, root: Path) -> list[str]:
+    dedicated = (root / "crates/clean" / crate / "tests/vectors.rs").is_file()
     if os.name == "nt":
-        return ["bash", "tools/lane/run_tests.sh", crate]
+        target = "test:vectors" if dedicated else "lib"
+        return ["bash", "tools/lane/run_tests.sh", "--suite", target, crate]
     command = ["cargo", "test", "--locked", "-p", crate]
-    # Dedicated vector adapters avoid repeating unrelated, expensive library tests for
-    # every probe. Domains with unit-based adapters use their library test target.
-    if (root / "crates/clean" / crate / "tests/vectors.rs").is_file():
-        return command + ["--test", "vectors"]
-    return command + ["--lib"]
+    return command + (["--test", "vectors"] if dedicated else ["--lib"])
 
 
 def rule_owners(root: Path, domain: str, required: bool) -> dict[str, frozenset[str]]:
@@ -291,8 +317,12 @@ def check_domain(root: Path, domain: str) -> int:
     crate = domain.replace("-", "_")
 
     def run() -> bool:
-        return subprocess.run(test_command(crate, root), cwd=root, capture_output=True,
-                              check=False).returncode == 0
+        try:
+            result = subprocess.run(test_command(crate, root), cwd=root, capture_output=True,
+                                    check=False)
+        except OSError as error:
+            raise CannotProbe("the test runner could not be launched") from error
+        return completed_test(result, failure_code=1 if os.name == "nt" else 101)
 
     entries = parameter_entries(spec)
     vector_path = root / "scenarios/vectors" / f"{domain}.toml"

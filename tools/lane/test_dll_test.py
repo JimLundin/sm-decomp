@@ -14,10 +14,10 @@ spec.loader.exec_module(test_dll)
 
 
 class CoverageTests(unittest.TestCase):
-    def select(self, packages, requested):
+    def select(self, packages, requested, suite=None):
         result = SimpleNamespace(stdout=json.dumps({"packages": packages}))
         with patch.object(test_dll.subprocess, "run", return_value=result):
-            return test_dll.targets("cargo", requested)
+            return test_dll.targets("cargo", requested, suite)
 
     def package(self, name, kinds):
         return {
@@ -37,6 +37,19 @@ class CoverageTests(unittest.TestCase):
         for requested in [["empty"], ["covered", "empty"]]:
             with self.assertRaises(SystemExit):
                 self.select([empty, covered], requested)
+
+    def test_suite_selector_runs_one_enabled_existing_target(self):
+        package = self.package("sample", [("lib", True), ("test", True), ("bin", True)])
+        self.assertEqual([(kind, name) for _, kind, name, _ in self.select([package], ["sample"], "lib")], [("--lib", "")])
+        self.assertEqual([(kind, name) for _, kind, name, _ in self.select([package], ["sample"], "test:test")], [("--test", "test")])
+        for selector in ["test:absent", "test:", "bin", "x86_64-pc-windows-gnu"]:
+            with self.assertRaises(SystemExit):
+                self.select([package], ["sample"], selector)
+        disabled = self.package("sample", [("lib", True), ("test", False)])
+        with self.assertRaises(SystemExit):
+            self.select([disabled], ["sample"], "test:test")
+        with self.assertRaises(SystemExit):
+            self.select([package], ["sample", "sample"], "lib")
 
     def test_bin_command_compiles_a_test_harness(self):
         command = test_dll.build_command("cargo", "sample", "--bin", "sample", Path("sample.dll"))

@@ -1,5 +1,7 @@
 """Only a vector whose answer changes at the reference rules proves its entry adjustable."""
 
+import subprocess
+import sys
 import tempfile
 import tomllib
 import unittest
@@ -9,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  candidates, parameter_entries, probe, prove, rule_owners, test_command)
+                                  candidates, check_domain, completed_test, parameter_entries, probe, prove, rule_owners, test_command)
 
 SPEC = """\
 ### Fixed
@@ -270,6 +272,50 @@ class AdjustedVectors(unittest.TestCase):
             metadata.write_text('[owners]\nstep = ["Step"]\n', encoding="utf-8", newline="\n")
             self.assertEqual(rule_owners(root, "demo", True), {"step": frozenset({"Step"})})
 
+    def test_completed_nonempty_test_results_are_the_only_model_answers(self) -> None:
+        passed = b"running 2 tests\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n"
+        failed = b"running 2 tests\ntest result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n"
+        for failure_code in (1, 101):
+            self.assertTrue(completed_test(subprocess.CompletedProcess([], 0, passed), failure_code))
+            self.assertFalse(completed_test(subprocess.CompletedProcess([], failure_code, failed), failure_code))
+            for code, output in ((126, failed), (-9, failed), (1, passed), (0, failed),
+                                 (0, b""), (0, passed + passed),
+                                 (0, passed.replace(b"running 2", b"running 3")),
+                                 (0, passed.replace(b"running 2", b"running 0").replace(b"2 passed", b"0 passed")),
+                                 (0, passed.replace(b"2 passed", b"0 passed").replace(b"0 ignored", b"2 ignored"))):
+                with self.subTest(code=code, output=output), self.assertRaises(CannotProbe):
+                    completed_test(subprocess.CompletedProcess([], code, output), failure_code)
+
+    def test_reference_only_subprocess_launch_failure_cannot_prove_a_parameter(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            spec = root / "docs/behaviours/demo.md"
+            spec.parent.mkdir(parents=True)
+            spec.write_text("### Step\n- switch: Parameter.\n", encoding="utf-8", newline="\n")
+            metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text('[owners]\nstep = ["Step"]\n', encoding="utf-8", newline="\n")
+            path = root / "scenarios/vectors/demo.toml"
+            path.parent.mkdir(parents=True)
+            text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 1 }\n'
+                          'before = 2\nafter = 3\n')
+            path.write_text(text, encoding="utf-8", newline="\n")
+            runner = root / "runner.py"
+            runner.write_text("import sys,tomllib\nfrom pathlib import Path\n"
+                              "row=tomllib.loads(Path(sys.argv[1]).read_text())['vector'][1]\n"
+                              "if 'rules' not in row: sys.exit(126)\n"
+                              "print('running 1 test')\n"
+                              "print('test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s')\n",
+                              encoding="utf-8", newline="\n")
+            with patch("adjusted_vectors_run.test_command", return_value=[sys.executable, str(runner), str(path)]):
+                with self.assertRaises(CannotProbe):
+                    check_domain(root, "demo")
+            self.assertEqual(path.read_text(encoding="utf-8"), text)
+            with patch("adjusted_vectors_run.subprocess.run", side_effect=OSError()):
+                with self.assertRaises(CannotProbe):
+                    check_domain(root, "demo")
+            self.assertEqual(path.read_text(encoding="utf-8"), text)
+
     def test_linux_selects_dedicated_vectors_or_library_adapter(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -286,10 +332,10 @@ class AdjustedVectors(unittest.TestCase):
                                  ["cargo", "test", "--locked", "-p", "demo", "--test", "vectors"])
             with patch("adjusted_vectors_run.os.name", "nt"):
                 self.assertEqual(test_command("demo", root),
-                                 ["bash", "tools/lane/run_tests.sh", "demo"])
+                                 ["bash", "tools/lane/run_tests.sh", "--suite", "test:vectors", "demo"])
                 (tests / "vectors.rs").unlink()
                 self.assertEqual(test_command("demo", root),
-                                 ["bash", "tools/lane/run_tests.sh", "demo"])
+                                 ["bash", "tools/lane/run_tests.sh", "--suite", "lib", "demo"])
 
 
 if __name__ == "__main__":
