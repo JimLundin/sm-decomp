@@ -49,7 +49,7 @@ def targets(cargo: str, crates: list[str]) -> list[tuple[str, str, str, Path]]:
         ).stdout
     )
     packages = {p["name"]: p for p in meta["packages"]}
-    found = []
+    found: list[tuple[str, str, str, Path]] = []
     for crate in crates:
         if crate not in packages:
             sys.exit(f"test_dll: no package {crate}")
