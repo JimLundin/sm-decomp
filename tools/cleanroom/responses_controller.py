@@ -447,6 +447,11 @@ def prepare(export: Path, lane: Path, brief: Path, transcript: Path, probe: bool
                 raise Refused("followup history changed a protected path")
     if mode == "blind-reviewer" and operator(git + ["rev-list", "--count", "--all"]) != "1":
         raise Refused("blind copy must be one fresh commit")
+    if mode == "blind-reviewer":
+        stored = set(operator(git + ["cat-file", "--batch-all-objects", "--batch-check=%(objectname)"]).splitlines())
+        reachable = {line.split(" ", 1)[0] for line in operator(git + ["rev-list", "--objects", "--all"]).splitlines()}
+        if stored != reachable:
+            raise Refused("blind copy contains unreachable objects")
     if not probe:
         operator([paths["bash"], str(here / "scan_brief.sh"), str(brief.resolve(strict=True))], here.parent.parent)
     shutil.copyfile(here / "vector_runner.py", lane / "vector_runner.py")

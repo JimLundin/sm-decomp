@@ -258,6 +258,7 @@ class Preparation(unittest.TestCase):
             run("add", "--all")
             run("-c", "user.name=fixture", "-c", "user.email=fixture@invalid", "commit", "-qm", "Invented export")
             overrides = {"CLEANROOM_GIT": git}
+            overrides["RUSTUP_HOME"] = os.environ.get("RUSTUP_HOME", str(Path.home() / ".rustup"))
             if os.name == "nt":
                 overrides["CLEANROOM_BASH"] = str(Path(os.environ["LOCALAPPDATA"]) / "Programs/Git/bin/bash.exe")
                 overrides["CLEANROOM_CARGO"] = str(Path(os.environ["USERPROFILE"]) / ".rustup/toolchains/1.99.1-x86_64-pc-windows-gnu/bin/cargo.exe")
@@ -291,6 +292,11 @@ class Preparation(unittest.TestCase):
                 blind = prepared("blind-reviewer", "blind")
                 with self.assertRaises(Refused):
                     blind.dispatch("cleanroom", {"action": "write", "path": "crates/clean/types/src/lib.rs", "text": ""})
+                invented_blob = base / "invented-blob"
+                invented_blob.write_text("Invented unreachable object.\n", encoding="utf-8")
+                run("hash-object", "-w", str(invented_blob))
+                with self.assertRaises(Refused):
+                    prepared("blind-reviewer", "unreachable")
 
 
 if __name__ == "__main__":
