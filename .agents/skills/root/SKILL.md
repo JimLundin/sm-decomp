@@ -19,7 +19,8 @@ barrier; every other role does one step.
 3. **Wait** for its report. Start other work only where [What can run at once](../../../docs/cleanroom/PROCESS.md#what-can-run-at-once) allows, within its limit of three lanes.
 4. **Check** the report against the step's done-condition: open the branch and run the cheap
    checks yourself (scan, doc links, the vector count, the gate line). Done when every claim you
-   relay comes from output you saw.
+   relay comes from output you saw. After independent review of a round or engineering task,
+   complete [the Code Health review](../../../docs/cleanroom/PROCESS.md#coordinator-code-health-review).
 5. **Relay** to Jim: what the step found, what you decided, and what comes next. Lead with the
    ladder (the lowest rung's frames played alone and what it still needs) and the free run's
    held frames per row; give size as one line of the round's delta, a diagnostic (MODEL §1

@@ -139,7 +139,8 @@ Each step names its owner, what it waits for, and its done-condition.
     divergences against `main`, and the blind review. It says whether the next round needs a
     blind review. Done on a verdict of MERGE. Findings go to the integrator (harness, adapter),
     or into the next round's queue (model shape, spec gaps). Independent review excludes size
-    measurements. After the reports, the root completes the coordinator size assessment below.
+    measurements. After the reports, the root completes the coordinator size assessment and
+    [Code Health review](#coordinator-code-health-review) below.
     Size does not change the adversary's verdict; every non-size gate remains mandatory.
 11. **Land** (root), as **one commit**: the spec, the import and the integration of the round
     together (Jim, 2026-11-10). On the round's branch the root adds one to the model's `rounds`
@@ -173,6 +174,37 @@ its cost and risk. Exceeding the old-code guideline alone fails no gate and star
 Proceeding above it needs an explicit reason in the coordination log and landing report.
 A cut uses concrete review findings under "The loop"; its brief carries those shapes, with all
 size material withheld. It aims to improve the model, rather than shave a number.
+
+## Coordinator Code Health review
+
+After independent source review, the root runs the installed CodeScene CLI on the supported
+source files changed by the round or engineering task, including new modules and tests. Compare
+the reviewed commit with its fixed base; for moves and extractions, account for both the old
+file and every replacement so a split cannot hide a finding. Review clean models, adapters,
+engine code and development tools separately. Vendor code and deliberate checker fixtures are
+reported as exclusions, not improvement targets.
+
+Use `cs version` to record the analyzer version and `cs review --help` for its supported input
+forms. `cs review COMMIT:./path/to/file.rs` measures a committed file; `cs review --file-list
+PATHS --output REPORT` writes a human-readable report for a newline-separated path list.
+Keep reports outside the repository and confined exports. On Windows, check the output's
+encoding before reading it; the CLI can emit CP1252. Machine-readable null scores mean
+"no scorable code" and are excluded from averages.
+
+The step is complete when the coordination log and landing/session review record:
+
+- the base and reviewed hashes, CLI version, command, exit status and file coverage, with
+  unsupported, unscorable, deleted and excluded files identified;
+- each changed file's before/after score and significant findings, with new/deleted files
+  shown explicitly; any aggregate names its population and weighting;
+- a disposition for each material finding: addressed and rechecked, queued as a concrete
+  shape outcome, or retained with the behaviour or contract that justifies it.
+
+Code Health is maintainability feedback, not proof of exactness. Decisions retain the source
+review's judgement and the existing mandatory gates. If the CLI is unavailable, authentication
+is missing or analysis fails, record the missing measurement and its cause explicitly; a
+missing result is never a clean result. The coordinator keeps metric reports and targets out
+of implementer and independent-reviewer material, and relays only concrete shape findings.
 
 ## What can run at once
 
@@ -219,7 +251,8 @@ Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 
 3. **Review.** No new lane starts in the last part of the session. The lanes in flight finish
    and land, or stop with a handoff. The root writes the session's review on the plan's issue:
    what landed, the figures before and after, what the gates found, and what the next session
-   should take up.
+   should take up, including the [Code Health review](#coordinator-code-health-review) of the
+   session's changes.
 
 Outside working hours no round runs (Jim, 2026-11-12). The time goes to the project's structure:
 tooling, movie captures, optimisations, and long computations that don't fit a session, all within

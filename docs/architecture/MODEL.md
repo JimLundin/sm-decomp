@@ -238,6 +238,13 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     type: a State that changes shape fails it until the pin moves. This is how decision 21's
     "the engine's State holds the models' States" is done.
 
+30. **CodeScene measures code health during review** (Jim, 2026-11-14). The root measures
+    the reviewed code after independent source review and records the findings and their
+    disposition alongside the existing evidence. Code Health supplements behavioural proof
+    and the size assessment; it sets no score threshold. Implementers and independent
+    reviewers receive concrete shape findings, with metric reports kept by the coordinator.
+    The procedure is in [PROCESS](../cleanroom/PROCESS.md#coordinator-code-health-review).
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our

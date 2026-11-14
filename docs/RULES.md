@@ -22,6 +22,8 @@ decision in MODEL §1, or a change where it lives, then a line here.
 6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
     planted fault makes it fail (decisions 24, 25). The process freezes once that holds (26).
 6c. Each session's plan and review is an issue (decision 27).
+6d. The root measures Code Health after independent review and records dispositions
+    ([PROCESS](cleanroom/PROCESS.md#coordinator-code-health-review), MODEL decision 30).
 
 ## The shape of the code
 
