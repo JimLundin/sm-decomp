@@ -277,8 +277,9 @@ class AdjustedVectors(unittest.TestCase):
         failed = b"running 2 tests\ntest result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n"
         for failure_code in (1, 101):
             self.assertTrue(completed_test(subprocess.CompletedProcess([], 0, passed), failure_code))
+            self.assertTrue(completed_test(subprocess.CompletedProcess([], 0, passed.replace(b"\n", b"\r\n")), failure_code))
             self.assertFalse(completed_test(subprocess.CompletedProcess([], failure_code, failed), failure_code))
-            for code, output in ((126, failed), (-9, failed), (1, passed), (0, failed),
+            for code, output in ((126, failed), (2, failed), (-9, failed), (1, passed), (0, failed),
                                  (0, b""), (0, passed + passed),
                                  (0, passed.replace(b"running 2", b"running 3")),
                                  (0, passed.replace(b"running 2", b"running 0").replace(b"2 passed", b"0 passed")),
@@ -301,15 +302,18 @@ class AdjustedVectors(unittest.TestCase):
                           'before = 2\nafter = 3\n')
             path.write_text(text, encoding="utf-8", newline="\n")
             runner = root / "runner.py"
+            receipt = root / "receipt.txt"
             runner.write_text("import sys,tomllib\nfrom pathlib import Path\n"
                               "row=tomllib.loads(Path(sys.argv[1]).read_text())['vector'][1]\n"
+                              "with Path(sys.argv[2]).open('a') as receipt: receipt.write(str('rules' in row)+chr(10))\n"
                               "if 'rules' not in row: sys.exit(126)\n"
                               "print('running 1 test')\n"
                               "print('test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s')\n",
                               encoding="utf-8", newline="\n")
-            with patch("adjusted_vectors_run.test_command", return_value=[sys.executable, str(runner), str(path)]):
+            with patch("adjusted_vectors_run.test_command", return_value=[sys.executable, str(runner), str(path), str(receipt)]):
                 with self.assertRaises(CannotProbe):
                     check_domain(root, "demo")
+            self.assertEqual(receipt.read_text(encoding="utf-8").splitlines(), ["True", "False"])
             self.assertEqual(path.read_text(encoding="utf-8"), text)
             with patch("adjusted_vectors_run.subprocess.run", side_effect=OSError()):
                 with self.assertRaises(CannotProbe):

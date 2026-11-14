@@ -8,6 +8,9 @@ before calling `main`.
 
     python test_dll.py <cargo> <out-dir> [--suite lib|test:NAME] <crate>... [-- <libtest args>]
     python test_dll.py --run <dll> [<libtest args>]
+
+The wrapper exits 0 when all suites pass, 1 for ordinary libtest failures (child 101),
+and 2 for build, launch or other process failures, which take precedence.
 """
 
 import ctypes
@@ -101,19 +104,46 @@ def main() -> int:
     crates, libtest = rest[:split], rest[split + 1 :]
     if not crates:
         sys.exit("test_dll: name at least one package")
-    out.mkdir(parents=True, exist_ok=True)
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        print("test_dll: output preparation failed")
+        return 2
     failed = []
-    for crate, kind, name, root in targets(cargo, crates, suite):
+    infrastructure = []
+    try:
+        selected = targets(cargo, crates, suite)
+    except (OSError, subprocess.CalledProcessError, ValueError, SystemExit):
+        print("test_dll: target discovery failed")
+        return 2
+    for crate, kind, name, root in selected:
         label = f"{crate} {kind} {name}".strip()
         dll = out / f"{crate}-{name or 'lib'}.dll"
         build = build_command(cargo, crate, kind, name, dll)
         print(f"     Running {label} ({dll.name})", flush=True)
-        if subprocess.run(build).returncode != 0:
-            failed.append(f"{label} (build)")
+        try:
+            build_status = subprocess.run(build).returncode
+        except OSError:
+            infrastructure.append(f"{label} (build launch)")
+            continue
+        if build_status != 0:
+            infrastructure.append(f"{label} (build)")
             continue
         run = [sys.executable, "-I", __file__, "--run", str(dll), *libtest]
-        if subprocess.run(run, cwd=root).returncode != 0:
+        try:
+            status = subprocess.run(run, cwd=root).returncode
+        except OSError:
+            infrastructure.append(f"{label} (test launch)")
+            continue
+        # libtest's ordinary completed test failure exits 101. Other child statuses
+        # include crashes and launch failures; they cannot be a model counterexample.
+        if status == 101:
             failed.append(label)
+        elif status != 0:
+            infrastructure.append(f"{label} (test process)")
+    if infrastructure:
+        print("test_dll: infrastructure failed: " + ", ".join(infrastructure))
+        return 2
     if failed:
         print("test_dll: FAILED " + ", ".join(failed))
         return 1

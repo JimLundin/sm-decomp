@@ -267,7 +267,7 @@ def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int
     Build errors, tool failures, crashes and empty/ignored suites are not model answers.
     Exactly one selected test target must complete and agree with its process status.
     """
-    output = result.stdout.decode("utf-8", errors="replace")
+    output = result.stdout.decode("utf-8", errors="replace").replace("\r\n", "\n")
     summaries = SUMMARY.findall(output)
     running = RUNNING.findall(output)
     if len(summaries) != 1 or len(running) != 1:
