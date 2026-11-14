@@ -180,9 +180,10 @@ class Contract(unittest.TestCase):
         self.assertEqual(requests[0]["include"], ["reasoning.encrypted_content"])
         self.assertEqual(len(requests[0]["tools"]), 1)
         self.assertFalse(requests[0]["store"])
-        for label in (OBSERVED_MODEL, "gpt-6-1-sol-dz"):
+        for label in (OBSERVED_MODEL, "gpt-6-1-sol-dz", "gpt-6-1-sol-gs"):
             response_loop(self.broker, "Invented", lambda _: dict(final, model=label), self.lane / "transcript")
         for mutant in [dict(final, model="other"), dict(final, model="gpt-6-1-sol-dz-other"),
+                       dict(final, model="gpt-6-1-sol-gs-other"),
                        dict(final, model="global.openai.gpt-6-sol"), dict(final, model="gpt-6.1-sol"),
                        dict(final, status="incomplete"),
                        dict(final, error={"code": "failed"}), dict(final, output=[]),

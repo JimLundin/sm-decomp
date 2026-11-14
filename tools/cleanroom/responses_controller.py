@@ -21,9 +21,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 MODEL = "gpt-6.1-sol"
 OBSERVED_MODEL = "global.openai.gpt-6.1-sol"
-# This provider returns either the canonical identifier or its deployment label for
+# This provider returns either the canonical identifier or its deployment labels for
 # the same fixed Sol request. No other label, request model or route is accepted.
-OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-1-sol-dz"})
+OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-1-sol-dz", "gpt-6-1-sol-gs"})
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",
            "fmt", "fmtcheck", "test", "runner", "status", "diff", "log", "add", "commit")
 FIELDS = {
