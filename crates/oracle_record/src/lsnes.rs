@@ -302,6 +302,8 @@ pub fn read(bytes: &[u8]) -> Result<FrameRecord, RawError> {
     if bytes.get(42) == Some(&0) {
         return Err(RawError::ShortOfMemories(bytes.len()));
     }
+    // LEGACY(seed-ppu): a seed without the optional PPU tier keeps the default
+    // registers, even where its native state retains other values.
     let mut record = blank();
     decode(bytes, &mut record)?;
     Ok(record)

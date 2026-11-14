@@ -1,7 +1,7 @@
 format = 2
 mark_frames = 1000
 oracle = { emulator = "lsnes-bsnes", version = "rr2-beta23 (bsnes v085)", server = "833e4df966372d1277ecc1449fb59f9ba61c527b691336c6f87f09b3c5090ee9", fixes = [] }
-bundles = [{ name = "relock-v2-lsnes-e307a7d520ec1ff6.tar.gz.enc", sha256 = "2da2c6686fff86c66fcbbf5939ea0ab6d91bd115d5855b83913732e7f6294d96" }]
+bundles = [{ name = "relock-v2-lsnes-f612aa96b26daf8d.tar.gz.enc", sha256 = "8c504da029b3b3f810b50396933be000e77cef66ae78d526a304323d12936747" }]
 
 [[row]]
 id = "area-brinstar"

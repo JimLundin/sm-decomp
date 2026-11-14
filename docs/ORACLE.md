@@ -291,7 +291,7 @@ them with `verify::decode`, every fact is `"unevaluated"` and doesn't block gree
 | b2 | frame pads for every row | done |
 | c | `corpus --record-v2`, the format-2 recorder | done, but facts, typed streams and row rungs (below) |
 | d | record every row twice, compare, merge | done: 635 rows in `lsnes.toml`, 642 with the seven movie rows of `scenes-v1` |
-| e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-e307a7d520ec1ff6`) |
+| e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-f612aa96b26daf8d`) |
 | f | `verify::lock`: the reader and the per-(row, stream) comparison | done |
 | g | the free-run gate: `tools gate`, ratcheting the rows that start and their green pairs | done for `area-brinstar`, `item-morph-ball` and Ceres's `chain-any-0001` to `0011`, which start with the slots the engine doesn't model carried ([LEGACY](LEGACY.md#the-engine-slots-it-carries-but-doesnt-run)) |
 
@@ -369,8 +369,13 @@ every mark. The gate is `tools gate` ([STATUS](STATUS.md)).
 followed by `OHS1`, flag 4 and the 146 PPU bytes, and the emulation is unchanged.
 `tools/oracle/relock_ppu_recut.sh OLD PLAN WORK [ROW...]` re-cuts the records of a decrypted
 bundle, checks each against the old, packs deterministically, encrypts and prints the new
-`bundles` line. A re-cut state differs from the old only in `rrdata`, and the `seed_record` pins
-are the `.lss` SHA-256, so only the `bundles` line changes.
+`bundles` line. The native states must have the same members and identical contents except for
+`rrdata` and its derived `rerecords` history count. The lsnes manual §§10.22–10.23 defines these as
+load-history metadata; the bundled lsnes source, `src/core/moviedata.cpp`, adds a load ID even on
+a read-only load. The
+[native-state check](../tools/oracle/relock_seed_state.py) keeps `projectid`, inputs and every
+machine-state member exact. The new bundle keeps the old `.lss` files, whose SHA-256 values are
+the `seed_record` pins, so only the `bundles` line changes.
 
 ### Engineering answers
 
@@ -439,8 +444,8 @@ echo "SHA256  b.enc" | sha256sum --check
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -in b.enc | tar -xz -C DATA
 ```
 
-- **The relock bundle** `relock-v2-lsnes-e307a7d520ec1ff6.tar.gz.enc` (SHA-256
-  `2da2c6686fff86c66fcbbf5939ea0ab6d91bd115d5855b83913732e7f6294d96`), pinned by the `bundles` line
+- **The relock bundle** `relock-v2-lsnes-f612aa96b26daf8d.tar.gz.enc` (SHA-256
+  `8c504da029b3b3f810b50396933be000e77cef66ae78d526a304323d12936747`), pinned by the `bundles` line
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
   `.lss` and `.words`, and the rows' `.pads` (`verify::bundle`).
 - **The lockstep record cache** `lockstep-cache-5663de2c4b548c68.tar.xz.enc` (SHA-256

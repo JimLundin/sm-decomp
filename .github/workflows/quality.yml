@@ -83,6 +83,8 @@ jobs:
         run: pipx run --spec mypy==2.4.1 mypy
       - name: Test the planted-fault runner
         run: python3 -m unittest discover -s tools -p test_check_mutants.py
+      - name: Test the native seed recapture boundary
+        run: python3 -m unittest discover -s tools/oracle -p test_relock_seed_state.py
       - name: Save the cargo registry and the build
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
         uses: actions/cache/save@v4

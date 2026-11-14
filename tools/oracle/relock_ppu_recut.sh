@@ -17,7 +17,7 @@
 #
 # Each re-cut record must be the old record byte for byte, then the PPU part
 # alone ("OHS1", flag 4, 146 bytes); its state must equal the old state in every
-# member but `rrdata`, lsnes's per-run rerecord data. The new tree keeps the old
+# member but `rrdata` and its derived `rerecords` history count. The new tree keeps the old
 # .lss files, so the lock's `seed_record` pins (the .lss SHA-256) stay valid.
 # Prints the bundle's name, its ciphertext SHA-256 and the lock's new
 # `bundles` line; exits 1 when a record or state fails the check.
@@ -73,14 +73,10 @@ bash "$root/tools/oracle/relock_cut.sh" "$work/logs/plan.txt" "$work/seeds" "$wo
 bash "$root/tools/oracle/relock_cut.sh" "$work/logs/plan.txt" "$work/seeds" "$work/logs" realign
 echo "cut in $((SECONDS - begun))s"
 
-# Whether lsnes states OLD and NEW (zip archives) hold the same members, equal
-# but for rrdata.
+# Whether lsnes states OLD and NEW hold the same members, equal except for
+# rerecord history. The count is derived from rrdata; neither runs the machine.
 same_state() {
-    local scratch=$work/logs/state
-    rm -rf "$scratch"
-    mkdir -p "$scratch/old" "$scratch/new"
-    unzip -q "$1" -d "$scratch/old" && unzip -q "$2" -d "$scratch/new" &&
-        diff -rq --exclude=rrdata "$scratch/old" "$scratch/new" > /dev/null
+    "${SM_PY:-${PYTHON:-python3}}" "$root/tools/oracle/relock_seed_state.py" "$1" "$2"
 }
 
 failures=0
@@ -105,10 +101,10 @@ while read -r capture index; do
         echo "FAIL $capture:$index no PPU part after the memories" >> "$report"
         failures=$((failures + 1))
     elif ! same_state "$was.lss" "$new.lss"; then
-        echo "FAIL $capture:$index state differs from the old outside rrdata" >> "$report"
+        echo "FAIL $capture:$index state differs from the old outside rerecord history" >> "$report"
         failures=$((failures + 1))
     else
-        echo "ok   $capture:$index old record + PPU part; state equal outside rrdata" >> "$report"
+        echo "ok   $capture:$index old record + PPU part; state equal outside rerecord history" >> "$report"
     fi
 done < "$work/logs/targets.txt"
 echo "ppu re-cut check: $(wc -l < "$work/logs/targets.txt") records, $failures failing" | tee -a "$report"

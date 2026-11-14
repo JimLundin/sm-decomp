@@ -360,6 +360,14 @@ Differences the plan keeps on purpose, listed ahead of the work that brings them
   SP `$CF`), the CPU-to-APU ports from the driver's copy at SPC `$00-$03`, the timers from their RAM
   shadows, and the DSP from reset with echo writes off. In some rows the resumed driver answers no sound
   request, so uploads, door transitions and message boxes stall. Native seeds retire this entry.
+- **`LEGACY(seed-ppu)`** in `oracle_record::lsnes::read`: 531 of the relock bundle's 541 seed
+  records lack the optional PPU tier. Reading one starts the committed PPU and DMA registers
+  at their defaults, even where the native state retains other values. A first NMI overwrites
+  most registers; retained Mode 7 matrix and DMA values can differ from frame 0 in a free run.
+  The `any-boundary:3` seed carries its captured PPU tier. The remaining records need the
+  same [seed recapture check](ORACLE.md#seed-records-with-the-ppu-registers-relock-9), preserving
+  their original record prefixes and native states. Every PPU field covered by the contract
+  stays compared.
 - **lsnes's cut at line 241** without a previewed pad: an NMI whose writes pass that line shows a step
   later (`Cut::NmiStillRunning`). The format-2 lock is recorded from frame pads with preview, so it has
   no such cut ([ORACLE, MEASUREMENTS (g), (i)](ORACLE.md#appendix-a-measurements-measurements)).
