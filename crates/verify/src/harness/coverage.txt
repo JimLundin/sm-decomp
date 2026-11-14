@@ -224,3 +224,33 @@ world-doors entry TheFades 540 107 540 17
 world-doors entry TheTouch 0 0 0 0
 world-doors entry WhatRuns 18 18 18 497
 world-doors entry WhereSheLands 109 74 109 0
+
+weapons-projectiles frames 40835 23468 22290 0 22166
+weapons-projectiles field 23468 0 phase
+weapons-projectiles field 20754 2714 free-trails
+weapons-projectiles field 23468 0 cooldown
+weapons-projectiles field 23468 0 count
+weapons-projectiles field 23468 0 consumed
+weapons-projectiles field 23468 0 retained-fractions
+weapons-projectiles field 23468 0 position
+weapons-projectiles field 23468 0 heading
+weapons-projectiles field 23468 0 speed
+weapons-projectiles field 23468 0 radius
+weapons-projectiles field 23468 0 damage
+weapons-projectiles field 23468 0 live-trail
+weapons-projectiles field 23468 0 clip
+weapons-projectiles field 23468 0 cursor
+weapons-projectiles field 23468 0 hold
+weapons-projectiles field 23468 0 picture
+weapons-projectiles entry BeamPictures 528 1177 1705 0
+weapons-projectiles entry BeamTrail 4 0 4 0
+weapons-projectiles entry BeamVisibility 0 0 0 0
+weapons-projectiles entry CannonOrigin 1 0 1 0
+weapons-projectiles entry EndingShot 527 1647 1704 0
+weapons-projectiles entry FlyingBeam 4 0 4 0
+weapons-projectiles entry HoldingShoot 96 744 840 0
+weapons-projectiles entry InheritedMotion 1 0 1 0
+weapons-projectiles entry LeavingView 4 3 4 0
+weapons-projectiles entry MuzzleContact 1 0 1 0
+weapons-projectiles entry ShotContact 4 0 4 0
+weapons-projectiles entry ShotSpacing 21112 21135 22290 0

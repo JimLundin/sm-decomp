@@ -854,7 +854,7 @@ cells of the HUD in `game/src/state/hud.rs`; for the mini-map `game/src/mini_map
 map layout it walks in `data/src/map.rs`, without the ROM loader and the bitmap conversions. The
 selection has no old code: the old engine never changed the selected item. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
-as a wall; over an area's old code is a failure.
+as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
   SwitchClick, OneShotFlash, IconsAppear

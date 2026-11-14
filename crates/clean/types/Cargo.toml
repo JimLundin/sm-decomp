@@ -7,7 +7,8 @@ publish = false
 description = "The domain types the clean models share"
 
 [dependencies]
-enum-map = "=3.1.0"
+enum-map = { version = "=3.1.0", features = ["serde"] }
+serde = { version = "=1.0.229", features = ["derive"] }
 
 [lints]
 workspace = true

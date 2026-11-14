@@ -514,8 +514,8 @@ and its slow path (Mode 1, BG3 at normal priority) is optimised; Checkpoints enc
 and the declarations reported beside them, MODEL §1 decision 5), per crate and per MODEL layer so
 the routine-port share is visible and falls; the trait budget (§4.3); and the behaviour catalogue
 (MODEL §3, §6): behaviours catalogued, proven exact and switchable (P20). A rebuilt domain's budget
-comes from its spec (MODEL §1 decision 7). The budget is an indicator; a domain over the old code
-it replaces stops for a design review.
+comes from its spec (MODEL §1 decision 7). After independent review, the root uses the advisory
+comparison to decide whether a cut is worthwhile (MODEL §1 decision 19).
 
 ## 14. Checkpoints and starts
 

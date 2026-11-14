@@ -63,6 +63,10 @@ rounds = 1
 name = "world-doors"
 rounds = 1
 
+[[model]]
+name = "weapons-projectiles"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -232,6 +236,8 @@ wave = 2
 rounds = 5
 # Inferred: F1 for the equipment screen's toggles.
 reads = ["S1", "W3", "F1"]
+model = "weapons-projectiles"
+status = "in-progress"
 
 [[domain]]
 id = "C1"

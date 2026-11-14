@@ -348,6 +348,15 @@ fn progress_runs_free_against_the_cache() {
     hold_domain(&domain, "run-progress", &cache);
 }
 
+#[test]
+fn weapons_run_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::weapons::Weapons::load(&image).unwrap();
+    hold_domain(&domain, "weapons-projectiles", &cache);
+}
+
 /// Every domain's free run over every cached row, held to `free_floors.txt`, and each row's
 /// frames no model domain compares to its `uncompared` line; `SM_CACHE` and `SM_ROM` as the
 /// per-frame harness's tests read them. Run with `--nocapture` to see each row's segments and
@@ -368,6 +377,8 @@ fn every_domain_runs_free_against_the_cache() {
         failures: Vec::new(),
     };
     held.hold(&Clock, "game-time");
+    let weapons = crate::harness::weapons::Weapons::load(&image).unwrap();
+    held.hold(&weapons, "weapons-projectiles");
     let samus =
         movement::Movement::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
     held.hold(&samus, "samus-movement");

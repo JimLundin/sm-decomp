@@ -338,6 +338,7 @@ fn step<D: Domain>(
         state: seeded,
     });
     domain.step(&mut state, &inputs, &mut world);
+    domain.checked_step(&world).map_err(skipped)?;
     let model = domain.fields(&state);
     let hidden = |hides| {
         masks

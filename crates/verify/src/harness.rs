@@ -37,6 +37,7 @@ pub mod game_time;
 pub mod hud;
 pub mod movement;
 pub mod progress;
+pub mod weapons;
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -294,6 +295,14 @@ pub trait Domain {
 
     /// The model: one frame of `state` under `inputs`, asking `world`.
     fn step(&self, state: &mut Self::State, inputs: &Self::Inputs, world: &mut Self::World);
+
+    /// Validate neighboring capabilities encountered during the actual model step.
+    ///
+    /// # Errors
+    /// A missing reaction or unreadable neighbor encountered by the carried State.
+    fn checked_step(&self, _world: &Self::World) -> Result<(), Self::Skip> {
+        Ok(())
+    }
 
     /// The catalogue entries the frame exercised, by their places in [`Domain::behaviours`]:
     /// `state` and `inputs` as decoded, `world` as the step left it.
@@ -788,6 +797,7 @@ fn frame<D: Domain>(
     let null = domain.fields(&decoded);
     let neutral = domain.neutral(&world);
     domain.step(&mut state, &inputs, &mut world);
+    domain.checked_step(&world)?;
     let model = domain.fields(&state);
     let unverified = neutral.map_or(FieldSet::EMPTY, |mut neutral| {
         let mut alone = decoded.clone();
