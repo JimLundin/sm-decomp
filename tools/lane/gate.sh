@@ -29,7 +29,10 @@ if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/carg
   fail "CLEAN CLIPPY FAIL"
   grep -E '^(error|warning)|-->' "$O/check.log" | head -10
 fi
-CARGO="$R/cargo" bash tools/check_crate_rules.sh >/dev/null 2>&1 || fail "CRATE RULES FAIL"
+if ! CARGO="$R/cargo" bash tools/check_crate_rules.sh >"$O/check.log" 2>&1; then
+  fail "CRATE RULES FAIL"
+  cat "$O/check.log"
+fi
 sh tools/check_doc_links.sh >/dev/null 2>&1 || fail "DOC LINKS FAIL"
 CARGO="$R/cargo" SM_RUST_BIN="$R" bash tools/check_report.sh >/dev/null 2>&1 || fail "REPORT OR README STATUS STALE: run cargo run -p tools --bin tools -- report --write"
 if [ "$ok" -eq 1 ]; then
