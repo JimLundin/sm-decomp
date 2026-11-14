@@ -930,20 +930,11 @@ impl Count {
             .filter(|block| block.entry)
             .map(|block| block.heading.as_str())
             .collect();
-        let mut seen_cells = BTreeSet::new();
-        let mut arms = Vec::new();
-        let mut strays = Vec::new();
+        let mut spec = SpecAccumulator::default();
         let mut counts: Vec<BlockCount> = blocks
             .iter()
             .map(|block| {
-                let (tally, checked) = count_block(
-                    block,
-                    vectors,
-                    &entries,
-                    &mut seen_cells,
-                    &mut arms,
-                    &mut strays,
-                );
+                let (tally, checked) = spec.count_block(block, vectors, &entries);
                 BlockCount {
                     heading: block.heading.clone(),
                     entry: block.entry,
@@ -996,10 +987,10 @@ impl Count {
         Self {
             areas,
             blocks: counts,
-            arms,
+            arms: spec.arms,
             unknown_items,
             unassigned,
-            strays,
+            strays: spec.strays,
             k,
             spec_states_budget,
             old,
@@ -1296,82 +1287,129 @@ pub struct StrayFormula {
     pub formula: String,
 }
 
-/// One block's tally and whether it has a `checked` bullet; its arms go to `arms`, and formulas
-/// outside an entry to `strays`.
-fn count_block(
-    block: &Block,
+/// Pure classification of a piece, before any accounting takes place.
+enum PieceKind<'a> {
+    Cells(&'a str),
+    Checked,
+    Arm(Stated<'a>),
+    Definition(&'a str),
+    Field,
+    Explanation,
+    Prose,
+}
+
+fn classify_piece(piece: &Piece) -> PieceKind<'_> {
+    let text = unlabelled(&piece.text);
+    if AreaDef::parse(text).is_some() || text.starts_with("Budget:") {
+        PieceKind::Field
+    } else if let Some(terms) = text.strip_prefix("Cells:") {
+        PieceKind::Cells(terms)
+    } else if !piece.bullet {
+        PieceKind::Prose
+    } else if text.to_lowercase().starts_with("checked") {
+        PieceKind::Checked
+    } else if let Some(arm) = stated(text) {
+        PieceKind::Arm(arm)
+    } else if field(text) {
+        PieceKind::Field
+    } else if explains(text) {
+        PieceKind::Explanation
+    } else {
+        PieceKind::Definition(text)
+    }
+}
+
+/// Citation and placement classification never reserves an outcome.
+enum Evidence {
+    OutsideEntry,
+    CrossReference,
+    Missing(Vec<String>),
+    Uncited(Unchecked),
+    Accepted,
+}
+
+fn classify_evidence(
+    arm: &Stated<'_>,
+    in_entry: bool,
     vectors: &Vectors,
     entries: &HashSet<&str>,
-    seen_cells: &mut BTreeSet<String>,
-    arms: &mut Vec<Arm>,
-    strays: &mut Vec<StrayFormula>,
-) -> (Tally, bool) {
-    let mut tally = Tally::default();
-    let mut checked = false;
-    let mut counted_formulas = Vec::new();
-    let mut outcomes: HashMap<String, usize> = HashMap::new();
-    let mut conditions: Vec<(String, usize)> = Vec::new();
-    let first_arm = arms.len();
-    for piece in &block.pieces {
-        let text = unlabelled(&piece.text);
-        if AreaDef::parse(text).is_some() || text.starts_with("Budget:") {
-            continue;
+) -> Evidence {
+    if !in_entry {
+        Evidence::OutsideEntry
+    } else if cross_reference(arm.outcome, entries) {
+        Evidence::CrossReference
+    } else if !arm.cites.vectors.is_empty() {
+        let missing: Vec<String> = arm
+            .cites
+            .vectors
+            .iter()
+            .filter(|cite| !vectors.holds(cite))
+            .map(|cite| (*cite).to_owned())
+            .collect();
+        if missing.is_empty() {
+            Evidence::Accepted
+        } else {
+            Evidence::Missing(missing)
         }
-        if let Some(terms) = text.strip_prefix("Cells:") {
-            for term in terms.split([',', ';']) {
-                let term = normal(&term.replace('`', ""));
-                if !term.is_empty() && seen_cells.insert(term) {
-                    tally.cells = tally.cells.saturating_add(1);
-                }
+    } else if !arm.cites.record_only.is_empty() {
+        Evidence::Uncited(Unchecked::RecordOnly(
+            arm.cites
+                .record_only
+                .iter()
+                .map(|&frame| frame.to_owned())
+                .collect(),
+        ))
+    } else if arm.cites.original_only {
+        Evidence::Uncited(Unchecked::OriginalOnly)
+    } else {
+        Evidence::Uncited(Unchecked::NoCite)
+    }
+}
+
+/// Owns accepted outcomes and formulas within one entry, and its complete arm diagnostics.
+/// Non-entry blocks use the same diagnostics without accepting arms or formulas.
+#[derive(Default)]
+struct EntryAccumulator {
+    tally: Tally,
+    checked: bool,
+    formulas: Vec<String>,
+    outcomes: HashMap<String, usize>,
+    conditions: Vec<(String, usize)>,
+    arms: Vec<Arm>,
+}
+
+impl EntryAccumulator {
+    fn accept(&mut self, outcome: &str, line: usize, text: &str) -> Verdict {
+        // Repeated accepted outcomes still contribute their formulas.
+        self.formulas.extend(formulas(text));
+        match self.outcomes.entry(outcome.to_owned()) {
+            Entry::Occupied(first) => Verdict::SameOutcome(*first.get()),
+            Entry::Vacant(slot) => {
+                slot.insert(line);
+                self.tally.arms = self.tally.arms.saturating_add(1);
+                Verdict::Counts
             }
-            continue;
         }
-        if !piece.bullet {
-            continue;
-        }
-        if text.to_lowercase().starts_with("checked") {
-            checked = true;
-            continue;
-        }
-        let Some(arm) = stated(text) else {
-            if field(text) || explains(text) {
-                continue;
-            }
-            if block.entry {
-                counted_formulas.extend(formulas(text));
-            } else {
-                strays.extend(formulas(text).filter(|formula| operators(formula) > 0).map(
-                    |formula| StrayFormula {
-                        block: block.heading.clone(),
-                        line: piece.line,
-                        formula,
-                    },
-                ));
-            }
-            continue;
-        };
+    }
+
+    fn record_arm(&mut self, block: &Block, piece: &Piece, arm: &Stated<'_>, evidence: Evidence) {
         let condition = normal(arm.condition);
         let outcome = normal(arm.outcome);
-        let verdict = judge(&arm, block.entry, vectors, entries, || {
-            match outcomes.entry(outcome.clone()) {
-                Entry::Occupied(first) => Verdict::SameOutcome(*first.get()),
-                Entry::Vacant(slot) => {
-                    slot.insert(piece.line);
-                    tally.arms = tally.arms.saturating_add(1);
-                    Verdict::Counts
-                }
-            }
-        });
-        if matches!(verdict, Verdict::Counts | Verdict::SameOutcome(_)) {
-            counted_formulas.extend(formulas(text));
-        }
-        let complements = conditions
+        let verdict = match evidence {
+            Evidence::OutsideEntry => Verdict::OutsideEntry,
+            Evidence::CrossReference => Verdict::CrossReference,
+            Evidence::Missing(missing) => Verdict::Missing(missing),
+            Evidence::Uncited(unchecked) => Verdict::Uncited(unchecked),
+            Evidence::Accepted => self.accept(&outcome, piece.line, unlabelled(&piece.text)),
+        };
+        let complements = self
+            .conditions
             .iter()
             .find(|(earlier, _)| negation(&condition, earlier))
-            .or_else(|| conditions.first().filter(|_| otherwise(&condition)))
+            .or_else(|| self.conditions.first().filter(|_| otherwise(&condition)))
             .map(|(_, line)| *line);
-        conditions.push((condition.clone(), piece.line));
-        arms.push(Arm {
+        self.conditions.push((condition.clone(), piece.line));
+        self.arms.push(Arm {
             block: block.heading.clone(),
             line: piece.line,
             null_outcome: null_outcome(&outcome),
@@ -1382,48 +1420,72 @@ fn count_block(
             chained: arm.chained,
         });
     }
-    else_lint(arms.get_mut(first_arm..).unwrap_or_default());
-    tally.ops = entry_operators(&counted_formulas);
-    (tally, checked)
+
+    fn finish(mut self) -> (Tally, bool, Vec<Arm>) {
+        else_lint(&mut self.arms);
+        self.tally.ops = entry_operators(&self.formulas);
+        (self.tally, self.checked, self.arms)
+    }
 }
 
-/// An arm's verdict; `cited` judges an entry's arm whose cites all exist, by its outcome.
-fn judge(
-    arm: &Stated<'_>,
-    in_entry: bool,
-    vectors: &Vectors,
-    entries: &HashSet<&str>,
-    cited: impl FnOnce() -> Verdict,
-) -> Verdict {
-    let missing: Vec<String> = arm
-        .cites
-        .vectors
-        .iter()
-        .filter(|cite| !vectors.holds(cite))
-        .map(|cite| (*cite).to_owned())
-        .collect();
-    if !in_entry {
-        Verdict::OutsideEntry
-    } else if cross_reference(arm.outcome, entries) {
-        Verdict::CrossReference
-    } else if !arm.cites.vectors.is_empty() {
-        if missing.is_empty() {
-            cited()
-        } else {
-            Verdict::Missing(missing)
+/// Owns whole-spec cell deduplication and collects completed block diagnostics.
+#[derive(Default)]
+struct SpecAccumulator {
+    cells: BTreeSet<String>,
+    arms: Vec<Arm>,
+    strays: Vec<StrayFormula>,
+}
+
+impl SpecAccumulator {
+    fn count_cells(&mut self, terms: &str) -> u64 {
+        let mut count = 0_u64;
+        for term in terms.split([',', ';']) {
+            let term = normal(&term.replace('`', ""));
+            if !term.is_empty() && self.cells.insert(term) {
+                count = count.saturating_add(1);
+            }
         }
-    } else if !arm.cites.record_only.is_empty() {
-        Verdict::Uncited(Unchecked::RecordOnly(
-            arm.cites
-                .record_only
-                .iter()
-                .map(|&frame| frame.to_owned())
-                .collect(),
-        ))
-    } else if arm.cites.original_only {
-        Verdict::Uncited(Unchecked::OriginalOnly)
-    } else {
-        Verdict::Uncited(Unchecked::NoCite)
+        count
+    }
+
+    fn count_block(
+        &mut self,
+        block: &Block,
+        vectors: &Vectors,
+        entries: &HashSet<&str>,
+    ) -> (Tally, bool) {
+        let mut entry = EntryAccumulator::default();
+        let mut cells = 0_u64;
+        for piece in &block.pieces {
+            match classify_piece(piece) {
+                PieceKind::Cells(terms) => cells = cells.saturating_add(self.count_cells(terms)),
+                PieceKind::Checked => entry.checked = true,
+                PieceKind::Arm(arm) => {
+                    let evidence = classify_evidence(&arm, block.entry, vectors, entries);
+                    entry.record_arm(block, piece, &arm, evidence);
+                }
+                PieceKind::Definition(text) => {
+                    if block.entry {
+                        entry.formulas.extend(formulas(text));
+                    } else {
+                        self.strays.extend(
+                            formulas(text).filter(|formula| operators(formula) > 0).map(
+                                |formula| StrayFormula {
+                                    block: block.heading.clone(),
+                                    line: piece.line,
+                                    formula,
+                                },
+                            ),
+                        );
+                    }
+                }
+                PieceKind::Field | PieceKind::Explanation | PieceKind::Prose => {}
+            }
+        }
+        let (mut tally, checked, arms) = entry.finish();
+        tally.cells = cells;
+        self.arms.extend(arms);
+        (tally, checked)
     }
 }
 
@@ -1617,7 +1679,7 @@ fails: an arm or a formula is outside any entry (see the findings)
 #[cfg(test)]
 mod tests {
     use super::{
-        Complement, Count, PerUnit, StrayFormula, Unchecked, Units, Vectors, Verdict,
+        Complement, Count, PerUnit, StrayFormula, Tally, Unchecked, Units, Vectors, Verdict,
         budget_section, delta, entry_operators, operators, thousands,
     };
 
@@ -1780,6 +1842,61 @@ Area moving",
             verdicts,
             [Verdict::Missing(vec![String::from("V9")]), Verdict::Counts]
         );
+    }
+
+    #[test]
+    fn entry_boundaries_reset_outcomes_and_formulas_but_not_cells() {
+        let together =
+            count("### A\nCells: position\n- `v + d` → moves [V1]\n- `v + d` → moves [V2]\n");
+        let apart = count(
+            "### A\nCells: position\n- `v + d` → moves [V1]\n### B\nCells: position\n- `v + d` → moves [V2]\n",
+        );
+        assert_eq!(
+            (
+                together.total().arms,
+                together.total().ops,
+                together.total().cells
+            ),
+            (1, 1, 1)
+        );
+        assert_eq!(
+            (apart.total().arms, apart.total().ops, apart.total().cells),
+            (2, 2, 1)
+        );
+        let entries: Vec<_> = apart
+            .blocks
+            .iter()
+            .filter(|block| block.entry)
+            .map(|block| block.tally)
+            .collect();
+        assert_eq!(
+            entries,
+            [
+                Tally {
+                    arms: 1,
+                    ops: 1,
+                    cells: 1
+                },
+                Tally {
+                    arms: 1,
+                    ops: 1,
+                    cells: 0
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn a_complement_can_repeat_a_later_outcome() {
+        let count = count(
+            "### A\n- running → gains [V1]\n- otherwise → keeps [V2]\n- standing → keeps [V1]\n",
+        );
+        assert_eq!(
+            count.arms[1].complement,
+            Some(Complement { of: 2, repeats: 4 })
+        );
+        assert_eq!(count.arms[1].verdict, Verdict::Counts);
+        assert_eq!(count.arms[2].verdict, Verdict::SameOutcome(3));
     }
 
     #[test]
