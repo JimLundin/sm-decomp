@@ -9,6 +9,11 @@
 //! `oracle cross ROM INPUTS [--frames A..B]` steps LakeSnes and lsnes with the
 //!   same pads from power-on and reports where their records differ.
 
+mod csv;
+mod requests;
+#[cfg(test)]
+mod tests;
+
 use crate::lakesnes::LakeSnes;
 use crate::{Cut, FrameRecord, NmiKind, Oracle, Pad, Start, Tiers};
 use std::path::{Path, PathBuf};
@@ -20,6 +25,7 @@ fn fail(message: impl core::fmt::Display) -> ! {
 }
 
 /// One row of an lsnes room-seed CSV.
+#[derive(Debug, PartialEq, Eq)]
 struct RoomSeed {
     index: u32,
     room: u16,
@@ -29,26 +35,7 @@ struct RoomSeed {
 fn room_seeds(path: &Path) -> Vec<RoomSeed> {
     let text = std::fs::read_to_string(path)
         .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-    let mut lines = text.lines();
-    let header: Vec<&str> = lines.next().unwrap_or_default().split(',').collect();
-    let column = |name: &str| {
-        header
-            .iter()
-            .position(|&field| field == name)
-            .unwrap_or_else(|| fail(format!("{}: no column {name}", path.display())))
-    };
-    let (index, room, frame) = (column("room_index"), column("room"), column("movie_frame"));
-    lines
-        .filter(|line| !line.is_empty())
-        .map(|line| {
-            let fields: Vec<&str> = line.split(',').collect();
-            RoomSeed {
-                index: fields[index].parse().unwrap_or_else(|_| fail(line)),
-                room: u16::from_str_radix(fields[room], 16).unwrap_or_else(|_| fail(line)),
-                movie_frame: fields[frame].parse().unwrap_or_else(|_| fail(line)),
-            }
-        })
-        .collect()
+    csv::room_seeds(&text).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
 }
 
 fn word(wram: &[u8], address: usize) -> u16 {
@@ -147,160 +134,55 @@ fn save_due(
         || cutting.is_some_and(|cutting| cutting.rung_after(step, frames))
 }
 
-fn movie(arguments: &[String]) {
-    let [rom, inputs, rest @ ..] = arguments else {
-        fail(
-            "movie ROM INPUTS [--frames N] [--seeds CSV DIR] [--ranges] [--lag-log CSV] [--watch FROM EVERY] [--trace FROM TO PC,...] [--spc] [--no-picture] [--streams] [--ppu] [--oracle lakesnes|lsnes] [--native-seeds CSV DIR]... [--no-memories] [--from STATE FRAME] [--ladder N DIR] [--from-ladder DIR]",
-        )
-    };
-    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
-    let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
-    let mut frames = pads.len();
-    let mut seeds: Option<(Vec<RoomSeed>, PathBuf)> = None;
-    let mut picture = true;
-    // The record streams asked of lsnes: none, or the tiers with the PPU registers.
-    let mut streams: Option<Tiers> = None;
-    let mut ranges = false;
-    let mut lag_log: Option<Vec<[i64; 7]>> = None;
+fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
+    let requests::MovieRequest {
+        rom,
+        inputs,
+        frames,
+        seeds,
+        picture,
+        streams,
+        ranges,
+        lag_log,
+        watch,
+        trace,
+        spc,
+        positions_only,
+        profile,
+        backend,
+        native,
+        memories,
+        start,
+        cutting,
+        from_ladder,
+    } = requests::MovieRequest::parse(arguments)?;
+    let backend = backend.into_name();
+    let rom =
+        std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
+    let pads = crate::inputs::read(&inputs).unwrap_or_else(|error| fail(error));
+    let frames = frames.unwrap_or(pads.len());
+    let seeds = seeds.map(|(csv, directory)| (room_seeds(&csv), directory));
+    let native: Vec<_> = native
+        .into_iter()
+        .map(|(csv, directory)| (room_seeds(&csv), directory))
+        .collect();
+    let lag_log = lag_log.map(|csv| read_lag_log(&csv));
     let mut lag_mismatches = 0;
-    let mut watch: Option<(usize, usize)> = None;
-    let mut trace: Option<(usize, usize, Vec<u32>)> = None;
-    let mut spc = false;
-    let mut positions_only = false;
-    let mut profile: Option<(usize, usize)> = None;
-    let mut backend = "lakesnes".to_owned();
-    let mut native: Vec<(Vec<RoomSeed>, PathBuf)> = Vec::new();
-    let mut memories = true;
-    let mut start = Start::PowerOn { wram_fill: 0x55 };
-    let mut first = 0;
-    let mut cutting: Option<Cutting> = None;
-    let mut from_ladder: Option<PathBuf> = None;
-    let mut options = rest.iter();
-    while let Some(option) = options.next() {
-        match option.as_str() {
-            "--frames" => {
-                frames = options
-                    .next()
-                    .and_then(|value| value.parse().ok())
-                    .unwrap_or_else(|| fail("--frames N"));
-            }
-            "--seeds" => {
-                let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
-                    fail("--seeds CSV DIR")
-                };
-                seeds = Some((room_seeds(Path::new(csv)), PathBuf::from(directory)));
-            }
-            "--oracle" => {
-                backend = options
-                    .next()
-                    .cloned()
-                    .unwrap_or_else(|| fail("--oracle NAME"));
-            }
-            "--native-seeds" => {
-                let (Some(csv), Some(directory)) = (options.next(), options.next()) else {
-                    fail("--native-seeds CSV DIR")
-                };
-                native.push((room_seeds(Path::new(csv)), PathBuf::from(directory)));
-            }
-            "--from" => {
-                let (Some(state), Some(frame)) = (options.next(), options.next()) else {
-                    fail("--from STATE FRAME")
-                };
-                start = Start::State(
-                    std::fs::read(state).unwrap_or_else(|error| fail(format!("{state}: {error}"))),
-                );
-                first = frame.parse().unwrap_or_else(|_| fail("--from STATE FRAME"));
-            }
-            "--ladder" => {
-                let (Some(every), Some(directory)) = (
-                    options.next().and_then(|every| every.parse().ok()),
-                    options.next(),
-                ) else {
-                    fail("--ladder N DIR")
-                };
-                if every == 0 {
-                    fail("--ladder N DIR: N is at least 1");
-                }
-                let ladder = crate::ladder::Ladder::open(Path::new(directory), Path::new(inputs))
-                    .unwrap_or_else(|error| fail(error));
-                cutting = Some(Cutting { ladder, every });
-            }
-            "--from-ladder" => {
-                from_ladder = Some(PathBuf::from(
-                    options.next().unwrap_or_else(|| fail("--from-ladder DIR")),
-                ));
-            }
-            "--no-picture" => picture = false,
-            // lsnes only: the picture, the APU port log and the PPU registers
-            // with each record (docs/ORACLE.md, MEASUREMENTS (o)).
-            "--streams" => {
-                streams = Some(Tiers {
-                    picture: true,
-                    apu_log: true,
-                    ..Tiers::default()
-                });
-            }
-            // lsnes only: the PPU registers with each record, and no other
-            // stream: a seed record the gate decodes needs them, and the rest
-            // of the record stays byte for byte as without.
-            "--ppu" => {
-                streams.get_or_insert(Tiers {
-                    picture: false,
-                    apu_log: false,
-                    ..Tiers::default()
-                });
-            }
-            // lsnes only: records without the memories, about twice as fast;
-            // for cutting native seeds, not for comparing.
-            "--no-memories" => memories = false,
-            "--ranges" => ranges = true,
-            "--spc" => spc = true,
-            "--positions-only" => positions_only = true,
-            "--profile" => {
-                let mut number = || {
-                    options
-                        .next()
-                        .and_then(|value| value.parse().ok())
-                        .unwrap_or_else(|| fail("--profile FROM TO"))
-                };
-                profile = Some((number(), number()));
-            }
-            "--watch" => {
-                let mut number = || {
-                    options
-                        .next()
-                        .and_then(|value| value.parse().ok())
-                        .unwrap_or_else(|| fail("--watch FROM EVERY"))
-                };
-                watch = Some((number(), number()));
-            }
-            "--trace" => {
-                let mut number = || {
-                    options
-                        .next()
-                        .and_then(|text| text.parse().ok())
-                        .unwrap_or_else(|| fail("--trace FROM TO PC,..."))
-                };
-                let (from, to) = (number(), number());
-                let pcs = options
-                    .next()
-                    .unwrap_or_else(|| fail("--trace FROM TO PC,..."))
-                    .split(',')
-                    .map(|pc| {
-                        u32::from_str_radix(pc, 16)
-                            .unwrap_or_else(|_| fail(format!("--trace: {pc}")))
-                    })
-                    .collect();
-                trace = Some((from, to, pcs));
-            }
-            "--lag-log" => {
-                lag_log = Some(read_lag_log(Path::new(
-                    options.next().unwrap_or_else(|| fail("--lag-log CSV")),
-                )));
-            }
-            other => fail(format!("unknown option {other}")),
-        }
-    }
+    let (mut start, mut first) = match start {
+        requests::MovieStart::PowerOn => (Start::PowerOn { wram_fill: 0x55 }, 0),
+        requests::MovieStart::Saved { state, frame } => (
+            Start::State(
+                std::fs::read(&state)
+                    .unwrap_or_else(|error| fail(format!("{}: {error}", state.display()))),
+            ),
+            frame,
+        ),
+    };
+    let mut cutting = cutting.map(|(every, directory)| {
+        let ladder =
+            crate::ladder::Ladder::open(&directory, &inputs).unwrap_or_else(|error| fail(error));
+        Cutting { ladder, every }
+    });
     if let Some(directory) = &from_ladder {
         // The earliest seed is cut after step F-1, so the run starts at or before it.
         let Some(target) = native
@@ -312,8 +194,8 @@ fn movie(arguments: &[String]) {
                 "--from-ladder resumes for --native-seeds; for another frame use `oracle ladder-rung`",
             )
         };
-        let ladder = crate::ladder::Ladder::open(directory, Path::new(inputs))
-            .unwrap_or_else(|error| fail(error));
+        let ladder =
+            crate::ladder::Ladder::open(directory, &inputs).unwrap_or_else(|error| fail(error));
         match ladder.nearest(target) {
             Some(rung) => {
                 let path = ladder.state_path(rung);
@@ -326,9 +208,6 @@ fn movie(arguments: &[String]) {
             }
             None => println!("no rung at or before step {target}: from power-on"),
         }
-    }
-    if (cutting.is_some() || !native.is_empty()) && backend != "lsnes" {
-        fail("--ladder and --native-seeds need --oracle lsnes");
     }
     let mut oracle =
         crate::Backend::open(&backend, &rom, start).unwrap_or_else(|error| fail(error));
@@ -555,6 +434,7 @@ fn movie(arguments: &[String]) {
     if seeds.is_some() {
         println!("room seeds in the same room: {synced} of {checked}");
     }
+    Ok(())
 }
 
 /// Derive an lsnes native seed: the state of `BASE` with the words written
@@ -629,15 +509,21 @@ fn derive_seed(arguments: &[String]) {
 /// Run the command line `arguments` (without the program name).
 pub fn main(arguments: &[String]) -> i32 {
     match arguments.split_first() {
-        Some((command, rest)) if command == "movie" => movie(rest),
-        Some((command, rest)) if command == "corpus" => corpus(rest),
+        Some((command, rest)) if command == "movie" => {
+            movie(rest).unwrap_or_else(|error| fail(error))
+        }
+        Some((command, rest)) if command == "corpus" => {
+            corpus(rest).unwrap_or_else(|error| fail(error))
+        }
         Some((command, rest)) if command == "trace" => trace(rest),
         Some((command, rest)) if command == "measure" => measure(rest),
         Some((command, rest)) if command == "measure-movie" => measure_movie(rest),
         Some((command, rest)) if command == "derive-seed" => derive_seed(rest),
         Some((command, rest)) if command == "ladder-check" => return ladder_check(rest),
         Some((command, rest)) if command == "ladder-rung" => ladder_rung(rest),
-        Some((command, rest)) if command == "cross" => cross(rest),
+        Some((command, rest)) if command == "cross" => {
+            cross(rest).unwrap_or_else(|error| fail(error))
+        }
         Some((command, rest)) if command == "relock-compare" => {
             return crate::relock_check::compare_command(rest);
         }
@@ -807,18 +693,7 @@ fn print_ranges(left: &[u8], right: &[u8]) {
 fn read_lag_log(path: &Path) -> Vec<[i64; 7]> {
     let text = std::fs::read_to_string(path)
         .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
-    text.lines()
-        .skip(1)
-        .map(|line| {
-            let fields: Vec<i64> = line
-                .split(',')
-                .map(|field| field.parse().unwrap_or(-1))
-                .collect();
-            [
-                fields[3], fields[5], fields[6], fields[7], fields[8], fields[9], fields[10],
-            ]
-        })
-        .collect()
+    csv::lag_log(&text).unwrap_or_else(|error| fail(format!("{}: {error}", path.display())))
 }
 
 /// `corpus ROM LOCK DATA [--only ID]... [--limit N]`: run the lock's rows
@@ -941,166 +816,65 @@ fn dump_frame(directory: &Path, id: &str, frame: u64, record: &FrameRecord) {
     println!("  {id} frame {frame}: {}", path.display());
 }
 
-fn corpus(arguments: &[String]) {
-    let [rom, lock, data, rest @ ..] = arguments else {
-        fail(
-            "corpus ROM LOCK DATA [--only ID]... [--shard I/N] [--limit N] [--record FILE] [--record-v2 FILE [--sidecar DIR] [--dump-frames ROW:F,...]...] [--oracle lakesnes|lsnes] [--native-seeds DIR] [--watch-words ADDR,...] [--watch-pcs ADDR,...] [--frame-pads DIR | --from-frame-pads DIR] [--no-memories] [--cache DIR [--cache-pictures]]",
-        )
-    };
-    let scenarios = Path::new(lock)
-        .parent()
-        .map(Path::to_path_buf)
-        .unwrap_or_default();
-    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
-    let lock =
-        std::fs::read_to_string(lock).unwrap_or_else(|error| fail(format!("{lock}: {error}")));
-    let lock = crate::lock::Lock::parse(&lock);
-    let data = Path::new(data);
-    let mut only = Vec::new();
-    let mut limit = usize::MAX;
-    let mut shard: (usize, usize) = (0, 1);
-    let mut record: Option<std::fs::File> = None;
-    let mut record_v2: Option<std::fs::File> = None;
-    let mut sidecar: Option<PathBuf> = None;
-    let mut dump_frames: Vec<(String, u64)> = Vec::new();
-    let mut backend = String::new();
-    let mut native_seeds: Option<PathBuf> = None;
-    let mut watched: Vec<usize> = Vec::new();
-    let mut watched_pcs: Vec<u32> = Vec::new();
-    let mut pads: Option<FramePads> = None;
-    let mut lean = false;
-    let mut cache: Option<PathBuf> = None;
-    let mut cache_pictures = crate::record::codec::PictureMode::Drop;
-    let mut options = rest.iter();
-    while let Some(option) = options.next() {
-        match option.as_str() {
-            "--only" => only.push(options.next().unwrap_or_else(|| fail("--only ID")).clone()),
-            "--shard" => {
-                let text = options.next().unwrap_or_else(|| fail("--shard I/N"));
-                let (index, count) = text.split_once('/').unwrap_or_else(|| fail("--shard I/N"));
-                shard = (
-                    index.parse().unwrap_or_else(|_| fail("--shard I/N")),
-                    count.parse().unwrap_or_else(|_| fail("--shard I/N")),
-                );
-            }
-            "--record" => {
-                let path = options.next().unwrap_or_else(|| fail("--record FILE"));
+fn acquire_corpus_outputs(
+    outputs: Vec<requests::CorpusOutput>,
+) -> (Option<std::fs::File>, Option<std::fs::File>) {
+    let (mut record, mut record_v2) = (None, None);
+    for output in outputs {
+        match output {
+            requests::CorpusOutput::Record(path) => {
                 record = Some(
-                    std::fs::File::create(path)
-                        .unwrap_or_else(|error| fail(format!("{path}: {error}"))),
+                    std::fs::File::create(&path)
+                        .unwrap_or_else(|error| fail(format!("{}: {error}", path.display()))),
                 );
             }
-            "--record-v2" => {
-                let path = options.next().unwrap_or_else(|| fail("--record-v2 FILE"));
-                let mut file = std::fs::File::create(path)
-                    .unwrap_or_else(|error| fail(format!("{path}: {error}")));
+            requests::CorpusOutput::RecordV2(path) => {
+                let mut file = std::fs::File::create(&path)
+                    .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
                 let header =
                     crate::relock::header(crate::lsnes::IDENTITY, &crate::lsnes::server_sha256());
                 std::io::Write::write_all(&mut file, header.as_bytes())
                     .unwrap_or_else(|error| fail(error));
                 record_v2 = Some(file);
             }
-            "--sidecar" => {
-                // Each row's per-frame stream digests, `DIR/<row>.frames`,
-                // so two recordings that disagree name their first frame.
-                let directory = options.next().unwrap_or_else(|| fail("--sidecar DIR"));
-                std::fs::create_dir_all(directory)
-                    .unwrap_or_else(|error| fail(format!("{directory}: {error}")));
-                sidecar = Some(PathBuf::from(directory));
+            requests::CorpusOutput::Directory(path) => {
+                std::fs::create_dir_all(&path)
+                    .unwrap_or_else(|error| fail(format!("{}: {error}", path.display())));
             }
-            "--dump-frames" => {
-                // The pictures of named frames, `DIR/<row>.<frame>.png` in
-                // the sidecar directory, to look at a frame a sidecar named.
-                let usage = "--dump-frames ROW:F,...";
-                let text = options.next().unwrap_or_else(|| fail(usage));
-                let (row, list) = text.rsplit_once(':').unwrap_or_else(|| fail(usage));
-                for number in list.split(',') {
-                    let number: u64 = number.parse().unwrap_or_else(|_| fail(usage));
-                    dump_frames.push((row.to_owned(), number));
-                }
-            }
-            "--oracle" => {
-                backend = options
-                    .next()
-                    .cloned()
-                    .unwrap_or_else(|| fail("--oracle NAME"));
-            }
-            "--native-seeds" => {
-                native_seeds = Some(PathBuf::from(
-                    options.next().unwrap_or_else(|| fail("--native-seeds DIR")),
-                ));
-            }
-            "--watch-words" => {
-                // Work-RAM words (hex) printed whenever their value changes,
-                // to read a row's outcome (game state, energy) off the oracle.
-                let list = options
-                    .next()
-                    .unwrap_or_else(|| fail("--watch-words ADDR,..."));
-                for address in list.split(',') {
-                    watched.push(
-                        usize::from_str_radix(address.trim_start_matches('$'), 16)
-                            .unwrap_or_else(|_| fail(format!("--watch-words: {address}"))),
-                    );
-                }
-            }
-            "--watch-pcs" => {
-                // Instruction addresses (24-bit hex) whose hits each record
-                // carries, printed per frame and kept in a --cache's hits.txt
-                // (LakeSnes watches the first 32).
-                let list = options
-                    .next()
-                    .unwrap_or_else(|| fail("--watch-pcs ADDR,..."));
-                for address in list.split(',') {
-                    watched_pcs.push(
-                        u32::from_str_radix(
-                            address.trim_start_matches('$').replace(':', "").as_str(),
-                            16,
-                        )
-                        .unwrap_or_else(|_| fail(format!("--watch-pcs: {address}"))),
-                    );
-                }
-            }
-            "--limit" => {
-                limit = options
-                    .next()
-                    .and_then(|value| value.parse().ok())
-                    .unwrap_or_else(|| fail("--limit N"));
-            }
-            "--frame-pads" => {
-                let directory = options.next().unwrap_or_else(|| fail("--frame-pads DIR"));
-                std::fs::create_dir_all(directory)
-                    .unwrap_or_else(|error| fail(format!("{directory}: {error}")));
-                pads = Some(FramePads::Write(PathBuf::from(directory)));
-            }
-            "--from-frame-pads" => {
-                let directory = options
-                    .next()
-                    .unwrap_or_else(|| fail("--from-frame-pads DIR"));
-                pads = Some(FramePads::Play(PathBuf::from(directory)));
-            }
-            "--no-memories" => lean = true,
-            "--cache" => {
-                // Every frame's whole record, for lockstep (`oracle::cache`).
-                cache = Some(PathBuf::from(
-                    options.next().unwrap_or_else(|| fail("--cache DIR")),
-                ));
-            }
-            "--cache-pictures" => cache_pictures = crate::record::codec::PictureMode::Keep,
-            other => fail(format!("unknown option {other}")),
         }
     }
-    if record_v2.is_some() && (backend != "lsnes" || !matches!(pads, Some(FramePads::Play(_)))) {
-        fail("--record-v2 records lsnes rows played --from-frame-pads");
-    }
-    if (sidecar.is_some() || !dump_frames.is_empty()) && record_v2.is_none() {
-        fail("--sidecar and --dump-frames go with --record-v2");
-    }
-    if !dump_frames.is_empty() && sidecar.is_none() {
-        fail("--dump-frames writes into the --sidecar DIR");
-    }
-    if cache.is_some() && (lean || !matches!(pads, Some(FramePads::Play(_)))) {
-        fail("--cache records rows played --from-frame-pads, with their memories");
-    }
+    (record, record_v2)
+}
+
+fn corpus(arguments: &[String]) -> Result<(), requests::RequestError> {
+    let requests::CorpusRequest {
+        rom,
+        lock,
+        data,
+        only,
+        limit,
+        shard,
+        outputs,
+        sidecar,
+        dump_frames,
+        backend,
+        native_seeds,
+        watched,
+        watched_pcs,
+        pads,
+        lean,
+        cache,
+        cache_pictures,
+    } = requests::CorpusRequest::parse(arguments)?;
+    let backend = backend.into_name();
+    let scenarios = lock.parent().map(Path::to_path_buf).unwrap_or_default();
+    let rom =
+        std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
+    let lock = std::fs::read_to_string(&lock)
+        .unwrap_or_else(|error| fail(format!("{}: {error}", lock.display())));
+    let lock = crate::lock::Lock::parse(&lock);
+    let data = data.as_path();
+    let (mut record, mut record_v2) = acquire_corpus_outputs(outputs);
     let tiers = Tiers {
         picture: record_v2.is_some()
             || matches!(cache_pictures, crate::record::codec::PictureMode::Keep),
@@ -1119,7 +893,7 @@ fn corpus(arguments: &[String]) {
         .filter(|entry| entry.oracle == "faithful")
         .filter(|entry| only.is_empty() || only.contains(&entry.id))
         .enumerate()
-        .filter(|(position, _)| position % shard.1 == shard.0)
+        .filter(|(position, _)| shard.includes(*position))
         .map(|(_, entry)| entry)
         .take(limit);
     for entry in entries {
@@ -1328,6 +1102,7 @@ fn corpus(arguments: &[String]) {
         ticks as f64 / seconds,
         frames as f64 / seconds
     );
+    Ok(())
 }
 
 /// `trace ROM LOCK DATA ID FROM TO`: one row's frames FROM-TO in detail.
@@ -1465,49 +1240,34 @@ fn measure_movie(arguments: &[String]) {
 /// differing step in its window. `--right-from STATE STEP` resumes lsnes from
 /// its saved state (a ladder rung) at STEP, while LakeSnes runs from power-on
 /// through the steps before it uncompared.
-fn cross(arguments: &[String]) {
+fn cross(arguments: &[String]) -> Result<(), requests::RequestError> {
     use crate::cross::{Compare, Difference, Part, describe};
-    let usage = "cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]";
-    let [rom, inputs, rest @ ..] = arguments else {
-        fail(usage)
-    };
-    let rom = std::fs::read(rom).unwrap_or_else(|error| fail(format!("{rom}: {error}")));
-    let pads = crate::inputs::read(Path::new(inputs)).unwrap_or_else(|error| fail(error));
+    let requests::CrossRequest {
+        rom,
+        inputs,
+        range,
+        first_ranges,
+        streams,
+        ranges_at,
+        right_start,
+    } = requests::CrossRequest::parse(arguments)?;
+    let rom =
+        std::fs::read(&rom).unwrap_or_else(|error| fail(format!("{}: {error}", rom.display())));
+    let pads = crate::inputs::read(&inputs).unwrap_or_else(|error| fail(error));
     let last = u64::try_from(pads.len().saturating_sub(1)).unwrap_or(u64::MAX);
-    let steps = |text: Option<&String>| {
-        let (from, to) = text
-            .and_then(|text| text.split_once(".."))
-            .unwrap_or_else(|| fail(usage));
-        let (Ok(from), Ok(to)) = (from.parse::<u64>(), to.parse::<u64>()) else {
-            fail(usage)
-        };
-        from..=to.min(last)
+    let clamp = |range: std::ops::RangeInclusive<u64>| *range.start()..=(*range.end()).min(last);
+    let range = range.map_or(0..=last, clamp);
+    let ranges_at = ranges_at.map(clamp);
+    let (right_start, resume) = match right_start {
+        requests::CrossStart::PowerOn => (Start::PowerOn { wram_fill: 0x55 }, 0),
+        requests::CrossStart::Saved { state, step } => (
+            Start::State(
+                std::fs::read(&state)
+                    .unwrap_or_else(|error| fail(format!("{}: {error}", state.display()))),
+            ),
+            step,
+        ),
     };
-    let mut range = 0..=last;
-    let mut first_ranges = false;
-    let mut streams = false;
-    let mut ranges_at: Option<std::ops::RangeInclusive<u64>> = None;
-    let mut right_start = Start::PowerOn { wram_fill: 0x55 };
-    let mut resume = 0u64;
-    let mut options = rest.iter();
-    while let Some(option) = options.next() {
-        match option.as_str() {
-            "--frames" => range = steps(options.next()),
-            "--ranges" => first_ranges = true,
-            "--streams" => streams = true,
-            "--ranges-at" => ranges_at = Some(steps(options.next())),
-            "--right-from" => {
-                let (Some(state), Some(step)) = (options.next(), options.next()) else {
-                    fail(usage)
-                };
-                right_start = Start::State(
-                    std::fs::read(state).unwrap_or_else(|error| fail(format!("{state}: {error}"))),
-                );
-                resume = step.parse().unwrap_or_else(|_| fail(usage));
-            }
-            _ => fail(usage),
-        }
-    }
     let start = Start::PowerOn { wram_fill: 0x55 };
     let mut left =
         crate::Backend::open("lakesnes", &rom, start.clone()).unwrap_or_else(|error| fail(error));
@@ -1654,4 +1414,5 @@ fn cross(arguments: &[String]) {
             None => println!("  {:<12} equal throughout", part.name()),
         }
     }
+    Ok(())
 }
