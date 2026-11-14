@@ -83,6 +83,10 @@ jobs:
         run: pipx run --spec mypy==2.4.1 mypy
       - name: Test the planted-fault runner
         run: python3 -m unittest discover -s tools -p test_check_mutants.py
+      - name: Test movie input qualification and publication
+        run: python3 -m unittest discover -s tools -p test_movie_inputs.py
+      - name: Test Windows DLL target coverage
+        run: python3 -m unittest discover -s tools/lane -p test_dll_test.py
       - name: Test the native seed recapture boundary
         run: python3 -m unittest discover -s tools/oracle -p test_relock_seed_state.py
       - name: Save the cargo registry and the build
