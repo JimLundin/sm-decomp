@@ -140,12 +140,15 @@ time, with `SM_CACHE=CACHE SM_ROM=rom/sm.smc python3 tools/check_mutants.py`. It
 each fault's recorded floor or ratchet tests to pass on the unchanged model, then requires
 all its exact named tests to fail on the changed model. A missing test or a build failure
 cannot kill a fault. The source is restored byte-for-byte after each fault, and CI reports
-the killed faults per domain. Movement, camera, appearance, door passage, HUD and progress
+the killed faults per domain. Movement, camera, appearance, door passage, HUD, progress and weapons
 each exercise their harness and an independent domain free-run test; the Ceres doors exercise
 both and the engine lockstep ratchet.
 The runner prints M0 (`chain-any-0003-DFD7`) domain floor counts separately: `ok` means that
 row's held-frame floor survived, even when the test failed on another row or on accounting.
 The HUD fault reverses `HerBlink`'s phase, exercised by M0's mini-map marker.
+The weapons fault reverses `FlyingBeam`'s horizontal acceleration. Its harness and independent
+free-run floors reject it on M0's active power beam; this is a source mutation checked against
+the standing corpus, separate from the adjusted-parameter vectors.
 The progress fault prevents `EventsHappen` from remembering an event: the harness and free
 run reject it on `event-zebes-awake`, while M0's floors survive. M0 exercises room-state
 selection but no report behaviour, and its progress null model holds the same 344 frames:

@@ -63,3 +63,12 @@ before = "Report::Happened(event) => self.events[event] = true,"
 after = "Report::Happened(event) => self.events[event] = false,"
 test = "harness::tests::progress_holds_its_floors_against_the_cache"
 extra_tests = ["harness::free::tests::progress_runs_free_against_the_cache"]
+
+[[fault]]
+name = "beam-horizontal-acceleration-reversed"
+domain = "weapons-projectiles"
+file = "crates/clean/weapons_projectiles/src/lib.rs"
+before = ".wrapping_add(rules.acceleration.0.wrapping_mul(axes.x));"
+after = ".wrapping_sub(rules.acceleration.0.wrapping_mul(axes.x));"
+test = "harness::tests::weapons_hold_their_floors_against_the_cache"
+extra_tests = ["harness::free::tests::weapons_run_free_against_the_cache"]
