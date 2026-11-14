@@ -38,6 +38,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
+| transition firing aim | optional `Heading`, the ten named directions in weapons-projectiles; a publication, not a distance | a shot made while her pose changes keeps the intended gun direction | output (weapons-projectiles `CannonOrigin` through caller-held pending aim) |
 | latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
@@ -121,6 +122,7 @@ or falling at 0.
 
 | Input | Type | Read by |
 | --- | --- | --- |
+| cannon headings | imported named `Heading` for each ordinary straight-jump and moonwalking pose; the gun direction, independent of walking-facing | `TransitionFiringAim` |
 | pad | held: run, jump, shoot, left, right, up, down, aim up, aim down; just pressed: each of them, held this frame and not the frame before | most behaviours |
 | items switched on | the `Item`s switched on: progress's own output (progress §1.1), never the ones merely hers | below |
 | world | the room's blocks and solid enemies, answered as §8 says | §8 |
@@ -417,6 +419,28 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   holding the way she walks; CE4 for a crouched turn's skid); constructed (the sinking;
   C-moonwalk-turn, C-crouch-turn-skid); original only (the aim of a turn begun aimed
   `DownForward`).
+
+### TransitionFiringAim
+- kind: output.
+- summary: a pose change can preserve the gun direction for a following cannon attempt.
+- params: none.
+- switch: none.
+- An ordinary pose change enters an upright straight jump, shoot pressed this frame, with no
+  shinespark handover → publish the new jump pose's cannon heading [C-aim-jump-press].
+- A ground turn begins from moonwalking, its moonwalk-jump variant included → publish the
+  old moonwalking pose's cannon heading, whether shoot is held or released [C-aim-moonwalk-turn,
+  C-aim-moonwalk-jump].
+- Any other ordinary pose change, or ordinary selection keeps the same pose → no publication
+  [C-aim-jump-held, C-aim-jump-released, C-aim-same-pose].
+- This output is a fresh publication, not retained State. The caller keeps an earlier pending
+  aim when no new heading is published; its ordinary interval clears pending aim after the
+  cannon pass, before her pose changes this frame. It can save and restore that pending aim as
+  any optional Heading. W1 consumes it only on an available attempt (`CannonOrigin`).
+- The heading comes from pose content, not her horizontal speed or the new turn's facing.
+  Moonwalking faces the way she walks while her gun points back, so its content heading matters.
+- checked: oracle (M0:80 to 81, pending at 81 and absent at 82);
+  constructed (C-aim-jump-press, C-aim-jump-held, C-aim-jump-released, C-aim-same-pose,
+  C-aim-moonwalk-turn, C-aim-moonwalk-jump).
 
 ### AimingAndShooting
 - kind: quirk and output.

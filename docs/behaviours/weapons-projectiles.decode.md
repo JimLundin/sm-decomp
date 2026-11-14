@@ -339,3 +339,25 @@ boundary at that preceding counter. The stored PRE pointer $E695 does not imply 
 R1 reset is later $82:E4A9. Hold W1 State on this bounded no-update path; M0 count is zero
 and all five shots are free, so C1 cannot consume one. A game-state-9 case with live shots
 still needs independently proved C1/actor effects; it is not covered by this hold case.
+
+## Ordinary cannon caller lifetime
+
+`TransitionFiringAim` is movement's producer; see its decode note. W1 consumes the retained
+Heading at $90:BA5F-BA67 only after availability. $90:EB02-EB20 clears it after the ordinary
+$E695/$E6C9 pass or locked $E713 pass whether attempted or not; a no-update path does neither.
+$90:EB35-EB42/EAB3-EAD4 writes the current newly pressed controls for the following PRE;
+$E82D/$E864 restores saved demo controls before the later drawing writer. Preserve semantic
+controls and apply the shoot binding at read time; held history is not prior-new history.
+
+Ordinary eligibility maps named movement families to the existing `shoot` input: $DD05-DD3C
+and $DD74 permit ground/jump/fall turns only with pending aim. $DD8C-DDC7 permits crouch/stand
+and aimed transitions, suppressing morph/unmorph with inactive grapple. The standard selection
+precedence is $DD3D-DD73; $B80D-B82A selects held-shoot uncharged beam when charge is absent.
+Other selected weapons, active grapple, charge and forced pose boundaries are outside the
+ordinary power producer contract. No per-row or frame-number eligibility table is authorized.
+
+Fresh M0 direct-cut checks: pending lifecycle344/344 versus absent null343/344, using the actual
+upstream pose result rather than a complete movement reference. Prior-new controls agree344/344
+with preceding newly pressed controls; SHOOT is present only81/157. The new focused movement
+publication vectors pass6/6. These do not prove engine wiring or whole movement free-run gain.
+The existing gaps remain until the producer and retained caller consumption are integrated.

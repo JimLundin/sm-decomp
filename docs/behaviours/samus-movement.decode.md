@@ -2270,7 +2270,7 @@ doesn't bound it. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
-- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, AimingAndShooting,
+- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
   DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
 - Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
@@ -2285,3 +2285,47 @@ From the spec's §7 (the pose chart), moved with the header's:
 
 **Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
 effects. The tables below are data records (about 120 rows), counted as data.
+
+Current official count: 248.7 units over 429 vector ids; budget 9,324 weighted tokens
+(motion 3,712, pose fit 687, pose chart 2,375, collision 2,550).
+
+## Transition firing aim
+
+`TransitionFiringAim` sources: $91:F404-F422 only initializes a changed ordinary pose;
+$91:F433/F468-F4A1 initializes its named family and repeats ground-turn initialization when
+another turn becomes ground turning. $91:F543-F599 diverts a straight jump into shinespark;
+$91:F5CF-F5E6 otherwise publishes the new pose firing direction on newly pressed shoot.
+$91:F8D3-F903 publishes the old direction only when entering a ground turn from moonwalking;
+$91:F952-F989 can turn the moonwalk jump into that ground turn. Other families do not write it.
+
+Mapping: pending aim is $0B5E. Jump publication carries a high marker, moonwalk publication a
+different marker; only the low heading byte affects W1's $90:BA5F-BA67 heading choice. Decode
+these as optional named Heading, preserving the source encoding at an observed edge. Pose
+heading is content from $91:B62C in each pose descriptor; never a raw code in the clean model.
+The fresh output means publication/no publication, not replacement by absent pending state.
+
+Caller: $90:EB02-EB20 clears pending after ordinary/elevator/locked PRE. POST pose application
+then publishes for the next PRE. Drawing $90:EB35-EB42/EAB3-EAD4 writes prior newly pressed
+controls; demo restoration $90:E82D/E864 restores them. W1 remains their consumer.
+
+Fresh M0 observation over 345 recovered records: pending only81; prior-new SHOOT only81/157.
+80 PRE spin suppresses held/new shoot, POST enters straight jump and publishes;81 released
+shoot makes no attempt but PRE clears pending, so82 has none.156 ordinary standing fires,
+157 has count1/cooldown15 and prior-new shoot. Existing decode's private boundary oracle
+matched345/345 cuts; that replay is prior evidence, not a fresh replay of this amendment.
+
+Harness: compare publication using the independent preceding pose/controls and the actual
+pose change outcome, never use following pending as an input. Only the ordinary pose path is
+claimed. For a skipped PRE, no publication must preserve caller-held pending rather than clear
+it. Equipment/cinematic forced pose initializations and shinespark are outside this amendment.
+The constructed vectors reuse complete movement frames and add a publication expectation;
+pose headings are invented typed content. C-aim-jump-press differs from its held/released cases
+only in shoot press; both moonwalk variants use the old content heading, not the new pose.
+
+AF3 `import::projectile` already imports `MuzzleAim::Aimed(Heading)`, `PreviousAim` and
+`Forbidden`. All 22 source straight-jump descriptors and six moonwalking descriptors are Aimed;
+the producer reads those semantic headings, and leaves other descriptor kinds distinct for W1.
+No second ROM-content extraction is required. C-aim-same-pose is R126's full movement case with
+a publication expectation: a straight jump already aimed down-forward keeps its pose on a new
+shoot press and publishes none. Shinespark handover is not represented in this movement model;
+it remains an explicitly excluded external pose boundary, not a guessed supported vector.

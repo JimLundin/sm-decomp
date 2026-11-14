@@ -1,3 +1,6 @@
+# cannon_heading / previous_cannon_heading: optional imported Heading for the new and old
+# pose content (TransitionFiringAim). after.pending_aim checks the fresh publication,
+# "None" means no publication; caller-held pending storage is outside this vector.
 # Test vectors for docs/behaviours/samus-movement.md.
 #
 # Format
@@ -6130,3 +6133,96 @@ pose = { body = "Upright", action = "Falling", facing = "Left", radius = [5, 21]
 pad = ["left"]
 jump_pressed = false
 after = { position = ["0105.0000", "0100.8000"], travelled = { left = "-0001.0000", right = "+0000.0000", up = "+0000.0000", down = "+0000.0000" } }
+
+
+[[vector]]
+id = "C-aim-jump-press"
+source = "constructed"
+entries = ["Jumping", "Dash", "AnimationEnds", "TransitionFiringAim"]
+items = ["MorphBall"]
+cannon_heading = "Right"
+world = { floor_top = 720 }
+before = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["shoot", "run", "right"]
+jump_pressed = false
+pressed = ["shoot"]
+animation_ends = "End"
+after = { pending_aim = "Right", position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", dashing = false, heading_down = false, handed_over = true }
+
+
+[[vector]]
+id = "C-aim-jump-held"
+source = "constructed"
+entries = ["Jumping", "Dash", "AnimationEnds", "TransitionFiringAim"]
+items = ["MorphBall"]
+cannon_heading = "Right"
+world = { floor_top = 720 }
+before = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["shoot", "run", "right"]
+jump_pressed = false
+animation_ends = "End"
+after = { pending_aim = "None", position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", dashing = false, heading_down = false, handed_over = true }
+
+
+[[vector]]
+id = "C-aim-jump-released"
+source = "constructed"
+entries = ["Jumping", "Dash", "AnimationEnds", "TransitionFiringAim"]
+items = ["MorphBall"]
+cannon_heading = "Right"
+world = { floor_top = 720 }
+before = { position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000" }
+pose = { body = "Upright", action = "TakingOff", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+pad = ["run", "right"]
+jump_pressed = false
+animation_ends = "End"
+after = { pending_aim = "None", position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", dashing = false, heading_down = false, handed_over = true }
+
+
+[[vector]]
+id = "C-aim-moonwalk-turn"
+source = "constructed"
+entries = ["PadChart", "TurningRound", "SpeedBuildsAndBrakes", "FollowingTheGround", "TransitionFiringAim"]
+previous_cannon_heading = "Left"
+world = { floor_top = 112 }
+before = { position = ["019B.8000", "005B.FFFF"] }
+pose = { body = "Upright", action = "Moonwalking", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "Ground" }
+pad = ["right"]
+jump_pressed = false
+after = { pending_aim = "Left", position = ["019C.0000", "005B.FFFF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.0000", skidding = true }
+
+
+[[vector]]
+id = "C-aim-moonwalk-jump"
+source = "constructed"
+entries = ["TurningRound", "PadChart", "SpeedBuildsAndBrakes", "FollowingTheGround", "TransitionFiringAim"]
+previous_cannon_heading = "Left"
+world = { floor_top = 112 }
+before = { position = ["019B.8000", "005B.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Moonwalking", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 21], turn = "MoonwalkJump" }
+pad = ["right", "jump"]
+jump_pressed = true
+after = { pending_aim = "Left", position = ["019C.0000", "005B.FFFF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0000.0000", dashing = false, heading_down = false }
+
+
+
+[[vector]]
+id = "C-aim-same-pose"
+source = "constructed"
+entries = ["TransitionFiringAim", "RisingAndFalling", "DriftInTheAir"]
+items = ["Bombs", "HiJumpBoots", "MorphBall", "SpeedBooster", "VariaSuit", "XRayScope"]
+cannon_heading = "DownLeft"
+world = {}
+before = { position = ["00AD.2000", "0079.0400"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0001.3400" }
+pose = { body = "Upright", action = "Jumping", facing = "Left", radius = [5, 19], aim = "DownForward" }
+pad = ["shoot", "left", "aim_down"]
+jump_pressed = false
+pressed = ["shoot"]
+after = { pending_aim = "None", position = ["00AB.E000", "007A.3800"], speed_x = "-0001.4000", dash = "0000.0000", speed_y = "+0001.5000" }
