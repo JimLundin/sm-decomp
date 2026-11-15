@@ -35,6 +35,8 @@ pub struct Content {
     pub transitions: PoseTransitions,
     /// Samus's clips and her run's paces, which her animation plays.
     pub samus_clips: crate::samus_appearance_bridge::Clips,
+    /// Imported ordinary power content; absent means this path is unsupported.
+    pub ordinary_power: Option<crate::weapons_projectiles_bridge::PowerContent>,
     /// The slope shapes her block collision reads.
     pub slopes: Slopes,
     /// The loaded species' instruction lists.
@@ -59,6 +61,8 @@ pub struct Content {
     pub room_plms: RoomPlms,
     /// The rooms' door lists, which say where each door block leads.
     pub room_doors: crate::collision::RoomDoors,
+    /// Checked rooms, destination identities and arrivals used by passage selection.
+    pub world: Option<data::assets::world::World>,
     /// The blocks' reactions and what each reacting cell's mark is.
     pub blocks: crate::world_blocks_bridge::BlockContent,
     /// The area maps and the pictures the HUD draws with.

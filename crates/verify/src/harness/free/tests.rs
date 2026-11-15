@@ -379,6 +379,8 @@ fn every_domain_runs_free_against_the_cache() {
     held.hold(&Clock, "game-time");
     let weapons = crate::harness::weapons::Weapons::load(&image).unwrap();
     held.hold(&weapons, "weapons-projectiles");
+    let contact = crate::harness::contact::Contact::load(&image).unwrap();
+    held.hold(&contact, "enemy-interactions");
     let samus =
         movement::Movement::load(&image).unwrap_or_else(|error| panic!("content: {error:?}"));
     held.hold(&samus, "samus-movement");
@@ -449,4 +451,57 @@ fn a_skip_counts_in_scope_unless_the_domain_names_it_out_of_scope() {
         (1, 0, 2)
     );
     assert_eq!(elsewhere.in_scope(), 1);
+}
+
+#[test]
+fn contact_runs_free_against_the_cache() {
+    let Some((cache, image)) = cache_and_image() else {
+        return;
+    };
+    let domain = crate::harness::contact::Contact::load(&image).unwrap();
+    hold_domain(&domain, "enemy-interactions", &cache);
+}
+
+#[test]
+fn stateless_null_uses_each_opportunitys_changed_upstream_input() {
+    use crate::harness::{Domain, Field, Interval};
+    struct Stateless;
+    impl Domain for Stateless {
+        const NAME: &'static str = "stateless-witness";
+        type State = u16;
+        type Inputs = u16;
+        type World = ();
+        type Fields = u16;
+        type Skip = Infallible;
+        const FIELDS: &'static [Field<u16>] = &[Field {
+            name: "output",
+            same: |a, b| a == b,
+            show: |a| a.to_string(),
+        }];
+        fn decode(&self, from: &FrameRecord, _: Interval) -> Result<(u16, u16), Infallible> {
+            let input = if from.index == 0 { 5 } else { 7 };
+            Ok((input, input))
+        }
+        fn world(&self, _: &FrameRecord, _: &FrameRecord) -> Result<(), Infallible> {
+            Ok(())
+        }
+        fn step(&self, output: &mut u16, input: &u16, (): &mut ()) {
+            *output = *input;
+        }
+        fn fields(&self, output: &u16) -> u16 {
+            *output
+        }
+        fn expected(&self, next: &FrameRecord) -> Result<u16, Infallible> {
+            Ok(if next.index == 1 { 5 } else { 7 })
+        }
+        fn stateless_outputs(&self) -> bool {
+            true
+        }
+    }
+    let report = run(&Stateless, clock(&[0, 0, 0])).unwrap();
+    assert_eq!(
+        (report.compared(), report.held, report.null_held),
+        (2, 2, 2)
+    );
+    assert_eq!(report.row_ends, 1);
 }

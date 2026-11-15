@@ -30,6 +30,8 @@ pub enum ImportError {
     Aim,
     /// Dress variants of one named pose disagree about its cannon origin.
     PoseConflict,
+    /// Ordinary trail animation has a frame or command before termination.
+    NonEmptyPowerTrail,
 }
 
 /// Original places of one clip, for record decoding and reconstruction only.
@@ -67,6 +69,14 @@ pub struct Imported {
 ///
 /// Returns [`ImportError`] for malformed content or inconsistent pose identities.
 pub fn import(rom: Lorom<'_>) -> Result<Imported, ImportError> {
+    // These are the two ordinary family references, not the heading-offset table.
+    // A zero first duration terminates before either a picture or command is consumed.
+    for table in [0xb5bb, 0xb609] {
+        let animation = word(rom, 0x90, table)?;
+        if word(rom, 0x90, animation)? != 0 {
+            return Err(ImportError::NonEmptyPowerTrail);
+        }
+    }
     let descriptor = word(rom, 0x93, 0x83c1)?;
     let damage = Damage::try_from(word(rom, 0x93, descriptor)?).map_err(|_| ImportError::Damage)?;
     let mut pools = Pools::default();
@@ -119,6 +129,7 @@ pub fn import(rom: Lorom<'_>) -> Result<Imported, ImportError> {
                 impact,
                 damage,
                 trails: pools.trails,
+                trail_presentation: data::assets::projectile::TrailPresentation::EndsImmediately,
             },
             muzzles,
         },

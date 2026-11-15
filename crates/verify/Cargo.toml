@@ -17,6 +17,7 @@ samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
 world_doors = { path = "../clean/world_doors" }
 weapons_projectiles = { path = "../clean/weapons_projectiles" }
+enemy_interactions = { path = "../clean/enemy_interactions" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 import = { path = "../import" }

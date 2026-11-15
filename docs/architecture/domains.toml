@@ -67,6 +67,10 @@ rounds = 1
 name = "weapons-projectiles"
 rounds = 1
 
+[[model]]
+name = "enemy-interactions"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -241,6 +245,8 @@ status = "in-progress"
 
 [[domain]]
 id = "C1"
+model = "enemy-interactions"
+status = "in-progress"
 name = "Fighting enemies"
 area = "enemy"
 wave = 2

@@ -192,7 +192,7 @@ fn step(
 ) -> Result<(Frame, Next), SessionFault> {
     Ok(match frame {
         Frame::MainLoop(at) => {
-            let (at, next) = main_loop(at, state, rules);
+            let (at, next) = main_loop(at, state, rules, content)?;
             (Frame::MainLoop(at), next)
         }
         Frame::Gameplay(at) => {
@@ -254,8 +254,13 @@ const AFTER_GAME_STATE: [MainLoopPhase; 3] = [
 ];
 
 /// One step of the main loop from `at`.
-fn main_loop(at: MainLoopAt, state: &mut State, rules: Rules) -> (MainLoopAt, Next) {
-    match at {
+fn main_loop(
+    at: MainLoopAt,
+    state: &mut State,
+    rules: Rules,
+    content: &Content,
+) -> Result<(MainLoopAt, Next), SessionFault> {
+    Ok(match at {
         MainLoopAt::Start => {
             main_loop_phase(MainLoopPhase::HdmaObjects, state, rules);
             (MainLoopAt::AfterHdmaObjects, Next::Sync)
@@ -266,7 +271,7 @@ fn main_loop(at: MainLoopAt, state: &mut State, rules: Rules) -> (MainLoopAt, Ne
             }
             (
                 MainLoopAt::AfterGameState,
-                Next::Call(game_state(state.mode)),
+                Next::Call(game_state(state, content)?),
             )
         }
         MainLoopAt::AfterGameState => {
@@ -275,13 +280,19 @@ fn main_loop(at: MainLoopAt, state: &mut State, rules: Rules) -> (MainLoopAt, Ne
             }
             (MainLoopAt::Start, Next::Yield(Wait::Nmi))
         }
-    }
+    })
 }
 
 /// The frame the game state dispatch calls.
-const fn game_state(mode: GameMode) -> Frame {
-    match mode {
-        GameMode::Gameplay => Frame::Gameplay(GameplayAt::Start),
+fn game_state(state: &State, content: &Content) -> Result<Frame, SessionFault> {
+    match state.mode {
+        GameMode::Gameplay => Ok(Frame::Gameplay(GameplayAt::Start)),
+        GameMode::PassageEntry { .. } => {
+            crate::selected_doorway::validate(state, content).map_err(SessionFault::Passage)?;
+            Err(SessionFault::Passage(
+                crate::selected_doorway::PassageFault::MissingRuntime,
+            ))
+        }
     }
 }
 
@@ -398,6 +409,8 @@ const AFTER_PLMS: [GameplayPhase; 13] = [
 struct Pass {
     /// Samus's pose requests, from her current state to her new state.
     requests: pose::PoseRequests,
+    /// Ordinary W1 requests, consumed within the uninterrupted gameplay pass.
+    power: crate::weapons_projectiles_bridge::FrameRequests,
     /// The enemies processing this frame, from the selection to the main enemy routine.
     active: crate::enemy::Active,
     /// The PLM whose instruction called out of the PLM pass, which ends the step.
@@ -416,6 +429,18 @@ fn gameplay(
             let mut pass = Pass::default();
             for phase in THROUGH_PLMS {
                 gameplay_phase(phase, state, rules, content, &mut pass)?;
+            }
+            if state.projectiles.ordinary().is_some() {
+                if pass.callout.is_some() {
+                    return Err(SessionFault::Power(
+                        crate::weapons_projectiles_bridge::Fault::Applicability,
+                    ));
+                }
+                // Ordinary transient requests remain in this pass through their drawing destination.
+                for phase in AFTER_PLMS {
+                    gameplay_phase(phase, state, rules, content, &mut pass)?;
+                }
+                return Ok((GameplayAt::Start, Next::Return));
             }
             // An item's pickup called out of the PLM pass.
             let next = pass
@@ -440,13 +465,14 @@ fn gameplay(
 fn samus_current_state(
     state: &mut State,
     content: &Content,
+    power_requests: &mut crate::weapons_projectiles_bridge::FrameRequests,
 ) -> Result<pose::PoseRequests, SessionFault> {
     // While the elevator carries her, the locked current state handler (`$90:E713`, from
     // `$91:E44D`) neither sets her radius nor runs the pose input handler, which would
     // return at once anyway (`$91:805C`).
     let reads = blocks(state, content);
     if pose::carried(&state.samus, state.elevator) {
-        crate::projectile::handle(state, reads).map_err(SessionFault::Projectile)?;
+        weapons_pre(state, content, reads, true, power_requests)?;
         state.movement_travel.0.refresh();
         state.pending_aim.0 = None;
         return Ok(pose::PoseRequests::default());
@@ -456,13 +482,46 @@ fn samus_current_state(
     // open: the suit palette index and the Y acceleration (`$90:E6B6`, `$90:E6B9`) run
     // between the input handler and the inside handling.
     inside::handle(&mut state.room, &state.samus, reads).map_err(SessionFault::Blocks)?;
-    crate::projectile::current_state(state, reads).map_err(SessionFault::Projectile)?;
+    weapons_pre(state, content, reads, false, power_requests)?;
     // Normal PRE clears only after the projectile pass consumed the preceding interval.
     state.movement_travel.0.refresh();
     state.pending_aim.0 = None;
     Ok(requests)
 }
 
+/// Deliver W1 events before the normal PRE clears its neighbouring receipts.
+fn weapons_pre(
+    state: &mut State,
+    content: &Content,
+    reads: crate::world_blocks_bridge::Reads<'_>,
+    locked: bool,
+    requests: &mut crate::weapons_projectiles_bridge::FrameRequests,
+) -> Result<(), SessionFault> {
+    if state.projectiles.ordinary().is_some() {
+        let power = content.ordinary_power.as_ref().ok_or(SessionFault::Power(
+            crate::weapons_projectiles_bridge::Fault::Content,
+        ))?;
+        let input = crate::weapons_projectiles_bridge::frame_input(state, power, locked)
+            .map_err(SessionFault::Power)?;
+        let crate::state::projectile::ProjectileOwner::OrdinaryPower(owner) =
+            &mut state.projectiles
+        else {
+            return Err(SessionFault::Power(
+                crate::weapons_projectiles_bridge::Fault::Applicability,
+            ));
+        };
+        *requests = crate::weapons_projectiles_bridge::update(owner, &input, &state.room, power)
+            .map_err(SessionFault::Power)?;
+        if requests.pending_aim_consumed {
+            state.pending_aim.0 = None;
+        }
+        Ok(())
+    } else if locked {
+        crate::projectile::handle(state, reads).map_err(SessionFault::Projectile)
+    } else {
+        crate::projectile::current_state(state, reads).map_err(SessionFault::Projectile)
+    }
+}
 /// What the blocks read in `state`'s room: the content's blocks and the room's population.
 fn blocks<'a>(state: &State, content: &'a Content) -> crate::world_blocks_bridge::Reads<'a> {
     crate::world_blocks_bridge::Reads {
@@ -482,7 +541,9 @@ fn gameplay_phase(
     pass: &mut Pass,
 ) -> Result<(), SessionFault> {
     match phase {
-        GameplayPhase::SamusCurrentState => pass.requests = samus_current_state(state, content)?,
+        GameplayPhase::SamusCurrentState => {
+            pass.requests = samus_current_state(state, content, &mut pass.power)?;
+        }
         // The movement handler, the pose the moves ask for (`$91:E8B6`) and the pose update,
         // then her animation, whose model plays her clip and starts the one of the pose she
         // took (`$90:E725`).
@@ -505,6 +566,7 @@ fn gameplay_phase(
             let stepped = samus_movement_bridge::step::step(&mut state.samus, inputs, &mut touches)
                 .map_err(SessionFault::Samus)?;
             if let Some(stepped) = &stepped {
+                select_passage(state, &stepped.outcome.reached, content)?;
                 state.movement_travel.0.travels = stepped.outcome.travelled;
                 if stepped.outcome.placed.is_some() {
                     world_camera_bridge::remember(
@@ -542,7 +604,9 @@ fn gameplay_phase(
         GameplayPhase::HealthAndTime => state.clock.game_time.tick(),
         GameplayPhase::Hud => hud_turn(state, content).map_err(SessionFault::Hud)?,
         GameplayPhase::EnemySelection => pass.active = crate::enemy::select(state),
-        GameplayPhase::Enemies => crate::enemy::run(state, &pass.active, content),
+        GameplayPhase::Enemies => {
+            crate::enemy::run(state, &pass.active, content).map_err(SessionFault::Power)?;
+        }
         // `$84:85B4`.
         GameplayPhase::Plms => {
             let population = content.room_plms.of(state.room.room);
@@ -560,7 +624,8 @@ fn gameplay_phase(
             world_camera_bridge::scroll(&mut state.camera.0, &mut state.room, &mut state.samus)
                 .map_err(SessionFault::Room)?;
         }
-        GameplayPhase::Draw => crate::enemy::drawing::draw(state, content),
+        GameplayPhase::Draw => crate::enemy::drawing::draw(state, content, &mut pass.power)
+            .map_err(SessionFault::Power)?,
         GameplayPhase::BgScroll => bg_scroll(state, content),
         GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
@@ -573,6 +638,22 @@ fn gameplay_phase(
         | GameplayPhase::RoomMain
         | GameplayPhase::RoomShaking
         | GameplayPhase::HurtTimers => {}
+    }
+    Ok(())
+}
+
+/// Select the passage reached by the checked ordinary projectile owner.
+fn select_passage(
+    state: &mut State,
+    reached: &[types::Touch],
+    content: &Content,
+) -> Result<(), SessionFault> {
+    // Legacy retains its documented missing-passage behavior until that owner joins.
+    if state.projectiles.ordinary().is_some()
+        && let Some(doorway) = crate::selected_doorway::select(&state.room, reached, content)
+            .map_err(SessionFault::Passage)?
+    {
+        state.mode = GameMode::PassageEntry { doorway };
     }
     Ok(())
 }
@@ -636,7 +717,14 @@ mod firing_history_tests {
         state.samus.movement = data::pose::MovementType::Standing;
         state.elevator.status = crate::state::room::ElevatorStatus::LeavingRoom;
         state.pending_aim.0 = Some(types::FiringDirection::DownFacingRight);
-        assert!(super::samus_current_state(&mut state, &crate::Content::default()).is_ok());
+        assert!(
+            super::samus_current_state(
+                &mut state,
+                &crate::Content::default(),
+                &mut crate::weapons_projectiles_bridge::FrameRequests::default()
+            )
+            .is_ok()
+        );
         assert_eq!(state.pending_aim.0, None);
     }
 
@@ -644,7 +732,14 @@ mod firing_history_tests {
     fn ordinary_pre_clears_pending_even_without_a_shot() {
         let mut state = crate::state::State::default();
         state.pending_aim.0 = Some(types::FiringDirection::UpFacingLeft);
-        assert!(super::samus_current_state(&mut state, &crate::Content::default()).is_ok());
+        assert!(
+            super::samus_current_state(
+                &mut state,
+                &crate::Content::default(),
+                &mut crate::weapons_projectiles_bridge::FrameRequests::default()
+            )
+            .is_ok()
+        );
         assert_eq!(state.pending_aim.0, None);
     }
 }

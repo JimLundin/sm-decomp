@@ -1,0 +1,330 @@
+# One contact opportunity per vector; repeat=2 applies its returned marker before a second door.
+# Conditions are named current facts; protection is measured before this opportunity's countdown.
+# All cases constructed; observation cases translate actor and shot centres together to invented centres.
+# Observations use invented centres. No imported content is present.
+# Five stable shots; after.slot=-1 means no consumption; all behaviours Fixed.
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-inside"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-disabled-actors"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = false, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Passable", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-passable"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "WithoutFigure", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-no-figure"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 0
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-count-zero"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1012, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-edge"
+entries = ["BoxOverlap", "ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2036], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-y-edge"
+entries = ["BoxOverlap"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [989, 1965], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-negative"
+entries = ["BoxOverlap"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [2, 2], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [65535, 65535], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-wrap"
+entries = ["BoxOverlap"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [33768, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-half-world"
+entries = ["BoxOverlap"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [0, 0] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-zero-radius"
+entries = ["BoxOverlap"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 2
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-first"
+entries = ["FirstPowerShot"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Free" }, { kind = "Impact" }, { kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }]
+id = "C-skip-free-impact"
+entries = ["FirstPowerShot"]
+source = "constructed"
+after = { slot = 2 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = true }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-already-consumed"
+entries = ["FirstPowerShot"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [2000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-miss"
+entries = ["FirstPowerShot"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+repeat = 2
+id = "C-two-doors"
+entries = ["FirstPowerShot"]
+source = "constructed"
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1163, 2268], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-157-door-0"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 157
+actor = 0
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [971, 2012], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-157-door-1"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 157
+actor = 1
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1169, 2271], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-158-door-0"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 158
+actor = 0
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [977, 2015], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-158-door-1"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 158
+actor = 1
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1175, 2274], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-159-door-0"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 159
+actor = 0
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [983, 2018], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-159-door-1"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 159
+actor = 1
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1181, 2277], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-160-door-0"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 160
+actor = 0
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [989, 2021], radius = [8, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-record-160-door-1"
+entries = ["ContactAllowed", "BoxOverlap", "FirstPowerShot"]
+source = "constructed"
+frame = 160
+actor = 1
+after = { slot = 0 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+observation = "translated geometry"
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-disabled-interactions"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = false, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-Samus-stopped"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = true, enemies_stopped = false, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-enemies-stopped"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = true, processing_member = true, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-not-processing"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = false, protection = 0 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-protected-one"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 1 }
+
+[[vector]]
+count = 1
+door = { kind = "Box", centre = [1000, 2000], radius = [8, 32] }
+shots = [{ kind = "Power", centre = [1000, 2000], radius = [4, 4], consumed = false }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }, { kind = "Free" }]
+id = "C-protected-two"
+entries = ["ContactAllowed"]
+source = "constructed"
+after = { slot = -1 }
+conditions = { actor_updates = true, interactions = true, Samus_stopped = false, enemies_stopped = false, processing_member = true, protection = 2 }

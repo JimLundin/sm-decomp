@@ -234,6 +234,10 @@ pub enum Memory {
 /// Why a record has no State.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DecodeError {
+    /// Independently decoded ordinary producer facts are unavailable or unsupported.
+    OrdinaryPowerFacts,
+    /// The ordinary owner cannot represent the source caller or complete content state.
+    OrdinaryPowerOwner,
     /// The record's work RAM ends before the named source.
     WramTooShort {
         /// The source's `ram_map.rs` name.
@@ -273,6 +277,8 @@ pub enum DecodeError {
 impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::OrdinaryPowerFacts => write!(f, "unsupported ordinary power seed facts"),
+            Self::OrdinaryPowerOwner => write!(f, "unsupported ordinary power seed owner"),
             Self::WramTooShort { source } => write!(f, "work RAM ends before {source}"),
             Self::WrongSize {
                 memory,
@@ -366,6 +372,8 @@ pub struct Rules<'t> {
     pub repeat_delay: WramWord,
     /// `mode`.
     pub game_state: WramWord,
+    /// The physical enemy routine count retained for hurt-flash phase.
+    pub enemy_routine_count: WramWord,
     /// `room.room`.
     pub room: WramWord,
     /// `video.nmi_requested`.
@@ -985,6 +993,7 @@ impl Rules<'_> {
         repeat: source::JOYPAD1_NEWKEYS2_UNUSED,
         repeat_delay: source::JOYPAD1_KEYREPEAT_CTR,
         game_state: source::GAME_STATE,
+        enemy_routine_count: source::ENEMY_ROUTINE_COUNT,
         room: source::ROOM_PTR,
         nmi_requested: source::WAITING_FOR_NMI,
         oam_buffer: source::OAM,
@@ -1194,6 +1203,17 @@ impl Rules<'_> {
         if game_state != MAIN_GAMEPLAY {
             return Err(DecodeError::Unsupported(Unsupported::GameState(game_state)));
         }
+        self.decode_mode(record, rooms, GameMode::Gameplay)
+    }
+
+    // Only certificate-gated verifier callers can decode a completed entry snapshot.
+    fn decode_mode(
+        &self,
+        record: &FrameRecord,
+        rooms: &RoomMap,
+        mode: GameMode,
+    ) -> Result<Decoded, DecodeError> {
+        let wram = &*record.wram;
         let header = RoomHeader(self.room.read(wram)?);
         let room = rooms.get(header).ok_or(DecodeError::UnknownRoom(header))?;
         let nmi = match record.cut {
@@ -1252,7 +1272,7 @@ impl Rules<'_> {
                 repeat: buttons(self.repeat.read(wram)?),
                 repeat_delay: Frames(self.repeat_delay.read(wram)?),
             },
-            mode: GameMode::Gameplay,
+            mode,
             timing: Timing {
                 last,
                 ..Timing::default()
@@ -1273,7 +1293,9 @@ impl Rules<'_> {
             collected_items: collected_items(self.collected_items, wram)?,
             hud: self.hud.read(wram)?,
             sram: save_ram(&record.sram)?,
-            projectiles: self.projectiles.read(wram)?,
+            projectiles: game::state::projectile::ProjectileOwner::Legacy(
+                self.projectiles.read(wram)?,
+            ),
         };
         Ok(Decoded { state, quiescence })
     }
@@ -1321,6 +1343,7 @@ impl Rules<'_> {
             item_gfx: self.item_gfx.read(wram)?,
             enemies: self.enemies.read(wram, &rooms.species, &rooms.programs)?,
             drawing: EnemyDrawing {
+                routine_count: self.enemy_routine_count.read(wram)?,
                 hook: self.drawn_hook.read(wram)?,
                 ..EnemyDrawing::default()
             },
@@ -2451,4 +2474,111 @@ pub(crate) fn pending_aim(wram: &[u8]) -> Result<Option<types::FiringDirection>,
         }
     };
     Ok(Some(heading))
+}
+
+/// Decode an independently certified ordinary gameplay seed; the next record is never an input.
+///
+/// # Errors
+/// Unsupported R1/caller, invalid ordinary content/producer facts or any base State decode defect.
+pub fn decode_ordinary(
+    record: &FrameRecord,
+    rooms: &RoomMap,
+    weapons: &crate::harness::weapons::Weapons,
+    content: &game::weapons_projectiles_bridge::PowerContent,
+) -> Result<Decoded, DecodeError> {
+    let mut decoded = decode(record, rooms)?;
+    let facts = crate::harness::weapons::Weapons::ordinary_seed_facts(record)
+        .map_err(|_| DecodeError::OrdinaryPowerFacts)?;
+    let owner = weapons
+        .ordinary_owner(record, facts, content)
+        .map_err(|_| DecodeError::OrdinaryPowerOwner)?;
+    decoded.state.projectiles = game::state::projectile::ProjectileOwner::OrdinaryPower(owner);
+    Ok(decoded)
+}
+
+// This token cannot be constructed outside the decoder's fully checked entry path.
+#[cfg(test)]
+pub(crate) struct CompletedEntry<'a> {
+    record: &'a FrameRecord,
+}
+#[cfg(test)]
+impl CompletedEntry<'_> {
+    pub(crate) fn record(&self) -> &FrameRecord {
+        self.record
+    }
+}
+
+/// Decode a completed ordinary touch cut, with a separately certified pending entry.
+/// Generic gameplay/lockstep admission is deliberately unchanged.
+/// # Errors
+/// Any missing entry certificate, imported identity or strict ordinary field rejects.
+#[cfg(test)]
+pub(crate) fn decode_ordinary_completed_entry(
+    record: &FrameRecord,
+    previous: &FrameRecord,
+    rooms: &RoomMap,
+    weapons: &crate::harness::weapons::Weapons,
+    content: &game::weapons_projectiles_bridge::PowerContent,
+    world: &data::assets::world::World,
+) -> Result<Decoded, DecodeError> {
+    use game::state::strand::{Frame, MainLoopAt, Wait};
+    let read_word = |offset| {
+        source::WramWord {
+            name: "PASSAGE_ENTRY",
+            offset,
+        }
+        .read(&record.wram)
+    };
+    let game_state = source::GAME_STATE.read(&record.wram)?;
+    let rejected = || DecodeError::Unsupported(Unsupported::GameState(game_state));
+    if game_state != 9
+        || read_word(0x099C)? != 0xE17D
+        || source::GAME_STATE.read(&previous.wram)? != MAIN_GAMEPLAY
+        || source::ROOM_PTR.read(&record.wram)? != source::ROOM_PTR.read(&previous.wram)?
+        || read_word(0x07BB)?
+            != (source::WramWord {
+                name: "ROOM_STATE",
+                offset: 0x07BB,
+            })
+            .read(&previous.wram)?
+    {
+        return Err(rejected());
+    }
+    let Cut::NmiReturn(nmi) = record.cut else {
+        return Err(rejected());
+    };
+    if nmi.kind != NmiKind::Requested || !matches!(nmi.interrupted_pc, 0x0080_8343 | 0x0080_8346) {
+        return Err(rejected());
+    }
+    let doorway = import::world::doorway(data::rom::RomAddress::new(0x83, read_word(0x078D)?))
+        .ok_or_else(rejected)?;
+    let mut decoded =
+        Rules::ORIGINAL.decode_mode(record, rooms, GameMode::PassageEntry { doorway })?;
+    if decoded.state.main.waiting != Some(Wait::Nmi)
+        || !matches!(
+            decoded.state.main.frames.as_slice(),
+            [Frame::MainLoop(MainLoopAt::Start)]
+        )
+    {
+        return Err(rejected());
+    }
+    let source_room = world.room(decoded.state.room.room).ok_or_else(rejected)?;
+    if !source_room
+        .doors
+        .contains(&data::assets::world::Door::To(doorway))
+        || world
+            .doorway(doorway)
+            .and_then(|arrival| world.room(arrival.room))
+            .is_none()
+    {
+        return Err(rejected());
+    }
+    let certificate = CompletedEntry { record };
+    let facts = crate::harness::weapons::Weapons::ordinary_seed_facts(record)
+        .map_err(|_| DecodeError::OrdinaryPowerFacts)?;
+    let owner = weapons
+        .completed_entry_owner(&certificate, facts, content)
+        .map_err(|_| DecodeError::OrdinaryPowerOwner)?;
+    decoded.state.projectiles = game::state::projectile::ProjectileOwner::OrdinaryPower(owner);
+    Ok(decoded)
 }

@@ -80,6 +80,10 @@ frames exceed the null model's by the smallest share of what it compares; a doma
 no more than the null model gains nothing. So "100 % held" beside a small gain says the rows
 don't move that domain's fields, not that its model is proven.
 
+A stateless domain has no retained model State: its output receipt's null leaves the
+independently predicted current neighbour output unchanged at each opportunity, under the
+same admission and masks. Stateful domains continue carrying their seed fields unchanged.
+
 ## The ratchets and floors
 
 Before replay, CI requires every row named by either harness floor file. Its shared corpus

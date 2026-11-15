@@ -105,6 +105,13 @@ struct Apart {
 /// The rebuilt domains, in the report's order. Adding one is one entry.
 const DOMAINS: &[Domain] = &[
     Domain {
+        name: "enemy-interactions",
+        bridge: "enemy_interactions_bridge",
+        harness: "contact",
+        areas: &[("contact", &["lib.rs"])],
+        apart: &[],
+    },
+    Domain {
         name: "weapons-projectiles",
         bridge: "weapons_projectiles_bridge",
         harness: "weapons",

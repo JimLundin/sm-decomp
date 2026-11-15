@@ -157,6 +157,12 @@ pub const GAME_STATE: WramWord = WramWord {
     offset: 0x0998,
 };
 
+/// The physical main enemy routine count used by hurt-flash drawing.
+pub const ENEMY_ROUTINE_COUNT: WramWord = WramWord {
+    name: "ENEMY_ROUTINE_COUNT",
+    offset: 0x0E44,
+};
+
 /// Bank $90 log: Samus's X position, whole pixels.
 pub const SAMUS_X_POS: WramWord = WramWord {
     name: "SAMUS_X_POS",
@@ -1295,6 +1301,11 @@ pub const MAP_TILES_EXPLORED: WramBlock = WramBlock {
 pub const AREA_INDEX: WramWord = WramWord {
     name: "AREA_INDEX",
     offset: 0x079F,
+};
+/// Bank $A0 log, `$A0:8ECA`: admit all live enemies regardless of the camera window.
+pub const GLOBAL_OFF_SCREEN_ENEMY_PROCESSING: WramWord = WramWord {
+    name: "GLOBAL_OFF_SCREEN_ENEMY_PROCESSING",
+    offset: 0x183C,
 };
 /// Bank $90 log, `$90:A94B`: the room's left column on the area map.
 pub const ROOM_X_COORDINATE_ON_MAP: WramWord = WramWord {

@@ -109,7 +109,8 @@ jobs:
       - *cache
       - *rom
       - *decrypt
-      - name: Fetch the relock bundle and check its pin
+      - &relock_fetch
+        name: Fetch the relock bundle and check its pin
         run: |
           # The lock's one bundles entry: its ci-data name and its ciphertext's SHA-256.
           entry='^bundles = \[\{ name = "([^"]+)", sha256 = "([0-9a-f]{64})" \}\]$'
@@ -122,7 +123,8 @@ jobs:
             --output "$RUNNER_TEMP/relock.tar.gz.enc" \
             "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$name"
           echo "$sha  $RUNNER_TEMP/relock.tar.gz.enc" | sha256sum --check
-      - name: Decrypt the relock bundle
+      - &relock_unpack
+        name: Decrypt the relock bundle
         run: |
           # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (docs/ORACLE.md).
           SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
@@ -182,6 +184,26 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
             -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
+      - *relock_fetch
+      - *relock_unpack
+      - name: "Ordinary production: public admission, complete-cut minimum and entry rejection"
+        run: |
+          set -o pipefail
+          export SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc"
+          export SM_BUNDLE="$RUNNER_TEMP/relock/relock-v2-lsnes"
+          test -f "$SM_ROM"
+          test -d "$SM_CACHE"
+          test -f "$SM_BUNDLE/seeds/any-boundary/0003.record"
+          test -f "$SM_BUNDLE/pads/chain-any-0003-DFD7.pads"
+          replay=harness::ordinary_power_replay::m0_ordinary_owner_runs_once_from_seed_through_first_actual_unsupported_boundary
+          cargo test --locked -p verify --profile verify "$replay" -- --exact --nocapture | tee "$RUNNER_TEMP/ordinary-replay.txt"
+          grep -q "^test $replay \.\.\. ok$" "$RUNNER_TEMP/ordinary-replay.txt"
+          awk '/^ordinary replay reached=/ { split($3,r,"="); split($4,c,"="); split($5,s,"="); split($6,o,"="); split($7,v,"="); if (r[2]>=183 && c[2]==r[2] && s[2]==r[2] && o[2]==r[2] && v[2]==r[2]) held=1 } END { exit !held }' "$RUNNER_TEMP/ordinary-replay.txt"
+          for test_name in public_ordinary_seed_admission_rejects_an_unsupported_owner_without_legacy_fallback completed_entry_certificate_rejects_later_passage_and_invalid_entry_facts; do
+            test=harness::ordinary_power_replay::$test_name
+            cargo test --locked -p verify --profile verify "$test" -- --exact --nocapture | tee "$RUNNER_TEMP/ordinary-rejection.txt"
+            grep -q "^test $test \.\.\. ok$" "$RUNNER_TEMP/ordinary-rejection.txt"
+          done
       - name: "Corpus preflight: every committed floor row is readable before replay"
         run: |
           set -o pipefail
@@ -208,7 +230,7 @@ jobs:
             | tee "$RUNNER_TEMP/floors.txt"
           for test in the_clock_holds_its movement_holds_its the_camera_holds_its \
             progress_holds_its appearance_holds_its the_hud_holds_its the_blocks_hold_their \
-            the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their; do
+            the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their contact_holds_its; do
             grep -q "^test harness::tests::${test}_floors_against_the_cache \.\.\. ok$" \
               "$RUNNER_TEMP/floors.txt"
           done
@@ -259,6 +281,18 @@ jobs:
             "$RUNNER_TEMP/ceres-moonwalk.txt"
           grep -Fxq 'Ceres moonwalk: pose and pending Left match; row pending 576 compared, 0 differed' \
             "$RUNNER_TEMP/ceres-moonwalk.txt"
+      - name: "Recorded contact and caller witnesses"
+        run: |
+          set -euo pipefail
+          for witness in \
+            harness::gameplay_caller::tests::preceding_permissions_and_completed_endpoint_are_independent \
+            harness::weapons::tests::quiet_prediction_requires_valid_borrowed_inputs_before_update \
+            harness::contact::tests::recorded_m0_has_four_live_searches_and_one_hit_from_preceding_w1_execution; do
+            SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+              cargo test --locked -p verify --profile verify "$witness" -- --exact --nocapture \
+              | tee "$RUNNER_TEMP/contact-caller-witness.txt"
+            grep -Fxq "test $witness ... ok" "$RUNNER_TEMP/contact-caller-witness.txt"
+          done
       - name: "Domain free run: every domain fed its own State over every cached row, against free_floors.txt"
         run: |
           # The primary proof (MODEL §4): each row's segments, first divergences and held frames
@@ -267,8 +301,8 @@ jobs:
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
             cargo test --locked -p verify --profile verify every_domain_runs_free_against_the_cache -- --nocapture \
             | tee "$RUNNER_TEMP/free.txt"
-          # One total per domain: the clock and the nine models.
-          test "$(grep -c '^all rows: ' "$RUNNER_TEMP/free.txt")" -eq 10
+          # One total per domain: the clock and the ten models.
+          test "$(grep -c '^all rows: ' "$RUNNER_TEMP/free.txt")" -eq 11
       - name: "Progress's ROM checks: the harness cases, the rows' standing room states and the full percentage"
         run: |
           # Each test skips and passes only with both SM_CACHE and SM_ROM unset, which this step

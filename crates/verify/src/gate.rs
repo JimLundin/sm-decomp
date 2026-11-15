@@ -145,6 +145,26 @@ impl Seed {
         };
         Ok(Self { state, rules })
     }
+    /// Admit checked ordinary power from the native preceding record, with no Legacy fallback.
+    /// This capability owns modeled State and OAM, not sound output: FireSound/ImpactSound
+    /// are disposed in the no-APU path and Protection has checked inactive-reader scope.
+    /// # Errors
+    /// Unsupported owner facts, content, caller or any base State decode failure.
+    pub fn decode_ordinary(
+        record: &FrameRecord,
+        rooms: &RoomMap,
+        weapons: &crate::harness::weapons::Weapons,
+        power: &game::weapons_projectiles_bridge::PowerContent,
+    ) -> Result<Self, DecodeError> {
+        let state = crate::decode::decode_ordinary(record, rooms, weapons, power)?.state;
+        Ok(Self {
+            state,
+            rules: Rules {
+                switches: Switches::REFERENCE,
+                auto_repeat: auto_repeat(record)?,
+            },
+        })
+    }
 }
 
 /// Steps `row` freely from `seed`, giving `visit` each frame's State and cut.

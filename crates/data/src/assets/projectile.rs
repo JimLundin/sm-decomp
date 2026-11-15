@@ -28,6 +28,22 @@ pub enum Heading {
     UpFacingLeft,
 }
 
+impl Heading {
+    /// Every aimed direction in the content's declaration order.
+    pub const ALL: [Self; 10] = [
+        Self::UpFacingRight,
+        Self::UpRight,
+        Self::Right,
+        Self::DownRight,
+        Self::DownFacingRight,
+        Self::DownFacingLeft,
+        Self::DownLeft,
+        Self::Left,
+        Self::UpLeft,
+        Self::UpFacingLeft,
+    ];
+}
+
 /// A complete heading map; its shape requires all ten choices.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Headings<T> {
@@ -226,6 +242,13 @@ pub enum TrailAppearance {
     Inactive,
 }
 
+/// The checked presentation of both ordinary power-trail sides.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TrailPresentation {
+    /// Both sides terminate before producing any frame or animation command.
+    EndsImmediately,
+}
+
 /// All content required for uncharged power shots.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PowerBeam {
@@ -239,6 +262,8 @@ pub struct PowerBeam {
     pub damage: Damage,
     /// The trail appearances frames name.
     pub trails: Vec<TrailAppearance>,
+    /// Presentation disposition validated at the content import edge.
+    pub trail_presentation: TrailPresentation,
 }
 
 impl PowerBeam {

@@ -74,8 +74,15 @@ fn beam(x: Fixed, y: Fixed, speed: i16, frame_timer: u16) -> ProjectileBody {
 }
 
 fn fire(state: &mut State, body: ProjectileBody, trail: u16) {
-    state.projectiles.count = ShotCount(1);
-    if let Some(slot) = state.projectiles.slots.slots.first_mut() {
+    state.projectiles.legacy_mut().unwrap().count = ShotCount(1);
+    if let Some(slot) = state
+        .projectiles
+        .legacy_mut()
+        .unwrap()
+        .slots
+        .slots
+        .first_mut()
+    {
         *slot = Slot {
             common: ProjectileCommon {
                 trail_timer: Frames(trail),
@@ -87,7 +94,7 @@ fn fire(state: &mut State, body: ProjectileBody, trail: u16) {
 }
 
 fn slot_zero(state: &State) -> Slot<ProjectileCommon, ProjectileBody> {
-    state.projectiles.slots.slots[0]
+    state.projectiles.legacy().unwrap().slots.slots[0]
 }
 
 #[test]
@@ -226,7 +233,7 @@ fn the_explosion_shows_six_frames_of_three_then_deletes_itself() {
     assert_eq!(slot.occupancy, Occupancy::Free);
     // The clear keeps the trail timer.
     assert_eq!(slot.common.trail_timer, Frames(4));
-    assert_eq!(state.projectiles.count, ShotCount(0));
+    assert_eq!(state.projectiles.legacy_mut().unwrap().count, ShotCount(0));
 }
 
 #[test]
@@ -238,10 +245,10 @@ fn a_beam_past_the_camera_is_cleared_and_the_count_stops_at_zero() {
         beam(at(0x04a1, 0x5f00), at(0x02b2, 0x5f00), 0x037b, 3),
         3,
     );
-    state.projectiles.count = ShotCount(0);
+    state.projectiles.legacy_mut().unwrap().count = ShotCount(0);
     handle(&mut state).unwrap();
     assert_eq!(slot_zero(&state).occupancy, Occupancy::Free);
-    assert_eq!(state.projectiles.count, ShotCount(0));
+    assert_eq!(state.projectiles.legacy_mut().unwrap().count, ShotCount(0));
 }
 
 #[test]
@@ -253,7 +260,7 @@ fn a_deleted_beam_is_cleared_without_moving() {
     handle(&mut state).unwrap();
     assert_eq!(slot_zero(&state).occupancy, Occupancy::Free);
     assert_eq!(slot_zero(&state).common.trail_timer, Frames(3));
-    assert_eq!(state.projectiles.count, ShotCount(0));
+    assert_eq!(state.projectiles.legacy_mut().unwrap().count, ShotCount(0));
 }
 
 #[test]
@@ -275,12 +282,12 @@ fn the_cooldown_counts_down_to_zero_and_a_negative_one_is_zero() {
 #[test]
 fn facing_forward_holds_the_cooldown() {
     let mut state = state();
-    state.projectiles.cooldown = Frames(5);
+    state.projectiles.legacy_mut().unwrap().cooldown = Frames(5);
     current_state(&mut state).unwrap();
-    assert_eq!(state.projectiles.cooldown, Frames(5));
+    assert_eq!(state.projectiles.legacy_mut().unwrap().cooldown, Frames(5));
     state.samus.pose = data::pose::PoseId(1);
     current_state(&mut state).unwrap();
-    assert_eq!(state.projectiles.cooldown, Frames(4));
+    assert_eq!(state.projectiles.legacy_mut().unwrap().cooldown, Frames(4));
 }
 
 #[test]

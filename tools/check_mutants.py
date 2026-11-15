@@ -45,11 +45,20 @@ def reported(output: str, test: str, status: str) -> bool:
                      output, re.MULTILINE) is not None
 
 
-def check_fault(root: Path, fault: Fault) -> bool:
-    path = (root / fault.file).resolve()
+def source_path(root: Path, source: str) -> Path:
+    relative = Path(source)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError("fault source must be a relative path without traversal")
+    path = (root / relative).resolve()
     clean = (root / "crates/clean").resolve()
-    if not path.is_relative_to(clean):
-        raise ValueError(f"{fault.name}: source is outside the clean crates")
+    bridges = (root / "crates/game/src").resolve()
+    if not path.is_relative_to(clean) and not (path.parent == bridges and path.name.endswith("_bridge.rs")):
+        raise ValueError("fault source is outside the clean crates and direct engine bridges")
+    return path
+
+
+def check_fault(root: Path, fault: Fault) -> bool:
+    path = source_path(root, fault.file)
     original = path.read_bytes()
     before, after = fault.before.encode(), fault.after.encode()
     if before == after or not before or original.count(before) != 1:

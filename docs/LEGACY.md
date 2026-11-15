@@ -223,7 +223,7 @@ original's bytes as data.
   the room's loading and the doors (R1, R2), the sound queue (U1).
 - **Her passage through a door** (the samus-movement domain, `docs/behaviours/samus-movement.md`
   `OtherBlockKinds`; `game::samus_movement_bridge`; `$94:938B`, `$94:93CE`): a door that leads to a room
-  lets her move on, as in the original, but the engine has no doors yet, so it starts no passage
+  lets her move on, as in the original. The Legacy owner starts no passage
   (game state 9 and the door pointer `$078D`, set as she reaches the door): she moves on into the
   door's cells and the room goes on running. The harness compares the frame that reaches the door,
   her move, and skips those after it, which aren't gameplay. The missing passage also owns the
@@ -249,8 +249,11 @@ original's bytes as data.
   placing, colours included, on the 11 frames a room places its doors (H1 and H2 among them). Each
   goes with the domain named: R3, U1, B8's later pieces, C1, R2.
 - **The door passage in the engine** (the world-doors domain, `docs/behaviours/world-doors.md`;
-  no bridge yet): the engine runs no passage. Its only game state is gameplay, so the seed
-  decoder refuses a record in a passage (game states 9, Ah and Bh), and a row's frames from her
+  no passage execution bridge yet): checked ordinary ownership retains the selected typed
+  doorway through the complete touch frame and refuses the next passage dispatch. Generic
+  seed decoding still refuses passage records; the bounded completed-entry reference decoder
+  admits only the certified initial delay snapshot, leaving later passage work unsupported.
+  A row's frames from her
   touch of a door until play goes on in the next room are not started by the free-run gate or
   lockstep. The model is proven on its own: the harness (`verify::harness::doors`) and its free
   run hold every passage frame of the cache. The engine runs it once the domains it asks join:
@@ -285,30 +288,25 @@ original's bytes as data.
   masks until the read is decoded (the decode notes, "The harness", her position at the
   mini-map's turn).
 
-## The engine: uncharged power beam awaiting integration
+## The engine: checked ordinary power beam
 
-- **Uncharged power-beam integration** (W1,
+- **Ordinary uncharged power beam** (W1/C1,
   [the spec](behaviours/weapons-projectiles.md) and
-  [decode notes](behaviours/weapons-projectiles.decode.md)): the clean model is checked by
-  `verify::harness::weapons`, but the engine still runs `game::projectile`. It does not fire
-  shots or draw their imported pictures. AF3's `import::projectile::import` supplies complete
-  content; `game::pose::Content::projectile_assets` carries it. `samus_movement::Outcome::travelled`
-  supplies exact directional receipts, retained in the pinned `State.movement_travel` across
-  checkpoints. These are per-direction collision-returned whole and fractional distances.
-  Their write semantics when PRE is skipped remain unproved, and W1 cannon consumption of
-  the retained interval remains unwired. `State.pending_aim` retains movement publication,
-  and `Controller.prior_pressed` retains physical newly pressed controls from drawing;
-  W1 consumption under the configured shoot binding and general locked PRE modes beyond
-  the elevator ride remain unwired. The engine retains the clean camera's height-distance
-  fraction across frames and checkpoints, independently of clamped camera travel. Its W1
-  PRE consumer remains unwired; persistence alone does not establish cannon integration. C1 does not
-  supply player-owned shot contact before each enemy's AI in
-  `game::enemy::run`, so it cannot consume a Flying shot after W1's update (the observed
-  consumption at `chain-any-0003-DFD7` frame 160). The next wiring must install that
-  independent actor event at the per-enemy pre-AI boundary,
-  persist the validated neighbor inputs, hold W1's State through `canonical::model::Model`,
-  and send its separately ordered pictures through the sprite encoder at the presentation
-  camera origin and preceding-cut flicker phase. Until then no W1 whole-engine gain is claimed.
+  [decode notes](behaviours/weapons-projectiles.decode.md)): explicit checked ordinary seed
+  admission owns the complete clean power model, imported content and retained motion, aim,
+  camera and prior-control receipts. PRE through drawing executes in one pass; per-door contact
+  runs before that door's protection decrement. Pictures enter the shared sprite order.
+  The continuous production witness proves at least 183 accepted complete modeled State,
+  owner and all 544 OAM bytes from the native preceding seed through the selected doorway.
+  Its next dispatch refuses missing passage execution and preserves the complete touch State.
+  This is not a full-row or all-output-stream claim. Ordinary admission errors never select
+  Legacy instead. The normal gate still explicitly seeds Legacy, whose documented missing
+  doorway passage behavior remains until passage execution joins.
+- **Ordinary power event consumers**: FireSound and ImpactSound are explicitly disposed in
+  the no-APU path; sound output and queue readiness are not supported. Protection is scoped to
+  the checked inactive-reader caller/actor capability. Unsupported charge, equipment, competing
+  producers, callback actors, content or continuation remain named failures; no U1 behavior or
+  general locked caller support follows from the modeled State/OAM witness.
 - **Shot ContactContinuation** (W2,
   [the W1 decode contract](behaviours/weapons-projectiles.decode.md#world-capability-contactcontinuation)):
   `game::projectile::check_blocks` answers contacts past the level as passing and reads an odd

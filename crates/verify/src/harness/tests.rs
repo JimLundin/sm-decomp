@@ -475,9 +475,9 @@ fn weapons_c1_admission_uses_preceding_inputs_and_never_expected_outputs() {
     );
     assert_eq!(differing_expected.defects.values().sum::<u64>(), 0);
 
-    // A previously unwatched enemy position cannot inherit the receipt's authority.
+    // An unsupported processing actor cannot inherit the supported-door temporal proof.
     let mut changed_input = from.clone();
-    changed_input.wram[0x0f7a] ^= 1;
+    changed_input.wram[0x0f78..0x0f7a].copy_from_slice(&0xe13f_u16.to_le_bytes());
     for expected in [next, &changed_expected] {
         let rejected = run(&domain, pair(&changed_input, expected)).unwrap();
         assert_eq!(rejected.compared, 0);
@@ -1472,4 +1472,45 @@ fn the_huds_harness_cases_hold_against_the_cache() {
         }
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn contact_holds_its_floors_against_the_cache() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let domain = super::contact::Contact::load(&std::fs::read(rom).unwrap()).unwrap();
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let report = run_cached(&domain, &lock, &cache, "chain-any-0003-DFD7").unwrap();
+    let _ = writeln!(std::io::stdout(), "{report}");
+    for mismatch in &report.fields[0].first {
+        let _ = writeln!(
+            std::io::stdout(),
+            "C1 first mismatch frame {} consumed-markers",
+            mismatch.frame.0
+        );
+    }
+
+    let _ = writeln!(
+        std::io::stdout(),
+        "FLOOR harness enemy-interactions chain-any-0003-DFD7 {} 136 {}",
+        report.matched,
+        if report.matched >= 136 {
+            "ok"
+        } else {
+            "FAILED"
+        }
+    );
+    assert_eq!(
+        (
+            report.frames,
+            report.compared,
+            report.matched,
+            report.null_matched
+        ),
+        (344, 136, 136, 135)
+    );
+    assert_eq!(report.defects.values().sum::<u64>(), 208);
+    hold_floors(&domain, "enemy-interactions", &cache);
 }

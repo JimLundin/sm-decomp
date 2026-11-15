@@ -688,7 +688,7 @@ pub const FIELDS: &[Field] = &[
     ),
     // Empty at every Tick's end: the drawing loop empties what the main enemy routine queued.
     open("room.drawing.queues"),
-    open("room.drawing.routine_count"),
+    wram("room.drawing.routine_count", source::ENEMY_ROUTINE_COUNT),
     wram("room.drawing.hook", source::ENEMY_GFX_DRAWN_HOOK),
     wram(
         "enemy_palette_cycle.palette",
@@ -977,6 +977,7 @@ mod tests {
             rules.samus_tiles.bottom,
             rules.layer_blending,
             rules.drawing,
+            rules.enemy_routine_count,
             rules.drawn_hook.pointer,
             rules.palette_cycle.palette,
             rules.palette_cycle.set,

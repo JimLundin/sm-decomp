@@ -7,10 +7,18 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from check_mutants import Fault, check_fault, show_scope
+from check_mutants import Fault, check_fault, show_scope, source_path
 
 
 class MutantCheck(unittest.TestCase):
+    def test_only_clean_models_and_direct_bridges_are_allowed(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        for name in ("crates/clean/enemy_interactions/src/lib.rs", "crates/game/src/enemy_interactions_bridge.rs"):
+            self.assertEqual(source_path(root, name), (root / name).resolve())
+        for name in ("crates/game/src/tick.rs", "crates/game/src/sub/contact_bridge.rs", "crates/game/src_other/contact_bridge.rs", "crates/game/src/../src/contact_bridge.rs", str((root / "crates/game/src/contact_bridge.rs").resolve())):
+            with self.assertRaises(ValueError):
+                source_path(root, name)
+
     def exercise(self, result: tuple[int, str], test: str = "model::floor") -> bool:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

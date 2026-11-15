@@ -40,9 +40,10 @@ things it needs belong to every enemy, so they are the framework's, not this spe
    treats it as it treats a solid enemy (samus-movement), her touch does nothing to
    her or to it, and her shots that reach it end there (a plasma beam's go through, as with any
    enemy that doesn't stop plasma) and do nothing to it. While it is passable none of this
-   happens (`Solid`). Each frame, her motion, her touch and her shots meet a door as blocking if it
-   was solid when the frame began, before its run; it is drawn as it is after its run (§4;
-   original only).
+   happens (`Solid`). Her motion reads the solid interaction membership selected when the frame
+   began. Shots use the separate processing membership and the current door contact state
+   before that door runs, as [enemy-interactions](enemy-interactions.md) specifies. Her touch
+   has no response. Drawing reads the resulting door state (§4).
 4. **Placing.** When a room starts, the framework places each door from the room's content: its
    kind, its facing and its position, in the state `RoomStart` names.
 
@@ -257,8 +258,8 @@ back: a vector's `before` builds it and its `after` reads it.
   [D-open-near-stays, D-start-wait]
 - Her touch while it is solid does nothing to her or to it (Header, Solid contact; original
   only).
-- checked: oracle (whether it is solid, every frame of the cached rows); original only (her touch
-  and her shots: no cached row has her meet a door while it blocks).
+- checked: oracle (whether it is solid, every frame of the cached rows); original only (her touch); shot selection and consumption are checked by
+  [enemy-interactions](enemy-interactions.md).
 
 ### Shown
 - kind: mechanic.
@@ -309,10 +310,11 @@ back: a vector's `before` builds it and its `after` reads it.
 
 - The doors run before she moves: the position they read is hers at the end of the last frame
   (`SheIsNear`).
-- Her motion, her touch and her shots meet a door as blocking if it was solid when the frame began,
-  before its run: the frame a door's `Opening(4)` steps to `Open` it still blocks her, and the
-  frame its `Open` steps to `Closing(1)` it doesn't block her yet. It is drawn as it is after its
-  run (`Solid`, `Shown`; original only: no cached row has her meet a door those frames).
+- Her motion uses the solid interaction membership selected when the frame began: a door
+  opening this frame still blocks her movement, and a door starting to close is not yet in that
+  membership. Shots instead meet each processing door with its current contact state before
+  that door runs; earlier actors' changes remain visible. Drawing reads the resulting door state
+  (`Solid`, `Shown`, [enemy-interactions](enemy-interactions.md)).
 - The doors run in the room's order of its enemies, and a shake one starts is in the frames left
   the next one reads (`EscapeShakes`).
 - The opening sound is asked for in the run that takes `Opening(1)`'s figure.
@@ -333,8 +335,8 @@ back: a vector's `before` builds it and its `after` reads it.
 
 ## 6. Open questions
 
-1. Her touch and her shots on a door while it blocks: no cached row has her meet one (any% never touches a
-   closed door), so `Solid`'s touch and shot arms are the original's only. A short trick movie
-   that walks into a closing door and shoots one would check them.
+1. Her touch on a blocking door remains original-only. The recorded ordinary power-shot contact
+   is covered by [enemy-interactions](enemy-interactions.md);
+   other beam families remain outside that first piece.
 2. `Getaway` with a door of this piece placed: no row places one in that stage (the getaway happens
    in Ridley's room, whose door is a later piece). The arms that read it follow the original.

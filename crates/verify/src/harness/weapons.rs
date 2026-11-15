@@ -1,17 +1,17 @@
 //! W1's uncharged power beam. All inputs and actor boxes come from the preceding cut.
-//! Production integration waits for persisted movement inheritance and C1 events; see LEGACY.
+//!
+//! Checked `OrdinaryPower` production owns the persisted inputs and per-actor C1 events.
+//! The bounded complete modeled State/OAM prefix leaves broader callers and sound unsupported.
 
-use std::collections::BTreeMap;
 use std::fmt;
 
 use data::assets::projectile as asset;
 use data::assets::samus::map;
 use enum_map::EnumMap;
-use oracle_record::{Cut, FrameRecord};
+use oracle_record::FrameRecord;
 use weapons_projectiles as beam;
 
 use super::{Domain, Entry, Field, FieldSet, Interval, Mask, Uncompared};
-use crate::lock::{Frame, Sha256};
 
 const HEADINGS: [beam::Heading; 10] = [
     beam::Heading::UpFacingRight,
@@ -28,7 +28,7 @@ const HEADINGS: [beam::Heading; 10] = [
 
 /// A decode or neighboring capability that this first part cannot answer.
 #[derive(Clone, Debug)]
-pub struct Defect(&'static str);
+pub struct Defect(pub(super) &'static str);
 impl fmt::Display for Defect {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.0)
@@ -69,12 +69,9 @@ fn clip_id(id: asset::ClipId) -> beam::ClipId {
 fn picture(id: u16) -> beam::PictureId {
     beam::PictureId(id.to_string())
 }
-fn appearance(id: u16) -> beam::TrailAppearanceId {
-    beam::TrailAppearanceId(id.to_string())
-}
 
 fn inheritance(wram: &[u8]) -> Result<beam::Inheritance, Defect> {
-    let distance = |whole, fraction| {
+    let distance = |whole, fraction| -> Result<beam::MovementDistance, Defect> {
         Ok(beam::MovementDistance {
             whole: word(wram, whole)?,
             fraction: beam::PixelFraction(word(wram, fraction)?),
@@ -89,8 +86,15 @@ fn inheritance(wram: &[u8]) -> Result<beam::Inheritance, Defect> {
     })
 }
 
+impl From<super::gameplay_caller::Error> for Defect {
+    fn from(error: super::gameplay_caller::Error) -> Self {
+        Self(error.message())
+    }
+}
+
 /// Imported production content and verification-only original-place relations.
 pub struct Weapons {
+    caller: super::gameplay_caller::Caller,
     imported: import::projectile::Imported,
     content: beam::PowerBeam,
     /// A deliberate fault can change a parameter without editing the clean crate.
@@ -104,55 +108,203 @@ impl Weapons {
     pub fn load(image: &[u8]) -> Result<Self, Defect> {
         let rom = data::rom::Rom::new(image.to_vec()).map_err(|_| Defect("ROM import"))?;
         let imported = import::projectile::import(rom.lorom()).map_err(|_| Defect("AF3 import"))?;
-        let source = &imported.content.power;
-        let mut clips = BTreeMap::new();
-        for places in &imported.places.clips {
-            let clip = source.clip(places.id);
-            let frames = clip
-                .frames
-                .iter()
-                .map(|frame| {
-                    Ok::<_, Defect>(beam::Frame {
-                        hold: beam::FrameHold::new(frame.hold.updates())
-                            .ok_or(Defect("AF3 hold conversion"))?,
-                        picture: picture(frame.picture.0),
-                        radius: beam::Axes {
-                            x: beam::Radius(frame.radius.x),
-                            y: beam::Radius(frame.radius.y),
-                        },
-                        trail_appearance: match source
-                            .trails
-                            .get(usize::from(frame.trail_appearance.0))
-                        {
-                            Some(asset::TrailAppearance::PowerBeam(_)) => {
-                                Some(appearance(frame.trail_appearance.0))
-                            }
-                            Some(asset::TrailAppearance::Inactive) => None,
-                            None => return Err(Defect("missing AF3 trail appearance")),
-                        },
-                    })
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            let ending = match clip.end {
-                asset::ClipEnd::Remove => beam::ClipEnding::Remove,
-                asset::ClipEnd::RepeatFrom(frame) => beam::ClipEnding::RepeatFrom(
-                    beam::ClipFrame::new(usize::from(frame.0), clip.frames.len())
-                        .ok_or(Defect("AF3 repeat conversion"))?,
-                ),
-            };
-            clips.insert(clip_id(places.id), beam::Clip { frames, ending });
-        }
-        let content = beam::PowerBeam {
-            damage: beam::Damage::new(source.damage.points())
-                .ok_or(Defect("AF3 damage conversion"))?,
-            flying_clips: EnumMap::from_fn(|h| clip_id(asset::ClipId::Flight(asset_heading(h)))),
-            impact_clip: clip_id(asset::ClipId::Impact),
-            clips,
-        };
+        let content = game::weapons_projectiles_bridge::PowerContent::new(imported.content.clone())
+            .map_err(|_| Defect("AF3 model content conversion"))?
+            .model()
+            .clone();
         Ok(Self {
+            caller: super::gameplay_caller::Caller::load(image)?,
             imported,
             content,
             rules: beam::Rules::REFERENCE,
+        })
+    }
+    /// Independently decode absent neighbouring producers from the same seed cut.
+    /// # Errors
+    /// Missing words, unsupported beam equipment or occupied competing pools.
+    pub fn ordinary_seed_facts(
+        from: &FrameRecord,
+    ) -> Result<game::state::projectile::PowerSeedFacts, Defect> {
+        use game::state::projectile::{
+            ChargeEquipment, GrappleActivity, HyperActivity, PowerSeedFacts, PowerTime,
+            ProducerPool,
+        };
+        let w = |at| word(&from.wram, at);
+        if w(0x0e12)? != 0
+            || w(0x185e)? != 0
+            || w(0x0e16)? != 0
+            || w(0x09d2)? != 0
+            || w(0x0a04)? != 0
+            || !matches!(w(0x0a42)?, 0xe695 | 0xe6c9 | 0xe713)
+        {
+            return Err(Defect(
+                "ordinary seed has unsupported caller interaction or selection",
+            ));
+        }
+        let equipment = w(0x09a6)?;
+        if equipment & !0x1000 != 0 {
+            return Err(Defect("ordinary seed has unsupported beam equipment"));
+        }
+        let pool = |bases: &[usize], count: usize| -> Result<ProducerPool, Defect> {
+            for &base in bases {
+                for offset in (0..count.saturating_mul(2)).step_by(2) {
+                    if w(base.saturating_add(offset))? != 0 {
+                        return Ok(ProducerPool::Occupied);
+                    }
+                }
+            }
+            Ok(ProducerPool::Empty)
+        };
+        let mut other_player_slots = ProducerPool::Empty;
+        for offset in (10..20).step_by(2) {
+            if w(0x0c40_usize.saturating_add(offset))? != 0 {
+                other_player_slots = ProducerPool::Occupied;
+            }
+        }
+        Ok(PowerSeedFacts {
+            beams: game::state::slots::FlagSet::default(),
+            charge: if equipment & 0x1000 == 0 {
+                ChargeEquipment::Unequipped
+            } else {
+                ChargeEquipment::Equipped
+            },
+            charge_history: (
+                game::state::slots::Frames(w(0x0cd0)?),
+                game::state::slots::Frames(w(0x0dc2)?),
+            ),
+            hyper: if w(0x0a76)? == 0 {
+                HyperActivity::Inactive
+            } else {
+                HyperActivity::Active
+            },
+            grapple: if w(0x0d32)? == 0xc4f0 {
+                GrappleActivity::Inactive
+            } else {
+                GrappleActivity::Unsupported
+            },
+            time: if w(0x0a78)? == 0 {
+                PowerTime::Running
+            } else {
+                PowerTime::Stopped
+            },
+            sprite_objects: pool(&[0xef78], 32)?,
+            enemy_projectiles: pool(&[0x1997], 18)?,
+            // Both sides independently remain occupied while their timer word is nonzero.
+            trail_effects: pool(&[0xd658, 0xd67c], 18)?,
+            other_player_slots,
+        })
+    }
+    /// Decode the complete ordinary owner from this cut alone.
+    ///
+    /// # Errors
+    /// Unsupported caller/binding, ambiguous Impact seed or invalid imported references.
+    pub fn ordinary_owner(
+        &self,
+        from: &FrameRecord,
+        facts: game::state::projectile::PowerSeedFacts,
+        content: &game::weapons_projectiles_bridge::PowerContent,
+    ) -> Result<game::state::projectile::OrdinaryPower, Defect> {
+        if word(&from.wram, 0x0998)? != 8 {
+            return Err(Defect(
+                "ordinary ownership requires Gameplay; R1 is unsupported",
+            ));
+        }
+        self.ordinary_owner_fields(from, facts, content)
+    }
+
+    /// Restore only the exact reference cut that passed the completed-entry certificate.
+    #[cfg(test)]
+    pub(crate) fn completed_entry_owner(
+        &self,
+        certificate: &crate::decode::CompletedEntry<'_>,
+        facts: game::state::projectile::PowerSeedFacts,
+        content: &game::weapons_projectiles_bridge::PowerContent,
+    ) -> Result<game::state::projectile::OrdinaryPower, Defect> {
+        self.ordinary_owner_fields(certificate.record(), facts, content)
+    }
+
+    fn ordinary_owner_fields(
+        &self,
+        from: &FrameRecord,
+        facts: game::state::projectile::PowerSeedFacts,
+        content: &game::weapons_projectiles_bridge::PowerContent,
+    ) -> Result<game::state::projectile::OrdinaryPower, Defect> {
+        if word(&from.wram, 0x09b2)? != 0x0040 {
+            return Err(Defect("ordinary engine shoot binding is unsupported"));
+        }
+        let mut decoded = self.state(&from.wram)?;
+        for shot in decoded.slots.values_mut() {
+            match shot {
+                beam::ShotState::Free { .. } => {}
+                beam::ShotState::Impact { .. } => {
+                    return Err(Defect(
+                        "retained Impact trail appearance seed is unsupported",
+                    ));
+                }
+                beam::ShotState::Flying { body, .. } => {
+                    let clip = self
+                        .content
+                        .clips
+                        .get(&body.clip)
+                        .ok_or(Defect("ordinary seed clip"))?;
+                    let displayed = body
+                        .next_frame
+                        .index()
+                        .checked_sub(1)
+                        .and_then(|index| clip.frames.get(index))
+                        .ok_or(Defect(
+                            "ordinary seed has no preceding displayed flight frame",
+                        ))?;
+                    body.trail_appearance
+                        .clone_from(&displayed.trail_appearance);
+                }
+            }
+        }
+        game::state::projectile::OrdinaryPower::from_seed(decoded, facts, content)
+            .map_err(|_| Defect("ordinary seed producer/content capability"))
+    }
+    /// Predict post-W1 bodies exclusively from preceding inputs and imported content.
+    pub(super) fn predict(
+        &self,
+        from: &FrameRecord,
+        interval: Interval,
+    ) -> Result<beam::State, Defect> {
+        let (mut state, input) = self.decode(from, interval)?;
+        let mut world = self.preceding_world(from)?;
+        if let Some(input) = input {
+            world.borrowed.clone()?;
+            let _ = beam::update(&mut state, &input, &self.content, self.rules, &mut world);
+        }
+        self.checked_step(&world)?;
+        Ok(state)
+    }
+    pub(super) fn marker_memory_inputs(&self, from: &FrameRecord) -> Result<(), Defect> {
+        self.caller.marker_memory_inputs(from).map_err(Defect::from)
+    }
+    pub(super) fn contact_start(&self, from: &FrameRecord) -> Result<(), Defect> {
+        self.caller
+            .start(from)
+            .and_then(|()| self.caller.weapon_inputs(from))
+            .and_then(|()| {
+                self.caller.contact_inputs(
+                    from,
+                    &super::contact::processing_receipt(&from.wram)
+                        .map_err(|_| super::gameplay_caller::Error::BorrowedActorInputs)?,
+                )
+            })
+            .map_err(Defect::from)
+    }
+    fn preceding_world(&self, from: &FrameRecord) -> Result<World, Defect> {
+        Ok(World {
+            wram: from.wram.clone(),
+            active: super::contact::processing_receipt(&from.wram)?,
+            caller: self.contact_start(from),
+            borrowed: self.caller.weapon_inputs(from).map_err(Defect::from),
+            completion: Ok(()),
+            defect: None,
+            events: Vec::new(),
+            contacts: 0,
+            actor_hits: 0,
         })
     }
     fn muzzle(&self, pose: u16) -> Result<beam::Muzzle, Defect> {
@@ -303,55 +455,20 @@ impl Weapons {
     }
 }
 
-/// Before-cut world geometry/content and C1's interactive boxes, never after-shot values.
+/// Before-cut geometry/content and source processing receipt, never after-shot values.
 #[derive(Clone)]
 pub struct World {
     wram: Box<[u8]>,
     active: Vec<usize>,
-    observed_c1_receipt: bool,
+    caller: Result<(), Defect>,
+    borrowed: Result<(), Defect>,
+    completion: Result<(), Defect>,
     defect: Option<Defect>,
     events: Vec<beam::Event>,
     contacts: u64,
     actor_hits: u64,
 }
 
-/// Full preceding WRAM identities bind the independently watched pre-AI receipts. A room,
-/// species or selected-field projection cannot prove the earlier actors' cross-effects.
-const OBSERVED_C1_RECEIPTS: [(Frame, &str); 5] = [
-    (
-        Frame(156),
-        "aa0021a536771517434717a5291c1158c77c8c0e529ef8d2dd28bb5c195052be",
-    ),
-    (
-        Frame(157),
-        "9dc898d6660bd089aa31434cfede7cbf72c0fc542aef54c4c1936034a0394297",
-    ),
-    (
-        Frame(158),
-        "3434e9a31081bb09138197aae88821a5fe1ac6b4859400f179d7aa02d4503add",
-    ),
-    (
-        Frame(159),
-        "fe8ceaea4ad75caf9c0c7bf0651cf74b6f3b909a5dbd7ff52de37164cabf72c0",
-    ),
-    (
-        Frame(160),
-        "df0e3d3ac8dcfe59a22c642b188616920fbc93bd187f42ee7090713c69bc265f",
-    ),
-];
-
-fn has_observed_c1_receipt(from: &FrameRecord) -> bool {
-    if !matches!(from.cut, Cut::NmiReturn(_)) {
-        return false;
-    }
-    let Some((_, expected)) = OBSERVED_C1_RECEIPTS
-        .iter()
-        .find(|(frame, _)| *frame == Frame(from.index))
-    else {
-        return false;
-    };
-    Sha256::of(&from.wram).to_string() == *expected
-}
 impl World {
     /// Current selector receipt, in execution order, expressed as stable enemy slots.
     #[must_use]
@@ -717,32 +834,12 @@ impl Domain for Weapons {
         input.inheritance = inheritance(&from.wram)?;
         Ok((state, Some(input)))
     }
-    fn world(&self, from: &FrameRecord, _: &FrameRecord) -> Result<World, Defect> {
-        let camera = (word(&from.wram, 0x0911)?, word(&from.wram, 0x0915)?);
-        let commons = crate::enemy::EnemySources::ORIGINAL
-            .commons(&from.wram)
-            .map_err(|_| Defect("enemy selector input decode"))?;
-        // Selection rebuilds its receipt each frame. The original empties the raw lists
-        // before the cut, so those stored lists cannot answer this frame's contacts.
-        let active = commons
-            .iter()
-            .enumerate()
-            .filter_map(|(index, common)| {
-                common
-                    .as_ref()
-                    .filter(|common| game::enemy::touchable(common, camera.0, camera.1))
-                    .map(|_| index.saturating_mul(64))
-            })
-            .collect();
-        Ok(World {
-            wram: from.wram.clone(),
-            active,
-            observed_c1_receipt: has_observed_c1_receipt(from),
-            defect: None,
-            events: Vec::new(),
-            contacts: 0,
-            actor_hits: 0,
-        })
+    fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<World, Defect> {
+        // The raw preceding list is cleared at the cut. Reconstruct its source-backed
+        // processing receipt; this is separate from Samus's solid interaction list.
+        let mut world = self.preceding_world(from)?;
+        world.completion = super::gameplay_caller::completed(from, next).map_err(Defect::from);
+        Ok(world)
     }
     fn masks(
         &self,
@@ -763,86 +860,20 @@ impl Domain for Weapons {
         let Some(input) = input else {
             return;
         };
+        if let Err(error) = &world.borrowed {
+            world.defect = Some(error.clone());
+            return;
+        }
         world.events = beam::update(state, input, &self.content, self.rules, world);
-        // C1's strict overlap and first shot per interactive enemy, before enemy AI.
-        let event = (|| {
-            if word(&world.wram, 0x0998)? != 8 {
-                return Ok(());
-            }
-            if state.count.0 == 0
-                || !state
-                    .slots
-                    .values()
-                    .any(|shot| matches!(shot, beam::ShotState::Flying { .. }))
-            {
-                return Ok(());
-            }
-            if !world.observed_c1_receipt || world.active != [0, 64] {
-                return Err(Defect(
-                    "C1 pre-AI receipt outside independently watched inputs",
-                ));
-            }
-            if word(&world.wram, 0x0e4c)? == 0
-                || word(&world.wram, 0x0e12)? != 0
-                || word(&world.wram, 0x0a78)? != 0
-                || word(&world.wram, 0x185e)? != 0
-            {
-                return Err(Defect(
-                    "C1 interaction guards outside validated simple-box contract",
-                ));
-            }
-            for &off in &world.active {
-                if word(&world.wram, 0x0f78_usize.saturating_add(off))? == 0xdaff {
-                    continue;
-                }
-                if word(&world.wram, 0x0f88_usize.saturating_add(off))? & 4 != 0 {
-                    return Err(Defect("C1 multibox contact not yet decoded"));
-                }
-                if word(&world.wram, 0x0f78_usize.saturating_add(off))? == 0
-                    || matches!(
-                        word(&world.wram, 0x0f8e_usize.saturating_add(off))?,
-                        0 | 0x804d
-                    )
-                    || word(&world.wram, 0x0f86_usize.saturating_add(off))? & 0x0400 != 0
-                    || word(&world.wram, 0x0fa0_usize.saturating_add(off))? != 0
-                {
-                    continue;
-                }
-                let mut consumed = None;
-                for (slot, shot) in &state.slots {
-                    let beam::ShotState::Flying { body, .. } = shot else {
-                        continue;
-                    };
-                    let overlap = |position: u16, radius: u8, at: usize, extent: usize| {
-                        let distance =
-                            position.wrapping_sub(word(&world.wram, at.saturating_add(off))?);
-                        let distance = if distance.cast_signed() < 0 {
-                            distance.wrapping_neg()
-                        } else {
-                            distance
-                        };
-                        Ok::<_, Defect>(
-                            distance < u16::from(radius)
-                                || distance.wrapping_sub(u16::from(radius))
-                                    < word(&world.wram, extent.saturating_add(off))?,
-                        )
-                    };
-                    if overlap(body.position.x.integer(), body.radius.x.0, 0x0f7a, 0x0f82)?
-                        && overlap(body.position.y.integer(), body.radius.y.0, 0x0f7e, 0x0f84)?
-                    {
-                        consumed = Some(slot);
-                        break;
-                    }
-                }
-                if let Some(slot) = consumed {
-                    state.consume(slot);
-                    world.actor_hits = world.actor_hits.saturating_add(1);
-                }
-            }
-            Ok::<(), Defect>(())
-        })();
-        if let Err(error) = event {
+        if super::contact::has_live_power(state)
+            && let Err(error) = world.caller.clone().and_then(|()| world.completion.clone())
+        {
             world.defect = Some(error);
+            return;
+        }
+        match super::contact::apply(&world.wram, &world.active, state) {
+            Ok(hits) => world.actor_hits = world.actor_hits.saturating_add(hits),
+            Err(error) => world.defect = Some(error),
         }
     }
     fn fields(&self, state: &beam::State) -> Fields {
@@ -863,13 +894,62 @@ impl Domain for Weapons {
 mod tests {
     use super::{World, beam};
 
+    #[test]
+    fn quiet_prediction_requires_valid_borrowed_inputs_before_update() {
+        use crate::harness::{Domain, Interval};
+        let Some((cache, rom)) = crate::harness::tests::environment() else {
+            return;
+        };
+        let domain = super::Weapons::load(&std::fs::read(rom).unwrap()).unwrap();
+        let lock = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../scenarios/locks/lsnes.toml");
+        let cached = crate::harness::open_cached(&lock, &cache, "chain-any-0003-DFD7").unwrap();
+        let records = cached
+            .records_without_pictures()
+            .map(|record| record.unwrap().1)
+            .collect::<Vec<_>>();
+        let pair = records
+            .windows(2)
+            .find(|pair| {
+                domain
+                    .predict(&pair[0], Interval::ending_at(&pair[1]))
+                    .is_ok_and(|state| !super::super::contact::has_live_power(&state))
+            })
+            .unwrap();
+        let mut from = pair[0].clone();
+        let put = |record: &mut oracle_record::FrameRecord, at: usize, value: u16| {
+            record.wram[at..at.saturating_add(2)].copy_from_slice(&value.to_le_bytes());
+        };
+        for slot in (0..12).step_by(2) {
+            put(&mut from, 0x18b4 + slot, 0);
+        }
+        put(&mut from, 0x18b0, 0x8000);
+        put(&mut from, 0x18b4, 1);
+        put(&mut from, 0x18f0, 0x86ef);
+        from.wram[0x18fc] = 0x88;
+        put(&mut from, 0x18e4, 0);
+        put(&mut from, 0x0a7a, 5);
+        put(&mut from, 0x0a78, 1);
+        let interval = Interval::ending_at(&pair[1]);
+        assert!(domain.predict(&from, interval).is_err());
+        let (mut state, input) = domain.decode(&from, interval).unwrap();
+        assert!(input.is_some());
+        let before = state.clone();
+        let mut world = domain.world(&from, &pair[1]).unwrap();
+        domain.step(&mut state, &input, &mut world);
+        assert!(domain.checked_step(&world).is_err());
+        assert_eq!(state, before);
+    }
+
     fn world(width: u16) -> World {
         let mut wram = vec![0_u8; 0x20000].into_boxed_slice();
         wram[0x07a5..0x07a7].copy_from_slice(&width.to_le_bytes());
         World {
             wram,
             active: Vec::new(),
-            observed_c1_receipt: false,
+            caller: Ok(()),
+            borrowed: Ok(()),
+            completion: Ok(()),
             defect: None,
             events: Vec::new(),
             contacts: 0,

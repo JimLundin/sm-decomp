@@ -30,10 +30,12 @@ const fn flickers_off(samus: &Samus, odd_frame: bool) -> bool {
 // open: the arm cannon (`$90:C663`, drawn only once it opens; `$90:C5C4` before the
 // handler), the charge flare (`$90:BAFC`), the speed echoes (`$90:87BD`), the grapple
 // beam's flare, tiles and beam (`$9B:C036`, `$9B:BFA5`, `$94:AFBA`) and the shinespark
-// crash's echoes (`$90:88BA`) join with those lanes; slice 0's power beam keeps the cannon
-// closed and those handlers draw her body alone.
+// crash's echoes (`$90:88BA`) join with those lanes. Checked OrdinaryPower draws its
+// imported cannon with Samus before its flying pictures; Legacy keeps its existing body path.
 pub fn draw(state: &mut State, content: &Content) {
-    state.controller.prior_pressed = state.controller.pressed;
+    if state.projectiles.ordinary().is_none() {
+        state.controller.prior_pressed = state.controller.pressed;
+    }
     let odd_frame = state.clock.counters.completed.0 & 1 != 0;
     match state.samus.drawing {
         // `$90:EB55` and `$90:EB86`: the atmospheric graphics go first.

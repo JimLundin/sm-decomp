@@ -15,6 +15,8 @@ interface_hud = { path = "../clean/interface_hud" }
 run_progress = { path = "../clean/run_progress" }
 samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }
+enemy_interactions = { path = "../clean/enemy_interactions" }
+weapons_projectiles = { path = "../clean/weapons_projectiles" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 enum-map = "=3.1.0"

@@ -43,6 +43,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "enemy_interactions"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml 1.2.1+spec-1.1.0",
+]
+
+[[package]]
 name = "enum-map"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -76,6 +85,7 @@ dependencies = [
  "boss_ceres_ridley",
  "canonical",
  "data",
+ "enemy_interactions",
  "enum-map",
  "interface_hud",
  "run_progress",
@@ -83,6 +93,7 @@ dependencies = [
  "samus_movement",
  "toml 0.8.23",
  "types",
+ "weapons_projectiles",
  "world_blocks",
  "world_camera",
 ]
@@ -347,6 +358,7 @@ dependencies = [
  "boss_ceres_ridley",
  "canonical",
  "data",
+ "enemy_interactions",
  "enum-map",
  "game",
  "import",
