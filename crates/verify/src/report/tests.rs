@@ -504,3 +504,16 @@ fn a_rungs_work_waits_only_on_unstarted_work_it_needs_before_it() {
     let done: Vec<String> = vec![String::from("E1")];
     assert_eq!(plan.order(&done).sentence(), "nothing left to start");
 }
+
+#[test]
+fn independent_vector_ids_include_opportunities_and_compositions_once() {
+    let text = "[[vector]]\nid = \"animation\"\n[[opportunity]]\nid = \"contact\"\n[[appearance_work]]\nid = \"combined\"\n[appearance_work.after]\nid = \"combined\"\n";
+    assert_eq!(crate::spec_units::Vectors::parse(text).len(), 3);
+    assert_eq!(
+        crate::spec_units::Vectors::parse(include_str!(
+            "../../../../scenarios/vectors/samus-appearance.toml"
+        ))
+        .len(),
+        145
+    );
+}

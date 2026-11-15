@@ -275,46 +275,51 @@ pub enum ReserveMode {
 
 pub use data::pose::animation::AnimationFrame;
 
-/// Her step in her pose's clip, numbered from 0 without the original's operand bytes
-/// (samus-appearance §1.4); `samus_appearance_bridge` gives the original's frame of it.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct ClipStep(pub u8);
+/// The clean appearance State, retained unchanged between animation updates.
+pub struct AppearancePin;
 
-/// Her run's speed booster stage (samus-appearance §1).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum BoostStage {
-    /// Stage 0, where every dash begins.
-    #[default]
-    Stage0,
-    /// Stage 1.
-    Stage1,
-    /// Stage 2.
-    Stage2,
-    /// Stage 3.
-    Stage3,
-    /// Stage 4: boosting.
-    Boosting,
+impl canonical::model::Pinned for AppearancePin {
+    type State = samus_appearance::State;
+    const NAME: &'static str = "samus-appearance";
+    const SHAPE: u64 = 0x347B_D040_BE28_1439;
 }
 
-/// Her run's boost: its stage and the laps the stage still lasts (samus-appearance §1).
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Boost {
-    /// The stage.
-    pub stage: BoostStage,
-    /// The laps of her run the stage still lasts.
-    pub laps_left: u8,
+/// Samus's complete retained animation model.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Animation(pub canonical::model::Model<AppearancePin>);
+
+impl Default for Animation {
+    fn default() -> Self {
+        Self::restore(
+            samus_appearance::Step::FIRST,
+            0,
+            types::BoostStage::Stage0,
+            0,
+        )
+    }
 }
 
-/// Samus's animation (samus-appearance §1): where her clip is and her run's boost, all it keeps
-/// from one frame to the next.
-#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Animation {
-    /// Her step in her pose's clip.
-    pub step: ClipStep,
-    /// The frames her step still shows, 0 to 255.
-    pub frames_left: u8,
-    /// Her run's boost.
-    pub boost: Boost,
+impl Animation {
+    /// Convert record/content quantities once at the boundary.
+    #[must_use]
+    pub fn restore(
+        step: samus_appearance::Step,
+        frames: u8,
+        stage: types::BoostStage,
+        laps: u8,
+    ) -> Self {
+        Self(canonical::model::Model(samus_appearance::State {
+            playhead: samus_appearance::Playhead {
+                step,
+                time_left: samus_appearance::Frames(frames),
+            },
+            stage,
+            laps_left: samus_appearance::Laps::new(laps).map_or(
+                samus_appearance::LapsLeft::WithoutBooster,
+                samus_appearance::LapsLeft::WithBooster,
+            ),
+        }))
+    }
 }
 
 /// Which of the visor's cycle colours shows next (bank $91 log, handle visor palette
@@ -443,6 +448,9 @@ pub struct Samus {
     pub aim: Aim,
     /// Her pose's movement type, as the pose change copies it from the definition.
     pub movement: MovementType,
+    /// Movement saved at actual preparation, before motion and pose selection; drawing
+    /// observes it until preparation runs again, including while animation is frozen.
+    pub preparation_movement: MovementType,
     /// Her motion: where she is and how she moves.
     pub motion: Motion,
     /// What she has.
@@ -466,4 +474,37 @@ pub struct Samus {
     pub slope_adjusted: bool,
     /// Jump held through.
     pub jump_held: JumpHeld,
+}
+
+#[cfg(test)]
+mod appearance_tests {
+    #[test]
+    fn appearance_state_shape_is_pinned() {
+        assert_eq!(
+            canonical::model::pin_holds::<super::AppearancePin>(),
+            Ok(())
+        );
+    }
+    #[test]
+    fn checkpoints_keep_and_compare_every_appearance_quantity() {
+        use canonical::Canonical;
+        let mut state = crate::state::State::default();
+        state.samus.animation =
+            super::Animation::restore(samus_appearance::Step(7), 29, types::BoostStage::Stage3, 2);
+        let restored =
+            canonical::from_bytes::<crate::state::State>(&canonical::to_bytes(&state)).unwrap();
+        assert_eq!(restored, state);
+        let mut changed = restored.clone();
+        changed.samus.animation.0.0.playhead.time_left.0 += 1;
+        assert!(state.diff(&changed).is_some());
+        changed = restored.clone();
+        changed.samus.animation.0.0.playhead.step.0 += 1;
+        assert!(state.diff(&changed).is_some());
+        changed = restored.clone();
+        changed.samus.animation.0.0.stage = types::BoostStage::Stage2;
+        assert!(state.diff(&changed).is_some());
+        changed = restored;
+        changed.samus.animation.0.0.laps_left = samus_appearance::LapsLeft::WithoutBooster;
+        assert!(state.diff(&changed).is_some());
+    }
 }

@@ -261,7 +261,7 @@ fn skipped_follow_keeps_nonzero_receipt_and_placement_keeps_remembered_fraction(
         state.samus.previous_position,
         types::VerticalFraction(0xBEEF),
     );
-    let saved = state.camera.clone();
+    let saved = state.camera;
     scroll(&mut state.camera.0, &mut state.room, &mut state.samus).unwrap();
     assert_eq!(state.camera, saved);
 

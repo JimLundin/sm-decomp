@@ -28,6 +28,9 @@ mod vectors {
         paces: PacesTable,
         clips: BTreeMap<String, ClipTable>,
         vector: Vec<Vector>,
+        contact_content: BTreeMap<String, ContactTable>,
+        opportunity: Vec<OpportunityVector>,
+        appearance_work: Vec<AppearanceWork>,
     }
 
     #[derive(Deserialize)]
@@ -351,6 +354,7 @@ mod vectors {
             kick: table.kick.map(Step),
             fast_fall: table.fast_fall.map(Step),
             rising: table.rising.map(Step),
+            contacts: std::collections::BTreeSet::new(),
         }
     }
 
@@ -462,8 +466,11 @@ mod vectors {
         (file, clips, paces)
     }
 
-    /// Runs one vector; its mismatches, if any.
-    fn run(vector: &Vector, clips: &BTreeMap<String, Clip>, paces: &Paces) -> Option<String> {
+    fn animate(
+        vector: &Vector,
+        clips: &BTreeMap<String, Clip>,
+        paces: &Paces,
+    ) -> (Ahead, State, Option<AnimationSound>) {
         let given = &vector.inputs;
         let inputs = inputs(given);
         let clip_named = |name: &str| clips.get(name).unwrap_or_else(|| panic!("no clip {name}"));
@@ -483,6 +490,12 @@ mod vectors {
         let ahead = Ahead::of(before.playhead, content.clip);
         let (after, sound) = update(before, &inputs, &content, &rules(&vector.rules));
 
+        (ahead, after, sound)
+    }
+
+    /// Runs one vector; its mismatches, if any.
+    fn run(vector: &Vector, clips: &BTreeMap<String, Clip>, paces: &Paces) -> Option<String> {
+        let (ahead, after, sound) = animate(vector, clips, paces);
         let a = &vector.after;
         let expected = (
             Ahead {
@@ -505,6 +518,10 @@ mod vectors {
     }
 
     #[test]
+    #[expect(
+        clippy::print_stdout,
+        reason = "report the number of supplied vectors executed"
+    )]
     fn every_vector_passes() {
         let (file, clips, paces) = read_file();
         for vector in &file.vector {
@@ -524,6 +541,7 @@ mod vectors {
             file.vector.len(),
             failures.join("\n")
         );
+        println!("{} animation vectors passed", file.vector.len());
     }
 
     /// A vector that adjusts the game exercises only entries whose switch is a parameter.
@@ -552,6 +570,346 @@ mod vectors {
         assert!(fixed.is_empty(), "adjusted, but not parameters: {fixed:?}");
     }
 
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ContactTable {
+        steps: Vec<String>,
+        contacts: Vec<u8>,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct OpportunityVector {
+        id: String,
+        source: String,
+        kind: String,
+        entries: Vec<String>,
+        before: Before,
+        after: Before,
+        inputs: toml::Value,
+        expected: ExpectedOpportunity,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ExpectedOpportunity {
+        sounds: Vec<String>,
+        contact: bool,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct ContactInputs {
+        movement: String,
+        step: u8,
+        left: u8,
+        clip: String,
+        cinematic: bool,
+        boss: bool,
+        special_colours: bool,
+        stage: u8,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    #[expect(
+        clippy::struct_excessive_bools,
+        reason = "the selection vector supplies figure difference and owner predicates"
+    )]
+    struct SelectionInputs {
+        from_action: String,
+        to_action: String,
+        changed: bool,
+        space_jump: bool,
+        screw_attack: bool,
+        submerged: bool,
+        cinematic: bool,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct DrawInputs {
+        previous: String,
+        current: String,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct DoorInputs {
+        current: String,
+        shoot_held: bool,
+        charge: u16,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct AppearanceWork {
+        id: String,
+        source: String,
+        entries: Vec<String>,
+        animation_vector: Option<String>,
+        opportunities: Vec<String>,
+        sounds: Vec<String>,
+        contact: bool,
+        after: After,
+    }
+
+    fn retained(given: &Before) -> State {
+        state(given.step, given.left, given.stage, given.laps)
+    }
+
+    fn request(name: &str) -> samus_appearance::SoundRequest {
+        use samus_appearance::SoundRequest;
+        named(
+            &[
+                SoundRequest::Footstep,
+                SoundRequest::PlainSpin,
+                SoundRequest::SpaceJump,
+                SoundRequest::ScrewAttack,
+                SoundRequest::SpinEnded,
+                SoundRequest::SamusSilence,
+            ],
+            name,
+        )
+    }
+
+    fn contact_clips(file: &VectorFile) -> BTreeMap<String, Clip> {
+        file.contact_content
+            .iter()
+            .map(|(name, table)| {
+                (
+                    name.clone(),
+                    Clip {
+                        instructions: table.steps.iter().map(|cell| instruction(cell)).collect(),
+                        kick: None,
+                        fast_fall: None,
+                        rising: None,
+                        contacts: table.contacts.iter().copied().map(Step).collect(),
+                    },
+                )
+            })
+            .collect()
+    }
+
+    /// The compact selection vectors give actions and an explicit figure-difference guard,
+    /// not full poses. A changed selection is represented by a changed sprite as needed.
+    /// In the unchanged case the selected figure is exactly the original, regardless of the
+    /// nominal `to_action`: C-start-same explicitly tests the no-different-figure condition.
+    fn selection(given: &SelectionInputs) -> samus_appearance::Opportunity<'static> {
+        let from = figure(&format!("Upright {} Right Forward", given.from_action));
+        let mut selected = from;
+        if given.changed {
+            selected.pose.action = named(ACTIONS, &given.to_action);
+            selected.sprite = Sprite::OtherSuit;
+        } else {
+            named(ACTIONS, &given.to_action);
+        }
+        let mut items = Set::<Item>::default();
+        items[Item::SpaceJump] = given.space_jump;
+        items[Item::ScrewAttack] = given.screw_attack;
+        samus_appearance::Opportunity::PoseSelected {
+            from,
+            selected,
+            items,
+            submerged: given.submerged,
+            cinematic: if given.cinematic {
+                samus_appearance::CinematicActivity::Active
+            } else {
+                samus_appearance::CinematicActivity::Inactive
+            },
+        }
+    }
+
+    fn read_opportunity(
+        vector: &OpportunityVector,
+        clips: &BTreeMap<String, Clip>,
+    ) -> samus_appearance::OpportunityOutput {
+        use samus_appearance::{Charge, ContactSuppressor, Opportunity};
+        let inputs = vector.inputs.clone();
+        let opportunity = match vector.kind.as_str() {
+            "Contact" => {
+                let given: ContactInputs = inputs.try_into().expect("typed contact inputs");
+                let mut suppressors = Set::<ContactSuppressor>::default();
+                suppressors[ContactSuppressor::Cinematic] = given.cinematic;
+                suppressors[ContactSuppressor::Boss] = given.boss;
+                suppressors[ContactSuppressor::SpecialColours] = given.special_colours;
+                assert_eq!(
+                    given.stage, vector.before.stage,
+                    "{}: stride stage",
+                    vector.id
+                );
+                Opportunity::Contact {
+                    figure: figure(&format!("Upright {} Right Forward", given.movement)),
+                    playhead: Playhead {
+                        step: Step(given.step),
+                        time_left: Frames(given.left),
+                    },
+                    stage: BoostStage::ALL[usize::from(given.stage)],
+                    clip: clips.get(&given.clip).expect("named contact clip"),
+                    suppressors,
+                }
+            }
+            "PoseSelected" => selection(&inputs.try_into().expect("typed selection inputs")),
+            "NormalDraw" => {
+                let given: DrawInputs = inputs.try_into().expect("typed drawing inputs");
+                Opportunity::NormalDraw {
+                    previous: named(ACTIONS, &given.previous),
+                    current: named(ACTIONS, &given.current),
+                }
+            }
+            "PassageEntry" => {
+                let given: DoorInputs = inputs.try_into().expect("typed passage inputs");
+                Opportunity::PassageEntry {
+                    current: named(ACTIONS, &given.current),
+                    shoot_held: given.shoot_held,
+                    charge: Charge::new(given.charge).expect("valid charge"),
+                }
+            }
+            other => panic!("unknown opportunity {other}"),
+        };
+        opportunity.read()
+    }
+
+    #[test]
+    #[expect(
+        clippy::print_stdout,
+        reason = "report the number of supplied opportunity vectors executed"
+    )]
+    fn every_sound_opportunity_passes() {
+        let (file, _, _) = read_file();
+        let clips = contact_clips(&file);
+        for vector in &file.opportunity {
+            for entry in &vector.entries {
+                behaviour(entry);
+            }
+            let before = retained(&vector.before);
+            let output = read_opportunity(vector, &clips);
+            assert_eq!(
+                before,
+                retained(&vector.after),
+                "{} ({}): retained State",
+                vector.id,
+                vector.source
+            );
+            assert_eq!(
+                output.contact.is_some(),
+                vector.expected.contact,
+                "{}: graphics",
+                vector.id
+            );
+            assert_eq!(
+                output.sound.into_iter().collect::<Vec<_>>(),
+                vector
+                    .expected
+                    .sounds
+                    .iter()
+                    .map(|sound| request(sound))
+                    .collect::<Vec<_>>(),
+                "{}: ordered sounds",
+                vector.id
+            );
+            if let Some(contact) = output.contact {
+                let given: ContactInputs =
+                    vector.inputs.clone().try_into().expect("contact inputs");
+                assert_eq!(
+                    contact.figure,
+                    figure(&format!("Upright {} Right Forward", given.movement))
+                );
+                assert_eq!(
+                    contact.playhead,
+                    Playhead {
+                        step: Step(given.step),
+                        time_left: Frames(given.left)
+                    }
+                );
+            }
+        }
+        println!(
+            "{} sound-opportunity vectors passed",
+            file.opportunity.len()
+        );
+    }
+
+    #[test]
+    #[expect(
+        clippy::print_stdout,
+        reason = "report the number of supplied composition vectors executed"
+    )]
+    fn every_composition_retains_all_outputs() {
+        let (file, clips, paces) = read_file();
+        let contacts = contact_clips(&file);
+        for work in &file.appearance_work {
+            for entry in &work.entries {
+                behaviour(entry);
+            }
+            let opportunities: Vec<&OpportunityVector> = work
+                .opportunities
+                .iter()
+                .map(|id| {
+                    file.opportunity
+                        .iter()
+                        .find(|v| v.id == *id)
+                        .expect("named opportunity")
+                })
+                .collect();
+            let mut after = retained(
+                &opportunities
+                    .first()
+                    .expect("work has an opportunity")
+                    .before,
+            );
+            let mut sounds = Vec::new();
+            let mut graphics = Vec::new();
+            if let Some(id) = &work.animation_vector {
+                let vector = file
+                    .vector
+                    .iter()
+                    .find(|v| v.id == *id)
+                    .expect("named animation vector");
+                let (_, updated, sound) = animate(vector, &clips, &paces);
+                after = updated;
+                sounds.extend(sound.map(|s| format!("{s:?}")));
+            }
+            for vector in opportunities {
+                let retained_before_read = after;
+                let output = read_opportunity(vector, &contacts);
+                sounds.extend(output.sound.map(|s| format!("{s:?}")));
+                graphics.extend(output.contact);
+                assert_eq!(after, retained_before_read, "opportunity changed animation");
+            }
+            let expected = &work.after;
+            assert!(
+                expected.sounds.is_empty(),
+                "composition after sounds must be top-level"
+            );
+            assert_eq!(
+                after,
+                state(expected.step, expected.left, expected.stage, expected.laps),
+                "{} ({}): all four quantities",
+                work.id,
+                work.source
+            );
+            assert_eq!(sounds, work.sounds, "{}: every ordered request", work.id);
+            assert_eq!(
+                !graphics.is_empty(),
+                work.contact,
+                "{}: retained graphics",
+                work.id
+            );
+            for graphic in graphics {
+                assert_eq!(graphic.figure.pose.action, Action::Running);
+                assert_eq!(
+                    graphic.playhead,
+                    Playhead {
+                        step: Step(2),
+                        time_left: Frames::LAST
+                    }
+                );
+            }
+        }
+        println!("{} composition vectors passed", file.appearance_work.len());
+    }
+
     #[test]
     fn every_behaviour_checked_by_vectors_has_one() {
         let (file, _, _) = read_file();
@@ -559,6 +917,16 @@ mod vectors {
             .vector
             .iter()
             .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry)))
+            .chain(
+                file.opportunity
+                    .iter()
+                    .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
+            )
+            .chain(
+                file.appearance_work
+                    .iter()
+                    .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
+            )
             .collect();
         let missing: Vec<BehaviourId> = CATALOGUE
             .iter()

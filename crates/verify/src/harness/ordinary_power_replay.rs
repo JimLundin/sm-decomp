@@ -193,6 +193,9 @@ struct ReplayProof {
     reached: u64,
     compared: u64,
     whole_state_equal: u64,
+    appearance_equal: u64,
+    appearance_null_equal: u64,
+    appearance_requests: u64,
     owner_equal: u64,
     oam_equal: u64,
     milestones: [bool; 5],
@@ -408,6 +411,117 @@ struct ReplayInputs<'a> {
     weapons: &'a crate::harness::weapons::Weapons,
     power: &'a game::weapons_projectiles_bridge::PowerContent,
     content: &'a game::pose::Content,
+    contact_marks: &'a [u8],
+}
+
+/// Queue insertion observations are independent of the semantic producer under test.
+/// Sender writes and ACK/retry transitions never provide expected appearance requests.
+fn appearance_expected(
+    previous: &oracle_record::FrameRecord,
+    next: &oracle_record::FrameRecord,
+) -> Vec<game::samus_appearance_bridge::producer::Request> {
+    use game::samus_appearance_bridge::producer::Request;
+    use samus_appearance::SoundRequest;
+    let mut requests = Vec::new();
+    for library in [0_usize, 2] {
+        let before = previous.wram[0x646_usize.saturating_add(library)];
+        let after = next.wram[0x646_usize.saturating_add(library)];
+        let appended = after.wrapping_sub(before) & 15;
+        for index in 0..appended {
+            let slot = before.wrapping_add(index) & 15;
+            let code = next.wram[0x656_usize
+                .saturating_add(16_usize.saturating_mul(library))
+                .saturating_add(usize::from(slot))];
+            let request = match (library, code) {
+                (0, 0x31) => Some(SoundRequest::PlainSpin),
+                (0, 0x32) => Some(SoundRequest::SpinEnded),
+                (0, 2) => Some(SoundRequest::SamusSilence),
+                (2, 6) => Some(SoundRequest::Footstep),
+                // CeresDoorOpening, weapon requests and the out-of-scope
+                // SamusLandedOrWallJumped family are excluded from this S5 inventory.
+                _ => None,
+            };
+            requests.extend(request.map(Request::Appearance));
+        }
+    }
+    requests
+}
+
+fn appearance_word(record: &oracle_record::FrameRecord, at: usize) -> u16 {
+    u16::from_le_bytes(record.wram[at..at.saturating_add(2)].try_into().unwrap())
+}
+
+fn graphical_contacts(
+    previous: &oracle_record::FrameRecord,
+    contact: bool,
+    content: &game::pose::Content,
+) -> Vec<samus_appearance::GraphicalContact> {
+    if !contact {
+        return Vec::new();
+    }
+    let pose = data::pose::PoseId(appearance_word(previous, 0x0a1c));
+    let figure = game::samus_appearance_bridge::figure_of(pose).unwrap();
+    let step = content
+        .samus_clips
+        .of(pose)
+        .unwrap()
+        .step_of(data::pose::animation::AnimationFrame(appearance_word(
+            previous, 0x0a96,
+        )))
+        .unwrap();
+    vec![samus_appearance::GraphicalContact {
+        figure,
+        playhead: samus_appearance::Playhead {
+            step,
+            time_left: samus_appearance::Frames(
+                u8::try_from(appearance_word(previous, 0x0a94)).unwrap(),
+            ),
+        },
+    }]
+}
+
+/// Source opportunities use independently retained quantities and raw imported mark bytes.
+/// Queue observations cross-check admission; they do not define a silent missing request.
+fn appearance_sources(
+    previous: &oracle_record::FrameRecord,
+    next: &oracle_record::FrameRecord,
+    marks: &[u8],
+) -> (Vec<game::samus_appearance_bridge::producer::Request>, bool) {
+    use game::samus_appearance_bridge::producer::Request;
+    use samus_appearance::SoundRequest;
+    let word = appearance_word;
+    let from = word(previous, 0x0a1f) & 255;
+    let current = word(next, 0x0a1f) & 255;
+    let spinning = |movement| matches!(movement, 3 | 20);
+    let contact = if from == 1 && word(previous, 0x0a94) == 1 {
+        let marker = marks
+            .get(usize::from(word(previous, 0x0a96)))
+            .expect("running source picture must have independently imported contact content");
+        *marker != 0
+    } else {
+        false
+    };
+    let mut requests = Vec::new();
+    if contact
+        && word(previous, 0x0b3e) < 0x0400
+        && [0x1f51, 0x179c, 0x0a68]
+            .into_iter()
+            .all(|at| word(next, at) == 0)
+    {
+        requests.push(Request::Appearance(SoundRequest::Footstep));
+    }
+    if word(previous, 0x0a1c) != word(next, 0x0a1c) && current == 3 {
+        let items = word(next, 0x09a2);
+        // Independently checked capability rejects liquid surfaces and special equipped items.
+        assert_eq!(items & 0x228, 0);
+        if !spinning(from) && word(next, 0x1f51) == 0 {
+            requests.push(Request::Appearance(SoundRequest::PlainSpin));
+        }
+    }
+    if spinning(word(next, 0x0a11) & 255) && !spinning(current) {
+        requests.push(Request::Appearance(SoundRequest::SpinEnded));
+    }
+    (requests, contact)
 }
 
 fn run_replay(session: &mut Session, inputs: &ReplayInputs<'_>, proof: &mut ReplayProof) {
@@ -457,6 +571,30 @@ fn run_replay(session: &mut Session, inputs: &ReplayInputs<'_>, proof: &mut Repl
         } else {
             &records[position.checked_sub(1).unwrap()].1
         };
+        let inserted = appearance_expected(previous, reference);
+        let (wanted, contact) = appearance_sources(previous, reference, inputs.contact_marks);
+        assert_eq!(
+            wanted, inserted,
+            "source opportunities must equal independent accepted queue insertions"
+        );
+        let output = result.unwrap();
+        let contacts_match =
+            output.appearance.contacts == graphical_contacts(previous, contact, inputs.content);
+        proof.appearance_equal = proof.appearance_equal.saturating_add(u64::from(
+            output.appearance.requests == wanted && contacts_match,
+        ));
+        proof.appearance_null_equal = proof
+            .appearance_null_equal
+            .saturating_add(u64::from(wanted.is_empty()));
+        proof.appearance_requests = proof
+            .appearance_requests
+            .saturating_add(u64::try_from(wanted.len()).unwrap());
+        if output.appearance.requests != wanted || !contacts_match {
+            proof
+                .first_mismatches
+                .entry("appearance producer ordered requests".into())
+                .or_insert(frame.0);
+        }
         let reference_decoded = reference_expected(reference, previous, inputs);
         let Some((mut expected, calls)) = proof.expect(
             reference_decoded,
@@ -491,6 +629,10 @@ fn m0_ordinary_owner_runs_once_from_seed_through_first_actual_unsupported_bounda
     let bundle_root = std::env::var_os("SM_BUNDLE")
         .expect("public ordinary admission requires original pinned bundle");
     let image = std::fs::read(rom).unwrap();
+    let contact_marks = data::rom::Lorom::new(&image)
+        .read(data::rom::RomAddress::new(0x90, 0xA424), 10)
+        .unwrap()
+        .to_vec();
     let content = Arc::new(crate::bundle::content(image.clone()).unwrap());
     let rooms = crate::bundle::rooms(&content, &image).unwrap();
     let weapons = crate::harness::weapons::Weapons::load(&image).unwrap();
@@ -552,17 +694,8 @@ fn m0_ordinary_owner_runs_once_from_seed_through_first_actual_unsupported_bounda
         ..ReplayProof::default()
     };
     // This is the sole Session construction and sole assignment from a decoded State.
-    let mut session = match Session::open(seed.state, rules, Arc::clone(&content)) {
-        Ok(session) => session,
-        Err(error) => {
-            let _ = writeln!(
-                std::io::stdout(),
-                "ordinary replay seed {} open unsupported {error:?}",
-                seed_record.index
-            );
-            panic!("ordinary replay seed cannot open its owned production Session");
-        }
-    };
+    let mut session = Session::open(seed.state, rules, Arc::clone(&content))
+        .expect("ordinary replay seed must open its owned production Session");
     run_replay(
         &mut session,
         &ReplayInputs {
@@ -574,8 +707,67 @@ fn m0_ordinary_owner_runs_once_from_seed_through_first_actual_unsupported_bounda
             weapons: &weapons,
             power,
             content: &content,
+            contact_marks: &contact_marks,
         },
         &mut proof,
+    );
+    prove_appearance(&proof);
+    prove_callable_passage(&session, &records);
+}
+
+fn prove_appearance(proof: &ReplayProof) {
+    let _ = writeln!(
+        std::io::stdout(),
+        "ordinary appearance producer compared={} equal={} null={} requests={}",
+        proof.reached,
+        proof.appearance_equal,
+        proof.appearance_null_equal,
+        proof.appearance_requests
+    );
+    assert_eq!(proof.appearance_equal, proof.reached);
+}
+
+fn prove_callable_passage(
+    session: &Session,
+    records: &[(crate::lock::Frame, oracle_record::FrameRecord)],
+) {
+    // R1 dispatch is still held. Exercise only its callable producer boundary on the last
+    // actual retained State, without running a sender, making readiness or reseeding.
+    let previous = &records.iter().find(|(frame, _)| frame.0 == 182).unwrap().1;
+    let entry = &records.iter().find(|(frame, _)| frame.0 == 183).unwrap().1;
+    let retained = session.state().samus.animation;
+    assert!(
+        session
+            .state()
+            .projectiles
+            .ordinary()
+            .unwrap()
+            .appearance()
+            .is_some()
+    );
+    let current = game::samus_appearance_bridge::figure_of(session.state().samus.pose)
+        .unwrap()
+        .pose
+        .action;
+    let shoot = session
+        .state()
+        .controller
+        .held
+        .contains(game::state::Button::X);
+    let mut held = game::samus_appearance_bridge::producer::Outputs::default();
+    // The checked no-charge ordinary owner preserves unequipped charge and zero history.
+    game::samus_appearance_bridge::producer::passage_entry(
+        current,
+        shoot,
+        samus_appearance::Charge::new(0).unwrap(),
+        &mut held,
+    );
+    assert_eq!(held.requests, appearance_expected(previous, entry));
+    assert_eq!(session.state().samus.animation, retained);
+    let _ = writeln!(
+        std::io::stdout(),
+        "ordinary held passage producer callable-only equal=1 requests={}",
+        held.requests.len()
     );
 }
 
@@ -664,4 +856,38 @@ fn public_ordinary_seed_admission_rejects_an_unsupported_owner_without_legacy_fa
         ),
         "ordinary capability error cannot return a Legacy seed"
     );
+}
+
+#[test]
+fn time_up_event_refuses_native_seed_and_restoration() {
+    use game::samus_appearance_bridge::producer::ExcludedWriter;
+    use game::state::projectile::OrdinaryCapability;
+    let Some((cache_root, rom)) = crate::harness::tests::environment() else {
+        return;
+    };
+    let lock_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let lock = Lock::parse(&std::fs::read_to_string(lock_path).unwrap()).unwrap();
+    let row = lock.row(&RowId("chain-any-0003-DFD7".into())).unwrap();
+    let cache = Cache::open(&cache_root, row).unwrap();
+    let (_, mut record) = cache.records_without_pictures().next().unwrap().unwrap();
+    let image = std::fs::read(rom).unwrap();
+    let content = Arc::new(crate::bundle::content(image.clone()).unwrap());
+    let rooms = crate::bundle::rooms(&content, &image).unwrap();
+    let weapons = crate::harness::weapons::Weapons::load(&image).unwrap();
+    let power = content.ordinary_power.as_ref().unwrap();
+    let facts = crate::harness::weapons::Weapons::ordinary_seed_facts(&record).unwrap();
+    assert!(!facts.appearance.unwrap().active[ExcludedWriter::TimeUp]);
+    assert!(OrdinaryCapability::from_seed(facts).is_ok());
+    let seed = crate::gate::Seed::decode_ordinary(&record, &rooms, &weapons, power).unwrap();
+    let restored = canonical::from_bytes::<State>(&canonical::to_bytes(&seed.state)).unwrap();
+    assert!(Session::open(restored, seed.rules, Arc::clone(&content)).is_ok());
+    record.wram[0x0943..0x0945].copy_from_slice(&0_u16.to_le_bytes());
+    record.wram[0xd821] |= 0x40;
+    let facts = crate::harness::weapons::Weapons::ordinary_seed_facts(&record).unwrap();
+    assert!(OrdinaryCapability::from_seed(facts).is_err());
+    assert!(facts.appearance.unwrap().active[ExcludedWriter::TimeUp]);
+    assert!(matches!(
+        crate::gate::Seed::decode_ordinary(&record, &rooms, &weapons, power),
+        Err(crate::decode::DecodeError::OrdinaryPowerOwner)
+    ));
 }

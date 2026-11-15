@@ -66,6 +66,8 @@ pub enum Unpinned {
 /// A model's State, held in the engine's State as the model gives it.
 pub struct Model<P: Pinned>(pub P::State);
 
+impl<P: Pinned> Copy for Model<P> where P::State: Copy {}
+
 impl<P: Pinned> Clone for Model<P>
 where
     P::State: Clone,

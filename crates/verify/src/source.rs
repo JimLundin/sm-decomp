@@ -1087,6 +1087,12 @@ pub const SAMUS_MOVEMENT_TYPE: WramByte = WramByte {
     name: "SAMUS_MOVEMENT_TYPE",
     offset: 0x0A1F,
 };
+/// Movement retained by actual preparation after input/projectiles, before motion;
+/// drawing reads it until preparation executes again.
+pub const SAMUS_PREPARATION_MOVEMENT: WramByte = WramByte {
+    name: "SAMUS_PREPARATION_MOVEMENT",
+    offset: 0x0A11,
+};
 /// Bank $91 log: the pose before the last pose change.
 pub const SAMUS_PREV_POSE: WramWord = WramWord {
     name: "SAMUS_PREV_POSE",

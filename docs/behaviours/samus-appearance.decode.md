@@ -357,8 +357,9 @@ graphics (splashes, dust, `$90:80E6`, `$90:A413`), and the echoes' pictures. Old
 
 `tools/cleanroom/scan.sh` on the spec and the vectors: 0 (address-form 0, address-known 0, name 0,
 enum-order 0, ram-field 0, single-routine 0, entry-point 0, route 0). `score_scan.sh`: 0.
-`scan.sh --mirror` on the spec and these notes: 0 of 15 entries single-routine (0 %, limit
-30 %), 0 unsourced.
+`scan.sh --mirror` on the spec and these notes: 2 of 19 entries single-routine (10 %, limit
+30 %), 0 unsourced. FootContact and SpinStarts each have one source mechanism; the spec
+states their observable opportunities and leaves the public API form to the implementer.
 
 **Invented content (decision 13).** `invented_check.py` tokenises the vectors' clips and every
 game clip the importer reads (251) into shown holds and control kinds, and flags a vector clip
@@ -388,13 +389,176 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 37.7 units = 1,412 (clip 812, moves 225, run 375), 15 entries, 33 arms, 98 vectors
-(92 constructed, 7 of them with adjusted rules, and 6 recorded).
+Budget: 37.5 × 50.7 units = 1,900 (clip 1,300, moves 225, run 375), 19 entries, 46 arms,
+145 vectors (135 constructed, 7 of them with adjusted rules, and 10 recorded).
 
 Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.
 
 - Area clip: 1.4, ClipPlays, ClipControls, Breathing, ClipEnds, WallJumpBranch, HandOverSlowdown,
-  StartingClip
+  StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor
 - Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
 - Area run: RunPace, BoostStages, BoostingLap
+
+
+## Stride, spin and passage sound opportunities
+
+### Sources and existing interface
+
+`FootContact`: `$90:A3E5` running dispatch moves X/Y first, then `$A3EE..A3FF` reads
+`0A96` and exactly `0A94 == 1`; contact content is the nonzero low byte at `$90:A424`
+indexed by that animation frame. Import this as a contact-step set through `Imported::frames`,
+not a new execution table or numeric movement code. `$A401` requests graphics before sound
+suppression; `$A404..A419` checks `1F51`, `179C`, `0A68`, then `0B3E & 0400`.
+`$A41B/A41E` asks for sound 6 in library3, cap 6 (`$80:914D`). The sound suppressors have
+no effect on the already-run graphic request. Current `Clip` has no contact markers;
+`Playhead` already supplies step/time. `Samus::movement` already supplies Running and
+`Samus::animation.boost.stage` supplies boosting. `Inputs::figure` is the frame start;
+`figure_after` is the animation's final figure, not the contact-phase figure after movement.
+The contact opportunity must be captured where running movement has executed, before
+`samus_appearance_bridge::animate`, not discovered from a resulting sender write.
+
+`SpinStarts`: `$91:F624..F757`, the spinning pose initialisation. Old movement `0A23`
+spin or wall jump sets a first-step skip, which suppresses plain/screw spin-start but not
+SpaceJump. Surface/gravity checks precede item selection. Plain right `$F6C6/F6CE` and
+left `$F727/F72F` reject cinematic `1F51`; SpaceJump `$F6D4/F6D7`, `$F735/F738`
+does not reject cinematic or a continuing spin. ScrewAttack `$F74A/F752` rejects the
+step skip, not cinematic. Sounds 31/3E/33 in library1, cap 6. These are not `$90:8455`,
+which is the already-modelled WallJumpBranch control. `$90:F376` belongs to command14,
+whose `$F34F` facing test makes it unreachable for ordinary valid pose facing; it is not
+a generic native spin-start producer. The new selection opportunity uses typed Figure,
+items and Liquid inputs; no new animation progression or motion. `StartingClip` remains
+sole owner of the animation start. A continuing spin's sprite-only selection is a useful
+non-M0 test: SpaceJump may sound while plain and ScrewAttack do not.
+
+`SpinEnds`: normal draw `$90:EB35`, after body/projectiles and `$EAB3`, calls `$F576`.
+`$F5A8..F5CB` reads previous movement `0A11` and current `0A1F`; prior spin/wall and
+current neither asks sound 32, library1, cap 15. `0A11` is a separate retained preparation
+snapshot, NOT `Samus.previous: PoseRecord`, which the decoder maps from `0A20/0A22/0A23`.
+The engine needs a typed `preparation_movement` alongside its pose history; current movement
+still comes from `Samus.movement`. `Inputs::figure` at frame start cannot substitute for
+the actual preparation snapshot. Model output
+is a pure semantic decision, with no acknowledgement, animation update or motion step.
+Drawing can repeat this decision if remembered movement remains unspun; the sender retry
+itself never invokes it. The engine must call it on each real normal drawing opportunity.
+
+`AtTheDoor`: `$90:F471..F4A1`, invoked by `$84:8250` on first Quieting entry.
+Current movement `0A1F` spin/wall asks 32 regardless of pad/charge. Otherwise shoot
+released (`008B & 09B2 == 0`) and `0CD0 < 0010` asks 2. Both library1, cap 15.
+The comparison is signed; the supplied clean charge domain0..32767 excludes negative words.
+This first-entry request precedes the sound hold and is distinct from the same work's draw.
+R1 owns the first-entry opportunity; S5 owns selection of the Samus sound.
+
+### Native prefix evidence and admission
+
+Row `chain-any-0003-DFD7`, pinned lsnes recovered cache, native Requested cuts0..183:
+contact producer queue changes at10,64,74,131,141,151,164,174 in cut0->183.
+The actual preceding native seed has no library3 pending queue or outstanding ACK; it is
+Running on a contact with1 frame left. Seed->cut0 admits a NEW Footstep, and cut0 then
+holds its outstanding ACK. Cut0 is not the seed; these two windows must not be conflated. SpinStarts changes library1 queue at16
+and80, both plain spin poses from Running, no items/gravity/submersion/cinematic.
+SpinEnds queue changes29 and81. The second sound is sent at86/87; those sender writes do
+not define its appearance trigger. AtTheDoor asks SamusSilence183. All 13 new requests are
+supported by independent semantic queue comparison over 183 cut transitions: reference
+183/183, no-request model170/183. This is a per-frame localiser, not an engine free run:
+movement/pose inputs are observed at their real cuts. Sender state/replies are not predicted.
+
+`evidence.py` independently checks every cut0..183: `1F51`, `179C`, `0A68`, `0CD0`,
+`0DC0`, `0B40`, `05D1`, `0943` all zero; area `079F` is Ceres exclusively and
+`0B3E & 0400` never set. `dry.py` checks both liquid surface branches against Samus's
+top, gravity and liquid-disable input: dry 184/184; SpaceJump/ScrewAttack/gravity absent 184/184.
+These predicates validate the observed admission; production must validate the native
+seed/restoration and preserve the owner restrictions, not inject false values at each cut.
+Engine State currently lacks cinematic/boss/special-colour and retained charge/echo controls.
+They require typed owner inputs or a validated bounded inactive capability; broad support
+cannot come from constants in the bridge. The clean SpinEnds decision itself accepts all
+supplied movement pairs; its output must not be disabled by engine capability admission.
+
+Neighbouring `$F579..F58E` consumes retained charge-resume `0DC0` and may request 41;
+`$F591..F5A4` cancels an echo in `0B40` with sound 25 when boosting stops;
+`$F5CF..F5E1` may retain charge resumption for an unspin at charge>=16 with shoot held.
+`$F5E4..F638` contains debug and Zebes time-up. They are not implemented by this amendment.
+Admission must establish their inactive owners, including no time-up event (event0E) and
+no debug state; `0943 == 0` alone is Ceres escape admission, not proof of Zebes event0E.
+`family157.py` separately verifies `D821 & 40 == 0` on all 184 cuts0..183 (event0E
+through `$80:8233`, events at `D820`). Native admission for this neighbour is proven.
+The decode must check the event bit at seed/restoration as well as retained charge/echo;
+a future owner supplies their outputs/state changes before admitting an active restore.
+
+### Graphics and comparison
+
+Ceres `$90:ED91` dispatches contacts to `$EE64`; common graphics return unless boost
+stage byte equals04. With admitted unboosted dry Ceres the graphic request changes no
+atmospheric memory or OAM. This proves a real zero-effect graphical opportunity, not a reason
+to suppress graphics with a sound flag. Active boosting dust and non-Ceres liquid contacts
+stay part2; the contact output remains separate so its owner can run them. Compare whole
+`samus.animation`, atmospherics and OAM on admitted M0, and semantic request families at
+producer opportunities. Do not mask a graphical slot merely because sound was suppressed.
+
+The other M0 library3 requests at 57/124 are SamusLanded, not CeresDoorOpening:
+`door_inventory.py` reads each newly admitted queue slot at the prior next-index and
+identifies the shared landing/wall-jump cue; `landing_inventory.py` proves both are ordinary
+landings from NormalJumping to Landing(Jump), not wall jumps. Source `$91:F010` calls
+`$F046`, and `$F08F` asks for the landing cue, library3, cap 6. `$F078..F09D` selects hard
+landing when the signed whole speed is at least 5; otherwise the subpixel speed must be
+nonzero (`$F082/F085`) for the shared soft cue, even when whole speed is nonzero.
+Without that fractional word, the soft branch also skips graphics. Cinematic
+suppresses sound; graphical landing still runs at `$F0A1`. M0 admits the soft cue at 57/124.
+The actual pre-stop speed is movement-owned; current M1 Outcome publishes that speed but
+no landing/Met event or semantic sound, so these requests require an owner extension.
+`Met::Floor` is currently private to movement resolution; remembered landed-or-ended jump
+history conflates distinct causes and cannot be used as an admission event.
+
+At 157, `family157.py` and `door_inventory.py` identify CeresDoorOpening against the
+newly admitted queue slot and source `$A6:F6C0`, the single B8 cue. It is neither footstep
+nor impact, and has no B8 variant at 57/124. Firing at 157 belongs to weapons.
+The audio driver's replies remain U1: these opportunities cannot produce them, and exact
+native sound-State equivalence is not claimed here.
+
+### Vectors and checks
+
+Vector source alias `M0` names row `chain-any-0003-DFD7`. The 45 `[[opportunity]]` cases supplement the 98 existing animation vectors. Each compares
+semantic sounds, independent graphical contact and unchanged four-quantity animation State;
+recorded guard cases use invented content, never copied contact tables or clip holds.
+`reference.py`: existing98/98, opportunities45/45, native183/183 versus null170/183.
+Contact vectors supply the actual retained stride stage, with matching before/after State:
+stage 3 requests Footstep, stage 4 suppresses its sound while preserving graphical contact.
+Two composition checks retain contact plus spin-start and WallJumpBranch plus SpinEnded
+requests, graphical contact and all four final animation quantities, with at most one update.
+Eight planted faults are caught: drawing advancement fails C-end-frozen on time left;
+aggregated contact loss fails C-contact-and-start on contact; treating stage 3 as boosting
+fails C-contact-stage3 on its sound. Five further decision faults are caught: wrong contact frame, graphics suppressed with sound,
+plain continuation sounds, spin-to-wall wrongly ending, and charge threshold 15 instead of 16.
+Observer artifacts live in `$TEMP/collab/night-20261115/appearance-spec/`.
+
+FootContact, SpinStarts, SpinEnds and AtTheDoor belong to area clip. The old animation code has no generic producer counterpart; this amendment does
+not rebuild part2 rendering. `tools spec-units` counts 50.7 units, a budget of 1,900,
+using the fixed k and the areas above.
+
+
+### The prepared movement snapshot and boundary accounting
+
+The sole explicit writer in inspected banks is `$90:EB2D/EB30`: copy the current word
+`0A1E` (facing/movement) into `0A10`; `0A11` is its movement byte. Current-state preparation
+calls this from normal `$E695` at `$E6C3`, demo `$E6C9` at `$E70D`, and locked `$E713`
+at `$E71C`. It follows input/projectile effects and precedes ordinary motion/new-state pose
+selection. Pose-change history `0A23` is a different writer/lifetime, often refreshed to the
+current action before drawing. Normal `$F576` reads the prepared snapshot; neither it nor
+the extra body-only inanimate draw updates it. A locked current-state preparation still
+refreshes it even when animation/motion do not run. Current-handler RTL and Quieting work
+that bypass preparation retain it; do not key the refresh to a general frozen-animation flag.
+
+`drawing_snapshot.py` reads the actual preceding `any-boundary/0003.record` and all native
+cuts0..183. The snapshot recurrence is184/184: refresh at actual ordinary preparation through
+182 and hold at183. At29 and81 prepared movement is SpinJumping, while current and pose-change
+history are NormalJumping; using0A23 instead gives exactly2 missed unspin opportunities.
+The next preparation at30/82 captures NormalJumping. Seed/0/182/183 all retain Running; the
+first passage's normal drawing is frozen and does not fabricate another preparation.
+
+The selected S5 producer windows are: cut0->183 has13requests (8Footstep,2PlainSpin,2SpinEnded,
+SamusSilence183); seed->182 has13 (9Footstep includingcut0,2PlainSpin,2SpinEnded);
+seed->183 has14 including first-entry silence. Seed library3 queue and ACK are empty before
+its genuine cut0 Footstep admission. These counts exclude the separately owned landing57/124,
+Ceres opening157 and firing157 families. `snapshot_reference.py` exercises capture-after-earlier
+effects, hold, locked preparation, repeated normal drawing and body-only inanimate drawing;
+pose-history substitution and frame-start substitution faults fail their named cases.

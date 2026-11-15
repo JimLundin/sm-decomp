@@ -191,7 +191,7 @@ original's bytes as data.
   `docs/behaviours/samus-appearance.md`; `game::samus_appearance_bridge`): the engine runs the model, and
   gives it what the domains it lacks would: no slowdown, no start's slowdown and never submerged
   until the liquids join (R3, S2); the sounds the model asks for (the wall jump's spin, the boost)
-  go nowhere and none wait, which every boosting lap on record had, until the sound queue joins
+  leave through typed ordered producer outputs and none wait, which every boosting lap on record had, until the sound queue joins
   (U1); and the boost stage it keeps is read by none of its readers (the shinespark, the echoes,
   her glow, the blocks, the enemies) until they join. Her animation keeps a step only in the
   domain's poses: in a pose outside it (the shinespark's, the grapple's, the x-ray scope's,
@@ -431,3 +431,17 @@ Differences the plan keeps on purpose, listed ahead of the work that brings them
   travel, clears it after the normal or elevator-carried projectile pass, and fills it from
   normal movement. The fresh output cannot merge unwritten directions into a retained interval
   when PRE is skipped. Those caller variants and weapon inheritance still need their wiring.
+
+- **Appearance producer consumption and passage dispatch** (`samus-appearance`): ordinary
+  admitted Ceres ticks expose contact, spin selection, animation and normal-drawing requests
+  in source order. U1 sending, reply and queue ownership is absent. First-entry AtTheDoor is
+  a callable typed boundary held until R1 runtime dispatch exists; dispatch 183 of the native
+  M0 prefix remains unsupported. Other gameplay lacks checked suppression and drawing
+  neighbours, and does not run the new opportunities. No whole sound-State equality is claimed.
+
+- **Movement landing sound publication** (`samus-movement`): its public `Outcome` has no
+  landing sound request or consumer cue. Native cuts 57 and 124 request
+  SamusLandedOrWallJumped; pose changes and JumpHeld's LandedOrEnded cannot independently
+  publish that movement opportunity. The movement observer's contract and a model output
+  are required before these requests can feed U1. They are not appearance's FootContact
+  requests or CeresDoorOpening.

@@ -11,7 +11,7 @@ gone. Her clips and the run's paces are one importer's: `data` decodes the delay
 the frames the marks reach (`data::pose::animation::reached`), and the paces
 (`data::pose::animation::RunPaces`); the bridge turns them into the model's clips, each with its
 step map, and the harness reads the same clips from the engine's content. The engine's
-`Samus::animation` holds the State's four quantities. The RAM translation (D6, `verify::decode`)
+`Samus::animation` retains the complete clean State through `canonical::model::Model`, with its shape pinned for checkpoints. The RAM translation (D6, `verify::decode`)
 reads `0A96` through the step map of her pose's clip, `0A94` as is and `0B3E` as the stage and
 the laps; a frame on no step, a pose outside the domain, a time left past 255 or a stage past 4
 is a decode error. Each frame:
@@ -46,8 +46,7 @@ animation timing in the engine"):
 
 - **The liquids:** the slowdown, the start's slowdown and whether she is submerged: 0, 0 and not
   submerged.
-- **The sound domain:** the sounds the model asks for (the wall jump's spin, the speed booster's
-  boost) go nowhere, and no sound waits (`BoostingLap`): every boosting lap on record had 0
+- **The sound domain:** the sounds the model asks for leave as ordered typed producer requests, and no sound waits (`BoostingLap`): every boosting lap on record had 0
   waiting.
 - **The boost's readers:** the shinespark, the echoes, her glow, the blocks a boost breaks and the
   enemies she touches read the boost stage the engine now keeps; none of them reads it yet
@@ -64,3 +63,48 @@ holds as it did before the wiring.
 The harness compares the 2,023 frames the harness note adds: the Ceres escape's handler, the
 frames a message box opens and the frames a door starts. Left uncompared: the frames in poses
 outside the domain (1,688), and the masked boost frame (terrain-quicksand 156, the shinespark's).
+
+
+## Sound opportunities and bounded native admission
+
+The spec's §9 supplies FootContact, generic SpinStarts, normal-drawing SpinEnds and
+first-passage AtTheDoor. Imported contact-step content and actual ordinary Ceres movement, selection and drawing
+opportunities now produce ordered typed requests through `TickOutput`. First-entry passage
+remains a callable producer boundary until R1 runtime supplies its actual dispatch.
+Existing WallJumpBranch and BoostingLap remain animation outputs and must coexist without
+another animation update. Normal drawing during Quieting must run SpinEnds with remembered
+movement and frozen animation. The first-entry passage request precedes holding sounds.
+
+Cinematic, boss and special-colour suppression need typed owning inputs or native-seed
+validated inactive capabilities; no default-false bridge admission is evidence. Charge,
+retained charging resume, echo cancellation, debug and time-up are separate unsupported
+engine drawing neighbours. The native M0 observations establish their absence over0..183;
+production still validates seed/restoration and preserves that capability. Active restored
+owners must be supplied before complete drawing work is admitted. This capability limitation
+never changes the clean model's total SpinEnds rule for supplied movements.
+
+Ceres unboosted foot contacts have no graphical slot/OAM effect. Part2 still owns boosted
+dust and liquid effects; sound suppression may not drop the graphical contact opportunity.
+The library3 family at157 is CeresDoorOpening, produced by the existing Ceres door owner.
+Audio replies are U1;
+source opportunities alone do not establish native prefix sound-State equality.
+
+
+Normal drawing's previous movement is a caller-retained preparation snapshot, separate from
+`Samus.previous` pose-change history. The engine decodes and retains it independently,
+refreshes it only at actual current-state preparation, and preserves it when paused drawing
+bypasses preparation. Frozen animation alone is not a refresh guard. S5 reads this supplied
+input statelessly; its four animation State quantities and sound decision do not change.
+
+The ordinary producer capability is separately admitted from independently decoded native
+seed facts: no cinematic, boss, special colour, charge/resume, echo, debug, time-up or liquid
+surface. The ordinary owner preserves this certificate; Session reopening checks Ceres,
+equipped items, drawing and boost quantities along with the ordinary producer/actor path.
+Other gameplay has no appearance opportunity admission. Audio queues and replies are not
+reseeded, made ready or compared by this producer proof; U1 remains required.
+
+The native requests at cuts 57 and 124 are SamusLandedOrWallJumped, outside this appearance
+opportunity inventory. The movement model currently gives no typed sound request; its
+remembered LandedOrEnded quantity also covers animation ends and cannot invent that request.
+Observer ownership evidence and a producer contract are required before those sounds feed U1.
+CeresDoorOpening at cut 157 is separately B8-owned.

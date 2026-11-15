@@ -486,7 +486,9 @@ pub enum ClipEnd {
 
 /// Her run's speed booster stage (samus-appearance `BoostStages`): 0 to 4, where 4 is boosting. The
 /// shinespark, the echoes, her glow, the blocks a boost breaks and the enemies she touches read it.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Enum)]
+#[derive(
+    Clone, Copy, PartialEq, Eq, Debug, Default, Enum, serde::Serialize, serde::Deserialize,
+)]
 pub enum BoostStage {
     /// Stage 0: where every dash begins.
     #[default]

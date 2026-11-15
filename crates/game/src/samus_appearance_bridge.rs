@@ -2,79 +2,29 @@
 //! (`samus_appearance`).
 //!
 //! The engine keeps the model's State in `Samus::animation`: her step, the time left, the boost
-//! stage and the laps left. Each frame the model is read twice. Before samus-movement's step,
+//! stage and the laps left, directly in its pinned canonical model. Each frame the model is read twice. Before samus-movement's step,
 //! `Ahead`: the end her clip reaches and whether her spin has turned far enough to kick off a
 //! wall, both from the State the frame starts with. After the pose change, the update, from
 //! samus-movement's outputs (`Outcome`) and the pose she took. The liquids, the sound queues and
 //! the boost's readers aren't the engine's yet (LEGACY, "Samus's animation timing in the
-//! engine"): she is in no liquid, no sound waits and the sounds asked for go nowhere.
+//! engine"): she is in no liquid and no sound waits. Ordered producer requests leave through
+//! `session::TickOutput`; U1 still owns their sending and acknowledgements.
 
 pub mod import;
+pub mod producer;
 
 use data::pose::animation::AnimationFrame;
 use data::pose::transition::Control;
-use samus_appearance::{
-    Ahead, Dash, Frames, Inputs, Laps, LapsLeft, Liquid, MoveEvent, Playhead, Rules, SoundsWaiting,
-    State, Step, update,
-};
+use samus_appearance::{Ahead, Dash, Inputs, Liquid, MoveEvent, Rules, SoundsWaiting, update};
 use samus_movement::{Dashing, Outcome, StandingAnimation, WallTest};
-use types::{BoostStage, Fixed, Set};
+use types::{Fixed, Set};
 
 pub use import::{Clips, ImportError, Imported, figure_of};
 
 use crate::pose::controls;
 use crate::run_progress_bridge;
 use crate::state::Controller;
-use crate::state::samus::{self, Animation, ClipStep, PoseId, Samus};
-
-/// The model's boost stage for the engine's.
-const fn model_stage(stage: samus::BoostStage) -> BoostStage {
-    match stage {
-        samus::BoostStage::Stage0 => BoostStage::Stage0,
-        samus::BoostStage::Stage1 => BoostStage::Stage1,
-        samus::BoostStage::Stage2 => BoostStage::Stage2,
-        samus::BoostStage::Stage3 => BoostStage::Stage3,
-        samus::BoostStage::Boosting => BoostStage::Boosting,
-    }
-}
-
-/// The engine's boost stage for the model's.
-const fn engine_stage(stage: BoostStage) -> samus::BoostStage {
-    match stage {
-        BoostStage::Stage0 => samus::BoostStage::Stage0,
-        BoostStage::Stage1 => samus::BoostStage::Stage1,
-        BoostStage::Stage2 => samus::BoostStage::Stage2,
-        BoostStage::Stage3 => samus::BoostStage::Stage3,
-        BoostStage::Boosting => samus::BoostStage::Boosting,
-    }
-}
-
-/// The engine's count of the model's laps left.
-const fn laps_count(laps_left: LapsLeft) -> u8 {
-    match laps_left {
-        LapsLeft::WithoutBooster => 0,
-        LapsLeft::WithBooster(laps) => laps.count(),
-    }
-}
-
-/// The model's State from the engine's animation: the engine's 0 laps left is her run without
-/// the speed booster.
-fn state(animation: Animation) -> State {
-    State {
-        playhead: playhead(animation),
-        stage: model_stage(animation.boost.stage),
-        laps_left: Laps::new(animation.boost.laps_left)
-            .map_or(LapsLeft::WithoutBooster, LapsLeft::WithBooster),
-    }
-}
-
-/// Where her clip is, from the engine's animation.
-const fn playhead(animation: Animation) -> Playhead {
-    Playhead {
-        step: Step(animation.step.0),
-        time_left: Frames(animation.frames_left),
-    }
-}
+use crate::state::samus::{PoseId, Samus};
 
 /// Her pose's clip, with its step map; `None` for a pose outside her domain.
 fn imported<'a>(samus: &Samus, clips: &'a Clips) -> Option<&'a Imported> {
@@ -88,14 +38,14 @@ fn imported<'a>(samus: &Samus, clips: &'a Clips) -> Option<&'a Imported> {
 #[must_use]
 pub fn ahead(samus: &Samus, clips: &Clips) -> Option<Ahead> {
     let imported = imported(samus, clips)?;
-    Some(Ahead::of(playhead(samus.animation), &imported.clip))
+    Some(Ahead::of(samus.animation.0.0.playhead, &imported.clip))
 }
 
 /// The original's frame of her step, which her sprite is drawn by; `None` for a pose outside her
 /// domain or a step past her clip.
 #[must_use]
 pub fn frame(samus: &Samus, clips: &Clips) -> Option<AnimationFrame> {
-    imported(samus, clips)?.frame_of(Step(samus.animation.step.0))
+    imported(samus, clips)?.frame_of(samus.animation.0.0.playhead.step)
 }
 
 /// What her animation reads as the frame starts, before her moves and the pose change.
@@ -187,17 +137,9 @@ pub fn animate(
     outcome: Option<&Outcome>,
     controller: &Controller,
     clips: &Clips,
-) {
-    let Some(inputs) = outcome.and_then(|outcome| inputs(samus, start, outcome, controller)) else {
-        return;
-    };
-    let (after, _sound) = update(state(samus.animation), &inputs, clips, &Rules::VANILLA);
-    samus.animation = Animation {
-        step: ClipStep(after.playhead.step.0),
-        frames_left: after.playhead.time_left.0,
-        boost: samus::Boost {
-            stage: engine_stage(after.stage),
-            laps_left: laps_count(after.laps_left),
-        },
-    };
+) -> Option<types::AnimationSound> {
+    let inputs = outcome.and_then(|outcome| inputs(samus, start, outcome, controller))?;
+    let (after, sound) = update(samus.animation.0.0, &inputs, clips, &Rules::VANILLA);
+    samus.animation.0.0 = after;
+    sound
 }

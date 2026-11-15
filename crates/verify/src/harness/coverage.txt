@@ -161,6 +161,7 @@ samus-appearance field 20977 0 step
 samus-appearance field 20977 0 time_left
 samus-appearance field 20976 1 stage
 samus-appearance field 20976 1 laps_left
+samus-appearance entry AtTheDoor 0 0 0 0
 samus-appearance entry BoostStages 346 4 346 0
 samus-appearance entry BoostingLap 5 0 5 0
 samus-appearance entry Breathing 33 0 33 0
@@ -168,9 +169,12 @@ samus-appearance entry ClipControls 547 1 547 0
 samus-appearance entry ClipEnds 417 0 417 0
 samus-appearance entry ClipPlays 20977 557 20977 0
 samus-appearance entry FastFall 6 0 6 0
+samus-appearance entry FootContact 0 0 0 0
 samus-appearance entry HandOverSlowdown 0 0 0 0
 samus-appearance entry RisingHold 20 0 20 0
 samus-appearance entry RunPace 2087 0 2087 0
+samus-appearance entry SpinEnds 0 0 0 0
+samus-appearance entry SpinStarts 0 0 0 0
 samus-appearance entry SpinTurnedFar 0 0 0 3230
 samus-appearance entry StandingRestart 32 2 32 0
 samus-appearance entry StartingClip 5260 555 5260 0

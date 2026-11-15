@@ -447,6 +447,10 @@ pub const FIELDS: &[Field] = &[
     wram_byte("samus.facing", source::SAMUS_POSE_X_DIR),
     open("samus.aim"),
     wram_byte("samus.movement", source::SAMUS_MOVEMENT_TYPE),
+    wram_byte(
+        "samus.preparation_movement",
+        source::SAMUS_PREPARATION_MOVEMENT,
+    ),
     wram("samus.equipment.collected", source::COLLECTED_ITEMS),
     wram("samus.equipment.equipped", source::EQUIPPED_ITEMS),
     wram("samus.equipment.energy.current", source::SAMUS_HEALTH),
@@ -861,7 +865,7 @@ mod tests {
     }
 
     /// The byte sources the decoder reads.
-    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 38] {
+    fn byte_sources(rules: &Rules<'_>) -> [WramByte; 39] {
         [
             rules.lag,
             rules.max_lag,
@@ -895,6 +899,7 @@ mod tests {
             rules.playfield.next_colour_math[1],
             rules.pose.facing,
             rules.pose.movement,
+            rules.preparation_movement,
             rules.previous_pose.facing,
             rules.previous_pose.movement,
             rules.last_different_pose.facing,

@@ -29,7 +29,7 @@ The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): s
 
 The lowest rung not yet reached is M0, and the work starts only from its needs ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 24). Their order, from the plan's edges (platform work's `before`, and the domains a domain reads, within the rung's needs; an item waits only on work not started): **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
-Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **11 are in progress** and **0 done**; 26 have not started. **56 rounds** have landed on 10 models; the plan estimates 157 rounds for the whole game.
+Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **11 are in progress** and **0 done**; 26 have not started. **57 rounds** have landed on 10 models; the plan estimates 157 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
 
@@ -43,12 +43,12 @@ Each model is built in the clean room from its spec alone, then checked frame by
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | enemy-interactions | C1 (in progress) | in progress | 1 | 30 | 2 (0.7 %) | 295 | 293 | 295 | 264 | 362 | 0.73 |
 | weapons-projectiles | W1 (in progress) | in progress | 1 | 81 | 163 (0.7 %) | 22,329 | 22,166 | 23,507 | 4,035 | 2,062 | 1.96 |
-| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 22 | 359 | 15,256 (72.6 %) | 20,856 | 5,600 | 21,001 | 9,879 | 9,324 | 1.06 |
-| world-camera | CAM (in progress) | in progress | 7 | 87 | 14,333 (60.7 %) | 23,501 | 9,168 | 23,603 | 1,932 | 1,962 | 0.98 |
+| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 22 | 430 | 15,256 (72.6 %) | 20,856 | 5,600 | 21,001 | 9,879 | 9,324 | 1.06 |
+| world-camera | CAM (in progress) | in progress | 7 | 103 | 14,333 (60.7 %) | 23,501 | 9,168 | 23,603 | 1,932 | 1,962 | 0.98 |
 | run-progress | P1 (in progress) | in progress | 8 | 76 | 28 (0.1 %) | 40,442 | 40,414 | 40,451 | 819 | 1,061 | 0.77 |
 | interface-hud | H2 (in progress) | in progress | 6 | 95 | 2,853 (10.6 %) | 26,821 | 23,968 | 26,823 | 2,700 | 2,337 | 1.16 |
 | world-blocks | W2 (in progress) | in progress | 4 | 100 | 602 (2.6 %) | 23,517 | 22,915 | 23,603 | 2,395 | 2,074 | 1.15 |
-| samus-appearance | S5 (in progress) | in progress | 5 | 98 | 20,420 (97.3 %) | 20,977 | 557 | 20,977 | 2,191 | 1,412 | 1.55 |
+| samus-appearance | S5 (in progress) | in progress | 6 | 145 | 20,420 (97.3 %) | 20,977 | 557 | 20,977 | 2,672 | 1,900 | 1.41 |
 | boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 2,204 (40.5 %) | 5,437 | 3,233 | 5,437 | 1,299 | 1,150 | 1.13 |
 | world-doors | R1 (in progress) | in progress | 1 | 70 | 1,863 (99.1 %) | 1,863 | 0 | 1,880 | 3,374 | 2,912 | 1.16 |
 
@@ -73,9 +73,9 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 
 | Code | Files | Logic-equivalent lines | Score | Lines |
 | --- | ---: | ---: | ---: | ---: |
-| not yet rebuilt | 53 | 5,491 | 32,948 | 7,419 |
-| bridges from the engine to the models | 13 | 3,566 | 21,395 | 3,686 |
-| rebuilt models, shared types included | 92 | 4,939 | 29,636 | 11,736 |
+| not yet rebuilt | 53 | 5,588 | 33,528 | 7,538 |
+| bridges from the engine to the models | 14 | 3,702 | 22,212 | 3,861 |
+| rebuilt models, shared types included | 93 | 5,020 | 30,117 | 11,981 |
 
 ### Verification
 

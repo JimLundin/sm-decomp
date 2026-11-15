@@ -95,6 +95,7 @@ const fn no_steps() -> Clip {
         kick: None,
         fast_fall: None,
         rising: None,
+        contacts: std::collections::BTreeSet::new(),
     }
 }
 
@@ -124,20 +125,38 @@ impl Clips {
             .iter()
             .map(|entry| {
                 let list = delays.of(entry.id).ok_or(ImportError::NoList(entry.id))?;
-                imported(entry.id, list)
+                imported(entry.id, list, delays.contacts())
             })
             .collect::<Result<_, _>>()?;
         // By stage, from the first, as `BoostStage` orders them.
         let [first, second, third, fourth, boosting] =
             paces.boosted.each_ref().map(|holds| pace(holds));
-        Ok(Self {
+        let clips = Self {
             poses,
             paces: Paces {
                 plain: pace(&paces.plain)?,
                 boosted: EnumMap::from_array([first?, second?, third?, fourth?, boosting?]),
             },
             none: no_steps(),
-        })
+        };
+        for imported in &clips.poses {
+            if imported.figure.pose.action != types::Action::Running {
+                continue;
+            }
+            for (index, instruction) in imported.clip.instructions.iter().enumerate() {
+                if matches!(instruction, Instruction::Show(_))
+                    && (clips.paces.plain.0.get(index).is_none()
+                        || clips
+                            .paces
+                            .boosted
+                            .values()
+                            .any(|pace| pace.0.get(index).is_none()))
+                {
+                    return Err(ImportError::Pace);
+                }
+            }
+        }
+        Ok(clips)
     }
 
     /// The pose the original's `id` is, with its clip; `None` outside her domain.
@@ -192,7 +211,11 @@ fn hold(id: PoseId, delay: u8) -> Result<Hold, ImportError> {
 }
 
 /// Pose `id`'s clip from its delay list.
-fn imported(id: PoseId, list: &DelayList) -> Result<Imported, ImportError> {
+fn imported(
+    id: PoseId,
+    list: &DelayList,
+    contacts: &[AnimationFrame],
+) -> Result<Imported, ImportError> {
     use animation::Instruction as I;
     let (frames, items): (Vec<AnimationFrame>, Vec<DelayItem>) = list.steps().unzip();
     let step_at = |at: Option<usize>| -> Result<Step, ImportError> {
@@ -229,7 +252,8 @@ fn imported(id: PoseId, list: &DelayList) -> Result<Imported, ImportError> {
                 I::DrainedFalling => return Err(ImportError::Unwritten(id)),
             }))
         })
-        .collect::<Result<_, _>>()?;
+        .collect::<Result<Vec<_>, _>>()?;
+    validate_instructions(id, &instructions)?;
     let [kick, fast_fall, rising] = marks(id);
     let mark = |frame: Option<AnimationFrame>| {
         frame
@@ -245,9 +269,52 @@ fn imported(id: PoseId, list: &DelayList) -> Result<Imported, ImportError> {
             kick: mark(kick)?,
             fast_fall: mark(fast_fall)?,
             rising: mark(rising)?,
+            contacts: if figure.pose.action == types::Action::Running {
+                contacts
+                    .iter()
+                    .map(|frame| mark(Some(*frame)))
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into_iter()
+                    .flatten()
+                    .collect()
+            } else {
+                std::collections::BTreeSet::new()
+            },
         },
         frames,
     })
+}
+
+/// Imported targets must show a picture; clean total fallbacks never validate content.
+fn validate_instructions(id: PoseId, instructions: &[Instruction]) -> Result<(), ImportError> {
+    let shown = |step: Step| {
+        matches!(
+            instructions.get(usize::from(step.0)),
+            Some(Instruction::Show(_))
+        )
+    };
+    for (index, instruction) in instructions.iter().enumerate() {
+        let valid = match instruction {
+            Instruction::Show(_) => index.saturating_add(1) < instructions.len(),
+            Instruction::Control(Control::Again(step)) => shown(*step),
+            Instruction::Control(Control::Branch(branch)) => {
+                [branch.spin, branch.space_jump, branch.screw_attack]
+                    .into_iter()
+                    .all(shown)
+            }
+            Instruction::Control(Control::Rest | Control::Breathe) => {
+                matches!(
+                    instructions.get(index.saturating_add(1)),
+                    Some(Instruction::Show(_))
+                )
+            }
+            Instruction::Control(Control::End | Control::EndUnlessJump) => true,
+        };
+        if !valid {
+            return Err(ImportError::Unwritten(id));
+        }
+    }
+    Ok(())
 }
 
 /// The frames pose `id`'s clip marks: its kick step's, its fast fall step's (`FastFall`) and its

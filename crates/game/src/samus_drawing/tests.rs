@@ -1,5 +1,4 @@
 use super::*;
-use crate::state::samus::ClipStep;
 use crate::state::slots::Frames;
 use crate::state::video::{OamEntry, SamusTileUploads, SpriteCount};
 use crate::state::{FrameCount, State};
@@ -10,6 +9,7 @@ use data::pose::PoseId;
 use data::pose::animation::{AnimationDelays, DelayList, RunPaces};
 use data::pose::tiles::{FrameTiles, SamusTiles, TileDefinition, TileDefinitionId};
 use data::spritemap::Spritemap;
+use samus_appearance::Step;
 
 /// A frame drawing sprite lists `top` and `bottom` with the chest or not, its origin `origin_y`
 /// pixels down from her position.
@@ -110,7 +110,14 @@ fn clips() -> crate::samus_appearance_bridge::Clips {
     let bytes: Vec<u8> = [[1_u8; 0x1C].as_slice(), &[0xFF]].concat();
     let list = DelayList::decode(&bytes).unwrap();
     let delays = AnimationDelays::new(vec![list; data::pose::POSE_COUNT], DelayList::default());
-    crate::samus_appearance_bridge::Clips::import(&delays, &RunPaces::default()).unwrap()
+    crate::samus_appearance_bridge::Clips::import(
+        &delays,
+        &RunPaces {
+            plain: vec![1; 28],
+            boosted: std::array::from_fn(|_| vec![1; 28]),
+        },
+    )
+    .unwrap()
 }
 
 /// Samus at (0x150, 0x90) in pose `pose`, the camera at (0x100, 0x20).
@@ -192,7 +199,7 @@ fn a_hidden_samus_leaves_the_atmospheric_graphics_alone() {
 #[test]
 fn the_frame_picks_the_sprites_and_a_frame_may_have_no_bottom_half() {
     let mut rolling = state(2);
-    rolling.samus.animation.step = ClipStep(1);
+    rolling.samus.animation.0.0.playhead.step = Step(1);
     draw(&mut rolling, &content());
     assert_eq!(tiles(&rolling), [2]);
 }
@@ -215,7 +222,7 @@ fn facing_forward_adds_the_chest_sprite_between_the_halves() {
     // From the third frame the forward pose's origin is a pixel up, not its graphics offset;
     // frame 2 draws spritemap 3, whose first sprite is at (0, 0).
     let mut later = state(0);
-    later.samus.animation.step = ClipStep(2);
+    later.samus.animation.0.0.playhead.step = Step(2);
     draw(&mut later, &content());
     assert_eq!(later.video.batch.oam.low[0].y, 0x90 - 1 - 0x20);
 }
@@ -287,7 +294,7 @@ fn drawing_queues_the_frames_tile_uploads_flickering_or_not() {
     assert_eq!(drawn.video.batch.samus_tiles, queued(1, Some(2)));
     // A frame without bottom tiles leaves the bottom half's upload as it was.
     let mut rolling = state(2);
-    rolling.samus.animation.step = ClipStep(1);
+    rolling.samus.animation.0.0.playhead.step = Step(1);
     rolling.video.batch.samus_tiles.bottom = Some(TileDefinitionId(2));
     draw(&mut rolling, &content());
     assert_eq!(rolling.video.batch.samus_tiles, queued(0, Some(2)));

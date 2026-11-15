@@ -256,6 +256,8 @@ pub enum ProducerPool {
 /// Independently decoded facts establishing the bounded ordinary producer path.
 #[derive(Clone, Copy, Debug)]
 pub struct PowerSeedFacts {
+    /// Optional independently checked appearance path; absence does not admit its producers.
+    pub appearance: Option<crate::samus_appearance_bridge::producer::SeedFacts>,
     /// Actually equipped ordinary beam combination.
     pub beams: Beams,
     /// Actually equipped charge beam.
@@ -290,6 +292,7 @@ pub struct PowerSeedFacts {
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct OrdinaryCapability {
     checked: CheckedOrdinary,
+    appearance: Option<crate::samus_appearance_bridge::producer::Capability>,
 }
 
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -302,6 +305,13 @@ impl OrdinaryCapability {
     pub fn from_seed(
         facts: PowerSeedFacts,
     ) -> Result<Self, crate::weapons_projectiles_bridge::Fault> {
+        let appearance = facts
+            .appearance
+            .map(|facts| {
+                crate::samus_appearance_bridge::producer::Capability::from_seed(facts)
+                    .ok_or(crate::weapons_projectiles_bridge::Fault::Applicability)
+            })
+            .transpose()?;
         let supported = facts.beams == Beams::default()
             && facts.charge == ChargeEquipment::Unequipped
             && facts.charge_history == (Frames(0), Frames(0))
@@ -319,6 +329,7 @@ impl OrdinaryCapability {
         supported
             .then_some(Self {
                 checked: CheckedOrdinary,
+                appearance,
             })
             .ok_or(crate::weapons_projectiles_bridge::Fault::Applicability)
     }
@@ -332,6 +343,11 @@ pub struct OrdinaryPower {
     capability: OrdinaryCapability,
 }
 impl OrdinaryPower {
+    /// The separately admitted appearance producer path.
+    #[must_use]
+    pub const fn appearance(&self) -> Option<crate::samus_appearance_bridge::producer::Capability> {
+        self.capability.appearance
+    }
     /// Restore complete independently decoded model State after the capability edge checks.
     /// # Errors
     /// Invalid references or unsupported ordinary seed producers.

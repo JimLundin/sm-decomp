@@ -9,7 +9,7 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 
 ## Header
 
-**Scope.** Part 1 of the domain "how Samus looks": her animation's timing. One domain with her
+**Scope.** Part 1 of the domain "how Samus looks": her animation's timing and its sound opportunities (§9). One domain with her
 sprite and colours (part 2), because the player sees one thing, her figure; this part is the
 clock that the sprite reads. It covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
@@ -54,7 +54,7 @@ within the frame. A vector gives them as `before` and compares them as `after`.
 | --- | --- | --- |
 | end | the end her clip reaches this frame (`ClipEnds`): none, an end, or an end unless a jump; known from the frame's start, before samus-movement picks her pose (§6) | samus-movement (`AnimationEnds`, where an end unless a jump gives way when its pad chart's pose that frame is a take-off aimed forward or a spin) |
 | turned far | `bool`: whether her spin has turned far enough to kick off a wall (`SpinTurnedFar`); known from the frame's start, before samus-movement's step (§6) | samus-movement (`WallJump`), that frame |
-| sounds | the sound asked for this frame, at most one (a frame passes at most one control): `PlainSpin`, `SpaceJump`, `ScrewAttack` (`WallJumpBranch`), `Boosting` (`BoostStages`) | the sound domain |
+| sounds | the sound asked for by the animation update, at most one (an update passes at most one control): `PlainSpin`, `SpaceJump`, `ScrewAttack` (`WallJumpBranch`), `Boosting` (`BoostStages`) | the sound domain |
 | her step and the boost stage | as §1 | part 2 (her sprite, her glow), the shinespark, the echoes, the blocks, the enemies |
 
 The end and turned far are given ahead: each follows from the State and the clip of her pose at
@@ -63,7 +63,7 @@ itself then tells only what it alone can: the State it leaves and the sound it a
 
 ### 1.2 Her pose
 
-Her pose is samus-movement's (§2 there: body, action, facing, aim, gun, legs) with the sprite
+Her pose comes from samus-movement (§2 there: body, action, facing, aim, gun, legs) with the sprite
 `HowSheIsDrawn` chooses for it (plain, the screw attack's, the space jump's, the other suit's):
 each pose and sprite has its own clip. She takes another pose when either part differs.
 
@@ -320,7 +320,7 @@ Cells: kept, step 1
   (C-far-leaving).
 - So "past it" goes by step number: in a clip that branches, the steps of a branch numbered after
   the kick step are past it (C-far-later-branch: the space jump's steps in a wall jump).
-- checked: oracle (every frame of a spin on record, through samus-movement's wall jumps);
+- checked: oracle (every frame of a spin on record, through samus-movement, which reads it when she wall jumps);
   constructed (C-far, C-far-at-kick, C-not-far, C-far-no-kick, C-ready, C-far-taken-clip,
   C-far-leaving, C-far-later-branch).
 
@@ -470,3 +470,153 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
 1. The laps left at 0 with the speed booster (a dash begun without it, then the booster switched
    on mid-run) is outside the inputs' domain (§1.5); the pause screen's equipment change is out of
    scope.
+
+
+## 9. Sounds at her stride, pose selection and drawing
+
+These opportunities belong to how Samus looks: a foot contacting the ground is timed by the
+picture still showing, a spin starts with the figure she takes, and a spin ends while that
+figure is drawn. Each is an observable opportunity with its own inputs; the implementer chooses the
+interface form. None advances the animation, changes
+its four State quantities, or consumes a sound acknowledgement. The caller runs each at its
+named opportunity once. Multiple opportunities in one work may each ask for sound; the
+animation update's at-most-one output does not limit their combined outputs.
+
+### 9.1 Inputs, content and outputs
+
+| Quantity | Type and owner | Read by |
+| --- | --- | --- |
+| contact steps | a set of shown step indices in each clip, content supplied by the importer; any number of contacts, independent of holds and the kick mark | `FootContact` |
+| stride figure and playhead | her figure, step and frames left at the running movement opportunity, before the animation update; samus-movement and this domain | `FootContact` |
+| cinematic active | bool, the cinematic owner | `FootContact`, `SpinStarts` |
+| boss active | bool, the boss owner | `FootContact` |
+| special colours active | bool, appearance's colour owner: special colour time remains | `FootContact` |
+| boosting | the boost stage already in this domain's State, at the stride opportunity | `FootContact` |
+| figure selected from and figure selected | her figure immediately before and after a pose selection, including its sprite; samus-movement | `SpinStarts` |
+| submerged and items | the existing liquid input and items switched on, at pose selection | `SpinStarts` |
+| previous and current movement | typed actions: spin, wall jump, or any named other action; previous is the caller-retained action captured at the latest actual work preparation, current is samus-movement's action at normal drawing. Previous is independent of pose-change history | `SpinEnds` |
+| current action, shoot held, charge | current action from samus-movement, bool from the pad, charge frames from weapons, a count from 0 to 32767 | `AtTheDoor` |
+
+A contact opportunity returns a graphical contact opportunity separately from its optional sound.
+Part 2 reads the graphical opportunity with the room and liquid context to decide the splash
+or dust. Cinematic, boss and special colours suppress its sound only. This amendment does not
+replace the existing atmospheric drawing or add liquid graphics. Its bounded dry Ceres
+admission has no boosting, so the graphical opportunity leaves atmospheric slots and sprite output unchanged;
+it must still remain available to part 2.
+
+Sound outputs are semantic requests: `Footstep` to the footstep sounds, with at most 6 waiting;
+`PlainSpin`, `SpaceJump` and `ScrewAttack` to Samus sounds, with at most 6 waiting;
+`SpinEnded` and `SamusSilence` to Samus sounds, with at most 15 waiting. Sound admission,
+sending, retries and driver replies belong to the sound domain. An outstanding retry is not
+another appearance opportunity. Callers preserve requests from distinct opportunities in the
+order those opportunities occur.
+
+**Bounded engine admission for the other drawing effects.** Charge is zero, a charge sound is not retained
+for resumption, the echoes are quiet, debug is inactive, and the countdown has not expired.
+The owning domains must establish these predicates from the native starting State and preserve
+them; a caller may not manufacture them as false or read them from a later oracle cut. A
+violation requires the missing charge, echo or countdown owner before the engine can claim complete drawing work. These are engine capability limits, not guards on `SpinEnds`: the appearance model
+returns its spin-end decision for every supplied pair of movements. It does not model
+charge resumption, echo cancellation or countdown expiry.
+Foot contact itself accepts every combination of its sound suppressors. The broader sprite,
+colour and liquid effects remain part 2.
+
+### FootContact
+- kind: output.
+- summary: the last frame of a running contact picture asks for the stride's graphics, and
+  for its footstep sound unless an active sound suppressor prevents it.
+- params: none; contacts are content.
+- switch: none.
+- Running, exactly 1 frame left, her shown step marked as a contact → graphical contact
+  opportunity [C-contact, C-contact-cinematic, C-contact-boss, C-contact-colours, C-contact-boost]
+- That contact, cinematic inactive, boss inactive, special colours inactive, not boosting →
+  ask for `Footstep` [C-contact, C-contact-stage3, R-contact]
+- That contact with any of those four active → no sound, graphical contact still present
+  [C-contact-cinematic, C-contact-boss, C-contact-colours, C-contact-boost]
+- Any other movement, a different time left (0 included), or an unmarked step → neither
+  contact nor sound [C-contact-other, C-contact-early, C-contact-zero, C-contact-unmarked]
+- checked: constructed (the cases above); recorded (R-contact, the native prefix contacts).
+
+### SpinStarts
+- kind: output.
+- summary: the pose she takes starts its spin's sound, while a plain continuing spin stays
+  quiet; this does not add a second animation update.
+- params: none.
+- switch: none.
+
+For the item branches below, a qualifying selection means a different figure is selected,
+its action is `Spinning`, and she is not submerged. This common condition says nothing
+about her items, prior action or cinematic activity.
+
+- Qualifying selection, with SpaceJump and without ScrewAttack → ask for `SpaceJump`,
+  even from spin or wall jump and even during a cinematic [C-start-space, C-start-space-continued, C-start-space-cinematic]
+- Qualifying selection, with ScrewAttack, not from spin or wall jump → ask for `ScrewAttack`,
+  even during a cinematic [C-start-screw, C-start-both, C-start-screw-cinematic]
+- Qualifying selection, with ScrewAttack, from spin or wall jump → no sound
+  [C-start-screw-continued]
+- Qualifying selection, with neither item, not from spin or wall jump, cinematic inactive →
+  ask for `PlainSpin` [C-start-plain, R-start]
+- Qualifying selection, with neither item, from spin or wall jump or cinematic active → no sound
+  [C-start-continued, C-start-wall, C-start-cinematic, C-start-continued-cinematic]
+- No different figure, no spinning selection, or submerged → no sound
+  [C-start-same, C-start-other, C-start-submerged, C-start-submerged-both]
+- checked: constructed (the cases above); recorded (R-start). The existing `WallJumpBranch`
+  remains a wall jump's later animation branch sound, a distinct opportunity.
+
+### SpinEnds
+- kind: output.
+- summary: when she leaves a spin or wall jump, normal drawing ends its sound, even while
+  her animation is frozen.
+- params: none.
+- switch: none.
+- Normal drawing, prior action `Spinning` or `WallJumping`, current action
+  neither → ask for `SpinEnded` [C-end-spin, C-end-wall, C-end-frozen, R-unspin]
+- Prior action neither, or current action `Spinning` or `WallJumping` → no sound
+  [C-end-neither, C-end-spin-spin, C-end-spin-wall, C-end-wall-spin, C-end-wall-wall]
+- checked: constructed (the cases above); recorded (R-unspin).
+
+### AtTheDoor
+- kind: output.
+- summary: on first entering a passage, Samus stops her spin sound or her quiet uncharged
+  sound before sounds are held.
+- params: none.
+- switch: none.
+- First passage opportunity, current action `Spinning` or `WallJumping` → ask for `SpinEnded`,
+  whatever shoot and charge [C-door-spin, C-door-wall]
+- Current movement neither, shoot released, charge below 16 frames → ask for `SamusSilence`
+  [C-door-quiet, C-door-below, R-door]
+- Current movement neither, shoot held or charge 16 frames or more → no request
+  [C-door-held, C-door-threshold, C-door-above]
+- checked: constructed (the cases above); recorded (R-door).
+
+### 9.2 Opportunities and paused work
+
+The running contact read follows that running movement's position changes and precedes the
+animation update; pose selection follows. The selection read belongs to each actual pose selection;
+it uses the selected figures, not next-cut sound State. Normal drawing reads the remembered
+prepared action and the current action after pose selection, including the normal drawing
+performed during a passage's quieting; animation and motion may remain frozen there.
+The first passage read happens once on entry before the sound hold, separately from normal
+drawing. Sound retries are serviced by sound work alone. These reads require neither another
+motion step nor another animation update [C-end-frozen, C-contact, C-door-quiet].
+
+
+An invented work combines the existing wall-jump branch sound with drawing's spin end;
+another combines a contact and a spin selection. Each retains both requests in opportunity
+order, retain graphical contact, and compare all four animation quantities while animation
+runs at most once [C-branch-and-end, C-contact-and-start].
+
+
+The caller captures her current action when work preparation actually runs, after earlier
+effects that may have changed her action, before ordinary movement; pose selection follows. It retains this
+snapshot independently of pose-change history, and restores it with the rest of the caller's
+State. Normal drawing reads the snapshot without refreshing or consuming it. It is a supplied
+input, outside this model's four animation quantities; the appearance model stores no extra
+history. A frame-start figure is not a substitute for the actual preparation snapshot.
+
+Frozen animation alone does not decide whether the snapshot changes. Locked work that still
+performs preparation captures the current action; paused drawing that bypasses preparation
+keeps the earlier snapshot. The extra inanimate body draw does not capture an action or run a
+second sound opportunity. If preparation is bypassed and normal drawing repeats, each actual
+normal drawing reads the same retained snapshot. These rules preserve both the last prepared
+spin and a current action that has left it, without another motion or animation update.

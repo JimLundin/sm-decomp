@@ -219,13 +219,15 @@ fn untraceable(form: &str) -> Unencodable {
 impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
     type Error = Unencodable;
 
+    // Integer values are placeholders, not part of the shape. One also satisfies serde's
+    // NonZero wrappers; zero would reject their types before any shape can be traced.
     trace_primitive!(
         deserialize_bool: "bool" => visit_bool(false),
-        deserialize_i8: "i8" => visit_i8(0), deserialize_i16: "i16" => visit_i16(0),
-        deserialize_i32: "i32" => visit_i32(0), deserialize_i64: "i64" => visit_i64(0),
-        deserialize_i128: "i128" => visit_i128(0), deserialize_u8: "u8" => visit_u8(0),
-        deserialize_u16: "u16" => visit_u16(0), deserialize_u32: "u32" => visit_u32(0),
-        deserialize_u64: "u64" => visit_u64(0), deserialize_u128: "u128" => visit_u128(0),
+        deserialize_i8: "i8" => visit_i8(1), deserialize_i16: "i16" => visit_i16(1),
+        deserialize_i32: "i32" => visit_i32(1), deserialize_i64: "i64" => visit_i64(1),
+        deserialize_i128: "i128" => visit_i128(1), deserialize_u8: "u8" => visit_u8(1),
+        deserialize_u16: "u16" => visit_u16(1), deserialize_u32: "u32" => visit_u32(1),
+        deserialize_u64: "u64" => visit_u64(1), deserialize_u128: "u128" => visit_u128(1),
         deserialize_f32: "f32" => visit_f32(0.0), deserialize_f64: "f64" => visit_f64(0.0),
         deserialize_char: "char" => visit_char('\0'), deserialize_str: "str" => visit_str(""),
         deserialize_string: "str" => visit_str(""), deserialize_bytes: "bytes" => visit_bytes(&[]),

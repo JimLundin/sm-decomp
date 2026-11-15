@@ -36,6 +36,12 @@ impl Rules {
         fast_fall_hold: Hold(8),
         rising_hold: Hold(4),
         // 1 lap at stages 0 to 3, 2 at stage 4.
-        laps_per_stage: EnumMap::from_array([Laps(1), Laps(1), Laps(1), Laps(1), Laps(2)]),
+        laps_per_stage: EnumMap::from_array([
+            Laps::ONE,
+            Laps::ONE,
+            Laps::ONE,
+            Laps::ONE,
+            Laps::TWO,
+        ]),
     };
 }

@@ -447,6 +447,12 @@ pub fn validate_path(
     let Some(owner) = state.projectiles.ordinary() else {
         return Ok(());
     };
+    if owner
+        .appearance()
+        .is_some_and(|capability| !capability.holds(state))
+    {
+        return Err(Fault::Applicability);
+    }
     let power = content.ordinary_power.as_ref().ok_or(Fault::Content)?;
     power.validate_state(&owner.model.0)?;
     if !matches!(
@@ -722,6 +728,7 @@ mod tests {
 
     fn seed_facts() -> crate::state::projectile::PowerSeedFacts {
         crate::state::projectile::PowerSeedFacts {
+            appearance: None,
             beams: crate::state::slots::FlagSet::default(),
             charge: crate::state::projectile::ChargeEquipment::Unequipped,
             charge_history: (

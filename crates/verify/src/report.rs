@@ -818,7 +818,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
         model,
         uses_shared,
         count,
-        vectors: tables(&toml, "vector"),
+        vectors: Vectors::parse(&toml).len(),
         pose_steps: tables(&toml, "pose_step"),
         baseline: baseline(budget),
         bridge: measure(

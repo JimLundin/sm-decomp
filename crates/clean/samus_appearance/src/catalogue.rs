@@ -36,6 +36,14 @@ pub enum BehaviourId {
     BoostStages,
     /// The lap on which she starts boosting starts on a stage the sounds waiting name.
     BoostingLap,
+    /// Running contact graphics and optional footstep sound.
+    FootContact,
+    /// Pose selection starts its spin sound.
+    SpinStarts,
+    /// Normal drawing ends a departed spin sound.
+    SpinEnds,
+    /// First passage entry quiets Samus before sound hold.
+    AtTheDoor,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -54,7 +62,7 @@ pub struct Behaviour {
 }
 
 /// Every behaviour of the spec, in its order.
-pub const CATALOGUE: [Behaviour; 15] = [
+pub const CATALOGUE: [Behaviour; 19] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -172,6 +180,34 @@ pub const CATALOGUE: [Behaviour; 15] = [
                   numbered by the sounds waiting, usually the slowest, and lasts that stage's \
                   laps; the rest of the lap runs at the boosting pace",
         kind: Kind::Quirk,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::FootContact,
+        summary: "the last frame of a running contact picture asks for the stride's graphics, and for its footstep sound unless an active sound suppressor prevents it",
+        kind: Kind::Output,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SpinStarts,
+        summary: "the pose she takes starts its spin's sound, while a plain continuing spin stays quiet; this does not add a second animation update",
+        kind: Kind::Output,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SpinEnds,
+        summary: "when she leaves a spin or wall jump, normal drawing ends its sound, even while her animation is frozen",
+        kind: Kind::Output,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::AtTheDoor,
+        summary: "on first entering a passage, Samus stops her spin sound or her quiet uncharged sound before sounds are held",
+        kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

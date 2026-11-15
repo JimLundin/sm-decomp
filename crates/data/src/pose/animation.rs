@@ -331,6 +331,7 @@ const LIST_BANK: u8 = 0x91;
 pub struct AnimationDelays {
     poses: Vec<DelayList>,
     running: DelayList,
+    contacts: Vec<AnimationFrame>,
 }
 
 impl AnimationDelays {
@@ -361,13 +362,38 @@ impl AnimationDelays {
             })
             .collect::<Result<_, _>>()?;
         let running = list_at(RUNNING_DELAYS, PoseId(u16::MAX), None)?;
-        Ok(Self { poses, running })
+        // Running contact marks are content, shared by the running pictures.
+        let contact_start = RomAddress::new(0x90, 0xA424);
+        let contact_bytes = rom
+            .read(contact_start, 10)
+            .map_err(AnimationError::Address)?;
+        let contacts = contact_bytes
+            .iter()
+            .enumerate()
+            .filter(|(_, mark)| **mark != 0)
+            .filter_map(|(index, _)| u16::try_from(index).ok().map(AnimationFrame))
+            .collect();
+        Ok(Self {
+            poses,
+            running,
+            contacts,
+        })
     }
 
     /// The table from each pose's list and the running list.
     #[must_use]
     pub const fn new(poses: Vec<DelayList>, running: DelayList) -> Self {
-        Self { poses, running }
+        Self {
+            poses,
+            running,
+            contacts: Vec::new(),
+        }
+    }
+
+    /// Imported running pictures that make ground contact.
+    #[must_use]
+    pub fn contacts(&self) -> &[AnimationFrame] {
+        &self.contacts
     }
 
     /// The list of `pose`; `None` past the table.

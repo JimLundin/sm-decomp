@@ -53,7 +53,7 @@ rounds = 4
 
 [[model]]
 name = "samus-appearance"
-rounds = 5
+rounds = 6
 
 [[model]]
 name = "boss-ceres-ridley"

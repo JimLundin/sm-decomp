@@ -338,3 +338,24 @@ fn a_table_by_enum_is_its_entries_in_variant_order_and_traces_with_its_key() {
     );
     assert!(shape::<Shafts>().is_ok());
 }
+
+#[test]
+fn constrained_integer_states_trace_and_keep_their_exact_encoding() {
+    use core::num::{NonZeroI16, NonZeroU8};
+    type Positive = (NonZeroU8, NonZeroI16);
+    struct PositivePin;
+    impl Pinned for PositivePin {
+        type State = Positive;
+        const NAME: &'static str = "positive";
+        const SHAPE: u64 = 0;
+    }
+    assert_eq!(shape::<Positive>(), shape::<(u8, i16)>());
+    assert!(shape::<Positive>().is_ok());
+    let value = Model::<PositivePin>((NonZeroU8::new(7).unwrap(), NonZeroI16::new(-3).unwrap()));
+    assert_eq!(to_bytes(&value), [3, 0, 0, 0, 7, 0xfd, 0xff]);
+    assert_eq!(
+        from_bytes::<Model<PositivePin>>(&to_bytes(&value)),
+        Ok(value)
+    );
+    assert!(from_bytes::<Model<PositivePin>>(&[3, 0, 0, 0, 0, 0xfd, 0xff]).is_err());
+}

@@ -31,9 +31,8 @@ use game::state::room::{
     SpritePalette,
 };
 use game::state::samus::{
-    Animation, AnimationFrame, Boost, BoostStage, ClipStep, DrawingHandler, Equipment, Facing,
-    Fixed, FrameBefore, Gauge, Item, Items, JumpHeld, Point, PoseId, PoseRecord, ReserveMode,
-    Samus, Visor, VisorShade, VisorTimer,
+    Animation, AnimationFrame, DrawingHandler, Equipment, Facing, Fixed, FrameBefore, Gauge, Item,
+    Items, JumpHeld, Point, PoseId, PoseRecord, ReserveMode, Samus, Visor, VisorShade, VisorTimer,
 };
 use game::state::slots::{FlagSet, Frames};
 use game::state::sram::{SAVE_RAM_BYTES, SaveRam};
@@ -456,6 +455,8 @@ pub struct Rules<'t> {
     pub pose: PoseSources,
     /// `samus.previous`.
     pub previous_pose: PoseSources,
+    /// `samus.preparation_movement`, independent of pose-change history.
+    pub preparation_movement: WramByte,
     /// `samus.last_different`.
     pub last_different_pose: PoseSources,
     /// `message`.
@@ -1178,6 +1179,7 @@ impl Rules<'_> {
             facing: source::SAMUS_POSE_X_DIR,
             movement: source::SAMUS_MOVEMENT_TYPE,
         },
+        preparation_movement: source::SAMUS_PREPARATION_MOVEMENT,
         previous_pose: PoseSources {
             pose: source::SAMUS_PREV_POSE,
             facing: source::SAMUS_PREV_POSE_X_DIR,
@@ -1390,6 +1392,11 @@ impl Rules<'_> {
             last_different: self.last_different_pose.read(wram)?,
             facing: pose.facing,
             movement: pose.movement,
+            preparation_movement: MovementType::try_from(self.preparation_movement.read(wram)?)
+                .map_err(|value| DecodeError::Unrepresentable {
+                    source: self.preparation_movement.name,
+                    value: u16::from(value),
+                })?,
             animation: self.animation.read(wram, pose.pose, clips)?,
             visor: visor(self.visor, wram)?,
             drawing: drawing_handler(self.drawing, wram)?,
@@ -2091,21 +2098,17 @@ impl AnimationSources {
             .get(usize::from(stage))
             .copied()
             .ok_or_else(|| unrepresentable(self.boost, boost))?;
-        Ok(Animation {
-            step: ClipStep(step.0),
-            frames_left,
-            boost: Boost { stage, laps_left },
-        })
+        Ok(Animation::restore(step, frames_left, stage, laps_left))
     }
 }
 
 /// Her run's boost stages, by the number the speed booster's counter holds.
-const BOOST_STAGES: [BoostStage; 5] = [
-    BoostStage::Stage0,
-    BoostStage::Stage1,
-    BoostStage::Stage2,
-    BoostStage::Stage3,
-    BoostStage::Boosting,
+const BOOST_STAGES: [types::BoostStage; 5] = [
+    types::BoostStage::Stage0,
+    types::BoostStage::Stage1,
+    types::BoostStage::Stage2,
+    types::BoostStage::Stage3,
+    types::BoostStage::Boosting,
 ];
 
 /// Samus's visor cycle from its word: the timer in the low byte, in the high byte the byte

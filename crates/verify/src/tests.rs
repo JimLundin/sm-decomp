@@ -24,8 +24,8 @@ use game::state::room::{
 };
 use game::state::room::{BlockPoint, DrawnBlocks, ItemGfx, ItemGfxSlot};
 use game::state::samus::{
-    Animation, Boost, BoostStage, ClipStep, DrawingHandler, Facing, FrameBefore, JumpHeld,
-    MovementType, PoseId, PoseRecord, Visor, VisorShade, VisorTimer,
+    Animation, DrawingHandler, Facing, FrameBefore, JumpHeld, MovementType, PoseId, PoseRecord,
+    Visor, VisorShade, VisorTimer,
 };
 use game::state::samus::{Dashing, SpeedMode, VerticalMotion};
 use game::state::samus::{Fixed, Point};
@@ -89,7 +89,10 @@ fn samus_clips() -> game::samus_appearance_bridge::Clips {
     );
     game::samus_appearance_bridge::Clips::import(
         &delays,
-        &data::pose::animation::RunPaces::default(),
+        &data::pose::animation::RunPaces {
+            plain: vec![1; 28],
+            boosted: std::array::from_fn(|_| vec![1; 28]),
+        },
     )
     .unwrap()
 }
@@ -518,14 +521,7 @@ fn record() -> FrameRecord {
 /// Samus's animation, as the synthetic record sets it.
 fn decodes_the_animation(state: &State) -> bool {
     state.samus.animation
-        == Animation {
-            step: ClipStep(3),
-            frames_left: 7,
-            boost: Boost {
-                stage: BoostStage::Stage1,
-                laps_left: 2,
-            },
-        }
+        == Animation::restore(samus_appearance::Step(3), 7, types::BoostStage::Stage1, 2)
         && state.samus.drawing == DrawingHandler::UsingElevator
         && state.video.batch.samus_tiles
             == SamusTileUploads {

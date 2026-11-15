@@ -135,7 +135,10 @@ const fn shown_by(id: BehaviourId) -> FieldSet {
         | B::RisingHold
         | B::RunPace => PLAYHEAD,
         B::BoostStages | B::BoostingLap => PLAYHEAD.union(BOOST),
-        B::SpinTurnedFar => FieldSet::EMPTY,
+        // Opportunity outputs are checked by the typed producer proof, not animation State.
+        B::SpinTurnedFar | B::FootContact | B::SpinStarts | B::SpinEnds | B::AtTheDoor => {
+            FieldSet::EMPTY
+        }
     }
 }
 

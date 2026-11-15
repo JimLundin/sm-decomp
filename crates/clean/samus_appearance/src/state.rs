@@ -2,6 +2,8 @@
 //! stage and the laps left. A caller may build each at any value the spec allows and read it
 //! back, and keeps them between frames as `update` left them: nothing else carries over.
 
+use core::num::NonZeroU8;
+
 use types::BoostStage;
 
 use crate::clip::{Clip, Frames, Hold, Instruction, Slowdown, Step};
@@ -14,7 +16,7 @@ fn less_one(count: u8) -> Option<u8> {
 }
 
 /// Where her clip is: her step, and the time left on it.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Playhead {
     /// Her step: the picture she shows (part 2).
     pub step: Step,
@@ -65,26 +67,36 @@ impl Playhead {
 
 /// A number of laps of her run, 1 or more: the laps a stage lasts (`BoostStages`), which an
 /// adjusted game may set to any number from 1, or the laps a stage still lasts.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct Laps(pub(crate) u8);
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Laps(NonZeroU8);
+
+/// Spec: `BoostStages`. Vanilla boosting lasts two laps.
+const BOOSTING_LAPS: u8 = 2;
 
 impl Laps {
+    /// Spec: `BoostStages`. Vanilla stages before boosting last one lap.
+    pub const ONE: Self = Self(NonZeroU8::MIN);
+    /// Spec: `BoostStages`. Vanilla boosting lasts two laps.
+    pub const TWO: Self = Self(NonZeroU8::new(BOOSTING_LAPS).expect("boosting laps are positive"));
     /// The laps of `count`, if it is 1 or more.
     #[must_use]
     pub const fn new(count: u8) -> Option<Self> {
-        if count > 0 { Some(Self(count)) } else { None }
+        match NonZeroU8::new(count) {
+            Some(count) => Some(Self(count)),
+            None => None,
+        }
     }
 
     /// How many laps.
     #[must_use]
     pub const fn count(self) -> u8 {
-        self.0
+        self.0.get()
     }
 }
 
 /// The laps of her run the boost stage still lasts, the lap she is running included, so at 1
 /// that lap is the stage's last (`BoostStages`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum LapsLeft {
     /// No laps, 0: her run without the speed booster. A dash begun without it leaves none, and so
     /// does a dash lost, until the next dash begins.
@@ -99,7 +111,7 @@ impl LapsLeft {
     #[must_use]
     pub fn after_lap(self) -> Option<Laps> {
         match self {
-            Self::WithBooster(laps) => less_one(laps.0).map(Laps),
+            Self::WithBooster(laps) => less_one(laps.count()).and_then(Laps::new),
             Self::WithoutBooster => None,
         }
     }
@@ -109,7 +121,7 @@ impl LapsLeft {
 ///
 /// The end, whether her spin has turned far, where the clip of the pose she takes starts, the
 /// slowdowns and what her moves did are each worked out within the frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct State {
     /// Her step and the time left on it.
     pub playhead: Playhead,

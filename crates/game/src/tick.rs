@@ -134,6 +134,27 @@ pub fn run(
     until: Until,
     budget: &mut u16,
 ) -> Result<(), SessionFault> {
+    run_with_appearance(
+        state,
+        rules,
+        content,
+        until,
+        budget,
+        &mut samus_appearance_bridge::producer::Outputs::default(),
+    )
+}
+
+/// Run the dispatcher while retaining each appearance producer output.
+/// # Errors
+/// The same dispatcher and gameplay faults as `run`.
+pub fn run_with_appearance(
+    state: &mut State,
+    rules: Rules,
+    content: &Content,
+    until: Until,
+    budget: &mut u16,
+    appearance: &mut samus_appearance_bridge::producer::Outputs,
+) -> Result<(), SessionFault> {
     if state.main.waiting.is_some() {
         return Ok(());
     }
@@ -145,7 +166,7 @@ pub fn run(
         *budget = budget
             .checked_sub(1)
             .ok_or(SessionFault::StepBudgetExceeded)?;
-        match step_once(state, rules, content)? {
+        match step_once_with_appearance(state, rules, content, appearance)? {
             Next::Sync if until == Until::BeamSync => return Ok(()),
             Next::Yield(_) => return Ok(()),
             Next::Continue | Next::Call(_) | Next::Return | Next::Sync => {}
@@ -159,8 +180,22 @@ pub fn run(
 ///
 /// A [`SessionFault`] when the strand is empty or a call would nest it too deep.
 pub fn step_once(state: &mut State, rules: Rules, content: &Content) -> Result<Next, SessionFault> {
+    step_once_with_appearance(
+        state,
+        rules,
+        content,
+        &mut samus_appearance_bridge::producer::Outputs::default(),
+    )
+}
+
+fn step_once_with_appearance(
+    state: &mut State,
+    rules: Rules,
+    content: &Content,
+    appearance: &mut samus_appearance_bridge::producer::Outputs,
+) -> Result<Next, SessionFault> {
     let top = *state.main.frames.last().ok_or(SessionFault::StrandEmpty)?;
-    let (at, next) = step(top, state, rules, content)?;
+    let (at, next) = step(top, state, rules, content, appearance)?;
     if let Some(innermost) = state.main.frames.last_mut() {
         *innermost = at;
     }
@@ -189,6 +224,7 @@ fn step(
     state: &mut State,
     rules: Rules,
     content: &Content,
+    appearance: &mut samus_appearance_bridge::producer::Outputs,
 ) -> Result<(Frame, Next), SessionFault> {
     Ok(match frame {
         Frame::MainLoop(at) => {
@@ -196,7 +232,7 @@ fn step(
             (Frame::MainLoop(at), next)
         }
         Frame::Gameplay(at) => {
-            let (at, next) = gameplay(at, state, rules, content)?;
+            let (at, next) = gameplay(at, state, rules, content, appearance)?;
             (Frame::Gameplay(at), next)
         }
         Frame::MessageBox(at) => {
@@ -423,12 +459,13 @@ fn gameplay(
     state: &mut State,
     rules: Rules,
     content: &Content,
+    appearance: &mut samus_appearance_bridge::producer::Outputs,
 ) -> Result<(GameplayAt, Next), SessionFault> {
     Ok(match at {
         GameplayAt::Start => {
             let mut pass = Pass::default();
             for phase in THROUGH_PLMS {
-                gameplay_phase(phase, state, rules, content, &mut pass)?;
+                gameplay_phase(phase, state, rules, content, &mut pass, appearance)?;
             }
             if state.projectiles.ordinary().is_some() {
                 if pass.callout.is_some() {
@@ -438,7 +475,7 @@ fn gameplay(
                 }
                 // Ordinary transient requests remain in this pass through their drawing destination.
                 for phase in AFTER_PLMS {
-                    gameplay_phase(phase, state, rules, content, &mut pass)?;
+                    gameplay_phase(phase, state, rules, content, &mut pass, appearance)?;
                 }
                 return Ok((GameplayAt::Start, Next::Return));
             }
@@ -453,7 +490,7 @@ fn gameplay(
             // only the enemy phases before it read.
             let mut pass = Pass::default();
             for phase in AFTER_PLMS {
-                gameplay_phase(phase, state, rules, content, &mut pass)?;
+                gameplay_phase(phase, state, rules, content, &mut pass, appearance)?;
             }
             (GameplayAt::Start, Next::Return)
         }
@@ -475,6 +512,7 @@ fn samus_current_state(
         weapons_pre(state, content, reads, true, power_requests)?;
         state.movement_travel.0.refresh();
         state.pending_aim.0 = None;
+        state.samus.preparation_movement = state.samus.movement;
         return Ok(pose::PoseRequests::default());
     }
     pose::set_radius(&mut state.samus, content);
@@ -486,6 +524,7 @@ fn samus_current_state(
     // Normal PRE clears only after the projectile pass consumed the preceding interval.
     state.movement_travel.0.refresh();
     state.pending_aim.0 = None;
+    state.samus.preparation_movement = state.samus.movement;
     Ok(requests)
 }
 
@@ -539,6 +578,7 @@ fn gameplay_phase(
     rules: Rules,
     content: &Content,
     pass: &mut Pass,
+    appearance: &mut samus_appearance_bridge::producer::Outputs,
 ) -> Result<(), SessionFault> {
     match phase {
         GameplayPhase::SamusCurrentState => {
@@ -548,55 +588,7 @@ fn gameplay_phase(
         // then her animation, whose model plays her clip and starts the one of the pose she
         // took (`$90:E725`).
         GameplayPhase::SamusNewState => {
-            let completed = state.clock.counters.completed.0;
-            let surroundings = surroundings(&state.room, content, &pass.active);
-            let reads = blocks(state, content);
-            let mut touches = Touches::default();
-            let inputs = samus_movement_bridge::step::Inputs {
-                reads: samus_movement_bridge::step::Reads {
-                    controller: &state.controller,
-                    ride: state.elevator,
-                    completed,
-                    content,
-                },
-                surroundings,
-                speed_cap: rules.switches.speed_cap,
-            };
-            let start = samus_appearance_bridge::Start::of(&state.samus);
-            let stepped = samus_movement_bridge::step::step(&mut state.samus, inputs, &mut touches)
-                .map_err(SessionFault::Samus)?;
-            if let Some(stepped) = &stepped {
-                select_passage(state, &stepped.outcome.reached, content)?;
-                state.movement_travel.0.travels = stepped.outcome.travelled;
-                if stepped.outcome.placed.is_some() {
-                    world_camera_bridge::remember(
-                        &mut state.camera.0,
-                        state.samus.previous_position,
-                    );
-                }
-                if let Some(aim) = stepped.outcome.pending_aim {
-                    state.pending_aim.0 = Some(aim);
-                }
-            }
-            mini_map_turn(state, content).map_err(SessionFault::Hud)?;
-            let next =
-                samus_movement_bridge::step::next(&state.samus, stepped.as_ref(), pass.requests);
-            change_pose(&mut state.samus, &mut state.atmospherics, next, content);
-            samus_appearance_bridge::animate(
-                &mut state.samus,
-                start,
-                stepped.as_ref().map(|stepped| &stepped.outcome),
-                &state.controller,
-                &content.samus_clips,
-            );
-            // The touch PLMs the moves spawned, which change nothing the moves read.
-            touches
-                .apply(&mut state.room, reads)
-                .map_err(|fault| match fault {
-                    crate::collision::Fault::Item(fault) => SessionFault::Plm(fault),
-                    crate::collision::Fault::Blocks(fault) => SessionFault::Blocks(fault),
-                })?;
-            crate::samus_palette::handle(state, &content.visor_colours);
+            samus_new_state(state, rules, content, pass, appearance)?;
         }
         // open: running out of health (the reserve tanks' refill and the death sequence) joins
         // with those game states. In game state 8 the clock still counts on that frame; it
@@ -624,8 +616,21 @@ fn gameplay_phase(
             world_camera_bridge::scroll(&mut state.camera.0, &mut state.room, &mut state.samus)
                 .map_err(SessionFault::Room)?;
         }
-        GameplayPhase::Draw => crate::enemy::drawing::draw(state, content, &mut pass.power)
-            .map_err(SessionFault::Power)?,
+        GameplayPhase::Draw => {
+            crate::enemy::drawing::draw(state, content, &mut pass.power)
+                .map_err(SessionFault::Power)?;
+            if let Some(capability) = state
+                .projectiles
+                .ordinary()
+                .and_then(crate::state::projectile::OrdinaryPower::appearance)
+            {
+                samus_appearance_bridge::producer::normal_draw(
+                    &state.samus,
+                    capability,
+                    appearance,
+                );
+            }
+        }
         GameplayPhase::BgScroll => bg_scroll(state, content),
         GameplayPhase::PaletteFx
         | GameplayPhase::SamusProjectileInteraction
@@ -639,6 +644,90 @@ fn gameplay_phase(
         | GameplayPhase::RoomShaking
         | GameplayPhase::HurtTimers => {}
     }
+    Ok(())
+}
+
+/// Movement, contact, selection and animation share one uninterrupted gameplay phase.
+fn samus_new_state(
+    state: &mut State,
+    rules: Rules,
+    content: &Content,
+    pass: &Pass,
+    appearance: &mut samus_appearance_bridge::producer::Outputs,
+) -> Result<(), SessionFault> {
+    let completed = state.clock.counters.completed.0;
+    let surroundings = surroundings(&state.room, content, &pass.active);
+    let reads = blocks(state, content);
+    let mut touches = Touches::default();
+    let inputs = samus_movement_bridge::step::Inputs {
+        reads: samus_movement_bridge::step::Reads {
+            controller: &state.controller,
+            ride: state.elevator,
+            completed,
+            content,
+        },
+        surroundings,
+        speed_cap: rules.switches.speed_cap,
+    };
+    let start = samus_appearance_bridge::Start::of(&state.samus);
+    let stepped = samus_movement_bridge::step::step(&mut state.samus, inputs, &mut touches)
+        .map_err(SessionFault::Samus)?;
+    if let Some(stepped) = &stepped {
+        select_passage(state, &stepped.outcome.reached, content)?;
+        state.movement_travel.0.travels = stepped.outcome.travelled;
+        if stepped.outcome.placed.is_some() {
+            world_camera_bridge::remember(&mut state.camera.0, state.samus.previous_position);
+        }
+        if let Some(aim) = stepped.outcome.pending_aim {
+            state.pending_aim.0 = Some(aim);
+        }
+    }
+    if let Some(capability) = state
+        .projectiles
+        .ordinary()
+        .and_then(crate::state::projectile::OrdinaryPower::appearance)
+    {
+        samus_appearance_bridge::producer::contact(
+            &state.samus,
+            &content.samus_clips,
+            capability,
+            appearance,
+        );
+    }
+    mini_map_turn(state, content).map_err(SessionFault::Hud)?;
+    let next = samus_movement_bridge::step::next(&state.samus, stepped.as_ref(), pass.requests);
+    let selection_from = state.samus.pose;
+    change_pose(&mut state.samus, &mut state.atmospherics, next, content);
+    let sound = samus_appearance_bridge::animate(
+        &mut state.samus,
+        start,
+        stepped.as_ref().map(|stepped| &stepped.outcome),
+        &state.controller,
+        &content.samus_clips,
+    );
+    appearance.animation(sound);
+    // The selected figures are retained across the update; request order is contact, animation, selection.
+    if let Some(capability) = state
+        .projectiles
+        .ordinary()
+        .and_then(crate::state::projectile::OrdinaryPower::appearance)
+    {
+        samus_appearance_bridge::producer::selected(
+            selection_from,
+            &state.samus,
+            capability,
+            appearance,
+        );
+    }
+
+    // The touch PLMs the moves spawned, which change nothing the moves read.
+    touches
+        .apply(&mut state.room, reads)
+        .map_err(|fault| match fault {
+            crate::collision::Fault::Item(fault) => SessionFault::Plm(fault),
+            crate::collision::Fault::Blocks(fault) => SessionFault::Blocks(fault),
+        })?;
+    crate::samus_palette::handle(state, &content.visor_colours);
     Ok(())
 }
 
@@ -717,6 +806,7 @@ mod firing_history_tests {
         state.samus.movement = data::pose::MovementType::Standing;
         state.elevator.status = crate::state::room::ElevatorStatus::LeavingRoom;
         state.pending_aim.0 = Some(types::FiringDirection::DownFacingRight);
+        state.samus.preparation_movement = data::pose::MovementType::SpinJumping;
         assert!(
             super::samus_current_state(
                 &mut state,
@@ -726,12 +816,14 @@ mod firing_history_tests {
             .is_ok()
         );
         assert_eq!(state.pending_aim.0, None);
+        assert_eq!(state.samus.preparation_movement, state.samus.movement);
     }
 
     #[test]
     fn ordinary_pre_clears_pending_even_without_a_shot() {
         let mut state = crate::state::State::default();
         state.pending_aim.0 = Some(types::FiringDirection::UpFacingLeft);
+        state.samus.preparation_movement = data::pose::MovementType::SpinJumping;
         assert!(
             super::samus_current_state(
                 &mut state,
@@ -741,5 +833,6 @@ mod firing_history_tests {
             .is_ok()
         );
         assert_eq!(state.pending_aim.0, None);
+        assert_eq!(state.samus.preparation_movement, state.samus.movement);
     }
 }

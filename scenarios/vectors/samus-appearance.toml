@@ -1003,3 +1003,487 @@ entries = ["BoostStages"]
 before = { step = 0, left = 2, stage = 3, laps = 1 }
 inputs = { pose = "Upright Falling Left Forward", clip = "long", dashing = true, dash_lost = true, items = ["SpeedBooster", "SpaceJump", "ScrewAttack"], heading_down = true, vertical_speed = "+0000.C400" }
 after = { step = 0, left = 1, stage = 0, laps = 0 }
+
+
+# Appearance opportunities are independent of [[vector]] animation updates.
+# Each [[opportunity]] has kind Contact, PoseSelected, NormalDraw or PassageEntry;
+# inputs explicitly supply every guard used by that opportunity, expected lists semantic
+# sounds and graphical contact, and before/after compare unchanged animation quantities.
+# Contact uses retained inputs.stage, matching before.stage, rather than a boosting flag.
+# Contact content is invented, including recorded guard cases; ROM content is harness-only.
+[contact_content.invented_stride]
+steps = ["13", "2", "7", "rest", "again 0"]
+contacts = [2]
+
+[[opportunity]]
+id = "C-contact"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = ["Footstep"], contact = true }
+
+[[opportunity]]
+id = "C-contact-cinematic"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = true, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = [], contact = true }
+
+[[opportunity]]
+id = "C-contact-boss"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = true, special_colours = false, stage = 0 }
+expected = { sounds = [], contact = true }
+
+[[opportunity]]
+id = "C-contact-colours"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = true, stage = 0 }
+expected = { sounds = [], contact = true }
+
+[[opportunity]]
+id = "C-contact-boost"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 4, laps = 2 }
+after = { step = 2, left = 1, stage = 4, laps = 2 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 4 }
+expected = { sounds = [], contact = true }
+
+[[opportunity]]
+id = "C-contact-other"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Jumping", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-contact-early"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 2, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-contact-zero"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 0, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-contact-unmarked"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 1, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "R-contact"
+source = "M0:63->64"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 0 }
+expected = { sounds = ["Footstep"], contact = true }
+
+[[opportunity]]
+id = "C-start-plain"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = ["PlainSpin"], contact = false }
+
+[[opportunity]]
+id = "C-start-continued"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-wall"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "WallJumping", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-cinematic"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = true }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-same"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = false, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-other"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Running", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-submerged"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = true, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-space"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = ["SpaceJump"], contact = false }
+
+[[opportunity]]
+id = "C-start-space-continued"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = true, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = ["SpaceJump"], contact = false }
+
+[[opportunity]]
+id = "C-start-space-cinematic"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = false, submerged = false, cinematic = true }
+expected = { sounds = ["SpaceJump"], contact = false }
+
+[[opportunity]]
+id = "C-start-screw"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = true, submerged = false, cinematic = false }
+expected = { sounds = ["ScrewAttack"], contact = false }
+
+[[opportunity]]
+id = "C-start-both"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = true, submerged = false, cinematic = false }
+expected = { sounds = ["ScrewAttack"], contact = false }
+
+[[opportunity]]
+id = "C-start-screw-cinematic"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = true, submerged = false, cinematic = true }
+expected = { sounds = ["ScrewAttack"], contact = false }
+
+[[opportunity]]
+id = "C-start-screw-continued"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "WallJumping", to_action = "Spinning", changed = true, space_jump = false, screw_attack = true, submerged = false, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "R-start"
+source = "M0:15->16"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = false }
+expected = { sounds = ["PlainSpin"], contact = false }
+
+[[opportunity]]
+id = "C-end-spin"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "Spinning", current = "Falling" }
+expected = { sounds = ["SpinEnded"], contact = false }
+
+[[opportunity]]
+id = "C-end-wall"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "WallJumping", current = "Running" }
+expected = { sounds = ["SpinEnded"], contact = false }
+
+[[opportunity]]
+id = "C-end-frozen"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "Spinning", current = "Running" }
+expected = { sounds = ["SpinEnded"], contact = false }
+
+[[opportunity]]
+id = "C-end-neither"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "Running", current = "Falling" }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-end-spin-spin"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "Spinning", current = "Spinning" }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-end-spin-wall"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "Spinning", current = "WallJumping" }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-end-wall-spin"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "WallJumping", current = "Spinning" }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-end-wall-wall"
+source = "constructed"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "WallJumping", current = "WallJumping" }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "R-unspin"
+source = "M0:80->81"
+kind = "NormalDraw"
+entries = ["SpinEnds"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { previous = "Spinning", current = "Falling" }
+expected = { sounds = ["SpinEnded"], contact = false }
+
+[[opportunity]]
+id = "C-door-spin"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Spinning", shoot_held = true, charge = 23 }
+expected = { sounds = ["SpinEnded"], contact = false }
+
+[[opportunity]]
+id = "C-door-wall"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "WallJumping", shoot_held = false, charge = 0 }
+expected = { sounds = ["SpinEnded"], contact = false }
+
+[[opportunity]]
+id = "C-door-quiet"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Running", shoot_held = false, charge = 0 }
+expected = { sounds = ["SamusSilence"], contact = false }
+
+[[opportunity]]
+id = "C-door-below"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Running", shoot_held = false, charge = 15 }
+expected = { sounds = ["SamusSilence"], contact = false }
+
+[[opportunity]]
+id = "C-door-held"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Running", shoot_held = true, charge = 0 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-door-threshold"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Running", shoot_held = false, charge = 16 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-door-above"
+source = "constructed"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Running", shoot_held = false, charge = 17 }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "R-door"
+source = "M0:182->183"
+kind = "PassageEntry"
+entries = ["AtTheDoor"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { current = "Running", shoot_held = false, charge = 0 }
+expected = { sounds = ["SamusSilence"], contact = false }
+
+
+# A work combines already-checked opportunities in the order named here; this is a
+# composition check, not a required clean interface. The animation_vector runs once.
+# sounds, contact and all four after quantities are explicit expected outputs.
+[[appearance_work]]
+id = "C-branch-and-end"
+source = "constructed"
+entries = ["WallJumpBranch", "SpinEnds"]
+animation_vector = "C-branch-spin"
+opportunities = ["C-end-wall"]
+sounds = ["PlainSpin", "SpinEnded"]
+contact = false
+after = { step = 2, left = 7, stage = 0, laps = 0 }
+
+[[appearance_work]]
+id = "C-contact-and-start"
+source = "constructed"
+entries = ["FootContact", "SpinStarts"]
+opportunities = ["C-contact", "C-start-plain"]
+sounds = ["Footstep", "PlainSpin"]
+contact = true
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+
+[[opportunity]]
+id = "C-contact-stage3"
+source = "constructed"
+kind = "Contact"
+entries = ["FootContact"]
+before = { step = 2, left = 1, stage = 3, laps = 1 }
+after = { step = 2, left = 1, stage = 3, laps = 1 }
+inputs = { movement = "Running", step = 2, left = 1, clip = "invented_stride", cinematic = false, boss = false, special_colours = false, stage = 3 }
+expected = { sounds = ["Footstep"], contact = true }
+
+[[opportunity]]
+id = "C-start-submerged-both"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Running", to_action = "Spinning", changed = true, space_jump = true, screw_attack = true, submerged = true, cinematic = false }
+expected = { sounds = [], contact = false }
+
+[[opportunity]]
+id = "C-start-continued-cinematic"
+source = "constructed"
+kind = "PoseSelected"
+entries = ["SpinStarts"]
+before = { step = 2, left = 1, stage = 0, laps = 0 }
+after = { step = 2, left = 1, stage = 0, laps = 0 }
+inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = true }
+expected = { sounds = [], contact = false }

@@ -5,7 +5,9 @@ use types::{BoostStage, ClipEnd};
 
 /// A place in a clip, numbered from 0: her step is the one her clip is on, and each step holds
 /// one instruction.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(
+    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, serde::Serialize, serde::Deserialize,
+)]
 pub struct Step(pub u8);
 
 impl Step {
@@ -32,7 +34,9 @@ impl Step {
 }
 
 /// A number of frames: the time her step has left, 0 to 255, or a hold the model sets.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(
+    Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, serde::Serialize, serde::Deserialize,
+)]
 pub struct Frames(pub u8);
 
 impl Frames {
@@ -160,6 +164,9 @@ pub struct Clip {
     pub fast_fall: Option<Step>,
     /// A straight jump's rising step (`RisingHold`).
     pub rising: Option<Step>,
+    /// Spec: `FootContact`. Shown contact steps, independent of holds and other marks.
+    /// The importer owns their relationship to the instructions.
+    pub contacts: std::collections::BTreeSet<Step>,
 }
 
 impl Clip {

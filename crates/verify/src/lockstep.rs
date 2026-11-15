@@ -361,6 +361,23 @@ fn variables(state: &State) -> [Option<AiVariables>; ENEMY_SLOTS] {
     })
 }
 
+/// Observable record byte of the retained clean boost stage.
+const fn appearance_stage(state: &State) -> u8 {
+    match state.samus.animation.0.0.stage {
+        types::BoostStage::Stage0 => 0,
+        types::BoostStage::Stage1 => 1,
+        types::BoostStage::Stage2 => 2,
+        types::BoostStage::Stage3 => 3,
+        types::BoostStage::Boosting => 4,
+    }
+}
+const fn appearance_laps(state: &State) -> u8 {
+    match state.samus.animation.0.0.laps_left {
+        samus_appearance::LapsLeft::WithoutBooster => 0,
+        samus_appearance::LapsLeft::WithBooster(laps) => laps.count(),
+    }
+}
+
 macro_rules! field {
     ($path:literal, $($name:ident).+) => {
         Comparator {
@@ -660,6 +677,7 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.previous.pose", samus.previous.pose),
     field!("samus.previous.facing", samus.previous.facing),
     field!("samus.previous.movement", samus.previous.movement),
+    field!("samus.preparation_movement", samus.preparation_movement),
     field!("samus.last_different.pose", samus.last_different.pose),
     field!("samus.last_different.facing", samus.last_different.facing),
     field!(
@@ -669,13 +687,42 @@ const COMPARATORS: &[Comparator] = &[
     field!("samus.facing", samus.facing),
     field!("samus.movement", samus.movement),
     field!("samus.equipment.collected", samus.equipment.collected),
-    field!("samus.animation.step", samus.animation.step),
-    field!("samus.animation.frames_left", samus.animation.frames_left),
-    field!("samus.animation.boost.stage", samus.animation.boost.stage),
-    field!(
-        "samus.animation.boost.laps_left",
-        samus.animation.boost.laps_left
-    ),
+    Comparator {
+        path: "samus.animation.step",
+        compare: |engine, oracle| {
+            engine
+                .samus
+                .animation
+                .0
+                .0
+                .playhead
+                .step
+                .0
+                .diff(&oracle.samus.animation.0.0.playhead.step.0)
+        },
+    },
+    Comparator {
+        path: "samus.animation.frames_left",
+        compare: |engine, oracle| {
+            engine
+                .samus
+                .animation
+                .0
+                .0
+                .playhead
+                .time_left
+                .0
+                .diff(&oracle.samus.animation.0.0.playhead.time_left.0)
+        },
+    },
+    Comparator {
+        path: "samus.animation.boost.stage",
+        compare: |engine, oracle| appearance_stage(engine).diff(&appearance_stage(oracle)),
+    },
+    Comparator {
+        path: "samus.animation.boost.laps_left",
+        compare: |engine, oracle| appearance_laps(engine).diff(&appearance_laps(oracle)),
+    },
     field!("samus.visor.shade", samus.visor.shade),
     field!("samus.visor.timer", samus.visor.timer),
     field!("samus.drawing", samus.drawing),

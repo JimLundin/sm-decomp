@@ -162,6 +162,29 @@ impl Weapons {
             }
         }
         Ok(PowerSeedFacts {
+            appearance: if w(0x079f)? == 6 {
+                use game::samus_appearance_bridge::producer::{ExcludedWriter as W, SeedFacts};
+                let mut active = types::Set::default();
+                for (writer, address) in [
+                    (W::Cinematic, 0x1f51),
+                    (W::Boss, 0x179c),
+                    (W::SpecialColours, 0x0a68),
+                    (W::Charge, 0x0cd0),
+                    (W::ChargingResume, 0x0dc0),
+                    (W::Echoes, 0x0b40),
+                    (W::Debug, 0x05d1),
+                ] {
+                    active[writer] = w(address)? != 0;
+                }
+                // The Ceres latch and Zebes event 0E independently activate time-up drawing.
+                active[W::TimeUp] = w(0x0943)? != 0 || (w(0xd821)? & 0x0040) != 0;
+                // No liquid surface anywhere is stronger than dryness at the current body.
+                active[W::Liquid] = i16::from_le_bytes(w(0x195e)?.to_le_bytes()) >= 0
+                    || i16::from_le_bytes(w(0x1962)?.to_le_bytes()) >= 0;
+                Some(SeedFacts { active })
+            } else {
+                None
+            },
             beams: game::state::slots::FlagSet::default(),
             charge: if equipment & 0x1000 == 0 {
                 ChargeEquipment::Unequipped
