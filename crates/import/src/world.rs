@@ -328,10 +328,21 @@ fn from_decoded(
         },
         size: decoded.size,
         scrollers: decoded.scrollers,
+        item_lighting: item_lighting(decoded.cre),
         doors,
         conditional,
         default: version(id, decoded.default)?,
     })
+}
+
+/// Decode only the item-colour flag; other CRE flags remain in the edge room data.
+const fn item_lighting(cre: u8) -> world::ItemLighting {
+    const ITEMS_DARK: u8 = 1;
+    if cre & ITEMS_DARK == 0 {
+        world::ItemLighting::Lit
+    } else {
+        world::ItemLighting::Dark
+    }
 }
 
 /// The record's condition for room `room`'s decoded `condition`.

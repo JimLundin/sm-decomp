@@ -126,6 +126,18 @@ pub struct Conditional {
     pub version: Version,
 }
 
+/// A room's item lighting policy during passages.
+///
+/// The passage reads both the source and destination room's policy.
+/// A dark policy also hides the front layer during the slide (world-doors `FinishedFrames`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ItemLighting {
+    /// Item colours may stay lit.
+    Lit,
+    /// Item colours fade with the room.
+    Dark,
+}
+
 /// A room.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Room {
@@ -137,6 +149,8 @@ pub struct Room {
     pub size: Screens,
     /// Its vertical scrollers.
     pub scrollers: Scrollers,
+    /// Its item-colour policy during passages.
+    pub item_lighting: ItemLighting,
     /// Its doors, by the place its door blocks name.
     pub doors: Vec<Door>,
     /// The conditional versions, in the order they are checked.
@@ -267,6 +281,7 @@ mod tests {
                 up: 0x70,
                 down: 0xa0,
             },
+            item_lighting: ItemLighting::Lit,
             doors: vec![Door::Nowhere, Door::To(doorways::ELEVATOR_TO_FALLING_TILE)],
             conditional: vec![Conditional {
                 condition: Condition::PowerBombs,
@@ -300,6 +315,30 @@ mod tests {
             speed: None,
         },
     };
+
+    #[test]
+    fn destination_lighting_is_independent_of_source_and_import_order() {
+        for source_policy in [ItemLighting::Lit, ItemLighting::Dark] {
+            for destination_policy in [ItemLighting::Lit, ItemLighting::Dark] {
+                let mut source = room(rooms::CERES_ELEVATOR_ROOM);
+                source.item_lighting = source_policy;
+                let mut destination = room(rooms::FALLING_TILE_ROOM);
+                destination.item_lighting = destination_policy;
+                for records in [
+                    vec![source.clone(), destination.clone()],
+                    vec![destination.clone(), source.clone()],
+                ] {
+                    let world = World::new(records, vec![INTO_FALLING_TILE]).unwrap();
+                    let leaving = world.room(source.id).unwrap();
+                    let arriving = world
+                        .room(world.leads_to(leaving.doors[1]).unwrap())
+                        .unwrap();
+                    assert_eq!(leaving.item_lighting, source_policy);
+                    assert_eq!(arriving.item_lighting, destination_policy);
+                }
+            }
+        }
+    }
 
     #[test]
     fn a_world_holds_each_room_once_by_its_id() {

@@ -186,6 +186,7 @@ pub(crate) mod tests {
                 height: 1,
             },
             scrollers: data::room::Scrollers { up: 0, down: 0 },
+            item_lighting: data::assets::world::ItemLighting::Lit,
             doors: vec![
                 Door::To(DoorwayId(1)),
                 Door::To(DoorwayId(2)),

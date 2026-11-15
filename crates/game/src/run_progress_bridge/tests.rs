@@ -219,6 +219,7 @@ fn record(conditions: &[world::Condition]) -> world::Room {
         },
         scrollers: Scrollers { up: 0, down: 0 },
         doors: Vec::new(),
+        item_lighting: world::ItemLighting::Lit,
         conditional: conditions
             .iter()
             .zip(0..)

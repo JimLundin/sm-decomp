@@ -249,6 +249,7 @@ fn each_room_holds_what_the_decoder_reads() {
         });
         assert_eq!(room.size, decoded.size);
         assert_eq!(room.scrollers, decoded.scrollers);
+        assert_eq!(room.item_lighting, item_lighting(decoded.cre));
         assert_eq!(room.doors.len(), decoded.doors.doors.len());
         for (&ours, &theirs) in room.doors.iter().zip(&decoded.doors.doors) {
             match (ours, theirs) {
@@ -300,4 +301,39 @@ fn each_room_holds_what_the_decoder_reads() {
             MORPH_BALL_ROOM
         )))
     );
+}
+
+#[test]
+fn only_the_item_colour_flag_changes_the_imported_lighting_policy() {
+    for unrelated in (0..=u8::MAX).filter(|flags| flags & 1 == 0) {
+        assert_eq!(item_lighting(unrelated), world::ItemLighting::Lit);
+        assert_eq!(item_lighting(unrelated | 1), world::ItemLighting::Dark);
+    }
+}
+
+#[test]
+fn imported_room_lighting_survives_unrelated_header_flags() {
+    let Some(cartridge) = rom() else {
+        return;
+    };
+    let decoded = decode(cartridge.lorom(), CERES_ELEVATOR_ROOM).unwrap();
+    let imported = |flags| {
+        let mut room = decoded.clone();
+        room.cre = flags;
+        from_decoded(
+            cartridge.lorom(),
+            CERES_ELEVATOR_ROOM,
+            room,
+            &mut BTreeMap::new(),
+        )
+        .unwrap()
+    };
+    let lit = imported(0);
+    let mut dark = imported(1);
+    assert_eq!(lit.item_lighting, world::ItemLighting::Lit);
+    assert_eq!(dark.item_lighting, world::ItemLighting::Dark);
+    assert_eq!(imported(0xfe), lit);
+    assert_eq!(imported(0xff), dark);
+    dark.item_lighting = world::ItemLighting::Lit;
+    assert_eq!(dark, lit);
 }
