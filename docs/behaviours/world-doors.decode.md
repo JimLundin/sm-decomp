@@ -446,13 +446,19 @@ Coverage256 is valid retained state while neighbouring work remains; completion 
 ### Native evidence and diagnostic limits
 
 The palette check covers1383 fade cuts, including868 overruns:842 interrupt colour treatment
-and26 interrupt other work. It agrees1383/1383 against a do-nothing170/1383 under the exact
+and26 interrupt other work. It agrees1383/1383 against a per-cut do-nothing170/1383 under the exact
 writer exclusions below. There are353311 compared colour-cuts and737 excluded colour-cuts.
 This is an observer diagnostic, not an engine ratchet, floor or whole-engine gain.
-It carries its own predicted colours across fades except `boss-kraid-defeated`, whose missing
+It carries its own predicted colours within fade segments except `boss-kraid-defeated`, whose missing
 owner is diagnosed per cut using the preceding native palette. No arbitrary differing colour
-is injected. M0 alone carries its predicted colours across both fades:80/80 cuts with every
-colour compared, versus do-nothing8/80. The native model does not produce T1's elapsed costs,
+is injected. M0 carries its predicted palette separately within each of its two fade segments:80/80 cuts
+with every colour compared. The corresponding carried null matches4/80; the per-cut no-op
+matches8/80. Both carried palettes start from exactly the same native palette at each fade
+segment's entrance and receive no palette resets within that segment. The null keeps those
+colours unchanged, while the model applies fade treatment. The room-loading gap between the
+two segments is outside this comparison and supplies the next segment's starting palette to
+both equally. Work step, completion and progress remain observed timing inputs: this proves
+palette carry within fade segments, not a whole-R1 State free run. The native model does not produce T1's elapsed costs,
 U1's replies, neighbouring OAM or their timings, and does not prove the whole passage's outputs.
 
 The Kraid exclusion of113..115 remains the corpse flash writer. The additional full-group
@@ -464,7 +470,7 @@ Only those13 writer cuts get the expanded mask in the per-cut diagnostic. Source
 colour in both groups, including equal colours. All other colours remain compared.
 
 With just the narrow exclusions the corrected progress decoder agrees1370/1383 (353688
-compared and360 excluded colour-cuts; do-nothing164/1383). The extra13 exclusions account for
+compared and360 excluded colour-cuts; per-cut do-nothing164/1383). The extra13 exclusions account for
 377 fewer comparisons, not model gain. The missing real Kraid palette owner prevents carrying
 that row through later unmasked cuts; a continuous harness must obtain those colours from its
 owner rather than re-seed from the record. The Ceres beacon remains colours41..46 on its
