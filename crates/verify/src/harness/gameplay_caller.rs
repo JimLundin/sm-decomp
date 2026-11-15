@@ -7,7 +7,7 @@ use oracle_record::{Cut, FrameRecord, NmiKind};
 
 /// A missing caller capability or malformed source, independent of any domain.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Error {
+pub enum Error {
     ShortWord,
     NotMainWait,
     ShortReturnBank,
@@ -24,10 +24,13 @@ pub(super) enum Error {
     FarCallCapability,
     ReverseDmaCapability,
     HdmaChannelCapability,
+    BorrowedWeaponInputs,
+    BorrowedActorInputs,
+    MarkerMemoryInputs,
 }
 
 impl Error {
-    pub(super) const fn message(self) -> &'static str {
+    pub const fn message(self) -> &'static str {
         match self {
             Self::ShortWord => "gameplay caller short word",
             Self::NotMainWait => "gameplay caller is not the ordinary main wait",
@@ -51,6 +54,9 @@ impl Error {
             }
             Self::HdmaChannelCapability => "gameplay caller HDMA hardware channel unsupported",
             Self::FarCallCapability => "gameplay caller HDMA far-call capability unsupported",
+            Self::BorrowedWeaponInputs => "HDMA Samus input producer not yet decoded",
+            Self::BorrowedActorInputs => "HDMA actor parameter producer not yet decoded",
+            Self::MarkerMemoryInputs => "C1 HDMA reverse-DMA producer unsupported",
         }
     }
 }
@@ -69,7 +75,7 @@ fn byte(bytes: &[u8], at: usize) -> Result<u8, Error> {
 }
 
 /// Fixed return position beneath the wait's PHP/PHB, never a stack search.
-pub(super) fn main_wait(record: &FrameRecord) -> Result<(), Error> {
+pub fn main_wait(record: &FrameRecord) -> Result<(), Error> {
     if !matches!(record.cut, Cut::NmiReturn(nmi) if nmi.kind == NmiKind::Requested)
         || record.cpu.k != 0x80
         || !matches!(record.cpu.pc, 0x8343 | 0x8346)
@@ -89,7 +95,7 @@ pub(super) fn main_wait(record: &FrameRecord) -> Result<(), Error> {
 }
 
 /// The end proves completion, independently of which dispatch the start selected.
-pub(super) fn completed(from: &FrameRecord, next: &FrameRecord) -> Result<(), Error> {
+pub fn completed(from: &FrameRecord, next: &FrameRecord) -> Result<(), Error> {
     main_wait(next)?;
     if next.index != from.index.wrapping_add(1)
         || word(&next.wram, 0x05b6)?.wrapping_sub(word(&from.wram, 0x05b6)?) != 1
@@ -100,12 +106,25 @@ pub(super) fn completed(from: &FrameRecord, next: &FrameRecord) -> Result<(), Er
 }
 
 /// Imported source content used only to validate finite callback capabilities.
-pub(super) struct Caller {
+pub struct Caller {
     rom: Rom,
 }
 
+#[derive(Default)]
+struct Capabilities {
+    calls: BTreeSet<RomAddress>,
+    phantoon_wave_setup: bool,
+    xray_pre: bool,
+}
+
+#[derive(Clone, Copy)]
+enum InstructionReach {
+    Future,
+    Current,
+}
+
 impl Caller {
-    pub(super) fn load(image: &[u8]) -> Result<Self, Error> {
+    pub fn load(image: &[u8]) -> Result<Self, Error> {
         Ok(Self {
             rom: Rom::new(image.to_vec()).map_err(|_| Error::RomImport)?,
         })
@@ -131,7 +150,7 @@ impl Caller {
 
     /// Prove the start route from the preceding cut alone. Upstream finite
     /// capabilities preserve these debug controls until their consumption.
-    pub(super) fn start(&self, from: &FrameRecord) -> Result<(), Error> {
+    pub fn start(&self, from: &FrameRecord) -> Result<(), Error> {
         main_wait(from)?;
         let wram = &from.wram;
         if word(wram, 0x0998)? != 8
@@ -141,11 +160,15 @@ impl Caller {
         {
             return Err(Error::DebugRoute);
         }
-        self.graph(Self::roots(wram)?, false)
+        self.graph(
+            Self::roots(wram, InstructionReach::Future)?,
+            InstructionReach::Future,
+        )
+        .map(|_| ())
     }
 
     /// Establish requested-NMI writes without admitting a reverse-DMA producer.
-    pub(super) fn receipt_start(&self, from: &FrameRecord) -> Result<(), Error> {
+    pub(crate) fn receipt_start(&self, from: &FrameRecord) -> Result<(), Error> {
         self.start(from)?;
         let wram = &from.wram;
         if byte(wram, 0x0360)? != 0 {
@@ -170,10 +193,24 @@ impl Caller {
                 return Err(Error::ReverseDmaCapability);
             }
         }
-        self.graph(Self::roots(wram)?, true)
+        let capabilities = self.graph(
+            Self::roots(wram, InstructionReach::Future)?,
+            InstructionReach::Future,
+        )?;
+        if capabilities.xray_pre
+            || capabilities.calls.iter().any(|address| {
+                matches!(
+                    address.long(),
+                    0x91_CB1C | 0x91_CB57 | 0x91_CB8E | 0x91_D0D3
+                )
+            })
+        {
+            return Err(Error::ReverseDmaCapability);
+        }
+        Ok(())
     }
 
-    fn roots(wram: &[u8]) -> Result<Vec<RomAddress>, Error> {
+    fn roots(wram: &[u8], reach: InstructionReach) -> Result<Vec<RomAddress>, Error> {
         let mut roots = Vec::new();
         if word(wram, 0x18b0)? & 0x8000 == 0 {
             return Ok(roots);
@@ -200,7 +237,11 @@ impl Caller {
                 byte(wram, 0x18c1_usize.saturating_add(slot))?,
                 word(wram, 0x18cc_usize.saturating_add(slot))?,
             );
-            roots.push(root);
+            if matches!(reach, InstructionReach::Future)
+                || word(wram, 0x18e4_usize.saturating_add(slot))? == 1
+            {
+                roots.push(root);
+            }
             if wakes(pre) {
                 roots.push(RomAddress::new(root.bank, root.offset.wrapping_add(2)));
             }
@@ -208,8 +249,109 @@ impl Caller {
         Ok(roots)
     }
 
-    fn graph(&self, mut pending: Vec<RomAddress>, exclude_reverse_dma: bool) -> Result<(), Error> {
+    /// Additional domain seam: a proved dispatch can still have changed Samus
+    /// before W1 consumes its pose, movement and time-freeze inputs.
+    pub fn weapon_inputs(&self, from: &FrameRecord) -> Result<(), Error> {
+        let wram = &from.wram;
+        if word(wram, 0x18b0)? & 0x8000 == 0 {
+            return Ok(());
+        }
+        let roots = Self::roots(wram, InstructionReach::Current)?;
+        for slot in (0..12).step_by(2) {
+            if word(wram, 0x18b4_usize.saturating_add(slot))?.to_le_bytes()[0] == 0 {
+                continue;
+            }
+            let pre = RomAddress::new(
+                byte(wram, 0x18fc_usize.saturating_add(slot))?,
+                word(wram, 0x18f0_usize.saturating_add(slot))?,
+            );
+            if pre.long() == 0x88_86ef && word(wram, 0x0a7a)? == 5 && word(wram, 0x0a78)? != 0 {
+                return Err(Error::BorrowedWeaponInputs);
+            }
+        }
+        let calls = self.graph(roots, InstructionReach::Current)?;
+        if calls.calls.contains(&RomAddress::new(0x91, 0xcaf9)) && word(wram, 0x0a78)? == 0 {
+            return Err(Error::BorrowedWeaponInputs);
+        }
+        if calls.calls.contains(&RomAddress::new(0x88, 0x8b4e))
+            && word(wram, 0x0af6)? == word(wram, 0x0ce2)?
+            && word(wram, 0x0afa)? == word(wram, 0x0ce4)?
+            && word(wram, 0x008b)? == (0x0430 | word(wram, 0x09b2)?)
+            && word(wram, 0x0b2c)? == 0
+            && word(wram, 0x0b2e)? == 0
+            && word(wram, 0x09c2)?.wrapping_sub(0x0033) & 0x8000 != 0
+            && word(wram, 0x09d6)? == 0
+            && (word(wram, 0x09c6)?.wrapping_sub(10) & 0x8000) == 0
+            && (word(wram, 0x09ca)?.wrapping_sub(10) & 0x8000) == 0
+            && (word(wram, 0x09ce)?.wrapping_sub(10) & 0x8000) == 0
+        {
+            return Err(Error::BorrowedWeaponInputs);
+        }
+        Ok(())
+    }
+
+    /// A source setup command aliases the second actor's parameter word.
+    pub fn contact_inputs(&self, from: &FrameRecord, active: &[usize]) -> Result<(), Error> {
+        let wram = &from.wram;
+        if word(wram, 0x18b0)? & 0x8000 == 0
+            || !active.contains(&0x40)
+            || word(wram, 0x0fb8)? != 0xe23f
+        {
+            return Ok(());
+        }
+        if self
+            .graph(
+                Self::roots(wram, InstructionReach::Current)?,
+                InstructionReach::Current,
+            )?
+            .phantoon_wave_setup
+        {
+            return Err(Error::BorrowedActorInputs);
+        }
+        Ok(())
+    }
+
+    /// C1 alone requires absence of reverse-DMA producers through its endpoint.
+    pub fn marker_memory_inputs(&self, from: &FrameRecord) -> Result<(), Error> {
+        if word(&from.wram, 0x18b0)? & 0x8000 == 0 {
+            return Ok(());
+        }
+        for slot in (0..12).step_by(2) {
+            if word(&from.wram, 0x18b4_usize.saturating_add(slot))?.to_le_bytes()[0] == 0 {
+                continue;
+            }
+            let pre = RomAddress::new(
+                byte(&from.wram, 0x18fc_usize.saturating_add(slot))?,
+                word(&from.wram, 0x18f0_usize.saturating_add(slot))?,
+            );
+            if pre.long() == 0x88_86ef {
+                return Err(Error::MarkerMemoryInputs);
+            }
+        }
+        let capabilities = self.graph(
+            Self::roots(&from.wram, InstructionReach::Future)?,
+            InstructionReach::Future,
+        )?;
+        if capabilities.xray_pre
+            || capabilities.calls.iter().any(|address| {
+                matches!(
+                    address.long(),
+                    0x91_caf9 | 0x91_cb1c | 0x91_cb57 | 0x91_cb8e | 0x91_d0d3
+                )
+            })
+        {
+            return Err(Error::MarkerMemoryInputs);
+        }
+        Ok(())
+    }
+
+    fn graph(
+        &self,
+        mut pending: Vec<RomAddress>,
+        reach: InstructionReach,
+    ) -> Result<Capabilities, Error> {
         let mut visited = BTreeSet::new();
+        let mut capabilities = Capabilities::default();
         while let Some(address) = pending.pop() {
             if !visited.insert(address) {
                 continue;
@@ -218,36 +360,41 @@ impl Caller {
             let arg = RomAddress::new(address.bank, address.offset.wrapping_add(2));
             let next = |count: u16| RomAddress::new(arg.bank, arg.offset.wrapping_add(count));
             match opcode {
-                0..=0x7fff | 0x864c | 0x867f => {
+                0..=0x7fff => {
                     self.short(arg)?;
-                    pending.push(next(2));
+                    if matches!(reach, InstructionReach::Future) {
+                        pending.push(next(2));
+                    }
                 }
                 0x8569 | 0x8682 => {}
                 0x85ec => pending.push(RomAddress::new(arg.bank, self.short(arg)?)),
                 0x8570 => {
                     let pre = self.long(arg)?;
                     validate_pre(pre)?;
-                    if exclude_reverse_dma && pre.long() == 0x88_86ef {
-                        return Err(Error::ReverseDmaCapability);
-                    }
+                    capabilities.xray_pre |= pre.long() == 0x88_86ef;
                     pending.push(next(3));
                 }
                 0x85b4 => {
                     let call = self.long(arg)?;
                     validate_call(call)?;
-                    if exclude_reverse_dma
-                        && matches!(call.long(), 0x91_CB1C | 0x91_CB57 | 0x91_CB8E | 0x91_D0D3)
-                    {
-                        return Err(Error::ReverseDmaCapability);
-                    }
+                    capabilities.calls.insert(call);
                     pending.push(next(3));
                 }
                 0x8655 | 0x866a | 0x8616 | 0x8622 | 0x8637 => {
                     self.bytes(arg, 1)?;
                     pending.push(next(1));
                 }
-                0xe4bd | 0xe917 | 0x8584 | 0xb3a9 | 0xdb2e | 0xc467 | 0xd916 | 0xd949 | 0xb4ce
-                | 0xc582 => pending.push(arg),
+                0x864c | 0x867f => {
+                    self.short(arg)?;
+                    pending.push(next(2));
+                }
+                0xe4bd => {
+                    capabilities.phantoon_wave_setup = true;
+                    pending.push(arg);
+                }
+                0xe917 | 0x8584 | 0xb3a9 | 0xdb2e | 0xc467 | 0xd916 | 0xd949 | 0xb4ce | 0xc582 => {
+                    pending.push(arg);
+                }
                 0x8607 => {
                     pending.push(RomAddress::new(arg.bank, self.short(arg)?));
                     pending.push(next(2));
@@ -255,7 +402,7 @@ impl Caller {
                 _ => return Err(Error::InstructionCapability),
             }
         }
-        Ok(())
+        Ok(capabilities)
     }
 }
 
@@ -361,7 +508,7 @@ mod tests {
             .unwrap();
         let from = &pair[0];
         let put = |record: &mut FrameRecord, at: usize, value: u16| {
-            record.wram[at..at.checked_add(2).unwrap()].copy_from_slice(&value.to_le_bytes());
+            record.wram[at..at.saturating_add(2)].copy_from_slice(&value.to_le_bytes());
         };
         assert!(caller.receipt_start(from).is_ok());
         let mut dma = from.clone();
@@ -397,12 +544,33 @@ mod tests {
         put(&mut changed, 0x18b4, 1);
         put(&mut changed, 0x18f0, 0);
         assert!(caller.start(&changed).is_err());
+        assert!(caller.weapon_inputs(&changed).is_err());
         put(&mut changed, 0x18f0, 0xb3b0);
         changed.wram[0x18fc] = 0x88;
         put(&mut changed, 0x196c, 0);
-        assert_eq!(caller.start(&changed), Err(Error::FxCapability));
+        assert_eq!(caller.weapon_inputs(&changed), Err(Error::FxCapability));
         put(&mut changed, 0x18b0, 0);
         assert!(caller.start(&changed).is_ok());
+        // Time-freeze remains borrowed only while the teardown writer cannot run.
+        for slot in (0..12).step_by(2) {
+            put(&mut changed, 0x18b4_usize.saturating_add(slot), 0);
+        }
+        put(&mut changed, 0x18b0, 0x8000);
+        put(&mut changed, 0x18b4, 1);
+        put(&mut changed, 0x18f0, 0x86ef);
+        changed.wram[0x18fc] = 0x88;
+        put(&mut changed, 0x18e4, 0);
+        put(&mut changed, 0x0a7a, 5);
+        put(&mut changed, 0x0a78, 1);
+        assert_eq!(
+            caller.weapon_inputs(&changed),
+            Err(Error::BorrowedWeaponInputs)
+        );
+        put(&mut changed, 0x0a7a, 4);
+        assert!(caller.weapon_inputs(&changed).is_ok());
+        put(&mut changed, 0x0a7a, 5);
+        put(&mut changed, 0x0a78, 0);
+        assert!(caller.weapon_inputs(&changed).is_ok());
         let mut next = pair[1].clone();
         put(&mut next, 0x0998, 9);
         put(&mut next, 0x0091, 1);

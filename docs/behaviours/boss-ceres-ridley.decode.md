@@ -89,7 +89,7 @@ figures; no vector carries them.
 | a shake | `1840` timer, `183E` type: small = timer 2, type `14h` (BG1, BG2 and enemies, 1 px, diagonal); strong = timer 4, type `1Ah` (3 px) | |
 | the doors' colours | target palette `7EC3E2..7EC3FF` (sprite palette 7, colours 1 to Fh) by `$A9:D2F6` from `$A6:F4EE` (calm) or `$A6:F50E` (escape) | at the door's init; the door transition's fade brings `CGRAM` to them (R4) |
 | shown, figure | the enemy drawing queue, then OAM | C1's drawing and the sprite encoder |
-| solid | the interactive list (`17EC`) and `$A0:A8F0`'s solid-enemy collision | C1's. Main gameplay builds the list (`$82:8B47`, `$A0:8EB6` → `$A0:8F40`, intangible excluded) before her state handler, her projectiles' interaction (`$A0:9785`) and the main enemy routine (`$82:8B65`), so her motion, touch and shots meet the door as it was when the frame began (spec §4); the drawing (`$A0:884D`) runs after, with the door as it is after its run |
+| solid | the interactive list (`17EC`) and `$A0:A8F0`'s solid-enemy collision | C1's. Main gameplay builds the list (`$82:8B47`, `$A0:8EB6` → `$A0:8F40`, intangible excluded) before her state handler, her projectiles' interaction (`$A0:9785`) and the main enemy routine (`$82:8B65`), so her solid motion uses the selected beginning-of-frame membership (spec §4); shots instead use current per-processing-actor pre-AI contact properties (see [enemy-interactions](enemy-interactions.decode.md)); the drawing (`$A0:884D`) runs after, with the door as it is after its run |
 
 ## Sources per entry
 
@@ -179,9 +179,11 @@ The smallest interface the door's model needs, each a piece C1 owns for every en
    lag frames) is C1's and R1's.
 2. **Draw** (`$A0:9423` queue, `$A0:944A` OAM): a shown enemy's figure at its position less the
    camera, palette 7, layer 2 (header), when on screen; the figures imported (AF3).
-3. **Solid contact** (`$A0:A8F0`, `$A0:9758`, `$A0:A1F7`): the interactive list's solid boxes
-   stop her; touch and shot reactions (none for a door); non-plasma shots deleted. The list is
-   built from the doors' shown and solid as the frame begins, before their runs (Outputs, solid).
+3. **Solid contact** (`$A0:A8F0`): the interactive list's solid boxes stop her; membership is
+   selected before the runs. **Shot contact** (`$A0:9758`, `$A0:A1F7`): current processing
+   membership and each actor's current pre-AI properties, independently of the solid list;
+   ordinary power shots are marked consumed, and the door response is no-op. See
+   [enemy-interactions](enemy-interactions.decode.md) for the narrow Ceres contract.
 4. **Place** (`$A0:8A1E`, `$A0:8CD7`): slot, position, parameter, properties `A800h`, the
    instruction list by parameter, timer 1, the target colours.
 
@@ -206,8 +208,8 @@ replacing the runner and drawing later, on four conditions:
    before the doors run. Before free-running the escape the integrator checks that the engine
    steps it there, and that no enemy earlier in slot order steps it in a room with doors.
 4. **Touch and shots go in LEGACY when the door is wired.** The old runner treats them as
-   `open` (`$A0:9758`); no M0 row has her touch or shoot a blocking door, so it is harmless for
-   M0, but the difference is listed in `docs/LEGACY.md` in the wiring commit.
+   `open` (`$A0:9758`); the ordinary power shot in M0 row 3 is consumed at frame160; the missing production contact
+   callback must be supplied by [enemy-interactions](enemy-interactions.decode.md), and the difference is listed in `docs/LEGACY.md` in the wiring commit.
 
 The remaining edge is the figure → sprite mapping, which goes in the bridge or AF3.
 

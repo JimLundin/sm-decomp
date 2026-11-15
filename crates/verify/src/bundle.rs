@@ -91,7 +91,7 @@ impl InputError {
 pub struct RowInputs {
     /// Where the run starts.
     pub seed: Seed,
-    /// One pad per frame; frame 0's is unused.
+    /// One pad per row frame, followed by the next-frame pad used for NMI preview.
     pub pads: Vec<Buttons>,
 }
 
@@ -102,6 +102,32 @@ impl RowInputs {
     ///
     /// An [`InputError`] when the row has no plain seed or a file is missing or wrong.
     pub fn read(root: &Path, row: &Row, rooms: &RoomMap) -> Result<Self, InputError> {
+        Self::read_with(root, row, |record| Seed::decode(record, rooms))
+    }
+
+    /// Read pinned original inputs and explicitly admit checked ordinary power ownership.
+    /// A failed ordinary admission is returned; it never selects Legacy instead.
+    /// The capability covers modeled State/owner/OAM; sound requests are disposed in the
+    /// no-APU path, Protection requires inactive readers, and passage execution is unsupported.
+    /// # Errors
+    /// Any bundle error or named ordinary owner/content/caller decode failure.
+    pub fn read_ordinary(
+        root: &Path,
+        row: &Row,
+        rooms: &RoomMap,
+        weapons: &crate::harness::weapons::Weapons,
+        power: &game::weapons_projectiles_bridge::PowerContent,
+    ) -> Result<Self, InputError> {
+        Self::read_with(root, row, |record| {
+            Seed::decode_ordinary(record, rooms, weapons, power)
+        })
+    }
+
+    fn read_with(
+        root: &Path,
+        row: &Row,
+        decode: impl FnOnce(&oracle_record::FrameRecord) -> Result<Seed, DecodeError>,
+    ) -> Result<Self, InputError> {
         let Start::Seed { capture, index } = &row.start else {
             return Err(InputError::PowerOn(row.id.clone()));
         };
@@ -127,8 +153,7 @@ impl RowInputs {
             .map_err(|error| InputError::Io(record_path.clone(), error))?;
         let record = oracle_record::lsnes::read(&bytes)
             .map_err(|error| InputError::Record(record_path.clone(), error))?;
-        let seed =
-            Seed::decode(&record, rooms).map_err(|error| InputError::Seed(record_path, error))?;
+        let seed = decode(&record).map_err(|error| InputError::Seed(record_path, error))?;
         Ok(Self { seed, pads })
     }
 }
@@ -160,6 +185,8 @@ pub enum ContentError {
     SamusAssets(import::samus::ImportError),
     /// Power-beam assets or cannon descriptors failed import.
     Projectiles(import::projectile::ImportError),
+    /// Ordinary projectile model content cannot be constructed.
+    PowerContent(game::weapons_projectiles_bridge::Fault),
     /// Slice 0's rooms don't import.
     Rooms(WorldError),
     /// The area maps are outside the image.
@@ -183,6 +210,7 @@ impl fmt::Display for ContentError {
             Self::Poses(error) => write!(f, "the pose table: {error:?}"),
             Self::Projectiles(error) => write!(f, "projectile assets: {error:?}"),
             Self::SamusAssets(error) => write!(f, "Samus's assets: {error:?}"),
+            Self::PowerContent(error) => write!(f, "power content: {error:?}"),
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
             Self::SamusClips(error) => write!(f, "Samus's clips: {error:?}"),
@@ -242,15 +270,18 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let paces = RunPaces::load(rom.lorom()).map_err(ContentError::Delays)?;
     let samus_clips = game::samus_appearance_bridge::Clips::import(&delays, &paces)
         .map_err(ContentError::SamusClips)?;
+    let projectile_assets = import::projectile::import(rom.lorom())
+        .map_err(ContentError::Projectiles)?
+        .content;
+    let ordinary_power =
+        game::weapons_projectiles_bridge::PowerContent::new(projectile_assets.clone())
+            .map_err(ContentError::PowerContent)?;
     Ok(Content {
-        projectile_assets: Some(
-            import::projectile::import(rom.lorom())
-                .map_err(ContentError::Projectiles)?
-                .content,
-        ),
+        projectile_assets: Some(projectile_assets),
         poses,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
         samus_clips,
+        ordinary_power: Some(ordinary_power),
         slopes: Slopes::load(rom.lorom()).map_err(ContentError::Slopes)?,
         enemy_programs,
         eye_lists,
@@ -271,6 +302,7 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
         tilesets: import::tileset::import(rom.lorom(), &world).map_err(ContentError::Tilesets)?,
         message_boxes: data::message::MessageBoxes::load(rom.lorom())
             .map_err(ContentError::MessageBoxes)?,
+        world: Some(world),
     })
 }
 

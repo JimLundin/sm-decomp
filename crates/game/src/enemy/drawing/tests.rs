@@ -113,7 +113,12 @@ fn the_layers_draw_from_zero_up_and_their_queues_empty() {
         enemy_programs: programs,
         ..Content::default()
     };
-    draw(&mut state, &content);
+    draw(
+        &mut state,
+        &content,
+        &mut crate::weapons_projectiles_bridge::FrameRequests::default(),
+    )
+    .unwrap();
     // Layer 1's sprite first: ($80 - 4, $70 - 8); then layer 5's two at ($80, $70), ($88, $70).
     let written: Vec<OamEntry> = state.video.batch.oam.low.iter().take(3).copied().collect();
     let sprite = |x, y, tile| OamEntry {
@@ -154,7 +159,12 @@ fn a_shaking_enemy_moves_a_pixel_and_counts_down_with_its_tiles_and_palette() {
         enemy_programs: programs,
         ..Content::default()
     };
-    draw(&mut state, &content);
+    draw(
+        &mut state,
+        &content,
+        &mut crate::weapons_projectiles_bridge::FrameRequests::default(),
+    )
+    .unwrap();
     // Bit 1 of its frame counter set: a pixel left. Tile $10 + $100, palette 1.
     assert_eq!(
         state.video.batch.oam.low[0],

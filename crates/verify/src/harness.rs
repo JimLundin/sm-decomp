@@ -31,6 +31,7 @@ pub mod appearance;
 pub mod blocks;
 pub mod camera;
 pub mod ceres;
+pub mod contact;
 pub mod doors;
 pub mod free;
 pub mod game_time;
@@ -314,6 +315,12 @@ pub trait Domain {
         _world: &Self::World,
     ) -> Vec<usize> {
         Vec::new()
+    }
+
+    /// Whether fields are per-call output receipts with no retained model State.
+    /// Their null baseline is the current decoded neighbour input projection.
+    fn stateless_outputs(&self) -> bool {
+        false
     }
 
     /// The declared fields of the model's `state`.
@@ -954,6 +961,9 @@ fn open_cached(lock: &Path, cache: &Path, row: &str) -> Result<Cache, HarnessErr
         .ok_or_else(|| HarnessError::NoRow(row.to_owned()))?;
     Ok(Cache::open(cache, row)?)
 }
+
+#[cfg(test)]
+mod ordinary_power_replay;
 
 #[cfg(test)]
 mod tests;

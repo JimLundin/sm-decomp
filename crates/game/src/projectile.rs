@@ -92,6 +92,8 @@ pub const fn cool_down(projectiles: &mut Projectiles) {
 pub enum ProjectileFault {
     /// It reached a cell the room's loading would refuse.
     Blocks(BlocksFault),
+    /// The sole owner requires the clean ordinary update producer instead.
+    Ownership,
 }
 
 /// The projectiles' part of Samus's normal current state handler (`$90:DCDD`): the cooldown
@@ -104,7 +106,11 @@ pub enum ProjectileFault {
 // fire, join with firing; frozen time, which skips the pass, with its states.
 pub fn current_state(state: &mut State, reads: Reads<'_>) -> Result<(), ProjectileFault> {
     if !FACING_FORWARD.contains(&state.samus.pose) {
-        cool_down(&mut state.projectiles);
+        let legacy = state
+            .projectiles
+            .legacy_mut()
+            .ok_or(ProjectileFault::Ownership)?;
+        cool_down(legacy);
     }
     handle(state, reads)
 }
@@ -122,6 +128,7 @@ pub fn handle(state: &mut State, reads: Reads<'_>) -> Result<(), ProjectileFault
     let State {
         projectiles, room, ..
     } = state;
+    let projectiles = projectiles.legacy_mut().ok_or(ProjectileFault::Ownership)?;
     for index in (0..projectiles.slots.slots.len()).rev() {
         let Some(slot) = projectiles.slots.slots.get(index) else {
             continue;

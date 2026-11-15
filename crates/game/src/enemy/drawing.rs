@@ -66,13 +66,58 @@ pub fn queue(drawing: &mut EnemyDrawing, index: usize, common: &EnemyCommon, cam
 // the high-priority enemy projectiles (`$86:8390`) before the layers, Samus's projectiles
 // with her and the low-priority enemy projectiles at layer 6 (`$86:83B2`) join with their
 // domains.
-pub fn draw(state: &mut State, content: &Content) {
+/// # Errors
+/// Missing or invalid ordinary picture/trail content.
+pub fn draw(
+    state: &mut State,
+    content: &Content,
+    requests: &mut crate::weapons_projectiles_bridge::FrameRequests,
+) -> Result<(), crate::weapons_projectiles_bridge::Fault> {
+    let power = state
+        .projectiles
+        .ordinary()
+        .map(|owner| {
+            let content = content
+                .ordinary_power
+                .as_ref()
+                .ok_or(crate::weapons_projectiles_bridge::Fault::Content)?;
+            let phase = if state.clock.counters.completed.0 & 1 == 0 {
+                weapons_projectiles::FlickerPhase::Even
+            } else {
+                weapons_projectiles::FlickerPhase::Odd
+            };
+            let view = weapons_projectiles::DrawView::Normal(weapons_projectiles::ScreenOrigin(
+                weapons_projectiles::Axes {
+                    x: state.room.camera.x.pixels,
+                    y: state.room.camera.y.pixels,
+                },
+            ));
+            let pictures = weapons_projectiles::pictures(&owner.model.0, phase, &view);
+            Ok::<_, crate::weapons_projectiles_bridge::Fault>((
+                content.draw(&pictures.impact)?,
+                content.draw(&pictures.flying)?,
+            ))
+        })
+        .transpose()?;
+    if let Some((impact, _)) = &power {
+        state.video.batch.draw_sprites(impact);
+    }
+
     let queues = std::mem::take(&mut state.room.drawing.queues);
     let camera = (state.room.camera.x.pixels, state.room.camera.y.pixels);
     let count = state.room.drawing.routine_count;
     for (layer, queue) in queues.iter().enumerate() {
         if layer == SAMUS_LAYER {
             crate::samus_drawing::draw(state, content);
+            if let Some((_, flying)) = &power {
+                state.video.batch.draw_sprites(flying);
+            }
+            // EndsImmediately consumes real requests at the trail point without appending OAM.
+            drop(requests.deliver_trails()?);
+            if state.projectiles.ordinary().is_some() {
+                // The next PRE reads history only after the complete layer3 producer.
+                state.controller.prior_pressed = state.controller.pressed;
+            }
         }
         for slot in queue {
             if let Some(enemy) = state.room.enemies.slots.get_mut(usize::from(slot.0)) {
@@ -92,6 +137,8 @@ pub fn draw(state: &mut State, content: &Content) {
         }
     }
     graphics_drawn(state, content);
+    requests.finish()?;
+    Ok(())
 }
 
 /// The enemy graphics drawn hook (`$A0:88C4`).

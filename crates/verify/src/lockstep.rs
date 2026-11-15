@@ -226,14 +226,12 @@ macro_rules! projectile {
             path: $path,
             compare: |engine: &State, oracle: &State| {
                 let part = |state: &State| {
-                    state
-                        .projectiles
-                        .slots
-                        .slots
-                        .map(|slot| match slot.occupancy {
+                    state.projectiles.legacy().map(|legacy| {
+                        legacy.slots.slots.map(|slot| match slot.occupancy {
                             Occupancy::Free => None,
                             Occupancy::Live(body) | Occupancy::Deleting(body) => Some($part(body)),
                         })
+                    })
                 };
                 part(engine).diff(&part(oracle))
             },
@@ -374,6 +372,7 @@ macro_rules! field {
 
 /// A comparator for every field the coverage table marks decoded, in its order.
 const COMPARATORS: &[Comparator] = &[
+    field!("room.drawing.routine_count", room.drawing.routine_count),
     field!("clock.counters.nmi", clock.counters.nmi),
     field!("clock.counters.completed", clock.counters.completed),
     field!("clock.counters.lag", clock.counters.lag),
@@ -870,17 +869,48 @@ const COMPARATORS: &[Comparator] = &[
     field!("ceres", ceres),
     field!("collected_items", collected_items),
     field!("sram", sram),
-    field!("projectiles.count", projectiles.count),
-    field!("projectiles.cooldown", projectiles.cooldown),
+    Comparator {
+        path: "projectiles.count",
+        compare: |engine, oracle| {
+            engine
+                .projectiles
+                .legacy()
+                .map(|value| value.count)
+                .diff(&oracle.projectiles.legacy().map(|value| value.count))
+        },
+    },
+    Comparator {
+        path: "projectiles.cooldown",
+        compare: |engine, oracle| {
+            engine
+                .projectiles
+                .legacy()
+                .map(|value| value.cooldown)
+                .diff(&oracle.projectiles.legacy().map(|value| value.cooldown))
+        },
+    },
+    Comparator {
+        path: "projectiles.ordinary",
+        compare: |engine, oracle| match (&engine.projectiles, &oracle.projectiles) {
+            (
+                game::state::projectile::ProjectileOwner::OrdinaryPower(left),
+                game::state::projectile::ProjectileOwner::OrdinaryPower(right),
+            ) => left.diff(right),
+            (
+                game::state::projectile::ProjectileOwner::Legacy(_),
+                game::state::projectile::ProjectileOwner::Legacy(_),
+            ) => None,
+            _ => engine.projectiles.diff(&oracle.projectiles),
+        },
+    },
     Comparator {
         path: "projectiles.slots.common.trail_timer",
         compare: |engine: &State, oracle: &State| {
             let part = |state: &State| {
                 state
                     .projectiles
-                    .slots
-                    .slots
-                    .map(|slot| slot.common.trail_timer)
+                    .legacy()
+                    .map(|legacy| legacy.slots.slots.map(|slot| slot.common.trail_timer))
             };
             part(engine).diff(&part(oracle))
         },
@@ -986,6 +1016,10 @@ pub(crate) fn differences(
 /// Why a frame has no decoded State, by kind.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ErrorKind {
+    /// [`DecodeError::OrdinaryPowerFacts`].
+    OrdinaryPowerFacts,
+    /// [`DecodeError::OrdinaryPowerOwner`].
+    OrdinaryPowerOwner,
     /// [`DecodeError::WramTooShort`].
     WramTooShort,
     /// [`DecodeError::WrongSize`].
@@ -1013,6 +1047,8 @@ impl ErrorKind {
     #[must_use]
     pub const fn of(error: &DecodeError) -> Self {
         match error {
+            DecodeError::OrdinaryPowerFacts => Self::OrdinaryPowerFacts,
+            DecodeError::OrdinaryPowerOwner => Self::OrdinaryPowerOwner,
             DecodeError::WramTooShort { .. } => Self::WramTooShort,
             DecodeError::WrongSize { .. } => Self::WrongSize,
             DecodeError::UnknownRoom(_) => Self::UnknownRoom,

@@ -688,7 +688,7 @@ pub const FIELDS: &[Field] = &[
     ),
     // Empty at every Tick's end: the drawing loop empties what the main enemy routine queued.
     open("room.drawing.queues"),
-    open("room.drawing.routine_count"),
+    wram("room.drawing.routine_count", source::ENEMY_ROUTINE_COUNT),
     wram("room.drawing.hook", source::ENEMY_GFX_DRAWN_HOOK),
     wram(
         "enemy_palette_cycle.palette",
@@ -745,6 +745,9 @@ pub const FIELDS: &[Field] = &[
         status: Status::Decoded(Source::WramBlock(source::ITEM_BIT_ARRAY)),
     },
     record("sram", "sram"),
+    // Generic decoding selects Legacy. Checked ordinary admission and its complete
+    // owner/State comparison are covered separately by the production replay.
+    open("projectiles.ordinary"),
     wram("projectiles.count", source::PROJECTILE_COUNTER),
     wram("projectiles.cooldown", source::COOLDOWN_TIMER),
     none(
@@ -977,6 +980,7 @@ mod tests {
             rules.samus_tiles.bottom,
             rules.layer_blending,
             rules.drawing,
+            rules.enemy_routine_count,
             rules.drawn_hook.pointer,
             rules.palette_cycle.palette,
             rules.palette_cycle.set,

@@ -327,7 +327,11 @@ fn step<D: Domain>(
     let mut world = domain.world(from, next).map_err(skipped)?;
     let masks = domain.masks(from, next, &inputs).map_err(skipped)?;
     let oracle = domain.expected(next).map_err(skipped)?;
-    let null = null.unwrap_or_else(|| domain.fields(&seeded));
+    let null = if domain.stateless_outputs() {
+        domain.fields(&seeded)
+    } else {
+        null.unwrap_or_else(|| domain.fields(&seeded))
+    };
     let Open {
         seed,
         held,

@@ -72,3 +72,12 @@ before = ".wrapping_add(rules.acceleration.0.wrapping_mul(axes.x));"
 after = ".wrapping_sub(rules.acceleration.0.wrapping_mul(axes.x));"
 test = "harness::tests::weapons_hold_their_floors_against_the_cache"
 extra_tests = ["harness::free::tests::weapons_run_free_against_the_cache"]
+
+[[fault]]
+name = "ceres-consumption-not-applied"
+domain = "enemy-interactions"
+file = "crates/game/src/enemy_interactions_bridge.rs"
+before = "state.consume(slot);"
+after = "state.consume(beam::ShotSlot::Slot4);"
+test = "harness::tests::contact_holds_its_floors_against_the_cache"
+extra_tests = ["harness::free::tests::contact_runs_free_against_the_cache"]

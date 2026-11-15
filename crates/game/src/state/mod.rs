@@ -173,6 +173,11 @@ pub enum GameMode {
     /// Main gameplay.
     #[default]
     Gameplay,
+    /// Ordinary touch work has selected a doorway; the next dispatch begins passage.
+    PassageEntry {
+        /// The checked destination retained through the complete touch frame.
+        doorway: data::id::DoorwayId,
+    },
 }
 
 /// Whether an NMI arrived after the main strand yielded or while it was still working (D8).
@@ -242,7 +247,7 @@ pub struct State {
     /// The cartridge's save RAM.
     pub sram: sram::SaveRam,
     /// Samus's projectiles.
-    pub projectiles: projectile::Projectiles,
+    pub projectiles: projectile::ProjectileOwner,
 }
 impl Default for State {
     fn default() -> Self {
@@ -268,7 +273,7 @@ impl Default for State {
             message: Message::default(),
             collected_items: CollectedItems::default(),
             sram: sram::SaveRam::default(),
-            projectiles: projectile::Projectiles::default(),
+            projectiles: projectile::ProjectileOwner::default(),
         }
     }
 }

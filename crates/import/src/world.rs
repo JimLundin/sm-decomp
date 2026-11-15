@@ -168,7 +168,8 @@ pub fn tileset_index(id: TilesetId) -> Option<TilesetIndex> {
 }
 
 /// The registered doorway whose door header is at `at`.
-fn doorway(at: RomAddress) -> Option<DoorwayId> {
+#[must_use]
+pub fn doorway(at: RomAddress) -> Option<DoorwayId> {
     DOORWAYS.iter().find_map(|&(doorway, pointer)| {
         (RomAddress::new(DOOR_BANK, pointer) == at).then_some(doorway)
     })

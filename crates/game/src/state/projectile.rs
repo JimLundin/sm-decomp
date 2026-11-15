@@ -203,3 +203,188 @@ pub struct Projectiles {
     /// Frames until Samus can fire again (`$0CCC`).
     pub cooldown: Frames,
 }
+
+/// Complete clean power State, pinned for checkpoint shape compatibility.
+pub struct PowerPin;
+impl canonical::model::Pinned for PowerPin {
+    type State = weapons_projectiles::State;
+    const NAME: &'static str = "weapons-projectiles";
+    const SHAPE: u64 = 0x98F6_AF73_265D_2556;
+}
+
+/// Whether the charge beam is equipped, independent of any fired projectile.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ChargeEquipment {
+    /// Charge beam is absent.
+    Unequipped,
+    /// Charge beam is equipped.
+    Equipped,
+}
+/// Actual hyper activity at the seed edge.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HyperActivity {
+    /// The neighbouring producer is inactive.
+    Inactive,
+    /// The neighbouring producer is active.
+    Active,
+}
+/// Actual grapple activity; equipment ownership alone cannot establish inactivity.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GrappleActivity {
+    /// The neighbouring producer is inactive.
+    Inactive,
+    /// The grapple producer lies outside this ordinary path.
+    Unsupported,
+}
+/// Running time is required through the ordinary trail destination.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PowerTime {
+    /// Ordinary updates and trail presentation run.
+    Running,
+    /// Time stops ordinary trail retirement.
+    Stopped,
+}
+/// A decoded producer pool at the seed cut.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ProducerPool {
+    /// No competing producer occupies the decoded pool.
+    Empty,
+    /// At least one competing producer occupies the decoded pool.
+    Occupied,
+}
+
+/// Independently decoded facts establishing the bounded ordinary producer path.
+#[derive(Clone, Copy, Debug)]
+pub struct PowerSeedFacts {
+    /// Actually equipped ordinary beam combination.
+    pub beams: Beams,
+    /// Actually equipped charge beam.
+    pub charge: ChargeEquipment,
+    /// Current and previous charge counters at the seed.
+    pub charge_history: (Frames, Frames),
+    /// Actual hyper producer activity.
+    pub hyper: HyperActivity,
+    /// Actual grapple producer activity.
+    pub grapple: GrappleActivity,
+    /// Whether ordinary time is running.
+    pub time: PowerTime,
+    /// Sprite-object occupancy at the seed.
+    pub sprite_objects: ProducerPool,
+    /// Enemy-projectile occupancy at the seed.
+    pub enemy_projectiles: ProducerPool,
+    /// Occupancy of both sides of every trail pair.
+    pub trail_effects: ProducerPool,
+    /// Occupancy outside the five owned power slots.
+    pub other_player_slots: ProducerPool,
+}
+
+/// A checked ordinary route; private construction rejects unavailable neighbouring facts.
+///
+/// Checkpoint reopening must revalidate the owned state/content and its current caller.
+/// Competing pools are absent seed facts rather than inert runtime arrays: this owner
+/// can create only Power and Impact bodies. Admitted doors create no player/effect
+/// producers; equipped items, other live actors, occupied PLMs and reactive block
+/// classes are rejected. Ordinary trails are transient requests delivered before
+/// the uninterrupted pass completes. A restored capability alone is insufficient:
+/// Session reopening checks the complete typed path and imported references again.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OrdinaryCapability {
+    checked: CheckedOrdinary,
+}
+
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+struct CheckedOrdinary;
+
+impl OrdinaryCapability {
+    /// Establish actual no-charge, power-only applicability and absent competing producers.
+    /// # Errors
+    /// Any unsupported or occupied producer fact.
+    pub fn from_seed(
+        facts: PowerSeedFacts,
+    ) -> Result<Self, crate::weapons_projectiles_bridge::Fault> {
+        let supported = facts.beams == Beams::default()
+            && facts.charge == ChargeEquipment::Unequipped
+            && facts.charge_history == (Frames(0), Frames(0))
+            && facts.hyper == HyperActivity::Inactive
+            && facts.grapple == GrappleActivity::Inactive
+            && facts.time == PowerTime::Running
+            && [
+                facts.sprite_objects,
+                facts.enemy_projectiles,
+                facts.trail_effects,
+                facts.other_player_slots,
+            ]
+            .into_iter()
+            .all(|pool| pool == ProducerPool::Empty);
+        supported
+            .then_some(Self {
+                checked: CheckedOrdinary,
+            })
+            .ok_or(crate::weapons_projectiles_bridge::Fault::Applicability)
+    }
+}
+
+/// Ordinary power's sole projectile owner. No legacy first-five bodies coexist with it.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct OrdinaryPower {
+    /// Complete persistent clean power state.
+    pub model: canonical::model::Model<PowerPin>,
+    capability: OrdinaryCapability,
+}
+impl OrdinaryPower {
+    /// Restore complete independently decoded model State after the capability edge checks.
+    /// # Errors
+    /// Invalid references or unsupported ordinary seed producers.
+    pub fn from_seed(
+        state: weapons_projectiles::State,
+        facts: PowerSeedFacts,
+        content: &crate::weapons_projectiles_bridge::PowerContent,
+    ) -> Result<Self, crate::weapons_projectiles_bridge::Fault> {
+        let capability = OrdinaryCapability::from_seed(facts)?;
+        content.validate_state(&state)?;
+        Ok(Self {
+            model: canonical::model::Model(state),
+            capability,
+        })
+    }
+}
+
+/// Disjoint ownership, with no automatic conversion or switching between weapon families.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub enum ProjectileOwner {
+    /// Unsupported families retain their sole existing owner.
+    Legacy(Projectiles),
+    /// Checked ordinary power runs clean W1 and C1.
+    OrdinaryPower(OrdinaryPower),
+}
+impl Default for ProjectileOwner {
+    fn default() -> Self {
+        Self::Legacy(Projectiles::default())
+    }
+}
+
+impl ProjectileOwner {
+    /// The legacy family owner, when it alone owns player projectiles.
+    #[must_use]
+    pub const fn legacy(&self) -> Option<&Projectiles> {
+        match self {
+            Self::Legacy(value) => Some(value),
+            Self::OrdinaryPower(_) => None,
+        }
+    }
+    /// Mutably borrow the legacy family owner without switching ownership.
+    pub const fn legacy_mut(&mut self) -> Option<&mut Projectiles> {
+        match self {
+            Self::Legacy(value) => Some(value),
+            Self::OrdinaryPower(_) => None,
+        }
+    }
+    /// The ordinary power owner, when the checked path was selected.
+    #[must_use]
+    pub const fn ordinary(&self) -> Option<&OrdinaryPower> {
+        match self {
+            Self::Legacy(_) => None,
+            Self::OrdinaryPower(value) => Some(value),
+        }
+    }
+}

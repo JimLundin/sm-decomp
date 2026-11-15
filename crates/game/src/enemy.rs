@@ -94,7 +94,8 @@ fn on_screen(slot: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
 }
 
 /// Whether normal selection admits a live enemy: processed off screen, frozen, or on screen.
-fn processes(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
+#[must_use]
+pub fn processes(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
     common
         .properties
         .contains(EnemyProperty::ProcessedOffScreen)
@@ -158,13 +159,59 @@ pub fn select(state: &mut State) -> Active {
 // open: the shake request, Samus's and projectiles' collisions (`$A0:9758`), time frozen
 // (the X-ray scope, which skips the frame count and the instructions), the grapple paralysis
 // death, the sprite objects and the solid-enemy collision reset join with their lanes.
-pub fn run(state: &mut State, active: &Active, content: &Content) {
+/// # Errors
+/// The owned ordinary contact producer rejects its checked input.
+pub fn run(
+    state: &mut State,
+    active: &Active,
+    content: &Content,
+) -> Result<(), crate::weapons_projectiles_bridge::Fault> {
     let camera = (state.room.camera.x.pixels, state.room.camera.y.pixels);
     let mut station = Station::new(state.ceres, state.rng.word);
     for &index in active.slots.iter().filter(|&&index| index < ENEMY_SLOTS) {
         let Some(slot) = state.room.enemies.slots.get_mut(index) else {
             continue;
         };
+        if let crate::state::projectile::ProjectileOwner::OrdinaryPower(owner) =
+            &mut state.projectiles
+        {
+            let crate::state::slots::Occupancy::Live(EnemyBody::CeresDoor(door)) = slot.occupancy
+            else {
+                return Err(crate::weapons_projectiles_bridge::Fault::Applicability);
+            };
+            let passable = slot.common.properties.contains(EnemyProperty::Intangible);
+            let geometry = if passable {
+                enemy_interactions::DoorContact::Passable
+            } else if door.0.figure().is_none() {
+                enemy_interactions::DoorContact::WithoutFigure
+            } else {
+                enemy_interactions::DoorContact::Box(enemy_interactions::ContactBox {
+                    centre: enemy_interactions::Centre {
+                        x: slot.common.position.x.pixels,
+                        y: slot.common.position.y.pixels,
+                    },
+                    radii: enemy_interactions::Radii {
+                        x: slot.common.radius_x,
+                        y: slot.common.radius_y,
+                    },
+                })
+            };
+            let conditions = enemy_interactions::ContactConditions {
+                actor_updates_enabled: true,
+                interactions_enabled: true,
+                samus_time_stopped: false,
+                enemies_stopped_in_time: false,
+                processing_membership: true,
+                protection_remaining: enemy_interactions::ProtectionFrames(
+                    slot.common.invincibility.0,
+                ),
+            };
+            let _ = crate::enemy_interactions_bridge::contact_door(
+                &mut owner.model.0,
+                conditions,
+                geometry,
+            );
+        }
         let intangible = slot.common.properties.contains(EnemyProperty::Intangible);
         if !intangible && slot.common.invincibility != Frames(0) {
             slot.common.invincibility = Frames(slot.common.invincibility.0.wrapping_sub(1));
@@ -214,6 +261,7 @@ pub fn run(state: &mut State, active: &Active, content: &Content) {
         count_flash(slot);
     }
     state.room.drawing.routine_count = state.room.drawing.routine_count.wrapping_add(1);
+    Ok(())
 }
 
 /// Whether the main enemy routine processes the slot's instructions: a Ceres door's model
@@ -562,7 +610,7 @@ mod tests {
         }
         let active = select(&mut state);
         assert_eq!(active.slots, vec![0]);
-        run(&mut state, &active, &crate::pose::Content::default());
+        run(&mut state, &active, &crate::pose::Content::default()).unwrap();
         let counters: Vec<u16> = state
             .room
             .enemies
@@ -615,7 +663,7 @@ mod tests {
         assert_eq!(active.slots, Vec::<usize>::new());
         let interactive: Vec<u8> = active.interactive().iter().map(|slot| slot.0).collect();
         assert_eq!(interactive, [0]);
-        run(&mut state, &active, &crate::pose::Content::default());
+        run(&mut state, &active, &crate::pose::Content::default()).unwrap();
         assert_eq!(state.room.enemies.slots.first().copied(), before);
         assert!(state.room.drawing.queues.iter().all(Vec::is_empty));
     }

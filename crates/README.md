@@ -6,7 +6,7 @@ The rebuild's crates, as planned in
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |
 | `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `types` (the asset key is the clean room's pose) |
-| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress` |
+| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions` |
 | `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
 | `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `import` (the player's ROM at startup), `game`, `runtime` |
 | `import` | the importers ([assets.md §5](../docs/architecture/assets.md#5-the-importers)): the only code that knows the ROM's layout of the content it writes, into `data`'s formats, and the content cache ([assets.md §6](../docs/architecture/assets.md#6-loading-at-runtime)). `game` and `runtime` never reach it. | `data`, `canonical` (the cache is written with the codec) |
@@ -24,6 +24,7 @@ The rebuild's crates, as planned in
 | `run_progress` | what the game remembers of a run (`crates/clean/run_progress`): the reports that change it, the questions it answers and the room states it picks, built from its spec in the clean room, and its catalogue. | `types` |
 | `samus_appearance` | her animation's timing (`crates/clean/samus_appearance`), part 1 of how Samus looks: the clip's steps, the pose's start, her moves' writes and the run's boost stages, built from its spec in the clean room, and its catalogue. | `types` |
 | `weapons_projectiles` | the uncharged power beam (`crates/clean/weapons_projectiles`): firing, inherited motion, contact, lifetime and picture intents, built from its spec in the clean room, and its catalogue. | `types` |
+| `enemy_interactions` | ordinary power-shot contact with single-box Ceres doors (`crates/clean/enemy_interactions`): stateless eligibility, overlap and stable shot consumption, built from its spec in the clean room. | none |
 
 The clean crates are the folders of `crates/clean/`, one level deep, each a workspace member
 (`crates/clean/*`). A model's package is its domain's name with dashes as underscores, and the

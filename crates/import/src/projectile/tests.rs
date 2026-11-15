@@ -29,6 +29,11 @@ fn put_word(image: &mut [u8], bank: u8, address: u16, value: u16) {
 
 fn fixture() -> Vec<u8> {
     let mut image = vec![0; Rom::SIZE];
+    // Each ordinary trail family terminates at its own invented animation.
+    put_word(&mut image, 0x90, 0xb5bb, 0x9000);
+    put_word(&mut image, 0x90, 0xb609, 0x9002);
+    put_word(&mut image, 0x90, 0x9000, 0);
+    put_word(&mut image, 0x90, 0x9002, 0);
     put_word(&mut image, 0x93, 0x83c1, 0x9000);
     put_word(&mut image, 0x93, 0x9000, 0);
     put_word(&mut image, 0x93, 0x867b, 0x9400);
@@ -182,6 +187,8 @@ fn invented_content_keeps_heading_offsets_holds_pictures_and_unsigned_lift() {
 #[test]
 fn malformed_content_is_refused_by_kind() {
     let cases = [
+        (0x90, 0x9000, 1, ImportError::NonEmptyPowerTrail),
+        (0x90, 0x9002, 1, ImportError::NonEmptyPowerTrail),
         (0x93, 0x9000, 0x8000, ImportError::Damage),
         (0x93, 0x9200, 0x8001, ImportError::Control),
         (0x93, 0x9200, 0x822f, ImportError::EmptyClip),

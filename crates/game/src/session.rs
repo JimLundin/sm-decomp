@@ -164,6 +164,8 @@ pub enum SessionFault {
     Blocks(crate::world_blocks_bridge::BlocksFault),
     /// A projectile reached a block whose reaction isn't modelled.
     Projectile(crate::projectile::ProjectileFault),
+    /// The ordinary owned power continuation rejected a producer or content edge.
+    Power(crate::weapons_projectiles_bridge::Fault),
     /// Her motion met cells that stand for each other in a loop, where the original's never
     /// ends, or a pose the motion model names no situation for.
     Samus(crate::samus_movement_bridge::SamusFault),
@@ -173,6 +175,8 @@ pub enum SessionFault {
     /// The HUD's State holds what the HUD model isn't defined on: a count past its cells, a room
     /// off the map.
     Hud(crate::interface_hud_bridge::HudFault),
+    /// A selected doorway requires missing content or passage execution.
+    Passage(crate::selected_doorway::PassageFault),
 }
 
 /// Why a State can't open as a Session.
@@ -182,6 +186,10 @@ pub enum OpenError {
     StrandEmpty,
     /// The main strand nests deeper than [`MAIN_STRAND_DEPTH`].
     StrandTooDeep,
+    /// Restored ordinary ownership does not establish its current typed capability.
+    Power(crate::weapons_projectiles_bridge::Fault),
+    /// A restored selected doorway lacks its checked source or arrival content.
+    Passage(crate::selected_doorway::PassageFault),
 }
 
 /// A running game.
@@ -195,6 +203,8 @@ pub struct Session {
     fault: Option<SessionFault>,
     /// Between `begin` and `end`.
     begun: bool,
+    /// Ordinary steps publish only after every fallible phase succeeds.
+    rollback: Option<State>,
 }
 
 impl Session {
@@ -210,12 +220,16 @@ impl Session {
         if state.main.frames.len() > MAIN_STRAND_DEPTH {
             return Err(OpenError::StrandTooDeep);
         }
+        crate::selected_doorway::validate(&state, &content).map_err(OpenError::Passage)?;
+        crate::weapons_projectiles_bridge::validate_path(&state, &content)
+            .map_err(OpenError::Power)?;
         Ok(Self {
             state,
             rules,
             content,
             fault: None,
             begun: false,
+            rollback: None,
         })
     }
 
@@ -252,6 +266,15 @@ impl Session {
         if self.begun {
             return Err(self.poison(SessionFault::TickAbandoned));
         }
+        if self.state.projectiles.ordinary().is_some() {
+            crate::weapons_projectiles_bridge::validate_path(&self.state, &self.content)
+                .map_err(|fault| self.poison(SessionFault::Power(fault)))?;
+        }
+        if self.state.projectiles.ordinary().is_some()
+            || matches!(self.state.mode, crate::state::GameMode::PassageEntry { .. })
+        {
+            self.rollback = Some(self.state.clone());
+        }
         self.begun = true;
         let mut budget = STEP_BUDGET;
         if tick::resume(&mut self.state) {
@@ -274,7 +297,10 @@ impl Session {
         })
     }
 
-    const fn poison(&mut self, fault: SessionFault) -> SessionFault {
+    fn poison(&mut self, fault: SessionFault) -> SessionFault {
+        if let Some(state) = self.rollback.take() {
+            self.state = state;
+        }
         self.fault = Some(fault);
         fault
     }
@@ -323,6 +349,7 @@ impl Begun<'_> {
         let tick = clock.tick;
         clock.tick = Tick(tick.0.wrapping_add(1));
         session.begun = false;
+        session.rollback = None;
         Ok(TickOutput {
             tick,
             nmi: kind,
