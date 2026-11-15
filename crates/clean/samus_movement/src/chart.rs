@@ -53,7 +53,9 @@ pub struct Choice {
     pub aim_step: bool,
     /// `ShrinkingLowersHer`: the look down the pose starts with.
     pub lower: Option<Lowers>,
-    /// `AnimationEnds`: her animation's end handed the pose over.
+    /// `AnimationEnds`: an animation end selected this pose, independently of later fitting.
+    /// The same selected end supplies held-jump history (`Jumping`); taller supplied targets
+    /// remain an open model gap and may be refused or substituted by `PoseFitAfterMoves`.
     pub handed_over: bool,
 }
 

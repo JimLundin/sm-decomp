@@ -38,6 +38,7 @@ Every quantity here is something the player sees or can measure frame by frame.
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
+| transition firing aim | optional `FiringDirection`, defined below; a publication, not a distance | a shot made while her pose changes keeps the intended gun direction | output (weapons-projectiles `CannonOrigin` through caller-held pending aim) |
 | latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
 | horizontal speed | signed `P.S`, rightward positive | how fast and which way she walks, runs or drifts, before the dash | `SpeedBuildsAndBrakes`, `TurningRound`, `DriftInTheAir`, `Landing`, `WallsAndCeilings` |
@@ -121,6 +122,7 @@ or falling at 0.
 
 | Input | Type | Read by |
 | --- | --- | --- |
+| cannon headings | imported named `FiringDirection` for each ordinary straight-jump and moonwalking pose; the gun direction, independent of walking-facing | `TransitionFiringAim` |
 | pad | held: run, jump, shoot, left, right, up, down, aim up, aim down; just pressed: each of them, held this frame and not the frame before | most behaviours |
 | items switched on | the `Item`s switched on: progress's own output (progress §1.1), never the ones merely hers | below |
 | world | the room's blocks and solid enemies, answered as §8 says | §8 |
@@ -417,6 +419,45 @@ The ball `Still` is the ball at rest. While her body grows or shrinks, she moves
   holding the way she walks; CE4 for a crouched turn's skid); constructed (the sinking;
   C-moonwalk-turn, C-crouch-turn-skid); original only (the aim of a turn begun aimed
   `DownForward`).
+
+### Firing directions
+
+`FiringDirection` names where the gun fires. It is distinct from movement's four-way
+`Heading`: diagonal firing and the facing retained while firing vertically are observable
+parts of the cannon direction. All ten variants below are valid pose-content inputs and
+publication values; a publication forwards its supplied variant unchanged.
+
+| Variants | Player-visible meaning |
+| --- | --- |
+| `Left`, `Right` | horizontally left or right |
+| `DownLeft`, `DownRight`, `UpLeft`, `UpRight` | diagonally in the two named directions |
+| `DownFacingLeft`, `DownFacingRight` | straight down with the gun on the left-facing or right-facing body |
+| `UpFacingLeft`, `UpFacingRight` | vertically upward with the gun on the left-facing or right-facing body |
+
+The two vertical facings must remain distinct even though their shots travel along the same
+axis. These are named choices, not angles rounded to a movement direction.
+
+### TransitionFiringAim
+- kind: output.
+- summary: a pose change can preserve the gun direction for a following cannon attempt.
+- params: none.
+- switch: none.
+- An ordinary pose change enters an upright straight jump, shoot pressed this frame, with no
+  shinespark handover → publish the new jump pose's cannon heading [C-aim-jump-press, C-aim-jump-up].
+- A ground turn begins from moonwalking, its moonwalk-jump variant included → publish the
+  old moonwalking pose's cannon heading, whether shoot is held or released [C-aim-moonwalk-turn,
+  C-aim-moonwalk-jump].
+- Any other ordinary pose change, or ordinary selection keeps the same pose → no publication
+  [C-aim-jump-held, C-aim-jump-released, C-aim-same-pose].
+- This output is a fresh publication, not retained State. The caller keeps an earlier pending
+  aim when no new heading is published; its ordinary interval clears pending aim after the
+  cannon pass, before her pose changes this frame. It can save and restore that pending aim as
+  any optional FiringDirection. W1 consumes it only on an available attempt (`CannonOrigin`).
+- The heading comes from pose content, not her horizontal speed or the new turn's facing.
+  Moonwalking faces the way she walks while her gun points back, so its content heading matters.
+- checked: oracle (M0:80 to 81, pending at 81 and absent at 82);
+  constructed (C-aim-jump-press, C-aim-jump-up, C-aim-jump-held, C-aim-jump-released, C-aim-same-pose,
+  C-aim-moonwalk-turn, C-aim-moonwalk-jump).
 
 ### AimingAndShooting
 - kind: quirk and output.
@@ -1429,8 +1470,10 @@ holds or has just pressed. Vectors: the `[[pose_step]]` entries of the vector fi
 - Its end handing over its pose → the frame reports `handed over` (§1.4) [W16, C-landing-aimed-jump,
   C-turn-end-plain]
 - So with no end, or an end that gives way, it doesn't (R-turn-gives-way, C-landing-gives-way).
-- So an end's pose is always the pose she ends the frame in: no pose an end hands over is taller
-  than the pose it ends, so pose fit never refuses one (`PoseFitAfterMoves`).
+- With imported game body sizes and animation endings, an end's pose is the pose she ends the
+  frame in: no pose an end hands over is taller than the pose it ends, so pose fit never refuses
+  one (`PoseFitAfterMoves`). Taller supplied animation targets remain an open model gap; the
+  handover reports the end that chose her pose, independently of a later refusal or substitution.
 - So an end never ends her dashing at the pose change: of the effects an end hands over only a
   turn's takes her dash, and a turn's own moves have already ended her dashing (`Dashing`,
   C-dash-turn-moves).
@@ -1932,9 +1975,9 @@ acts on her motion as below. These rules are Samus's; other actors get their own
 
 ## 11. Open questions
 
-- With more than one solid enemy in a move's reach, which one decides is not yet specified (the
-  vectors have one). It is not always the nearest, and one she already overlaps never decides
-  (`SolidEnemies`).
+- With more than one solid enemy in a move's reach, the first qualifying enemy in the supplied
+  order decides (`SolidEnemies`): one she already overlaps is skipped. The vectors have one
+  enemy, so ordering still needs a multiple-enemy check.
 
 - Answered: an animation's end neither brings nor cancels the extra pixel of
   `AimingAndShooting`; the step follows the pose the pad chart and her moves chose.

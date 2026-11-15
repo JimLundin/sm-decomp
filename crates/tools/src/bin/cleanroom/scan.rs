@@ -1,5 +1,6 @@
 //! Checks 1 to 3 over any text: addresses, names and (in Rust) shapes.
 
+use std::borrow::Cow;
 use std::collections::BTreeSet;
 use std::fmt;
 
@@ -337,6 +338,67 @@ fn struct_fields(toks: &[Tok], name_at: usize) -> Vec<String> {
     out
 }
 
+/// Recognize only the absolute `::core::ptr::eq(...)` code spelling. This is a lexical
+/// Name exception: library identity additionally requires the clean crate's mandatory
+/// edition, manifest and extern-declaration gates; this scanner does not resolve bindings.
+fn identity_names(src: &str) -> Cow<'_, str> {
+    let tokens = text::rust_spans(src);
+    let mut masked = None;
+    for (start, path) in tokens.windows(10).enumerate() {
+        let matches = matches!(
+            path.iter().map(|t| &t.token).collect::<Vec<_>>().as_slice(),
+            [Tok::Punct(':'), Tok::Punct(':'), Tok::Ident(core),
+             Tok::Punct(':'), Tok::Punct(':'), Tok::Ident(ptr),
+             Tok::Punct(':'), Tok::Punct(':'), Tok::Ident(eq), Tok::Punct('(')]
+                if core == "core" && ptr == "ptr" && eq == "eq"
+        );
+        if !matches
+            || ![0usize, 3, 6].into_iter().all(|i| {
+                path.get(i)
+                    .zip(path.get(i.saturating_add(1)))
+                    .is_some_and(|(left, right)| left.end == right.start)
+            })
+        {
+            continue;
+        }
+        // A preceding path segment, field, raw identifier or extra colon is not an
+        // absolute root. Accept expression-start punctuation and the return keyword.
+        if start
+            .checked_sub(1)
+            .and_then(|i| tokens.get(i))
+            .is_some_and(|t| {
+                !matches!(
+                    t.token,
+                    Tok::Punct(
+                        '=' | '('
+                            | '['
+                            | '{'
+                            | '}'
+                            | ','
+                            | ';'
+                            | '!'
+                            | '&'
+                            | '|'
+                            | '+'
+                            | '-'
+                            | '*'
+                            | '/'
+                            | '%'
+                            | '^'
+                    )
+                ) && !matches!(&t.token, Tok::Ident(word) if word == "return")
+            })
+        {
+            continue;
+        }
+        if let Some(ptr) = path.get(5) {
+            let text = masked.get_or_insert_with(|| src.to_owned());
+            text.replace_range(ptr.start..ptr.end, "   ");
+        }
+    }
+    masked.map_or(Cow::Borrowed(src), Cow::Owned)
+}
+
 /// Every check that applies to `path`'s contents.
 pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<Finding>) {
     let mut push = |line: usize, class: Class, detail: String| {
@@ -356,11 +418,16 @@ pub fn file(lex: &Lexicon, allow: &Allow, path: &str, src: &str, out: &mut Vec<F
             push(n.saturating_add(1), Class::Route, (*marker).to_owned());
         }
     }
-    names(lex, allow, src, &mut push);
-    if std::path::Path::new(path)
+    let rust = std::path::Path::new(path)
         .extension()
-        .is_some_and(|e| e.eq_ignore_ascii_case("rs"))
-    {
+        .is_some_and(|e| e.eq_ignore_ascii_case("rs"));
+    let name_src = if rust {
+        identity_names(src)
+    } else {
+        Cow::Borrowed(src)
+    };
+    names(lex, allow, &name_src, &mut push);
+    if rust {
         shapes(lex, src, &mut push);
     }
 }
@@ -379,3 +446,41 @@ const ROUTES: &[&str] = &[
     "verify/src",
     "rom/sm.smc",
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::{Allow, Class, file};
+    use crate::{lexicon::Lexicon, text};
+
+    #[test]
+    fn identity_exception_preserves_known_addresses_and_shapes() {
+        // All lexicon entries here are invented checker witnesses.
+        let mut lex = Lexicon::default();
+        lex.addresses.insert(text::hash(&lex.salt, "w:AB12"));
+        lex.fields
+            .insert(text::hash(&lex.salt, "f:Example.payload"));
+        lex.codes.insert(
+            0,
+            ["Alpha", "Bravo", "Charlie"]
+                .into_iter()
+                .zip(0..)
+                .map(|(name, code)| (text::hash(&lex.salt, &text::normalise(name)), code))
+                .collect(),
+        );
+        let leak = "0xAB12; struct Example { payload: u16 } enum Kind { Alpha, Bravo, Charlie }";
+        let scan = |src: &str| {
+            let mut out = Vec::new();
+            file(&lex, &Allow::parse(""), "x.rs", src, &mut out);
+            out.into_iter()
+                .map(|f| (f.line, f.class))
+                .collect::<Vec<_>>()
+        };
+        let expected = [
+            (1, Class::AddressKnown),
+            (1, Class::RamField),
+            (1, Class::EnumOrder),
+        ];
+        assert_eq!(scan(leak), expected);
+        assert_eq!(scan(&format!("::core::ptr::eq(a, b); {leak}")), expected);
+    }
+}

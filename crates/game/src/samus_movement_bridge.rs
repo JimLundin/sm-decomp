@@ -40,6 +40,8 @@ pub enum SamusFault {
     /// The pose map holds her pose, but no situation of the model names it: every pose the map
     /// holds is named, so this can't happen.
     UnnamedPose(PoseId),
+    /// A transition requires an imported named cannon heading.
+    MissingCannonHeading(types::Pose),
 }
 
 /// The room and the frame's solid enemies.

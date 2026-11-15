@@ -235,6 +235,30 @@ jobs:
             grep -Fxq "test harness::camera::receipt::tests::${test} ... ok" \
               "$RUNNER_TEMP/camera-receipt.txt"
           done
+      - name: "Movement M0: physical control history and pending aim match the recorded caller"
+        run: |
+          set -euo pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --profile verify \
+              harness::tests::movement_m0_caller_history_and_pending_aim_match_the_record -- --exact --nocapture \
+            | tee "$RUNNER_TEMP/movement-caller.txt"
+          grep -Fxq 'test harness::tests::movement_m0_caller_history_and_pending_aim_match_the_record ... ok' \
+            "$RUNNER_TEMP/movement-caller.txt"
+          for field in controller.prior_pressed pending_aim; do
+            grep -Fxq "M0 $field: 181 compared, 0 differed, first frame None" \
+              "$RUNNER_TEMP/movement-caller.txt"
+          done
+      - name: "Ceres moonwalk: solid enemy geometry preserves the turn and pending aim"
+        run: |
+          set -euo pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --profile verify \
+              harness::tests::movement_ceres_moonwalk_turn_keeps_its_solid_enemy_and_pending_aim -- --exact --nocapture \
+            | tee "$RUNNER_TEMP/ceres-moonwalk.txt"
+          grep -Fxq 'test harness::tests::movement_ceres_moonwalk_turn_keeps_its_solid_enemy_and_pending_aim ... ok' \
+            "$RUNNER_TEMP/ceres-moonwalk.txt"
+          grep -Fxq 'Ceres moonwalk: pose and pending Left match; row pending 576 compared, 0 differed' \
+            "$RUNNER_TEMP/ceres-moonwalk.txt"
       - name: "Domain free run: every domain fed its own State over every cached row, against free_floors.txt"
         run: |
           # The primary proof (MODEL §4): each row's segments, first divergences and held frames

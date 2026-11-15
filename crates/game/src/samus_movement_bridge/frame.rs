@@ -76,7 +76,11 @@ pub fn body(content: &Content, samus: &Samus, pose: Pose) -> Radius {
 impl FrameSource<'_> {
     /// The model's frame, with `body` its body sizes.
     #[must_use]
-    pub fn frame<'b>(&self, body: &'b dyn Fn(Pose) -> Radius) -> Frame<'b> {
+    pub fn frame<'b>(
+        &self,
+        body: &'b dyn Fn(Pose) -> Radius,
+        cannon_heading: &'b dyn Fn(Pose) -> Option<types::FiringDirection>,
+    ) -> Frame<'b> {
         let samus = self.samus;
         let ahead = samus_appearance_bridge::ahead(samus, &self.content.samus_clips);
         Frame {
@@ -91,9 +95,32 @@ impl FrameSource<'_> {
             },
             animation_ends: ahead.and_then(|ahead| ahead.end),
             body,
+            cannon_heading,
         }
     }
 }
 
 #[cfg(test)]
 mod tests;
+
+/// Imported firing content, preserving all ten directions.
+#[must_use]
+pub fn cannon_heading(content: &Content, pose: Pose) -> Option<types::FiringDirection> {
+    use data::assets::projectile::{Heading, MuzzleAim};
+    use types::FiringDirection as F;
+    let MuzzleAim::Aimed(heading) = content.projectile_assets.as_ref()?.muzzle(pose)?.aim else {
+        return None;
+    };
+    Some(match heading {
+        Heading::Left => F::Left,
+        Heading::Right => F::Right,
+        Heading::DownLeft => F::DownLeft,
+        Heading::DownRight => F::DownRight,
+        Heading::UpLeft => F::UpLeft,
+        Heading::UpRight => F::UpRight,
+        Heading::DownFacingLeft => F::DownFacingLeft,
+        Heading::DownFacingRight => F::DownFacingRight,
+        Heading::UpFacingLeft => F::UpFacingLeft,
+        Heading::UpFacingRight => F::UpFacingRight,
+    })
+}

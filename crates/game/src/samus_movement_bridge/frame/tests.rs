@@ -41,7 +41,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         content: &content,
     };
     let sized = |pose| body(&content, &samus, pose);
-    let frame = source.frame(&sized);
+    let frame = source.frame(&sized, &|_| None);
     let pad = frame.pad;
     let held = [JUMP, RUN, RIGHT, AIM_UP];
     assert!(held.iter().all(|&set| pad.any(set)));
@@ -63,7 +63,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         ride: ElevatorRide::default(),
         ..source
     }
-    .frame(&sized);
+    .frame(&sized, &|_| None);
     assert_eq!(still.parity, Parity::Even);
     assert!(!still.elevator_moving);
 }

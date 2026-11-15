@@ -11,7 +11,6 @@ use crate::rows::{BACK, FORWARD, Met, Next, Row, RowId, Situation, Test};
 use crate::rules::Rules;
 use crate::situation::{CLASSES, UnknownPose, classify};
 use core::num::Wrapping;
-use core::ptr;
 use types::Action::{Crouching, Morphing, Rolling, StandingUp, Unmorphing};
 use types::button::{DOWN, PAD, SIDES, UP};
 use types::{Aim, Body, Buttons, Facing, Fixed, Gun, Item, Legs, Pose, Set, ZERO, px};
@@ -20,7 +19,7 @@ use types::{Aim, Body, Buttons, Facing, Fixed, Gun, Item, Legs, Pose, Set, ZERO,
 fn situations() -> Vec<&'static Situation> {
     let mut all: Vec<&'static Situation> = Vec::new();
     for class in CLASSES {
-        if !all.iter().any(|s| ptr::eq(*s, class.is)) {
+        if !all.iter().any(|s| ::core::ptr::eq(*s, class.is)) {
             all.push(class.is);
         }
     }
@@ -106,7 +105,7 @@ fn a_pose_no_situation_names_is_reported() {
 /// together).
 fn poses(s: &'static Situation) -> Vec<Pose> {
     let mut poses: Vec<Pose> = Vec::new();
-    for class in CLASSES.iter().filter(|c| ptr::eq(c.is, s)) {
+    for class in CLASSES.iter().filter(|c| ::core::ptr::eq(c.is, s)) {
         let parts = class
             .body
             .iter()
@@ -128,7 +127,7 @@ fn poses(s: &'static Situation) -> Vec<Pose> {
     poses
         .into_iter()
         .flat_map(|p| [Gun::Drawn, Gun::Stowed].map(|gun| Pose { gun, ..p }))
-        .filter(|p| classify(*p).is_ok_and(|c| ptr::eq(c, s)))
+        .filter(|p| classify(*p).is_ok_and(|c| ::core::ptr::eq(c, s)))
         .collect()
 }
 

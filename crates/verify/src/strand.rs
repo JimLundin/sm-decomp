@@ -466,6 +466,38 @@ fn stack_byte(wram: &[u8], address: u16) -> Result<u8, DecodeError> {
         .ok_or(DecodeError::WramTooShort { source: "stack" })
 }
 
+/// Width of a source-defined return saved on the CPU stack.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum StackReturn {
+    Near,
+    Far,
+}
+
+impl StackReturn {
+    pub(crate) const fn bytes(self) -> u16 {
+        match self {
+            Self::Near => 2,
+            Self::Far => 3,
+        }
+    }
+}
+
+/// Read one return at the source-defined cursor; never search for a caller.
+pub(crate) fn stack_return(
+    wram: &[u8],
+    cursor: u16,
+    bank: u32,
+    width: StackReturn,
+) -> Result<u32, DecodeError> {
+    let low = stack_byte(wram, cursor)?;
+    let high = stack_byte(wram, cursor.wrapping_add(1))?;
+    let bank = match width {
+        StackReturn::Near => bank,
+        StackReturn::Far => u32::from(stack_byte(wram, cursor.wrapping_add(2))?) << 16,
+    };
+    Ok(bank | u32::from(u16::from_le_bytes([low, high]).wrapping_add(1)))
+}
+
 impl StrandRules<'_> {
     /// The main strand waiting at `pc`, its return chain read from the stack at `s`, and a
     /// countdown on it read from `x`.
@@ -487,23 +519,13 @@ impl StrandRules<'_> {
         let mut routine_bank = bank(pc);
         let mut steps = 0_usize;
         loop {
-            let returns_to = match returns {
+            let width = match returns {
                 Return::Bottom => break,
-                Return::Rts => {
-                    let low = stack_byte(wram, cursor)?;
-                    let high = stack_byte(wram, cursor.wrapping_add(1))?;
-                    cursor = cursor.wrapping_add(2);
-                    routine_bank | u32::from(u16::from_le_bytes([low, high]).wrapping_add(1))
-                }
-                Return::Rtl => {
-                    let low = stack_byte(wram, cursor)?;
-                    let high = stack_byte(wram, cursor.wrapping_add(1))?;
-                    let pushed_bank = stack_byte(wram, cursor.wrapping_add(2))?;
-                    cursor = cursor.wrapping_add(3);
-                    (u32::from(pushed_bank) << 16)
-                        | u32::from(u16::from_le_bytes([low, high]).wrapping_add(1))
-                }
+                Return::Rts => StackReturn::Near,
+                Return::Rtl => StackReturn::Far,
             };
+            let returns_to = stack_return(wram, cursor, routine_bank, width)?;
+            cursor = cursor.wrapping_add(width.bytes());
             steps = steps.wrapping_add(1);
             let call = self
                 .calls

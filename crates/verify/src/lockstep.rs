@@ -391,6 +391,8 @@ const COMPARATORS: &[Comparator] = &[
     field!("controller.held", controller.held),
     field!("controller.pressed", controller.pressed),
     field!("controller.previous", controller.previous),
+    field!("controller.prior_pressed", controller.prior_pressed),
+    field!("pending_aim", pending_aim),
     field!("controller.repeat", controller.repeat),
     field!("controller.repeat_delay", controller.repeat_delay),
     field!("mode", mode),

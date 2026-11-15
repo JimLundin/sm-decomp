@@ -303,6 +303,104 @@ fn weapons_flight_check_catches_adjusted_acceleration_without_expected_inputs() 
 }
 
 #[test]
+fn movement_m0_caller_history_and_pending_aim_match_the_record() {
+    use std::io::Write as _;
+    let Some((cache, rom)) = environment() else {
+        return;
+    };
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let report =
+        crate::ratchet::run_row(&lock, &cache, &rom, "chain-any-0003-DFD7", 0..u64::MAX).unwrap();
+    assert_eq!(report.compared(), 181);
+    let fields = report.fields();
+    for path in ["controller.prior_pressed", "pending_aim"] {
+        let field = fields.iter().find(|field| field.path == path).unwrap();
+        let _ = writeln!(
+            std::io::stdout(),
+            "M0 {path}: {} compared, {} differed, first frame {:?}",
+            field.compared,
+            field.differed,
+            field.first.as_ref().map(|(frame, _)| frame.0)
+        );
+        assert_eq!((field.compared, field.differed), (181, 0));
+        assert!(field.first.is_none());
+    }
+}
+
+#[test]
+fn movement_ceres_moonwalk_turn_keeps_its_solid_enemy_and_pending_aim() {
+    use game::session::{Rules, Session, Switches, TickInput};
+    use game::state::NmiTiming;
+    use std::io::Write as _;
+    use std::sync::Arc;
+    let Some((cache_root, rom)) = environment() else {
+        return;
+    };
+    let lock = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/locks/lsnes.toml");
+    let row = "chain-any-0006-E0B5";
+    let cache = super::open_cached(&lock, &cache_root, row).unwrap();
+    let first = cache.record(cache.entries().first().unwrap()).unwrap();
+    let records = cache
+        .records_without_pictures()
+        .map(|record| record.unwrap())
+        .filter(|(frame, _)| (37..=38).contains(&frame.0))
+        .map(|(_, record)| record)
+        .collect::<Vec<_>>();
+    let [from, to] = records.as_slice() else {
+        panic!("the moonwalk transition pair must be present");
+    };
+    let image = std::fs::read(&rom).unwrap();
+    let content = Arc::new(crate::bundle::content(image.clone()).unwrap());
+    let rooms = crate::bundle::rooms(&content, &image).unwrap();
+    let from = crate::decode::decode(from, &rooms).unwrap().state;
+    let to = crate::decode::decode(to, &rooms).unwrap().state;
+    let rules = Rules {
+        auto_repeat: crate::lockstep::auto_repeat(&first).unwrap(),
+        switches: Switches::REFERENCE,
+    };
+    let mut session = Session::open(from, rules, content).unwrap();
+    session
+        .step(TickInput {
+            pad: to.controller.auto_read,
+            timing: NmiTiming::OnTime,
+        })
+        .unwrap();
+    let expected_pose = data::assets::samus::map::key_of(to.samus.pose).unwrap();
+    let actual_pose = data::assets::samus::map::key_of(session.state().samus.pose).unwrap();
+    let _ = writeln!(
+        std::io::stdout(),
+        "Ceres moonwalk: actual {actual_pose:?}, pending {:?}; expected {expected_pose:?}, pending {:?}",
+        session.state().pending_aim.0,
+        to.pending_aim.0
+    );
+    assert_eq!(
+        (expected_pose.action, expected_pose.facing),
+        (
+            types::Action::Turning(types::Turn::MoonwalkJump),
+            types::Facing::Right
+        )
+    );
+    assert_eq!(to.pending_aim.0, Some(types::FiringDirection::Left));
+    assert_eq!(actual_pose, expected_pose);
+    assert_eq!(
+        session.state().pending_aim.0,
+        Some(types::FiringDirection::Left)
+    );
+    let report = crate::ratchet::run_row(&lock, &cache_root, &rom, row, 0..u64::MAX).unwrap();
+    assert_eq!(report.compared(), 576);
+    let fields = report.fields();
+    let pending = fields
+        .iter()
+        .find(|field| field.path == "pending_aim")
+        .unwrap();
+    assert_eq!((pending.compared, pending.differed), (576, 0));
+    let _ = writeln!(
+        std::io::stdout(),
+        "Ceres moonwalk: pose and pending Left match; row pending 576 compared, 0 differed"
+    );
+}
+
+#[test]
 fn weapons_m0_runs_with_validated_inputs_and_own_state() {
     use std::io::Write as _;
     let Some((cache, rom)) = environment() else {

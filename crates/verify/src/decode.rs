@@ -1248,6 +1248,7 @@ impl Rules<'_> {
                 held: buttons(self.held.read(wram)?),
                 pressed: buttons(self.pressed.read(wram)?),
                 previous: buttons(self.previous.read(wram)?),
+                prior_pressed: buttons(source::PRIOR_NEW_CONTROLS.read(wram)?),
                 repeat: buttons(self.repeat.read(wram)?),
                 repeat_delay: Frames(self.repeat_delay.read(wram)?),
             },
@@ -1262,6 +1263,7 @@ impl Rules<'_> {
             movement_travel: canonical::model::Model(samus_movement::TravelledDistances {
                 travels: directional_travel(wram)?,
             }),
+            pending_aim: canonical::model::Model(pending_aim(wram)?),
             atmospherics: self.atmospherics.read(wram)?,
             room,
             elevator: self.elevator.read(wram)?,
@@ -2421,4 +2423,32 @@ pub fn directional_travel(wram: &[u8]) -> Result<types::DirectionalTravels, Deco
         ));
     }
     Ok(travels)
+}
+
+/// Decode the publication markers at the record edge; only the low heading byte is consumed.
+pub(crate) fn pending_aim(wram: &[u8]) -> Result<Option<types::FiringDirection>, DecodeError> {
+    use types::FiringDirection as F;
+    let value = source::PENDING_FIRING_AIM.read(wram)?;
+    if value == 0 {
+        return Ok(None);
+    }
+    let heading = match value.to_le_bytes()[0] {
+        0 => F::UpFacingRight,
+        1 => F::UpRight,
+        2 => F::Right,
+        3 => F::DownRight,
+        4 => F::DownFacingRight,
+        5 => F::DownFacingLeft,
+        6 => F::DownLeft,
+        7 => F::Left,
+        8 => F::UpLeft,
+        9 => F::UpFacingLeft,
+        _ => {
+            return Err(DecodeError::Unrepresentable {
+                source: "PENDING_FIRING_AIM",
+                value,
+            });
+        }
+    };
+    Ok(Some(heading))
 }

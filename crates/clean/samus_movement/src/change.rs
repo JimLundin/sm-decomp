@@ -14,6 +14,34 @@ use crate::tick::Tick;
 use crate::vertical::Contact;
 use types::{Aim, Fixed, Parts, ZERO, px};
 
+/// Spec: `TransitionFiringAim`. Only an actual ordinary change publishes: a new upright
+/// straight jump on shoot pressed reads new content; a moonwalk's ground turn reads old content.
+/// Called after pose fit decides what she really becomes, never from speed or placement.
+fn transition_firing_aim(
+    old: types::Pose,
+    new: types::Pose,
+    frame: &crate::tick::Frame,
+) -> Option<types::FiringDirection> {
+    if old == new {
+        return None;
+    }
+    if new.body == types::Body::Upright
+        && new.action == types::Action::Jumping
+        && frame.pressed.any(types::button::SHOOT)
+    {
+        return (frame.cannon_heading)(new);
+    }
+    if old.action == types::Action::Moonwalking
+        && matches!(
+            new.action,
+            types::Action::Turning(types::Turn::Ground | types::Turn::MoonwalkJump)
+        )
+    {
+        return (frame.cannon_heading)(old);
+    }
+    None
+}
+
 impl Effect {
     /// `Dashing`: whether it is a let-go effect other than none (she follows the pad again, as
     /// running, dash 0, or a halt), which ends her dashing at the pose change. (The dash 0 a
@@ -53,6 +81,7 @@ impl Samus {
             Fitted::Crouched { .. } => (Choice::instead(crouched(self.pose.facing)), None),
         };
         self.pose = became.pose;
+        t.pending_aim = transition_firing_aim(start.pose, self.pose, t.frame);
         if let Some(lowers) = became.lower {
             self.shrink(lowers, t);
         }

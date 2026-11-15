@@ -19,7 +19,11 @@
 //! Tick does (`samus_movement_bridge::step::next`, `pose::change`,
 //! `samus_appearance_bridge::animate`), and takes where the camera last saw her from record N
 //! (the scroll writes it), so a free run carries her pose, facing, radius and clip into the
-//! next frame. Her pose isn't a declared field yet: its writers outside this domain, knockback's
+//! next frame. Pending aim is independently decoded as a named heading; admitted main-loop
+//! cuts establish that the selected PRE runs. Ordinary $E695/$E6C9 and locked $E713 clear
+//! after projectiles, while no-update $E8CD retains it (weapons-projectiles decode notes,
+//! caller boundary). Unsupported PRE semantics are defects for model and null alike.
+//! Her pose isn't a declared field yet: its writers outside this domain, knockback's
 //! start among them, have no masks for it.
 
 use core::cell::RefCell;
@@ -88,6 +92,8 @@ const GRAVITY_SUIT: u16 = 0x0020;
 /// harness couldn't decode it (`Unreadable`: a harness defect).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Skip {
+    /// The pending-aim caller interval has no independently established PRE contract.
+    PendingCaller(u16),
     /// A source couldn't be read, or holds a code the model has no value for.
     Unreadable(DecodeError),
     /// The main loop isn't in gameplay.
@@ -153,6 +159,10 @@ impl fmt::Display for Deferred {
 impl fmt::Display for Skip {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::PendingCaller(code) => write!(
+                f,
+                "pending-aim PRE handler {code:#06X} has no validated lifetime"
+            ),
             Self::Unreadable(error) => write!(f, "unreadable: {error:?}"),
             Self::GameState(code) => write!(f, "game state {code:#04X}, not gameplay"),
             Self::NotAtFrameEnd => write!(f, "record N isn't at the main loop's frame end (lag)"),
@@ -579,6 +589,7 @@ pub struct Hers {
     /// Whether her pose is the one her animation's end handed over: as record N has it, then
     /// the step's `handed_over`.
     handed_over: bool,
+    pending_aim: Option<types::FiringDirection>,
 }
 
 /// Whether her pose in `record` is the one her animation's end handed over: the super special
@@ -650,6 +661,8 @@ pub struct Declared {
     pub speed_after_moves: Ps,
     /// `handed_over`.
     pub handed_over: bool,
+    /// Caller-held transition direction after the normal PRE/POST interval.
+    pub pending_aim: Option<types::FiringDirection>,
 }
 
 /// The outputs the step gives besides her State, or the record shows of them.
@@ -660,6 +673,7 @@ struct Shown {
     heading_down: bool,
     speed_after_moves: Fixed,
     handed_over: bool,
+    pending_aim: Option<types::FiringDirection>,
 }
 
 impl Declared {
@@ -680,6 +694,7 @@ impl Declared {
             heading_down: shown.heading_down,
             speed_after_moves: Ps(shown.speed_after_moves),
             handed_over: shown.handed_over,
+            pending_aim: shown.pending_aim,
         }
     }
 }
@@ -719,6 +734,7 @@ fn shown_by(id: BehaviourId) -> FieldSet {
         // Travel receipts are compared only by the named cases, not credited as broad fields.
         | B::TravelledDistances => FieldSet::EMPTY,
         B::AnimationEnds => Q::HandedOver.set(),
+        B::TransitionFiringAim => Q::PendingAim.set(),
         B::Dashing => Q::Dashing.set(),
         B::SpeedBuildsAndBrakes | B::DriftInTheAir => {
             Q::all(&[Q::X, Q::BaseSpeed, Q::Dashing, Q::Mode])
@@ -783,6 +799,7 @@ enum Quantity {
     HeadingDown,
     SpeedAfterMoves,
     HandedOver,
+    PendingAim,
 }
 
 impl Quantity {
@@ -808,6 +825,7 @@ impl Quantity {
             Self::HeadingDown => 11,
             Self::SpeedAfterMoves => 12,
             Self::HandedOver => 13,
+            Self::PendingAim => 14,
         }
     }
 
@@ -945,7 +963,18 @@ impl Movement {
 /// What the model reads besides her, from record N: the pad, the elevator, the frame count,
 /// the level, its room's door list, the enemies she can touch, and where the camera last saw
 /// her.
+/// Caller lifetime established from the PRE selected at the preceding frame-end cut.
+#[derive(Clone, Copy, Debug)]
+enum PendingInterval {
+    /// Ordinary and locked PRE clear after their projectile pass.
+    Cleared,
+    /// The documented no-update PRE performs neither the pass nor the clear.
+    Retained,
+}
+
+/// The frame's neighboring inputs and independently decoded pending-aim lifetime.
 pub struct Inputs {
+    pending_interval: PendingInterval,
     controller: Controller,
     ride: ElevatorRide,
     completed: u16,
@@ -962,7 +991,7 @@ impl Inputs {
     /// Record N's inputs, in a room of `doors`, with the camera having last seen her at `seen`:
     /// the enemies are the live ones the selection would let her touch, by the camera as record
     /// N has it.
-    fn of(wram: &[u8], doors: Vec<Door>, seen: Point) -> Result<Self, DecodeError> {
+    fn of(wram: &[u8], doors: Vec<Door>, seen: Point) -> Result<Self, Skip> {
         let rules = Rules::ORIGINAL;
         let (camera_x, camera_y) = (rules.camera_x.read(wram)?, rules.camera_y.read(wram)?);
         let enemies = rules
@@ -973,7 +1002,13 @@ impl Inputs {
             .filter(|common| game::enemy::touchable(common, camera_x, camera_y))
             .map(Obstacle::from)
             .collect();
+        let pending_interval = match source::SAMUS_PRE_HANDLER.read(wram)? {
+            0xE695 | 0xE6C9 | 0xE713 => PendingInterval::Cleared,
+            0xE8CD => PendingInterval::Retained,
+            code => return Err(Skip::PendingCaller(code)),
+        };
         Ok(Self {
+            pending_interval,
             controller: Controller {
                 held: buttons(rules.held.read(wram)?),
                 pressed: buttons(rules.pressed.read(wram)?),
@@ -992,7 +1027,7 @@ impl Inputs {
 
 /// The catalogue entries the step exercised, which the attribution reads.
 #[derive(Default)]
-pub struct Exercised(Vec<usize>);
+pub struct Exercised(Vec<usize>, Option<Skip>);
 
 /// Bank $85 log: the message box's bank, whose wait loops ($85:8271, $85:8425) hold the main
 /// loop while a box is up.
@@ -1051,6 +1086,47 @@ fn runs_after(record: &FrameRecord) -> Result<(), Skip> {
         .map_or(Ok(()), |at| Err(Skip::Waiting(at)))
 }
 
+/// Other writers displace Samus or replace the movement physics before pose selection.
+fn displacement_masks(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
+    use Quantity as Q;
+    let mut masks = Vec::new();
+    let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
+    if word(from, source::ELEVATOR_STATUS)? != 0 {
+        mask(
+            "the elevator moves her: another domain writes y",
+            Q::Y.set(),
+        );
+    }
+    if pushed(next)? {
+        let mut fields = Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed]);
+        // Sand forces a downward collision before pose selection ($94:97B3): an old
+        // spin takes the spin landing ($91:E95D/E9D8), bypassing jump publication.
+        if word(next, IN_QUICKSAND)? != 0
+            && source::SAMUS_MOVEMENT_TYPE.read(&from.wram)? == SPINNING
+        {
+            fields = fields.union(Q::PendingAim.set());
+        }
+        mask(
+            "deferred: a block-inside push (quicksand, treadmill)",
+            fields,
+        );
+        // The surface's inside reactions at the frame's start write her speed (`$84:B447`
+        // grounded: 0, `$84:B45A` moving up: capped); the sand's fall, the submerging
+        // quicksand and the treadmills write displacements only.
+        let direction = word(from, source::SAMUS_Y_DIR)?;
+        if direction == UP || direction == NO_DIRECTION && signed_speed(from)?.0 != 0 {
+            mask(
+                "deferred: the quicksand surface sets her vertical speed before her moves (grounded 0, a rise capped)",
+                Q::SpeedAfterMoves.set(),
+            );
+        }
+    }
+    if submerged(from, radius(from)?)? {
+        mask("deferred: liquid physics (submerged)", FieldSet::ALL);
+    }
+    Ok(masks)
+}
+
 impl Domain for Movement {
     const NAME: &'static str = "samus movement";
     type State = Hers;
@@ -1073,6 +1149,7 @@ impl Domain for Movement {
         domain_field!("heading_down", heading_down),
         domain_field!("vertical_speed_after_moves", speed_after_moves),
         domain_field!("handed_over", handed_over),
+        domain_field!("pending_aim", pending_aim),
     ];
 
     fn decode(&self, from: &FrameRecord, _interval: Interval) -> Result<(Hers, Inputs), Skip> {
@@ -1097,6 +1174,7 @@ impl Domain for Movement {
             heading_down: direction == DOWN,
             speed_after_moves: signed_speed(from)?,
             handed_over: handed_over(from)?,
+            pending_aim: crate::decode::pending_aim(&from.wram)?,
         };
         let doors = self.doors(word(from, source::ROOM_PTR)?)?;
         let seen = hers.samus.previous_position;
@@ -1110,33 +1188,8 @@ impl Domain for Movement {
         _inputs: &Inputs,
     ) -> Result<Vec<Mask>, Skip> {
         use Quantity as Q;
-        let mut masks = Vec::new();
+        let mut masks = displacement_masks(from, next)?;
         let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
-        if word(from, source::ELEVATOR_STATUS)? != 0 {
-            mask(
-                "the elevator moves her: another domain writes y",
-                Q::Y.set(),
-            );
-        }
-        if pushed(next)? {
-            mask(
-                "deferred: a block-inside push (quicksand, treadmill)",
-                Q::all(&[Q::X, Q::Y, Q::BaseSpeed, Q::ExtraRun, Q::VerticalSpeed]),
-            );
-            // The surface's inside reactions at the frame's start write her speed (`$84:B447`
-            // grounded: 0, `$84:B45A` moving up: capped); the sand's fall, the submerging
-            // quicksand and the treadmills write displacements only.
-            let direction = word(from, source::SAMUS_Y_DIR)?;
-            if direction == UP || direction == NO_DIRECTION && signed_speed(from)?.0 != 0 {
-                mask(
-                    "deferred: the quicksand surface sets her vertical speed before her moves (grounded 0, a rise capped)",
-                    Q::SpeedAfterMoves.set(),
-                );
-            }
-        }
-        if submerged(from, radius(from)?)? {
-            mask("deferred: liquid physics (submerged)", FieldSet::ALL);
-        }
         // The windup's start runs in the frame's pose change, after the motion, and writes the
         // shinespark's own speeds ($90:CFFA): dash 8.0, base speed 0, vertical speed 0, rising.
         if word(next, SAMUS_MOVEMENT_HANDLER)? == SHINESPARK_WINDUP {
@@ -1176,6 +1229,7 @@ impl Domain for Movement {
                     Q::Mode,
                     Q::VerticalSpeed,
                     Q::Vertical,
+                    Q::PendingAim,
                 ]),
             );
         }
@@ -1192,7 +1246,11 @@ impl Domain for Movement {
         if !scrolled {
             mask(
                 "the scroll hasn't run: record N+1's main thread waits before it (the message box) or is mid-frame",
-                Q::Placed.set(),
+                if cut::before_post(next)? {
+                    Q::Placed.set().union(Q::PendingAim.set())
+                } else {
+                    Q::Placed.set()
+                },
             );
         }
         if word(from, source::SLOW_GRAPPLE_SCROLLING)? != 0
@@ -1240,12 +1298,25 @@ impl Domain for Movement {
         } else {
             pose::input(&hers.samus, &inputs.controller, content)
         };
-        if let Ok(ran) = self.ran(&mut hers.samus, inputs, &level) {
+        {
+            let ran = match self.ran(&mut hers.samus, inputs, &level) {
+                Ok(ran) => ran,
+                Err(fault) => {
+                    world.1 = Some(fault);
+                    return;
+                }
+            };
             settle(&mut hers.samus, &ran);
             hers.rising = ran.outcome.rising;
             hers.heading_down = ran.outcome.heading_down;
             hers.speed_after_moves = Fixed(ran.outcome.vertical_speed_after_moves.0);
             hers.handed_over = ran.outcome.handed_over;
+            if matches!(inputs.pending_interval, PendingInterval::Cleared) {
+                hers.pending_aim = None;
+            }
+            if let Some(aim) = ran.outcome.pending_aim {
+                hers.pending_aim = Some(aim);
+            }
             world.0 = exercised(&ran, &level);
             // The frame's pose change and her animation, as the engine's Tick runs them after
             // her moves: the free run carries her State, so the next frame's moves read the
@@ -1264,6 +1335,10 @@ impl Domain for Movement {
                 &content.samus_clips,
             );
         }
+    }
+
+    fn checked_step(&self, world: &Exercised) -> Result<(), Skip> {
+        world.1.clone().map_or(Ok(()), Err)
     }
 
     fn behaviours(&self) -> Vec<Entry> {
@@ -1289,6 +1364,7 @@ impl Domain for Movement {
                 heading_down: hers.heading_down,
                 speed_after_moves: hers.speed_after_moves,
                 handed_over: hers.handed_over,
+                pending_aim: hers.pending_aim,
             },
         )
     }
@@ -1303,13 +1379,14 @@ impl Domain for Movement {
                 heading_down: direction == DOWN,
                 speed_after_moves: signed_speed(next)?,
                 handed_over: handed_over(next)?,
+                pending_aim: crate::decode::pending_aim(&next.wram)?,
             },
         ))
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) | Skip::Fault(_) | Skip::Room(..) => {
+            Skip::PendingCaller(_) | Skip::Unreadable(_) | Skip::Fault(_) | Skip::Room(..) => {
                 Uncompared::Defect(skip.to_string())
             }
             Skip::GameState(_)
@@ -1391,6 +1468,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
             changed && matches!(after.pose.action, Action::Crouching | Action::Morphing),
         ),
         (B::AnimationEnds, ran.animation_ends.is_some()),
+        (B::TransitionFiringAim, outcome.pending_aim.is_some()),
         (
             B::Dashing,
             before.run.dashing == Dashes::On || after.run.dashing == Dashes::On,
@@ -1414,6 +1492,7 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
 }
 
 pub mod cases;
+mod cut;
 
 #[cfg(test)]
 mod tests {
@@ -1421,8 +1500,48 @@ mod tests {
     use crate::source::{self, WramWord};
     use oracle_record::{CpuRegisters, Cut, FrameRecord, Nmi, NmiKind, Pad, PpuRegisters};
 
+    #[test]
+    fn no_publication_preserves_pending_only_when_pre_retains_it() {
+        let domain = Movement {
+            content: game::Content::default(),
+            image: Vec::new(),
+            doors: core::cell::RefCell::default(),
+        };
+        for (interval, expected) in [
+            (
+                super::PendingInterval::Retained,
+                Some(types::FiringDirection::UpFacingLeft),
+            ),
+            (super::PendingInterval::Cleared, None),
+        ] {
+            let mut hers = super::Hers {
+                samus: game::state::samus::Samus::default(),
+                rising: false,
+                heading_down: false,
+                speed_after_moves: game::model::num::Fixed::default(),
+                handed_over: false,
+                pending_aim: Some(types::FiringDirection::UpFacingLeft),
+            };
+            let inputs = Inputs {
+                pending_interval: interval,
+                controller: game::state::Controller::default(),
+                ride: game::state::room::ElevatorRide::default(),
+                completed: 0,
+                width: game::state::room::BlockColumns(1),
+                blocks: Vec::new(),
+                doors: Vec::new(),
+                enemies: Vec::new(),
+                seen: game::state::samus::Point::default(),
+            };
+            let mut world = super::Exercised::default();
+            domain.step(&mut hers, &inputs, &mut world);
+            assert!(domain.checked_step(&world).is_ok());
+            assert_eq!(domain.fields(&hers).pending_aim, expected);
+        }
+    }
+
     /// A record of work RAM alone, every word 0 but `words`; no liquid in the room.
-    fn record(index: u64, words: &[(WramWord, u16)]) -> FrameRecord {
+    pub(super) fn record(index: u64, words: &[(WramWord, u16)]) -> FrameRecord {
         let mut wram = vec![0_u8; 0x2_0000];
         let no_liquid = [(super::FX_Y_POS, 0xFFFF), (super::LAVA_ACID_Y_POS, 0xFFFF)];
         for &(word, value) in no_liquid.iter().chain(words) {
@@ -1468,6 +1587,7 @@ mod tests {
             doors: core::cell::RefCell::default(),
         };
         let inputs = Inputs {
+            pending_interval: super::PendingInterval::Cleared,
             controller: game::state::Controller::default(),
             ride: game::state::room::ElevatorRide::default(),
             completed: 0,
@@ -1484,7 +1604,7 @@ mod tests {
     }
 
     /// The fields the masks of the frame from `from` to `next` take.
-    fn masked(from: &FrameRecord, next: &FrameRecord) -> FieldSet {
+    pub(super) fn masked(from: &FrameRecord, next: &FrameRecord) -> FieldSet {
         masks(from, next)
             .iter()
             .fold(FieldSet::EMPTY, |set, mask| set.union(mask.fields))
@@ -1587,6 +1707,41 @@ mod tests {
     }
 
     #[test]
+    fn priority_hit_masks_pending_but_an_ordinary_transition_keeps_it_compared() {
+        let from = record(
+            0,
+            &[(super::SAMUS_MOVEMENT_HANDLER, super::NORMAL_MOVEMENT)],
+        );
+        let hit = record(1, &[(super::SAMUS_MOVEMENT_HANDLER, super::KNOCKBACK)]);
+        assert!(masked(&from, &hit).contains(Quantity::PendingAim.index()));
+        let normal = record(
+            1,
+            &[(super::SAMUS_MOVEMENT_HANDLER, super::NORMAL_MOVEMENT)],
+        );
+        assert!(!masked(&from, &normal).contains(Quantity::PendingAim.index()));
+    }
+
+    #[test]
+    fn only_sand_contact_with_an_old_spin_defers_pending_publication() {
+        let movement = WramWord {
+            name: "SAMUS_MOVEMENT_TYPE",
+            offset: source::SAMUS_MOVEMENT_TYPE.offset,
+        };
+        let spin = record(0, &[(movement, u16::from(super::SPINNING))]);
+        let standing = record(0, &[(movement, 0)]);
+        let sand = record(
+            1,
+            &[(super::IN_QUICKSAND, 1), (super::EXTRA_Y_DISPLACEMENT, 1)],
+        );
+        assert!(masked(&spin, &sand).contains(Quantity::PendingAim.index()));
+        assert!(!masked(&standing, &sand).contains(Quantity::PendingAim.index()));
+        let treadmill = record(1, &[(super::EXTRA_X_DISPLACEMENT, 1)]);
+        assert!(!masked(&spin, &treadmill).contains(Quantity::PendingAim.index()));
+        let ordinary_floor = record(1, &[]);
+        assert!(!masked(&spin, &ordinary_floor).contains(Quantity::PendingAim.index()));
+    }
+
+    #[test]
     fn a_quantity_names_the_declared_field_at_its_place() {
         use Quantity as Q;
         let named = [
@@ -1604,6 +1759,7 @@ mod tests {
             (Q::HeadingDown, "heading_down"),
             (Q::SpeedAfterMoves, "vertical_speed_after_moves"),
             (Q::HandedOver, "handed_over"),
+            (Q::PendingAim, "pending_aim"),
         ];
         for (quantity, name) in named {
             let place = Movement::FIELDS.iter().position(|field| field.name == name);

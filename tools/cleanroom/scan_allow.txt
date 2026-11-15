@@ -221,6 +221,33 @@ block grapple        # a block her grapple holds
 no solid             # a slope column without a solid pixel
 frame pose           # the pose at a lead-in frame's start
 
+# Movement model phrases: ordinary actions, geometry and query outcomes.
+stop look            # a collision look stopped by an obstacle
+jump turn            # a visible turn during a jump
+spring ball air      # the spring ball moving in the air
+up down              # opposing pad directions and their grouping
+pose animation       # a visible pose's animation and its ending
+one pixel            # a measurable geometric distance
+face block           # the face of a geometric block
+top centre           # measured top and centre coordinates
+enemy touch          # observable contact with a solid enemy
+up one               # prose describing cells through the one stopping a look
+down row             # displacement down to an air row
+room before          # block clearance taking priority over enemy clearance
+move vertically      # the domain's ordinary vertical movement operation
+collision result     # a typed collision outcome and accepted travel
+ball air             # the ball form moving through air
+animation frame      # visible animation timing within a frame
+ball ground          # the ball form resting on ground
+spring ball fall     # the spring ball's falling action
+make wall jump       # a jump assigning wall-jump speeds
+make wall            # adjacent prose words in assigning wall-jump speeds
+old pose             # prior pose content used for cannon direction
+block row            # a row in invented stepped-block geometry
+single block         # invented world cells containing individual blocks
+make jump            # player input history making jump held through
+straight up          # vertical firing direction with facing retained
+
 # Reviewed generic camera and shared-type phrase contexts; no original-specific structure.
 room after           # prose comparing a position below the room with the room bound
 next row             # geometric continuation of a strip of screens into the row below

@@ -214,6 +214,8 @@ pub enum Skip {
     RoomChange,
     /// The cut metadata cannot establish whether ordinary following ran.
     Execution(ExecutionError),
+    /// Movement cannot establish the caller interval supplying its placement.
+    MovementCaller(u16),
 }
 
 impl fmt::Display for Skip {
@@ -224,6 +226,9 @@ impl fmt::Display for Skip {
             Self::GameState(code) => write!(f, "game state {code:#04X}, not gameplay"),
             Self::Frames(count) => write!(f, "{count} frames ran, not one"),
             Self::RoomChange => f.write_str("the room changed (the door's domain)"),
+            Self::MovementCaller(code) => {
+                write!(f, "movement PRE caller {code:#06X} is not validated")
+            }
             Self::Execution(error) => write!(f, "camera execution defect: {error}"),
         }
     }
@@ -427,6 +432,7 @@ impl TryFrom<Result<Option<Fixed>, Motion>> for Placement {
         Ok(match answer {
             Ok(placed) => Self::Model(placed),
             Err(Motion::Unreadable(error)) => return Err(Skip::Unreadable(error)),
+            Err(Motion::PendingCaller(code)) => return Err(Skip::MovementCaller(code)),
             Err(
                 Motion::GameState(_)
                 | Motion::NotAtFrameEnd
@@ -896,7 +902,7 @@ impl Domain for CameraDomain {
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) | Skip::Room(_) | Skip::Execution(_) => {
+            Skip::Unreadable(_) | Skip::Room(_) | Skip::Execution(_) | Skip::MovementCaller(_) => {
                 Uncompared::Defect(skip.to_string())
             }
             Skip::GameState(_) | Skip::Frames(_) | Skip::RoomChange => {

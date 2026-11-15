@@ -15,6 +15,8 @@ pub enum BehaviourId {
     Dashing,
     /// How turning round or reversing a spin makes her skid (§3).
     TurningRound,
+    /// A pose change preserves the supplied cannon direction for a following attempt.
+    TransitionFiringAim,
     /// The 1 px step forward into another running pose (§3).
     AimingAndShooting,
     /// Her descent facing the screen on a moving elevator (§3).
@@ -86,7 +88,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 31] = [
+pub const CATALOGUE: [Behaviour; 32] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -119,6 +121,13 @@ pub const CATALOGUE: [Behaviour; 31] = [
         id: BehaviourId::TurningRound,
         summary: "turning round, or reversing a spin, makes her skid the old way and brake before she goes the new way.",
         kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TransitionFiringAim,
+        summary: "a pose change can preserve the gun direction for a following cannon attempt.",
+        kind: Kind::Output,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

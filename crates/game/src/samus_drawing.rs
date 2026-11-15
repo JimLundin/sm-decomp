@@ -33,6 +33,7 @@ const fn flickers_off(samus: &Samus, odd_frame: bool) -> bool {
 // crash's echoes (`$90:88BA`) join with those lanes; slice 0's power beam keeps the cannon
 // closed and those handlers draw her body alone.
 pub fn draw(state: &mut State, content: &Content) {
+    state.controller.prior_pressed = state.controller.pressed;
     let odd_frame = state.clock.counters.completed.0 & 1 != 0;
     match state.samus.drawing {
         // `$90:EB55` and `$90:EB86`: the atmospheric graphics go first.

@@ -156,6 +156,8 @@ pub const FIELDS: &[Field] = &[
     wram("controller.held", source::JOYPAD1_LASTKEYS),
     wram("controller.pressed", source::JOYPAD1_NEWKEYS),
     wram("controller.previous", source::JOYPAD1_PREV),
+    wram("controller.prior_pressed", source::PRIOR_NEW_CONTROLS),
+    wram("pending_aim", source::PENDING_FIRING_AIM),
     wram("controller.repeat", source::JOYPAD1_NEWKEYS2_UNUSED),
     wram("controller.repeat_delay", source::JOYPAD1_KEYREPEAT_CTR),
     wram("mode", source::GAME_STATE),

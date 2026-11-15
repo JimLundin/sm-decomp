@@ -116,6 +116,9 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
 )]
 pub struct Outcome {
+    /// Spec: `TransitionFiringAim`. Fresh optional cannon direction from the actual pose change.
+    /// On `None`, the caller keeps earlier pending aim; this is not retained movement State.
+    pub pending_aim: Option<types::FiringDirection>,
     /// Spec: `TravelledDistances`. Fresh complete signed ordinary travels after collision.
     /// Save this set for the next firing opportunity; aim steps and placements are excluded.
     pub travelled: types::DirectionalTravels,
@@ -147,8 +150,10 @@ pub struct Outcome {
     /// §1.4, `Dashing`: she was dashing at the frame's start or from a run in her moves, and
     /// isn't at the frame's end. A run into a wall that starts her dashing reports both.
     pub dash_lost: bool,
-    /// §1.4, `AnimationEnds`: her animation's end handed over her pose this frame (an end's pose
-    /// is always the one she ends the frame in).
+    /// §1.4, `AnimationEnds`: an animation end selected a pose this frame, independently of
+    /// later fitting. The same selected end supplies held-jump history (`Jumping`). With
+    /// imported game bodies its pose is final; taller supplied targets remain an open model
+    /// gap and may be refused or substituted by `PoseFitAfterMoves`.
     pub handed_over: bool,
     /// §1.4, `RisingAndFalling`: she is heading down as her moves leave her, before what they
     /// met acts and before the pose change: falling (in the air, or on the ground at 0), or

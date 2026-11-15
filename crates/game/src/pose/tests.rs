@@ -23,6 +23,7 @@ fn content() -> Content {
         pose: PoseId(2),
     };
     Content {
+        projectile_assets: None,
         poses: Poses::decode(&bytes).unwrap(),
         transitions: PoseTransitions::new(vec![Vec::new(), vec![run_right], vec![run_right]]),
         samus_clips: crate::samus_appearance_bridge::Clips::default(),
