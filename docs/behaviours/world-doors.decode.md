@@ -57,7 +57,7 @@ The 29 colour misses are G2's two writers. Over the ten Ceres passages alone: 1,
 frames, 457 of 457 phases, 445 of 457 colour frames (the 12 of row 10). The loading's writes
 taken as input: 182 colours over 17 passages.
 
-`ref/vecrun2.py` runs every vector through the same `step`: 94 of 94 agree. `ref/vecgen2.py`
+`ref/vecrun2.py` runs every vector through the same `step`: 97 of 97 agree. `ref/vecgen2.py`
 writes the vector file and refuses to unless the 15 vectors below, worked by hand from the
 spec's rules and not from `step`, agree with it (they do).
 
@@ -486,7 +486,7 @@ owner rather than re-seed from the record. The Ceres beacon remains colours41..4
 
 ### Constructed progress checks and actual faults
 
-All94 vectors pass, preserving the70 existing cases. The16 palette progress cases cover starting,
+All97 vectors pass, preserving the70 existing cases. The16 palette progress cases cover starting,
 continuing, no progress, completing after partial work, all colours done while work continues,
 both fade directions, zero/goal/final steps, last colour and adjusted steps. Hand arithmetic:
 with d12,t1, channel31 toward0 becomes28; channel0 toward31 becomes2. With d2,t1,31 becomes15.
@@ -520,3 +520,30 @@ including `neighbours-resume-at-zero`, `neighbours-done-at-zero` and `neighbours
 The final Darkening step has no enemy/layered-drawing obligation; B8's timer overlay remains
 its separately retained work when active, and T1 cannot certify total work before its real
 completion. The constructed model does not pretend to certify B8's partial overlay execution.
+
+### Causal observation/update composition
+
+The reference `prospective_neighbours` derives start/continuation solely from retained phase,
+coverage and request state. It returns the updated requested State before invoking any owner.
+`NeighbourReceipt` is a separate actual result (`Pending` or `Complete`), not a prerequisite to
+emit the initial request. Darkening's prospective request is exposed after its independently
+observed palette treatment reaches256; Brightening's is exposed before any palette treatment.
+Pure repeated observations execute no owner and spend no execution time. Receipt application
+belongs to the current work; it cannot advance a later work by reusing a consumed receipt.
+
+The three invented live caller vectors contain remaining owner work and available execution
+budget, not a future completion receipt. The runner first retains the request, invokes the
+owner once within that budget, derives its actual completion, and only then supplies receipt
+and palette progress. `neighbours-live-same-cut` completes two work units from a two-unit budget
+and changes its invented colour in the same video frame. `neighbours-live-pending` spends one
+of two units and remains requested at coverage0. `neighbours-live-resume` restores the prior
+requested work with one unit remaining and completes it without a new start. Owner execution
+is forbidden before request; repeated observation cannot execute it or spend budget again.
+The actual `no_start` reference fault prevents live initiation and fails both start cases.
+
+Restored Brightening coverage above0 requires a prior aggregate `Complete` receipt. The
+last-colour, final-complete and adjusted-complete restored vectors explicitly retain it and
+issue no new start or continuation. The reference validates this before-state constraint before
+consuming an after-state receipt. `repeat_start` fails those three cases as well as the other
+restoration cases. Total vectors97/97; no native palette gain or exclusion changes arise from
+this caller correction. Native replay remains a palette diagnostic with observed timing.

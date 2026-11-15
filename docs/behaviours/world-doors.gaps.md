@@ -61,7 +61,9 @@ retained until the latter. Native decoded progress is reference evidence, never 
 input or a schedule fitted to cut numbers. Production needs real elapsed work costs and
 neighbour receipts, compatible with U1's request/reply completion milestones. Coverage0 cannot
 prove whether Brightening neighbours have begun or completed: the passage retains semantic
-aggregate progress and each owner retains its partially performed work. Native palette replay
+aggregate request/completion progress and each owner retains its partially performed work.
+A prospective request must be retained before owner execution; T1 supplies actual available
+execution time and real receipts afterwards. A future receipt cannot initiate work. Native palette replay
 observes timing and proves palette carry only; constructed start/resume vectors prove the
 passage requests without certifying arbitrary owners. B8's separate timer overlay work also
 needs its real retained continuation and completion receipt, including terminal Darkening. Unsupported

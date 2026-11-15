@@ -99,7 +99,8 @@ counting the screen colours already treated in that frame of work; `Fading` and 
 read it on later frames. No coverage means no fade work is in progress. Coverage 256 with
 unfinished work is allowed: all colours have been treated but the frame's other work continues.
 The phase's `t` is the step of that work until it completes. Neighbour-work progress is
-`NeighbourWork`: `NotStarted`, `Underway`, `Complete`, or `NotRequired`. It records the aggregate
+`NeighbourWork`: `NotStarted` (no request issued), `Underway` (requested, completion still
+pending, including an owner that has not yet executed), `Complete`, or `NotRequired`. It records the aggregate
 obligation for the enemies, their projectiles, animated tiles and layered drawing required by
 `WhatRuns` for this fade work. `Fading`, `WhatRuns` and `PassageTime` read it on later frames.
 Aggregate completion means every required owner completed that obligation, not merely that a
@@ -130,7 +131,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | the escape's timer running | `bool` (B8) | `TheFades`, `WhatRuns` |
 | the sounds sent | `bool`: every sound request so far has been sent (U1) | `Quieting` |
 | the music ready | `bool`: no track waits in the queue of tracks, as this frame of work finds it (U1) | `Landing` |
-| neighbour progress | `NeighbourWork`: independently produced aggregate owner progress for this fade work; every required owner certifies its own completion | `Fading`, `WhatRuns`, `PassageTime` |
+| neighbour receipt | `NeighbourReceipt`: `Pending`, `Complete` or `NotRequired`, supplied only from the actual requested owner work; every required owner certifies its completion | `Fading`, `WhatRuns`, `PassageTime` |
 | fade progress | `ColourCount`, 0 to 256: cumulative colours treated in the current fade work by this frame's cut; T1 produces it independently from semantic work costs and elapsed time | `Fading`, `PassageTime` |
 | the work done | `bool`: the work of the frame of work in progress, of the cost event the passage names, is done by this frame's end (T1, or the lock's recorded timing) | `PassageTime` |
 
@@ -294,16 +295,21 @@ Cells: phase, frames of work, next phase
 - summary: each colour of a fade moves to its goal in even steps, each channel on its own.
 - params: the steps, `d` = 12.
 - switch: **Parameter**, the steps (params).
-- Fade neighbour work `NotStarted`, its independent progress becomes `Underway` or `Complete`
-  → request the required owners to start once, report start, retain the new progress if work is
-  unfinished [neighbours-start-pending, neighbours-dark-start]
-- Fade neighbour work `Underway` → report resume, continue each owner's retained partial work;
-  keep `Underway` or accept its independently certified aggregate `Complete`, never request a
-  new start [neighbours-resume-at-zero, neighbours-finish-at-zero, neighbours-dark-resume]
-- Fade neighbour work `Complete` → keep its receipt and issue neither start nor resume;
-  unfinished palette work can continue independently [neighbours-done-at-zero, neighbours-dark-complete]
-- Fade neighbour work `NotStarted`, no owner has begun → keep it and report neither start nor
-  resume [neighbours-before-start]
+- Eligible fade neighbour work `NotStarted` → prospectively request the required owners to
+  start, report start and retain `Underway` before invoking them, independent of any future
+  receipt. Brightening is eligible immediately; Darkening becomes eligible when its palette
+  treatment has actually reached coverage256 [neighbours-before-start, neighbours-live-same-cut,
+  neighbours-live-pending, neighbours-dark-start]
+- Fade neighbour work `Underway` → offer continuation of each owner's retained work within
+  actual available execution time, report resume, never request a new start
+  [neighbours-resume-at-zero, neighbours-live-resume, neighbours-dark-resume]
+- The current requested work's actual receipt is `Complete` → retain its completed aggregate
+  receipt; unfinished palette work can continue independently. Further observation issues
+  neither start nor resume [neighbours-done-at-zero, neighbours-dark-complete]
+- The current requested work's actual receipt is `Pending` → retain `Underway`, including
+  when no owner execution time was available [neighbours-live-pending, neighbours-start-pending]
+- Fade neighbour work not yet eligible → leave it `NotStarted` and issue no start or resume
+  [work-pending, fade-start-overrun]
 - `Darkening` at `d + 2` → neighbour work `NotRequired`; neither the enemies nor layered drawing are requested;
   other required work still needs its owner's real receipt before T1 certifies completion
   [fade-final-pending, fade-final-complete]
@@ -522,9 +528,19 @@ Cells: phase, frames of work, next phase
 
 ## 3. Order that matters
 
+The caller can observe and update the current fade work more than once within a video frame.
+Observation proposes a start or continuation from retained State only; it does not execute an
+owner or spend time. Before invoking an owner the caller retains that the start was requested.
+Only then does it execute or resume the owner's real retained State within T1's actual available
+work time, obtain the real receipt, and update the passage. Repeated observation spends no
+execution time; the same elapsed budget or completed receipt cannot be consumed twice.
+Each receipt belongs to the requested work and cannot complete the next work after a phase or
+step transition. A start, real completion and ensuing colour treatment may all happen within
+one frame; no extra video frame is required by this observation/update boundary.
+
 - Brightening cannot treat a colour until its required pre-fade neighbour work has an aggregate
   `Complete` receipt. Darkening cannot start that neighbour work until colour coverage256.
-  Progress is monotone; `NotRequired` is allowed only for terminal Darkening. Total work
+  Retained request/completion progress is monotone; `NotRequired` is allowed only for terminal Darkening. Total work
   completion requires the actual receipts of every other required owner too, including B8's
   separate timer overlay drawing when active. That overlay's partial work and once-only
   continuation belong to B8; its completion is not a Brightening pre-palette prerequisite.
@@ -535,7 +551,7 @@ those actual writes; neither replacing them with the compared output nor admitti
 unsupported neighbour state is allowed. The owners and current gaps are in §4. No neighbour
 is run a second time merely because the same work crosses another frame. `WhatRuns` names
 one obligation per frame of work; starting it is a request, not a completion certificate.
-A restored `Underway` work continues from all owners' restored State. An aggregate receipt
+A restored `Underway` work continues from all owners' restored State. An aggregate completion receipt
 cannot be manufactured from colour coverage0/256, the passage phase, or T1's final done flag.
 
 - The slide's frame runs at each frame's start, before the passage's frame of work, so the frame
