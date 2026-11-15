@@ -110,12 +110,18 @@ pub(crate) fn aim(rules: &Rules, frame: &Frame) -> Pair<Px> {
 /// extra pixel carries it round to `0.xxxx`: a speed under a pixel, its pixel part 0, so the view
 /// settles 2 px, not 3.
 pub(crate) fn speed(rules: &Rules, her: Fixed, seen: Fixed) -> Fixed {
-    let moved = if before(her.pixel(), seen.pixel()) {
+    distance(her, seen) + rules.extra
+}
+
+/// The height receipt and following speed use this same pixel-directed distance, before
+/// adding any extra speed (Spec: FollowingHer, RememberedHeightFraction). At equal pixels
+/// an upward creep wraps her minus seen; at half range it takes seen minus her.
+pub(crate) fn distance(her: Fixed, seen: Fixed) -> Fixed {
+    if before(her.pixel(), seen.pixel()) {
         seen - her
     } else {
         her - seen
-    };
-    moved + rules.extra
+    }
 }
 
 /// The camera's move towards its aim by `speed`, stopping on the aim when it would go beyond it

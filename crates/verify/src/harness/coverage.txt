@@ -66,6 +66,7 @@ world-camera entry DownwardLooksAhead 1 0 1 0
 world-camera entry FollowingHer 15037 854 15037 321
 world-camera entry LeadingHer 11520 643 11520 50
 world-camera entry PushCarries 0 0 0 0
+world-camera entry RememberedHeightFraction 0 0 0 23603
 world-camera entry Remembering 23159 8976 23159 444
 world-camera entry RoomEdges 19742 8465 19742 367
 world-camera entry ScreensRunOn 0 0 0 0

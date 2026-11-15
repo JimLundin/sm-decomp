@@ -5,15 +5,19 @@ Where wiring [the spec](world-camera.md)'s model into the engine finds something
 entry. The integrator files them; the observer answers them in the spec, or in the spec of the
 domain the gap belongs to.
 
-## The camera in the engine and the harness (integrator, 2026-11-08, lane/wire-cam)
+## The camera in the engine and the harness
 
-The Tick's scroll steps the camera model through `game::world_camera_bridge`, and
-`verify::harness::camera` checks it against the oracle over the 32 cached rows: 13,310 of 14,947
-compared frames match on the camera's position (1,632 masked whole), against 5,438 for the null
-model, with no harness defect. The proof against main `cfa5b8144` holds: the free-run gate's
-output and its localisation are identical, and the lockstep ratchet is at 1372 of 1427
-(item-morph-ball) and 476 of 476 (area-brinstar). Five frames differ, all on y and all from
-samus-movement's `camera_from`, not the camera's rules.
+The Tick's scroll steps the clean camera held in `State.camera` through
+`game::world_camera_bridge`. The canonical pin checkpoints its view, remembered centre and
+retained height fraction together. Movement publishes its pixel-only remembered-y placement
+through the model API at the placement boundary, before an intervening checkpoint. That write
+keeps the remembered fraction and receipt. An omitted following phase preserves the receipt;
+ordinary following replaces it independently of view movement.
+
+The projectile model's PRE consumer remains unwired. Retaining the camera output establishes
+its producer and lifetime, not a whole-engine cannon gain. The verifier compares the receipt
+independently, with unavailable remembered-y and placement inputs named separately from
+view-only writers.
 
 ### C1. samus-movement must export `rising` (answered in samus-movement's spec; the export is its implementer's)
 
@@ -100,3 +104,28 @@ Samus-movement's harness now names them as the skip the known waits already give
 thread waits in the message box"): 364 frames that were harness defects (361 in
 samus-square-slope-reserve, the missile tank's box, and 3 in samus-bomb-jump-vertical). The camera skips the same frames
 by its own rule (the requested-NMI count doesn't advance). The strand's tables should learn them.
+
+### C6. Partial view resume and runtime camera placements (open)
+
+The engine holds the clean Camera, including its independently retained vertical fraction,
+through checkpoints and ordinary following. Movement publishes its pixel-only remembered-y
+placement at its own write boundary. The receipt producer does not prove its weapons consumer.
+
+A receipt-only record proof establishes source execution separately from camera outputs.
+Its supported endpoint chains and finite callback capabilities are named in
+[the decode contract](world-camera.decode.md#receipt-cut-execution-boundary). Unknown callbacks,
+malformed chains and instruction operands are defects. Requested NMI kind or a live door handler
+alone cannot establish one camera measurement. The supplemental proof admits ordinary
+Requested gameplay with source-certified reverse-DMA and HDMA hardware channel guards.
+Interrupted suffixes and door loading remain explicit defects until their asynchronous
+writers, imported callbacks and restored decompression destinations are bounded.
+
+The partial vertical tail retains the receipt but still finishes Remembering and may move or
+clamp view. Full Camera resume at that tail is unsupported. Door passage also writes remembered
+X/Y pixels at `82:E3D2/E3E2`, preserving fractions. Runtime does not execute that passage yet;
+its future room-loading/passage integration must publish both placements immediately into the
+pinned Camera. Receipt-only retention does not retain its entire remembered centre unchanged.
+
+The full-view harness uses completed-next remembered centre as its upstream position and
+reports the resulting remembered centre without comparison credit. Its admission contract
+provides no additional full-Camera, whole-engine or weapons gain from the separate receipt.

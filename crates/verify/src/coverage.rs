@@ -527,6 +527,10 @@ pub const FIELDS: &[Field] = &[
     wram("room.camera.x.subpixels", source::LAYER1_X_SUBPOS),
     wram("room.camera.y.pixels", source::LAYER1_Y_POS),
     wram("room.camera.y.subpixels", source::LAYER1_Y_SUBPOS),
+    wram(
+        "room.camera.vertical_fraction",
+        source::CAMERA_VERTICAL_FRACTION,
+    ),
     wram("room.camera.layer2.x", source::LAYER2_X_POS),
     wram("room.camera.layer2.y", source::LAYER2_Y_POS),
     wram("room.camera.bg1_offset.x", source::BG1_X_OFFSET),
@@ -943,6 +947,7 @@ mod tests {
             rules.camera_x_subpixels,
             rules.camera_y,
             rules.camera_y_subpixels,
+            rules.camera_vertical_fraction,
             rules.scrolling.layer2[0],
             rules.scrolling.layer2[1],
             rules.scrolling.bg1_offset[0],

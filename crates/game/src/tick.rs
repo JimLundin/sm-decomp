@@ -504,6 +504,12 @@ fn gameplay_phase(
                 .map_err(SessionFault::Samus)?;
             if let Some(stepped) = &stepped {
                 state.movement_travel.0.travels = stepped.outcome.travelled;
+                if stepped.outcome.placed.is_some() {
+                    world_camera_bridge::remember(
+                        &mut state.camera.0,
+                        state.samus.previous_position,
+                    );
+                }
             }
             mini_map_turn(state, content).map_err(SessionFault::Hud)?;
             let next =
@@ -546,7 +552,7 @@ fn gameplay_phase(
             .map_err(SessionFault::Blocks)?;
         }
         GameplayPhase::Scrolling => {
-            world_camera_bridge::scroll(&mut state.room, &mut state.samus)
+            world_camera_bridge::scroll(&mut state.camera.0, &mut state.room, &mut state.samus)
                 .map_err(SessionFault::Room)?;
         }
         GameplayPhase::Draw => crate::enemy::drawing::draw(state, content),

@@ -1,0 +1,11 @@
+# Ownership follows the Parameter declarations in docs/behaviours/world-camera.md.
+# Keys are the vector adapter's top-level rule subtrees.
+[owners]
+# FollowingHer declares the extra distance; its downstream consumers are not owners.
+extra = ["FollowingHer"]
+# LeadingHer declares the right and left lead distances.
+ahead = ["LeadingHer"]
+# ClosedScreens declares the push distance.
+push = ["ClosedScreens"]
+# ShortScreens declares the margin.
+margin = ["ShortScreens"]

@@ -13,8 +13,8 @@ extra_tests = ["harness::free::tests::movement_runs_free_against_the_cache"]
 name = "camera-extra-omitted"
 domain = "world-camera"
 file = "crates/clean/world_camera/src/follow.rs"
-before = "moved + rules.extra"
-after = "moved + (rules.extra - rules.extra)"
+before = "distance(her, seen) + rules.extra"
+after = "distance(her, seen) + (rules.extra - rules.extra)"
 test = "harness::tests::the_camera_holds_its_floors_against_the_cache"
 extra_tests = ["harness::free::tests::the_camera_runs_free_against_the_cache"]
 

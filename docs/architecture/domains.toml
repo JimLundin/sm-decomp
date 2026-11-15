@@ -37,7 +37,7 @@ rounds = 21
 
 [[model]]
 name = "world-camera"
-rounds = 6
+rounds = 7
 
 [[model]]
 name = "run-progress"

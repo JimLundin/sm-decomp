@@ -1683,3 +1683,9 @@ pub const SAMUS_DIRECTIONAL_TRAVEL: [(types::Direction, [WramWord; 2]); 4] = [
         ],
     ),
 ];
+
+/// Ordinary camera following retains this height-distance fraction for the next projectile pass.
+pub const CAMERA_VERTICAL_FRACTION: WramWord = WramWord {
+    name: "CAMERA_VERTICAL_FRACTION",
+    offset: 0x0DA8,
+};

@@ -280,7 +280,12 @@ impl CameraDomain {
         let masked = masks
             .iter()
             .filter(|mask| mask.fields.overlaps(CAMERA))
-            .fold(FieldSet::EMPTY, |axes, mask| axes.union(mask.fields));
+            .fold(FieldSet::EMPTY, |axes, mask| {
+                [super::X, super::Y]
+                    .into_iter()
+                    .filter(|axis| mask.fields.overlaps(*axis))
+                    .fold(axes, FieldSet::union)
+            });
         let expected = match case.compared {
             Compared::Both => FieldSet::EMPTY,
             Compared::Masked(axes) => axes,
