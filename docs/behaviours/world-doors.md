@@ -440,7 +440,7 @@ Cells: phase, frames of work, next phase
 
 ### SheKeepsHerMotion
 - kind: mechanic.
-- summary: nothing of her but her position changes across the passage.
+- summary: her pose, facing, speeds and momentum carry across the passage.
 - params: none.
 - switch: Fixed.
 - Every frame of the passage → her pose, facing, speeds and momentum are as the touch left them;

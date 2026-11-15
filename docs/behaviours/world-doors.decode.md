@@ -354,7 +354,7 @@ pool gives a real zero-request drawing receipt. Do not manufacture a PRE receipt
 history append just to satisfy a helper. Normal layer3 input history is still updated.
 A draw helper may share body/tiles without temporarily changing her drawing handler.
 
-M0 records182->183 and183->184 independently keep animation words `0A94..0A97`,
+M0 records 182->183 and 183->184 independently keep animation words `0A94..0A97`,
 cannon state `0AA6..0AAC`, auto-jump `0AF4`, hurt flash `0A48`, previous health `0A12`,
 and trail memory `D658..D7BF` unchanged. These observations do not prove all drawing writers
 are inactive for arbitrary restored State. Admission must validate unsupported neighbour
@@ -378,16 +378,15 @@ validation at seed/restoration; supporting active use needs P2's typed owner and
 
 M0 `chain-any-0003-DFD7`: frame182 Requested is state9/E17D; frame183 Requested is
 stateBh/E29E; frame184 Requested is stateBh/E2DB with fade numerator0. First-entry effects
-all complete by183; last timing admits work and next-cut timing certifies completion for
+all complete by 183; last timing admits work and next-cut timing certifies completion for
 this Requested first entry. Completion-only execution cannot model the fade's partial writes:
-WRAM palette hashes differ at Overrun187 and188 before Requested189 advances its numerator.
+WRAM palette hashes differ at Overrun 187 and 188 before Requested 189 advances its numerator.
 Do not weaken the existing frames-of-work harness into a complete-cut claim.
 
 Audio is required from the native seed, not first introduced at the door. M0 cut0 already
-holds a library3 outstanding acknowledgment; it clears/re-arms through2..6. There are78 cuts
-with audio state changes through183, including pending backlog81..84. A last pre-door sound
-at174 clears/re-arms through176..180. The send-only boundary draft
-can check the first entry in isolation but cannot produce this native prefix without its
-request and acknowledgment owners. No production readiness may be injected at182.
+holds a library3 outstanding acknowledgment; it clears/re-arms through 2..6. There are 78 cuts
+with audio state changes through183, including pending backlog at 81..84. A last pre-door sound
+at 174 clears/re-arms through 176..180. Request admission and sending alone can check the first entry in isolation but cannot
+produce this native prefix without the earlier request and acknowledgment owners. No production readiness may be injected at 182.
 
 Independent decoder: `$TEMP/collab/night-20261115/observer/first_cut.py`.
