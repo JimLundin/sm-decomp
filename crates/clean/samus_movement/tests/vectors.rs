@@ -80,6 +80,10 @@ struct Vector {
     /// The input "spin turned far".
     #[serde(default)]
     spin_turned_far: bool,
+    /// Imported new pose cannon content.
+    cannon_heading: Option<samus_movement::FiringDirection>,
+    /// Imported old pose cannon content.
+    previous_cannon_heading: Option<samus_movement::FiringDirection>,
     /// What is compared at the checked frame's end.
     after: After,
 }
@@ -94,6 +98,8 @@ impl Vector {
             pressed: self.pressed.clone(),
             animation_ends: self.animation_ends,
             spin_turned_far: self.spin_turned_far,
+            cannon_heading: self.cannon_heading,
+            previous_cannon_heading: self.previous_cannon_heading,
         }
     }
 }
@@ -116,6 +122,10 @@ struct FrameTable {
     /// The input "spin turned far".
     #[serde(default)]
     spin_turned_far: bool,
+    /// Imported new pose cannon content.
+    cannon_heading: Option<samus_movement::FiringDirection>,
+    /// Imported old pose cannon content.
+    previous_cannon_heading: Option<samus_movement::FiringDirection>,
 }
 
 /// A `[[pose_step]]`: one frame of the pose chart.
@@ -411,6 +421,8 @@ struct Before {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct After {
+    /// Fresh publication, not a separate test-support calculation or retained state.
+    pending_aim: Option<PendingAim>,
     /// Her position, `[x, y]`.
     position: Option<[Quantity; 2]>,
     /// Complete latest signed ordinary distances, checked from movement's output.
@@ -451,7 +463,9 @@ struct After {
     dash_began: Option<bool>,
     /// Whether her dash was lost this frame.
     dash_lost: Option<bool>,
-    /// Whether she ends in the pose her animation's end handed over.
+    /// Whether an animation end selected a pose this frame, independently of later fitting.
+    /// The same selected end supplies held-jump history; taller supplied targets remain an
+    /// open model gap and need not be the final accepted pose.
     handed_over: Option<bool>,
     /// Whether she is heading down as her moves leave her.
     heading_down: Option<bool>,
@@ -619,6 +633,35 @@ impl Signed {
         };
         format!("{sign}{}", show(self.size))
     }
+}
+
+/// The publication expectation: all named directions unchanged, or explicit no publication.
+#[derive(Deserialize)]
+#[serde(try_from = "String")]
+struct PendingAim(Option<samus_movement::FiringDirection>);
+
+impl TryFrom<String> for PendingAim {
+    type Error = String;
+
+    fn try_from(text: String) -> Result<Self, String> {
+        if text == "None" {
+            return Ok(Self(None));
+        }
+        toml::from_str::<AimCheckpoint>(&format!("aim = {text:?}"))
+            .map(|value| Self(value.aim))
+            .map_err(|error| error.to_string())
+    }
+}
+
+/// Caller-held checkpoint, also used to read the vector's direction names strictly.
+#[derive(serde::Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct AimCheckpoint {
+    aim: Option<samus_movement::FiringDirection>,
+}
+
+fn show_aim(aim: Option<samus_movement::FiringDirection>) -> String {
+    aim.map_or_else(|| "None".to_owned(), |aim| format!("{aim:?}"))
 }
 
 /// The y a placement put her at, or "none".
@@ -841,15 +884,15 @@ impl LegsName {
 #[derive(Deserialize, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 enum ButtonName {
-    Run,
+    AimDown,
+    AimUp,
+    Down,
     Jump,
-    Shoot,
     Left,
     Right,
+    Run,
+    Shoot,
     Up,
-    Down,
-    AimUp,
-    AimDown,
 }
 
 impl ButtonName {
@@ -1432,6 +1475,18 @@ fn run(vector: &Vector) -> Vec<String> {
                 step.radius
             })
         };
+        let content = if n.wrapping_add(1) == frames.len() {
+            &checked
+        } else {
+            &vector.lead_in[n]
+        };
+        let cannon_heading = |p: Pose| {
+            if p == step.pose {
+                content.previous_cannon_heading
+            } else {
+                end.filter(|e| e.0 == p).and(content.cannon_heading)
+            }
+        };
         let frame = Frame {
             pad: step.pad,
             pressed: step.pressed,
@@ -1441,6 +1496,7 @@ fn run(vector: &Vector) -> Vec<String> {
             parity,
             animation_ends: step.animation_ends,
             body: &body,
+            cannon_heading: &cannon_heading,
         };
         parity = other(parity);
         let stepped = samus.step(&frame, &room, &rules);
@@ -1582,7 +1638,7 @@ type Compared = (&'static str, Option<String>, String);
 /// as `before` gives them. The radius `after.pose` gives is that pose's body (spec §1.3), data
 /// the frames read like every pose's radius, not a quantity of hers.
 fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
-    let x = after.position.map(|[x, _]| x).or(after.position_x);
+    let x = after.position.map(|[x, _]| x);
     let landed = samus.jump_held.before == FrameBefore::LandedOrEnded;
     vec![
         (
@@ -1591,6 +1647,11 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
             (samus.run.dashing == Dashing::On).to_string(),
         ),
         ("position.x", x.map(|q| show(q.0)), show(samus.position.x)),
+        (
+            "position_x",
+            after.position_x.map(|q| show(q.0)),
+            show(samus.position.x),
+        ),
         (
             "position.y",
             after.position.map(|[_, y]| show(y.0)),
@@ -1694,6 +1755,11 @@ fn for_her_animation(after: &After, outcome: &Outcome) -> Vec<Compared> {
 /// Every field a vector's `after` gives, hers and the frame's outputs.
 fn compared(after: &After, samus: &Samus, outcome: &Outcome) -> Vec<Compared> {
     let mut fields = hers(after, samus);
+    fields.push((
+        "pending_aim",
+        after.pending_aim.as_ref().map(|aim| show_aim(aim.0)),
+        show_aim(outcome.pending_aim),
+    ));
     fields.extend(outputs(after, outcome));
     fields.extend(for_her_animation(after, outcome));
     fields.extend(compared_travels(
@@ -2064,6 +2130,74 @@ after = { pose = { body = "Upright", action = "TakingOff", facing = "Right" } }
         run_pose_step(&step).is_some(),
         "a radius in a pose step passed"
     );
+}
+
+/// Spec: `TransitionFiringAim`. Every content direction passes through actual complete
+/// movement, for both new-jump and old-moonwalk publications; caller memory round-trips too.
+#[test]
+fn every_firing_direction_is_published_and_checkpointed_unchanged() {
+    use samus_movement::FiringDirection;
+    let directions = [
+        FiringDirection::Left,
+        FiringDirection::Right,
+        FiringDirection::DownLeft,
+        FiringDirection::DownRight,
+        FiringDirection::UpLeft,
+        FiringDirection::UpRight,
+        FiringDirection::DownFacingLeft,
+        FiringDirection::DownFacingRight,
+        FiringDirection::UpFacingLeft,
+        FiringDirection::UpFacingRight,
+    ];
+    let mut vectors = file().vector;
+    for direction in directions {
+        for id in [
+            "C-aim-jump-press",
+            "C-aim-moonwalk-turn",
+            "C-aim-moonwalk-jump",
+        ] {
+            let vector = vectors
+                .iter_mut()
+                .find(|v| v.id == id)
+                .expect("supplied movement vector");
+            vector.cannon_heading = (id == "C-aim-jump-press").then_some(direction);
+            vector.previous_cannon_heading = (id != "C-aim-jump-press").then_some(direction);
+            vector.after.pending_aim = Some(PendingAim(Some(direction)));
+            assert!(run(vector).is_empty(), "{id}: {direction:?}");
+        }
+        let mut retained = AimCheckpoint {
+            aim: Some(direction),
+        };
+        let saved = toml::to_string(&retained).expect("serialize optional firing direction");
+        retained.aim = None;
+        assert_eq!(retained.aim, None);
+        retained = toml::from_str(&saved).expect("restore optional firing direction");
+        assert_eq!(retained.aim, Some(direction));
+        // No-publication cases run the complete controller with content available.
+        for id in ["C-aim-jump-held", "C-aim-jump-released", "C-aim-same-pose"] {
+            let vector = vectors
+                .iter_mut()
+                .find(|v| v.id == id)
+                .expect("supplied no publication case");
+            vector.cannon_heading = Some(direction);
+            vector.previous_cannon_heading = Some(direction);
+            assert!(run(vector).is_empty(), "{id}");
+        }
+    }
+    let empty = AimCheckpoint { aim: None };
+    let saved = toml::to_string(&empty).expect("serialize no pending aim");
+    assert_eq!(toml::from_str::<AimCheckpoint>(&saved).unwrap(), empty);
+}
+
+/// New vector inputs and expectations reject unknown directions rather than rounding them.
+#[test]
+fn firing_content_and_expectations_are_strict() {
+    let known = with_unknown_key_in(EVERY_TABLE, TABLES, None);
+    for field in ["cannon_heading", "previous_cannon_heading"] {
+        assert!(toml::from_str::<Vector>(&format!("{known}{field} = \"Upward\"\n")).is_err());
+    }
+    assert!(PendingAim::try_from("Upward".to_owned()).is_err());
+    assert!(PendingAim::try_from("none".to_owned()).is_err());
 }
 
 #[test]

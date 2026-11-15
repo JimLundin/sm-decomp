@@ -158,6 +158,8 @@ pub enum ContentError {
     SamusTiles(AddressError),
     /// Samus's assets don't import.
     SamusAssets(import::samus::ImportError),
+    /// Power-beam assets or cannon descriptors failed import.
+    Projectiles(import::projectile::ImportError),
     /// Slice 0's rooms don't import.
     Rooms(WorldError),
     /// The area maps are outside the image.
@@ -179,6 +181,7 @@ impl fmt::Display for ContentError {
         match self {
             Self::Rom(error) => write!(f, "not the ROM: {error:?}"),
             Self::Poses(error) => write!(f, "the pose table: {error:?}"),
+            Self::Projectiles(error) => write!(f, "projectile assets: {error:?}"),
             Self::SamusAssets(error) => write!(f, "Samus's assets: {error:?}"),
             Self::Transitions(error) => write!(f, "the pose transitions: {error:?}"),
             Self::Delays(error) => write!(f, "the animation delay lists: {error:?}"),
@@ -240,6 +243,11 @@ pub fn content(image: Vec<u8>) -> Result<Content, ContentError> {
     let samus_clips = game::samus_appearance_bridge::Clips::import(&delays, &paces)
         .map_err(ContentError::SamusClips)?;
     Ok(Content {
+        projectile_assets: Some(
+            import::projectile::import(rom.lorom())
+                .map_err(ContentError::Projectiles)?
+                .content,
+        ),
         poses,
         transitions: PoseTransitions::load(rom.lorom()).map_err(ContentError::Transitions)?,
         samus_clips,

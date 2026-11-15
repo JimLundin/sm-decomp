@@ -41,6 +41,7 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
     };
     let world = SamusWorld::new(room, SolidEnemies::default());
     let sized = |pose| body(content, &samus, pose);
+    let heading = |pose| game::samus_movement_bridge::frame::cannon_heading(content, pose);
     let frame = FrameSource {
         samus: &samus,
         controller: &to.controller,
@@ -48,7 +49,7 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
         completed: from.clock.counters.completed.0,
         content,
     }
-    .frame(&sized);
+    .frame(&sized, &heading);
     let outcome = model.step(&frame, &world, &Rules::default()).ok()?;
     write_back(&model, outcome.rising, &mut samus);
     Some(State {

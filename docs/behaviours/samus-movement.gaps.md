@@ -46,3 +46,25 @@ leaves this file; its text and answer are in git history.
     movement entry point taking the retained interval. No recorded skipped-PRE sequence is
     claimed here. Weapon inheritance and the caller variants outside the engine's normal and
     elevator-carried PRE paths remain unwired; the directional harness checks named end cuts.
+
+## Accepted animation handover
+
+39. **Taller supplied animation targets can differ from the selected animation handover.**
+    `change::Samus::change_pose` replaces the choice on `Fitted::Refused` or
+    `Fitted::Crouched`, while `Samus::step` supplies the original `chosen.handed_over`
+    to `FrameBefore::left_behind` and `Outcome::handed_over`. No recorded frame or
+    supplied vector reproduces a wrong result yet. The original accepts the selected animation
+    pose without fitting it and retains that end for handover and held-jump history. Imported
+    animation endings and body sizes never grow at a handover, so the model's extra fit has
+    no refusal or substitution there. The caller's body-size callback does not enforce that
+    invariant for adjusted content or restored pose/end combinations. Those combinations
+    remain a model gap; no behavior correction is inferred from an unobserved vanilla case.
+    `TransitionFiringAim` already reads the accepted pose after fit.
+
+## External pose selection and interrupted POST
+
+Pending publication is proven only where the ordinary pose initializer runs. The harness
+names priority hit selection, sand-forced spin landing and independently validated
+pre-POST cuts as external boundaries in the [decode notes](samus-movement.decode.md#pending-publication-at-external-pose-boundaries).
+The engine still needs damage and sand-contact inputs to replace those writers; its
+general locked modes and special control-restoration paths remain unwired.

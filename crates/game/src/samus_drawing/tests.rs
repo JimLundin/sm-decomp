@@ -311,3 +311,34 @@ fn the_elevator_queues_no_tiles_on_odd_frames_and_hidden_samus_none() {
     draw(&mut hidden, &content());
     assert_eq!(hidden.video.batch.samus_tiles, SamusTileUploads::default());
 }
+
+#[test]
+fn drawing_retains_physical_new_controls_even_when_hidden() {
+    let mut state = State::default();
+    state.samus.drawing = DrawingHandler::Hidden;
+    state.controller.pressed.insert(crate::state::Button::X);
+    state
+        .controller
+        .prior_pressed
+        .insert(crate::state::Button::Y);
+    draw(&mut state, &Content::default());
+    assert_eq!(state.controller.prior_pressed, state.controller.pressed);
+    assert!(
+        state
+            .controller
+            .prior_pressed
+            .contains(crate::state::Button::X)
+    );
+    assert!(
+        !state
+            .controller
+            .prior_pressed
+            .contains(crate::state::Button::Y)
+    );
+    state.controller.pressed = crate::state::Buttons::default();
+    draw(&mut state, &Content::default());
+    assert_eq!(
+        state.controller.prior_pressed,
+        crate::state::Buttons::default()
+    );
+}

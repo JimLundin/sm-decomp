@@ -11,6 +11,18 @@ grep -rn 'LEGACY(' --include=*.rs crates
 Add an entry in the change that introduces the difference. When a check no longer needs an entry,
 remove the behaviour, its tags and its entry in the same change.
 
+## Comparison representation limits
+
+- **Pending-aim source-word encoding**(samus-movement/W1): the decoder and retained engine field
+  represent pending aim as Option<FiringDirection>, preserving presence and all ten directions.
+  The original jump and moonwalk writers use different high publication markers; the charge,
+  turn and muzzle readers use only presence and low direction ($90:B82D-B83A, DD74-DD79,
+  BA5F-BA67). Their consumer behavior is represented, but the high writer marker is not retained
+  or compared. Equality of the original pending-aim word is unclaimed, including the observed
+  pending publication at chain-any-0003-DFD7 frame81. This is a source-word representation/proof
+  limit, not a demonstrated difference in cannon behavior. The separate pending-consumption
+  integration gaps remain open.
+
 ## The engine: original overflows it doesn't reproduce yet
 
 The engine has no RAM image, so where the original reads past a table it can't read "whatever lies
@@ -280,15 +292,16 @@ original's bytes as data.
   [decode notes](behaviours/weapons-projectiles.decode.md)): the clean model is checked by
   `verify::harness::weapons`, but the engine still runs `game::projectile`. It does not fire
   shots or draw their imported pictures. AF3's `import::projectile::import` supplies complete
-  content; `game::pose::Content` does not yet carry it. `samus_movement::Outcome::travelled`
+  content; `game::pose::Content::projectile_assets` carries it. `samus_movement::Outcome::travelled`
   supplies exact directional receipts, retained in the pinned `State.movement_travel` across
   checkpoints. These are per-direction collision-returned whole and fractional distances.
   Their write semantics when PRE is skipped remain unproved, and W1 cannon consumption of
-  the retained interval remains unwired. Pending firing aim and preceding shoot press are
-  also missing inputs. The engine retains the clean camera's height-distance fraction across
-  frames and checkpoints, independently of clamped camera travel. Its W1 PRE consumer remains
-  unwired; persistence alone does not establish cannon integration. Pending aim needs the pose change's named
-  output, and preceding shoot press needs the drawing phase's history update. C1 does not
+  the retained interval remains unwired. `State.pending_aim` retains movement publication,
+  and `Controller.prior_pressed` retains physical newly pressed controls from drawing;
+  W1 consumption under the configured shoot binding and general locked PRE modes beyond
+  the elevator ride remain unwired. The engine retains the clean camera's height-distance
+  fraction across frames and checkpoints, independently of clamped camera travel. Its W1
+  PRE consumer remains unwired; persistence alone does not establish cannon integration. C1 does not
   supply player-owned shot contact before each enemy's AI in
   `game::enemy::run`, so it cannot consume a Flying shot after W1's update (the observed
   consumption at `chain-any-0003-DFD7` frame 160). The next wiring must install that
@@ -314,9 +327,12 @@ the seed held (the species or ID as a named kind; an enemy's instruction and spr
 six AI words, a PLM's instruction pointer, room argument and variable), which go back out
 unchanged where lockstep compares them. Only these ids are admitted (`verify::enemy::UNMODELLED_SPECIES`,
 `verify::plm::UNMODELLED_PLMS`); any other id the engine doesn't hold is still refused by name. The
-engine never selects such an enemy (`LEGACY(unmodelled)` in `game::enemy::select`), so it runs no
-AI or instructions, its frame counter and timers stand still, it isn't drawn and nothing touches
-it; such a PLM is no place of the blocks' (`LEGACY(unmodelled)` in `game::world_blocks_bridge`) and
+engine excludes such an enemy from AI execution: it runs no AI or instructions, its frame counter
+and timers stand still, and it isn't drawn. An occupied live unmodelled enemy still supplies
+solid or frozen geometry to Samus's moves when normal screen eligibility admits it and it is
+tangible; free or deleting slots supply none. This preserves the solid Ceres door under the
+moonwalk turn in `chain-any-0006-E0B5` at frame 38. Its unsupported AI remains inert. Such a PLM
+is no place of the blocks' (`LEGACY(unmodelled)` in `game::world_blocks_bridge`) and
 the items' pass skips it, so it never runs or deletes itself. No Ceres row has a Tick fully equal in
 lockstep but `chain-any-0003-DFD7` (178 of 181), whose doors the engine runs, and `0004` (101 of 101);
 the free-run gate's Ceres rows start, green on `sram` and `timing` only. Each entry goes, with its

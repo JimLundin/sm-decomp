@@ -29,6 +29,8 @@ use crate::state::{Button, Buttons, Controller};
 pub struct Content {
     /// Samus's pose definitions.
     pub poses: Poses,
+    /// Imported power-beam assets and named cannon headings.
+    pub projectile_assets: Option<data::assets::projectile::Content>,
     /// Samus's pose transitions from input.
     pub transitions: PoseTransitions,
     /// Samus's clips and her run's paces, which her animation plays.

@@ -4,6 +4,32 @@ use core::num::Wrapping;
 
 use enum_map::{Enum, EnumMap};
 
+/// Spec: `TransitionFiringAim`. Named cannon directions from pose content, independent of
+/// motion's `Heading`. Vertical shots retain the body's facing; no supplied choice is rounded.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum FiringDirection {
+    /// Horizontal shot left.
+    Left,
+    /// Horizontal shot right.
+    Right,
+    /// Diagonal shot down and left.
+    DownLeft,
+    /// Diagonal shot down and right.
+    DownRight,
+    /// Diagonal shot up and left.
+    UpLeft,
+    /// Diagonal shot up and right.
+    UpRight,
+    /// Straight down on the left-facing body.
+    DownFacingLeft,
+    /// Straight down on the right-facing body.
+    DownFacingRight,
+    /// Straight up on the left-facing body.
+    UpFacingLeft,
+    /// Straight up on the right-facing body.
+    UpFacingRight,
+}
+
 /// A `P.S` quantity: the pixel part in the high 16 bits, the subpixel part in the low 16.
 ///
 /// A signed one is held in two's complement: `-4.E000` is `FFFB.2000`. A sum carries the
@@ -636,7 +662,8 @@ pub trait World {
     /// `OtherBlockKinds`: whether an answered cell lets her through on this touch, a move's or a
     /// look's; the answer may change from one touch to the next.
     fn lets_through(&self, cell: Cell, way: Way) -> bool;
-    /// The solid enemies.
+    /// `SolidEnemies`: the solid enemies in supplied order. The first qualifying enemy in
+    /// this order decides a move or look; enemies she already overlaps are skipped.
     fn solid_enemies(&self) -> &[Hitbox];
 }
 

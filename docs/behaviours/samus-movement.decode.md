@@ -1693,9 +1693,15 @@ gaps 1 and 2), and the queued observer items O1, J3 (adversary 88, item 5), I3 (
   and 30 jump-turn frames with a speed and direction 0 are chain-0014-96BA's and
   chain-0232-D5A7's moonfalls), a rise is 1.
 - **Handed over**: `0A32` = 3 with `0A2C` bit 15 clear at N+1 (the super special command
-  "transition animation finished", `$91:F36E`). No hand-over's pose is taller than the pose it
-  ends (the 78 ending poses' radii against their operands' in `$91:B629`), so pose fit never
-  refuses one, and the pose she ends the frame in is the table's.
+  "transition animation finished", `$91:F36E`). `$91:EB8E`..`$91:EBC3` accepts the animation
+  selection and initializes it through `$91:F433`, without `$91:F404`/`$91:FDAE` pose fit.
+  The ordinary and special selections instead call `$91:F404` at `$91:EBD7`/`$91:EBEA`.
+  Thus the original has no refused or crouch-substituted animation handover; the handover
+  observation and held-jump history retain the animation end, not a fit acceptance result.
+  No imported hand-over's pose is taller than the pose it ends (the 78 ending poses' radii
+  against their operands' in `$91:B629`), so the model's extra fit cannot refuse one with that
+  content. Its public body callback does not enforce those radii against restored pose/end
+  inputs or adjusted content. A taller supplied target remains gap 39, not a proven invariant.
 - **The end's kind** is an input: samus-appearance's end from the frame's start (its harness's
   `Playhead::end_ahead` over the importer's clips). F8h is the end unless a jump; F9h, FAh, FCh and
   FDh the plain end. F8h ends every turn (25h, 26h, 2Fh, 30h, 43h, 44h, 87h, 88h, 8Bh-A3h,
@@ -2270,7 +2276,7 @@ doesn't bound it. The budget is an
 indicator: the fit is score ÷ budget, and being over it costs in proportion to how far over, never
 as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
-- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, AimingAndShooting,
+- Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
   DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
 - Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
@@ -2285,3 +2291,95 @@ From the spec's §7 (the pose chart), moved with the header's:
 
 **Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
 effects. The tables below are data records (about 120 rows), counted as data.
+
+Current official count: 248.7 units over 430 vector ids; budget 9,324 weighted tokens
+(motion 3,712, pose fit 687, pose chart 2,375, collision 2,550).
+
+## Transition firing aim
+
+Animation-selected poses reach `$91:F433` directly from `$91:EBB3`: bypassing pose fit does
+not bypass initialization or its pending-aim writers. `$91:F446` calls `$91:F468`, which
+dispatches normal jumping to `$91:F543`; its non-shinespark arm reaches `$91:F5CF`..`$91:F5E6`.
+The ordinary changed-pose and animation-selected paths therefore share the publication rules.
+The model publishes from its final accepted pose; taller supplied handover targets remain
+gap 39 and are not evidence for a different vanilla pending-aim rule.
+
+`TransitionFiringAim` sources: $91:F404-F422 only initializes a changed ordinary pose;
+$91:F433/F468-F4A1 initializes its named family and repeats ground-turn initialization when
+another turn becomes ground turning. $91:F543-F599 diverts a straight jump into shinespark;
+$91:F5CF-F5E6 otherwise publishes the new pose firing direction on newly pressed shoot.
+$91:F8D3-F903 publishes the old direction only when entering a ground turn from moonwalking;
+$91:F952-F989 can turn the moonwalk jump into that ground turn. Other families do not write it.
+
+Mapping: pending aim is $0B5E. Jump and moonwalk publications carry different high markers.
+Decode zero as None and a nonzero word as Some(FiringDirection) from its low heading byte.
+The full-word presence test preserves UpFacingRight even though its direction byte is zero.
+Charge/release policy ($90:B82D-B83A) and turn eligibility ($90:DD74-DD79) read only presence;
+muzzle selection ($90:BA5F-BA67) reads presence and the low heading byte, then clears pending.
+None of these readers distinguishes the high markers or publication origin. The canonical
+pending-aim field compares presence and direction; original source-word marker equality is
+not compared or claimed. Pose heading is content from $91:B62C in each pose descriptor,
+converted to named FiringDirection at the edge; no original direction code enters the model.
+The fresh output means publication/no publication, not replacement by absent pending state.
+
+Caller: $90:EB02-EB20 clears pending after ordinary/elevator/locked PRE. POST pose application
+then publishes for the next PRE. Drawing $90:EB35-EB42/EAB3-EAD4 writes prior newly pressed
+controls; demo restoration $90:E82D/E864 restores them. W1 remains their consumer.
+
+Fresh M0 observation over 345 recovered records: pending only81; prior-new SHOOT only81/157.
+80 PRE spin suppresses held/new shoot, POST enters straight jump and publishes;81 released
+shoot makes no attempt but PRE clears pending, so82 has none.156 ordinary standing fires,
+157 has count1/cooldown15 and prior-new shoot. Existing decode's private boundary oracle
+matched345/345 cuts; that replay is prior evidence, not a fresh replay of this amendment.
+
+Harness: compare publication using the independent preceding pose/controls and the actual
+pose change outcome, never use following pending as an input. Only the ordinary pose path is
+claimed. For a skipped PRE, no publication must preserve caller-held pending rather than clear
+it. Equipment/cinematic forced pose initializations and shinespark are outside this amendment.
+The constructed vectors reuse complete movement frames and add a publication expectation;
+pose headings are invented typed content. C-aim-jump-press differs from its held/released cases
+only in shoot press; both moonwalk variants use the old content heading, not the new pose.
+
+AF3 `import::projectile` already imports `MuzzleAim::Aimed(Heading)`, `PreviousAim` and
+`Forbidden`. All 22 source straight-jump descriptors and six moonwalking descriptors are Aimed;
+the producer reads those semantic headings, and leaves other descriptor kinds distinct for W1.
+No second ROM-content extraction is required. C-aim-same-pose is R126's full movement case with
+a publication expectation: a straight jump already aimed down-forward keeps its pose on a new
+shoot press and publishes none. Shinespark handover is not represented in this movement model;
+it remains an explicitly excluded external pose boundary, not a guessed supported vector.
+
+The clean producer's `FiringDirection` is separate from movement `Heading`. AF3's semantic
+firing Heading converts variant-for-variant to this ten-choice domain type. The two vertical
+facings and all four diagonals survive that conversion; no original codes reach the producer.
+C-aim-jump-up enters the same upright jump interval as C-aim-jump-press, with an up-aimed pose
+and invented UpFacingRight content. Its publication stays UpFacingRight; movement remains
+unchanged because this pose change does not add a running aim step or change body height.
+
+### Pending publication at external pose boundaries
+
+The harness defers pending aim under the existing priority-knockback mask: $90:E73E's
+hit request reaches $91:EB8E-EBC3 before the ordinary pose paths and bypasses F404
+initialisation. Following Knockback identifies this writer; the preceding ordinary
+request and newly pressed controls are retained as inputs.
+
+Sand contact under $94:97B3 forces downward collision. With preceding SpinJumping,
+$91:E95D/E9D8 selects LandingFromSpin instead of the ordinary jump. Pending aim joins
+the block-inside push mask only for the independently decoded sand flag and old spin;
+treadmills and ordinary solid-floor contact do not receive this additional mask.
+
+At decompressor instructions $80:B1DD/B1DF, fixed saved bytes and six source returns
+through Kraid graphics, mouth collision, main AI, enemy pass and gameplay establish a
+cut before POST. `movement::cut` validates the complete grammar through $82:8B69 then
+$82:896E using the shared checked stack-return decoder. Only that validated cut adds
+pending aim to the existing unfinished-pass placement mask. Operand PCs, wrong banks,
+missing callers and post-POST continuations never authorize it; x/y differences remain
+compared. These are caller/input ownership boundaries, not clean producer rule changes.
+
+## Supplied solid-enemy order
+
+`$A0:A9B8` starts the interactive-enemy list and `$A0:AB81` advances it. Failed overlap or
+negative-gap checks proceed to the next entry; touching (`$A0:AAC8`..`$A0:AB21`) and positive
+gap (`$A0:AB22`..`$A0:AB80`) return immediately with the first qualifying entry. There is no
+nearest-contact comparison. The caller must preserve the supplied order; the current single-
+enemy vector world cannot prove multiple-enemy ordering. This source clarification changes
+neither selection behavior nor that testing limitation.

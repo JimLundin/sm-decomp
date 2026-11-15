@@ -10,6 +10,7 @@ pub mod atmospheric;
 pub mod camera;
 pub mod hud;
 pub mod movement_travel;
+pub mod pending_aim;
 pub mod projectile;
 pub mod room;
 pub mod samus;
@@ -156,6 +157,8 @@ pub struct Controller {
     pub pressed: Buttons,
     /// Held last frame.
     pub previous: Buttons,
+    /// Physical controls newly pressed at the preceding drawing pass.
+    pub prior_pressed: Buttons,
     /// Auto-repeat presses.
     pub repeat: Buttons,
     /// Frames until the next auto-repeat.
@@ -218,6 +221,8 @@ pub struct State {
     pub camera: canonical::model::Model<camera::CameraPin>,
     /// The accepted directional travels available to the next projectile pass.
     pub movement_travel: canonical::model::Model<movement_travel::TravelPin>,
+    /// Transition firing aim retained until the next ordinary or locked PRE.
+    pub pending_aim: canonical::model::Model<pending_aim::PendingAimPin>,
     /// The splashes, bubbles and dust around her.
     pub atmospherics: Atmospherics,
     /// The current room.
@@ -253,6 +258,7 @@ impl Default for State {
             samus: Samus::default(),
             camera: camera::initialise(),
             movement_travel: canonical::model::Model::<movement_travel::TravelPin>::default(),
+            pending_aim: canonical::model::Model::<pending_aim::PendingAimPin>::default(),
             atmospherics: Atmospherics::default(),
             room: RoomScoped::default(),
             elevator: room::ElevatorRide::default(),

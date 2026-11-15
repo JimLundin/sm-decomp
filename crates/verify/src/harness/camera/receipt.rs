@@ -139,6 +139,7 @@ impl Domain for ReceiptDomain {
                 | Skip::GameState(_)
                 | Skip::Frames(_)
                 | Skip::RoomChange
+                | Skip::MovementCaller(_)
                 | Skip::Execution(_)) => skip,
             })
     }

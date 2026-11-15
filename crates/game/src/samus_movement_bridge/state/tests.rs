@@ -296,10 +296,13 @@ fn a_frame_on_the_floor_runs_her_right() {
         completed: 0,
         content: &content,
     }
-    .frame(&|_| Radius {
-        x: X_RADIUS,
-        y: Wrapping(0x15),
-    });
+    .frame(
+        &|_| Radius {
+            x: X_RADIUS,
+            y: Wrapping(0x15),
+        },
+        &|_| None,
+    );
     let Some(mut model) = clean_of(&engine) else {
         panic!("running is hers");
     };
@@ -327,4 +330,43 @@ fn a_frame_on_the_floor_runs_her_right() {
 #[test]
 fn every_pose_of_the_map_is_named() {
     assert!(map::MAP.iter().all(|entry| named(entry.key)));
+}
+
+#[test]
+fn a_transition_that_requires_missing_cannon_content_is_refused() {
+    let mut samus = Samus {
+        pose: SPIN_RIGHT,
+        y_radius: 21,
+        ..Samus::default()
+    };
+    samus.motion.vertical = VerticalMotion::Up;
+    samus.motion.vertical_speed = Fixed::new(2, 0);
+    let mut controller = Controller::default();
+    controller.held.insert(Button::X);
+    controller.pressed.insert(Button::X);
+    let content = Content::default();
+    let world = SamusWorld::new(
+        Room {
+            blocks: &[],
+            width: BlockColumns(1),
+            slopes: None,
+            doors: &[],
+        },
+        SolidEnemies::default(),
+    );
+    let result = crate::samus_movement_bridge::step::run(
+        &mut samus,
+        crate::samus_movement_bridge::step::Reads {
+            controller: &controller,
+            ride: ElevatorRide::default(),
+            completed: 0,
+            content: &content,
+        },
+        &world,
+        &Rules::default(),
+    );
+    assert!(matches!(
+        result,
+        Err(crate::samus_movement_bridge::SamusFault::MissingCannonHeading(_))
+    ));
 }

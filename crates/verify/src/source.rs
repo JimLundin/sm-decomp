@@ -1689,3 +1689,20 @@ pub const CAMERA_VERTICAL_FRACTION: WramWord = WramWord {
     name: "CAMERA_VERTICAL_FRACTION",
     offset: 0x0DA8,
 };
+
+/// Newly pressed physical controls retained by Samus drawing.
+pub const PRIOR_NEW_CONTROLS: WramWord = WramWord {
+    name: "PRIOR_NEW_CONTROLS",
+    offset: 0x0E00,
+};
+/// Transition publication consumed by the following cannon pass.
+pub const PENDING_FIRING_AIM: WramWord = WramWord {
+    name: "PENDING_FIRING_AIM",
+    offset: 0x0B5E,
+};
+
+/// Samus PRE handler selected for the following gameplay pass.
+pub const SAMUS_PRE_HANDLER: WramWord = WramWord {
+    name: "FRAME_HANDLER_ALPHA",
+    offset: 0x0A42,
+};

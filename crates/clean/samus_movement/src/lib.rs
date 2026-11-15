@@ -23,6 +23,13 @@
 //! `TravelledDistances::record` replaces ordinary travels while ignoring adjustments and looks;
 //! `refresh` clears every direction. Skipping movement does not require a refresh.
 
+//! Spec: `TransitionFiringAim`. Supply named pose content through `Frame::cannon_heading`.
+//! `Outcome::pending_aim` is the actual ordinary transition's fresh publication, including
+//! changes handed over by ordinary animation ends and excluding refused changes. On `None`,
+//! retain the caller's earlier pending aim. `FiringDirection` supports serde checkpoints for
+//! every optional direction, including diagonals and each distinct vertical facing. Forced
+//! handovers such as shinespark belong to their surrounding domain, not `Samus::step`.
+
 pub mod catalogue;
 mod change;
 mod chart;
@@ -41,7 +48,7 @@ mod travel;
 mod vertical;
 
 pub use travel::{TravelKind, TravelledDistances};
-pub use types::{Direction, DirectionalTravels, TravelDistance};
+pub use types::{Direction, DirectionalTravels, FiringDirection, TravelDistance};
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
 pub use chart::Moment;

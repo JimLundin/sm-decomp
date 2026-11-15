@@ -33,6 +33,9 @@ pub struct Frame<'a> {
     /// starts the frame in, the body she had as the ride began, not the body of facing the
     /// screen.
     pub body: &'a dyn Fn(Pose) -> Radius,
+    /// Spec: `TransitionFiringAim`. Imported cannon direction for ordinary jump and moonwalk
+    /// poses. Missing content publishes nothing. Forced shinespark handovers are not this step.
+    pub cannon_heading: &'a dyn Fn(Pose) -> Option<types::FiringDirection>,
 }
 
 /// One frame's moves and looks: the frame they are made in, the room and rules they meet, and
@@ -48,6 +51,8 @@ pub struct Tick<'a> {
     pub reached: Vec<Touch>,
     /// Spec: `TravelledDistances`. Fresh ordinary travel, unaffected by later looks or placements.
     pub travelled: TravelledDistances,
+    /// Spec: `TransitionFiringAim`. Fresh publication from the accepted ordinary pose change.
+    pub pending_aim: Option<types::FiringDirection>,
 }
 
 impl Tick<'_> {

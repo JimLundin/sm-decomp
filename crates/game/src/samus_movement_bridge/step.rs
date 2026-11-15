@@ -92,6 +92,14 @@ pub fn run(
     };
     let before = after;
     let sized = |pose| body(reads.content, samus, pose);
+    let missing_heading = core::cell::OnceCell::new();
+    let heading = |pose| {
+        let heading = super::frame::cannon_heading(reads.content, pose);
+        if heading.is_none() {
+            missing_heading.get_or_init(|| pose);
+        }
+        heading
+    };
     let frame = FrameSource {
         samus,
         controller: reads.controller,
@@ -99,11 +107,14 @@ pub fn run(
         completed: reads.completed,
         content: reads.content,
     }
-    .frame(&sized);
+    .frame(&sized, &heading);
     let outcome = after
         .step(&frame, world, rules)
         .map_err(|_| SamusFault::UnnamedPose(samus.pose))?;
     world.refused()?;
+    if let Some(&pose) = missing_heading.get() {
+        return Err(SamusFault::MissingCannonHeading(pose));
+    }
     let (animation_ends, elevator_moving) = (frame.animation_ends, frame.elevator_moving);
     let (body_before, body_after) = (sized(before.pose), sized(after.pose));
     write_back(&after, outcome.rising, samus);

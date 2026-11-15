@@ -412,7 +412,8 @@ impl Tick<'_> {
         })
     }
 
-    /// `SolidEnemies`: the first solid enemy that stops a move, if any.
+    /// `SolidEnemies`: the first qualifying enemy in supplied order decides the move, if any;
+    /// enemies she already overlaps are skipped.
     fn enemies(&self, a: &Axis) -> Option<Moved> {
         self.world.solid_enemies().iter().find_map(|e| a.enemy(e))
     }
@@ -421,7 +422,8 @@ impl Tick<'_> {
     /// probe says: where it leaves her, and what stopped it; its cells go to the frame's report.
     /// A walk is shortened first (`SlopesSlowTheWalk`), and a horizontal move is limited to 15 px
     /// either way, its subpixel kept. A solid enemy in the move's path decides it alone, the
-    /// first she reaches; blocks stop her only on a path free of them. A move of exactly 0 meets
+    /// first qualifying enemy in supplied order, not necessarily the nearest; blocks stop her
+    /// only on a path free of qualifying enemies. A move of exactly 0 meets
     /// a solid enemy she touches as any move does, and nothing else (`blocks`).
     pub fn go(&mut self, mut a: Axis) -> Moved {
         if a.probe == Probe::Walk {

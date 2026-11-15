@@ -326,6 +326,93 @@ mod tests {
     }
 
     #[test]
+    fn absolute_identity_calls_pass_name_scanning() {
+        for src in [
+            "::core::ptr::eq(left, right)",
+            "assert!(::core::ptr::eq(left, right));",
+            "fn same() { return ::core::ptr::eq(left, right); }",
+            "::\ncore\n::\nptr\n::\neq\n(left, right)",
+            "::core /* ptr */ ::ptr::eq(left, right)",
+        ] {
+            let expected = usize::from(src.contains("/* ptr */"));
+            assert_eq!(
+                findings("x.rs", src)
+                    .iter()
+                    .filter(|c| **c == Class::Name)
+                    .count(),
+                expected,
+                "{src}"
+            );
+        }
+    }
+
+    #[test]
+    fn identity_name_exception_requires_exact_absolute_code_call() {
+        for src in [
+            "ptr::eq(left, right)",
+            "use core::ptr; ptr::eq(left, right)",
+            "mod core {} core::ptr::eq(left, right)",
+            "mod ptr {} ptr::eq(left, right)",
+            "foo::core::ptr::eq(left, right)",
+            "crate::core::ptr::eq(left, right)",
+            "::other::ptr::eq(left, right)",
+            "::core::other::ptr::eq(left, right)",
+            "::std::ptr::eq(left, right)",
+            "::Core::ptr::eq(left, right)",
+            "::core::ptr::equal(left, right)",
+            "::core::ptr::eq::other(left, right)",
+            "::core::ptr::eq",
+            "foo:::core::ptr::eq(left, right)",
+            ":::core::ptr::eq(left, right)",
+            "foo.::core::ptr::eq(left, right)",
+            "r#core::ptr::eq(left, right)",
+            "::r#core::ptr::eq(left, right)",
+            "::core::ptr::eq(left, right); let ptr = left;",
+            "::core::ptr::eq(left, right); // ptr",
+            "::core::ptr::eq(left, right); /* ptr */",
+            "// ::core::ptr::eq(left, right)",
+            "/* ::core::ptr::eq(left, right) */",
+            "let text = \"::core::ptr::eq(left, right)\";",
+            "let text = r#\"::core::ptr::eq(left, right)\"#;",
+            "ptr",
+            "OriginalPtr",
+        ] {
+            assert!(findings("x.rs", src).contains(&Class::Name), "{src}");
+        }
+        assert!(findings("x.md", "::core::ptr::eq(left, right)").contains(&Class::Name));
+    }
+
+    #[test]
+    fn identity_masking_preserves_utf8_offsets_and_finding_lines() {
+        let mut lex = Lexicon::default();
+        lex.names.insert(crate::text::hash(&lex.salt, "u:ptr"));
+        let src = "// café\n::core::ptr::eq(left, right);\n// naïve\n::\ncore::ptr::eq(left, right);\nptr\n";
+        let mut out = Vec::new();
+        scan::file(&lex, &Allow::parse(""), "x.rs", src, &mut out);
+        assert_eq!(
+            out.into_iter()
+                .map(|f| (f.line, f.class))
+                .collect::<Vec<_>>(),
+            [(6, Class::Name)]
+        );
+    }
+
+    #[test]
+    fn identity_calls_preserve_adjacent_other_checks() {
+        let call = "::core::ptr::eq(left, right); ";
+        for (leak, class) in [
+            ("Source::bank(0x12, 0x3456)", Class::AddressForm),
+            ("read the bank logs", Class::Route),
+        ] {
+            let alone = findings("x.rs", leak);
+            assert!(alone.contains(&class));
+            assert_eq!(findings("x.rs", &format!("{call}{leak}")), alone);
+        }
+        // This file's real name checks remain active even alongside an exempt span.
+        assert_eq!(findings("x.rs", &format!("{call}ptr")), [Class::Name]);
+    }
+
+    #[test]
     fn routes_are_caught() {
         assert_eq!(findings("x.md", "read the bank logs"), [Class::Route]);
     }

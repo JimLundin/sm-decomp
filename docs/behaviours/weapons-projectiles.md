@@ -96,7 +96,7 @@ speed. Pending aim consumption is returned as an output; the caller remembers sh
 `shoot` means held shoot after weapon and pose eligibility: standing, running, jumping without spinning,
 crouching, falling, moonwalking or stopped by a wall may fire this power beam; spin jump,
 wall jump cannot fire. Knockback cannot fire. A pose change's input is eligible when it is a crouch/stand
-transition or an aiming transition; morphing suppresses it, as does unmorphing. Grabbed poses use
+transition or an aiming transition; morphing suppresses it, as does unmorphing. Ground, jump and fall turns permit the ordinary cannon only while pending aim is present. Grabbed poses use
 their muzzle descriptor. The caller supplies whether the uncharged power-beam path applies;
 the item selection alone does not decide it. Active grapple suppresses this input.
 Those decisions are caller inputs, not something inferred from velocity or raw pose numbers.
@@ -113,6 +113,17 @@ for ContactContinuation is the integrator's W2 capability check; declaring this 
 not establish that the existing World supports it.
 
 ## Order that matters
+
+The caller retains controls pressed this frame at the drawing phase after this frame's cannon and
+pose changes; the following cannon reads that retained value as `previous_new_press` through
+its configured shoot control. It is distinct from held-button history. A control-restoration
+path restores that saved history, and a skipped history writer retains it.
+
+The ordinary cannon interval and the elevator/locked ShotsOnly interval clear caller-held
+pending aim after W1, even when no shot was attempted or available. Movement's later
+`TransitionFiringAim` publication supplies the next interval's pending heading. An interval without W1
+ neither updates W1 nor performs this clear. An available attempt consumes pending aim
+at `CannonOrigin` before the interval clear.
 
 In CannonAndShots, cooldown changes before firing. Firing happens before existing and newly spawned shots update.
 Slots update from last to first, so W2 sees their contacts in that order. A newly fired shot has

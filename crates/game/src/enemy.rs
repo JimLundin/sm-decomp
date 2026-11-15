@@ -27,8 +27,8 @@ pub mod eye;
 pub mod face_block;
 pub mod instructions;
 
-/// The slots processing this frame, in table order (the original's active enemy indices), and
-/// those of them Samus and projectiles can touch (its interactive enemy indices, `$17EC`).
+/// The slots whose AI processes this frame and the hitboxes Samus's moves can touch, each in
+/// table order. Unmodelled bodies can supply collision geometry without executing their AI.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Active {
     slots: Vec<usize>,
@@ -93,7 +93,7 @@ fn on_screen(slot: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
     ![left, right, top, bottom].into_iter().any(negative)
 }
 
-/// Whether a live enemy runs this frame: it is processed off screen, frozen, or on screen.
+/// Whether normal selection admits a live enemy: processed off screen, frozen, or on screen.
 fn processes(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
     common
         .properties
@@ -102,11 +102,17 @@ fn processes(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
         || on_screen(common, camera_x, camera_y)
 }
 
-/// Whether a live enemy is one Samus and projectiles can touch this frame (the interactive
-/// list, `$17EC`): it runs, and isn't intangible.
+/// Whether a live enemy meets normal interactive-list eligibility (`$17EC`): its screen
+/// policy admits it, and it isn't intangible. AI implementation does not decide eligibility.
 #[must_use]
 pub fn touchable(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
     processes(common, camera_x, camera_y) && !common.properties.contains(EnemyProperty::Intangible)
+}
+
+/// Whether a carried body supplies solid collision geometry under normal list eligibility.
+fn solid_collision_is_eligible(common: &EnemyCommon, camera_x: u16, camera_y: u16) -> bool {
+    touchable(common, camera_x, camera_y)
+        && (common.properties.contains(EnemyProperty::SolidToSamus) || common.frozen != Frames(0))
 }
 
 /// The enemy selection phase (`$A0:8EB6`): free the deleted slots and list the live ones on
@@ -120,9 +126,15 @@ pub fn select(state: &mut State) -> Active {
     let mut active = Active::default();
     for (index, slot) in state.room.enemies.slots.iter_mut().enumerate() {
         match slot.occupancy {
-            // LEGACY(unmodelled): a species the engine carries but doesn't run is never
-            // selected, so it runs no AI or instructions, isn't drawn and touches nothing.
-            Occupancy::Free | Occupancy::Live(EnemyBody::Unmodelled(_)) => {}
+            Occupancy::Free => {}
+            Occupancy::Live(EnemyBody::Unmodelled(_)) => {
+                // Its occupied hitbox is independent of its unimplemented AI. Keep it out
+                // of the execution list so its instructions, timers and drawing stay inert.
+                if solid_collision_is_eligible(&slot.common, camera_x, camera_y) {
+                    let slot = u8::try_from(index).map(|index| SlotIndex(index, PhantomData));
+                    active.interactive.extend(slot);
+                }
+            }
             Occupancy::Deleting(_) => {
                 slot.occupancy = Occupancy::Free;
                 slot.common.species = SpeciesId::default();
@@ -581,7 +593,7 @@ mod tests {
     }
 
     #[test]
-    fn an_unmodelled_enemy_is_never_selected_and_keeps_its_words() {
+    fn an_unmodelled_solid_enemy_supplies_geometry_without_executing_or_changing_its_words() {
         let mut state = State::default();
         let (common, _, _) = arriving(at(0x1b, 0), 0x80);
         let carried = Occupancy::Live(EnemyBody::Unmodelled(UnmodelledEnemy {
@@ -595,14 +607,82 @@ mod tests {
             slot.common
                 .properties
                 .insert(EnemyProperty::ProcessedOffScreen);
+            slot.common.properties.insert(EnemyProperty::SolidToSamus);
             slot.occupancy = carried;
         }
         let before = state.room.enemies.slots.first().copied();
         let active = select(&mut state);
         assert_eq!(active.slots, Vec::<usize>::new());
-        assert_eq!(active.interactive(), []);
+        let interactive: Vec<u8> = active.interactive().iter().map(|slot| slot.0).collect();
+        assert_eq!(interactive, [0]);
         run(&mut state, &active, &crate::pose::Content::default());
         assert_eq!(state.room.enemies.slots.first().copied(), before);
         assert!(state.room.drawing.queues.iter().all(Vec::is_empty));
+    }
+
+    #[test]
+    fn unmodelled_collision_requires_live_tangible_solid_or_frozen_geometry_in_slot_order() {
+        let mut state = State::default();
+        let (common, _, _) = arriving(at(0x1b, 0), 0x80);
+        let body = EnemyBody::Unmodelled(UnmodelledEnemy {
+            species: UnmodelledSpecies::CeresDoor,
+            instruction: 0,
+            spritemap: 0,
+            variables: [0; 6],
+        });
+        for slot in state.room.enemies.slots.iter_mut().take(6) {
+            slot.common = common;
+            slot.common
+                .properties
+                .insert(EnemyProperty::ProcessedOffScreen);
+            slot.occupancy = Occupancy::Live(body);
+        }
+        let [solid, frozen, intangible, nonsolid, free, deleting, ..] =
+            state.room.enemies.slots.as_mut_slice()
+        else {
+            panic!("six collision fixtures must fit");
+        };
+        solid.common.properties.insert(EnemyProperty::SolidToSamus);
+        frozen.common.frozen = crate::state::slots::Frames(1);
+        intangible
+            .common
+            .properties
+            .insert(EnemyProperty::SolidToSamus);
+        intangible
+            .common
+            .properties
+            .insert(EnemyProperty::Intangible);
+        assert_eq!(nonsolid.common.frozen, crate::state::slots::Frames(0));
+        free.common.properties.insert(EnemyProperty::SolidToSamus);
+        free.occupancy = Occupancy::Free;
+        deleting
+            .common
+            .properties
+            .insert(EnemyProperty::SolidToSamus);
+        deleting.occupancy = Occupancy::Deleting(body);
+        let active = select(&mut state);
+        let interactive: Vec<u8> = active.interactive().iter().map(|slot| slot.0).collect();
+        assert_eq!(interactive, [0, 1]);
+        assert_eq!(active.slots, Vec::<usize>::new());
+    }
+
+    #[test]
+    fn unmodelled_collision_uses_screen_eligibility_and_distinguishes_frozen_ai_from_timer() {
+        use crate::state::room::AiHandler;
+        use crate::state::slots::Frames;
+        let (mut common, _, _) = arriving(at(0x1b, 0), 0x80);
+        common.position.x.pixels = 0x7000;
+        common.properties.insert(EnemyProperty::SolidToSamus);
+        assert!(!super::solid_collision_is_eligible(&common, 0, 0));
+        common.frozen = Frames(1);
+        assert!(!super::solid_collision_is_eligible(&common, 0, 0));
+        common.ai_handlers.insert(AiHandler::Frozen);
+        assert!(super::solid_collision_is_eligible(&common, 0, 0));
+        common.ai_handlers.remove(AiHandler::Frozen);
+        common.properties.insert(EnemyProperty::ProcessedOffScreen);
+        assert!(super::solid_collision_is_eligible(&common, 0, 0));
+        common.properties.remove(EnemyProperty::ProcessedOffScreen);
+        common.position.x.pixels = 0x80;
+        assert!(super::solid_collision_is_eligible(&common, 0, 0));
     }
 }

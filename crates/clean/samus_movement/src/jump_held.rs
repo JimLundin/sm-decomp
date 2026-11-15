@@ -85,12 +85,12 @@ fn counts(frames: Wrapping<u16>, r: &Rules) -> bool {
 
 impl FrameBefore {
     /// §1.2: what a frame leaves behind for the next, from what her moves met, whether her
-    /// animation's end handed over her pose (`handed_over`), the pose she started it in (`was`)
+    /// animation's end selected a pose (`handed_over`), the pose she started it in (`was`)
     /// and the one she ends it in (`now`). She landed: her moves met a floor and she
     /// ends in `Landing`, the pose `WhatHerMovesMet` chose and pose fit took; a landing pose fit
     /// refuses or turns into the crouch is none (`PoseFitAfterMoves`). Or the animation of a
-    /// turn or of a landing ended and handed over its pose (`AnimationEnds`); an end that gave
-    /// way handed over nothing.
+    /// turn or of a landing selected a pose (`AnimationEnds`), independently of later fitting:
+    /// the same selected end supplies this history. An end that gave way selected nothing.
     pub(crate) fn left_behind(met: Option<Met>, handed_over: bool, was: Pose, now: Pose) -> Self {
         let landed = met == Some(Met::Floor) && matches!(now.action, Action::Landing(_));
         let ended = handed_over && matches!(was.action, Action::Turning(_) | Action::Landing(_));

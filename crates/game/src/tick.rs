@@ -448,6 +448,7 @@ fn samus_current_state(
     if pose::carried(&state.samus, state.elevator) {
         crate::projectile::handle(state, reads).map_err(SessionFault::Projectile)?;
         state.movement_travel.0.refresh();
+        state.pending_aim.0 = None;
         return Ok(pose::PoseRequests::default());
     }
     pose::set_radius(&mut state.samus, content);
@@ -458,6 +459,7 @@ fn samus_current_state(
     crate::projectile::current_state(state, reads).map_err(SessionFault::Projectile)?;
     // Normal PRE clears only after the projectile pass consumed the preceding interval.
     state.movement_travel.0.refresh();
+    state.pending_aim.0 = None;
     Ok(requests)
 }
 
@@ -509,6 +511,9 @@ fn gameplay_phase(
                         &mut state.camera.0,
                         state.samus.previous_position,
                     );
+                }
+                if let Some(aim) = stepped.outcome.pending_aim {
+                    state.pending_aim.0 = Some(aim);
                 }
             }
             mini_map_turn(state, content).map_err(SessionFault::Hud)?;
@@ -619,5 +624,27 @@ fn bg_scroll(state: &mut State, content: &Content) {
             room.tilemap_gap,
             looks,
         );
+    }
+}
+
+#[cfg(test)]
+mod firing_history_tests {
+    #[test]
+    fn elevator_pre_clears_pending_even_without_a_shot() {
+        let mut state = crate::state::State::default();
+        state.samus.pose = crate::state::samus::PoseId(0);
+        state.samus.movement = data::pose::MovementType::Standing;
+        state.elevator.status = crate::state::room::ElevatorStatus::LeavingRoom;
+        state.pending_aim.0 = Some(types::FiringDirection::DownFacingRight);
+        assert!(super::samus_current_state(&mut state, &crate::Content::default()).is_ok());
+        assert_eq!(state.pending_aim.0, None);
+    }
+
+    #[test]
+    fn ordinary_pre_clears_pending_even_without_a_shot() {
+        let mut state = crate::state::State::default();
+        state.pending_aim.0 = Some(types::FiringDirection::UpFacingLeft);
+        assert!(super::samus_current_state(&mut state, &crate::Content::default()).is_ok());
+        assert_eq!(state.pending_aim.0, None);
     }
 }
