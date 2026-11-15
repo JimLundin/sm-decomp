@@ -1,15 +1,11 @@
-//! The camera as the engine meets it: the camera model (`world_camera`).
-//!
-//! The model is stepped over the engine's room and Samus, and written back to the engine's
-//! camera and her previous position (`docs/behaviours/world-camera.decode.md`, "State" and "Inputs").
-//! The engine keeps the camera as the game keeps it: layer 1's position and the point it last
-//! saw her, which is her previous position. The model's camera is rebuilt from those each frame
-//! and written back after its step.
+//! The following camera held as clean model State, with external position writes published
+//! through its placement API. The retained fraction belongs solely to the clean model.
 
 use core::num::Wrapping;
 use types::{Facing as Side, Fixed, Pair, ScreenKind};
 use world_camera::{
-    Camera as Model, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus as Her,
+    Camera as Model, Frame, Heights, LeadSetting, RememberedPosition, Room, RoomError, Rules,
+    Samus as Her, ViewPosition,
 };
 
 use crate::model::num::Fixed as Exact;
@@ -130,19 +126,31 @@ pub fn her(samus: &Samus) -> Her {
     }
 }
 
+/// Restore recorded or saved positions and receipt without fresh initialization.
+#[must_use]
+pub fn restore(camera: &Camera, remembered: Point, receipt: types::VerticalFraction) -> Model {
+    Model::restore(
+        ViewPosition(Pair {
+            x: quantity(camera.x),
+            y: quantity(camera.y),
+        }),
+        RememberedPosition(pair(remembered)),
+        receipt,
+    )
+}
+
+/// Publish an external remembered-position write without measuring or clearing the receipt.
+/// Movement calls this at its placement boundary, before an intervening message box can save State.
+pub fn remember(model: &mut Model, remembered: Point) {
+    *model = model.with_remembered(RememberedPosition(pair(remembered)));
+}
+
 /// The camera's frame through the model over `room`.
 ///
 /// Layer 1 follows her, and the point it saw her at becomes her position. Time is never
 /// stopped: the engine has none of the states that stop it yet (the x-ray scope, the reserve
 /// tanks' refill).
-pub fn follow(camera: &mut Camera, samus: &mut Samus, room: &Room) {
-    let model = Model::new(
-        Pair {
-            x: quantity(camera.x),
-            y: quantity(camera.y),
-        },
-        pair(samus.previous_position),
-    );
+pub fn follow(model: &mut Model, camera: &mut Camera, samus: &mut Samus, room: &Room) {
     let frame = Frame {
         samus: her(samus),
         room,
@@ -153,6 +161,7 @@ pub fn follow(camera: &mut Camera, samus: &mut Samus, room: &Room) {
     let Point { x, y } = point(after.position());
     (camera.x, camera.y) = (x, y);
     samus.previous_position = point(after.seen());
+    *model = after;
 }
 
 /// Blocks a screen across or down.
@@ -175,7 +184,11 @@ fn screens(room: &RoomScoped) -> Pair<usize> {
 ///
 /// The model's [`RoomError`] when the room's scroll areas aren't a room: no screens across or
 /// down, a run shorter than its screens, or more than 256 screens across or down.
-pub fn scroll(room: &mut RoomScoped, samus: &mut Samus) -> Result<(), RoomError> {
+pub fn scroll(
+    model: &mut Model,
+    room: &mut RoomScoped,
+    samus: &mut Samus,
+) -> Result<(), RoomError> {
     if room.scroll_areas.is_empty() {
         return Ok(());
     }
@@ -185,7 +198,7 @@ pub fn scroll(room: &mut RoomScoped, samus: &mut Samus) -> Result<(), RoomError>
         screens(room),
         room.camera.scrollers,
     )?;
-    follow(&mut room.camera, samus, &screens);
+    follow(model, &mut room.camera, samus, &screens);
     Ok(())
 }
 

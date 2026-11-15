@@ -1,7 +1,7 @@
 //! What the camera reads each frame (Spec: §1.3): her motion's outputs, the room, the lead
 //! setting and whether time is stopped.
 
-use types::{Facing, Fixed, Position};
+use types::{Facing, PlacementY, Position};
 
 use crate::room::Room;
 
@@ -32,9 +32,10 @@ pub struct Samus {
     /// Her position, after everything that moved her this frame.
     pub position: Position,
     /// The y a placement put her at this frame, if any: where pose fit or a change of shape
-    /// placed her (her motion's output). Its pixel part replaces where the camera last saw her
-    /// down; with none, the camera follows her from where it last saw her (Spec: Remembering).
-    pub placed: Option<Fixed>,
+    /// placed her (her motion's output). This pixel replaces the remembered y pixel, keeping
+    /// its old fraction; with none, following reads the unchanged remembered centre
+    /// (Spec: Remembering, RememberedHeightFraction).
+    pub placed: Option<PlacementY>,
     /// Which way she faces (Spec: LeadingHer).
     pub facing: Facing,
     /// Whether she is going backwards: she skids, moonwalks or takes a knockback (Spec:

@@ -282,12 +282,7 @@ impl<'a> Line<'a> {
         if exceeds(c, bound) {
             return self.stop_past(bound, back);
         }
-        let floor = edge(c) + margin;
-        if self.next_closed(looked) && self.past_floor(c, floor) {
-            max_by_before(floor, back)
-        } else {
-            c
-        }
+        self.held_back(c, looked, margin, m.reached).unwrap_or(c)
     }
 
     /// Where the view settles on an axis she didn't move on, from its pixel part as the frame
@@ -304,11 +299,10 @@ impl<'a> Line<'a> {
         let found = self.camera.pixel();
         let margin = self.margin_at(found);
         let c = min_by_exceeds(max_by_before(found, ROOM_START), self.far + margin);
-        let floor = edge(c) + margin;
         if self.screen(c) == ScreenKind::Closed {
             self.ease_out(c, found)
-        } else if self.next_closed(c) && self.past_floor(c, floor) {
-            self.ease_back(floor, found)
+        } else if let Some(held) = self.held_back(c, c, margin, found) {
+            self.ease_back(edge(c) + margin, held)
         } else {
             c
         }
@@ -336,17 +330,29 @@ impl<'a> Line<'a> {
         }
     }
 
-    /// Where the view settles when the screen after its own is closed (Spec: Settling): pushed
-    /// back from `found`, where the frame found it, but not before `floor`. When the push back
-    /// is the later and lands in a closed screen, it goes on to that screen's next edge: from a
-    /// camera right of the room, the push back can land in the column after the last, which runs
-    /// on to a closed screen (C-settle-back-far-right).
-    fn ease_back(&self, floor: Px, found: Px) -> Px {
-        let pushed = self.push_back(found);
-        if before(floor, pushed) && self.screen(pushed) == ScreenKind::Closed {
-            next_edge(pushed)
+    /// Settling's extra correction after the shared hold-back (Spec: Settling). Only when
+    /// the max selected a push beyond the floor, and it landed in a closed screen, does it
+    /// go on to that screen's next edge. A camera found far right of the room can push back
+    /// into a column past the last, whose screen runs on into the next row. Keep the floor
+    /// comparison even with adjusted margins that can put the floor in another screen.
+    fn ease_back(&self, floor: Px, held: Px) -> Px {
+        if before(floor, held) && self.screen(held) == ScreenKind::Closed {
+            next_edge(held)
         } else {
-            max_by_before(floor, pushed)
+            held
+        }
+    }
+
+    /// The shared closed-next-screen hold-back (Spec: ClosedScreens, Settling). The floor
+    /// reads the limited position `c`; the next screen reads `looked`; the push reads `from`.
+    /// A move supplies its reached position for the push (and down's look-ahead), whereas
+    /// settling supplies where the frame found the view for its push.
+    fn held_back(&self, c: Px, looked: Px, margin: Px, from: Px) -> Option<Px> {
+        let floor = edge(c) + margin;
+        if self.next_closed(looked) && self.past_floor(c, floor) {
+            Some(max_by_before(floor, self.push_back(from)))
+        } else {
+            None
         }
     }
 }

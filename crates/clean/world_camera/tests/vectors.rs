@@ -1,6 +1,6 @@
 //! Runs every vector of `scenarios/vectors/world-camera.toml` through the model, and checks that every
 //! catalogue entry checked by vectors has one, from the code and the vector file alone. The checks
-//! that read the spec are `tests/spec.rs`.
+//! that compare the catalogue with the spec are in the `spec` integration-test target.
 //!
 //! The file is read with `toml` into the shape its header defines, declared once below. Every
 //! table of it refuses a key the shape doesn't give, and every name in it (a source, a spec entry,
@@ -12,9 +12,12 @@ mod tests {
     use core::num::Wrapping;
 
     use serde::Deserialize;
-    use types::{Checked, Facing, Fixed, Pair, Parts, ScreenKind, fixed};
+    use types::{
+        Checked, Facing, Fixed, Pair, Parts, PlacementY, ScreenKind, VerticalFraction, fixed,
+    };
     use world_camera::{
-        CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules, Samus,
+        CATALOGUE, Camera, Frame, Heights, LeadSetting, Leads, RememberedPosition, Room, RoomError,
+        Rules, Samus, ViewPosition,
     };
 
     const VECTORS: &str = include_str!("../../../../scenarios/vectors/world-camera.toml");
@@ -24,6 +27,8 @@ mod tests {
     #[serde(deny_unknown_fields)]
     struct VectorFile {
         vector: Vec<Vector>,
+        #[serde(default)]
+        distance_vector: Vec<DistanceVector>,
     }
 
     /// One frame of the camera, from its state at the frame's start to its state at the end.
@@ -41,13 +46,70 @@ mod tests {
         before: State,
         samus: SamusShape,
         after: State,
+        #[serde(default)]
+        rules: AdjustedRules,
     }
 
-    /// Where a vector comes from: every vector of the file is constructed.
+    #[derive(Deserialize, Default)]
+    #[serde(deny_unknown_fields)]
+    struct AdjustedRules {
+        extra: Option<Ps>,
+        ahead: Option<[u16; 2]>,
+        push: Option<u16>,
+        margin: Option<u16>,
+    }
+
+    impl AdjustedRules {
+        fn rules(self) -> Rules {
+            let mut rules = Rules::REFERENCE;
+            if let Some(extra) = self.extra {
+                rules.extra = extra.0;
+            }
+            if let Some([right, left]) = self.ahead {
+                rules.ahead = Leads {
+                    right: Wrapping(right),
+                    left: Wrapping(left),
+                };
+            }
+            if let Some(push) = self.push {
+                rules.push = Wrapping(push);
+            }
+            if let Some(margin) = self.margin {
+                rules.margin = Wrapping(margin);
+            }
+            rules
+        }
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct DistanceVector {
+        id: String,
+        source: Source,
+        entries: Vec<Entry>,
+        row: Option<String>,
+        frame: Option<u32>,
+        operation: Operation,
+        before: u16,
+        after: u16,
+        samus_y: Option<Ps>,
+        seen_y: Option<Ps>,
+        placed: Option<u16>,
+    }
+
+    #[derive(Deserialize)]
+    enum Operation {
+        Follow,
+        Retain,
+        Initialize,
+    }
+
+    /// Where a vector comes from: constructed frames or recorded receipts.
     #[derive(Deserialize)]
     #[serde(rename_all = "lowercase")]
     enum Source {
         Constructed,
+        Recorded,
     }
 
     /// A spec entry a vector exercises, by its name in the catalogue.
@@ -127,11 +189,17 @@ mod tests {
     struct State {
         camera: [Ps; 2],
         seen: [Ps; 2],
+        #[serde(default)]
+        vertical_fraction: u16,
     }
 
     impl State {
         fn camera(&self) -> Camera {
-            Camera::new(pair(self.camera), pair(self.seen))
+            Camera::restore(
+                ViewPosition(pair(self.camera)),
+                RememberedPosition(pair(self.seen)),
+                VerticalFraction(self.vertical_fraction),
+            )
         }
     }
 
@@ -146,14 +214,14 @@ mod tests {
         #[serde(default)]
         rising: bool,
         #[serde(default)]
-        placed: Option<Ps>,
+        placed: Option<u16>,
     }
 
     impl SamusShape {
         fn samus(&self) -> Samus {
             Samus {
                 position: pair(self.position),
-                placed: self.placed.map(|p| p.0),
+                placed: self.placed.map(PlacementY),
                 facing: self.facing.facing(),
                 backwards: self.backwards.is_some(),
                 rising: self.rising,
@@ -238,10 +306,9 @@ mod tests {
     }
 
     /// The file's vectors; a key or a name the shape doesn't know fails the read.
-    fn vectors() -> Vec<Vector> {
+    fn vectors() -> VectorFile {
         toml::from_str::<VectorFile>(VECTORS)
             .unwrap_or_else(|e| panic!("the vector file doesn't read: {e}"))
-            .vector
     }
 
     fn show(p: Pair<Fixed>) -> String {
@@ -253,7 +320,7 @@ mod tests {
     fn run(v: Vector) -> (String, Result<(), String>) {
         let Vector {
             id,
-            source: Source::Constructed,
+            source,
             entries: _,
             room,
             lead,
@@ -261,7 +328,12 @@ mod tests {
             before,
             samus,
             after,
+            rules,
         } = v;
+        assert!(
+            matches!(source, Source::Constructed),
+            "full frames are constructed"
+        );
         let room = room.room();
         let frame = Frame {
             samus: samus.samus(),
@@ -269,7 +341,7 @@ mod tests {
             lead: lead.setting(),
             time_stopped,
         };
-        let got = before.camera().step(&Rules::REFERENCE, &frame);
+        let got = before.camera().step(&rules.rules(), &frame);
         let after = after.camera();
         let mut wrong = Vec::new();
         if got.position() != after.position() {
@@ -286,6 +358,13 @@ mod tests {
                 show(got.seen())
             ));
         }
+        if got.vertical_fraction() != after.vertical_fraction() {
+            wrong.push(format!(
+                "vertical_fraction: expected {:?}, got {:?}",
+                after.vertical_fraction(),
+                got.vertical_fraction()
+            ));
+        }
         let result = if wrong.is_empty() {
             Ok(())
         } else {
@@ -294,9 +373,82 @@ mod tests {
         (id, result)
     }
 
+    /// Receipt-only cases use an ordinary camera follow with irrelevant open room content;
+    /// they assert no movement of a passage or another domain that the spec leaves out.
+    fn run_distance(v: DistanceVector) -> (String, Result<(), String>) {
+        match v.source {
+            Source::Recorded => {
+                assert!(
+                    v.row.is_some() && v.frame.is_some(),
+                    "recorded observation identified"
+                );
+            }
+            Source::Constructed => {
+                assert!(v.row.is_none() && v.frame.is_none(), "constructed receipt");
+            }
+        }
+        let zero = fixed(Wrapping(0), 0);
+        let view = ViewPosition(Pair { x: zero, y: zero });
+        let remembered = RememberedPosition(Pair {
+            x: zero,
+            y: v.seen_y.map_or(zero, |p| p.0),
+        });
+        let camera = Camera::restore(view, remembered, VerticalFraction(v.before));
+        let got = match v.operation {
+            Operation::Follow => {
+                let room = Room::new(
+                    vec![ScreenKind::Open],
+                    Pair { x: 1, y: 1 },
+                    Heights {
+                        while_not_rising: Wrapping(0),
+                        while_rising: Wrapping(0),
+                    },
+                )
+                .unwrap();
+                assert!(v.seen_y.is_some(), "following needs remembered y");
+                camera.step(
+                    &Rules::REFERENCE,
+                    &Frame {
+                        samus: Samus {
+                            position: Pair {
+                                x: zero,
+                                y: v.samus_y.unwrap().0,
+                            },
+                            placed: v.placed.map(PlacementY),
+                            facing: Facing::Right,
+                            backwards: false,
+                            rising: false,
+                        },
+                        room: &room,
+                        lead: LeadSetting::Ahead,
+                        time_stopped: false,
+                    },
+                )
+            }
+            Operation::Retain => camera.with_view(view).with_remembered(remembered),
+            Operation::Initialize => Camera::initialise(view, remembered),
+        };
+        let actual = got.vertical_fraction().0;
+        let result = if actual == v.after {
+            Ok(())
+        } else {
+            Err(format!(
+                "vertical_fraction: expected {}, got {actual}",
+                v.after
+            ))
+        };
+        (v.id, result)
+    }
+
     #[test]
     fn every_vector_passes() {
-        let results: Vec<_> = vectors().into_iter().map(run).collect();
+        let file = vectors();
+        let results: Vec<_> = file
+            .vector
+            .into_iter()
+            .map(run)
+            .chain(file.distance_vector.into_iter().map(run_distance))
+            .collect();
         assert!(!results.is_empty(), "the file holds vectors");
         let failures: Vec<String> = results
             .iter()
@@ -314,9 +466,12 @@ mod tests {
     #[test]
     fn every_entry_checked_by_vectors_has_one() {
         // A name no catalogue entry has fails the read (`Entry`).
-        let named: Vec<String> = vectors()
+        let file = vectors();
+        let named: Vec<String> = file
+            .vector
             .into_iter()
             .flat_map(|v| v.entries)
+            .chain(file.distance_vector.into_iter().flat_map(|v| v.entries))
             .map(|entry| entry.0)
             .collect();
         for b in &CATALOGUE {
@@ -354,7 +509,7 @@ after = { camera = ["0000.0000", "0000.0000"], seen = ["0000.0000", "0000.0000"]
             ("facing = \"Right\"", "facing = \"Right\", extra = 1"),
             ("after = { camera", "after = { extra = 1, camera"),
             // A name of each kind the shape doesn't know.
-            ("\"constructed\"", "\"recorded\""),
+            ("\"constructed\"", "\"unknown\""),
             ("[\"Settling\"]", "[\"Unknown\"]"),
             ("[\"O\"]", "[\"X\"]"),
             ("\"Right\"", "\"Up\""),
@@ -364,6 +519,16 @@ after = { camera = ["0000.0000", "0000.0000"], seen = ["0000.0000", "0000.0000"]
             ),
             ("source", "lead = \"Far\"\nsource"),
             ("\"0000.0000\"", "\"0.0\""),
+            (
+                "source",
+                "rules = { extra = \"0001.0000\", unknown = 1 }\nsource",
+            ),
+            ("source", "rules = { extra = \"0.0\" }\nsource"),
+            ("facing = \"Right\"", "facing = \"Right\", placed = 65536"),
+            (
+                "facing = \"Right\"",
+                "facing = \"Right\", placed = \"0001.8000\"",
+            ),
         ];
         for (from, to) in changes {
             assert!(!reads(&ONE.replacen(from, to, 1)), "{to} reads");

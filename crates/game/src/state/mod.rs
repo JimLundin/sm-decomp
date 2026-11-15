@@ -7,6 +7,7 @@
 // which collected-item bits its rows read.
 
 pub mod atmospheric;
+pub mod camera;
 pub mod hud;
 pub mod movement_travel;
 pub mod projectile;
@@ -193,7 +194,7 @@ pub struct Timing {
 }
 
 /// The whole Session at a cut.
-#[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct State {
     /// Time.
     pub clock: Clock,
@@ -213,6 +214,8 @@ pub struct State {
     pub video: Video,
     /// Samus.
     pub samus: Samus,
+    /// The following camera and retained height fraction available to the next projectile pass.
+    pub camera: canonical::model::Model<camera::CameraPin>,
     /// The accepted directional travels available to the next projectile pass.
     pub movement_travel: canonical::model::Model<movement_travel::TravelPin>,
     /// The splashes, bubbles and dust around her.
@@ -235,6 +238,33 @@ pub struct State {
     pub sram: sram::SaveRam,
     /// Samus's projectiles.
     pub projectiles: projectile::Projectiles,
+}
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            clock: Clock::default(),
+            rng: Rng::default(),
+            controller: Controller::default(),
+            mode: GameMode::default(),
+            main: MainStrand::default(),
+            irq: IrqStrand::default(),
+            timing: Timing::default(),
+            video: Video::default(),
+            samus: Samus::default(),
+            camera: camera::initialise(),
+            movement_travel: canonical::model::Model::<movement_travel::TravelPin>::default(),
+            atmospherics: Atmospherics::default(),
+            room: RoomScoped::default(),
+            elevator: room::ElevatorRide::default(),
+            enemy_palette_cycle: room::EnemyPaletteCycle::default(),
+            ceres: room::CeresStage::default(),
+            hud: Hud::default(),
+            message: Message::default(),
+            collected_items: CollectedItems::default(),
+            sram: sram::SaveRam::default(),
+            projectiles: projectile::Projectiles::default(),
+        }
+    }
 }
 
 /// Words of the collected item bits (`$7E:D870`, 64 bytes).

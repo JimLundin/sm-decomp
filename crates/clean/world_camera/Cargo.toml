@@ -9,8 +9,9 @@ description = "The camera model, built from its behaviour spec"
 [dependencies]
 types = { path = "../types" }
 
-[dev-dependencies]
 serde = { version = "=1.0.229", features = ["derive"] }
+
+[dev-dependencies]
 toml = "=1.2.1"
 
 [lints]

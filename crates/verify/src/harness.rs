@@ -34,6 +34,7 @@ pub mod ceres;
 pub mod doors;
 pub mod free;
 pub mod game_time;
+pub(crate) mod gameplay_caller;
 pub mod hud;
 pub mod movement;
 pub mod progress;

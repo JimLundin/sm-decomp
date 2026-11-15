@@ -38,15 +38,15 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | weapons-projectiles | 4,035 | 2,062 | 1.96 | 1.94 | 1 % | 2,605 | 1,081 | 673 | 22,290 | 81 |
 | samus-movement | 9,736 | 9,212 | 1.06 | 1.01 | 4 % | 12,724 | 4,170 | 1,623 | 20,856 | 352 |
-| world-camera | 1,839 | 1,762 | 1.04 | 0.93 | 11 % | 2,274 | 631 | 306 | 23,501 | 83 |
+| world-camera | 1,932 | 1,962 | 0.98 | 0.83 | 15 % | 2,274 | 675 | 322 | 23,501 | 87 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 40,442 | 76 |
 | interface-hud | 2,700 | 2,337 | 1.16 | 0.82 | 29 % (over 25 %) | 2,742 | 1,087 | 450 | 26,821 | 95 |
 | world-blocks | 2,395 | 2,074 | 1.15 | 1.09 | 5 % | - | 1,076 | 399 | 23,517 | 100 |
 | samus-appearance | 2,191 | 1,412 | 1.55 | 1.41 | 9 % | 1,525 | 879 | 365 | 20,977 | 98 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 216 | 5,437 | 56 |
 | world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 562 | 1,863 | 70 |
-| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 559 | 125 | - | - |
-| total | 29,137 | 23,982 | 1.21 | 1.10 | 10 % | - | 11,464 | 4,856 | 185,704 | 1,011 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 566 | 125 | - | - |
+| total | 29,230 | 24,182 | 1.21 | 1.09 | 10 % | - | 11,515 | 4,872 | 185,704 | 1,015 |
 
 ## Models
 
@@ -89,14 +89,14 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean/world_camera/src/axis.rs` | limits | logic | 951 | 1,083 | 91 | 12 | 31 | 50 | 9 | 186 |
-| `crates/clean/world_camera/src/catalogue.rs` | - | tables and types | 0 | 13 | 83 | 435 | 0 | 0 | 0 | 143 |
-| `crates/clean/world_camera/src/follow.rs` | follow | logic | 360 | 492 | 49 | 0 | 9 | 0 | 6 | 84 |
+| `crates/clean/world_camera/src/axis.rs` | limits | logic | 949 | 1,118 | 91 | 12 | 33 | 25 | 8 | 187 |
+| `crates/clean/world_camera/src/catalogue.rs` | - | tables and types | 0 | 13 | 85 | 466 | 0 | 0 | 0 | 155 |
+| `crates/clean/world_camera/src/follow.rs` | follow | logic | 367 | 508 | 49 | 0 | 9 | 0 | 6 | 86 |
 | `crates/clean/world_camera/src/input.rs` | - | tables and types | 0 | 20 | 106 | 0 | 0 | 0 | 0 | 25 |
-| `crates/clean/world_camera/src/lib.rs` | - | logic | 207 | 300 | 63 | 0 | 3 | 26 | 7 | 64 |
+| `crates/clean/world_camera/src/lib.rs` | - | logic | 295 | 433 | 144 | 0 | 4 | 26 | 7 | 93 |
 | `crates/clean/world_camera/src/room.rs` | limits | logic | 242 | 308 | 88 | 3 | 10 | 0 | 0 | 71 |
 | `crates/clean/world_camera/src/rules.rs` | follow | tables and types | 80 | 134 | 75 | 86 | 0 | 0 | 0 | 58 |
-| total | | | 1,839 | 2,350 | 555 | 536 | 53 | 76 | 21 | 631 |
+| total | | | 1,932 | 2,534 | 638 | 567 | 55 | 51 | 20 | 675 |
 
 ### run-progress
 
@@ -214,7 +214,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | 1,147 | 1,675 | 110 | 17 | 0 | 0 | 559 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | 1,153 | 1,735 | 113 | 17 | 0 | 0 | 566 |
 
 ## Lines
 
@@ -222,15 +222,15 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | weapons-projectiles | 1,081 | 418 | 663 | 673 |
 | samus-movement | 4,170 | 2,629 | 1,541 | 1,623 |
-| world-camera | 631 | 226 | 405 | 306 |
+| world-camera | 675 | 238 | 437 | 322 |
 | run-progress | 437 | 182 | 255 | 136 |
 | interface-hud | 1,087 | 577 | 510 | 450 |
 | world-blocks | 1,076 | 725 | 351 | 399 |
 | samus-appearance | 879 | 559 | 320 | 365 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 978 | 402 | 576 | 562 |
-| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 559 | 559 | 0 | 125 |
-| total | 11,464 | 6,484 | 4,980 | 4,856 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 566 | 566 | 0 | 125 |
+| total | 11,515 | 6,503 | 5,012 | 4,872 |
 
 ## Spec, budget and fit by area
 
@@ -267,12 +267,12 @@ Spec [`docs/behaviours/world-camera.md`](behaviours/world-camera.md), k = 37.5. 
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| follow | 5 | 15.7 | 587 | 715 | 439 | 0.75 |
-| limits | 9 | 31.3 | 1,175 | 1,559 | 1,193 | 1.02 |
-| shared (in no area) | | | | | 207 | |
-| total | 14 | 47.0 | 1,762 | 2,274 | 1,839 | 1.04 |
+| follow | 6 | 21.0 | 787 | 715 | 446 | 0.57 |
+| limits | 9 | 31.3 | 1,175 | 1,559 | 1,191 | 1.01 |
+| shared (in no area) | | | | | 295 | |
+| total | 15 | 52.3 | 1,962 | 2,274 | 1,932 | 0.98 |
 
-Area fit 0.93: the areas' score, 1,632, ÷ the budget. Shared code 207, its share of the model 11 %.
+Area fit 0.83: the areas' score, 1,637, ÷ the budget. Shared code 295, its share of the model 15 %.
 
 ### run-progress
 
@@ -367,8 +367,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | weapons-projectiles | harness | 1 | 6,084 | 5,183 | 191 | 223 | 890 | 405 | 0 | 824 |
 | samus-movement | bridge | 4 | 3,158 | 3,753 | 286 | 197 | 127 | 90 | 3 | 597 |
 | samus-movement | harness | 2 | 7,053 | 7,064 | 765 | 1,166 | 464 | 562 | 22 | 1,396 |
-| world-camera | bridge | 1 | 505 | 696 | 21 | 93 | 1 | 17 | 0 | 120 |
-| world-camera | harness | 2 | 6,082 | 6,206 | 784 | 266 | 290 | 432 | 30 | 1,066 |
+| world-camera | bridge | 1 | 549 | 768 | 24 | 93 | 1 | 17 | 0 | 133 |
+| world-camera | harness | 6 | 8,894 | 8,861 | 1,084 | 13,008 | 512 | 831 | 80 | 4,994 |
 | run-progress | bridge | 1 | 1,343 | 1,634 | 54 | 195 | 31 | 45 | 22 | 272 |
 | run-progress | harness | 3 | 7,869 | 7,442 | 1,053 | 1,221 | 811 | 609 | 62 | 1,401 |
 | interface-hud | bridge | 1 | 2,314 | 2,476 | 119 | 133 | 157 | 111 | 16 | 388 |
@@ -381,7 +381,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | boss-ceres-ridley | harness | 1 | 3,328 | 3,084 | 561 | 96 | 317 | 344 | 7 | 556 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | harness | 1 | 6,207 | 5,883 | 1,195 | 438 | 342 | 622 | 31 | 1,081 |
-| total | | | 69,895 | 69,565 | 7,828 | 5,423 | 5,528 | 4,700 | 353 | 11,946 |
+| total | | | 72,751 | 72,292 | 8,131 | 18,165 | 5,750 | 5,100 | 402 | 15,887 |
 
 ## Harness floors and vectors
 
@@ -458,7 +458,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | --- | ---: | ---: |
 | weapons-projectiles | 81 | 0 |
 | samus-movement | 352 | 64 |
-| world-camera | 83 | 0 |
+| world-camera | 87 | 0 |
 | run-progress | 76 | 0 |
 | interface-hud | 95 | 0 |
 | world-blocks | 100 | 0 |
@@ -628,6 +628,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | world-camera | FollowingHer | gain 14,183 | 15,037 | 854 | 15,037 | 321 |
 | world-camera | LeadingHer | gain 10,877 | 11,520 | 643 | 11,520 | 50 |
 | world-camera | PushCarries | vectors only | - | - | 0 | 0 |
+| world-camera | RememberedHeightFraction | vectors only | - | - | 0 | 23,603 |
 | world-camera | Remembering | gain 14,183 | 23,159 | 8,976 | 23,159 | 444 |
 | world-camera | RoomEdges | gain 11,277 | 19,742 | 8,465 | 19,742 | 367 |
 | world-camera | ScreensRunOn | vectors only | - | - | 0 | 0 |
@@ -735,9 +736,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 50 | 4,991 | 29,948 | 31,561 | 10,330 | 1,914 | 2,335 | 2,777 | 629 | 6,934 |
-| bridges | 11 | 2,881 | 17,288 | 18,821 | 1,191 | 1,199 | 1,076 | 874 | 157 | 3,013 |
-| rebuilt models, shared types included | 91 | 4,856 | 29,137 | 35,964 | 13,532 | 16,006 | 1,476 | 1,069 | 608 | 11,464 |
+| engine, not yet rebuilt | 51 | 5,044 | 30,262 | 31,879 | 10,367 | 1,916 | 2,355 | 2,801 | 629 | 6,990 |
+| bridges | 11 | 2,889 | 17,331 | 18,893 | 1,194 | 1,199 | 1,076 | 874 | 157 | 3,026 |
+| rebuilt models, shared types included | 91 | 4,872 | 29,230 | 36,154 | 13,675 | 16,040 | 1,478 | 1,044 | 607 | 11,515 |
 
 ## Timeline
 
@@ -1400,11 +1401,11 @@ graph LR
 
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| `axis.rs` | limits | One axis of a frame: the camera following her there (Spec: §2), and the room keeping the view in (Spec: §3): its edges, its closed and short screens, and how the view settles out of a closed screen. | `enum Axis (2)`, `struct Line`, `Line::{new, follow}`, 20 private | 951 | 186 |
-| `catalogue.rs` | - | The catalogue: one behaviour per spec entry, with its kind, its switch and how it is checked. | `enum BehaviourId (14)`, `struct Behaviour`, `const CATALOGUE` | 0 | 143 |
-| `follow.rs` | follow | Following her (Spec: §2): how positions compare, where the view aims, and how fast and how far it moves there. | `fn before`, `fn exceeds`, `fn max_by_before`, `fn min_by_exceeds`, `enum Going (2)`, `struct Move`, `fn aim`, `fn speed`, `fn chase`, 3 private | 360 | 84 |
+| `axis.rs` | limits | One axis of a frame: the camera following her there (Spec: §2), and the room keeping the view in (Spec: §3): its edges, its closed and short screens, and how the view settles out of a closed screen. | `enum Axis (2)`, `struct Line`, `Line::{new, follow}`, 21 private | 949 | 187 |
+| `catalogue.rs` | - | The catalogue: one behaviour per spec entry, with its kind, its switch and how it is checked. | `enum BehaviourId (15)`, `struct Behaviour`, `const CATALOGUE` | 0 | 155 |
+| `follow.rs` | follow | Following her (Spec: §2): how positions compare, where the view aims, and how fast and how far it moves there. | `fn before`, `fn exceeds`, `fn max_by_before`, `fn min_by_exceeds`, `enum Going (2)`, `struct Move`, `fn aim`, `fn speed`, `fn distance`, `fn chase`, 3 private | 367 | 86 |
 | `input.rs` | - | What the camera reads each frame (Spec: §1.3): her motion's outputs, the room, the lead setting and whether time is stopped. | `enum LeadSetting (4)`, `struct Samus`, `struct Frame` | 0 | 25 |
-| `lib.rs` | - | The camera model, built from its behaviour spec alone: the screen's view following Samus. | `struct Camera`, `Camera::{new, position, seen, step}` | 207 | 64 |
+| `lib.rs` | - | The camera model, built from its behaviour spec alone: the screen's view following Samus. | `struct ViewPosition`, `struct RememberedPosition`, `struct Camera`, `Camera::{restore, initialise, with_view, with_remembered, vertical_fraction, position, seen, step}` | 295 | 93 |
 | `room.rs` | limits | The room as the camera reads it (Spec: §1.3): its screens, run on as one strip, and its aim heights. | `const SCREEN`, `struct Heights`, `enum RoomError (3)`, `struct Room`, `Heights::height`, `Room::{new, screen}`, 2 private | 242 | 71 |
 | `rules.rs` | follow | The tuning the camera reads: `Rules`, whose reference profile holds the spec's vanilla values. | `struct Leads`, `struct Rules`, `Rules::{lead, REFERENCE}`, 1 private | 80 | 58 |
 
@@ -1418,14 +1419,18 @@ Its crate root exports:
 The public functions a caller reaches through them:
 
 ```rust
-Camera::new(position: Pair<Fixed>, her: Position) -> Self
+Camera::restore(view: ViewPosition, remembered: RememberedPosition, vertical_fraction: VerticalFraction) -> Self
+Camera::initialise(view: ViewPosition, remembered: RememberedPosition) -> Self
+Camera::with_view(mut self, view: ViewPosition) -> Self
+Camera::with_remembered(mut self, remembered: RememberedPosition) -> Self
+Camera::vertical_fraction(&self) -> VerticalFraction
 Camera::position(&self) -> Pair<Fixed>
 Camera::seen(&self) -> Position
 Camera::step(self, rules: &Rules, frame: &Frame) -> Self
 Room::new(run: Vec<ScreenKind>, size: Pair<usize>, heights: Heights) -> Result<Self, RoomError>
 ```
 
-Shared types it takes from `types`: `Checked`, `Facing`, `Fixed`, `Kind`, `PIXEL`, `Pair`, `Parts`, `Position`, `Px`, `ScreenKind`, `Switch`, `below`, `fixed`, `px`. Other crates it uses: `core`.
+Shared types it takes from `types`: `Checked`, `Facing`, `Fixed`, `Kind`, `PIXEL`, `Pair`, `Parts`, `PlacementY`, `Position`, `Px`, `ScreenKind`, `Switch`, `VerticalFraction`, `below`, `fixed`, `px`. Other crates it uses: `core`.
 
 Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
 
@@ -2081,6 +2086,8 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `struct Colour` | world-doors |
 | `struct Pair` | boss-ceres-ridley, interface-hud, samus-movement, world-blocks, world-camera, world-doors |
 | `type Position` | samus-movement, world-camera, world-doors |
+| `struct VerticalFraction` | world-camera |
+| `struct PlacementY` | world-camera |
 | `type Radius` | boss-ceres-ridley, samus-movement |
 | `enum Heading (4)` | samus-movement, world-blocks, world-doors |
 | `type Direction` | samus-movement |
@@ -2153,7 +2160,8 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/samus_movement_bridge.rs` | bridge | - | 1,285 | 214 |
 | samus-movement | `crates/game/src/state/movement_travel.rs` | names it | `TravelledDistances` | 0 | 7 |
 | world-camera | `crates/game/src/session.rs` | names it | `RoomError` | 579 | 211 |
-| world-camera | `crates/game/src/world_camera_bridge.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `RoomError`, `Rules`, `Samus` | 505 | 120 |
+| world-camera | `crates/game/src/state/camera.rs` | names it | `Camera`, `RememberedPosition`, `ViewPosition` | 86 | 21 |
+| world-camera | `crates/game/src/world_camera_bridge.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `RoomError`, `Rules`, `Samus`, `ViewPosition` | 549 | 133 |
 | run-progress | `crates/game/src/run_progress_bridge.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,343 | 272 |
 | interface-hud | `crates/game/src/interface_hud_bridge.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Dropped`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,314 | 388 |
 | world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,107 | 1,062 |

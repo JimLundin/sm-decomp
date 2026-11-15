@@ -200,6 +200,20 @@ impl<T: Copy> Pair<T> {
 /// Her position: the centre of her body.
 pub type Position = Pair<Fixed>;
 
+/// Spec: `RememberedHeightFraction`. Retained height difference in subpixels, 65536 per pixel.
+/// Every u16 value is valid, including a restored receipt unrelated to current positions.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct VerticalFraction(pub u16);
+
+impl VerticalFraction {
+    /// Spec: `RememberedHeightFraction`. The receipt at fresh Samus initialization.
+    pub const ZERO: Self = Self(0);
+}
+
+/// Spec: Remembering. The pixel y supplied by a placement; it carries no fraction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct PlacementY(pub u16);
+
 /// A body's half-width and half-height, in pixels.
 pub type Radius = Pair<Px>;
 
