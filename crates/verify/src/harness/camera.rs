@@ -1,16 +1,14 @@
-//! The camera as a harness domain: the camera model (`world_camera`) against the oracle.
+//! The camera's ordinary-call view projection compared with independent oracle cuts.
 //!
-//! It is checked frame by frame on the spec's declared fields (`docs/behaviours/world-camera.md` §1),
-//! by the decode notes' harness note (`docs/behaviours/world-camera.decode.md`, "The harness").
-//! The camera is downstream of her motion and nothing upstream reads it, so it is checked on its
-//! own: its State (the camera position and where it last saw her) is decoded from record N, the
-//! inputs from record N+1 as the scroll read them (her position after everything moved her, her
-//! facing and state, the room's screens), and the y a placement put her at from samus-movement's
-//! model run on the frame (its `placed`), never from record N+1's word, which is her y at the
-//! scroll by construction. The compared fields are the camera's position, pixel and subpixel parts. Where
-//! it last saw her is decoded from the same words as her position, so it is reported and masked,
-//! never counted. Nothing answers from the camera's own fields of record N+1, so no field is
-//! unverified; the null model is the camera left where record N has it.
+//! The retained receipt has a separate mandatory per-frame and carried proof in `receipt`.
+//! Some cuts fall partway through following; the full-view projection does not certify a
+//! partial-call resume. Seeds include the clean Camera state, while view comparisons keep
+//! their existing fields and named writers. Remembered centre is reported only because its
+//! end-cut words supply upstream Samus in this projection.
+
+mod execution;
+pub use execution::Error as ExecutionError;
+pub mod receipt;
 
 use core::fmt;
 use core::num::Wrapping;
@@ -20,10 +18,12 @@ use game::model::num::Fixed as Exact;
 use game::state::room::Scrollers;
 use game::world_camera_bridge;
 use oracle_record::FrameRecord;
-use types::{Facing, Fixed, Pair, Parts, Px, ScreenKind, below, fixed};
+use types::{
+    Facing, Fixed, Pair, Parts, PlacementY, Px, ScreenKind, VerticalFraction, below, fixed,
+};
 use world_camera::{
-    BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, Room, RoomError, Rules,
-    Samus as Her,
+    BehaviourId, CATALOGUE, Camera, Frame, Heights, LeadSetting, RememberedPosition, Room,
+    RoomError, Rules, Samus as Her, ViewPosition,
 };
 
 use super::movement::{self, Movement, Ps, Skip as Motion};
@@ -109,7 +109,7 @@ struct Writer {
 
 /// The bosses that move her or the view while they are live: their collisions, their holds and
 /// their rooms' code. Kraid moves her only on the frames `kraid` names.
-const WRITERS: [Writer; 3] = [
+const WRITERS: [Writer; 4] = [
     Writer {
         species: &[0xDDBF],
         reason: "another domain: Crocomire moves her ($A4:8C95), and his room shakes the view across ($8F:E8CD)",
@@ -118,12 +118,17 @@ const WRITERS: [Writer; 3] = [
     // Ceres Ridley (E13Fh) has no feet.
     Writer {
         species: &[0xE17F],
-        reason: "another domain: Ridley's feet set where it saw her to her position ($A6:E501)",
-        fields: CAMERA,
+        reason: "another domain: Ridley's feet set remembered y before following ($A6:E50A)",
+        fields: CAMERA.union(RECEIPT),
     },
     Writer {
-        species: &[0xEC3F, 0xEC7F, 0xECBF, 0xEEBF],
-        reason: "another domain: Mother Brain moves her ($A9:BBFD, $A9:BC3F), and the Shitroid waits for the view ($A9:EFE6)",
+        species: &[0xEC3F, 0xEC7F, 0xECBF],
+        reason: "another domain: Mother Brain replaces remembered y pixels and fractions before following ($A9:BBFD..BC3A)",
+        fields: CAMERA.union(RECEIPT),
+    },
+    Writer {
+        species: &[0xEEBF],
+        reason: "another domain: the Shitroid waits for the view and writes view x and screens ($A9:EFE6)",
         fields: CAMERA,
     },
 ];
@@ -148,8 +153,9 @@ const KRAID_BOTTOM_LINT: u16 = 0xE3BF;
 const KRAID_ARM_TOUCHED: u16 = 0xB89B;
 
 /// The gunship's top, and the three of its functions that write where the camera saw her. The
-/// enemies run after the scroll ($82:8B65), so such a write is what record N+1 holds, not what
-/// the camera read. Its other functions write only her y ($0AFA), which the camera doesn't read.
+/// enemies run before following ($82:8B65 before $82:8B8A), so these writes change
+/// the remembered centre the camera reads. Liftoff's pixel-only remembered-y writer makes
+/// the receipt input unavailable without that writer's reconstruction; its old fraction survives.
 const GUNSHIP: u16 = 0xD07F;
 /// Landing, the brakes: on its last frame it sets her x and where the camera saw her across
 /// ($A2:A922, $A2:A925).
@@ -171,12 +177,14 @@ const X: FieldSet = FieldSet::single(0);
 const Y: FieldSet = FieldSet::single(1);
 const CAMERA: FieldSet = X.union(Y);
 const SEEN: FieldSet = FieldSet::single(2);
+const RECEIPT: FieldSet = FieldSet::single(3);
 
 /// The declared fields a catalogue entry's output reaches: the axis it moves the view on, or
 /// both. Where it last saw her is reported only, so no entry is credited by it.
 const fn shown_by(id: BehaviourId) -> FieldSet {
     use BehaviourId as B;
     match id {
+        B::RememberedHeightFraction => FieldSet::EMPTY,
         B::LeadingHer | B::ScreensRunOn => X,
         B::AimingHeight | B::ShortScreens | B::DownwardLooksAhead | B::BelowTheRoom => Y,
         B::FollowingHer
@@ -197,13 +205,15 @@ pub enum Skip {
     Unreadable(DecodeError),
     /// The room's screens aren't a room the model takes: a harness defect.
     Room(RoomError),
-    /// The main loop isn't in gameplay at record N or N+1: no scroll runs.
+    /// The ordinary gameplay adapter does not support the recorded game-state pair.
     GameState(u16),
     /// The requested-NMI count advanced by other than one: a lag frame (no scroll) or two
     /// frames (two scrolls).
     Frames(u16),
     /// The room changed: the door's domain places the view.
     RoomChange,
+    /// The cut metadata cannot establish whether ordinary following ran.
+    Execution(ExecutionError),
 }
 
 impl fmt::Display for Skip {
@@ -214,6 +224,7 @@ impl fmt::Display for Skip {
             Self::GameState(code) => write!(f, "game state {code:#04X}, not gameplay"),
             Self::Frames(count) => write!(f, "{count} frames ran, not one"),
             Self::RoomChange => f.write_str("the room changed (the door's domain)"),
+            Self::Execution(error) => write!(f, "camera execution defect: {error}"),
         }
     }
 }
@@ -259,6 +270,15 @@ fn seen(record: &FrameRecord) -> Result<Pair<Fixed>, Skip> {
             source::SAMUS_PREV_Y_SUBPOS,
         )?,
     })
+}
+
+/// Decode all persistent quantities, including the receipt, once at the seed cut.
+fn recorded_camera(record: &FrameRecord) -> Result<Camera, Skip> {
+    Ok(Camera::restore(
+        ViewPosition(position(record)?),
+        RememberedPosition(seen(record)?),
+        VerticalFraction(word(record, source::CAMERA_VERTICAL_FRACTION)?),
+    ))
 }
 
 /// The room's screens as the scroll read them in `record`: the whole scroll table, one run
@@ -510,7 +530,7 @@ fn kraid(
     if pushed && !arm_touched(before, after) {
         masks.push(Mask {
             reason: "another domain: Kraid's body collision moves her and where the camera saw her ($A7:B0F3)",
-            fields: CAMERA,
+            fields: CAMERA.union(RECEIPT),
             hides: Hides::AnotherWriter,
         });
     }
@@ -602,8 +622,8 @@ fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
         .any(|slot| slot.species == YAPPING_MAW && slot.grabbing != 0)
     {
         mask(
-            "another domain: a yapping maw holds her and caps the scroll's speed",
-            CAMERA,
+            "another domain: a yapping maw's hold clamps remembered y before following ($A0:B7C4)",
+            CAMERA.union(RECEIPT),
         );
     }
     for writer in &WRITERS {
@@ -623,12 +643,12 @@ fn enemies(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip> {
             X,
         ),
         Some(GUNSHIP_IDLE) if gunship(&after) != Some(GUNSHIP_IDLE) => mask(
-            "another domain: the gunship sets her x and where the camera saw her as she enters ($A2:AA1D), and turns her ($A2:AA20)",
-            CAMERA,
+            "another domain: the gunship handover initializes her pose and replaces remembered y ($A2:AA20 -> $91:E44A)",
+            CAMERA.union(RECEIPT),
         ),
         Some(GUNSHIP_LIFTOFF) => mask(
             "another domain: the gunship's liftoff moves her y and where the camera saw her ($A2:AC2F..$A2:AC64)",
-            Y,
+            Y.union(RECEIPT),
         ),
         _ => {}
     }
@@ -660,7 +680,7 @@ fn shinespark(from: &FrameRecord, next: &FrameRecord) -> Result<Vec<Mask>, Skip>
     {
         masks.push(Mask {
             reason: "another domain: the shinespark's clamp down moves where it saw her ($90:D2A3)",
-            fields: Y,
+            fields: Y.union(RECEIPT),
             hides: Hides::AnotherWriter,
         });
     }
@@ -688,68 +708,25 @@ fn deferred(
     if movement::pushed(next)? {
         masks.push(Mask {
             reason: "another domain: a block-inside push (quicksand, treadmill) moves her y, which samus-movement defers, and her pose change or its step places the y the camera follows from",
-            fields: Y,
+            fields: Y.union(RECEIPT),
             hides: Hides::AnotherWriter,
         });
     }
     if movement::knockback_ends(from)? {
         masks.push(Mask {
             reason: "another domain: the knockback's end (its time run out under the normal handler) decides her y, which samus-movement defers, and her pose change or its step places the y the camera follows from",
-            fields: Y,
+            fields: Y.union(RECEIPT),
             hides: Hides::AnotherWriter,
         });
     }
     Ok(masks)
 }
 
-impl Domain for CameraDomain {
-    const NAME: &'static str = "world-camera";
-    type State = Camera;
-    type Inputs = Placement;
-    type World = Upstream;
-    type Fields = Declared;
-    type Skip = Skip;
-    const FIELDS: &'static [Field<Declared>] = &[
-        domain_field!("position.x", x),
-        domain_field!("position.y", y),
-        domain_field!("seen", seen),
-    ];
-
-    fn behaviours(&self) -> Vec<Entry> {
-        CATALOGUE
-            .iter()
-            .map(|entry| Entry {
-                name: format!("{:?}", entry.id),
-                fields: shown_by(entry.id),
-            })
-            .collect()
-    }
-
-    fn decode(&self, from: &FrameRecord, interval: Interval) -> Result<(Camera, Placement), Skip> {
-        gameplay(from)?;
-        let camera = Camera::new(position(from)?, seen(from)?);
-        let placement = Placement::try_from(self.motion.placement(from, interval))?;
-        Ok((camera, placement))
-    }
-
-    fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Upstream, Skip> {
-        gameplay(next)?;
-        let frames = word(next, source::NMI_FRAME_COUNTER_WORD)?
-            .wrapping_sub(word(from, source::NMI_FRAME_COUNTER_WORD)?);
-        if frames != 1 {
-            return Err(Skip::Frames(frames));
-        }
-        if word(next, source::ROOM_PTR)? != word(from, source::ROOM_PTR)? {
-            return Err(Skip::RoomChange);
-        }
-        upstream(next)
-    }
-
-    fn masks(
-        &self,
+impl CameraDomain {
+    fn writer_masks(
         from: &FrameRecord,
         next: &FrameRecord,
-        placement: &Placement,
+        placement: Placement,
     ) -> Result<Vec<Mask>, Skip> {
         let mut masks = vec![Mask {
             reason: "reported, not counted: where it last saw her is her position's own words",
@@ -757,7 +734,7 @@ impl Domain for CameraDomain {
             hides: Hides::NoWriter,
         }];
         masks.extend(enemies(from, next)?);
-        masks.extend(deferred(from, next, *placement)?);
+        masks.extend(deferred(from, next, placement)?);
         let movement = [
             byte(from, source::SAMUS_MOVEMENT_TYPE)?,
             byte(next, source::SAMUS_MOVEMENT_TYPE)?,
@@ -768,14 +745,14 @@ impl Domain for CameraDomain {
         let mut mask = |reason, fields| masks.push(Mask::another(reason, fields));
         if movement.contains(&GRAPPLING) {
             mask(
-                "another domain: the grapple beam's clamps move where it saw her",
-                CAMERA,
+                "another domain: the grapple beam's clamps move remembered y ($90:BB4E/BB5F/BED6/BEE7)",
+                CAMERA.union(RECEIPT),
             );
         }
         if movement.contains(&HELD_BY_DRAYGON) {
             mask(
-                "another domain: Draygon holds her and caps the scroll's speed",
-                CAMERA,
+                "another domain: Draygon's hold clamps remembered y before following ($A0:B7C4)",
+                CAMERA.union(RECEIPT),
             );
         }
         if word(from, source::SLOW_GRAPPLE_SCROLLING)? != 0
@@ -806,7 +783,7 @@ impl Domain for CameraDomain {
         if handlers.contains(&APPEARANCE) {
             mask(
                 "another domain: her appearance when a game loads places her",
-                Y,
+                Y.union(RECEIPT),
             );
         }
         if word(from, POSE_CHANGE_COMMAND)? == CENTRE_ON_VIEW {
@@ -823,7 +800,7 @@ impl Domain for CameraDomain {
         if handler(next)? == KNOCKBACK && handler(from)? != KNOCKBACK {
             mask(
                 "another domain: a hit's knockback starts in the pose change and fits its body, placing her",
-                Y,
+                Y.union(RECEIPT),
             );
         }
         let pose = |record| word(record, source::SAMUS_POSE);
@@ -832,19 +809,76 @@ impl Domain for CameraDomain {
                 Placement::Model(_) => {}
                 Placement::NoMotion => mask(
                     "the placement: her motion doesn't run in the frame, yet her pose changes and may place her",
-                    Y,
+                    Y.union(RECEIPT),
                 ),
                 Placement::Uncovered => mask(
                     "the placement: samus-movement's model doesn't cover the frame (a pose outside its domain, a deferred movement), so where her pose change placed her is that model's to come",
-                    Y,
+                    Y.union(RECEIPT),
                 ),
             }
         }
         Ok(masks)
     }
+}
+
+impl Domain for CameraDomain {
+    const NAME: &'static str = "world-camera";
+    type State = Camera;
+    type Inputs = Placement;
+    type World = Upstream;
+    type Fields = Declared;
+    type Skip = Skip;
+    const FIELDS: &'static [Field<Declared>] = &[
+        domain_field!("position.x", x),
+        domain_field!("position.y", y),
+        domain_field!("seen", seen),
+    ];
+
+    fn behaviours(&self) -> Vec<Entry> {
+        CATALOGUE
+            .iter()
+            .map(|entry| Entry {
+                name: format!("{:?}", entry.id),
+                fields: shown_by(entry.id),
+            })
+            .collect()
+    }
+
+    fn decode(&self, from: &FrameRecord, interval: Interval) -> Result<(Camera, Placement), Skip> {
+        gameplay(from)?;
+        let camera = recorded_camera(from)?;
+        let placement = Placement::try_from(self.motion.placement(from, interval))?;
+        Ok((camera, placement))
+    }
+
+    fn world(&self, from: &FrameRecord, next: &FrameRecord) -> Result<Upstream, Skip> {
+        gameplay(next)?;
+        let frames = word(next, source::NMI_FRAME_COUNTER_WORD)?
+            .wrapping_sub(word(from, source::NMI_FRAME_COUNTER_WORD)?);
+        if frames != 1 {
+            return Err(Skip::Frames(frames));
+        }
+        if word(next, source::ROOM_PTR)? != word(from, source::ROOM_PTR)? {
+            return Err(Skip::RoomChange);
+        }
+        upstream(next)
+    }
+
+    fn masks(
+        &self,
+        from: &FrameRecord,
+        next: &FrameRecord,
+        placement: &Placement,
+    ) -> Result<Vec<Mask>, Skip> {
+        let mut masks = Self::writer_masks(from, next, *placement)?;
+        for mask in &mut masks {
+            mask.fields = mask.fields.without(RECEIPT);
+        }
+        Ok(masks)
+    }
 
     fn step(&self, camera: &mut Camera, placement: &Placement, upstream: &mut Upstream) {
-        upstream.samus.placed = placement.placed();
+        upstream.samus.placed = placement.placed().map(|y| PlacementY(y.pixel().0));
         *camera = camera.step(&Rules::REFERENCE, &upstream.frame());
     }
 
@@ -857,12 +891,14 @@ impl Domain for CameraDomain {
     }
 
     fn expected(&self, next: &FrameRecord) -> Result<Declared, Skip> {
-        Ok(Declared::from(&Camera::new(position(next)?, seen(next)?)))
+        Ok(Declared::from(&recorded_camera(next)?))
     }
 
     fn uncompared(&self, skip: &Skip) -> Uncompared {
         match skip {
-            Skip::Unreadable(_) | Skip::Room(_) => Uncompared::Defect(skip.to_string()),
+            Skip::Unreadable(_) | Skip::Room(_) | Skip::Execution(_) => {
+                Uncompared::Defect(skip.to_string())
+            }
             Skip::GameState(_) | Skip::Frames(_) | Skip::RoomChange => {
                 Uncompared::OutOfScope(skip.to_string())
             }
@@ -902,6 +938,7 @@ fn exercised(camera: &Camera, placement: Placement, upstream: &Upstream) -> Vec<
         (B::LeadingHer, across),
         (B::AimingHeight, down),
         (B::Remembering, true),
+        (B::RememberedHeightFraction, true),
         (
             B::CreepReadsRightward,
             creeps(samus.position.x, seen.x) || creeps(samus.position.y, seen.y),

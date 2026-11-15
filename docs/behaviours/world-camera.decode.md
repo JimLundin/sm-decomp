@@ -135,22 +135,26 @@ row's name carries a room header's address:
 | r09 | chain-0220-D017 |
 | r10 | chain-0224-D0B9 |
 | r11 | chain-0232-D5A7 |
+| r12 | chain-any-0003-DFD7 (M0) |
 
 ## State
 
 | Quantity | RAM | Decode |
 | --- | --- | --- |
 | camera position | x `0911`.`090F`, y `0915`.`0913` (layer 1's position) | as is |
+| retained vertical distance fraction | `0DA8` | fraction in 1/65536 px, preserved until ordinary follow or fresh initialisation writes it |
 | where it last saw her | x `0B10`.`0B12`, y `0B14`.`0B16` (Samus's previous position) | as is |
 
-**RAM shape** (fields decoded as one word copied as-is): both, four words each. They are
+**RAM shape** (fields decoded as one word copied as-is): the two positions, four words each.
+The retained fraction is one word because all of its fraction is observable in leftward projectile drift. They are
 positions, and the spec's quantity is the position itself: its pixel part and its subpixel part
 are what the rules read and what the player sees (the view's corner, the point the next speed is
 measured from). Nothing narrower would hold them.
 
 Not State: the ideal positions `0B0A` and `0B0E` (the aims, worked out each frame), the camera
-speeds `0DA2`.`0DA4` and `0DA6`.`0DA8` (worked out each frame from the position and the previous
-position), the scratch `0933`-`0939`.
+horizontal speed `0DA2`.`0DA4` and vertical whole speed `0DA6` (worked out each ordinary
+following frame), the scratch `0933`-`0939`. The vertical fraction `0DA8` is State: W1 reads it
+before the next ordinary follow can overwrite it.
 
 ## Inputs
 
@@ -357,15 +361,17 @@ be verified on its own from the records, with her motion's outputs decoded as in
     placement masks cover);
     Ridley (`$A6:E501`); Mother Brain moving her towards the ceiling or floor (`$A9:BBFD`, y) and
     towards the wall (`$A9:BC3F`, x): mask Mother Brain's moves on both axes;
-  - the gunship (enemy $D07F), by its function at N. The enemies run after the scroll
-    (`$82:8B65`), so a write to `0B10`/`0B14` there is what N+1 holds, not what the camera read.
+  - the gunship (enemy $D07F), by its function at N. Enemy work at `$82:8B65` precedes
+    following at `$82:8B8A`. Its `0B10`/`0B14` writes replace measurement inputs before
+    Remembering copies Samus's current centre over them.
     Only three of its functions write them:
     - `$A8D0` (landing, the brakes) sets her x and `0B10` on its last frame (`$A2:A922`,
       `$A2:A925`): mask x where N's function is `$A8D0`;
     - `$A9BD` (idle) on the frame she enters, where N+1's function is no longer `$A9BD`: it sets
       her x and `0B10` (`$A2:AA1A`, `$A2:AA1D`, unless her x is 480h), turns her to face forward
       and starts her entering (`$A2:AA20`, `$A2:AA27`): mask x and y (on the 44-row cache, x alone
-      gives the same counts);
+      gives the same counts). `$A2:AA20` calls pose initialisation through `$91:E3F6`/`$91:E44A`,
+      which also replaces remembered Y; that upstream writer supplies the receipt mask;
     - `$AC1B` (liftoff, firing the engines) moves her y 1 or 2 px each frame and `0B14` with it
       (`$A2:AC2F`..`$A2:AC64`): mask y where N's function is `$AC1B`.
     Its other functions (`$A80C`, `$A8D0`'s `$A2:A8DC`, `$A950` the eject at `$A2:A960`, `$AA5D`,
@@ -504,6 +510,169 @@ red in the table, green in RAM). The cases cover every outcome the recorded fram
 two each from different rows (§How the spec was made, `gen.py`); the other recorded frames stay
 checked by the harness's frame counts and floors as before.
 
+## Retained vertical distance: producer and lifetime
+
+Source: `RememberedHeightFraction`: `$90:94EC..9588`, `$90:96FF..973D`,
+`$91:E0F5..E100`, the pose placements described under `Remembering`, and the W1 drift
+readers in [weapons-projectiles.decode.md](weapons-projectiles.decode.md). W1 uses its high byte in the leftward x-speed drift, despite the measurement being vertical.
+The public quantity is the distance fraction, not camera travel or the vertical speed including its extra pixel.
+The ordinary measurement's low-word subtraction precedes its high-word subtraction; its borrow
+changes the high word, not the wrapped low word. The direction is the sign of the pixel-word
+subtraction at `$90:9705`, including equal pixels and half-range separation. Pose placement
+writes `$0B14` only, keeping `$0B16`. `D-placement-turns` changes which difference is used;
+`D-placement-keeps-fraction` distinguishes replacing the remembered fraction from keeping it.
+
+`$90:94F2..9555` selects the grapple's alternative scrolling, bypassing `$96FF`, then
+`$956E..9583` still remembers Samus. Thus remembered centre or view placement alone cannot
+supply a retained receipt. The alternative camera's view movement is outside this receipt specification.
+The ordinary measurement precedes the vertical follow's time-stopped settling guard: stopped
+time does not suppress measurement. Ordinary following refreshes even zero movement, an aim
+already reached, and room clamping. `FollowingHer`'s adjusted extra never contributes to this
+distance fraction; `C-adjust-extra` includes a fractional extra to distinguish them.
+
+Fresh Samus initialisation (`$91:E0F5..E100`) writes the initial vertical-speed fraction,
+zero in the reference profile. This is a separate reset event; passage, view placement and
+stopped time must not be interpreted as fresh initialisation. W1's directional clear
+`$90:EB05..EB1A` does not clear `$0DA8`. The runtime must hold the latest camera output until
+another measurement or actual initialisation, including save/restore, and give W1 the receipt
+at its PRE boundary. The engine holds the output in its pinned Camera and steps that model
+directly. View and remembered-centre projection does not derive or reset the receipt.
+After `Remembering`, `position()` and `seen()` cannot recover it. The runtime W1 PRE consumer
+remains unwired.
+
+**Observed M0 proof.** Private files live in
+`$TEMP/collab/night-20261114/camera-observer/`: `camera_probe.rs`, `camera-server.lua`,
+`camera-boundaries.txt`, `proof.py`, `reference.py`, `camera_model.py`. The private oracle
+uses the current pinned native seed/pads in
+`$TEMP/collab/night-20261113/seed-boundary/recut2/relock-v2-lsnes` and the cached row in
+`$TEMP/collab/night-20261113/recovered-cache-20261114/rows`. Read-only callbacks surround
+ordinary measurement and remembered-centre replacement and observe W1's input. The replay
+matches all 345/345 full WRAM cuts. A callback during shutdown after final cut 344 is excluded.
+No output from the expected cut chooses a route or supplies the pre-follow centre.
+
+There are 183 ordinary measurements, two with pose placement, and 162 frames without ordinary
+following. The reference receipt matches 344/344 transitions versus a do-nothing step's 257/344,
+a gain of 87. Carrying only the receipt over all 345 cuts gives 345/345 against constant-zero
+262/345. This is receipt-only accumulation, not a complete camera-domain free-run claim.
+All 183 watched W1 reads see the prior receipt, including frames whose later follow replaces it.
+A deliberately wrong full-fixed absolute distance fails at frames 54 and 121. A clear-on-skip
+fault is rejected by `D-retain-nonzero`; replacing a placement's remembered fraction is rejected
+by `D-placement-keeps-fraction`.
+
+| Receipt vector | r12 frame | What the watched inputs prove |
+| --- | ---: | --- |
+| D-recorded-17 | 17 | upward receipt changes while camera pixel position holds |
+| D-recorded-19 | 19 | distance changes within the same pixel while camera holds |
+| D-recorded-22 | 22 | downward subtraction borrows from its pixel part |
+| D-recorded-54 | 54 | pose placement replaces remembered y pixel; its old fraction survives |
+| D-recorded-82 | 82 | upward subtraction borrows from its pixel part |
+| D-recorded-121 | 121 | a second placement with a different retained fraction |
+| D-recorded-retain | 183 | passage skips measurement and retains the prior zero fraction |
+
+Each recorded vector contains RAM observations only, without room content. At 54 the remembered
+pixel changes from 204 to 211 with fraction 2047 kept; at 121 it changes from 330 to 339 with
+fraction 16383 kept. The placement vectors retain the preceding centre and supply the watched
+replacement pixel explicitly. At 183 through 344 no measurement callback occurs and the
+receipt stays zero. These frames do not prove nonzero retention: the constructed witness and
+source path do. Other domain-owned camera paths remain outside the full camera harness; none
+is admitted by matching an expected receipt. No retained path may be inferred merely from a
+camera that did not move.
+
+The reference agrees with all 87 full-camera vectors (including four adjusted witnesses) and
+16 receipt cases (nine constructed, seven recorded). The constructed arithmetic uses the
+subtraction and direction rules above: upward borrow, downward borrow, equal-pixel upward
+creep, half-range direction, placement changing direction, placement retaining fraction,
+stationary overwrite, nonzero retention and explicit initialisation. The original 83 vector
+camera/seen outputs are unchanged. The four adjusted witnesses exercise extra, ahead lead,
+closed-screen push and open-screen margin; each differs from the reference-profile result.
+The placement input is now pixel-only; fractions previously present in that input were unused.
+
+**Harness contract.** Compare the receipt as a separate camera-owned field at cuts, without
+masking a camera-held or stopped-time frame. Seed it once for a domain free run, carry it on
+skipped ordinary follow, and compare the same field with identical masks in null. The full-view
+camera harness compares view and remembered centre under its historical projection; the
+mandatory receipt-only per-frame and carried-free proof is separate. Broader ordinary-follow inputs keep the
+existing placement/other-writer admission boundaries. No new room or grapple mask is justified.
+
+## Receipt cut execution boundary
+
+The engine persists the full clean Camera and restores `vertical_fraction` from `0DA8`.
+The full-view record harness uses completed-next remembered centre as upstream position;
+it compares view outputs and reports remembered centre without comparison credit.
+`RememberedHeightFraction` has no full-view comparison credit. A separate receipt proof
+compares only that fraction and must establish measurement timing from source metadata.
+
+A requested main-loop wait is an exact interrupted instruction `80:8343` or `80:8346`,
+with the far return at stack pointer plus three resolving to `82:897E`. NMI kind alone is
+insufficient. An overrun phase marker is interpreted only after fixed saved-byte layouts and
+every expected caller return reach the documented main-loop tail. Instruction operands and
+unknown chains are defects. The shared gameplay caller certificate requires preceding state `0998=8`, debug index
+`185C` low byte zero, and zero controls `0091/05C5`. NMI has already latched those controls;
+music, random, OAM, enemy-predebug work and source-certified HDMA content do not replace them.
+Imported active HDMA list roots are followed through the finite source VM, including possible
+wake branches, checked argument widths, pre-instruction replacements and external-call
+footprints. Unknown capabilities or content addresses are defects. These preceding inputs
+prove the selected gameplay dispatch and default debug return; following controls are not
+borrowed for this proof. Completed-next mainwait, record adjacency and one NMI-counter advance
+independently establish completion. Nested and Overrun execution grammars validate their complete already-selected gameplay
+return chains, but the supplemental receipt proof rejects them until their remaining
+asynchronous memory writers are certified.
+
+After-measurement-before-Remembering retains the fraction; it still completes the centre copy
+and may move or clamp view. Receipt retention therefore does not prove full Camera retention.
+Remembering at `90:956E..9583` reads physical Samus centre, after hook `07E9`. The certified
+room-main and graphics capabilities below do not write physical centre
+or the selector after this copy. They make next physical centre its consumed input. The door
+endpoint chains below independently prove execution through the acquired passage route.
+Partial-view resume and runtime placement wiring remain the explicit
+[integration gaps](world-camera.gaps.md#c6-partial-view-resume-and-runtime-camera-placements-open).
+
+The room-main word `07DF` remains unchanged between the endpoints and must name zero,
+`C116`, `E51F`, `E524`, `E525` or `E571`. It is written by room loading, which this same-room
+route does not perform. Zero and `E524` do nothing; `C116` runs sky VRAM/background work;
+`E525` creates debris; `E571` updates Ridley graphics/palette and installs a later movement
+handler; `E51F` rotates view and can initialise a standing pose without moving physical centre.
+The final graphics far pointer at `178C/178E` must name `A0:804C`, `A6:A2F2`, `A8:804C` or
+`A8:E86E`: empty hooks, baby/door OAM drawing or palette cycling. Enemy AI selects it before
+following; these hooks and the later tail do not replace it. Hook `07E9` must remain zero.
+Supported static drawing, HUD, background, health/time, shake and timer tails write neither
+physical centre nor follow selector. Known selector writers execute before following, so
+completed-next `0CF8` supplies the consumed selector.
+
+A nested message wait requires Requested PC `85:813C` or `85:813F`, X equal to one, and
+fixed expected returns at S+2=`85:857B`, S+4=`85:80B7`, S+12=`84:8916` or `84:89CF`,
+S+15=`84:85EE`, S+17=`84:85D0`, S+21=`82:8B75`, S+25=`82:896E`. The complete chain
+proves the final lag iteration resumes the selected gameplay's PLM tail before following.
+Both the ordinary and alternative follow reach Remembering; alternative following retains
+the receipt. The partial measured tail updates Remembering without a second measurement.
+
+Door endpoints require exact instruction identities and fixed caller layouts through the
+state11 wrapper's synthetic `82:E292` return, then `82:896E`. The nested Requested door wait
+has PC `80:8346` and returns S+3=`82:E544`, S+6=`82:E292`, S+10=`82:896E`; its caller has
+already pulled PHP. Source-adjusted decompressor and VRAM-helper returns account for their
+inline arguments. These grammars establish execution, but do not establish memory-write scope. The supplemental
+receipt proof rejects passage intervals: imported initialization callbacks and restored
+decompression destinations remain unsupported. `E675` also performs following. The real passage writes remembered X/Y pixels at `82:E3D2/E3E2`,
+preserving fractions. Runtime passage integration must publish those placements immediately;
+receipt retention alone does not retain the full Camera unchanged.
+The receipt proof admits ordinary Requested mainwait starts with low byte `0360=0`.
+Its reachable HDMA graph excludes reverse-DMA producers `91:CB1C`, `91:CB57`, `91:CB8E`,
+`91:D0D3`, and active or installed preinstruction `88:86EF`. Active low channel bytes at
+`18C0+slot` must be `00,10,20,30,40,50,60,70`: NMI uses eight-bit Y, and these offsets
+preserve the existing DMA control and target graph. Other offsets can alter later DMA
+controls, even though the direct hardware write cannot alias the camera receipt.
+Unknown interrupted suffixes and door loading are explicit defects, never retention masks.
+Exact numeric supplemental accounting, including defect totals and free-run unreached inputs,
+is pinned in `crates/verify/src/harness/camera/receipt_floors.toml`. Per-cause descriptions are
+diagnostics and do not participate in floor equality. Model and null share
+these admissions. The M0 check holds 183 supported cuts against constant-zero 100, and all 182 supported
+transitions against null 95. Its first unsupported interval ends at cut 183, where door loading
+and actor memory-write capabilities are unproved; the remaining 162 transitions receive no
+carried receipt credit. These counts add no full-view or whole-engine credit.
+
+Source: [bank 82](https://patrickjohnston.org/bank/82),
+[bank 90](https://patrickjohnston.org/bank/90) and
+[bank B4](https://patrickjohnston.org/bank/B4).
 ## Size baseline (tokens, 2026-11-08)
 
 `tools size` (the quality-terms counter, `$TEMP/collab/sizedll-quality`), at spine `cc505407c`,
@@ -542,8 +711,8 @@ spine `cc505407c`. The old code lacks two of this spec's rules, the knockback's 
 stopped, so `old` slightly understates the domain. The budget is an indicator: the fit is score ÷
 budget, and being over it costs in proportion to how far over, never as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
-- Area follow (old 715): FollowingHer, LeadingHer, AimingHeight, Remembering, CreepReadsRightward
+- Area follow (old 715): FollowingHer, LeadingHer, AimingHeight, Remembering, CreepReadsRightward, RememberedHeightFraction
 - Area limits (old 1,559): ClosedScreens, RoomEdges, ShortScreens, Settling, TimeStopped,
   DownwardLooksAhead, ScreensRunOn, BelowTheRoom, PushCarries
 
-Budget: 37.5 × 47.0 units = 1,762 (follow 587, limits 1,175)
+Budget: 37.5 × 52.3 units = 1,962 (follow 787, limits 1,175)

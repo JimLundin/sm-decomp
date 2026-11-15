@@ -2,6 +2,15 @@ use super::*;
 use crate::state::room::{Camera, CameraDistance, Scrollers};
 use crate::state::samus::{Fixed as Word, Motion};
 
+fn follow_fixture(camera: &mut Camera, samus: &mut Samus, room: &Room) {
+    let mut model = restore(
+        camera,
+        samus.previous_position,
+        types::VerticalFraction::ZERO,
+    );
+    follow(&mut model, camera, samus, room);
+}
+
 const fn at(pixels: u16, subpixels: u16) -> Word {
     Word { pixels, subpixels }
 }
@@ -115,7 +124,7 @@ fn the_camera_follows_samus_right_at_her_speed_plus_a_pixel() {
         spot(at(0x90, 0), at(0x80, 0)),
         spot(at(0x91, 0x8000), at(0x80, 0)),
     );
-    follow(&mut camera, &mut samus, &of(&[ScrollArea::Blue; 2], &[], 2));
+    follow_fixture(&mut camera, &mut samus, &of(&[ScrollArea::Blue; 2], &[], 2));
     assert_eq!(camera.x, at(2, 0x8000));
     assert_eq!(camera.y, at(0, 0));
     assert_eq!(samus.previous_position, samus.motion.position.into());
@@ -129,7 +138,7 @@ fn a_red_screen_on_the_right_stops_the_camera_at_its_edge() {
         spot(at(0x92, 0), at(0x80, 0)),
     );
     let room = of(&[ScrollArea::Blue, ScrollArea::Red], &[], 2);
-    follow(&mut camera, &mut samus, &room);
+    follow_fixture(&mut camera, &mut samus, &room);
     assert_eq!(camera.x.pixels, 0);
 }
 
@@ -160,7 +169,7 @@ fn facing_left_or_skidding_turns_the_lead() {
         },
     ] {
         let (mut camera, mut her) = (start, her);
-        follow(&mut camera, &mut her, &room);
+        follow_fixture(&mut camera, &mut her, &room);
         assert_eq!(camera.x.pixels, 0x12B);
     }
 }
@@ -180,7 +189,7 @@ fn rising_the_camera_aims_lower_above_her() {
     rising.motion.vertical = VerticalMotion::Up;
     let room = of(&[ScrollArea::Green; 2], &[], 1);
     let mut camera = start;
-    follow(&mut camera, &mut rising, &room);
+    follow_fixture(&mut camera, &mut rising, &room);
     assert_eq!(camera.y.pixels, 0x6B);
 }
 
@@ -192,7 +201,7 @@ fn a_still_camera_in_a_red_screen_leaves_it_three_pixels_a_frame() {
     };
     let still = spot(at(0x80, 0), at(0x80, 0));
     let mut samus = samus(still, still);
-    follow(
+    follow_fixture(
         &mut camera,
         &mut samus,
         &of(&[ScrollArea::Red, ScrollArea::Blue], &[], 2),
@@ -217,7 +226,7 @@ fn scrolling_down_reads_the_scroll_buffer_past_the_room() {
             spot(at(0x80, 0), at(0x16F, 0)),
         );
         let room = of(&[ScrollArea::Green, ScrollArea::Blue], below, 1);
-        follow(&mut camera, &mut samus, &room);
+        follow_fixture(&mut camera, &mut samus, &room);
         camera.y.pixels
     };
     assert_eq!(samus_at(&[ScrollArea::Unknown(0x80)]), 0xFF);
@@ -230,13 +239,54 @@ fn scrolling_down_reads_the_scroll_buffer_past_the_room() {
 fn with_no_room_loaded_the_camera_stays_and_too_few_areas_are_a_fault() {
     let mut state = crate::state::State::default();
     let before = state.room.camera;
-    assert_eq!(scroll(&mut state.room, &mut state.samus), Ok(()));
+    assert_eq!(
+        scroll(&mut state.camera.0, &mut state.room, &mut state.samus),
+        Ok(())
+    );
     assert_eq!(state.room.camera, before);
     state.room.scroll_areas = vec![ScrollArea::Green; 3];
     state.room.width = crate::state::room::BlockColumns(4 * SCREEN_BLOCKS);
     state.room.height = crate::state::room::BlockRows(SCREEN_BLOCKS);
     assert_eq!(
-        scroll(&mut state.room, &mut state.samus),
+        scroll(&mut state.camera.0, &mut state.room, &mut state.samus),
         Err(RoomError::MissingScreens)
     );
+}
+
+#[test]
+fn skipped_follow_keeps_nonzero_receipt_and_placement_keeps_remembered_fraction() {
+    let mut state = crate::state::State::default();
+    state.camera.0 = restore(
+        &state.room.camera,
+        state.samus.previous_position,
+        types::VerticalFraction(0xBEEF),
+    );
+    let saved = state.camera.clone();
+    scroll(&mut state.camera.0, &mut state.room, &mut state.samus).unwrap();
+    assert_eq!(state.camera, saved);
+
+    state.samus.previous_position.y = at(100, 0x9000);
+    // Movement's placement writes only the remembered pixel, before the scroll.
+    state.samus.previous_position.y.pixels = 98;
+    remember(&mut state.camera.0, state.samus.previous_position);
+    assert_eq!(state.camera.0.seen().y, Wrapping(0x0062_9000));
+    assert_eq!(
+        state.camera.0.vertical_fraction(),
+        types::VerticalFraction(0xBEEF)
+    );
+    let saved = canonical::to_bytes(&state);
+    state = canonical::from_bytes(&saved).unwrap();
+    state.samus.motion.position.y = Exact(0x0063_3000);
+    let room = of(&[ScrollArea::Blue], &[], 1);
+    follow(
+        &mut state.camera.0,
+        &mut state.room.camera,
+        &mut state.samus,
+        &room,
+    );
+    assert_eq!(
+        state.camera.0.vertical_fraction(),
+        types::VerticalFraction(0xA000)
+    );
+    assert_eq!(state.samus.previous_position.y, at(99, 0x3000));
 }

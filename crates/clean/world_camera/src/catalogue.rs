@@ -12,7 +12,10 @@ use types::{Checked, Kind, Switch};
 /// A spec entry's id, one variant per entry, named as the spec names it.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum BehaviourId {
-    /// The view moves towards its aim as fast as she moved plus an extra amount.
+    /// On an axis where her pixel part changed, the view moves towards its aim as fast as she
+    /// moved plus an extra amount. An aim at the view's pixel leaves it unchanged, subpixel
+    /// included, without settling; when her pixel part did not change, that axis settles instead
+    /// unless time is stopped.
     FollowingHer,
     /// Across, the view aims to keep her a set distance from its left edge.
     LeadingHer,
@@ -20,11 +23,18 @@ pub enum BehaviourId {
     AimingHeight,
     /// The camera remembers where it last saw her.
     Remembering,
+    /// The fractional height difference remains available to her next shot.
+    RememberedHeightFraction,
     /// A creep left or up inside a pixel reads as a move right or down.
     CreepReadsRightward,
-    /// A closed screen is never shown.
+    /// Following pushes a view entering a closed screen towards its edge, backing off against
+    /// her move by 2 px per frame in the reference profile, or 1 when the move carried a subpixel.
+    /// A settling view may partly show a closed screen while easing out.
     ClosedScreens,
-    /// A view in the room never shows past its edges; one left outside it comes back.
+    /// Following corrects the view at the room edge in its direction; settling first brings it
+    /// into the room. Subsequent screen corrections can take it outside again (ScreensRunOn).
+    /// A view another domain left outside returns at once (sometimes to the far edge) or a few
+    /// pixels per frame, according to the directional rules.
     RoomEdges,
     /// Where the view can go no lower, it stops on a short screen's top edge, or the margin lower.
     ShortScreens,
@@ -58,7 +68,7 @@ pub struct Behaviour {
 }
 
 /// Every spec entry, in the spec's order.
-pub const CATALOGUE: [Behaviour; 14] = [
+pub const CATALOGUE: [Behaviour; 15] = [
     Behaviour {
         id: BehaviourId::FollowingHer,
         summary: "when she moves, the view moves towards its aim as fast as she moved plus an \
@@ -93,6 +103,14 @@ pub const CATALOGUE: [Behaviour; 14] = [
         checked: Checked::ByVectors,
     },
     Behaviour {
+        id: BehaviourId::RememberedHeightFraction,
+        summary: "the fraction of the height difference from her remembered centre remains available \
+                  for the leftward drift of her next shot, even when the view itself cannot move.",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
         id: BehaviourId::CreepReadsRightward,
         summary: "a creep left or up inside a pixel reads as a move right or down of less than \
                   a pixel, so the view eases a pixel less that frame.",
@@ -102,18 +120,21 @@ pub const CATALOGUE: [Behaviour; 14] = [
     },
     Behaviour {
         id: BehaviourId::ClosedScreens,
-        summary: "a closed screen is never shown: a view that goes into one is pushed back to \
-                  its edge, backing off by the push each frame against her move (2 px in the \
-                  reference profile).",
+        summary: "while following, a view that goes into a closed screen is pushed towards its \
+                  edge, backing off by the push each frame against her move (2 px in the \
+                  reference profile). While settling, the view may partly show a closed \
+                  screen as it eases out (`Settling`).",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
         checked: Checked::ByVectors,
     },
     Behaviour {
         id: BehaviourId::RoomEdges,
-        summary: "a view in the room never shows past its left, top or right edge, nor below its \
-                  bottom; one another domain left outside it comes back, at once (at times to \
-                  the far edge) or a few pixels a frame.",
+        summary: "following corrects the view at the room edge in the direction it moves; \
+                  settling first brings it into the room. Subsequent screen corrections can \
+                  take it outside again (`ScreensRunOn`, C-wrap, C-settle-back-far-right). A \
+                  view another domain left outside comes back at once (at times to the far \
+                  edge) or a few pixels a frame, as the directional rules say.",
         kind: Kind::Mechanic,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

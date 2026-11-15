@@ -220,3 +220,20 @@ block shots          # a block her shots break
 block grapple        # a block her grapple holds
 no solid             # a slope column without a solid pixel
 frame pose           # the pose at a lead-in frame's start
+
+# Reviewed generic camera and shared-type phrase contexts; no original-specific structure.
+room after           # prose comparing a position below the room with the room bound
+next row             # geometric continuation of a strip of screens into the row below
+room height          # the room's visible aim-height distance, not a source routine
+screen column        # geometric screen lookup by column and row
+lines up             # prose: a spec entry's text lines up to the next heading
+pixel position       # pixel part of a position on an axis, with wrapping arithmetic
+no speed             # zero motion or distance, expressed as 0.0000
+direction movement   # named directions refer to the model's movement headings
+current pose         # restored values need not relate to Samus's present pose
+run speed booster    # the player's run and the named speed booster ability
+shot bomb            # air on which the player's shots or bombs act
+pixel column         # the surface depth at each geometric column of a block
+list empty           # an empty collection has no members
+not beam             # equipment excluding beams and tanks
+block touch          # blocks reacting to Samus touching them

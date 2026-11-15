@@ -731,6 +731,17 @@ const COMPARATORS: &[Comparator] = &[
     field!("room.camera.x.subpixels", room.camera.x.subpixels),
     field!("room.camera.y.pixels", room.camera.y.pixels),
     field!("room.camera.y.subpixels", room.camera.y.subpixels),
+    Comparator {
+        path: "room.camera.vertical_fraction",
+        compare: |engine, oracle| {
+            engine
+                .camera
+                .0
+                .vertical_fraction()
+                .0
+                .diff(&oracle.camera.0.vertical_fraction().0)
+        },
+    },
     field!("room.camera.layer2.x", room.camera.layer2.x),
     field!("room.camera.layer2.y", room.camera.layer2.y),
     field!("room.camera.bg1_offset.x", room.camera.bg1_offset.x),

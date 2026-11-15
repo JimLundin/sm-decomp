@@ -27,9 +27,16 @@ impl Leads {
 }
 
 /// The camera's tuning parameters.
+///
+/// Parameters use wrapping P.S or pixel arithmetic throughout, including adjusted values.
+/// `extra` also affects the whole-pixel speed used by pushes and settling, `push` changes
+/// their additional distance, and `margin` changes downward floors and bounds. Lead values
+/// are subtracted from her pixel x. These adjustments do not change the receipt calculation.
 #[derive(Clone, Copy, Debug)]
 pub struct Rules {
-    /// The extra pixel the view moves on top of how far she moved (Spec: FollowingHer).
+    /// Extra wrapping P.S distance added to her pixel-directed distance, including any fractional
+    /// part (Spec: FollowingHer). Pushes and settling read the resulting speed's pixel part;
+    /// the retained height fraction excludes this extra (Spec: RememberedHeightFraction).
     pub extra: Fixed,
     /// The leads of `LeadSetting::Ahead` (Spec: LeadingHer).
     pub ahead: Leads,

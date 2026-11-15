@@ -432,6 +432,8 @@ pub struct Rules<'t> {
     pub camera_y: WramWord,
     /// `room.camera.y.subpixels`.
     pub camera_y_subpixels: WramWord,
+    /// The clean camera's retained height fraction.
+    pub camera_vertical_fraction: WramWord,
     /// The rest of `room.camera`.
     pub scrolling: ScrollingSources,
     /// `samus.previous_position`: x, its subpixels, y, its subpixels.
@@ -1063,6 +1065,7 @@ impl Rules<'_> {
         camera_x_subpixels: source::LAYER1_X_SUBPOS,
         camera_y: source::LAYER1_Y_POS,
         camera_y_subpixels: source::LAYER1_Y_SUBPOS,
+        camera_vertical_fraction: source::CAMERA_VERTICAL_FRACTION,
         scrolling: ScrollingSources {
             layer2: [source::LAYER2_X_POS, source::LAYER2_Y_POS],
             bg1_offset: [source::BG1_X_OFFSET, source::BG1_Y_OFFSET],
@@ -1210,6 +1213,13 @@ impl Rules<'_> {
         };
         let irq = self.irq(record)?;
 
+        let samus = self.samus(wram, &rooms.samus_clips)?;
+        let room = self.room(wram, rooms, room)?;
+        let camera = canonical::model::Model(game::world_camera_bridge::restore(
+            &room.camera,
+            samus.previous_position,
+            types::VerticalFraction(self.camera_vertical_fraction.read(wram)?),
+        ));
         let state = State {
             main,
             irq,
@@ -1247,12 +1257,13 @@ impl Rules<'_> {
                 ..Timing::default()
             },
             video: self.video(record, rooms)?,
-            samus: self.samus(wram, &rooms.samus_clips)?,
+            samus,
+            camera,
             movement_travel: canonical::model::Model(samus_movement::TravelledDistances {
                 travels: directional_travel(wram)?,
             }),
             atmospherics: self.atmospherics.read(wram)?,
-            room: self.room(wram, rooms, room)?,
+            room,
             elevator: self.elevator.read(wram)?,
             enemy_palette_cycle: self.palette_cycle.read(wram)?,
             message: Message(self.message.read(wram)?),

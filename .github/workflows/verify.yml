@@ -223,6 +223,18 @@ jobs:
             "$RUNNER_TEMP/directional-travel.txt"
           grep -Fxq 'directional travel: 7/7 compared and matched; zero-output null 0/7' \
             "$RUNNER_TEMP/directional-travel.txt"
+      - name: "Camera receipt: recorded per-frame, carried State and M0 passage proof"
+        run: |
+          set -euo pipefail
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+            cargo test --locked -p verify --profile verify \
+              harness::camera::receipt::tests:: -- --nocapture \
+            | tee "$RUNNER_TEMP/camera-receipt.txt"
+          for test in every_supported_camera_receipt_matches_per_frame_and_carried_free \
+            m0_receipt_is_carried_through_supported_gameplay_prefix; do
+            grep -Fxq "test harness::camera::receipt::tests::${test} ... ok" \
+              "$RUNNER_TEMP/camera-receipt.txt"
+          done
       - name: "Domain free run: every domain fed its own State over every cached row, against free_floors.txt"
         run: |
           # The primary proof (MODEL §4): each row's segments, first divergences and held frames

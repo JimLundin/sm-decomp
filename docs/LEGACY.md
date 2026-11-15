@@ -214,7 +214,10 @@ original's bytes as data.
   lets her move on, as in the original, but the engine has no doors yet, so it starts no passage
   (game state 9 and the door pointer `$078D`, set as she reaches the door): she moves on into the
   door's cells and the room goes on running. The harness compares the frame that reaches the door,
-  her move, and skips those after it, which aren't gameplay. The entry goes with the doors (R1, R2).
+  her move, and skips those after it, which aren't gameplay. The missing passage also owns the
+  remembered X/Y pixel replacements at `$82:E3D2`/`$82:E3E2`, preserving their fractions and
+  the camera receipt. Runtime passage wiring must publish those placements immediately into
+  the pinned Camera before an intervening checkpoint. The entry goes with the doors (R1, R2).
 
 - **The Ceres doors in the engine** (the boss-ceres-ridley domain,
   `docs/behaviours/boss-ceres-ridley.md`; `game::boss_ceres_ridley_bridge`): the engine runs the
@@ -282,9 +285,9 @@ original's bytes as data.
   checkpoints. These are per-direction collision-returned whole and fractional distances.
   Their write semantics when PRE is skipped remain unproved, and W1 cannon consumption of
   the retained interval remains unwired. Pending firing aim and preceding shoot press are
-  also missing inputs. Camera also lacks the retained
-  fractional receipt of Samus's vertical distance from the remembered centre, which W1 reads
-  independently of the camera's clamped travel. Pending aim needs the pose change's named
+  also missing inputs. The engine retains the clean camera's height-distance fraction across
+  frames and checkpoints, independently of clamped camera travel. Its W1 PRE consumer remains
+  unwired; persistence alone does not establish cannon integration. Pending aim needs the pose change's named
   output, and preceding shoot press needs the drawing phase's history update. C1 does not
   supply player-owned shot contact before each enemy's AI in
   `game::enemy::run`, so it cannot consume a Flying shot after W1's update (the observed

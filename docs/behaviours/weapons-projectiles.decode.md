@@ -274,8 +274,15 @@ constants and $ECB6 the water effect; neither moves Samus. Directional movement 
 written by $90:9395/939A, 93D0/93D5, 9433/9438 and 9461/9466, including the enemy-blocked
 routes $9826/$9842/$9871/$988D. $EB05..EB1A clears them after W1; POST movement refills
 them before the next cut. They are the latest per-direction whole/fraction receipts, not net
-centre displacement. Camera fraction $0DA8 is the absolute vertical displacement fraction
-computed by $90:96FF, before follow remembers her centre; preserve it when that route is skipped.
+centre displacement. Camera fraction $0DA8 is measured by
+$90:96FF before follow remembers her centre. The sign of the pixel-word difference selects
+which fractional subtraction is used: remembered minus current when the pixel difference is
+negative, current minus remembered otherwise (equal pixels included). Each subtraction wraps
+to 16 bits. Pose placement replaces the remembered pixel only, retaining its old fraction;
+therefore this is not the absolute value of a full fixed-point difference. Preserve the receipt
+when ordinary following is skipped; fresh Samus initialisation separately resets it. W1 uses
+its high byte in leftward x-speed drift. The exact producer and watched placement/borrow cases
+are in [the camera contract](world-camera.decode.md#retained-vertical-distance-producer-and-lifetime).
 
 Pending aim is produced by POST pose application ($91:EB88, F404/F433, F490, F5CF..F5E6
 and F8D3..F903), consumed on an available muzzle attempt ($90:BA56), then cleared by $EB20.

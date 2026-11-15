@@ -10,7 +10,8 @@ what it may not. Written behaviour first, from the oracle's records over time. V
 **Scope.** One domain, because the player sees one thing: the view following her. It covers the
 view's position in the room on both axes, the point it aims at (the lead across, the height down),
 the speed it moves at, the room's edges, the room's closed screens and how it eases out of them,
-and what it remembers of her between frames. It reads her motion's outputs: her position after her
+and what it remembers of her between frames, including the fractional height difference that
+her next shot inherits. It reads her motion's outputs: her position after her
 moves, the y a placement put her at, if any, whether she skids, whether she rises, her facing and
 whether she moonwalks.
 
@@ -38,7 +39,8 @@ screens, each 256 px square; the view is 256 px across.
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
 | camera position | x, y: `P.S`; the view's top-left corner in the room | where the room is drawn on the screen | every entry; output |
-| where it last saw her | x, y: `P.S` | the view's next move: its speed and whether she moved are measured from here | `FollowingHer`, `Remembering` |
+| retained height fraction | `VerticalFraction`, subpixel count 0 to 65535; 65536 per pixel | the leftward drift inherited by her next shot | `RememberedHeightFraction`; output to weapons-projectiles |
+| where it last saw her | x, y: `P.S` | the view's next move: its speed and whether she moved are measured from here | `FollowingHer`, `Remembering`, `RememberedHeightFraction` |
 
 In §2's formulas, on one axis: `c` is the camera's position, `s` hers and `e` where it last saw
 her, all `P.S`, and `sx`, `ex`, `sy`, `ey` the pixel parts of hers and the seen one on each axis.
@@ -46,15 +48,18 @@ her, all `P.S`, and `sx`, `ex`, `sy`, `ey` the pixel parts of hers and the seen 
 
 ### 1.2 What it remembers
 
-Only the two quantities above. A vector's start gives both; nothing else carries from one frame to
-the next.
+The three quantities above persist. The retained fraction starts at zero when Samus is freshly
+initialised. A caller can set and read every allowed fraction, including when restoring a saved
+state. Placing the view or replacing its remembered centre does not itself initialise the
+fraction. Each ordinary following frame replaces it; a frame without ordinary following keeps
+it. How callers select such a frame belongs to their domains (§5).
 
 ### 1.3 What it reads (Inputs)
 
 | Input | Type | Read by |
 | --- | --- | --- |
-| her position | x, y: `P.S`, after everything that moved her this frame | `FollowingHer`, `LeadingHer`, `AimingHeight`, `Remembering` |
-| the y a placement put her at, if any | `P.S`, or none: where pose fit or a change of shape placed her this frame (her motion's output); none on a frame nothing placed her, and then the camera follows her from where it last saw her | `Remembering` |
+| her position | x, y: `P.S`, after everything that moved her this frame | `FollowingHer`, `LeadingHer`, `AimingHeight`, `Remembering`, `RememberedHeightFraction` |
+| the y a placement put her at, if any | `PlacementY`, a pixel coordinate from 0 to 65535, or none: where pose fit or a change of shape placed her this frame (her motion's output); none on a frame nothing placed her, and then the camera follows her from where it last saw her | `Remembering`, `RememberedHeightFraction` |
 | her facing | `Left`, `Right`, `Screen` (facing the player; leads as `Right`) | `LeadingHer` |
 | going backwards | `bool`: she skids (her motion's output), moonwalks (her pose), or takes a knockback (the damage domain); the vectors name which | `LeadingHer` |
 | rising | `bool`: she is rising, from the rise's start until it ends, a rise at 0 and the frame that spends the rise included: samus-movement's output (`RisingAndFalling`), or the knockback's while one moves her (§5) | `AimingHeight` |
@@ -64,7 +69,8 @@ the next.
 | time stopped | `bool` | `TimeStopped` |
 
 **Screen kinds**, listed alphabetically (the order means nothing):
-- `Closed`: the view may not show it; a view that would is pushed back to its edge.
+- `Closed`: following pushes the view away from it towards its edge (`ClosedScreens`);
+  settling may partly show it while easing out (`Settling`).
 - `Open`: the view may show all of it.
 - `Short`: like `Open`, but where the view can go no lower it stops with its top on the screen's
   top edge, the margin higher than on an `Open` one, so less of the screen's bottom is shown
@@ -125,9 +131,10 @@ of the room is in a column past the row's last (`ScreensRunOn`).
   going left or up, it `before` the aim) → it stops on the aim, its subpixel part 0
   [C-right-onto-edge, C-left-past-edge, C-aim-above-top-right-edge, C-up-to-aim,
   C-skid-rising-down-to-bottom, C-lead-near-right]
-- So with the aim's pixel part the camera's, it stays as it is, subpixel included, and doesn't
-  settle (C-at-aim-across-rising, C-at-aim-down, C-at-aim-down-held-across, C-at-aim-across). When
-  she didn't move on an axis, it settles instead (`Settling`).
+- So on an axis where her pixel part changed, with the aim's pixel part the camera's, it stays
+  as it is, subpixel included, and doesn't settle (C-at-aim-across-rising, C-at-aim-down,
+  C-at-aim-down-held-across, C-at-aim-across). When she didn't move on an axis, it settles instead
+  (`Settling`).
 - So a creep left or up inside a pixel gives a speed under 1 px (`CreepReadsRightward`).
 - Every other rule in this spec sets the camera's pixel part only: its subpixel part changes only
   by this move and this stop.
@@ -186,13 +193,46 @@ of the room is in a column past the row's last (`ScreensRunOn`).
   [C-aim-above-top, C-hold-creep, C-skid-rising-down-to-bottom, C-stopped-hold-other-heights,
   C-placed]
 - A placement put her at a y this frame, before it follows → the pixel part of where it last saw
-  her down becomes that y's, its subpixel part kept [C-placed, C-placed-pixel]
+  her down becomes that y, its subpixel part kept [C-placed, C-placed-pixel]
 - So with nothing placing her, where it last saw her stays as it was until after both axes, and
   the move pose fit or a change of shape made isn't followed: from the placed y she didn't move
   (C-placed); the same frame unplaced scrolls (C-unplaced). The kept subpixel can make her
   creep inside a pixel (C-placed-pixel eases 2 px).
 - checked: oracle (every harness case's seen position); constructed (every vector's `after.seen`;
   C-placed, C-placed-pixel, C-unplaced).
+
+### RememberedHeightFraction
+- kind: mechanic.
+- summary: the fraction of the height difference from her remembered centre remains available
+  for the leftward drift of her next shot, even when the view itself cannot move.
+- params: none.
+- switch: none.
+- Ordinary following, her pixel part is `before` the remembered pixel part after any placement
+  → replace the retained fraction with `(remembered_fraction − her_fraction) mod 65536`
+  [D-up-borrow, D-half-turn, D-recorded-17, D-recorded-82]
+- Ordinary following, her pixel part is not `before` that remembered pixel part
+  → replace it with `(her_fraction − remembered_fraction) mod 65536`
+  [D-down-borrow, D-same-pixel, D-still-replaces, D-placement-keeps-fraction,
+  D-placement-turns, D-recorded-19, D-recorded-22, D-recorded-54, D-recorded-121]
+- No ordinary following → retain the previous fraction [D-retain-nonzero, D-recorded-retain]
+- Samus is freshly initialised → the retained fraction becomes zero [D-initialise]
+- The direction test is `FollowingHer`'s pixel comparison, including its half-range case.
+  Equal pixels therefore take the second arm even when she crept upwards inside the pixel.
+  Borrow wraps the fraction; its borrow into the whole-pixel distance does not change the
+  retained fraction. The extra following speed is not part of this distance, including an
+  adjusted extra with a fractional part.
+- `Remembering` supplies the effective remembered centre: a placement changes its pixel part,
+  keeping its old fraction. The distance is measured before the remembered centre becomes her
+  current position. Every ordinary follow replaces it, including a still frame, an aim already
+  reached, a room edge that holds the view and stopped time [D-still-replaces, D-same-pixel;
+  every full camera vector's `after.vertical_fraction`].
+- A passage or another camera can omit ordinary following. The caller supplies that selection;
+  a passage label alone does not decide it. This rule only preserves the receipt, without
+  specifying those domains' view movement or remembered centre.
+  Stopped time alone is not such a frame: `TimeStopped` skips settling only.
+- checked: oracle (D-recorded-17, D-recorded-19, D-recorded-22, D-recorded-54, D-recorded-82,
+  D-recorded-121, D-recorded-retain); constructed (the other D vectors and every full camera
+  vector's fraction).
 
 ### CreepReadsRightward
 - kind: quirk.
@@ -216,8 +256,9 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 
 ### ClosedScreens
 - kind: mechanic.
-- summary: a closed screen is never shown: a view that goes into one is pushed back to its edge,
-  backing off by the push each frame against her move (2 px in the reference profile).
+- summary: while following, a view that goes into a closed screen is pushed towards its edge,
+  backing off by the push each frame against her move (2 px in the reference profile). While
+  settling, the view may partly show a closed screen as it eases out (`Settling`).
 - params: the push, 2 px beyond the speed.
 - switch: **Parameter**, the push (params). A push also moves by `v`, which holds
   `FollowingHer`'s extra, so that Parameter changes it too.
@@ -256,9 +297,10 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 
 ### RoomEdges
 - kind: mechanic.
-- summary: a view in the room never shows past its left, top or right edge, nor below its bottom;
-  one another domain left outside it comes back, at once (at times to the far edge) or a few
-  pixels a frame.
+- summary: following corrects the view at the room edge in the direction it moves; settling
+  first brings it into the room. Subsequent screen corrections can take it outside again
+  (`ScreensRunOn`, C-wrap, C-settle-back-far-right). A view another domain left outside comes
+  back at once (at times to the far edge) or a few pixels a frame, as the directional rules say.
 - params: none.
 - switch: none.
 - The camera's furthest right is the last screen's left edge, `xr = (w − 1) × 256`; its furthest
@@ -430,6 +472,8 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 - Across first, then down: the row it reads across, 128 px below its top edge, is the camera's
   before it moves down, and the column it reads down, 128 px right of its left edge, is the
   camera's after it moved across.
+- The retained height fraction uses the same remembered centre as following, before that
+  centre is replaced. The next shot reads the retained output; shooting does not clear it.
 - Where it last saw her becomes her position after both axes, so a frame's two speeds are both
   measured from the last frame's.
 - A placement (the y it put her at) replaces where it last saw her down before the camera follows.
@@ -438,7 +482,8 @@ screen the view's top may stop where it can go no lower, in px (`ShortScreens`);
 
 ## 5. Out of scope, and who supplies it
 
-- **Doors and room loading:** the passage places the view in the next room and sets where it
+- **Doors and room loading:** absent fresh initialisation, the retained height fraction survives
+  view placement and frames without ordinary following. The passage places the view in the next room and sets where it
   last saw her; the room's loading supplies the room's screens, its aim heights and the run of
   screens after the room's last screen (`BelowTheRoom`).
 - **The cells:** a cell that opens or closes a screen changes the room's screens before the camera
