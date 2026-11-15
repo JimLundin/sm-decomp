@@ -319,3 +319,75 @@ gameplay), so no area has `old` for the guideline comparison (MODEL §1 decision
 - Area passage: TheTouch, PassageTime, FinishedFrames, Quieting, TheFades, Fading, Squaring, Building, SettingOff, Sliding, Carrying, Arriving, WhereSheLands, Landing, SheKeepsHerMotion, WhatRuns
 
 Budget: 37.5 × 77.7 units = 2,912 (passage 2,912)
+
+## First Quieting production boundary
+
+The original first-entry order is `$82:E1C4` mini-map, `E1C7` last save use,
+`E1CA`/`E1CE` enemy selection and run, `E1D2` normal layered drawing, `E1D6`
+inanimate body drawing, `E1D9` source/destination CRE flags, `E1E1`..`E264` target
+colours, conditional `E267` timer drawing, `E26B` Samus sound selection, `E272`
+room silence, `E279` holding requests. This source order is not automatically a spec
+ordering rule. Request-before-hold is observable: the queue admission checks `05F5`.
+The enemy run can write screen colours; target colours must use the resulting colours.
+Independent mini-map and save-use writes can be applied anywhere before the compared cut.
+
+### Drawing contract
+
+`WhatRuns`'s `drawn` includes both normal layered drawing and the extra inanimate Samus
+body, not just one call to the gameplay drawing helper. `$A0:884D` invokes `$90:EB35`
+at layer3 (`$A0:8871`), draws its layer queues, then the graphics-drawn hook (`$A0:88BD`).
+Only afterwards does `$82:DFC7` invoke `$90:8A00` (unless the door is an elevator).
+The extra draw appends the same frozen pose/frame's body and queues its tiles; it neither
+runs her animation/movement nor changes her drawing handler. Its OAM ordering matters.
+It does not draw the cannon, atmospheric effects or trails a second time.
+
+Normal `$90:EB35` invokes cannon state/drawing, projectile drawing (`$93:8254`),
+auto-jump/hurt/input-history/previous-health maintenance (`$90:EAB3`) and sound/time-up
+maintenance (`$90:F576`). These are the neighbour's drawing obligations, not movement.
+The spec's unchanged pose/speed/momentum rule does not license skipping these writers.
+
+Projectile drawing ends at `$93:82F7` with `$90:B6A9`: existing trails age and draw even
+while PRE is paused. No new trail spawns in this pass: the spawn (`$90:B657`) is produced
+by projectile execution (`$90:B0FC` for the ordinary beam), which `WhatRuns` pauses.
+For checked ordinary power content `EndsImmediately`, a validated retained-empty trail
+pool gives a real zero-request drawing receipt. Do not manufacture a PRE receipt or a
+history append just to satisfy a helper. Normal layer3 input history is still updated.
+A draw helper may share body/tiles without temporarily changing her drawing handler.
+
+M0 records182->183 and183->184 independently keep animation words `0A94..0A97`,
+cannon state `0AA6..0AAC`, auto-jump `0AF4`, hurt flash `0A48`, previous health `0A12`,
+and trail memory `D658..D7BF` unchanged. These observations do not prove all drawing writers
+are inactive for arbitrary restored State. Admission must validate unsupported neighbour
+features or the production neighbour must supply them. OAM must compare whole.
+
+### Inputs and retained state
+
+Source/destination items-dark are room-header content, not selected room-version state:
+`$82:DDF1` copies current CRE `07B3` to previous `07B1`, reads destination header byte8,
+then uses `(07B1 | 07B3) & 1`. Import both rooms' flags from the player's ROM at the edge;
+never derive them from a predicted passage phase. B8 escape-running is `0943 != 0`.
+M0 first entry has both room flags false and escape inactive; admission validates actual
+native seed and imported room content, not unvalidated constants.
+
+Last-save-use `1E75` is real retained behaviour state: `$84:B5A2` reads it to prevent repeat
+use, and `$84:B03A` sets it. It is not an unobserved hardware leftover. The first entry clears
+it. M0 has it inactive before/after entry. A bounded inactive-state capability needs actual
+validation at seed/restoration; supporting active use needs P2's typed owner and reset event.
+
+### Timing and prefix limitation
+
+M0 `chain-any-0003-DFD7`: frame182 Requested is state9/E17D; frame183 Requested is
+stateBh/E29E; frame184 Requested is stateBh/E2DB with fade numerator0. First-entry effects
+all complete by183; last timing admits work and next-cut timing certifies completion for
+this Requested first entry. Completion-only execution cannot model the fade's partial writes:
+WRAM palette hashes differ at Overrun187 and188 before Requested189 advances its numerator.
+Do not weaken the existing frames-of-work harness into a complete-cut claim.
+
+Audio is required from the native seed, not first introduced at the door. M0 cut0 already
+holds a library3 outstanding acknowledgment; it clears/re-arms through2..6. There are78 cuts
+with audio state changes through183, including pending backlog81..84. A last pre-door sound
+at174 clears/re-arms through176..180. The send-only boundary draft
+can check the first entry in isolation but cannot produce this native prefix without its
+request and acknowledgment owners. No production readiness may be injected at182.
+
+Independent decoder: `$TEMP/collab/night-20261115/observer/first_cut.py`.

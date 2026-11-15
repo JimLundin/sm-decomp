@@ -42,7 +42,7 @@ costs, the lock's recorded timing gives them, as it does for every domain the fr
 
 **What the other domains must carry unchanged across the passage.** Samus's State in
 samus-movement, but for her position, which the passage moves (§1.4): her pose, facing, speeds,
-momentum, and every timer of hers; she resumes as she was (`SheKeepsHerMotion`). The camera's
+momentum; she resumes as she was (`SheKeepsHerMotion`). The camera's
 State, but for the two quantities the passage sets. The HUD's and progress's State. Each enemy's
 State on the frames the enemies don't run (`WhatRuns`).
 
@@ -477,6 +477,9 @@ Cells: phase, frames of work, next phase
   the next.
 - Where the camera last saw her is set by the placing and every slide frame, not by `Landing`:
   after the passage the camera measures from her position at the slide's end.
+- The first door sound requests are admitted before sounds are held. Holding rejects later
+  requests but does not stop already waiting requests from being sent. The passage reads
+  whether requests are sent before the sound send turn that follows its work.
 - The queue of tracks takes its step at the start of the frame of work, before
   `Music { started: false }` reads it (U1).
 
