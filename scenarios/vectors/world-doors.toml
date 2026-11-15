@@ -21,6 +21,11 @@
 #   (absent before it is taken): { way, "Down", "Left", "Right" or "Up"; view = [x, y], the
 #   view's place in the next room, px; speed (optional), her speed in the slide, P.S }; slide
 #   (absent before it starts): the slide's frames so far.
+# - fade_neighbours (optional retained fade state): "NotStarted", "Underway", "Complete",
+#   or "NotRequired" for terminal Darkening. Each fade vector explicitly supplies
+#   inputs.fade_neighbours_reached, an independently produced aggregate owner receipt.
+#   after.neighbour_start/resume report start/continuation requests, default false.
+#   Aggregate completion certifies every required owner; each retains its own partial State.
 # - fade_covered (optional in before/after): retained ColourCount0..256 for unfinished fade
 #   work. Absent means no fade work in progress. t stays the current work step until done.
 # - colours may name slot (0..255), their screen colour number; omitted slots use
@@ -89,8 +94,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
-inputs = { done = false }
-after = { fade_covered = 0, phase = "Darkening", t = 5, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_neighbours_reached = "NotStarted" }
+after = { fade_covered = 0, phase = "Darkening", t = 5, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 # the contents still being fetched: the slide moves, the frame is finished anyway
@@ -190,7 +195,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
-after = { phase = "Darkening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # step 1: each channel 1/13 of the way, rounded toward black; a colour at its goal stays
@@ -202,7 +208,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
-after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "0380", goal = "0000" }, { now = "0C63", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "0380", goal = "0000" }, { now = "0C63", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # step 7 of a colour part way: the divisor is 6
@@ -214,7 +221,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "1A6B", goal = "0000", group = "Other" }, { now = "0421", goal = "7FFF", group = "Other" }]
-after = { phase = "Darkening", t = 8, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "15E9", goal = "0000" }, { now = "18C6", goal = "7FFF" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 8, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "15E9", goal = "0000" }, { now = "18C6", goal = "7FFF" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # step 13: every colour is its goal
@@ -226,7 +234,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "0842", goal = "0000", group = "Other" }, { now = "0421", goal = "0000", group = "Other" }]
-after = { phase = "Darkening", t = 14, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "0000", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 14, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "0000", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # step 14 changes nothing, the enemies stop, the view squares next
@@ -238,6 +247,7 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "0000", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
+inputs = { fade_neighbours_reached = "NotRequired" }
 after = { phase = "Squaring", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
 
 [[vector]]
@@ -250,7 +260,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "0000", goal = "7FFF", group = "Other" }, { now = "0000", goal = "03E0", group = "Other" }, { now = "1084", goal = "1084", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
-after = { phase = "Brightening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "03E0" }, { now = "1084", goal = "1084" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 1, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "03E0" }, { now = "1084", goal = "1084" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # the fade in, step 5: toward the new room's colours; the tiles, enemies and projectiles run
@@ -262,7 +273,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "2108", goal = "7FFF", group = "Other" }, { now = "00A0", goal = "03E0", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
-after = { phase = "Brightening", t = 6, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "294A", goal = "7FFF" }, { now = "0100", goal = "03E0" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 6, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "294A", goal = "7FFF" }, { now = "0100", goal = "03E0" }, { now = "5EF7", goal = "5EF7" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # the last step: play goes on, sounds let through, her spin's sound asked for again
@@ -274,7 +286,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }]
-after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # a fade in of 6 steps ends at step 8: play goes on
@@ -287,7 +300,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "7FFF", group = "Other" }]
-after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # the fade in's work not done: not a finished frame, the count goes on
@@ -298,8 +312,8 @@ before = { phase = "Brightening", t = 3 }
 her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
-inputs = { done = false }
-after = { fade_covered = 0, phase = "Brightening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_neighbours_reached = "NotStarted" }
+after = { fade_covered = 0, phase = "Brightening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 # a fade of 6 steps: step 2 divides by 5
@@ -312,7 +326,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "1084", goal = "0C63", group = "Other" }]
-after = { phase = "Darkening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "6318", goal = "0000" }, { now = "0C63", goal = "0C63" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "6318", goal = "0000" }, { now = "0C63", goal = "0C63" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # a fade of 6 steps: step 7 lands every colour on its goal
@@ -325,7 +340,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "0842", goal = "0000", group = "Other" }]
-after = { phase = "Darkening", t = 8, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 8, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 # a fade of 6 steps ends at step 8
@@ -338,6 +354,7 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "0000", goal = "0000", group = "Other" }]
+inputs = { fade_neighbours_reached = "NotRequired" }
 after = { phase = "Squaring", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
 
 [[vector]]
@@ -885,8 +902,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 101 }
-after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 101, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-continue-overrun"
@@ -897,8 +914,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 219 }
-after = { phase = "Darkening", t = 1, fade_covered = 219, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 219, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 1, fade_covered = 219, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-complete-overrun"
@@ -909,8 +926,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "739C", goal = "0000", group = "Other" }, { slot = 218, now = "739C", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = true, fade_reached = 256 }
-after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { done = true, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 id = "fade-no-progress"
@@ -921,8 +938,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 101 }
-after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 101, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-colours-done-pending"
@@ -933,8 +950,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "739C", goal = "0000", group = "Other" }, { slot = 218, now = "739C", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 256 }
-after = { phase = "Darkening", t = 1, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 256, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 1, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-complete-after-colours"
@@ -945,8 +962,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "739C", goal = "0000", group = "Other" }, { slot = 218, now = "739C", goal = "0000", group = "Other" }, { slot = 219, now = "739C", goal = "0000", group = "Other" }, { slot = 255, now = "739C", goal = "0000", group = "Other" }]
-inputs = { done = true, fade_reached = 256 }
-after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { done = true, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 id = "fade-bright-overrun"
@@ -957,8 +974,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "0000", goal = "7FFF", group = "Other" }, { slot = 100, now = "0000", goal = "7FFF", group = "Other" }, { slot = 101, now = "0000", goal = "7FFF", group = "Other" }, { slot = 218, now = "0000", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
-inputs = { done = false, fade_reached = 101 }
-after = { phase = "Brightening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 101, fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "Complete", neighbour_start = true }
 
 [[vector]]
 id = "fade-zero-pending"
@@ -969,8 +986,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 219 }
-after = { phase = "Darkening", t = 0, fade_covered = 219, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 219, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 0, fade_covered = 219, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-goal-overrun"
@@ -981,8 +998,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 101 }
-after = { phase = "Darkening", t = 13, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "0000", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 101, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 13, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "0000", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-boundary-last-colour"
@@ -993,8 +1010,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "0842", goal = "7FFF", group = "Other" }, { slot = 100, now = "0842", goal = "7FFF", group = "Other" }, { slot = 101, now = "0842", goal = "7FFF", group = "Other" }, { slot = 218, now = "0842", goal = "7FFF", group = "Other" }, { slot = 219, now = "0842", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
-inputs = { done = false, fade_reached = 256 }
-after = { phase = "Brightening", t = 1, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 1, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "Complete", neighbour_start = true }
 
 [[vector]]
 id = "fade-final-pending"
@@ -1005,8 +1022,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 256 }
-after = { phase = "Darkening", t = 14, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 256, fade_neighbours_reached = "NotRequired" }
+after = { phase = "Darkening", t = 14, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotRequired" }
 
 [[vector]]
 id = "fade-final-complete"
@@ -1017,7 +1034,7 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = true, fade_reached = 256 }
+inputs = { done = true, fade_reached = 256, fade_neighbours_reached = "NotRequired" }
 after = { phase = "Squaring", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
 
 [[vector]]
@@ -1029,8 +1046,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "0000", goal = "7FFF", group = "Other" }, { slot = 100, now = "0000", goal = "7FFF", group = "Other" }, { slot = 101, now = "0000", goal = "7FFF", group = "Other" }, { slot = 218, now = "0000", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
-inputs = { done = false, fade_reached = 256 }
-after = { phase = "Brightening", t = 14, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 14, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "Complete", neighbour_start = true }
 
 [[vector]]
 id = "fade-bright-final-complete"
@@ -1041,8 +1058,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "0000", goal = "7FFF", group = "Other" }, { slot = 100, now = "0000", goal = "7FFF", group = "Other" }, { slot = 101, now = "0000", goal = "7FFF", group = "Other" }, { slot = 218, now = "0000", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
-inputs = { done = true, fade_reached = 256 }
-after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false }
+inputs = { done = true, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
 
 [[vector]]
 id = "fade-adjusted-overrun"
@@ -1054,8 +1071,8 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
-inputs = { done = false, fade_reached = 101 }
-after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "3DEF", goal = "0000" }, { now = "3DEF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+inputs = { done = false, fade_reached = 101, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "3DEF", goal = "0000" }, { now = "3DEF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, fade_neighbours = "NotStarted" }
 
 [[vector]]
 id = "fade-adjusted-complete"
@@ -1067,5 +1084,101 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ slot = 0, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 100, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 101, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 218, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
-inputs = { done = true, fade_reached = 256 }
-after = { phase = "Brightening", t = 4, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+inputs = { done = true, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 4, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = true }
+
+[[vector]]
+id = "neighbours-before-start"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Brightening", t = 1, fade_covered = 0 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 0, fade_neighbours_reached = "NotStarted" }
+after = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "NotStarted", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = false, neighbour_resume = false }
+
+[[vector]]
+id = "neighbours-start-pending"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Brightening", t = 1, fade_covered = 0 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 0, fade_neighbours_reached = "Underway" }
+after = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Underway", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = true, neighbour_resume = false }
+
+[[vector]]
+id = "neighbours-resume-at-zero"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Underway" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 0, fade_neighbours_reached = "Underway" }
+after = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Underway", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = false, neighbour_resume = true }
+
+[[vector]]
+id = "neighbours-done-at-zero"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Complete" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 0, fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Complete", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = false, neighbour_resume = false }
+
+[[vector]]
+id = "neighbours-finish-at-zero"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Underway" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 0, fade_neighbours_reached = "Complete" }
+after = { phase = "Brightening", t = 1, fade_covered = 0, fade_neighbours = "Complete", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = false, neighbour_resume = true }
+
+[[vector]]
+id = "neighbours-dark-start"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Darkening", t = 1, fade_covered = 256, fade_neighbours = "NotStarted" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "739C", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 256, fade_neighbours_reached = "Underway" }
+after = { phase = "Darkening", t = 1, fade_covered = 256, fade_neighbours = "Underway", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = true, neighbour_resume = false }
+
+[[vector]]
+id = "neighbours-dark-resume"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Darkening", t = 1, fade_covered = 256, fade_neighbours = "Underway" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "739C", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 1, fade_covered = 256, fade_neighbours = "Complete", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false, neighbour_start = false, neighbour_resume = true }
+
+[[vector]]
+id = "neighbours-dark-complete"
+source = "constructed"
+entries = ["Fading", "PassageTime", "WhatRuns"]
+before = { phase = "Darkening", t = 1, fade_covered = 256, fade_neighbours = "Complete" }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ now = "739C", goal = "0000", group = "Other" }]
+inputs = { done = true, fade_reached = 256, fade_neighbours_reached = "Complete" }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false, neighbour_start = false, neighbour_resume = false }

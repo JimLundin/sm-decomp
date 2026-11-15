@@ -92,12 +92,23 @@ channels of 5 bits: red in bits 0 to 4, green 5 to 9, blue 10 to 14.
 
 ### 1.2 What it remembers: state a caller can hold
 
-The phase with its data, the arrival once taken, the slide's frames, and the fade's coverage
+The phase with its data, the arrival once taken, the slide's frames, the fade's neighbour-work
+progress and the fade's coverage
 while a frame of fade work is in progress. Fade coverage is a `ColourCount`, 0 to 256,
 counting the screen colours already treated in that frame of work; `Fading` and `PassageTime`
 read it on later frames. No coverage means no fade work is in progress. Coverage 256 with
 unfinished work is allowed: all colours have been treated but the frame's other work continues.
-The phase's `t` is the step of that work until it completes. These quantities are publicly
+The phase's `t` is the step of that work until it completes. Neighbour-work progress is
+`NeighbourWork`: `NotStarted`, `Underway`, `Complete`, or `NotRequired`. It records the aggregate
+obligation for the enemies, their projectiles, animated tiles and layered drawing required by
+`WhatRuns` for this fade work. `Fading`, `WhatRuns` and `PassageTime` read it on later frames.
+Aggregate completion means every required owner completed that obligation, not merely that a
+request was emitted. Each owner retains its own partially performed work in its public State
+and resumes it once; passage state never substitutes for that owner State. Both the aggregate
+progress and colour coverage are independently restorable, including Brightening coverage0 with work
+unstarted, underway, or already complete. Darkening requires `NotStarted` below coverage256;
+its post-palette work can be unstarted, underway or complete at coverage256. Terminal
+Darkening alone has `NotRequired`; completed work has no retained fade progress. These quantities are publicly
 carryable and restorable, including an unfinished fade whose colours are already partly changed.
 Her position, the camera's, the screen's colours and the colours they head for belong to their
 domains; the passage reads and sets them (§1.3, §1.4). This is state the engine carries from
@@ -119,6 +130,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | the escape's timer running | `bool` (B8) | `TheFades`, `WhatRuns` |
 | the sounds sent | `bool`: every sound request so far has been sent (U1) | `Quieting` |
 | the music ready | `bool`: no track waits in the queue of tracks, as this frame of work finds it (U1) | `Landing` |
+| neighbour progress | `NeighbourWork`: independently produced aggregate owner progress for this fade work; every required owner certifies its own completion | `Fading`, `WhatRuns`, `PassageTime` |
 | fade progress | `ColourCount`, 0 to 256: cumulative colours treated in the current fade work by this frame's cut; T1 produces it independently from semantic work costs and elapsed time | `Fading`, `PassageTime` |
 | the work done | `bool`: the work of the frame of work in progress, of the cost event the passage names, is done by this frame's end (T1, or the lock's recorded timing) | `PassageTime` |
 
@@ -127,6 +139,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | Output | Type | Read by |
 | --- | --- | --- |
 | passing | `bool`: from the frame after the touch to the last frame of `Brightening`; while it holds, her motion, the camera, the blocks' run (world-blocks' `TheScriptsRun` is paused), the HUD and play time don't run | every domain; output |
+| start or resume neighbour work | each a `bool`, per frame, distinguished even at colour coverage0 or256; start requests the current work once, resume continues owner-held partial work | C1, R4, samus-appearance |
 | what runs | per frame of work: the enemies, their projectiles, the animated tiles, what is drawn, the escape's timer drawn, each a `bool` (`WhatRuns`) | C1, R4, samus-appearance, B8 |
 | the cost event | per frame: `CostEvent` (`BuildRoom`, `FadeStep`, `FetchContents`, `FetchTiles`, `Other`, listed alphabetically), or none while the passage waits on its own (`PassageTime`) | T1 |
 | a finished frame | `bool`, per frame (`FinishedFrames`) | the Tick, T1 |
@@ -281,8 +294,21 @@ Cells: phase, frames of work, next phase
 - summary: each colour of a fade moves to its goal in even steps, each channel on its own.
 - params: the steps, `d` = 12.
 - switch: **Parameter**, the steps (params).
+- Fade neighbour work `NotStarted`, its independent progress becomes `Underway` or `Complete`
+  → request the required owners to start once, report start, retain the new progress if work is
+  unfinished [neighbours-start-pending, neighbours-dark-start]
+- Fade neighbour work `Underway` → report resume, continue each owner's retained partial work;
+  keep `Underway` or accept its independently certified aggregate `Complete`, never request a
+  new start [neighbours-resume-at-zero, neighbours-finish-at-zero, neighbours-dark-resume]
+- Fade neighbour work `Complete` → keep its receipt and issue neither start nor resume;
+  unfinished palette work can continue independently [neighbours-done-at-zero, neighbours-dark-complete]
+- Fade neighbour work `NotStarted`, no owner has begun → keep it and report neither start nor
+  resume [neighbours-before-start]
+- `Darkening` at `d + 2` → neighbour work `NotRequired`; neither the enemies nor layered drawing are requested;
+  other required work still needs its owner's real receipt before T1 certifies completion
+  [fade-final-pending, fade-final-complete]
 - Fade progress is cumulative, from retained coverage to 256, never backwards; total work
-  completion requires all 256 treated. A fade frame with no work in progress → start work at the phase's `t`, with coverage 0;
+  completion requires all 256 treated and the aggregate receipt `Complete` or `NotRequired`. A fade frame with no work in progress → start work at the phase's `t`, with coverage 0;
   retain the coverage reached by this frame, even if work is unfinished [fade-start-overrun]
 - Fade progress reaches `b` from retained coverage `a` → treat just colours `a` through `b − 1`
   in the screen's colour numbering, background first and then sprites. Each whole colour changes
@@ -304,7 +330,8 @@ Cells: phase, frames of work, next phase
 - A colour already at its goal → it stays [dark-step]
 - So a fade takes `d + 3` frames of work, 15, and a colour reaches its goal at the `d + 1`-th, 13th
   (the phases' `t` 0 to 14 are for `d` = 12; with another `d`, `t` runs 0 to `d + 2`).
-- checked: oracle (every colour of the cached fades); constructed (the adjusted steps).
+- checked: oracle (compared fade colours under the named external-writer limits);
+  constructed (adjusted steps and semantic neighbour start/resume/completion receipts).
 
 ### Squaring
 - kind: mechanic.
@@ -495,13 +522,21 @@ Cells: phase, frames of work, next phase
 
 ## 3. Order that matters
 
+- Brightening cannot treat a colour until its required pre-fade neighbour work has an aggregate
+  `Complete` receipt. Darkening cannot start that neighbour work until colour coverage256.
+  Progress is monotone; `NotRequired` is allowed only for terminal Darkening. Total work
+  completion requires the actual receipts of every other required owner too, including B8's
+  separate timer overlay drawing when active. That overlay's partial work and once-only
+  continuation belong to B8; its completion is not a Brightening pre-palette prerequisite.
 - During darkening, a colour's fade treatment precedes
 that work's enemy colour writes. During brightening, that work's running neighbours can write
 colours before the fade treats them. The palettes supplied to each treatment must include
 those actual writes; neither replacing them with the compared output nor admitting an
 unsupported neighbour state is allowed. The owners and current gaps are in §4. No neighbour
 is run a second time merely because the same work crosses another frame. `WhatRuns` names
-one obligation per frame of work; it does not certify that obligation only at completion.
+one obligation per frame of work; starting it is a request, not a completion certificate.
+A restored `Underway` work continues from all owners' restored State. An aggregate receipt
+cannot be manufactured from colour coverage0/256, the passage phase, or T1's final done flag.
 
 - The slide's frame runs at each frame's start, before the passage's frame of work, so the frame
   of work that waits for the slide ends in the frame the slide does.

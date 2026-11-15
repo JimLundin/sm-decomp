@@ -57,7 +57,7 @@ The 29 colour misses are G2's two writers. Over the ten Ceres passages alone: 1,
 frames, 457 of 457 phases, 445 of 457 colour frames (the 12 of row 10). The loading's writes
 taken as input: 182 colours over 17 passages.
 
-`ref/vecrun2.py` runs every vector through the same `step`: 86 of 86 agree. `ref/vecgen2.py`
+`ref/vecrun2.py` runs every vector through the same `step`: 94 of 94 agree. `ref/vecgen2.py`
 writes the vector file and refuses to unless the 15 vectors below, worked by hand from the
 spec's rules and not from `step`, agree with it (they do).
 
@@ -447,7 +447,7 @@ Coverage256 is valid retained state while neighbouring work remains; completion 
 
 The palette check covers1383 fade cuts, including868 overruns:842 interrupt colour treatment
 and26 interrupt other work. It agrees1383/1383 against a per-cut do-nothing170/1383 under the exact
-writer exclusions below. There are353311 compared colour-cuts and737 excluded colour-cuts.
+writer exclusions below. There are353282 compared colour-cuts and766 excluded colour-cuts.
 This is an observer diagnostic, not an engine ratchet, floor or whole-engine gain.
 It carries its own predicted colours within fade segments except `boss-kraid-defeated`, whose missing
 owner is diagnosed per cut using the preceding native palette. No arbitrary differing colour
@@ -463,22 +463,30 @@ U1's replies, neighbouring OAM or their timings, and does not prove the whole pa
 
 The Kraid exclusion of113..115 remains the corpse flash writer. The additional full-group
 writer is `$A7:AC24` -> `$A7:B337` -> `$A7:B394`, with stores `$A7:B3BE` and `$A7:B3C5`:
-BG palette7 colours112..127 and sprite palette7 colours240..255. At cuts1097,1100,1103,1106,
+BG palette7 colours112..127 and sprite palette7 colours240..255. At cuts1094,1097,1100,1103,1106,
 1109,1112,1115,1118,1121,1124,1127,1130,1131 of `boss-kraid-defeated`, retained Kraid health
-`0F8C` is0 before and after; `$A7:B33F` takes the dead case and the palette copy executes.
-Only those13 writer cuts get the expanded mask in the per-cut diagnostic. Source writes every
+`0F8C` is0 before and after. Independent dispatcher evidence at every window: slot0 is in
+`17AC`'s active list, `0F78` names Kraid, `0FA6` is its bank, `0F8A` selects main AI,
+`0A78` and `185E` leave time unfrozen, `0F88` does not paralyse it, and `0FA4` advances once.
+`$A0:9002`/`$A0:9018` select that active slot/bank; `$A0:905A`..`$A0:9088` select its header's
+main pointer; `$A0:90A3` dispatches it. The Kraid header's main pointer is `$A7:AC21`.
+`$A7:AC24` calls the palette handler unconditionally before the current death function.
+`$A7:B33F` takes the dead case and the palette copy executes. The windows are selected by
+these source execution conditions, never by palette mismatches. At1094, t0, the palette copy
+still executes although its outputs already match: equal writes are not a reason to omit it.
+Only those14 writer cuts get the expanded mask in the per-cut diagnostic. Source writes every
 colour in both groups, including equal colours. All other colours remain compared.
 
 With just the narrow exclusions the corrected progress decoder agrees1370/1383 (353688
-compared and360 excluded colour-cuts; per-cut do-nothing164/1383). The extra13 exclusions account for
-377 fewer comparisons, not model gain. The missing real Kraid palette owner prevents carrying
+compared and360 excluded colour-cuts; per-cut do-nothing164/1383). The extra14 exclusions account for
+406 fewer comparisons, not model gain. The missing real Kraid palette owner prevents carrying
 that row through later unmasked cuts; a continuous harness must obtain those colours from its
 owner rather than re-seed from the record. The Ceres beacon remains colours41..46 on its
 `Brightening` cuts, source `$A6:F850` -> `$A6:F86B`. No masks or floors were changed in code.
 
 ### Constructed progress checks and actual faults
 
-All86 vectors pass, preserving the70 existing cases. The16 added cases cover starting,
+All94 vectors pass, preserving the70 existing cases. The16 palette progress cases cover starting,
 continuing, no progress, completing after partial work, all colours done while work continues,
 both fade directions, zero/goal/final steps, last colour and adjusted steps. Hand arithmetic:
 with d12,t1, channel31 toward0 becomes28; channel0 toward31 becomes2. With d2,t1,31 becomes15.
@@ -492,3 +500,23 @@ colours and retained coverage; restarting treatment from colour0 catches
 The native completion-only fault first fails M0's
 palette at187 and reduces its match from80/80 to8/80. Faults live only in local Python and are
 not committed. Full Cargo gate is deferred until the root grants the shared build slot.
+
+### Retained semantic neighbour work
+
+Colour coverage alone does not show whether Brightening's neighbours have been run before
+colour0. The aggregate status in the spec separates unstarted, partial and completed work,
+even at coverage0 or256. Each owner must retain its own partial continuation State; the
+aggregate certifies every required owner, not an original routine boundary. Source ordering
+above proves the required pre/post-palette placement of neighbour writes, but does not supply
+real T1 durations or owners' continuation models. The native palette diagnostic does not
+exercise these new work receipts; it remains observed timing plus palette carry only.
+
+Eight constructed receipt cases add: unstarted at0, first start at0, restored underway at0,
+restored complete at0, completion of underway work at0, and Darkening's post-palette start,
+resume and completion at256. `ref/vecrun2.py` compares start versus resume separately;
+`ref/passage.py` requires explicit aggregate receipts, never defaults completion from `done`.
+A real local repeat-start fault (`repeat_start`) fails restored underway and completed cases,
+including `neighbours-resume-at-zero`, `neighbours-done-at-zero` and `neighbours-dark-complete`.
+The final Darkening step has no enemy/layered-drawing obligation; B8's timer overlay remains
+its separately retained work when active, and T1 cannot certify total work before its real
+completion. The constructed model does not pretend to certify B8's partial overlay execution.

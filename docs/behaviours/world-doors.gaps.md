@@ -25,7 +25,7 @@ The frame-of-work diagnostic has 29 colour mismatches attributable to other doma
   there.
 
 The harness masks both under their writer until those domains output them. In the all-cut
-palette diagnostic, Kraid also replaces the full background and sprite palette groups at 13
+palette diagnostic, Kraid also replaces the full background and sprite palette groups at 14
 cuts, not just the three flashing colours. Exact colour ranges and windows are decode-only.
 Those writer cuts are not passage gain. Carrying a predicted palette through the later cuts
 requires Kraid's real replacement colours; a per-cut diagnostic can localise the passage
@@ -59,7 +59,12 @@ within semantic work: cumulative colour coverage0..256, and work completion sepa
 Palette completion can precede total work completion; phase and current work step remain
 retained until the latter. Native decoded progress is reference evidence, never a runtime
 input or a schedule fitted to cut numbers. Production needs real elapsed work costs and
-neighbour receipts, compatible with U1's request/reply completion milestones. Unsupported
+neighbour receipts, compatible with U1's request/reply completion milestones. Coverage0 cannot
+prove whether Brightening neighbours have begun or completed: the passage retains semantic
+aggregate progress and each owner retains its partially performed work. Native palette replay
+observes timing and proves palette carry only; constructed start/resume vectors prove the
+passage requests without certifying arbitrary owners. B8's separate timer overlay work also
+needs its real retained continuation and completion receipt, including terminal Darkening. Unsupported
 neighbour state must fail admission until its owner supplies the writes at their actual instants.
 
 The contents' cost is bounded above only: its frame of work then waits for the slide, which the
