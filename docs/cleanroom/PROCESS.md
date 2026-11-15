@@ -239,8 +239,8 @@ until that domain has landed, so the interface it reads is fixed.
 
 ## Working hours
 
-Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 local time, 10 to
-12 hours with its planning and review included. Each session has three parts:
+Work is scheduled in one session a night, from 20:00 to 08:00 local time, with its planning and
+review included. Each session has three parts:
 
 1. **Planning.** The root reads the last session's review, REPORT and the queue, chooses the
    session's rounds and lanes within the limits above, and writes the plan down before any lane
@@ -250,14 +250,23 @@ Work runs in one session a night (Jim, 2026-11-11), from 20:00 to at most 08:00 
    planted faults and the gain over null (decisions 24 and 25) run alongside.
 2. **Implementation.** The loop below runs the plan: rounds and lanes start, land and report as
    they do today.
-3. **Review.** No new lane starts in the last part of the session. The lanes in flight finish
-   and land, or stop with a handoff. The root writes the session's review on the plan's issue:
+3. **Review.** New scope stops in the last part of the session. The root completes the work
+   already in flight under the rule below and writes the session's review on the plan's issue:
    what landed, the figures before and after, what the gates found, and what the next session
    should take up, including the [Code Health review](#coordinator-code-health-review) of the
    session's changes.
 
-Outside working hours no round runs (Jim, 2026-11-12). The time goes to the project's structure:
-tooling, movie captures, optimisations, and long computations that don't fit a session, all within
+**Finish active work.** The scheduled shift end stops new scope, not completion. Every task or
+round already started continues beyond scheduled hours through necessary implementation and
+corrections, required reviews and checks, passing CI, landing, reporting and cleanup. Later role
+sessions needed to finish that round may start; a new round or unrelated follow-up waits for its
+next permitted start. The existing lane limits, clean-room roles, mandatory proof and root-only
+landing still apply. An explicit stop or pause from Jim takes precedence. A real external blocker
+is reported with the unfinished work and concrete next step in a handoff; the work stays pending
+and resumes when unblocked. Shift end alone is never a reason to leave work pending.
+
+Outside working hours new rounds wait for the nightly session. New work goes to the project's
+structure: tooling, movie captures, optimisations, and long computations that don't fit a session, within
 the rung's needs (decision 24). Independent short tasks may run in parallel within the
 three-lane limit, supervised by the root (Jim, 2026-11-13). Each task starts fresh, finishes
 with a handoff and lands like any other change; the root reviews and lands one change at a time.
