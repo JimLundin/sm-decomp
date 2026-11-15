@@ -81,6 +81,8 @@ jobs:
       - name: Type-check the Python tooling
         # pyproject.toml's [tool.mypy] sets strict mode and the files.
         run: pipx run --spec mypy==2.4.1 mypy
+      - name: Test harness floor execution receipts
+        run: bash tools/ci/harness_floors_test.sh
       - name: Test the planted-fault runner
         run: python3 -m unittest discover -s tools -p test_check_mutants.py
       - name: Test movie input qualification and publication
