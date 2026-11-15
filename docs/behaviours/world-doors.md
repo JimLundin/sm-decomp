@@ -36,7 +36,10 @@ left it. The passage then sets it (§1.4); the camera doesn't run during the pas
 
 **What it reads from the platform (T1).** The cost of each frame of work the passage does, by its
 cost event (`PassageTime`): T1 answers, each frame, whether the work of the frame of work in
-progress is done. The passage owns the rest of its timing: the counted frames of work, the waits,
+progress is done, and the observable completion milestones within it. During a fade it reports
+how many screen colours have been treated by the cut (`Fading`), independently of whether
+all work is done. T1 must produce that progress from the work's costs and elapsed time. The
+passage owns the rest of its timing: the counted frames of work, the waits,
 the slide's wait and the finished frames (`PassageTime`, `FinishedFrames`). Until T1 models the
 costs, the lock's recorded timing gives them, as it does for every domain the free run plays.
 
@@ -89,8 +92,14 @@ channels of 5 bits: red in bits 0 to 4, green 5 to 9, blue 10 to 14.
 
 ### 1.2 What it remembers: state a caller can hold
 
-The phase with its data, the arrival once taken and the slide's frames: nothing else. Her
-position, the camera's, the screen's colours and the colours they head for belong to their
+The phase with its data, the arrival once taken, the slide's frames, and the fade's coverage
+while a frame of fade work is in progress. Fade coverage is a `ColourCount`, 0 to 256,
+counting the screen colours already treated in that frame of work; `Fading` and `PassageTime`
+read it on later frames. No coverage means no fade work is in progress. Coverage 256 with
+unfinished work is allowed: all colours have been treated but the frame's other work continues.
+The phase's `t` is the step of that work until it completes. These quantities are publicly
+carryable and restorable, including an unfinished fade whose colours are already partly changed.
+Her position, the camera's, the screen's colours and the colours they head for belong to their
 domains; the passage reads and sets them (§1.3, §1.4). This is state the engine carries from
 frame to frame, saves and restores, so a caller can build a passage in any phase this spec
 allows and read it back: a vector's `before` builds it and its `after` reads it.
@@ -110,6 +119,7 @@ allows and read it back: a vector's `before` builds it and its `after` reads it.
 | the escape's timer running | `bool` (B8) | `TheFades`, `WhatRuns` |
 | the sounds sent | `bool`: every sound request so far has been sent (U1) | `Quieting` |
 | the music ready | `bool`: no track waits in the queue of tracks, as this frame of work finds it (U1) | `Landing` |
+| fade progress | `ColourCount`, 0 to 256: cumulative colours treated in the current fade work by this frame's cut; T1 produces it independently from semantic work costs and elapsed time | `Fading`, `PassageTime` |
 | the work done | `bool`: the work of the frame of work in progress, of the cost event the passage names, is done by this frame's end (T1, or the lock's recorded timing) | `PassageTime` |
 
 ### 1.4 What it reports (Outputs)
@@ -175,8 +185,11 @@ R2 owns what each does and in what order; the passage owns when.
   or `Brightening` → `FadeStep`; of `BeforeTheSlide(1)` → `BuildRoom`; of `Arriving` fetching
   `Tiles` → `FetchTiles`, fetching `Contents` → `FetchContents`; any other → `Other`
   [work-pending, building, place-right, loading-waits, settle]
-- A frame whose work isn't done → the phase and its data stay, and nothing but the placing and
-  the slide moves [work-pending, place-pending, work-pending-slide]
+- A frame whose work isn't done → the phase and its data stay; placing, sliding and the
+  fade's reported colour progress still act. Fade work retains its coverage for the next frame
+  [work-pending, place-pending, work-pending-slide, fade-start-overrun, fade-continue-overrun]
+- Fade work completes → the remaining colours are treated, coverage is cleared, and the phase
+  takes its next step once [fade-complete-overrun, fade-complete-after-colours]
 - A frame whose work is done → the phase's entry below acts, in that frame [silence-sent,
   dark-step, prepare, building, settle]
 - `Arriving`, fetching `Done` → no cost: T1 is asked nothing, and the frame of work ends on the
@@ -268,13 +281,25 @@ Cells: phase, frames of work, next phase
 - summary: each colour of a fade moves to its goal in even steps, each channel on its own.
 - params: the steps, `d` = 12.
 - switch: **Parameter**, the steps (params).
-- A step with `t` 0 → no colour changes [dark-first]
+- Fade progress is cumulative, from retained coverage to 256, never backwards; total work
+  completion requires all 256 treated. A fade frame with no work in progress → start work at the phase's `t`, with coverage 0;
+  retain the coverage reached by this frame, even if work is unfinished [fade-start-overrun]
+- Fade progress reaches `b` from retained coverage `a` → treat just colours `a` through `b − 1`
+  in the screen's colour numbering, background first and then sprites. Each whole colour changes
+  once, using its current colour and goal when treated; a partly calculated colour has no output yet
+  [fade-continue-overrun, fade-no-progress, fade-boundary-last-colour]
+- All 256 colours treated, work unfinished → retain coverage 256 and the current `t`; no colour
+  is treated again while the remaining work continues [fade-colours-done-pending]
+- Work completes → coverage is absent and `t` advances once, or the fade ends at `d + 2`
+  [fade-complete-overrun, fade-complete-after-colours, fade-final-pending, fade-final-complete]
+- A colour not yet treated in this work → keep it at this cut [fade-start-overrun]
+- A step with `t` 0 → no colour changes [dark-first, fade-zero-pending]
 - A step with `t` from 1 to `d` → each channel `c` of a colour not yet at its goal `g` becomes
   `c + q`, where `q = ⌊|g − c| × 256 / (d + 1 − t)⌋`, negated if `g < c`, and the sum
   `c × 256 + q` is taken `mod 2^16` and its high byte kept (`⌊(c × 256 + q) / 256⌋`, which
-  rounds down) [dark-step, bright-step, fade-half, steps-adjusted]
-- A step with `t` = `d + 1` → each colour is its goal [dark-last, steps-adjusted-last]
-- A step with `t` = `d + 2` → no colour changes; the fade ends [dark-end, bright-end,
+  rounds down) [dark-step, bright-step, fade-half, steps-adjusted, fade-bright-overrun, fade-adjusted-overrun]
+- A step with `t` = `d + 1` → each colour is its goal [dark-last, steps-adjusted-last, fade-goal-overrun]
+- A step with `t` = `d + 2` → no colour changes; the fade ends when the work completes [dark-end, bright-end,
   steps-adjusted-end, bright-steps-adjusted-end]
 - A colour already at its goal → it stays [dark-step]
 - So a fade takes `d + 3` frames of work, 15, and a colour reaches its goal at the `d + 1`-th, 13th
@@ -470,6 +495,14 @@ Cells: phase, frames of work, next phase
 
 ## 3. Order that matters
 
+- During darkening, a colour's fade treatment precedes
+that work's enemy colour writes. During brightening, that work's running neighbours can write
+colours before the fade treats them. The palettes supplied to each treatment must include
+those actual writes; neither replacing them with the compared output nor admitting an
+unsupported neighbour state is allowed. The owners and current gaps are in §4. No neighbour
+is run a second time merely because the same work crosses another frame. `WhatRuns` names
+one obligation per frame of work; it does not certify that obligation only at completion.
+
 - The slide's frame runs at each frame's start, before the passage's frame of work, so the frame
   of work that waits for the slide ends in the frame the slide does.
 - She is placed before the slide's next frame carries her.
@@ -488,8 +521,9 @@ Cells: phase, frames of work, next phase
 - **The room's loading (R2):** what each of the room's calls (§1.5) loads, and in what order, and
   the new room's colours; the colours it and the enemies write straight to the screen while it
   is dark; the HUD's `a boss encountered` (interface-hud), on entering the room of a boss.
-- **The platform (T1):** the cost of each frame of work by its cost event (`PassageTime`); until
-  it is modelled, the lock's recorded timing.
+- **The platform (T1):** the cost of each frame of work by its cost event (`PassageTime`) and
+  independently produced observable progress within it (`Fading`); the native progress used by
+  the observer's reference is evidence, never a runtime producer.
 - **The backgrounds:** layer 2's place over the arrival view, by the room's rates; the passage
   only moves it with the slide.
 - **The video encoder (E2):** the tile layers drawn as the view slides, and their scroll

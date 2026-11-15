@@ -21,6 +21,12 @@
 #   (absent before it is taken): { way, "Down", "Left", "Right" or "Up"; view = [x, y], the
 #   view's place in the next room, px; speed (optional), her speed in the slide, P.S }; slide
 #   (absent before it starts): the slide's frames so far.
+# - fade_covered (optional in before/after): retained ColourCount0..256 for unfinished fade
+#   work. Absent means no fade work in progress. t stays the current work step until done.
+# - colours may name slot (0..255), their screen colour number; omitted slots use
+#   the listed position. inputs.fade_reached is cumulative treated coverage at this cut,
+#   default retained coverage when unfinished, 256 when done. Real T1 produces this progress;
+#   vectors supply invented timing milestones. A completed fade requires coverage256.
 # - her: [x, y], P.S, her position (samus-movement's) at the frame's start. seen: [x, y], px,
 #   where the camera last saw her. camera: [x, y], P.S, the camera's position.
 # - colours (optional): some of the screen's colours, each { now, the colour as it stands; goal,
@@ -84,7 +90,7 @@ seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 colours = [{ now = "7FFF", goal = "0000", group = "Other" }, { now = "03E0", goal = "0000", group = "Other" }, { now = "1084", goal = "0000", group = "Other" }, { now = "5EF7", goal = "5EF7", group = "Lit" }]
 inputs = { done = false }
-after = { phase = "Darkening", t = 5, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+after = { fade_covered = 0, phase = "Darkening", t = 5, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "03E0", goal = "0000" }, { now = "1084", goal = "0000" }, { now = "5EF7", goal = "5EF7" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
 
 [[vector]]
 # the contents still being fetched: the slide moves, the frame is finished anyway
@@ -293,7 +299,7 @@ her = ["0080.4000", "0094.FFFF"]
 seen = ["0080", "0094"]
 camera = ["0000.8000", "0000.2400"]
 inputs = { done = false }
-after = { phase = "Brightening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+after = { fade_covered = 0, phase = "Brightening", t = 3, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
 
 [[vector]]
 # a fade of 6 steps: step 2 divides by 5
@@ -869,3 +875,197 @@ her = ["0170.0000", "00E4.8000"]
 seen = ["0170", "00E4"]
 camera = ["0000.8000", "0000.2400"]
 after = { phase = "Brightening", t = 0, arrival = { way = "Up", view = ["0100", "0000"] }, slide = 57, her = ["0170.0000", "00E4.8000"], seen = ["0170", "00E4"], camera = ["0000.8000", "0000.2400"], runs = [], calls = ["ReadLiquid"], sounds = [], her_sounds = [], cost = "Other", finished = true, restart = true, screen = "FrontAndSprites" }
+
+[[vector]]
+id = "fade-start-overrun"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 1 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 101 }
+after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-continue-overrun"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 1, fade_covered = 101 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 219 }
+after = { phase = "Darkening", t = 1, fade_covered = 219, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-complete-overrun"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 1, fade_covered = 219 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "739C", goal = "0000", group = "Other" }, { slot = 218, now = "739C", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = true, fade_reached = 256 }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+id = "fade-no-progress"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 1, fade_covered = 101 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 101 }
+after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-colours-done-pending"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 1, fade_covered = 219 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "739C", goal = "0000", group = "Other" }, { slot = 218, now = "739C", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 256 }
+after = { phase = "Darkening", t = 1, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-complete-after-colours"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 1, fade_covered = 256 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "739C", goal = "0000", group = "Other" }, { slot = 100, now = "739C", goal = "0000", group = "Other" }, { slot = 101, now = "739C", goal = "0000", group = "Other" }, { slot = 218, now = "739C", goal = "0000", group = "Other" }, { slot = 219, now = "739C", goal = "0000", group = "Other" }, { slot = 255, now = "739C", goal = "0000", group = "Other" }]
+inputs = { done = true, fade_reached = 256 }
+after = { phase = "Darkening", t = 2, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }, { now = "739C", goal = "0000" }], runs = ["drawn", "enemies"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+id = "fade-bright-overrun"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Brightening", t = 1 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "0000", goal = "7FFF", group = "Other" }, { slot = 100, now = "0000", goal = "7FFF", group = "Other" }, { slot = 101, now = "0000", goal = "7FFF", group = "Other" }, { slot = 218, now = "0000", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 101 }
+after = { phase = "Brightening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-zero-pending"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 0 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 219 }
+after = { phase = "Darkening", t = 0, fade_covered = 219, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-goal-overrun"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 13 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 101 }
+after = { phase = "Darkening", t = 13, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "0000" }, { now = "0000", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-boundary-last-colour"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Brightening", t = 1, fade_covered = 255 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "0842", goal = "7FFF", group = "Other" }, { slot = 100, now = "0842", goal = "7FFF", group = "Other" }, { slot = 101, now = "0842", goal = "7FFF", group = "Other" }, { slot = 218, now = "0842", goal = "7FFF", group = "Other" }, { slot = 219, now = "0842", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 256 }
+after = { phase = "Brightening", t = 1, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }, { now = "0842", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-final-pending"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 14 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 256 }
+after = { phase = "Darkening", t = 14, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-final-complete"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Darkening", t = 14, fade_covered = 256 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = true, fade_reached = 256 }
+after = { phase = "Squaring", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+id = "fade-bright-final-pending"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Brightening", t = 14 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "0000", goal = "7FFF", group = "Other" }, { slot = 100, now = "0000", goal = "7FFF", group = "Other" }, { slot = 101, now = "0000", goal = "7FFF", group = "Other" }, { slot = 218, now = "0000", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = false, fade_reached = 256 }
+after = { phase = "Brightening", t = 14, fade_covered = 256, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-bright-final-complete"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+before = { phase = "Brightening", t = 14, fade_covered = 256 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "0000", goal = "7FFF", group = "Other" }, { slot = 100, now = "0000", goal = "7FFF", group = "Other" }, { slot = 101, now = "0000", goal = "7FFF", group = "Other" }, { slot = 218, now = "0000", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = true, fade_reached = 256 }
+after = { phase = "Play", her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }, { now = "0000", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = ["let through"], her_sounds = ["spin again"], cost = "FadeStep", finished = true, restart = false }
+
+[[vector]]
+id = "fade-adjusted-overrun"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+rules = { steps = 2 }
+before = { phase = "Darkening", t = 1 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "0000", group = "Other" }, { slot = 100, now = "7FFF", goal = "0000", group = "Other" }, { slot = 101, now = "7FFF", goal = "0000", group = "Other" }, { slot = 218, now = "7FFF", goal = "0000", group = "Other" }, { slot = 219, now = "7FFF", goal = "0000", group = "Other" }, { slot = 255, now = "7FFF", goal = "0000", group = "Other" }]
+inputs = { done = false, fade_reached = 101 }
+after = { phase = "Darkening", t = 1, fade_covered = 101, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "3DEF", goal = "0000" }, { now = "3DEF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }, { now = "7FFF", goal = "0000" }], runs = [], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = false, restart = false }
+
+[[vector]]
+id = "fade-adjusted-complete"
+source = "constructed"
+entries = ["Fading", "PassageTime", "FinishedFrames"]
+rules = { steps = 2 }
+before = { phase = "Brightening", t = 3, fade_covered = 219 }
+her = ["0080.4000", "0094.FFFF"]
+seen = ["0080", "0094"]
+camera = ["0000.8000", "0000.2400"]
+colours = [{ slot = 0, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 100, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 101, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 218, now = "7FFF", goal = "7FFF", group = "Other" }, { slot = 219, now = "0000", goal = "7FFF", group = "Other" }, { slot = 255, now = "0000", goal = "7FFF", group = "Other" }]
+inputs = { done = true, fade_reached = 256 }
+after = { phase = "Brightening", t = 4, her = ["0080.4000", "0094.FFFF"], seen = ["0080", "0094"], camera = ["0000.8000", "0000.2400"], colours = [{ now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }, { now = "7FFF", goal = "7FFF" }], runs = ["drawn", "enemies", "projectiles", "tiles"], calls = [], sounds = [], her_sounds = [], cost = "FadeStep", finished = true, restart = false }

@@ -15,7 +15,7 @@ view sets off.
 
 ### G2. Colours other domains write during the fades
 
-The passage's fades are exact over every frame of work but 29, each another domain's write:
+The frame-of-work diagnostic has 29 colour mismatches attributable to other domains:
 - 17 in `boss-kraid-defeated` (colours 113 to 115): Kraid's corpse, rewritten at each enemy run
   while the room darkens (Kraid's family, C1).
 - 12 in `chain-any-0010-DF8D` (colours 41 to 46, BG palette 2 colours 9 to 14): the Ceres door of
@@ -24,7 +24,13 @@ The passage's fades are exact over every frame of work but 29, each another doma
   that is the fade in's first frame of work, so the beacon's colours are set there and faded from
   there.
 
-The harness masks both under their writer until those domains output them.
+The harness masks both under their writer until those domains output them. In the all-cut
+palette diagnostic, Kraid also replaces the full background and sprite palette groups at 13
+cuts, not just the three flashing colours. Exact colour ranges and windows are decode-only.
+Those writer cuts are not passage gain. Carrying a predicted palette through the later cuts
+requires Kraid's real replacement colours; a per-cut diagnostic can localise the passage
+without claiming a continuous run for that row. Never copy every differing colour from the
+expected record or extend a writer mask to a whole room.
 
 ### G3. The colours the loading writes straight to the screen
 
@@ -47,6 +53,15 @@ U1's spec must state the queue's step.
 T1 owns the cost of each frame of work, by the passage's cost event: `FadeStep`, `BuildRoom`,
 `FetchTiles`, `FetchContents` and `Other`. The passage is the largest stretch of lag on every
 Ceres rung (25 of the 40 frames of each fade, and 60 to 70 frames of the loading, are overruns).
+Completion alone cannot reproduce the fade: M0 cuts187/188 have partly changed colours before
+work completes at189. T1 must independently produce timed observable completion milestones
+within semantic work: cumulative colour coverage0..256, and work completion separately.
+Palette completion can precede total work completion; phase and current work step remain
+retained until the latter. Native decoded progress is reference evidence, never a runtime
+input or a schedule fitted to cut numbers. Production needs real elapsed work costs and
+neighbour receipts, compatible with U1's request/reply completion milestones. Unsupported
+neighbour state must fail admission until its owner supplies the writes at their actual instants.
+
 The contents' cost is bounded above only: its frame of work then waits for the slide, which the
 passage owns, and in every cached passage it ended with the slide.
 

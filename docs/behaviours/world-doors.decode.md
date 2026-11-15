@@ -24,7 +24,7 @@ the nudge, the IRQ's commands and the music queue.
 
 The reference model, `$TEMP/collab/r1-fix/ref/passage.py` (`step`: one frame), is run over the
 dumps by `ref/model3.py`: from the touch's record it steps every frame, with the recorded timing
-as T1's input (below), and compares what the table lists. Its inputs from the records: the sound
+as T1's input (below), and compares what the table lists. Its non-fade inputs from the records: the sound
 queues' emptiness at the last frame of work (`0643`..`0648`), the music's readiness from the
 music queue (below), the timer (`0943`), the CRE bitsets (`07B1 | 07B3` bit 0), the doorway's
 arrival (`0791`, `0927`, `0929`, `092B`, `092D`), the new room's target colours (`7EC200`) during
@@ -57,7 +57,7 @@ The 29 colour misses are G2's two writers. Over the ten Ceres passages alone: 1,
 frames, 457 of 457 phases, 445 of 457 colour frames (the 12 of row 10). The loading's writes
 taken as input: 182 colours over 17 passages.
 
-`ref/vecrun2.py` runs every vector through the same `step`: 70 of 70 agree. `ref/vecgen2.py`
+`ref/vecrun2.py` runs every vector through the same `step`: 86 of 86 agree. `ref/vecgen2.py`
 writes the vector file and refuses to unless the 15 vectors below, worked by hand from the
 spec's rules and not from `step`, agree with it (they do).
 
@@ -184,8 +184,11 @@ other function: one frame on record). T1 answers, per frame, whether that cost i
 reports only the work's cost: the slide's wait (`$82:E526`) is the passage's, so a T1 fitted from
 the records must not take `FetchContents`'s record length (the wait) as its cost; the records
 bound that cost by the slide's end only. Nor does T1 own the forced finished frames
-(`FinishedFrames`): the IRQ's door commands own them. Until T1 exists, the harness decodes
-"the work done" as the cut being `Requested`, for every cost event.
+(`FinishedFrames`): the IRQ's door commands own them. Until T1 exists, the diagnostic decodes
+"the work done" as the cut being `Requested`, for every cost event. For fades it also decodes
+colour progress independently from the interrupted source location and cursor below. Runtime
+T1 must produce real semantic progress from elapsed costs; native progress is not a runtime
+input. A cost receipt cannot certify palette completion merely by certifying frame completion.
 
 **The HUD's colour groups** (`TheFades`; the importer's, by palette index; `7EC000 + 2 ×
 index`): always lit 9, 10 (BG3 palette 2 colours 1, 2), 13, 14 (palette 3 colours 1, 2), 17 to 19
@@ -254,9 +257,11 @@ palette 4 colour 4).
   queue, never from the phase compared; the doorway's arrival from the importer's `Doorway`
   record for the touched door (the World records), which must equal `0791`/`0927`/`0929`/`092B`
   once taken.
-- **Compared against the records** (each checked by `model3.py`): every frame, her position,
+- **Compared against the records** (the position/timing diagnostic is `model3.py`; the all-cut
+  palette diagnostic is `passage-fade/native.py` below): every frame, her position,
   `0B10`/`0B14`, the camera, a finished frame (`05B6` steps) and the frame count (`05B5`); every
-  frame of work, the phase and its data, `t`, `7EC000..7EC1FF`, the silence (library 2's queue),
+  frame of work, the phase and its data; every fade cut, logical `t`, coverage and
+  `7EC000..7EC1FF` under the named-writer limits below; the silence (library 2's queue),
   sounds held (`05F5`), the mini-map (`05F7`), the enemies' runs (each slot's `0FA4`: none steps
   when they don't run), and the library-1 sound at the first and last frames of work as G6's rule
   picks it (samus-appearance's, until its spec owns it).
@@ -390,3 +395,94 @@ at 174 clears/re-arms through 176..180. Request admission and sending alone can 
 produce this native prefix without the earlier request and acknowledgment owners. No production readiness may be injected at 182.
 
 Independent decoder: `$TEMP/collab/night-20261115/observer/first_cut.py`.
+
+## Every fade cut: palette progress and retained work
+
+The native reference is `$TEMP/collab/night-20261115/passage-fade/ref/passage.py`, vectors
+`ref/vecrun2.py`, and the native diagnostic `passage-fade/native.py`. These read the pinned lean
+records at `$TEMP/collab/night-20261113/recovered-cache-20261114/rows`; no extracted palette
+content is committed. A colour is written atomically by `$82:DA3A`, after its three components
+have been calculated (`$82:DA4A` through `$82:DAF6`). The loop treats screen colours in ascending
+physical palette order (`$82:DA1E`..`$82:DA44`). A current colour equal to its target still counts
+as treated; no write is needed. A cut within the component arithmetic shows the old whole
+colour, never a partly changed channel.
+
+### Independent progress decoding
+
+`7EC404 / 2` identifies the currently treated colour, not necessarily the count completed.
+At an interruption inside `$82:DA4A`..`$82:DAF6`, or before `$82:DA3A`, completed coverage is
+that colour's index. At `$82:DA3D`..`$82:DA42`, the colour was treated: add one. At `$82:DA21`
+the store of the new cursor has not occurred: use CPU X/2, not the stale `7EC404`. At
+`$82:DA44`..`$82:DA49`, all256 have been treated. Decode uses source position and registers,
+never colour equality or expected colour bytes. Neighbour work before palette treatment has
+coverage0; neighbour work afterwards has coverage256. Each completion cut certifies256.
+
+The original increments `7EC400` at `$82:DA44`, before the frame's remaining work finishes.
+The model's phase `t` instead stays the current work step until total completion; the decoder
+retains that logical step across overrun cuts and interprets an advanced original numerator
+as palette-complete work still in progress. `Darkening` runs enemy/drawing work after the fade
+(`$82:E2E0`..`$82:E2EC`); `Brightening` runs tiles, enemies, projectiles and drawing before it
+(`$82:E737`..`$82:E752`). These writer instants must be supplied by the real neighbour owners.
+No original call boundary is an implementer-facing type or ordering requirement.
+
+M0 `chain-any-0003-DFD7` has these independently decoded cuts:
+
+| Cut | Kind | Current logical step | Colours treated | Work complete |
+| --- | --- | --- | --- | --- |
+| 185 | Overrun | 0 | 219 | no |
+| 186 | Requested | 0 | 256 | yes |
+| 187 | Overrun | 1 | 101 | no |
+| 188 | Overrun | 1 | 219 | no |
+| 189 | Requested | 1 | 256 | yes |
+| 190 | Overrun | 2 | 102 | no |
+| 191 | Overrun | 2 | 220 | no |
+| 192 | Requested | 2 | 256 | yes |
+
+The numerator's zero step treats colours without changing them. At187 the first101 have
+changed; at188 the next118 have changed without applying the first101 again. Completing at189
+changes only the remaining37, then advances logical `t` to2. The frame is unfinished at187/188.
+Coverage256 is valid retained state while neighbouring work remains; completion clears it.
+
+### Native evidence and diagnostic limits
+
+The palette check covers1383 fade cuts, including868 overruns:842 interrupt colour treatment
+and26 interrupt other work. It agrees1383/1383 against a do-nothing170/1383 under the exact
+writer exclusions below. There are353311 compared colour-cuts and737 excluded colour-cuts.
+This is an observer diagnostic, not an engine ratchet, floor or whole-engine gain.
+It carries its own predicted colours across fades except `boss-kraid-defeated`, whose missing
+owner is diagnosed per cut using the preceding native palette. No arbitrary differing colour
+is injected. M0 alone carries its predicted colours across both fades:80/80 cuts with every
+colour compared, versus do-nothing8/80. The native model does not produce T1's elapsed costs,
+U1's replies, neighbouring OAM or their timings, and does not prove the whole passage's outputs.
+
+The Kraid exclusion of113..115 remains the corpse flash writer. The additional full-group
+writer is `$A7:AC24` -> `$A7:B337` -> `$A7:B394`, with stores `$A7:B3BE` and `$A7:B3C5`:
+BG palette7 colours112..127 and sprite palette7 colours240..255. At cuts1097,1100,1103,1106,
+1109,1112,1115,1118,1121,1124,1127,1130,1131 of `boss-kraid-defeated`, retained Kraid health
+`0F8C` is0 before and after; `$A7:B33F` takes the dead case and the palette copy executes.
+Only those13 writer cuts get the expanded mask in the per-cut diagnostic. Source writes every
+colour in both groups, including equal colours. All other colours remain compared.
+
+With just the narrow exclusions the corrected progress decoder agrees1370/1383 (353688
+compared and360 excluded colour-cuts; do-nothing164/1383). The extra13 exclusions account for
+377 fewer comparisons, not model gain. The missing real Kraid palette owner prevents carrying
+that row through later unmasked cuts; a continuous harness must obtain those colours from its
+owner rather than re-seed from the record. The Ceres beacon remains colours41..46 on its
+`Brightening` cuts, source `$A6:F850` -> `$A6:F86B`. No masks or floors were changed in code.
+
+### Constructed progress checks and actual faults
+
+All86 vectors pass, preserving the70 existing cases. The16 added cases cover starting,
+continuing, no progress, completing after partial work, all colours done while work continues,
+both fade directions, zero/goal/final steps, last colour and adjusted steps. Hand arithmetic:
+with d12,t1, channel31 toward0 becomes28; channel0 toward31 becomes2. With d2,t1,31 becomes15.
+At t=d+1 the colour is exactly the goal; t0 and t=d+2 change nothing. Physical slots at100/101,
+218/219 and255 make off-by-one coverage observable. Existing Parameter coverage remains complete.
+
+Actual local reference faults fail: suppressing unfinished writes catches `fade-start-overrun`'s
+colours and retained coverage; restarting treatment from colour0 catches
+`fade-continue-overrun`'s already-treated prefix; advancing the work step early catches
+`fade-colours-done-pending`'s retained t. The native repeated-prefix fault first fails M0's palette at188 and reduces its match to14/80.
+The native completion-only fault first fails M0's
+palette at187 and reduces its match from80/80 to8/80. Faults live only in local Python and are
+not committed. Full Cargo gate is deferred until the root grants the shared build slot.
