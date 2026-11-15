@@ -29,6 +29,8 @@ session. The root starts each session with a brief.
 Every role except the confined two (implementer, blind reviewer) also follows the
 [lane](../../.agents/skills/lane/SKILL.md) skill for its worktree, commits, proof and report.
 
+Run every lane sub-agent with `gpt-6.1-sol`.
+
 ## Who sees what
 
 The **barrier** is the reason the clean room exists: the model is shaped by what a player sees,

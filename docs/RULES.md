@@ -54,6 +54,7 @@ decision in MODEL §1, or a change where it lives, then a line here.
     commit ([PROCESS](cleanroom/PROCESS.md#a-round), decision 20).
 18. At most three lanes, one round in flight per domain
     ([PROCESS](cleanroom/PROCESS.md#what-can-run-at-once)).
+18a. Lane sub-agents use GPT-6.1 Sol ([PROCESS](cleanroom/PROCESS.md#roles)).
 19. Rounds run in the nightly session; outside it short structural tasks may run in parallel
     ([PROCESS](cleanroom/PROCESS.md#working-hours)).
 20. The root decides a cut from independent findings and the size guideline (decision 19,
