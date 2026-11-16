@@ -32,6 +32,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
     let content = Content::default();
     let source = FrameSource {
         samus: &samus,
+        cinematic_active: Some(false),
         controller: &controller,
         ride: ElevatorRide {
             status: ElevatorStatus::LeavingRoom,
@@ -41,7 +42,7 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         content: &content,
     };
     let sized = |pose| body(&content, &samus, pose);
-    let frame = source.frame(&sized, &|_| None);
+    let frame = source.frame(&sized, &|_| None).unwrap();
     let pad = frame.pad;
     let held = [JUMP, RUN, RIGHT, AIM_UP];
     assert!(held.iter().all(|&set| pad.any(set)));
@@ -63,7 +64,8 @@ fn the_pad_items_elevator_parity_and_radius_reach_the_model() {
         ride: ElevatorRide::default(),
         ..source
     }
-    .frame(&sized, &|_| None);
+    .frame(&sized, &|_| None)
+    .unwrap();
     assert_eq!(still.parity, Parity::Even);
     assert!(!still.elevator_moving);
 }
@@ -95,4 +97,33 @@ fn the_pose_she_is_in_has_her_radius_word() {
     assert_eq!(body(&content, &samus, forward).y.0, 0x15);
     samus.pose = PoseId(0x01);
     assert_eq!(body(&content, &samus, forward).y.0, 0x9B);
+}
+
+#[test]
+fn an_unmapped_selected_figure_returns_a_typed_fault() {
+    let pose = PoseId(0xffff);
+    let samus = Samus {
+        pose,
+        ..Samus::default()
+    };
+    let controller = Controller::default();
+    let content = Content::default();
+    let source = FrameSource {
+        samus: &samus,
+        cinematic_active: Some(false),
+        controller: &controller,
+        ride: ElevatorRide::default(),
+        completed: 0,
+        content: &content,
+    };
+    let frame = source.frame(
+        &|_| types::Radius {
+            x: std::num::Wrapping(0),
+            y: std::num::Wrapping(0),
+        },
+        &|_| None,
+    );
+    assert!(
+        matches!(frame, Err(crate::samus_movement_bridge::SamusFault::UnnamedPose(found)) if found == pose)
+    );
 }

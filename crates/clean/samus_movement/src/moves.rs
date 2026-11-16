@@ -12,7 +12,7 @@ use crate::tick::Tick;
 use crate::travel::TravelKind;
 use crate::vertical::Course;
 use types::button::{JUMP, LEFT, SIDES};
-use types::{Direction, Facing, Fixed, Parts, Side, TravelDistance, ZERO};
+use types::{CollisionPurpose, Direction, Facing, Fixed, Parts, Side, TravelDistance, ZERO};
 
 /// `WhatHerMovesMet`: what a frame's moves met, and what else the step reports of them.
 #[derive(Default)]
@@ -72,6 +72,7 @@ impl Samus {
     pub(crate) fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
             if self.rides_the_elevator(t.frame) {
+                t.purpose = CollisionPurpose::OrdinaryMove;
                 let ride = t.vmove(self.bounds(t), t.rules.elevator_descent, Probe::Move);
                 self.position = ride.to;
                 let direction = if t.rules.elevator_descent.negative() {
@@ -137,7 +138,7 @@ impl Samus {
             self.run.dash
         };
         let way = self.run.moving(facing);
-        let moved = self.hmove(way, by, t);
+        let moved = self.hmove(way, by, CollisionPurpose::OrdinaryMove, t);
         t.travelled
             .record(TravelKind::Walk, way.heading(), moved.accepted);
         let stop = moved.stop;
@@ -162,7 +163,8 @@ impl Samus {
 
     /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, a walk when it is made with
     /// her vertical speed exactly 0. Returns its collision result and signed accepted travel.
-    fn hmove(&mut self, way: Side, d: Fixed, t: &mut Tick) -> Moved {
+    fn hmove(&mut self, way: Side, d: Fixed, purpose: CollisionPurpose, t: &mut Tick) -> Moved {
+        t.purpose = purpose;
         let probe = if self.vertical.speed == ZERO {
             Probe::Walk
         } else {
@@ -184,7 +186,12 @@ impl Samus {
         }
         let x = self.position.x;
         let stop = self
-            .hmove(Side::of(self.pose.facing), t.rules.aim_step, t)
+            .hmove(
+                Side::of(self.pose.facing),
+                t.rules.aim_step,
+                CollisionPurpose::AimChange,
+                t,
+            )
             .stop;
         if stop == Some(Stop::Enemy) {
             self.position.x = x;
@@ -214,6 +221,7 @@ impl Samus {
         let towards_wall = self
             .bounds(t)
             .axis(wall.heading(), t.rules.wall_reach, Probe::NearWall);
+        t.purpose = CollisionPurpose::NearWallReach;
         let look = t.go(towards_wall);
         // What stopped the look writes her x subpixel, or her y subpixel against an enemy.
         self.take_result(&look);
@@ -242,6 +250,11 @@ impl Samus {
             Course::Pulled => pull + r.ground_pull,
             Course::BallMovesByIt | Course::InTheAir => self.vertical.speed,
         };
+        t.purpose = if course == Course::Pulled {
+            CollisionPurpose::GroundFollowing
+        } else {
+            CollisionPurpose::OrdinaryMove
+        };
         let moved = t.vmove(self.bounds(t), by, Probe::Move);
         if by != ZERO {
             self.seat = Seat::Unseated;
@@ -260,6 +273,6 @@ impl Samus {
         t.travelled
             .record(TravelKind::Vertical, direction, moved.accepted);
         self.take_result(&moved);
-        self.vertical.end_move(course, by, stopped, footing, r)
+        self.vertical.end_move(course, by, stopped, footing, t)
     }
 }

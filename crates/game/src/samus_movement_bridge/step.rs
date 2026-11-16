@@ -35,6 +35,8 @@ pub struct Stepped {
 pub struct Reads<'a> {
     /// The pad.
     pub controller: &'a Controller,
+    /// Known cinematic activity; legacy callers without the input discard new producer outputs.
+    pub cinematic_active: Option<bool>,
     /// The elevator under her.
     pub ride: ElevatorRide,
     /// The requested-NMI count, whose parity orders the vertical scans.
@@ -102,12 +104,13 @@ pub fn run(
     };
     let frame = FrameSource {
         samus,
+        cinematic_active: reads.cinematic_active,
         controller: reads.controller,
         ride: reads.ride,
         completed: reads.completed,
         content: reads.content,
     }
-    .frame(&sized, &heading);
+    .frame(&sized, &heading)?;
     let outcome = after
         .step(&frame, world, rules)
         .map_err(|_| SamusFault::UnnamedPose(samus.pose))?;

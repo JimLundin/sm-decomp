@@ -38,6 +38,10 @@ Every quantity here is something the player sees or can measure frame by frame.
 
 | Quantity | Units | Why the player can tell | Read by |
 | --- | --- | --- | --- |
+| accepted floor response | optional `FloorResponse`, carrying the response kind and signed `VerticalSpeed` in 1/65536 px/frame immediately before that response | a touchdown, bounce or continued turn has different sound and motion | output (sound transport and samus-appearance); `AcceptedFloorResponse` |
+| performed collision tests | ordered `CollisionTests`, each with named purpose, `Direction`, tested `Cell` and horizontal `VerticalMotionAtTest` (`ExactlyZero` or `Nonzero`) where applicable | collision work consumes time and can delay sound and the next displayed frame | output (CPU timing); `PerformedCollisionTests` |
+| touchdown cue opportunities | ordered named `SoundRequest`s, each with its sound identity, library and queue allowance | touchdown and ending a spin can sound separately | output (sound transport); `TouchdownRequests` |
+| touchdown graphics opportunity | `bool` | a touchdown can start dust or a splash when appearance admits it | output (samus-appearance); `TouchdownRequests` |
 | transition firing aim | optional `FiringDirection`, defined below; a publication, not a distance | a shot made while her pose changes keeps the intended gun direction | output (weapons-projectiles `CannonOrigin` through caller-held pending aim) |
 | latest directional travels | `DirectionalTravels`, a complete map from named `Direction` (Down, Left, Right, Up) to signed `TravelDistance`, wrapping `P.S` in 1/65536 px | how far each ordinary move got after the world stopped it; firing carries these distances into a shot, including fractions | output (weapons-projectiles `InheritedMotion`); caller-held memory as `TravelledDistances` says |
 | position | x, y: `P.S`; wraps mod 2^32 | where she is drawn | every move; output |
@@ -122,6 +126,8 @@ or falling at 0.
 
 | Input | Type | Read by |
 | --- | --- | --- |
+| prior selected sprite | shared `Sprite` (`Plain`, `ScrewAttack`, `SpaceJump`, `OtherSuit`) from the actual figure selected before movement; independent of current items and the figure newly selected this frame | `TouchdownRequests` |
+| cinematic active | `bool` | `TouchdownRequests` |
 | cannon headings | imported named `FiringDirection` for each ordinary straight-jump and moonwalking pose; the gun direction, independent of walking-facing | `TransitionFiringAim` |
 | pad | held: run, jump, shoot, left, right, up, down, aim up, aim down; just pressed: each of them, held this frame and not the frame before | most behaviours |
 | items switched on | the `Item`s switched on: progress's own output (progress §1.1), never the ones merely hers | below |
@@ -1054,6 +1060,102 @@ axis. These are named choices, not angles rounded to a movement direction.
   an invented room; C-walljump-hijump, WK1's kick with hi-jump, at 5.8000); original
   only (no test without a spin carried on or without a
   side held: no vector checks a spin near a wall lacking either).
+
+
+### AcceptedFloorResponse
+- kind: output.
+- summary: publish the floor response actually accepted this frame.
+- params: none.
+- switch: none.
+- A downward move whose floor contact is accepted with the chosen pose → report its actual
+  response, with the vertical speed after the pull and before that response changes it:
+  `UprightTouchdown`, `BallSettles`, `SpringHop`, or `Rebound` carrying the updated
+  bounces count (the existing `Bounces`, 0 to 2) [C-output-soft, C-output-hard, C-output-ball-bounce-one, C-output-ball-bounce-two,
+  C-output-ball-settles, C-output-spring-hop]
+- A body-changing move whose floor stops its vertical motion within the move → report
+  `ChangingBodyStops`, with the speed after the pull before it becomes zero
+  [C-output-changing-body]
+- A turning downward move stopped by a floor → report `TurningStops`, with the speed it
+  retains; grounded-ball contact reports `GroundedBallStops`, also retaining its speed
+  [C-output-turning, C-output-grounded-ball]
+- Ground following, no downward stop, a wall kick, or a touchdown choice refused or replaced
+  by pose fitting → publish no floor response (`None`) and no accepted touchdown sound opportunity. A floor found by a fit or
+  lowering look is the look's result, not an additional landing [C-output-ground-follow,
+  C-output-no-floor, C-output-refused, C-output-substituted]
+- Each report describes this frame's actual response; pose history and the jump-held history
+  do not manufacture a response [C-output-ground-follow]
+- checked: constructed.
+
+### TouchdownRequests
+- kind: output.
+- summary: a real touchdown offers its sounds and a separate touchdown graphics opportunity.
+- params: none.
+- switch: none.
+- An accepted upright touchdown, a settling ball, a spring hop, or a bouncing ball, whose frame started in
+  a spin or wall jump, with cinematic inactive → offer `SpinEnded` to Samus sounds (library 1) with a
+  queue allowance of 6. When that prior action is `Spinning` and its prior selected sprite is
+  `ScrewAttack`, offer `ScrewAttackEnded` instead; a wall jump offers `SpinEnded` in every
+  sprite. Current switched-on items do not overwrite the prior selected sprite;
+  this precedes that touchdown's touchdown cue, even if its speed offers no touchdown cue
+  [C-output-spin-end, C-output-screw-end, C-output-spin-soft, C-output-prior-screw-no-item,
+  C-output-prior-plain-screw-on, C-output-wall-touchdown-plain, C-output-wall-touchdown-screw,
+  C-output-prior-space]
+- The same accepted touchdown with a whole downward speed of at least 5 px/frame → offer
+  `SamusLandedHard` in library 3 with allowance 6 when cinematic is inactive; offer the
+  touchdown graphics opportunity regardless of cinematic [C-output-hard, C-output-hard-cinematic]
+- The same accepted touchdown with a smaller whole speed and a nonzero fractional part →
+  offer `SamusLandedOrWallJumped` in library 3 with allowance 6 when cinematic is inactive;
+  offer the touchdown graphics opportunity regardless of cinematic
+  [C-output-soft, C-output-soft-cinematic, C-output-tiny]
+- The same accepted touchdown with a smaller whole speed and a zero fractional part → no
+  touchdown cue and no touchdown graphics opportunity, even when the total speed is nonzero
+  [C-output-whole-only, C-output-zero]
+- Cinematic active → no touchdown spin-ending or touchdown cue; this does not cancel a
+  graphics opportunity admitted by the speed rules [C-output-soft-cinematic,
+  C-output-hard-cinematic, C-output-spin-cinematic]
+- A changing-body stop, turning stop, grounded-ball stop, ground following, or refused
+  touchdown → no touchdown sound or touchdown graphics opportunity
+  [C-output-changing-body, C-output-turning, C-output-grounded-ball,
+  C-output-ground-follow, C-output-refused, C-output-substituted]
+- An accepted wall kick → its own `SamusLandedOrWallJumped` opportunity in library 3 with
+  allowance 6 even when cinematic is active; it offers no touchdown graphics
+  [C-output-wall-kick, C-output-wall-kick-cinematic]
+- Graphics opportunity is permission to evaluate appearance's own room/liquid/cinematic
+  rules, not a claim that dust or a splash is visible. Sound transport evaluates its own
+  admission rules. Neither consumer reconstructs an opportunity from the final pose.
+- Landing requests remain distinct from appearance's subsequent normal-drawing requests,
+  even when both name `SpinEnded`; the landing allowance is 6, independent of normal
+  drawing's allowance. The caller preserves their order and any repeated identity.
+- checked: constructed.
+
+### PerformedCollisionTests
+- kind: output.
+- summary: report the movement work that can delay sound and display.
+- params: none.
+- switch: none.
+- A collision test that actually evaluates a cell for a move or look → report that cell,
+  its direction and its semantic purpose: ordinary movement, aim change, ground following, near-wall
+  reach, body-fit room above or below, body-fit clearance on the far side, or body lowering.
+  Cells not tested because an enemy or an earlier cell stopped the search are absent
+  [C-work-stop-first, C-work-enemy-first, C-work-fit, C-work-lowering, C-work-near-wall, C-work-aim-change]
+- A movement or look of exactly zero distance → no leading-edge cell tests; an enemy can
+  still stop it as `SolidEnemies` says [C-work-air-zero, C-work-enemy-first]
+- A horizontal ordinary or aim-change move → its tests retain whether the vertical speed
+  is exactly zero at that move. The condition describes the performed move rather than
+  whether she is physically on the ground; it is not reconstructed from a frame's final speed
+  [C-work-move-zero, C-work-move-nonzero, C-work-aim-change]
+- An airborne horizontal move at zero vertical speed → `ExactlyZero`, without claiming
+  physical ground contact [C-work-air-zero]
+- A look → retain its tested direction and purpose, even though `TouchedCells` reports
+  the reaction's way as `Look`; the reaction's way and the performed work are separate
+  meanings [C-work-fit, C-work-lowering]
+- A direct seating/read of a slope or the cells inside her body that does not evaluate a
+  leading-edge move/look → no leading-edge collision test
+  [C-work-no-raw-reads]
+- The report describes actual performed tests, in their observable order. It contains no
+  CPU addresses, elapsed times or instruction identities. CPU timing consumes the semantic
+  work; this domain does not assign a cost to a test.
+- checked: constructed.
 
 ### Landing
 - kind: mechanic.

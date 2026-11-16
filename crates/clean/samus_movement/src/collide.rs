@@ -475,6 +475,24 @@ impl Tick<'_> {
             return None;
         }
         self.line(a).into_iter().find_map(|(k, at)| {
+            // Spec: PerformedCollisionTests. Record evaluation here, not from reached
+            // reactions or raw slope/inside reads. Enemy and earlier-cell stops never get here.
+            let vertical_motion =
+                if !a.heading.vertical() && matches!(a.probe, Probe::Walk | Probe::Move) {
+                    Some(if a.probe == Probe::Walk {
+                        types::VerticalMotionAtTest::ExactlyZero
+                    } else {
+                        types::VerticalMotionAtTest::Nonzero
+                    })
+                } else {
+                    None
+                };
+            self.collision_tests.push(types::CollisionTest {
+                cell: at,
+                direction: a.heading,
+                purpose: self.purpose,
+                vertical_motion,
+            });
             let (block, at) = self.resolve(at);
             self.reached.push(Touch {
                 cell: at,

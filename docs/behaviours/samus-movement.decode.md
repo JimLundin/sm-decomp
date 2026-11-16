@@ -2278,22 +2278,21 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
 
 - Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
-  DriftInTheAir, Moonfall, WallJump, Landing, WordwiseTopSpeed, 1.2, 9
+  DriftInTheAir, Moonfall, WallJump, Landing, AcceptedFloorResponse, TouchdownRequests, WordwiseTopSpeed, 1.2, 9
 - Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
 - Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
   AnimationEnds
 - Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
-  SlopesSlowTheWalk, TouchedCells, OtherBlockKinds
+  SlopesSlowTheWalk, TouchedCells, PerformedCollisionTests, OtherBlockKinds
 
-Budget: 37.5 × 245.7 units = 9,212 (motion 3,600, pose fit 687, pose chart 2,375, collision 2,550)
+Budget: 37.5 × 265.7 units = 9,962 (motion 4,125, pose fit 687, pose chart 2,375, collision 2,775).
+The official counter reports 110.0 motion units, 18.3 pose-fit units, 63.3 pose-chart units
+and 74.0 collision units for this output contract. Old-code baselines and k above are unchanged.
 
 From the spec's §7 (the pose chart), moved with the header's:
 
 **Size.** Inside the header's 1,500 tokens of logic for the chart: the chart's reader and the
 effects. The tables below are data records (about 120 rows), counted as data.
-
-Current official count: 248.7 units over 430 vector ids; budget 9,324 weighted tokens
-(motion 3,712, pose fit 687, pose chart 2,375, collision 2,550).
 
 ## Transition firing aim
 
@@ -2383,3 +2382,153 @@ gap (`$A0:AB22`..`$A0:AB80`) return immediately with the first qualifying entry.
 nearest-contact comparison. The caller must preserve the supplied order; the current single-
 enemy vector world cannot prove multiple-enemy ordering. This source clarification changes
 neither selection behavior nor that testing limitation.
+
+
+## Accepted responses and performed collision tests
+
+### Source and semantic mapping
+
+`AcceptedFloorResponse` publishes actual movement responses rather than an end-cut contact
+word. Upright and ball responses are deferred until the proposed pose survives fit;
+`$91:F404`/`$91:FDAE` and `$91:FE82` establish refusal, and `$91:EFC4`/`$91:F010`
+apply the accepted landing response. Changing-body movement clears vertical motion inside
+the move at `$90:A640`; the pre-clear speed must be retained at that response, not recovered
+from `vertical_speed_after_moves`. Turning and grounded-ball contact map to no-change in
+`$90:E676`, so their floor stop does not call the touchdown cue writer. Ground following
+`$90:923F` is not a landing. These distinctions are the existing `Landing`/`FollowingTheGround`
+rules; publication does not change their response or ordering.
+
+`TouchdownRequests`: `$91:F010` calls `$91:F046` before its response. Old movement
+and old pose are `$0A23`/`$0A20`. `$91:F056` gates the ending sound on cinematic activity;
+`$91:F05B` selects screw-specific ending only for prior spinning with the prior selected
+ScrewAttack sprite; prior wall-jumping always offers SpinEnded. The bridge imports
+`samus_appearance_bridge::figure_of(PoseId).sprite` as shared `types::Sprite`; current
+items or the new figure cannot reconstruct that prior selection. Ending requests at `$91:F06B`
+and `$91:F074` are library 1, allowance 6, independently of appearance's normal-drawing
+allowance 15. `$91:F078..F080` selects hard from whole vertical speed; `$91:F082..F085`
+returns on zero fraction on the other branch. A total-speed test is wrong. The current
+vertical magnitude words `$0B2E`/`$0B2C` are read after the frame's pull and before response.
+`$91:F08F`/`$91:F09D` offer soft/hard in library 3, allowance 6. Cinematic branches
+`$91:F08A`/`$91:F098` skip sound but reach `$91:F0A1`; fraction-zero reaches `$91:F0A4`
+without the graphics opportunity. Wall-kick `$91:F2EB` offers the shared soft identity,
+without the touchdown graphics opportunity and without that cinematic guard.
+
+Graphics are a separate consumer. `$91:F0A5..F0AA` dispatch by area; the Ceres entry
+of `$91:F0AE` selects `$91:F0BE`, clearing atmospheric slots `$0AF0`/`$0AF2`. Other
+area admission at `$91:F0C5` includes its own cinematic/room/liquid rules. Entering the
+graphics opportunity neither promises visible dust nor bypasses those rules. Movement
+owns the sound opportunities; samus-appearance part 2 owns the graphical admission. The
+bounded Ceres bridge must respect the opportunity without inventing dust.
+
+`PerformedCollisionTests`: `$94:9515`/`$94:952C` are the leading-edge cell evaluations;
+`$94:9543` scans horizontal rows; `$94:959E`/`$94:95F5` scan vertical columns in the
+parity-selected order. They are not upward/downward purpose identities. The reaction-facing direction is not the physical direction of a fit look. Its signed
+whole/fraction test displacement and source call purpose independently establish that direction.
+Actual sampled call stacks distinguish ordinary horizontal movement `$90:938F`/`$90:93CA`,
+aim movement `$91:EB48`, ordinary vertical `$90:942D`/`$90:945B`, fit room above
+`$91:FE4C`, fit room below `$91:FE64`, and the fit far-clearance checks `$91:FF2B`/`$91:FF58`.
+All fit calls use `$94:96AB`; its short first look and continued look belong to the same
+semantic room/clearance purpose. Lowering `$91:ECDA` and near-wall reach `$94:967F` are
+covered by invented vectors; neither is inferred from a native aggregate remainder.
+
+Horizontal slope scaling consumes exactly-zero vertical whole and fraction at the actual
+move (`SlopesSlowTheWalk`), regardless of ground phase. The clean `hmove` selects `Walk`
+on that predicate but `Bounds::axis` reports both `Walk` and `Move` as `Way::Move`, losing
+it. `Probe::Blocks` similarly becomes directionless `Way::Look`. Reaction-facing `TouchedCells`
+keeps its semantics; a performed-work publication retains the additional direction/purpose.
+Direct slope seating and inside-body reads are not leading-edge cell evaluations.
+
+### Native harness and independent reference
+
+Harness row `chain-any-0003-DFD7`, cuts 57 and 124: start in ordinary falling straight-jump
+motion, accepted upright touchdown, cinematic inactive; independently predicted after-pull
+whole below 5 and fraction nonzero. The cue found at the prior library-3 next slot is
+`SamusLandedOrWallJumped`, allowance 6. Cut 157 separately offers `CeresDoorOpening`; it
+is not the landing cue. No collision word or pose-history field injects these events.
+
+Read-only native capture `native-full-on-v15-query-context`, outside the repository,
+preserves entry/dispatch stack and exact speed predicates. Recorder proof holds 184 ordinary
+records and CPU/WRAM pins, 185 clock/APURAM states, 1,037 equal entry/dispatch contexts,
+and 140 CPU sound events/764 publications with tail excluded. Its source-classified native
+prefix covers 773 horizontal evaluations (534 ordinary, 239 aim) and 264 vertical
+evaluations (230 ordinary, 34 fit). The fit subset is 11 above-room, 15 below-room and
+8 far-clearance evaluations; no lowering occurs in this native prefix.
+
+Horizontal actual zero predicates: 544 zero, 229 nonzero; all 239 aim evaluations are zero.
+No prefix frame has both horizontal conditions. With native capture N ending at cache cut N,
+frame-start speed inference is wrong for 6 evaluations at captures 18/83; end-cut inference
+is wrong for 19 at 16/18/57/80/83/124. The rise-end writers are `$90:8FDC`/`$90:9046`/`$90:90C4`;
+a reachable invented jump-release vector checks the zero-speed horizontal move before that
+frame's pull. No air-landing-aim mixed example or ordering change is assumed.
+
+The bounded independent Python references live outside the repository: 30 output vectors
+match 30 (null matches 4), and 10 work vectors match 10 (null matches 1). Existing 359 movement
+vectors and 64 pose-step groups remain structurally identical. Five independent semantic
+fault modes are rejected: total-speed admission, cinematic graphical suppression, lost
+horizontal-zero condition, lost fit work and aim cells mislabeled as ordinary movement. This is a reference for the output delta,
+not an independent full movement model. The full landed baseline remains a separate suite.
+
+Prior selected-sprite witnesses cover mismatched current items, SpaceJump and OtherSuit,
+and both wall-jump sprite choices. A proper refused oversized ball target and an accepted
+crouching substitute separately prove that selected contact is not accepted touchdown.
+
+The zero pre-response boundary vector uses a nonzero actual move with adjusted gravity;
+a zero-distance move never evaluates blocks and cannot manufacture a touchdown.
+Vectors contain only invented geometry and RAM-like observations; native content remains in
+the importer-backed harness. No timestamps, CPU addresses, sampled stacks or raw bank data
+are clean-model inputs. The source-derived numerical slope workload audit belongs to CPU
+timing and is not a movement algorithm or a timing prediction proof.
+
+### Remaining interface limits
+
+- The checked ordinary caller's actual gameplay receipt matches native cell identities,
+  classes, complete order, directions and semantic purposes across all 183 prefix cuts:
+  773 horizontal, 230 ordinary vertical and 34 fit evaluations, 1,037 total. Independent
+  native entry contexts prove all 773 horizontal conditions (544 exactly zero, 229 nonzero)
+  and fit purposes (11 room-above, 15 room-below, 8 far-clearance). The ordinary vertical
+  caller stacks distinguish 108 ground-following from 122 ordinary moves, without ambiguity.
+  The engine's frozen pre-movement content independently classifies each published cell:
+  870 plain air, 77 common solid, 87 slope, 3 door. Native query contexts never enter production.
+  A null empty-work receipt matches no cut; removing horizontal conditions fails at cut 0.
+- Actual performed tests are published directly by the model and retained in gameplay
+  outputs. Raw `World::block` reads or frame-boundary speed inference cannot replace them.
+- The appearance consumer's general landing graphical admission is outside this output
+  delta; Ceres' delete-slots behavior is source-proven. Other areas need that owner before
+  claiming complete atmospheric effects.
+- Native prefix has no extension chains, near-wall reach or lowering. Their wider CPU
+  workload costs and other movement consumers are not established by this receipt.
+
+### Aim-purpose and fit boundary receipts
+
+`C-work-aim-change` enters the ordinary movement step from upright Still, right-facing,
+with run/right/aim-down held and aim-down newly pressed. Ground following evaluates
+cell (2,12) first. The pad selects Running DownForward; `$91:EADE..EB48` then performs
+its one-pixel rightward aim step. At centre (40,171.FFFF), half-size (5,21), the aim
+step evaluates column 2, rows 9,10,11, in that order, each Right/AimChange/ExactlyZero.
+The prior Still pose produces no ordinary horizontal leading-edge cells; its zero-distance
+ordinary request and support checks remain actual work. The independent work
+reference rejects an aim-purpose mutant at this case alone. Library and allowance
+metadata of each request remain mandatory production comparison fields; checking only
+the vector's identity list would not prove transport admission.
+
+Independent source/geometry re-derivation of the fit cases uses `$91:FE4C/FE64` for
+the two growth looks, `$91:FFA7` for the old-half-height threshold, and `$91:FE82`,
+`$91:F404` and `$91:EBEE` for refusal/substitution and deferred-response suppression.
+For `C-output-refused`, the floor stop seats the old radius-7 ball at centre 281,
+leaving 2 pixels above and 0 below within floor288/ceiling272. The supplied radius21
+target grows14, so both looks stop: old half-height below8 restores Ball Falling.
+For `C-output-substituted`, the floor stop seats old radius12 at centre180, leaving
+8 pixels above and0 below within floor192/ceiling160. Growth9 passes the short8
+upward look, then hits on the full9 look; the downward look also stops. Old radius
+at least8 selects crouched Still radius16 and raises its centre4, preserving feet.
+Neither case accepts the selected landing response. A separate bounded Python
+geometry reference derives both choices from input geometry and supplied body sizes
+before comparing the output; it agrees2/2. No expected pose or output is an input
+to its decision. These invented sizes are not a claim that vanilla ball landing grows.
+
+`C-work-lowering` supplies Down newly pressed as well as held: the ordinary pad chart
+lookup `$91:81A9..82D9` tests required new presses, including non-jump buttons. Holding
+Down alone does not select its crouching target. This witness therefore starts crouching
+through the existing pad rule, then performs the body-lowering look; its expected cells
+and ordering remain unchanged. The bounded work reference now requires that press before
+publishing this lowering look. Removing the press rejects this case's expected work.

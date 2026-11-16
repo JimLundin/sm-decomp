@@ -39,6 +39,12 @@ pub enum BehaviourId {
     Moonfall,
     /// How a spin near a wall readies, then kicks off it (§6).
     WallJump,
+    /// Publish the floor response actually accepted this frame.
+    AcceptedFloorResponse,
+    /// Ordered touchdown sound opportunities and separate graphics permission.
+    TouchdownRequests,
+    /// Actual ordered leading-edge collision work without timing cost.
+    PerformedCollisionTests,
     /// What touching down does to her speeds, and the ball's bounces (§6).
     Landing,
     /// What decides her next pose, and when the change acts (§7).
@@ -88,7 +94,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 32] = [
+pub const CATALOGUE: [Behaviour; 35] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -206,6 +212,27 @@ pub const CATALOGUE: [Behaviour; 32] = [
         summary: "a spin near a wall readies, then kicks off it.",
         kind: Kind::Mechanic,
         switch: Switch::Parameter,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::AcceptedFloorResponse,
+        summary: "publish the floor response actually accepted this frame.",
+        kind: Kind::Output,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::TouchdownRequests,
+        summary: "a real touchdown offers ordered sounds and separate graphics permission.",
+        kind: Kind::Output,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PerformedCollisionTests,
+        summary: "report actual ordered leading-edge collision work without assigning cost.",
+        kind: Kind::Output,
+        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
     Behaviour {

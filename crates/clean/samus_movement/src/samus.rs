@@ -116,6 +116,18 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
 )]
 pub struct Outcome {
+    /// Spec: `AcceptedFloorResponse`. Actual accepted response with its pre-response speed,
+    /// never manufactured from final pose or handover/jump-held history.
+    pub floor_response: Option<types::FloorResponse>,
+    /// Spec: `TouchdownRequests`. Ordered opportunities; preserve repeated identities when
+    /// appending appearance's subsequent normal-drawing requests. Transport admits them.
+    pub touchdown_requests: Vec<types::SoundRequest>,
+    /// Spec: `TouchdownRequests`. Permission to evaluate appearance's graphics rules, not
+    /// a claim that dust or splash is visible; cinematic can suppress sounds independently.
+    pub touchdown_graphics: bool,
+    /// Spec: `PerformedCollisionTests`. Actual ordered leading-edge work, including test
+    /// directions for looks, separate from reached reaction identities and without cost.
+    pub collision_tests: types::CollisionTests,
     /// Spec: `TransitionFiringAim`. Fresh optional cannon direction from the actual pose change.
     /// On `None`, the caller keeps earlier pending aim; this is not retained movement State.
     pub pending_aim: Option<types::FiringDirection>,

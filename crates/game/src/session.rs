@@ -137,8 +137,8 @@ pub struct TickInput {
 /// What a Tick produced, at its cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TickOutput {
-    /// Appearance producer requests and independent contacts, before audio consumption.
-    pub appearance: crate::samus_appearance_bridge::producer::Outputs,
+    /// Ordered gameplay requests and independent movement/appearance receipts.
+    pub gameplay: crate::gameplay_outputs::Outputs,
     /// The Tick that ran, counted from the Session's open.
     pub tick: Tick,
     /// The path its NMI took.
@@ -207,7 +207,7 @@ pub struct Session {
     begun: bool,
     /// Ordinary steps publish only after every fallible phase succeeds.
     rollback: Option<State>,
-    appearance: crate::samus_appearance_bridge::producer::Outputs,
+    gameplay: crate::gameplay_outputs::Outputs,
 }
 
 impl Session {
@@ -233,7 +233,7 @@ impl Session {
             fault: None,
             begun: false,
             rollback: None,
-            appearance: crate::samus_appearance_bridge::producer::Outputs::default(),
+            gameplay: crate::gameplay_outputs::Outputs::default(),
         })
     }
 
@@ -279,17 +279,17 @@ impl Session {
         {
             self.rollback = Some(self.state.clone());
         }
-        self.appearance = crate::samus_appearance_bridge::producer::Outputs::default();
+        self.gameplay = crate::gameplay_outputs::Outputs::default();
         self.begun = true;
         let mut budget = STEP_BUDGET;
         if tick::resume(&mut self.state) {
-            let ran = tick::run_with_appearance(
+            let ran = tick::run_with_outputs(
                 &mut self.state,
                 self.rules,
                 &self.content,
                 Until::BeamSync,
                 &mut budget,
-                &mut self.appearance,
+                &mut self.gameplay,
             );
             if let Err(fault) = ran {
                 return Err(self.poison(fault));
@@ -334,13 +334,13 @@ impl Begun<'_> {
     /// The [`SessionFault`] the main strand raised, which poisons the Session.
     pub fn end(mut self, input: TickInput) -> Result<TickOutput, SessionFault> {
         let session = &mut *self.session;
-        let ran = tick::run_with_appearance(
+        let ran = tick::run_with_outputs(
             &mut session.state,
             session.rules,
             &session.content,
             Until::Yield,
             &mut self.budget,
-            &mut session.appearance,
+            &mut session.gameplay,
         );
         if let Err(fault) = ran {
             return Err(session.poison(fault));
@@ -358,7 +358,7 @@ impl Begun<'_> {
         session.begun = false;
         session.rollback = None;
         Ok(TickOutput {
-            appearance: std::mem::take(&mut session.appearance),
+            gameplay: std::mem::take(&mut session.gameplay),
             tick,
             nmi: kind,
             picture: self.picture,

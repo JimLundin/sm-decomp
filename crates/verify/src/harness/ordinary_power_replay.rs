@@ -419,8 +419,8 @@ struct ReplayInputs<'a> {
 fn appearance_expected(
     previous: &oracle_record::FrameRecord,
     next: &oracle_record::FrameRecord,
-) -> Vec<game::samus_appearance_bridge::producer::Request> {
-    use game::samus_appearance_bridge::producer::Request;
+) -> Vec<game::gameplay_outputs::Request> {
+    use game::gameplay_outputs::Request;
     use samus_appearance::SoundRequest;
     let mut requests = Vec::new();
     for library in [0_usize, 2] {
@@ -432,13 +432,22 @@ fn appearance_expected(
             let code = next.wram[0x656_usize
                 .saturating_add(16_usize.saturating_mul(library))
                 .saturating_add(usize::from(slot))];
+            if library == 2 && code == 5 {
+                requests.push(game::gameplay_outputs::Request::Movement(
+                    types::SoundRequest {
+                        identity: types::SoundIdentity::SamusLandedOrWallJumped,
+                        library: types::SoundLibrary::Library3,
+                        queue_allowance: types::QueueAllowance(6),
+                    },
+                ));
+                continue;
+            }
             let request = match (library, code) {
                 (0, 0x31) => Some(SoundRequest::PlainSpin),
                 (0, 0x32) => Some(SoundRequest::SpinEnded),
                 (0, 2) => Some(SoundRequest::SamusSilence),
                 (2, 6) => Some(SoundRequest::Footstep),
-                // CeresDoorOpening, weapon requests and the out-of-scope
-                // SamusLandedOrWallJumped family are excluded from this S5 inventory.
+                // CeresDoorOpening and weapon requests belong to other producers.
                 _ => None,
             };
             requests.extend(request.map(Request::Appearance));
@@ -486,8 +495,8 @@ fn appearance_sources(
     previous: &oracle_record::FrameRecord,
     next: &oracle_record::FrameRecord,
     marks: &[u8],
-) -> (Vec<game::samus_appearance_bridge::producer::Request>, bool) {
-    use game::samus_appearance_bridge::producer::Request;
+) -> (Vec<game::gameplay_outputs::Request>, bool) {
+    use game::gameplay_outputs::Request;
     use samus_appearance::SoundRequest;
     let word = appearance_word;
     let from = word(previous, 0x0a1f) & 255;
@@ -522,6 +531,124 @@ fn appearance_sources(
         requests.push(Request::Appearance(SoundRequest::SpinEnded));
     }
     (requests, contact)
+}
+
+/// Native source witnesses: these two accepted upright touchdowns are independently
+/// established by `native_landing`'s queue and movement contexts, without pose-history input.
+fn movement_landing(
+    previous: &oracle_record::FrameRecord,
+    next: &oracle_record::FrameRecord,
+    cut: u64,
+) -> Option<u32> {
+    if !matches!(cut, 57 | 124) {
+        return None;
+    }
+    let word = appearance_word;
+    assert_eq!(word(previous, 0x1f51), 0);
+    assert_eq!(word(next, 0x1f51), 0);
+    assert_eq!(word(previous, 0x0a1f) & 255, 2);
+    assert_eq!(word(previous, 0x0b36), 2);
+    assert_eq!(word(next, 0x0b36), 0);
+    let prior = (u32::from(word(previous, 0x0b2e)) << 16) | u32::from(word(previous, 0x0b2c));
+    let pulled = if (prior >> 16) == 5 {
+        prior
+    } else {
+        prior.wrapping_add(0x1c00)
+    };
+    assert!((pulled >> 16) < 5 && (pulled & 0xffff) != 0);
+    Some(pulled)
+}
+
+/// Classify the engine's own pre-movement content at a published physical test cell.
+/// This does not reconstruct when a test ran or substitute native cells for its output.
+fn performed_test_class(state: &State, cell: types::Cell) -> &'static str {
+    use data::level::BlockKind as B;
+    let index = usize::from(cell.y)
+        .saturating_mul(usize::from(state.room.width.0))
+        .saturating_add(usize::from(cell.x));
+    let Some(block) = state.room.blocks.get(index) else {
+        return "outside_room";
+    };
+    match block.kind {
+        B::Air(_) => "plain_air",
+        B::Solid(_) => "solid_common",
+        B::Slope(_) => "slope",
+        B::Door(_) => "door",
+        B::SpikeAir(_)
+        | B::SpecialAir(_)
+        | B::ShootableAir(_)
+        | B::UnusedAir(_)
+        | B::BombableAir(_) => "other_air",
+        B::HorizontalExtension(_) | B::VerticalExtension(_) => "extension",
+        B::Spike(_) | B::Special(_) | B::Shootable(_) | B::Grapple(_) | B::Bombable(_) => {
+            "other_solid"
+        }
+    }
+}
+
+/// Independent semantic sources for the combined ordered request collection.
+fn gameplay_sources(
+    previous: &oracle_record::FrameRecord,
+    next: &oracle_record::FrameRecord,
+    marks: &[u8],
+    cut: u64,
+) -> (Vec<game::gameplay_outputs::Request>, bool, Option<u32>) {
+    let (mut wanted, contact) = appearance_sources(previous, next, marks);
+    let landing = movement_landing(previous, next, cut);
+    if landing.is_some() {
+        wanted.insert(
+            0,
+            game::gameplay_outputs::Request::Movement(types::SoundRequest {
+                identity: types::SoundIdentity::SamusLandedOrWallJumped,
+                library: types::SoundLibrary::Library3,
+                queue_allowance: types::QueueAllowance(6),
+            }),
+        );
+    }
+    (wanted, contact, landing)
+}
+
+/// Check the two independently established touchdowns and emit every actual work receipt.
+/// Other cuts' response absence is not established by the retained native query hooks.
+fn check_movement_receipt(
+    movement: &game::gameplay_outputs::MovementOutputs,
+    landing: Option<u32>,
+    cut: u64,
+    before: &State,
+) {
+    if let Some(speed) = landing {
+        assert_eq!(
+            movement.floor_response,
+            Some(types::FloorResponse {
+                kind: types::FloorResponseKind::UprightTouchdown,
+                speed: types::VerticalSpeed(core::num::Wrapping(speed)),
+            }),
+            "native accepted landing response and pre-response speed"
+        );
+        assert!(movement.touchdown_graphics);
+    }
+    if std::env::var_os("SM_MOVEMENT_RECEIPT_LOG").is_some() {
+        let _ = writeln!(
+            std::io::stdout(),
+            "movement_receipt cut={} tests={}",
+            cut,
+            movement.collision_tests.len()
+        );
+        for (order, test) in movement.collision_tests.iter().enumerate() {
+            let _ = writeln!(
+                std::io::stdout(),
+                "movement_receipt cut={} order={} cell=({}, {}) direction={:?} purpose={:?} vertical={:?} class={}",
+                cut,
+                order,
+                test.cell.x,
+                test.cell.y,
+                test.direction,
+                test.purpose,
+                test.vertical_motion,
+                performed_test_class(before, test.cell)
+            );
+        }
+    }
 }
 
 fn run_replay(session: &mut Session, inputs: &ReplayInputs<'_>, proof: &mut ReplayProof) {
@@ -572,16 +699,23 @@ fn run_replay(session: &mut Session, inputs: &ReplayInputs<'_>, proof: &mut Repl
             &records[position.checked_sub(1).unwrap()].1
         };
         let inserted = appearance_expected(previous, reference);
-        let (wanted, contact) = appearance_sources(previous, reference, inputs.contact_marks);
+        let (wanted, contact, landing) =
+            gameplay_sources(previous, reference, inputs.contact_marks, frame.0);
         assert_eq!(
             wanted, inserted,
             "source opportunities must equal independent accepted queue insertions"
         );
         let output = result.unwrap();
+        let movement = output
+            .gameplay
+            .movement
+            .as_ref()
+            .expect("admitted ordinary movement publishes its actual receipt");
+        check_movement_receipt(movement, landing, frame.0, &before);
         let contacts_match =
-            output.appearance.contacts == graphical_contacts(previous, contact, inputs.content);
+            output.gameplay.contacts == graphical_contacts(previous, contact, inputs.content);
         proof.appearance_equal = proof.appearance_equal.saturating_add(u64::from(
-            output.appearance.requests == wanted && contacts_match,
+            output.gameplay.requests == wanted && contacts_match,
         ));
         proof.appearance_null_equal = proof
             .appearance_null_equal
@@ -589,10 +723,10 @@ fn run_replay(session: &mut Session, inputs: &ReplayInputs<'_>, proof: &mut Repl
         proof.appearance_requests = proof
             .appearance_requests
             .saturating_add(u64::try_from(wanted.len()).unwrap());
-        if output.appearance.requests != wanted || !contacts_match {
+        if output.gameplay.requests != wanted || !contacts_match {
             proof
                 .first_mismatches
-                .entry("appearance producer ordered requests".into())
+                .entry("gameplay producer ordered requests".into())
                 .or_insert(frame.0);
         }
         let reference_decoded = reference_expected(reference, previous, inputs);
@@ -718,7 +852,7 @@ fn m0_ordinary_owner_runs_once_from_seed_through_first_actual_unsupported_bounda
 fn prove_appearance(proof: &ReplayProof) {
     let _ = writeln!(
         std::io::stdout(),
-        "ordinary appearance producer compared={} equal={} null={} requests={}",
+        "ordinary gameplay producer compared={} equal={} null={} requests={}",
         proof.reached,
         proof.appearance_equal,
         proof.appearance_null_equal,
@@ -754,7 +888,7 @@ fn prove_callable_passage(
         .controller
         .held
         .contains(game::state::Button::X);
-    let mut held = game::samus_appearance_bridge::producer::Outputs::default();
+    let mut held = game::gameplay_outputs::Outputs::default();
     // The checked no-charge ordinary owner preserves unequipped charge and zero history.
     game::samus_appearance_bridge::producer::passage_entry(
         current,

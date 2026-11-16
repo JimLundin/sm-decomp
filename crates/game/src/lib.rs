@@ -14,6 +14,7 @@ pub mod enemy;
 pub mod enemy_interactions_bridge;
 pub mod exact;
 pub mod game_time;
+pub mod gameplay_outputs;
 pub mod intent;
 pub mod interface_hud_bridge;
 pub mod lines;

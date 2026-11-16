@@ -38,7 +38,7 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | enemy-interactions | 264 | 362 | 0.73 | 0.73 | 0 % | - | 170 | 44 | 295 | 30 |
 | weapons-projectiles | 4,035 | 2,062 | 1.96 | 1.94 | 1 % | 2,605 | 1,081 | 673 | 22,290 | 81 |
-| samus-movement | 9,879 | 9,324 | 1.06 | 1.02 | 4 % | 12,724 | 4,208 | 1,646 | 20,856 | 430 |
+| samus-movement | 10,756 | 9,962 | 1.08 | 1.01 | 6 % | 12,724 | 4,392 | 1,793 | 20,856 | 470 |
 | world-camera | 1,932 | 1,962 | 0.98 | 0.83 | 15 % | 2,274 | 675 | 322 | 23,501 | 103 |
 | run-progress | 819 | 1,061 | 0.77 | 0.72 | 6 % | - | 437 | 136 | 40,442 | 76 |
 | interface-hud | 2,700 | 2,337 | 1.16 | 0.82 | 29 % (over 25 %) | 2,742 | 1,087 | 450 | 26,821 | 95 |
@@ -46,8 +46,8 @@ How it is counted:
 | samus-appearance | 2,672 | 1,900 | 1.41 | 1.05 | 25 % (over 25 %) | 1,525 | 1,122 | 445 | 20,977 | 145 |
 | boss-ceres-ridley | 1,299 | 1,150 | 1.13 | 1.07 | 5 % | - | 566 | 216 | 5,437 | 56 |
 | world-doors | 3,374 | 2,912 | 1.16 | 1.11 | 4 % | - | 978 | 562 | 1,863 | 70 |
-| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 581 | 125 | - | - |
-| total | 30,117 | 25,144 | 1.20 | 1.07 | 11 % | - | 11,981 | 5,020 | 185,999 | 1,186 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | - | - | - | - | - | 648 | 125 | - | - |
+| total | 30,994 | 25,782 | 1.20 | 1.06 | 12 % | - | 12,232 | 5,166 | 185,999 | 1,226 |
 
 ## Models
 
@@ -71,27 +71,28 @@ How it is counted:
 
 | File | Area | Holds | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `crates/clean/samus_movement/src/catalogue.rs` | - | tables and types | 0 | 13 | 132 | 993 | 0 | 0 | 0 | 270 |
-| `crates/clean/samus_movement/src/change.rs` | pose fit | logic | 192 | 311 | 0 | 0 | 5 | 0 | 0 | 50 |
-| `crates/clean/samus_movement/src/change.rs` `fn change_pose` | pose chart | logic | 314 | 313 | 0 | 0 | 23 | 0 | 0 | 35 |
+| `crates/clean/samus_movement/src/catalogue.rs` | - | tables and types | 0 | 13 | 138 | 1,086 | 0 | 0 | 0 | 294 |
+| `crates/clean/samus_movement/src/change.rs` | pose fit | logic | 202 | 321 | 0 | 0 | 5 | 0 | 0 | 51 |
+| `crates/clean/samus_movement/src/change.rs` `fn change_pose` | pose chart | logic | 466 | 432 | 0 | 0 | 58 | 0 | 0 | 49 |
 | `crates/clean/samus_movement/src/change.rs` `fn apply` | motion | logic | 251 | 253 | 0 | 0 | 8 | 0 | 1 | 24 |
 | `crates/clean/samus_movement/src/chart/table.rs` | pose chart | tables and types | 0 | 65 | 28 | 1,298 | 0 | 0 | 0 | 289 |
 | `crates/clean/samus_movement/src/chart.rs` | pose chart | logic | 958 | 1,071 | 135 | 0 | 44 | 17 | 0 | 150 |
-| `crates/clean/samus_movement/src/collide.rs` | collision | logic | 2,371 | 2,431 | 196 | 23 | 155 | 77 | 1 | 319 |
-| `crates/clean/samus_movement/src/fit.rs` | pose fit | logic | 562 | 634 | 46 | 0 | 39 | 0 | 0 | 92 |
+| `crates/clean/samus_movement/src/collide.rs` | collision | logic | 2,482 | 2,514 | 196 | 23 | 184 | 77 | 1 | 335 |
+| `crates/clean/samus_movement/src/fit.rs` | pose fit | logic | 601 | 671 | 46 | 0 | 46 | 0 | 0 | 105 |
 | `crates/clean/samus_movement/src/jump_held.rs` | motion | logic | 227 | 325 | 71 | 14 | 8 | 0 | 0 | 59 |
-| `crates/clean/samus_movement/src/lib.rs` | - | logic | 0 | 166 | 0 | 0 | 0 | 0 | 0 | 28 |
-| `crates/clean/samus_movement/src/moves.rs` | motion | logic | 1,308 | 1,297 | 72 | 0 | 86 | 117 | 11 | 201 |
+| `crates/clean/samus_movement/src/lib.rs` | - | logic | 0 | 197 | 0 | 0 | 0 | 0 | 0 | 33 |
+| `crates/clean/samus_movement/src/moves.rs` | motion | logic | 1,371 | 1,354 | 72 | 0 | 91 | 123 | 12 | 214 |
 | `crates/clean/samus_movement/src/rows.rs` | pose chart | tables and types | 294 | 398 | 862 | 376 | 5 | 13 | 0 | 360 |
-| `crates/clean/samus_movement/src/rules.rs` | - | tables and types | 328 | 394 | 418 | 365 | 3 | 38 | 0 | 222 |
+| `crates/clean/samus_movement/src/rules.rs` | - | tables and types | 328 | 399 | 388 | 365 | 3 | 38 | 0 | 217 |
 | `crates/clean/samus_movement/src/run.rs` | motion | logic | 889 | 1,018 | 129 | 0 | 45 | 37 | 0 | 162 |
-| `crates/clean/samus_movement/src/samus.rs` | motion | logic | 288 | 437 | 290 | 0 | 7 | 0 | 0 | 119 |
+| `crates/clean/samus_movement/src/samus.rs` | motion | logic | 288 | 437 | 322 | 0 | 7 | 0 | 0 | 123 |
 | `crates/clean/samus_movement/src/situation.rs` | pose chart | tables and types | 114 | 254 | 349 | 6,483 | 12 | 0 | 0 | 1,471 |
-| `crates/clean/samus_movement/src/step.rs` | motion | logic | 506 | 605 | 0 | 0 | 6 | 12 | 0 | 78 |
-| `crates/clean/samus_movement/src/tick.rs` | motion | tables and types | 15 | 65 | 130 | 0 | 0 | 0 | 0 | 27 |
+| `crates/clean/samus_movement/src/step.rs` | motion | logic | 574 | 673 | 0 | 0 | 6 | 12 | 0 | 92 |
+| `crates/clean/samus_movement/src/tick.rs` | motion | tables and types | 15 | 65 | 171 | 0 | 0 | 0 | 0 | 33 |
+| `crates/clean/samus_movement/src/touchdown.rs` | - | logic | 270 | 294 | 18 | 29 | 27 | 0 | 0 | 65 |
 | `crates/clean/samus_movement/src/travel.rs` | - | logic | 72 | 110 | 58 | 0 | 3 | 0 | 0 | 34 |
-| `crates/clean/samus_movement/src/vertical.rs` | motion | logic | 1,191 | 1,364 | 127 | 0 | 42 | 27 | 17 | 218 |
-| total | | | 9,879 | 11,524 | 3,043 | 9,552 | 487 | 338 | 30 | 4,208 |
+| `crates/clean/samus_movement/src/vertical.rs` | motion | logic | 1,353 | 1,465 | 127 | 0 | 70 | 63 | 22 | 232 |
+| total | | | 10,756 | 12,329 | 3,110 | 9,674 | 620 | 380 | 36 | 4,392 |
 
 ### world-camera
 
@@ -223,7 +224,7 @@ How it is counted:
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | 1,154 | 1,788 | 113 | 17 | 0 | 0 | 581 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 751 | 1,166 | 2,104 | 113 | 17 | 0 | 0 | 648 |
 
 ## Lines
 
@@ -231,7 +232,7 @@ How it is counted:
 | --- | ---: | ---: | ---: | ---: |
 | enemy-interactions | 170 | 170 | 0 | 44 |
 | weapons-projectiles | 1,081 | 418 | 663 | 673 |
-| samus-movement | 4,208 | 2,639 | 1,569 | 1,646 |
+| samus-movement | 4,392 | 2,664 | 1,728 | 1,793 |
 | world-camera | 675 | 238 | 437 | 322 |
 | run-progress | 437 | 182 | 255 | 136 |
 | interface-hud | 1,087 | 577 | 510 | 450 |
@@ -239,8 +240,8 @@ How it is counted:
 | samus-appearance | 1,122 | 609 | 513 | 445 |
 | boss-ceres-ridley | 566 | 207 | 359 | 216 |
 | world-doors | 978 | 402 | 576 | 562 |
-| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 581 | 581 | 0 | 125 |
-| total | 11,981 | 6,748 | 5,233 | 5,020 |
+| shared types (`crates/clean/types`, used by weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors) | 648 | 648 | 0 | 125 |
+| total | 12,232 | 6,840 | 5,392 | 5,166 |
 
 ## Spec, budget and fit by area
 
@@ -274,14 +275,14 @@ Spec [`docs/behaviours/samus-movement.md`](behaviours/samus-movement.md), k = 37
 
 | Area | Entries | Units | Budget | Old code | Model score | Fit |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| motion | 16 | 99.0 | 3,712 | 4,019 | 4,674 | 1.26 |
-| pose fit | 2 | 18.3 | 687 | 1,549 | 753 | 1.10 |
-| pose chart | 6 | 63.3 | 2,375 | 2,263 | 1,680 | 0.71 |
-| collision | 8 | 68.0 | 2,550 | 4,893 | 2,371 | 0.93 |
-| shared (in no area) | | | | | 400 | |
-| total | 32 | 248.7 | 9,324 | 12,724 | 9,879 | 1.06 |
+| motion | 18 | 110.0 | 4,125 | 4,019 | 4,968 | 1.20 |
+| pose fit | 2 | 18.3 | 687 | 1,549 | 803 | 1.17 |
+| pose chart | 6 | 63.3 | 2,375 | 2,263 | 1,832 | 0.77 |
+| collision | 9 | 74.0 | 2,775 | 4,893 | 2,482 | 0.89 |
+| shared (in no area) | | | | | 670 | |
+| total | 35 | 265.7 | 9,962 | 12,724 | 10,756 | 1.08 |
 
-Area fit 1.02: the areas' score, 9,479, ÷ the budget. Shared code 400, its share of the model 4 %.
+Area fit 1.01: the areas' score, 10,086, ÷ the budget. Shared code 670, its share of the model 6 %.
 
 ### world-camera
 
@@ -389,8 +390,8 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | enemy-interactions | harness | 2 | 4,464 | 4,209 | 169 | 1 | 473 | 268 | 20 | 665 |
 | weapons-projectiles | bridge | 1 | 3,721 | 3,492 | 171 | 474 | 421 | 186 | 0 | 590 |
 | weapons-projectiles | harness | 1 | 5,926 | 5,478 | 212 | 182 | 624 | 347 | 0 | 856 |
-| samus-movement | bridge | 4 | 3,295 | 3,916 | 295 | 277 | 139 | 90 | 3 | 634 |
-| samus-movement | harness | 3 | 7,600 | 7,611 | 850 | 1,290 | 483 | 604 | 23 | 1,519 |
+| samus-movement | bridge | 4 | 3,347 | 3,970 | 308 | 277 | 139 | 90 | 3 | 641 |
+| samus-movement | harness | 3 | 7,675 | 7,688 | 854 | 1,290 | 483 | 604 | 23 | 1,534 |
 | world-camera | bridge | 1 | 549 | 768 | 24 | 93 | 1 | 17 | 0 | 133 |
 | world-camera | harness | 6 | 8,939 | 8,903 | 1,088 | 13,008 | 515 | 831 | 80 | 5,000 |
 | run-progress | bridge | 1 | 1,343 | 1,634 | 54 | 195 | 31 | 45 | 22 | 272 |
@@ -399,13 +400,13 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | interface-hud | harness | 2 | 5,599 | 5,855 | 834 | 468 | 329 | 223 | 30 | 1,036 |
 | world-blocks | bridge | 1 | 7,107 | 6,889 | 439 | 264 | 661 | 500 | 97 | 1,062 |
 | world-blocks | harness | 2 | 6,672 | 6,007 | 833 | 210 | 895 | 453 | 0 | 982 |
-| samus-appearance | bridge | 3 | 2,531 | 2,870 | 359 | 272 | 198 | 64 | 43 | 521 |
+| samus-appearance | bridge | 3 | 2,533 | 2,853 | 312 | 276 | 210 | 64 | 43 | 515 |
 | samus-appearance | harness | 2 | 3,732 | 4,036 | 421 | 136 | 116 | 178 | 14 | 593 |
 | boss-ceres-ridley | bridge | 1 | 1,118 | 1,286 | 71 | 181 | 11 | 63 | 0 | 222 |
 | boss-ceres-ridley | harness | 1 | 3,328 | 3,084 | 561 | 96 | 317 | 344 | 7 | 556 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | harness | 1 | 6,207 | 5,883 | 1,195 | 438 | 342 | 622 | 31 | 1,081 |
-| total | | | 82,547 | 82,080 | 8,751 | 18,999 | 6,553 | 5,553 | 447 | 17,550 |
+| total | | | 82,676 | 82,194 | 8,721 | 19,003 | 6,565 | 5,553 | 447 | 17,566 |
 
 ## Harness floors and vectors
 
@@ -482,7 +483,7 @@ Frames matched and verified on every unmasked field, per row (`crates/verify/src
 | --- | ---: | ---: |
 | enemy-interactions | 30 | 0 |
 | weapons-projectiles | 81 | 0 |
-| samus-movement | 430 | 64 |
+| samus-movement | 470 | 64 |
 | world-camera | 103 | 0 |
 | run-progress | 76 | 0 |
 | interface-hud | 95 | 0 |
@@ -620,6 +621,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | weapons-projectiles | MuzzleContact | gain 5 | 5 | 0 | 5 | 0 |
 | weapons-projectiles | ShotContact | gain 43 | 43 | 0 | 43 | 0 |
 | weapons-projectiles | ShotSpacing | gain 11 | 21,151 | 21,140 | 22,329 | 0 |
+| samus-movement | AcceptedFloorResponse | vectors only | - | - | 0 | 1,204 |
 | samus-movement | Aiming | vectors only | - | - | 0 | 3,473 |
 | samus-movement | AimingAndShooting | gain 3,127 | 3,632 | 505 | 3,638 | 62 |
 | samus-movement | AnimationEnds | gain 401 | 410 | 9 | 422 | 0 |
@@ -635,6 +637,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | samus-movement | MovesAsShePosed | gain 14,111 | 19,609 | 5,498 | 19,674 | 1,327 |
 | samus-movement | OtherBlockKinds | vectors only | - | - | 0 | 0 |
 | samus-movement | PadChart | vectors only | - | - | 0 | 21,001 |
+| samus-movement | PerformedCollisionTests | vectors only | - | - | 0 | 20,518 |
 | samus-movement | PoseFitAfterMoves | gain 454 | 454 | 0 | 455 | 35 |
 | samus-movement | PoseFollows | vectors only | - | - | 0 | 21,001 |
 | samus-movement | RidingTheElevator | vectors only | - | - | 0 | 906 |
@@ -644,6 +647,7 @@ Per catalogue entry, the frames that exercised it with every field its output re
 | samus-movement | SlopesSlowTheWalk | vectors only | - | - | 0 | 0 |
 | samus-movement | SolidEnemies | gain 4,925 | 7,198 | 2,273 | 7,203 | 442 |
 | samus-movement | SpeedBuildsAndBrakes | gain 7,456 | 13,108 | 5,652 | 13,131 | 205 |
+| samus-movement | TouchdownRequests | vectors only | - | - | 0 | 228 |
 | samus-movement | TouchedCells | vectors only | - | - | 0 | 20,518 |
 | samus-movement | TransitionFiringAim | gain 53 | 53 | 0 | 53 | 5 |
 | samus-movement | TravelledDistances | vectors only | - | - | 0 | 0 |
@@ -772,9 +776,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: w
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| engine, not yet rebuilt | 53 | 5,588 | 33,528 | 34,738 | 10,817 | 1,922 | 2,757 | 3,237 | 795 | 7,538 |
-| bridges | 14 | 3,702 | 22,212 | 23,572 | 1,535 | 1,949 | 1,649 | 1,074 | 180 | 3,861 |
-| rebuilt models, shared types included | 93 | 5,020 | 30,117 | 37,282 | 14,542 | 16,385 | 1,503 | 1,061 | 612 | 11,981 |
+| engine, not yet rebuilt | 54 | 5,622 | 33,732 | 34,953 | 10,919 | 1,922 | 2,774 | 3,255 | 789 | 7,592 |
+| bridges | 14 | 3,711 | 22,266 | 23,609 | 1,501 | 1,953 | 1,661 | 1,074 | 180 | 3,862 |
+| rebuilt models, shared types included | 94 | 5,166 | 30,994 | 38,099 | 14,925 | 16,507 | 1,636 | 1,103 | 617 | 12,232 |
 
 ## Timeline
 
@@ -1313,28 +1317,29 @@ graph LR
 
 ### samus-movement
 
-`crates/clean/samus_movement`, 18 modules.
+`crates/clean/samus_movement`, 19 modules.
 
 | Module | Area | Says it is | Items | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
-| `catalogue.rs` | - | One entry per spec entry: what the player sees, its kind and its switch. | `enum BehaviourId (32)`, `struct Behaviour`, `const CATALOGUE` | 0 | 270 |
-| `change.rs` | pose fit; `fn change_pose` in pose chart, `fn apply` in motion | The pose change at a frame's end (`PoseFollows`, `PoseFitAfterMoves`): whether she takes the pose chosen, where pose fit or the shrink places her, then what her moves met and the change's effects. | `Samus::change_pose`, 4 private | 757 | 109 |
+| `catalogue.rs` | - | One entry per spec entry: what the player sees, its kind and its switch. | `enum BehaviourId (35)`, `struct Behaviour`, `const CATALOGUE` | 0 | 294 |
+| `change.rs` | pose fit; `fn change_pose` in pose chart, `fn apply` in motion | The pose change at a frame's end (`PoseFollows`, `PoseFitAfterMoves`): whether she takes the pose chosen, where pose fit or the shrink places her, then what her moves met and the change's effects. | `Samus::change_pose`, 4 private | 919 | 124 |
 | `chart/table.rs` | pose chart | The rows of `WhatHerMovesMet` and of `AnimationEnds` (§7), read in order, the first that fits. | `const MOVES_MET`, `const STEP_BLOCKED`, `const ANIMATION_ENDS`, 1 private | 0 | 289 |
 | `chart.rs` | pose chart | §7: the pose chart's reader. | `struct Moment`, `struct Choice`, `Choice::{instead, blocked}`, `Moment::{next_pose, choose}`, 11 private | 958 | 150 |
-| `collide.rs` | collision | Tilemap collision (`BlocksStopFlush`, `SolidEnemies`, `SlopesCarry`, `TouchedCells`, `OtherBlockKinds`): one axis at a time, against the room's grid of 16 px cells and the solid enemies' boxes. | `struct Bounds`, `enum Stop (3)`, `enum Probe (5)`, `struct Moved`, `struct Axis`, `Bounds::axis`, `Tick::{inside, go, vmove, slope_checks}`, 32 private | 2,371 | 319 |
-| `fit.rs` | pose fit | `PoseFitAfterMoves`: placing her body when the pose change grows it, by looks that test a move without making it, from her box and her poses alone. | `fn crouched`, `enum Fitted (4)`, `Fitted::moved`, `Samus::fit`, 3 private | 562 | 92 |
+| `collide.rs` | collision | Tilemap collision (`BlocksStopFlush`, `SolidEnemies`, `SlopesCarry`, `TouchedCells`, `OtherBlockKinds`): one axis at a time, against the room's grid of 16 px cells and the solid enemies' boxes. | `struct Bounds`, `enum Stop (3)`, `enum Probe (5)`, `struct Moved`, `struct Axis`, `Bounds::axis`, `Tick::{inside, go, vmove, slope_checks}`, 32 private | 2,482 | 335 |
+| `fit.rs` | pose fit | `PoseFitAfterMoves`: placing her body when the pose change grows it, by looks that test a move without making it, from her box and her poses alone. | `fn crouched`, `enum Fitted (4)`, `Fitted::moved`, `Samus::fit`, 3 private | 601 | 105 |
 | `jump_held.rs` | motion | `Jumping`, jump held through (§1.2): jump held through a landing, or through the end of a turn or of a landing, counts as a press for the pad chart the next frame, so she takes off again without pressing it. | `enum FrameBefore (2)`, `struct JumpHeld`, `JumpHeld::{NONE, pressed, then}`, `FrameBefore::left_behind`, 2 private | 227 | 59 |
-| `lib.rs` | - | The samus-movement model, built from its behaviour spec alone: a character controller for Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels. | - | 0 | 28 |
-| `moves.rs` | motion | Her moves in a frame, as the pose at its start says (`MovesAsShePosed`): horizontally, the near-wall test, then the ground pull or her vertical move, and after the pose is chosen the aim change's step; what they met (`WhatHerMovesMet`), and what they do to her dashing (`Dashing`). | `struct Meeting`, `Samus::{moves, step_forward}`, 7 private | 1,308 | 201 |
+| `lib.rs` | - | The samus-movement model, built from its behaviour spec alone: a character controller for Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels. | - | 0 | 33 |
+| `moves.rs` | motion | Her moves in a frame, as the pose at its start says (`MovesAsShePosed`): horizontally, the near-wall test, then the ground pull or her vertical move, and after the pose is chosen the aim change's step; what they met (`WhatHerMovesMet`), and what they do to her dashing (`Dashing`). | `struct Meeting`, `Samus::{moves, step_forward}`, 7 private | 1,371 | 214 |
 | `rows.rs` | pose chart | The pose chart's vocabulary (§7). | `const FORWARD`, `const BACK`, `fn seen`, `enum Doing (14)`, `enum Drift (5)`, `enum Moves (5)`, `enum Footing (4)`, `struct Situation`, `struct Class`, `enum Test (13)`, `struct Aiming`, `enum NextFacing (3)`, `struct Next`, `enum Effect (13)`, `struct Entering`, `enum Was (2)`, `struct Beat`, `struct Row`, `enum RowId (76)`, `const AIM`, `const UP_DOWN`, `const UDA`, `const NO_CHANGE`, `const KEEP_POSE`, `const TO_STILL`, `const LOWERS_NOTHING`, `const TO_RUNNING`, `const TO_JUMPING`, `const TO_FALLING`, `const TO_SPINNING`, `const TO_TAKING_OFF`, `const TO_MOONWALKING`, `const TO_CROUCHING`, `const TO_MORPHING`, `const TO_TURNING`, `const FORWARD_AIM`, `const UP_AIM`, `const AIM_UP_ELSE_DOWN`, `const DOWN_TO_FORWARD`, `enum Met (5)`, `Next::pose_from`, `Entering::on` | 294 | 360 |
-| `rules.rs` | - | The tuning parameters the model reads: one `Rules` a caller holds, whose `Default` is the vanilla game, the spec's numbers. | `enum SpeedCap (2)`, `enum Gait (7)`, `struct Limits`, `struct Speeds`, `enum Lowers (3)`, `struct WithItem`, `enum Bounces (3)`, `struct Bounce`, `struct Rules`, `WithItem::of`, `Rules::{limits, lowers, cap, rise_speed}`, `impl Default for Rules`, 1 private | 328 | 222 |
+| `rules.rs` | - | The tuning parameters the model reads: one `Rules` a caller holds, whose `Default` is the vanilla game, the spec's numbers. | `enum SpeedCap (2)`, `enum Gait (7)`, `struct Limits`, `struct Speeds`, `enum Lowers (3)`, `struct WithItem`, `struct Bounce`, `struct Rules`, `WithItem::of`, `Rules::{limits, lowers, cap, rise_speed}`, `impl Default for Rules`, 1 private | 328 | 217 |
 | `run.rs` | motion | Her run: her horizontal motion as a value of its own (§1.2 carrying on, her dash, dashing). | `enum Carry (2)`, `enum Dashing (2)`, `enum Stride (4)`, `fn running_with_run_held`, `struct Run`, `Run::{halt, skids, turn_round, end_skid, as_running, meet, launch, moving, stride}`, 7 private | 889 | 162 |
-| `samus.rs` | motion | Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows beyond her quantities: its outputs, for the caller to act on. | `enum Spin (4)`, `enum Seat (2)`, `enum WallTest (3)`, `enum StandingAnimation (2)`, `fn sprite`, `struct Outcome`, `struct Samus`, `Spin::then`, `StandingAnimation::of`, `Samus::{rides_the_elevator, bounds, take_result}` | 288 | 119 |
+| `samus.rs` | motion | Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows beyond her quantities: its outputs, for the caller to act on. | `enum Spin (4)`, `enum Seat (2)`, `enum WallTest (3)`, `enum StandingAnimation (2)`, `fn sprite`, `struct Outcome`, `struct Samus`, `Spin::then`, `StandingAnimation::of`, `Samus::{rides_the_elevator, bounds, take_result}` | 288 | 123 |
 | `situation.rs` | pose chart | Her situation, classified once a frame from her pose at its start (`MovesAsShePosed`). | `struct UnknownPose`, `fn classify`, `static ENTERING`, `static CLASSES`, 47 private | 114 | 1,471 |
-| `step.rs` | motion | One frame of her motion, in the order `PoseFitAfterMoves` gives: she moves as the pose at its start says (`MovesAsShePosed`, `moves`); what those moves met is known; the pose is chosen (`PoseFollows`, `chart`) and the aim change's step made; then the pose change (`change`): pose fit or the shrink places her, and what she met and the change's effects act, where the change is taken. | `Samus::step` | 506 | 78 |
-| `tick.rs` | motion | One frame's play: what the frame brings from the player and the world (§1.3), and the room, the rules and the cells reached that the frame's moves and looks share (`TouchedCells`). | `struct Frame`, `struct Tick`, `Tick::body` | 15 | 27 |
+| `step.rs` | motion | One frame of her motion, in the order `PoseFitAfterMoves` gives: she moves as the pose at its start says (`MovesAsShePosed`, `moves`); what those moves met is known; the pose is chosen (`PoseFollows`, `chart`) and the aim change's step made; then the pose change (`change`): pose fit or the shrink places her, and what she met and the change's effects act, where the change is taken. | `Samus::step` | 574 | 92 |
+| `tick.rs` | motion | One frame's play: what the frame brings from the player and the world (§1.3), and the room, the rules and the cells reached that the frame's moves and looks share (`TouchedCells`). | `struct Frame`, `struct Tick`, `Tick::body` | 15 | 33 |
+| `touchdown.rs` | - | Spec: `TouchdownRequests`. | `fn opportunities`, 4 private | 270 | 65 |
 | `travel.rs` | - | Spec: `TravelledDistances`. | `enum TravelKind (5)`, `struct TravelledDistances`, `TravelledDistances::{fresh, refresh, record}`, `impl Default for TravelledDistances` | 72 | 34 |
-| `vertical.rs` | motion | Her vertical motion as a value of its own (§1 vertical speed and bounces, §1.2 falling at 0 and the moonfall). | `enum Phase (5)`, `struct Vertical`, `enum Course (3)`, `enum Contact (4)`, `Contact::rises`, `Vertical::{on_ground, has_motion, rising, heading_down, jump, end_rise, space_jump, enter_spin_from_a_turn, come_to_the_ground, course, end_move, meet_in_moves, contact, meet, end_bounce}`, 7 private | 1,191 | 218 |
+| `vertical.rs` | motion | Her vertical motion as a value of its own (§1 vertical speed and bounces, §1.2 falling at 0 and the moonfall). | `enum Phase (5)`, `struct Vertical`, `enum Course (3)`, `enum Contact (4)`, `Contact::rises`, `Vertical::{on_ground, has_motion, rising, heading_down, jump, end_rise, space_jump, enter_spin_from_a_turn, come_to_the_ground, course, end_move, meet_in_moves, contact, meet, end_bounce}`, 7 private | 1,353 | 232 |
 
 Its crate root exports:
 
@@ -1348,7 +1353,7 @@ Its crate root exports:
 - from `situation`: `UnknownPose`
 - from `tick`: `Frame`
 - from `travel`: `TravelKind`, `TravelledDistances`
-- from `types`: `Direction`, `DirectionalTravels`, `FiringDirection`, `TravelDistance`
+- from `types`: `CollisionPurpose`, `CollisionTest`, `CollisionTests`, `FloorResponse`, `FloorResponseKind`, `QueueAllowance`, `SoundIdentity`, `SoundLibrary`, `SoundRequest`, `VerticalMotionAtTest`, `VerticalSpeed`, `Direction`, `DirectionalTravels`, `FiringDirection`, `TravelDistance`
 - from `vertical`: `Phase`, `Vertical`
 - the module `catalogue`
 - the module `rules`
@@ -1369,7 +1374,7 @@ TravelledDistances::record(&mut self, kind: TravelKind, direction: Direction, ac
 Vertical::on_ground(self) -> bool
 ```
 
-Shared types it takes from `types`: `Action`, `Aim`, `Block`, `Body`, `Buttons`, `Cell`, `Checked`, `ClipEnd`, `Direction`, `DirectionalTravels`, `Facing`, `FiringDirection`, `Fixed`, `Gun`, `Heading`, `Hitbox`, `Item`, `Kind`, `LandedFrom`, `Legs`, `Pair`, `Parity`, `Parts`, `Pose`, `Position`, `Px`, `Radius`, `Set`, `Side`, `Slope`, `SlopeFaces`, `Sprite`, `Switch`, `Touch`, `TravelDistance`, `Turn`, `Way`, `World`, `ZERO`, `button`, `fixed`, `part_below`, `px`. Other crates it uses: `core`.
+Shared types it takes from `types`: `Action`, `Aim`, `Block`, `Body`, `Bounces`, `Buttons`, `Cell`, `Checked`, `ClipEnd`, `CollisionPurpose`, `CollisionTest`, `CollisionTests`, `Direction`, `DirectionalTravels`, `Facing`, `FiringDirection`, `Fixed`, `FloorResponse`, `FloorResponseKind`, `Gun`, `Heading`, `Hitbox`, `Item`, `Kind`, `LandedFrom`, `Legs`, `Pair`, `Parity`, `Parts`, `Pose`, `Position`, `Px`, `QueueAllowance`, `Radius`, `Set`, `Side`, `Slope`, `SlopeFaces`, `SoundIdentity`, `SoundLibrary`, `SoundRequest`, `Sprite`, `Switch`, `Touch`, `TravelDistance`, `Turn`, `VerticalMotionAtTest`, `VerticalSpeed`, `Way`, `World`, `ZERO`, `button`, `fixed`, `part_below`, `px`. Other crates it uses: `core`.
 
 Which module uses which, grouped by area (a module's own area, its functions counted elsewhere aside):
 
@@ -1379,6 +1384,7 @@ graph LR
     m_catalogue["catalogue"]
     m_lib["lib"]
     m_rules["rules"]
+    m_touchdown["touchdown"]
     m_travel["travel"]
   end
   subgraph a_collision["collision"]
@@ -1464,10 +1470,12 @@ graph LR
   m_step --> m_samus
   m_step --> m_situation
   m_step --> m_tick
+  m_step --> m_touchdown
   m_step --> m_travel
   m_step --> m_vertical
   m_tick --> m_rules
   m_tick --> m_travel
+  m_touchdown --> m_tick
   m_vertical --> m_rows
   m_vertical --> m_rules
   m_vertical --> m_tick
@@ -2197,6 +2205,18 @@ The public items of `crates/clean/types` the clean models share, and the models 
 | `enum Sprite (4)` | samus-appearance, samus-movement |
 | `enum ClipEnd (2)` | samus-appearance, samus-movement |
 | `enum BoostStage (5)` | samus-appearance |
+| `enum Bounces (3)` | samus-movement |
+| `struct VerticalSpeed` | samus-movement |
+| `enum FloorResponseKind (7)` | samus-movement |
+| `struct FloorResponse` | samus-movement |
+| `enum SoundIdentity (4)` | samus-movement |
+| `enum SoundLibrary (2)` | samus-movement |
+| `struct QueueAllowance` | samus-movement |
+| `struct SoundRequest` | samus-movement |
+| `enum VerticalMotionAtTest (2)` | samus-movement |
+| `enum CollisionPurpose (8)` | samus-movement |
+| `struct CollisionTest` | samus-movement |
+| `type CollisionTests` | samus-movement |
 | `enum AnimationSound (4)` | samus-appearance |
 | `struct Buttons` | samus-movement |
 | `mod button` (RUN, JUMP, SHOOT, LEFT, RIGHT, UP, DOWN, AIM_UP, AIM_DOWN, SIDES, PAD) | samus-movement |
@@ -2249,20 +2269,22 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | weapons-projectiles | `crates/game/src/enemy/drawing.rs` | names it | `Axes`, `DrawView`, `FlickerPhase`, `ScreenOrigin`, `pictures` | 1,244 | 173 |
 | weapons-projectiles | `crates/game/src/state/projectile.rs` | names it | `State` | 366 | 251 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 3,721 | 590 |
+| samus-movement | `crates/game/src/gameplay_outputs.rs` | names it | `Outcome` | 112 | 43 |
 | samus-movement | `crates/game/src/samus_appearance_bridge.rs` | names it | `Dashing`, `Outcome`, `StandingAnimation`, `WallTest` | 424 | 99 |
-| samus-movement | `crates/game/src/samus_movement_bridge/frame.rs` | bridge | `Frame` | 404 | 96 |
+| samus-movement | `crates/game/src/samus_movement_bridge/frame.rs` | bridge | `Frame` | 449 | 101 |
 | samus-movement | `crates/game/src/samus_movement_bridge/state.rs` | bridge | `Bounces`, `Carry`, `Dashing`, `FrameBefore`, `JumpHeld`, `Moment`, `Phase`, `Run`, `Samus`, `Seat`, `Spin`, `Vertical` | 978 | 186 |
-| samus-movement | `crates/game/src/samus_movement_bridge/step.rs` | bridge | `Outcome`, `Rules`, `Samus`, `SpeedCap` | 628 | 137 |
+| samus-movement | `crates/game/src/samus_movement_bridge/step.rs` | bridge | `Outcome`, `Rules`, `Samus`, `SpeedCap` | 635 | 139 |
 | samus-movement | `crates/game/src/samus_movement_bridge.rs` | bridge | - | 1,285 | 215 |
 | samus-movement | `crates/game/src/state/movement_travel.rs` | names it | `TravelledDistances` | 0 | 7 |
-| world-camera | `crates/game/src/session.rs` | names it | `RoomError` | 822 | 240 |
+| world-camera | `crates/game/src/session.rs` | names it | `RoomError` | 818 | 240 |
 | world-camera | `crates/game/src/state/camera.rs` | names it | `Camera`, `RememberedPosition`, `ViewPosition` | 86 | 21 |
 | world-camera | `crates/game/src/world_camera_bridge.rs` | bridge | `Camera`, `Frame`, `Heights`, `LeadSetting`, `RememberedPosition`, `Room`, `RoomError`, `Rules`, `Samus`, `ViewPosition` | 549 | 133 |
 | run-progress | `crates/game/src/run_progress_bridge.rs` | bridge | `Condition`, `EnteredRoom`, `Inventory`, `Pickup`, `Progress`, `Remembered`, `Report`, `ReserveMode`, `RoomStates`, `Rules`, `Supplies`, `Supply`, `Version` | 1,343 | 272 |
 | interface-hud | `crates/game/src/interface_hud_bridge.rs` | bridge | `Ammo`, `Ammunition`, `CancelButton`, `ColourSet`, `Controls`, `Dropped`, `Energy`, `Equipped`, `Flip`, `FrameCount`, `FrameInputs`, `HerMap`, `HudGrid`, `HudPictures`, `HudState`, `Icons`, `MapCellSet`, `MapPictures`, `MiniMapInputs`, `MiniMapPower`, `Mute`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `SelectButton`, `SelectableItem`, `Selection`, `Shown`, `Status`, `Stock`, `Tile` | 2,314 | 388 |
 | world-blocks | `crates/game/src/world_blocks_bridge.rs` | bridge | `Becomes`, `CellKind`, `Frames`, `Grid`, `Inside`, `Mark`, `Meeting`, `OtherMetAs`, `OutsideTheRoom`, `PatternCell`, `Place`, `Placement`, `Places`, `ReactingBody`, `Reaction`, `ReactionName`, `Request`, `Rules`, `Run`, `Running`, `ScreenChange`, `ScrollReaction`, `SoundRequest`, `StandIn`, `State`, `Step`, `Tile`, `Touched` | 7,107 | 1,062 |
+| samus-appearance | `crates/game/src/gameplay_outputs.rs` | names it | `GraphicalContact`, `OpportunityOutput`, `SoundRequest` | 112 | 43 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,667 | 270 |
-| samus-appearance | `crates/game/src/samus_appearance_bridge/producer.rs` | bridge | `Charge`, `CinematicActivity`, `GraphicalContact`, `Opportunity`, `OpportunityOutput`, `SoundRequest` | 440 | 152 |
+| samus-appearance | `crates/game/src/samus_appearance_bridge/producer.rs` | bridge | `Charge`, `CinematicActivity`, `Opportunity` | 442 | 146 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | `Ahead`, `Dash`, `Inputs`, `Liquid`, `MoveEvent`, `Rules`, `SoundsWaiting`, `update` | 424 | 99 |
 | samus-appearance | `crates/game/src/state/samus.rs` | names it | `Frames`, `Laps`, `LapsLeft`, `Playhead`, `State`, `Step` | 259 | 286 |
 | boss-ceres-ridley | `crates/game/src/boss_ceres_ridley_bridge.rs` | bridge | `CeresDoor`, `DoorKind`, `FigureLook`, `Inputs`, `Phase`, `Placement`, `Quarter`, `Rules`, `Stage`, `Wait` | 1,118 | 222 |

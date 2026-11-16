@@ -1,3 +1,9 @@
+# sprite_before_movement is shared Sprite of the prior selected figure; default Plain.
+# It is independent of items. New body content for a substituted/refused choice is explicit.
+# after.collision_tests is the ordered performed leading-edge work: cell=[column,row],
+# direction, purpose, and vertical_motion for moves left or right only. Empty means no tests.
+# Output delta: cinematic_active defaults false. after.floor_response is "None" or
+# { kind, speed }, after.touchdown_requests is ordered, and touchdown_graphics is the opportunity.
 # cannon_heading / previous_cannon_heading: optional imported FiringDirection for the new and old
 # pose content (TransitionFiringAim). after.pending_aim checks the fresh publication,
 # "None" means no publication; caller-held pending storage is outside this vector.
@@ -6243,3 +6249,528 @@ jump_pressed = false
 pressed = ["shoot"]
 animation_ends = "End"
 after = { pending_aim = "UpFacingRight", position = ["0523.3FFF", "02B3.FFFF"], speed_x = "+0000.0000", dash = "0000.0000", speed_y = "-0004.E000", dashing = false, heading_down = false, handed_over = true }
+
+
+[[vector]]
+id = "C-output-soft"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-hard"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0004.E400" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0005.0000" }, touchdown_requests = ["SamusLandedHard"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-whole-only"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E400" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0000" }, touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-zero"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0001.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+rules = { gravity = "-0001.0000" }
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0000.0000" }, touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-tiny"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0000.0001" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+rules = { gravity = "+0000.0000" }
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0000.0001" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-soft-cinematic"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = true
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = [], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-hard-cinematic"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0004.E400" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = true
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0005.0000" }, touchdown_requests = [], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-spin-end"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0000" }, touchdown_requests = ["SpinEnded"], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-screw-end"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+items = ["ScrewAttack"]
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0000" }, touchdown_requests = ["ScrewAttackEnded"], touchdown_graphics = false }
+
+sprite_before_movement = "ScrewAttack"
+
+[[vector]]
+id = "C-output-changing-body"
+source = "constructed"
+entries = ["Landing", "SpeedBuildsAndBrakes", "WhatHerMovesMet", "AcceptedFloorResponse", "TouchdownRequests"]
+items = ["Bombs", "MorphBall"]
+world = { floor_top = 192 }
+before = { position = ["0580.BFFF", "00B0.FFFF"], speed_x = "+0001.0000", dash = "0000.2000", speed_y = "+0002.3000" }
+pose = { body = "Crouched", action = "Unmorphing", facing = "Right", radius = [5, 16] }
+pad = []
+jump_pressed = false
+after = { floor_response = { kind = "ChangingBodyStops", speed = "+0002.4C00" }, touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-turning"
+source = "constructed"
+entries = ["Landing", "TurningRound", "RisingAndFalling", "BlocksStopFlush", "AcceptedFloorResponse", "TouchdownRequests"]
+world = { floor_top = 192 }
+before = { position = ["0445.8C00", "00AD.F7FF"], speed_x = "-0000.8000", dash = "0000.0000", speed_y = "+0001.5000" }
+pose = { body = "Upright", action = "Turning", facing = "Right", radius = [5, 19], turn = "Fall" }
+pad = ["run", "left"]
+jump_pressed = false
+after = { floor_response = { kind = "TurningStops", speed = "+0001.6C00" }, touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-ground-follow"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "FollowingTheGround"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AB.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { floor_response = "None", touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-no-floor"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "FollowingTheGround"]
+world = {  }
+before = { position = ["0028.0000", "0030.0000"] }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { floor_response = "None", touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-ball-bounce-one"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "DriftInTheAir", "AcceptedFloorResponse", "TouchdownRequests"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000" }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { floor_response = { kind = "Rebound", bounces = 1, speed = "+0003.5C00" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-ball-bounce-two"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "DriftInTheAir", "AcceptedFloorResponse", "TouchdownRequests"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0119.4000"], speed_y = "+0000.E000", bounces = 1 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { floor_response = { kind = "Rebound", bounces = 2, speed = "+0000.FC00" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-ball-settles"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir", "AcceptedFloorResponse", "TouchdownRequests"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000", bounces = 2 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { floor_response = { kind = "BallSettles", speed = "+0003.5C00" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-spring-hop"
+source = "constructed"
+entries = ["Landing", "Jumping", "BlocksStopFlush", "AcceptedFloorResponse", "TouchdownRequests"]
+items = ["MorphBall", "SpringBall"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], dash = "0003.0000", speed_y = "+0002.0000", dashing = true }
+pose = { body = "SpringBall", action = "Jumping", facing = "Right", radius = [5, 7] }
+pad = ["right", "jump"]
+jump_pressed = false
+after = { floor_response = { kind = "SpringHop", speed = "+0002.1C00" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-substituted"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192, ceiling_bottom = 160 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { pose = { body = "Crouched", action = "Still", facing = "Right", radius = [5, 16] }, floor_response = "None", touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-wall-kick"
+source = "constructed"
+entries = ["TouchdownRequests", "WallJump", "RisingAndFalling"]
+rules = { gravity = "+0000.0000" }
+world = { solid_block = [48, 32] }
+before = { position = ["0028.0000", "0028.0000"] }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 12] }
+lead_in = [{ pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false }, { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false }]
+pad = ["left", "jump"]
+jump_pressed = true
+spin_turned_far = true
+after = { floor_response = "None", touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-spin-soft"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = ["SpinEnded", "SamusLandedOrWallJumped"], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-spin-cinematic"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0004.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = true
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0005.0000" }, touchdown_requests = [], touchdown_graphics = true }
+
+[[vector]]
+id = "C-output-grounded-ball"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "FollowingTheGround", "RisingAndFalling"]
+world = { floor_top = 288 }
+before = { position = ["0100.0000", "0118.0000"], speed_y = "+0002.0000" }
+pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 7] }
+pad = []
+jump_pressed = false
+after = { floor_response = { kind = "GroundedBallStops", speed = "+0002.1C00" }, touchdown_requests = [], touchdown_graphics = false }
+
+
+[[vector]]
+id = "C-work-move-zero"
+source = "constructed"
+entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+world = {  }
+before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "-0001.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
+pad = ["right"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
+
+[[vector]]
+id = "C-work-move-nonzero"
+source = "constructed"
+entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+world = {  }
+before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0001.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
+pad = ["right"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "Nonzero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "Nonzero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "Nonzero" }, { cell = [2, 3], direction = "Down", purpose = "OrdinaryMove" }] }
+
+[[vector]]
+id = "C-work-air-zero"
+source = "constructed"
+entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+world = {  }
+before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
+pad = ["right"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
+
+[[vector]]
+id = "C-work-no-raw-reads"
+source = "constructed"
+entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+world = {  }
+before = { position = ["0028.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
+pad = ["right"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [2, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
+
+[[vector]]
+id = "C-work-stop-first"
+source = "constructed"
+entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+world = { wall_right = 48 }
+before = { position = ["002B.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
+pad = ["right"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [3, 1], direction = "Right", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }] }
+
+[[vector]]
+id = "C-work-enemy-first"
+source = "constructed"
+entries = ["PerformedCollisionTests", "RisingAndFalling", "DriftInTheAir", "TouchedCells"]
+world = { enemy = { centre = [50, 40], radius = [2, 19] } }
+before = { position = ["002B.0000", "0028.0000"], speed_x = "+0001.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19], legs = "Striding" }
+pad = ["right"]
+jump_pressed = false
+after = { collision_tests = [] }
+
+[[vector]]
+id = "C-work-fit"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves", "PerformedCollisionTests"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "OrdinaryMove" }, { cell = [2, 9], direction = "Up", purpose = "FitRoomAbove" }, { cell = [2, 12], direction = "Down", purpose = "FitRoomBelow" }, { cell = [2, 9], direction = "Up", purpose = "FitFarClearance" }] }
+
+[[vector]]
+id = "C-work-lowering"
+source = "constructed"
+entries = ["PerformedCollisionTests", "FollowingTheGround", "ShrinkingLowersHer", "PadChart"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AB.FFFF"] }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Crouched", action = "Crouching", facing = "Right", radius = [5, 16] }
+pad = ["down"]
+pressed = ["down"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "GroundFollowing" }, { cell = [2, 11], direction = "Down", purpose = "BodyLowering" }] }
+
+[[vector]]
+id = "C-work-near-wall"
+source = "constructed"
+entries = ["TouchdownRequests", "WallJump", "RisingAndFalling", "PerformedCollisionTests", "TouchedCells"]
+rules = { gravity = "+0000.0000" }
+world = { solid_block = [48, 32] }
+before = { position = ["0028.0000", "0028.0000"] }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 12] }
+lead_in = [{ pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false }, { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false }]
+pad = ["left", "jump"]
+jump_pressed = true
+spin_turned_far = true
+after = { collision_tests = [{ cell = [2, 1], direction = "Left", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 2], direction = "Left", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [2, 3], direction = "Left", purpose = "OrdinaryMove", vertical_motion = "ExactlyZero" }, { cell = [3, 1], direction = "Right", purpose = "NearWallReach" }, { cell = [3, 2], direction = "Right", purpose = "NearWallReach" }] }
+
+
+[[vector]]
+id = "C-output-prior-screw-no-item"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+items = []
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0000" }, touchdown_requests = ["ScrewAttackEnded"], touchdown_graphics = false }
+sprite_before_movement = "ScrewAttack"
+
+[[vector]]
+id = "C-output-prior-plain-screw-on"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E400" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0000" }, touchdown_requests = ["SpinEnded"], touchdown_graphics = false }
+sprite_before_movement = "Plain"
+items = ["ScrewAttack"]
+
+[[vector]]
+id = "C-output-prior-space"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "Spinning", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = ["SpinEnded", "SamusLandedOrWallJumped"], touchdown_graphics = true }
+sprite_before_movement = "SpaceJump"
+items = ["SpaceJump"]
+
+[[vector]]
+id = "C-output-nonspin-other-sprite"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AD.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "Jumping", facing = "Right", radius = [5, 19] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Jump" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = true }
+sprite_before_movement = "OtherSuit"
+items = []
+
+[[vector]]
+id = "C-output-wall-touchdown-plain"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = ["SpinEnded", "SamusLandedOrWallJumped"], touchdown_graphics = true }
+sprite_before_movement = "Plain"
+items = []
+
+[[vector]]
+id = "C-output-wall-touchdown-screw"
+source = "constructed"
+entries = ["AcceptedFloorResponse", "TouchdownRequests", "Landing", "RisingAndFalling", "PoseFitAfterMoves"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00B4.FFFF"], speed_y = "+0003.E401" }
+pose = { body = "Upright", action = "WallJumping", facing = "Right", radius = [5, 12] }
+next_pose = { body = "Upright", action = "Landing", facing = "Right", radius = [5, 21], landed_from = "Spin" }
+pad = []
+jump_pressed = false
+cinematic_active = false
+after = { floor_response = { kind = "UprightTouchdown", speed = "+0004.0001" }, touchdown_requests = ["SpinEnded", "SamusLandedOrWallJumped"], touchdown_graphics = true }
+sprite_before_movement = "ScrewAttack"
+items = ["ScrewAttack"]
+
+[[vector]]
+id = "C-output-refused"
+source = "constructed"
+entries = ["Landing", "BlocksStopFlush", "WhatHerMovesMet", "DriftInTheAir", "AcceptedFloorResponse", "TouchdownRequests", "PoseFitAfterMoves"]
+world = { floor_top = 288, ceiling_bottom = 272 }
+before = { position = ["0100.0000", "0117.0000"], speed_y = "+0003.4000", bounces = 2 }
+pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }
+next_pose = { body = "Ball", action = "Still", facing = "Right", radius = [5, 21] }
+pad = []
+jump_pressed = false
+after = { pose = { body = "Ball", action = "Falling", facing = "Right", radius = [5, 7] }, floor_response = "None", touchdown_requests = [], touchdown_graphics = false }
+
+[[vector]]
+id = "C-output-wall-kick-cinematic"
+source = "constructed"
+entries = ["TouchdownRequests", "WallJump", "RisingAndFalling"]
+rules = { gravity = "+0000.0000" }
+world = { solid_block = [48, 32] }
+before = { position = ["0028.0000", "0028.0000"] }
+pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }
+next_pose = { body = "Upright", action = "WallJumping", facing = "Left", radius = [5, 12] }
+lead_in = [{ pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false }, { pose = { body = "Upright", action = "Spinning", facing = "Left", radius = [5, 12] }, pad = ["jump"], jump_pressed = false }]
+pad = ["left", "jump"]
+jump_pressed = true
+spin_turned_far = true
+after = { floor_response = "None", touchdown_requests = ["SamusLandedOrWallJumped"], touchdown_graphics = false }
+cinematic_active = true
+
+[[vector]]
+id = "C-work-aim-change"
+source = "constructed"
+entries = ["PerformedCollisionTests", "AimingAndShooting", "FollowingTheGround", "MovesAsShePosed", "TouchedCells"]
+world = { floor_top = 192 }
+before = { position = ["0028.0000", "00AB.FFFF"], speed_x = "+0000.0000", speed_y = "+0000.0000" }
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+next_pose = { body = "Upright", action = "Running", facing = "Right", radius = [5, 21], aim = "DownForward" }
+pad = ["run", "right", "aim_down"]
+pressed = ["aim_down"]
+jump_pressed = false
+after = { collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "GroundFollowing" }, { cell = [2, 9], direction = "Right", purpose = "AimChange", vertical_motion = "ExactlyZero" }, { cell = [2, 10], direction = "Right", purpose = "AimChange", vertical_motion = "ExactlyZero" }, { cell = [2, 11], direction = "Right", purpose = "AimChange", vertical_motion = "ExactlyZero" }] }

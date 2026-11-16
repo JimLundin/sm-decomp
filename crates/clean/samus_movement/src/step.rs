@@ -43,6 +43,10 @@ impl Samus {
             world,
             rules,
             reached: Vec::new(),
+            collision_tests: Vec::new(),
+            purpose: types::CollisionPurpose::OrdinaryMove,
+            floor_response: None,
+            accepted_wall_kick: false,
             travelled: crate::travel::TravelledDistances::fresh(),
             pending_aim: None,
         };
@@ -76,7 +80,17 @@ impl Samus {
             FrameBefore::left_behind(meeting.met, chosen.handed_over, start.pose, self.pose);
         self.jump_held = start.jump_held.then(rules, frame, left_behind);
         let was_dashing = start.run.dashing == Dashing::On;
+        let (touchdown_requests, touchdown_graphics) = crate::touchdown::opportunities(
+            t.floor_response,
+            t.accepted_wall_kick,
+            start.pose.action,
+            frame,
+        );
         Ok(Outcome {
+            floor_response: t.floor_response,
+            touchdown_requests,
+            touchdown_graphics,
+            collision_tests: t.collision_tests,
             travelled: t.travelled.travels,
             pending_aim: t.pending_aim,
             wall_test: meeting.wall_test,

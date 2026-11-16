@@ -462,7 +462,7 @@ pub struct Pose {
 
 /// The sprite her pose is drawn in, as samus-movement's `HowSheIsDrawn` chooses it: in
 /// samus-appearance each pose has a clip for each sprite. Its order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
 pub enum Sprite {
     /// Her plain sprite.
     Plain,
@@ -513,6 +513,137 @@ impl BoostStage {
         Self::Boosting,
     ];
 }
+
+/// Spec: `Landing`. Ball bounces since it last rested, exactly 0 through 2.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub enum Bounces {
+    /// No bounce since rest.
+    None,
+    /// One bounce; the next contact rebounds at any speed.
+    Once,
+    /// Two bounces; the next contact settles.
+    Twice,
+}
+
+/// Spec: `AcceptedFloorResponse`. Signed downward-positive speed immediately before the
+/// response, in 1/65536 pixel per frame. Not move distance or final vertical speed.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct VerticalSpeed(pub Fixed);
+
+/// Spec: `AcceptedFloorResponse`. What the floor actually did, not the selected pose.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum FloorResponseKind {
+    /// Upright landing accepted by pose fitting.
+    UprightTouchdown,
+    /// Airborne ball comes to rest.
+    BallSettles,
+    /// Spring ball hops again.
+    SpringHop,
+    /// Ball rebounds, with the updated bounce count.
+    Rebound(Bounces),
+    /// Body-changing move ends its vertical motion within the move.
+    ChangingBodyStops,
+    /// Turn stops flush but retains vertical speed.
+    TurningStops,
+    /// Grounded ball stops flush but retains vertical speed.
+    GroundedBallStops,
+}
+
+/// Spec: `AcceptedFloorResponse`. Fresh actual response and its pre-response pulled speed.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct FloorResponse {
+    /// Response accepted this frame.
+    pub kind: FloorResponseKind,
+    /// Speed after pull, before response (retained speed for turns and grounded balls).
+    pub speed: VerticalSpeed,
+}
+
+/// Spec: `TouchdownRequests`. Named sound identity, independent of library and allowance.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+pub enum SoundIdentity {
+    /// Plain spin or any wall jump ends.
+    SpinEnded,
+    /// Prior screw-attack spinning figure ends.
+    ScrewAttackEnded,
+    /// Fractional soft landing or a wall kick.
+    SamusLandedOrWallJumped,
+    /// Landing with whole downward speed at least five.
+    SamusLandedHard,
+}
+
+/// Spec: `TouchdownRequests`. Sound transport library, not a sound identity.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SoundLibrary {
+    /// Samus sounds, library 1.
+    Samus,
+    /// Landing and wall-jump sounds, library 3.
+    Library3,
+}
+
+/// Spec: `TouchdownRequests`. Number of queued requests transport may admit for this
+/// opportunity. Distinct from library or playback duration; transport decides admission.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct QueueAllowance(pub u16);
+
+/// Spec: `TouchdownRequests`. One opportunity, not a claim of playback. Keep ordered lists,
+/// never a set: subsequent appearance requests may repeat an identity with another allowance.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct SoundRequest {
+    /// Named cue.
+    pub identity: SoundIdentity,
+    /// Transport library.
+    pub library: SoundLibrary,
+    /// Transport's queue admission allowance.
+    pub queue_allowance: QueueAllowance,
+}
+
+/// Spec: `PerformedCollisionTests`. Speed condition at a horizontal ordinary/aim move,
+/// not physical ground contact and not the final speed.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+pub enum VerticalMotionAtTest {
+    /// Vertical speed was exactly zero, even in the air.
+    ExactlyZero,
+    /// Vertical speed was nonzero.
+    Nonzero,
+}
+
+/// Spec: `PerformedCollisionTests`. Why a leading-edge cell was evaluated.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+pub enum CollisionPurpose {
+    /// Ordinary speed-driven movement or elevator descent.
+    OrdinaryMove,
+    /// Extra forward step for an aim/pose choice.
+    AimChange,
+    /// Ground pull, not a speed-driven landing.
+    GroundFollowing,
+    /// Wall-jump reach look.
+    NearWallReach,
+    /// Initial fit room above the body.
+    FitRoomAbove,
+    /// Initial fit room below the body.
+    FitRoomBelow,
+    /// Additional fit clearance on the far side.
+    FitFarClearance,
+    /// New body's lowering look.
+    BodyLowering,
+}
+
+/// Spec: `PerformedCollisionTests`. Actual ordered cell work, distinct from `Touch` reactions.
+/// Direction remains directional for looks. No elapsed duration or CPU cost is assigned.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct CollisionTest {
+    /// Tested cell in the grid, before stand-in reaction identity resolution.
+    pub cell: Cell,
+    /// Direction tested, including looks.
+    pub direction: Direction,
+    /// Semantic reason for the test.
+    pub purpose: CollisionPurpose,
+    /// Applicable only to horizontal ordinary/aim moves; absent on vertical moves and looks.
+    pub vertical_motion: Option<VerticalMotionAtTest>,
+}
+
+/// Spec: `PerformedCollisionTests`. Work in observable order; early-stopped cells are absent.
+pub type CollisionTests = Vec<CollisionTest>;
 
 /// A sound her animation asks for (samus-appearance `WallJumpBranch`, `BoostStages`), for the sound
 /// domain to play or not.

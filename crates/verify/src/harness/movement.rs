@@ -732,7 +732,11 @@ fn shown_by(id: BehaviourId) -> FieldSet {
         | B::WhatHerMovesMet
         | B::TouchedCells
         // Travel receipts are compared only by the named cases, not credited as broad fields.
-        | B::TravelledDistances => FieldSet::EMPTY,
+        | B::TravelledDistances
+        // These receipts have independent production checks, not broad State-field credit.
+        | B::AcceptedFloorResponse
+        | B::TouchdownRequests
+        | B::PerformedCollisionTests => FieldSet::EMPTY,
         B::AnimationEnds => Q::HandedOver.set(),
         B::TransitionFiringAim => Q::PendingAim.set(),
         B::Dashing => Q::Dashing.set(),
@@ -912,6 +916,7 @@ impl Movement {
             pose::set_radius(samus, content);
         }
         let reads = Reads {
+            cinematic_active: Some(inputs.cinematic_active),
             controller: &inputs.controller,
             ride: inputs.ride,
             completed: inputs.completed,
@@ -975,6 +980,7 @@ enum PendingInterval {
 /// The frame's neighboring inputs and independently decoded pending-aim lifetime.
 pub struct Inputs {
     pending_interval: PendingInterval,
+    cinematic_active: bool,
     controller: Controller,
     ride: ElevatorRide,
     completed: u16,
@@ -1009,6 +1015,7 @@ impl Inputs {
         };
         Ok(Self {
             pending_interval,
+            cinematic_active: source::CINEMATIC_ACTIVE.read(wram)? != 0,
             controller: Controller {
                 held: buttons(rules.held.read(wram)?),
                 pressed: buttons(rules.pressed.read(wram)?),
@@ -1480,6 +1487,15 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
             before.seat == Seat::Seated || after.seat == Seat::Seated,
         ),
         (B::TouchedCells, !outcome.reached.is_empty()),
+        (B::AcceptedFloorResponse, outcome.floor_response.is_some()),
+        (
+            B::TouchdownRequests,
+            !outcome.touchdown_requests.is_empty() || outcome.touchdown_graphics,
+        ),
+        (
+            B::PerformedCollisionTests,
+            !outcome.collision_tests.is_empty(),
+        ),
     ]
     .into_iter()
     .filter(|&(_, exercised)| exercised)
@@ -1524,6 +1540,7 @@ mod tests {
             };
             let inputs = Inputs {
                 pending_interval: interval,
+                cinematic_active: false,
                 controller: game::state::Controller::default(),
                 ride: game::state::room::ElevatorRide::default(),
                 completed: 0,
@@ -1588,6 +1605,7 @@ mod tests {
         };
         let inputs = Inputs {
             pending_interval: super::PendingInterval::Cleared,
+            cinematic_active: false,
             controller: game::state::Controller::default(),
             ride: game::state::room::ElevatorRide::default(),
             completed: 0,

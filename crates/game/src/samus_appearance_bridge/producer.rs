@@ -2,10 +2,8 @@
 use super::{Clips, figure_of};
 use crate::state::{State, samus::Samus};
 use canonical::Canonical;
-use samus_appearance::{
-    CinematicActivity, GraphicalContact, Opportunity, OpportunityOutput, SoundRequest,
-};
-use types::{Action, AnimationSound, Set};
+use samus_appearance::{CinematicActivity, Opportunity};
+use types::{Action, Set};
 
 /// Neighbouring writers excluded from the ordinary appearance producer path.
 #[derive(Clone, Copy, Debug, enum_map::Enum)]
@@ -61,33 +59,24 @@ impl Capability {
     }
 }
 
-/// Each distinct source request survives, in source order, including animation requests.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Request {
-    /// `WallJumpBranch` or `BoostingLap`.
-    Animation(AnimationSound),
-    /// Contact, selection, drawing or first passage.
-    Appearance(SoundRequest),
-}
-/// Transient producer outputs; never an audio queue, retry or acknowledgement.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Outputs {
-    /// Ordered semantic requests for the later sound owner.
-    pub requests: Vec<Request>,
-    /// Graphical contacts for part 2, independent of sound suppression.
-    pub contacts: Vec<GraphicalContact>,
-}
-impl Outputs {
-    /// Preserve both independent outputs of an opportunity.
-    pub fn retain(&mut self, output: OpportunityOutput) {
-        self.requests.extend(output.sound.map(Request::Appearance));
-        self.contacts.extend(output.contact);
-    }
-    /// Preserve an animation request at its own phase.
-    pub fn animation(&mut self, sound: Option<AnimationSound>) {
-        self.requests.extend(sound.map(Request::Animation));
+use crate::gameplay_outputs::Outputs;
+/// Ceres admits the touchdown graphics opportunity by deleting its two landing slots.
+/// Other areas require their own graphical admission rules before this consumer can run.
+pub fn landing_graphics(
+    atmospherics: &mut crate::state::atmospheric::Atmospherics,
+    offered: bool,
+    _: Capability,
+) {
+    const LANDING_GRAPHIC_SLOTS: [usize; 2] = [2, 3];
+    if offered {
+        for (slot, graphic) in atmospherics.slots.iter_mut().enumerate() {
+            if LANDING_GRAPHIC_SLOTS.contains(&slot) {
+                *graphic = None;
+            }
+        }
     }
 }
+
 /// Running movement opportunity, before pose selection and animation update.
 pub fn contact(samus: &Samus, clips: &Clips, _: Capability, out: &mut Outputs) {
     if samus.movement != data::pose::MovementType::Running {
@@ -187,7 +176,32 @@ pub fn passage_entry(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn ceres_deletes_only_landing_slots_at_an_offered_graphics_opportunity() {
+        use crate::state::atmospheric::{
+            AtmosphericFrame, AtmosphericGraphic, AtmosphericKind, AtmosphericTimer, Atmospherics,
+        };
+        let graphic = AtmosphericGraphic {
+            kind: AtmosphericKind::LandingDust,
+            frame: AtmosphericFrame(0),
+            timer: AtmosphericTimer(1),
+            x: 1,
+            y: 2,
+        };
+        let mut effects = Atmospherics {
+            slots: [Some(graphic); 4],
+        };
+        let capability = Capability::from_seed(SeedFacts::default()).unwrap();
+        landing_graphics(&mut effects, false, capability);
+        assert_eq!(effects.slots, [Some(graphic); 4]);
+        landing_graphics(&mut effects, true, capability);
+        assert_eq!(effects.slots, [Some(graphic), Some(graphic), None, None]);
+    }
+
     use super::*;
+    use crate::gameplay_outputs::Request;
+    use samus_appearance::{GraphicalContact, SoundRequest};
+    use types::AnimationSound;
     #[test]
     fn every_excluded_writer_refuses_admission() {
         let inactive = SeedFacts::default();

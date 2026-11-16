@@ -68,3 +68,24 @@ names priority hit selection, sand-forced spin landing and independently validat
 pre-POST cuts as external boundaries in the [decode notes](samus-movement.decode.md#pending-publication-at-external-pose-boundaries).
 The engine still needs damage and sand-contact inputs to replace those writers; its
 general locked modes and special control-restoration paths remain unwired.
+
+## Accepted contact and performed work consumers
+
+The public movement output publishes accepted floor responses, ordered touchdown cue
+requests and actual performed leading-edge collision tests. The checked ordinary Ceres
+caller forwards them before subsequent appearance opportunities. Its sealed capability
+proves cinematic activity inactive. Wider legacy callers lack the actual cinematic input;
+they retain movement while discarding the new producer outputs. Audio queue/sending and
+CPU timing costs remain separate consumer obligations.
+
+Prior selected Sprite is imported from the existing selected figure, independently of
+current equipment. Rejected pose fit suppresses deferred landing/wall-kick requests;
+a changing-body floor stop retains the speed before its response. Native query contexts
+remain independent expectations, never production input.
+No reachable mixed-condition horizontal frame or movement ordering
+correction is established by this prefix.
+
+Samus-appearance part 2 owns admission of landing dust/splashes from the published graphical
+opportunity. Ceres deletes its atmospheric landing slots; general room/liquid graphical
+admission remains outside the movement output delta. CPU workload prediction outside the
+native prefix's ordinary moves, aim moves and fit looks remains the timing owner's gap.

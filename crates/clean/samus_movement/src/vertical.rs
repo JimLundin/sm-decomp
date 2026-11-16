@@ -244,10 +244,26 @@ impl Vertical {
         by: Fixed,
         stopped: bool,
         footing: Footing,
-        r: &Rules,
+        t: &mut Tick,
     ) -> Option<Met> {
         if course != Course::Pulled {
-            self.grow(r);
+            self.grow(t.rules);
+        }
+        // Spec: AcceptedFloorResponse. These stops happen within the move and keep their
+        // own speed meaning; ordinary contact is published only after pose fit accepts it.
+        if stopped && !by.negative() {
+            let kind = match (course, footing) {
+                (_, Footing::Turning) => Some(types::FloorResponseKind::TurningStops),
+                (Course::BallMovesByIt, _) => Some(types::FloorResponseKind::GroundedBallStops),
+                (Course::InTheAir, Footing::ChangingShape) => {
+                    Some(types::FloorResponseKind::ChangingBodyStops)
+                }
+                _ => None,
+            };
+            t.floor_response = kind.map(|kind| types::FloorResponse {
+                kind,
+                speed: types::VerticalSpeed(self.speed),
+            });
         }
         let shaping = footing == Footing::ChangingShape;
         if stopped && by.negative() {

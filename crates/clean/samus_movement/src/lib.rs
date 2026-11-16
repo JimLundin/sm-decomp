@@ -30,6 +30,38 @@
 //! every optional direction, including diagonals and each distinct vertical facing. Forced
 //! handovers such as shinespark belong to their surrounding domain, not `Samus::step`.
 
+//! # An ordinary call and consumer lifetime
+//!
+//! Restore the caller's complete serde `Samus` (position, pose, Run, Vertical including
+//! bounces/phase, Spin, Seat and `JumpHeld`). Before the new movement interval, weapons read
+//! caller-held previous `TravelledDistances` and pending firing aim; the cannon pass clears
+//! pending aim. Appearance's first half supplies this frame's clip end and spin-turned-far
+//! result, and its actual already-selected `Sprite` supplies `sprite_before_movement`.
+//! Progress supplies switched-on items, the mode supplies cinematic/elevator status, input
+//! supplies held/just-pressed actions, and the game supplies parity and pose-body/cannon content.
+//! None of these inputs is inferred from this frame's final pose or current items.
+//!
+//! Build `Frame` with those inputs and call `samus.step(&frame, &world, &rules)` exactly once.
+//! It mutates the persistent Samus; retain/save all of that value for next frame. Save
+//! `outcome.travelled` for the next cannon opportunity and replace caller pending aim only
+//! when `outcome.pending_aim` publishes a heading. Skipped intervals preserve caller memory.
+//! The world receives `inside` and ordered `reached` reactions, not collision-work records.
+//!
+//! CPU timing receives ordered `collision_tests` immediately as semantic performed work;
+//! it assigns any timing costs outside movement. Sound transport receives every ordered
+//! `touchdown_requests` record (identity, library and allowance), without deduplication.
+//! Appearance's second half receives start/end pose, actual `floor_response` and its
+//! pre-response `VerticalSpeed`, `touchdown_graphics` permission, and the existing animation
+//! outputs. It evaluates its own graphics admission rules and can append normal-drawing sound
+//! requests *after* movement's requests, preserving even repeated `SpinEnded` identities.
+//! These new outputs are fresh per-call publications, not movement State and not claims of
+//! sound playback or visible dust/splash. A subsequent call with no contact reports none.
+//! `handed_over` still means animation-end selection, independently of fit acceptance;
+//! `floor_response` reports acceptance, never that selection or held-jump history.
+//!
+//! The integration test `ordinary_call_delivers_outputs_and_comparison_checks_transport_fields`
+//! performs this ordinary flow through the public entry point with supplied room/body data.
+
 pub mod catalogue;
 mod change;
 mod chart;
@@ -44,7 +76,12 @@ mod samus;
 mod situation;
 mod step;
 mod tick;
+mod touchdown;
 mod travel;
+pub use types::{
+    CollisionPurpose, CollisionTest, CollisionTests, FloorResponse, FloorResponseKind,
+    QueueAllowance, SoundIdentity, SoundLibrary, SoundRequest, VerticalMotionAtTest, VerticalSpeed,
+};
 mod vertical;
 
 pub use travel::{TravelKind, TravelledDistances};

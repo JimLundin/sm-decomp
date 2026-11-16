@@ -1723,3 +1723,9 @@ pub const SAMUS_PRE_HANDLER: WramWord = WramWord {
     name: "FRAME_HANDLER_ALPHA",
     offset: 0x0A42,
 };
+
+/// Cinematic activity read by accepted touchdown sound admission.
+pub const CINEMATIC_ACTIVE: WramWord = WramWord {
+    name: "cinematic_function",
+    offset: 0x1f51,
+};

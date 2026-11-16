@@ -97,16 +97,7 @@ impl WithItem {
     }
 }
 
-/// `Landing`: how many times the ball has bounced since it last rested.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
-pub enum Bounces {
-    /// It hasn't bounced since it last rested.
-    None,
-    /// It has bounced once: the next landing bounces it at any speed.
-    Once,
-    /// It has bounced twice: the next landing rests it.
-    Twice,
-}
+pub use types::Bounces;
 
 /// `Landing`: one of the ball's bounces: the landing that makes it, the speed it rises at, and the
 /// bounce that comes after it.

@@ -439,9 +439,11 @@ Differences the plan keeps on purpose, listed ahead of the work that brings them
   M0 prefix remains unsupported. Other gameplay lacks checked suppression and drawing
   neighbours, and does not run the new opportunities. No whole sound-State equality is claimed.
 
-- **Movement landing sound publication** (`samus-movement`): its public `Outcome` has no
-  landing sound request or consumer cue. Native cuts 57 and 124 request
-  SamusLandedOrWallJumped; pose changes and JumpHeld's LandedOrEnded cannot independently
-  publish that movement opportunity. The movement observer's contract and a model output
-  are required before these requests can feed U1. They are not appearance's FootContact
-  requests or CeresDoorOpening.
+- **Movement output consumers** (`samus-movement`): checked ordinary Ceres ticks
+  publish accepted floor responses, ordered touchdown requests with library and queue
+  allowance, and actual performed collision tests. Sound playback/queue admission and
+  CPU timing costs remain unwired. The sealed ordinary capability proves cinematic
+  activity inactive; wider legacy callers lack an actual cinematic input and discard
+  the new producer outputs while retaining movement. General landing dust/splash
+  admission remains samus-appearance's; Ceres deletes the two landing graphic slots
+  at its independent accepted opportunity. Dispatch 183 remains unsupported.

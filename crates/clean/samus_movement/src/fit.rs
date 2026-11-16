@@ -96,9 +96,14 @@ impl Samus {
         let g = new.y - old.y;
         let mut found: Rooms = (None, None);
         for (probe, far) in [(Probe::Enemies, new), (Probe::Blocks, old)] {
-            let mut look = |by, r| self.look(t, by, r, probe);
-            let here = (look(-g, old), look(g, old));
-            if alone(here, g).is_some_and(|push| look(push, far).is_some()) {
+            let mut look = |by, r, purpose| self.look(t, by, r, probe, purpose);
+            let here = (
+                look(-g, old, types::CollisionPurpose::FitRoomAbove),
+                look(g, old, types::CollisionPurpose::FitRoomBelow),
+            );
+            if alone(here, g).is_some_and(|push| {
+                look(push, far, types::CollisionPurpose::FitFarClearance).is_some()
+            }) {
                 return Fitted::Refused;
             }
             found = (here.0.or(found.0), here.1.or(found.1));
@@ -122,7 +127,15 @@ impl Samus {
     /// `r`. It doesn't move her, but what stops it writes her y subpixel as a stop would, and a
     /// stepped block below seats her (`SlopesCarry`). Returns the room it found where something
     /// stopped it: how far it got, in whole px.
-    fn look(&mut self, t: &mut Tick, by: Px, r: Radius, probe: Probe) -> Option<Px> {
+    fn look(
+        &mut self,
+        t: &mut Tick,
+        by: Px,
+        r: Radius,
+        probe: Probe,
+        purpose: types::CollisionPurpose,
+    ) -> Option<Px> {
+        t.purpose = purpose;
         let look = t.vmove(
             Bounds {
                 at: self.position,

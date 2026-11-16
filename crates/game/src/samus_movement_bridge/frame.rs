@@ -41,6 +41,8 @@ fn pad(held: Controls) -> Buttons {
 pub struct FrameSource<'a> {
     /// Samus as the frame starts.
     pub samus: &'a Samus,
+    /// Known cinematic suppression, or unknown legacy context whose new requests are discarded.
+    pub cinematic_active: Option<bool>,
     /// The pad.
     pub controller: &'a Controller,
     /// The elevator under her.
@@ -75,15 +77,24 @@ pub fn body(content: &Content, samus: &Samus, pose: Pose) -> Radius {
 
 impl FrameSource<'_> {
     /// The model's frame, with `body` its body sizes.
-    #[must_use]
+    ///
+    /// # Errors
+    ///
+    /// A selected pose without an imported figure returns `SamusFault::UnnamedPose`.
     pub fn frame<'b>(
         &self,
         body: &'b dyn Fn(Pose) -> Radius,
         cannon_heading: &'b dyn Fn(Pose) -> Option<types::FiringDirection>,
-    ) -> Frame<'b> {
+    ) -> Result<Frame<'b>, super::SamusFault> {
         let samus = self.samus;
         let ahead = samus_appearance_bridge::ahead(samus, &self.content.samus_clips);
-        Frame {
+        let sprite_before_movement = samus_appearance_bridge::figure_of(samus.pose)
+            .ok_or(super::SamusFault::UnnamedPose(samus.pose))?
+            .sprite;
+        Ok(Frame {
+            sprite_before_movement,
+            // Unknown legacy context computes motion only; its producer outputs are discarded.
+            cinematic_active: self.cinematic_active.unwrap_or(false),
             pad: pad(controls(self.controller.held)),
             pressed: pad(controls(self.controller.pressed)),
             items: run_progress_bridge::switched_on(&samus.equipment),
@@ -96,7 +107,7 @@ impl FrameSource<'_> {
             animation_ends: ahead.and_then(|ahead| ahead.end),
             body,
             cannon_heading,
-        }
+        })
     }
 }
 

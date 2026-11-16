@@ -24,6 +24,7 @@ samus-movement field 20635 366 heading_down
 samus-movement field 20361 640 vertical_speed_after_moves
 samus-movement field 21001 0 handed_over
 samus-movement field 20946 55 pending_aim
+samus-movement entry AcceptedFloorResponse 0 0 0 1204
 samus-movement entry Aiming 0 0 0 3473
 samus-movement entry AimingAndShooting 3632 505 3638 62
 samus-movement entry AnimationEnds 410 9 422 0
@@ -39,6 +40,7 @@ samus-movement entry Moonfall 751 121 751 66
 samus-movement entry MovesAsShePosed 19609 5498 19674 1327
 samus-movement entry OtherBlockKinds 0 0 0 0
 samus-movement entry PadChart 0 0 0 21001
+samus-movement entry PerformedCollisionTests 0 0 0 20518
 samus-movement entry PoseFitAfterMoves 454 0 455 35
 samus-movement entry PoseFollows 0 0 0 21001
 samus-movement entry RidingTheElevator 0 0 0 906
@@ -48,6 +50,7 @@ samus-movement entry SlopesCarry 80 3 80 1
 samus-movement entry SlopesSlowTheWalk 0 0 0 0
 samus-movement entry SolidEnemies 7198 2273 7203 442
 samus-movement entry SpeedBuildsAndBrakes 13108 5652 13131 205
+samus-movement entry TouchdownRequests 0 0 0 228
 samus-movement entry TouchedCells 0 0 0 20518
 samus-movement entry TransitionFiringAim 53 0 53 5
 samus-movement entry TravelledDistances 0 0 0 0

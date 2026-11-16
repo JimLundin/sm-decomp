@@ -44,12 +44,14 @@ fn stepped(from: &State, to: &State, content: &game::Content) -> Option<State> {
     let heading = |pose| game::samus_movement_bridge::frame::cannon_heading(content, pose);
     let frame = FrameSource {
         samus: &samus,
+        cinematic_active: None,
         controller: &to.controller,
         ride: from.elevator,
         completed: from.clock.counters.completed.0,
         content,
     }
-    .frame(&sized, &heading);
+    .frame(&sized, &heading)
+    .unwrap();
     let outcome = model.step(&frame, &world, &Rules::default()).ok()?;
     write_back(&model, outcome.rising, &mut samus);
     Some(State {

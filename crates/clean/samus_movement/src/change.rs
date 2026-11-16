@@ -88,6 +88,22 @@ impl Samus {
         let placed = (fitted.moved() || became.lower.is_some())
             .then(|| self.position.y.with_sub(start.position.y.sub()));
         if let Some(contact) = contact {
+            // Spec: AcceptedFloorResponse and TouchdownRequests. This is the acceptance
+            // boundary: fitting has removed refused/substituted contact, but not handover.
+            t.accepted_wall_kick = contact == Contact::WallKick;
+            let kind = match contact {
+                Contact::WallKick => None,
+                Contact::Hop => Some(types::FloorResponseKind::SpringHop),
+                Contact::Bounce(b) => Some(types::FloorResponseKind::Rebound(b.then)),
+                Contact::Land if start.pose.body == types::Body::Upright => {
+                    Some(types::FloorResponseKind::UprightTouchdown)
+                }
+                Contact::Land => Some(types::FloorResponseKind::BallSettles),
+            };
+            t.floor_response = kind.map(|kind| types::FloorResponse {
+                kind,
+                speed: types::VerticalSpeed(self.vertical.speed),
+            });
             self.vertical.meet(contact, self.run.dash, t);
             self.run.meet(contact);
         }
@@ -106,6 +122,7 @@ impl Samus {
     /// `ShrinkingLowersHer`: the frame a change of shape starts, she looks down its distance
     /// (`lowers`) at her new size, a block look, and is lowered as far as it got.
     fn shrink(&mut self, lowers: Lowers, t: &mut Tick) {
+        t.purpose = types::CollisionPurpose::BodyLowering;
         let look = t.vmove(self.bounds(t), t.rules.lowers(lowers), Probe::Blocks);
         // What stopped the look writes her y subpixel FFFF, or seats her on a stepped block.
         self.take_result(&look);

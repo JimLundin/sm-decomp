@@ -65,6 +65,11 @@ struct Vector {
     pose: PoseTable,
     /// The pose chosen during the checked frame, where it changes.
     next_pose: Option<PoseTable>,
+    /// Actual prior figure, independent of items; vector format defaults to Plain.
+    sprite_before_movement: Option<types::Sprite>,
+    /// Vector format defaults cinematic to inactive.
+    #[serde(default)]
+    cinematic_active: bool,
     /// The checked frame's parity.
     #[serde(default)]
     frame: ParityName,
@@ -207,7 +212,7 @@ struct RulesTable {
     /// `ShrinkingLowersHer`: the crouch's own distance.
     crouch_lowers: Option<Quantity>,
     /// `RisingAndFalling`: the pull a frame.
-    gravity: Option<Quantity>,
+    gravity: Option<GravityQuantity>,
     /// `WallJump`: the near-wall test's move.
     wall_reach: Option<Quantity>,
     /// `PoseFitAfterMoves`: the old body's half-height under which a change is refused.
@@ -232,7 +237,7 @@ impl RulesTable {
         set(&mut rules.jump.without, self.jump_speed);
         set(&mut rules.ground_pull, self.ground_pull);
         set(&mut rules.crouch_lowers, self.crouch_lowers);
-        set(&mut rules.gravity, self.gravity);
+        set(&mut rules.gravity, self.gravity.map(|g| Quantity(g.0)));
         set(&mut rules.wall_reach, self.wall_reach);
         let set_px = |value: &mut Px, n: Option<u16>| {
             if let Some(n) = n {
@@ -421,6 +426,10 @@ struct Before {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct After {
+    floor_response: Option<ExpectedFloor>,
+    touchdown_requests: Option<Vec<types::SoundIdentity>>,
+    touchdown_graphics: Option<bool>,
+    collision_tests: Option<Vec<ExpectedTest>>,
     /// Fresh publication, not a separate test-support calculation or retained state.
     pending_aim: Option<PendingAim>,
     /// Her position, `[x, y]`.
@@ -471,6 +480,147 @@ struct After {
     heading_down: Option<bool>,
     /// Her vertical speed as her moves leave her, at `heading_down`'s point.
     speed_y_after_moves: Option<Signed>,
+}
+
+/// Explicit None or a response; every nested field is consumed, no unknown fields allowed.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ExpectedFloor {
+    None(NoFloorResponse),
+    Response(FloorTable),
+}
+
+#[derive(Deserialize)]
+enum NoFloorResponse {
+    None,
+}
+
+#[derive(Deserialize, Debug)]
+enum FloorKindName {
+    UprightTouchdown,
+    BallSettles,
+    SpringHop,
+    Rebound,
+    ChangingBodyStops,
+    TurningStops,
+    GroundedBallStops,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FloorTable {
+    kind: FloorKindName,
+    speed: Signed,
+    bounces: Option<u8>,
+}
+
+impl ExpectedFloor {
+    fn show(&self) -> String {
+        match self {
+            Self::None(_) => "None".to_owned(),
+            Self::Response(r) => format!("{:?} {:?} {}", r.kind, r.bounces, r.speed.show()),
+        }
+    }
+}
+
+fn show_floor(response: Option<types::FloorResponse>) -> String {
+    let Some(r) = response else {
+        return "None".to_owned();
+    };
+    let (kind, count) = match r.kind {
+        types::FloorResponseKind::UprightTouchdown => (FloorKindName::UprightTouchdown, None),
+        types::FloorResponseKind::BallSettles => (FloorKindName::BallSettles, None),
+        types::FloorResponseKind::SpringHop => (FloorKindName::SpringHop, None),
+        types::FloorResponseKind::Rebound(b) => (FloorKindName::Rebound, Some(bounces(b))),
+        types::FloorResponseKind::ChangingBodyStops => (FloorKindName::ChangingBodyStops, None),
+        types::FloorResponseKind::TurningStops => (FloorKindName::TurningStops, None),
+        types::FloorResponseKind::GroundedBallStops => (FloorKindName::GroundedBallStops, None),
+    };
+    format!("{kind:?} {count:?} {}", speed_y(r.speed.0).show())
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ExpectedTest {
+    cell: [u16; 2],
+    direction: DirectionName,
+    purpose: types::CollisionPurpose,
+    vertical_motion: Option<types::VerticalMotionAtTest>,
+}
+
+impl ExpectedTest {
+    fn model(&self) -> types::CollisionTest {
+        let [x, y] = self.cell;
+        types::CollisionTest {
+            cell: Cell { x, y },
+            direction: self.direction.model(),
+            purpose: self.purpose,
+            vertical_motion: self.vertical_motion,
+        }
+    }
+}
+
+/// Independent expectation from `TouchdownRequests`' library/allowance prose, NOT the
+/// production request constructor or any production constants. Compare all three fields.
+fn expected_sound(identity: types::SoundIdentity) -> types::SoundRequest {
+    use types::{QueueAllowance, SoundIdentity, SoundLibrary, SoundRequest};
+    match identity {
+        SoundIdentity::SpinEnded => SoundRequest {
+            identity: SoundIdentity::SpinEnded,
+            library: SoundLibrary::Samus,
+            queue_allowance: QueueAllowance(6),
+        },
+        SoundIdentity::ScrewAttackEnded => SoundRequest {
+            identity: SoundIdentity::ScrewAttackEnded,
+            library: SoundLibrary::Samus,
+            queue_allowance: QueueAllowance(6),
+        },
+        SoundIdentity::SamusLandedOrWallJumped => SoundRequest {
+            identity: SoundIdentity::SamusLandedOrWallJumped,
+            library: SoundLibrary::Library3,
+            queue_allowance: QueueAllowance(6),
+        },
+        SoundIdentity::SamusLandedHard => SoundRequest {
+            identity: SoundIdentity::SamusLandedHard,
+            library: SoundLibrary::Library3,
+            queue_allowance: QueueAllowance(6),
+        },
+    }
+}
+
+fn compared_new_outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
+    vec![
+        (
+            "floor_response",
+            after.floor_response.as_ref().map(ExpectedFloor::show),
+            show_floor(outcome.floor_response),
+        ),
+        (
+            "touchdown_requests",
+            after.touchdown_requests.as_ref().map(|list| {
+                format!(
+                    "{:?}",
+                    list.iter().copied().map(expected_sound).collect::<Vec<_>>()
+                )
+            }),
+            format!("{:?}", outcome.touchdown_requests),
+        ),
+        (
+            "touchdown_graphics",
+            after.touchdown_graphics.map(|b| b.to_string()),
+            outcome.touchdown_graphics.to_string(),
+        ),
+        (
+            "collision_tests",
+            after.collision_tests.as_ref().map(|list| {
+                format!(
+                    "{:?}",
+                    list.iter().map(ExpectedTest::model).collect::<Vec<_>>()
+                )
+            }),
+            format!("{:?}", outcome.collision_tests),
+        ),
+    ]
 }
 
 /// A reached cell: its top-left corner, and the way.
@@ -585,6 +735,22 @@ impl TryFrom<String> for Quantity {
             .ok_or_else(|| format!("{text:?} is no P.S quantity"))?;
         let part = |p: &str| u16::from_str_radix(p, 16).map_err(|e| format!("{text:?}: {e}"));
         Ok(Self(fixed(Wrapping(part(pixel)?), part(sub)?)))
+    }
+}
+
+/// Gravity vectors supply both unsigned and signed parameter notation.
+#[derive(Deserialize, Clone, Copy)]
+#[serde(try_from = "String")]
+struct GravityQuantity(Fixed);
+
+impl TryFrom<String> for GravityQuantity {
+    type Error = String;
+    fn try_from(text: String) -> Result<Self, String> {
+        if text.starts_with(['+', '-']) {
+            Signed::try_from(text).map(|s| Self(s.value()))
+        } else {
+            Quantity::try_from(text).map(|q| Self(q.0))
+        }
     }
 }
 
@@ -1431,13 +1597,17 @@ fn body_size(p: Pose, step: Step, end: Option<SizedPose>, known: &[SizedPose]) -
         .map(|k| k.1)
 }
 
+fn applied_rules(vector: &Vector) -> Rules {
+    vector
+        .rules
+        .as_ref()
+        .map_or_else(Rules::default, |r| r.applied(Rules::default()))
+}
+
 /// Runs one vector; returns its mismatches.
 fn run(vector: &Vector) -> Vec<String> {
     let name = format!("{} ({})", vector.id, vector.source);
-    let rules = vector
-        .rules
-        .as_ref()
-        .map_or_else(Rules::default, |r| r.applied(Rules::default()));
+    let rules = applied_rules(vector);
     let items: Set<Item> = vector.items.iter().map(|i| (i.model(), true)).collect();
     let room = room(&vector.world);
     let checked = vector.checked();
@@ -1488,6 +1658,10 @@ fn run(vector: &Vector) -> Vec<String> {
             }
         };
         let frame = Frame {
+            sprite_before_movement: vector
+                .sprite_before_movement
+                .unwrap_or(types::Sprite::Plain),
+            cinematic_active: vector.cinematic_active,
             pad: step.pad,
             pressed: step.pressed,
             items,
@@ -1515,10 +1689,9 @@ fn run(vector: &Vector) -> Vec<String> {
         }
         // The first pose that differs; the later ones follow from it. The checked frame's
         // after.pose, where given, is the pose it ends in instead of next_pose.
-        let checked = n.wrapping_add(1) == frames.len();
         let expected = end
             .map(|e| e.0)
-            .filter(|_| !(checked && after_pose.is_some()));
+            .filter(|_| !(n.wrapping_add(1) == frames.len() && after_pose.is_some()));
         if misses.is_empty() && expected.is_some_and(|e| e != samus.pose) {
             misses.push(format!(
                 "{name}: frame {n} ends in pose {:?}, expected {expected:?}",
@@ -1760,6 +1933,7 @@ fn compared(after: &After, samus: &Samus, outcome: &Outcome) -> Vec<Compared> {
         after.pending_aim.as_ref().map(|aim| show_aim(aim.0)),
         show_aim(outcome.pending_aim),
     ));
+    fields.extend(compared_new_outputs(after, outcome));
     fields.extend(outputs(after, outcome));
     fields.extend(for_her_animation(after, outcome));
     fields.extend(compared_travels(
@@ -1828,7 +2002,8 @@ fn every_distance_history() {
 
 /// The vector file, read into its shape: a key or a name the shape doesn't know fails here.
 fn file() -> VectorFile {
-    toml::from_str(VECTORS).expect("the vector file reads as its shape")
+    toml::from_str(VECTORS)
+        .unwrap_or_else(|error| panic!("vector file: {} at {:?}", error.message(), error.span()))
 }
 
 #[test]
@@ -2198,6 +2373,140 @@ fn firing_content_and_expectations_are_strict() {
     }
     assert!(PendingAim::try_from("Upward".to_owned()).is_err());
     assert!(PendingAim::try_from("none".to_owned()).is_err());
+}
+
+/// A complete ordinary call: input/body/room from content, persistent Samus restored,
+/// output publications delivered separately. Mutating either transport field must mismatch
+/// the independent spec expectations, not merely leave vector identities unchanged.
+#[test]
+fn ordinary_call_delivers_outputs_and_comparison_checks_transport_fields() {
+    let vectors = file().vector;
+    let vector = vectors
+        .iter()
+        .find(|v| v.id == "C-output-spin-soft")
+        .unwrap();
+    let content = vector.checked();
+    let step = step_of(&content);
+    let end = vector.next_pose.as_ref().map(PoseTable::sized);
+    let known = [
+        vector.pose.sized(),
+        vector.next_pose.as_ref().unwrap().sized(),
+    ];
+    let body = |pose| body_size(pose, step, end, &known).unwrap();
+    let cannon = |_| None;
+    let world = room(&vector.world);
+    let mut samus = start(&vector.before, step.pose);
+    let frame = Frame {
+        sprite_before_movement: types::Sprite::Plain,
+        cinematic_active: false,
+        pad: step.pad,
+        pressed: step.pressed,
+        items: Set::default(),
+        spin_turned_far: step.spin_turned_far,
+        elevator_moving: false,
+        parity: Parity::Even,
+        animation_ends: step.animation_ends,
+        body: &body,
+        cannon_heading: &cannon,
+    };
+    let outcome = samus.step(&frame, &world, &Rules::default()).unwrap();
+    let saved = toml::to_string(&samus).unwrap();
+    let restored: Samus = toml::from_str(&saved).unwrap();
+    assert_eq!(restored, samus);
+    let mut next_firing = TravelledDistances::fresh();
+    next_firing.travels = outcome.travelled;
+    assert_eq!(next_firing.travels, outcome.travelled);
+    let matches = |out: &Outcome| {
+        compared_new_outputs(&vector.after, out)
+            .iter()
+            .all(|(_, expected, actual)| {
+                expected.as_ref().is_none_or(|expected| expected == actual)
+            })
+    };
+    assert!(matches(&outcome));
+    for index in 0..outcome.touchdown_requests.len() {
+        let mut wrong_library = outcome.clone();
+        wrong_library.touchdown_requests[index].library =
+            match wrong_library.touchdown_requests[index].library {
+                types::SoundLibrary::Samus => types::SoundLibrary::Library3,
+                types::SoundLibrary::Library3 => types::SoundLibrary::Samus,
+            };
+        assert!(!matches(&wrong_library), "wrong library must fail");
+        let mut wrong_allowance = outcome.clone();
+        wrong_allowance.touchdown_requests[index].queue_allowance = types::QueueAllowance(1);
+        assert!(!matches(&wrong_allowance), "wrong allowance must fail");
+    }
+    // Later consumer requests are appended verbatim, even when their identity repeats.
+    let later_request = outcome.touchdown_requests[0];
+    let mut transport = outcome.touchdown_requests.clone();
+    transport.push(later_request);
+    assert_eq!(transport[0], *transport.last().unwrap());
+    assert_eq!(transport.len(), outcome.touchdown_requests.len() + 1);
+    assert!(outcome.touchdown_graphics); // Appearance may still decline graphics.
+    assert!(outcome.floor_response.is_some());
+    assert_ne!(outcome.collision_tests, Vec::new()); // Timing receives work, no costs.
+}
+
+/// Spec: `PadChart` and `ShrinkingLowersHer`. Tapping Down admits crouching and its
+/// lowering look; holding Down alone keeps the upright pose and performs only ground
+/// following. Both cases use the actual movement entry point, with independent expectations.
+#[test]
+fn lowering_requires_tapping_down_not_merely_holding_it() {
+    let mut vectors = file().vector;
+    let vector = vectors
+        .iter_mut()
+        .find(|v| v.id == "C-work-lowering")
+        .unwrap();
+    assert_eq!(buttons(&vector.pad), button::DOWN);
+    assert_eq!(buttons(&vector.pressed), button::DOWN);
+    // Check the corrected supplied work verbatim, without adding a press or filtering tests.
+    assert_eq!(run(vector), Vec::<String>::new());
+    vector.after.pose = vector.next_pose.clone();
+    vector.after.position = Some([
+        Quantity(fixed(Wrapping(40), 0)),
+        Quantity(fixed(Wrapping(176), 0xFFFF)),
+    ]);
+    vector.after.placed = Some(Placed(Some(fixed(Wrapping(176), 0xFFFF))));
+    assert_eq!(run(vector), Vec::<String>::new());
+
+    // The held-only counterexample starts independently from the same supplied state.
+    vector.pressed.clear();
+    vector.next_pose = None;
+    vector.after = toml::from_str(
+        r#"
+pose = { body = "Upright", action = "Still", facing = "Right", radius = [5, 21] }
+position = ["0028.0000", "00AB.FFFF"]
+placed = "none"
+collision_tests = [{ cell = [2, 12], direction = "Down", purpose = "GroundFollowing" }]
+"#,
+    )
+    .unwrap();
+    assert_eq!(buttons(&vector.pad), button::DOWN);
+    assert_eq!(run(vector), Vec::<String>::new());
+}
+
+#[test]
+fn new_output_tables_and_names_are_strict() {
+    for text in [
+        "kind = \"UprightTouchdown\"\nspeed = \"+0001.1000\"\nbogus = 1",
+        "kind = \"Landed\"\nspeed = \"+0001.1000\"",
+    ] {
+        assert!(toml::from_str::<FloorTable>(text).is_err());
+    }
+    for text in [
+        "cell = [2, 1]\ndirection = \"Right\"\npurpose = \"OrdinaryMove\"\nbogus = 1",
+        "cell = [2, 1]\ndirection = \"Right\"\npurpose = \"Unknown\"",
+        "cell = [2, 1]\ndirection = \"Right\"\npurpose = \"OrdinaryMove\"\nvertical_motion = \"Grounded\"",
+    ] {
+        assert!(toml::from_str::<ExpectedTest>(text).is_err());
+    }
+    let known = with_unknown_key_in(EVERY_TABLE, TABLES, None);
+    for field in [
+        "sprite_before_movement = \"Unknown\"",
+        "cinematic_active = \"false\"",
+    ] {
+        assert!(toml::from_str::<Vector>(&format!("{known}{field}\n")).is_err());
+    }
 }
 
 #[test]

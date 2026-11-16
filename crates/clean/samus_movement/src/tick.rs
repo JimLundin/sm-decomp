@@ -8,6 +8,11 @@ use types::{Buttons, ClipEnd, Item, Parity, Pose, Radius, Set, Touch, World};
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
 /// and feeds us (the header): the end her animation reaches, from its timing.
 pub struct Frame<'a> {
+    /// Spec: `TouchdownRequests`. Actual figure selected before movement, supplied by
+    /// appearance independently of current items or this frame's newly selected sprite.
+    pub sprite_before_movement: types::Sprite,
+    /// Spec: `TouchdownRequests`. Current cinematic state supplied by the surrounding mode.
+    pub cinematic_active: bool,
     /// The buttons held as the frame starts.
     pub pad: Buttons,
     /// The buttons just pressed this frame.
@@ -49,6 +54,14 @@ pub struct Tick<'a> {
     pub rules: &'a Rules,
     /// The cells her moves and looks reach, in order.
     pub reached: Vec<Touch>,
+    /// Spec: `PerformedCollisionTests`. Only actually evaluated leading-edge tests.
+    pub collision_tests: types::CollisionTests,
+    /// Purpose of the current movement/look, set by its semantic caller.
+    pub purpose: types::CollisionPurpose,
+    /// Spec: `AcceptedFloorResponse`. Move-local stops, or accepted contact after fitting.
+    pub floor_response: Option<types::FloorResponse>,
+    /// Spec: `TouchdownRequests`. A wall kick accepted by fitting, not merely selected.
+    pub accepted_wall_kick: bool,
     /// Spec: `TravelledDistances`. Fresh ordinary travel, unaffected by later looks or placements.
     pub travelled: TravelledDistances,
     /// Spec: `TransitionFiringAim`. Fresh publication from the accepted ordinary pose change.

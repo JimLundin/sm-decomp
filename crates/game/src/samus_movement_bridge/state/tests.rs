@@ -291,6 +291,7 @@ fn a_frame_on_the_floor_runs_her_right() {
     let content = Content::default();
     let frame = FrameSource {
         samus: &engine,
+        cinematic_active: Some(false),
         controller: &controller,
         ride: ElevatorRide::default(),
         completed: 0,
@@ -302,7 +303,8 @@ fn a_frame_on_the_floor_runs_her_right() {
             y: Wrapping(0x15),
         },
         &|_| None,
-    );
+    )
+    .unwrap();
     let Some(mut model) = clean_of(&engine) else {
         panic!("running is hers");
     };
@@ -357,6 +359,7 @@ fn a_transition_that_requires_missing_cannon_content_is_refused() {
     let result = crate::samus_movement_bridge::step::run(
         &mut samus,
         crate::samus_movement_bridge::step::Reads {
+            cinematic_active: Some(false),
             controller: &controller,
             ride: ElevatorRide::default(),
             completed: 0,
@@ -369,4 +372,127 @@ fn a_transition_that_requires_missing_cannon_content_is_refused() {
         result,
         Err(crate::samus_movement_bridge::SamusFault::MissingCannonHeading(_))
     ));
+}
+
+#[test]
+fn cinematic_context_changes_only_touchdown_requests() {
+    let blocks = floor();
+    let room = Room {
+        blocks: &blocks,
+        width: BlockColumns(4),
+        slopes: None,
+        doors: &[],
+    };
+    let mut engine = samus(
+        SPIN_RIGHT,
+        Motion {
+            position: Position {
+                x: Fixed::new(0x20, 0),
+                y: Fixed::new(0x30 - 0x15, 0),
+            },
+            vertical: VerticalMotion::Down,
+            vertical_speed: Fixed::new(1, 0x1000),
+            ..Motion::default()
+        },
+    );
+    // Selected plain sprite stays independent of the newly equipped screw attack.
+    engine.equipment.equipped.insert(Item::ScrewAttack);
+    let controller = Controller {
+        held: FlagSet {
+            bits: Button::Right.bit(),
+            ..FlagSet::default()
+        },
+        ..Controller::default()
+    };
+    let content = Content::default();
+    let sized = |_| Radius {
+        x: X_RADIUS,
+        y: Wrapping(0x15),
+    };
+    let heading = |_| None;
+    let evaluate = |cinematic_active| {
+        let world = SamusWorld::new(room, SolidEnemies::default());
+        let frame = FrameSource {
+            samus: &engine,
+            controller: &controller,
+            cinematic_active,
+            ride: ElevatorRide::default(),
+            completed: 0,
+            content: &content,
+        }
+        .frame(&sized, &heading)
+        .unwrap();
+        assert_eq!(frame.sprite_before_movement, types::Sprite::Plain);
+        let mut model = clean_of(&engine).unwrap();
+        let output = model.step(&frame, &world, &Rules::default()).unwrap();
+        (model, output)
+    };
+    let (inactive_state, inactive) = evaluate(Some(false));
+    let (active_state, active) = evaluate(Some(true));
+    let (legacy_state, legacy) = evaluate(None);
+    assert_eq!(inactive_state, active_state);
+    assert_eq!(inactive_state, legacy_state);
+    assert!(
+        inactive
+            .collision_tests
+            .iter()
+            .any(|test| test.vertical_motion == Some(types::VerticalMotionAtTest::Nonzero))
+    );
+    assert_eq!(inactive.collision_tests, active.collision_tests);
+    assert_eq!(inactive.collision_tests, legacy.collision_tests);
+    assert_eq!(inactive.floor_response, active.floor_response);
+    assert_eq!(inactive.floor_response, legacy.floor_response);
+    assert!(inactive.touchdown_graphics && active.touchdown_graphics && legacy.touchdown_graphics);
+    assert_eq!(
+        inactive.touchdown_requests,
+        [
+            types::SoundRequest {
+                identity: types::SoundIdentity::SpinEnded,
+                library: types::SoundLibrary::Samus,
+                queue_allowance: types::QueueAllowance(6)
+            },
+            types::SoundRequest {
+                identity: types::SoundIdentity::SamusLandedOrWallJumped,
+                library: types::SoundLibrary::Library3,
+                queue_allowance: types::QueueAllowance(6)
+            },
+        ]
+    );
+    assert_eq!(active.touchdown_requests, Vec::<types::SoundRequest>::new());
+    assert_eq!(inactive.touchdown_requests, legacy.touchdown_requests);
+    let mut active_without_sound = active;
+    active_without_sound.touchdown_requests = inactive.touchdown_requests.clone();
+    assert_eq!(active_without_sound, inactive);
+    assert_eq!(legacy, inactive);
+    assert_movement_then_drawing_are_both_delivered(&mut engine, &inactive);
+}
+
+fn assert_movement_then_drawing_are_both_delivered(
+    engine: &mut Samus,
+    inactive: &samus_movement::Outcome,
+) {
+    let mut delivered = crate::gameplay_outputs::Outputs::default();
+    delivered.moved(inactive);
+    engine.preparation_movement = MovementType::SpinJumping;
+    engine.movement = MovementType::Standing;
+    let capability = crate::samus_appearance_bridge::producer::Capability::from_seed(
+        crate::samus_appearance_bridge::producer::SeedFacts::default(),
+    )
+    .unwrap();
+    crate::samus_appearance_bridge::producer::normal_draw(engine, capability, &mut delivered);
+    let mut wanted: Vec<_> = inactive
+        .touchdown_requests
+        .iter()
+        .copied()
+        .map(crate::gameplay_outputs::Request::Movement)
+        .collect();
+    let drawing = samus_appearance::SoundRequest::SpinEnded;
+    assert_eq!(drawing.queue(), samus_appearance::SoundQueue::Samus);
+    assert_eq!(drawing.max_waiting(), 15);
+    wanted.push(crate::gameplay_outputs::Request::Appearance(drawing));
+    assert_eq!(delivered.requests, wanted);
+    assert_eq!(
+        delivered.movement.unwrap().collision_tests,
+        inactive.collision_tests
+    );
 }
