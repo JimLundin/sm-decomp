@@ -11,6 +11,35 @@ who sees what. The rules it relies on live elsewhere, and are linked where they 
   score and the budget, a diagnostic since decision 19; [size-budget](../architecture/size-budget.md),
   the study behind them.
 
+## Replay transition
+
+[MODEL §1 decisions 32 and 33](../architecture/MODEL.md#1-the-goal-and-what-is-exact) are the
+source of truth for the target replay architecture and removal policy. This is a scoped,
+one-time transition, not a claim that the target runner or removal is implemented. It
+supersedes harness-only progress with retained gameplay, and parallel independent acceptance
+definitions. The round's roles, clean-room barrier, review and root-only landing remain.
+
+Before cutover, the root records a bounded work plan and obtains independent review of:
+
+- the inventory of previous gameplay owners, their state and fallback routes, and the reviewed
+  content, codec, exact encoding, scheduling and rendering services to retain;
+- the indexed replay cases and their behaviour witnesses, declared scopes and dependency
+  contracts, showing that scoped replay calls the same production model and adapter entries
+  as integrated replay and carries owned State without oracle next-state feedback;
+- the old-code-dependent results to retire, the independent records and witnesses to preserve,
+  and replacement coverage for each retired claim, including cross-domain contracts;
+- the proposed cutover of acceptance checks and ratchets, with explicit before/after claims and
+  any coverage loss identified for review rather than hidden by deleting a check.
+
+Until that cutover is reviewed and landed, all current mandatory checks and floors remain in
+force: this direction grants no blanket ratchet waiver. The cutover change records which
+checks remain, which are replaced or retired and why, and the replacement proof. Scoped cases
+prove only their stated scope; full-engine and milestone claims still need integrated replay.
+Vectors, unit tests and localisation checks remain useful development evidence. Required
+missing behaviour is reported as `Unsupported`, so removing an old owner cannot silently turn
+its responsibility into a successful no-op. The plan stays within the lowest rung's needs;
+authorisation of this direction does not start unrelated behaviour rounds.
+
 ## Roles
 
 Each role is its own session with its own skill, and is never combined with another role in one
@@ -131,6 +160,10 @@ Each step names its owner, what it waits for, and its done-condition.
    - the old code it replaces is deleted;
    - `tools/lane/gate.sh` passes;
    - the free-run gate's green pairs and the lockstep ratchet hold.
+
+   **Transition constraint:** the following retention route is superseded by MODEL decision 33
+   at the reviewed [replay cutover](#replay-transition); it is not the target integration policy.
+   Current mandatory checks remain until that cutover.
 
    Where the engine can run the model exactly only once another domain gives it inputs that
    domain's model doesn't yet give, the round lands with the harness alone. The domain's gaps

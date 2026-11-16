@@ -1,5 +1,9 @@
 # Status: how to measure it
 
+The target replay acceptance process and removal policy are defined in
+[MODEL §1 decisions 32 and 33](architecture/MODEL.md#1-the-goal-and-what-is-exact), with current
+checks preserved until the reviewed [transition](cleanroom/PROCESS.md#replay-transition).
+
 The numbers live in committed ratchet and floor files, never in a hand-written document; the
 README's status is generated from them ([BUILDING](BUILDING.md#the-status-and-the-report)).
 Read them, or rerun the checks below.

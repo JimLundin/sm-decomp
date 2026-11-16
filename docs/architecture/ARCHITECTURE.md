@@ -1,5 +1,9 @@
 # The engine's architecture
 
+[MODEL §1 decisions 32 and 33](MODEL.md#1-the-goal-and-what-is-exact) define the target replay
+acceptance process and removal policy. Current checks remain until the reviewed
+[transition](../cleanroom/PROCESS.md#replay-transition).
+
 This document decides the engine's architecture. Its principles are in
 [PRINCIPLES.md](PRINCIPLES.md) (P1-P20 for design, K1-K10 for code), and each decision cites
 the ones it follows. [MODEL.md](MODEL.md) sets the shape of the game code (the layers `data`,

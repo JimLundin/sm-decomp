@@ -82,7 +82,8 @@ Jim's decisions, 2026-11-07:
    for comparison are deleted; a comparison uses git history (the tag `archive/old-engine`, or the
    commit before a deletion). When a clean model replaces engine code, the integrator deletes the
    old code in the same lane, and a baseline cites the commit it was measured at. The engine code
-   of domains not yet rebuilt is current, and goes as each domain is replaced.
+   of domains not yet rebuilt is current, and goes as each domain is replaced. Decision 33
+   supersedes this retention route under the reviewed replay transition.
 9. **Audio is rebuilt clean-room too** (Jim, 2026-11-08): a sequencer and a model of the sound
    chip's DSP, specced in behaviour and verified on the oracle's audio stream, scheduled late; the
    CPU side (which sound plays when) is modelled with the domains that trigger it. The plan of
@@ -155,7 +156,7 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     V1). A round reports each row's held frames and first divergences beside the per-frame
     harness, and the free run's floors (`crates/verify/src/harness/free_floors.txt`) never fall.
     The per-frame harness stays as the localiser: it says where a model goes wrong, never that
-    it is right.
+    it is right. Decision 32 supersedes this acceptance path at the reviewed replay cutover.
 18. **A ladder of rungs leads to the milestone.** The headline milestone (decision 14) stays the
     goal, but its stretch is mostly cinematics, front end, lag and the sound driver, so its
     number can't move for weeks. Rungs over shorter stretches of the same movie, Ceres first,
@@ -253,6 +254,44 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     same issue. Closing prerequisite issues does not count as frames played alone. The
     procedure is in [PROCESS](../cleanroom/PROCESS.md#work-items).
 
+32. **One authoritative replay process, with explicit scopes** (Jim, 2026-11-16). The
+    target acceptance process is an index of short replay segments witnessing named behaviours,
+    alongside integrated and whole-movie cases. A behaviour catalogue entry names a rule, not a
+    test: one case may witness several behaviours, and a behaviour may need many cases.
+    Scoped and integrated cases use the same runner and admission, advance, comparison and
+    result semantics. Each case selects production responsibilities and invokes the same model
+    and adapter entry used by the engine, carrying their owned State from its admitted start
+    across the segment. No oracle next-state is copied into that owned State, and no verifier-only
+    implementation decides gameplay. Inputs and borrowed stimuli must not be computed from the
+    next expected outcome. Vectors and unit tests remain development checks; they do
+    not form an independent acceptance definition.
+    Each case declares its start, inputs, static content, borrowed neighbour stimuli, selected
+    responsibilities, compared fields and outputs, their expectations, and scope limits. If a changing producer is
+    required, the case includes the actual dependency or an explicitly admitted external input
+    and reports the limited claim. Scope selection must not silently omit relevant consumers
+    or claim full engine proof. A movement case can compare motion, pose, contact and intents
+    without pixel compositing: rendering is downstream, and changed movement changes image
+    inputs; such a case proves nothing about unchanged pixels. Integrated and end-to-end cases
+    still check cross-domain contracts, and the whole-movie milestone (decision 14) remains.
+    This supersedes decision 17's separate domain acceptance path and §4's harness progress
+    definition. It requires the same production paths selected by the case, not full-frame
+    rendering in every case. Implementation and the reviewed cutover are governed by
+    [PROCESS](../cleanroom/PROCESS.md#replay-transition); this decision does not claim they exist.
+
+33. **Remove previous gameplay owners; fail visibly where behaviour is missing** (Jim,
+    2026-11-16). The target engine runs the clean models without previous executable gameplay
+    as fallback. Inventory all previous behaviour owners, not just a `Legacy` enum: remove their
+    gameplay decision code, state and fallback routes, preserving source through git history.
+    Legitimate content, codecs, exact encoding, scheduling and rendering services may remain
+    after review of their responsibility; their location or age alone does not make them
+    gameplay to delete. Required missing behaviour returns explicit `Unsupported`, never a
+    silent no-op or old-gameplay fallback. This supersedes decision 8's retention of gameplay
+    until each domain is replaced and PROCESS's harness-only landing route. The one-time
+    [transition](../cleanroom/PROCESS.md#replay-transition) reviews replacement coverage and
+    ratchets before cutover; current mandatory gates remain until then. Clean-room roles,
+    root-only landing and lowest-rung prioritisation are unchanged. Approval of this direction
+    does not authorise unrelated rounds.
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our
@@ -322,7 +361,9 @@ port.
 
 ## 4. The reference domain: Samus's motion
 
-This domain was replaced first, end to end, so every later domain has a working example to copy.
+This domain was replaced first, end to end. The harnesses described here are current development
+and localisation machinery; decisions 32 and 33 define the target acceptance process and removal
+policy, with the reviewed cutover in [PROCESS](../cleanroom/PROCESS.md#replay-transition).
 
 **Scope (Jim, 2026-11-07):** Samus moving through the world is one domain, because one set of
 speed quantities has writers across all of it and the player sees one thing. It covers her speeds

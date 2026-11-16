@@ -1,5 +1,9 @@
 # Principles
 
+[MODEL §1 decisions 32 and 33](MODEL.md#1-the-goal-and-what-is-exact) define the target replay
+acceptance process and removal policy. Current checks remain until the reviewed
+[transition](../cleanroom/PROCESS.md#replay-transition).
+
 Jim agreed these principles on 2026-11-05. Every decision in [ARCHITECTURE.md](ARCHITECTURE.md)
 cites the principles it follows; [MODEL.md](MODEL.md) applies them to the game code. "How we know"
 is a check that runs or a question a reviewer asks, never a line count.

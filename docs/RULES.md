@@ -13,8 +13,9 @@ decision in MODEL §1, or a change where it lives, then a line here.
 3. The goal's number is the milestone: power-on through Ceres played alone (decision 14). The
    work aims at the lowest rung of its ladder not yet reached (decision 18,
    [domains.md §4](architecture/domains.md#4-order)).
-4. A domain is proven by its free run, fed its own State over the rows; the per-frame harness
-   localises (decision 17, [MODEL §4](architecture/MODEL.md#4-the-reference-domain-samuss-motion)).
+4. Target acceptance is indexed scoped and integrated replay through the same production paths;
+   behaviours are rules and cases are witnesses (MODEL decisions 32 and 33,
+   [transition](cleanroom/PROCESS.md#replay-transition)). Current checks remain until reviewed cutover.
 5. Green pairs, the lockstep ratchet, harness floors and free-run floors never fall
    ([STATUS](STATUS.md)).
 6. Size is counted as a guideline; the root records cut or proceed after review (decision 19).
