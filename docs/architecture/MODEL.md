@@ -245,6 +245,14 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     reviewers receive concrete shape findings, with metric reports kept by the coordinator.
     The procedure is in [PROCESS](../cleanroom/PROCESS.md#coordinator-code-health-review).
 
+31. **Track bounded work beneath the milestone** (Jim, 2026-11-16). The milestone issue
+    holds the goal and its measured progress. Work proceeds through smaller issues, each with
+    one verifiable outcome, an owner, dependencies, current state and completion evidence.
+    Session plans select those issues and session reviews record their actual results. A
+    discovered prerequisite becomes visible work rather than an indefinite extension of the
+    same issue. Closing prerequisite issues does not count as frames played alone. The
+    procedure is in [PROCESS](../cleanroom/PROCESS.md#work-items).
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our

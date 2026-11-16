@@ -237,6 +237,50 @@ N to land, so the implementer starts from the landed model.
 A domain's spec can start before a domain it reads from has landed. Its own round then waits
 until that domain has landed, so the interface it reads is fixed.
 
+## Work items
+
+The milestone issue is the umbrella for its measured goal and remaining dependency order.
+Before starting a lane or round, the root creates or selects a linked issue for one bounded
+outcome. Its title says what becomes possible, rather than naming only a domain, round number
+or role. A research or contract issue may finish with reviewed evidence; an implementation
+issue finishes with the resulting behavior and its proof. The issue states which kind it is.
+
+Each work issue contains:
+
+- **Outcome and scope:** the concrete change, its current boundary and what remains outside it.
+- **Owner and stage:** the responsible role, the active branch or PR when one exists, and the
+  next action. A handoff updates these fields.
+- **Dependencies:** links to prerequisite issues and the specific input or decision each must
+  supply. A missing contract becomes a linked issue before the lane broadens its scope.
+- **Done when:** observable acceptance conditions and the required checks. State the expected
+  change in the relevant boundary or comparison; if the work supplies a prerequisite without
+  increasing played frames, say so.
+- **Evidence:** the landed commit and PR for code, the reviewed result for research, applicable
+  test/CI receipts, and actual versus intended results, including unchanged figures.
+
+Open work uses one current-state label: `status:backlog` for work awaiting scope or priority,
+`status:ready` when its prerequisites and acceptance conditions are clear, `status:in-progress`
+while an owner works on it, `status:blocked` with the exact blocker and unblock condition, or
+`status:in-review` while its result awaits required review, CI or landing. Issue bodies carry
+the detail; labels do not replace it. Update at ownership, scope or state changes rather than
+posting each tool action. Close completed issues only when their acceptance evidence holds;
+remove their open-state label. Close superseded work as not planned with a replacement link,
+not as a completed outcome.
+
+The milestone issue links the child issues in dependency order and distinguishes completed
+prerequisites, active work, ready work and blockers. Native sub-issue links may supplement the
+written dependency list. Keep the milestone's actual played-frame and stream figures visible:
+the fraction of closed issues is not the fraction of the game reproduced. Session issues
+select work IDs, record owner/stage and intended outcomes, and link the final results. A
+missed outcome names its cause and next work item; it does not silently reset the same goal.
+
+After landing or supersession, retire unused local and remote branches. Preserve a recovery
+reference or archive before retiring unmerged drafts, and preserve uncommitted files before
+removing their worktree. Held work retains an explicit issue and branch link. Branches are
+working copies; the tracker, commits and review evidence retain the work's status and history.
+These tracking rules change neither the lowest-rung scope limit nor the clean-room roles and
+mandatory gates.
+
 ## Working hours
 
 Work is scheduled in one session a night, from 20:00 to 08:00 local time, with its planning and
@@ -244,7 +288,8 @@ review included. Each session has three parts:
 
 1. **Planning.** The root reads the last session's review, REPORT and the queue, chooses the
    session's rounds and lanes within the limits above, and writes the plan down before any lane
-   starts, as an issue (MODEL §1 decision 27). Work goes only to the lowest rung of the ladder
+   starts, as a session issue selecting the bounded [work items](#work-items) (MODEL §1
+   decisions 27 and 31). Work goes only to the lowest rung of the ladder
    not yet reached (decisions 18 and 24): the items it still needs, then the free run's first
    divergences on its rows. A round or lane outside the rung's needs list doesn't start; the
    planted faults and the gain over null (decisions 24 and 25) run alongside.
@@ -254,7 +299,8 @@ review included. Each session has three parts:
    already in flight under the rule below and writes the session's review on the plan's issue:
    what landed, the figures before and after, what the gates found, and what the next session
    should take up, including the [Code Health review](#coordinator-code-health-review) of the
-   session's changes.
+   session's changes. Update each selected work issue with its actual outcome, evidence and
+   remaining dependency; the session review links those issues.
 
 **Finish active work.** The scheduled shift end stops new scope, not completion. Every task or
 round already started continues beyond scheduled hours through necessary implementation and

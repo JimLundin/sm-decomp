@@ -24,6 +24,9 @@ decision in MODEL §1, or a change where it lives, then a line here.
 6c. Each session's plan and review is an issue (decision 27).
 6d. The root measures Code Health after independent review and records dispositions
     ([PROCESS](cleanroom/PROCESS.md#coordinator-code-health-review), MODEL decision 30).
+6e. Each bounded outcome has a work issue with an owner, dependencies, state and proof;
+    milestone and session issues link that work ([PROCESS](cleanroom/PROCESS.md#work-items),
+    MODEL decision 31).
 
 ## The shape of the code
 

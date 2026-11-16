@@ -1,0 +1,44 @@
+name: Bounded work item
+description: A concrete outcome with dependencies and evidence of completion.
+labels: ["type:work", "status:backlog"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome and scope
+      description: What becomes possible, what is the current boundary, and what is outside this item?
+    validations:
+      required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent milestone or maintenance issue
+      description: Link the issue this outcome supports.
+    validations:
+      required: true
+  - type: textarea
+    id: owner
+    attributes:
+      label: Owner, stage and next action
+      description: Name the responsible role and the current branch or PR when one exists.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and unblock conditions
+      description: Link each prerequisite and name the input it supplies, or state that none are known.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: State observable acceptance conditions, required proof and the intended boundary or comparison gain. Identify prerequisite work that does not itself add played frames.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and actual result
+      description: Record PR or reviewed-result links, exact commits, checks and actual versus intended results as work completes.
