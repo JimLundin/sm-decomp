@@ -140,5 +140,5 @@ jobs:
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
             python3 tools/check_mutants.py
       - name: Check retained imported content and progress supply
-        run: SM_ROM=rom/sm.smc cargo test --locked --profile verify -p verify --lib tests::content -- --ignored
+        run: SM_ROM="$PWD/rom/sm.smc" cargo test --locked --profile verify -p verify --lib tests::content -- --ignored
       - *cache_save
