@@ -26,13 +26,13 @@ needed patches, or shared code with the engine, proved little in earlier attempt
 
 ### Which oracle records which stream (D25)
 
-The gate never runs an oracle: it compares the engine with the lock's recorded digests. So
-accuracy decides which oracle records a stream, and oracle speed matters only for re-locking,
-lockstep and cross-oracle reports. Each stream's lock comes from the most accurate oracle that
+Acceptance replay never runs an oracle: it compares actual production with pinned independent
+observations. Accuracy decides which oracle records a stream; capture speed matters for
+re-locking and cross-oracle reports. Each stream's lock comes from the most accurate oracle that
 produces it. Today that is **lsnes for every recorded stream** (memories, `ppu`, `apu`, `video`,
 `timing`), since lsnes gives the picture, the CPU port log and the PPU registers too
 (MEASUREMENTS (o), (r)). The five PPU fields lsnes doesn't expose are not compared (Q4).
-LakeSnes stays the fast oracle for lockstep and for tier b (SPC state), and its records count only
+LakeSnes stays the fast oracle for independent measurements and tier b (SPC state), and its records count only
 on frames where its memories equal lsnes's. The `ReferenceProfile` names the oracle per stream;
 changing one re-locks that stream oracle-side.
 
@@ -45,7 +45,7 @@ One record per video frame, lag or not. Record k covers (cut k-1, cut k] and the
   `Cut::NmiStillRunning`.
 - **NMI k:** its kind (`Requested` when the handler read the joypad, else `Lag`), its interrupted
   PC (the instruction the RTI returns to), and `overrun` when that PC is not one of
-  `game::WAIT_SITES`.
+  `oracle_record::game::WAIT_SITES`.
 - **Facts:** the pad auto-read at vblank k, joypad register reads, the overscan flag, the beam
   position where the main thread entered its wait.
 - **Raw state at cut k:** CPU registers, WRAM 128 KiB, VRAM 64 KiB, CGRAM 512 B, OAM 544 B, SRAM,
@@ -149,7 +149,7 @@ It writes the column layout of `tools/lsnes_lag_log.lua` (about 120 frames/s).
 `lakesnes.rs`, `lsnes.rs`, `streams.rs` (per-stream digests), `lock.rs` (the old lock's pins and
 entries), `seed.rs` (lsnes room captures), `corpus.rs` (running rows), `relock.rs` and
 `relock_check.rs` (format 2), `ladder.rs`, `measure.rs`, `cross.rs`, `cli.rs`, `bin/oracle.rs`.
-`crates/oracle_record`: `FrameRecord`, its codec, the lsnes raw record decoder, `game::WAIT_SITES`
+`crates/oracle_record`: `FrameRecord`, its codec, the lsnes raw record decoder, `oracle_record::game::WAIT_SITES`
 and `inputs.rs`. No crates.io dependency. A backend implements `Oracle` (open a start, step one
 video frame with a pad, save its state, set tiers and watched PCs); a second backend is a second
 implementation, and `oracle cross` steps two with the same pads.
@@ -293,7 +293,7 @@ them with `verify::decode`, every fact is `"unevaluated"` and doesn't block gree
 | d | record every row twice, compare, merge | done: 635 rows in `lsnes.toml`, 642 with the seven movie rows of `scenes-v1` |
 | e | bundle, encrypt, upload, pin in `lsnes.toml` | done (`relock-v2-lsnes-f612aa96b26daf8d`) |
 | f | `verify::lock`: the reader and the per-(row, stream) comparison | done |
-| g | the free-run gate: `tools gate`, ratcheting the rows that start and their green pairs | done for `area-brinstar`, `item-morph-ball` and Ceres's `chain-any-0001` to `0011`, which start with the slots the engine doesn't model carried ([LEGACY](LEGACY.md#the-engine-slots-it-carries-but-doesnt-run)) |
+| g | historical free-run gate | retired at reviewed production replay cutover; replacements and losses are in [the transition ledger](../scenarios/replay/transition.toml) |
 
 ### Step a1: the cut plan
 
@@ -361,7 +361,8 @@ rejects a lock of another oracle version. `Row::compare(&EngineRow)` gives per s
 `wram`) the entry has is `Equal` and no fact blocks. Writer and reader share the fixture
 `crates/verify/src/lock/format2.toml`, which `oracle::relock`'s test writes byte for byte.
 `oracle relock-refold A SIDECAR_DIR` re-folds a recording's sidecars through `SpanFold` and checks
-every mark. The gate is `tools gate` ([STATUS](STATUS.md)).
+every mark. Current acceptance is `tools replay check` ([STATUS](STATUS.md)); this lock reader validates
+independent capture metadata rather than dispatching gameplay.
 
 ### Seed records with the PPU registers (RELOCK §9)
 
@@ -400,13 +401,13 @@ with `LIBRARY_PATH` set). Where Defender blocks fresh executables, run the CLI a
 | Command | Does |
 | --- | --- |
 | `oracle movie ROM INPUTS [--oracle lsnes] [--frames N] [--from STATE FRAME] [--lag-log CSV] [--seeds CSV DIR] [--native-seeds CSV DIR] [--from-ladder L] [--ladder N DIR] [--ppu] [--streams] [--no-memories] [--no-picture] [--trace FROM TO PC,...]` | plays a movie; checks sync, cuts seeds and rungs, traces PCs |
-| `oracle corpus ROM scenarios/lock.toml DATA [--oracle lsnes] [--native-seeds DIR] [--frame-pads DIR \| --from-frame-pads DIR] [--record-v2 FILE] [--sidecar DIR] [--dump-frames ROW:F,...] [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--watch-words ADDR,...] [--watch-pcs ADDR,...]` | runs rows: pads, format-2 recordings, the lockstep record cache; prints watched words when they change and watched instruction hits per frame |
+| `oracle corpus ROM scenarios/lock.toml DATA [--oracle lsnes] [--native-seeds DIR] [--frame-pads DIR \| --from-frame-pads DIR] [--record-v2 FILE] [--sidecar DIR] [--dump-frames ROW:F,...] [--cache OUT [--cache-pictures]] [--only ID] [--shard I/N] [--watch-words ADDR,...] [--watch-pcs ADDR,...]` | runs rows: pads, format-2 recordings, the independent record cache; prints watched words when they change and watched instruction hits per frame |
 | `oracle cross ROM INPUTS [--frames A..B] [--ranges] [--ranges-at A..B] [--streams] [--right-from STATE STEP]` | LakeSnes against lsnes, part by part per step |
 | `oracle measure ROM LOCK DATA ID...`, `oracle measure-movie ROM INPUTS FRAMES`, `oracle trace` | the measurements |
 | `oracle ladder-check`, `oracle ladder-rung`, `oracle derive-seed` | ladders and derived seeds |
 | `oracle relock-compare`, `relock-merge`, `relock-refold` | checking recordings (§5) |
 | `tools/oracle/relock_plan.sh` → `relock_cut.sh` → `relock_ppu_recut.sh` | cutting seeds |
-| `tools gate`, `tools lockstep`, `tools localise` | the engine against the lock ([STATUS](STATUS.md)) |
+| `tools replay list`, `tools replay run`, `tools replay check` | indexed production replay against independent observations ([STATUS](STATUS.md)) |
 | `tools cache-lean LOCK FROM TO ROW...` | writes record cache rows again as the lean tier |
 | `tools/ci/pack_lockstep_cache.sh CACHE ROM [OUT]` | packs the record cache for ci-data |
 
@@ -419,8 +420,7 @@ pins differ from the lock row. The **full tier** (`--cache-pictures`) is `OUT/<r
 every `FrameRecord` with its picture in `oracle_record::codec`'s encoding, and `index.txt`. The
 **lean tier** (the default) is `lean.bin`, each record without its picture and its five memories
 as the bytes that changed since the frame before, whole every 256th frame
-(`oracle_record::lean`), and `lean.txt`: about a hundredth of the bytes. Lockstep, the harnesses
-and the domain free run read no picture, so they read the lean tier when a row has one and the
+(`oracle_record::lean`), and `lean.txt`: about a hundredth of the bytes. Replay observations that need no picture use the lean tier when available, with the
 full tier otherwise; `tools cache-lean LOCK FROM TO ROW...` writes full rows again as lean ones.
 A row recorded with
 `--watch-pcs` also has `hits.txt`: `# watched` and the addresses, then `frame pc line dot peek`
@@ -447,17 +447,16 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
 - **The relock bundle** `relock-v2-lsnes-f612aa96b26daf8d.tar.gz.enc` (SHA-256
   `8c504da029b3b3f810b50396933be000e77cef66ae78d526a304323d12936747`), pinned by the `bundles` line
   of `scenarios/locks/lsnes.toml`, unpacks to `relock-v2-lsnes/`: `seeds/<capture>/NNNN.record`,
-  `.lss` and `.words`, and the rows' `.pads` (`verify::bundle`).
+  `.lss` and `.words`, and the rows' `.pads`. These remain independent source assets;
+  indexed replay declares which seed and input formats its admission supports.
 - **The lockstep record cache** `lockstep-cache-5663de2c4b548c68.tar.xz.enc` (SHA-256
   `4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f`), pinned in
   `.github/workflows/verify.yml` (`CACHE_ASSET`, `CACHE_SHA256`); unpack with `tar -xJ` (about
-  92 MB, the lean tier). It holds the 63 rows `floors.txt` names, each with its `hits.txt` (the watched
-  instructions of every domain, the blocks' scripts included), so CI holds the ratchet's rows and
-  every domain's harness floors and coverage. Before replay, CI's
-  `harness::corpus::committed_corpus_is_complete_before_replay` test requires the union of rows
-  named in `floors.txt` and `free_floors.txt`, opens each against the lock's pins and checks its
-  record byte ranges. Replay checks payload decoding. Local harness runs can use partial caches;
-  run that exact preflight test with `SM_CACHE` set to require the complete corpus locally.
+  92 MB, the lean tier). The asset retains independent recorded rows and watched causal traces.
+  Replay case metadata selects required rows; admission checks source pins and record coverage.
+  Required acceptance runs the complete index rather than former harness floor-file unions.
+  Local selection can use the cases whose required sources are available; missing data fails
+  the selected case, never silently skips it.
   Pack it with
   `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
   repins it.

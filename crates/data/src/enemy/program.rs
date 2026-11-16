@@ -178,7 +178,7 @@ pub const SLICE_ZERO_SPRITEMAPS: [Spritemap; 2] = [
     Spritemap(RomAddress::new(0xa8, 0x804d)),
 ];
 
-/// The Ceres doors' ten figures, which `game::boss_ceres_ridley_bridge` draws.
+/// The Ceres doors' ten imported sprite figures.
 ///
 /// Closed, the three ajar figures and open, facing right, then the same facing left. Their
 /// importer is AF3's.

@@ -1456,6 +1456,12 @@ pub struct WramArray {
     pub offset: u16,
 }
 
+/// Ordered observed interactive enemy slot offsets, ending at the first FFFF word.
+pub const INTERACTIVE_ENEMY_INDICES: WramArray = WramArray {
+    name: "INTERACTIVE_ENEMY_INDICES",
+    offset: 0x17EC,
+};
+
 impl WramArray {
     /// Where slot `slot`'s word is.
     ///

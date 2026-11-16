@@ -20,7 +20,7 @@
 use data::dma::{BusAddress, HUD_TILEMAP_BUFFER, PLM_DRAW_TILEMAP};
 
 use crate::intent::{BlockLook, OverlayRows, TileWrite};
-use crate::state::room::{BlockPoint, Camera};
+use crate::state::render::BlockPoint;
 use crate::state::video::{NmiBatch, TilemapEntry, VramSource, VramStep, VramTransfer, VramWord};
 
 mod direct;
@@ -28,6 +28,24 @@ mod exposure;
 
 pub use direct::{DirectBuffer, read_now, write_now};
 pub use exposure::{commit_exposures, expose};
+
+/// Immutable view inputs for tilemap placement and exact screen selection.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct View {
+    /// Whole-pixel view origin supplied by the current camera producer.
+    pub origin: types::Pair<u16>,
+    /// Horizontal BG1 scroll used by the tilemap screen selector.
+    pub bg1_scroll_x: u16,
+}
+
+impl Default for View {
+    fn default() -> Self {
+        Self {
+            origin: types::Pair { x: 0, y: 0 },
+            bg1_scroll_x: 0,
+        }
+    }
+}
 
 /// BG1's tilemap in VRAM, two 32x32 screens side by side.
 pub const BG1_TILEMAP: VramWord = VramWord(0x5000);
@@ -86,7 +104,7 @@ impl<'a> TileQueue<'a> {
     }
 
     /// Queue `write` where the original queued it; a block row is placed from `camera`.
-    pub fn write(&mut self, camera: &Camera, write: &TileWrite) {
+    pub fn write(&mut self, camera: View, write: &TileWrite) {
         match write {
             TileWrite::Overlay(rows) => self.overlay(rows),
             TileWrite::Blocks { at, looks } => self.blocks(camera, *at, looks),
@@ -124,7 +142,7 @@ impl<'a> TileQueue<'a> {
     }
 
     /// The row of blocks `looks` from the block at `at`, if any of it is on screen.
-    fn blocks(&mut self, camera: &Camera, at: BlockPoint, looks: &[BlockLook]) {
+    fn blocks(&mut self, camera: View, at: BlockPoint, looks: &[BlockLook]) {
         let Some(clip) = Clip::of(camera, at, looks.len()) else {
             return;
         };
@@ -228,9 +246,9 @@ impl Clip {
     /// What of a row of `length` blocks starting at `at` shows, or `None` if none does: rows
     /// above the screen's top or below its fifteenth row show nothing, nor do blocks left of
     /// the one before the screen or right of the 17th past it.
-    fn of(camera: &Camera, at: BlockPoint, length: usize) -> Option<Self> {
+    fn of(camera: View, at: BlockPoint, length: usize) -> Option<Self> {
         let BlockPoint { x, y } = at;
-        let screen_y = camera.y.pixels >> 4;
+        let screen_y = camera.origin.y >> 4;
         // Below the screen's last row, then above its first.
         if is_negative(screen_y.wrapping_add(SCREEN_ROWS).wrapping_sub(y))
             || is_negative(y.wrapping_sub(screen_y))
@@ -241,7 +259,7 @@ impl Clip {
         let mut first = x;
         let mut skipped = 0;
         // The block before the screen's left edge, which a draw starts from.
-        let left = (camera.x.pixels.wrapping_add(0x0F) >> 4).wrapping_sub(1);
+        let left = (camera.origin.x.wrapping_add(0x0F) >> 4).wrapping_sub(1);
         let before = left.wrapping_sub(x);
         if !is_negative(before) && before != 0 {
             skipped = before;
@@ -277,10 +295,10 @@ impl Clip {
 
 /// The tilemap word a block row's first block lands on: its column in the screen that column
 /// is in, which BG1's scroll offset may have swapped.
-const fn destination(camera: &Camera, column: u16, row: u16) -> VramWord {
+const fn destination(camera: View, column: u16, row: u16) -> VramWord {
     let row_start = (row & ROW_MASK).wrapping_mul(BLOCK_ROW_STRIDE);
     let word = (column & COLUMN_MASK).wrapping_mul(BLOCK_ROW_WORDS);
-    let swapped = camera.bg1_offset.x & OTHER_SCREEN_FIRST != 0;
+    let swapped = camera.bg1_scroll_x & OTHER_SCREEN_FIRST != 0;
     let in_first_screen = column & COLUMN_MASK < SCREEN_COLUMNS;
     let first_screen = BG1_TILEMAP.0;
     let second_screen = first_screen.wrapping_add(SECOND_SCREEN);

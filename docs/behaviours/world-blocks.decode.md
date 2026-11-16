@@ -496,8 +496,7 @@ another PLM's draws are noted under takes those draws too: the blue doors' closi
 cells by PLM; `mask_reach.py ROW...` reads the dumps.
 
 The table's single source is
-[`writers.toml`](../../crates/verify/src/harness/blocks/writers.toml), which the harness masks
-by: each writer's PLMs, its cells as points and boxes from its own cell (a box's ends both
+[`writers.toml`](../../crates/verify/src/replay/observation/world_blocks_writers.toml), which records independent writer facts: each writer's PLMs, its cells as points and boxes from its own cell (a box's ends both
 included), what the 44 cached rows do with it (`writes`, `live` or `no`, from `mask_reach.py`)
 and, for a writer left out, why. Its comments give each writer's account from the bank log.
 

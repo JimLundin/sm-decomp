@@ -1,6 +1,9 @@
 # The behaviour model
 
-This note sets the shape of the engine's game code. Its changes to ARCHITECTURE and PRINCIPLES are
+This note sets the shape of the engine's game code. Current implementation follows decisions
+32 and 33: indexed production replay replaces separate acceptance executors, and missing
+behaviour stays unsupported. Earlier decision text is retained as the decision record; where
+32 or 33 supersedes it, the current rule is the later decision. Its changes to ARCHITECTURE and PRINCIPLES are
 made there, and where they disagree this note wins. It follows Jim's decisions, recorded in §1.
 
 ## 1. The goal, and what is exact
@@ -299,22 +302,20 @@ code is organised.
 
 ## 2. Layers
 
-| Layer | Holds | May name | Never names |
-| --- | --- | --- | --- |
-| `data` | content decoded from the ROM, and the **rule tables** (vanilla values of every behaviour parameter) | ROM formats at its edge | game State |
-| `game::model` | behaviour, in domain terms: Samus, the camera, actors (PLMs, enemies), the HUD's values, progress, the message box | State, `data`, `Rules`, intents | `VideoMemory`, `NmiBatch`, `VramWord`, `DmaChannel`, OAM bytes, B-bus registers |
-| `game::intent` | the per-Tick intents: `SpriteDraw`, `TileWrite`, `LayerExposure`, `HudValues`, `PaletteWrite`, `Effect`, `SoundRequest` | domain types | bytes |
-| `game::exact` | the one encoder from intents to the original's bytes, with every encoding quirk as a named rule: the OAM format and its 128-entry wrap, the screen split of tilemap rows, the write queue's capacity, the HUD's tile words, the message box's video | intents, video State | behaviour decisions |
-| `game::tick` | the Tick, strands, the NMI, the line program, the cost model (unchanged) | everything | |
+The layers separate decisions, their receipts, exact encoding and ordering. Their current
+implementation is clean domain crates plus concrete `game::production` recipes:
 
-- `model` decides; `exact` encodes; `tick` orders.
-- `exact` runs where the original queued its uploads, so the batch order is unchanged.
-- The intents are also ARCHITECTURE D16's view: the wide and HD renderers read them, and the
-  exact path and the intent path come from one source by construction.
-- A rebuilt domain's behaviour is a clean crate (`crates/clean/<crate>`, §5), which
-  `game` calls through its bridge in `model`'s place.
-- The "never names" column is held by review; `tools/check_crate_rules.sh` gains a check for it
-  with the reshape.
+| Responsibility | Holds | May name | Never names |
+| --- | --- | --- | --- |
+| `data` / `import` | typed content and reference values; ROM layout at import edge | content formats | live gameplay State |
+| clean models | named domain rules and complete State | domain types, rules, intents | addresses, OAM bytes, video register layouts |
+| production | complete model owners, checked content, concrete execution recipes | clean States, typed inputs and outputs | oracle records, expected outcomes, verifier case IDs |
+| exact encoding | bytes from actual output intents | intents and encoding formats | gameplay decisions |
+| runtime | downstream composition and presentation | immutable display/audio outputs | writable production State |
+
+`model` decides, `exact` encodes, and production orders selected actual calls. Old `tick`,
+strand and NMI gameplay dispatchers are absent. A missing ordering/clock/consumer rule is an
+explicit unsupported dependency, not a service reconstructed outside the clean room.
 
 ## 3. Behaviours are named, catalogued and switchable
 
@@ -348,7 +349,7 @@ that needs its own tests. `SpeedCap` is a Toggle, as the proof of the thesis. Ot
 Fixed until a consumer asks for them: a Map Rando option, respin, the QoL list. A `Parameter`, a
 value in `Rules`, is cheap and may stay.
 
-`Rules` (the Session's options, ARCHITECTURE §10) carries one value for each switchable behaviour.
+`Rules` (the admitted production profile, ARCHITECTURE §10) carries one value for each switchable behaviour.
 The Reference profile holds the vanilla values, and those are what the oracle checks. A different
 value is an adjusted game. The engine runs it the same way; it just isn't compared.
 
@@ -361,68 +362,32 @@ port.
 
 ## 4. The reference domain: Samus's motion
 
-This domain was replaced first, end to end. The harnesses described here are current development
-and localisation machinery; decisions 32 and 33 define the target acceptance process and removal
-policy, with the reviewed cutover in [PROCESS](../cleanroom/PROCESS.md#replay-transition).
+Movement owns `samus_movement::Samus` in production and calls its clean `step` entry.
+Selected frame inputs include controller edges, equipment, animation feedback, cinematic and
+elevator context, parity, pose content and collision geometry. Each changing dependency has
+an actual selected producer or an independently admitted borrowed source.
 
-**Scope (Jim, 2026-11-07):** Samus moving through the world is one domain, because one set of
-speed quantities has writers across all of it and the player sees one thing. It covers her speeds
-and position on the ground and in the air, how her pose follows from input and the world where
-that changes her speeds, and her collision with blocks, slopes and solid enemies. The spec,
-[samus-movement.md](../behaviours/samus-movement.md), states the scope and what is not in it yet.
+```mermaid
+flowchart LR
+    A[Pick a movement rule] --> B[Load a short indexed case]
+    B --> C[Advance production movement]
+    C --> D[Compare independent oracle cuts]
+```
 
-**Replace, never adapt.** The model is wired in and the old code it replaces is deleted in the
-same change. No `LEGACY` gate or compatibility shim keeps the old port's behaviour inside a new
-type. Where the model and the old engine disagree, the oracle decides, and a fall in the old
-numbers is recorded as a defect of the old port.
+Clean outputs include semantic pose, placement, contacts, directional travel and intents.
+A travel-only witness proves only its named travel outputs. Wider movement observations need
+no pixels. They prove no camera application, appearance, blocks, weapons, sound delivery or
+rendering unless those actual consumers are selected. Missing required policy is unsupported.
 
-**Shape.** The model is the clean crate `samus_movement`
-(`crates/clean/samus_movement`): a character controller stepped one frame at a time, its
-moves as table rows and its pose as a chart, over the shared types and the `World` trait in
-`types`. `game::samus_movement_bridge` is the integrator's bridge: it answers `World` from the
-engine's level and solid enemies, maps the engine's State to the model's and back, and turns the
-cells the model reports into the engine's touches.
+Admission converts an independent observation once. Production carries complete State across
+the segment. Expected records only supply comparisons; they do not settle pose, restore State
+or manufacture stimuli. A mismatch ends the case. Separate reseeding harnesses and free-run
+restart loops are absent. Catalogue entries name rules, indexed cases witness them, and many
+cases may be required per rule. Unit vectors remain development checks; acceptance uses
+[the single production replay pipeline](../STATUS.md).
 
-**What proves it: the oracle, directly, frame by frame.** The yardstick is the oracle, never
-today's engine, which is itself a partly wrong port. The **domain harness** in `verify` covers every
-recorded frame of every scenario. For each frame N it:
-1. decodes the domain's State and inputs from the oracle's record N;
-2. runs the model one frame;
-3. compares the domain's declared fields with the oracle's record N+1.
+### Measurement rules
 
-It reports **N of M oracle frames matched**, per behaviour. That is the domain's progress
-measure. Gaps come from frames that don't match, not from reading old code. The spec's vectors stay,
-for cases no recorded frame reaches.
-
-**A domain is a unit that can be verified on its own (Jim, 2026-11-07).** Its boundary is set by
-verification, not by where the original's code is split. If checking a domain needs a stand-in that
-answers from the oracle (a collision bridge that copies the next frame's stop, pose inputs read from
-the next record), the boundary is wrong and the domains merge. That is why Samus's motion, pose
-selection and her collision with the world are one domain: on whole frames, the first motion model
-scored no better than a step that does nothing (5,631 against 5,686 verified frames, recorded at `4f5b431ae`), because the
-world decides where she ends up.
-
-**The primary proof is a free run, not a per-frame check.** Run the domain from a seed over many
-frames, with no re-seeding, against the recorded game. Report the first differing frame per field and
-per behaviour (the free-run localiser). The per-frame harness re-seeds every frame, so errors never
-accumulate. It finds where a model goes wrong; it does not prove it right. The domain free run is
-`verify::harness::free`, over the same `Domain` trait: it seeds once, carries the model's State,
-and ends a segment at the first difference, at a mask another domain's writer stands behind or at
-a frame the domain doesn't run in.
-Its held frames per row are a round's measure (§1 decision 17).
-
-**The measure must be honest (Jim, 2026-11-07, after the second pilot review):**
-- Report over **all recorded frames** of every row, beside a **null model's** score (a step that
-  does nothing) on the same frames. A match rate means only what it gains over that baseline.
-- **Mask a field; don't skip a frame.** A frame is skipped only when the domain doesn't run in it,
-  and for a named reason. A skip may never depend on the outcome being tested, such as next-frame
-  values or "y isn't where the prediction puts it".
-- A value the harness's stand-in copies from the oracle's next frame is **unverified**, not
-  matched. It is reported separately.
-- A frame that fails to decode is a **harness defect**, counted, not a skip.
-- **Every row has a floor**, so a regression anywhere fails.
-- **Per-behaviour attribution:** each entry reports the frames that exercised it and the frames
-  that matched. Entries no recorded frame exercises are listed as "vectors only".
 - Size is measured **like for like**: the same counter on the old code and the new model. The
   bridge that wires the model into the engine is the integrator's, reported apart and kept small
   by review, not counted against the model (Jim, 2026-11-07).
@@ -586,24 +551,6 @@ localiser show any change against today's engine. Each change is either a fix or
   with the rationale (PROCESS, "Coordinator size assessment"). A scope change still goes to
   Jim with the numbers, and the lane stops until he answers.
 
-**Done means:**
-- A movement kind is a row, a parameter is a table entry or a rule, and collision is one sweep.
-- Nothing in the domain's clean model names a video type or an address. Source lines live in
-  the observer's decode notes only.
-
-**The pilot passes (review R10) when all of these hold:**
-1. The three exactness checks above hold.
-2. No asm address appears in the domain's clean model.
-3. The domain's RAM-shape list (§5) is short and every item on it is justified.
-4. The domain harness matches the oracle on the declared fields; the vector tests pass; and the
-   root records the size assessment under decision 19.
-5. At least one gap from an unmatched oracle frame went from the implementer to the observer and
-   back, and was fixed by amending the spec, not by patching the code.
-6. The implementer never read the bank logs, `verify`'s address files or the old module.
-
-If the other items hold but item 3 doesn't, the clean room failed, however well the code reads.
-That is fixed before the second domain.
-
 ## 5. How the work is planned
 
 **By mechanism, not by divergence.** A piece of work builds or extends one general mechanism
@@ -613,8 +560,8 @@ that covers a family of behaviours:
 - the collision sweep;
 - an encoder rule.
 
-Lockstep and the free-run localiser are the acceptance check, and they tell *which behaviour* is
-wrong. They don't decide *what code to write*.
+Indexed production replay is the acceptance check; first differing observations identify
+*which behaviour* is wrong. They don't decide *what code to write*.
 
 **The round**, its steps, roles and who sees what, is [PROCESS](../cleanroom/PROCESS.md): the
 single source of truth for the order of the work. This section holds the rules a round relies on.
@@ -735,13 +682,13 @@ coasts like standing; add its row"). It carries no bank-log excerpt and no addre
 budget or size target (§1 decision 10): a size review's findings go in as shapes to change. A new free
 function named after a routine is a review stop.
 
-**Order** (each domain is proven against the oracle by its harness, §4):
+**Order** (each domain is proven against the oracle by indexed production witnesses, §4):
 1. **Groundwork:**
    - the catalogue type and the `Rules` hook;
    - the numeric quirks once, on the types (signed compare, the word-by-word cap, wrapping
      moves);
    - the layer check as a warning.
-2. **Reference domain:** Samus's motion (§4), with the domain harness; collision became part of it
+2. **Reference domain:** Samus's motion (§4), with indexed production witnesses; collision is part of it
    (her moves can't be checked without it). Jim, 2026-11-08: it is accepted near its budget after
    round 12's cut pass (about 7,200 against 6,924, 4% over, substantiated by area: collision and
    pose fit), rather than compacted further at the cost of worse forms. Then **the camera**
@@ -762,21 +709,19 @@ function named after a routine is a review stop.
 
 ## 6. How progress is measured
 
-Measured first (review R9; a raw behaviour count is easy to inflate by splitting entries, so it
-isn't a goal):
-- the headline milestone (§1 decision 14) and the ladder's rungs (decision 18): of each stretch's
-  frames, how many the engine plays alone, and the plan items it still needs;
-- for each domain, its free run's held frames per row (decision 17);
-- the domains that meet §4's definition of done;
-- for each domain, its oracle-checked entries out of its total;
-- for each domain, the RAM-shape list (§5) and its size against budget.
+The headline remains whole-movie acceptance from power-on with movie inputs only, every
+compared cut and output byte matching. Scoped, integrated and whole-movie witnesses are
+reported separately. Borrowed facts are never counted as modeled producers.
 
-Then, as checks that must not regress:
-- the lockstep ratchet and the free-run gate's green pairs;
-- the free-run localiser's first differing frames;
-- Ticks/s.
+The replay index defines witness coverage and the committed baseline defines reviewed result,
+count and observation obligations. Every declared cut is accounted for. An expected unsupported
+boundary remains unsupported rather than a successful case. Missing data, empty comparisons
+and unreached outputs do not establish exactness.
 
-The size report adds tokens per layer, so the routine-port share is visible and falls.
+The transition ledger names replacement claims and reviewed losses. Former harness and
+lockstep counts are historical evidence. Meaningful planted faults establish whether a witness
+can distinguish incorrect behaviour. [STATUS](../STATUS.md) gives current commands and report
+sources. Coordinator assessments and clean-room rules remain unchanged.
 
 ## 7. Lessons
 

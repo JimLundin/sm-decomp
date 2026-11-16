@@ -6,7 +6,7 @@ engine="data game runtime app"
 allowed() {
   case $1 in
     data) echo "canonical types" ;;
-    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley weapons_projectiles enemy_interactions" ;;
+    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport" ;;
     runtime) echo "data" ;;
     app) echo "data import game runtime" ;;
     oracle) echo "data oracle_record" ;;

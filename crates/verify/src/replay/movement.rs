@@ -1,0 +1,666 @@
+//! Once-only movement admission and preceding-cut causal neighbour observations.
+
+use super::{compare::Observation, data_failure, index::ObservationId, result::Outcome};
+use crate::source::{self, WramWord};
+use core::num::Wrapping;
+use data::assets::samus::map;
+use data::level::slope::{Shape, Slopes};
+use data::level::{BlockKind, Offset, PlmChoice};
+use data::pose::animation::{AnimationDelays, AnimationFrame, RunPaces};
+use data::pose::{PoseId, Poses, Shot, ShotDirection};
+use data::rom::Rom;
+use game::production::world::{Boundary, MovementWorld};
+use game::production::{MovementContent, PoseContent};
+use samus_movement::{
+    Bounces, Carry, Dashing, FrameBefore, JumpHeld, Phase, Run, Samus, Seat, Spin, Vertical,
+};
+use types::{Action, Buttons, Fixed, Item, Parity, Pose, Position, Radius, Set, Side, Turn, ZERO};
+
+fn word(wram: &[u8], source: WramWord) -> Result<u16, Outcome> {
+    source
+        .read(wram)
+        .map_err(|_| data_failure(None, source.name))
+}
+fn fixed(wram: &[u8], pixel: WramWord, sub: WramWord) -> Result<Fixed, Outcome> {
+    Ok(types::fixed(Wrapping(word(wram, pixel)?), word(wram, sub)?))
+}
+fn unsupported(dependency: &str) -> Outcome {
+    Outcome::Unsupported {
+        cut: None,
+        dependency: dependency.to_owned(),
+    }
+}
+
+pub struct Content {
+    pub movement: MovementContent,
+    pub clips: game::samus_appearance_bridge::Clips,
+    slopes: Slopes,
+    rom: Rom,
+}
+
+impl Content {
+    pub fn load(path: &std::path::Path) -> Result<Self, Outcome> {
+        let image = std::fs::read(path).map_err(|_| data_failure(None, "player ROM file"))?;
+        let rom = Rom::new(image).map_err(|_| data_failure(None, "player ROM pin"))?;
+        let poses = Poses::load(rom.lorom()).map_err(|_| data_failure(None, "pose content"))?;
+        let delays = AnimationDelays::load(rom.lorom(), &poses)
+            .map_err(|_| data_failure(None, "animation clip content"))?;
+        let paces = RunPaces::load(rom.lorom())
+            .map_err(|_| data_failure(None, "animation pace content"))?;
+        let clips = game::samus_appearance_bridge::Clips::import(&delays, &paces)
+            .map_err(|_| data_failure(None, "semantic animation content"))?;
+        let entries = map::MAP
+            .iter()
+            .map(|entry| {
+                let definition = poses
+                    .get(entry.id)
+                    .ok_or_else(|| data_failure(None, "selectable pose content"))?;
+                Ok(PoseContent {
+                    pose: entry.key,
+                    radius: Radius {
+                        x: Wrapping(5),
+                        y: Wrapping(u16::from(definition.y_radius)),
+                    },
+                    cannon_heading: heading(definition.shot),
+                })
+            })
+            .collect::<Result<Vec<_>, Outcome>>()?;
+        let movement = MovementContent::new(entries)
+            .map_err(|_| data_failure(None, "movement content relation"))?;
+        let slopes = Slopes::load(rom.lorom()).map_err(|_| data_failure(None, "slope content"))?;
+        Ok(Self {
+            movement,
+            clips,
+            slopes,
+            rom,
+        })
+    }
+}
+
+const fn heading(shot: Shot) -> Option<types::FiringDirection> {
+    use types::FiringDirection as F;
+    match shot {
+        Shot::Withheld(_) => None,
+        Shot::Fires(direction) => Some(match direction {
+            ShotDirection::Left => F::Left,
+            ShotDirection::Right => F::Right,
+            ShotDirection::DownLeft => F::DownLeft,
+            ShotDirection::DownRight => F::DownRight,
+            ShotDirection::UpLeft => F::UpLeft,
+            ShotDirection::UpRight => F::UpRight,
+            ShotDirection::DownFacingLeft => F::DownFacingLeft,
+            ShotDirection::DownFacingRight => F::DownFacingRight,
+            ShotDirection::UpFacingLeft => F::UpFacingLeft,
+            ShotDirection::UpFacingRight => F::UpFacingRight,
+        }),
+    }
+}
+
+/// The only record-to-selected-state conversion. Subsequent cuts decode neighbours only.
+pub fn seed(wram: &[u8]) -> Result<Samus, Outcome> {
+    let pose = map::key_of(PoseId(word(wram, source::SAMUS_POSE)?))
+        .ok_or_else(|| unsupported("movement seed pose"))?;
+    let (carry, way) = match word(wram, source::SAMUS_X_ACCEL_MODE)? {
+        0 => (Carry::FollowsPad, Side::of(pose.facing)),
+        1 => (Carry::CarriesOn, Side::of(pose.facing.back())),
+        2 => (Carry::CarriesOn, Side::of(pose.facing)),
+        _ => return Err(data_failure(None, "movement speed mode")),
+    };
+    let magnitude = fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?;
+    let airborne = matches!(
+        pose.action,
+        Action::Jumping | Action::Spinning | Action::Falling | Action::WallJumping
+    );
+    let turning = matches!(pose.action, Action::Turning(Turn::Jump | Turn::Fall));
+    let (phase, speed) = match word(wram, source::SAMUS_Y_DIR)? {
+        0 if airborne || (turning && magnitude != ZERO) => (Phase::Moonfall, -magnitude),
+        0 => (Phase::Ground, -magnitude),
+        1 => (Phase::Rising, -magnitude),
+        2 if airborne || turning => (Phase::Falling, magnitude),
+        2 if magnitude == ZERO => (Phase::GroundFalling, ZERO),
+        2 => (Phase::Ground, magnitude),
+        _ => return Err(data_failure(None, "movement vertical phase")),
+    };
+    let [bounce, _] = word(wram, source::SAMUS_BOUNCE_STATE)?.to_le_bytes();
+    let bounces = match bounce {
+        0 => Bounces::None,
+        1 => Bounces::Once,
+        2 => Bounces::Twice,
+        _ => return Err(data_failure(None, "movement bounce count")),
+    };
+    let previous_type = source::SAMUS_LAST_DIFFERENT_POSE_MOVEMENT_TYPE
+        .read(wram)
+        .map_err(|_| data_failure(None, "movement spin history"))?;
+    Ok(Samus {
+        position: Position {
+            x: fixed(wram, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?,
+            y: fixed(wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?,
+        },
+        run: Run {
+            speed: fixed(
+                wram,
+                source::SAMUS_X_BASE_SPEED,
+                source::SAMUS_X_BASE_SUBSPEED,
+            )?,
+            way,
+            carry,
+            dash: fixed(
+                wram,
+                source::SAMUS_X_EXTRA_RUN_SPEED,
+                source::SAMUS_X_EXTRA_RUN_SUBSPEED,
+            )?,
+            dashing: if word(wram, source::SAMUS_HAS_MOMENTUM_FLAG)? == 0 {
+                Dashing::Off
+            } else {
+                Dashing::On
+            },
+        },
+        vertical: Vertical {
+            speed,
+            phase,
+            bounces,
+        },
+        pose,
+        spin: if pose.action == Action::Spinning && [3, 20].contains(&previous_type) {
+            Spin::CarriedOn
+        } else {
+            Spin::Off
+        },
+        seat: match word(wram, source::SAMUS_SLOPE_ADJUSTED)? {
+            0 => Seat::Unseated,
+            1 => Seat::Seated,
+            _ => return Err(data_failure(None, "movement slope seat")),
+        },
+        jump_held: JumpHeld {
+            frames: Wrapping(word(wram, source::SAMUS_JUMP_HELD_FRAMES)?),
+            before: if word(wram, source::SAMUS_POSE_INPUT_HANDLER)? == 0xE926 {
+                FrameBefore::LandedOrEnded
+            } else {
+                FrameBefore::Other
+            },
+        },
+    })
+}
+
+pub struct Input {
+    pub sprite: types::Sprite,
+    pub cinematic: bool,
+    pub pad: Buttons,
+    pub pressed: Buttons,
+    pub items: Set<Item>,
+    pub ahead: samus_appearance::Ahead,
+    pub elevator: bool,
+    pub parity: Parity,
+    pub world: MovementWorld,
+}
+
+fn pad(value: u16) -> Buttons {
+    use types::button as B;
+    [
+        (0x8000, B::RUN),
+        (0x0080, B::JUMP),
+        (0x0040, B::SHOOT),
+        (0x0200, B::LEFT),
+        (0x0100, B::RIGHT),
+        (0x0800, B::UP),
+        (0x0400, B::DOWN),
+        (0x0010, B::AIM_UP),
+        (0x0020, B::AIM_DOWN),
+    ]
+    .into_iter()
+    .filter(|(bit, _)| value & bit != 0)
+    .fold(Buttons::default(), |out, (_, button)| {
+        Buttons(out.0 | button.0)
+    })
+}
+
+fn items(value: u16) -> Set<Item> {
+    let mut items = Set::default();
+    for (bit, item) in [
+        (0x0001, Item::VariaSuit),
+        (0x0002, Item::SpringBall),
+        (0x0004, Item::MorphBall),
+        (0x0008, Item::ScrewAttack),
+        (0x0020, Item::GravitySuit),
+        (0x0100, Item::HiJumpBoots),
+        (0x0200, Item::SpaceJump),
+        (0x2000, Item::SpeedBooster),
+    ] {
+        items[item] = value & bit != 0;
+    }
+    items
+}
+
+pub fn input(wram: &[u8], actual_pose: Pose, content: &Content) -> Result<Input, Outcome> {
+    let raw_pose = PoseId(word(wram, source::SAMUS_POSE)?);
+    let observed_figure = content
+        .clips
+        .of(raw_pose)
+        .ok_or_else(|| unsupported("appearance figure observation"))?;
+    let imported = content
+        .clips
+        .poses()
+        .iter()
+        .find(|imported| {
+            imported.figure.pose == actual_pose
+                && imported.figure.sprite == observed_figure.figure.sprite
+        })
+        .ok_or_else(|| unsupported("actual movement pose animation content"))?;
+    let step = imported
+        .step_of(AnimationFrame(word(wram, source::SAMUS_ANIM_FRAME)?))
+        .ok_or_else(|| data_failure(None, "appearance observed playhead"))?;
+    let timer = u8::try_from(word(wram, source::SAMUS_ANIM_FRAME_TIMER)?)
+        .map_err(|_| data_failure(None, "appearance observed frame count"))?;
+    let [laps, stage] = word(wram, source::SPEED_BOOSTER_LEVEL)?.to_le_bytes();
+    let stage = types::BoostStage::ALL
+        .get(usize::from(stage))
+        .copied()
+        .ok_or_else(|| data_failure(None, "appearance observed boost stage"))?;
+    let appearance = samus_appearance::State {
+        playhead: samus_appearance::Playhead {
+            step,
+            time_left: samus_appearance::Frames(timer),
+        },
+        stage,
+        laps_left: samus_appearance::Laps::new(laps).map_or(
+            samus_appearance::LapsLeft::WithoutBooster,
+            samus_appearance::LapsLeft::WithBooster,
+        ),
+    };
+    let ahead = game::production::appearance::ahead(&appearance, &imported.clip);
+    Ok(Input {
+        sprite: observed_figure.figure.sprite,
+        cinematic: word(wram, source::CINEMATIC_ACTIVE)? != 0,
+        pad: pad(word(wram, source::JOYPAD1_LASTKEYS)?),
+        pressed: pad(word(wram, source::JOYPAD1_NEWKEYS)?),
+        items: items(word(wram, source::EQUIPPED_ITEMS)?),
+        ahead,
+        elevator: word(wram, source::ELEVATOR_STATUS)? != 0,
+        parity: if word(wram, source::NMI_FRAME_COUNTER_WORD)? & 1 == 0 {
+            Parity::Even
+        } else {
+            Parity::Odd
+        },
+        world: world(wram, content)?,
+    })
+}
+
+fn world(wram: &[u8], content: &Content) -> Result<MovementWorld, Outcome> {
+    level_world(wram, content, enemy_roster(wram)?)
+}
+
+fn roster_slots(wram: &[u8]) -> Result<Vec<u16>, Outcome> {
+    let mut slots = Vec::new();
+    for occurrence in 0..=32 {
+        let index = source::INTERACTIVE_ENEMY_INDICES
+            .word(occurrence)
+            .and_then(|field| field.read(wram))
+            .map_err(|_| data_failure(None, "prior-cut interactive roster observation"))?;
+        if index == u16::MAX {
+            return Ok(slots);
+        }
+        if occurrence == 32 || !index.is_multiple_of(64) || index >= 2048 {
+            return Err(data_failure(
+                None,
+                "prior-cut interactive roster slot or termination",
+            ));
+        }
+        slots.push(index / 64);
+    }
+    Err(data_failure(
+        None,
+        "prior-cut interactive roster termination",
+    ))
+}
+
+fn enemy_roster(wram: &[u8]) -> Result<Vec<types::Hitbox>, Outcome> {
+    let mut boxes = Vec::new();
+    for slot in roster_slots(wram)? {
+        let read = |field| {
+            source::ENEMY_DATA
+                .word(field, slot)
+                .and_then(|source| source.read(wram))
+                .map_err(|_| data_failure(None, "enemy geometry observation"))
+        };
+        if read(source::ENEMY_SPECIES)? == 0 {
+            return Err(data_failure(
+                None,
+                "prior-cut interactive roster occupied slot",
+            ));
+        }
+        let observed_solid = (read(source::ENEMY_PROPERTIES)? & 0x8000) != 0;
+        let observed_frozen = read(source::ENEMY_FROZEN_TIMER)? != 0;
+        if observed_solid || observed_frozen {
+            boxes.push(types::Hitbox {
+                centre: types::Pair {
+                    x: Wrapping(read(source::ENEMY_X_POS)?),
+                    y: Wrapping(read(source::ENEMY_Y_POS)?),
+                },
+                radius: Radius {
+                    x: Wrapping(read(source::ENEMY_X_RADIUS)?),
+                    y: Wrapping(read(source::ENEMY_Y_RADIUS)?),
+                },
+            });
+        }
+    }
+    Ok(boxes)
+}
+
+fn level_world(
+    wram: &[u8],
+    content: &Content,
+    enemies: Vec<types::Hitbox>,
+) -> Result<MovementWorld, Outcome> {
+    let width = word(wram, source::ROOM_WIDTH_IN_BLOCKS)?;
+    let height = word(wram, source::ROOM_HEIGHT_IN_BLOCKS)?;
+    if width > 255 {
+        return Err(unsupported("movement wrapped level addressing"));
+    }
+    let count = usize::from(width)
+        .checked_mul(usize::from(height))
+        .ok_or_else(|| data_failure(None, "level observation size"))?;
+    let byte_count = count
+        .checked_mul(2)
+        .ok_or_else(|| data_failure(None, "level observation bytes"))?;
+    let words = source::LEVEL_DATA
+        .read(wram)
+        .ok()
+        .and_then(|bytes| bytes.get(..byte_count))
+        .ok_or_else(|| data_failure(None, "level observation"))?;
+    let bts = source::BTS
+        .read(wram)
+        .ok()
+        .and_then(|bytes| bytes.get(..count))
+        .ok_or_else(|| data_failure(None, "level BTS observation"))?;
+    let room = data::room::decode(
+        content.rom.lorom(),
+        data::room::RoomKey::from_room_pointer(word(wram, source::ROOM_PTR)?),
+    )
+    .map_err(|_| data_failure(None, "room door content"))?;
+    let mut cells = Vec::new();
+    let mut permissions = Vec::new();
+    for (index, (bytes, bts)) in words.as_chunks::<2>().0.iter().zip(bts).enumerate() {
+        let kind = data::level::Block::new(u16::from_le_bytes(*bytes), *bts).kind;
+        permissions.push(matches!(kind, BlockKind::Special(PlmChoice::Common(0x45))));
+        let cell = match kind {
+            BlockKind::Air(_)
+            | BlockKind::UnusedAir(_)
+            | BlockKind::SpikeAir(_)
+            | BlockKind::ShootableAir(_)
+            | BlockKind::BombableAir(_)
+            | BlockKind::SpecialAir(_) => types::Block::Air,
+            BlockKind::Solid(_)
+            | BlockKind::Spike(_)
+            | BlockKind::Shootable(_)
+            | BlockKind::Grapple(_) => types::Block::Solid,
+            BlockKind::Bombable(_) | BlockKind::Special(_) => types::Block::Answered,
+            BlockKind::Door(door) => {
+                if matches!(
+                    room.doors.doors.get(door.place()),
+                    Some(data::room::Door::ToRoom(_))
+                ) {
+                    types::Block::Air
+                } else {
+                    types::Block::Solid
+                }
+            }
+            BlockKind::HorizontalExtension(Offset(by))
+            | BlockKind::VerticalExtension(Offset(by)) => {
+                let rows = matches!(kind, BlockKind::VerticalExtension(_));
+                let offset =
+                    i16::from(by)
+                        .cast_unsigned()
+                        .wrapping_mul(if rows { width } else { 1 });
+                let at = u16::try_from(index)
+                    .map_err(|_| data_failure(None, "level address"))?
+                    .wrapping_add(offset);
+                types::Block::StandsFor((by != 0).then(|| types::Cell {
+                    x: at.checked_rem(width).unwrap_or(at),
+                    y: at.checked_div(width).unwrap_or(0),
+                }))
+            }
+            BlockKind::Slope(slope) => match content
+                .slopes
+                .shape(slope.shape)
+                .ok_or_else(|| data_failure(None, "slope shape"))?
+            {
+                Shape::Square(square) => types::Block::Stepped(std::array::from_fn(|row| {
+                    std::array::from_fn(|column| {
+                        square.solid_at((column != 0) ^ slope.x_flip, (row != 0) ^ slope.y_flip)
+                    })
+                })),
+                Shape::Surface(surface) => {
+                    let mut tops = surface.tops;
+                    if slope.x_flip {
+                        tops.reverse();
+                    }
+                    types::Block::Slope(types::Slope {
+                        faces: if slope.y_flip {
+                            types::SlopeFaces::Ceiling
+                        } else {
+                            types::SlopeFaces::Floor
+                        },
+                        depth: tops.map(|depth| Wrapping(u16::from(depth.min(17)))),
+                        factor: types::SlopeFactor(surface.factor),
+                    })
+                }
+            },
+        };
+        cells.push(cell);
+    }
+    MovementWorld::new(width, cells, permissions, enemies, Boundary::Air)
+        .map_err(|_| data_failure(None, "admitted movement world relation"))
+}
+
+pub fn expected(
+    wram: &[u8],
+    selected: &[ObservationId],
+    row: &str,
+    cut: u64,
+) -> Result<Vec<Observation>, Outcome> {
+    let travels = crate::decode::directional_travel(wram)
+        .map_err(|_| data_failure(None, "directional travel observation"))?;
+    selected
+        .iter()
+        .map(|field| expected_field(wram, *field, &travels, row, cut))
+        .collect()
+}
+
+fn expected_field(
+    wram: &[u8],
+    field: ObservationId,
+    travels: &types::DirectionalTravels,
+    row: &str,
+    cut: u64,
+) -> Result<Observation, Outcome> {
+    let (name, value) = match field {
+        ObservationId::PositionX => (
+            "movement.position.x",
+            i64::from(fixed(wram, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?.0),
+        ),
+        ObservationId::PositionY => (
+            "movement.position.y",
+            i64::from(fixed(wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?.0),
+        ),
+        ObservationId::VerticalSpeed => (
+            "movement.vertical_speed",
+            i64::from(fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?.0),
+        ),
+        ObservationId::TravelLeft => (
+            "movement.travel.Left",
+            i64::from(travels[types::Direction::Left].0.0),
+        ),
+        ObservationId::TravelRight => (
+            "movement.travel.Right",
+            i64::from(travels[types::Direction::Right].0.0),
+        ),
+        ObservationId::TravelUp => (
+            "movement.travel.Up",
+            i64::from(travels[types::Direction::Up].0.0),
+        ),
+        ObservationId::TravelDown => (
+            "movement.travel.Down",
+            i64::from(travels[types::Direction::Down].0.0),
+        ),
+        ObservationId::WallTest if row == "item-morph-ball" && cut == 817 => {
+            ("movement.wall_test", 0)
+        }
+        ObservationId::Reached if row == "item-morph-ball" && cut == 817 => {
+            return Ok(Observation {
+                field: "movement.reached".to_owned(),
+                bytes: reached_w15(),
+            });
+        }
+        ObservationId::WallTest | ObservationId::Reached => {
+            let source = "named reached-cell witness row and cut";
+            return Err(data_failure(Some(cut), source));
+        }
+        ObservationId::AudioSemantic
+        | ObservationId::AppearanceStep
+        | ObservationId::AppearanceTimeLeft
+        | ObservationId::AppearanceBoostStage
+        | ObservationId::AppearanceLapsLeft
+        | ObservationId::ProgressPlanetAwake
+        | ObservationId::ProgressMotherBrainTankBroken
+        | ObservationId::ProgressPhantoonStatueGrey
+        | ObservationId::ProgressRidleyStatueGrey
+        | ObservationId::ProgressDraygonStatueGrey
+        | ObservationId::ProgressKraidStatueGrey
+        | ObservationId::ProgressTourianOpen
+        | ObservationId::ProgressGlassTunnelBroken
+        | ObservationId::ProgressAcidReceded
+        | ObservationId::ProgressShaktoolPath
+        | ObservationId::ProgressTimeBombSet
+        | ObservationId::ProgressAnimalsFreed
+        | ObservationId::ProgressMetroidRoom1Empty
+        | ObservationId::ProgressMetroidRoom2Empty
+        | ObservationId::ProgressMetroidRoom3Empty
+        | ObservationId::ProgressMetroidRoom4Empty
+        | ObservationId::ProgressTourianRoomsUnset
+        | ObservationId::ProgressLavaQuakeOutrun
+        | ObservationId::ProgressZebetites
+        | ObservationId::AudioPublications
+        | ObservationId::AudioReplies
+        | ObservationId::AudioPendingMusic
+        | ObservationId::CeresPhase
+        | ObservationId::CeresWait
+        | ObservationId::CeresFigure
+        | ObservationId::CeresShown
+        | ObservationId::CeresSolid
+        | ObservationId::CameraViewXPixel
+        | ObservationId::CameraViewXFraction
+        | ObservationId::CameraViewYPixel
+        | ObservationId::CameraViewYFraction
+        | ObservationId::CameraRememberedXPixel
+        | ObservationId::CameraRememberedXFraction
+        | ObservationId::CameraRememberedYPixel
+        | ObservationId::CameraRememberedYFraction
+        | ObservationId::CameraVerticalFraction
+        | ObservationId::WeaponsState
+        | ObservationId::ContactConsumedMarkers
+        | ObservationId::HudGrid
+        | ObservationId::HudExplored
+        | ObservationId::HudEnergy
+        | ObservationId::HudMissiles
+        | ObservationId::HudSupers
+        | ObservationId::HudBombs
+        | ObservationId::HudHighlighted
+        | ObservationId::HudSelected
+        | ObservationId::HudOneShot
+        | ObservationId::HudMapOff => {
+            return Err(data_failure(None, "movement observation scope"));
+        }
+    };
+    Ok(Observation::quantity(name, value))
+}
+
+/// Observer's named W15 ordered reached-cell witness, in pixel coordinates.
+fn reached_w15() -> Vec<u8> {
+    encode_reached(&[
+        ([1120, 640], 1),
+        ([1120, 656], 1),
+        ([1104, 640], 0),
+        ([1104, 656], 0),
+        ([1120, 656], 4),
+        ([1136, 656], 4),
+        ([1120, 624], 0),
+        ([1136, 624], 0),
+        ([1120, 672], 0),
+        ([1136, 672], 0),
+    ])
+}
+
+fn encode_reached(reached: &[([u16; 2], u8)]) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    for ([x, y], way) in reached {
+        bytes.extend_from_slice(&x.to_le_bytes());
+        bytes.extend_from_slice(&y.to_le_bytes());
+        bytes.push(*way);
+    }
+    bytes
+}
+
+pub fn reached(outcome: &samus_movement::Outcome) -> Observation {
+    let reached: Vec<_> = outcome
+        .reached
+        .iter()
+        .map(|touch| {
+            let way = match touch.way {
+                types::Way::Look => 0,
+                types::Way::Move(types::Heading::Left) => 1,
+                types::Way::Move(types::Heading::Right) => 2,
+                types::Way::Move(types::Heading::Up) => 3,
+                types::Way::Move(types::Heading::Down) => 4,
+            };
+            (
+                [touch.cell.x.wrapping_mul(16), touch.cell.y.wrapping_mul(16)],
+                way,
+            )
+        })
+        .collect();
+    Observation {
+        field: "movement.reached".to_owned(),
+        bytes: encode_reached(&reached),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::roster_slots;
+    use crate::replay::result::Outcome;
+
+    fn capture(indices: &[u16]) -> Vec<u8> {
+        let mut wram = vec![0; 0x20000];
+        for (offset, index) in indices.iter().enumerate() {
+            let at = 0x17EC_usize.saturating_add(offset.saturating_mul(2));
+            wram[at..at.saturating_add(2)].copy_from_slice(&index.to_le_bytes());
+        }
+        wram
+    }
+
+    #[test]
+    fn prior_roster_preserves_occurrences_and_stops_before_unrelated_words() {
+        assert_eq!(
+            roster_slots(&capture(&[192, 64, 192, u16::MAX, 5])).unwrap(),
+            [3, 1, 3]
+        );
+        assert_eq!(
+            roster_slots(&capture(&[u16::MAX])).unwrap(),
+            Vec::<u16>::new()
+        );
+    }
+
+    #[test]
+    fn malformed_or_unterminated_roster_is_a_data_failure() {
+        for indices in [&[63, u16::MAX][..], &[2048, u16::MAX][..], &[0; 33][..]] {
+            assert!(matches!(
+                roster_slots(&capture(indices)),
+                Err(Outcome::DataFailure { .. })
+            ));
+        }
+        assert!(matches!(
+            roster_slots(&[]),
+            Err(Outcome::DataFailure { .. })
+        ));
+    }
+}

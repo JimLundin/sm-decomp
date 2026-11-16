@@ -4,13 +4,15 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 publish = false
-description = "The Session, its State and the Tick: every gameplay domain"
+description = "Production clean model ownership and exact output encoding"
 
 [dependencies]
 canonical = { path = "../canonical" }
+audio_transport = { path = "../clean/audio_transport" }
 boss_ceres_ridley = { path = "../clean/boss_ceres_ridley" }
 world_blocks = { path = "../clean/world_blocks" }
 world_camera = { path = "../clean/world_camera" }
+world_doors = { path = "../clean/world_doors" }
 interface_hud = { path = "../clean/interface_hud" }
 run_progress = { path = "../clean/run_progress" }
 samus_appearance = { path = "../clean/samus_appearance" }
@@ -20,9 +22,7 @@ weapons_projectiles = { path = "../clean/weapons_projectiles" }
 types = { path = "../clean/types" }
 data = { path = "../data" }
 enum-map = "=3.1.0"
+serde = { version = "=1.0.229", features = ["derive"] }
 
 [lints]
 workspace = true
-
-[dev-dependencies]
-toml = { version = "0.8", default-features = false, features = ["parse"] }

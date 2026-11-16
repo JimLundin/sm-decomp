@@ -1,0 +1,290 @@
+format = 1
+index_sha256 = "ca1e7a471d6affb9d1b9d4e21eb69c43a8492439f903cc6eaee2b640f7586449"
+
+[[case]]
+id = "movement/D-inherited-cut"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "8a1844dc8eca0064c618c6c7ff8f97410d6509de8a9617403f737e6ebe35b2e0"
+
+[case.counts]
+cuts = 1
+fields = 0
+outputs = 4
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/W15"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "c29aaca29f4d8b5c668437299ddadd98e312b8557f96f01f801bd05bf7c4344b"
+
+[case.counts]
+cuts = 3
+fields = 9
+outputs = 2
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 3
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "audio/native-control"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "72c4997c5dab99c7eddd0fd40cb1809c8e3df009ceb56fd2ca5df8118de776d0"
+
+[case.counts]
+cuts = 184
+fields = 7157
+outputs = 764
+publications = 764
+replies = 736
+null_cuts = 0
+null_fields = 5731
+restorations = 184
+pending_boundaries = 573
+pending_restorations = 573
+
+[[case]]
+id = "audio/native-expire-prefix"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "34db45f0cac6dab5078eb4111c4ab138d811c7b7a027d3f3ca03a2669edf357a"
+
+[case.counts]
+cuts = 65
+fields = 2453
+outputs = 269
+publications = 269
+replies = 260
+null_cuts = 0
+null_fields = 2193
+restorations = 65
+pending_boundaries = 201
+pending_restorations = 201
+
+[[case]]
+id = "audio/native-expire-post64"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "a1ad50f70f25b80e5a972f74ed9bf26638418d5555e388072613facb412943f0"
+
+[case.counts]
+cuts = 119
+fields = 4704
+outputs = 495
+publications = 495
+replies = 476
+null_cuts = 0
+null_fields = 3809
+restorations = 119
+pending_boundaries = 372
+pending_restorations = 372
+
+[[case]]
+id = "ceres/door-closes-after-departure"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d39f90510a392df4f5910a0d9a27c6ee2732c14d94816b61a2699cdb63a180b4"
+
+[case.counts]
+cuts = 4
+fields = 20
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 11
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "weapons-contact/M0-four-searches"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "ffb63b4024fa68dfe0d0451e77fcc4296a06ad174c7236b0fdecb405ca0aea31"
+
+[case.counts]
+cuts = 4
+fields = 4
+outputs = 4
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 4
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "camera/unchanged-centre-follow"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "af5c8416f5fbb3d51bffbf44b9f02a0ea665d4158b3cdc0ac88457818765a923"
+
+[case.counts]
+cuts = 1
+fields = 9
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 3
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "hud/stationary-map-blink"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "240c1cbf98171fa4487f64d758c62412f866d60d7a06ca262b9481a179522e16"
+
+[case.counts]
+cuts = 17
+fields = 170
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 8
+null_fields = 161
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "appearance/standing-clip"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "a7ad65ff31d8277b5daa68ac3d4310bfe8e1745705d52d82b0ee40c12f50fff2"
+
+[case.counts]
+cuts = 16
+fields = 64
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 41
+restorations = 16
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "progress/planet-awake-recorded"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "99074f222c010a680756164a26e74c34e5f36b9f696a3e450bab7fc45c06e069"
+
+[case.counts]
+cuts = 1
+fields = 19
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 18
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "blocks/missing-requests"
+claim = "boundary"
+expected = { status = "unsupported", dependency = "independent complete block seed and ordered reaction requests" }
+observation_sha256 = ""
+
+[case.counts]
+cuts = 0
+fields = 0
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "doors/missing-passage-inputs"
+claim = "boundary"
+expected = { status = "unsupported", dependency = "independent complete passage seed and opportunity-time inputs" }
+observation_sha256 = ""
+
+[case.counts]
+cuts = 0
+fields = 0
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "audio-sender/missing-service-inputs"
+claim = "boundary"
+expected = { status = "unsupported", dependency = "independent CPU sender seed and ordered queue/service inputs" }
+observation_sha256 = ""
+
+[case.counts]
+cuts = 0
+fields = 0
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "integrated/missing-dependency-closure"
+claim = "boundary"
+expected = { status = "unsupported", dependency = "complete integrated production dependency closure" }
+observation_sha256 = ""
+
+[case.counts]
+cuts = 0
+fields = 0
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movie/missing-power-on"
+claim = "boundary"
+expected = { status = "unsupported", dependency = "complete production power-on and movie input pipeline" }
+observation_sha256 = ""
+
+[case.counts]
+cuts = 0
+fields = 0
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0

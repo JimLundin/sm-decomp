@@ -22,7 +22,21 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
   escape, the title, intro and file select, the cinematics, audio, Mode 7, slowdown and loading
   time). Then the movie's next stretches: items, enemies and bosses; the rest last.
 
-## 1. The engine today
+## 1. The current engine and the planning baseline
+
+Current production owns complete clean model State and advances selected responsibilities
+through `game::production::Production`, which `verify::replay` invokes. The application refuses
+unsupported power-on. Old tick, pose, actor, PLM and shadow-State gameplay owners are removed. Required missing
+history, lifecycle, room loading or timing is unsupported. Actual adapter and retained service
+inventory is in [the report](../REPORT.md#engine-services), and indexed acceptance is in
+[replay evidence](../REPORT.md#replay-evidence).
+
+The following snapshot is historical planning evidence at the spine named above, not current
+executable capability or acceptance. Its fixed figures and module names are retained to explain
+the plan's original estimates. Current source and proof are described by
+[ARCHITECTURE](ARCHITECTURE.md) and [STATUS](../STATUS.md).
+
+### Historical engine snapshot
 
 The engine runs **slice 0 only**: the rooms `data::room` loads for `area-brinstar` (the
 elevator ride into Brinstar and a short walk) and `item-morph-ball` (the Morph Ball Room, with
@@ -37,9 +51,8 @@ Totals: `game` 36,856, `data` 25,412, `runtime` 8,351, clean models 8,666, `type
 
 ### `crates/game`
 
-The modules as they are now. The scores above are the plan's, at its spine; the engine's size
-today, as code still to be rebuilt, bridges and rebuilt models, is in
-[the rebuild report](../REPORT.md#engine-not-yet-rebuilt).
+The modules at the planning spine. They are not the current executable tree. Current retained
+services and production adapters are in [the rebuild report](../REPORT.md#engine-services).
 
 | Module | What it does, what it covers |
 | --- | --- |
@@ -412,25 +425,22 @@ come first, each played alone from its first seed, as `[[rung]]` in
 
 | Rung | Stretch | Adds over the rung before |
 | --- | --- | --- |
-| M0 | Ceres's third room, across its door (any-boundary seeds 3 to 4) | her motion, looks, view, HUD and progress in a room; the Ceres door (B8 with C1, AF3) and the content it runs over in our formats (AF0 to AF4a); a door passage (R1, R2); the gate starting Ceres's rows (V3) |
+| M0 | Ceres's third room, across its door (any-boundary seeds 3 to 4) | her motion, looks, view, HUD and progress in a room; the Ceres door (B8 with C1, AF3) and the content it runs over in our formats (AF0 to AF4a); a door passage (R1, R2); production replay admission for Ceres witnesses (V3) |
 | M1 | Ceres's rooms 1 to 5, down to Ridley's door (seeds 1 to 6) | the shaft's mode 7 and mode switch (E3, E4, with AF5's Mode 7 planes); the haze and FX (R3) |
 | M2 | Ceres with Ridley and the escape (seeds 1 to 11) | Ridley's fight and knockbacks (S4, H1, W1), his push (S2), the escape's PLMs (W2) |
 | the milestone | power-on through Ceres | boot, title, file select and intro (F2), the flights and explosion (F4), the palette FX runner (R4), SRAM (P2), the sound requests and their replies (U1), modelled lag (T1), the whole run (V2) |
 
-The rungs' needs are a first estimate from the table above; a session's planning corrects them
-from what each rung's rows show. Every rung runs with the lock's recorded timing, as the free-run
-gate does; only the milestone needs lag modelled.
+The rungs' needs are planning estimates; session planning corrects them from actual missing
+owners and indexed witnesses. A scoped case may admit recorded timing but declares that limit;
+whole-movie acceptance requires modeled timing and movie inputs only.
 
-A rung is measured over the compared streams its needs claim: the shown picture (`video`) only
-once it needs the line program (E3), the APU port log (`apu`) only once it needs the sound
-requests (U1), as `[[stream]]` in [domains.toml](domains.toml) lists them; the milestone needs
-every stream. Until a rung is reached, the README gives three figures over the lock's rows that
-start inside it: the rows the free-run gate starts, their green (row, stream) pairs over the
-streams the rung counts, and, from the domain free run, the smallest share of the frames it
-compares that a domain holds and the smallest share of the rows' frames a domain compares (each
-domain's, and why it doesn't compare the rest, in [the report](../REPORT.md#the-ladder)). The gate runs every
-Ceres chain row in CI and reports a row it can't start yet, with why, so a rung's rows count the
-moment they start.
+Each rung is a target stretch, not a sum of successful scoped cases. The selected comparison
+plan declares required fields and outputs, including video or APU observations when claimed.
+The milestone needs every compared cut and output byte. Current reporting separates scoped,
+integrated and whole-movie evidence and keeps expected Unsupported boundaries distinct from
+completed behaviour. Borrowed sources, excluded consumers and lost historical claims remain
+visible in [replay evidence](../REPORT.md#replay-evidence) and the
+[transition ledger](../../scenarios/replay/transition.toml).
 
 **The milestone's order of work.** Each night picks work for the lowest rung not yet reached,
 the first step whose prerequisites hold. The README, under the ladder, gives that rung's
@@ -443,9 +453,9 @@ outside the needs starts (MODEL §1 decision 24).
    and locked (the `any-*` rows and `chain-any-0011-DF45`); with Ceres's chain rows the lock
    covers the whole stretch, one row run from its own seed at a time. `any-zebes-arrival`
    (15,196-15,427) locks the Landing Site's load, the next milestone's first row. Their seeds
-   and pads are in the relock bundle and their records cached with floors, but the engine's
-   decoder starts only main gameplay in rooms it knows, so the free-run gate starts none of
-   them yet and lockstep compares none of their Ticks.
+   and pads remain independent source evidence in the relock bundle. Recorded coverage is not
+   production execution: indexed whole-movie cases remain unsupported until required boot,
+   scene, caller and clock owners are supplied.
 2. Ceres's play, 8,538-13,235 (4,698 frames, 31%): the in-progress Samus, camera, HUD and
    progress work; then AF0 to AF3, R1 with R2, A1, C1 with its projectile runner, B8 (the Ceres doors
    first, in every room), H1 with S4, W1's power beam, R3's FX and quakes, E3's mode switch and
@@ -459,16 +469,11 @@ outside the needs starts (MODEL §1 decision 24).
 Each wave's domains are independent specs and run in parallel; a wave starts when what it
 depends on has its model shape (decision 2).
 
-**Wave 0, now (small, queued).** V1's domain free run exists (`verify::harness::free`);
-V3, the gate starting Ceres's rows, is every rung's first need.
-- S1 samus-movement follow-ups: `rising`, C2, C3. 1 round.
-- Camera round 2: C5's masks named in the harness note; the lead settings' vectors; the
-  closed-screen cells' interface ready for W2. 1 round. (C4 waits for S4/H1/S7.)
-- V1 tooling, what remains: the RNG consumer split. Its domain free run holds its floors on
-  every cached row, and the lean cache tier is what CI reads.
-- V3: the free-run gate and lockstep start Ceres's chain rows from their seeds, so the rungs
-  can be measured. 1 lane. The gate already runs them in CI, reporting each as not starting
-  until the engine knows Ceres's rooms, and the README measures each rung over its rows.
+**Wave 0.** V1 and V3 retain their planning purpose: independent observation inputs and
+production replay admission for the lowest rung. Separate domain free-run, gate and lockstep
+executors are retired. Their reviewed replacements and lost claims are in the transition
+ledger. Follow-up work is selected from actual indexed boundaries and clean-room spec gaps,
+not the old floor files. Priority and dependency IDs below remain the plan's.
 
 **Wave 1 (on the cached rows, 4-5 lanes):** S2 (4), S5 (3) with E1, H2 (2) with E2, W2 (5)
 with A1, P1 (1); AF0, then AF1 and AF2, AF1 first converting slice 0's rooms with no change in
@@ -477,7 +482,7 @@ behaviour. About 15 rounds plus 15 platform lanes.
 **Wave 2, the engine past slice 0, toward Ceres:** R1 (6) with R2, W1 (5), C1 (6) with AF3,
 AF4a with H2's cutover, then H1 (2) and S4 (2) (camera C4 closes); V2, the whole-movie run.
 This is where the engine first runs a chain row across a door: value jumps, since every later
-domain is then proven in the engine's free run on hundreds of chain rows, not only the harness.
+domain is then witnessed through actual production replay on the indexed cases with explicit scope.
 About 21 rounds.
 
 **Wave 3, Ceres and the opening; the milestone closes with it:** B8 (4), F2 (8), F4 (5), R3 (4),

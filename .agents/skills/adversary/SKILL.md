@@ -53,13 +53,14 @@ Your brief names the import and integration branches, the blind review, and the 
    state is read by a spec entry, and none exists only because the decoder has one.
 3. **The catalogue** holds the spec's entries one for one, and its switches agree with what
    `Rules` lets a caller adjust.
-4. **The harness is honest.** Each skip and mask names its writer, and covers only that writer's
-   frames. No decode error turns into "not compared". Its floors are committed and its baseline is
-   cited. Re-run it, and confirm a one-line mutant in the model makes it fail.
-5. **The free run** (`every_domain_runs_free_against_the_cache`, MODEL §1 decision 17). Its held
-   frames hold `free_floors.txt`; give each row's held frames and first divergences beside
-   `main`'s. A first divergence that moved earlier is a finding, even where the per-frame harness
-   rose.
+4. **The replay is honest.** Trace each case's seed, causal inputs, production entry and independent
+   expectations. State carries between cuts; missing data fails; borrowed producers and exclusions
+   limit the claim explicitly. Re-run the indexed case and confirm the declared one-line fault
+   fails at the expected cut and field. Model faults require role-authorised tooling.
+5. **The baseline holds.** Compare the complete indexed outcomes, observation digests, counts,
+   null evidence and continuations with `main`. A supported case becoming Unsupported or an
+   earlier divergence is a regression. Review any explicit transition atom by atom; a held
+   Unsupported boundary never earns behaviour acceptance.
 6. **Shape, independently of size** (MODEL §1 decision 19). Review without size scores,
    budgets or old-code baselines. Give concrete findings such as duplication or a function
    doing two jobs. The root measures size and decides whether a cut is worthwhile after your

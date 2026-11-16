@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 publish = false
-description = "The run coordinator: Tick admission, the input profile and effect delivery"
+description = "The application entry for production admission"
 
 [[bin]]
 name = "super-metroid"

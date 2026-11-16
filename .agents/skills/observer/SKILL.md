@@ -10,7 +10,7 @@ will ever know of the game, so it has to be complete, exact and written in a **p
 This is step 1 of [the round](../../../docs/cleanroom/PROCESS.md#a-round).
 
 **You read:** the [bank logs](https://patrickjohnston.org/bank/), the ROM, the oracle's records
-(the record caches, `oracle`, `tools lockstep`, `tools localise`), the existing specs and the
+(the record caches, `oracle`, and indexed `tools replay run` results), the existing specs and the
 engine's current code for your domain.
 
 ## Write a spec

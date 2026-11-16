@@ -14,12 +14,11 @@ who sees what. The rules it relies on live elsewhere, and are linked where they 
 ## Replay transition
 
 [MODEL §1 decisions 32 and 33](../architecture/MODEL.md#1-the-goal-and-what-is-exact) are the
-source of truth for the target replay architecture and removal policy. This is a scoped,
-one-time transition, not a claim that the target runner or removal is implemented. It
-supersedes harness-only progress with retained gameplay, and parallel independent acceptance
-definitions. The round's roles, clean-room barrier, review and root-only landing remain.
+source of truth for indexed production replay and removal policy. The one-time replacement
+of previous acceptance definitions is recorded in `scenarios/replay/transition.toml`, with
+exact prior claims in `scenarios/replay/prior-claims.toml`. The round's roles, clean-room barrier, review and root-only landing remain.
 
-Before cutover, the root records a bounded work plan and obtains independent review of:
+A replacement of production or acceptance requires a bounded work plan and independent review of:
 
 - the inventory of previous gameplay owners, their state and fallback routes, and the reviewed
   content, codec, exact encoding, scheduling and rendering services to retain;
@@ -31,9 +30,9 @@ Before cutover, the root records a bounded work plan and obtains independent rev
 - the proposed cutover of acceptance checks and ratchets, with explicit before/after claims and
   any coverage loss identified for review rather than hidden by deleting a check.
 
-Until that cutover is reviewed and landed, all current mandatory checks and floors remain in
-force: this direction grants no blanket ratchet waiver. The cutover change records which
-checks remain, which are replaced or retired and why, and the replacement proof. Scoped cases
+Current indexed requirements remain in force until an explicit replacement is reviewed and
+landed. Its transition records which claims remain, which are replaced or retired and why,
+and the measured replacement proof. Scoped cases
 prove only their stated scope; full-engine and milestone claims still need integrated replay.
 Vectors, unit tests and localisation checks remain useful development evidence. Required
 missing behaviour is reported as `Unsupported`, so removing an old owner cannot silently turn
@@ -52,7 +51,7 @@ session. The root starts each session with a brief.
 | adversary | gates a spec before a round, and a round before it lands | [adversary](../../.agents/skills/adversary/SKILL.md) |
 | implementer | builds the model from the spec alone, confined to an export | [implementer](../../.agents/skills/implementer/SKILL.md) |
 | blind reviewer | reads the model's code cold, confined, and reviews it as code | [blind-reviewer](../../.agents/skills/blind-reviewer/SKILL.md) |
-| integrator | wires the model into the engine, writes its honest harness, deletes the old code | [integrator](../../.agents/skills/integrator/SKILL.md) |
+| integrator | wires the model into the engine, wires its indexed replay witnesses, deletes the old code | [integrator](../../.agents/skills/integrator/SKILL.md) |
 | engineer | builds tools, checks and CI outside a round | [lane](../../.agents/skills/lane/SKILL.md) |
 
 Every role except the confined two (implementer, blind reviewer) also follows the
@@ -151,28 +150,21 @@ Each step names its owner, what it waits for, and its done-condition.
    does" with the spec: where the reviewer misread the code, the code doesn't explain itself.
 9. **Integrate** (integrator), after 7. Done when:
    - the engine runs the model through an adapter, which holds the model's State as the
-     engine's (MODEL §1 decision 21) for a new domain, and moves toward it for an old one: a
-     `canonical::model::Model<P>` in the engine's State, `P` pinning the State's shape, with a
-     test that `canonical::model::pin_holds::<P>()` (decision 29);
-   - the honest harness compares it with the records, and its floors are committed;
-   - the domain free run (`every_domain_runs_free_against_the_cache`) holds its floors in
-     `crates/verify/src/harness/free_floors.txt`; a raise is committed with the round;
+     engine's (MODEL §1 decision 21). Complete canonical model pins have a shape check
+     (decision 29); unavailable durable codecs are explicit, never partial saved state;
+   - indexed cases compare the actual production entry with independent records, with carried
+     State, declared observations and inputs, null evidence and available complete continuations;
    - the old code it replaces is deleted;
    - `tools/lane/gate.sh` passes;
-   - the free-run gate's green pairs and the lockstep ratchet hold.
+   - the complete reviewed replay baseline holds, including exact expected Unsupported boundaries.
 
-   **Transition constraint:** the following retention route is superseded by MODEL decision 33
-   at the reviewed [replay cutover](#replay-transition); it is not the target integration policy.
-   Current mandatory checks remain until that cutover.
-
-   Where the engine can run the model exactly only once another domain gives it inputs that
-   domain's model doesn't yet give, the round lands with the harness alone. The domain's gaps
-   file names the missing inputs, and LEGACY lists what the old code lacks. The engine wiring,
-   and the deletion of the old code, then land with the round that supplies those inputs.
+   Missing neighbours can be independently observed inputs of a scoped production case, with
+   their ownership and timing explicitly unproved. Required missing integrated producers remain
+   Unsupported and are named in the domain's gaps. Previous gameplay never supplies them.
 10. **Round gate** (adversary), after 8 (when it ran) and 9. It reads the leaks, the spec delta
-    when step 3 didn't gate it, the harness's honesty, the free run's held frames and first
-    divergences against `main`, and the blind review. It says whether the next round needs a
-    blind review. Done on a verdict of MERGE. Findings go to the integrator (harness, adapter),
+    when step 3 didn't gate it, replay provider independence, carried production State, case
+    outcomes and first differences against `main`, and the blind review. It says whether the next round needs a
+    blind review. Done on a verdict of MERGE. Findings go to the integrator (replay provider, adapter),
     or into the next round's queue (model shape, spec gaps). Independent review excludes size
     measurements. After the reports, the root completes the coordinator size assessment and
     [Code Health review](#coordinator-code-health-review) below.
@@ -193,8 +185,8 @@ Each step names its owner, what it waits for, and its done-condition.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     So does every item two blind reads name, a zero-cost one (a name, a wrong doc, an
     unreachable arm) included.
-    The domain is done when its free run holds every row it runs in to the row's end or to a
-    named mask, and the queue holds nothing that changes behaviour.
+    The domain is done when its required indexed witnesses reach their declared ends, its
+    required integration is proven, and the queue holds nothing that changes behaviour.
 
 ## Coordinator size assessment
 
@@ -323,8 +315,8 @@ review included. Each session has three parts:
    session's rounds and lanes within the limits above, and writes the plan down before any lane
    starts, as a session issue selecting the bounded [work items](#work-items) (MODEL §1
    decisions 27 and 31). Work goes only to the lowest rung of the ladder
-   not yet reached (decisions 18 and 24): the items it still needs, then the free run's first
-   divergences on its rows. A round or lane outside the rung's needs list doesn't start; the
+   not yet reached (decisions 18 and 24): the items it still needs, then the indexed replay cases' first
+   differences on its rows. A round or lane outside the rung's needs list doesn't start; the
    planted faults and the gain over null (decisions 24 and 25) run alongside.
 2. **Implementation.** The loop below runs the plan: rounds and lanes start, land and report as
    they do today.
@@ -360,6 +352,6 @@ with a handoff and lands like any other change; the root reviews and lands one c
 - A vector that won't pass, and that the spec doesn't explain, is a **gap**. The implementer
   records it, and the observer answers it in the spec. The model is never tuned to a record.
 - A finding is fixed by its owner: the observer owns spec and vectors, the implementer the clean
-  crates, the integrator the adapter and harness, the root briefs and landing.
+  crates, the integrator the adapter and replay provider, the root briefs and landing.
 - Old code and documents kept only for comparison are deleted. A comparison uses git history
   (MODEL §1 decision 8).

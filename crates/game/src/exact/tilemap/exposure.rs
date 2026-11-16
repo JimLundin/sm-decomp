@@ -20,7 +20,7 @@ use data::dma::{BG1_COLUMN_BUFFER, BG1_ROW_BUFFER, BG2_BUFFER_OFFSET};
 use super::BG1_TILEMAP;
 use crate::commit::{VRAM_CHANNEL, write_words};
 use crate::intent::{BlockLine, BlockLook, LayerExposure, LevelLayer};
-use crate::state::room::BlockPoint;
+use crate::state::render::BlockPoint;
 use crate::state::video::{
     BBusRegister, BusAddress, ColumnUpload, DmaChannel, DmaControl, LevelUploads, RowUpload,
     TilemapEntry, TilemapPart, Video, VramStep, VramWord,

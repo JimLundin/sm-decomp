@@ -6,13 +6,13 @@ The rebuild's crates, as planned in
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |
 | `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `types` (the asset key is the clean room's pose) |
-| `game` | the `Session`, the `State`, the Tick and every gameplay domain. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions` |
-| `runtime` | the line compositor, presentation, sound backends, storage. Feeds nothing back into the Session. | `data` |
-| `app` | the run coordinator, Tick admission, the input profile, effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `import` (the player's ROM at startup), `game`, `runtime` |
+| `game` | production admission, complete owned clean State, concrete selected recipes and their adapters. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions`, `world_doors`, `audio_transport` |
+| `runtime` | the line compositor. Presentation, sound backends and storage are planned; compositor output feeds nothing back into production State. | `data` |
+| `app` | the production application coordinator, admission and effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `import` (the player's ROM at startup), `game`, `runtime` |
 | `import` | the importers ([assets.md §5](../docs/architecture/assets.md#5-the-importers)): the only code that knows the ROM's layout of the content it writes, into `data`'s formats, and the content cache ([assets.md §6](../docs/architecture/assets.md#6-loading-at-runtime)). `game` and `runtime` never reach it. | `data`, `canonical` (the cache is written with the codec) |
 | `oracle` | the emulator adapters, `Oracle`, seeds, the lock recorder; re-exports `oracle_record` as `oracle::record`. | `data`, `oracle_record` |
 | `oracle_record` | `FrameRecord` and the types in it, the lsnes raw record decoder, the wait sites and the pad file reader, with no emulator: linking `oracle` needs the emulator archive. | none |
-| `verify` | the oracle record decoder, the stream projections, facts, digests and comparison. No engine crate depends on it. | `data`, `import` (it builds the content from the ROM), `game`, `runtime`, `oracle_record`, `canonical` (lockstep names differences with `Canonical::diff`), `types` and the clean models (the domain harnesses run them) |
+| `verify` | independent record/input admission, observation projections, the indexed production replay runner and its baseline. No engine crate depends on it. | `data`, `import` (it builds the content from the ROM), `game`, `runtime`, `oracle_record`, `canonical` (state codecs), `types` and the clean models (typed input/state observation edges) |
 | `tools` | the command line over the above. No comparison logic of its own. | `verify`, `oracle`, `runtime`, `import` |
 | `canonical` | the `Canonical` trait, its codec, diff and schema hash, and the primitive impls; re-exports the derive. Its own crate so `data` can derive it without depending on `game`. `canonical::model` holds a clean model's State, which derives serde's traits, by the same codec (MODEL §1 decision 29). | `canonical_derive` |
 | `canonical_derive` | the `Canonical` derive macro, dependency-free. | none |
@@ -25,6 +25,8 @@ The rebuild's crates, as planned in
 | `samus_appearance` | her animation's timing (`crates/clean/samus_appearance`), part 1 of how Samus looks: the clip's steps, the pose's start, her moves' writes and the run's boost stages, built from its spec in the clean room, and its catalogue. | `types` |
 | `weapons_projectiles` | the uncharged power beam (`crates/clean/weapons_projectiles`): firing, inherited motion, contact, lifetime and picture intents, built from its spec in the clean room, and its catalogue. | `types` |
 | `enemy_interactions` | ordinary power-shot contact with single-box Ceres doors (`crates/clean/enemy_interactions`): stateless eligibility, overlap and stable shot consumption, built from its spec in the clean room. | none |
+| `boss_ceres_ridley` | Ceres door behaviour and its catalogue (`crates/clean/boss_ceres_ridley`). | `types` |
+| `world_doors` | Admitted door travel and its catalogue (`crates/clean/world_doors`). | `types` |
 | `audio_transport` | admitted request delivery, resident music/effect progress and timed physical reply publications (`crates/clean/audio_transport`), built from its spec in the clean room, and its catalogue. | `types` |
 
 The clean crates are the folders of `crates/clean/`, one level deep, each a workspace member

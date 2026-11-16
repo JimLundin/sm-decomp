@@ -1,8 +1,7 @@
-//! The PPU set-up the message box writes itself while the NMI lags: its text colours straight
-//! to CGRAM, the playfield it shows over, a black backdrop and BG3's scroll, and the way back.
+//! Exact PPU encoding for a message overlay and restoration of its saved playfield.
+//! Its text colours go straight to CGRAM, with a black backdrop and BG3's scroll.
 //!
-//! The box's BG3 Y scroll HDMA channel is not here: it goes with the line program's HDMA
-//! channels (E3), and `message_box` still points the channel itself.
+//! The BG3 Y-scroll HDMA channel is outside this encoding service.
 
 use crate::state::video::{
     ColourWrite, Layer, Layers, Playfield, PlayfieldColourMath, Scroll, TilemapBase, Video,

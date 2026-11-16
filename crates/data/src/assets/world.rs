@@ -67,9 +67,7 @@ pub struct Arrival {
 /// It says what progress's own condition (`run_progress::Condition`) says, in the same terms,
 /// a doorway where progress has its entrance. They stay two types because neither crate can
 /// name the other's: progress is a clean-room model, which depends only on `types`, and `data`
-/// may not depend on a model. One type would live in `types`, a change for the progress
-/// model's own round; until then `game::run_progress_bridge` maps each variant to progress's,
-/// exhaustively.
+/// may not depend on a model. Conversion belongs to content admission.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Condition {
     /// She came in through this doorway.

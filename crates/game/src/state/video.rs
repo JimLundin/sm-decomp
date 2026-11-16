@@ -8,7 +8,7 @@ use data::assets::art::{Cell, PaletteRow, TileRef};
 pub use data::dma::BusAddress;
 pub use data::pose::tiles::{GraphicsRef, TileDefinitionId};
 
-use super::slots::{Flag, FlagSet};
+use super::video_flags::{Flag, FlagSet};
 
 /// VRAM's size in 16-bit words: 64 KiB.
 pub const VRAM_WORDS: usize = 0x8000;
@@ -160,7 +160,7 @@ impl Default for Oam {
 /// The PPU's memories.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct VideoMemory {
-    /// VRAM, exactly `VRAM_WORDS` words; opening a Session checks it.
+    /// VRAM, exactly `VRAM_WORDS` words; the encoding consumer checks its admitted size.
     pub vram: Vec<u16>,
     /// CGRAM.
     pub cgram: [Colour; CGRAM_COLOURS],
@@ -711,8 +711,8 @@ pub struct TilemapPart {
     pub bytes: u16,
 }
 
-/// How many times the main strand built an upload since the NMI last made it: the NMI
-/// makes it while the low byte is nonzero, then clears it.
+/// Upload requests since the last NMI commit: the transfer consumer makes the upload while
+/// the low byte is nonzero, then clears it.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct UploadRequests(pub u16);
 
@@ -907,7 +907,7 @@ pub struct Video {
     pub dma: [DmaChannel; DMA_CHANNELS],
     /// The batch for the next requested NMI.
     pub batch: NmiBatch,
-    /// Whether the main strand has requested that NMI.
+    /// Whether a requested NMI commit is pending.
     pub nmi_requested: bool,
     /// What the message box set aside to put back when it closes.
     pub message_box: MessageBoxSaved,

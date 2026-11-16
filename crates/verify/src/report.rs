@@ -1,26 +1,7 @@
-//! The rebuild's size and progress report, `docs/REPORT.md`, for `tools report` (Jim,
-//! 2026-11-08: the numbers observable at any commit, sizes also in lines).
-//!
-//! Per rebuilt domain ([`DOMAINS`]) and in total: the model's score (`size`) over
-//! `crates/clean/<crate>` (the domain, dashes as underscores), with `crates/clean/types` shared out; the spec's units and
-//! budget by area (`spec_units` on `docs/behaviours/<domain>.md` and
-//! `scenarios/vectors/<domain>.toml`, k and the areas from the Budget section of
-//! `docs/behaviours/<domain>.decode.md`) and the fit, score ÷ budget; the old code's baseline as
-//! that section states it; the bridge's and the harness's scores; code lines ([`lines`]); the
-//! harness floors and the vector counts; the harnesses' oracle coverage, unverified frames
-//! and per catalogue entry; the engine code not yet rebuilt, `crates/game`
-//! without the bridges; the timeline of each movie's cover by the checks ([`timeline`], also
-//! drawn as `docs/timeline.svg`); the domain graph, the plan's domains and their reads; and how
-//! each clean model is built ([`structure`]).
-//!
-//! The same measures, with the whole-game plan and the verification state, give the README's
-//! status ([`status`]), written between its markers.
-//!
-//! The report, the picture and the status are generated, never edited: [`check`] fails when any
-//! committed one differs from what the tree generates. Everything in them is sorted or in registry order,
-//! with paths relative to the repository root and no timestamp, so one tree gives one report.
+//! Generated progress from the indexed replay baseline, with clean model structure and size.
 
 pub mod lines;
+mod replay;
 mod status;
 mod structure;
 mod timeline;
@@ -28,12 +9,10 @@ mod timeline;
 #[cfg(test)]
 mod tests;
 
-use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::harness::free::Floors;
 use crate::size::{self, Size};
 use crate::spec_units::{Count, Vectors, budget_section};
 
@@ -56,16 +35,6 @@ const TOKENS_PER_LINE: usize = 6;
 /// The share of a model's score, in percent, above which its shared code (in no area) is a
 /// finding (Jim, 2026-11-11): no spec unit pays for it, so it bends the fit.
 const SHARED_FLAG: usize = 25;
-/// The gain over the null model, in percent of a domain's compared frames, under which the
-/// README flags a domain in progress: its rows barely tell the model from a step that
-/// does nothing.
-const GAIN_FLAG: usize = 10;
-/// The harness floors, per domain and row.
-const FLOORS: &str = "crates/verify/src/harness/floors.txt";
-/// The domain free run's floors, per domain and row: the frames each domain holds fed its own State.
-const FREE_FLOORS: &str = "crates/verify/src/harness/free_floors.txt";
-/// The harnesses' oracle coverage over every row, per domain and catalogue entry.
-const COVERAGE: &str = "crates/verify/src/harness/coverage.txt";
 /// The crate of types the clean models share.
 const SHARED_TYPES: &str = "crates/clean/types";
 /// The engine crate, the bridges' home and the code not yet rebuilt.
@@ -74,15 +43,15 @@ const ENGINE: &str = "crates/game";
 /// A rebuilt domain. Its spec is `docs/behaviours/<name>.md`, its budget the `## Budget`
 /// section of `docs/behaviours/<name>.decode.md`, its vectors
 /// `scenarios/vectors/<name>.toml`, its model `crates/clean/<crate>` (the name with dashes as
-/// underscores) and its floors the rows of `floors.txt` that name it.
+/// underscores); replay providers independently observe its selected outputs.
 struct Domain {
     /// The domain's name.
     name: &'static str,
     /// The bridge's files under `crates/game/src`: those whose names start with it.
     bridge: &'static str,
-    /// The harness's files under `crates/verify/src/harness`: those whose names start with it.
-    /// The harness module is named apart from the model crate, so neither hides the other.
-    harness: &'static str,
+    /// The replay provider's files under `crates/verify/src/replay`: those whose names start with it.
+    /// The provider module is named apart from the model crate, so neither hides the other.
+    provider: &'static str,
     /// The Budget section's areas, each with the model files (under the model's `src`) that
     /// hold it. A model file in no area is the domain's shared code: it counts in the domain's
     /// total only.
@@ -107,7 +76,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "audio-transport",
         bridge: "audio_transport_bridge",
-        harness: "audio",
+        provider: "audio",
         areas: &[
             ("sender", &["sender.rs"]),
             ("effects", &["effects.rs"]),
@@ -119,21 +88,21 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "enemy-interactions",
         bridge: "enemy_interactions_bridge",
-        harness: "contact",
+        provider: "contact",
         areas: &[("contact", &["lib.rs"])],
         apart: &[],
     },
     Domain {
         name: "weapons-projectiles",
         bridge: "weapons_projectiles_bridge",
-        harness: "weapons",
+        provider: "weapons",
         areas: &[("shots", &["lib.rs", "domain.rs"])],
         apart: &[],
     },
     Domain {
         name: "samus-movement",
         bridge: "samus_movement_bridge",
-        harness: "movement",
+        provider: "movement",
         areas: &[
             (
                 "motion",
@@ -178,7 +147,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "world-camera",
         bridge: "world_camera_bridge",
-        harness: "camera",
+        provider: "camera",
         areas: &[
             ("follow", &["follow.rs", "rules.rs"]),
             ("limits", &["axis.rs", "room.rs"]),
@@ -193,7 +162,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "run-progress",
         bridge: "run_progress_bridge",
-        harness: "progress",
+        provider: "progress",
         areas: &[
             ("happened", &["progress.rs"]),
             ("places", &["places.rs", "report.rs"]),
@@ -209,7 +178,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "interface-hud",
         bridge: "interface_hud_bridge",
-        harness: "hud",
+        provider: "hud",
         areas: &[
             ("status", &["status_bar.rs", "pictures.rs", "layout.rs"]),
             ("selection", &["selection.rs", "item.rs"]),
@@ -239,7 +208,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "world-blocks",
         bridge: "world_blocks_bridge",
-        harness: "blocks",
+        provider: "blocks",
         areas: &[
             ("places", &["places.rs", "reactions.rs"]),
             ("scroll", &[]),
@@ -291,7 +260,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "samus-appearance",
         bridge: "samus_appearance_bridge",
-        harness: "appearance",
+        provider: "appearance",
         areas: &[
             ("clip", &["clip.rs", "ahead.rs", "play.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
@@ -324,7 +293,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "boss-ceres-ridley",
         bridge: "boss_ceres_ridley_bridge",
-        harness: "ceres",
+        provider: "ceres",
         areas: &[
             ("doors", &["door.rs", "phase.rs", "figure.rs"]),
             ("station", &["station.rs"]),
@@ -355,7 +324,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "world-doors",
         bridge: "world_doors_bridge",
-        harness: "doors",
+        provider: "doors",
         areas: &[(
             "passage",
             &["passage.rs", "step.rs", "view.rs", "colours.rs"],
@@ -510,12 +479,11 @@ struct Measured {
     uses_shared: bool,
     count: Count,
     vectors: usize,
-    pose_steps: usize,
     /// The commit the Budget section's baseline or budget paragraph names last: the old
     /// code's.
     baseline: Option<String>,
     bridge: Vec<File>,
-    harness: Vec<File>,
+    provider: Vec<File>,
 }
 
 impl Measured {
@@ -690,30 +658,6 @@ fn last_commit(section: &str, label: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// How many `[[name]]` tables the vector file holds.
-fn tables(toml: &str, name: &str) -> usize {
-    let header = format!("[[{name}]]");
-    toml.lines().filter(|line| line.trim() == header).count()
-}
-
-/// The floors, by (domain, row): `domain row frames` lines, `#` comments skipped.
-fn floors(text: &str) -> Result<BTreeMap<(String, String), usize>, String> {
-    text.lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(
-            |line| match line.split_whitespace().collect::<Vec<_>>().as_slice() {
-                [domain, row, frames] => frames
-                    .parse()
-                    .map(|frames| (((*domain).to_owned(), (*row).to_owned()), frames))
-                    .map_err(|e| format!("{line}: {e}")),
-                _ => Err(format!("{line}: not `domain row frames`")),
-            },
-        )
-        .collect()
-}
-
-/// Whether a model's manifest depends on the shared types.
 fn uses_shared_types(manifest: &str) -> bool {
     manifest.lines().any(|line| {
         line.split('=')
@@ -823,7 +767,7 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
             ));
         }
     }
-    let harness = prefixed(&root.join("crates/verify/src/harness"), domain.harness)?;
+    let provider = prefixed(&root.join("crates/verify/src/replay"), domain.provider)?;
     let uses_shared = uses_shared_types(&read(&model_dir.join("Cargo.toml"))?);
     Ok(Measured {
         domain,
@@ -831,13 +775,12 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
         uses_shared,
         count,
         vectors: Vectors::parse(&toml).len(),
-        pose_steps: tables(&toml, "pose_step"),
         baseline: baseline(budget),
         bridge: measure(
             root,
             &sources(&prefixed(&root.join(ENGINE).join("src"), domain.bridge)?)?,
         )?,
-        harness: measure(root, &sources(&harness)?)?,
+        provider: measure(root, &sources(&provider)?)?,
     })
 }
 
@@ -847,16 +790,12 @@ struct Tree {
     shared_files: Vec<File>,
     /// The rebuilt domains, in registry order.
     domains: Vec<Measured>,
-    /// The engine code not yet rebuilt, file by file.
+    /// The engine composition and exact services, file by file.
     engine: Vec<File>,
     /// The sources the structure section outlines.
     sources: structure::Sources,
-    /// The movies' cover by the checks.
-    timeline: timeline::Timeline,
-    /// The ladder's rungs, measured.
-    rungs: Vec<status::RungFigures>,
-    floors: BTreeMap<(String, String), usize>,
-    coverage: BTreeMap<String, Coverage>,
+    /// Current committed replay requirements, validated against the complete index.
+    replay: replay::Snapshot,
     /// The whole-game plan, checked against the rebuilt domains.
     plan: status::Plan,
 }
@@ -887,20 +826,13 @@ impl Tree {
         let names: Vec<&str> = DOMAINS.iter().map(|domain| domain.name).collect();
         let rebuilt = names.iter().copied().collect();
         let plan = status::Plan::parse(&read(&root.join(status::PLAN))?, &rebuilt)?;
-        let free_floors = Floors::parse(&read(&root.join(FREE_FLOORS))?)
-            .map_err(|e| format!("{FREE_FLOORS}: {e}"))?;
-        let floors = floors(&read(&root.join(FLOORS))?).map_err(|e| format!("{FLOORS}: {e}"))?;
-        let timeline = timeline::Timeline::measure(root, &floors)?;
-        let rungs = status::rungs(root, &plan, &timeline, &free_floors)?;
+        let replay = replay::Snapshot::read(root)?;
         Ok(Self {
             shared_files,
             domains,
             engine,
             sources: structure::Sources::read(root, &names)?,
-            timeline,
-            rungs,
-            floors,
-            coverage: coverage(&read(&root.join(COVERAGE))?)?,
+            replay,
             plan,
         })
     }
@@ -928,8 +860,8 @@ impl Tree {
         (measure, files)
     }
 
-    /// The engine code not yet rebuilt: its measure and its file count.
-    fn remaining(&self) -> (Measure, usize) {
+    /// The engine composition and exact services: its measure and its file count.
+    fn services(&self) -> (Measure, usize) {
         (total(&self.engine), self.engine.len())
     }
 
@@ -959,16 +891,13 @@ fn report(tree: &Tree) -> String {
     let shared = total(&tree.shared_files);
     let mut out = String::new();
     header(&mut out);
-    summary(&mut out, domains, shared, &tree.floors);
+    tree.replay.section(&mut out);
+    summary(&mut out, domains);
     models(&mut out, domains, shared);
     lines_section(&mut out, domains, &tree.shared_files);
     areas(&mut out, domains);
-    bridge_and_harness(&mut out, domains);
-    floors_section(&mut out, domains, &tree.floors);
-    coverage_section(&mut out, domains, &tree.coverage);
+    adapters_and_providers(&mut out, domains);
     engine_section(&mut out, tree);
-    tree.timeline.section(&mut out);
-    status::ladder_section(&mut out, tree);
     status::graph_section(&mut out, &tree.plan);
     structure::section(&mut out, tree);
     out
@@ -1025,16 +954,6 @@ fn table(out: &mut String, labels: usize, columns: &[&str]) {
     let _ = writeln!(out, "| {} |", rule.join(" | "));
 }
 
-fn harness_frames(floors: &BTreeMap<(String, String), usize>, domain: &str) -> (usize, usize) {
-    floors
-        .iter()
-        .filter(|((name, _), _)| name == domain)
-        .fold((0, 0), |(rows, frames), (_, &floor)| {
-            (rows.saturating_add(1), frames.saturating_add(floor))
-        })
-}
-
-/// The shared types' row label: the crate and the domains whose model uses it.
 fn shared_label(domains: &[Measured]) -> String {
     let used_by: Vec<&str> = domains
         .iter()
@@ -1047,12 +966,7 @@ fn shared_label(domains: &[Measured]) -> String {
     )
 }
 
-fn summary(
-    out: &mut String,
-    domains: &[Measured],
-    shared: Measure,
-    floors: &BTreeMap<(String, String), usize>,
-) {
+fn summary(out: &mut String, domains: &[Measured]) {
     out.push_str("\n## Summary\n\n");
     table(
         out,
@@ -1064,23 +978,17 @@ fn summary(
             "Fit",
             "Area fit",
             "Shared",
-            "Old code",
+            "Old code baseline",
             "Model lines",
-            "Logic-equivalent lines",
-            "Harness frames",
             "Vectors",
         ],
     );
-    // The models, their shared code (the shared types' included), budgets, old code, harness
-    // frames and vectors.
-    let mut sum = (shared, shared, Some(0_u64), Some(0_u64), 0usize, 0usize);
     for domain in domains {
         let model = domain.model_total();
         let unassigned = domain.unassigned();
-        let (_, frames) = harness_frames(floors, domain.domain.name);
         let _ = writeln!(
             out,
-            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |",
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
             domain.domain.name,
             model.score(),
             or_dash(domain.count.budget()),
@@ -1089,44 +997,9 @@ fn summary(
             shared_share(unassigned.score, model.score),
             or_dash(domain.old()),
             grouped(model.lines),
-            model.logic_lines(),
-            grouped(frames),
-            grouped(domain.vectors),
-        );
-        sum = (
-            sum.0.plus(model),
-            sum.1.plus(unassigned),
-            sum.2
-                .zip(domain.count.budget())
-                .map(|(a, b)| a.saturating_add(b)),
-            sum.3.zip(domain.old()).map(|(a, b)| a.saturating_add(b)),
-            sum.4.saturating_add(frames),
-            sum.5.saturating_add(domain.vectors),
+            grouped(domain.vectors)
         );
     }
-    let _ = writeln!(
-        out,
-        "| {} | {} | - | - | - | - | - | {} | {} | - | - |",
-        shared_label(domains),
-        shared.score(),
-        grouped(shared.lines),
-        shared.logic_lines(),
-    );
-    let (model, unassigned, budget, old, frames, vectors) = sum;
-    let _ = writeln!(
-        out,
-        "| total | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |",
-        model.score(),
-        or_dash(budget),
-        fit(model.score, budget),
-        fit(model.minus(unassigned).score, budget),
-        shared_share(unassigned.score, model.score),
-        or_dash(old),
-        grouped(model.lines),
-        model.logic_lines(),
-        grouped(frames),
-        grouped(vectors),
-    );
 }
 
 const MEASURE_COLUMNS: [&str; 8] = [
@@ -1303,16 +1176,19 @@ fn areas(out: &mut String, domains: &[Measured]) {
     }
 }
 
-fn bridge_and_harness(out: &mut String, domains: &[Measured]) {
+fn adapters_and_providers(out: &mut String, domains: &[Measured]) {
     out.push_str(
-        "\n## Bridges and harnesses\n\nThe bridge (`crates/game/src/<bridge>*`) answers the \
-         model's world from the engine; the harness (`crates/verify/src/harness/<harness>*`) \
+        "\n## Production adapters and replay providers\n\nThe bridge (`crates/game/src/<bridge>*`) answers the \
+         model's world from the engine; the replay provider (`crates/verify/src/replay/<provider>*`) \
          checks the model against the oracle. Neither is the model's.\n\n",
     );
     measure_table(out, 2, &["Domain", "Part", "Files"]);
     let mut sum = Measure::default();
     for domain in domains {
-        for (part, files) in [("bridge", &domain.bridge), ("harness", &domain.harness)] {
+        for (part, files) in [
+            ("bridge", &domain.bridge),
+            ("replay provider", &domain.provider),
+        ] {
             let measure = total(files);
             let _ = writeln!(
                 out,
@@ -1327,360 +1203,17 @@ fn bridge_and_harness(out: &mut String, domains: &[Measured]) {
     let _ = writeln!(out, "| total | | | {} |", sum.cells());
 }
 
-fn floors_section(
-    out: &mut String,
-    domains: &[Measured],
-    floors: &BTreeMap<(String, String), usize>,
-) {
-    out.push_str(
-        "\n## Harness floors and vectors\n\nFrames matched and verified on every unmasked field, \
-         per row (`crates/verify/src/harness/floors.txt`).\n\n",
-    );
-    let names: Vec<&str> = domains.iter().map(|domain| domain.domain.name).collect();
-    let columns: Vec<&str> = std::iter::once("Row")
-        .chain(names.iter().copied())
-        .collect();
-    table(out, 1, &columns);
-    let mut rows: Vec<&str> = floors
-        .keys()
-        .filter(|(domain, _)| names.contains(&domain.as_str()))
-        .map(|(_, row)| row.as_str())
-        .collect();
-    rows.sort_unstable();
-    rows.dedup();
-    for row in &rows {
-        let cells: Vec<String> = names
-            .iter()
-            .map(|&name| {
-                floors
-                    .get(&(name.to_owned(), (*row).to_owned()))
-                    .map_or_else(|| String::from("-"), |&frames| grouped(frames))
-            })
-            .collect();
-        let _ = writeln!(out, "| {row} | {} |", cells.join(" | "));
-    }
-    let totals: Vec<String> = names
-        .iter()
-        .map(|name| {
-            let (count, frames) = harness_frames(floors, name);
-            format!("{} in {count} rows", grouped(frames))
-        })
-        .collect();
-    let _ = writeln!(out, "| total | {} |", totals.join(" | "));
-    out.push('\n');
-    table(out, 1, &["Domain", "Vectors", "Pose steps"]);
-    for domain in domains {
-        let _ = writeln!(
-            out,
-            "| {} | {} | {} |",
-            domain.domain.name,
-            grouped(domain.vectors),
-            grouped(domain.pose_steps)
-        );
-    }
-}
-
-/// A domain's oracle coverage over every row, as `coverage.txt` commits it.
-#[derive(Default, Debug, PartialEq, Eq)]
-struct Coverage {
-    /// Its frames and how the model and the null model met them.
-    frames: Option<Frames>,
-    /// Each declared field: its name, the frames it was compared on, the frames it was masked on.
-    fields: Vec<(String, usize, usize)>,
-    /// Each catalogue entry: its name and its counts.
-    entries: Vec<EntryCoverage>,
-}
-
-/// A domain's frames over every row, as its `frames` line in `coverage.txt` gives them.
-#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
-struct Frames {
-    /// The frames the harness ran over.
-    ran: usize,
-    /// Those it compared: run, not skipped and not a harness defect.
-    compared: usize,
-    /// The compared frames the model matched on every unmasked field, verified.
-    matched: usize,
-    /// The compared frames it matched only through a stand-in's answer.
-    unverified: usize,
-    /// The compared frames the null model matched on every unmasked field.
-    null_matched: usize,
-}
-
-impl Frames {
-    /// The frames the model matched beyond those a step that does nothing matches, none where
-    /// it matches fewer.
-    const fn gain(self) -> usize {
-        self.matched.saturating_sub(self.null_matched)
-    }
-
-    /// Whether the gain is under [`GAIN_FLAG`] percent of the compared frames: the rows barely
-    /// tell the model from one that does nothing.
-    const fn weak(self) -> bool {
-        self.gain().saturating_mul(100) < self.compared.saturating_mul(GAIN_FLAG)
-    }
-}
-
-/// How the rows prove a catalogue entry.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Proof {
-    /// No frame exercised it with its fields compared: its vectors alone check it.
-    VectorsOnly,
-    /// The null model matched it on as many of its frames as the model, so the rows would pass
-    /// a step that does nothing too.
-    Unproven,
-    /// The model matched it on this many more frames than the null model.
-    Gain(usize),
-}
-
-impl Proof {
-    /// Its cell in the report's entry table.
-    fn cell(self) -> String {
-        match self {
-            Self::VectorsOnly => String::from("vectors only"),
-            Self::Unproven => String::from("unproven"),
-            Self::Gain(gain) => format!("gain {}", grouped(gain)),
-        }
-    }
-}
-
-/// A catalogue entry's oracle coverage over every row.
-#[derive(Default, Debug, PartialEq, Eq)]
-struct EntryCoverage {
-    /// The entry's name.
-    name: String,
-    /// The frames that exercised it, matched and verified.
-    matched: usize,
-    /// Of the exercised frames, those on which the null model matched every field it reaches.
-    null_matched: usize,
-    /// The frames that exercised it with its fields compared.
-    exercised: usize,
-    /// The frames that exercised it unchecked.
-    unchecked: usize,
-}
-
-impl EntryCoverage {
-    /// How the rows prove it: by the frames the model matched beyond the null model's.
-    const fn proof(&self) -> Proof {
-        if self.exercised == 0 {
-            Proof::VectorsOnly
-        } else if self.matched > self.null_matched {
-            Proof::Gain(self.matched.saturating_sub(self.null_matched))
-        } else {
-            Proof::Unproven
-        }
-    }
-}
-
-/// The coverage by domain: `domain frames <5 counts>`, `domain field <2 counts> <name>` and
-/// `domain entry <name> <4 counts>` lines, `#` comments skipped.
-fn coverage(text: &str) -> Result<BTreeMap<String, Coverage>, String> {
-    let mut domains: BTreeMap<String, Coverage> = BTreeMap::new();
-    let number = |line: &str, word: &str| {
-        word.parse::<usize>()
-            .map_err(|e| format!("{COVERAGE}: {line}: {e}"))
-    };
-    for line in text
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-    {
-        match line.split_whitespace().collect::<Vec<_>>().as_slice() {
-            [
-                domain,
-                "frames",
-                frames,
-                compared,
-                matched,
-                unverified,
-                null_matched,
-            ] => {
-                let frames = Frames {
-                    ran: number(line, frames)?,
-                    compared: number(line, compared)?,
-                    matched: number(line, matched)?,
-                    unverified: number(line, unverified)?,
-                    null_matched: number(line, null_matched)?,
-                };
-                domains.entry((*domain).to_owned()).or_default().frames = Some(frames);
-            }
-            [domain, "field", compared, masked, name @ ..] if !name.is_empty() => {
-                let field = (
-                    name.join(" "),
-                    number(line, compared)?,
-                    number(line, masked)?,
-                );
-                domains
-                    .entry((*domain).to_owned())
-                    .or_default()
-                    .fields
-                    .push(field);
-            }
-            [
-                domain,
-                "entry",
-                name,
-                matched,
-                null_matched,
-                exercised,
-                unchecked,
-            ] => {
-                let entry = EntryCoverage {
-                    name: (*name).to_owned(),
-                    matched: number(line, matched)?,
-                    null_matched: number(line, null_matched)?,
-                    exercised: number(line, exercised)?,
-                    unchecked: number(line, unchecked)?,
-                };
-                domains
-                    .entry((*domain).to_owned())
-                    .or_default()
-                    .entries
-                    .push(entry);
-            }
-            _ => return Err(format!("{COVERAGE}: {line}: not a coverage line")),
-        }
-    }
-    Ok(domains)
-}
-
-/// A domain's gain over the null model and its share of the compared frames, as a table cell.
-fn gain_cell(frames: Frames) -> String {
-    format!(
-        "{} ({})",
-        grouped(frames.gain()),
-        timeline::percent(frames.gain(), frames.compared)
-    )
-}
-
-fn coverage_section(out: &mut String, domains: &[Measured], coverage: &BTreeMap<String, Coverage>) {
-    out.push_str(
-        "\n## Oracle coverage\n\nOver every row the floors name \
-         (`crates/verify/src/harness/coverage.txt`, which the floor tests hold equal to a run over \
-         every row). A frame is compared unless the domain doesn't run in it or the harness \
-         couldn't decode it; it is matched and verified when every unmasked field matched the \
-         oracle, and unverified when it matched only through a stand-in's answer copied from the \
-         next record. The null model is a step that does nothing, on the same frames; a model's \
-         **gain** is the frames it matched beyond the null model's, what the rows prove of it \
-         (MODEL §4).\n\n",
-    );
-    table(
-        out,
-        1,
-        &[
-            "Domain",
-            "Gain over null",
-            "Matched and verified",
-            "Null model",
-            "Compared",
-            "Unverified",
-            "Frames",
-        ],
-    );
-    for domain in domains {
-        let name = domain.domain.name;
-        let cells = coverage
-            .get(name)
-            .and_then(|coverage| coverage.frames)
-            .map_or_else(
-                || String::from("- | - | - | - | - | -"),
-                |frames| {
-                    format!(
-                        "{} | {} | {} | {} | {} | {}",
-                        gain_cell(frames),
-                        grouped(frames.matched),
-                        grouped(frames.null_matched),
-                        grouped(frames.compared),
-                        grouped(frames.unverified),
-                        grouped(frames.ran)
-                    )
-                },
-            );
-        let _ = writeln!(out, "| {name} | {cells} |");
-    }
-    out.push_str(
-        "\nPer declared field, the compared frames on which it was compared and those on which \
-         a mask, by its named writer, put it out of scope. The summary's harness frames count a \
-         frame matched on its unmasked fields alone.\n\n",
-    );
-    table(out, 2, &["Domain", "Field", "Compared", "Masked"]);
-    for domain in domains {
-        let name = domain.domain.name;
-        for (field, compared, masked) in coverage
-            .get(name)
-            .map(|coverage| coverage.fields.as_slice())
-            .unwrap_or_default()
-        {
-            let _ = writeln!(
-                out,
-                "| {name} | {field} | {} | {} |",
-                grouped(*compared),
-                grouped(*masked)
-            );
-        }
-    }
-    entries_table(out, domains, coverage);
-}
-
-/// The coverage section's table of catalogue entries, each with its proof.
-fn entries_table(out: &mut String, domains: &[Measured], coverage: &BTreeMap<String, Coverage>) {
-    out.push_str(
-        "\nPer catalogue entry, the frames that exercised it with every field its output reaches \
-         compared, those of them matched and verified, those of them on which the null model \
-         matched every such field too, and the frames that exercised it unchecked: one of its \
-         fields masked, or an output (an event) the harness doesn't compare. Its proof is the \
-         rows' **gain** over the null model; an entry the null model matches on as many frames \
-         as the model is **unproven** by the rows, since doing nothing would pass them too, and \
-         one no frame exercises with its fields compared is checked by its **vectors only**.\n\n",
-    );
-    table(
-        out,
-        2,
-        &[
-            "Domain",
-            "Entry",
-            "Proof",
-            "Matched and verified",
-            "Null model",
-            "Exercised",
-            "Unchecked",
-        ],
-    );
-    for domain in domains {
-        let name = domain.domain.name;
-        for entry in coverage
-            .get(name)
-            .map(|coverage| coverage.entries.as_slice())
-            .unwrap_or_default()
-        {
-            let proof = entry.proof();
-            let (matched, null) = if proof == Proof::VectorsOnly {
-                (String::from("-"), String::from("-"))
-            } else {
-                (grouped(entry.matched), grouped(entry.null_matched))
-            };
-            let _ = writeln!(
-                out,
-                "| {name} | {} | {} | {matched} | {null} | {} | {} |",
-                entry.name,
-                proof.cell(),
-                grouped(entry.exercised),
-                grouped(entry.unchecked)
-            );
-        }
-    }
-}
-
 fn engine_section(out: &mut String, tree: &Tree) {
     out.push_str(
-        "\n## Engine not yet rebuilt\n\nThe engine's code, every non-test source of `crates/game` without the bridges: \
-         what the rebuilt domains have yet to replace, beside what they hold.\n\n",
+        "\n## Engine services\n\nThe engine's code, every non-test source of `crates/game` without the bridges: \
+         production composition, state admission and exact encoding, beside the clean models.\n\n",
     );
     measure_table(out, 1, &["Part", "Files", "Logic-equivalent lines"]);
-    let (remaining, files) = tree.remaining();
+    let (services, files) = tree.services();
     let (bridge, bridges) = tree.bridges();
     let (models, model_files) = tree.models();
     for (part, count, measure) in [
-        ("engine, not yet rebuilt", files, remaining),
+        ("production and exact services", files, services),
         ("bridges", bridges, bridge),
         ("rebuilt models, shared types included", model_files, models),
     ] {
@@ -1710,7 +1243,7 @@ fn pages(root: &Path) -> Result<Pages, String> {
     Ok(Pages {
         report: report(&tree),
         status: status::status(root, &tree)?,
-        svg: tree.timeline.svg(),
+        svg: tree.replay.svg(),
     })
 }
 

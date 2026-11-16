@@ -1,10 +1,6 @@
-name: Verify
+# Content import checks and the indexed production replay acceptance.
+# ROM and captured fixture bytes remain encrypted in the pinned CI assets.
 
-# Verify: the ROM-reading checks of the rebuild. `content` runs the content decoders against
-# the real ROM, `free-run-gate` runs the slice rows from the relock bundle against the green
-# ratchet, and `lockstep-ratchet` replays the record cache against the lockstep ratchet.
-# The ROM is encrypted in the private ci-data repository. ROM-derived files stay private,
-# and fetching it needs secrets, so only in-repo branches run it.
 on:
   workflow_call:
     secrets:
@@ -89,74 +85,16 @@ jobs:
             target
           key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
 
-  # The free-run gate (ARCHITECTURE D22) on the slice-0 rows and the ladder's Ceres rows: each
-  # row runs from its seed's record in the relock bundle on the content read from the ROM. A row
-  # the engine can't start yet (a room it doesn't know) is reported as not starting; the job
-  # fails when a row scenarios/locks/lsnes.green.txt holds as starting doesn't start, or a
-  # (row, stream) pair it lists is no longer green. Never --update here: the ratchet grows by a
-  # commit. `tools` doesn't link the emulator.
-  free-run-gate:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    env:
-      ROWS: >-
-        area-brinstar item-morph-ball
-        chain-any-0001-DF45 chain-any-0002-DF8D chain-any-0003-DFD7 chain-any-0004-E021
-        chain-any-0005-E06B chain-any-0006-E0B5 chain-any-0007-E06B chain-any-0008-E021
-        chain-any-0009-DFD7 chain-any-0010-DF8D chain-any-0011-DF45
-    steps:
-      - uses: actions/checkout@v4
-      - *cache
-      - *rom
-      - *decrypt
-      - &relock_fetch
-        name: Fetch the relock bundle and check its pin
-        run: |
-          # The lock's one bundles entry: its ci-data name and its ciphertext's SHA-256.
-          entry='^bundles = \[\{ name = "([^"]+)", sha256 = "([0-9a-f]{64})" \}\]$'
-          line=$(grep -E "$entry" scenarios/locks/lsnes.toml)
-          name=$(sed -E "s/$entry/\1/" <<<"$line")
-          sha=$(sed -E "s/$entry/\2/" <<<"$line")
-          # The release host answers 504 at times: back off for up to ten minutes.
-          curl --fail --silent --show-error --location \
-            --retry 8 --retry-delay 15 --retry-all-errors --retry-max-time 600 \
-            --output "$RUNNER_TEMP/relock.tar.gz.enc" \
-            "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$name"
-          echo "$sha  $RUNNER_TEMP/relock.tar.gz.enc" | sha256sum --check
-      - &relock_unpack
-        name: Decrypt the relock bundle
-        run: |
-          # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (docs/ORACLE.md).
-          SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
-          export SM_SEED_PASSPHRASE
-          mkdir -p "$RUNNER_TEMP/relock"
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
-            -in "$RUNNER_TEMP/relock.tar.gz.enc" | tar -xz -C "$RUNNER_TEMP/relock"
-          rm "$RUNNER_TEMP/relock.tar.gz.enc"
-      - name: Build tools
-        run: cargo build --locked --profile verify -p tools
-      - name: "Free-run gate: slice-0 and Ceres rows against the green ratchet"
-        run: |
-          # shellcheck disable=SC2086 # ROWS is a list of row ids.
-          target/verify/tools gate scenarios/locks/lsnes.toml "$RUNNER_TEMP/relock/relock-v2-lsnes" \
-            rom/sm.smc scenarios/locks/lsnes.green.txt $ROWS
-      - *cache_save
-
-  # The lockstep ratchet (scenarios/locks/lockstep.ratchet.txt): each row's record cache
-  # (A2) replays engine-only in lockstep, and the job fails when a row's fully equal Ticks
-  # fall or a group's differing Ticks rise. The cache is a ci-data asset packed by
-  # tools/ci/pack_lockstep_cache.sh and pinned here by name and ciphertext SHA-256; a new
-  # cache is a new asset and a commit that repins it. The cache holds every row a harness
-  # reads, so the same job holds each domain's harness to its floors and its coverage.
-  lockstep-ratchet:
+  # One complete index and baseline hold all currently admitted replay claims.
+  replay:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
       CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
-      # Root pins the corrected, validated native pair after uploading its ciphertext.
-      AUDIO_NATIVE_ASSET: "audio-native-d67b7c3a5874330d.tar.xz.enc"
-      AUDIO_NATIVE_SHA256: "69343bdd499bcdf1f5eb95aa53952d4aed8c26f98a212b160c77639f5d59af5d"
+      # Root pins the validated fixture set after uploading its ciphertext.
+      AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
+      AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"
     steps:
       - uses: actions/checkout@v4
       - *cache
@@ -187,134 +125,20 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
             -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
-      - *relock_fetch
-      - *relock_unpack
-      - name: Fetch and validate the pinned native audio pair
+      - name: Fetch and validate the pinned native fixtures and continuation seed
         run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Native audio paired cuts and every saved continuation
-        run: SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" bash tools/ci/audio_native.sh
-      - name: "Ordinary production: public admission, complete-cut minimum and entry rejection"
+      - name: Build the shared replay command
+        run: cargo build --locked --profile verify -p tools
+      - name: Check every indexed case against the reviewed baseline
         run: |
-          set -o pipefail
-          export SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc"
-          export SM_BUNDLE="$RUNNER_TEMP/relock/relock-v2-lsnes"
-          test -f "$SM_ROM"
-          test -d "$SM_CACHE"
-          test -f "$SM_BUNDLE/seeds/any-boundary/0003.record"
-          test -f "$SM_BUNDLE/pads/chain-any-0003-DFD7.pads"
-          replay=harness::ordinary_power_replay::m0_ordinary_owner_runs_once_from_seed_through_first_actual_unsupported_boundary
-          cargo test --locked -p verify --profile verify "$replay" -- --exact --nocapture | tee "$RUNNER_TEMP/ordinary-replay.txt"
-          grep -q "^test $replay \.\.\. ok$" "$RUNNER_TEMP/ordinary-replay.txt"
-          awk '/^ordinary replay reached=/ { split($3,r,"="); split($4,c,"="); split($5,s,"="); split($6,o,"="); split($7,v,"="); if (r[2]>=183 && c[2]==r[2] && s[2]==r[2] && o[2]==r[2] && v[2]==r[2]) held=1 } END { exit !held }' "$RUNNER_TEMP/ordinary-replay.txt"
-          for test_name in public_ordinary_seed_admission_rejects_an_unsupported_owner_without_legacy_fallback completed_entry_certificate_rejects_later_passage_and_invalid_entry_facts; do
-            test=harness::ordinary_power_replay::$test_name
-            cargo test --locked -p verify --profile verify "$test" -- --exact --nocapture | tee "$RUNNER_TEMP/ordinary-rejection.txt"
-            grep -q "^test $test \.\.\. ok$" "$RUNNER_TEMP/ordinary-rejection.txt"
-          done
-      - name: "Corpus preflight: every committed floor row is readable before replay"
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
+            bash tools/ci/replay.sh --write "$RUNNER_TEMP/replay-receipt.toml"
+      - name: Verify recorded bridge fault rejection and exact restoration
         run: |
-          set -o pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" \
-            cargo test --locked -p verify --profile verify \
-            harness::corpus::committed_corpus_is_complete_before_replay -- --exact --nocapture \
-            | tee "$RUNNER_TEMP/corpus.txt"
-          grep -q '^corpus preflight holds: [1-9][0-9]* required rows$' "$RUNNER_TEMP/corpus.txt"
-          grep -q '^test harness::corpus::committed_corpus_is_complete_before_replay \.\.\. ok$' "$RUNNER_TEMP/corpus.txt"
-      - name: "Lockstep ratchet: the record cache against scenarios/locks/lockstep.ratchet.txt"
-        run: |
-          # A renamed test would filter to nothing and pass, so require its report.
-          set -o pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --profile verify committed_ratchet_holds_against_the_cache -- --nocapture \
-            | tee "$RUNNER_TEMP/ratchet.txt"
-          grep -q '^ratchet holds: ' "$RUNNER_TEMP/ratchet.txt"
-      - name: "Harness floors: every domain over every cached row against floors.txt and coverage.txt"
-        run: |
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            bash tools/ci/harness_floors.sh
-      - name: "Directional travel: named recorded receipts and zero-output contrast"
-        run: |
-          set -euo pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --profile verify \
-              harness::tests::movement_harness_cases_hold_against_the_cache -- --exact --nocapture \
-            | tee "$RUNNER_TEMP/directional-travel.txt"
-          grep -Fxq 'test harness::tests::movement_harness_cases_hold_against_the_cache ... ok' \
-            "$RUNNER_TEMP/directional-travel.txt"
-          grep -Fxq 'directional travel: 7/7 compared and matched; zero-output null 0/7' \
-            "$RUNNER_TEMP/directional-travel.txt"
-      - name: "Camera receipt: recorded per-frame, carried State and M0 passage proof"
-        run: |
-          set -euo pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --profile verify \
-              harness::camera::receipt::tests:: -- --nocapture \
-            | tee "$RUNNER_TEMP/camera-receipt.txt"
-          for test in every_supported_camera_receipt_matches_per_frame_and_carried_free \
-            m0_receipt_is_carried_through_supported_gameplay_prefix; do
-            grep -Fxq "test harness::camera::receipt::tests::${test} ... ok" \
-              "$RUNNER_TEMP/camera-receipt.txt"
-          done
-      - name: "Movement M0: physical control history and pending aim match the recorded caller"
-        run: |
-          set -euo pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --profile verify \
-              harness::tests::movement_m0_caller_history_and_pending_aim_match_the_record -- --exact --nocapture \
-            | tee "$RUNNER_TEMP/movement-caller.txt"
-          grep -Fxq 'test harness::tests::movement_m0_caller_history_and_pending_aim_match_the_record ... ok' \
-            "$RUNNER_TEMP/movement-caller.txt"
-          for field in controller.prior_pressed pending_aim; do
-            grep -Fxq "M0 $field: 181 compared, 0 differed, first frame None" \
-              "$RUNNER_TEMP/movement-caller.txt"
-          done
-      - name: "Ceres moonwalk: solid enemy geometry preserves the turn and pending aim"
-        run: |
-          set -euo pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --profile verify \
-              harness::tests::movement_ceres_moonwalk_turn_keeps_its_solid_enemy_and_pending_aim -- --exact --nocapture \
-            | tee "$RUNNER_TEMP/ceres-moonwalk.txt"
-          grep -Fxq 'test harness::tests::movement_ceres_moonwalk_turn_keeps_its_solid_enemy_and_pending_aim ... ok' \
-            "$RUNNER_TEMP/ceres-moonwalk.txt"
-          grep -Fxq 'Ceres moonwalk: pose and pending Left match; row pending 576 compared, 0 differed' \
-            "$RUNNER_TEMP/ceres-moonwalk.txt"
-      - name: "Recorded contact and caller witnesses"
-        run: |
-          set -euo pipefail
-          for witness in \
-            harness::gameplay_caller::tests::preceding_permissions_and_completed_endpoint_are_independent \
-            harness::weapons::tests::quiet_prediction_requires_valid_borrowed_inputs_before_update \
-            harness::contact::tests::recorded_m0_has_four_live_searches_and_one_hit_from_preceding_w1_execution; do
-            SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-              cargo test --locked -p verify --profile verify "$witness" -- --exact --nocapture \
-              | tee "$RUNNER_TEMP/contact-caller-witness.txt"
-            grep -Fxq "test $witness ... ok" "$RUNNER_TEMP/contact-caller-witness.txt"
-          done
-      - name: "Domain free run: every domain fed its own State over every cached row, against free_floors.txt"
-        run: |
-          # The primary proof (MODEL §4): each row's segments, first divergences and held frames
-          # print to the log. Require one aggregate per named domain and actual test execution.
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            bash tools/ci/domain_free.sh
-      - name: "Progress's ROM checks: the harness cases, the rows' standing room states and the full percentage"
-        run: |
-          # Each test skips and passes only with both SM_CACHE and SM_ROM unset, which this step
-          # sets; a renamed test would filter to nothing and pass, so require each one's result.
-          set -o pipefail
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
-            cargo test --locked -p verify --profile verify -- \
-              progress_harness_cases_hold_against_the_cache \
-              progress_chooses_each_rows_standing_room_state \
-              every_item_the_game_places_counts_a_hundred_percent \
-            | tee "$RUNNER_TEMP/progress.txt"
-          for test in progress_harness_cases_hold_against_the_cache \
-            progress_chooses_each_rows_standing_room_state \
-            every_item_the_game_places_counts_a_hundred_percent; do
-            grep -q "^test harness::tests::${test} \.\.\. ok$" "$RUNNER_TEMP/progress.txt"
-          done
-      - *cache_save
-      - name: "Planted faults: domain harnesses, free runs and the Ceres ratchet reject wrong models"
-        run: |
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM="$PWD/rom/sm.smc" \
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
             python3 tools/check_mutants.py
+      - name: Check retained imported content and progress supply
+        run: SM_ROM=rom/sm.smc cargo test --locked --profile verify -p verify --lib tests::content -- --ignored
+      - *cache_save

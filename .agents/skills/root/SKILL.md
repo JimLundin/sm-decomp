@@ -22,8 +22,8 @@ barrier; every other role does one step.
    relay comes from output you saw. After independent review of a round or engineering task,
    complete [the Code Health review](../../../docs/cleanroom/PROCESS.md#coordinator-code-health-review).
 5. **Relay** to Jim: what the step found, what you decided, and what comes next. Lead with the
-   ladder (the lowest rung's frames played alone and what it still needs) and the free run's
-   held frames per row; give size as one line of the round's delta, a diagnostic (MODEL §1
+   ladder (the lowest rung's integrated proof and what it still needs) and the indexed cases'
+   results, with scoped and whole-movie claims kept separate; give size as one line of the round's delta, a diagnostic (MODEL §1
    decision 19), and cite `docs/REPORT.md` once a change lands.
 6. **Record** the step in the coordination log (`$TEMP/collab/reviews/coord-log.md`): heads,
    verdicts, and the queue. Done when a fresh root could resume from the log alone.
@@ -109,7 +109,7 @@ steps 4 and 11). Before the squash, on the round's branch: add one to the model'
 regenerate REPORT and the README's status. Then squash it with `tools/lane/squash.sh SUBJECT
 BRANCH`: you write the subject, which says what is true after the round and ends with its kind.
 Land one change at a time, by fast-forward through `bash tools/lane/land.sh <pr>`, after the PR's
-CI is green: Quality, content, free-run-gate and lockstep-ratchet. The
+CI is green: Quality, content and replay. The
 [lane](../lane/SKILL.md#land-root-only) skill gives the steps.
 
 ## Jim

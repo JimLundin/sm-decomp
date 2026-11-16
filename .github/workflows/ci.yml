@@ -3,7 +3,7 @@ name: CI
 # The only entry point. It holds the triggers and no steps: each event calls the reusable
 # workflows that own one responsibility each.
 #   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
-#   verify.yml   the ROM-reading checks: content decoders, free-run gate, lockstep ratchet.
+#   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
 # Pull requests and pushes to main run quality; pull requests and verify/** pushes run verify.
 # Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:

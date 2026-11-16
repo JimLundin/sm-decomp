@@ -1,7 +1,5 @@
-//! Per-actor Ceres contact against W1's current owned shots.
-//!
-//! Checked `OrdinaryPower` gameplay calls this seam before each processing door's AI,
-//! using its current actor facts. Unsupported owners and actors retain named limits.
+//! Ordered Ceres contact against the production weapons owner's current shots.
+//! Each supplied opportunity carries its current geometry and interaction permissions.
 
 use enemy_interactions as contact;
 use weapons_projectiles as beam;

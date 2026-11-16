@@ -13,11 +13,11 @@ decision in MODEL §1, or a change where it lives, then a line here.
 3. The goal's number is the milestone: power-on through Ceres played alone (decision 14). The
    work aims at the lowest rung of its ladder not yet reached (decision 18,
    [domains.md §4](architecture/domains.md#4-order)).
-4. Target acceptance is indexed scoped and integrated replay through the same production paths;
+4. Acceptance is indexed scoped and integrated replay through the same production paths;
    behaviours are rules and cases are witnesses (MODEL decisions 32 and 33,
-   [transition](cleanroom/PROCESS.md#replay-transition)). Current checks remain until reviewed cutover.
-5. Green pairs, the lockstep ratchet, harness floors and free-run floors never fall
-   ([STATUS](STATUS.md)).
+   [transition](cleanroom/PROCESS.md#replay-transition)).
+5. Every indexed case holds its reviewed outcome, observation digest and counts; an expected
+   Unsupported boundary remains Unsupported ([STATUS](STATUS.md)).
 6. Size is counted as a guideline; the root records cut or proceed after review (decision 19).
 6a. The lowest rung's needs list is a limit: nothing outside it starts (decision 24).
 6b. A model's headline is its gain over a step that does nothing; a check is trusted once a
@@ -31,7 +31,7 @@ decision in MODEL §1, or a change where it lives, then a line here.
 
 ## The shape of the code
 
-7. `model` decides, `exact` encodes, `tick` orders; intents between them
+7. `model` decides, `exact` encodes, production orders; intents between them
    ([MODEL §2](architecture/MODEL.md#2-layers)).
 8. Every behaviour is a catalogue entry; switches stay Fixed until a use asks
    ([MODEL §3](architecture/MODEL.md#3-behaviours-are-named-catalogued-and-switchable)).

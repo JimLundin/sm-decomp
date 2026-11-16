@@ -1,0 +1,357 @@
+format = 1
+engine_api = "production-v1"
+observation_schema = "semantic-v1"
+lock = "scenarios/locks/lsnes.toml"
+
+[[case]]
+id = "movement/D-inherited-cut"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 155 }
+end = { cut_inclusive = 156 }
+rules = ["samus-movement/TravelledDistances"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = [], outputs = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"] }
+checkpoints = true
+limits = ["one-step travel witness", "upstream producers externally admitted", "prior-cut observed actor roster; current actor-selection update and request timing unproved", "movement receipts and downstream consumers outside declared comparisons", "pixel composition omitted"]
+
+[[case.borrowed]]
+dependency = "movement.world"
+provider = "preceding-cut-level-and-observed-interactive-roster"
+fields = ["world.blocks", "world.interactive_roster", "world.observed_solid_geometry"]
+phase = "preceding-record-cut"
+claim = "prior-cut membership and geometry observed; current actor-selection update and request timing unproved"
+
+[[case.borrowed]]
+dependency = "movement.animation-and-camera"
+provider = "preceding-cut-appearance-state-and-production-ahead"
+fields = ["appearance.playhead", "appearance.figure", "appearance.boost", "camera.remembered"]
+phase = "before-movement"
+claim = "feedback producer outside case"
+
+[[case]]
+id = "movement/W15"
+kind = "scoped"
+row = "item-morph-ball"
+start = { source = "cache-cut", frame = 814 }
+end = { cut_inclusive = 817 }
+rules = ["samus-movement/WallJump", "samus-movement/TouchedCells"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed"], outputs = ["movement.wall_test", "movement.reached"], output_cut = 817 }
+checkpoints = true
+limits = ["appearance feedback externally admitted", "upstream producers externally admitted", "prior-cut observed actor roster; current actor-selection update and request timing unproved", "camera and pixel composition omitted"]
+
+[[case.borrowed]]
+dependency = "movement.animation"
+provider = "preceding-cut-appearance-state-and-production-ahead"
+fields = ["appearance.playhead", "appearance.figure", "appearance.boost"]
+phase = "before-movement"
+claim = "appearance producer external; only movement state carried"
+
+[[case.borrowed]]
+dependency = "movement.world-and-controller"
+provider = "preceding-cut-independent-observations"
+fields = ["world.blocks", "world.interactive_roster", "world.observed_solid_geometry", "controller.held", "controller.pressed", "progress.equipment", "mode.cinematic", "clock.parity", "elevator.moving"]
+phase = "preceding-record-cut"
+claim = "upstream changing producers external; current actor-selection update and request timing unproved"
+
+[[case]]
+id = "audio/native-control"
+kind = "scoped"
+row = "native-control"
+start = { source = "native-seed", path = "control.local.toml", sha256 = "7b7eb9f99ad4e148889376e154aff5e8f30fe887d01f105ecb864c6c74d1aa52" }
+end = { cut_inclusive = 183 }
+rules = ["audio-transport/MusicalProgress", "audio-transport/WholeArrangement", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
+profile = "reference"
+responsibilities = ["audio"]
+content = "native-resident-content"
+inputs = "native-physical-presentations"
+expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
+checkpoints = true
+limits = ["measured clock and physical presentations admitted", "CPU workload and sender timing unproved", "audio waveform omitted", "77 independently named source-writer exclusions"]
+
+[[case.borrowed]]
+dependency = "audio.clock-and-requests"
+provider = "pinned-native-capture"
+fields = ["physical.clock", "physical.presentations"]
+phase = "CPU-cut"
+claim = "clock and CPU request producers outside case"
+
+[[case]]
+id = "audio/native-expire-prefix"
+kind = "scoped"
+row = "native-expire"
+start = { source = "native-seed", path = "expire.local.toml", sha256 = "45113c87404d46760293702be222f3efa53e1404df6a1c8367c7b7f0a00728b7" }
+end = { cut_inclusive = 64 }
+rules = ["audio-transport/MusicalProgress", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
+profile = "reference"
+responsibilities = ["audio"]
+content = "native-resident-content"
+inputs = "native-physical-presentations"
+expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
+checkpoints = true
+limits = ["measured clock and physical requests admitted", "ends before external repeat-count intervention", "no through-intervention continuation claim", "CPU timing and audio waveform unproved"]
+
+[[case.borrowed]]
+dependency = "audio.clock-and-requests"
+provider = "pinned-native-capture"
+fields = ["physical.clock", "physical.presentations"]
+phase = "CPU-cut"
+claim = "clock and CPU request producers external"
+
+[[case]]
+id = "audio/native-expire-post64"
+kind = "scoped"
+row = "native-expire"
+start = { source = "native-checkpoint", path = "expire.local.toml", sha256 = "45113c87404d46760293702be222f3efa53e1404df6a1c8367c7b7f0a00728b7", seed_path = "expire-post64-seed.local.toml", seed_sha256 = "1220beb747750c51b702ae7b26e5f2655743ad489a78b76e58ab4ccbaeaa4ab2", frame = 64 }
+end = { cut_inclusive = 183 }
+rules = ["audio-transport/MusicalProgress", "audio-transport/FinitePhrases", "audio-transport/WholeArrangement", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
+profile = "reference"
+responsibilities = ["audio"]
+content = "native-resident-content"
+inputs = "native-physical-presentations"
+expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
+checkpoints = true
+limits = ["independent complete post-intervention seed at original cut64", "compares original cuts65 through183", "no through-intervention continuity claim", "measured clock and physical requests admitted", "CPU timing and audio waveform unproved"]
+
+[[case.borrowed]]
+dependency = "audio.clock-and-requests"
+provider = "pinned-native-capture"
+fields = ["physical.clock", "physical.presentations"]
+phase = "CPU-cut"
+claim = "clock and CPU request producers external"
+
+[[case]]
+id = "ceres/door-closes-after-departure"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+actor_slot = 0
+start = { source = "cache-cut", frame = 6 }
+end = { cut_inclusive = 10 }
+rules = ["boss-ceres-ridley/Waiting", "boss-ceres-ridley/SheIsNear", "boss-ceres-ridley/Polling", "boss-ceres-ridley/Closing", "boss-ceres-ridley/Shown", "boss-ceres-ridley/Solid"]
+profile = "reference"
+responsibilities = ["ceres"]
+content = "ceres-reference"
+inputs = "preceding-cut-ceres-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["ceres.phase", "ceres.wait", "ceres.figure", "ceres.shown", "ceres.solid"], outputs = [] }
+checkpoints = false
+limits = ["Samus position and station stage externally admitted", "current-cut framework counter validates one externally scheduled run; actor selection and update timing unproved", "opening sound and shake outputs omitted", "pixel composition and downstream collision omitted", "durable Ceres codec unavailable"]
+
+[[case.borrowed]]
+dependency = "ceres.samus-and-stage"
+provider = "preceding-cut-independent-observations"
+fields = ["samus.position", "station.stage"]
+phase = "preceding-record-cut"
+claim = "movement and progress producers outside case; Calm and Getaway only"
+
+[[case.borrowed]]
+dependency = "ceres.actor-run"
+provider = "adjacent-cut-framework-counter-and-identity"
+fields = ["actor.identity", "actor.position", "actor.framework_counter"]
+phase = "current-record-cut"
+claim = "one run supplied externally; no Ceres output feeds input or owned state"
+
+[[case]]
+id = "weapons-contact/M0-four-searches"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 156 }
+end = { cut_inclusive = 160 }
+rules = ["weapons-projectiles/ShotSpacing", "weapons-projectiles/HoldingShoot", "weapons-projectiles/CannonOrigin", "weapons-projectiles/InheritedMotion", "weapons-projectiles/FlyingBeam", "enemy-interactions/ContactAllowed", "enemy-interactions/BoxOverlap", "enemy-interactions/FirstPowerShot"]
+profile = "reference"
+responsibilities = ["weapons", "contact"]
+content = "player-rom-import"
+inputs = "preceding-cut-weapons-contact-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["weapons.state"], outputs = ["contact.consumed-markers"] }
+checkpoints = true
+limits = ["four-step scoped weapons/contact witness", "controller, movement inheritance, muzzle context, room geometry and actor opportunities externally admitted", "actor selection and AI not executed; watch validates preceding contact fields", "retained trail appearance, event consumers, OAM, pixels, door response and sound/shake effects uncompared", "occupied starts require independent retained appearance and are unsupported"]
+
+[[case.borrowed]]
+dependency = "weapons.cannon-and-world"
+provider = "preceding-cut-recorded-ordinary-weapons-inputs"
+fields = ["controller.held", "controller.pressed", "controller.previous_pressed", "pose.current", "pose.previous", "pose.pending_aim", "muzzle.centre", "movement.directional_travel", "camera.origin", "camera.vertical_fraction", "world.blocks", "world.bts", "world.dimensions", "mode.time_stopped"]
+phase = "preceding-record-cut"
+claim = "upstream context externally admitted; no control, motion, camera or geometry producer claim"
+
+[[case.borrowed]]
+dependency = "contact.actor-opportunities"
+provider = "independent-watched-m0-door-membership"
+fields = ["actor.processing_order", "actor.permissions", "actor.geometry", "actor.protection", "actor.figure", "actor.tangibility"]
+phase = "before-each-door-contact"
+claim = "bounded original watch validates ordered slots0 then1 and immutable preceding actor contact fields for this caller; actor selection and AI execution outside case"
+
+[[case]]
+id = "camera/unchanged-centre-follow"
+kind = "scoped"
+row = "item-morph-ball"
+start = { source = "cache-cut", frame = 1215 }
+end = { cut_inclusive = 1216 }
+rules = ["world-camera/FollowingHer", "world-camera/Remembering", "world-camera/RememberedHeightFraction"]
+profile = "reference"
+responsibilities = ["camera"]
+content = "recorded-scroll-run"
+inputs = "preceding-cut-camera-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["camera.view.x.pixel", "camera.view.x.fraction", "camera.view.y.pixel", "camera.view.y.fraction", "camera.remembered.x.pixel", "camera.remembered.x.fraction", "camera.remembered.y.pixel", "camera.remembered.y.fraction", "camera.vertical-fraction"], outputs = [] }
+checkpoints = true
+limits = ["one ordinary follow externally scheduled", "movement centre and unchanged pose externally observed; no placement supplied", "scroll producer externally observed", "gameplay update scheduling and other room writers unproved", "screen reads past the captured 50-byte run unsupported", "downstream weapons receipt consumption and pixels omitted"]
+
+[[case.borrowed]]
+dependency = "camera.movement-and-room"
+provider = "preceding-cut-unchanged-producer-facts"
+fields = ["movement.physical-centre", "movement.facing", "movement.backwards", "movement.rising", "movement.no-placement", "room.screens", "room.heights", "room.lead", "clock.time-stopped"]
+phase = "preceding-record-cut"
+claim = "prior facts admitted only while independently captured movement and room producer fields remain unchanged; camera-owned current fields are expectations only"
+
+[[case]]
+id = "hud/stationary-map-blink"
+kind = "scoped"
+row = "chain-any-0001-DF45"
+start = { source = "cache-cut", frame = 7 }
+end = { cut_inclusive = 24 }
+rules = ["interface-hud/HerBlink", "interface-hud/MiniMapWindow"]
+profile = "reference"
+responsibilities = ["hud"]
+content = "hud-reference"
+inputs = "preceding-cut-hud-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["hud.grid", "hud.explored", "hud.energy", "hud.missiles", "hud.supers", "hud.bombs", "hud.highlighted", "hud.selected", "hud.one-shot", "hud.map-off"], outputs = [] }
+checkpoints = false
+limits = ["drops represented by Nothing under unselected invariant; turn-on represented by false under powered-on invariant; all alternatives require complete production state/output equivalence proof", "stationary upstream producer values borrowed and required unchanged", "exactly one ordinary HUD invocation supplied by scoped schedule; caller timing unproved", "click and switch events, video upload and composed pixels omitted", "durable HUD codec unavailable"]
+
+[[case.borrowed]]
+dependency = "hud.upstream-status-controls-and-map"
+provider = "preceding-cut-independent-observations"
+fields = ["frame-counter", "physical-controls", "bindings", "progress-gauges", "equipment", "samus-handlers", "samus-pose", "samus-position", "room-map-origin", "room-size", "area", "map-collected"]
+phase = "preceding-record-cut"
+claim = "external quantities only; paired current cuts certify unchanged producers and one gameplay tick"
+
+[[case.borrowed]]
+dependency = "hud.inert-drop-and-turn-on-inputs"
+provider = "complete-production-alternative-equivalence"
+fields = ["drops-before", "drops-after", "collected", "map-turned-on", "mother-brain-falls"]
+phase = "before-HUD-entry"
+claim = "initial seed selection None and mini-map On; physical controls empty throughout and pickups/boss events rejected; all3 before-drop x3 after-drop x2 turn-on alternatives preserve complete state and outputs; no claim that unrecorded drops are absent"
+
+[[case]]
+id = "appearance/standing-clip"
+kind = "scoped"
+row = "samus-input-poses"
+start = { source = "cache-cut", frame = 434 }
+end = { cut_inclusive = 450 }
+rules = ["samus-appearance/ClipPlays"]
+profile = "reference"
+responsibilities = ["appearance"]
+content = "player-rom-import"
+inputs = "preceding-cut-appearance-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["appearance.step", "appearance.time-left", "appearance.boost-stage", "appearance.laps-left"], outputs = [] }
+checkpoints = true
+limits = ["unchanged dry standing figure", "one ordinary animation update per advancing gameplay tick", "movement, equipment and liquid producers externally admitted", "appearance sound and drawing opportunities outside comparison", "upstream timing and downstream pixels unproved"]
+
+[[case.borrowed]]
+dependency = "appearance.movement-equipment-liquid-and-controller"
+provider = "preceding-cut-standing-interval"
+fields = ["appearance.figure", "movement.standing_restart", "controller.held", "controller.bindings", "progress.equipment", "progress.energy", "liquid.slowdown", "sound.queue_count"]
+phase = "preceding-record-cut"
+claim = "unchanged figure, equipment and zero slowdown certify preceding-cut values; movement and producer timing unproved"
+
+[[case]]
+id = "progress/planet-awake-recorded"
+kind = "scoped"
+row = "event-zebes-awake"
+start = { source = "cache-cut", frame = 151 }
+end = { cut_inclusive = 152 }
+rules = ["run-progress/EventsHappen"]
+profile = "reference"
+responsibilities = ["progress"]
+content = "player-rom-import"
+inputs = "observed-fixed-progress-events"
+expectations = { provider = "pinned-record-cache", fields = ["progress.events.PlanetAwake", "progress.events.MotherBrainTankBroken", "progress.events.PhantoonStatueGrey", "progress.events.RidleyStatueGrey", "progress.events.DraygonStatueGrey", "progress.events.KraidStatueGrey", "progress.events.TourianOpen", "progress.events.GlassTunnelBroken", "progress.events.AcidReceded", "progress.events.ShaktoolPath", "progress.events.TimeBombSet", "progress.events.AnimalsFreed", "progress.events.MetroidRoom1Empty", "progress.events.MetroidRoom2Empty", "progress.events.MetroidRoom3Empty", "progress.events.MetroidRoom4Empty", "progress.events.TourianRoomsUnset", "progress.events.LavaQuakeOutrun", "progress.zebetites"], outputs = [] }
+checkpoints = false
+limits = ["event-store comparison only; inventory, places and other Progress fields retained but unselected", "other report producers are outside this witness", "two observed fixed PlanetAwake setter visits; generic event arguments unavailable", "upstream trigger timing is externally observed", "checkpoint codec unavailable"]
+
+[[case.borrowed]]
+dependency = "progress.event-reports"
+provider = "pinned-record-executed-fixed-event-setter-visits"
+fields = ["progress.reports.identity", "progress.reports.order", "progress.reports.count"]
+phase = "observed-interval-execution"
+claim = "fixed PlanetAwake setter identity from approved decode notes; no result-word-derived reports"
+
+[[case]]
+id = "blocks/missing-requests"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 1 }
+rules = []
+profile = "reference"
+responsibilities = ["blocks"]
+content = "player-rom-import"
+inputs = "unavailable"
+expectations = { provider = "pinned-record-cache", fields = [], outputs = [] }
+checkpoints = false
+limits = ["independent complete block seed and ordered reaction requests unavailable", "boundary holds unsupported; no behaviour Pass"]
+
+[[case]]
+id = "doors/missing-passage-inputs"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 1 }
+rules = []
+profile = "reference"
+responsibilities = ["doors"]
+content = "player-rom-import"
+inputs = "unavailable"
+expectations = { provider = "pinned-record-cache", fields = [], outputs = [] }
+checkpoints = false
+limits = ["independent complete passage seed and opportunity-time inputs unavailable", "boundary holds unsupported; no behaviour Pass"]
+
+[[case]]
+id = "audio-sender/missing-service-inputs"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 1 }
+rules = []
+profile = "reference"
+responsibilities = ["audio-sender"]
+content = "player-rom-import"
+inputs = "unavailable"
+expectations = { provider = "pinned-record-cache", fields = [], outputs = [] }
+checkpoints = false
+limits = ["independent CPU sender seed and ordered queue/service inputs unavailable", "boundary holds unsupported; no behaviour Pass"]
+
+[[case]]
+id = "integrated/missing-dependency-closure"
+kind = "integrated"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 0 }
+end = { cut_inclusive = 1 }
+rules = ["samus-movement/TravelledDistances"]
+profile = "reference"
+responsibilities = ["movement", "audio"]
+content = "player-rom-import"
+inputs = "preceding-cut-movement-inputs"
+expectations = { provider = "pinned-record-cache", fields = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"], outputs = [] }
+checkpoints = false
+limits = ["complete production dependency closure unavailable", "boundary holds unsupported; no behaviour Pass"]
+
+[[case]]
+id = "movie/missing-power-on"
+kind = "movie"
+row = "chain-any-0003-DFD7"
+start = { source = "power-on" }
+end = { cut_inclusive = 1 }
+rules = ["samus-movement/TravelledDistances"]
+profile = "reference"
+responsibilities = ["movement", "audio"]
+content = "player-rom-import"
+inputs = "movie"
+expectations = { provider = "pinned-record-cache", fields = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"], outputs = [] }
+checkpoints = false
+limits = ["complete production dependency closure unavailable", "boundary holds unsupported; no behaviour Pass"]

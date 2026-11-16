@@ -4,7 +4,7 @@
 use data::spritemap::{SpriteAttributes, SpriteSize, Spritemap};
 use types::Pair;
 
-use crate::state::room::BlockPoint;
+use crate::state::render::BlockPoint;
 use crate::state::video::TilemapEntry;
 
 /// A point on the screen, in pixels from the picture's top-left corner, at full precision.

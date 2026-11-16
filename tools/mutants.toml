@@ -1,83 +1,9 @@
-# Invented faults in named behaviours, never oracle bytes. Each must compile and
-# fail its exact recorded floor or ratchet test; a build failure or an absent test is invalid.
+# A bridge fault must fail at its reviewed recorded cut and field.
 [[fault]]
-name = "gravity-reversed"
-domain = "samus-movement"
-file = "crates/clean/samus_movement/src/vertical.rs"
-before = "self.speed += r.gravity;"
-after = "self.speed -= r.gravity;"
-test = "harness::tests::movement_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::movement_runs_free_against_the_cache"]
-
-[[fault]]
-name = "camera-extra-omitted"
-domain = "world-camera"
-file = "crates/clean/world_camera/src/follow.rs"
-before = "distance(her, seen) + rules.extra"
-after = "distance(her, seen) + (rules.extra - rules.extra)"
-test = "harness::tests::the_camera_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::the_camera_runs_free_against_the_cache"]
-
-[[fault]]
-name = "ceres-door-does-not-see-her"
-domain = "boss-ceres-ridley"
-file = "crates/clean/boss_ceres_ridley/src/rules.rs"
-before = "const REACH: u16 = 48;"
-after = "const REACH: u16 = 0;"
-test = "ratchet::tests::committed_ratchet_holds_against_the_cache"
-
-extra_tests = ["harness::tests::the_ceres_doors_hold_their_floors_against_the_cache", "harness::free::tests::the_ceres_doors_run_free_against_the_cache"]
-
-[[fault]]
-name = "clip-countdown-too-fast"
-domain = "samus-appearance"
-file = "crates/clean/samus_appearance/src/state.rs"
-before = "less_one(self.time_left.0)"
-after = "less_one(self.time_left.0.saturating_sub(1))"
-test = "harness::tests::appearance_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::appearance_runs_free_against_the_cache"]
-
-[[fault]]
-name = "slide-count-stalls"
-domain = "world-doors"
-file = "crates/clean/world_doors/src/step.rs"
-before = "self.slide_frames = self.slide_frames.saturating_add(1);"
-after = "self.slide_frames = self.slide_frames.saturating_add(0);"
-test = "harness::tests::the_door_passage_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::the_door_passage_runs_free_against_the_cache"]
-
-[[fault]]
-name = "her-blink-phase-reversed"
-domain = "interface-hud"
-file = "crates/clean/interface_hud/src/mini_map.rs"
-before = "let in_blink_colours = rules.her_blink.first_half(frame);"
-after = "let in_blink_colours = !rules.her_blink.first_half(frame);"
-test = "harness::tests::the_hud_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::the_hud_runs_free_against_the_cache"]
-
-[[fault]]
-name = "events-do-not-happen"
-domain = "run-progress"
-file = "crates/clean/run_progress/src/report.rs"
-before = "Report::Happened(event) => self.events[event] = true,"
-after = "Report::Happened(event) => self.events[event] = false,"
-test = "harness::tests::progress_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::progress_runs_free_against_the_cache"]
-
-[[fault]]
-name = "beam-horizontal-acceleration-reversed"
-domain = "weapons-projectiles"
-file = "crates/clean/weapons_projectiles/src/lib.rs"
-before = ".wrapping_add(rules.acceleration.0.wrapping_mul(axes.x));"
-after = ".wrapping_sub(rules.acceleration.0.wrapping_mul(axes.x));"
-test = "harness::tests::weapons_hold_their_floors_against_the_cache"
-extra_tests = ["harness::free::tests::weapons_run_free_against_the_cache"]
-
-[[fault]]
-name = "ceres-consumption-not-applied"
-domain = "enemy-interactions"
-file = "crates/game/src/enemy_interactions_bridge.rs"
-before = "state.consume(slot);"
-after = "state.consume(beam::ShotSlot::Slot4);"
-test = "harness::tests::contact_holds_its_floors_against_the_cache"
-extra_tests = ["harness::free::tests::contact_runs_free_against_the_cache"]
+name = "audio-elapsed-not-carried"
+file = "crates/game/src/production.rs"
+before = "let elapsed = stop.difference(&state.0.now);"
+after = "let elapsed = audio_transport::time::cycles(0);"
+case = "audio/native-control"
+cut = 0
+field = "track0.note"

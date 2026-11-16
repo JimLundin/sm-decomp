@@ -17,6 +17,50 @@ The retained sender proof covers552activities,184cuts,19offers and140CPU events,
 independent input sequence. Earlier individually reseeded spans are localizers. Captured CPU
 clock events are diagnostic stimuli; T1 must supply production workload clocks independently.
 
+## Independent expiry continuation seed
+
+`tools/audio_expiry_seed.py` imports `audio-expiry-post64-seed-v1` from the native expiry
+capture's complete `music-after` snapshot. The capture dumps `cut-64` before the paused
+repeat-count adjustment, increments its capture number to65, then dumps `music-before`
+and `music-after` at the intervention barrier. Every `music-before` device object equals
+its cut64 object. The post-adjustment CPU, PPU and DSP objects are unchanged; APURAM
+changes only offsets128/130, and SMP_STATE changes only their embedded equivalents176/178.
+The independent process-memory before/after snapshots equal the corresponding SMP objects.
+The ordinary cut64 observation remains the pre-adjustment expectation.
+
+The importer decodes every retained State field from the post-adjustment APURAM, CPU ports,
+native timer prescaler, captured publications and validated source content. It loads no
+reference or clean model and never advances one to construct the seed. Typed music positions
+come from the observed next-byte pointer, repeated-phrase target and root return pointer,
+with Duration/Articulation bundles mapped to their typed cursor. Active effect parts come
+from their allocated voice, instruction-list cursor/countdown, pitch/fraction and active slide
+registers. Their source span boundaries are checked against the independently imported clip.
+Every admitted release-history entry is decoded, including dormant parts. All native effect
+reservations belong to the decoded parts, so the external reservation set is empty.
+Resident identity and full content stay bound to the independently imported arrangement.
+
+The seed's global time is cut64's1109109 AudioCycles since the loaded native snapshot.
+Native PC is at the DSP-update boundary after the resident music pair, with no work pending.
+The preceding music publication is289 cycles earlier. The unchanged resident CPU0 request
+establishes a stable pair without retries; the source return establishes the next polling
+episode's first empty opportunity at publication+500.5, or211.5 cycles after the seed.
+The prescaler recurrence agrees independently from loaded state through cuts63/64/65.
+The first subsequent `soundEffectsClock` source store occurs406 cycles after the seed,
+agreeing with the first nonempty read on that episode and its26.5-cycle distribution interval.
+The importer checks both the recurrence and this source-store witness before emitting State.
+
+`tools/audio_expiry_seed_pins.toml` freezes184 source inputs explicitly, including the
+cut63/64/65 and intervention device objects, clock/write sidecars, capture code and decode
+content. These post-adjustment objects are not assumed to belong to the earlier selected
+roster. The private seed schema carries the full typed State, global start/next/last cuts,
+publication offset, initial physical replies, content/fixture hashes and those source pins.
+Its output remains private or in an encrypted evidence bundle.
+
+Expiry acceptance is two carried cases: the initial seed compares cuts0..64; the independent
+post-adjustment seed64 compares cuts65..183. There is no omitted cut, but these cases do not
+prove an uninterrupted184-cut execution or a restored continuation that begins before the
+intervention and crosses it. Restoration proof belongs separately to each carried case.
+
 ## Sources by behaviour
 
 | Entry | Source ownership and evidence |

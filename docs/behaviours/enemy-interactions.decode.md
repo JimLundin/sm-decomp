@@ -69,7 +69,17 @@ preserves evolving state even where this narrow harness can reconstruct it.
 
 Revalidated existing independent original watch against recovered immutable records:
 chain-any-0003-DFD7 preceding cuts156..160, ten entries in order slots0 then1, all nine
-actor contact words agree. The original watched replay's existing evidence is 345/345 WRAM
+actor contact words and all five global permission words agree. The pre-contact watch is
+`boundary-c1.txt`, SHA-256
+`16620f616496ff75e1ce8fed6f5219fb1b8540d4ac04cdcd6297d5da66b02202`, captured by the
+execution callback in `boundary-server.lua` at A0:A143. The selected replay uses preceding
+cuts156..159: eight ordered visits, 72 actor-word comparisons and 40 global-word comparisons.
+The globals cover gameplay mode, actor updates, interactions, Samus stopped and enemies
+stopped; the post-W1 shot count is not admitted from the preceding cut. The trace stays in
+private oracle evidence; this source pin and the immutable record cross-check establish
+the bounded input tape, not actor selection outside it.
+
+The original watched replay's existing evidence is 345/345 WRAM
 cuts; this observer did not rerun that oracle session. The new checks decoded all345 records,
 confirmed shot live157..159, consumed160, absent161, and independently predicted post-W1
 bodies from preceding records with the observer W1 reference. Its input_frame ignores the

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetch the root-pinned encrypted pair; the fixtures retain their independent source pins.
+# Fetch root-pinned native fixtures and the independent continuation seed.
 set -euo pipefail
 if [ "$#" -ne 2 ]; then
   echo "usage: $0 <rom> <new-fixture-dir>" >&2
@@ -41,7 +41,7 @@ SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat "$rom"; } | sha256sum | 
 export SM_SEED_PASSPHRASE
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
   -in "$scratch/pair.enc" -out "$scratch/pair.tar.xz"
-test "$(tar -tJf "$scratch/pair.tar.xz" | LC_ALL=C sort)" = "$(printf '%s\n' control.local.toml expire.local.toml native.sha256)"
+test "$(tar -tJf "$scratch/pair.tar.xz" | LC_ALL=C sort)" = "$(printf '%s\n' control.local.toml expire-post64-seed.local.toml expire.local.toml native.sha256)"
 mkdir "$destination"
 tar -xJf "$scratch/pair.tar.xz" -C "$destination"
 (cd "$destination" && sha256sum --check --strict native.sha256)

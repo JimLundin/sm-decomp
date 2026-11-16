@@ -9,6 +9,8 @@ description = "The command line over the engine, the oracle and the comparison"
 [dependencies]
 runtime = { path = "../runtime" }
 verify = { path = "../verify" }
+serde = { version = "=1.0.229", features = ["derive"] }
+toml = "=1.2.1"
 
 [lints]
 workspace = true

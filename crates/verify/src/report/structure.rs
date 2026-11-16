@@ -26,8 +26,6 @@ const WORKSPACE: &str = "Cargo.toml";
 const ENGINE_CRATES: [&str; 4] = ["data", "game", "runtime", "app"];
 /// The State codec's crates.
 const CODEC_CRATES: [&str; 2] = ["canonical", "canonical_derive"];
-/// What a clean crate's name starts with.
-const CLEAN_PREFIX: &str = "clean_";
 /// The shared types' crate name, as code names it.
 const SHARED_CRATE: &str = "types";
 
@@ -40,6 +38,7 @@ pub(super) struct Source {
 /// A workspace crate and the workspace crates it depends on.
 pub(super) struct Crate {
     name: String,
+    clean: bool,
     dependencies: BTreeSet<String>,
 }
 
@@ -125,6 +124,7 @@ impl Sources {
                     .collect();
                 Ok(Crate {
                     name: manifest.package.name,
+                    clean: Path::new(member).starts_with("crates/clean"),
                     dependencies,
                 })
             })
@@ -160,8 +160,8 @@ fn member_folders(root: &Path, members: &[String]) -> Result<Vec<String>, String
     Ok(folders)
 }
 
-/// Whether a crate, by its name, is in a group of the crate diagram.
-type InGroup = fn(&str) -> bool;
+/// Whether a crate belongs to a group of the crate diagram.
+type InGroup = fn(&Crate) -> bool;
 
 /// A module of a crate, by its path from the crate root: `[]` is `lib.rs`.
 type ModulePath<'a> = Vec<&'a str>;
@@ -451,18 +451,22 @@ fn crates_section(out: &mut String, crates: &[Crate]) {
          bridges, and the verification crates hold them to the oracle.\n\n```mermaid\ngraph LR\n",
     );
     let groups: [(&str, &str, InGroup); 4] = [
-        ("engine", "engine", |name| ENGINE_CRATES.contains(&name)),
-        ("clean", "clean room", |name| name.starts_with(CLEAN_PREFIX)),
-        ("codec", "State codec", |name| CODEC_CRATES.contains(&name)),
-        ("verification", "verification", |name| {
-            !ENGINE_CRATES.contains(&name)
-                && !CODEC_CRATES.contains(&name)
-                && !name.starts_with(CLEAN_PREFIX)
+        ("engine", "engine", |krate| {
+            ENGINE_CRATES.contains(&krate.name.as_str())
+        }),
+        ("clean", "clean room", |krate| krate.clean),
+        ("codec", "State codec", |krate| {
+            CODEC_CRATES.contains(&krate.name.as_str())
+        }),
+        ("verification", "verification", |krate| {
+            !ENGINE_CRATES.contains(&krate.name.as_str())
+                && !CODEC_CRATES.contains(&krate.name.as_str())
+                && !krate.clean
         }),
     ];
     for (id, label, holds) in groups {
         let _ = writeln!(out, "  subgraph {id}[\"{label}\"]");
-        for krate in crates.iter().filter(|krate| holds(&krate.name)) {
+        for krate in crates.iter().filter(|krate| holds(krate)) {
             let _ = writeln!(out, "    {}[\"{}\"]", node("c", &krate.name), krate.name);
         }
         out.push_str("  end\n");

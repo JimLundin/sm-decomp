@@ -5,7 +5,7 @@
 //!
 //! The image is the battery file's byte layout read as little-endian words, in order: the
 //! checks, the three files, a stretch the save code never touches, and the checks' mirror.
-//! Slice 0 neither saves nor loads, so a file's contents stay opaque words here.
+//! A file's contents stay opaque words at this encoding boundary.
 
 use canonical::Canonical;
 

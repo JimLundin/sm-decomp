@@ -18,8 +18,8 @@ push only it; the root lands it. Read [AGENTS.md](../../../AGENTS.md) and
 
 [PROCESS](../../../docs/cleanroom/PROCESS.md#roles) names the roles of a clean-room round. Load the
 skill your brief names after this one; an engineer's task (oracle, tools, CI, docs) needs only
-this skill. Work by mechanism, not by divergence: lockstep and the localiser say *which behaviour*
-is wrong, not what code to write.
+this skill. Work by mechanism: a replay's first differing cut and field identifies the affected
+behaviour; its specification determines the implementation.
 
 ## Commit rules
 
@@ -45,10 +45,11 @@ is wrong, not what code to write.
   fresh test executables (exit 126), so it links each test target as a DLL and runs it through
   Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`). This is
   for local machines only, never CI; elsewhere it is `cargo test`. Doc tests run only in CI. The
-  harness tests replay recorded rows, so build them optimised: `CARGO_PROFILE_TEST_OPT_LEVEL=3`
-  takes `run_tests.sh verify` from about 2 minutes to under 30 seconds.
-- Behaviour: the lockstep ratchet, the free-run gate and the localiser, as
-  [STATUS](../../../docs/STATUS.md) shows. CI runs the ratchet and the gate on every pull request.
+  replay tests execute recorded cases, so build them optimised with `CARGO_PROFILE_TEST_OPT_LEVEL=3`.
+- Behaviour: run the affected indexed cases, then the complete required replay baseline as
+  [STATUS](../../../docs/STATUS.md) shows. Local acceptance and CI use the same runner.
+  Compare case outcomes, declared fields/outputs, null evidence and checkpoint continuations;
+  an expected Unsupported result is a held boundary, never a passing behaviour case.
 - A new check must catch a deliberate one-line bug: apply the mutant locally, confirm the check
   fails at the right frame and field, revert. Never commit the mutant.
 - **Fixing a failure.** Reproduce the exact failure (the same command, row, frame and field)
@@ -56,8 +57,7 @@ is wrong, not what code to write.
   before trying the next. The regression test asserts the property that was reported, not the
   mechanism of the fix.
 
-**Triage a difference:** localise (the localiser's first frame and field group, then lockstep's
-field) → observer: find the writer in the bank log and amend the spec → implementer: fix the model
+**Triage a difference:** use the replay's first differing cut and field → observer: find the writer in the bank log and amend the spec → implementer: fix the model
 → or a LEGACY entry naming the cause, the rows and the frames. Green never falls.
 
 ## Guardrails and traps
@@ -88,8 +88,8 @@ Branch <branch>, based on <base hash>. GATE OK <tip hash>.
 <hash> <title>        (one line per commit, oldest first, from git log)
 ```
 
-- **Evidence:** each check you ran, per row and mode, with its numbers before and after (ratchet
-  lines, green pairs, first differing frames), and any mutant result.
+- **Evidence:** each check you ran, per case and scope, with its numbers before and after (outcome,
+  compared observations, null baseline, first differing cut), and any mutant result.
 - **Needs from the root:** a bundle path and SHA-256 to upload, or a decision with its options.
 - **Found:** bugs, spec gaps, stale data, anything a teammate's work hit. Keep what you couldn't run
   under "Not run", with the reason. Every number comes from output you saw.

@@ -1,8 +1,8 @@
 # Principles
 
-[MODEL §1 decisions 32 and 33](MODEL.md#1-the-goal-and-what-is-exact) define the target replay
-acceptance process and removal policy. Current checks remain until the reviewed
-[transition](../cleanroom/PROCESS.md#replay-transition).
+[MODEL §1 decisions 32 and 33](MODEL.md#1-the-goal-and-what-is-exact) govern current indexed production replay
+and previous-gameplay removal. The reviewed
+[transition](../cleanroom/PROCESS.md#replay-transition) records replacement claims and losses.
 
 Jim agreed these principles on 2026-11-05. Every decision in [ARCHITECTURE.md](ARCHITECTURE.md)
 cites the principles it follows; [MODEL.md](MODEL.md) applies them to the game code. "How we know"
@@ -34,11 +34,13 @@ and from oracle measurements made beforehand, not found by editing until the dif
 *How we know:* a domain's spec (`docs/behaviours/`) lists its behaviours, sources and test
 vectors before its code lands.
 
-**P3. Keep what is proven; rebuild what is not.** The oracle, the lock format, facts, lockstep
-localisation, `[exact]` refactors, LEGACY, typed mutants and `land.sh` carry over. No game code does.
+**P3. Keep what is proven; rebuild what is not.** Independent oracle capture, pinned records, `[exact]` refactors,
+LEGACY, meaningful mutants and `land.sh` remain. Previous executable gameplay is removed;
+reviewed services remain by responsibility. Indexed replay uses the actual production entry.
 
-**P4. The engine's structure follows the hardware. A harness's limits are parameters.** The Tick is
-a video frame with a real NMI, a real line order and real lag. An oracle's shortcuts (line-granular
+**P4. Observable hardware behaviour is part of the model. Replay limits are explicit.** The Tick is
+a frame boundary with observed NMI, line order and lag requirements. Scoped transport
+or motion entries do not imply a complete clock or frame dispatcher. An oracle's shortcuts (line-granular
 interrupts, its colour conversion) live in the Reference profile and in LEGACY, never in the shape
 of the Tick. *How we know:* swapping oracles changes `OracleRules` and locks, not types.
 
@@ -69,9 +71,10 @@ timing hidden inside a pass.
 *How we know:* every wait site the oracle stops at maps to a named `Wait`. The decoder rejects a stack
 it can't map instead of guessing.
 
-**P10. The gate is the engine, in free run, against the lock, with facts.** A row counts only if the
-engine executes it, every compared stream matches and its facts hold. Lockstep only finds the first
-bad Tick. *How we know:* reports keep "reached", "matches" and "deterministic" apart.
+**P10. Acceptance executes production with carried State against independent expectations.**
+Scoped and integrated cases use the same entry and runner. Compared cuts and outputs must
+match; missing dependencies stay unsupported. *How we know:* reports separate completed
+behaviour from held unsupported boundaries and disclose borrowed inputs.
 
 **P11. Every check must be able to fail.** Every gate stream has a mutant that must fail it, and so
 does the decoder. Every exclusion is a named LEGACY row. A surviving mutant is red.
@@ -82,7 +85,7 @@ engine and oracle, or oracle and hardware, is a LEGACY row. A second reference (
 captures) is in the build order.
 
 **P13. Measure outcomes; structural counts are advisory.** Only measures that need the engine to run
-alone can fail CI: green pairs, facts, verified Ticks/s. (Structural ratchets once reached zero
+alone can fail CI: indexed production comparisons, reviewed boundaries, facts and verified throughput. (Structural ratchets once reached zero
 while the old code still ran.)
 
 **P14. Verified speed is a requirement from the first slice.** Every landing reports Ticks/s. (At
@@ -145,7 +148,7 @@ point, presentation only through `&`. The compiler checks it.
 
 **K5. The engine fails in types, not panics.** No `unwrap`, `expect`, `panic!` or indexing that can
 panic in engine code. Arithmetic states how it overflows (`wrapping_*`, `checked_*`, `saturating_*`):
-the original's arithmetic is 16-bit and wraps. An engine fault is a `SessionFault`; a full table is a
+the original's arithmetic is 16-bit and wraps. An engine fault is a typed production fault; a full table is a
 gameplay result; the original's own crashes are an `OriginalFailure`.
 *Jim (2026-11-05):* confirmed, unless it grew code volume by a factor; measured, it cost about 2%.
 Patterns: iterators instead of indices; `get`, `split_at_mut_checked` and `split_first_mut` with
