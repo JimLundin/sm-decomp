@@ -15,7 +15,7 @@ use case. To build it and run the checks, see [BUILDING](docs/BUILDING.md).
 
 | Milestone | Frames | The engine plays alone | Still needed |
 | --- | ---: | ---: | --- |
-| **Power-on through Ceres**, the any% movie from power-on | 15,196 | 0 (0.0 %) | 33 of 33: S1, S2, S5, CAM, H2, P1, W1, W2, C1, B8, R1, E1, E2, AF0 (in progress); S4, H1, P2, R3, R4, F2, F4, U1, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, R2, T1, V2 (not started) |
+| **Power-on through Ceres**, the any% movie from power-on | 15,196 | 0 (0.0 %) | 33 of 33: S1, S2, S5, CAM, H2, P1, W1, W2, C1, B8, R1, U1, E1, E2, AF0 (in progress); S4, H1, P2, R3, R4, F2, F4, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, R2, T1, V2 (not started) |
 
 The headline milestone ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 14): the engine replays the stretch from power-on with nothing fed back, every compared cut and byte matching. Until it does, the frames it plays alone are those inside the movie's rows whose every compared stream (all but `wram`) the free-run gate holds green, each row run from its own seed. Still needed are the plan's domains and platform work the stretch touches ([domains.md §4](docs/architecture/domains.md#4-order)) that are not done.
 
@@ -23,13 +23,13 @@ The ladder toward it ([domains.md §4](docs/architecture/domains.md#4-order)): s
 
 | Rung | Stretch | Frames | Plays alone | Rows start | Green pairs | Free run, least held of what it compares | Free run, least gain over the null model | Free run, least compared of its scope | Still needed |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 0 of 4 (and 2 of 2 on sram, timing) | 100.0 % (every domain) | 0.0 % (run-progress, world-blocks) | 39.5 % (enemy-interactions) | 19 of 19: S1, W1, S5, CAM, H2, P1, C1, B8, R1, E1, E2, AF0 (in progress); R2, A1, AF1, AF2, AF3, AF4a, V3 (not started) |
-| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 0 of 25 (and 10 of 10 on sram, timing) | 100.0 % (every domain) | 0.0 % (run-progress) | 13.0 % (enemy-interactions) | 23 of 23: S1, W1, S5, CAM, H2, P1, C1, B8, R1, E1, E2, AF0 (in progress); R2, R3, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
-| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 0 of 50 (and 20 of 20 on sram, timing) | 99.6 % (samus-movement) | 0.0 % (world-blocks) | 6.5 % (enemy-interactions) | 27 of 27: S1, S2, S5, CAM, H2, P1, W1, W2, C1, B8, R1, E1, E2, AF0 (in progress); S4, H1, R2, R3, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M0 | Ceres's third room, across its door, frames 9,232-9,576 | 345 | 0 (0.0 %) | 1 of 1 | 0 of 4 (and 2 of 2 on sram, timing) | 100.0 % (every domain) | 0.0 % (run-progress, world-blocks) | 0.0 % (audio-transport) | 19 of 19: S1, W1, S5, CAM, H2, P1, C1, B8, R1, E1, E2, AF0 (in progress); R2, A1, AF1, AF2, AF3, AF4a, V3 (not started) |
+| M1 | Ceres's rooms 1 to 5, down to Ridley's door, frames 8,538-10,161 | 1,624 | 0 (0.0 %) | 5 of 5 | 0 of 25 (and 10 of 10 on sram, timing) | 100.0 % (every domain) | 0.0 % (run-progress) | 0.0 % (audio-transport) | 23 of 23: S1, W1, S5, CAM, H2, P1, C1, B8, R1, E1, E2, AF0 (in progress); R2, R3, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M2 | Ceres with Ridley and the escape, frames 8,538-13,071 | 4,534 | 0 (0.0 %) | 10 of 10 | 0 of 50 (and 20 of 20 on sram, timing) | 99.6 % (samus-movement) | 0.0 % (world-blocks) | 0.0 % (audio-transport) | 27 of 27: S1, S2, S5, CAM, H2, P1, W1, W2, C1, B8, R1, E1, E2, AF0 (in progress); S4, H1, R2, R3, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
 The lowest rung not yet reached is M0, and the work starts only from its needs ([MODEL §1](docs/architecture/MODEL.md#1-the-goal-and-what-is-exact), decision 24). Their order, from the plan's edges (platform work's `before`, and the domains a domain reads, within the rung's needs; an item waits only on work not started): **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
-Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **11 are in progress** and **0 done**; 26 have not started. **59 rounds** have landed on 10 models; the plan estimates 157 rounds for the whole game.
+Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **12 are in progress** and **0 done**; 25 have not started. **60 rounds** have landed on 11 models; the plan estimates 157 rounds for the whole game.
 
 ![How much of each movie the checks cover](docs/timeline.svg)
 
@@ -41,6 +41,7 @@ Each model is built in the clean room from its spec alone, then checked frame by
 
 | Model | Plan | Status | Rounds | Vectors | Gain over null | Matched | Null model | Compared | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| audio-transport | U1 (in progress) | in progress | 1 | 112 | 0 (0.0 %) | 0 | 0 | 0 | 8,053 | 2,711 | 2.97 |
 | enemy-interactions | C1 (in progress) | in progress | 1 | 30 | 2 (0.7 %) | 295 | 293 | 295 | 264 | 362 | 0.73 |
 | weapons-projectiles | W1 (in progress) | in progress | 1 | 81 | 163 (0.7 %) | 22,329 | 22,166 | 23,507 | 4,035 | 2,062 | 1.96 |
 | samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 24 | 485 | 15,257 (72.6 %) | 20,857 | 5,600 | 21,001 | 11,805 | 10,524 | 1.12 |
@@ -63,7 +64,7 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 | 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3); V3 The free-run gate and lockstep start Ceres's chain rows (1) | 2 of 2 | 2 |
 | 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); E5 The engine's State holds the models' States (3); A1 Instruction lists as assets (3); AF0 Asset formats: the shared shapes, the import crate, the content cache (2); AF1 Asset formats: the world, rooms, levels and doors (3); AF2 Asset formats: tilesets and palettes (2) | 5 of 5 | 15 |
 | 2 | **R1 Doors and elevators** (in progress); **W1 Beams, missiles and bombs** (in progress); **C1 Fighting enemies** (in progress); H1 Energy, reserves and death; S4 Hurt and knockback, bomb jumps | R2 Room loading (2); AF3 Asset formats: enemies, projectiles and sprite objects (3); AF4a Asset formats: HUD art and area maps (1); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 3 of 5 | 21 |
-| 3 | **B8 Ceres Ridley and the escape** (in progress); F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; U1 Audio, the CPU side | AF5 Asset formats: scenes and Mode 7 (4); E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 1 of 7 | 30 |
+| 3 | **B8 Ceres Ridley and the escape** (in progress); F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; **U1 Audio, the CPU side** (in progress) | AF5 Asset formats: scenes and Mode 7 (4); E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 2 of 7 | 30 |
 | 4 | W3 Items to pick up; H3 Message boxes; C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B9 Ridley; B10 Mother Brain and the escape | AF4b Asset formats: the font, messages and the pause screens (2) | 0 of 12 | 66 |
 | 5 | U2 The music and sound sequencer; S3 The shinespark and echoes; S6 The grapple beam; S7 The x-ray scope; F1 The pause screen; F3 Game over | A3 Asset formats: songs, instruments, PCM samples and sound effects (3); E6 The audio mixer in runtime, not compared (1) | 0 of 6 | 23 |
 
@@ -75,7 +76,7 @@ The engine's code still to be rebuilt (`crates/game` without the bridges), besid
 | --- | ---: | ---: | ---: | ---: |
 | not yet rebuilt | 54 | 5,648 | 33,891 | 7,626 |
 | bridges from the engine to the models | 15 | 3,802 | 22,815 | 3,988 |
-| rebuilt models, shared types included | 94 | 5,341 | 32,043 | 12,549 |
+| rebuilt models, shared types included | 103 | 6,767 | 40,600 | 14,541 |
 
 ### Verification
 

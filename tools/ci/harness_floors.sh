@@ -7,7 +7,7 @@ receipt=$(mktemp)
 trap 'rm -f -- "$receipt"' EXIT
 for test in the_clock_holds_its movement_holds_its the_camera_holds_its \
   progress_holds_its appearance_holds_its the_hud_holds_its the_blocks_hold_their \
-  the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their contact_holds_its; do
+  the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their contact_holds_its audio_holds_its; do
   name="harness::tests::${test}_floors_against_the_cache"
   "${CARGO:-cargo}" test --locked -p verify --profile verify --lib "$name" -- --exact \
     | tee "$receipt"

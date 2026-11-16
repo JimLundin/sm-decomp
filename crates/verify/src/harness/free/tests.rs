@@ -377,6 +377,7 @@ fn every_domain_runs_free_against_the_cache() {
         failures: Vec::new(),
     };
     held.hold(&Clock, "game-time");
+    held.hold(&crate::harness::audio::cached::Audio, "audio-transport");
     let weapons = crate::harness::weapons::Weapons::load(&image).unwrap();
     held.hold(&weapons, "weapons-projectiles");
     let contact = crate::harness::contact::Contact::load(&image).unwrap();
@@ -460,6 +461,19 @@ fn contact_runs_free_against_the_cache() {
     };
     let domain = crate::harness::contact::Contact::load(&image).unwrap();
     hold_domain(&domain, "enemy-interactions", &cache);
+}
+
+/// Audio's unsupported ordinary rows are unreached defects, never out-of-scope successes.
+#[test]
+fn audio_runs_free_against_the_cache() {
+    let Some((cache, _)) = cache_and_image() else {
+        return;
+    };
+    hold_domain(
+        &crate::harness::audio::cached::Audio,
+        "audio-transport",
+        &cache,
+    );
 }
 
 #[test]

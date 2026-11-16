@@ -25,6 +25,7 @@ The rebuild's crates, as planned in
 | `samus_appearance` | her animation's timing (`crates/clean/samus_appearance`), part 1 of how Samus looks: the clip's steps, the pose's start, her moves' writes and the run's boost stages, built from its spec in the clean room, and its catalogue. | `types` |
 | `weapons_projectiles` | the uncharged power beam (`crates/clean/weapons_projectiles`): firing, inherited motion, contact, lifetime and picture intents, built from its spec in the clean room, and its catalogue. | `types` |
 | `enemy_interactions` | ordinary power-shot contact with single-box Ceres doors (`crates/clean/enemy_interactions`): stateless eligibility, overlap and stable shot consumption, built from its spec in the clean room. | none |
+| `audio_transport` | admitted request delivery, resident music/effect progress and timed physical reply publications (`crates/clean/audio_transport`), built from its spec in the clean room, and its catalogue. | `types` |
 
 The clean crates are the folders of `crates/clean/`, one level deep, each a workspace member
 (`crates/clean/*`). A model's package is its domain's name with dashes as underscores, and the

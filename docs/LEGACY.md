@@ -11,6 +11,17 @@ grep -rn 'LEGACY(' --include=*.rs crates
 Add an entry in the change that introduces the difference. When a check no longer needs an entry,
 remove the behaviour, its tags and its entry in the same change.
 
+## Audio transport production inputs
+
+- **Admitted audio without a production consumer** (U1, audio-transport): the engine has no
+  sender FIFO, physical request/reply transport or resident music/effect importer. The clean
+  model is proven in a harness with captured stimuli. T1 must supply real elapsed CPU workload
+  clocks and callback phases, and A3 must supply checked resident content, before an engine
+  bridge can run it. The exact prerequisites are in
+  [audio-transport gaps](behaviours/audio-transport.gaps.md). Intrinsic sender timing is not
+  whole CPU timing: native CPU timing coverage remains0/140. The diagnostic opening's
+ 183-cut prefix still ends at MissingRuntime183.
+
 ## Comparison representation limits
 
 - **Pending-aim source-word encoding**(samus-movement/W1): the decoder and retained engine field
