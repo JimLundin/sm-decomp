@@ -28,6 +28,8 @@ pub struct Stepped {
     pub pose: Pose,
     /// The frame's outputs, which her animation reads.
     pub outcome: Outcome,
+    /// Actual caller population supplied to the movement world.
+    pub roster: super::roster::Roster,
 }
 
 /// What the frame reads besides Samus and her world.
@@ -165,6 +167,7 @@ pub fn step(
     Ok(Some(Stepped {
         pose: ran.after.pose,
         outcome: ran.outcome,
+        roster: world.roster().clone(),
     }))
 }
 

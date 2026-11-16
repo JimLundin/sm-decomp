@@ -230,8 +230,9 @@ impl Vertical {
 
     /// What her vertical move by `by` met, stopped or not, as its course and her situation's
     /// footing say. Moving by her speed, the pull then grows it (`RisingAndFalling`). An upward
-    /// move stopped is a ceiling (`WallsAndCeilings`), which then ends the rise with no pull that
-    /// frame; while her body changes shape it stops her flush only, and she rises on. In the air
+    /// move stopped is a ceiling (`WallsAndCeilings`). The pull grows the published
+    /// pre-response speed first; the normal ceiling response then ends the rise at zero.
+    /// While her body changes shape it stops her flush only, retaining the pulled rise. In the air
     /// a floor is met (`Landing`): while her body changes shape it lands her within her moves,
     /// only her vertical motion stopping. On the ground the floor stops her flush and never lands
     /// her, and finding none she walks off a ledge (`FollowingTheGround`), unless turning, where

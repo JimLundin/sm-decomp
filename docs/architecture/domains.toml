@@ -33,7 +33,7 @@
 
 [[model]]
 name = "samus-movement"
-rounds = 23
+rounds = 24
 
 [[model]]
 name = "world-camera"

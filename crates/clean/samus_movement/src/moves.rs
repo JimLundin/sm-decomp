@@ -72,9 +72,16 @@ impl Samus {
     pub(crate) fn moves(&mut self, s: &Situation, t: &mut Tick) -> Meeting {
         if self.pose.facing == Facing::Screen {
             if self.rides_the_elevator(t.frame) {
-                t.purpose = CollisionPurpose::OrdinaryMove;
-                let ride = t.vmove(self.bounds(t), t.rules.elevator_descent, Probe::Move);
-                self.position = ride.to;
+                let ride = t.vmove(
+                    self.bounds(t),
+                    t.rules.elevator_descent,
+                    Probe::Move,
+                    CollisionPurpose::OrdinaryMove,
+                );
+                if t.rules.elevator_descent != ZERO && ride.stop != Some(Stop::Enemy) {
+                    self.seat = Seat::Unseated;
+                }
+                self.take_result(&ride);
                 let direction = if t.rules.elevator_descent.negative() {
                     Direction::Up
                 } else {
@@ -82,6 +89,8 @@ impl Samus {
                 };
                 t.travelled
                     .record(TravelKind::Vertical, direction, ride.accepted);
+            } else {
+                t.movement_skip = Some(types::MotionSkipReason::FacingPlayer);
             }
             return Meeting {
                 heading_down: self.vertical.heading_down(),
@@ -164,13 +173,12 @@ impl Samus {
     /// `BlocksStopFlush`, `SlopesSlowTheWalk`: a horizontal move, a walk when it is made with
     /// her vertical speed exactly 0. Returns its collision result and signed accepted travel.
     fn hmove(&mut self, way: Side, d: Fixed, purpose: CollisionPurpose, t: &mut Tick) -> Moved {
-        t.purpose = purpose;
         let probe = if self.vertical.speed == ZERO {
             Probe::Walk
         } else {
             Probe::Move
         };
-        let moved = t.go(self.bounds(t).axis(way.heading(), d, probe));
+        let moved = t.go(self.bounds(t).axis(way.heading(), d, probe, purpose));
         self.position = moved.to;
         moved
     }
@@ -218,10 +226,12 @@ impl Samus {
         } else {
             Side::Left
         };
-        let towards_wall = self
-            .bounds(t)
-            .axis(wall.heading(), t.rules.wall_reach, Probe::NearWall);
-        t.purpose = CollisionPurpose::NearWallReach;
+        let towards_wall = self.bounds(t).axis(
+            wall.heading(),
+            t.rules.wall_reach,
+            Probe::NearWall,
+            CollisionPurpose::NearWallReach,
+        );
         let look = t.go(towards_wall);
         // What stopped the look writes her x subpixel, or her y subpixel against an enemy.
         self.take_result(&look);
@@ -239,8 +249,8 @@ impl Samus {
     /// `FollowingTheGround`, `RisingAndFalling`: her vertical move, its course as her vertical
     /// motion and her situation's footing say, and what it met (`Vertical::end_move`). Pulled,
     /// she moves down by `pull` (the frame's horizontal speed and dash) plus 1 px
-    /// (`SlopesCarry`: 1 px seated); else by her vertical speed. `SlopesCarry`: a move of more
-    /// than 0 unseats her as it starts. While her body changes shape, a pull that finds no floor
+    /// (`SlopesCarry`: 1 px seated); else by her vertical speed. `SlopesCarry`: a nonzero
+    /// ordinary vertical move clears seating only if it reaches blocks; an enemy stop retains it. While her body changes shape, a pull that finds no floor
     /// leaves her where she is, meeting nothing.
     fn move_vertically(&mut self, footing: Footing, pull: Fixed, t: &mut Tick) -> Option<Met> {
         let r = t.rules;
@@ -250,13 +260,13 @@ impl Samus {
             Course::Pulled => pull + r.ground_pull,
             Course::BallMovesByIt | Course::InTheAir => self.vertical.speed,
         };
-        t.purpose = if course == Course::Pulled {
+        let purpose = if course == Course::Pulled {
             CollisionPurpose::GroundFollowing
         } else {
             CollisionPurpose::OrdinaryMove
         };
-        let moved = t.vmove(self.bounds(t), by, Probe::Move);
-        if by != ZERO {
+        let moved = t.vmove(self.bounds(t), by, Probe::Move, purpose);
+        if by != ZERO && moved.stop != Some(Stop::Enemy) {
             self.seat = Seat::Unseated;
         }
         let stopped = moved.stop.is_some();

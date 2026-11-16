@@ -1,11 +1,12 @@
-//! `PoseFitAfterMoves`: placing her body when the pose change grows it, by looks that test a
-//! move without making it, from her box and her poses alone.
+//! `PoseFitAfterMoves`: placing her body when an ordinary selected pose grows it, by looks
+//! that test a move without making it, from her box and her poses alone. `AnimationEnds`:
+//! handovers bypass this consideration at every supplied body height.
 
 use crate::collide::{Bounds, Probe};
 use crate::samus::Samus;
 use crate::tick::Tick;
 use core::num::Wrapping;
-use types::{Action, Aim, Body, Facing, Gun, Item, Legs, Pose, Px, Radius, px};
+use types::{Action, Aim, Body, Facing, Gun, Item, Legs, Parts, Pose, Px, Radius, px};
 
 /// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
 /// as before the change).
@@ -82,14 +83,53 @@ impl Samus {
     /// `PoseFollows`: a change into `Morphing` without the morph ball is refused as pose fit
     /// refuses one, before any look.
     pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Fitted {
-        let into_morph = chosen.action == Action::Morphing && self.pose.action != Action::Morphing;
-        if into_morph && !t.frame.items[Item::MorphBall] {
-            return Fitted::Refused;
-        }
         if chosen == self.pose || chosen.facing == Facing::Screen {
             return Fitted::Taken;
         }
-        let (old, new) = (t.body(self.pose), t.body(chosen));
+        if chosen.action == Action::Morphing && !t.frame.items[Item::MorphBall] {
+            return Fitted::Refused;
+        }
+        let old = t.body(self.pose);
+        let new = t.body(chosen);
+        let centre = self.position;
+        let first = t.movement_work.len();
+        let fitted = self.fit_body(t, old, new);
+        let checks = t
+            .movement_work
+            .split_off(first)
+            .into_iter()
+            .filter_map(|work| {
+                if let types::MovementWork::Motion(request) = work {
+                    Some(request)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let result = match fitted {
+            Fitted::Taken if new.y <= old.y => types::BodyFitResult::NoGrowth,
+            Fitted::Taken => types::BodyFitResult::GrowthClear,
+            Fitted::Pushed => types::BodyFitResult::PushedAway,
+            Fitted::Refused => types::BodyFitResult::Refused,
+            Fitted::Crouched { .. } => types::BodyFitResult::CrouchedInstead,
+        };
+        let placement = fitted
+            .moved()
+            .then(|| types::PlacementDistance(self.position.y.pixel() - centre.y.pixel()));
+        t.movement_work
+            .push(types::MovementWork::BodyFit(types::BodyFitConsideration {
+                old_radius: old,
+                new_radius: new,
+                centre,
+                checks,
+                result,
+                placement,
+            }));
+        fitted
+    }
+
+    /// Spec: `PoseFitAfterMoves`. Collision decisions, independent of publication.
+    fn fit_body(&mut self, t: &mut Tick, old: Radius, new: Radius) -> Fitted {
         if new.y <= old.y {
             return Fitted::Taken;
         }
@@ -135,7 +175,6 @@ impl Samus {
         probe: Probe,
         purpose: types::CollisionPurpose,
     ) -> Option<Px> {
-        t.purpose = purpose;
         let look = t.vmove(
             Bounds {
                 at: self.position,
@@ -143,6 +182,7 @@ impl Samus {
             },
             px(by),
             probe,
+            purpose,
         );
         // What stopped the look writes her y subpixel (FFFF down, 0 up or against an enemy).
         self.take_result(&look);

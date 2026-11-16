@@ -18,7 +18,7 @@ use data::level::slope::{Shape, Slopes, Square, Surface as Tops};
 use data::level::{BlockKind, DoorIndex, Offset, PlmChoice};
 use types::{Block, Cell, Hitbox, Pair, Radius, Slope, SlopeFaces, Way, World};
 
-use crate::collision::solid_enemy::{Obstacle, SolidEnemies, obstacles};
+use crate::collision::solid_enemy::{Obstacle, SolidEnemies};
 use crate::collision::{Room, Touch, Touches};
 use crate::state::room::BlockIndex;
 use crate::state::samus::PoseId;
@@ -48,6 +48,7 @@ pub enum SamusFault {
 pub struct SamusWorld<'a> {
     room: Room<'a>,
     enemies: Vec<Hitbox>,
+    roster: roster::Roster,
     /// The first cell whose stand-in chain looped, if any.
     looped: OnceCell<Cell>,
 }
@@ -56,18 +57,25 @@ impl<'a> SamusWorld<'a> {
     /// The room's blocks and the interactive enemies that are solid to her or frozen.
     #[must_use]
     pub fn new(room: Room<'a>, enemies: SolidEnemies<'_>) -> Self {
-        Self::of(
-            room,
-            obstacles(enemies.interactive, enemies.slots).map(|(_, enemy)| enemy),
-        )
+        Self::with_roster(room, roster::Roster::interactive(enemies))
     }
 
     /// The room's blocks and those of `enemies` that are solid to her or frozen.
     #[must_use]
     pub fn of(room: Room<'a>, enemies: impl IntoIterator<Item = Obstacle>) -> Self {
-        let enemies = enemies
-            .into_iter()
-            .filter(|enemy| enemy.solid || enemy.frozen)
+        Self::with_roster(room, roster::Roster::supplied(enemies))
+    }
+
+    fn with_roster(room: Room<'a>, roster: roster::Roster) -> Self {
+        let enemies = roster
+            .eligible
+            .iter()
+            .filter_map(|occurrence| {
+                roster
+                    .members
+                    .get(occurrence.0)
+                    .and_then(|member| member.obstacle)
+            })
             .map(|enemy| Hitbox {
                 centre: Pair {
                     x: Wrapping(enemy.position.x.pixels),
@@ -82,8 +90,15 @@ impl<'a> SamusWorld<'a> {
         Self {
             room,
             enemies,
+            roster,
             looped: OnceCell::new(),
         }
+    }
+
+    /// Caller-owned occurrence and eligibility snapshot, independent of native admission.
+    #[must_use]
+    pub const fn roster(&self) -> &roster::Roster {
+        &self.roster
     }
 
     /// The fault a frame's moves met, if any: a stand-in chain that loops.
@@ -255,7 +270,7 @@ fn surface_of(surface: Tops, slope: data::level::Slope) -> Slope {
     Slope {
         faces,
         depth: tops.map(|top| Wrapping(u16::from(top.min(FAR_PAST)))),
-        factor: Wrapping(u32::from(surface.factor)),
+        factor: types::SlopeFactor(surface.factor),
     }
 }
 
@@ -296,6 +311,7 @@ impl World for SamusWorld<'_> {
 }
 
 pub mod frame;
+pub mod roster;
 pub mod state;
 pub mod step;
 

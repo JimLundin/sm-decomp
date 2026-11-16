@@ -89,7 +89,7 @@ samus-movement area-norfair 209 53 209 4 165 0 0
 samus-movement boss-kraid-defeated 1023 219 1026 50 98 15 0
 samus-movement boss-phantoon 1915 362 1956 90 72 81 0
 samus-movement chain-0012-91F8 421 96 421 13 611 0 0
-samus-movement chain-0013-92FD 598 315 599 13 0 0 0
+samus-movement chain-0013-92FD 599 315 599 13 0 0 0
 samus-movement chain-0014-96BA 343 56 343 4 163 0 0
 samus-movement chain-0043-9AD9 417 1 417 27 0 0 0
 samus-movement chain-0057-9FBA 536 139 537 14 2 10 0

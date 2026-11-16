@@ -1,4 +1,3 @@
-use core::num::Wrapping;
 use data::assets::world::Door;
 use data::assets::world::doorways::MORPH_BALL_TO_CONSTRUCTION;
 use data::level::slope::{SHAPES, Slopes};
@@ -208,7 +207,7 @@ fn a_surface_is_a_floor_or_a_ceiling_by_its_flip() {
     };
     assert!(floor.faces == SlopeFaces::Floor);
     assert_eq!((row(floor.depth[0]), row(floor.depth[15])), (15, 0));
-    assert_eq!(floor.factor, Wrapping(0xc0));
+    assert_eq!(floor.factor, types::SlopeFactor(0xc0));
     let Block::Slope(ceiling) = world.block(at(1, 0)) else {
         panic!("ceiling slope");
     };

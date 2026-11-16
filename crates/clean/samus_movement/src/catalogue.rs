@@ -45,6 +45,14 @@ pub enum BehaviourId {
     TouchdownRequests,
     /// Actual ordered leading-edge collision work without timing cost.
     PerformedCollisionTests,
+    /// Actual travel and clearance requests, including zero and enemy stops.
+    MotionAttempts,
+    /// Considered eligible-box prefix in supplied order.
+    ReachedEnemyCandidates,
+    /// Separate floor and ceiling support decisions.
+    PerformedSupportChecks,
+    /// Selected-body consideration and its actual clearances.
+    PerformedBodyFit,
     /// What touching down does to her speeds, and the ball's bounces (§6).
     Landing,
     /// What decides her next pose, and when the change acts (§7).
@@ -94,7 +102,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 35] = [
+pub const CATALOGUE: [Behaviour; 39] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -232,6 +240,34 @@ pub const CATALOGUE: [Behaviour; 35] = [
         id: BehaviourId::PerformedCollisionTests,
         summary: "report actual ordered leading-edge collision work without assigning cost.",
         kind: Kind::Output,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::MotionAttempts,
+        summary: "actual requests retain intended travel, geometry and result",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::ReachedEnemyCandidates,
+        summary: "eligible boxes actually considered in supplied order",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PerformedSupportChecks,
+        summary: "floor then ceiling support with updated centres",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PerformedBodyFit,
+        summary: "actual selected-body consideration and clearance",
+        kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },

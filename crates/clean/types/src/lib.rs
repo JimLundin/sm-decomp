@@ -645,6 +645,190 @@ pub struct CollisionTest {
 /// Spec: `PerformedCollisionTests`. Work in observable order; early-stopped cells are absent.
 pub type CollisionTests = Vec<CollisionTest>;
 
+/// Spec: `MotionAttempts`. Number of eligible boxes supplied by the caller, not a distance.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CandidateCount(pub usize);
+/// Spec: `ReachedEnemyCandidates`. Ordinal identity in the supplied eligible population.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CandidateIndex(pub usize);
+/// Spec: `MotionAttempts`. Available whole-pixel clearance, not accepted ordinary travel.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ClearanceRoom(pub Px);
+/// Spec: `ReachedEnemyCandidates`. Signed wrapping pixel gap between boxes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PixelGap(pub Px);
+/// Spec: `PerformedSupportChecks`, `PerformedBodyFit`. Signed whole-pixel centre placement,
+/// not a box gap, available room, or accepted ordinary travel.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PlacementDistance(pub Px);
+/// Spec: `ReachedEnemyCandidates`. Geometry at the requested target.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CandidateResult {
+    /// Target does not reach this box.
+    Miss,
+    /// Reached, but its near face is behind the starting edge.
+    AlreadyOverlapping(PixelGap),
+    /// Reached with zero gap; ends the search.
+    Touching,
+    /// Reached ahead; ends the search, irrespective of later nearer boxes.
+    StopsAtGap(PixelGap),
+}
+/// Spec: `ReachedEnemyCandidates`. Only a box actually considered in this search.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EnemyCandidate {
+    /// Identity, never a sorted-by-gap index.
+    pub candidate: CandidateIndex,
+    /// Supplied geometry in whole pixels.
+    pub centre: Pair<Px>,
+    /// Supplied half-sizes.
+    pub radius: Radius,
+    /// Geometric outcome.
+    pub result: CandidateResult,
+}
+/// Spec: `MotionAttempts`. An actual eligible enemy search, even when empty.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EnemySearch {
+    /// Supplied population size; excluded actors belong to the caller.
+    pub supplied_count: CandidateCount,
+    /// Considered prefix in supplied order.
+    pub candidates: Vec<EnemyCandidate>,
+}
+/// Spec: `MotionAttempts`. Requested collision population.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum RequestedWorld {
+    /// No enemy eligibility/search work is claimed.
+    Blocks,
+    /// Ordinary movement and near-wall reach.
+    EnemiesThenBlocks,
+    /// Selected-body enemy clearance.
+    SolidEnemies,
+}
+/// Spec: `MotionAttempts`. Stopping contact, independent of slope shortening.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum MotionResult {
+    /// No stopping contact, possibly shortened by terrain.
+    Unobstructed,
+    /// First qualifying supplied box stopped the request.
+    EnemyStopped,
+    /// Leading-edge terrain stopped the request.
+    TerrainStopped,
+}
+/// Spec: `MotionAttempts`. Travel and clearance have different result quantities.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum RequestEffect {
+    /// Signed accepted ordinary/aim travel.
+    Travel(TravelDistance),
+    /// Available whole pixels for a look; no claim that she travelled them.
+    Clearance(ClearanceRoom),
+}
+/// Spec: `MotionAttempts`. One actual request, including zero or enemy-before-block stops.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MotionAttempt {
+    /// Request owner/purpose, retained on every test independently.
+    pub purpose: CollisionPurpose,
+    /// Direction, including a zero request's direction.
+    pub direction: Direction,
+    /// Requested world.
+    pub world: RequestedWorld,
+    /// Actual request geometry.
+    pub start: Position,
+    /// Half-sizes used by this request.
+    pub radius: Radius,
+    /// Spec: `MotionAttempts`. Signed distance after the movement limit, before terrain
+    /// slope shortening. Eligible enemies judge this complete request; an enemy stop skips
+    /// terrain. Otherwise its unshortened target selects the terrain collision line.
+    pub intended: TravelDistance,
+    /// Only present if enemies were actually searched.
+    pub enemy_search: Option<EnemySearch>,
+    /// Accepted travel or clearance room.
+    pub effect: RequestEffect,
+    /// Named stopping outcome.
+    pub result: MotionResult,
+}
+/// Spec: `MotionAttempts`. Admission reason, not a zero request.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum MotionSkipReason {
+    /// Facing the screen without an active elevator ride.
+    FacingPlayer,
+}
+/// Spec: `PerformedSupportChecks`. Independent floor then ceiling checks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum SupportSurface {
+    /// Bottom-edge floor support.
+    Floor,
+    /// Top-edge ceiling support.
+    Ceiling,
+}
+/// Spec: `PerformedSupportChecks`. Surface decision even with no placement.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum SupportResult {
+    /// No surface facing this check.
+    NoSlope,
+    /// Surface exists but does not place her.
+    NoPlacement,
+    /// Floor raises the centre and seats her.
+    Lifted,
+    /// Ceiling lowers the centre and seats her, zero included.
+    PushedDown,
+}
+/// Spec: `PerformedSupportChecks`. Actual geometry before this check and its signed placement.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SupportCheck {
+    /// Checked surface.
+    pub surface: SupportSurface,
+    /// Updated by the preceding check where it placed her.
+    pub centre: Position,
+    /// Shared ordinary body geometry.
+    pub radius: Radius,
+    /// Centre-column edge cell, not pixel position.
+    pub cell: Cell,
+    /// Surface outcome.
+    pub result: SupportResult,
+    /// Signed wrapping whole-pixel placement; zero also retained.
+    pub placement: PlacementDistance,
+}
+/// Spec: `PerformedBodyFit`. Decision for the selected target, not accepted response effects.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum BodyFitResult {
+    /// Selected target is no taller.
+    NoGrowth,
+    /// Growth found open room on both sides.
+    GrowthClear,
+    /// Growth pushed the centre away from one side.
+    PushedAway,
+    /// Target rejected, original pose and speeds retained.
+    Refused,
+    /// Crouch substituted with no selected response effects.
+    CrouchedInstead,
+}
+/// Spec: `PerformedBodyFit`. Actual consideration, with its ordered clearance requests.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BodyFitConsideration {
+    /// Body before selection.
+    pub old_radius: Radius,
+    /// Selected body's geometry, even on refusal/substitution.
+    pub new_radius: Radius,
+    /// Centre where consideration began, even with no growth.
+    pub centre: Position,
+    /// Clearances actually performed, including shorter preliminary block looks.
+    pub checks: Vec<MotionAttempt>,
+    /// Selected-body decision.
+    pub result: BodyFitResult,
+    /// Fit's signed whole-pixel placement, absent when it did not place her.
+    pub placement: Option<PlacementDistance>,
+}
+/// Spec: `MotionAttempts`, `PerformedSupportChecks`, `PerformedBodyFit`. Ordered fresh work
+/// for CPU timing; this domain owns no elapsed duration.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MovementWork {
+    /// Requested travel or standalone clearance.
+    Motion(MotionAttempt),
+    /// Ordinary horizontal support check.
+    Support(SupportCheck),
+    /// Selected body and the clearances it required.
+    BodyFit(BodyFitConsideration),
+}
+
 /// A sound her animation asks for (samus-appearance `WallJumpBranch`, `BoostStages`), for the sound
 /// domain to play or not.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -765,6 +949,11 @@ pub enum SlopeFaces {
     Floor,
 }
 
+/// Spec: `SlopesSlowTheWalk`. A dimensionless factor in 1/256ths, not travel or speed.
+/// Imported shapes use the specified factors; typed values remain total for adjusted content.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SlopeFactor(pub u16);
+
 /// A sloped surface's shape: world data.
 #[derive(Clone, Copy)]
 pub struct Slope {
@@ -777,7 +966,7 @@ pub struct Slope {
     /// and a ceiling alike.
     pub depth: [Px; 16],
     /// `SlopesSlowTheWalk`: a floor's walk factor, in 1/256ths (`0x100` is 1.00).
-    pub factor: Fixed,
+    pub factor: SlopeFactor,
 }
 
 /// A solid enemy's box: its centre and half-sizes, in pixels.

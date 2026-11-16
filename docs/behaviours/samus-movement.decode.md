@@ -1430,8 +1430,8 @@ up 8 (top EFh, block (100h,E0h), air) and 9 (EEh, air): none; down 8 (bottom 116
 `0B2E`.`0B2C` stays 3.1C00 (the fall's pull), `0B36` 2, and no `$91:F1EC`, so no `$E926` and no
 landing for jump held through. The spec's same-side arm, "original only" before, now names the
 block's re-look and cites the vector. A second solid enemy above her at the new radius would refuse
-a landing on an enemy through `$91:FEDF` too; the vector format holds one enemy, so the slope
-carries it. The round-15 model passes it; the gate's mutant R4 (a refused change keeps what she met)
+a landing on an enemy through `$91:FEDF` too; this witness uses one enemy, so the slope
+carries the other contact. The round-15 model passes it; the gate's mutant R4 (a refused change keeps what she met)
 fails it alone (speed_y 0).
 
 **V2, under bounce 1's threshold.** C-bounce-under: the ball at 0118.0000 falling at 2.D400
@@ -1699,9 +1699,10 @@ gaps 1 and 2), and the queued observer items O1, J3 (adversary 88, item 5), I3 (
   Thus the original has no refused or crouch-substituted animation handover; the handover
   observation and held-jump history retain the animation end, not a fit acceptance result.
   No imported hand-over's pose is taller than the pose it ends (the 78 ending poses' radii
-  against their operands' in `$91:B629`), so the model's extra fit cannot refuse one with that
-  content. Its public body callback does not enforce those radii against restored pose/end
-  inputs or adjusted content. A taller supplied target remains gap 39, not a proven invariant.
+  against their operands' in `$91:B629`). The public body callback does not enforce those radii
+  against restored pose/end inputs or adjusted content. The source bypass still accepts an
+  admitted ordinary animation target of a taller supplied body without fitting it;
+  `C-attempt-taller-animation-handover` checks that content boundary on an invented floor.
 - **The end's kind** is an input: samus-appearance's end from the frame's start (its harness's
   `Playhead::end_ahead` over the importer's clips). F8h is the end unless a jump; F9h, FAh, FCh and
   FDh the plain end. F8h ends every turn (25h, 26h, 2Fh, 30h, 43h, 44h, 87h, 88h, 8Bh-A3h,
@@ -2279,15 +2280,16 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
 - Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
   DriftInTheAir, Moonfall, WallJump, Landing, AcceptedFloorResponse, TouchdownRequests, WordwiseTopSpeed, 1.2, 9
-- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer
+- Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer, PerformedBodyFit
 - Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
   AnimationEnds
 - Area collision (old 4,893): TravelledDistances, BlocksStopFlush, WallsAndCeilings, SolidEnemies, SlopesCarry,
-  SlopesSlowTheWalk, TouchedCells, PerformedCollisionTests, OtherBlockKinds
+  SlopesSlowTheWalk, TouchedCells, PerformedCollisionTests, MotionAttempts, ReachedEnemyCandidates,
+  PerformedSupportChecks, OtherBlockKinds
 
-Budget: 37.5 × 265.7 units = 9,962 (motion 4,125, pose fit 687, pose chart 2,375, collision 2,775).
-The official counter reports 110.0 motion units, 18.3 pose-fit units, 63.3 pose-chart units
-and 74.0 collision units for this output contract. Old-code baselines and k above are unchanged.
+Budget: 37.5 × 280.7 units = 10,524 (motion 4,125, pose fit 762, pose chart 2,412, collision 3,225).
+The official counter reports 110.0 motion units, 20.3 pose-fit units, 64.3 pose-chart units
+and 86.0 collision units for this output contract. Old-code baselines and k above are unchanged.
 
 From the spec's §7 (the pose chart), moved with the header's:
 
@@ -2300,8 +2302,8 @@ Animation-selected poses reach `$91:F433` directly from `$91:EBB3`: bypassing po
 not bypass initialization or its pending-aim writers. `$91:F446` calls `$91:F468`, which
 dispatches normal jumping to `$91:F543`; its non-shinespark arm reaches `$91:F5CF`..`$91:F5E6`.
 The ordinary changed-pose and animation-selected paths therefore share the publication rules.
-The model publishes from its final accepted pose; taller supplied handover targets remain
-gap 39 and are not evidence for a different vanilla pending-aim rule.
+The model publishes from its final accepted pose. A taller supplied ordinary animation target
+bypasses fitting too; initialization and its pending-aim writers are still admitted.
 
 `TransitionFiringAim` sources: $91:F404-F422 only initializes a changed ordinary pose;
 $91:F433/F468-F4A1 initializes its named family and repeats ground-turn initialization when
@@ -2379,9 +2381,10 @@ compared. These are caller/input ownership boundaries, not clean producer rule c
 `$A0:A9B8` starts the interactive-enemy list and `$A0:AB81` advances it. Failed overlap or
 negative-gap checks proceed to the next entry; touching (`$A0:AAC8`..`$A0:AB21`) and positive
 gap (`$A0:AB22`..`$A0:AB80`) return immediately with the first qualifying entry. There is no
-nearest-contact comparison. The caller must preserve the supplied order; the current single-
-enemy vector world cannot prove multiple-enemy ordering. This source clarification changes
-neither selection behavior nor that testing limitation.
+nearest-contact comparison. The caller must preserve the supplied order. Constructed complete-
+frame witnesses `C-attempt-running-miss-touch`, `C-attempt-running-gap-touch` and
+`C-attempt-running-touch-gap` check rejected prefixes, first accepted stops and reversed
+eligible-box order. Native complete candidate-order receipts remain unproved.
 
 
 ## Accepted responses and performed collision tests
@@ -2532,3 +2535,143 @@ Down alone does not select its crouching target. This witness therefore starts c
 through the existing pad rule, then performs the body-lowering look; its expected cells
 and ordering remain unchanged. The bounded work reference now requires that press before
 publishing this lowering look. Removing the press rejects this case's expected work.
+
+## Actual movement decisions before leading-edge cells
+
+### Source closure and the caller boundary
+
+The ordinary standing path calls horizontal travel at `$90:A3CA` → `$90:9348`/`$90:934C`
+and ground following at `$90:A3CD` → `$90:923F`. There is no zero-distance guard before
+the horizontal request. Both completion paths of `$90:8EA9`..`$90:8F1F` call or tail-call
+the left/right world request, including zero travel. Screen poses 0/9B branch at
+`$90:A389`/`$90:A38E` through `$90:A392`; inactive elevator `$0E18` at `$90:A395` takes
+`$90:A3A8` to `$90:A3E3` without horizontal, vertical or support work.
+
+Solid motion iterates `$17EC` using cursor `$17AA` at `$A0:A9CA`/`$A0:A9CD` and tests
+the FFFF terminator at `$A0:A9D0`/`$A0:A9D3`. An interactive member is eligible when
+frozen (`$0F9E`, `$A0:A9DC`/`$A0:A9DF`) or solid to Samus (`$0F86` bit15,
+`$A0:A9E1`/`$A0:A9E7`). Continuation `$A0:AB81` reaches `$A0:AABF`..`$A0:AAC5`,
+increments the cursor twice and returns to the next supplied identity at `$A0:A9CA`.
+Touching `$A0:AAC8` and positive-gap `$A0:AB23` each return before the next candidate;
+the first accepted eligible box decides, without a nearest-contact comparison.
+
+The clean candidate identity is an ordinal in the supplied eligible boxes, not a new
+actor-slot input. The caller selects beginning-of-frame interactive membership before
+movement (`$82:8B47`, `$A0:8EB6` → `$A0:8F40`) and qualifies current frozen/solid
+properties. Excluded actors still incur original selection/eligibility work. That caller
+writer and its CPU-timing consumer are missing proof obligations; an empty eligible list
+does not prove absent roster work. See the owning selection contract in
+[boss-ceres-ridley](boss-ceres-ridley.decode.md#the-harness-for-the-integrator).
+
+Original eligibility is evaluated per actual request, not established by the engine's eager
+once-per-world filtering. The future caller retains ordered interactive members and their
+admitted current properties, plus an eligible-ordinal-to-roster-member mapping. Each movement
+request's considered eligible results identify the reached raw prefix: excluded members before
+an accepted stop count; all members and the terminator count on exhaustion; neither suffix
+members nor the terminator are reached after an accepted stop. Eligible misses and negative
+gaps continue the cursor. `CandidateCount` alone cannot recover that prefix. This is a caller
+writer/CPU-timing consumer obligation, with native complete roster coverage0; raw roster and
+eligibility properties remain outside the clean movement interface.
+
+Horizontal support `$94:87F4`..`$94:89AF` checks floor then ceiling, using the placed
+centre for the second check. Setters `$94:8887`/`$94:8916` seat her; this support path has
+no seated-clear writer. Ordinary vertical terrain clears seating at `$94:976F`.
+Enemy-result branches after `$90:9408`/`$90:9449` return before terrain `$90:942D`/
+`$90:945B`; thus a seated body stopped by an enemy retains seating. The fit-block path
+`$94:96AB`..`$94:9762` has no such clear and calls bounds/query/clipping helpers rather
+than the ordinary terrain entry. A nonzero fit look is not sufficient to clear seating.
+
+Ordinary fit consideration follows `$91:F404` and `$91:FDAE`; unchanged targets and
+animation handovers that reach `$91:F433` directly do not manufacture a consideration.
+Same-height actual aim selection uses `$91:EADE`..`$91:EB48`; no growth produces no
+clearance while retaining that real body-size decision. Growth keeps the existing
+`PoseFitAfterMoves` enemy-before-block look order and the independently derived eight-
+pixel preliminary look, refusal threshold, fractional writes and selected placements.
+
+The one-pixel right aim request from x002B.4000 with horizontal half-size5 targets
+x002C.4000. The inclusive right edge is48, so `$94:9543` (`$94:955E`..`$94:957C`)
+evaluates column3, not the starting centre column2. The y span150..191 gives rows9..11.
+`C-attempt-aim-no-growth` carries that complete request geometry.
+`C-work-aim-change` starts at x0028.0000; its aim target is0029.0000 and right edge45,
+so that separate witness evaluates column2 with the same vertical rows.
+
+`C-attempt-fit-push` begins a straight jump, following the pad with neither side held,
+not a take-off. `$90:A431` calls `$90:8FB3`; the ordinary forward straight-jump pose
+branches at `$90:8FC9` to `$90:8FDC`, bypassing `$90:8FD3`'s horizontal call and its
+support checks. Take-off poses4B/4C and55..5A are different inputs. The actual first
+request is its downward travel; the accepted floor stop and following growth fit remain.
+The bounded full-entry reference checks inherited collision fields as well as work,
+using this admission and target-edge arithmetic instead of a fixed cell column.
+
+### Proof and limits
+
+Fifteen complete constructed frame-entry witnesses compare every added work field and
+their derived positions: six Running slope/enemy cases, a three-stage request case, four
+idle/screen/aim cases, three actual floor-contact growth-fit cases and a taller animation
+handover. The bounded independent Python reference
+agrees15/15, against do-nothing0/15; an empty-work-only comparison agrees1/15.
+Eleven full-field faults are rejected: lost motion, candidate, candidate order, support,
+body fit, seated lifetime, absent-motion reason, fit centre, enemy count, raw intent and
+post-slope travel substituted for requested travel. Primitive references are separate:
+attempt7/7, support6/6, seated lifetime6/6, flat fit7/7; they are not full-step proof.
+Two actual source-law faults additionally fail the complete taller-handover and slope/enemy
+witnesses: forcing fit on the animation branch changes its y, and shortening before enemy
+reach changes the accepted x. Both isolated reference mutations restore byte-exactly.
+
+Native complete attempt/candidate/roster receipt coverage is0. The retained1,037 query
+evaluations prove existing leading-edge cells, not no-cell attempts, support admission,
+empty candidate searches or absent roster work. No new captures or oracle substitutions
+are used. Mixed/stepped complete fit receipts and broader forced movement remain unproved;
+their existing behaviour vectors and source rules are preserved. This bounded delta is
+not a full movement-State model, native timing prediction or a new free-run floor.
+
+The unforced caller boundary remains: ordinary movement does not accept external travel.
+Ground following's external-Y guard at `$90:923F` skips the ordinary pull on nonzero
+`$0B5C`/`$0B5A`; verifier pushed-state masking remains independent. No public force input
+is added to encode that original guard.
+
+### Request publication stage and clearance shape
+
+Speed-derived ordinary horizontal travel is bounded before its world request on the admitted
+speed path: `$90:8ECB`/`$90:8F05` call `$90:E4AD`; `$90:E4CA` compares the whole part with16,
+and `$90:E4D1` returns15 without clearing the fractional word. The ensuing enemy requests
+at `$90:9366`/`$90:93B4` precede terrain calls `$90:938F`/`$90:93CA`. Preparatory caller
+paths retain their actual admitted request; publication does not reconstruct it from speed.
+The terrain handler `$94:8FD4` reaches `$94:84D6`, which changes distance `$12`/`$14` while
+preserving target `$20` used by the leading-edge scan `$94:9543` (`$94:9551`/`$94:955C`).
+Thus intended request travel precedes slope shortening; `TravelledDistances` remains the
+signed accepted travel after shortening or collision, excluding independent subpixel snaps.
+
+`C-attempt-slope-enemy-before-factor` uses the same Running start, whole-part limit1 and
+half-factor slope with one invented enemy at(265,294), half-sizes(2,8). The submitted horizontal
+request1.C000 puts the target whole258 and its subpixel extension at259. X separation6 is
+strictly below summed radii7, and Y separation28 is below29. The starting gap is1, so the enemy
+stops accepted travel1 before terrain. At the placed x258, floor support lifts1; the following
+downward request misses this enemy across X (separation7 equals summed radii7), reaches the
+slope and accepts0. The horizontal stop halts her run and selects AgainstWall, whose unchanged
+height gives a real no-growth consideration. Final centre0102.0000/0109.FFFF; speed0. Terrain
+cells are only Down(15,17),(16,17). Shortening before the enemy instead misses it horizontally
+and gives0101.E000, a source rule violation, not an accepted alternate request stage.
+
+`C-attempt-taller-animation-handover` supplies invented Landing half-height19 and Still21,
+centre0028.0000/00AD.FFFF, no pad and EndUnlessJump. Old-body horizontal0, two support checks
+and ground pull1 run first; the pull hits floor192 and accepts0. `$91:EBB3` then calls `$91:F433`
+directly, so there is no `$91:FDAE` consideration or clearance despite growth2. The centre
+stays00AD.FFFF with the selected taller body; fitting would incorrectly raise it to00AB.FFFF.
+The only leading cell is GroundFollowing Down(2,12). The constructed body callback has no
+target-height bound; this does not claim a growing vanilla animation or external POST entry.
+
+`C-attempt-request-stages` uses the ordinary Running `C-seat-lift` entry with adjusted whole-
+part limit1 and world factor `0.80` (hex1/256, exactly one half). Speed-derived2.C000 becomes
+request1.C000 before terrain; the reached slope accepts0.E000. Floor support lifts1 and seats
+her; the ground pull1 reaches terrain, accepts0 and clears the seat. Final position is
+0101.E000/0109.FFFF, speed remains2.C000 and rightward accepted travel is0.E000. All five
+leading-edge cells and the complete work geometry/order are expected. Raw-intent and post-
+slope-intent publication faults fail this case's request-distance field.
+
+The vector field `body_fit` names an actual selected-body consideration, including its centre
+after the aim step for `C-attempt-aim-no-growth`. Each clearance names its requested world.
+Enemy-only clearance carries supplied eligible count and considered boxes; block-only clearance
+does not invent an enemy search. Both carry geometry, signed requested distance, purpose, named
+result and nonnegative whole-pixel room. This room is not signed ordinary accepted travel.
+The field name avoids a literal score-vocabulary collision; checker rules are unchanged.

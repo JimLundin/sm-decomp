@@ -675,8 +675,9 @@ fn samus_new_state(
     let stepped = samus_movement_bridge::step::step(&mut state.samus, inputs, &mut touches)
         .map_err(SessionFault::Samus)?;
     if let Some(stepped) = &stepped {
+        outputs.work_with_roster(&stepped.outcome, &stepped.roster);
         if let Some(capability) = capability {
-            outputs.moved(&stepped.outcome);
+            outputs.movement_requests(&stepped.outcome);
             samus_appearance_bridge::producer::landing_graphics(
                 &mut state.atmospherics,
                 stepped.outcome.touchdown_graphics,
@@ -809,6 +810,53 @@ fn bg_scroll(state: &mut State, content: &Content) {
 
 #[cfg(test)]
 mod firing_history_tests {
+    #[test]
+    fn movement_work_survives_absent_appearance_capability_in_the_tick_phase() {
+        use crate::model::num::Fixed;
+        use crate::state::room::{Block, BlockColumns};
+        use crate::state::samus::{MovementType, PoseId, Position, VerticalMotion};
+
+        let mut state = crate::state::State::default();
+        state.samus.pose = PoseId(0x19);
+        state.samus.movement = MovementType::SpinJumping;
+        state.samus.y_radius = 21;
+        state.samus.motion.position = Position {
+            x: Fixed::new(32, 0),
+            y: Fixed::new(27, 0),
+        };
+        state.samus.motion.vertical = VerticalMotion::Down;
+        state.samus.motion.vertical_speed = Fixed::new(1, 0x1000);
+        state.room.width = BlockColumns(4);
+        state.room.blocks = vec![Block::default(); 16];
+        for block in state.room.blocks.iter_mut().skip(12) {
+            block.kind = data::level::BlockKind::Solid(data::level::Bts(0));
+        }
+        assert!(state.projectiles.ordinary().is_none());
+        let mut outputs = crate::gameplay_outputs::Outputs::default();
+        super::samus_new_state(
+            &mut state,
+            crate::session::Rules {
+                switches: crate::session::Switches::REFERENCE,
+                auto_repeat: crate::session::AutoRepeat {
+                    initial: crate::state::slots::Frames(12),
+                    subsequent: crate::state::slots::Frames(2),
+                },
+            },
+            &crate::Content::default(),
+            &super::Pass::default(),
+            &mut outputs,
+        )
+        .unwrap();
+        let movement = outputs.movement.unwrap();
+        assert!(movement.floor_response.is_some());
+        assert!(movement.touchdown_graphics);
+        assert!(movement.work.iter().any(|work| matches!(work, types::MovementWork::Motion(attempt) if attempt.result == types::MotionResult::TerrainStopped)));
+        assert_eq!(movement.skip, None);
+        assert_eq!(movement.roster.unwrap().members, []);
+        assert_ne!(movement.searches, []);
+        assert_eq!(outputs.requests, []);
+    }
+
     #[test]
     fn elevator_pre_clears_pending_even_without_a_shot() {
         let mut state = crate::state::State::default();

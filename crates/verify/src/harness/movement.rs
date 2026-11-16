@@ -736,7 +736,12 @@ fn shown_by(id: BehaviourId) -> FieldSet {
         // These receipts have independent production checks, not broad State-field credit.
         | B::AcceptedFloorResponse
         | B::TouchdownRequests
-        | B::PerformedCollisionTests => FieldSet::EMPTY,
+        | B::PerformedCollisionTests
+        // Complete work is constructed-only; ordinary record cuts do not witness admission.
+        | B::MotionAttempts
+        | B::ReachedEnemyCandidates
+        | B::PerformedSupportChecks
+        | B::PerformedBodyFit => FieldSet::EMPTY,
         B::AnimationEnds => Q::HandedOver.set(),
         B::TransitionFiringAim => Q::PendingAim.set(),
         B::Dashing => Q::Dashing.set(),
@@ -1331,6 +1336,7 @@ impl Domain for Movement {
             let stepped = Stepped {
                 pose: ran.after.pose,
                 outcome: ran.outcome,
+                roster: level.roster().clone(),
             };
             let asked = next(&hers.samus, Some(&stepped), requests);
             pose::change(&mut hers.samus, asked, content);
@@ -1509,6 +1515,8 @@ fn exercised(ran: &Ran, level: &SamusWorld) -> Vec<usize> {
 
 pub mod cases;
 mod cut;
+#[cfg(test)]
+mod work;
 
 #[cfg(test)]
 mod tests {

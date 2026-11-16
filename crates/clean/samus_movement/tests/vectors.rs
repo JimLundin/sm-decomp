@@ -23,6 +23,243 @@ use types::{
     SlopeFaces, Touch, Turn, Way, World, ZERO, button, fixed,
 };
 
+mod work;
+
+/// Run an isolated full-frame receipt through the real public controller.
+fn receipt(vector: &Vector) -> (Samus, Outcome) {
+    assert!(vector.lead_in.is_empty());
+    let step = step_of(&vector.checked());
+    let end = vector.next_pose.as_ref().map(PoseTable::sized);
+    let mut known = vec![vector.pose.sized()];
+    known.extend(end);
+    known.extend(vector.after.pose.as_ref().map(PoseTable::sized));
+    let body = |pose| body_size(pose, step, end, &known).unwrap();
+    let headings = |_| None;
+    let world = room(&vector.world);
+    let frame = Frame {
+        sprite_before_movement: vector
+            .sprite_before_movement
+            .unwrap_or(types::Sprite::Plain),
+        cinematic_active: vector.cinematic_active,
+        pad: step.pad,
+        pressed: step.pressed,
+        items: vector.items.iter().map(|i| (i.model(), true)).collect(),
+        spin_turned_far: step.spin_turned_far,
+        elevator_moving: vector.world.elevator_moving,
+        parity: vector.frame.model(),
+        animation_ends: step.animation_ends,
+        body: &body,
+        cannon_heading: &headings,
+    };
+    let mut samus = start(&vector.before, step.pose);
+    let outcome = samus.step(&frame, &world, &applied_rules(vector)).unwrap();
+    (samus, outcome)
+}
+
+fn publications_match(after: &After, outcome: &Outcome) -> bool {
+    compared_new_outputs(after, outcome)
+        .iter()
+        .all(|(_, expected, actual)| expected.as_ref().is_none_or(|expected| expected == actual))
+}
+
+/// Receipts compare complete ordered work, not just lengths or final displacement.
+#[test]
+fn work_comparison_detects_missing_publications_candidate_order_and_seating() {
+    let vectors = file().vector;
+    let vector = vectors
+        .iter()
+        .find(|v| v.id == "C-attempt-running-miss-touch")
+        .unwrap();
+    let (mut samus, outcome) = receipt(vector);
+    assert!(publications_match(&vector.after, &outcome));
+    let mut missing = outcome.clone();
+    missing.movement_work.remove(0);
+    assert!(!publications_match(&vector.after, &missing));
+    let mut wrong_order = outcome.clone();
+    let types::MovementWork::Motion(first) = &mut wrong_order.movement_work[0] else {
+        panic!("ordinary request")
+    };
+    first.enemy_search.as_mut().unwrap().candidates.reverse();
+    assert!(!publications_match(&vector.after, &wrong_order));
+    let mut wrong_support = outcome;
+    let types::MovementWork::Support(support) = &mut wrong_support.movement_work[1] else {
+        panic!("floor support")
+    };
+    support.placement = types::PlacementDistance(Wrapping(0));
+    assert!(!publications_match(&vector.after, &wrong_support));
+    samus.seat = Seat::Unseated;
+    assert!(
+        hers(&vector.after, &samus)
+            .iter()
+            .any(|(field, expected, actual)| {
+                *field == "seated" && expected.as_ref().is_some_and(|e| e != actual)
+            })
+    );
+    let vector = vectors
+        .iter()
+        .find(|v| v.id == "C-attempt-fit-substitute")
+        .unwrap();
+    let (_, outcome) = receipt(vector);
+    assert!(publications_match(&vector.after, &outcome));
+    let mut wrong_fit = outcome;
+    let types::MovementWork::BodyFit(fit) = wrong_fit.movement_work.last_mut().unwrap() else {
+        panic!("selected body")
+    };
+    fit.checks.reverse();
+    assert!(!publications_match(&vector.after, &wrong_fit));
+    let types::MovementWork::BodyFit(fit) = wrong_fit.movement_work.last_mut().unwrap() else {
+        panic!("selected body")
+    };
+    fit.checks.reverse();
+    fit.placement = None;
+    assert!(!publications_match(&vector.after, &wrong_fit));
+}
+
+/// Spec: `AimingAndShooting`, `PerformedCollisionTests`. The fractional start
+/// reaches a different column, not different rows; the earlier witness is unchanged.
+#[test]
+fn corrected_aim_receipts_keep_their_distinct_starting_centres() {
+    let vectors = file().vector;
+    for (id, column) in [("C-attempt-aim-no-growth", 3), ("C-work-aim-change", 2)] {
+        let vector = vectors.iter().find(|v| v.id == id).unwrap();
+        assert_eq!(run(vector), Vec::<String>::new());
+        let (_, outcome) = receipt(vector);
+        let aim_cells: Vec<Cell> = outcome
+            .collision_tests
+            .iter()
+            .filter(|test| test.purpose == types::CollisionPurpose::AimChange)
+            .map(|test| test.cell)
+            .collect();
+        assert_eq!(aim_cells, [9, 10, 11].map(|y| Cell { x: column, y }));
+        let mut wrong_column = outcome;
+        for test in &mut wrong_column.collision_tests {
+            if test.purpose == types::CollisionPurpose::AimChange {
+                test.cell.x = if column == 3 { 2 } else { 3 };
+            }
+        }
+        assert!(!publications_match(&vector.after, &wrong_column));
+    }
+}
+
+/// Spec: `DriftInTheAir`, `MotionAttempts`, `PerformedBodyFit`. An unsteered
+/// straight jump requests vertical travel first, not a zero horizontal move.
+#[test]
+fn corrected_straight_jump_fit_receipt_has_no_horizontal_or_support_prefix() {
+    let vectors = file().vector;
+    let vector = vectors
+        .iter()
+        .find(|v| v.id == "C-attempt-fit-push")
+        .unwrap();
+    assert_eq!(run(vector), Vec::<String>::new());
+    let (_, outcome) = receipt(vector);
+    let [
+        types::MovementWork::Motion(motion),
+        types::MovementWork::BodyFit(_),
+    ] = outcome.movement_work.as_slice()
+    else {
+        panic!("downward travel followed by complete body fitting only")
+    };
+    assert_eq!(motion.direction, Direction::Down);
+    assert_eq!(motion.purpose, types::CollisionPurpose::OrdinaryMove);
+    assert!(publications_match(&vector.after, &outcome));
+
+    // A fabricated zero horizontal request must not disappear from comparison.
+    let mut extra_horizontal = outcome.clone();
+    let mut horizontal = motion.clone();
+    horizontal.direction = Direction::Right;
+    horizontal.intended = TravelDistance::ZERO;
+    horizontal.effect = types::RequestEffect::Travel(TravelDistance::ZERO);
+    horizontal.result = types::MotionResult::Unobstructed;
+    extra_horizontal
+        .movement_work
+        .insert(0, types::MovementWork::Motion(horizontal));
+    assert!(!publications_match(&vector.after, &extra_horizontal));
+
+    // Support work is equally observable, even when it has no placement effect.
+    let aim = vectors
+        .iter()
+        .find(|v| v.id == "C-attempt-aim-no-growth")
+        .unwrap();
+    let (_, aim_outcome) = receipt(aim);
+    let mut extra_support = outcome.clone();
+    extra_support
+        .movement_work
+        .splice(0..0, aim_outcome.movement_work[1..3].iter().cloned());
+    assert!(!publications_match(&vector.after, &extra_support));
+    let mut missing_fit = outcome;
+    missing_fit.movement_work.pop();
+    assert!(!publications_match(&vector.after, &missing_fit));
+}
+
+/// Spec: `AnimationEnds`, `PerformedBodyFit`. Handover does not read selected body
+/// geometry for fitting, even when that content grows into the floor. Compare all state
+/// and outputs, including absence of a placement, through the controller entry point.
+#[test]
+fn animation_handover_bypasses_fit_at_every_supplied_target_height() {
+    let mut vectors = file().vector;
+    let vector = vectors
+        .iter_mut()
+        .find(|v| v.id == "C-attempt-taller-animation-handover")
+        .unwrap();
+    assert_eq!(run(vector), Vec::<String>::new());
+    let (expected_state, expected_outcome) = receipt(vector);
+    assert!(expected_outcome.handed_over);
+    assert_eq!(expected_outcome.placed, None);
+    assert!(
+        expected_outcome
+            .movement_work
+            .iter()
+            .all(|work| { !matches!(work, types::MovementWork::BodyFit(_)) })
+    );
+    for radius in [[0, 0], [5, 19], [5, 21], [u16::MAX, u16::MAX]] {
+        vector.next_pose.as_mut().unwrap().radius = Some(radius);
+        let (state, outcome) = receipt(vector);
+        assert_eq!(state, expected_state);
+        assert_eq!(outcome, expected_outcome);
+    }
+}
+
+/// Spec: `MotionAttempts`, `SolidEnemies`, `SlopesSlowTheWalk`. Limited requested
+/// travel, enemy-accepted travel and the skipped terrain work are distinct receipts.
+#[test]
+fn slope_enemy_receipt_uses_the_complete_limited_request() {
+    let vectors = file().vector;
+    let vector = vectors
+        .iter()
+        .find(|v| v.id == "C-attempt-slope-enemy-before-factor")
+        .unwrap();
+    assert_eq!(run(vector), Vec::<String>::new());
+    let (_, outcome) = receipt(vector);
+    assert!(publications_match(&vector.after, &outcome));
+    let types::MovementWork::Motion(motion) = &outcome.movement_work[0] else {
+        panic!("ordinary horizontal request")
+    };
+    assert_eq!(motion.intended, TravelDistance(fixed(Wrapping(1), 0xC000)));
+    assert_eq!(motion.result, types::MotionResult::EnemyStopped);
+    assert_eq!(
+        motion.effect,
+        types::RequestEffect::Travel(TravelDistance(fixed(Wrapping(1), 0)))
+    );
+    assert!(
+        outcome
+            .collision_tests
+            .iter()
+            .all(|test| test.direction != Direction::Right)
+    );
+    let mut shortened_request = outcome.clone();
+    let types::MovementWork::Motion(motion) = &mut shortened_request.movement_work[0] else {
+        panic!("ordinary horizontal request")
+    };
+    motion.intended = TravelDistance(fixed(Wrapping(0), 0xE000));
+    assert!(!publications_match(&vector.after, &shortened_request));
+    let mut wrong_accepted = outcome;
+    let types::MovementWork::Motion(motion) = &mut wrong_accepted.movement_work[0] else {
+        panic!("ordinary horizontal request")
+    };
+    motion.effect = types::RequestEffect::Travel(TravelDistance(fixed(Wrapping(0), 0xE000)));
+    assert!(!publications_match(&vector.after, &wrong_accepted));
+}
+
 const VECTORS: &str = include_str!("../../../../scenarios/vectors/samus-movement.toml");
 
 // ---- The file's shape.
@@ -302,6 +539,8 @@ struct WorldTable {
     stepped: Option<SteppedTable>,
     /// One solid enemy.
     enemy: Option<EnemyTable>,
+    #[serde(default)]
+    enemies: Vec<EnemyTable>,
     /// She stands on an elevator that is moving.
     #[serde(default)]
     elevator_moving: bool,
@@ -426,6 +665,9 @@ struct Before {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct After {
+    movement_work: Option<Vec<work::ExpectedWork>>,
+    movement_skip: Option<types::MotionSkipReason>,
+    seated: Option<bool>,
     floor_response: Option<ExpectedFloor>,
     touchdown_requests: Option<Vec<types::SoundIdentity>>,
     touchdown_graphics: Option<bool>,
@@ -590,6 +832,25 @@ fn expected_sound(identity: types::SoundIdentity) -> types::SoundRequest {
 
 fn compared_new_outputs(after: &After, outcome: &Outcome) -> Vec<Compared> {
     vec![
+        (
+            "movement_work",
+            after.movement_work.as_ref().map(|work| {
+                format!(
+                    "{:?}",
+                    work.iter()
+                        .map(work::ExpectedWork::model)
+                        .collect::<Vec<_>>()
+                )
+            }),
+            format!("{:?}", outcome.movement_work),
+        ),
+        (
+            "movement_skip",
+            after
+                .movement_skip
+                .map(|reason| format!("{:?}", Some(reason))),
+            format!("{:?}", outcome.movement_skip),
+        ),
         (
             "floor_response",
             after.floor_response.as_ref().map(ExpectedFloor::show),
@@ -1376,7 +1637,9 @@ fn slope(table: &SlopeTable, faces: SlopeFaces) -> ((u16, u16), Block) {
             n
         })
     });
-    let factor = table.factor.as_ref().map_or(Wrapping(0x100), |f| f.0);
+    let factor = types::SlopeFactor(table.factor.as_ref().map_or(0x100, |f| {
+        u16::try_from(f.0.0).expect("dimensionless factor")
+    }));
     (
         corner(table.block),
         Block::Slope(Slope {
@@ -1430,6 +1693,7 @@ fn room(world: &WorldTable) -> Room {
     let enemies = world
         .enemy
         .iter()
+        .chain(&world.enemies)
         .map(|e| Hitbox {
             centre: px_pair(e.centre),
             radius: px_pair(e.radius),
@@ -1841,6 +2105,11 @@ fn hers(after: &After, samus: &Samus) -> Vec<Compared> {
             speed_y(samus.vertical.speed).show(),
         ),
         ("dash", after.dash.map(|d| show(d.0)), show(samus.run.dash)),
+        (
+            "seated",
+            after.seated.map(|s| s.to_string()),
+            (samus.seat == Seat::Seated).to_string(),
+        ),
         (
             "bounces",
             after.bounces.map(|b| b.to_string()),

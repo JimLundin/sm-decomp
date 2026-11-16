@@ -47,20 +47,6 @@ leaves this file; its text and answer are in git history.
     claimed here. Weapon inheritance and the caller variants outside the engine's normal and
     elevator-carried PRE paths remain unwired; the directional harness checks named end cuts.
 
-## Accepted animation handover
-
-39. **Taller supplied animation targets can differ from the selected animation handover.**
-    `change::Samus::change_pose` replaces the choice on `Fitted::Refused` or
-    `Fitted::Crouched`, while `Samus::step` supplies the original `chosen.handed_over`
-    to `FrameBefore::left_behind` and `Outcome::handed_over`. No recorded frame or
-    supplied vector reproduces a wrong result yet. The original accepts the selected animation
-    pose without fitting it and retains that end for handover and held-jump history. Imported
-    animation endings and body sizes never grow at a handover, so the model's extra fit has
-    no refusal or substitution there. The caller's body-size callback does not enforce that
-    invariant for adjusted content or restored pose/end combinations. Those combinations
-    remain a model gap; no behavior correction is inferred from an unobserved vanilla case.
-    `TransitionFiringAim` already reads the accepted pose after fit.
-
 ## External pose selection and interrupted POST
 
 Pending publication is proven only where the ordinary pose initializer runs. The harness
@@ -89,3 +75,33 @@ Samus-appearance part 2 owns admission of landing dust/splashes from the publish
 opportunity. Ceres deletes its atmospheric landing slots; general room/liquid graphical
 admission remains outside the movement output delta. CPU workload prediction outside the
 native prefix's ordinary moves, aim moves and fit looks remains the timing owner's gap.
+
+## Movement decisions and their timing consumers
+
+The movement contract publishes actual requests, eligible candidates, ordered floor/ceiling
+support and actual selected-body fit considerations. Their production implementation and
+CPU-timing consumption must preserve complete geometry and performed order; no elapsed
+costs are supplied by movement. Fifteen constructed full-entry delta witnesses are proven.
+Native complete attempt/candidate/support receipts remain absent, and the existing query
+list cannot prove no-attempt or no-effect admission. Mixed/stepped complete fit receipts
+remain unproved; existing movement behaviour and leading-edge vectors remain required.
+
+**Missing caller roster writer and timing consumer.** The actor caller owns beginning-of-frame
+interactive membership and current frozen/solid eligibility. Movement receives ordered eligible
+boxes only. Selection and tests on excluded actors consume original work outside this bounded
+receipt; the caller must publish it and CPU timing must consume it before full enemy-work
+prediction is claimed. Empty supplied candidates do not prove absent roster work.
+
+The caller preserves the raw admitted interactive order, current frozen/solid properties and
+an eligible-ordinal-to-member mapping. Original filtering occurs at each actual request.
+Its receipt includes excluded members in the reached prefix; exhaustion includes the terminator,
+and a first accepted stop excludes its following suffix and terminator. Eager filtering once
+when constructing the world's eligible boxes is a distinct operation. CandidateCount does not
+recover repeated scans or excluded members. Neither raw roster nor eligibility becomes a new
+clean movement input; native complete roster coverage remains0.
+
+**Seating cleared after an enemy-blocked ground pull.** The current ordinary vertical movement
+clears seating solely from nonzero requested travel. An enemy stop skips terrain and must retain
+the seat. The complete constructed slope witness starts unseated, is seated by horizontal
+support, then touches an enemy during the ground pull and ends seated. The unconditional-clear
+fault loses that field. The next model must clear only when ordinary vertical terrain is reached.

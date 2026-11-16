@@ -61,7 +61,10 @@ impl Samus {
     /// or skids stay as her moves left them, her position and seat as her looks left them. What
     /// she becomes brings, in order: after pose fit's push the shrink (`shrink`), then what she
     /// met, then its row's effects, then the change of action's own (`ENTERING`). `Dashing`: a
-    /// let-go effect ends her dashing.
+    /// let-go effect ends her dashing. Spec: `AnimationEnds`, `PerformedBodyFit`: a handover
+    /// accepts its target at any supplied height without fit consideration, clearance or fit
+    /// placement. Initialization and the end's effects still run; an end that gives way fits
+    /// its ordinary selection instead.
     ///
     /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where pose fit moved her, or a change of
     /// shape starts (a lowering of 0 px included), she is placed at her y pixel just after that,
@@ -74,7 +77,11 @@ impl Samus {
         start: &Self,
         t: &mut Tick,
     ) -> Option<Fixed> {
-        let fitted = self.fit(t, chosen.pose);
+        let fitted = if chosen.handed_over {
+            Fitted::Taken
+        } else {
+            self.fit(t, chosen.pose)
+        };
         let (became, contact) = match fitted {
             Fitted::Taken | Fitted::Pushed => (chosen, contact),
             Fitted::Refused => (Choice::instead(self.pose), None),
@@ -122,8 +129,12 @@ impl Samus {
     /// `ShrinkingLowersHer`: the frame a change of shape starts, she looks down its distance
     /// (`lowers`) at her new size, a block look, and is lowered as far as it got.
     fn shrink(&mut self, lowers: Lowers, t: &mut Tick) {
-        t.purpose = types::CollisionPurpose::BodyLowering;
-        let look = t.vmove(self.bounds(t), t.rules.lowers(lowers), Probe::Blocks);
+        let look = t.vmove(
+            self.bounds(t),
+            t.rules.lowers(lowers),
+            Probe::Blocks,
+            types::CollisionPurpose::BodyLowering,
+        );
         // What stopped the look writes her y subpixel FFFF, or seats her on a stepped block.
         self.take_result(&look);
         self.position.y += px(look.gone);

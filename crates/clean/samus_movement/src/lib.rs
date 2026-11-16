@@ -47,8 +47,14 @@
 //! when `outcome.pending_aim` publishes a heading. Skipped intervals preserve caller memory.
 //! The world receives `inside` and ordered `reached` reactions, not collision-work records.
 //!
-//! CPU timing receives ordered `collision_tests` immediately as semantic performed work;
-//! it assigns any timing costs outside movement. Sound transport receives every ordered
+//! CPU timing receives `movement_work`, `movement_skip` and ordered `collision_tests`
+//! at step completion as fresh semantic performed work. Fit requests are nested in the
+//! actual `BodyFitConsideration`, preserving request order rather than flattening it away.
+//! An enemy search owns its `CandidateCount` and considered prefix; block-only looks have
+//! no enemy-search fields. Support is floor then ceiling, using any floor-updated centre.
+//! A zero request is present; skipped ordinary admission is not a zero request.
+//!
+//! CPU timing assigns any timing costs outside movement. Sound transport receives every ordered
 //! `touchdown_requests` record (identity, library and allowance), without deduplication.
 //! Appearance's second half receives start/end pose, actual `floor_response` and its
 //! pre-response `VerticalSpeed`, `touchdown_graphics` permission, and the existing animation
@@ -56,8 +62,40 @@
 //! requests *after* movement's requests, preserving even repeated `SpinEnded` identities.
 //! These new outputs are fresh per-call publications, not movement State and not claims of
 //! sound playback or visible dust/splash. A subsequent call with no contact reports none.
-//! `handed_over` still means animation-end selection, independently of fit acceptance;
-//! `floor_response` reports acceptance, never that selection or held-jump history.
+//! Spec: `AnimationEnds`, `PerformedBodyFit`. An ordinary animation end accepts its
+//! handed-over target without body-fit consideration, clearance, refusal, substitution or
+//! fit placement, even for taller supplied bodies. Initialization and the end's effects
+//! still apply. An end that gives way uses ordinary selection and fitting instead.
+//! `floor_response` reports accepted contact, never handover or held-jump history.
+//!
+//! # Content boundary and numerical meanings
+//!
+//! The importer validates pose/action relations, coverage for every selectable body, and
+//! world stand-in chains before handing the model content. `Frame::body` returns an actual
+//! `Radius` (whole-pixel half-sizes), not an unavailable-content sentinel. Missing body
+//! content is an importer error, never silently replaced by zero geometry. The spec gives
+//! no universal radius range; the model is total for admitted typed radii, including zero,
+//! while the importer checks that its content represents the intended game's boxes.
+//! `cannon_heading` may be unavailable (`None`), distinct from every valid firing direction.
+//!
+//! `Run::speed` and `Run::dash` are magnitudes; carry/facing supplies their direction.
+//! Moonwalking's facing is the way she travels, while her sprite/gun looks backwards.
+//! A speed-derived intent is submitted to collision, the horizontal whole-part limit keeps
+//! its fraction, then `MotionAttempt::intended` publishes the signed limited request before
+//! slope shortening. Eligible enemies see that complete limited request first; an enemy
+//! stop skips terrain and its factors. Otherwise terrain tests use the unshortened target
+//! line, applying each reached floor's factor in order until a stop. `RequestEffect::Travel`
+//! is signed accepted travel; `RequestEffect::Clearance` is available whole-pixel room,
+//! not net displacement. `SlopeFactor` is dimensionless, and cells are column/row coordinates.
+//! All pixel/subpixel carries and signed travel borrows retain their wrapping meanings.
+//! Gravity grows the speed after vertical travel and before the response. Thus a ceiling
+//! reports the pulled pre-response rise, then ordinarily clears it; changing-body ceiling
+//! contact retains that pulled speed. Selected `handed_over` metadata is not an accepted
+//! floor effect. Each accepted floor response carries its own kind and pre-response speed.
+//!
+//! The complete compiling ordinary example is `tests/ordinary.rs`: fresh initialization
+//! is separate from serde restoration, including complete carry, phase, spin and seating.
+//! It shows caller-owned pending aim/travel at the firing and publication boundaries.
 //!
 //! The integration test `ordinary_call_delivers_outputs_and_comparison_checks_transport_fields`
 //! performs this ordinary flow through the public entry point with supplied room/body data.
@@ -79,8 +117,12 @@ mod tick;
 mod touchdown;
 mod travel;
 pub use types::{
-    CollisionPurpose, CollisionTest, CollisionTests, FloorResponse, FloorResponseKind,
-    QueueAllowance, SoundIdentity, SoundLibrary, SoundRequest, VerticalMotionAtTest, VerticalSpeed,
+    BodyFitConsideration, BodyFitResult, CandidateCount, CandidateIndex, CandidateResult,
+    ClearanceRoom, CollisionPurpose, CollisionTest, CollisionTests, EnemyCandidate, EnemySearch,
+    FloorResponse, FloorResponseKind, MotionAttempt, MotionResult, MotionSkipReason, MovementWork,
+    PixelGap, PlacementDistance, QueueAllowance, RequestEffect, RequestedWorld, SoundIdentity,
+    SoundLibrary, SoundRequest, SupportCheck, SupportResult, SupportSurface, VerticalMotionAtTest,
+    VerticalSpeed,
 };
 mod vertical;
 

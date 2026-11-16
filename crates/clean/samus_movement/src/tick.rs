@@ -56,8 +56,10 @@ pub struct Tick<'a> {
     pub reached: Vec<Touch>,
     /// Spec: `PerformedCollisionTests`. Only actually evaluated leading-edge tests.
     pub collision_tests: types::CollisionTests,
-    /// Purpose of the current movement/look, set by its semantic caller.
-    pub purpose: types::CollisionPurpose,
+    /// Spec: `MotionAttempts`. Fresh performed requests and decisions in order.
+    pub movement_work: Vec<types::MovementWork>,
+    /// Spec: `MotionAttempts`. Ordinary admission, distinct from zero travel.
+    pub movement_skip: Option<types::MotionSkipReason>,
     /// Spec: `AcceptedFloorResponse`. Move-local stops, or accepted contact after fitting.
     pub floor_response: Option<types::FloorResponse>,
     /// Spec: `TouchdownRequests`. A wall kick accepted by fitting, not merely selected.

@@ -142,8 +142,12 @@ pub struct Axis {
     probe: Probe,
     /// `TouchedCells`: the way its cells are reported: a walk's or a move's direction, or a look.
     way: Way,
+    /// Spec: `PerformedCollisionTests`. Each request owns its purpose.
+    purpose: types::CollisionPurpose,
     /// The move (`SlopesCarry`: a sloped floor's stop counts its pixel part, not the carry).
     dist: Fixed,
+    /// Unshortened terrain target after the horizontal limit.
+    terrain_target: Option<Fixed>,
     /// Her centre along the axis where she starts.
     from: Fixed,
     /// Her centre across it, its subpixel kept for where the move puts her.
@@ -158,7 +162,13 @@ impl Bounds {
     /// `BlocksStopFlush`: a move of `dist` from this box heading `heading`, tested as `probe`
     /// says: the box's parts along the axis and across it. `TouchedCells`: a walk or a move
     /// reports its cells with its direction, anything else with the way `Look`.
-    pub const fn axis(self, heading: Heading, dist: Fixed, probe: Probe) -> Axis {
+    pub const fn axis(
+        self,
+        heading: Heading,
+        dist: Fixed,
+        probe: Probe,
+        purpose: types::CollisionPurpose,
+    ) -> Axis {
         let ((from, across), (ra, rc)) = (self.at.along(heading), self.r.along(heading));
         let way = if matches!(probe, Probe::Walk | Probe::Move) {
             Way::Move(heading)
@@ -169,7 +179,9 @@ impl Bounds {
             heading,
             probe,
             way,
+            purpose,
             dist,
+            terrain_target: None,
             from,
             across,
             ra,
@@ -204,7 +216,11 @@ impl Axis {
 
     /// `BlocksStopFlush`: her leading edge at the target.
     fn lead(&self) -> Px {
-        edge(self.to().pixel(), self.ra, self.heading)
+        edge(
+            self.terrain_target.unwrap_or_else(|| self.to()).pixel(),
+            self.ra,
+            self.heading,
+        )
     }
 
     /// `BlocksStopFlush`, `SlopesCarry`: the move ending `by` whole px on from where she starts,
@@ -242,7 +258,7 @@ impl Axis {
     /// stops her. The centres must be closer than the half-sizes summed on both axes, along the
     /// move at her reach: her box at the move's end pushed 1 px on, moving left or up unless the
     /// end's subpixel is 0, right or down unless both her start's and the move's are 0.
-    fn enemy(&self, e: &Hitbox) -> Option<Moved> {
+    fn enemy(&self, e: &Hitbox) -> (types::CandidateResult, Option<Moved>) {
         let ((ea, ec), (era, erc)) = (e.centre.along(self.heading), e.radius.along(self.heading));
         let gap = self.ahead(ea) - era - self.ra;
         let push = if grows(self.heading) {
@@ -252,14 +268,27 @@ impl Axis {
         } != 0;
         let reach = self.to().pixel() + if push { onward(self.heading) } else { NONE };
         let near = |a: Px, b: Px, sum: Px| (a - b).0.cast_signed().unsigned_abs() < sum.0;
-        let reached = !below_zero(gap)
-            && near(reach, ea, self.ra + era)
-            && near(self.across.pixel(), ec, self.rc + erc);
+        let reached =
+            near(reach, ea, self.ra + era) && near(self.across.pixel(), ec, self.rc + erc);
+        if !reached {
+            return (types::CandidateResult::Miss, None);
+        }
+        if below_zero(gap) {
+            return (
+                types::CandidateResult::AlreadyOverlapping(types::PixelGap(gap)),
+                None,
+            );
+        }
         let mut moved = self.put(gap, self.from.sub(), Some(Stop::Enemy));
         if gap == NONE {
             moved.to.y = moved.to.y.with_sub(0);
         }
-        reached.then_some(moved)
+        let result = if gap == NONE {
+            types::CandidateResult::Touching
+        } else {
+            types::CandidateResult::StopsAtGap(types::PixelGap(gap))
+        };
+        (result, Some(moved))
     }
 
     /// `BlocksStopFlush`, `SlopesCarry`: what a block on her leading edge's line, the `k`th
@@ -354,7 +383,7 @@ impl Tick<'_> {
     /// edge heading `h` (her bottom edge for a floor, her top edge for a ceiling), how many rows
     /// past the air row next to its surface that edge is, where the cell is a sloped surface
     /// facing that way and the edge is on that air row or past it.
-    fn sloped(&self, b: Bounds, h: Heading) -> Option<Px> {
+    fn sloped(&self, b: Bounds, h: Heading) -> (bool, Option<Px>) {
         let at = Pair {
             x: b.at.x.pixel(),
             y: edge(b.at.y.pixel(), b.r.y, h),
@@ -363,9 +392,10 @@ impl Tick<'_> {
             x: cell(at.x),
             y: cell(at.y),
         }) else {
-            return None;
+            return (false, None);
         };
-        past(surface, h, at)
+        let facing = (surface.faces == SlopeFaces::Floor) == (h == Heading::Down);
+        (facing, past(surface, h, at))
     }
 
     /// `TouchedCells`: the cells she is inside, from her box at the frame's start: her centre
@@ -394,65 +424,122 @@ impl Tick<'_> {
     /// leading edge's column at the unshortened target, in each row her body spans, top row
     /// first: cut to a multiple of 1/256 px towards minus infinity (read as 8.8 from the signed
     /// move), its pixel part kept mod 256, multiplied by the factor exactly, its direction put
-    /// back.
-    fn shortened(&self, a: &Axis) -> Fixed {
-        self.line(a).into_iter().fold(a.dist, |d, (_, at)| {
-            if let (Block::Slope(s), _) = self.resolve(at)
-                && s.faces == SlopeFaces::Floor
-            {
-                let cut = if grows(a.heading) {
-                    d.to_8_8()
-                } else {
-                    -(-d).to_8_8()
-                };
-                Wrapping(u32::from(cut.0)) * s.factor
+    /// back. Each actually tested floor applies its factor once; later cells after a stop
+    /// do not contribute. The leading-edge line remains the complete limited request's line.
+    fn shorten(a: &mut Axis, block: Block) {
+        if a.probe == Probe::Walk
+            && let Block::Slope(s) = block
+            && s.faces == SlopeFaces::Floor
+        {
+            let cut = if grows(a.heading) {
+                a.dist.to_8_8()
             } else {
-                d
-            }
-        })
+                -(-a.dist).to_8_8()
+            };
+            a.dist = Wrapping(u32::from(cut.0)) * Wrapping(u32::from(s.factor.0));
+        }
     }
 
     /// `SolidEnemies`: the first qualifying enemy in supplied order decides the move, if any;
     /// enemies she already overlaps are skipped.
-    fn enemies(&self, a: &Axis) -> Option<Moved> {
-        self.world.solid_enemies().iter().find_map(|e| a.enemy(e))
+    fn enemies(&self, a: &Axis) -> (types::EnemySearch, Option<Moved>) {
+        let supplied = self.world.solid_enemies();
+        let mut search = types::EnemySearch {
+            supplied_count: types::CandidateCount(supplied.len()),
+            candidates: Vec::new(),
+        };
+        for (index, e) in supplied.iter().enumerate() {
+            let (result, moved) = a.enemy(e);
+            search.candidates.push(types::EnemyCandidate {
+                candidate: types::CandidateIndex(index),
+                centre: e.centre,
+                radius: e.radius,
+                result,
+            });
+            if moved.is_some() {
+                return (search, moved);
+            }
+        }
+        (search, None)
     }
 
     /// `BlocksStopFlush`, `SolidEnemies`, `TouchedCells`: a move along axis `a`, tested as its
     /// probe says: where it leaves her, and what stopped it; its cells go to the frame's report.
-    /// A walk is shortened first (`SlopesSlowTheWalk`), and a horizontal move is limited to 15 px
-    /// either way, its subpixel kept. A solid enemy in the move's path decides it alone, the
-    /// first qualifying enemy in supplied order, not necessarily the nearest; blocks stop her
+    /// The speed-derived intent first receives the horizontal whole-part limit, its fraction
+    /// kept. `MotionAttempts` publishes that signed request before `SlopesSlowTheWalk`
+    /// shortens accepted travel, and terrain retains the unshortened target line. Enemies
+    /// judge the complete limited request before any factor is applied. An enemy stop skips
+    /// terrain altogether. The first qualifying enemy in supplied order decides, not
+    /// necessarily the nearest; blocks stop her
     /// only on a path free of qualifying enemies. A move of exactly 0 meets
     /// a solid enemy she touches as any move does, and nothing else (`blocks`).
     pub fn go(&mut self, mut a: Axis) -> Moved {
-        if a.probe == Probe::Walk {
-            a.dist = self.shortened(&a);
-        }
         if !a.heading.vertical() {
             a.dist = a.dist.min(fixed(self.rules.move_limit, a.dist.sub()));
         }
-        let stopped = match a.probe {
-            Probe::Enemies => self.enemies(&a),
-            Probe::Blocks => self.blocks(&a),
+        let intended = a.signed_travel(a.dist);
+        a.terrain_target = Some(a.to());
+        let (world, enemy_search, enemy_stop) = match a.probe {
+            Probe::Blocks => (types::RequestedWorld::Blocks, None, None),
+            Probe::Enemies => {
+                let (search, stop) = self.enemies(&a);
+                (types::RequestedWorld::SolidEnemies, Some(search), stop)
+            }
             Probe::Walk | Probe::Move | Probe::NearWall => {
-                self.enemies(&a).or_else(|| self.blocks(&a))
+                let (search, stop) = self.enemies(&a);
+                (types::RequestedWorld::EnemiesThenBlocks, Some(search), stop)
             }
         };
-        stopped.unwrap_or_else(|| {
+        let stopped = enemy_stop.or_else(|| {
+            if a.probe == Probe::Enemies {
+                None
+            } else {
+                self.blocks(&mut a)
+            }
+        });
+        let moved = stopped.unwrap_or_else(|| {
             let mut moved = a.put(a.ahead(a.to().pixel()), a.to().sub(), None);
             // Spec: TravelledDistances. No stop: the limit and walk factors already determined
             // the complete accepted travel, independently of position wrapping or alignment.
             moved.accepted = a.signed_travel(a.dist);
             moved
-        })
+        });
+        let result = match moved.stop {
+            None => types::MotionResult::Unobstructed,
+            Some(Stop::Enemy) => types::MotionResult::EnemyStopped,
+            Some(Stop::Flat | Stop::Seats) => types::MotionResult::TerrainStopped,
+        };
+        let effect = if a.way == Way::Look {
+            types::RequestEffect::Clearance(types::ClearanceRoom(moved.gone))
+        } else {
+            types::RequestEffect::Travel(moved.accepted)
+        };
+        self.movement_work
+            .push(types::MovementWork::Motion(types::MotionAttempt {
+                purpose: a.purpose,
+                direction: a.heading,
+                world,
+                start: Pair::from_along(a.heading, a.from, a.across),
+                radius: Pair::from_along(a.heading, a.ra, a.rc),
+                intended,
+                enemy_search,
+                effect,
+                result,
+            }));
+        moved
     }
 
     /// `BlocksStopFlush`, `PoseFitAfterMoves`, `ShrinkingLowersHer`: a vertical move or look by
     /// `by`, signed, downward positive. A block look as long as the long look (8 px) or longer
     /// is stopped by whatever the long look the same way would stop; only when nothing stops
     /// that is it the look of its own distance.
-    pub fn vmove(&mut self, b: Bounds, by: Fixed, probe: Probe) -> Moved {
+    pub fn vmove(
+        &mut self,
+        b: Bounds,
+        by: Fixed,
+        probe: Probe,
+        purpose: types::CollisionPurpose,
+    ) -> Moved {
         let heading = if by.negative() {
             Heading::Up
         } else {
@@ -460,17 +547,17 @@ impl Tick<'_> {
         };
         let long_look = self.rules.long_look;
         let first = (probe == Probe::Blocks && by.size() >= long_look)
-            .then(|| self.go(b.axis(heading, long_look, probe)));
+            .then(|| self.go(b.axis(heading, long_look, probe, purpose)));
         first
             .filter(|m| m.stop.is_some())
-            .unwrap_or_else(|| self.go(b.axis(heading, by.size(), probe)))
+            .unwrap_or_else(|| self.go(b.axis(heading, by.size(), probe, purpose)))
     }
 
     /// `BlocksStopFlush`: the cells of her leading edge's line at the target; the first that
     /// stops her decides. `TouchedCells`: the cells it reaches, up to the one that stops it, with
     /// the way it reached them. `OtherBlockKinds`: an answered cell is air on a touch its reaction
     /// lets through. A move of exactly 0 reaches no cells, and blocks never stop it.
-    fn blocks(&mut self, a: &Axis) -> Option<Moved> {
+    fn blocks(&mut self, a: &mut Axis) -> Option<Moved> {
         if a.dist == ZERO {
             return None;
         }
@@ -490,7 +577,7 @@ impl Tick<'_> {
             self.collision_tests.push(types::CollisionTest {
                 cell: at,
                 direction: a.heading,
-                purpose: self.purpose,
+                purpose: a.purpose,
                 vertical_motion,
             });
             let (block, at) = self.resolve(at);
@@ -498,6 +585,7 @@ impl Tick<'_> {
                 cell: at,
                 way: a.way,
             });
+            Self::shorten(a, block);
             let through = matches!(block, Block::Answered) && self.world.lets_through(at, a.way);
             a.stop(block, k).filter(|_| !through)
         })
@@ -508,10 +596,42 @@ impl Tick<'_> {
     /// lifts her by whole pixels onto its last air row; then a sloped ceiling at her top edge's
     /// row, with that edge in its solid part or on the first air row under it, pushes her down
     /// onto that row. Either seats her: returns her y then, if she is seated.
-    pub fn slope_checks(&self, mut b: Bounds) -> Option<Fixed> {
-        let lift = self.sloped(b, Heading::Down).filter(|p| *p != NONE);
+    pub fn slope_checks(&mut self, mut b: Bounds) -> Option<Fixed> {
+        let lift = self.support(b, Heading::Down);
         b.at.y -= px(lift.unwrap_or(NONE));
-        let push = self.sloped(b, Heading::Up);
+        let push = self.support(b, Heading::Up);
         lift.or(push).map(|_| b.at.y + px(push.unwrap_or(NONE)))
+    }
+
+    /// Spec: `PerformedSupportChecks`. Retain a surface read even when it does not place her.
+    fn support(&mut self, b: Bounds, h: Heading) -> Option<Px> {
+        let at = Cell {
+            x: cell(b.at.x.pixel()),
+            y: cell(edge(b.at.y.pixel(), b.r.y, h)),
+        };
+        let is_floor = h == Heading::Down;
+        let (slope, raw) = self.sloped(b, h);
+        let placement = raw.filter(|p| !is_floor || *p != NONE);
+        let result = match (slope, placement, is_floor) {
+            (false, _, _) => types::SupportResult::NoSlope,
+            (_, None, _) => types::SupportResult::NoPlacement,
+            (_, Some(_), true) => types::SupportResult::Lifted,
+            (_, Some(_), false) => types::SupportResult::PushedDown,
+        };
+        let by = placement.unwrap_or(NONE) * if is_floor { -ONE } else { ONE };
+        self.movement_work
+            .push(types::MovementWork::Support(types::SupportCheck {
+                surface: if is_floor {
+                    types::SupportSurface::Floor
+                } else {
+                    types::SupportSurface::Ceiling
+                },
+                centre: b.at,
+                radius: b.r,
+                cell: at,
+                result,
+                placement: types::PlacementDistance(by),
+            }));
+        placement
     }
 }

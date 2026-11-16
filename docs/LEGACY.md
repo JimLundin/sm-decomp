@@ -447,3 +447,12 @@ Differences the plan keeps on purpose, listed ahead of the work that brings them
   the new producer outputs while retaining movement. General landing dust/splash
   admission remains samus-appearance's; Ceres deletes the two landing graphic slots
   at its independent accepted opportunity. Dispatch 183 remains unsupported.
+
+- **Native seating after an enemy-blocked ground pull** (`samus-movement`, proof): the model
+  retains seating when an enemy stops a nonzero ordinary vertical request before blocks.
+  Complete constructed running witnesses compare the one-pixel request, enemy stop, retained
+  seating and absent terrain work. Native coverage of that combined boundary remains unproved.
+- **Eligible movement candidates omit caller roster work** (`samus-movement`, CPU timing):
+  ordered solid boxes do not expose interactive selection or eligibility checks on excluded
+  actors. The caller's roster writer and timing consumer need independent receipts. An empty
+  candidate list or leading-edge query list proves neither absent motion nor absent actor work.

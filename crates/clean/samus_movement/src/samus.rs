@@ -38,8 +38,10 @@ impl Spin {
     }
 }
 
-/// `SlopesCarry`: whether she is seated on a slope, until her next vertical move of more than 0
-/// starts.
+/// Spec: `SlopesCarry`, `PerformedSupportChecks`. Remembered slope seating.
+///
+/// Zero travel, enemy-before-block stops and fit clearances retain it. A nonzero ordinary
+/// vertical move reaching blocks clears it before any new stepped-block seating.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Seat {
     /// She is not on a slope.
@@ -116,6 +118,11 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
 )]
 pub struct Outcome {
+    /// Spec: `MotionAttempts`, `ReachedEnemyCandidates`, `PerformedSupportChecks`,
+    /// `PerformedBodyFit`. Fresh ordered work for CPU timing at completion of the step.
+    pub movement_work: Vec<types::MovementWork>,
+    /// Spec: `MotionAttempts`. No ordinary request admitted, not a request of zero travel.
+    pub movement_skip: Option<types::MotionSkipReason>,
     /// Spec: `AcceptedFloorResponse`. Actual accepted response with its pre-response speed,
     /// never manufactured from final pose or handover/jump-held history.
     pub floor_response: Option<types::FloorResponse>,
