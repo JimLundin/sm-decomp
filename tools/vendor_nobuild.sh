@@ -29,9 +29,16 @@ patch=${version#*.}; patch=${patch#*.}; patch=${patch%%[+-]*}
 
 # The recipe: what the crate's build.rs emits on rustc 1.80 or later (every check-cfg branch
 # taken), on a stable compiler without RUSTC_BOOTSTRAP. `cfg NAME PREDICATE` for a cfg it sets,
-# `out FILE TEXT` for a file it writes. Read the new build.rs before changing a version here.
+# `check CFG` for a declaration emitted indirectly, `out FILE TEXT` for a file it writes.
+# Read the new build.rs before changing a version here.
 recipe() {
   case $crate-$version in
+    num-traits-0.2.19)
+      # f64::total_cmp is stable since 1.62, with or without the crate's std feature.
+      # autocfg emits this declaration indirectly, beyond the literal extractor below.
+      check 'cfg(has_total_cmp)'
+      cfg has_total_cmp 'all()'
+      ;;
     proc-macro2-1.0.107)
       # Without `procmacro2_semver_exempt` in RUSTFLAGS: wrap the compiler's proc_macro, and use
       # Span::start/end and Span::file, whose probes compile on stable 1.88 and later.
@@ -100,6 +107,7 @@ mapfile -t checks < <(tar -xzOf "$work/$file" "$crate-$version/build.rs" \
   | sed -n 's/.*"cargo::\{0,1\}rustc-check-cfg=\(.*\)");.*/\1/p' | sed 's/\\"/"/g')
 
 cfgs=() outs=()
+check() { checks+=("$1"); }
 cfg() { # NAME PREDICATE: the cfg's uses in src/, outside the build script's probes.
   local f n=0 before
   while IFS= read -r f; do

@@ -1,0 +1,28 @@
+# Persistent physical-part storage, independent of allocated voice and current cue arity.
+# ram.asm:218–219,260–261,296–297; active guard sound library.asm:75.
+[release]
+active_flag = 255
+
+[[release.part]]
+group = 1
+index = 0
+flag_address = 960
+timer_address = 961
+
+[[release.part]]
+group = 2
+index = 0
+flag_address = 1108
+timer_address = 1109
+
+[[release.part]]
+group = 3
+index = 0
+flag_address = 1164
+timer_address = 1165
+
+[[release.part]]
+group = 3
+index = 1
+flag_address = 1166
+timer_address = 1167

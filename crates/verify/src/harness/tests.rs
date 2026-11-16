@@ -689,6 +689,14 @@ fn the_clock_holds_its_floors_against_the_cache() {
     }
 }
 
+/// Missing native audio inputs remain defects on every ordinary cached row.
+#[test]
+fn audio_holds_its_floors_against_the_cache() {
+    if let Some((cache, _)) = environment() {
+        hold_floors(&super::audio::cached::Audio, "audio-transport", &cache);
+    }
+}
+
 /// Samus's motion over every cached row, held to its floors; `SM_CACHE` and `SM_ROM` as the
 /// clock's test reads them.
 #[test]

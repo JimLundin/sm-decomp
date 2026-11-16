@@ -1385,3 +1385,8 @@ pub enum Script {
     /// What a bomb block does when her touch breaks it.
     Touched,
 }
+
+/// Shared audio content and retained transport state.
+pub mod audio;
+/// Admitted musical and effect pitch quantities.
+pub mod pitch;

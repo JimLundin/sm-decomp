@@ -274,3 +274,6 @@ enemy-interactions field 295 0 consumed-markers
 enemy-interactions entry BoxOverlap 2 0 2 0
 enemy-interactions entry ContactAllowed 2 0 2 0
 enemy-interactions entry FirstPowerShot 2 0 2 0
+
+audio-transport frames 40835 0 0 0 0
+audio-transport field 0 0 admitted transport

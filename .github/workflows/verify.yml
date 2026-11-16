@@ -154,6 +154,9 @@ jobs:
     env:
       CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
       CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
+      # Root pins the corrected, validated native pair after uploading its ciphertext.
+      AUDIO_NATIVE_ASSET: "audio-native-d67b7c3a5874330d.tar.xz.enc"
+      AUDIO_NATIVE_SHA256: "69343bdd499bcdf1f5eb95aa53952d4aed8c26f98a212b160c77639f5d59af5d"
     steps:
       - uses: actions/checkout@v4
       - *cache
@@ -186,6 +189,10 @@ jobs:
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
       - *relock_fetch
       - *relock_unpack
+      - name: Fetch and validate the pinned native audio pair
+        run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Native audio paired cuts and every saved continuation
+        run: SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" bash tools/ci/audio_native.sh
       - name: "Ordinary production: public admission, complete-cut minimum and entry rejection"
         run: |
           set -o pipefail

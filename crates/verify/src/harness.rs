@@ -28,6 +28,7 @@
 //! The harness never consults today's engine: the oracle is the yardstick (MODEL §4).
 
 pub mod appearance;
+pub mod audio;
 pub mod blocks;
 pub mod camera;
 pub mod ceres;

@@ -32,6 +32,10 @@
 # milestone or a rung that needs one of those needs the format too.
 
 [[model]]
+name = "audio-transport"
+rounds = 1
+
+[[model]]
 name = "samus-movement"
 rounds = 24
 
@@ -359,6 +363,8 @@ reads = ["H3", "P1", "F3"]
 
 [[domain]]
 id = "U1"
+model = "audio-transport"
+status = "in-progress"
 name = "Audio, the CPU side"
 area = "audio"
 wave = 3

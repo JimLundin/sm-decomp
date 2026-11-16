@@ -32,11 +32,11 @@ for scenario in splice renamed failed ignored bad_exit no_summary; do
   if bash tools/ci/harness_floors.sh > "$scratch/output" 2>&1; then result=0; else result=$?; fi
   if [ "$scenario" = splice ]; then
     [ "$result" -eq 0 ]
-    [ "$(wc -l < "$calls")" -eq 11 ]
-    [ "$(sort -u "$calls" | wc -l)" -eq 11 ]
+    [ "$(wc -l < "$calls")" -eq 12 ]
+    [ "$(sort -u "$calls" | wc -l)" -eq 12 ]
     for domain in the_clock_holds_its movement_holds_its the_camera_holds_its \
       progress_holds_its appearance_holds_its the_hud_holds_its the_blocks_hold_their \
-      the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their contact_holds_its; do
+      the_ceres_doors_hold_their the_door_passage_holds_its weapons_hold_their contact_holds_its audio_holds_its; do
       grep -Fxq "harness::tests::${domain}_floors_against_the_cache" "$calls"
     done
     if grep -Fxq 'test harness::tests::the_hud_holds_its_floors_against_the_cache ... ok' "$scratch/output"; then exit 1; fi
