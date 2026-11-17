@@ -2,7 +2,7 @@ name: Quality
 
 # Quality: formatting, line endings, lints, tests, the crate plan's rules and the doc links.
 # It needs no ROM.
-# ci.yml calls it on every pull request and push to main.
+# ci.yml calls it on pull requests, main pushes, schedules and dispatched runs.
 on:
   workflow_call:
 
@@ -27,6 +27,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Type-check the Python tooling
+        # pyproject.toml's [tool.mypy] sets strict mode and the files.
+        run: pipx run --spec mypy==2.4.1 mypy
       - name: Install the repository toolchain
         run: rustup toolchain install
       # The registry and the build, per job (github.job). The nightly and dispatched runs on main
@@ -76,9 +79,6 @@ jobs:
         run: sh tools/check_doc_links.sh
       - name: Keep docs/REPORT.md what tools report generates
         run: bash tools/check_report.sh
-      - name: Type-check the Python tooling
-        # pyproject.toml's [tool.mypy] sets strict mode and the files.
-        run: pipx run --spec mypy==2.4.1 mypy
       - name: Test the shared replay entrypoint
         run: bash tools/ci/replay_test.sh
       - name: Test exact historical replay claim accounting

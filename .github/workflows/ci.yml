@@ -4,7 +4,8 @@ name: CI
 # workflows that own one responsibility each.
 #   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
 #   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
-# Pull requests and pushes to main run quality; pull requests and verify/** pushes run verify.
+# Quality runs on every event except verify/** pushes. Verification runs on every event
+# except pushes to main; verify/** pushes run it independently of Quality.
 # Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:
   pull_request:
@@ -24,13 +25,14 @@ concurrency:
 
 jobs:
   quality:
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/')
     permissions:
       contents: read
     uses: ./.github/workflows/quality.yml
 
   verify:
     # Replays are most of the runner time, so a Quality failure stops them before they start.
-    # Scheduled and dispatched runs skip Quality, which doesn't block them.
+    # Verification-only pushes skip Quality; other eligible events require its success.
     needs: quality
     if: >-
       !cancelled()
