@@ -94,3 +94,16 @@ after = "let elapsed = audio_transport::time::cycles(0);"
 case = "audio/native-control"
 cut = 0
 field = "track0.note"
+
+[[fault]]
+name = "movement-ceres-door-centre-substitution"
+responsibility = "ceres"
+file = "crates/game/src/production/movement_ceres.rs"
+before = '''her: types::Pair {
+            x: state.movement.0.position.x.pixel(),
+            y: state.movement.0.position.y.pixel(),
+        },'''
+after = "her: state.ceres.position,"
+case = "movement-ceres/carried-position-proximity"
+cut = 9
+field = "ceres.phase"

@@ -34,12 +34,14 @@ responsibility to its exact recorded Difference cut and field. With `SM_CACHE`, 
 applies each fault, restores the source byte for byte, then requires the original complete
 receipt again, including its digest and counts. CI runs this check; the supported responsibility
 inventory comes from the index and reviewed baseline, so omitting an owner fails the check.
-Weapons and contact have separate faults in their shared case.
+Weapons and contact have separate faults in their shared case. The movement/Ceres connection
+has a separate fault substituting the door centre for held movement proximity.
 
 These faults exercise movement scheduling, elapsed audio time, cannon permission, contact
 permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres
 scheduling. They prove the named comparisons detect those errors within the existing scoped
-cases. They do not prove all rules, borrowed producers, omitted outputs or pixels. Unsupported
+cases and the narrowly integrated movement/Ceres connection. They do not prove all rules,
+borrowed producers, omitted outputs or pixels. Unsupported
 cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
 
 ## The ratchets and floors
@@ -108,7 +110,7 @@ outcomes, counts and observation digests; they are reviewed obligations, not fre
 Borrowed providers, phases, fields and limits stay in the declaration and do not become rule
 proof. File links express declared relevance, not exhaustive impact or measured coverage.
 
-The default query shows all 16 cases, including three empty-rule boundaries with empty code
+The default query shows all 17 cases, including three empty-rule boundaries with empty code
 links. A travel-file query includes the scoped witness and the integrated and movie held
 Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
 Mapping queries never select or skip landing checks; the complete index remains required.
@@ -135,3 +137,26 @@ compositor's checks need. `tools cache-lean` turns a full tier into a lean one.
 8 lsnes at a time, skipping rows already cached, one log line per row; with `WATCH_PCS` set it
 passes `--watch-pcs` too, for the `hits.txt` the independent causal input providers can read.
 `ORACLE` names the oracle command (the Python DLL runner where Defender blocks executables).
+
+## The movement/Ceres connection
+
+The indexed `movement-ceres/carried-position-proximity` case admits complete movement and slot0
+Ceres owners together at cut6 of `chain-any-0003-DFD7`, then compares positions and five door fields
+at7..10. Production derives Ceres proximity from held movement whole pixels before advancing
+movement. Both owners and all outputs commit atomically. No separate writable position receipt
+or record refresh exists. Both scoped and connected recipes call the same adapters.
+
+Its external ordinary opportunities come from the reviewed passive capture pinned by
+[movement-opportunities-capture-manifest.toml](../scenarios/replay/movement-opportunities-capture-manifest.toml),
+[provenance](../scenarios/replay/movement-opportunities-capture-pins.toml) and
+[first-record manifest](../scenarios/replay/movement-opportunities-first-record-manifest.toml).
+`tools/ci/fetch_movement_opportunities.sh` fetches the immutable encrypted evidence into the
+`movement-opportunities-v1` child of the `--native` directory. Rust admission checks file integrity,
+independent input-record alignment, requested cut identity, exact ordered completed work and
+all actual-read premises. Missing evidence is DataFailure; incompatible intact opportunities
+are Unsupported. Expected observations never supply these facts.
+
+Prior cuts6..9 must have empty interactive rosters before any actor geometry is decoded. World,
+controls, equipment, appearance ahead feedback, station stage and actor scheduling remain
+external. The case proves only this position connection and its declared comparisons; no durable
+Ceres continuation, pixels, application, power-on or played-alone coverage follows.

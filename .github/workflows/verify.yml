@@ -122,6 +122,8 @@ jobs:
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
       - name: Fetch and validate the pinned native fixtures and continuation seed
         run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch the reviewed movement opportunity evidence
+        run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Build the shared replay command
         run: cargo build --locked --profile verify -p tools
       - name: Check every indexed case against the reviewed baseline

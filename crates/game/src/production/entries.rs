@@ -158,8 +158,7 @@ pub(super) fn advance(
             ProductionRules::Ceres(rules),
             AdvanceInput::Ceres(inputs),
         ) => {
-            let output = state.run(inputs, rules);
-            *state = output.door;
+            let output = ceres_advance(state, inputs, rules);
             ProductionOutputs::Ceres(output)
         }
         (
@@ -218,4 +217,15 @@ fn advance_hud(
             Vec::new()
         }
     }
+}
+
+/// Shared complete Ceres adapter entry.
+pub(super) fn ceres_advance(
+    state: &mut boss_ceres_ridley::CeresDoor,
+    inputs: &boss_ceres_ridley::Inputs,
+    rules: &boss_ceres_ridley::Rules,
+) -> boss_ceres_ridley::Run {
+    let output = state.run(inputs, rules);
+    *state = output.door;
+    output
 }

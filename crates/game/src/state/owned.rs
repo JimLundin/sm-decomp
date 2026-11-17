@@ -56,6 +56,8 @@ impl Pinned for SenderPin {
 pub enum OwnedState {
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
+    /// Complete owners connected by held movement position.
+    MovementCeres(Box<crate::production::MovementCeresState>),
     /// Committed and pending transport quantities.
     Audio(Model<AudioPin>),
     /// Current power shots and late contact consumption.

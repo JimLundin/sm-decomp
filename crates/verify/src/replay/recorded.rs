@@ -20,6 +20,11 @@ use std::sync::Arc;
 #[derive(Clone)]
 enum Context {
     Ceres(ceres::Slot),
+    MovementCeres {
+        slot: ceres::Slot,
+        content: Arc<super::movement::Content>,
+        evidence: super::opportunity::Evidence,
+    },
     Weapons(Arc<weapons::Content>),
     Camera,
     Hud(Arc<hud::Content>),
@@ -41,6 +46,9 @@ pub(super) struct Expected {
 #[derive(Clone)]
 pub(super) enum Actual {
     Ceres,
+    MovementCeres {
+        last: Option<Box<game::production::MovementCeresOutputs>>,
+    },
     Weapons,
     Camera,
     Hud(Arc<hud::Content>),
@@ -56,7 +64,54 @@ struct Recipe {
     rules: ProductionRules,
 }
 
-fn recipe(case: &Case, wram: &[u8], sources: &Sources) -> Result<Recipe, Outcome> {
+fn connected_recipe(
+    case: &Case,
+    wram: &[u8],
+    sources: &Sources,
+    cache: &Cache,
+) -> Result<Recipe, Outcome> {
+    let lock =
+        std::fs::read(&sources.lock).map_err(|_| data_failure(None, "opportunity source lock"))?;
+    if crate::lock::Sha256::of(&lock).to_string()
+        != "d12b9153c73a2eb79e6de12eea3b4e6ea0ebf5101a0673d4cb61f2ffaf84dd71"
+    {
+        return Err(data_failure(None, "reviewed opportunity lock provenance"));
+    }
+    let slot = ceres::Slot::try_from(
+        case.actor_slot
+            .ok_or_else(|| data_failure(None, "connected Ceres slot"))?,
+    )?;
+    let content = Arc::new(super::movement::Content::load(&sources.rom)?);
+    let evidence = super::opportunity::admit(
+        &sources.native.join("movement-opportunities-v1"),
+        cache,
+        &content,
+    )?;
+    let seed = ProductionSeed::MovementCeres(Box::new(game::production::MovementCeresState {
+        movement: canonical::model::Model(super::movement::seed(wram)?),
+        ceres: ceres::seed(wram, slot)?,
+    }));
+    let production_content = ProductionContent::MovementCeres(content.movement.clone());
+    Ok(Recipe {
+        source: Context::MovementCeres {
+            slot,
+            content,
+            evidence,
+        },
+        actual: Actual::MovementCeres { last: None },
+        seed,
+        content: production_content,
+        rules: ProductionRules::MovementCeres {
+            movement: samus_movement::Rules::default(),
+            ceres: boss_ceres_ridley::Rules::default(),
+        },
+    })
+}
+
+fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<Recipe, Outcome> {
+    if case.responsibilities == [Responsibility::Movement, Responsibility::Ceres] {
+        return connected_recipe(case, wram, sources, cache);
+    }
     let (source, actual, seed, content, rules) = match case.responsibilities.as_slice() {
         [Responsibility::Ceres] => {
             let slot = ceres::Slot::try_from(
@@ -165,7 +220,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         seed,
         content,
         rules,
-    } = recipe(case, &seed_record.wram, sources)?;
+    } = recipe(case, &seed_record.wram, sources, &inputs)?;
     let production = Production::admit(seed, content.clone(), rules.clone())
         .map_err(|_| data_failure(Some(frame), "recorded production admission"))?;
     if case.checkpoints {
@@ -212,6 +267,49 @@ impl Inputs {
                 .ok_or_else(|| data_failure(Some(cut), "recorded preceding cut"))?,
         )?;
         let outputs = match &self.recipe {
+            Context::MovementCeres {
+                slot,
+                content,
+                evidence,
+            } => {
+                evidence.require(cut)?;
+                if !super::movement::roster_slots(&prior.wram)?.is_empty() {
+                    return Err(Outcome::Unsupported {
+                        cut: Some(cut),
+                        dependency: "reviewed empty interactive roster".to_owned(),
+                    });
+                }
+                ceres::validate_step(&prior.wram, &record(&self.cache, cut)?.wram, *slot)?;
+                let OwnedState::MovementCeres(state) = production.state() else {
+                    return Err(data_failure(Some(cut), "connected owned scope"));
+                };
+                let input = super::movement::input(&prior.wram, state.movement.0.pose, content)?;
+                let ceres = ceres::context(&prior.wram, *slot)?;
+                let radius = content
+                    .movement
+                    .radius(state.movement.0.pose)
+                    .ok_or_else(|| data_failure(Some(cut), "connected body content"))?;
+                let body = |_| radius;
+                let heading = |pose| content.movement.cannon_heading(pose);
+                let frame = samus_movement::Frame {
+                    sprite_before_movement: input.sprite,
+                    cinematic_active: input.cinematic,
+                    pad: input.pad,
+                    pressed: input.pressed,
+                    items: input.items,
+                    spin_turned_far: input.ahead.turned_far,
+                    elevator_moving: input.elevator,
+                    parity: input.parity,
+                    animation_ends: input.ahead.end,
+                    body: &body,
+                    cannon_heading: &heading,
+                };
+                production.advance(AdvanceInput::MovementCeres {
+                    frame,
+                    world: &input.world,
+                    ceres,
+                })
+            }
             Context::Ceres(slot) => {
                 ceres::validate_step(&prior.wram, &record(&self.cache, cut)?.wram, *slot)?;
                 let input = ceres::input(&prior.wram, *slot)?;
@@ -255,6 +353,19 @@ impl Expected {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         let current = record(&self.cache, cut)?;
         let fields = match &self.recipe {
+            Context::MovementCeres { slot, .. } => {
+                let mut fields = super::movement::expected(
+                    &current.wram,
+                    &[
+                        super::index::ObservationId::PositionX,
+                        super::index::ObservationId::PositionY,
+                    ],
+                    &case.row,
+                    cut,
+                )?;
+                fields.extend(ceres::expected(&current.wram, *slot)?);
+                fields
+            }
             Context::Ceres(slot) => ceres::expected(&current.wram, *slot)?,
             Context::Weapons(content) => weapons::expected(&current.wram, content)?,
             Context::Camera => camera::expected(&current.wram)?,
@@ -275,12 +386,22 @@ impl Expected {
 
 impl Actual {
     pub fn accept(
-        &self,
+        &mut self,
         production: &Production,
         outputs: &ProductionOutputs,
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, production.state(), outputs) {
+            (
+                Self::MovementCeres { last },
+                OwnedState::MovementCeres(state),
+                ProductionOutputs::MovementCeres(outputs),
+            ) => {
+                *last = Some(outputs.clone());
+                let mut fields = connected_position(state);
+                fields.extend(ceres::actual(&state.ceres, &outputs.ceres));
+                Ok(fields)
+            }
             (Self::Ceres, OwnedState::Ceres(state), ProductionOutputs::Ceres(outputs)) => {
                 Ok(ceres::actual(state, outputs))
             }
@@ -309,6 +430,11 @@ impl Actual {
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match (self, production.state()) {
+            (Self::MovementCeres { .. }, OwnedState::MovementCeres(state)) => {
+                let mut fields = connected_position(state);
+                fields.extend(ceres::initial(&state.ceres));
+                Ok(fields)
+            }
             (Self::Ceres, OwnedState::Ceres(state)) => Ok(ceres::initial(state)),
             (Self::Weapons, OwnedState::WeaponsContact(state)) => Ok(weapons::initial(&state.0)),
             (Self::Camera, OwnedState::Camera(state)) => Ok(camera::initial(&state.0)),
@@ -320,6 +446,19 @@ impl Actual {
             _ => Err(data_failure(None, "recorded initial scope")),
         }
     }
+}
+
+fn connected_position(state: &game::production::MovementCeresState) -> Vec<Observation> {
+    vec![
+        Observation::quantity(
+            "movement.position.x",
+            i64::from(state.movement.0.position.x.0),
+        ),
+        Observation::quantity(
+            "movement.position.y",
+            i64::from(state.movement.0.position.y.0),
+        ),
+    ]
 }
 
 #[cfg(test)]
@@ -390,5 +529,216 @@ mod tests {
             }
         }
         assert_eq!(compared, 18);
+    }
+}
+
+#[cfg(test)]
+mod connection_tests {
+    use super::*;
+    use crate::replay::{index::Index, runner::execute};
+    use oracle_record::codec::{PictureMode, encode};
+    use std::fmt::Write as _;
+
+    #[derive(Clone, Copy)]
+    enum ExpectedMutation {
+        X,
+        Y,
+        Phase,
+        Wait,
+        Figure,
+        Shown,
+        Solid,
+    }
+    impl ExpectedMutation {
+        const fn name(self) -> &'static str {
+            match self {
+                Self::X => "movement.position.x",
+                Self::Y => "movement.position.y",
+                Self::Phase => "ceres.phase",
+                Self::Wait => "ceres.wait",
+                Self::Figure => "ceres.figure",
+                Self::Shown => "ceres.shown",
+                Self::Solid => "ceres.solid",
+            }
+        }
+    }
+    fn altered_expectations(
+        sources: &Sources,
+        row: &crate::lock::Row,
+        cache: &Cache,
+        field: Option<ExpectedMutation>,
+        target: u64,
+    ) -> std::path::PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "sm-expected-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let directory = root.join(&row.id.0);
+        std::fs::create_dir(&root).unwrap();
+        std::fs::create_dir(&directory).unwrap();
+        let mut header = std::fs::read_to_string(sources.cache.join(&row.id.0).join("lean.txt"))
+            .unwrap()
+            .lines()
+            .take(7)
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        header[0] = crate::cache::HEAD.to_owned();
+        header[6] = "pictures no".to_owned();
+        let mut index = header.join("\n") + "\n";
+        let mut bytes = Vec::new();
+        for entry in cache.entries() {
+            let start = bytes.len();
+            if (6..=10).contains(&entry.frame.0) && (field.is_some() || entry.frame.0 != target) {
+                let mut original = record(cache, entry.frame.0).unwrap();
+                if entry.frame.0 == target
+                    && let Some(field) = field
+                {
+                    let (address, value): (usize, u16) = match field {
+                        ExpectedMutation::X => (
+                            0x0af6,
+                            u16::from_le_bytes(original.wram[0x0af6..0x0af8].try_into().unwrap())
+                                .wrapping_add(1),
+                        ),
+                        ExpectedMutation::Y => (
+                            0x0afa,
+                            u16::from_le_bytes(original.wram[0x0afa..0x0afc].try_into().unwrap())
+                                .wrapping_add(1),
+                        ),
+                        ExpectedMutation::Phase => (0x0f92, 0xf5a0),
+                        ExpectedMutation::Wait => (0x0f94, 40),
+                        ExpectedMutation::Figure => (0x0f8e, 0xfa13),
+                        ExpectedMutation::Shown => (
+                            0x0f86,
+                            u16::from_le_bytes(original.wram[0x0f86..0x0f88].try_into().unwrap())
+                                ^ 0x0100,
+                        ),
+                        ExpectedMutation::Solid => (
+                            0x0f86,
+                            u16::from_le_bytes(original.wram[0x0f86..0x0f88].try_into().unwrap())
+                                ^ 0x0400,
+                        ),
+                    };
+                    original.wram[address..address.saturating_add(2)]
+                        .copy_from_slice(&value.to_le_bytes());
+                }
+                encode(&original, PictureMode::Drop, &mut bytes);
+            }
+            let length = bytes.len().checked_sub(start).unwrap();
+            let kind = match entry.cut {
+                crate::cache::CutKind::Requested => "R",
+                crate::cache::CutKind::Overrun => "O",
+                crate::cache::CutKind::VblankWithoutNmi => "V",
+                crate::cache::CutKind::NmiStillRunning => "S",
+            };
+            writeln!(index, "{} {start} {length} {kind}", entry.frame.0).unwrap();
+        }
+        std::fs::write(directory.join("index.txt"), index).unwrap();
+        std::fs::write(directory.join("records.bin"), bytes).unwrap();
+        root
+    }
+    fn execute_cut(
+        case: &Case,
+        admitted: &mut AdmittedCase,
+        cut: u64,
+    ) -> Result<ExpectedCut, Outcome> {
+        execute(
+            case,
+            &admitted.inputs,
+            &admitted.expected,
+            &mut admitted.production,
+            &mut admitted.actual,
+            cut,
+        )
+    }
+    #[test]
+    #[ignore = "private pinned capture, cache and player ROM"]
+    fn expected_position_and_door_sources_cannot_change_complete_owners_or_outputs() {
+        use ExpectedMutation as M;
+        let index = Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let case = index
+            .cases
+            .iter()
+            .find(|case| case.id.0 == "movement-ceres/carried-position-proximity")
+            .unwrap();
+        let path = |name| std::env::var_os(name).unwrap().into();
+        let sources = Sources {
+            cache: path("SM_CACHE"),
+            rom: path("SM_ROM"),
+            native: path("SM_AUDIO_NATIVE"),
+            lock: std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../../")
+                .join(&index.lock),
+            ..Sources::default()
+        };
+        let lock = Lock::parse(&std::fs::read_to_string(&sources.lock).unwrap()).unwrap();
+        let row = lock.row(&RowId(case.row.clone())).unwrap();
+        for (target, changed) in [9, 7].into_iter().flat_map(|target| {
+            [
+                Some(M::X),
+                Some(M::Y),
+                Some(M::Phase),
+                Some(M::Wait),
+                Some(M::Figure),
+                Some(M::Shown),
+                Some(M::Solid),
+                None,
+            ]
+            .into_iter()
+            .map(move |changed| (target, changed))
+        }) {
+            let mut reference = admit(case, &sources).unwrap();
+            let mut altered = admit(case, &sources).unwrap();
+            for cut in 7..target {
+                execute_cut(case, &mut reference, cut).unwrap();
+                execute_cut(case, &mut altered, cut).unwrap();
+            }
+            let InputReader::Recorded(input) = &reference.inputs else {
+                panic!()
+            };
+            let temporary = altered_expectations(&sources, row, &input.cache, changed, target);
+            let ExpectedReader::Recorded(expected) = &mut altered.expected else {
+                panic!()
+            };
+            *expected.cache = Cache::open(&temporary, row).unwrap();
+            // Warmed owners retain their produced state; only the expectation handle changes.
+            execute_cut(case, &mut reference, target).unwrap();
+            let result = execute_cut(case, &mut altered, target);
+            if let Some(field) = changed {
+                assert!(
+                    matches!(result,Err(Outcome::Difference { cut,field: actual }) if cut == target && actual == field.name())
+                );
+            } else {
+                assert!(matches!(
+                    result,
+                    Err(Outcome::DataFailure { cut: Some(cut), .. }) if cut == target
+                ));
+            }
+            let complete_owners_unchanged = reference.production == altered.production;
+            assert!(complete_owners_unchanged);
+            let (
+                ActualReader::Recorded(Actual::MovementCeres {
+                    last: reference_outputs,
+                }),
+                ActualReader::Recorded(Actual::MovementCeres {
+                    last: altered_outputs,
+                }),
+            ) = (&reference.actual, &altered.actual)
+            else {
+                panic!()
+            };
+            assert!(reference_outputs.is_some());
+            let complete_outputs_unchanged = reference_outputs == altered_outputs;
+            assert!(complete_outputs_unchanged);
+            drop(altered);
+            let directory = temporary.join(&row.id.0);
+            std::fs::remove_file(directory.join("index.txt")).unwrap();
+            std::fs::remove_file(directory.join("records.bin")).unwrap();
+            std::fs::remove_dir(directory).unwrap();
+            std::fs::remove_dir(temporary).unwrap();
+        }
     }
 }

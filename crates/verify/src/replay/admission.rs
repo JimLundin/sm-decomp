@@ -43,7 +43,8 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             | Responsibility::Appearance
             | Responsibility::Progress,
         ]
-        | [Responsibility::Weapons, Responsibility::Contact] => {
+        | [Responsibility::Weapons, Responsibility::Contact]
+        | [Responsibility::Movement, Responsibility::Ceres] => {
             super::recorded::admit(case, sources)
         }
         _ => Err(Outcome::Unsupported {

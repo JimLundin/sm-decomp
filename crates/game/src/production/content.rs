@@ -76,6 +76,8 @@ impl MovementContent {
 pub enum ProductionContent {
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
     Movement(MovementContent),
+    /// Checked movement content with fixed clean Ceres geometry.
+    MovementCeres(MovementContent),
     /// Imported resident effects and arrangement.
     Audio(audio_transport::Content),
     /// Checked imported ordinary power assets.
@@ -103,6 +105,13 @@ pub enum ProductionContent {
 pub enum ProductionRules {
     /// The existing movement model's complete rules.
     Movement(samus_movement::Rules),
+    /// Complete parameters for both connected owners.
+    MovementCeres {
+        /// Movement tuning.
+        movement: samus_movement::Rules,
+        /// Ceres tuning.
+        ceres: boss_ceres_ridley::Rules,
+    },
     /// Transport has fixed catalogue rules.
     Audio,
     /// The existing power model's tuning parameters.

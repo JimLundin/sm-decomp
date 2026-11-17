@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "ca1e7a471d6affb9d1b9d4e21eb69c43a8492439f903cc6eaee2b640f7586449"
+index_sha256 = "be3ca508bd62eb157aa0c6cf96667e64bf77f4d9a3006663dc29a572ab526f97"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -288,3 +288,10 @@ null_fields = 0
 restorations = 0
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "movement-ceres/carried-position-proximity"
+claim = "behaviour"
+expected = { status = "pass" }
+counts = { cuts = 4, fields = 28, outputs = 0, publications = 0, replies = 0, null_cuts = 0, null_fields = 15, restorations = 0, pending_boundaries = 0, pending_restorations = 0 }
+observation_sha256 = "2b18d2768c7961fff569672e3f2c145cc3d660e2f44c876416731caf9dc37f13"

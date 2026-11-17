@@ -1,0 +1,12 @@
+format = 1
+status = "reviewed"
+case = "movement-ceres/carried-position-proximity"
+contract = "movement-opportunity-v1-cuts6-to10"
+artifact = "movement-opportunities-84754af24c91d7bf.tar.gz.enc"
+ciphertext_sha256 = "84754af24c91d7bf7339b2f6cf3dbc425758a48c5e514697ba833ad3e1e5bc4b"
+ciphertext_bytes = 7532576
+capture_manifest_sha256 = "e29db9906f12fa3505e72290ebae31fca377d39f130aba9b67e26313b4e04f1a"
+provenance_sha256 = "68870d3cc1b2dd4758468c145f47ce418acdeff8f00ebd9904850e28eef4024f"
+claim = "actual held prior whole-pixel production movement consumed by complete carried Ceres door; atomic opportunity"
+prior_claim_changes = []
+limits = ["only positions and five door fields compared at7..10", "external appearance, controls, equipment, world, station and actor producers", "no durable Ceres continuation, pixels, app, power-on or played-alone credit"]

@@ -12,7 +12,7 @@ fn count(counter: &mut usize, amount: usize) -> Result<(), Outcome> {
     Ok(())
 }
 
-fn execute(
+pub(super) fn execute(
     case: &Case,
     inputs: &InputReader,
     expected: &ExpectedReader,

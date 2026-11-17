@@ -12,6 +12,7 @@ mod compare;
 mod hud;
 pub mod index;
 mod movement;
+mod opportunity;
 mod pending;
 mod progress;
 mod readers;

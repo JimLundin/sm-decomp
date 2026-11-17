@@ -12,6 +12,8 @@ mod content;
 mod entries;
 mod immutable;
 mod movement;
+mod movement_ceres;
+pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
 mod sender;
 #[cfg(test)]
 mod tests;
@@ -29,6 +31,8 @@ pub use sender::SenderInput;
 pub enum Scope {
     /// Movement and semantic pose.
     Movement,
+    /// Movement position consumed by one Ceres door.
+    MovementCeres,
     /// Admitted native audio transport.
     Audio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
@@ -56,6 +60,8 @@ pub enum Scope {
 pub enum ProductionSeed {
     /// Full movement memory.
     Movement(samus_movement::Samus),
+    /// Both complete owners admitted at the same boundary.
+    MovementCeres(Box<MovementCeresState>),
     /// Full committed and pending audio state; restoration never initializes it.
     Audio(Box<audio_transport::State>),
     /// Full ordinary power shot/trail/spacing state.
@@ -80,6 +86,15 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
+    /// One independently admitted ordinary opportunity for connected owners.
+    MovementCeres {
+        /// External movement dependencies.
+        frame: samus_movement::Frame<'a>,
+        /// External collision geometry and reaction permissions.
+        world: &'a dyn types::World,
+        /// Unselected Ceres producers; proximity is derived from held movement.
+        ceres: CeresContext,
+    },
     /// Every changing movement dependency must be supplied by its producer or admitted source.
     Movement {
         /// The actual preceding frame context.
@@ -129,6 +144,8 @@ pub enum AdvanceInput<'a> {
 pub enum ProductionOutputs {
     /// Every movement receipt, including requests and placements.
     Movement(samus_movement::Outcome),
+    /// Complete outputs committed with both owners.
+    MovementCeres(Box<MovementCeresOutputs>),
     /// Every ordered observation, staging and publication milestone.
     Audio(Vec<audio_transport::transport::Output>),
     /// Every weapons request and supplied contact receipt.
@@ -264,6 +281,7 @@ impl Production {
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
             ProductionSeed::Movement(_) => Scope::Movement,
+            ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
             ProductionSeed::Blocks(_) => Scope::Blocks,
@@ -276,6 +294,17 @@ impl Production {
             ProductionSeed::AudioSender(_) => Scope::AudioSender,
         })?;
         let state = match (seed, &content, &rules) {
+            (
+                ProductionSeed::MovementCeres(state),
+                ProductionContent::MovementCeres(content),
+                ProductionRules::MovementCeres { .. },
+            ) => {
+                content.validate()?;
+                if content.pose(state.movement.0.pose).is_none() {
+                    return Err(AdmissionFault::MissingPose(state.movement.0.pose));
+                }
+                OwnedState::MovementCeres(state)
+            }
             (
                 ProductionSeed::Movement(samus),
                 ProductionContent::Movement(content),
@@ -328,6 +357,7 @@ impl Production {
     pub const fn scope(&self) -> Scope {
         match self.state {
             OwnedState::Movement(_) => Scope::Movement,
+            OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
             OwnedState::Blocks(_) => Scope::Blocks,
@@ -356,6 +386,18 @@ impl Production {
             &self.context.rules,
             input,
         ) {
+            (
+                OwnedState::MovementCeres(state),
+                ProductionContent::MovementCeres(content),
+                ProductionRules::MovementCeres { movement, ceres },
+                AdvanceInput::MovementCeres {
+                    frame,
+                    world,
+                    ceres: neighbours,
+                },
+            ) => ProductionOutputs::MovementCeres(Box::new(movement_ceres::advance(
+                state, content, movement, ceres, &frame, world, neighbours,
+            )?)),
             (
                 OwnedState::Movement(samus),
                 ProductionContent::Movement(content),
@@ -426,7 +468,8 @@ impl Production {
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
             OwnedState::AudioSender(state) => CodecState::AudioSender(state.clone()),
-            OwnedState::Blocks(_)
+            OwnedState::MovementCeres(_)
+            | OwnedState::Blocks(_)
             | OwnedState::Progress(_)
             | OwnedState::Hud(_)
             | OwnedState::Ceres(_)
@@ -474,7 +517,9 @@ impl Production {
 
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
-        Scope::Movement => canonical::model::pin_holds::<crate::state::owned::MovementPin>(),
+        Scope::Movement | Scope::MovementCeres => {
+            canonical::model::pin_holds::<crate::state::owned::MovementPin>()
+        }
         Scope::Audio => canonical::model::pin_holds::<crate::state::owned::AudioPin>(),
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),

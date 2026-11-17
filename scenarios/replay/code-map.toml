@@ -46,6 +46,9 @@ id = "boss-ceres-ridley/Closing"
 targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
   { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
 ]
 
@@ -54,6 +57,9 @@ id = "boss-ceres-ridley/Polling"
 targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
   { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
 ]
 
@@ -63,6 +69,9 @@ targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/inputs.rs" },
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
   { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
 ]
 
@@ -72,6 +81,9 @@ targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/phase.rs" },
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
   { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
 ]
 
@@ -81,6 +93,9 @@ targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/phase.rs" },
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
   { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
 ]
 
@@ -90,6 +105,9 @@ targets = [
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/phase.rs" },
   { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
   { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
 ]
 
@@ -235,4 +253,15 @@ targets = [
   { role = "model", path = "crates/clean/world_camera/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-movement/MovesAsShePosed"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
 ]

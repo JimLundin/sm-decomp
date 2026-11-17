@@ -101,6 +101,8 @@ pub enum InputProvider {
     PrecedingCutMovementInputs,
     /// Independent prior facts plus observed external Ceres run scheduling.
     PrecedingCutCeresInputs,
+    /// Reviewed ordinary opportunities and external neighbours for the position connection.
+    CertifiedMovementCeresInputs,
     /// Independent prior facts while captured camera producers remain unchanged.
     PrecedingCutCameraInputs,
     /// Independent cannon/terrain facts and bounded watched actor opportunities.
@@ -566,6 +568,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
 fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "samus-movement/MovesAsShePosed" => &[O::PositionX, O::PositionY],
         "samus-movement/TravelledDistances" => {
             &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
         }
@@ -611,6 +614,32 @@ fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
     })
 }
 
+fn connected_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    use ObservationId as O;
+
+    case.kind == CaseKind::Integrated
+        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::CertifiedMovementCeresInputs
+        && case.row == "chain-any-0003-DFD7"
+        && matches!(case.start, Start::CacheCut { frame: 6 })
+        && case.end.cut_inclusive == 10
+        && case.actor_slot == Some(0)
+        && !case.checkpoints
+        && !case.borrowed.is_empty()
+        && case.expectations.outputs.is_empty()
+        && *observations
+            == BTreeSet::from([
+                O::PositionX,
+                O::PositionY,
+                O::CeresPhase,
+                O::CeresWait,
+                O::CeresFigure,
+                O::CeresShown,
+                O::CeresSolid,
+            ])
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::Unavailable {
@@ -628,6 +657,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
         && matches!(case.start, Start::CacheCut { .. });
     match case.responsibilities.as_slice() {
+        [Responsibility::Movement, Responsibility::Ceres] => {
+            connected_provider_valid(case, observations)
+        }
         [Responsibility::Movement] => {
             recorded
                 && case.content == ContentProvider::PlayerRomImport
@@ -713,7 +745,9 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
 fn scope_valid(case: &Case) -> bool {
     let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
     if owners.len() != case.responsibilities.len()
-        || (case.actor_slot.is_some() && case.responsibilities != [Responsibility::Ceres])
+        || (case.actor_slot.is_some()
+            && case.responsibilities != [Responsibility::Ceres]
+            && case.responsibilities != [Responsibility::Movement, Responsibility::Ceres])
     {
         return false;
     }

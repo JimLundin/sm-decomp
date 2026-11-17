@@ -253,6 +253,23 @@ pub(super) fn actual(state: &CeresDoor, _outputs: &Run) -> Vec<Observation> {
     initial(state)
 }
 
+pub(super) fn context(wram: &[u8], slot: Slot) -> Result<game::production::CeresContext, Outcome> {
+    identity(wram, slot)?;
+    let stage = match source::CERES_STATUS
+        .read(wram)
+        .map_err(|_| data_failure(None, "Ceres station stage"))?
+    {
+        0 => Stage::Calm,
+        1 => Stage::Getaway,
+        _ => return Err(unsupported("Ceres escape random and shake producers")),
+    };
+    Ok(game::production::CeresContext {
+        stage,
+        random: 0,
+        shake_frames_left: 0,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Slot, expected, input, validate_step};
