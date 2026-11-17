@@ -18,6 +18,32 @@ def cache(identifier, prefix=PREFIXES[0], revision=CURRENT, ref="refs/heads/main
 
 
 class RetentionTests(unittest.TestCase):
+    def test_paginated_duplicate_newest_preserves_second_newest(self):
+        api = Api("owner/repo", "test-token")
+        def entry(identifier, revision):
+            return {"id": identifier, "key": PREFIXES[0] + revision,
+                    "ref": "refs/heads/main", "created_at": f"2026-01-01T00:00:0{identifier}Z"}
+        oldest = entry(1, "b" * 40)
+        second = entry(2, "c" * 40)
+        newest = entry(3, CURRENT)
+        pages = [{"actions_caches": [oldest, second, newest] + [newest] * 97},
+                 {"actions_caches": [oldest, newest]}]
+        def response(suffix, method="GET"):
+            return pages.pop(0) if method == "GET" else None
+        with patch.object(api, "request", side_effect=response) as request, patch("builtins.print"):
+            api.prune(PREFIXES[:1], CURRENT)
+        deletions = [call.args for call in request.call_args_list if len(call.args) == 2]
+        self.assertEqual(deletions, [("/1", "DELETE")])
+
+    def test_conflicting_duplicate_id_prevents_all_deletion(self):
+        api = Api("owner/repo", "test-token")
+        entries = [cache(1, revision="b" * 40), cache(2, revision="c" * 40), cache(3),
+                   cache(3, ref="refs/pull/1/merge")]
+        with patch.object(api, "inventory", return_value=entries), patch.object(api, "request") as request:
+            with self.assertRaises(ValueError):
+                api.prune(PREFIXES[:1], CURRENT)
+            request.assert_not_called()
+
     def test_keep_newest_two_and_overlapping_current(self):
         entries = [cache(1), cache(2, revision="b" * 40), cache(3, revision="c" * 40),
                    cache(4, revision="d" * 40)]

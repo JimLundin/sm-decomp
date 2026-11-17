@@ -21,9 +21,16 @@ class Cache:
 
 def candidates(caches: list[Cache], prefixes: list[str], revision: str) -> list[Cache]:
     """Plan all deletions before performing any; incomplete publication preserves all."""
+    # Inventory pages can overlap as other runs access caches during pagination.
+    unique: dict[int, Cache] = {}
+    for cache in caches:
+        previous = unique.get(cache.id)
+        if previous is not None and previous != cache:
+            raise ValueError("conflicting records for one cache id")
+        unique[cache.id] = cache
     remove: list[Cache] = []
     for prefix in prefixes:
-        family = [cache for cache in caches if cache.ref == "refs/heads/main"
+        family = [cache for cache in unique.values() if cache.ref == "refs/heads/main"
                   and re.fullmatch(re.escape(prefix) + r"[0-9a-f]{40}", cache.key)]
         current = [cache for cache in family if cache.key == prefix + revision]
         if not current:
