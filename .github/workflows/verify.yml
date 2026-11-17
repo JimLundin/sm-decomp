@@ -28,15 +28,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      # The registry and the build, per job (github.job). The nightly and dispatched runs on main
-      # restore nothing, build from an empty target and save it as one entry a job, keyed by its
-      # commit: storage grows by one clean build a job a night, and GitHub drops the entries no run
-      # has read for a week. Every other run restores the newest entry for its toolchain, its
-      # Cargo.lock first. Cargo then judges each crate by the checksums of its sources (the
-      # workflow's env), not by file times, which a fresh checkout resets: a pull request compiles
-      # its own changes and the day's landings, not the workspace.
-      # The build holds no ROM bytes: the ROM and the records are read at run time, from rom/ and
-      # $RUNNER_TEMP.
+      # Main pushes restore recent compatible builds and publish this clean revision.
+      # Scheduled and manual-main producers stay cold. Other refs only restore.
+      # Cargo checksum freshness rebuilds changed sources; tests always execute.
+      # Cached paths exclude the ROM and records, which are read only at runtime.
       - &cache
         name: Restore the cargo registry and the build
         if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
@@ -76,7 +71,7 @@ jobs:
         run: cargo test --locked -p data -p import --no-fail-fast
       - &cache_save
         name: Save the cargo registry and the build
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v4
         with:
           path: |

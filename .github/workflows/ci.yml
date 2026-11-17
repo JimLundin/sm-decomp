@@ -1,11 +1,11 @@
 name: CI
 
-# The only entry point. It holds the triggers and no steps: each event calls the reusable
-# workflows that own one responsibility each.
+# The only entry point. Events call reusable proof workflows, then trusted main producers
+# retain recent clean caches after both workflows pass.
 #   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
 #   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
 # Pull requests, nightly runs and manual runs start Quality and verification independently.
-# Main pushes run Quality only; verify/** pushes run verification only.
+# Main pushes run both to refresh clean build caches; verify/** runs verification only.
 # Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:
   pull_request:
@@ -31,10 +31,28 @@ jobs:
     uses: ./.github/workflows/quality.yml
 
   verify:
-    if: github.event_name != 'push' || startsWith(github.ref, 'refs/heads/verify/')
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/verify/')
     permissions:
       contents: read
     uses: ./.github/workflows/verify.yml
     secrets:
       SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
       SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+
+  retain-caches:
+    # Only trusted main producers receive cache deletion permission, after all proof passes.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    needs: [quality, verify]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write
+    concurrency:
+      group: cargo-cache-retention-main
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retain recent clean main builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/ci/retain_cargo_caches.py
