@@ -181,7 +181,8 @@ Each step names its owner, what it waits for, and its done-condition.
     (spec, model, integration) with its own body indented under it, every `Role:` and
     `Co-Authored-By:` line kept once, at the end. The import's
     checks ran on the branch's own commits at step 7; the round's branch keeps them. The squashed
-    commit lands through `land.sh`, a fast-forward.
+    commit lands through `land.sh`, a fast-forward. Quality and verification run independently;
+    both must pass before landing.
 12. **Queue** (root). Every gap goes to the observer, and every shape finding to the next brief.
     So does every item two blind reads name, a zero-cost one (a name, a wrong doc, an
     unreachable arm) included.
