@@ -1,11 +1,16 @@
 """Recorded replay differences must reject temporary production bridge faults.
 
-Run while the coordinator has frozen the named sources. Restore their exact bytes
-after every mutation, then require a fresh Pass. Print only safe result identities.
+Run while the coordinator has frozen the worktree, Cargo environment and external
+ROM/cache/native inputs. Restore exact source bytes after every mutation, then
+require a fresh Pass from an immutable vanilla executable. Print safe identities.
 """
 import os
+import json
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,15 +39,70 @@ def source_path(root: Path, source: str) -> Path:
         raise ValueError("fault source must be Rust")
     return path
 
-def run_case(root: Path, case: str) -> tuple[int, str]:
-    command = [os.environ.get("CARGO", "cargo"), "run", "--locked", "--profile", "verify",
-               "-p", "tools", "--bin", "tools", "--", "replay", "run",
+def input_paths(root: Path) -> set[Path]:
+    result = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+                            cwd=root, check=True, capture_output=True)
+    return {root / os.fsdecode(name) for name in result.stdout.split(b"\0") if name}
+
+def input_bytes(path: Path) -> bytes | None:
+    return path.read_bytes() if path.exists() else None
+
+@dataclass(frozen=True)
+class FrozenInputs:
+    """Include dirty and nonignored untracked inputs; preserve absent tracked files."""
+    files: dict[Path, bytes | None]
+
+    @classmethod
+    def capture(cls, root: Path) -> "FrozenInputs":
+        return cls({path: input_bytes(path) for path in input_paths(root)})
+
+    def check(self, root: Path) -> None:
+        started = time.perf_counter()
+        if input_paths(root) != self.files.keys() or any(
+            input_bytes(path) != original for path, original in self.files.items()
+        ):
+            raise ValueError("worktree inputs changed; coordinator must reconcile")
+        print(f"TIMING input-check seconds={time.perf_counter() - started:.6f}", flush=True)
+
+def build_executable(root: Path) -> Path:
+    """Use Cargo's artifact path, including custom target directories and triples."""
+    started = time.perf_counter()
+    result = subprocess.run([os.environ.get("CARGO", "cargo"), "build", "--locked",
+                             "--profile", "verify", "-p", "tools", "--bin", "tools",
+                             "--message-format=json"], cwd=root, capture_output=True,
+                            text=True, encoding="utf-8", errors="replace")
+    print(f"TIMING compilation seconds={time.perf_counter() - started:.6f}", flush=True)
+    result.check_returncode()
+    executables = []
+    for line in result.stdout.splitlines():
+        artifact = json.loads(line)
+        if (artifact.get("reason") == "compiler-artifact"
+            and artifact.get("target", {}).get("name") == "tools"
+            and artifact.get("target", {}).get("kind") == ["bin"]
+            and isinstance(artifact.get("executable"), str)):
+            executables.append(Path(artifact["executable"]))
+    if len(executables) != 1:
+        raise ValueError("build must report exactly one tools executable")
+    executable = (root / executables[0]).resolve()
+    if not executable.is_file():
+        raise ValueError("reported tools executable is missing")
+    return executable
+
+def run_case(root: Path, case: str, executable: Path | None = None) -> tuple[int, str]:
+    if executable is None:
+        try:
+            executable = build_executable(root)
+        except subprocess.CalledProcessError as error:
+            return error.returncode, error.stderr
+    command = [str(executable), "replay", "run",
                "scenarios/replay/index.toml", "--case", case]
     for flag, variable in [("--cache", "SM_CACHE"), ("--rom", "SM_ROM"), ("--native", "SM_AUDIO_NATIVE")]:
         if value := os.environ.get(variable):
             command.extend([flag, value])
+    started = time.perf_counter()
     result = subprocess.run(command, cwd=root, capture_output=True, text=True,
                             encoding="utf-8", errors="replace")
+    print(f"TIMING replay case={case} seconds={time.perf_counter() - started:.6f}", flush=True)
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
 def receipt(output: str, case: str) -> dict[str, Any] | None:
@@ -66,7 +126,10 @@ def passed(result: tuple[int, str], case: str) -> bool:
     observed = receipt(output, case)
     return code == 0 and observed is not None and observed.get("outcome") == {"status": "pass"}
 
-def check_fault(root: Path, fault: Fault, baseline: dict[str, Any]) -> bool:
+def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
+                vanilla: Path | None = None, inputs: FrozenInputs | None = None) -> bool:
+    if inputs is not None:
+        inputs.check(root)
     path = source_path(root, fault.file)
     original = path.read_bytes()
     before, after = fault.before.encode(), fault.after.encode()
@@ -81,12 +144,16 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any]) -> bool:
             "status": "difference", "cut": fault.cut, "field": fault.field}
         print(f"{'KILLED' if killed else 'INVALID OR SURVIVED'} {fault.name}: {fault.case} cut{fault.cut} {fault.field}", flush=True)
     finally:
+        started = time.perf_counter()
         if path.read_bytes() != mutated:
             raise ValueError("fault source changed concurrently; coordinator must reconcile")
         path.write_bytes(original)
-    if path.read_bytes() != original:
-        raise ValueError("source was not restored byte-for-byte")
-    restored = run_case(root, fault.case)
+        if path.read_bytes() != original:
+            raise ValueError("source was not restored byte-for-byte")
+        print(f"TIMING restoration fault={fault.name} seconds={time.perf_counter() - started:.6f}", flush=True)
+    if inputs is not None:
+        inputs.check(root)
+    restored = run_case(root, fault.case, vanilla)
     if not passed(restored, fault.case) or receipt(restored[1], fault.case) != baseline:
         print(f"RESTORED BASELINE FAILED {fault.case}", flush=True)
         return False
@@ -115,16 +182,29 @@ def main() -> int:
     if not faults or any(not fault.name for fault in faults) or len({fault.name for fault in faults}) != len(faults):
         raise ValueError("fault names must be nonempty and unique")
     validate_coverage(root, faults)
-    baselines = {}
-    for case in dict.fromkeys(fault.case for fault in faults):
-        result = run_case(root, case)
-        observed = receipt(result[1], case)
-        if not passed(result, case) or observed is None:
-            print(f"BASELINE FAILED {case}", flush=True)
+    inputs = FrozenInputs.capture(root)
+    # Cargo's output is overwritten by mutant builds. The saved binary is private;
+    # every baseline/restored receipt still comes from a newly executed process.
+    with tempfile.TemporaryDirectory(prefix="sm-mutants-") as directory:
+        try:
+            built = build_executable(root)
+        except subprocess.CalledProcessError:
+            print("BASELINE BUILD FAILED", flush=True)
             return 1
-        baselines[case] = observed
-        print(f"BASELINE PASS {case}", flush=True)
-    results = [check_fault(root, fault, baselines[fault.case]) for fault in faults]
+        inputs.check(root)
+        vanilla = Path(directory) / built.name
+        shutil.copy2(built, vanilla)
+        baselines = {}
+        for case in dict.fromkeys(fault.case for fault in faults):
+            inputs.check(root)
+            result = run_case(root, case, vanilla)
+            observed = receipt(result[1], case)
+            if not passed(result, case) or observed is None:
+                print(f"BASELINE FAILED {case}", flush=True)
+                return 1
+            baselines[case] = observed
+            print(f"BASELINE PASS {case}", flush=True)
+        results = [check_fault(root, fault, baselines[fault.case], vanilla, inputs) for fault in faults]
     return 0 if all(results) else 1
 
 if __name__ == "__main__":

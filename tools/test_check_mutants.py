@@ -1,11 +1,14 @@
 """Bridge fault credit requires an exact recorded difference and restored Pass."""
 import tempfile
+import json
+import subprocess
 import tomllib
 import unittest
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
-from check_mutants import Fault, check_fault, receipt, source_path, validate_coverage
+from check_mutants import (Fault, FrozenInputs, build_executable, check_fault, receipt,
+                           run_case, source_path, validate_coverage)
 
 def outcome(status: str, case: str = "audio/example", cut: int = 3, field: str = "audio.reply0") -> str:
     text = f'format = 1\n[[cases]]\nid = "{case}"\nobservation_sha256 = "original"\n[cases.outcome]\nstatus = "{status}"\n'
@@ -14,6 +17,85 @@ def outcome(status: str, case: str = "audio/example", cut: int = 3, field: str =
     return text + '[cases.counts]\ncuts = 3\nrestorations = 2\n'
 
 class MutantCheck(unittest.TestCase):
+    def test_build_failure_cannot_execute_a_stale_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stale = root / "tools"
+            stale.write_bytes(b"stale executable")
+            artifact = json.dumps({"reason": "compiler-artifact", "target": {
+                "name": "tools", "kind": ["bin"]}, "executable": str(stale)})
+            failed = subprocess.CompletedProcess([], 101, artifact, "")
+            with patch("check_mutants.subprocess.run", return_value=failed) as execute:
+                self.assertEqual(run_case(root, "audio/example"), (101, ""))
+                self.assertEqual(execute.call_count, 1)
+
+    def test_cargo_reported_artifact_is_required_and_respects_its_location(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            executable = root / "custom-target" / "tools"
+            executable.parent.mkdir()
+            executable.write_bytes(b"executable")
+            artifact = {"reason": "compiler-artifact", "target": {
+                "name": "tools", "kind": ["bin"]}, "executable": str(executable)}
+            for rows in [[], [artifact, artifact], [{**artifact, "executable": str(root / "missing")}]]:
+                result = subprocess.CompletedProcess([], 0, "\n".join(json.dumps(row) for row in rows), "")
+                with patch("check_mutants.subprocess.run", return_value=result):
+                    with self.assertRaises(ValueError):
+                        build_executable(root)
+            result = subprocess.CompletedProcess([], 0, json.dumps(artifact), "")
+            with patch("check_mutants.subprocess.run", return_value=result):
+                self.assertEqual(build_executable(root), executable.resolve())
+
+    def test_frozen_inputs_preserve_dirty_missing_and_untracked_file_states(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            tracked = root / "tracked.rs"
+            absent = root / "absent.rs"
+            tracked.write_bytes(b"initial\n")
+            absent.write_bytes(b"initial\n")
+            subprocess.run(["git", "add", "tracked.rs", "absent.rs"], cwd=root, check=True)
+            tracked.write_bytes(b"dirty\r\n")
+            absent.unlink()
+            untracked = root / "config.toml"
+            untracked.write_bytes(b"input\n")
+            inputs = FrozenInputs.capture(root)
+            inputs.check(root)
+            for path, changed in [(tracked, b"initial\n"), (absent, b"appeared\n"),
+                                  (untracked, b"changed\n"), (root / "new.rs", b"new\n")]:
+                original = path.read_bytes() if path.exists() else None
+                path.write_bytes(changed)
+                with self.assertRaises(ValueError):
+                    inputs.check(root)
+                if original is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(original)
+            untracked.unlink()
+            with self.assertRaises(ValueError):
+                inputs.check(root)
+
+    def test_changed_neighbour_prevents_retained_restored_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "crates/game/src/production.rs"
+            path.parent.mkdir(parents=True)
+            original = b"let elapsed = measured;\n"
+            path.write_bytes(original)
+            neighbour = root / "model.rs"
+            neighbour.write_bytes(b"original\n")
+            inputs = FrozenInputs({path: original, neighbour: b"original\n"})
+            fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
+            def faulty_run(*args: object) -> tuple[int, str]:
+                neighbour.write_bytes(b"changed\n")
+                return 1, outcome("difference")
+            with patch("check_mutants.input_paths", return_value={path, neighbour}), \
+                 patch("check_mutants.run_case", side_effect=faulty_run) as execute:
+                with self.assertRaises(ValueError):
+                    check_fault(root, fault, receipt(outcome("pass"), "audio/example"), root / "vanilla", inputs)
+                self.assertEqual(execute.call_count, 1)
+            self.assertEqual(path.read_bytes(), original)
+
     def exercise(self, result: tuple[int, str], restored: tuple[int, str] | None = None) -> bool:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
