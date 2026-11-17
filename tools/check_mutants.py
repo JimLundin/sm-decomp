@@ -4,8 +4,8 @@ Run while the coordinator has frozen the worktree, Cargo environment and externa
 ROM/cache/native inputs. Restore exact source bytes after every mutation, then
 require a fresh Pass from an immutable vanilla executable. Print safe identities.
 """
-import os
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -154,6 +154,8 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
     if inputs is not None:
         inputs.check(root)
     restored = run_case(root, fault.case, vanilla)
+    if inputs is not None:
+        inputs.check(root)
     if not passed(restored, fault.case) or receipt(restored[1], fault.case) != baseline:
         print(f"RESTORED BASELINE FAILED {fault.case}", flush=True)
         return False
@@ -198,6 +200,7 @@ def main() -> int:
         for case in dict.fromkeys(fault.case for fault in faults):
             inputs.check(root)
             result = run_case(root, case, vanilla)
+            inputs.check(root)
             observed = receipt(result[1], case)
             if not passed(result, case) or observed is None:
                 print(f"BASELINE FAILED {case}", flush=True)

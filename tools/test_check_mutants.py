@@ -6,6 +6,7 @@ import tomllib
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 from check_mutants import (Fault, FrozenInputs, build_executable, check_fault, receipt,
                            run_case, source_path, validate_coverage)
@@ -15,6 +16,11 @@ def outcome(status: str, case: str = "audio/example", cut: int = 3, field: str =
     if status == "difference":
         text += f'cut = {cut}\nfield = "{field}"\n'
     return text + '[cases.counts]\ncuts = 3\nrestorations = 2\n'
+
+def pass_receipt() -> dict[str, Any]:
+    observed = receipt(outcome("pass"), "audio/example")
+    assert observed is not None
+    return observed
 
 class MutantCheck(unittest.TestCase):
     def test_build_failure_cannot_execute_a_stale_artifact(self) -> None:
@@ -75,7 +81,7 @@ class MutantCheck(unittest.TestCase):
             with self.assertRaises(ValueError):
                 inputs.check(root)
 
-    def test_changed_neighbour_prevents_retained_restored_replay(self) -> None:
+    def test_concurrent_neighbour_edits_prevent_retained_replay_credit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             path = root / "crates/game/src/production.rs"
@@ -86,15 +92,22 @@ class MutantCheck(unittest.TestCase):
             neighbour.write_bytes(b"original\n")
             inputs = FrozenInputs({path: original, neighbour: b"original\n"})
             fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
-            def faulty_run(*args: object) -> tuple[int, str]:
-                neighbour.write_bytes(b"changed\n")
-                return 1, outcome("difference")
-            with patch("check_mutants.input_paths", return_value={path, neighbour}), \
-                 patch("check_mutants.run_case", side_effect=faulty_run) as execute:
-                with self.assertRaises(ValueError):
-                    check_fault(root, fault, receipt(outcome("pass"), "audio/example"), root / "vanilla", inputs)
-                self.assertEqual(execute.call_count, 1)
-            self.assertEqual(path.read_bytes(), original)
+            for edit_during in [1, 2]:
+                calls = 0
+                neighbour.write_bytes(b"original\n")
+                def replay(*args: object) -> tuple[int, str]:
+                    nonlocal calls
+                    calls += 1
+                    if calls == edit_during:
+                        neighbour.write_bytes(b"changed\n")
+                    return (1, outcome("difference")) if calls == 1 else (0, outcome("pass"))
+                with self.subTest(edit_during=edit_during), \
+                     patch("check_mutants.input_paths", return_value={path, neighbour}), \
+                     patch("check_mutants.run_case", side_effect=replay) as execute:
+                    with self.assertRaises(ValueError):
+                        check_fault(root, fault, pass_receipt(), root / "vanilla", inputs)
+                    self.assertEqual(execute.call_count, edit_during)
+                self.assertEqual(path.read_bytes(), original)
 
     def exercise(self, result: tuple[int, str], restored: tuple[int, str] | None = None) -> bool:
         with tempfile.TemporaryDirectory() as directory:
@@ -105,7 +118,7 @@ class MutantCheck(unittest.TestCase):
             path.write_bytes(original)
             fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
             with patch("check_mutants.run_case", side_effect=[result, restored or (0, outcome("pass"))]):
-                killed = check_fault(root, fault, receipt(outcome("pass"), "audio/example"))
+                killed = check_fault(root, fault, pass_receipt())
             self.assertEqual(path.read_bytes(), original)
             return killed
 
@@ -157,7 +170,7 @@ class MutantCheck(unittest.TestCase):
             fault = Fault("zero", "audio", str(path.relative_to(root)), "measured", "zero", "audio/example", 3, "audio.reply0")
             with patch("check_mutants.run_case", side_effect=OSError):
                 with self.assertRaises(OSError):
-                    check_fault(root, fault, receipt(outcome("pass"), "audio/example"))
+                    check_fault(root, fault, pass_receipt())
             self.assertEqual(path.read_bytes(), original)
 
 if __name__ == "__main__":
