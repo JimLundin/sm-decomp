@@ -1,6 +1,93 @@
-# A bridge fault must fail at its reviewed recorded cut and field.
+# Production wiring faults must fail at the recorded cut and field.
+# Each supported replay responsibility has a distinct semantic fault.
+
+[[fault]]
+name = "movement-double-update"
+responsibility = "movement"
+file = "crates/game/src/production/movement.rs"
+before = '''let outcome = samus'''
+after = '''samus.step(&admitted, world, rules).map_err(ProductionFault::Movement)?;
+    let outcome = samus'''
+case = "movement/W15"
+cut = 815
+field = "movement.position.x"
+
+[[fault]]
+name = "weapons-cannon-disabled"
+responsibility = "weapons"
+file = "crates/game/src/production/weapons.rs"
+before = '''let events = beam::update(state, input, content.model(), rules, &mut candidate_world);'''
+after = '''let mut admitted = input.clone(); admitted.cannon.shoot = false;
+    let events = beam::update(state, &admitted, content.model(), rules, &mut candidate_world);'''
+case = "weapons-contact/M0-four-searches"
+cut = 157
+field = "weapons.state"
+
+[[fault]]
+name = "contact-disabled"
+responsibility = "contact"
+file = "crates/game/src/production/weapons.rs"
+before = '''opportunity.conditions,'''
+after = '''enemy_interactions::ContactConditions { interactions_enabled: false, ..opportunity.conditions },'''
+case = "weapons-contact/M0-four-searches"
+cut = 160
+field = "contact.consumed-markers"
+
+[[fault]]
+name = "camera-follow-omitted"
+responsibility = "camera"
+file = "crates/game/src/production/entries.rs"
+before = '''state.0 = state.0.step(rules.get(), frame);'''
+after = '''let _ = (rules, frame);'''
+case = "camera/unchanged-centre-follow"
+cut = 1216
+field = "camera.view.x.pixel"
+
+[[fault]]
+name = "hud-clock-offset"
+responsibility = "hud"
+file = "crates/game/src/production/entries.rs"
+before = '''HudInput::Play(inputs) => state.frame_of_play(rules, pictures, inputs),'''
+after = '''HudInput::Play(inputs) => state.frame_of_play(rules, pictures, &interface_hud::FrameInputs { frame: interface_hud::FrameCount(inputs.frame.0.wrapping_add(8)), ..*inputs }),'''
+case = "hud/stationary-map-blink"
+cut = 8
+field = "hud.grid"
+
+[[fault]]
+name = "appearance-double-update"
+responsibility = "appearance"
+file = "crates/game/src/production/animation.rs"
+before = '''let (next, sound) = samus_appearance::update(*state, inputs, &provider, rules);'''
+after = '''let (first, _) = samus_appearance::update(*state, inputs, &provider, rules);
+    let (next, sound) = samus_appearance::update(first, inputs, &provider, rules);'''
+case = "appearance/standing-clip"
+cut = 435
+field = "appearance.time-left"
+
+[[fault]]
+name = "progress-reports-omitted"
+responsibility = "progress"
+file = "crates/game/src/production/entries.rs"
+before = '''state.apply(rules, reports);'''
+after = '''let _ = reports; state.apply(rules, &[]);'''
+case = "progress/planet-awake-recorded"
+cut = 152
+field = "progress.events.PlanetAwake"
+
+[[fault]]
+name = "ceres-double-run"
+responsibility = "ceres"
+file = "crates/game/src/production/entries.rs"
+before = '''let output = state.run(inputs, rules);'''
+after = '''let first = state.run(inputs, rules);
+            let output = first.door.run(inputs, rules);'''
+case = "ceres/door-closes-after-departure"
+cut = 7
+field = "ceres.wait"
+
 [[fault]]
 name = "audio-elapsed-not-carried"
+responsibility = "audio"
 file = "crates/game/src/production.rs"
 before = "let elapsed = stop.difference(&state.0.now);"
 after = "let elapsed = audio_transport::time::cycles(0);"

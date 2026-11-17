@@ -28,6 +28,20 @@ parameter vectors remain development checks. Meaningful planted faults establish
 indexed comparisons distinguish incorrect behaviour. Historical null-model and harness figures
 are not current production acceptance and must be labelled as historical evidence.
 
+[`tools/mutants.toml`](../tools/mutants.toml) pins one production wiring fault per supported
+responsibility to its exact recorded Difference cut and field. With `SM_CACHE`, `SM_ROM` and
+`SM_AUDIO_NATIVE` set, `python3 tools/check_mutants.py` first requires a Pass, temporarily
+applies each fault, restores the source byte for byte, then requires the original complete
+receipt again, including its digest and counts. CI runs this check; the supported responsibility
+inventory comes from the index and reviewed baseline, so omitting an owner fails the check.
+Weapons and contact have separate faults in their shared case.
+
+These faults exercise movement scheduling, elapsed audio time, cannon permission, contact
+permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres
+scheduling. They prove the named comparisons detect those errors within the existing scoped
+cases. They do not prove all rules, borrowed producers, omitted outputs or pixels. Unsupported
+cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
+
 ## The ratchets and floors
 
 The replay baseline binds the exact index bytes to each measured result, comparison counters

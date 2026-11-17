@@ -14,6 +14,7 @@ from typing import Any
 @dataclass(frozen=True)
 class Fault:
     name: str
+    responsibility: str
     file: str
     before: str
     after: str
@@ -65,7 +66,7 @@ def passed(result: tuple[int, str], case: str) -> bool:
     observed = receipt(output, case)
     return code == 0 and observed is not None and observed.get("outcome") == {"status": "pass"}
 
-def check_fault(root: Path, fault: Fault) -> bool:
+def check_fault(root: Path, fault: Fault, baseline: dict[str, Any]) -> bool:
     path = source_path(root, fault.file)
     original = path.read_bytes()
     before, after = fault.before.encode(), fault.after.encode()
@@ -85,23 +86,45 @@ def check_fault(root: Path, fault: Fault) -> bool:
         path.write_bytes(original)
     if path.read_bytes() != original:
         raise ValueError("source was not restored byte-for-byte")
-    if not passed(run_case(root, fault.case), fault.case):
+    restored = run_case(root, fault.case)
+    if not passed(restored, fault.case) or receipt(restored[1], fault.case) != baseline:
         print(f"RESTORED BASELINE FAILED {fault.case}", flush=True)
         return False
     print(f"RESTORED PASS {fault.case}", flush=True)
     return killed
 
+def validate_coverage(root: Path, faults: list[Fault]) -> None:
+    """Every responsibility with a reviewed Pass needs its own production fault."""
+    with (root / "scenarios/replay/index.toml").open("rb") as stream:
+        cases = {case["id"]: case for case in tomllib.load(stream)["case"]}
+    with (root / "scenarios/replay/baseline.toml").open("rb") as stream:
+        supported = {case["id"] for case in tomllib.load(stream)["case"]
+                     if case["expected"] == {"status": "pass"}}
+    required = {owner for case in supported for owner in cases[case]["responsibilities"]}
+    for fault in faults:
+        if fault.case not in supported or fault.responsibility not in cases[fault.case]["responsibilities"]:
+            raise ValueError("fault must witness its responsibility in a reviewed Pass case")
+        source_path(root, fault.file)
+    if {fault.responsibility for fault in faults} != required:
+        raise ValueError("every supported replay responsibility needs a production fault")
+
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     with (root / "tools/mutants.toml").open("rb") as stream:
         faults = [Fault(**row) for row in tomllib.load(stream)["fault"]]
-    if not faults or len({fault.name for fault in faults}) != len(faults):
+    if not faults or any(not fault.name for fault in faults) or len({fault.name for fault in faults}) != len(faults):
         raise ValueError("fault names must be nonempty and unique")
+    validate_coverage(root, faults)
+    baselines = {}
     for case in dict.fromkeys(fault.case for fault in faults):
-        if not passed(run_case(root, case), case):
+        result = run_case(root, case)
+        if not passed(result, case):
             print(f"BASELINE FAILED {case}", flush=True)
             return 1
-    return 0 if all(check_fault(root, fault) for fault in faults) else 1
+        baselines[case] = receipt(result[1], case)
+        print(f"BASELINE PASS {case}", flush=True)
+    results = [check_fault(root, fault, baselines[fault.case]) for fault in faults]
+    return 0 if all(results) else 1
 
 if __name__ == "__main__":
     sys.exit(main())
