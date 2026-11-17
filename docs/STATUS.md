@@ -68,6 +68,57 @@ carry production State from the admitted start with no feedback from expected re
 automatic reseed after failure. Scope declares selected owners, borrowed stimuli, compared
 fields/outputs and excluded consumers. A movement case without rendering proves no pixels.
 
+## Finding the code for a replay segment
+
+The read-only `map` command joins the typed index and validated reviewed baseline with
+[rule-to-code metadata](../scenarios/replay/code-map.toml). It executes no replay and needs no
+ROM or cache. Each rule declares model and adapter files; navigation targets point to its
+catalogue or specification. Targets are existing repository-relative files, without line or
+symbol claims. The complete mapping is validated before filtering: missing, duplicate,
+unknown and dangling entries fail even when the query selects another rule.
+
+```mermaid
+flowchart LR
+    C[Indexed case and segment contract] <--> R[Named behaviour rule]
+    R <--> F[Declared model and adapter files]
+    B[Validated reviewed baseline] --> C
+    E[Borrowed stimuli and scope limits] --> C
+```
+
+Run from the repository root, using the `TOOLS` and `INDEX` above:
+
+```sh
+$TOOLS replay map "$INDEX"
+$TOOLS replay map "$INDEX" --case movement/W15
+$TOOLS replay map "$INDEX" --rule samus-movement/TravelledDistances
+$TOOLS replay map "$INDEX" --path crates/clean/samus_movement/src/travel.rs
+$TOOLS replay map "$INDEX" --mapping scenarios/replay/code-map.toml \
+  --baseline scenarios/replay/baseline.toml --repo . --case audio/native-expire-post64
+```
+
+Mapping and baseline paths default to `code-map.toml` and `baseline.toml` beside the index.
+`--repo` defaults to the working directory and sets the root for target validation; other
+argument paths resolve from the working directory. `--path` requires the exact declared
+forward-slash repository-relative filename. Multiple `--case` values select their union;
+case, rule and path filters intersect. An unknown selector or empty result fails.
+
+The TOML report keeps `declaration` from the index, `reviewed_requirement` from the baseline
+and `declared_relevance` from the mapping separate. Requirements include exact expected
+outcomes, counts and observation digests; they are reviewed obligations, not fresh results.
+Borrowed providers, phases, fields and limits stay in the declaration and do not become rule
+proof. File links express declared relevance, not exhaustive impact or measured coverage.
+
+The default query shows all 16 cases, including three empty-rule boundaries with empty code
+links. A travel-file query includes the scoped witness and the integrated and movie held
+Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
+Mapping queries never select or skip landing checks; the complete index remains required.
+
+Cache cuts are local to the named record row: W15 starts at cut 814 and compares cuts 815
+through 817 of `item-morph-ball`. Native seeds and checkpoints use native fixture coordinates;
+the post-intervention audio case compares original fixture cuts 65 through 183 from its
+independent cut-64 seed. Power-on starts have their own coordinate family. The report exposes
+the index's lock path and source declarations; it supplies no movie-global offset conversion.
+
 ## Making the record cache
 
 

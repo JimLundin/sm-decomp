@@ -1,0 +1,234 @@
+# File-level declared relevance; no line, symbol, dynamic coverage or exhaustive impact claims.
+format = 1
+
+[[rule]]
+id = "audio-transport/FinitePhrases"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/music.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "audio-transport/MusicalProgress"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/music.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "audio-transport/ReplyCadence"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "audio-transport/VisibleCompletion"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "audio-transport/WholeArrangement"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/music.rs" },
+  { role = "adapter", path = "crates/game/src/production.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/Closing"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/Polling"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/SheIsNear"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/Shown"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/Solid"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "boss-ceres-ridley/Waiting"
+targets = [
+  { role = "model", path = "crates/clean/boss_ceres_ridley/src/door.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/boss_ceres_ridley/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "enemy-interactions/BoxOverlap"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "docs/behaviours/enemy-interactions.md" },
+]
+
+[[rule]]
+id = "enemy-interactions/ContactAllowed"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "docs/behaviours/enemy-interactions.md" },
+]
+
+[[rule]]
+id = "enemy-interactions/FirstPowerShot"
+targets = [
+  { role = "model", path = "crates/clean/enemy_interactions/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "docs/behaviours/enemy-interactions.md" },
+]
+
+[[rule]]
+id = "interface-hud/HerBlink"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "interface-hud/MiniMapWindow"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "run-progress/EventsHappen"
+targets = [
+  { role = "model", path = "crates/clean/run_progress/src/progress.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/run_progress/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-appearance/ClipPlays"
+targets = [
+  { role = "model", path = "crates/clean/samus_appearance/src/play.rs" },
+  { role = "adapter", path = "crates/game/src/production/appearance.rs" },
+  { role = "navigation", path = "crates/clean/samus_appearance/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-movement/TouchedCells"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-movement/TravelledDistances"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/travel.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-movement/WallJump"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/CannonOrigin"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/FlyingBeam"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/HoldingShoot"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/InheritedMotion"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/ShotSpacing"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "world-camera/FollowingHer"
+targets = [
+  { role = "model", path = "crates/clean/world_camera/src/follow.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "world-camera/RememberedHeightFraction"
+targets = [
+  { role = "model", path = "crates/clean/world_camera/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "world-camera/Remembering"
+targets = [
+  { role = "model", path = "crates/clean/world_camera/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+]

@@ -281,6 +281,13 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     rendering in every case. Implementation and the reviewed cutover are governed by
     [PROCESS](../cleanroom/PROCESS.md#replay-transition); this decision does not claim they exist.
 
+    Declared replay segments map through their named rules to relevant production model and
+    adapter files, with lookup from case to code and code to cases (Jim, 2026-11-17). The
+    index supplies segment contracts and borrowed stimuli; the validated baseline supplies
+    reviewed requirements. File links are navigation metadata, not dynamic coverage or
+    exhaustive impact analysis. Queries preserve Unsupported boundaries and coordinate
+    meanings, and never change the complete indexed requirements for landing.
+
 33. **Remove previous gameplay owners; fail visibly where behaviour is missing** (Jim,
     2026-11-16). The target engine runs the clean models without previous executable gameplay
     as fallback. Inventory all previous behaviour owners, not just a `Legacy` enum: remove their

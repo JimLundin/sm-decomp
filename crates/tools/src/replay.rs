@@ -9,7 +9,9 @@ use verify::replay::{
     result::CaseResult,
 };
 
-pub const USAGE: &str = "tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
+mod map;
+
+pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
 
 struct Options {
     ids: Vec<CaseId>,
@@ -108,6 +110,11 @@ enum Operation {
 }
 
 pub fn run(args: &[String]) -> Result<String, String> {
+    if let [command, rest @ ..] = args
+        && command == "map"
+    {
+        return map::run(rest).map_err(|fault| format!("replay map: {fault:?}"));
+    }
     let [command, index_path, rest @ ..] = args else {
         return Err(USAGE.to_owned());
     };
