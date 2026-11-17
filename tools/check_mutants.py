@@ -118,10 +118,11 @@ def main() -> int:
     baselines = {}
     for case in dict.fromkeys(fault.case for fault in faults):
         result = run_case(root, case)
-        if not passed(result, case):
+        observed = receipt(result[1], case)
+        if not passed(result, case) or observed is None:
             print(f"BASELINE FAILED {case}", flush=True)
             return 1
-        baselines[case] = receipt(result[1], case)
+        baselines[case] = observed
         print(f"BASELINE PASS {case}", flush=True)
     results = [check_fault(root, fault, baselines[fault.case]) for fault in faults]
     return 0 if all(results) else 1
