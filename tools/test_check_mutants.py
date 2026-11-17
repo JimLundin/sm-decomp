@@ -8,6 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+import check_mutants
 from check_mutants import (Fault, FrozenInputs, build_executable, check_fault, receipt,
                            run_case, source_path, validate_coverage)
 
@@ -23,6 +24,56 @@ def pass_receipt() -> dict[str, Any]:
     return observed
 
 class MutantCheck(unittest.TestCase):
+    def test_success_leaves_normal_artifact_vanilla_for_direct_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "crates/game/src/production.rs"
+            source.parent.mkdir(parents=True)
+            original = b"let elapsed = measured;\n"
+            source.write_bytes(original)
+            config = root / "tools/mutants.toml"
+            config.parent.mkdir()
+            config.write_text('''[[fault]]
+name = "first"
+responsibility = "audio"
+file = "crates/game/src/production.rs"
+before = "measured"
+after = "zero"
+case = "audio/example"
+cut = 3
+field = "audio.reply0"
+[[fault]]
+name = "last"
+responsibility = "audio"
+file = "crates/game/src/production.rs"
+before = "measured"
+after = "zero"
+case = "audio/example"
+cut = 3
+field = "audio.reply0"
+''', encoding="utf-8", newline="\n")
+            target = root / "target/tools"
+            target.parent.mkdir()
+            inputs = FrozenInputs({source: original, config: config.read_bytes()})
+            def compile_source(build_root: Path) -> Path:
+                target.write_bytes(source.read_bytes())
+                return target
+            def execute(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+                vanilla = Path(command[0]).read_bytes() == original
+                text = outcome("pass" if vanilla else "difference")
+                return subprocess.CompletedProcess(command, 0 if vanilla else 1,
+                                                   text if vanilla else "", "" if vanilla else text)
+            with patch.object(check_mutants, "__file__", str(root / "tools/check_mutants.py")), \
+                 patch("check_mutants.validate_coverage"), \
+                 patch("check_mutants.FrozenInputs.capture", return_value=inputs), \
+                 patch("check_mutants.input_paths", return_value=set(inputs.files)), \
+                 patch("check_mutants.build_executable", side_effect=compile_source), \
+                 patch("check_mutants.subprocess.run", side_effect=execute):
+                self.assertEqual(check_mutants.main(), 0)
+                self.assertEqual(source.read_bytes(), original)
+                self.assertTrue(check_mutants.passed(run_case(root, "audio/example", target), "audio/example"))
+                self.assertEqual(target.read_bytes(), original)
+
     def test_build_failure_cannot_execute_a_stale_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

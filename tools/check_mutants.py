@@ -207,7 +207,11 @@ def main() -> int:
                 return 1
             baselines[case] = observed
             print(f"BASELINE PASS {case}", flush=True)
-        results = [check_fault(root, fault, baselines[fault.case], vanilla, inputs) for fault in faults]
+        results = [check_fault(root, fault, baselines[fault.case], vanilla, inputs) for fault in faults[:-1]]
+        # Direct replay scripts use Cargo's normal artifact. Build the last restored
+        # replay through Cargo so both that artifact and its fingerprints are vanilla.
+        last = faults[-1]
+        results.append(check_fault(root, last, baselines[last.case], inputs=inputs))
     return 0 if all(results) else 1
 
 if __name__ == "__main__":
