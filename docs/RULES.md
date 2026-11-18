@@ -16,7 +16,12 @@ Every required indexed replay holds its reviewed outcome, observation digest and
 Quality passes. Historical claim changes are explicit in the reviewed replay transition.
 The root alone lands on main, one change at a time through `tools/lane/land.sh`, by fast-forward
 onto a head whose CI passed: no merge commits or force pushes. It alone uploads to ci-data and
-posts to issues; lanes push only their own branch. Text is UTF-8/LF; data is TOML or Rust.
+posts to issues; lanes push only their own branch. Text is UTF-8/LF.
+
+Checks assert behaviour, not wording: never match on panic or error text. The verifier doesn't
+decide engine behaviour. Docs and comments describe the code as it is now: no history, lane names
+or PR numbers; say why a surprising thing holds. Data goes in `.toml` or `.rs`, never JSON.
+ROM-derived bytes never go in commits or logs.
 
 ## The goal and its measure
 

@@ -224,7 +224,4 @@ pass, as `tools/lane/gate.sh` runs it, and
 the clean crates pass it again under `tools/cleanroom/clippy.toml`. Fix findings; don't add
 `allow`s.
 
-Checks assert behaviour, not wording: never match on panic or error text. The verifier doesn't
-decide engine behaviour. Docs and comments describe the code as it is now: no history, lane names
-or PR numbers; say why a surprising thing holds. Data goes in `.toml` or `.rs`, never JSON.
-ROM-derived bytes never go in commits or logs.
+Shared check, documentation and data rules are in [RULES](../RULES.md#authority-and-shared-guardrails).
