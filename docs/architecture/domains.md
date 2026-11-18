@@ -8,6 +8,11 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
 
 ## 0. The answer in three lines
 
+These are the historical planning estimates at the spine above, including the concurrency
+assumption. They are not current acceptance figures or lane limits; current evidence is in
+[STATUS](../STATUS.md), and concurrency is governed by
+[PROCESS](../cleanroom/PROCESS.md#what-can-run-at-once).
+
 - Done: about 5% of the game's behaviour (samus-movement 7,160 + camera 1,506 weighted, about
   250 spec units). The remaining clean model is likely 120-170k weighted, about 3,500-4,500
   spec units at k = 36.
@@ -243,6 +248,12 @@ Two rules hold for the platform work whatever lane carries it:
   each with the lag the cost model gives it. A host that falls behind catches up by running
   whole frames, at most a capped number per host frame, and drops the rest of the debt rather
   than run ahead in a burst. Neither the renderer nor the audio backend advances the game.
+
+T1 is platform engineering, not a clean timing-domain round. Its named costs and hardware
+scheduling do not recreate gameplay producers. Current whole-frame timing is absent; the
+scoped sender service and missing clean-rule boundaries are described in
+[ARCHITECTURE §6.5](ARCHITECTURE.md#65-named-cpu-costs) and
+[§15](ARCHITECTURE.md#15-build-order).
 
 ### E1: where sprite drawing stands, and its second lane
 

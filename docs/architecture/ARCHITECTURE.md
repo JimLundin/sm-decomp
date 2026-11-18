@@ -138,7 +138,17 @@ Lag is observable; captured parity or intervals do not establish a production cl
 
 ### 6.5 Named CPU costs
 
-No clean whole-engine cost owner is implied. Required timing behaviour remains unsupported.
+Whole-frame CPU timing is not implemented. [T1](domains.md#platform-and-tracks-not-clean-room-hardware-formats-or-the-originals-timing)
+is platform engineering outside the clean room: named CPU costs, beam scheduling, hardware
+arbitration and the time coordinator. It is not a new clean gameplay domain. Costs describe
+actual named work, rather than executing the original's opcodes or routine structure or replaying
+an expected-time cost tape.
+
+The existing `AudioSender` production entry retains CPU master ticks and advances the clean
+sender's intrinsic timed service under an admitted timing profile and ordered physical replies.
+That scoped service does not supply a whole-frame clock. Its clock inputs do not imply a
+power-on epoch or prove beam phase; each scoped case must declare the timing facts it admits.
+Required missing timing remains unsupported.
 
 ### 6.6 Strands and continuations
 
@@ -296,6 +306,10 @@ The lowest unmet rung determines work. Wiring existing clean capabilities uses p
 and indexed witnesses. Missing rules go through observer/implementer clean-room rounds;
 engineering cannot recreate them to preserve an old prefix. See
 [MODEL §5](MODEL.md#5-how-the-work-is-planned) and [the plan](domains.md#4-order).
+
+Platform timing schedules and charges work owned by those models and services. Missing actor
+selection, audio queue rules or NMI gameplay mutations need clean rules or explicitly scoped
+external producers; timing machinery cannot supply their gameplay decisions.
 
 ## 16. Lessons
 

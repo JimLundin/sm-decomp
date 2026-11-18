@@ -274,9 +274,11 @@ heals span 3 shows spans 4 on as green again, and long rows can be recorded as p
 
 A cut is **quiescent** when it is `Cut::NmiReturn` with `NmiKind::Requested`, the NMI having
 interrupted a wait site (`relock::is_quiescent`). The overrun and NMI-off schedules are the
-complement, and the `Recorded` timing source replays them, so both sides fold at the same cuts.
-The fold rules are one type, `data::span::SpanFold`, used by `oracle::relock::Recorder` on
-`FrameRecord`s and by `verify::fold::EngineFold` on the engine's frames. `audio` is not recorded.
+complement. `data::span::SpanFold` folds the independent capture in `oracle::relock::Recorder`
+and the record cache. `verify::fold::EngineFold` retains a frame-fold representation, but
+production does not emit complete engine frames or replay a `Recorded` timing source.
+Acceptance uses the [indexed production runner](STATUS.md) and each case's
+declared observations and timing limits. `audio` is not recorded.
 
 **Facts** are evaluated on the decoded oracle State at record time. Until `tools relock` evaluates
 them with `verify::decode`, every fact is `"unevaluated"` and doesn't block green.
