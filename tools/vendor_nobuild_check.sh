@@ -16,6 +16,17 @@ set -uo pipefail
 cargo=${CARGO:-cargo}
 root=$(git rev-parse --show-toplevel)
 cd "$root" || exit 2
+# Scratch projects are outside rust-toolchain.toml's scope. Keep both rustup proxies
+# on the repository's active toolchain, including any explicit caller override.
+active_toolchain=$(rustup show active-toolchain) || {
+  echo "vendor_nobuild_check: cannot resolve the active Rust toolchain" >&2
+  exit 2
+}
+[ -n "$active_toolchain" ] || {
+  echo "vendor_nobuild_check: no active Rust toolchain" >&2
+  exit 2
+}
+export RUSTUP_TOOLCHAIN=${RUSTUP_TOOLCHAIN:-${active_toolchain%% *}}
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
 bad=0

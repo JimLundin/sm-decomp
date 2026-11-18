@@ -66,6 +66,8 @@ jobs:
       - name: Hold the crate plan's dependency and source rules
         # ARCHITECTURE §4.2 and D1; crates/README.md lists each crate's allowed dependencies.
         run: bash tools/check_crate_rules.sh
+      - name: Test the vendor verifier's toolchain selection
+        run: python3 -m unittest discover -s tools -p test_vendor_toolchain.py
       - name: Hold the crates in vendor/ to their real build scripts
         # tools/vendor_nobuild.sh bakes each script's output in, for a machine that can't run it; here it runs.
         # Without the workflow's RUSTC_BOOTSTRAP: a published build script that finds it turns on
