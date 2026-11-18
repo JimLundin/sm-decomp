@@ -8,24 +8,13 @@ Planner, 2026-11-08, read-only, at spine `e458a3d5d`. Sizes are `tools size` wei
 
 ## 0. The answer in three lines
 
-These are the historical planning estimates at the spine above, including the concurrency
-assumption. They are not current acceptance figures or lane limits; current evidence is in
-[STATUS](../STATUS.md), and concurrency is governed by
-[PROCESS](../cleanroom/PROCESS.md#what-can-run-at-once).
-
-- Done: about 5% of the game's behaviour (samus-movement 7,160 + camera 1,506 weighted, about
-  250 spec units). The remaining clean model is likely 120-170k weighted, about 3,500-4,500
-  spec units at k = 36.
-- That is about 150-160 clean-room pipeline rounds (spec, adversary, implement, wire, gaps)
-  plus 45-55 platform lanes (asset formats, encoders, room loading, timing, renderer, tooling).
-  With 4-6 lanes in parallel at about 2.5 h a round it is 70-100 h of pipeline wall-clock in
-  the best case. With review, Jim's gates and one-at-a-time landing, expect several weeks.
-- The order is toward the headline milestone (MODEL §1 decision 14), the engine replaying a
-  whole movie alone, first power-on through Ceres (§4): finish Samus and the world she touches
-  on the 32 cached rows; then doors, rooms and the fight (so the engine runs past slice 0 and
-  through Ceres's rooms); then Ceres itself and the opening around it (Ceres Ridley and the
-  escape, the title, intro and file select, the cinematics, audio, Mode 7, slowdown and loading
-  time). Then the movie's next stretches: items, enemies and bosses; the rest last.
+- Work targets the lowest unmet rung toward power-on through Ceres played alone, using only
+  movie inputs and matching every compared cut and output byte ([§4](#4-order)).
+- Named clean gameplay models own typed State and rules; platform lanes supply asset formats,
+  encoding, timing, rendering and tooling. Indexed replay proves selected production paths
+  with explicit scope limits and missing capabilities.
+- [STATUS](../STATUS.md) defines current progress and its evidence;
+  [PROCESS](../cleanroom/PROCESS.md#what-can-run-at-once) governs lane limits and concurrency.
 
 ## 1. The current engine and the planning baseline
 
