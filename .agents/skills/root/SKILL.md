@@ -102,15 +102,27 @@ that skill.
 
 ## Landing
 
-A round lands as **one commit** on `main` (Jim, 2026-11-10), its spec, model and integration
-together; nothing of a round lands before it ([PROCESS](../../../docs/cleanroom/PROCESS.md#a-round),
-steps 4 and 11). Before the squash, on the round's branch: add one to the model's `rounds` in
-`docs/architecture/domains.toml`, move a plan domain's `status` if its work started or ended, and
-regenerate REPORT and the README's status. Then squash it with `tools/lane/squash.sh SUBJECT
-BRANCH`: you write the subject, which says what is true after the round and ends with its kind.
-Land one change at a time, by fast-forward through `bash tools/lane/land.sh <pr>`, after the PR's
-CI is green: Quality, content and replay. The
-[lane](../lane/SKILL.md#land-root-only) skill gives the steps.
+Before landing a round, complete [PROCESS step 11](../../../docs/cleanroom/PROCESS.md#a-round):
+update its domain registration and regenerate measured reports after review. The spec, import
+and integration land together. Land one change at a time by fast-forward through
+`tools/lane/land.sh` only after CI is green: Quality, content and replay.
+The commands below apply to rounds and other work.
+
+1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
+2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
+   `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`. It lands as one commit
+   with the branch's tree, each part listed under its role with its body indented under it (a
+   lane of one commit has that commit's body as its own), and every `Role:` and
+   `Co-Authored-By:` line kept once, at the end; it refuses a branch that doesn't hold `HEAD`.
+   Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for
+   you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
+3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
+   each lane's commits, evidence and ratchet deltas.
+4. In the background: `bash tools/lane/watch.sh <pr>`. Exit 0 landed (via `land.sh`, fast-forward
+   only); 3 main moved (rebase, re-gate, re-push); 4 a run failed (read its log, land the green
+   prefix, hand the failure to a lane); 5 timed out.
+5. Bundles: check the lane's SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data FILE`,
+   confirm its size with `gh release view ci-data`, and commit the new pin. Only encrypted bundles.
 
 ## Jim
 

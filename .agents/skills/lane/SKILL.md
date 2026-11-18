@@ -6,8 +6,8 @@ description: Start here for any sm-decomp task in the repository. Covers the wor
 # Work a lane
 
 You were given one bounded task, a branch and a base by the root. You commit on your branch and
-push only it; the root lands it. Read [AGENTS.md](../../../AGENTS.md) and
-[PROCESS](../../../docs/cleanroom/PROCESS.md) first.
+push only it; the root lands it. Follow [AGENTS.md](../../../AGENTS.md#start-by-task)
+for startup reading. Engineering tasks do not load the round procedure unless they change it.
 
 ## Set up
 
@@ -30,7 +30,7 @@ behaviour; its specification determines the implementation.
 - In a round, end each commit's message with `Role: <your role>`: a round lands on `main` as one
   commit (`tools/lane/squash.sh`), whose body lists your commits under that role, each with its
   own body indented under it, so explain the change in the body. Your branch keeps them.
-- Idiomatic Rust per AGENTS.md. Fix clippy findings; add no `allow`s.
+- For Rust changes, follow [Rust style](../../../docs/architecture/PRINCIPLES.md#rust-style).
 - A difference from the original is fixed, or listed in `docs/LEGACY.md` in the same commit.
 - UTF-8 and LF. Data goes in `.toml` or `.rs`, never JSON.
 - ROM-derived bytes (inputs, seeds, records, dumps) stay in encrypted ci-data bundles. Logs and
@@ -102,18 +102,4 @@ background jobs and send the path. Say "I couldn't" plainly, with the reason.
 
 ## Land (root only)
 
-1. In the landing worktree, `git status` shows no rebase or cherry-pick in progress.
-2. A round: rebase its branch onto `origin/main` and re-gate it, then, with the landing branch at
-   `origin/main`, `bash tools/lane/squash.sh "<subject> [exact]" <branch>`. It lands as one commit
-   with the branch's tree, each part listed under its role with its body indented under it (a
-   lane of one commit has that commit's body as its own), and every `Role:` and
-   `Co-Authored-By:` line kept once, at the end; it refuses a branch that doesn't hold `HEAD`.
-   Other work: `bash tools/lane/pick.sh <hash>...` in the lane's order; it stops at a conflict for
-   you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
-3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
-   each lane's commits, evidence and ratchet deltas.
-4. In the background: `bash tools/lane/watch.sh <pr>`. Exit 0 landed (via `land.sh`, fast-forward
-   only); 3 main moved (rebase, re-gate, re-push); 4 a run failed (read its log, land the green
-   prefix, hand the failure to a lane); 5 timed out.
-5. Bundles: check the lane's SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data FILE`,
-   confirm its size with `gh release view ci-data`, and commit the new pin. Only encrypted bundles.
+The root follows [Landing](../root/SKILL.md#landing). Lanes hand off their branch and evidence.

@@ -113,8 +113,7 @@ write to the Session.
 width equal the exact picture.
 
 **P19. Every decision records its reason.** We make the engineering decisions and Jim vetoes.
-Questions for Jim are goal trade-offs, each with its context. The rules live in one short file Jim
-approves (AGENTS.md).
+Questions for Jim are goal trade-offs, each with its context. [RULES](../RULES.md) indexes each rule at its canonical home.
 
 **P20. Identify each behaviour, and model it so it can be reproduced exactly or switched off.** Lag,
 load times and the console's other emergent behaviours become named, modelled behaviours. In vanilla
@@ -126,8 +125,7 @@ landing (ARCHITECTURE D24). Every TAS movie syncs with all behaviours on.
 
 ## Coding principles
 
-AGENTS.md's Rust style is the base: enums with data, newtypes, typed flag sets, behaviour tables as
-data, conversion at the edges with `TryFrom`, no lint allows, no matching on panic text. These extend it.
+[Rust style](#rust-style) is the base. These principles extend it.
 
 **K1. No addresses in engine code.** Program places are labels, and content is referred to by ID. ROM
 and RAM addresses appear only in `data`'s import tables and in verification.
@@ -192,3 +190,41 @@ an original quirk being reproduced, an order that matters, a value that looks wr
 own, an oracle difference with its LEGACY row. Doc comments on public items say what the item is for
 and its contract.
 *Jim (2026-11-05):* his own principle. *How we know:* "does this comment say anything the code doesn't?"
+
+## Rust style
+
+Code is idiomatic Rust, not transpiled C. Preserve the original's behaviour, not its shapes:
+
+- Iterate (`iter().enumerate()`, `iter_mut()`) instead of `for i in 0..N { a[i] }`.
+- Parenthesize mixed shift, bitwise and arithmetic expressions.
+- Name checks with a function that says what it checks, never a no-op expression such as `[(); N][i];`.
+- Use `From`/`TryFrom` and `wrapping_*` instead of chains of `as` casts.
+- Use `std::fs` and owned buffers.
+- Store text files as UTF-8 with LF line endings (`.gitattributes` and CI enforce LF).
+
+Model the domain with types, not raw numbers:
+
+- Use an `enum` for a state, mode, kind or choice instead of a `u16` code. Avoid magic constants
+  and state words compared with `==`. Match exhaustively; don't fall back to `_ =>` when every
+  case can be named.
+- Give an enum variant the data it carries, rather than sibling fields that mean something in one state.
+- Use a newtype for an index or a quantity that must not mix with others: slot, room, pose, frame count.
+- Use a typed flag set, a struct of `bool`s or an enum set, instead of bit masks tested inline.
+- Keep behaviour tables as data: arrays of typed records or enums, plus a small interpreter.
+- Convert at the edges. Turn ROM bytes and record formats into the enum once, with `TryFrom`.
+  Where the original treats an invalid value as an error, map it to `Fatal::unreachable`; where it
+  tolerates one, keep a named variant (`Unknown(u16)`) and list it in LEGACY. Stay byte-exact: the
+  original's value goes back out wherever it is observed.
+
+`cargo clippy --locked -p data -p import -p game -p runtime -p app -p verify -p tools -p canonical -p
+canonical_derive -p oracle_record -p oracle -p types -p samus_movement -p
+world_blocks -p world_camera -p interface_hud -p run_progress -p
+samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions --all-targets --no-deps -- -D warnings` must
+pass, as `tools/lane/gate.sh` runs it, and
+the clean crates pass it again under `tools/cleanroom/clippy.toml`. Fix findings; don't add
+`allow`s.
+
+Checks assert behaviour, not wording: never match on panic or error text. The verifier doesn't
+decide engine behaviour. Docs and comments describe the code as it is now: no history, lane names
+or PR numbers; say why a surprising thing holds. Data goes in `.toml` or `.rs`, never JSON.
+ROM-derived bytes never go in commits or logs.
