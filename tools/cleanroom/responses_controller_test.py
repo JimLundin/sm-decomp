@@ -391,6 +391,37 @@ class Contract(unittest.TestCase):
             self.call("status")
         self.assertIs(caught.exception.category, RefusalCategory.INTEGRITY)
 
+    def test_long_command_output_retains_each_streams_diagnostics(self) -> None:
+        self.config["commands"]["status"] = [sys.executable, "-I", "invented.py"]
+        for lengths in ((140000, 0), (0, 140000), (140000, 140000)):
+            streams = [f"BEGIN-{i}\n" + "\u03bb" * length + f"\nEND-{i}\n" if length else ""
+                       for i, length in enumerate(lengths)]
+            def captured(*args: Any, **kwargs: Any) -> int:
+                for path, content in zip(args[2:4], streams):
+                    Path(path).write_text(content, encoding="utf-8", newline="\n")
+                return 7
+            with self.subTest(lengths=lengths), patch("launch_stream.capture", side_effect=captured):
+                result = json.loads(self.call("status"))
+                self.assertEqual(result["exit_code"], 7)
+                for i, length in enumerate(lengths):
+                    if length:
+                        self.assertIn(f"BEGIN-{i}\n", result["output"])
+                        self.assertIn(f"\nEND-{i}\n", result["output"])
+                self.assertLessEqual(len(result["output"]), 100000)
+                self.assertTrue(result["truncated"])
+                self.assertGreater(result["omitted_characters"], 0)
+
+    def test_short_command_output_remains_exact(self) -> None:
+        self.config["commands"]["status"] = [sys.executable, "-I", "invented.py"]
+        def captured(*args: Any, **kwargs: Any) -> int:
+            Path(args[2]).write_text("First\n", encoding="utf-8", newline="\n")
+            Path(args[3]).write_text("Last\n", encoding="utf-8", newline="\n")
+            return 0
+        with patch("launch_stream.capture", side_effect=captured):
+            result = json.loads(self.call("status"))
+        self.assertEqual(result["exit_code"], 0)
+        self.assertEqual(result["output"], "First\nLast\n")
+
     def test_uncertified_command_stops_before_reading_unavailable_artifacts(self) -> None:
         self.config["commands"]["status"] = [sys.executable, "-I", "invented.py"]
         for unavailable in ("missing", "unreadable"):

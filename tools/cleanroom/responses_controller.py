@@ -26,6 +26,7 @@ OBSERVED_MODEL = "global.openai.gpt-6.1-sol"
 # the same fixed Sol request. No other label, request model or route is accepted.
 OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-1-sol-dz", "gpt-6-1-sol-gs"})
 PAGE_CHARACTERS = 25000
+COMMAND_CHARACTERS = 100000
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",
            "fmt", "fmtcheck", "test", "runner", "status", "diff", "log", "add", "commit")
 FIELDS = {
@@ -44,7 +45,9 @@ TOOL = {
     "whose valid-prefix matches may appear. Matches and paths share a 1000-item/100000-character "
     "budget. Use paged read for full content. "
     "write/edit/delete modify only Rust src/tests. edit replaces exactly one old string. "
-    "Fixed commands accept no arguments; add stages all permitted changes. "
+    "Fixed commands accept no arguments; their results keep the beginning and end of each "
+    "output stream, with truncated and omitted_characters metadata when text is omitted. "
+    "add stages all permitted changes. "
     "commit takes text paragraphs; Role: implementer is appended. runner runs vectors.",
     "strict": False,
     "parameters": {"type": "object", "properties": {
@@ -60,6 +63,25 @@ class RefusalCategory(Enum):
     REQUEST = "request"
     INTEGRITY = "integrity"
     UNCERTIFIED = "uncertified"
+
+
+def command_output(stdout: str, stderr: str) -> dict[str, Any]:
+    """Keep both streams' final diagnostics when dependency chatter fills the result."""
+    stdout_limit = max(COMMAND_CHARACTERS // 2, COMMAND_CHARACTERS - len(stderr))
+    stderr_limit = COMMAND_CHARACTERS - min(len(stdout), stdout_limit)
+    marker = "\n[... command output omitted ...]\n"
+    parts = []
+    omitted = 0
+    for text, limit in ((stdout, stdout_limit), (stderr, stderr_limit)):
+        if len(text) > limit:
+            kept = limit - len(marker)
+            head = kept // 2
+            parts.append(text[:head] + marker + text[-(kept - head):])
+            omitted += len(text) - kept
+        else:
+            parts.append(text)
+    return {"output": "".join(parts), "truncated": omitted != 0,
+            "omitted_characters": omitted}
 
 
 class Refused(ValueError):
@@ -264,8 +286,9 @@ class Broker:
         self.audit()
         if status == 124:
             raise Refused("command completion uncertified", RefusalCategory.UNCERTIFIED)
-        output = out.read_text(encoding="utf-8", errors="replace") + errors.read_text(encoding="utf-8", errors="replace")
-        return json.dumps({"exit_code": status, "output": output[:100000]})
+        output = command_output(out.read_text(encoding="utf-8", errors="replace"),
+                                errors.read_text(encoding="utf-8", errors="replace"))
+        return json.dumps({"exit_code": status, **output})
 
     def dispatch(self, name: str, args: object) -> str:
         self.audit()
