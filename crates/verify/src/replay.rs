@@ -9,9 +9,11 @@ pub mod baseline;
 mod camera;
 mod ceres;
 mod compare;
+mod full_movement;
 mod hud;
 pub mod index;
 mod movement;
+mod native_search;
 mod opportunity;
 mod pending;
 mod progress;
@@ -52,7 +54,7 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         row: case.row.clone(),
         start_cut: match case.start {
             Start::CacheCut { frame } | Start::NativeCheckpoint { frame, .. } => Some(frame),
-            Start::NativeSeed { .. } | Start::PowerOn => None,
+            Start::NativeOpportunity { .. } | Start::NativeSeed { .. } | Start::PowerOn => None,
         },
         end_cut: case.end.cut_inclusive,
         counts: Counts::default(),

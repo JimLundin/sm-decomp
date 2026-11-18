@@ -56,6 +56,19 @@ pub enum Responsibility {
 #[serde(tag = "source", rename_all = "kebab-case", deny_unknown_fields)]
 /// The sole source of initial selected state.
 pub enum Start {
+    /// Direct scoped opportunity within one video frame, rather than an NMI-cut start.
+    NativeOpportunity {
+        /// Frozen independent source/input packet directory.
+        path: PathBuf,
+        /// Frozen admission manifest SHA-256.
+        sha256: String,
+        /// Video frame containing this opportunity.
+        video_frame: u64,
+        /// Independently qualified pre-step instruction coordinate.
+        source_start_index: u64,
+        /// Independent complete opportunity return coordinate.
+        source_completion_index: u64,
+    },
     /// Initial selected state from one pinned record cut.
     CacheCut {
         /// The original record cut used only for initial selected state.
@@ -97,6 +110,8 @@ pub struct End {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
+    /// Independently admitted selector-time Frame and actor-selection-time geometry.
+    NativeSearchInputs,
     /// Causal neighbours from the preceding pinned cut.
     PrecedingCutMovementInputs,
     /// Independent prior facts plus observed external Ceres run scheduling.
@@ -141,6 +156,8 @@ pub enum ContentProvider {
 #[serde(rename_all = "kebab-case")]
 /// Oracle source used only for comparison.
 pub enum ExpectedProvider {
+    /// Frozen complete source-derived movement work, with independent captured input packets.
+    NativeCompleteMovementWork,
     /// Independent pinned oracle records.
     PinnedRecordCache,
     /// Independent decoded native cuts.
@@ -150,6 +167,30 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Every ordered Motion, Support and nested `BodyFit` receipt.
+    #[serde(rename = "movement.work")]
+    MovementWork,
+    /// Every ordered leading-edge test, including classified horizontal context.
+    #[serde(rename = "movement.collision_tests")]
+    MovementTests,
+    /// Complete ordered reaction-facing reaches.
+    #[serde(rename = "movement.reached.complete")]
+    CompleteReached,
+    /// All starting inside cells, distinct from leading-edge tests.
+    #[serde(rename = "movement.inside")]
+    Inside,
+    /// Explicit absent ordinary-movement admission reason.
+    #[serde(rename = "movement.skip")]
+    MovementSkip,
+    /// Complete independently selected first request and its considered candidates.
+    #[serde(rename = "movement.motion.0.request")]
+    FirstMotionSearch,
+    /// Ordered considered identities, geometry and outcomes in the selected request.
+    #[serde(rename = "movement.motion.0.enemy_search.candidates")]
+    FirstMotionCandidates,
+    /// Actual ordinary-right terrain work for the independently unique first request.
+    #[serde(rename = "movement.motion.0.ordinary_terrain_tests")]
+    FirstMotionTerrain,
     #[serde(rename = "movement.position.x")]
     /// Fixed-point horizontal position.
     PositionX,
@@ -484,7 +525,15 @@ fn rule_exists(rule: &str) -> bool {
 
 const fn observation_owner(field: ObservationId) -> Responsibility {
     match field {
-        ObservationId::PositionX
+        ObservationId::MovementWork
+        | ObservationId::MovementTests
+        | ObservationId::CompleteReached
+        | ObservationId::Inside
+        | ObservationId::MovementSkip
+        | ObservationId::FirstMotionSearch
+        | ObservationId::FirstMotionCandidates
+        | ObservationId::FirstMotionTerrain
+        | ObservationId::PositionX
         | ObservationId::PositionY
         | ObservationId::VerticalSpeed
         | ObservationId::TravelLeft
@@ -568,6 +617,12 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
 fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
+        "samus-movement/MotionAttempts" => &[O::FirstMotionSearch],
+        "samus-movement/ReachedEnemyCandidates" => &[O::FirstMotionCandidates],
+        "samus-movement/PerformedCollisionTests" => &[O::MovementTests],
+        "samus-movement/PerformedSupportChecks" | "samus-movement/PerformedBodyFit" => {
+            &[O::MovementWork]
+        }
         "samus-movement/MovesAsShePosed" => &[O::PositionX, O::PositionY],
         "samus-movement/TravelledDistances" => {
             &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
@@ -640,6 +695,75 @@ fn connected_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>)
             ])
 }
 
+fn native_search_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    use ObservationId as O;
+    let source = match &case.start {
+        Start::NativeOpportunity {
+            sha256,
+            video_frame: 9233,
+            source_start_index: 424,
+            source_completion_index: 4283,
+            ..
+        } if sha256 == super::native_search::PACKET_PIN => {
+            *observations
+                == BTreeSet::from([
+                    O::FirstMotionSearch,
+                    O::FirstMotionCandidates,
+                    O::MovementWork,
+                    O::MovementTests,
+                    O::CompleteReached,
+                    O::Inside,
+                    O::MovementSkip,
+                ])
+        }
+        Start::NativeOpportunity {
+            sha256,
+            video_frame: 9233,
+            source_start_index: 424,
+            source_completion_index: 4052,
+            ..
+        } if sha256 == super::native_search::TOUCH_PACKET_PIN => {
+            *observations
+                == BTreeSet::from([
+                    O::FirstMotionTerrain,
+                    O::FirstMotionSearch,
+                    O::FirstMotionCandidates,
+                    O::MovementWork,
+                    O::MovementTests,
+                    O::CompleteReached,
+                    O::Inside,
+                    O::MovementSkip,
+                ])
+                && case.expectations.fields.first() == Some(&O::FirstMotionTerrain)
+        }
+        Start::NativeOpportunity { .. }
+        | Start::NativeSeed { .. }
+        | Start::NativeCheckpoint { .. }
+        | Start::CacheCut { .. }
+        | Start::PowerOn => false,
+    };
+    source
+        && case.kind == CaseKind::Scoped
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::NativeCompleteMovementWork
+        && case.end.cut_inclusive == super::native_search::COMPLETION
+        && !case.limits.is_empty()
+        && !case.borrowed.is_empty()
+}
+
+fn movement_provider_valid(
+    case: &Case,
+    observations: &BTreeSet<ObservationId>,
+    recorded: bool,
+) -> bool {
+    if case.inputs == InputProvider::NativeSearchInputs {
+        return native_search_provider_valid(case, observations);
+    }
+    recorded
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::PrecedingCutMovementInputs
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::Unavailable {
@@ -660,11 +784,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         [Responsibility::Movement, Responsibility::Ceres] => {
             connected_provider_valid(case, observations)
         }
-        [Responsibility::Movement] => {
-            recorded
-                && case.content == ContentProvider::PlayerRomImport
-                && case.inputs == InputProvider::PrecedingCutMovementInputs
-        }
+        [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => {
             case.kind == CaseKind::Scoped
                 && case.content == ContentProvider::NativeResidentContent
@@ -810,6 +930,18 @@ impl Case {
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
         let start_valid = match &case.start {
+            Start::NativeOpportunity {
+                path,
+                sha256,
+                video_frame,
+                source_start_index,
+                source_completion_index,
+            } => {
+                !path.as_os_str().is_empty()
+                    && valid_hash(sha256)
+                    && *video_frame == case.end.cut_inclusive
+                    && source_start_index < source_completion_index
+            }
             Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
             Start::NativeSeed { path, sha256 } => {
                 !path.as_os_str().is_empty() && valid_hash(sha256)
@@ -858,6 +990,7 @@ impl Case {
             Start::CacheCut { frame } | Start::NativeCheckpoint { frame, .. } => {
                 frame.checked_add(1)
             }
+            Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
             Start::NativeSeed { .. } | Start::PowerOn => Some(0),
         }
     }

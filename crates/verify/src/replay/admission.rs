@@ -77,7 +77,7 @@ fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
             };
             (path, sha256, Some((seed_path, seed_sha256, *frame)))
         }
-        Start::CacheCut { .. } | Start::PowerOn => {
+        Start::NativeOpportunity { .. } | Start::CacheCut { .. } | Start::PowerOn => {
             return Err(data_failure(None, "audio start contract"));
         }
     };
@@ -127,6 +127,44 @@ fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
 }
 
 fn movement(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    if case.inputs == InputProvider::NativeSearchInputs {
+        let Start::NativeOpportunity { path, sha256, .. } = &case.start else {
+            return Err(data_failure(None, "native search start"));
+        };
+        let path = if path.is_absolute() {
+            path.clone()
+        } else {
+            sources.native.join(path)
+        };
+        let kind = if sha256 == super::native_search::PACKET_PIN {
+            super::native_search::Kind::Miss
+        } else if sha256 == super::native_search::TOUCH_PACKET_PIN {
+            super::native_search::Kind::Touch
+        } else {
+            return Err(data_failure(None, "native source packet admitted identity"));
+        };
+        let (inputs, mut expected) = super::native_search::load(&path, &sources.rom, kind)?;
+        if !sources.native.as_os_str().is_empty() {
+            expected.work_root = sources.native.join("native-search-work-v2");
+        }
+        let content = ProductionContent::Movement(inputs.content.movement.clone());
+        let rules = ProductionRules::Movement(samus_movement::Rules::default());
+        let production = Production::admit(
+            ProductionSeed::Movement(inputs.seed),
+            content.clone(),
+            rules.clone(),
+        )
+        .map_err(|_| data_failure(None, "native search production admission"))?;
+        return Ok(AdmittedCase {
+            production,
+            content,
+            rules,
+            actual: ActualReader::NativeSearch(None),
+            schedule: vec![super::native_search::COMPLETION],
+            inputs: InputReader::NativeSearch(Box::new(inputs)),
+            expected: ExpectedReader::NativeSearch(expected),
+        });
+    }
     if case.content != ContentProvider::PlayerRomImport
         || case.inputs != InputProvider::PrecedingCutMovementInputs
         || case.expectations.provider != ExpectedProvider::PinnedRecordCache

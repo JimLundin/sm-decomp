@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "be3ca508bd62eb157aa0c6cf96667e64bf77f4d9a3006663dc29a572ab526f97"
+index_sha256 = "0721a154ffd551167bc8ccba7c4f377b134ba3c08d3de721e8ed974c128f85ea"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -295,3 +295,39 @@ claim = "behaviour"
 expected = { status = "pass" }
 counts = { cuts = 4, fields = 28, outputs = 0, publications = 0, replies = 0, null_cuts = 0, null_fields = 15, restorations = 0, pending_boundaries = 0, pending_restorations = 0 }
 observation_sha256 = "2b18d2768c7961fff569672e3f2c145cc3d660e2f44c876416731caf9dc37f13"
+
+[[case]]
+id = "movement-native-occupied-first-search"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "99e1733ec6efbb203b0da3689af59a5134b0f46f43503b40637890284d7db9f7"
+
+[case.counts]
+cuts = 1
+fields = 7
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement-native-enemy-stop-terrain-absence"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "6d0c0a70ded3f4271fff3c7469af80de1602ca9a2e47c78942c1cbd18fd82f08"
+
+[case.counts]
+cuts = 1
+fields = 8
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 2
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0

@@ -124,6 +124,23 @@ jobs:
         run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch the reviewed movement opportunity evidence
         run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch and qualify the pinned complete scoped search inputs
+        run: bash tools/ci/fetch_native_search.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch and qualify the pinned derived enemy-stop source
+        run: bash tools/ci/fetch_native_search_order.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch and qualify the independently reviewed complete movement observations
+        run: bash tools/ci/fetch_native_search_work.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Test independently admitted scoped search contracts
+        env:
+          SM_ROM: rom/sm.smc
+          SM_SEARCH_PACKET: ${{ runner.temp }}/audio-native/native-search-inputs-v1
+          SM_SEARCH_RECEIPT: ${{ runner.temp }}/search-receipt.toml
+          SM_SEARCH_FAULT_RECEIPT: ${{ runner.temp }}/search-fault-control.toml
+          SM_TOUCH_PACKET: ${{ runner.temp }}/audio-native/native-search-order-v1
+          SM_TOUCH_RECEIPT: ${{ runner.temp }}/search-touch-receipt.toml
+        run: |
+          cargo test --locked -p verify --lib native_search_ -- --ignored
+          cargo test --locked -p verify --lib native_touch_ -- --ignored
       - name: Build the shared replay command
         run: cargo build --locked --profile verify -p tools
       - name: Check every indexed case against the reviewed baseline

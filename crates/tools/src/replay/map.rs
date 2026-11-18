@@ -206,12 +206,14 @@ fn options(index: &Path, args: &[String]) -> Result<Options, Fault> {
 enum Coordinates {
     RowLocalCache,
     NativeFixture,
+    WithinVideoNativeOpportunity,
     PowerOn,
 }
 
 const fn coordinates(case: &Case) -> Coordinates {
     match case.start {
         Start::CacheCut { .. } => Coordinates::RowLocalCache,
+        Start::NativeOpportunity { .. } => Coordinates::WithinVideoNativeOpportunity,
         Start::NativeSeed { .. } | Start::NativeCheckpoint { .. } => Coordinates::NativeFixture,
         Start::PowerOn => Coordinates::PowerOn,
     }
