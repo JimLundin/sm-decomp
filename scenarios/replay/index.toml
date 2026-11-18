@@ -392,3 +392,84 @@ provider = "preceding-stage-and-adjacent-counter-identity"
 fields = ["station.stage", "actor.identity", "actor.position", "actor.framework_counter"]
 phase = "preceding-stage-current-run-validation"
 claim = "Calm and Getaway only; one external run, immutable selected identity and placement; no selected phase, figure or flags are inputs"
+
+[[case]]
+id = "movement-native-occupied-first-search"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-opportunity", path = "native-search-inputs-v1", sha256 = "2adee318fb765d39da0fcb85a16a326de3c84522946df2b37811fe52782a880c", video_frame = 9233, source_start_index = 424, source_completion_index = 4283 }
+end = { cut_inclusive = 9233 }
+rules = ["samus-movement/MotionAttempts", "samus-movement/ReachedEnemyCandidates", "samus-movement/PerformedCollisionTests", "samus-movement/PerformedSupportChecks", "samus-movement/PerformedBodyFit"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "native-search-inputs"
+checkpoints = true
+limits = [
+  "Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.",
+  "Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared; Motion ordinal0 also retains complete request and ordered considered candidate semantics.",
+  "One Miss candidate is order-insensitive; the separate derived enemy-stop witness checks forbidden ordinary-right terrain absence. Elapsed CPU timing remains unproved.",
+  "Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change."
+]
+expectations = { provider = "native-complete-movement-work", fields = ["movement.motion.0.request", "movement.motion.0.enemy_search.candidates", "movement.work", "movement.collision_tests", "movement.reached.complete", "movement.inside", "movement.skip"], outputs = [] }
+
+[[case.borrowed]]
+dependency = "complete scoped seed and ordinary opportunity"
+provider = "independently admitted native-search-inputs-v1 packet"
+fields = ["complete Samus", "ordinary opportunity", "Motion ordinal0"]
+phase = "video9233 selector424 through movement completion4283"
+claim = "Source-arm/writer/hardware closure covers424..4282; complete independent raw input snapshots are seed424 and Frame424. No NMI-cut scheduler claim."
+
+[[case.borrowed]]
+dependency = "Frame and immutable opportunity-time World"
+provider = "independent snapshots424/424/2189 with reviewed consumer and immutable-range closure"
+fields = ["complete Frame", "ordered eligible Hitboxes", "complete level and permissions", "imported content"]
+phase = "Frame424 before normal input; World2189 after actor selection and stable for earlier inside and later movement"
+claim = "Fixed existing typed converters and player ROM content supply the clean production step; every actual grid query must stay admitted. Actor selection and upstream Frame/World producers remain external."
+[[case.borrowed]]
+dependency = "complete independent movement observations"
+provider = "independently reviewed native-search-work-v2 source projection"
+fields = ["ordered Motion Support BodyFit", "nested BodyFit checks", "complete CollisionTests", "complete reached", "complete inside", "movement skip"]
+phase = "selector424 through complete movement return"
+claim = "Frozen source-only projection retains zero-effect Support and no-growth BodyFit; expectations are read after production and never supply input or State."
+
+[[case]]
+id = "movement-native-enemy-stop-terrain-absence"
+kind = "scoped"
+row = "derived-chain-any-0003-touch"
+start = { source = "native-opportunity", path = "native-search-order-v1", sha256 = "e6e41959d1d4ee9b9f8c811642849a18bc23a6a1df91f0acbedda613d2b1de73", video_frame = 9233, source_start_index = 424, source_completion_index = 4052 }
+end = { cut_inclusive = 9233 }
+rules = ["samus-movement/PerformedCollisionTests", "samus-movement/MotionAttempts", "samus-movement/ReachedEnemyCandidates", "samus-movement/PerformedSupportChecks", "samus-movement/PerformedBodyFit"]
+profile = "reference"
+responsibilities = ["movement"]
+content = "player-rom-import"
+inputs = "native-search-inputs"
+checkpoints = true
+limits = [
+  "Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.",
+  "Independent Motion ordinal0 is the unique ordinary-right request; compare its forbidden ordinary-right CollisionTests first, then its complete request and ordered considered candidate semantics.",
+  "Native enemy stop skips ordinary terrain while retaining separate support and later downward terrain. The production fault omits the required eligible enemy input/stage, exposing actual forbidden terrain work; no internal clean-model reorder mutant was executed.",
+  "Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared. Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically."
+]
+expectations = { provider = "native-complete-movement-work", fields = ["movement.motion.0.ordinary_terrain_tests", "movement.motion.0.request", "movement.motion.0.enemy_search.candidates", "movement.work", "movement.collision_tests", "movement.reached.complete", "movement.inside", "movement.skip"], outputs = [] }
+
+[[case.borrowed]]
+dependency = "derived complete scoped seed and unique ordinary-right opportunity"
+provider = "independently admitted native-search-order-v1 source packet"
+fields = ["complete Samus", "derived actor centre words", "ordinary opportunity", "Motion ordinal0"]
+phase = "video9233 selector424 through complete movement return4052"
+claim = "Independent source/hardware/writer and two-word intervention closure424..4051. No NMI scheduler, carried-cut State or played-alone claim."
+
+[[case.borrowed]]
+dependency = "Frame and immutable opportunity-time World"
+provider = "independent snapshots424/424/2215 with producer and immutable-range closure"
+fields = ["complete Frame", "ordered eligible Hitboxes", "complete level and permissions", "imported content"]
+phase = "Frame424 before normal input; World2215 after actor selection and stable for earlier inside and later movement"
+claim = "Native drawing-queue changes are retained. Idempotent zero SPEED_BOOSTER_LEVEL write is independently qualified. Fixed existing typed converters and actual grid guard supply one complete clean production step."
+
+[[case.borrowed]]
+dependency = "complete independent movement observations"
+provider = "independently reviewed native-search-work-v2 source projection"
+fields = ["ordered Motion Support BodyFit", "nested BodyFit checks", "complete CollisionTests", "complete reached", "complete inside", "movement skip"]
+phase = "selector424 through complete movement return"
+claim = "Frozen source-only projection retains zero-effect Support and no-growth BodyFit; expectations are read after production and never supply input or State."

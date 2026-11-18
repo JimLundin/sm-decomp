@@ -168,6 +168,53 @@ targets = [
 ]
 
 [[rule]]
+id = "samus-movement/MotionAttempts"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/PerformedBodyFit"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/fit.rs" },
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/PerformedCollisionTests"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/PerformedSupportChecks"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/ReachedEnemyCandidates"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement.rs" },
+  { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
 id = "samus-movement/TouchedCells"
 targets = [
   { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },

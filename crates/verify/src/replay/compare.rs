@@ -47,7 +47,26 @@ pub fn compare(expected: &[Observation], actual: &[Observation]) -> Result<(), C
         match indexed.get(observed.field.as_str()) {
             None => return Err(CompareFault::MissingActual(observed.field.clone())),
             Some(actual) if actual.bytes == observed.bytes => {}
-            Some(_) => return Err(CompareFault::Difference(observed.field.clone())),
+            Some(actual) => {
+                let suffix = if [
+                    "movement.work",
+                    "movement.collision_tests",
+                    "movement.reached.complete",
+                    "movement.inside",
+                    "movement.skip",
+                ]
+                .contains(&observed.field.as_str())
+                {
+                    super::full_movement::difference(&observed.bytes, &actual.bytes)
+                        .unwrap_or_default()
+                } else {
+                    String::new()
+                };
+                return Err(CompareFault::Difference(format!(
+                    "{}{suffix}",
+                    observed.field
+                )));
+            }
         }
     }
     Ok(())

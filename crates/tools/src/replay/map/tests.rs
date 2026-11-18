@@ -27,14 +27,14 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
     let (root, index, mapping, baseline) = fixture();
     mapping.validate(&index, &root).unwrap();
     let selected = mapping.select(&index, &Selection::default()).unwrap();
-    assert_eq!(selected.len(), 17);
+    assert_eq!(selected.len(), 19);
     let views = views(&mapping, &baseline, &selected).unwrap();
     assert_eq!(
         views
             .iter()
             .filter(|view| view.reviewed_requirement.claim == Claim::Behaviour)
             .count(),
-        12
+        14
     );
     assert_eq!(
         views
@@ -380,6 +380,11 @@ fn command_queries_round_trip_typed_contracts_and_reviewed_requirements() {
     for (flag, selector, count) in [
         ("--case", "movement/W15", 1),
         ("--rule", "samus-movement/TravelledDistances", 3),
+        ("--rule", "samus-movement/MotionAttempts", 2),
+        ("--rule", "samus-movement/ReachedEnemyCandidates", 2),
+        ("--rule", "samus-movement/PerformedCollisionTests", 2),
+        ("--rule", "samus-movement/PerformedSupportChecks", 2),
+        ("--rule", "samus-movement/PerformedBodyFit", 2),
         ("--path", "crates/clean/samus_movement/src/travel.rs", 3),
     ] {
         let mut args = prefix.clone();

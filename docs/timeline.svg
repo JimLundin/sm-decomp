@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="634" viewBox="0 0 1100 634" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="698" viewBox="0 0 1100 698" role="img" aria-labelledby="title description">
 <title id="title">Indexed replay requirements</title>
 <desc id="description">Each line is an independent case scope. Counts do not represent whole-movie coverage.</desc>
-<rect width="1100" height="634" fill="#fcfcfb"/>
+<rect width="1100" height="698" fill="#fcfcfb"/>
 <g font-family="sans-serif" font-size="14" fill="#202020">
 <text x="20" y="28" font-size="19">Indexed replay requirements</text>
 <text x="20" y="52">Separate scopes; compared cuts are not whole-movie progress.</text>
@@ -22,5 +22,7 @@
 <text x="20" y="530">integrated/missing-dependency-closure | Integrated cases | Unsupported at None: complete integrated production dependency closure | 0 compared cuts</text>
 <text x="20" y="562">movie/missing-power-on | Whole-movie cases | Unsupported at None: complete production power-on and movie input pipeline | 0 compared cuts</text>
 <text x="20" y="594">movement-ceres/carried-position-proximity | Integrated cases | Pass | 4 compared cuts</text>
+<text x="20" y="626">movement-native-occupied-first-search | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="658">movement-native-enemy-stop-terrain-absence | Scoped cases | Pass | 1 compared cuts</text>
 </g>
 </svg>

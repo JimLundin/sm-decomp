@@ -14,6 +14,7 @@ use game::production::{
 use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
+    NativeSearch(Box<super::native_search::Inputs>),
     Recorded(Box<super::recorded::Inputs>),
     Audio(Box<audio::InputTape>),
     Movement {
@@ -23,6 +24,7 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
+    NativeSearch(super::native_search::Expected),
     Recorded(Box<super::recorded::Expected>),
     Audio(Box<audio::ExpectedTape>),
     Movement { cache: Box<Cache>, row: String },
@@ -30,6 +32,7 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone)]
 pub(super) enum ActualReader {
+    NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
     Audio {
         publications: Vec<audio::Publication>,
@@ -74,6 +77,7 @@ impl InputReader {
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::NativeSearch(inputs) => inputs.advance(production, cut),
             Self::Recorded(reader) => reader.advance(production, cut),
             Self::Audio(tape) => {
                 let stop = tape
@@ -138,6 +142,16 @@ impl ActualReader {
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
+            (
+                Self::NativeSearch(retained),
+                InputReader::NativeSearch(_),
+                ProductionOutputs::Movement(outputs),
+            ) => {
+                let mut fields = super::native_search::actual(&outputs);
+                fields.extend(super::full_movement::actual(&outputs)?);
+                *retained = Some(Box::new(outputs));
+                Ok(fields)
+            }
             (Self::Recorded(actual), InputReader::Recorded(_), outputs) => {
                 actual.accept(production, &outputs, cut)
             }
@@ -191,6 +205,11 @@ impl ActualReader {
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
+            Self::NativeSearch(_) => {
+                let mut fields = super::native_search::initial();
+                fields.extend(super::full_movement::initial()?);
+                Ok(fields)
+            }
             Self::Recorded(actual) => actual.initial(production),
             Self::Audio {
                 publications,
@@ -229,7 +248,7 @@ impl ActualReader {
     pub const fn publication_count(&self) -> usize {
         match self {
             Self::Audio { publications, .. } => publications.len(),
-            Self::Movement | Self::Recorded(_) => 0,
+            Self::NativeSearch(_) | Self::Movement | Self::Recorded(_) => 0,
         }
     }
 }
@@ -237,6 +256,16 @@ impl ActualReader {
 impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
+            Self::NativeSearch(expected) => {
+                let fields = expected.read(cut)?;
+                Ok(ExpectedCut {
+                    semantics: fields.clone(),
+                    semantic_count: fields.len(),
+                    output_count: 0,
+                    replies: 0,
+                    fields,
+                })
+            }
             Self::Recorded(reader) => reader.read(case, cut),
             Self::Audio(tape) => {
                 let reader = AudioExpectedReader { tape };

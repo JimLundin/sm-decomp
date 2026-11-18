@@ -54,6 +54,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | blocks/missing-requests | Unsupported at None: independent complete block seed and ordered reaction requests | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | doors/missing-passage-inputs | Unsupported at None: independent complete passage seed and opportunity-time inputs | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | audio-sender/missing-service-inputs | Unsupported at None: independent CPU sender seed and ordered queue/service inputs | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
+| movement-native-occupied-first-search | Pass | 1 | 0 | 1 | 7 | 0 | 1 |
+| movement-native-enemy-stop-terrain-absence | Pass | 1 | 0 | 1 | 8 | 0 | 1 |
 
 - **movement/D-inherited-cut** witnesses samus-movement/TravelledDistances. Limits: one-step travel witness; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; movement receipts and downstream consumers outside declared comparisons; pixel composition omitted.
 - **movement/W15** witnesses samus-movement/WallJump, samus-movement/TouchedCells. Limits: appearance feedback externally admitted; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; camera and pixel composition omitted.
@@ -69,6 +71,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **blocks/missing-requests** declares no rule witness. Limits: independent complete block seed and ordered reaction requests unavailable; boundary holds unsupported; no behaviour Pass.
 - **doors/missing-passage-inputs** declares no rule witness. Limits: independent complete passage seed and opportunity-time inputs unavailable; boundary holds unsupported; no behaviour Pass.
 - **audio-sender/missing-service-inputs** declares no rule witness. Limits: independent CPU sender seed and ordered queue/service inputs unavailable; boundary holds unsupported; no behaviour Pass.
+- **movement-native-occupied-first-search** witnesses samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedCollisionTests, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared; Motion ordinal0 also retains complete request and ordered considered candidate semantics.; One Miss candidate is order-insensitive; the separate derived enemy-stop witness checks forbidden ordinary-right terrain absence. Elapsed CPU timing remains unproved.; Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change..
+- **movement-native-enemy-stop-terrain-absence** witnesses samus-movement/PerformedCollisionTests, samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.; Independent Motion ordinal0 is the unique ordinary-right request; compare its forbidden ordinary-right CollisionTests first, then its complete request and ordered considered candidate semantics.; Native enemy stop skips ordinary terrain while retaining separate support and later downward terrain. The production fault omits the required eligible enemy input/stage, exposing actual forbidden terrain work; no internal clean-model reorder mutant was executed.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared. Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically..
 
 ### Integrated cases
 
@@ -479,7 +483,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | weapons-projectiles | bridge | 1 | 1,409 | 1,347 | 68 | 240 | 208 | 37 | 0 | 226 |
 | weapons-projectiles | replay provider | 1 | 3,309 | 2,840 | 50 | 61 | 258 | 452 | 40 | 401 |
 | samus-movement | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-movement | replay provider | 1 | 4,278 | 3,970 | 84 | 144 | 398 | 342 | 22 | 619 |
+| samus-movement | replay provider | 1 | 4,331 | 4,053 | 84 | 176 | 396 | 342 | 30 | 637 |
 | world-camera | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -494,7 +498,7 @@ The bridge (`crates/game/src/<bridge>*`) answers the model's world from the engi
 | boss-ceres-ridley | replay provider | 1 | 1,305 | 1,467 | 17 | 113 | 33 | 72 | 55 | 248 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 23,720 | 22,040 | 994 | 1,247 | 2,281 | 2,025 | 199 | 3,524 |
+| total | | | 23,774 | 22,123 | 994 | 1,279 | 2,279 | 2,025 | 207 | 3,542 |
 
 ## Engine services
 

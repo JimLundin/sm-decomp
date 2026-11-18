@@ -110,7 +110,7 @@ outcomes, counts and observation digests; they are reviewed obligations, not fre
 Borrowed providers, phases, fields and limits stay in the declaration and do not become rule
 proof. File links express declared relevance, not exhaustive impact or measured coverage.
 
-The default query shows all 17 cases, including three empty-rule boundaries with empty code
+The default query shows all 19 cases, including three empty-rule boundaries with empty code
 links. A travel-file query includes the scoped witness and the integrated and movie held
 Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
 Mapping queries never select or skip landing checks; the complete index remains required.

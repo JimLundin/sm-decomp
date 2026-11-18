@@ -234,6 +234,16 @@ fn items(value: u16) -> Set<Item> {
 }
 
 pub fn input(wram: &[u8], actual_pose: Pose, content: &Content) -> Result<Input, Outcome> {
+    input_at(wram, wram, actual_pose, content)
+}
+
+/// Frame and geometry can have separately qualified consumption opportunities.
+pub(super) fn input_at(
+    wram: &[u8],
+    world_wram: &[u8],
+    actual_pose: Pose,
+    content: &Content,
+) -> Result<Input, Outcome> {
     let raw_pose = PoseId(word(wram, source::SAMUS_POSE)?);
     let observed_figure = content
         .clips
@@ -283,7 +293,7 @@ pub fn input(wram: &[u8], actual_pose: Pose, content: &Content) -> Result<Input,
         } else {
             Parity::Odd
         },
-        world: world(wram, content)?,
+        world: world(world_wram, content)?,
     })
 }
 
@@ -468,6 +478,19 @@ pub fn expected(
         .collect()
 }
 
+fn travel_quantity(
+    travels: &types::DirectionalTravels,
+    direction: types::Direction,
+) -> (&'static str, i64) {
+    let name = match direction {
+        types::Direction::Left => "movement.travel.Left",
+        types::Direction::Right => "movement.travel.Right",
+        types::Direction::Up => "movement.travel.Up",
+        types::Direction::Down => "movement.travel.Down",
+    };
+    (name, i64::from(travels[direction].0.0))
+}
+
 fn expected_field(
     wram: &[u8],
     field: ObservationId,
@@ -488,22 +511,10 @@ fn expected_field(
             "movement.vertical_speed",
             i64::from(fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?.0),
         ),
-        ObservationId::TravelLeft => (
-            "movement.travel.Left",
-            i64::from(travels[types::Direction::Left].0.0),
-        ),
-        ObservationId::TravelRight => (
-            "movement.travel.Right",
-            i64::from(travels[types::Direction::Right].0.0),
-        ),
-        ObservationId::TravelUp => (
-            "movement.travel.Up",
-            i64::from(travels[types::Direction::Up].0.0),
-        ),
-        ObservationId::TravelDown => (
-            "movement.travel.Down",
-            i64::from(travels[types::Direction::Down].0.0),
-        ),
+        ObservationId::TravelLeft => travel_quantity(travels, types::Direction::Left),
+        ObservationId::TravelRight => travel_quantity(travels, types::Direction::Right),
+        ObservationId::TravelUp => travel_quantity(travels, types::Direction::Up),
+        ObservationId::TravelDown => travel_quantity(travels, types::Direction::Down),
         ObservationId::WallTest if row == "item-morph-ball" && cut == 817 => {
             ("movement.wall_test", 0)
         }
@@ -514,10 +525,20 @@ fn expected_field(
             });
         }
         ObservationId::WallTest | ObservationId::Reached => {
-            let source = "named reached-cell witness row and cut";
-            return Err(data_failure(Some(cut), source));
+            return Err(data_failure(
+                Some(cut),
+                "named reached-cell witness row and cut",
+            ));
         }
-        ObservationId::AudioSemantic
+        ObservationId::MovementWork
+        | ObservationId::MovementTests
+        | ObservationId::CompleteReached
+        | ObservationId::Inside
+        | ObservationId::MovementSkip
+        | ObservationId::FirstMotionSearch
+        | ObservationId::FirstMotionCandidates
+        | ObservationId::FirstMotionTerrain
+        | ObservationId::AudioSemantic
         | ObservationId::AppearanceStep
         | ObservationId::AppearanceTimeLeft
         | ObservationId::AppearanceBoostStage
