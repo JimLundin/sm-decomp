@@ -1,15 +1,7 @@
-//! `PoseFitAfterMoves`: placing her body when an ordinary selected pose grows it, by looks
-//! that test a move without making it, from her box and her poses alone. `AnimationEnds`:
-//! handovers bypass this consideration at every supplied body height.
-
-use crate::collide::{Bounds, Probe};
-use crate::samus::Samus;
-use crate::tick::Tick;
+//! Spec: `PoseFitAfterMoves`. Semantic outcomes of ordinary body consideration.
 use core::num::Wrapping;
-use types::{Action, Aim, Body, Facing, Gun, Item, Legs, Parts, Pose, Px, Radius, px};
-
-/// `PoseFitAfterMoves`: crouched `Still`, aim `Forward`, facing `facing` (she takes it facing
-/// as before the change).
+use types::{Action, Aim, Body, Facing, Gun, Legs, Pose, Px};
+/// Spec: `PoseFitAfterMoves`. Tunnel substitution keeps facing and stows the gun.
 pub const fn crouched(facing: Facing) -> Pose {
     Pose {
         body: Body::Crouched,
@@ -20,45 +12,23 @@ pub const fn crouched(facing: Facing) -> Pose {
         legs: Legs::Together,
     }
 }
-
-/// `PoseFitAfterMoves`: the room the looks found above her and below her, where something
-/// stopped them, in whole px.
-type Rooms = (Option<Px>, Option<Px>);
-
-/// `PoseFitAfterMoves`: with something on one side alone, the push away from it, `g` less the
-/// room on its side, in whole px read signed, downward positive (down from what is above her,
-/// up from what is below her).
-fn alone(rooms: Rooms, g: Px) -> Option<Px> {
-    match rooms {
-        (Some(room), None) => Some(g - room),
-        (None, Some(room)) => Some(room - g),
-        (Some(_), Some(_)) | (None, None) => None,
-    }
-}
-
-/// `PoseFitAfterMoves`: what pose fit made of the change, each case with what it did to her.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// Spec: `PoseFitAfterMoves`. Fit answer, retained before its placement effect.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Fitted {
-    /// She takes the chosen pose where her moves left her: her body doesn't grow, or the looks
-    /// found nothing on either side and she grows about her centre.
+    /// Target accepted without placement.
     Taken,
-    /// She takes the chosen pose, pushed away from what is on one side of her: up from what is
-    /// below her, down from what is above her.
+    /// Target accepted with a push away from contact.
     Pushed,
-    /// The change is refused: she keeps the pose she had, aim included.
+    /// Target rejected, with no target effects.
     Refused,
-    /// Something above her and something below her: she takes crouched `Still` instead, rising
-    /// by these whole px, her feet where they were (0 where her old body is already the crouch's
-    /// height).
+    /// Tunnel substitutes crouched Still.
     Crouched {
-        /// How far she rose.
+        /// Whole pixels raised to retain the feet position.
         rise: Px,
     },
 }
-
 impl Fitted {
-    /// §1, `PoseFitAfterMoves`: whether pose fit moved her, which places her: a push, or the
-    /// crouch taken instead raising her.
+    /// Spec: `PoseFitAfterMoves`. Only an actual push or nonzero crouch lift places her.
     #[must_use]
     pub fn moved(self) -> bool {
         match self {
@@ -66,126 +36,5 @@ impl Fitted {
             Self::Crouched { rise } => rise != Wrapping(0),
             Self::Taken | Self::Refused => false,
         }
-    }
-}
-
-impl Samus {
-    /// `PoseFitAfterMoves`: when the chosen pose differs from hers, doesn't face the screen and
-    /// has a body taller by g px, she looks g px up and down from where her moves left her, at
-    /// her old size: solid enemies up and down, then the enemy's far-side look (at her new size);
-    /// blocks up and down, then the block's far-side look. A far-side look stopped refuses the
-    /// change. With something on one side only she is pushed away from it (a block's room before
-    /// an enemy's on the same side), keeping the subpixel her looks left. With something on both,
-    /// the change from an old body under 8 px half-height (the ball, `Rules::small_body`) is
-    /// refused, and from one of 8 px or more she takes crouched `Still` instead, rising by the
-    /// crouch's growth over her old body, her feet where they were.
-    ///
-    /// `PoseFollows`: a change into `Morphing` without the morph ball is refused as pose fit
-    /// refuses one, before any look.
-    pub(crate) fn fit(&mut self, t: &mut Tick, chosen: Pose) -> Fitted {
-        if chosen == self.pose || chosen.facing == Facing::Screen {
-            return Fitted::Taken;
-        }
-        if chosen.action == Action::Morphing && !t.frame.items[Item::MorphBall] {
-            return Fitted::Refused;
-        }
-        let old = t.body(self.pose);
-        let new = t.body(chosen);
-        let centre = self.position;
-        let first = t.movement_work.len();
-        let fitted = self.fit_body(t, old, new);
-        let checks = t
-            .movement_work
-            .split_off(first)
-            .into_iter()
-            .filter_map(|work| {
-                if let types::MovementWork::Motion(request) = work {
-                    Some(request)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        let result = match fitted {
-            Fitted::Taken if new.y <= old.y => types::BodyFitResult::NoGrowth,
-            Fitted::Taken => types::BodyFitResult::GrowthClear,
-            Fitted::Pushed => types::BodyFitResult::PushedAway,
-            Fitted::Refused => types::BodyFitResult::Refused,
-            Fitted::Crouched { .. } => types::BodyFitResult::CrouchedInstead,
-        };
-        let placement = fitted
-            .moved()
-            .then(|| types::PlacementDistance(self.position.y.pixel() - centre.y.pixel()));
-        t.movement_work
-            .push(types::MovementWork::BodyFit(types::BodyFitConsideration {
-                old_radius: old,
-                new_radius: new,
-                centre,
-                checks,
-                result,
-                placement,
-            }));
-        fitted
-    }
-
-    /// Spec: `PoseFitAfterMoves`. Collision decisions, independent of publication.
-    fn fit_body(&mut self, t: &mut Tick, old: Radius, new: Radius) -> Fitted {
-        if new.y <= old.y {
-            return Fitted::Taken;
-        }
-        let g = new.y - old.y;
-        let mut found: Rooms = (None, None);
-        for (probe, far) in [(Probe::Enemies, new), (Probe::Blocks, old)] {
-            let mut look = |by, r, purpose| self.look(t, by, r, probe, purpose);
-            let here = (
-                look(-g, old, types::CollisionPurpose::FitRoomAbove),
-                look(g, old, types::CollisionPurpose::FitRoomBelow),
-            );
-            if alone(here, g).is_some_and(|push| {
-                look(push, far, types::CollisionPurpose::FitFarClearance).is_some()
-            }) {
-                return Fitted::Refused;
-            }
-            found = (here.0.or(found.0), here.1.or(found.1));
-        }
-        if let Some(push) = alone(found, g) {
-            self.position.y += px(push);
-            return Fitted::Pushed;
-        }
-        let (Some(_), Some(_)) = found else {
-            return Fitted::Taken;
-        };
-        if old.y < t.rules.small_body {
-            return Fitted::Refused;
-        }
-        let rise = t.body(crouched(self.pose.facing)).y.max(old.y) - old.y;
-        self.position.y -= px(rise);
-        Fitted::Crouched { rise }
-    }
-
-    /// `PoseFitAfterMoves`: one look by `by` whole px (read signed, downward positive) at size
-    /// `r`. It doesn't move her, but what stops it writes her y subpixel as a stop would, and a
-    /// stepped block below seats her (`SlopesCarry`). Returns the room it found where something
-    /// stopped it: how far it got, in whole px.
-    fn look(
-        &mut self,
-        t: &mut Tick,
-        by: Px,
-        r: Radius,
-        probe: Probe,
-        purpose: types::CollisionPurpose,
-    ) -> Option<Px> {
-        let look = t.vmove(
-            Bounds {
-                at: self.position,
-                r,
-            },
-            px(by),
-            probe,
-            purpose,
-        );
-        // What stopped the look writes her y subpixel (FFFF down, 0 up or against an enemy).
-        self.take_result(&look);
-        look.stop.map(|_| look.gone)
     }
 }

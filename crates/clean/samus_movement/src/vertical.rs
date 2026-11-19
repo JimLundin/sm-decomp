@@ -44,7 +44,7 @@ pub struct Vertical {
 }
 
 /// `FollowingTheGround`, `RisingAndFalling`, `Moonfall`: how her vertical move goes this frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Course {
     /// The ground pull: on the ground, with no vertical motion she moves by (a turn in the
     /// moonfall too), she is pulled down by that frame's speed plus 1 px, 1 px seated on a slope.
@@ -62,7 +62,7 @@ pub enum Course {
 /// `Landing`, `WallJump`: what her moves' contact with a floor or a wall does to her motion,
 /// once the change it comes with is taken (`PoseFitAfterMoves`: a change refused, or the crouch
 /// taken instead, brings none of it). The pose it chooses is the chart's (`WhatHerMovesMet`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Contact {
     /// `WallJump`'s kick off a wall: she rises at the wall-jump speed, x speed 0, following the
     /// pad; it ends a moonfall.
@@ -237,7 +237,7 @@ impl Vertical {
     /// only her vertical motion stopping. On the ground the floor stops her flush and never lands
     /// her, and finding none she walks off a ledge (`FollowingTheGround`), unless turning, where
     /// she sinks by the pull. (Changing shape, she stays where she is instead: the move's own
-    /// case, `Samus::move_vertically`, before it ends.) What else it met acts afterwards
+    /// case in the ordinary continuation, before speed growth.) What else it met acts afterwards
     /// (`meet_in_moves`, or at the pose change for a floor).
     pub(crate) fn end_move(
         &mut self,

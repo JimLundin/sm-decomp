@@ -12,12 +12,14 @@
 //! a one-byte tag (declaration order) followed by its fields, `Option` is a tag then its
 //! value, a `Vec` is a `u32` length then its elements, and a fixed array is its elements with
 //! no length.
+//! A `Box` is transparent: allocation changes neither the bytes, schema nor field paths.
 
 use std::fmt;
 use std::marker::PhantomData;
 
 pub use canonical_derive::Canonical;
 
+mod boxed;
 pub mod model;
 
 /// A type with one canonical encoding, a fallible decoder, a field-path diff and a schema.

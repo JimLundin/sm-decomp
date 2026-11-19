@@ -23,7 +23,9 @@ use types::{
     SlopeFaces, Touch, Turn, Way, World, ZERO, button, fixed,
 };
 
+mod support;
 mod work;
+use support as suspension;
 
 /// Run an isolated full-frame receipt through the real public controller.
 fn receipt(vector: &Vector) -> (Samus, Outcome) {
@@ -274,6 +276,12 @@ struct VectorFile {
     distance_history: Vec<DistanceHistory>,
     /// The pose steps.
     pose_step: Vec<PoseStep>,
+    #[serde(default)]
+    suspended_update: Vec<suspension::SuspendedCase>,
+    #[serde(default)]
+    resume_case: Vec<suspension::ResumeCase>,
+    #[serde(default)]
+    decision_change_case: Vec<suspension::DecisionChangeCase>,
 }
 
 /// A `[[vector]]`: a short run of frames, the lead-in's and then the one it checks.
@@ -1579,6 +1587,7 @@ impl PoseTable {
 /// The vectors' stand-in room: a floor from `floor_top` down, a wall from `wall_right`
 /// rightward, a ceiling above `ceiling_bottom`, single blocks at cells (sloped, solid,
 /// stepped or another kind), solid enemies, air elsewhere.
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 struct Room {
     floor_top: Option<u32>,
     wall_right: Option<u32>,
@@ -2791,6 +2800,9 @@ fn catalogue_matches_the_vectors() {
         .flat_map(|v| &v.entries)
         .chain(file.pose_step.iter().flat_map(|s| &s.entries))
         .chain(file.distance_history.iter().flat_map(|h| &h.entries))
+        .chain(file.suspended_update.iter().flat_map(|s| &s.entries))
+        .chain(file.resume_case.iter().flat_map(|s| &s.entries))
+        .chain(file.decision_change_case.iter().flat_map(|s| &s.entries))
         .map(String::as_str)
         .collect();
     for entry in &exercised {

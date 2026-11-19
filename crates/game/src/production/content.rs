@@ -74,6 +74,8 @@ impl MovementContent {
 /// Content selected by the finite production recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionContent {
+    /// Checked shared connected movement/appearance content.
+    Connected(Box<super::connected::Content>),
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
     Movement(MovementContent),
     /// Checked movement content with fixed clean Ceres geometry.
@@ -103,6 +105,8 @@ pub enum ProductionContent {
 /// Rules selected by the same recipe.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionRules {
+    /// Complete parameters for every connected selected owner.
+    Connected(Box<super::connected::Rules>),
     /// The existing movement model's complete rules.
     Movement(samus_movement::Rules),
     /// Complete parameters for both connected owners.

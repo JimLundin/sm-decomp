@@ -389,14 +389,15 @@ so its figure covers the clip and the moves; the run area has almost no old coun
 budget is an indicator: the fit is score ÷ budget, and being
 over it costs in proportion to how far over, never as a wall.
 
-Budget: 37.5 × 50.7 units = 1,900 (clip 1,300, moves 225, run 375), 19 entries, 46 arms,
-145 vectors (135 constructed, 7 of them with adjusted rules, and 10 recorded).
+Budget: 37.5 × 56.7 units = 2,125 (clip 1,525, moves 225, run 375), 21 entries, 52 arms,
+157 vectors.
 
 Old code (old 1,525): `game/src/animation.rs` and the animation's part of `game/src/pose.rs`,
 together, not split by area.
 
 - Area clip: 1.4, ClipPlays, ClipControls, Breathing, ClipEnds, WallJumpBranch, HandOverSlowdown,
-  StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor
+  StartingClip, FootContact, SpinStarts, SpinEnds, AtTheDoor, PerformedAnimationDecisions,
+  SuspendedAppearance
 - Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
 - Area run: RunPace, BoostStages, BoostingLap
 
@@ -562,3 +563,82 @@ its genuine cut0 Footstep admission. These counts exclude the separately owned l
 Ceres opening157 and firing157 families. `snapshot_reference.py` exercises capture-after-earlier
 effects, hold, locked preparation, repeated normal drawing and body-only inanimate drawing;
 pose-history substitution and frame-start substitution faults fail their named cases.
+
+## Causal animation observations and continuation
+
+`PerformedAnimationDecisions` and `SuspendedAppearance` observe the existing animation rules and
+section6 order. Sources/RAM mapping remain the entries for move-driven playhead changes,
+`ClipPlays`, `RunPace`, `BoostStages`, `StartingClip`, `HandOverSlowdown` and section9's independent
+contact/selection opportunities. No animation rule or palette/liquid/echo producer is added.
+
+The existing public `Ahead::of` and read-only contact/pose-selected opportunities supply their
+current named answers. The whole public `update` currently combines earlier move-driven
+changes, current-clip play, selected-clip initialization and dash loss. Complete pre-effect
+observation therefore requires a confined interface amendment. Exact Rust form is left to the
+implementer; ordinary and suspended execution must use the same existing rule implementation.
+No expected future figure or second `update` supplies the earlier playing answer.
+
+### Invented vectors and proof
+
+The additive `suspended_update` schema inherits existing Animation, Opportunity or Work cases,
+including complete content, Rules, input and ordinary output comparisons. All added appearance
+cases are invented. C-op-kept-clip compares countdown before running-to-running KeepPlayhead;
+C-kept-run-advance adds the ordinary case that moves from step1 to step2 of the old running clip
+with its invented hold5, while the selected clip's corresponding hold is9. C-op-kept-advance
+observes the current-clip advance and keeps its resulting hold5. This distinguishes actual
+playing from an anticipated selected figure or restored earlier playhead.
+
+C-op-current-play counts the old jumping clip down before starting the actual falling clip.
+C-op-restart-play and its adjusted version show the actual restart hold before countdown,
+including altered restart Rules. C-op-contact-order preserves Footstep then PlainSpin from two
+independent read-only opportunities, with the complete animation State unchanged. A suppressed
+contact retains its graphics. These composed read-only cases are not an extra animation update.
+
+The private timing-opportunities-479/reference.py derives the observation quantities directly
+from inherited inputs, named Rules and invented clips, without importing the model or using
+expected future State. Each checked quantity and adjacent observed order has a caught comparison mutant. Evaluation
+faults substitute the future clip for current playing and repeat/reverse contact/selection;
+the checks catch these actual evaluation changes. No event-list roundtrip is claimed as
+continuation proof. These are independent selected-observation checks, not actual
+model/production checkpoint proof.
+The confined implementation must exercise every actual offered/completed opportunity, including
+unlisted ones, and compare complete State, sound/graphic order and input/output progress with
+ordinary execution. Existing ordinary/opportunity/work vectors retain every result.
+
+### Integration obligations
+
+At contact, production supplies the actual stride figure/playhead and fresh owner suppressors;
+at selection it supplies the actual selected figures. Playing consumes the current clip after
+its earlier move changes; initialization consumes the completed playing result and actual
+accepted selection. Boost stage can be read fresh at multiple real opportunities without
+advancing animation. Prepared movement history stays caller-owned, saved independently of pose
+history. Mutable borrowed environment/colour/cinematic/sound premises require actual freshness.
+The selected source timing arms, source initialization context, exact costs and hardware
+continuation remain outside this model. Palette/graphics/sound transport, publication
+materializations, complete runtime codec/atomic rollback and indexed replay/null/fault proof
+remain explicit integration obligations.
+
+### Changed-resume and serialized restoration witnesses
+
+The additive `resume_case` pairs change an external semantic premise before its actual request
+or decision, and after its actual answer but before dependent effects. Future unanswered inputs
+are fresh; an already returned/local chosen answer is retained with its causal inputs and
+applied once. Before/after pairs prevent accepting both premature caching and late recomputation.
+All content/world quantities are invented. There is no source hardware guard or timing result
+in this schema. Complete interrupted work and provider/output progress must serialize, the
+original objects must be discarded, and a fresh deserialized instance must reproduce every
+query/effect/output exactly once. Clone-only equality cannot satisfy these tests.
+
+Movement replaces the slope-bearing world after ordinary travel, either before floor support
+querying or after its actual lifted answer. Appearance replaces actual accepted selection after
+current-clip playing, either before or after selected initialization was decided, and changes a
+contact suppressor either before its read or after its completed publication. Missing production
+freshness remains an integration limitation; these clean observations retain model totality.
+
+The private `timing-opportunities-479/reference_v2.py` continues a selected semantic reference
+calculation after serializing and discarding its interrupted instance. Six changed-resume
+cases agree; eight evaluation faults catch caching unmade floor/selection/suppression inputs,
+requerying/recomputing actual retained answers, repeating a completed contact and omitting a
+pending answer during restoration. These are selected reference decisions, not a claim that
+actual clean model State or all ordinary vectors have been serialized and replayed. The
+confined implementation retains that complete actual-model proof obligation.

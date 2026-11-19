@@ -7,7 +7,7 @@ use crate::clip::{Clip, Instruction};
 use crate::state::{Playhead, RunDown};
 
 /// What is known of a frame from its start alone.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Ahead {
     /// The end her clip reaches this frame, if it reaches one (`ClipEnds`), which samus-movement's
     /// `AnimationEnds` reads before it picks her pose.

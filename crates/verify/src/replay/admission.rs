@@ -44,9 +44,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             | Responsibility::Progress,
         ]
         | [Responsibility::Weapons, Responsibility::Contact]
-        | [Responsibility::Movement, Responsibility::Ceres] => {
-            super::recorded::admit(case, sources)
-        }
+        | [Responsibility::Movement, Responsibility::Ceres]
+        | [
+            Responsibility::Movement,
+            Responsibility::Appearance,
+            Responsibility::Camera,
+        ] => super::recorded::admit(case, sources),
         _ => Err(Outcome::Unsupported {
             cut: None,
             dependency: "complete integrated production dependency closure".to_owned(),

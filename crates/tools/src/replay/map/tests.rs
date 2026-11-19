@@ -27,14 +27,14 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
     let (root, index, mapping, baseline) = fixture();
     mapping.validate(&index, &root).unwrap();
     let selected = mapping.select(&index, &Selection::default()).unwrap();
-    assert_eq!(selected.len(), 19);
+    assert_eq!(selected.len(), 20);
     let views = views(&mapping, &baseline, &selected).unwrap();
     assert_eq!(
         views
             .iter()
             .filter(|view| view.reviewed_requirement.claim == Claim::Behaviour)
             .count(),
-        14
+        15
     );
     assert_eq!(
         views

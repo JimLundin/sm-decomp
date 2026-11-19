@@ -10,7 +10,7 @@ use crate::inputs::Figure;
 use crate::state::Playhead;
 
 /// Spec: `FootContact`. Owners that suppress contact sound, never its graphics.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Enum, serde::Serialize, serde::Deserialize)]
 pub enum ContactSuppressor {
     /// A cinematic is active.
     Cinematic,
@@ -21,7 +21,7 @@ pub enum ContactSuppressor {
 }
 
 /// Spec: `SpinStarts`. Cinematic activity supplied by its owner, independent of selection.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum CinematicActivity {
     /// No cinematic is active.
     Inactive,
@@ -30,8 +30,16 @@ pub enum CinematicActivity {
 }
 
 /// Spec: `AtTheDoor`. Weapon charge in frames, 0 to 32767.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u16")]
 pub struct Charge(u16);
+
+impl TryFrom<u16> for Charge {
+    type Error = &'static str;
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        Self::new(value).ok_or("charge must be from 0 to 32767 frames")
+    }
+}
 
 impl Charge {
     /// Largest charge supplied by weapons.
@@ -57,7 +65,7 @@ impl Charge {
 }
 
 /// Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. Meaning, not driver commands.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SoundRequest {
     /// Ground contact of a running stride.
     Footstep,
@@ -108,7 +116,7 @@ impl SoundRequest {
 }
 
 /// Spec: `FootContact`. Available to part 2 for dust/splash decisions, even with no sound.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct GraphicalContact {
     /// Figure at the running movement opportunity.
     pub figure: Figure,
@@ -117,7 +125,7 @@ pub struct GraphicalContact {
 }
 
 /// Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. Outputs of one read.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct OpportunityOutput {
     /// Graphical contact retained independently of sound suppression.
     pub contact: Option<GraphicalContact>,
