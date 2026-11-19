@@ -70,14 +70,11 @@ impl Playhead {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Laps(NonZeroU8);
 
-/// Spec: `BoostStages`. Vanilla boosting lasts two laps.
-const BOOSTING_LAPS: u8 = 2;
-
 impl Laps {
     /// Spec: `BoostStages`. Vanilla stages before boosting last one lap.
     pub const ONE: Self = Self(NonZeroU8::MIN);
     /// Spec: `BoostStages`. Vanilla boosting lasts two laps.
-    pub const TWO: Self = Self(NonZeroU8::new(BOOSTING_LAPS).expect("boosting laps are positive"));
+    pub const TWO: Self = Self(NonZeroU8::MIN.saturating_add(1));
     /// The laps of `count`, if it is 1 or more.
     #[must_use]
     pub const fn new(count: u8) -> Option<Self> {

@@ -233,6 +233,37 @@ fn items(value: u16) -> Set<Item> {
     items
 }
 
+pub(super) struct Borrowed {
+    pub held: Buttons,
+    pub pressed: Buttons,
+    pub items: Set<Item>,
+    pub cinematic: bool,
+    pub elevator: bool,
+    pub parity: Parity,
+    pub world: MovementWorld,
+}
+
+/// Decode unselected current stimuli without reading selected pose, playhead or Ahead.
+pub(super) fn borrowed(
+    current: &[u8],
+    geometry: &[u8],
+    content: &Content,
+) -> Result<Borrowed, Outcome> {
+    Ok(Borrowed {
+        held: pad(word(current, source::JOYPAD1_LASTKEYS)?),
+        pressed: pad(word(current, source::JOYPAD1_NEWKEYS)?),
+        items: items(word(current, source::EQUIPPED_ITEMS)?),
+        cinematic: word(current, source::CINEMATIC_ACTIVE)? != 0,
+        elevator: word(current, source::ELEVATOR_STATUS)? != 0,
+        parity: if word(current, source::NMI_FRAME_COUNTER_WORD)? & 1 == 0 {
+            Parity::Even
+        } else {
+            Parity::Odd
+        },
+        world: world(geometry, content)?,
+    })
+}
+
 pub fn input(wram: &[u8], actual_pose: Pose, content: &Content) -> Result<Input, Outcome> {
     input_at(wram, wram, actual_pose, content)
 }
@@ -530,7 +561,9 @@ fn expected_field(
                 "named reached-cell witness row and cut",
             ));
         }
-        ObservationId::MovementWork
+        ObservationId::MovementStateComplete
+        | ObservationId::AppearancePlaying
+        | ObservationId::MovementWork
         | ObservationId::MovementTests
         | ObservationId::CompleteReached
         | ObservationId::Inside

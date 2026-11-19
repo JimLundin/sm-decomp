@@ -57,8 +57,16 @@ impl Frames {
 
 /// A hold: a shown step's, or one the tuning gives (the restart's, the fast fall's, the rising
 /// step's); 1 frame or more and at most `Hold::LONGEST`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u8")]
 pub struct Hold(pub(crate) u8);
+
+impl TryFrom<u8> for Hold {
+    type Error = &'static str;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::new(value).ok_or("hold must be from 1 to 127 frames")
+    }
+}
 
 impl Hold {
     /// The spec bounds a hold at 127 frames (the game's are at most 80), so a hold with both
@@ -81,8 +89,16 @@ impl Hold {
 }
 
 /// A slowdown: frames a liquid adds to a hold, 0 to `Slowdown::MOST`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u8")]
 pub struct Slowdown(u8);
+
+impl TryFrom<u8> for Slowdown {
+    type Error = &'static str;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::new(value).ok_or("slowdown must be from 0 to 3 frames")
+    }
+}
 
 impl Slowdown {
     /// A slowdown is at most 3 frames, in water.
@@ -98,7 +114,7 @@ impl Slowdown {
 }
 
 /// The steps a wall jump's `branch` goes on from (`WallJumpBranch`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Branch {
     /// The plain spin's step, `x`.
     pub spin: Step,
@@ -110,7 +126,7 @@ pub struct Branch {
 
 /// What a step of a clip does when the clip reaches it: show its picture for a hold, or a
 /// control.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Instruction {
     /// `n`: shows its picture for its hold (`ClipPlays`).
     Show(Hold),
@@ -119,7 +135,7 @@ pub enum Instruction {
 }
 
 /// A step that shows no picture of its own: it says where the clip goes, or that it ends.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Control {
     /// `rest`: she rests on it with no time left, and the clip moves on from it the next frame
     /// (`ClipControls`).
@@ -154,7 +170,7 @@ impl Control {
 /// followed by a shown step, and the last step is not a shown one. Outside them the model stays
 /// total: a clip that would move on past its end leaves her where she is, and a step with no
 /// hold gives no time left.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Clip {
     /// The instructions, one per step, in order from step 0.
     pub instructions: Vec<Instruction>,
@@ -188,7 +204,7 @@ impl Clip {
 
 /// One of the run's paces: a hold for each shown step of her running clips, by step number.
 /// Where a pace gives no hold for a step (outside the spec's content), the clip's own hold shows.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Pace(pub Vec<Hold>);
 
 impl Pace {
@@ -200,7 +216,7 @@ impl Pace {
 }
 
 /// The run's paces: the plain pace, and a boosted pace for each boost stage.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Paces {
     /// Her stride without the speed booster.
     pub plain: Pace,

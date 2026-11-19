@@ -33,7 +33,7 @@ const FLUSH: u16 = u16::MAX;
 const FAR_PAST: Px = Wrapping(17);
 
 /// `BlocksStopFlush`: a body's box, her centre and half-sizes.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Bounds {
     /// Her centre.
     pub at: Position,
@@ -42,7 +42,7 @@ pub struct Bounds {
 }
 
 /// What stopped a move.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Stop {
     /// `BlocksStopFlush`'s solid block, a stepped block met any way but downward, or
     /// `SlopesCarry`'s sloped surface.
@@ -55,7 +55,7 @@ pub enum Stop {
 }
 
 /// What a move or a look is tested against, and the way its cells are reported (`TouchedCells`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Probe {
     /// `SlopesSlowTheWalk`: a horizontal move made with her vertical speed exactly 0, which a
     /// sloped floor at her leading edge shortens; else as a move.
@@ -72,6 +72,7 @@ pub enum Probe {
 
 /// Where a move leaves her, what stopped it, and how far it got in whole px (a look's room). A
 /// look doesn't move her: it leaves her where she was, with what it wrote to her as a stop would.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Moved {
     /// Her position.
     pub to: Position,
@@ -134,7 +135,7 @@ fn onward(h: Heading) -> Px {
 
 /// `BlocksStopFlush`: one move or look along its axis (`Tick::go` makes it), in the parts of it
 /// its stops read, each worked out once where the move starts (`Bounds::axis`).
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Axis {
     /// The way she moves.
     heading: Heading,
@@ -474,9 +475,6 @@ impl Tick<'_> {
     /// only on a path free of qualifying enemies. A move of exactly 0 meets
     /// a solid enemy she touches as any move does, and nothing else (`blocks`).
     pub fn go(&mut self, mut a: Axis) -> Moved {
-        if !a.heading.vertical() {
-            a.dist = a.dist.min(fixed(self.rules.move_limit, a.dist.sub()));
-        }
         let intended = a.signed_travel(a.dist);
         a.terrain_target = Some(a.to());
         let (world, enemy_search, enemy_stop) = match a.probe {
@@ -529,30 +527,6 @@ impl Tick<'_> {
         moved
     }
 
-    /// `BlocksStopFlush`, `PoseFitAfterMoves`, `ShrinkingLowersHer`: a vertical move or look by
-    /// `by`, signed, downward positive. A block look as long as the long look (8 px) or longer
-    /// is stopped by whatever the long look the same way would stop; only when nothing stops
-    /// that is it the look of its own distance.
-    pub fn vmove(
-        &mut self,
-        b: Bounds,
-        by: Fixed,
-        probe: Probe,
-        purpose: types::CollisionPurpose,
-    ) -> Moved {
-        let heading = if by.negative() {
-            Heading::Up
-        } else {
-            Heading::Down
-        };
-        let long_look = self.rules.long_look;
-        let first = (probe == Probe::Blocks && by.size() >= long_look)
-            .then(|| self.go(b.axis(heading, long_look, probe, purpose)));
-        first
-            .filter(|m| m.stop.is_some())
-            .unwrap_or_else(|| self.go(b.axis(heading, by.size(), probe, purpose)))
-    }
-
     /// `BlocksStopFlush`: the cells of her leading edge's line at the target; the first that
     /// stops her decides. `TouchedCells`: the cells it reaches, up to the one that stops it, with
     /// the way it reached them. `OtherBlockKinds`: an answered cell is air on a touch its reaction
@@ -591,20 +565,8 @@ impl Tick<'_> {
         })
     }
 
-    /// `SlopesCarry`: the two checks after every horizontal move, each asking one cell at her
-    /// centre column. A sloped floor at her bottom edge's row, with that edge in its solid part,
-    /// lifts her by whole pixels onto its last air row; then a sloped ceiling at her top edge's
-    /// row, with that edge in its solid part or on the first air row under it, pushes her down
-    /// onto that row. Either seats her: returns her y then, if she is seated.
-    pub fn slope_checks(&mut self, mut b: Bounds) -> Option<Fixed> {
-        let lift = self.support(b, Heading::Down);
-        b.at.y -= px(lift.unwrap_or(NONE));
-        let push = self.support(b, Heading::Up);
-        lift.or(push).map(|_| b.at.y + px(push.unwrap_or(NONE)))
-    }
-
     /// Spec: `PerformedSupportChecks`. Retain a surface read even when it does not place her.
-    fn support(&mut self, b: Bounds, h: Heading) -> Option<Px> {
+    pub(crate) fn support(&mut self, b: Bounds, h: Heading) -> Option<Px> {
         let at = Cell {
             x: cell(b.at.x.pixel()),
             y: cell(edge(b.at.y.pixel(), b.r.y, h)),

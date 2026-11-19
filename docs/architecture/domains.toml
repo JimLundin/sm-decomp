@@ -37,7 +37,7 @@ rounds = 1
 
 [[model]]
 name = "samus-movement"
-rounds = 24
+rounds = 25
 
 [[model]]
 name = "world-camera"
@@ -57,7 +57,7 @@ rounds = 4
 
 [[model]]
 name = "samus-appearance"
-rounds = 6
+rounds = 7
 
 [[model]]
 name = "boss-ceres-ridley"

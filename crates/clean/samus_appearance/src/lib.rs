@@ -131,6 +131,26 @@
 //! // Hand out.graphics to part 2 and out.sounds to sound work without dropping either.
 //! ```
 
+//! # Interrupted work
+//!
+//! Spec: `PerformedAnimationDecisions`, `SuspendedAppearance`. Build owned `AnimationInputs`
+//! and a `SuspendedAppearance` with `animation_steps()`, inserting `WorkStep::Appearance`
+//! reads at their actual opportunities. The caller preserves animation order, places contact
+//! before playing and supplies actual accepted selection before `SelectedClip` is offered.
+//! Update unmade owner inputs in `animation` or unconsumed appearance inputs in `steps` at
+//! those opportunities; never replace a pending answer or completed receipt.
+//!
+//! `offer()` chooses and retains an applicable animation answer without applying it, consuming
+//! skipped rules. `None` can mean the next work is an appearance read or that work is finished;
+//! `complete()` distinguishes these cases, applying an answer once or completing the read.
+//! `finish()` is appropriate only once all remaining inputs are available at their opportunities.
+//! Produced receipts, sounds and graphics are retained in order, along with consumed work progress.
+//! Serialize the entire work with serde, discard it and deserialize fresh work to continue.
+//! The caller owns external delivered positions and pending publications and saves those with
+//! this work and the rest of its continuation, including independently retained preparation inputs.
+//! `update()` uses this same engine without pauses. Appearance-only frozen work has no
+//! animation inputs and contains only the actual drawing or passage opportunities.
+
 mod ahead;
 mod catalogue;
 mod clip;
@@ -142,7 +162,12 @@ mod rules;
 mod run;
 mod starting;
 mod state;
+mod suspended;
 mod update;
+pub use suspended::{
+    AnimationDecision, AnimationInputs, Answer, AppearanceRead, OfferedDecision, PublishedSound,
+    Receipt, SuspendedAppearance, WorkStep,
+};
 
 pub use ahead::Ahead;
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};

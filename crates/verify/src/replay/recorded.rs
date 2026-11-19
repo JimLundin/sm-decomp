@@ -30,6 +30,11 @@ enum Context {
     Hud(Arc<hud::Content>),
     Appearance(Arc<appearance::Content>),
     Progress,
+    Connected {
+        content: Arc<super::connected::Content>,
+        inputs: Arc<super::connected::Inputs>,
+    },
+    ConnectedObservations(Arc<super::connected::Content>),
 }
 
 pub(super) struct Inputs {
@@ -54,6 +59,9 @@ pub(super) enum Actual {
     Hud(Arc<hud::Content>),
     Appearance(Arc<appearance::Content>),
     Progress,
+    Connected {
+        content: Arc<super::connected::Content>,
+    },
 }
 
 struct Recipe {
@@ -108,7 +116,63 @@ fn connected_recipe(
     })
 }
 
+fn ordinary_recipe(
+    case: &Case,
+    wram: &[u8],
+    sources: &Sources,
+    cache: &Cache,
+) -> Result<Recipe, Outcome> {
+    let content = Arc::new(super::connected::Content {
+        movement: super::movement::Content::load(&sources.rom)?,
+        appearance: appearance::Content::load(&sources.rom)?,
+    });
+    let inputs = Arc::new(super::connected::Inputs::load(
+        &sources.native.join("connected-ordinary-v1"),
+        &content,
+    )?);
+    if let Start::CacheCut { frame } = case.start {
+        inputs.aligned(frame, &record(cache, frame)?)?;
+    }
+    let (appearance, playing) = appearance::running_owner(wram, &content.appearance)?;
+    let state = game::production::connected::State::new(
+        super::movement::seed(wram)?,
+        appearance,
+        playing,
+        camera::seed(wram, &camera::Content)?,
+    )
+    .map_err(|_| data_failure(None, "connected initial owners"))?;
+    Ok(Recipe {
+        source: Context::Connected {
+            content: content.clone(),
+            inputs,
+        },
+        actual: Actual::Connected {
+            content: content.clone(),
+        },
+        seed: ProductionSeed::Connected(Box::new(state)),
+        content: ProductionContent::Connected(Box::new(game::production::connected::Content {
+            movement: content.movement.movement.clone(),
+            appearance: content.appearance.appearance.clone(),
+        })),
+        rules: ProductionRules::Connected(Box::new(game::production::connected::Rules {
+            movement: samus_movement::Rules::default(),
+            appearance: samus_appearance::Rules::VANILLA,
+            camera: game::production::CameraRules::new(world_camera::Rules::REFERENCE),
+        })),
+    })
+}
+
 fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<Recipe, Outcome> {
+    if case.responsibilities
+        == [
+            Responsibility::Movement,
+            Responsibility::Appearance,
+            Responsibility::Camera,
+        ]
+    {
+        return ordinary_recipe(case, wram, sources, cache);
+    }
+
     if case.responsibilities == [Responsibility::Movement, Responsibility::Ceres] {
         return connected_recipe(case, wram, sources, cache);
     }
@@ -244,7 +308,17 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         })),
         expected: ExpectedReader::Recorded(Box::new(Expected {
             cache: expected,
-            recipe,
+            recipe: match recipe {
+                Context::Connected { content, .. } => Context::ConnectedObservations(content),
+                recipe @ (Context::Ceres(_)
+                | Context::MovementCeres { .. }
+                | Context::Weapons(_)
+                | Context::Camera
+                | Context::Hud(_)
+                | Context::Appearance(_)
+                | Context::Progress
+                | Context::ConnectedObservations(_)) => recipe,
+            },
         })),
         actual: ActualReader::Recorded(actual),
         schedule: (frame
@@ -255,18 +329,39 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     })
 }
 
+fn preceding(cache: &Cache, cut: u64) -> Result<oracle_record::FrameRecord, Outcome> {
+    record(
+        cache,
+        cut.checked_sub(1)
+            .ok_or_else(|| data_failure(Some(cut), "recorded preceding cut"))?,
+    )
+}
+
 impl Inputs {
     pub fn advance(
         &self,
         production: &mut Production,
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
-        let prior = record(
-            &self.cache,
-            cut.checked_sub(1)
-                .ok_or_else(|| data_failure(Some(cut), "recorded preceding cut"))?,
-        )?;
+        let prior = preceding(&self.cache, cut)?;
         let outputs = match &self.recipe {
+            Context::ConnectedObservations(_) => {
+                return Err(data_failure(
+                    Some(cut),
+                    "expected reader cannot advance production",
+                ));
+            }
+            Context::Connected { inputs, .. } => {
+                inputs.aligned(
+                    cut.checked_sub(1)
+                        .ok_or_else(|| data_failure(Some(cut), "connected preceding source"))?,
+                    &prior,
+                )?;
+                production.advance(AdvanceInput::Connected {
+                    inputs: inputs.current(cut)?,
+                    advance: game::production::connected::Advance::Opportunity,
+                })
+            }
             Context::MovementCeres {
                 slot,
                 content,
@@ -353,6 +448,15 @@ impl Expected {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         let current = record(&self.cache, cut)?;
         let fields = match &self.recipe {
+            Context::ConnectedObservations(content) => {
+                super::connected::expected(&current.wram, &content.appearance, case, cut)?
+            }
+            Context::Connected { .. } => {
+                return Err(data_failure(
+                    Some(cut),
+                    "input reader cannot read expectations",
+                ));
+            }
             Context::MovementCeres { slot, .. } => {
                 let mut fields = super::movement::expected(
                     &current.wram,
@@ -393,6 +497,15 @@ impl Actual {
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, production.state(), outputs) {
             (
+                Self::Connected { content, .. },
+                OwnedState::Connected(state),
+                ProductionOutputs::Connected(outputs),
+            ) => Ok(super::connected::actual(
+                state,
+                &content.appearance,
+                Some(outputs),
+            )),
+            (
                 Self::MovementCeres { last },
                 OwnedState::MovementCeres(state),
                 ProductionOutputs::MovementCeres(outputs),
@@ -430,6 +543,9 @@ impl Actual {
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match (self, production.state()) {
+            (Self::Connected { content, .. }, OwnedState::Connected(state)) => {
+                Ok(super::connected::actual(state, &content.appearance, None))
+            }
             (Self::MovementCeres { .. }, OwnedState::MovementCeres(state)) => {
                 let mut fields = connected_position(state);
                 fields.extend(ceres::initial(&state.ceres));

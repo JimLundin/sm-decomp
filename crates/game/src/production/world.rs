@@ -3,7 +3,7 @@
 use types::{Block, Cell, Hitbox, Way, World};
 
 /// Explicit geometry beyond the admitted rectangular grid.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Boundary {
     /// The admitted outside region is empty.
     Air,
@@ -26,6 +26,7 @@ pub enum WorldFault {
 
 /// A checked rectangular grid and the supplied eligible actor boxes in their order.
 /// No query mutates gameplay, terrain or reaction state.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct MovementWorld {
     width: u16,
     cells: Vec<Block>,
@@ -35,6 +36,19 @@ pub struct MovementWorld {
 }
 
 impl MovementWorld {
+    /// Validate complete saved geometry before an actual query.
+    /// # Errors
+    /// Malformed grids, permissions and stand-in chains are refused.
+    pub fn validate(&self) -> Result<(), WorldFault> {
+        Self::new(
+            self.width,
+            self.cells.clone(),
+            self.lets_through.clone(),
+            self.enemies.clone(),
+            self.boundary,
+        )
+        .map(|_| ())
+    }
     /// Admit complete typed geometry and explicit outside-region behaviour.
     ///
     /// # Errors
@@ -106,6 +120,10 @@ impl MovementWorld {
             }
         }
         Ok(world)
+    }
+
+    pub(crate) fn contains(&self, at: Cell) -> bool {
+        self.index(at).is_some()
     }
 
     fn index(&self, at: Cell) -> Option<usize> {

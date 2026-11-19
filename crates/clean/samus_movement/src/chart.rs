@@ -19,7 +19,7 @@ use types::{Action, Aim, Buttons, ClipEnd, Fixed, Item, Pose, Set, Side, ZERO};
 /// The buttons held and those just pressed, the items switched on, the end her animation
 /// reaches, her horizontal speed at the frame's start, whether she is off the ground once her
 /// moves are made, and what they met.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Moment {
     /// The buttons held.
     pub pad: Buttons,

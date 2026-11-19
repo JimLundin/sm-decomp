@@ -2,7 +2,6 @@
 //! the rules and the cells reached that the frame's moves and looks share (`TouchedCells`).
 
 use crate::rules::Rules;
-use crate::travel::TravelledDistances;
 use types::{Buttons, ClipEnd, Item, Parity, Pose, Radius, Set, Touch, World};
 
 /// What one frame brings from the player and the world (§1.3), and from what is out of scope
@@ -58,21 +57,8 @@ pub struct Tick<'a> {
     pub collision_tests: types::CollisionTests,
     /// Spec: `MotionAttempts`. Fresh performed requests and decisions in order.
     pub movement_work: Vec<types::MovementWork>,
-    /// Spec: `MotionAttempts`. Ordinary admission, distinct from zero travel.
-    pub movement_skip: Option<types::MotionSkipReason>,
     /// Spec: `AcceptedFloorResponse`. Move-local stops, or accepted contact after fitting.
     pub floor_response: Option<types::FloorResponse>,
-    /// Spec: `TouchdownRequests`. A wall kick accepted by fitting, not merely selected.
-    pub accepted_wall_kick: bool,
-    /// Spec: `TravelledDistances`. Fresh ordinary travel, unaffected by later looks or placements.
-    pub travelled: TravelledDistances,
     /// Spec: `TransitionFiringAim`. Fresh publication from the accepted ordinary pose change.
     pub pending_aim: Option<types::FiringDirection>,
-}
-
-impl Tick<'_> {
-    /// §1.3 body size: a pose's half-width and half-height.
-    pub fn body(&self, pose: Pose) -> Radius {
-        (self.frame.body)(pose)
-    }
 }

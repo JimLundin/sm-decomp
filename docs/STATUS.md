@@ -110,7 +110,7 @@ outcomes, counts and observation digests; they are reviewed obligations, not fre
 Borrowed providers, phases, fields and limits stay in the declaration and do not become rule
 proof. File links express declared relevance, not exhaustive impact or measured coverage.
 
-The default query shows all 19 cases, including three empty-rule boundaries with empty code
+The default query shows all 20 cases, including three empty-rule boundaries with empty code
 links. A travel-file query includes the scoped witness and the integrated and movie held
 Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
 Mapping queries never select or skip landing checks; the complete index remains required.
@@ -125,7 +125,7 @@ the index's lock path and source declarations; it supplies no movie-global offse
 
 
 `CACHE` is made by `oracle corpus ROM scenarios/lock.toml DATA --oracle lsnes --native-seeds
-BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE §6): lsnes plays the row's
+BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE Â§6): lsnes plays the row's
 frame pads from its native seed and writes the lean tier, `CACHE/ROW/lean.bin` and, last,
 `lean.txt` with the lock pins `verify::cache` checks: about 2 KB a frame, each frame's memory
 changes with the whole memories every 256th frame. `DATA` is the old lock's decrypted bundles
@@ -160,3 +160,25 @@ Prior cuts6..9 must have empty interactive rosters before any actor geometry is 
 controls, equipment, appearance ahead feedback, station stage and actor scheduling remain
 external. The case proves only this position connection and its declared comparisons; no durable
 Ceres continuation, pixels, application, power-on or played-alone coverage follows.
+
+## Carried ordinary movement, appearance and camera
+
+The connected ordinary witness starts once at cut6 and compares nine actual opportunities
+through cut15 in one production owner. Complete Movement, the four Appearance quantities,
+the playing Figure and all nine Camera components are observed, along with four directional
+travels per opportunity. Ahead reads retained playing state before motion; actual movement
+completion publishes the accepted pose before selected-clip initialization; Camera follows
+actual finished movement and retains its history.
+
+The separately checked current source has five clip holds, four advances, its first wrap at
+cut14 and one marked Contact at cut10. Complete returned Contact graphics, Footstep requests
+and Appearance receipts survive internal yields and delivered-history retirement. The indexed
+case checks ordinary cut continuations; the separate production test restores every internal
+semantic yield and rejects changes to its retained current inputs atomically.
+
+Controls, equipment, liquid, energy, occupancy, Contact guards, current terrain and actors,
+and room settings are authenticated borrowed stimuli. Actor lifecycle, receiver execution,
+health arithmetic, elapsed hardware time, complete Frame scheduling and played-alone
+production remain outside this witness. Its package is fetched by
+[the pinned connected fixture script](../tools/ci/fetch_connected_ordinary.sh); the declaration,
+reviewed outcome and code navigation are in the existing replay index, baseline and mapping.

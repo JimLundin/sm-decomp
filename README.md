@@ -70,9 +70,11 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | integrated/missing-dependency-closure | Unsupported at None: complete integrated production dependency closure | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | movement-ceres/carried-position-proximity | Pass | 4 | 0 | 4 | 28 | 0 | 0 |
+| connected-ordinary/carried-running-camera | Pass | 9 | 0 | 9 | 153 | 36 | 9 |
 
 - **integrated/missing-dependency-closure** witnesses samus-movement/TravelledDistances. Limits: complete production dependency closure unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-ceres/carried-position-proximity** witnesses samus-movement/MovesAsShePosed, boss-ceres-ridley/Waiting, boss-ceres-ridley/SheIsNear, boss-ceres-ridley/Polling, boss-ceres-ridley/Closing, boss-ceres-ridley/Shown, boss-ceres-ridley/Solid. Limits: only carried prior whole-pixel movement to door proximity integrated; complete outputs retained but only declared position and door fields compared; unselected producers remain external; prior roster empty; current actor selection and timing unproved; appearance ahead remains external feedback; no durable Ceres codec, pixels, app, power-on or played-alone claim.
+- **connected-ordinary/carried-running-camera** witnesses samus-movement/MovesAsShePosed, samus-appearance/ClipPlays, world-camera/FollowingHer, world-camera/Remembering, world-camera/RememberedHeightFraction. Limits: Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved..
 
 ### Whole-movie cases
 
@@ -95,7 +97,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 M0: **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
 
-Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **12 are in progress** and **0 done**; 25 have not started. **60 rounds** have landed on 11 models; the plan estimates 157 rounds for the whole game.
+Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **12 are in progress** and **0 done**; 25 have not started. **62 rounds** have landed on 11 models; the plan estimates 157 rounds for the whole game.
 
 ### The models
 
@@ -106,12 +108,12 @@ Model implementation and vectors are separate from the replay evidence above.
 | audio-transport | U1 (in progress) | in progress | 1 | 112 | 8,053 | 2,711 | 2.97 |
 | enemy-interactions | C1 (in progress) | in progress | 1 | 30 | 264 | 362 | 0.73 |
 | weapons-projectiles | W1 (in progress) | in progress | 1 | 81 | 4,035 | 2,062 | 1.96 |
-| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 24 | 485 | 11,805 | 10,524 | 1.12 |
+| samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 25 | 501 | 18,405 | 10,786 | 1.71 |
 | world-camera | CAM (in progress) | in progress | 7 | 103 | 1,932 | 1,962 | 0.98 |
 | run-progress | P1 (in progress) | in progress | 8 | 76 | 819 | 1,061 | 0.77 |
 | interface-hud | H2 (in progress) | in progress | 6 | 95 | 2,700 | 2,337 | 1.16 |
 | world-blocks | W2 (in progress) | in progress | 4 | 100 | 2,395 | 2,074 | 1.15 |
-| samus-appearance | S5 (in progress) | in progress | 6 | 145 | 2,672 | 1,900 | 1.41 |
+| samus-appearance | S5 (in progress) | in progress | 7 | 157 | 4,137 | 2,125 | 1.95 |
 | boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 1,299 | 1,150 | 1.13 |
 | world-doors | R1 (in progress) | in progress | 1 | 70 | 3,374 | 2,912 | 1.16 |
 

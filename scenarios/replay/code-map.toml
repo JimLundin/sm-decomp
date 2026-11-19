@@ -165,13 +165,17 @@ targets = [
   { role = "model", path = "crates/clean/samus_appearance/src/play.rs" },
   { role = "adapter", path = "crates/game/src/production/animation.rs" },
   { role = "navigation", path = "crates/clean/samus_appearance/src/catalogue.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
+  { role = "adapter", path = "crates/game/src/production/appearance.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/appearance.rs" },
 ]
 
 [[rule]]
 id = "samus-movement/MotionAttempts"
 targets = [
   { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
-  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "model", path = "crates/clean/samus_movement/src/suspended.rs" },
   { role = "adapter", path = "crates/game/src/production/movement.rs" },
   { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
   { role = "navigation", path = "docs/behaviours/samus-movement.md" },
@@ -233,7 +237,7 @@ targets = [
 [[rule]]
 id = "samus-movement/WallJump"
 targets = [
-  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "model", path = "crates/clean/samus_movement/src/suspended.rs" },
   { role = "adapter", path = "crates/game/src/production/movement.rs" },
   { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
 ]
@@ -284,6 +288,9 @@ targets = [
   { role = "model", path = "crates/clean/world_camera/src/follow.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
+  { role = "adapter", path = "crates/game/src/production/camera_semantic.rs" },
 ]
 
 [[rule]]
@@ -292,6 +299,9 @@ targets = [
   { role = "model", path = "crates/clean/world_camera/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
+  { role = "adapter", path = "crates/game/src/production/camera_semantic.rs" },
 ]
 
 [[rule]]
@@ -300,15 +310,21 @@ targets = [
   { role = "model", path = "crates/clean/world_camera/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/world_camera/src/catalogue.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
+  { role = "adapter", path = "crates/game/src/production/camera_semantic.rs" },
 ]
 
 [[rule]]
 id = "samus-movement/MovesAsShePosed"
 targets = [
-  { role = "model", path = "crates/clean/samus_movement/src/moves.rs" },
+  { role = "model", path = "crates/clean/samus_movement/src/suspended.rs" },
   { role = "adapter", path = "crates/game/src/production/movement.rs" },
   { role = "adapter", path = "crates/game/src/production/movement_ceres.rs" },
   { role = "navigation", path = "crates/clean/samus_movement/src/catalogue.rs" },
   { role = "navigation", path = "crates/verify/src/replay/opportunity.rs" },
   { role = "navigation", path = "crates/verify/src/replay/recorded.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_work.rs" },
 ]

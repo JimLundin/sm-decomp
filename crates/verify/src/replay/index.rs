@@ -110,6 +110,8 @@ pub struct End {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
+    /// Authenticated actual-use snapshots for the connected ordinary family.
+    ConnectedOrdinaryInputs,
     /// Independently admitted selector-time Frame and actor-selection-time geometry.
     NativeSearchInputs,
     /// Causal neighbours from the preceding pinned cut.
@@ -167,6 +169,12 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Complete retained movement owner.
+    #[serde(rename = "movement.state.complete")]
+    MovementStateComplete,
+    /// Complete currently playing Figure.
+    #[serde(rename = "appearance.playing")]
+    AppearancePlaying,
     /// Every ordered Motion, Support and nested `BodyFit` receipt.
     #[serde(rename = "movement.work")]
     MovementWork,
@@ -533,6 +541,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | ObservationId::FirstMotionSearch
         | ObservationId::FirstMotionCandidates
         | ObservationId::FirstMotionTerrain
+        | ObservationId::MovementStateComplete
         | ObservationId::PositionX
         | ObservationId::PositionY
         | ObservationId::VerticalSpeed
@@ -572,7 +581,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | ObservationId::HudMapOff => Responsibility::Hud,
         ObservationId::WeaponsState => Responsibility::Weapons,
         ObservationId::ContactConsumedMarkers => Responsibility::Contact,
-        ObservationId::AppearanceStep
+        ObservationId::AppearancePlaying
+        | ObservationId::AppearanceStep
         | ObservationId::AppearanceTimeLeft
         | ObservationId::AppearanceBoostStage
         | ObservationId::AppearanceLapsLeft => Responsibility::Appearance,
@@ -764,6 +774,21 @@ fn movement_provider_valid(
         && case.inputs == InputProvider::PrecedingCutMovementInputs
 }
 
+fn ordinary_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    use ObservationId as O;
+
+    case.kind == CaseKind::Integrated
+        && case.expectations.provider == ExpectedProvider::PinnedRecordCache
+        && matches!(case.start, Start::CacheCut { frame: 6 })
+        && (10..=15).contains(&case.end.cut_inclusive)
+        && case.row == "chain-any-0003-DFD7"
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::ConnectedOrdinaryInputs
+        && observations.len() == 21
+        && case.expectations.fields.len() == 17
+        && case.expectations.outputs == [O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::Unavailable {
@@ -781,6 +806,11 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
         && matches!(case.start, Start::CacheCut { .. });
     match case.responsibilities.as_slice() {
+        [
+            Responsibility::Movement,
+            Responsibility::Appearance,
+            Responsibility::Camera,
+        ] => ordinary_provider_valid(case, observations),
         [Responsibility::Movement, Responsibility::Ceres] => {
             connected_provider_valid(case, observations)
         }

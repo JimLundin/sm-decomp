@@ -1,11 +1,11 @@
 //! Samus as the player can tell her and what she remembers (§1, §1.2), and what a frame shows
 //! beyond her quantities: its outputs, for the caller to act on.
 
-use crate::collide::{Bounds, Moved, Stop};
+use crate::collide::{Moved, Stop};
 use crate::jump_held::JumpHeld;
 use crate::run::Dashing;
 use crate::run::Run;
-use crate::tick::{Frame, Tick};
+use crate::tick::Frame;
 use crate::vertical::Vertical;
 use types::{Action, Aim, Body, Buttons, Cell, Facing, Fixed, Item, Pose, Position};
 use types::{Set, Sprite, Touch, button::SHOOT};
@@ -51,7 +51,7 @@ pub enum Seat {
 }
 
 /// `WallJump`'s output: the near-wall test's outcome this frame.
-#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug, serde::Serialize, serde::Deserialize)]
 pub enum WallTest {
     /// No test, no wall found, or a wall near her once the spin has turned far, without jump
     /// pressed.
@@ -64,7 +64,7 @@ pub enum WallTest {
 }
 
 /// `AimingAndShooting`: what the standing animation does this frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum StandingAnimation {
     /// It plays on.
     PlaysOn,
@@ -112,7 +112,7 @@ pub fn sprite(pose: Pose, items: &Set<Item>) -> Sprite {
 /// her animation, `dashing_after_moves`, `dash_began`, `dash_lost`, `handed_over`,
 /// `heading_down` and `vertical_speed_after_moves`, with her pose and vertical speed at the
 /// frame's end, `standing_animation` and `wall_test`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[expect(
     clippy::struct_excessive_bools,
     reason = "each is one of the spec's yes-or-no outputs (§1, §1.4), read apart by other domains"
@@ -217,16 +217,6 @@ impl Samus {
     /// nothing else of hers changes that frame.
     pub(crate) fn rides_the_elevator(&self, f: &Frame) -> bool {
         self.pose.facing == Facing::Screen && f.elevator_moving
-    }
-
-    /// `BlocksStopFlush`, §1.3 body size: her box, the one her moves and looks test: her centre,
-    /// and the body of her pose (during the frame's moves, the pose she started it in; after the
-    /// pose change, the one she takes).
-    pub(crate) fn bounds(&self, t: &Tick) -> Bounds {
-        Bounds {
-            at: self.position,
-            r: t.body(self.pose),
-        }
     }
 
     /// She takes what a move or a look did to her: a move puts her where it left her; a look

@@ -83,6 +83,10 @@ pub enum BehaviourId {
     OtherBlockKinds,
     /// How the top speed is tested part by part (§9).
     WordwiseTopSpeed,
+    /// Actual named decisions offered before their dependent effects.
+    PerformedMotionDecisions,
+    /// Complete serialized continuation without repeated work.
+    SuspendedMovement,
 }
 
 /// A catalogue entry.
@@ -102,7 +106,7 @@ pub struct Behaviour {
 }
 
 /// The catalogue, in spec order.
-pub const CATALOGUE: [Behaviour; 39] = [
+pub const CATALOGUE: [Behaviour; 41] = [
     Behaviour {
         id: BehaviourId::HowSheIsDrawn,
         summary: "what her sprite shows beyond her pose's parts, from the items switched on.",
@@ -374,6 +378,20 @@ pub const CATALOGUE: [Behaviour; 39] = [
         summary: "the top speed is tested part by part.",
         kind: Kind::Quirk,
         switch: Switch::Toggle,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::PerformedMotionDecisions,
+        summary: "actual motion decisions are offered before their dependent effects",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::SuspendedMovement,
+        summary: "serialized interrupted movement continues only unfinished work",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
         checked: Checked::ByVectors,
     },
 ];

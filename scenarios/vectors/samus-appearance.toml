@@ -1487,3 +1487,169 @@ before = { step = 2, left = 1, stage = 0, laps = 0 }
 after = { step = 2, left = 1, stage = 0, laps = 0 }
 inputs = { from_action = "Spinning", to_action = "Spinning", changed = true, space_jump = false, screw_attack = false, submerged = false, cinematic = true }
 expected = { sounds = [], contact = false }
+
+# Additive suspended-update format; ordinary vector/opportunity/appearance_work cases unchanged.
+# Each suspended_update names base_kind (Animation, Opportunity, Work) and the matching base id.
+# Inherit its complete inputs, invented content, rules/defaults and expected ordinary outputs.
+# observations is a checked subsequence of semantic receipts, never a required interface shape.
+# Compare every ordinary output too. save_points="AllOfferedAndCompleted" means save before
+# every offered decision and after every completed receipt in the whole update; retain all
+# four animation quantities, pending answer, actual figures/inputs, consumed opportunity/input
+# position and every completed sound/graphic output. Restore and compare COMPLETE State and
+# outputs with uninterrupted updating, preserving order and one actual animation update.
+# rules explicitly repeats base overrides. Old and selected clip holds are invented content.
+
+[[suspended_update]]
+id = "C-op-kept-clip"
+source = "constructed"
+base_kind = "Animation"
+base = "C-kept-run"
+entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StartingClip", "ClipPlays"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="ClipPlaying", clip="run", step=2, left=3, answer="CountDown" },
+ { event="ClipPlayed", step=2, left=2, stage=0, laps=0 },
+ { event="SelectedClip", clip="ball", answer="KeepPlayhead", step=2, left=2 },
+ { event="ClipInitialized", step=2, left=2, stage=0, laps=0 }
+]
+
+[[suspended_update]]
+id = "C-op-current-play"
+source = "constructed"
+base_kind = "Animation"
+base = "C-start-after-count"
+entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StartingClip", "ClipPlays"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="ClipPlaying", clip="jump", step=3, left=6, answer="CountDown" },
+ { event="ClipPlayed", step=3, left=5, stage=0, laps=0 },
+ { event="SelectedClip", clip="fall", answer="StartFirst", step=0, left=9 },
+ { event="ClipInitialized", step=0, left=9, stage=0, laps=0 }
+]
+
+[[suspended_update]]
+id = "C-op-restart-play"
+source = "constructed"
+base_kind = "Animation"
+base = "C-restart"
+entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StandingRestart", "ClipPlays"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="StandingRestart", before_step=4, before_left=1, step=0, left=16 },
+ { event="ClipPlaying", clip="stand", step=0, left=16, answer="CountDown" },
+ { event="ClipPlayed", step=0, left=15, stage=0, laps=0 }
+]
+
+[[suspended_update]]
+id = "C-op-restart-adjusted"
+source = "constructed"
+base_kind = "Animation"
+base = "C-restart-adjusted"
+entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StandingRestart", "ClipPlays"]
+rules = { restart_hold=25 }
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="StandingRestart", before_step=3, before_left=6, step=0, left=25 },
+ { event="ClipPlaying", clip="stand", step=0, left=25, answer="CountDown" },
+ { event="ClipPlayed", step=0, left=24, stage=0, laps=0 }
+]
+
+[[suspended_update]]
+id = "C-op-contact-order"
+source = "constructed"
+base_kind = "Work"
+base = "C-contact-and-start"
+entries = ["SuspendedAppearance", "FootContact", "SpinStarts"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="ContactRead", step=2, left=1, stage=0, laps=0, contact=true, sounds=["Footstep"] },
+ { event="SelectionRead", sounds=["PlainSpin"], step=2, left=1, stage=0, laps=0 }
+]
+
+[[suspended_update]]
+id = "C-op-contact-suppressed"
+source = "constructed"
+base_kind = "Opportunity"
+base = "C-contact-cinematic"
+entries = ["SuspendedAppearance", "FootContact"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="ContactRead", step=2, left=1, stage=0, laps=0, contact=true, sounds=[] }
+]
+
+[[vector]]
+id = "C-kept-run-advance"
+source = "constructed"
+entries = ["StartingClip", "ClipPlays"]
+before = { step=1, left=1 }
+inputs = { pose="Upright Running Right Forward", clip="run", pose_after="Upright Running Right UpForward", clip_after="ball" }
+after = { step=2, left=5, stage=0, laps=0 }
+
+[[suspended_update]]
+id = "C-op-kept-advance"
+source = "constructed"
+base_kind = "Animation"
+base = "C-kept-run-advance"
+entries = ["PerformedAnimationDecisions", "SuspendedAppearance", "StartingClip", "ClipPlays"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="ClipPlaying", clip="run", step=1, left=1, answer="Advance" },
+ { event="ClipPlayed", step=2, left=5, stage=0, laps=0 },
+ { event="SelectedClip", clip="ball", answer="KeepPlayhead", step=2, left=5 },
+ { event="ClipInitialized", step=2, left=5, stage=0, laps=0 }
+]
+
+# Changed-resume schema: resume_case inherits base starting State, content, Rules and earlier completed work.
+# The old base after-result is not an expectation after a changed input. Compare expected
+# and complete resumed State/outputs with uninterrupted execution that receives this same
+# changed input at its actual semantic opportunity.
+# boundary identifies an actual semantic opportunity; selection_replace supplies the new
+# actual accepted figure/clip only from this boundary onward. contact_replace supplies current
+# suppressors for an unmade read; it cannot repeat or recompute an already completed contact.
+# Current playing is already complete at the selection boundaries and retains the old clip.
+# restoration requires serializing all complete interrupted work, provider/opportunity/output
+# progress, dropping originals and deserializing fresh instances at each supported point.
+
+[[resume_case]]
+id = "C-resume-selection-before"
+source = "constructed"
+base_kind = "Animation"
+base = "C-kept-run-advance"
+entries = ["SuspendedAppearance", "StartingClip", "ClipPlays"]
+boundary = { opportunity="SelectedClip", point="BeforeDecision" }
+selection_replace = { pose="Upright Falling Right Forward", clip="fall" }
+restoration = "SerializeDropDeserialize"
+expected = { played_step=2, played_left=5, selected_pose="Upright Falling Right Forward", answer="StartFirst", step=0, left=9, stage=0, laps=0, initialization_effects=1 }
+
+[[resume_case]]
+id = "C-resume-selection-after"
+source = "constructed"
+base_kind = "Animation"
+base = "C-kept-run-advance"
+entries = ["SuspendedAppearance", "StartingClip", "ClipPlays"]
+boundary = { opportunity="SelectedClip", point="AfterDecisionBeforeEffect" }
+selection_replace = { pose="Upright Falling Right Forward", clip="fall" }
+restoration = "SerializeDropDeserialize"
+expected = { played_step=2, played_left=5, selected_pose="Upright Running Right UpForward", answer="KeepPlayhead", step=2, left=5, stage=0, laps=0, initialization_effects=1 }
+
+[[resume_case]]
+id = "C-resume-contact-before"
+source = "constructed"
+base_kind = "Opportunity"
+base = "C-contact"
+entries = ["SuspendedAppearance", "FootContact"]
+boundary = { opportunity="Contact", point="BeforeRead" }
+contact_replace = { cinematic=true }
+restoration = "SerializeDropDeserialize"
+expected = { sounds=[], graphics=1, contact_reads=1, step=2, left=1, stage=0, laps=0 }
+
+[[resume_case]]
+id = "C-resume-contact-after"
+source = "constructed"
+base_kind = "Opportunity"
+base = "C-contact"
+entries = ["SuspendedAppearance", "FootContact"]
+boundary = { opportunity="Contact", point="AfterCompletedRead" }
+contact_replace = { cinematic=true }
+restoration = "SerializeDropDeserialize"
+expected = { sounds=["Footstep"], graphics=1, contact_reads=1, step=2, left=1, stage=0, laps=0 }

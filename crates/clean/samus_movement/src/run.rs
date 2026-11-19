@@ -37,7 +37,7 @@ pub enum Dashing {
 }
 
 /// `SpeedBuildsAndBrakes`: what a frame's horizontal move is made of.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Stride {
     /// She makes no horizontal move.
     Nothing,
@@ -155,6 +155,18 @@ impl Run {
         }
     }
 
+    /// Spec: `Dash`, `PerformedMotionDecisions`. Dash is decided before speed building.
+    pub(crate) fn dash_for_moves(&mut self, moves: Moves, t: &Tick) {
+        if let Moves::Build(gait, _) = moves {
+            if running_with_run_held(gait, t.frame.pad) {
+                self.dashing = Dashing::On;
+                self.grow_dash(t.rules.dash_cap.of(&t.frame.items), t.rules);
+            } else {
+                self.lose_dash();
+            }
+        }
+    }
+
     /// `SpeedBuildsAndBrakes`, `Dash`, `Jumping`: what her speed and dash become as her
     /// situation moves her (`moves`, facing `facing`), and what she moves by; `falls` is a
     /// vertical motion on the ground (a vertical speed, or falling at 0). The ball at rest
@@ -191,12 +203,6 @@ impl Run {
     /// on along her facing.
     fn drift(&mut self, gait: Gait, drift: Drift, facing: Facing, t: &Tick) -> Stride {
         let (r, pad) = (t.rules, t.frame.pad);
-        if running_with_run_held(gait, pad) {
-            self.dashing = Dashing::On;
-            self.grow_dash(r.dash_cap.of(&t.frame.items), r);
-        } else {
-            self.lose_dash();
-        }
         let (ahead, carries) = (Side::of(facing), self.carry == Carry::CarriesOn);
         if carries && (drift == Drift::Ground || self.way != ahead && drift != Drift::WallJump) {
             self.brake(r);

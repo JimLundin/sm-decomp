@@ -620,3 +620,80 @@ keeps the earlier snapshot. The extra inanimate body draw does not capture an ac
 second sound opportunity. If preparation is bypassed and normal drawing repeats, each actual
 normal drawing reads the same retained snapshot. These rules preserve both the last prepared
 spin and a current action that has left it, without another motion or animation update.
+
+## 10. Observing and suspending the ordinary animation update
+
+The two halves and order of section6 still hold. These observations let timing see the existing
+animation decision before its effects, without another animation update. The implementation
+chooses its interface and retention mechanism; no concrete method, stage list or enum is required.
+
+| Quantity | Units and domain meaning | Read by |
+| --- | --- | --- |
+| pending animation decision | named existing animation rule, current figure/clip, playhead, stage/laps, relevant inputs and its chosen answer; steps as clip indices, holds in frames | output (timing); completion of that decision |
+| completed playing result | actual playhead, boost stage and laps after the current clip plays, plus its optional semantic sound | StartingClip, BoostStages; output |
+| actual selection | figure immediately before and actually accepted figure after selection, not an anticipated frame-end figure | StartingClip, HandOverSlowdown, SpinStarts |
+| interrupted animation update | all four animation quantities, pending answer and still-needed actual inputs/figures, completed outputs and consumed input position | output (caller save/restore); continuation of this update |
+
+These are update quantities, not a fifth persistent animation memory. The caller retains complete
+interrupted work alongside the four State quantities and caller-owned opportunity/input progress.
+An already chosen answer is retained unchanged. Inputs for a decision not yet made are supplied
+at its actual opportunity; different future figures cannot choose how the earlier current clip plays.
+
+### PerformedAnimationDecisions
+- kind: timing.
+- summary: the actual current clip decision and selected clip initialization are observable before their effects.
+- params: none; the observed rules retain their existing parameters and content.
+- switch: none.
+- An animation update reaches a move-driven playhead change, current-clip play decision, selected-clip start or dash-loss decision → offer its actual named rule, current quantities and chosen answer before applying it; report its completed State and sound before any later decision consumes them [C-op-kept-clip, C-op-current-play, C-op-restart-play, C-op-restart-adjusted, C-op-kept-advance]
+- checked: constructed (the cases above); adjusted (C-op-restart-adjusted).
+
+Clip-playing reads the actual playhead after earlier movement-driven changes and rising hold,
+and the current figure's clip, pace and stage. Its answer does not require a future selected
+figure. Selected-clip initialization instead reads the actual accepted selection and the already
+completed playing result. A kept Running clip keeps that result, including a hold newly read
+from the old clip, rather than restoring its earlier playhead or reading a new clip's hold.
+Dash loss follows these decisions as section6 defines.
+
+FootContact and SpinStarts remain independent read-only opportunities of section9, with their
+actual current quantities at the named opportunity. A contact reads after running position
+changes and before animation advances. Selection reads actual selected figures. Their sound and
+graphical outputs keep opportunity order with any animation-control output; none advances the
+playhead, repeats movement or consumes a sound acknowledgement. Sound suppression leaves contact
+graphics available. NormalDraw and PassageEntry keep their existing frozen-work meanings.
+
+### SuspendedAppearance
+- kind: timing.
+- summary: interrupted animation and appearance opportunities continue once with complete State and ordered outputs.
+- params: none.
+- switch: none.
+- Suspend before an offered animation effect or after a completed animation/appearance opportunity → serialize all four State quantities, pending answer and still-needed actual inputs/figures, completed outputs and consumed opportunity/input progress; discard the original interrupted instance and deserialize a fresh instance to restore to identical final State, graphics and ordered sounds as uninterrupted updating [C-op-kept-clip, C-op-current-play, C-op-restart-play, C-op-restart-adjusted, C-op-contact-order, C-op-contact-suppressed]
+- The actual selection changes after current-clip playing but before selected-clip initialization is decided → preserve the already played current clip and decide initialization from the new actual selection [C-resume-selection-before]
+- Selection changes after the local initialization answer was chosen, before its effect → apply the retained answer to its retained actual selection once, without recomputing it from the later figure [C-resume-selection-after]
+- A contact suppressor changes before contact is read → its fresh value decides that sound, leaving graphics available [C-resume-contact-before]
+- A contact suppressor changes after contact was completed → retain its completed sound and graphics without another contact read or publication [C-resume-contact-after]
+- checked: constructed (the opportunity cases above), using every offered/completed opportunity as a save point.
+
+The ordinary animation entry completes the same rules without suspension. Read-only Ahead and
+appearance opportunities remain read-only; retaining their completed receipt prevents a resumed
+update from asking them again. Saving observes work without advancing it. The caller's prepared
+action snapshot remains independently retained as section9.2 specifies. A completed update has
+no effects left to resume. All existing ordinary and frozen-work vectors retain their results.
+
+Opportunity vectors use the additive `suspended_update` format documented in the existing
+[samus-appearance vectors](../../scenarios/vectors/samus-appearance.toml). Animation rules and
+content determine the answers; timing assigns no animation result or future selection. These
+observations introduce no liquid, palette, echo, sound-transport or dispatch producer.
+
+A future input is not cached merely because an update has begun. The changed-selection cases
+play the old running clip to step2 with hold5 first. Before the selected initialization decision,
+a new actual falling selection starts hold9. After a KeepPlayhead answer was already chosen for
+the running selection, a later supplied figure cannot change that answer or its selected identity.
+The paired contact cases likewise distinguish an unmade read from a completed publication.
+These are observations of existing total rules, not new capability guards.
+
+Every all-opportunity save test serializes the complete interrupted work and caller-held inputs,
+opportunity/query and output progress, discards the original objects, then deserializes fresh
+objects. A clone or memory-only checkpoint is insufficient. All four animation quantities,
+actual figures, pending answers and completed sound/graphic progress survive; each actual effect
+and read-only opportunity publishes once. Compare complete State and all outputs, beyond the
+listed observation subsequence. No storage layout, method list or stage enum is prescribed.
