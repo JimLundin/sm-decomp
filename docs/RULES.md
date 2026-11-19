@@ -47,6 +47,9 @@ ROM-derived bytes never go in commits or logs.
 6e. Each bounded outcome has a work issue with an owner, dependencies, state and proof;
     milestone and session issues link that work ([PROCESS](cleanroom/PROCESS.md#work-items),
     MODEL decision 31).
+6f. Prioritize reusable multi-frame production coverage; the exact retained-time frame remains
+    a required witness, and intermediate tick boundaries are diagnostics
+    ([MODEL decision 34](architecture/MODEL.md#1-the-goal-and-what-is-exact)).
 
 ## The shape of the code
 

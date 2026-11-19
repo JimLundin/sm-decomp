@@ -302,6 +302,17 @@ Jim's decisions, 2026-11-12, on the review of the project's direction:
     root-only landing and lowest-rung prioritisation are unchanged. Approval of this direction
     does not authorise unrelated rounds.
 
+34. **Prioritize reusable multi-frame coverage** (Jim, 2026-11-19). The next deliverable is
+    a reusable production lifecycle that carries complete State across consecutive frames,
+    proven by representative behaviour and continuation checks. The first retained-time
+    frame remains a required exactness witness: 359,922 independently recorded hardware
+    ticks and 2,295 ordered outputs. Its intermediate tick boundaries are diagnostics,
+    not development progress targets or a requirement to finish that witness before
+    building the reusable lifecycle. This changes the first-frame-first work priority,
+    not exactness, the lowest-rung scope, clean-room roles or current indexed obligations.
+    Additional scoped cases do not establish integrated dependency closure or played-alone
+    frames; borrowed inputs remain explicit and are not counted as modeled producers.
+
 What this rules out: code whose structure is the original's routines. That means a function per
 bank routine, branches in the 65816's order, flags re-derived from `wrapping_sub`, and module docs
 that narrate call order. The original stays the authority for *what* happens, never for how our
