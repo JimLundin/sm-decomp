@@ -3,6 +3,16 @@
 
 #[cfg(test)]
 mod vectors {
+    #[expect(
+        clippy::wildcard_enum_match_arm,
+        reason = "the assertion seeks only initialization receipts"
+    )]
+    mod additional;
+    #[expect(
+        clippy::wildcard_enum_match_arm,
+        reason = "strict test fixtures and assertion failures use known vector indices and exhaustive rejection fallbacks"
+    )]
+    mod suspended_vectors;
     use core::num::Wrapping;
     use std::collections::BTreeMap;
     use std::fmt::Debug;
@@ -31,6 +41,8 @@ mod vectors {
         contact_content: BTreeMap<String, ContactTable>,
         opportunity: Vec<OpportunityVector>,
         appearance_work: Vec<AppearanceWork>,
+        suspended_update: Vec<suspended_vectors::SuspendedVector>,
+        resume_case: Vec<suspended_vectors::ResumeCase>,
     }
 
     #[derive(Deserialize)]
@@ -724,6 +736,13 @@ mod vectors {
         vector: &OpportunityVector,
         clips: &BTreeMap<String, Clip>,
     ) -> samus_appearance::OpportunityOutput {
+        owned_opportunity(vector, clips).read()
+    }
+
+    fn owned_opportunity(
+        vector: &OpportunityVector,
+        clips: &BTreeMap<String, Clip>,
+    ) -> samus_appearance::AppearanceRead {
         use samus_appearance::{Charge, ContactSuppressor, Opportunity};
         let inputs = vector.inputs.clone();
         let opportunity = match vector.kind.as_str() {
@@ -767,7 +786,7 @@ mod vectors {
             }
             other => panic!("unknown opportunity {other}"),
         };
-        opportunity.read()
+        opportunity.into()
     }
 
     #[test]
@@ -924,6 +943,16 @@ mod vectors {
             )
             .chain(
                 file.appearance_work
+                    .iter()
+                    .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
+            )
+            .chain(
+                file.suspended_update
+                    .iter()
+                    .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
+            )
+            .chain(
+                file.resume_case
                     .iter()
                     .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
             )

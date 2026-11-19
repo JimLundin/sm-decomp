@@ -134,6 +134,47 @@ pub fn seed(wram: &[u8], content: &Content) -> Result<State, Outcome> {
     })
 }
 
+/// Independently decode the complete running owner and playing Figure for a comparison/start.
+pub(super) fn running_owner(
+    wram: &[u8],
+    content: &Content,
+) -> Result<(State, samus_appearance::Figure), Outcome> {
+    let imported = content
+        .clips
+        .of(PoseId(word(wram, 0x0a1c)?))
+        .ok_or_else(|| data_failure(None, "running figure content"))?;
+    if imported.figure.pose.action != types::Action::Running
+        || imported.figure.sprite != types::Sprite::Plain
+        || !matches!(
+            imported.figure.pose.facing,
+            types::Facing::Left | types::Facing::Right
+        )
+    {
+        return Err(unsupported("running side-facing figure"));
+    }
+    let step = imported
+        .step_of(AnimationFrame(word(wram, 0x0a96)?))
+        .ok_or_else(|| data_failure(None, "running observed playhead"))?;
+    let timer = u8::try_from(word(wram, 0x0a94)?)
+        .map_err(|_| data_failure(None, "running observed timer"))?;
+    let [laps, stage] = word(wram, 0x0b3e)?.to_le_bytes();
+    let stage = BoostStage::ALL
+        .get(usize::from(stage))
+        .copied()
+        .ok_or_else(|| data_failure(None, "running observed boost"))?;
+    Ok((
+        State {
+            playhead: Playhead {
+                step,
+                time_left: Frames(timer),
+            },
+            stage,
+            laps_left: Laps::new(laps).map_or(LapsLeft::WithoutBooster, LapsLeft::WithBooster),
+        },
+        imported.figure,
+    ))
+}
+
 pub fn input(prior: &[u8], content: &Content) -> Result<Inputs, Outcome> {
     let imported = figure(prior, content)?;
     let held = word(prior, 0x008b)?;

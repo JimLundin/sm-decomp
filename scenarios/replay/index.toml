@@ -473,3 +473,25 @@ provider = "independently reviewed native-search-work-v2 source projection"
 fields = ["ordered Motion Support BodyFit", "nested BodyFit checks", "complete CollisionTests", "complete reached", "complete inside", "movement skip"]
 phase = "selector424 through complete movement return"
 claim = "Frozen source-only projection retains zero-effect Support and no-growth BodyFit; expectations are read after production and never supply input or State."
+
+[[case]]
+id = "connected-ordinary/carried-running-camera"
+kind = "integrated"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 6 }
+end = { cut_inclusive = 15 }
+rules = ["samus-movement/MovesAsShePosed", "samus-appearance/ClipPlays", "world-camera/FollowingHer", "world-camera/Remembering", "world-camera/RememberedHeightFraction"]
+profile = "reference"
+responsibilities = ["movement", "appearance", "camera"]
+content = "player-rom-import"
+inputs = "connected-ordinary-inputs"
+checkpoints = true
+limits = ["Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved."]
+expectations = { provider = "pinned-record-cache", fields = ["movement.state.complete", "movement.position.x", "movement.position.y", "appearance.step", "appearance.time-left", "appearance.boost-stage", "appearance.laps-left", "appearance.playing", "camera.view.x.pixel", "camera.view.x.fraction", "camera.view.y.pixel", "camera.view.y.fraction", "camera.remembered.x.pixel", "camera.remembered.x.fraction", "camera.remembered.y.pixel", "camera.remembered.y.fraction", "camera.vertical-fraction"], outputs = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"] }
+
+[[case.borrowed]]
+dependency = "unselected current ordinary stimuli"
+provider = "authenticated-connected-ordinary-v1"
+fields = ["controls", "items", "parity", "energy", "queue occupancy", "Contact guards", "geometry and current actors", "camera room settings"]
+phase = "actual current source opportunity"
+claim = "Reviewed same-family inputs; selected movement, playhead, playing Figure, Ahead and Camera are retained production outputs."

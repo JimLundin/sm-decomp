@@ -9,6 +9,7 @@ pub mod baseline;
 mod camera;
 mod ceres;
 mod compare;
+mod connected;
 mod full_movement;
 mod hud;
 pub mod index;
@@ -85,6 +86,10 @@ fn data_failure(cut: Option<u64>, source: &str) -> Outcome {
 
 fn production_failure(cut: u64, fault: game::production::ProductionFault) -> Outcome {
     match fault {
+        game::production::ProductionFault::Connected(fault) => Outcome::Unsupported {
+            cut: Some(cut),
+            dependency: format!("connected ordinary {fault:?}"),
+        },
         game::production::ProductionFault::Unsupported(dependency) => Outcome::Unsupported {
             cut: Some(cut),
             dependency: format!("{dependency:?}"),

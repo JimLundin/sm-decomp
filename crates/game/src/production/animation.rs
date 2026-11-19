@@ -54,6 +54,33 @@ impl AppearanceContent {
             .find(|entry| entry.figure == figure)
             .map(|entry| &entry.clip)
     }
+
+    /// Bind current-playing and actual accepted-selection content to interrupted work.
+    /// Call again with fresh owner inputs before an unmade selection decision.
+    ///
+    /// # Errors
+    /// Either actual figure has no admitted clip.
+    pub fn animation_inputs(
+        &self,
+        inputs: Inputs,
+        selected_from: Figure,
+        rules: Rules,
+    ) -> Result<samus_appearance::AnimationInputs, ClipFault> {
+        let current_clip = self
+            .get(inputs.figure)
+            .ok_or(ClipFault::Missing(inputs.figure))?;
+        let selected_clip = self
+            .get(inputs.figure_after)
+            .ok_or(ClipFault::Missing(inputs.figure_after))?;
+        Ok(samus_appearance::AnimationInputs {
+            inputs,
+            current_clip: current_clip.clone(),
+            selected_from,
+            selected_clip: selected_clip.clone(),
+            paces: self.paces.clone(),
+            rules,
+        })
+    }
 }
 
 struct ClipProvider<'a> {

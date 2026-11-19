@@ -6,7 +6,7 @@ use core::ops::{Range, RangeInclusive};
 use types::{Fixed, Item, Parts, Px, Set, ZERO, fixed, part_below};
 
 /// `WordwiseTopSpeed`: how the top speed is tested.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SpeedCap {
     /// Vanilla: part by part, on the speed's size.
     Wordwise,
@@ -35,7 +35,7 @@ pub enum Gait {
 }
 
 /// One row of `SpeedBuildsAndBrakes`'s table: what she speeds up by a frame, and her top speed.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Limits {
     /// What she speeds up by a frame.
     pub step: Fixed,
@@ -44,7 +44,7 @@ pub struct Limits {
 }
 
 /// `SpeedBuildsAndBrakes`'s table: a row for each thing she can be doing, a `Gait`'s each.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Speeds {
     /// The row for `Gait::Running`.
     pub running: Limits,
@@ -63,7 +63,7 @@ pub struct Speeds {
 }
 
 /// `ShrinkingLowersHer`: the distance a change of shape lowers her by, as its row names it.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Lowers {
     /// Starting to crouch: the crouch's own distance.
     Crouch,
@@ -75,7 +75,7 @@ pub enum Lowers {
 
 /// A value that an item switched on changes (§1.3): `Jumping`'s rise speeds with the hi-jump
 /// boots, `Dash`'s cap with the speed booster.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct WithItem {
     /// The item.
     pub item: Item,
@@ -101,7 +101,7 @@ pub use types::Bounces;
 
 /// `Landing`: one of the ball's bounces: the landing that makes it, the speed it rises at, and the
 /// bounce that comes after it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Bounce {
     /// The bounces she has had when the landing that makes it comes.
     pub at: Bounces,
@@ -114,7 +114,7 @@ pub struct Bounce {
 
 /// The values the model reads: every number a spec entry's `params` give, which an adjusted game
 /// may set to other values. Its `Default` is the vanilla game's, the spec's numbers.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Rules {
     /// `WordwiseTopSpeed`: how the top speed is tested.
     pub speed_cap: SpeedCap,

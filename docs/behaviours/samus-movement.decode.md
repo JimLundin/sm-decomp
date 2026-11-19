@@ -2279,7 +2279,8 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
 
 - Area motion (old 4,019): SpeedBuildsAndBrakes, Dash, Dashing, TurningRound, TransitionFiringAim, AimingAndShooting,
   RidingTheElevator, Jumping, FollowingTheGround, MovesAsShePosed, RisingAndFalling,
-  DriftInTheAir, Moonfall, WallJump, Landing, AcceptedFloorResponse, TouchdownRequests, WordwiseTopSpeed, 1.2, 9
+  DriftInTheAir, Moonfall, WallJump, Landing, AcceptedFloorResponse, TouchdownRequests, WordwiseTopSpeed,
+  PerformedMotionDecisions, SuspendedMovement, 1.2, 9
 - Area pose fit (old 1,549): PoseFitAfterMoves, ShrinkingLowersHer, PerformedBodyFit
 - Area pose chart (old 2,263): HowSheIsDrawn, PoseFollows, PadChart, Aiming, WhatHerMovesMet,
   AnimationEnds
@@ -2287,8 +2288,8 @@ as a wall; the old-code comparison is a guideline assessed under MODEL §1 decis
   SlopesSlowTheWalk, TouchedCells, PerformedCollisionTests, MotionAttempts, ReachedEnemyCandidates,
   PerformedSupportChecks, OtherBlockKinds
 
-Budget: 37.5 × 280.7 units = 10,524 (motion 4,125, pose fit 762, pose chart 2,412, collision 3,225).
-The official counter reports 110.0 motion units, 20.3 pose-fit units, 64.3 pose-chart units
+Budget: 37.5 × 287.7 units = 10,786 (motion 4,387, pose fit 762, pose chart 2,412, collision 3,225).
+The official counter reports 117.0 motion units, 20.3 pose-fit units, 64.3 pose-chart units
 and 86.0 collision units for this output contract. Old-code baselines and k above are unchanged.
 
 From the spec's §7 (the pose chart), moved with the header's:
@@ -2675,3 +2676,118 @@ Enemy-only clearance carries supplied eligible count and considered boxes; block
 does not invent an enemy search. Both carry geometry, signed requested distance, purpose, named
 result and nonnegative whole-pixel room. This room is not signed ordinary accepted travel.
 The field name avoids a literal score-vocabulary collision; checker rules are unchanged.
+
+## Causal ordinary movement observations
+
+`PerformedMotionDecisions` and `SuspendedMovement` observe the existing rules; they introduce no
+new movement arm. Sources and RAM mapping remain those of `SpeedBuildsAndBrakes`,
+`WordwiseTopSpeed`, `Dash`, `FollowingTheGround`, `AimingAndShooting`, `PoseFitAfterMoves`,
+`PoseFollows`, and the performed work entries above. The same quantities are read at their actual
+opportunities, rather than using the final `Outcome` to authorize preceding effects.
+
+The accepted private selector-s3-v1 source contract qualifies the reached orchestration at
+historical source7fd1efeb77ae649b6d204f261b6da5efc4cfc292. Its immutable manifest is
+7e0a12e68dc683f5256cf104e9cef6be95cda7f60ff0b34c14b09e332753d1e8. Selected query semantics remain
+in movement-cost-contract-549/packet-v8, manifest
+1219a7a17f47a3c731024005d9fa9eef17d96ae0c6e437e8141b7b0a803aba08.
+Both are source evidence only. Hardware profiles, intrinsic bills, source dispatch and private
+encoding guards do not belong in these clean observations or their vectors.
+
+### Vector meaning and reference
+
+The existing TOML now adds `suspended_update` cases. Each inherits an existing complete ordinary
+fixture, including its supplied world/content and ordinary result; the strict reader must check
+both ordinary vectors and the new observations. The observed list is a semantic subsequence,
+not a prescribed sequence of interface calls. Save/restore is checked at every offered and
+completed decision of the entire actual update, not merely at listed observations. Complete
+Samus, the pending decision and still-needed prior quantities, consumed world/input progress,
+completed queries and output publications must agree with uninterrupted execution. Reusing a
+completed effect cannot produce another query or publication.
+
+R-op-run inherits item-morph-ball:704 (R2). Its original speed/dash observations and ordinary
+result remain recorded; the new intermediate arithmetic observations are independently derived
+from those RAM quantities and named Rules, not claimed as new recorded cuts. All other added
+movement opportunity cases are invented. C-op-stop-pull's enemy geometry stops a 2.C000 intended
+move at 2.0000, clearing Run; its subsequent unseated pull still requests 3.C000. The test does
+not identify accepted travel with the retained total. C-op-support-placement instead applies
+the actual slope lift before the ceiling support read, and its seated pull is one pixel.
+
+C-op-aim-substitute starts with ordinary motion unobstructed, then the separate one-pixel aim
+step reaches the wall. Fit and initialization read AgainstWall, not the earlier Running wish.
+C-op-aim-fit has an actual no-growth fit with explicit equal-sized bodies. C-op-adjusted-aim and
+C-op-adjusted-dash inherit adjusted Rules cases, proving that the new observation follows the
+actual changed aim distance and dash gain. No fixture position or final pose selects production.
+
+The private independent reference is timing-opportunities-479/reference.py. It reads ordinary
+inputs/content and calculates new observation quantities without importing a clean model or
+reading expected State to select an answer. It preserves wordwise signed-wrapping tests,
+fractional carries and original world geometry. Its comparison-sensitivity mutations corrupt every checked quantity and adjacent observed
+order. Evaluation faults replace retained pull with stopped Run, substitute the future clip
+for current playing, and repeat/reverse contact/selection work; the checks catch all four.
+No event-list roundtrip is claimed as continuation proof. Complete actual Samus continuation
+remains unproved; that proof belongs to the confined implementation and indexed
+production integration. The ordinary model must still pass every pre-existing vector.
+
+### Admission and integration limits
+
+The model stays total for admitted typed input/content. Missing source-qualified timing arms
+are rejected by production, not by a new model capability switch. Source initialization guards
+are production's obligation; do not add source cells to movement or appearance State.
+Dispatcher, environment, frame-clock, raw enemy-membership and math readiness remain selected
+actual owners or explicitly borrowed inputs with their producer exclusions named. Pending
+mutable premises require freshness at resume. A completed movement response cannot grant
+permission for earlier world work. Scope-specific borrowed providers must retain their cursor
+with the recipe. Runtime codecs, atomic Unsupported rollback, intrinsic costs, hardware
+continuation, output materializations and common indexed replay/null/fault proof remain pending.
+
+### Changed-resume and serialized restoration witnesses
+
+The additive `resume_case` pairs change an external semantic premise before its actual request
+or decision, and after its actual answer but before dependent effects. Future unanswered inputs
+are fresh; an already returned/local chosen answer is retained with its causal inputs and
+applied once. Before/after pairs prevent accepting both premature caching and late recomputation.
+All content/world quantities are invented. There is no source hardware guard or timing result
+in this schema. Complete interrupted work and provider/output progress must serialize, the
+original objects must be discarded, and a fresh deserialized instance must reproduce every
+query/effect/output exactly once. Clone-only equality cannot satisfy these tests.
+
+Movement replaces the slope-bearing world after ordinary travel, either before floor support
+querying or after its actual lifted answer. Appearance replaces actual accepted selection after
+current-clip playing, either before or after selected initialization was decided, and changes a
+contact suppressor either before its read or after its completed publication. Missing production
+freshness remains an integration limitation; these clean observations retain model totality.
+
+The private `timing-opportunities-479/reference_v2.py` continues a selected semantic reference
+calculation after serializing and discarding its interrupted instance. Six changed-resume
+cases agree; eight evaluation faults catch caching unmade floor/selection/suppression inputs,
+requerying/recomputing actual retained answers, repeating a completed contact and omitting a
+pending answer during restoration. These are selected reference decisions, not a claim that
+actual clean model State or all ordinary vectors have been serialized and replayed. The
+confined implementation retains that complete actual-model proof obligation.
+
+
+### Later speed choices and retained world answers
+
+The new `decision_change_case` pairs clarify the existing section12 contract rather than change
+ordinary choices/arithmetic. `C-answer-fall` is invented upright falling at one pixel/frame in
+Air. The returned downward move accepts one pixel and places her at y0081.0000. Growth then adds
+reference gravity0.1C00, yielding1.1C00. Changed gravity2.0000 before the later speed choice
+chooses3.0000; changed gravity after that actual choice still completes1.1C00. Neither boundary
+permits another world query or an expected future speed/pose as admission.
+
+`C-answer-rise` is invented upright Jumping, rising at one pixel/frame with jump held. Releasing
+before the rise-ending choice yields speed0 and a fall; releasing only after its actual chosen
+answer keeps the rise at that completion. These quantities precede later ordinary speed growth.
+The unchanged full frame rises one pixel and grows speed to-0.E400. All four cases require
+complete serialization/drop/fresh restore at every actual offered/completed opportunity,
+comparing complete State/ordered outputs with a no-save run receiving the same inputs at the
+same actual decisions. Existing ordinary vectors remain unchanged.
+
+The observer's invented API probe reproduced choosing growth inside retained world-answer
+completion from replacement Rules, without an offered speed answer. Collision was retained
+without another query. Do not cache unmade future answers early: the later speed choice is fresh
+when offered, and its actual chosen answer is retained afterwards. The private assessment/probe
+are `timing-opportunities-479/movement-contract-assessment.md` and `movement-observer-probe`;
+the independent boundary arithmetic check is `movement-retained-answer-reference.py` there.
+These regressions add no recorded-source coverage, intrinsic Exposure or production freshness/
+atomic publication claim; those remain with the existing source/integration owners.

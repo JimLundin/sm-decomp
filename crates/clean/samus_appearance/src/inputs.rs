@@ -1,13 +1,14 @@
 //! What a frame reads, each from the domain that owns it.
 
 use enum_map::Enum;
+use serde::{Deserialize, Serialize};
 use types::{Fixed, Item, Pose, Set, Sprite};
 
 use crate::clip::{Clip, Paces, Slowdown};
 
 /// Her figure: samus-movement's pose with the sprite she is drawn in. Each pose and sprite has its
 /// own clip, and she takes another pose when either part differs.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Figure {
     /// Samus-movement's pose: body, action, facing, aim, gun, legs.
     pub pose: Pose,
@@ -24,7 +25,7 @@ pub trait Content {
 }
 
 /// What samus-movement's step did this frame, that this domain reads. Listed in no order.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum, Serialize, Deserialize)]
 pub enum MoveEvent {
     /// "The standing animation restarts" (`StandingRestart`).
     StandingRestart,
@@ -37,7 +38,7 @@ pub enum MoveEvent {
 }
 
 /// Whether she is dashing as the clip moves on (`RunPace`, `BoostStages`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Dash {
     /// She is not dashing.
     Off,
@@ -48,7 +49,7 @@ pub enum Dash {
 }
 
 /// What the liquid she is in does to her animation (the liquids).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Liquid {
     /// Added to the holds her clip moves on to.
     pub slowdown: Slowdown,
@@ -68,7 +69,7 @@ impl Liquid {
 }
 
 /// The frame's inputs.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Inputs {
     /// Her figure at the frame's start.
     pub figure: Figure,
@@ -99,8 +100,16 @@ pub struct Inputs {
 
 /// How many sounds wait in the queue the speed booster's sound joins, before it (the sound
 /// domain): 0 to `SoundsWaiting::MOST`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(try_from = "u8")]
 pub struct SoundsWaiting(u8);
+
+impl TryFrom<u8> for SoundsWaiting {
+    type Error = &'static str;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::new(value).ok_or("sounds waiting must be from 0 to 15")
+    }
+}
 
 impl SoundsWaiting {
     /// At most 15 sounds wait.

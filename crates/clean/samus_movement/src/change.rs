@@ -1,23 +1,11 @@
-//! The pose change at a frame's end (`PoseFollows`, `PoseFitAfterMoves`): whether she takes the
-//! pose chosen, where pose fit or the shrink places her, then what her moves met and the
-//! change's effects.
-
-use crate::chart::Choice;
-use crate::collide::Probe;
-use crate::fit::{Fitted, crouched};
+//! Spec: `PoseFollows`. Accepted pose effects, used by the owned ordinary continuation.
 use crate::rows::Effect;
-use crate::rules::Lowers;
 use crate::run::Dashing;
 use crate::samus::{Samus, Spin};
-use crate::situation::ENTERING;
 use crate::tick::Tick;
-use crate::vertical::Contact;
-use types::{Aim, Fixed, Parts, ZERO, px};
-
-/// Spec: `TransitionFiringAim`. Only an actual ordinary change publishes: a new upright
-/// straight jump on shoot pressed reads new content; a moonwalk's ground turn reads old content.
-/// Called after pose fit decides what she really becomes, never from speed or placement.
-fn transition_firing_aim(
+use types::{Aim, ZERO};
+/// Spec: `TransitionFiringAim`. Publication reads accepted pose content, never desired aim.
+pub fn transition_firing_aim(
     old: types::Pose,
     new: types::Pose,
     frame: &crate::tick::Frame,
@@ -41,114 +29,19 @@ fn transition_firing_aim(
     }
     None
 }
-
 impl Effect {
-    /// `Dashing`: whether it is a let-go effect other than none (she follows the pad again, as
-    /// running, dash 0, or a halt), which ends her dashing at the pose change. (The dash 0 a
-    /// turn's end hands over is one too, but the turn's own moves have already ended it.)
-    const fn lets_go(self) -> bool {
+    /// Spec: `Dashing`. A nonempty let-go effect ends dashing at the pose change.
+    pub(crate) const fn lets_go(self) -> bool {
         matches!(
             self,
             Self::EndSkid | Self::AsRunning | Self::LoseDash | Self::Halt
         )
     }
 }
-
 impl Samus {
-    /// `PoseFollows`, `PoseFitAfterMoves`: what she becomes. Pose fit (or a morph refused) says
-    /// whether she takes the chosen pose with what her moves met (`contact`), or ends in the
-    /// pose she had or crouched `Still` with neither: her speeds, dash and whether she carries on
-    /// or skids stay as her moves left them, her position and seat as her looks left them. What
-    /// she becomes brings, in order: after pose fit's push the shrink (`shrink`), then what she
-    /// met, then its row's effects, then the change of action's own (`ENTERING`). `Dashing`: a
-    /// let-go effect ends her dashing. Spec: `AnimationEnds`, `PerformedBodyFit`: a handover
-    /// accepts its target at any supplied height without fit consideration, clearance or fit
-    /// placement. Initialization and the end's effects still run; an end that gives way fits
-    /// its ordinary selection instead.
-    ///
-    /// §1, `PoseFitAfterMoves`, `ShrinkingLowersHer`: where pose fit moved her, or a change of
-    /// shape starts (a lowering of 0 px included), she is placed at her y pixel just after that,
-    /// before the effects, with the subpixel her y had at the frame's start. Returns that y, the
-    /// placement, or none on any other frame.
-    pub(crate) fn change_pose(
-        &mut self,
-        chosen: Choice,
-        contact: Option<Contact>,
-        start: &Self,
-        t: &mut Tick,
-    ) -> Option<Fixed> {
-        let fitted = if chosen.handed_over {
-            Fitted::Taken
-        } else {
-            self.fit(t, chosen.pose)
-        };
-        let (became, contact) = match fitted {
-            Fitted::Taken | Fitted::Pushed => (chosen, contact),
-            Fitted::Refused => (Choice::instead(self.pose), None),
-            Fitted::Crouched { .. } => (Choice::instead(crouched(self.pose.facing)), None),
-        };
-        self.pose = became.pose;
-        t.pending_aim = transition_firing_aim(start.pose, self.pose, t.frame);
-        if let Some(lowers) = became.lower {
-            self.shrink(lowers, t);
-        }
-        let placed = (fitted.moved() || became.lower.is_some())
-            .then(|| self.position.y.with_sub(start.position.y.sub()));
-        if let Some(contact) = contact {
-            // Spec: AcceptedFloorResponse and TouchdownRequests. This is the acceptance
-            // boundary: fitting has removed refused/substituted contact, but not handover.
-            t.accepted_wall_kick = contact == Contact::WallKick;
-            let kind = match contact {
-                Contact::WallKick => None,
-                Contact::Hop => Some(types::FloorResponseKind::SpringHop),
-                Contact::Bounce(b) => Some(types::FloorResponseKind::Rebound(b.then)),
-                Contact::Land if start.pose.body == types::Body::Upright => {
-                    Some(types::FloorResponseKind::UprightTouchdown)
-                }
-                Contact::Land => Some(types::FloorResponseKind::BallSettles),
-            };
-            t.floor_response = kind.map(|kind| types::FloorResponse {
-                kind,
-                speed: types::VerticalSpeed(self.vertical.speed),
-            });
-            self.vertical.meet(contact, self.run.dash, t);
-            self.run.meet(contact);
-        }
-        if became.effects.iter().any(|e| e.lets_go()) {
-            self.run.dashing = Dashing::Off;
-        }
-        let entered = ENTERING
-            .iter()
-            .filter(|e| e.on(start.pose.action, became.pose));
-        for effect in became.effects.iter().chain(entered.map(|e| &e.effect)) {
-            self.apply(*effect, start, t);
-        }
-        placed
-    }
-
-    /// `ShrinkingLowersHer`: the frame a change of shape starts, she looks down its distance
-    /// (`lowers`) at her new size, a block look, and is lowered as far as it got.
-    fn shrink(&mut self, lowers: Lowers, t: &mut Tick) {
-        let look = t.vmove(
-            self.bounds(t),
-            t.rules.lowers(lowers),
-            Probe::Blocks,
-            types::CollisionPurpose::BodyLowering,
-        );
-        // What stopped the look writes her y subpixel FFFF, or seats her on a stepped block.
-        self.take_result(&look);
-        self.position.y += px(look.gone);
-    }
-
-    /// `Jumping`, `TurningRound`, `Moonfall`: one effect of the change (`PoseFollows`) on her
-    /// speeds, dash and position, from how she was at the frame's start (`start`). `Jumping`:
-    /// changing into a take-off from a crouch without aim she is also lifted; a rise at the jump
-    /// speed takes its share of her dash as the frame's moves left it. `TurningRound`: every
-    /// turn makes her skid against the facing it shows, the moonwalk's two turns, which keep her
-    /// facing, too; a pose that faces her the other way (a spin reversed, the ball turning round)
-    /// makes her skid and ends her dashing, and a spin reversed while skidding turns her travel
-    /// round. `WallJump`: a spin that followed a wall jump is carried on.
-    fn apply(&mut self, effect: Effect, start: &Self, t: &Tick) {
+    /// Spec: `PoseFollows`, `Jumping`, `TurningRound`, `Moonfall`, `ShrinkingLowersHer`.
+    /// Evaluate one accepted row or entry effect on a local answer, after fitting and lowering.
+    pub(crate) fn apply(&mut self, effect: Effect, start: &Self, t: &Tick) {
         let pose = self.pose;
         match effect {
             Effect::Rise => self.vertical.jump(self.run.dash, t),

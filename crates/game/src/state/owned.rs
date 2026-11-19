@@ -54,6 +54,8 @@ impl Pinned for SenderPin {
 /// One writable owner for every selected model quantity.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OwnedState {
+    /// Complete connected current owners and semantic continuation.
+    Connected(Box<crate::production::connected::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
     /// Complete owners connected by held movement position.
@@ -83,6 +85,7 @@ pub enum OwnedState {
 /// Codec-only values created at the save edge; these never own live gameplay.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub(crate) enum CodecState {
+    Connected(Box<crate::production::connected::State>),
     Movement(Model<MovementPin>),
     Audio(Model<AudioPin>),
     WeaponsContact(Model<PowerPin>),

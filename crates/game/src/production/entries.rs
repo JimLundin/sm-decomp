@@ -125,7 +125,7 @@ pub(super) fn advance(
             ProductionRules::Camera(rules),
             AdvanceInput::Camera(frame),
         ) => {
-            state.0 = state.0.step(rules.get(), frame);
+            super::camera_semantic::step(&mut state.0, rules.get(), frame);
             ProductionOutputs::Camera(state.0)
         }
         (

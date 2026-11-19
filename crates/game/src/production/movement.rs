@@ -3,27 +3,26 @@
 use super::{MovementContent, ProductionFault, Unsupported};
 use core::cell::Cell;
 
-pub(super) fn advance(
-    samus: &mut samus_movement::Samus,
+pub(super) fn with_frame<R>(
+    current_pose: types::Pose,
     content: &MovementContent,
-    rules: &samus_movement::Rules,
     frame: &samus_movement::Frame<'_>,
-    world: &dyn types::World,
-) -> Result<samus_movement::Outcome, ProductionFault> {
-    if frame.elevator_moving && samus.pose.facing == types::Facing::Screen {
+    operation: impl FnOnce(&samus_movement::Frame<'_>) -> Result<R, ProductionFault>,
+) -> Result<R, ProductionFault> {
+    if frame.elevator_moving && current_pose.facing == types::Facing::Screen {
         return Err(ProductionFault::Unsupported(Unsupported::ElevatorBody));
     }
     let initial = content
-        .pose(samus.pose)
+        .pose(current_pose)
         .ok_or(ProductionFault::Unsupported(Unsupported::PoseContent(
-            samus.pose,
+            current_pose,
         )))?;
     let missing = Cell::new(None);
     let body = |pose| {
         content.pose(pose).map_or_else(
             || {
                 missing.set(Some(pose));
-                // This candidate is discarded; no unavailable body is published or retained.
+                // This private candidate is discarded; unavailable content is never published.
                 initial.radius
             },
             |entry| entry.radius,
@@ -35,11 +34,24 @@ pub(super) fn advance(
         cannon_heading: &heading,
         ..*frame
     };
-    let outcome = samus
-        .step(&admitted, world, rules)
-        .map_err(ProductionFault::Movement)?;
+    let value = operation(&admitted)?;
     if let Some(pose) = missing.get() {
         return Err(ProductionFault::Unsupported(Unsupported::PoseContent(pose)));
     }
-    Ok(outcome)
+    Ok(value)
+}
+
+pub(super) fn advance(
+    samus: &mut samus_movement::Samus,
+    content: &MovementContent,
+    rules: &samus_movement::Rules,
+    frame: &samus_movement::Frame<'_>,
+    world: &dyn types::World,
+) -> Result<samus_movement::Outcome, ProductionFault> {
+    with_frame(samus.pose, content, frame, |admitted| {
+        let outcome = samus
+            .step(admitted, world, rules)
+            .map_err(ProductionFault::Movement)?;
+        Ok(outcome)
+    })
 }

@@ -6986,3 +6986,253 @@ after = { position = ["0102.0000", "0109.FFFF"], speed_x = "+0000.0000", pose = 
 rules = { move_limit = 1 }
 frame = "Even"
 next_pose = { body = "Upright", action = "AgainstWall", facing = "Right", radius = [5, 21] }
+
+# Additive suspended-update format (existing vector cases are unchanged).
+# Each suspended_update inherits the complete ordinary vector named by base, including
+# defaults, body content, world, inputs, rules and all ordinary expected outputs.
+# observations names semantic receipts in performed order. Each expected observation is
+# { event, ...quantities }; quantities use the existing P.S notation and pose vocabulary.
+# Observations are a checked subsequence, not the entire update or a mandated interface shape.
+# Ordinary tests still check the base result and complete State against uninterrupted execution.
+# save_points="AllOfferedAndCompleted": save before every offered decision and after every
+# completed receipt across the ENTIRE update, not only this observed subsequence. Restore
+# complete owned State, pending decision, retained quantities, query/input cursor and ordered
+# output progress. Finish and compare complete State and every output with uninterrupted work.
+# rules, when present, explicitly repeat the base's overrides for the opportunity test.
+# An altered externally supplied premise at resume must be revalidated before dependent work;
+# no pending answer may be silently recomputed and no completed query/publication repeated.
+
+[[suspended_update]]
+id = "C-op-run"
+source = "constructed"
+base = "C-cap"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "SpeedBuildsAndBrakes", "WordwiseTopSpeed"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="SpeedBuilding", before="0001.E000", step="0000.3000", sum="0002.1000", top="0002.C000", answer="WordwiseCapped" },
+ { event="SpeedBuilt", speed="0002.C000" },
+ { event="HorizontalDisplacement", intended="+0002.C000", retained_total="0002.C000" },
+ { event="GroundPull", retained_total="0002.C000", extra="0001.0000", intended="+0003.C000" }
+]
+
+[[suspended_update]]
+id = "R-op-run"
+source = "item-morph-ball:704"
+base = "R2"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "Dash", "SpeedBuildsAndBrakes", "FollowingTheGround"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="DashBuilding", before="0000.F000", gain="0000.1000", cap="0002.0000", answer="Gain" },
+ { event="DashBuilt", dash="0001.0000" },
+ { event="SpeedBuilding", before="0002.C000", step="0000.3000", sum="0002.F000", top="0002.C000", answer="WordwiseCapped" },
+ { event="SpeedBuilt", speed="0002.C000" },
+ { event="HorizontalDisplacement", intended="-0003.C000", retained_total="0003.C000" },
+ { event="GroundPull", retained_total="0003.C000", extra="0001.0000", intended="+0004.C000" }
+]
+
+[[suspended_update]]
+id = "C-op-stop-pull"
+source = "constructed"
+base = "C-aim-enemy-stop"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "FollowingTheGround", "SolidEnemies"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="HorizontalDisplacement", intended="+0002.C000", retained_total="0002.C000" },
+ { event="HorizontalResult", accepted="+0002.0000", result="EnemyStopped", current_speed="0000.0000", current_dash="0000.0000" },
+ { event="GroundPull", retained_total="0002.C000", extra="0001.0000", intended="+0003.C000" }
+]
+
+[[suspended_update]]
+id = "C-op-aim-substitute"
+source = "constructed"
+base = "C-aim-short"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "AimingAndShooting", "PoseFitAfterMoves"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="PoseChoice", action="Running", aim="DownForward", disposition="Ordinary" },
+ { event="AimTravel", intended="+0001.0000" },
+ { event="AimResult", result="TerrainStopped", action="AgainstWall", aim="DownForward" },
+ { event="BodyFit", action="AgainstWall", answer="NoGrowth", old_radius=[5,21], selected_radius=[5,21] },
+ { event="PoseInitialized", action="AgainstWall", aim="DownForward" }
+]
+
+[[suspended_update]]
+id = "C-op-support-placement"
+source = "constructed"
+base = "C-attempt-running-empty"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "PerformedSupportChecks", "SlopesCarry"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="SupportResult", surface="Floor", before_y="010A.FFFF", after_y="0109.FFFF", answer="Lifted" },
+ { event="SupportConsidered", surface="Ceiling", centre_y="0109.FFFF" },
+ { event="GroundPull", retained_total="0002.C000", extra="0001.0000", intended="+0001.0000", seated=true }
+]
+
+[[suspended_update]]
+id = "C-op-aim-fit"
+source = "constructed"
+base = "C-attempt-aim-no-growth"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "PerformedBodyFit", "AimingAndShooting"]
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="PoseChoice", action="Running", aim="DownForward", disposition="Ordinary" },
+ { event="AimTravel", intended="+0001.0000" },
+ { event="BodyFit", action="Running", answer="NoGrowth", old_radius=[5,21], selected_radius=[5,21] },
+ { event="PoseInitialized", action="Running", aim="DownForward" }
+]
+
+[[suspended_update]]
+id = "C-op-adjusted-aim"
+source = "constructed"
+base = "C-adj-aim-step"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "AimingAndShooting"]
+rules = { aim_step="0003.0000" }
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="PoseChoice", action="Running", aim="DownForward", disposition="Ordinary" },
+ { event="AimTravel", intended="-0003.0000" },
+ { event="PoseInitialized", action="Running", aim="DownForward" }
+]
+
+[[suspended_update]]
+id = "C-op-adjusted-dash"
+source = "constructed"
+base = "C-adj-dash-gain"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "Dash"]
+rules = { dash_gain="0000.2000" }
+save_points = "AllOfferedAndCompleted"
+observations = [
+ { event="DashBuilding", before="0001.0000", gain="0000.2000", cap="0002.0000", answer="Gain" },
+ { event="DashBuilt", dash="0001.2000" },
+ { event="HorizontalDisplacement", intended="+0003.E000", retained_total="0003.E000" }
+]
+
+# Changed-resume schema: resume_case inherits base starting State, content, Rules and earlier completed work.
+# The old base after-result is not an expectation after a changed world. Compare expected
+# and the complete resumed State/outputs with uninterrupted execution that receives the same
+# input change at the same actual semantic opportunity.
+# boundary identifies the actual semantic request, not a concrete model method or stage enum.
+# world_replace replaces the supplied world from that moment onward. Expected earlier work
+# remains from the inherited fixture; expected checks the changed later semantic observations.
+# BeforeQuery has no returned answer; AfterAnswerBeforeEffect has the actual answer retained.
+# restoration requires serialized complete interrupted work plus provider/output progress,
+# dropping all original objects and restoring fresh instances, at this and every ordinary
+# offered/completed point. All effects/queries/publications remain once-only.
+
+[[resume_case]]
+id = "C-resume-floor-before"
+source = "constructed"
+base = "C-attempt-running-empty"
+entries = ["SuspendedMovement", "PerformedSupportChecks", "FollowingTheGround"]
+boundary = { purpose="Support", surface="Floor", point="BeforeQuery" }
+world_replace = { floor_top=288 }
+restoration = "SerializeDropDeserialize"
+expected = { floor_answer="NoSlope", floor_after_y="010A.FFFF", ceiling_centre_y="010A.FFFF", intended_pull="+0003.C000", floor_queries=1, ceiling_queries=1 }
+
+[[resume_case]]
+id = "C-resume-floor-after"
+source = "constructed"
+base = "C-attempt-running-empty"
+entries = ["SuspendedMovement", "PerformedSupportChecks", "FollowingTheGround"]
+boundary = { purpose="Support", surface="Floor", point="AfterAnswerBeforeEffect" }
+world_replace = { floor_top=288 }
+restoration = "SerializeDropDeserialize"
+expected = { floor_answer="Lifted", floor_after_y="0109.FFFF", ceiling_centre_y="0109.FFFF", intended_pull="+0001.0000", floor_queries=1, ceiling_queries=1 }
+
+
+# Independent ordinary bases for changed-decision suspension regressions.
+[[vector]]
+id = "C-answer-fall"
+source = "constructed"
+entries = ["RisingAndFalling"]
+world = {}
+before = { position=["0100.0000", "0080.0000"], speed_y="+0001.0000" }
+pose = { body="Upright", action="Falling", facing="Right", radius=[5,21] }
+pad = []
+jump_pressed = false
+after = { position=["0100.0000", "0081.0000"], speed_y="+0001.1C00" }
+
+[[vector]]
+id = "C-answer-rise"
+source = "constructed"
+entries = ["RisingAndFalling"]
+world = {}
+before = { position=["0100.0000", "0080.0000"], speed_y="-0001.0000" }
+pose = { body="Upright", action="Jumping", facing="Right", radius=[5,21] }
+pad = ["jump"]
+jump_pressed = false
+after = { position=["0100.0000", "007F.0000"], speed_y="-0000.E400", rising=true }
+
+# Additive decision_change_case format. All existing vector/suspended_update/resume_case
+# tables retain their original meaning. base supplies complete ordinary start/content/world.
+# boundary.entry and boundary.decision name a semantic existing rule's choice, never an
+# implementation stage, API call or serializer field. BeforeChoice changes a genuinely unmade
+# decision's supplied premises; AfterChoiceBeforeEffect preserves an actual chosen answer.
+# For VerticalSpeedGrowth, required_world identifies the completed actual preceding move:
+# retain its returned travel/stop/work, apply it once, and never query it again. The later
+# speed choice is offered only after that actual result, with no early prediction/caching.
+# change supplies named Rules/pad replacements from the boundary onward; other inputs remain
+# inherited. expected checks the offered answer and once-only completed quantities.
+# The base's ordinary after-result applies only when inputs remain unchanged. Changed cases
+# compare complete State/all ordered outputs with a no-save run receiving the same semantic
+# input changes at the same actual decisions (ordinary_equivalence), never with future expected
+# pose/State used as a selector. The unchanged ordinary entry also matches the base.
+# restoration saves complete movement plus caller provider/input/query/publication progress,
+# drops original objects and restores fresh ones at every offered/completed opportunity
+# across the entire update, not merely this changed boundary. Deny unknown fields.
+# Matching query counts are per direction/purpose request, not raw block callback counts.
+# supplied_poses adds imported body content for newly reachable poses under changed premises.
+# rising in a RiseEnds record says its actual answer keeps the rise, not that an unfinished
+# whole-frame rising output has already been published.
+
+[[decision_change_case]]
+id = "C-answer-speed-current"
+source = "constructed"
+base = "C-answer-fall"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
+boundary = { entry="RisingAndFalling", decision="VerticalSpeedGrowth", point="BeforeChoice" }
+required_world = { direction="Down", purpose="OrdinaryMove", result="Unobstructed", accepted="+0001.0000", after_position=["0100.0000", "0081.0000"] }
+change = { rules={ gravity="0002.0000" } }
+expected = { before_speed="+0001.0000", chosen_speed="+0003.0000", completed_speed="+0003.0000", matching_world_queries=1 }
+restoration = "SerializeDropDeserialize"
+save_points = "AllOfferedAndCompleted"
+ordinary_equivalence = "SameActualDecisionInputs"
+
+[[decision_change_case]]
+id = "C-answer-speed-held"
+source = "constructed"
+base = "C-answer-fall"
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
+boundary = { entry="RisingAndFalling", decision="VerticalSpeedGrowth", point="AfterChoiceBeforeEffect" }
+required_world = { direction="Down", purpose="OrdinaryMove", result="Unobstructed", accepted="+0001.0000", after_position=["0100.0000", "0081.0000"] }
+change = { rules={ gravity="0002.0000" } }
+expected = { before_speed="+0001.0000", chosen_speed="+0001.1C00", completed_speed="+0001.1C00", matching_world_queries=1 }
+restoration = "SerializeDropDeserialize"
+save_points = "AllOfferedAndCompleted"
+ordinary_equivalence = "SameActualDecisionInputs"
+
+[[decision_change_case]]
+id = "C-answer-rise-current"
+source = "constructed"
+base = "C-answer-rise"
+supplied_poses = [{ body="Upright", action="Falling", facing="Right", radius=[5,21] }]
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
+boundary = { entry="RisingAndFalling", decision="RiseEnds", point="BeforeChoice" }
+change = { pad=[] }
+expected = { before_speed="-0001.0000", chosen_speed="+0000.0000", completed_speed="+0000.0000", rising=false }
+restoration = "SerializeDropDeserialize"
+save_points = "AllOfferedAndCompleted"
+ordinary_equivalence = "SameActualDecisionInputs"
+
+[[decision_change_case]]
+id = "C-answer-rise-held"
+source = "constructed"
+base = "C-answer-rise"
+supplied_poses = [{ body="Upright", action="Falling", facing="Right", radius=[5,21] }]
+entries = ["PerformedMotionDecisions", "SuspendedMovement", "RisingAndFalling"]
+boundary = { entry="RisingAndFalling", decision="RiseEnds", point="AfterChoiceBeforeEffect" }
+change = { pad=[] }
+expected = { before_speed="-0001.0000", chosen_speed="-0001.0000", completed_speed="-0001.0000", rising=true }
+restoration = "SerializeDropDeserialize"
+save_points = "AllOfferedAndCompleted"
+ordinary_equivalence = "SameActualDecisionInputs"

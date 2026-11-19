@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "0721a154ffd551167bc8ccba7c4f377b134ba3c08d3de721e8ed974c128f85ea"
+index_sha256 = "1500501a2455d8ecc4276293144dde482d31df150e01728bebf85c7b086c1358"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -331,3 +331,10 @@ null_fields = 2
 restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "connected-ordinary/carried-running-camera"
+claim = "behaviour"
+expected = { status = "pass" }
+counts = { cuts = 9, fields = 153, outputs = 36, publications = 0, replies = 0, null_cuts = 0, null_fields = 92, restorations = 9, pending_boundaries = 0, pending_restorations = 0 }
+observation_sha256 = "e3ece86289758b83462b54712825a78389e4c5504a2e9ce186da225989a2fcac"
