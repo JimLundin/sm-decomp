@@ -9,9 +9,10 @@ from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
+from typing import Any
 
 from adjusted_vectors_run import (CannotProbe, Proven, Unadjusted, Unproven, Verdict,
-                                  candidates, check_domain, completed_test, parameter_entries, probe, prove, rule_owners, test_command)
+                                  candidates, check_domain, completed_test, parameter_entries, probe, prove, probe_test, rule_owners, test_command)
 
 SPEC = """\
 ### Fixed
@@ -141,6 +142,122 @@ class AdjustedVectors(unittest.TestCase):
                                         (["reference", "adjusted-probe"], False),
                                         (["reference", "adjusted-probe"], True)])
             self.assertEqual(path.read_bytes(), original)
+
+    def test_dependent_failure_cannot_credit_an_ignored_direct_parameter(self) -> None:
+        for step, after, expected in ((3, 3, Unproven()), (3, 5, Proven("adjusted", ()))):
+            text = vector(f'id = "adjusted"\nentries = ["Step"]\nrules = {{ step = {step} }}\n'
+                          f'before = 2\nafter = {after}\n')
+            text += f'[[dependent]]\nbase = "adjusted"\nrules = {{ step = {step} }}\n'
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "demo.toml"
+                original = text.replace("\n", "\r\n").encode()
+                path.write_bytes(original)
+                calls = []
+                def complete() -> bool:
+                    calls.append("complete")
+                    data = tomllib.loads(path.read_text())
+                    v = data["vector"][1]
+                    dep = data["dependent"][0]
+                    return model(path, "ignored" if after == 3 else "step")() and dep["base"] == v["id"] and dep["rules"] == v["rules"]
+                def direct() -> bool:
+                    calls.append("direct")
+                    data = tomllib.loads(path.read_text())
+                    self.assertEqual(data["dependent"], tomllib.loads(text)["dependent"])
+                    return model(path, "ignored" if after == 3 else "step")()
+                self.assertEqual(prove(path, ["Step"], complete,
+                                       {"step": frozenset({"Step"})}, direct), {"Step": expected})
+                self.assertEqual(calls[:2], ["complete", "direct"])
+                self.assertEqual(calls.count("complete"), 1)
+                self.assertEqual(path.read_bytes(), original)
+
+    def test_failed_direct_baseline_and_runner_error_restore_original_bytes(self) -> None:
+        text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                      'before = 2\nafter = 5\n')
+        for failure_call in (1, 2, 3):
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "demo.toml"
+                original = text.encode()
+                path.write_bytes(original)
+                calls = 0
+                def direct() -> bool:
+                    nonlocal calls
+                    calls += 1
+                    if calls == failure_call:
+                        raise CannotProbe("runner failure")
+                    return model(path)()
+                with self.assertRaises(CannotProbe):
+                    prove(path, ["Step"], model(path), {"step": frozenset({"Step"})}, direct)
+                self.assertEqual(path.read_bytes(), original)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.toml"
+            path.write_bytes(text.encode())
+            with self.assertRaises(CannotProbe):
+                prove(path, ["Step"], model(path), {"step": frozenset({"Step"})}, lambda: False)
+            self.assertEqual(path.read_bytes(), text.encode())
+
+    def test_exact_selection_requires_one_named_nonignored_completed_test(self) -> None:
+        good = (b"running 1 test\ntest direct ... ok\n"
+                b"test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s\n")
+        self.assertTrue(completed_test(subprocess.CompletedProcess([], 0, good), 101, "direct"))
+        failed = good.replace(b"... ok", b"... FAILED").replace(b"result: ok", b"result: FAILED").replace(b"1 passed", b"0 passed").replace(b"0 failed", b"1 failed")
+        self.assertFalse(completed_test(subprocess.CompletedProcess([], 101, failed), 101, "direct"))
+        for output in (good.replace(b"direct", b"wrong"),
+                       good.replace(b"direct ... ok", b"direct ... ignored").replace(b"1 passed", b"0 passed").replace(b"0 ignored", b"1 ignored"),
+                       good.replace(b"running 1", b"running 0").replace(b"1 passed", b"0 passed"),
+                       good.replace(b"test direct ... ok\n", b"")):
+            with self.subTest(output=output), self.assertRaises(CannotProbe):
+                completed_test(subprocess.CompletedProcess([], 0, output), 101, "direct")
+
+    def test_domain_runs_full_baseline_then_exact_direct_baseline_and_probes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            spec = root / "docs/behaviours/demo.md"
+            spec.parent.mkdir(parents=True)
+            spec.write_text("### Step\n- switch: Parameter.\n", newline="\n")
+            metadata = root / "tools/cleanroom/adjusted_rule_owners/demo.toml"
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text('[owners]\nstep = ["Step"]\n', newline="\n")
+            (metadata.parent.parent / "adjusted_probe_tests.toml").write_text(
+                '[tests]\ndemo = "direct"\n', newline="\n")
+            path = root / "scenarios/vectors/demo.toml"
+            path.parent.mkdir(parents=True)
+            text = vector('id = "adjusted"\nentries = ["Step"]\nrules = { step = 3 }\n'
+                          'before = 2\nafter = 5\n') + '[[dependent]]\nbase = "adjusted"\n'
+            path.write_bytes(text.encode())
+            calls = []
+            def runner(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+                calls.append((command, path.read_bytes()))
+                passed = model(path)()
+                status = "ok" if passed else "FAILED"
+                output = (f"running 1 test\ntest direct ... {status}\n"
+                          f"test result: {status}. {int(passed)} passed; {int(not passed)} failed; "
+                          "0 ignored; 0 measured; 2 filtered out; finished in 0.00s\n").encode()
+                return subprocess.CompletedProcess(command, 0 if passed else 101, output)
+            with patch("adjusted_vectors_run.test_command", return_value=["runner"]), \
+                 patch("adjusted_vectors_run.os.name", "posix"), \
+                 patch("adjusted_vectors_run.subprocess.run", side_effect=runner):
+                self.assertEqual(check_domain(root, "demo"), 0)
+            self.assertEqual([c for c, _ in calls], [["runner"]] +
+                             [["runner", "--", "direct", "--exact"]] * 3)
+            self.assertEqual([b for _, b in calls[:2]], [text.encode()] * 2)
+            self.assertEqual(path.read_bytes(), text.encode())
+
+    def test_linked_files_require_valid_reviewed_test_selection(self) -> None:
+        text = REFERENCE + '[[dependent]]\nbase = "reference"\n'
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertIsNone(probe_test(root, "demo", REFERENCE))
+            with self.assertRaises(CannotProbe):
+                probe_test(root, "demo", text)
+            path = root / "tools/cleanroom/adjusted_probe_tests.toml"
+            path.parent.mkdir(parents=True)
+            for metadata in ('[tests]\ndemo = ""\n', '[tests]\ndemo = 3\n',
+                             '[tests]\ndemo = "direct --ignored"\n'):
+                path.write_text(metadata, newline="\n")
+                with self.assertRaises(CannotProbe):
+                    probe_test(root, "demo", text)
+            path.write_text('[tests]\ndemo = "vectors::direct"\n', newline="\n")
+            self.assertEqual(probe_test(root, "demo", text), "vectors::direct")
 
     def test_replacement_preserves_all_other_parsed_content(self) -> None:
         for rules in ('rules = { step = 3 }\n', '[vector.rules]\nstep = 3\n'):

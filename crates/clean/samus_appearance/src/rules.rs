@@ -10,7 +10,7 @@ use crate::clip::Hold;
 use crate::state::Laps;
 
 /// The tuning the model reads its parameters from, one field per parameter the spec names.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Rules {
     /// `Breathing`: the threshold, the energy at which she still breathes in a loop.
     pub breathing_threshold: u16,

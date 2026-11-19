@@ -108,7 +108,6 @@ const DOMAINS: &[Domain] = &[
                 "motion",
                 &[
                     "jump_held.rs",
-                    "moves.rs",
                     "run.rs",
                     "samus.rs",
                     "step.rs",
@@ -116,23 +115,21 @@ const DOMAINS: &[Domain] = &[
                     "vertical.rs",
                 ],
             ),
-            // `change.rs` is the pose change. Its shrink is pose fit's (`ShrinkingLowersHer`); its
-            // other two functions count apart, with their entries.
-            ("pose fit", &["change.rs", "fit.rs"]),
+            // The suspended controller spans motion and pose decisions and counts as shared.
+            ("pose fit", &["fit.rs"]),
             (
                 "pose chart",
-                &["chart.rs", "chart/table.rs", "rows.rs", "situation.rs"],
+                &[
+                    "change.rs",
+                    "chart.rs",
+                    "chart/table.rs",
+                    "rows.rs",
+                    "situation.rs",
+                ],
             ),
             ("collision", &["collide.rs"]),
         ],
         apart: &[
-            // `PoseFollows`: whether she takes the pose chosen, what her moves met, then the
-            // row's effects in order.
-            Apart {
-                file: "change.rs",
-                function: "change_pose",
-                area: "pose chart",
-            },
             // One effect on her speeds, dash and position: `Jumping`, `TurningRound`,
             // `Moonfall`, `WallJump`.
             Apart {

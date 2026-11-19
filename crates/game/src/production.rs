@@ -8,11 +8,14 @@ use std::sync::Arc;
 
 mod animation;
 pub mod appearance;
+mod camera_semantic;
+pub mod connected;
 mod content;
 mod entries;
 mod immutable;
 mod movement;
 mod movement_ceres;
+pub mod movement_work;
 pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
 mod sender;
 #[cfg(test)]
@@ -29,6 +32,8 @@ pub use sender::SenderInput;
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scope {
+    /// Carried movement, appearance and camera through an ordinary opportunity.
+    Connected,
     /// Movement and semantic pose.
     Movement,
     /// Movement position consumed by one Ceres door.
@@ -58,6 +63,8 @@ pub enum Scope {
 /// Complete initial state, admitted once rather than reconstructed each cut.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionSeed {
+    /// Complete coupled owners and any actual pending semantic work.
+    Connected(Box<connected::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
     /// Both complete owners admitted at the same boundary.
@@ -86,6 +93,13 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
+    /// Independently admitted unselected stimuli for one connected ordinary opportunity.
+    Connected {
+        /// Complete current inputs; selected feedback is derived internally.
+        inputs: &'a connected::inputs::Inputs,
+        /// A semantic yield or genuine opportunity completion.
+        advance: connected::Advance,
+    },
     /// One independently admitted ordinary opportunity for connected owners.
     MovementCeres {
         /// External movement dependencies.
@@ -142,6 +156,8 @@ pub enum AdvanceInput<'a> {
 /// Fresh complete outputs from the selected entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionOutputs {
+    /// Complete new selected outputs and actual semantic progress.
+    Connected(Box<connected::Outputs>),
     /// Every movement receipt, including requests and placements.
     Movement(samus_movement::Outcome),
     /// Complete outputs committed with both owners.
@@ -171,6 +187,8 @@ pub enum ProductionOutputs {
 /// Why a selected start or checkpoint cannot be admitted.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AdmissionFault {
+    /// Complete connected owner/content relation is invalid.
+    Connected(connected::Fault),
     /// State, content and rules must select the same entry.
     WrongScope,
     /// A selectable semantic pose has no body content.
@@ -198,6 +216,8 @@ pub enum AdmissionFault {
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
+    /// A produced Appearance request has no selected receiver mapping.
+    AppearanceSound(samus_appearance::PublishedSound),
     /// No independent value or producer for the selected entry.
     MissingInput(Scope),
     /// A selected pose requires unavailable semantic content.
@@ -221,6 +241,8 @@ pub enum Unsupported {
 /// A failed advance leaves state and publications unchanged.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProductionFault {
+    /// A connected opportunity lacks actual current owners or supported inputs.
+    Connected(connected::Fault),
     /// Input belongs to another admitted entry.
     WrongScope,
     /// Required production behaviour is unavailable.
@@ -280,6 +302,7 @@ impl Production {
         rules: ProductionRules,
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
+            ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
@@ -294,6 +317,15 @@ impl Production {
             ProductionSeed::AudioSender(_) => Scope::AudioSender,
         })?;
         let state = match (seed, &content, &rules) {
+            (
+                ProductionSeed::Connected(state),
+                ProductionContent::Connected(content),
+                ProductionRules::Connected(_),
+            ) => {
+                content.movement.validate()?;
+                state.validate(content).map_err(AdmissionFault::Connected)?;
+                OwnedState::Connected(state)
+            }
             (
                 ProductionSeed::MovementCeres(state),
                 ProductionContent::MovementCeres(content),
@@ -356,6 +388,7 @@ impl Production {
     #[must_use]
     pub const fn scope(&self) -> Scope {
         match self.state {
+            OwnedState::Connected(_) => Scope::Connected,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
@@ -386,6 +419,16 @@ impl Production {
             &self.context.rules,
             input,
         ) {
+            (
+                OwnedState::Connected(state),
+                ProductionContent::Connected(content),
+                ProductionRules::Connected(rules),
+                AdvanceInput::Connected { inputs, advance },
+            ) => ProductionOutputs::Connected(Box::new(
+                state
+                    .advance(inputs, content, rules, advance)
+                    .map_err(ProductionFault::Connected)?,
+            )),
             (
                 OwnedState::MovementCeres(state),
                 ProductionContent::MovementCeres(content),
@@ -462,6 +505,7 @@ impl Production {
     /// A model without a complete codec reports its selected scope explicitly.
     pub fn save(&self) -> Result<SavedProduction, SaveFault> {
         let state = match &self.state {
+            OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => CodecState::Audio(state.clone()),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
@@ -504,6 +548,7 @@ impl Production {
             return Err(AdmissionFault::RulesChanged);
         }
         let seed = match checkpoint.state {
+            CodecState::Connected(state) => ProductionSeed::Connected(state),
             CodecState::Movement(state) => ProductionSeed::Movement(state.0),
             CodecState::Audio(state) => ProductionSeed::Audio(state.0),
             CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
@@ -517,6 +562,17 @@ impl Production {
 
 fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
     match scope {
+        Scope::Connected => {
+            use canonical::model::pin_holds;
+            pin_holds::<connected::inputs::InputsPin>()
+                .and_then(|()| pin_holds::<connected::AheadPin>())
+                .and_then(|()| pin_holds::<connected::PlayingPin>())
+                .and_then(|()| pin_holds::<movement_work::WorkPin>())
+                .and_then(|()| pin_holds::<movement_work::ReceiptsPin>())
+                .and_then(|()| pin_holds::<appearance::WorkPin>())
+                .and_then(|()| pin_holds::<crate::state::owned::CameraPin>())
+                .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
+        }
         Scope::Movement | Scope::MovementCeres => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
         }

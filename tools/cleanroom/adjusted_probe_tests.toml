@@ -1,0 +1,5 @@
+# Exact ordinary-vector tests; dependent continuation/composition tests remain in the
+# mandatory committed-suite baseline, but cannot supply adjusted-parameter proof.
+[tests]
+samus-appearance = "vectors::every_vector_passes"
+samus-movement = "every_vector"

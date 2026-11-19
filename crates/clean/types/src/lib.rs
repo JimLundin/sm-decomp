@@ -462,7 +462,7 @@ pub struct Pose {
 
 /// The sprite her pose is drawn in, as samus-movement's `HowSheIsDrawn` chooses it: in
 /// samus-appearance each pose has a clip for each sprite. Its order means nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Sprite {
     /// Her plain sprite.
     Plain,
@@ -476,7 +476,7 @@ pub enum Sprite {
 
 /// The end her clip reaches this frame (samus-appearance `ClipEnds`), which samus-movement's
 /// `AnimationEnds` reads; no end is `None` where it is held as an `Option`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ClipEnd {
     /// The clip ends: samus-movement hands over her next pose.
     End,
@@ -527,11 +527,11 @@ pub enum Bounces {
 
 /// Spec: `AcceptedFloorResponse`. Signed downward-positive speed immediately before the
 /// response, in 1/65536 pixel per frame. Not move distance or final vertical speed.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct VerticalSpeed(pub Fixed);
 
 /// Spec: `AcceptedFloorResponse`. What the floor actually did, not the selected pose.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum FloorResponseKind {
     /// Upright landing accepted by pose fitting.
     UprightTouchdown,
@@ -550,7 +550,7 @@ pub enum FloorResponseKind {
 }
 
 /// Spec: `AcceptedFloorResponse`. Fresh actual response and its pre-response pulled speed.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct FloorResponse {
     /// Response accepted this frame.
     pub kind: FloorResponseKind,
@@ -559,7 +559,7 @@ pub struct FloorResponse {
 }
 
 /// Spec: `TouchdownRequests`. Named sound identity, independent of library and allowance.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum SoundIdentity {
     /// Plain spin or any wall jump ends.
     SpinEnded,
@@ -572,7 +572,7 @@ pub enum SoundIdentity {
 }
 
 /// Spec: `TouchdownRequests`. Sound transport library, not a sound identity.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum SoundLibrary {
     /// Samus sounds, library 1.
     Samus,
@@ -582,12 +582,12 @@ pub enum SoundLibrary {
 
 /// Spec: `TouchdownRequests`. Number of queued requests transport may admit for this
 /// opportunity. Distinct from library or playback duration; transport decides admission.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct QueueAllowance(pub u16);
 
 /// Spec: `TouchdownRequests`. One opportunity, not a claim of playback. Keep ordered lists,
 /// never a set: subsequent appearance requests may repeat an identity with another allowance.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SoundRequest {
     /// Named cue.
     pub identity: SoundIdentity,
@@ -599,7 +599,7 @@ pub struct SoundRequest {
 
 /// Spec: `PerformedCollisionTests`. Speed condition at a horizontal ordinary/aim move,
 /// not physical ground contact and not the final speed.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum VerticalMotionAtTest {
     /// Vertical speed was exactly zero, even in the air.
     ExactlyZero,
@@ -608,7 +608,7 @@ pub enum VerticalMotionAtTest {
 }
 
 /// Spec: `PerformedCollisionTests`. Why a leading-edge cell was evaluated.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum CollisionPurpose {
     /// Ordinary speed-driven movement or elevator descent.
     OrdinaryMove,
@@ -630,7 +630,7 @@ pub enum CollisionPurpose {
 
 /// Spec: `PerformedCollisionTests`. Actual ordered cell work, distinct from `Touch` reactions.
 /// Direction remains directional for looks. No elapsed duration or CPU cost is assigned.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct CollisionTest {
     /// Tested cell in the grid, before stand-in reaction identity resolution.
     pub cell: Cell,
@@ -646,23 +646,23 @@ pub struct CollisionTest {
 pub type CollisionTests = Vec<CollisionTest>;
 
 /// Spec: `MotionAttempts`. Number of eligible boxes supplied by the caller, not a distance.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CandidateCount(pub usize);
 /// Spec: `ReachedEnemyCandidates`. Ordinal identity in the supplied eligible population.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CandidateIndex(pub usize);
 /// Spec: `MotionAttempts`. Available whole-pixel clearance, not accepted ordinary travel.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ClearanceRoom(pub Px);
 /// Spec: `ReachedEnemyCandidates`. Signed wrapping pixel gap between boxes.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PixelGap(pub Px);
 /// Spec: `PerformedSupportChecks`, `PerformedBodyFit`. Signed whole-pixel centre placement,
 /// not a box gap, available room, or accepted ordinary travel.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct PlacementDistance(pub Px);
 /// Spec: `ReachedEnemyCandidates`. Geometry at the requested target.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum CandidateResult {
     /// Target does not reach this box.
     Miss,
@@ -674,7 +674,7 @@ pub enum CandidateResult {
     StopsAtGap(PixelGap),
 }
 /// Spec: `ReachedEnemyCandidates`. Only a box actually considered in this search.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EnemyCandidate {
     /// Identity, never a sorted-by-gap index.
     pub candidate: CandidateIndex,
@@ -686,7 +686,7 @@ pub struct EnemyCandidate {
     pub result: CandidateResult,
 }
 /// Spec: `MotionAttempts`. An actual eligible enemy search, even when empty.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EnemySearch {
     /// Supplied population size; excluded actors belong to the caller.
     pub supplied_count: CandidateCount,
@@ -694,7 +694,7 @@ pub struct EnemySearch {
     pub candidates: Vec<EnemyCandidate>,
 }
 /// Spec: `MotionAttempts`. Requested collision population.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum RequestedWorld {
     /// No enemy eligibility/search work is claimed.
     Blocks,
@@ -704,7 +704,7 @@ pub enum RequestedWorld {
     SolidEnemies,
 }
 /// Spec: `MotionAttempts`. Stopping contact, independent of slope shortening.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum MotionResult {
     /// No stopping contact, possibly shortened by terrain.
     Unobstructed,
@@ -714,7 +714,7 @@ pub enum MotionResult {
     TerrainStopped,
 }
 /// Spec: `MotionAttempts`. Travel and clearance have different result quantities.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum RequestEffect {
     /// Signed accepted ordinary/aim travel.
     Travel(TravelDistance),
@@ -722,7 +722,7 @@ pub enum RequestEffect {
     Clearance(ClearanceRoom),
 }
 /// Spec: `MotionAttempts`. One actual request, including zero or enemy-before-block stops.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct MotionAttempt {
     /// Request owner/purpose, retained on every test independently.
     pub purpose: CollisionPurpose,
@@ -746,13 +746,13 @@ pub struct MotionAttempt {
     pub result: MotionResult,
 }
 /// Spec: `MotionAttempts`. Admission reason, not a zero request.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum MotionSkipReason {
     /// Facing the screen without an active elevator ride.
     FacingPlayer,
 }
 /// Spec: `PerformedSupportChecks`. Independent floor then ceiling checks.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SupportSurface {
     /// Bottom-edge floor support.
     Floor,
@@ -760,7 +760,7 @@ pub enum SupportSurface {
     Ceiling,
 }
 /// Spec: `PerformedSupportChecks`. Surface decision even with no placement.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SupportResult {
     /// No surface facing this check.
     NoSlope,
@@ -772,7 +772,7 @@ pub enum SupportResult {
     PushedDown,
 }
 /// Spec: `PerformedSupportChecks`. Actual geometry before this check and its signed placement.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SupportCheck {
     /// Checked surface.
     pub surface: SupportSurface,
@@ -788,7 +788,7 @@ pub struct SupportCheck {
     pub placement: PlacementDistance,
 }
 /// Spec: `PerformedBodyFit`. Decision for the selected target, not accepted response effects.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum BodyFitResult {
     /// Selected target is no taller.
     NoGrowth,
@@ -802,7 +802,7 @@ pub enum BodyFitResult {
     CrouchedInstead,
 }
 /// Spec: `PerformedBodyFit`. Actual consideration, with its ordered clearance requests.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct BodyFitConsideration {
     /// Body before selection.
     pub old_radius: Radius,
@@ -819,7 +819,7 @@ pub struct BodyFitConsideration {
 }
 /// Spec: `MotionAttempts`, `PerformedSupportChecks`, `PerformedBodyFit`. Ordered fresh work
 /// for CPU timing; this domain owns no elapsed duration.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum MovementWork {
     /// Requested travel or standalone clearance.
     Motion(MotionAttempt),
@@ -831,7 +831,7 @@ pub enum MovementWork {
 
 /// A sound her animation asks for (samus-appearance `WallJumpBranch`, `BoostStages`), for the sound
 /// domain to play or not.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum AnimationSound {
     /// A wall jump's plain spin.
     PlainSpin,
@@ -845,7 +845,7 @@ pub enum AnimationSound {
 
 /// The pad: a set of its buttons, the ones held or the ones just pressed, each a bit of
 /// `button`'s.
-#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Buttons(pub u16);
 
 /// The pad's buttons, each a set of one; sets join by their bits, `Buttons(a.0 | b.0)`.
@@ -890,7 +890,7 @@ pub type Cell = Pair<u16>;
 
 /// `TouchedCells`: the way a cell is reached: a move's direction, or a look (the near-wall test,
 /// pose fit's block looks, the shrink's look), which doesn't move her.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Way {
     /// A move, heading this way.
     Move(Heading),
@@ -899,7 +899,7 @@ pub enum Way {
 }
 
 /// `TouchedCells`: a cell a move or a look reached, and the way it did.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Touch {
     /// The cell, as the cell it stands for where it stands for another.
     pub cell: Cell,
@@ -909,7 +909,7 @@ pub struct Touch {
 
 /// The kind of a 16 px cell as it meets her motion. `OtherBlockKinds`: the world answers
 /// each kind of cell as one of these; what the kind then does is its own domain's.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Block {
     /// Air to her motion: air, a door to a room, air with spikes, air her shots or bombs act on,
     /// reacting air.
@@ -932,7 +932,7 @@ pub enum Block {
 }
 
 /// `BlocksStopFlush`: the game's frame count's parity, alternating every frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Parity {
     /// An even frame.
     Even,
@@ -941,7 +941,7 @@ pub enum Parity {
 }
 
 /// Which way a sloped surface's solid part lies.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SlopeFaces {
     /// A sloped ceiling: solid above its surface.
     Ceiling,
@@ -951,11 +951,11 @@ pub enum SlopeFaces {
 
 /// Spec: `SlopesSlowTheWalk`. A dimensionless factor in 1/256ths, not travel or speed.
 /// Imported shapes use the specified factors; typed values remain total for adjusted content.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SlopeFactor(pub u16);
 
 /// A sloped surface's shape: world data.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Slope {
     /// Floor or ceiling.
     pub faces: SlopeFaces,
@@ -970,6 +970,7 @@ pub struct Slope {
 }
 
 /// A solid enemy's box: its centre and half-sizes, in pixels.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Hitbox {
     /// Its centre.
     pub centre: Pair<Px>,
@@ -1106,7 +1107,19 @@ impl Area {
 /// A piece of equipment she can take that is not a beam or a tank.
 ///
 /// Listed alphabetically; the order means nothing beyond keeping items in sorted sets.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Enum)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Enum,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum Item {
     /// Bombs, laid from the morph ball.
     Bombs,

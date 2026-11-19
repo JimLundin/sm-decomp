@@ -36,9 +36,9 @@ field = "contact.consumed-markers"
 [[fault]]
 name = "camera-follow-omitted"
 responsibility = "camera"
-file = "crates/game/src/production/entries.rs"
-before = '''state.0 = state.0.step(rules.get(), frame);'''
-after = '''let _ = (rules, frame);'''
+file = "crates/game/src/production/camera_semantic.rs"
+before = '''*camera = camera.step(rules, frame);'''
+after = '''let _ = (camera, rules, frame);'''
 case = "camera/unchanged-centre-follow"
 cut = 1216
 field = "camera.view.x.pixel"
@@ -135,3 +135,78 @@ after = "&[]"
 case = "movement-native-enemy-stop-terrain-absence"
 cut = 9233
 field = "movement.motion.0.ordinary_terrain_tests"
+
+[[fault]]
+name = "connected-playhead-reseed"
+responsibility = "appearance"
+file = "crates/game/src/production/connected.rs"
+before = '''        self.receipts_delivered = 0;'''
+after = '''        self.appearance.model.0.state.playhead = samus_appearance::Playhead { step: samus_appearance::Step::FIRST, time_left: samus_appearance::Frames::NONE };
+        self.receipts_delivered = 0;'''
+case = "connected-ordinary/carried-running-camera"
+cut = 7
+field = "appearance.step"
+
+[[fault]]
+name = "connected-wrap-omitted"
+responsibility = "appearance"
+file = "crates/game/src/production/connected/transition.rs"
+before = '''            Phase::AnimationComplete(ctx) => {
+                if !self.appearance.complete() {
+                    return Err(Fault::Appearance);
+                }
+                Phase::Animation(ctx)
+            }'''
+after = '''            Phase::AnimationComplete(ctx) => {
+                let before = self.appearance.model.0.state.playhead;
+                if !self.appearance.complete() { return Err(Fault::Appearance); }
+                if self.appearance.model.0.state.playhead.step < before.step { self.appearance.model.0.state.playhead.step = before.step; }
+                Phase::Animation(ctx)
+            }'''
+case = "connected-ordinary/carried-running-camera"
+cut = 14
+field = "appearance.step"
+
+[[fault]]
+name = "connected-camera-omitted"
+responsibility = "camera"
+file = "crates/game/src/production/camera_semantic.rs"
+before = '''    step(camera, rules, &frame);'''
+after = '''    let _ = (camera, rules, &frame);'''
+case = "connected-ordinary/carried-running-camera"
+cut = 7
+field = "camera.view.x.fraction"
+
+[[fault]]
+name = "connected-motion-placement-omitted"
+responsibility = "movement"
+file = "crates/game/src/production/movement_work.rs"
+before = '''        work.model = candidate;
+        work.completed.0.push(decision);'''
+after = '''        if matches!(decision, MovementDecision::MotionAnswer { .. }) { candidate.0.state.position = work.model.0.state.position; }
+        work.model = candidate;
+        work.completed.0.push(decision);'''
+case = "connected-ordinary/carried-running-camera"
+cut = 7
+field = "movement.state.complete"
+
+[[fault]]
+name = "connected-playing-publication-omitted"
+responsibility = "appearance"
+file = "crates/game/src/production/connected/transition.rs"
+before = '''                self.playing = Model(offered.inputs.figure_after);'''
+after = '''                let _ = offered.inputs.figure_after;'''
+case = "connected-ordinary/carried-running-camera"
+cut = 7
+field = "appearance.playing"
+
+[[fault]]
+name = "connected-camera-view-reset"
+responsibility = "camera"
+file = "crates/game/src/production/camera_semantic.rs"
+before = '''    step(camera, rules, &frame);'''
+after = '''    *camera = camera.with_view(world_camera::ViewPosition(types::Pair { x: types::ZERO, y: types::ZERO }));
+    step(camera, rules, &frame);'''
+case = "connected-ordinary/carried-running-camera"
+cut = 7
+field = "camera.view.x.fraction"

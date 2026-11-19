@@ -24,6 +24,13 @@ a candidate's entries, that witness is ambiguous and is refused. Separate witnes
 prove entries that share a parameter. This proves entry adjustability, not each knob.
 
 
+When linked cases inherit ordinary vectors, adjusted_probe_tests.toml names the reviewed
+exact direct-vector test. The committed complete suite and selected test must both pass
+before any mutation. Both probes then run only that exact test: dependent assertions
+cannot credit an override ignored by its ordinary vector. A selected run must complete
+exactly one nonignored test with the declared name. Linked files lacking selection refuse
+probing. No dependent reference, expectation or override is edited.
+
 Usage: adjusted_vectors_run.py [DOMAIN...], from the repository root; with no DOMAIN, every
 spec with a vector file and a clean crate. Exit 1 when an entry has adjusted vectors and none
 depends on its rules; 2 when a domain can't be probed (its test fails as committed, or fails
@@ -206,12 +213,18 @@ Verdict = Proven | Unproven | Unadjusted
 
 
 def prove(path: Path, entries: list[str], run: Callable[[], bool],
-          owners: dict[str, frozenset[str]]) -> dict[str, Verdict]:
+          owners: dict[str, frozenset[str]],
+          run_probe: Callable[[], bool] | None = None) -> dict[str, Verdict]:
     """Each Parameter entry's verdict, from probes of the vectors that adjust it."""
     original = path.read_bytes()
     text = original.decode("utf-8")
     if not run():
         raise CannotProbe("the vector test fails on the committed vectors")
+    if run_probe is not None:
+        if not run_probe():
+            raise CannotProbe("the selected direct-vector test fails on committed vectors")
+    else:
+        run_probe = run
     adjusting_candidates = candidates(text)
     for candidate in adjusting_candidates:
         for rule in vectors(text)[candidate.index]["rules"]:
@@ -230,10 +243,10 @@ def prove(path: Path, entries: list[str], run: Callable[[], bool],
         if key not in depending:
             path.write_bytes(probe(text, candidate, keep_rules=False,
                                    remove_rules=removed).encode("utf-8"))
-            fails_at_reference = not run()
+            fails_at_reference = not run_probe()
             if fails_at_reference:
                 path.write_bytes(probe(text, candidate, keep_rules=True).encode("utf-8"))
-                if not run():
+                if not run_probe():
                     raise CannotProbe(f"{candidate.id}: the test refuses a copy of it")
             depending[key] = fails_at_reference
         return depending[key]
@@ -261,7 +274,8 @@ SUMMARY = re.compile(
 RUNNING = re.compile(r"^running (\d+) tests?$", re.MULTILINE)
 
 
-def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int) -> bool:
+def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int,
+                   selected: str | None = None) -> bool:
     """Only a completed nonempty libtest suite can pass or refute a vector.
 
     Build errors, tool failures, crashes and empty/ignored suites are not model answers.
@@ -276,6 +290,11 @@ def completed_test(result: subprocess.CompletedProcess[bytes], failure_code: int
     passed, failed, ignored, measured, _filtered = map(int, counts)
     if passed + failed == 0 or int(running[0]) != passed + failed + ignored + measured:
         raise CannotProbe("the runner did not execute a nonempty consistent test suite")
+    if selected is not None:
+        names = re.findall(r"^test (\S+) \.\.\. (ok|FAILED|ignored).*$", output, re.MULTILINE)
+        if passed + failed != 1 or ignored != 0 or measured != 0 or names != [
+                (selected, "ok" if status == "ok" else "FAILED")]:
+            raise CannotProbe("the exact selected direct-vector test did not execute alone")
     if status == "ok" and failed == 0 and result.returncode == 0:
         return True
     if status == "FAILED" and failed > 0 and result.returncode == failure_code:
@@ -311,23 +330,52 @@ def rule_owners(root: Path, domain: str, required: bool) -> dict[str, frozenset[
     return {rule: frozenset(names) for rule, names in raw_owners.items()}
 
 
+def probe_test(root: Path, domain: str, text: str) -> str | None:
+    """Reviewed exact tests execute ordinary vectors without dependent-case assertions."""
+    path = root / "tools/cleanroom/adjusted_probe_tests.toml"
+    try:
+        tests = tomllib.loads(path.read_text(encoding="utf-8")).get("tests", {}) if path.is_file() else {}
+        if not isinstance(tests, dict) or not all(isinstance(k, str) and isinstance(v, str)
+                and re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*(?:::[A-Za-z_][A-Za-z_0-9]*)*", v)
+                for k, v in tests.items()):
+            raise ValueError()
+    except ValueError as error:
+        raise CannotProbe("invalid direct-vector test selection metadata") from error
+    selected: str | None = tests.get(domain)
+    # Linked cases can refute inherited rules even when the ordinary candidate ignores
+    # them. They require reviewed isolation rather than whole-suite probe answers.
+    linked = any(isinstance(rows, list) and any(isinstance(row, dict) and "base" in row
+                 for row in rows) for rows in tomllib.loads(text).values())
+    if linked and selected is None:
+        raise CannotProbe(f"{domain}: linked vectors need a reviewed direct-vector test")
+    return selected
+
+
 def check_domain(root: Path, domain: str) -> int:
     """Print the domain's verdicts; the number of entries whose adjusted vectors prove nothing."""
     spec = (root / "docs/behaviours" / f"{domain}.md").read_text(encoding="utf-8")
     crate = domain.replace("-", "_")
 
-    def run() -> bool:
+    vector_path = root / "scenarios/vectors" / f"{domain}.toml"
+    selected = probe_test(root, domain, vector_path.read_text(encoding="utf-8"))
+
+    def run(selection: str | None = None) -> bool:
+        command = test_command(crate, root)
+        if selection is not None:
+            command = command + ["--", selection, "--exact"]
         try:
-            result = subprocess.run(test_command(crate, root), cwd=root, capture_output=True,
+            result = subprocess.run(command, cwd=root, capture_output=True,
                                     check=False)
         except OSError as error:
             raise CannotProbe("the test runner could not be launched") from error
-        return completed_test(result, failure_code=1 if os.name == "nt" else 101)
+        return completed_test(result, failure_code=1 if os.name == "nt" else 101,
+                              selected=selection)
 
     entries = parameter_entries(spec)
     vector_path = root / "scenarios/vectors" / f"{domain}.toml"
     owners = rule_owners(root, domain, bool(candidates(vector_path.read_text(encoding="utf-8"))))
-    verdicts = prove(vector_path, entries, run, owners)
+    verdicts = prove(vector_path, entries, run, owners,
+                     (lambda: run(selected)) if selected is not None else None)
     for entry, verdict in verdicts.items():
         match verdict:
             case Unadjusted():

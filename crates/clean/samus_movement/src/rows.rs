@@ -247,7 +247,7 @@ impl Next {
 }
 
 /// What a change does to her speeds, dash and position, in order.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Effect {
     /// `Jumping`'s take-off, spin start or the spring ball's hop: she rises at the jump speed
     /// (taking off, the take-off's poses' own moves follow the pad).
@@ -638,7 +638,7 @@ pub const DOWN_TO_FORWARD: &[Aiming] = &[Aiming {
 
 /// `WhatHerMovesMet`: what this frame's moves met, before the aim change's step (a block in its
 /// way puts the running pose chosen against the wall, `Choice::blocked`).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub enum Met {
     /// A wall stop (`WallsAndCeilings`).
     Wall,

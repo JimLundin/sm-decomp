@@ -2272,3 +2272,94 @@ acts on her motion as below. These rules are Samus's; other actors get their own
     by that speed under the pull, where the unaimed crouched turn keeps the speed without moving by
     it, as the spec says of every pose on the ground. The records have the aimed crouched turns only
     with no vertical motion, where the two move alike; open until the oracle shows one.
+
+## 12. Observing and suspending ordinary movement
+
+This extends the observations of existing rules, not their choices or numbers. The ordinary
+frame remains one update. The implementation chooses how to offer and retain its decisions;
+these opportunities do not expose internal control flow. Timing and external scheduling belong
+to the caller, and never choose a movement answer.
+
+| Quantity | Units and domain meaning | Read by |
+| --- | --- | --- |
+| pending movement decision | named existing rule, its current semantic inputs, its intended world request or the actual answer already chosen/returned; speed/travel in 1/65536 px/frame or px, poses as section2, bodies in px | output (timing); completion of that decision |
+| horizontal amount before a stop | magnitude of speed plus dash in 1/65536 px, including wrapping carries; held for this update only | FollowingTheGround |
+| choice before aim and accepted choice | poses and ordinary/handover disposition; the latter includes any aim or fit substitution/refusal | AimingAndShooting, PoseFitAfterMoves, PoseFollows; output (appearance) |
+| interrupted ordinary movement | complete current movement State, pending decision and still-needed prior quantities, completed ordered requests/outputs and consumed input position | output (caller save/restore); continuation of this update |
+
+These are transient update quantities, not extra memory after a completed frame. The caller can
+save and restore an interrupted update in full; complete movement State retains every quantity
+of section1.2. An answer already chosen or returned cannot be changed by supplying different completion inputs.
+Mutable external premises for a decision not yet made must be current when that decision is made;
+a caller that cannot establish them must defer that work without publishing its effects.
+
+A returned world answer owns the travel, stop and performed world work it actually resolved.
+Applying it is not permission to choose and apply a later speed rule without first offering that
+rule's actual chosen answer. A genuinely later unmade speed decision reads fresh premises when
+it is offered; after that choice, changed completion premises cannot alter its answer or effect.
+Do not choose that future answer early merely to retain it. In particular, the speed growth after
+an airborne move is observable before its effect, with the completed travel retained independently
+of that speed answer. These boundaries preserve the existing ordinary arithmetic and ordering;
+they add no new movement rule, cost or scheduler.
+
+### PerformedMotionDecisions
+- kind: timing.
+- summary: the actual decisions that build motion, test the world and select her pose are observable before their dependent effects.
+- params: none; the observed rules retain their existing parameters and content.
+- switch: none.
+- An ordinary update reaches a speed, dash, displacement, support, world-test, aim, fit or pose-effect decision → offer the actual named rule and current operands before its effect; a world request is offered before querying, its actual returned answer after querying and before dependent effects, and a local chosen answer before applying it [C-op-run, C-op-stop-pull, C-op-aim-substitute, C-op-support-placement, C-op-aim-fit]
+- Completing an offered decision → apply its answer once and report the actual resulting quantities and ordered outputs before offering a decision that consumes them [C-op-run, C-op-stop-pull, C-op-aim-substitute, C-op-support-placement, C-op-aim-fit, C-answer-speed-current, C-answer-speed-held, C-answer-rise-current, C-answer-rise-held]
+- checked: constructed (the opportunity vectors above); recorded ordinary quantities (R-op-run); adjusted ordinary rules (C-op-adjusted-aim).
+
+A world request offers its intended geometry and purpose without predicting the answer. Completing
+a request queries the actual World once; its returned answer is then observable before the model
+applies dependent State changes. Suspension after that answer retains it without querying again.
+A local offered answer comes from the same existing rule as ordinary updating. Its name describes
+the rule's outcome, not a branch in another program. Speed-building reads the dash effect already
+completed; displacement reads the speed effect already completed. The retained horizontal amount
+comes from those actual quantities before a stop, independent of accepted travel or halted Run.
+Ground following reads it only after actual support checks, with seating and any placement as
+SlopesCarry already defines. Every support and world answer precedes effects that consume it;
+its considered candidates and performed cells keep the existing request order.
+
+The actual pose choice before aim is observable with the earlier motion result. An aim stop can
+change that choice; fit reads the changed choice and reports what she really takes. Pose
+initialization and response/row effects report their actual accepted pose and quantities, rather
+than a desired or final-frame pose. Appearance reads the actual selected figure and decides its
+own clip initialization. No animation playhead becomes movement State.
+
+### SuspendedMovement
+- kind: timing.
+- summary: suspension preserves a movement decision and all earlier work without repeating it.
+- params: none.
+- switch: none.
+- Suspend an offered decision before its effect, or suspend after a completed decision → serialize complete current movement, the uncompleted request or actual answer if any, earlier quantities still needed, completed requests/outputs and input progress; discard the original interrupted instance and deserialize into a fresh instance whose restoration completes the same update with identical final State and ordered outputs as uninterrupted updating [C-op-run, C-op-stop-pull, C-op-aim-substitute, C-op-support-placement, C-op-aim-fit, R-op-run, C-op-adjusted-aim, C-op-adjusted-dash]
+- A world premise changes after earlier work but before an actual support query → query the current world once and use its fresh answer for placement and the subsequent pull [C-resume-floor-before]
+- A world premise changes after the actual support answer, before applying its effect → retain and apply that already returned answer once, with no second query; later unmade queries read the new world [C-resume-floor-after]
+- A speed-growth premise changes after movement's returned world answer but before that later speed choice → retain the world answer, query it no second time, and offer the speed answer from the current premise before its effect [C-answer-speed-current]
+- A speed-growth or rise-ending premise changes after its actual local answer was chosen → apply that retained answer once; neither recompute it nor hide another unoffered choice in its completion [C-answer-speed-held, C-answer-rise-held]
+- checked: constructed and recorded-input opportunity cases above, with every offered/completed opportunity used as a save point.
+
+The ordinary entry completes these same rules without suspension. Observation and saving do not
+advance movement, consume another world answer or repeat a publication. A completed update cannot
+resume as though it had uncompleted effects. The model's complete State and ordinary outputs must
+remain unchanged for every existing vector, including nonselected poses and world responses.
+
+Opportunity vectors use the additive `suspended_update` format documented in the existing
+[samus-movement vectors](../../scenarios/vectors/samus-movement.toml). Their base cases retain
+all ordinary start/content/input/result checks. These observations add no CPU costs, interrupt
+rules, environment owner or gameplay dispatch mechanism.
+
+The changed-resume cases distinguish a request not yet answered from an actual retained answer.
+C-resume-floor-before removes the slope before the floor query: no lift, an unseated 3.C000 pull.
+C-resume-floor-after removes it after its actual lifted answer: apply that lift, then query the
+ceiling in the new world and retain the seated one-pixel pull. Prematurely cached future answers
+and recomputed returned answers are both incorrect. Missing production freshness still belongs
+to production; these are total answers to the supplied changed world, not Unsupported rules.
+
+Every all-opportunity save test serializes the complete interrupted work and caller-held input,
+query and output progress, discards the original objects, then deserializes into fresh objects.
+A clone or in-memory checkpoint is insufficient. All pending requests/answers, still-needed
+quantities, complete movement and completed outputs survive. Resuming performs each world query,
+State effect and output publication once. The tests compare all of them, not only the listed
+observation subsequence. No serializer layout, stage enum or method list is prescribed.

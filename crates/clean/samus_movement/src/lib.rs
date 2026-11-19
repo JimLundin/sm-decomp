@@ -2,7 +2,8 @@
 //! Samus, stepped one 60 Hz frame at a time, her motion in fixed-point subpixels.
 //!
 //! Every rule names the spec entry it comes from. `samus` holds her state and a frame's
-//! outputs; `step` runs a frame in its order: `moves` her moves, `change` the pose change. `run`
+//! outputs; `step` drains the ordinary `suspended` continuation in rule order. `change` holds
+//! transition aim publication. `run`
 //! is her horizontal motion and `vertical` her vertical motion, each a value with its own moves;
 //! `collide` what her moves meet, `fit` pose fit, `jump_held` jump held through, and `chart`
 //! with `situation` and `rows` the pose chart; `rules` the tuning parameters and `catalogue` the
@@ -68,6 +69,33 @@
 //! still apply. An end that gives way uses ordinary selection and fitting instead.
 //! `floor_response` reports accepted contact, never handover or held-jump history.
 //!
+//! # Observing and restoring an update
+//!
+//! Spec: `PerformedMotionDecisions`, `SuspendedMovement`. Construct an interval with
+//! `SuspendedMovement::new(complete_samus)`. `offer` chooses a local answer using current
+//! supplied inputs, or exposes an unanswered world request. `complete` queries that request
+//! once, leaving its actual answer offered; completing an answer applies it once. A later
+//! speed-growth or wall outcome is chosen only when offered, after the earlier travel.
+//! Repeated observation retains the offered answer without recomputation or effects.
+//!
+//! Save the whole reachable continuation with serde, together with caller-owned provider,
+//! input cursor and publication progress; discard it and deserialize a fresh whole value.
+//! Public fields permit inspection, not independent editing of quantities coupled to private
+//! progress. Mid-frame construction by field edits is unsupported; start from a complete
+//! Samus or restore an entire reachable continuation. Finished work cannot repeat effects.
+//! Until completion, `outputs` is a completed-record prefix, not a finished Outcome: final
+//! sprite, rising, cues and other unfinished fields are not yet authoritative. Fit receipts
+//! remain in retained fit progress until their enclosing consideration completes; the published
+//! record list is not temporarily flattened and later rewritten. External delivery acknowledgement
+//! and any delivered-output cursor remain caller-owned; movement does not acknowledge delivery.
+//! A completed growth consideration retains its old/selected height operands and growth distance;
+//! later clearance requests use current supplied body geometry and world. The specification has
+//! no rule for restarting a partially answered fit when imported heights change so that earlier
+//! rooms describe a different growth problem. That semantic gap must not be filled with a new
+//! fitting algorithm or by freezing future inputs; a caller unable to establish the premises
+//! must defer that work. Ordinary unchanged body content and current request geometry remain
+//! supported, without changing any existing fit rule.
+//!
 //! # Content boundary and numerical meanings
 //!
 //! The importer validates pose/action relations, coverage for every selectable body, and
@@ -106,13 +134,13 @@ mod chart;
 mod collide;
 mod fit;
 mod jump_held;
-mod moves;
 mod rows;
 pub mod rules;
 mod run;
 mod samus;
 mod situation;
 mod step;
+pub mod suspended;
 mod tick;
 mod touchdown;
 mod travel;

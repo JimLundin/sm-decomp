@@ -83,6 +83,53 @@ fn round_trip_is_identity() {
 }
 
 #[test]
+fn boxed_whole_state_keeps_checkpoint_schema_payload_and_nested_diff() {
+    let state = sample();
+    let schema = to_bytes(&Schema::<State>::new());
+    assert_eq!(
+        from_bytes::<Schema<Box<State>>>(&schema).unwrap().value(),
+        State::SCHEMA
+    );
+    let restored: Box<State> = from_bytes(&to_bytes(&state)).unwrap();
+    assert_eq!(to_bytes(&restored), to_bytes(&state));
+    assert_eq!(*restored, state);
+    let mut changed = sample();
+    changed.samus.vertical = Vertical::Falling {
+        speed: Speed(0x0124),
+        since: 4,
+    };
+    let difference = restored.diff(&Box::new(changed)).unwrap();
+    assert_eq!(
+        difference.path(),
+        [
+            Segment::Field("samus"),
+            Segment::Field("vertical"),
+            Segment::Variant("Falling"),
+            Segment::Field("speed")
+        ]
+    );
+    assert_eq!(difference.left(), 0x0123u16.to_le_bytes());
+    assert_eq!(difference.right(), 0x0124u16.to_le_bytes());
+}
+
+#[test]
+fn boxed_nested_state_rejects_invalid_or_incomplete_payload() {
+    let mut bytes = to_bytes(&sample());
+    bytes.pop();
+    assert_eq!(
+        from_bytes::<Box<State>>(&bytes),
+        Err(DecodeError::UnexpectedEnd)
+    );
+    assert_eq!(
+        from_bytes::<Box<Samus>>(&[0, 0, 4]),
+        Err(DecodeError::UnknownVariant {
+            type_name: "Vertical",
+            tag: 4,
+        })
+    );
+}
+
+#[test]
 fn encoding_is_byte_exact() {
     let samus = Samus {
         x: -2,

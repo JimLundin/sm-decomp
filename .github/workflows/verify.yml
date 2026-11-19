@@ -124,6 +124,8 @@ jobs:
         run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch the reviewed movement opportunity evidence
         run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch the reviewed connected ordinary opportunities
+        run: bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch and qualify the pinned complete scoped search inputs
         run: bash tools/ci/fetch_native_search.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch and qualify the pinned derived enemy-stop source
@@ -141,6 +143,14 @@ jobs:
         run: |
           cargo test --locked -p verify --lib native_search_ -- --ignored
           cargo test --locked -p verify --lib native_touch_ -- --ignored
+      - name: Test connected ordinary continuation and delivery
+        env:
+          SM_ROM: ${{ github.workspace }}/rom/sm.smc
+          SM_CACHE: ${{ runner.temp }}/cache
+          SM_CONNECTED_SOURCE: ${{ runner.temp }}/audio-native
+          SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
+        run: |
+          cargo test --locked --profile verify -p verify --lib replay::connected::tests:: -- --ignored --skip connected_complete_index_preserves_all_reviewed_floors
       - name: Build the shared replay command
         run: cargo build --locked --profile verify -p tools
       - name: Check every indexed case against the reviewed baseline
