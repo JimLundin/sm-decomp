@@ -81,10 +81,12 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | integrated/missing-dependency-closure | Unsupported at None: complete integrated production dependency closure | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | movement-ceres/carried-position-proximity | Pass | 4 | 0 | 4 | 28 | 0 | 0 |
 | connected-ordinary/carried-running-camera | Pass | 9 | 0 | 9 | 153 | 36 | 9 |
+| connected-ordinary/run-release-floor-aim | Pass | 16 | 0 | 16 | 272 | 64 | 16 |
 
 - **integrated/missing-dependency-closure** witnesses samus-movement/TravelledDistances. Limits: complete production dependency closure unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-ceres/carried-position-proximity** witnesses samus-movement/MovesAsShePosed, boss-ceres-ridley/Waiting, boss-ceres-ridley/SheIsNear, boss-ceres-ridley/Polling, boss-ceres-ridley/Closing, boss-ceres-ridley/Shown, boss-ceres-ridley/Solid. Limits: only carried prior whole-pixel movement to door proximity integrated; complete outputs retained but only declared position and door fields compared; unselected producers remain external; prior roster empty; current actor selection and timing unproved; appearance ahead remains external feedback; no durable Ceres codec, pixels, app, power-on or played-alone claim.
 - **connected-ordinary/carried-running-camera** witnesses samus-movement/MovesAsShePosed, samus-appearance/ClipPlays, world-camera/FollowingHer, world-camera/Remembering, world-camera/RememberedHeightFraction. Limits: Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved..
+- **connected-ordinary/run-release-floor-aim** witnesses samus-movement/MovesAsShePosed, samus-movement/Dash, samus-movement/AimingAndShooting, samus-movement/SlopesCarry, samus-movement/SlopesSlowTheWalk, samus-movement/FollowingTheGround, samus-appearance/ClipPlays, world-camera/FollowingHer, world-camera/Remembering, world-camera/RememberedHeightFraction. Limits: Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Reached Air/Solid/Floor Surface only; all support checks remain unseated. Control hardware/bindings, equipment, parity/clock, energy/health, liquid, actors, room scripts, camera tuning and sound transport remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved..
 
 ### Whole-movie cases
 
@@ -508,7 +510,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 34 | 3,642 | 21,850 | 21,472 | 6,043 | 814 | 1,438 | 2,824 | 290 | 4,532 |
+| production and exact services | 34 | 3,648 | 21,886 | 21,490 | 6,043 | 814 | 1,438 | 2,842 | 290 | 4,542 |
 | bridges | 4 | 552 | 3,310 | 3,280 | 204 | 336 | 434 | 85 | 0 | 537 |
 | rebuilt models, shared types included | 104 | 8,111 | 48,666 | 53,373 | 20,678 | 17,706 | 3,508 | 3,506 | 958 | 16,021 |
 

@@ -125,7 +125,7 @@ the index's lock path and source declarations; it supplies no movie-global offse
 
 
 `CACHE` is made by `oracle corpus ROM scenarios/lock.toml DATA --oracle lsnes --native-seeds
-BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE Ãƒâ€šÃ‚Â§6): lsnes plays the row's
+BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE §6): lsnes plays the row's
 frame pads from its native seed and writes the lean tier, `CACHE/ROW/lean.bin` and, last,
 `lean.txt` with the lock pins `verify::cache` checks: about 2 KB a frame, each frame's memory
 changes with the whole memories every 256th frame. `DATA` is the old lock's decrypted bundles
