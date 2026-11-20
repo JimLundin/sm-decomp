@@ -1,6 +1,6 @@
 //! Reviewed replay floors distinguish exact behaviour from explicitly held capability boundaries.
 
-use super::index::{Case, CaseId, Index, Responsibility, Start, valid_hash};
+use super::index::{Case, CaseId, ExpectedProvider, Index, Responsibility, Start, valid_hash};
 use super::result::{CaseResult, Counts, Outcome};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -284,6 +284,14 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         Outcome::Difference { .. }
         | Outcome::DataFailure { .. }
         | Outcome::CheckpointFailure { .. } => return false,
+    }
+    if case.expectations.provider == ExpectedProvider::NativeFrameCallbacks {
+        // One declared stream contains every observed publication at this return.
+        return case.expectations.fields.len().checked_mul(counts.cuts) == Some(counts.fields)
+            && counts.outputs == counts.publications
+            && (counts.outputs == 0) == (counts.cuts == 0)
+            && counts.replies == 0
+            && counts.pending_boundaries == 0;
     }
     if case.responsibilities != [Responsibility::Audio] {
         let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);

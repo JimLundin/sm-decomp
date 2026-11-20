@@ -527,7 +527,7 @@ impl Actual {
                 Ok(camera::actual(&state.0, outputs))
             }
             (Self::Hud(content), OwnedState::Hud(state), ProductionOutputs::Hud(outputs)) => {
-                Ok(hud::actual(state, outputs, content))
+                hud::actual(state, outputs, content)
             }
             (
                 Self::Appearance(content),
@@ -554,7 +554,7 @@ impl Actual {
             (Self::Ceres, OwnedState::Ceres(state)) => Ok(ceres::initial(state)),
             (Self::Weapons, OwnedState::WeaponsContact(state)) => Ok(weapons::initial(&state.0)),
             (Self::Camera, OwnedState::Camera(state)) => Ok(camera::initial(&state.0)),
-            (Self::Hud(content), OwnedState::Hud(state)) => Ok(hud::initial(state, content)),
+            (Self::Hud(content), OwnedState::Hud(state)) => hud::initial(state, content),
             (Self::Appearance(content), OwnedState::Appearance(state)) => {
                 Ok(appearance::initial(state.0, content))
             }

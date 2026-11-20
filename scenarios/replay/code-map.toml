@@ -26,6 +26,14 @@ targets = [
 ]
 
 [[rule]]
+id = "audio-transport/SenderTiming"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/sender_caller.rs" },
+  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
+]
+
+[[rule]]
 id = "audio-transport/VisibleCompletion"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },
@@ -136,6 +144,30 @@ targets = [
 ]
 
 [[rule]]
+id = "game-time/PlayTimeAdvance"
+targets = [
+  { role = "model", path = "crates/clean/game_time/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/play_time.rs" },
+  { role = "navigation", path = "docs/behaviours/game-time.md" },
+]
+
+[[rule]]
+id = "interface-hud/CountdownContinuation"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/countdown_work.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/countdown_caller.rs" },
+  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "interface-hud/EscapeCountdown"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/countdown.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/countdown_caller.rs" },
+  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
+]
+
+[[rule]]
 id = "interface-hud/HerBlink"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
@@ -148,6 +180,14 @@ id = "interface-hud/MiniMapWindow"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
+  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "interface-hud/RetainedHudWork"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/hud.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
 ]
 
@@ -169,6 +209,22 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
   { role = "adapter", path = "crates/game/src/production/appearance.rs" },
   { role = "adapter", path = "crates/game/src/production/connected/appearance.rs" },
+]
+
+[[rule]]
+id = "samus-health/LowEnergyWarning"
+targets = [
+  { role = "model", path = "crates/clean/samus_health/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/maintenance.rs" },
+  { role = "navigation", path = "crates/clean/samus_health/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-health/PeriodicLoss"
+targets = [
+  { role = "model", path = "crates/clean/samus_health/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/maintenance.rs" },
+  { role = "navigation", path = "crates/clean/samus_health/src/catalogue.rs" },
 ]
 
 [[rule]]
@@ -372,4 +428,12 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/connected.rs" },
   { role = "adapter", path = "crates/game/src/production/connected/world.rs" },
   { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "world-quake/QuietQuakePhase"
+targets = [
+  { role = "model", path = "crates/clean/world_quake/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/room_quake.rs" },
+  { role = "navigation", path = "crates/clean/world_quake/src/catalogue.rs" },
 ]

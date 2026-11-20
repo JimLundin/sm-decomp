@@ -47,11 +47,13 @@ const ENGINE: &str = "crates/game";
 struct Domain {
     /// The domain's name.
     name: &'static str,
-    /// The bridge's files under `crates/game/src`: those whose names start with it.
-    bridge: &'static str,
+    /// The top-level bridge prefix under `crates/game/src`, where present.
+    bridge: Option<&'static str>,
+    /// Dedicated production adapter paths under `crates/game/src`.
+    adapters: &'static [&'static str],
     /// The replay provider's files under `crates/verify/src/replay`: those whose names start with it.
     /// The provider module is named apart from the model crate, so neither hides the other.
-    provider: &'static str,
+    providers: &'static [&'static str],
     /// The Budget section's areas, each with the model files (under the model's `src`) that
     /// hold it. A model file in no area is the domain's shared code: it counts in the domain's
     /// total only.
@@ -65,8 +67,10 @@ struct Domain {
 struct Apart {
     /// The file, under the model's `src`.
     file: &'static str,
-    /// The function's name, which the file holds once.
+    /// The function's name in the file.
     function: &'static str,
+    /// Exact number of same-named functions that belong to the area.
+    occurrences: usize,
     /// The area that holds it.
     area: &'static str,
 }
@@ -75,8 +79,9 @@ struct Apart {
 const DOMAINS: &[Domain] = &[
     Domain {
         name: "audio-transport",
-        bridge: "audio_transport_bridge",
-        provider: "audio",
+        bridge: Some("audio_transport_bridge"),
+        adapters: &[],
+        providers: &["audio"],
         areas: &[
             ("sender", &["sender.rs"]),
             ("effects", &["effects.rs"]),
@@ -87,22 +92,25 @@ const DOMAINS: &[Domain] = &[
     },
     Domain {
         name: "enemy-interactions",
-        bridge: "enemy_interactions_bridge",
-        provider: "contact",
+        bridge: Some("enemy_interactions_bridge"),
+        adapters: &[],
+        providers: &["contact"],
         areas: &[("contact", &["lib.rs"])],
         apart: &[],
     },
     Domain {
         name: "weapons-projectiles",
-        bridge: "weapons_projectiles_bridge",
-        provider: "weapons",
+        bridge: Some("weapons_projectiles_bridge"),
+        adapters: &[],
+        providers: &["weapons"],
         areas: &[("shots", &["lib.rs", "domain.rs"])],
         apart: &[],
     },
     Domain {
         name: "samus-movement",
-        bridge: "samus_movement_bridge",
-        provider: "movement",
+        bridge: Some("samus_movement_bridge"),
+        adapters: &[],
+        providers: &["movement"],
         areas: &[
             (
                 "motion",
@@ -135,6 +143,7 @@ const DOMAINS: &[Domain] = &[
             Apart {
                 file: "change.rs",
                 function: "apply",
+                occurrences: 1,
                 area: "motion",
             },
         ],
@@ -143,8 +152,9 @@ const DOMAINS: &[Domain] = &[
     // and its other values (the push, the margin) are constants.
     Domain {
         name: "world-camera",
-        bridge: "world_camera_bridge",
-        provider: "camera",
+        bridge: Some("world_camera_bridge"),
+        adapters: &[],
+        providers: &["camera"],
         areas: &[
             ("follow", &["follow.rs", "rules.rs"]),
             ("limits", &["axis.rs", "room.rs"]),
@@ -158,8 +168,9 @@ const DOMAINS: &[Domain] = &[
     // there.
     Domain {
         name: "run-progress",
-        bridge: "run_progress_bridge",
-        provider: "progress",
+        bridge: Some("run_progress_bridge"),
+        adapters: &[],
+        providers: &["progress"],
         areas: &[
             ("happened", &["progress.rs"]),
             ("places", &["places.rs", "report.rs"]),
@@ -174,18 +185,34 @@ const DOMAINS: &[Domain] = &[
     // State, the flash's and blink's timing and the catalogue are the domain's shared code.
     Domain {
         name: "interface-hud",
-        bridge: "interface_hud_bridge",
-        provider: "hud",
+        bridge: Some("interface_hud_bridge"),
+        adapters: &[
+            "production/frame/hud.rs",
+            "production/frame/hud_map_caller.rs",
+            "production/frame/late_hud.rs",
+            "production/frame/countdown_caller.rs",
+        ],
+        providers: &["hud", "frame_hud_inputs", "frame_countdown_scene"],
         areas: &[
-            ("status", &["status_bar.rs", "pictures.rs", "layout.rs"]),
+            (
+                "status",
+                &[
+                    "status_bar.rs",
+                    "pictures.rs",
+                    "layout.rs",
+                    "countdown.rs",
+                    "countdown_work.rs",
+                ],
+            ),
             ("selection", &["selection.rs", "item.rs"]),
             ("minimap", &["mini_map.rs", "map.rs"]),
         ],
         apart: &[
-            // `CyclingItems`: whether Select can land on an item.
+            // `CyclingItems`: the early control input and the status view share the availability check.
             Apart {
                 file: "inputs.rs",
                 function: "has",
+                occurrences: 2,
                 area: "selection",
             },
             // The reference rules: the bosses' screens (`BossBlanksTheMap`) and her blink are
@@ -193,6 +220,7 @@ const DOMAINS: &[Domain] = &[
             Apart {
                 file: "rules.rs",
                 function: "reference",
+                occurrences: 1,
                 area: "minimap",
             },
         ],
@@ -204,8 +232,9 @@ const DOMAINS: &[Domain] = &[
     // area has no file of its own.
     Domain {
         name: "world-blocks",
-        bridge: "world_blocks_bridge",
-        provider: "blocks",
+        bridge: Some("world_blocks_bridge"),
+        adapters: &[],
+        providers: &["blocks"],
         areas: &[
             ("places", &["places.rs", "reactions.rs"]),
             ("scroll", &[]),
@@ -216,36 +245,42 @@ const DOMAINS: &[Domain] = &[
             Apart {
                 file: "cells.rs",
                 function: "show",
+                occurrences: 1,
                 area: "places",
             },
             // `Regrowing`: a cell grows back.
             Apart {
                 file: "cells.rs",
                 function: "regrow",
+                occurrences: 1,
                 area: "places",
             },
             // `PatternCells`: where a pattern's cell lands from its origin.
             Apart {
                 file: "cells.rs",
                 function: "offset",
+                occurrences: 1,
                 area: "places",
             },
             // `AnswersToHerMotion`: what a touch of a cell's kind answers.
             Apart {
                 file: "cells.rs",
                 function: "answer",
+                occurrences: 1,
                 area: "breakables",
             },
             // The plain cell a reaction that stops reacting leaves (the rules by family).
             Apart {
                 file: "cells.rs",
                 function: "plain",
+                occurrences: 1,
                 area: "breakables",
             },
             // `BlocksMarkedNothing`: the family a cell marked `Nothing` or `Other` is met as.
             Apart {
                 file: "cells.rs",
                 function: "met_as",
+                occurrences: 1,
                 area: "breakables",
             },
         ],
@@ -256,30 +291,36 @@ const DOMAINS: &[Domain] = &[
     // moves' writes and the run's pace and boost stages are the other two areas.
     Domain {
         name: "samus-appearance",
-        bridge: "samus_appearance_bridge",
-        provider: "appearance",
+        bridge: Some("samus_appearance_bridge"),
+        adapters: &["production/frame/samus_palette.rs"],
+        providers: &["appearance", "frame_palette"],
         areas: &[
             ("clip", &["clip.rs", "ahead.rs", "play.rs", "starting.rs"]),
             ("moves", &["moves.rs"]),
             ("run", &["run.rs"]),
+            ("cannon", &["cannon.rs"]),
+            ("palette", &["colours.rs"]),
         ],
         apart: &[
             // `ClipControls`: the playhead on a step, with its hold slowed.
             Apart {
                 file: "state.rs",
                 function: "on",
+                occurrences: 1,
                 area: "clip",
             },
             // `ClipPlays`: the time left runs down, and the clip moves on.
             Apart {
                 file: "state.rs",
                 function: "run_down",
+                occurrences: 1,
                 area: "clip",
             },
             // `BoostStages`: a stage's laps count down.
             Apart {
                 file: "state.rs",
                 function: "after_lap",
+                occurrences: 1,
                 area: "run",
             },
         ],
@@ -289,8 +330,9 @@ const DOMAINS: &[Domain] = &[
     // catalogue are the domain's shared code.
     Domain {
         name: "boss-ceres-ridley",
-        bridge: "boss_ceres_ridley_bridge",
-        provider: "ceres",
+        bridge: Some("boss_ceres_ridley_bridge"),
+        adapters: &[],
+        providers: &["ceres"],
         areas: &[
             ("doors", &["door.rs", "phase.rs", "figure.rs"]),
             ("station", &["station.rs"]),
@@ -300,17 +342,20 @@ const DOMAINS: &[Domain] = &[
             Apart {
                 file: "inputs.rs",
                 function: "she_is_near",
+                occurrences: 1,
                 area: "doors",
             },
             Apart {
                 file: "inputs.rs",
                 function: "gap",
+                occurrences: 1,
                 area: "doors",
             },
             // `EscapeShakes`: the shake a door's run starts.
             Apart {
                 file: "inputs.rs",
                 function: "escape_shake",
+                occurrences: 1,
                 area: "station",
             },
         ],
@@ -320,12 +365,41 @@ const DOMAINS: &[Domain] = &[
     // domain's shared code. The engine has no bridge yet: it runs no passage.
     Domain {
         name: "world-doors",
-        bridge: "world_doors_bridge",
-        provider: "doors",
+        bridge: Some("world_doors_bridge"),
+        adapters: &[],
+        providers: &["doors"],
         areas: &[(
             "passage",
             &["passage.rs", "step.rs", "view.rs", "colours.rs"],
         )],
+        apart: &[],
+    },
+    Domain {
+        name: "samus-health",
+        bridge: None,
+        adapters: &[
+            "production/frame/health.rs",
+            "production/frame/maintenance.rs",
+        ],
+        providers: &["frame_health_inputs"],
+        areas: &[("current-energy", &["lib.rs"])],
+        apart: &[],
+    },
+    // The retained frame loader and terminal comparisons serve both owners.
+    Domain {
+        name: "game-time",
+        bridge: None,
+        adapters: &["production/frame/play_time.rs"],
+        providers: &[],
+        areas: &[("clock", &["lib.rs"])],
+        apart: &[],
+    },
+    Domain {
+        name: "world-quake",
+        bridge: None,
+        adapters: &["production/frame/room_quake.rs"],
+        providers: &[],
+        areas: &[("quiet-quake", &["lib.rs"])],
         apart: &[],
     },
 ];
@@ -606,6 +680,17 @@ fn prefixed(dir: &Path, prefix: &str) -> Result<Vec<PathBuf>, String> {
     Ok(entries)
 }
 
+/// The bridge roots shared by measurement and the dependency check.
+fn bridge_roots(root: &Path, domain: &Domain) -> Result<Vec<PathBuf>, String> {
+    let engine = root.join(ENGINE).join("src");
+    let mut paths = match domain.bridge {
+        Some(prefix) => prefixed(&engine, prefix)?,
+        None => Vec::new(),
+    };
+    paths.extend(domain.adapters.iter().map(|path| engine.join(path)));
+    Ok(paths)
+}
+
 /// Each file's measure, the files measured together (a clump recurs across them).
 fn measure(root: &Path, files: &[PathBuf]) -> Result<Vec<File>, String> {
     let texts = files
@@ -691,16 +776,22 @@ fn with_apart(
             .flatten()
             .filter(|function| function.name == apart.function)
             .collect();
-        let (&[function], Some((part, taken))) = (named.as_slice(), parts.get_mut(at)) else {
+        let Some((part, taken)) = parts
+            .get_mut(at)
+            .filter(|_| named.len() == apart.occurrences)
+        else {
             return Err(format!(
-                "{}: apart: {} holds {} functions {}, not one",
+                "{}: apart: {} holds {} functions {}, expected {}",
                 domain.name,
                 apart.file,
                 named.len(),
-                apart.function
+                apart.function,
+                apart.occurrences,
             ));
         };
-        let measure = Measure::of(function.size, lines::code_lines(function.text));
+        let measure = named.iter().fold(Measure::default(), |total, function| {
+            total.plus(Measure::of(function.size, lines::code_lines(function.text)))
+        });
         part.file.measure = part.file.measure.minus(measure);
         taken.push(Part {
             file: File { path, measure },
@@ -764,7 +855,11 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
             ));
         }
     }
-    let provider = prefixed(&root.join("crates/verify/src/replay"), domain.provider)?;
+    let provider_dir = root.join("crates/verify/src/replay");
+    let mut providers = Vec::new();
+    for prefix in domain.providers {
+        providers.extend(prefixed(&provider_dir, prefix)?);
+    }
     let uses_shared = uses_shared_types(&read(&model_dir.join("Cargo.toml"))?);
     Ok(Measured {
         domain,
@@ -773,11 +868,8 @@ fn measure_domain(root: &Path, domain: &'static Domain) -> Result<Measured, Stri
         count,
         vectors: Vectors::parse(&toml).len(),
         baseline: baseline(budget),
-        bridge: measure(
-            root,
-            &sources(&prefixed(&root.join(ENGINE).join("src"), domain.bridge)?)?,
-        )?,
-        provider: measure(root, &sources(&provider)?)?,
+        bridge: measure(root, &sources(&bridge_roots(root, domain)?)?)?,
+        provider: measure(root, &sources(&providers)?)?,
     })
 }
 
@@ -1175,9 +1267,9 @@ fn areas(out: &mut String, domains: &[Measured]) {
 
 fn adapters_and_providers(out: &mut String, domains: &[Measured]) {
     out.push_str(
-        "\n## Production adapters and replay providers\n\nThe bridge (`crates/game/src/<bridge>*`) answers the \
-         model's world from the engine; the replay provider (`crates/verify/src/replay/<provider>*`) \
-         checks the model against the oracle. Neither is the model's.\n\n",
+        "\n## Production adapters and replay providers\n\nBridges and dedicated production adapters connect models to the engine. Replay providers compare \
+         model outputs against the oracle. Shared retained-frame load, scheduling and comparison \
+         code stays outside the per-domain totals.\n\n",
     );
     measure_table(out, 2, &["Domain", "Part", "Files"]);
     let mut sum = Measure::default();

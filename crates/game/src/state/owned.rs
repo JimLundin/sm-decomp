@@ -56,6 +56,8 @@ impl Pinned for SenderPin {
 pub enum OwnedState {
     /// Complete connected current owners and semantic continuation.
     Connected(Box<crate::production::connected::State>),
+    /// Complete retained frame caller, selected producers and physical continuation.
+    Frame(Box<crate::production::frame::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
     /// Complete owners connected by held movement position.
@@ -92,4 +94,5 @@ pub(crate) enum CodecState {
     Camera(Model<CameraPin>),
     Appearance(Model<AppearancePin>),
     AudioSender(Model<SenderPin>),
+    Frame(Box<crate::production::frame::State>),
 }

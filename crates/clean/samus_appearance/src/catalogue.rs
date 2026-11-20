@@ -48,6 +48,16 @@ pub enum BehaviourId {
     PerformedAnimationDecisions,
     /// Complete interrupted work restored and continued once.
     SuspendedAppearance,
+    /// Selected item identity controls the independent cannon delay.
+    CannonItemDelay,
+    /// Full initialization starts two eligible observations' wait.
+    CannonReadinessReset,
+    /// Actual chosen controls complete readiness once and survive restoration.
+    RetainedCannonReadiness,
+    /// An ordinary dry run readies the visor and charge glow without changing either palette.
+    OrdinaryRunColours,
+    /// An admitted palette reset survives interruption and completes once.
+    RetainedRunColours,
 }
 
 /// A behaviour of the spec: what the player sees, its kind, its switch and how it is checked.
@@ -66,7 +76,7 @@ pub struct Behaviour {
 }
 
 /// Every behaviour of the spec, in its order.
-pub const CATALOGUE: [Behaviour; 21] = [
+pub const CATALOGUE: [Behaviour; 26] = [
     Behaviour {
         id: BehaviourId::ClipPlays,
         summary: "each frame the step's time runs down by 1; when it runs out the clip moves on, \
@@ -225,6 +235,41 @@ pub const CATALOGUE: [Behaviour; 21] = [
     Behaviour {
         id: BehaviourId::SuspendedAppearance,
         summary: "interrupted animation and appearance opportunities continue once with complete State and ordered outputs",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CannonItemDelay,
+        summary: "after her selected item changes, the cannon waits for one more eligible control observation before it may follow that item",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::CannonReadinessReset,
+        summary: "a newly initialized Samus needs two eligible unchanged item-control observations before her cannon may follow the selection",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RetainedCannonReadiness,
+        summary: "cannon readiness follows one actual completed control answer, survives interruption, and is read without advancing it",
+        kind: Kind::Timing,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::OrdinaryRunColours,
+        summary: "during an ordinary dry run the visor and charge-glow sequences are readied while the present and target colours stay as they were",
+        kind: Kind::Mechanic,
+        switch: Switch::Fixed,
+        checked: Checked::ByVectors,
+    },
+    Behaviour {
+        id: BehaviourId::RetainedRunColours,
+        summary: "one actual ordinary palette opportunity survives interruption and applies its reset once",
         kind: Kind::Timing,
         switch: Switch::Fixed,
         checked: Checked::ByVectors,

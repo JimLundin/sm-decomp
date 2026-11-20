@@ -1,8 +1,9 @@
 """Run crates' libtest suites as DLLs, for Windows machines that block test executables.
 
 Defender quarantines freshly linked test `.exe` files but loads DLLs. Each enabled unit and
-integration-test target is linked with `-shared`, so the generated libtest `main`
-is an export of a DLL, and a child Python calls it through ctypes. libtest reads
+integration-test target is linked with `-shared` and exports only the generated
+libtest `main`, which a child Python calls through ctypes. Explicit exports avoid
+the PE ordinal limit when Rust's internal symbols exceed the export table. libtest reads
 its arguments from `GetCommandLineW`, so the child rewrites that buffer in place
 before calling `main`.
 
@@ -87,7 +88,8 @@ def build_command(cargo: str, crate: str, kind: str, name: str, dll: Path) -> li
     build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
     build += [name] if name else []
     build += ["--"]
-    return build + ["-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}"]
+    return build + ["-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}",
+                    "-C", f"link-arg={dll.with_suffix('.def').as_posix()}"]
 
 
 def main() -> int:
@@ -121,6 +123,12 @@ def main() -> int:
         dll = out / f"{crate}-{name or 'lib'}.dll"
         build = build_command(cargo, crate, kind, name, dll)
         print(f"     Running {label} ({dll.name})", flush=True)
+        try:
+            # A definition file disables GNU PE auto-export of Rust's internal symbols.
+            dll.with_suffix(".def").write_text("EXPORTS\nmain\n", encoding="ascii", newline="\n")
+        except OSError:
+            infrastructure.append(f"{label} (export preparation)")
+            continue
         try:
             build_status = subprocess.run(build).returncode
         except OSError:

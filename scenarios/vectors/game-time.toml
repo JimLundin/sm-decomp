@@ -1,0 +1,82 @@
+# One complete clock before and after one qualified ordinary opportunity.
+# Each constructed case starts independently unless continues names the snapshot to carry
+# or restore. Carry and saturation exercise the total model rule only.
+
+[[vector]]
+id = "R-ordinary-advance"
+source = "recorded"
+entries = ["PlayTimeAdvance"]
+before = { hours = 0, minutes = 0, seconds = 6, frames = 42 }
+after = { hours = 0, minutes = 0, seconds = 6, frames = 43 }
+
+[[vector]]
+id = "C-independent-a"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 3, minutes = 12, seconds = 25, frames = 4 }
+after = { hours = 3, minutes = 12, seconds = 25, frames = 5 }
+
+[[vector]]
+id = "C-independent-b"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 99, minutes = 58, seconds = 17, frames = 58 }
+after = { hours = 99, minutes = 58, seconds = 17, frames = 59 }
+
+[[vector]]
+id = "C-continued-after-restore"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 3, minutes = 12, seconds = 25, frames = 5 }
+after = { hours = 3, minutes = 12, seconds = 25, frames = 6 }
+continues = "C-independent-a"
+
+[[vector]]
+id = "C-second-carry"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 34, minutes = 23, seconds = 58, frames = 59 }
+after = { hours = 34, minutes = 23, seconds = 59, frames = 0 }
+
+[[vector]]
+id = "C-minute-carry"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 4, minutes = 58, seconds = 59, frames = 59 }
+after = { hours = 4, minutes = 59, seconds = 0, frames = 0 }
+
+[[vector]]
+id = "C-hour-carry"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 42, minutes = 59, seconds = 59, frames = 59 }
+after = { hours = 43, minutes = 0, seconds = 0, frames = 0 }
+
+[[vector]]
+id = "C-last-hour"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 98, minutes = 59, seconds = 59, frames = 59 }
+after = { hours = 99, minutes = 0, seconds = 0, frames = 0 }
+
+[[vector]]
+id = "C-ceiling-arrival"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 99, minutes = 59, seconds = 59, frames = 58 }
+after = { hours = 99, minutes = 59, seconds = 59, frames = 59 }
+
+[[vector]]
+id = "C-ceiling"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 99, minutes = 59, seconds = 59, frames = 59 }
+after = { hours = 99, minutes = 59, seconds = 59, frames = 59 }
+
+[[vector]]
+id = "C-ceiling-again"
+source = "constructed"
+entries = ["PlayTimeAdvance"]
+before = { hours = 99, minutes = 59, seconds = 59, frames = 59 }
+after = { hours = 99, minutes = 59, seconds = 59, frames = 59 }
+continues = "C-ceiling"

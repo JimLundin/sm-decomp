@@ -14,6 +14,9 @@ world_blocks = { path = "../clean/world_blocks" }
 world_camera = { path = "../clean/world_camera" }
 world_doors = { path = "../clean/world_doors" }
 interface_hud = { path = "../clean/interface_hud" }
+game_time = { path = "../clean/game_time" }
+world_quake = { path = "../clean/world_quake" }
+samus_health = { path = "../clean/samus_health" }
 run_progress = { path = "../clean/run_progress" }
 samus_appearance = { path = "../clean/samus_appearance" }
 samus_movement = { path = "../clean/samus_movement" }

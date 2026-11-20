@@ -1653,3 +1653,405 @@ boundary = { opportunity="Contact", point="AfterCompletedRead" }
 contact_replace = { cinematic=true }
 restoration = "SerializeDropDeserialize"
 expected = { sounds=["Footstep"], graphics=1, contact_reads=1, step=2, left=1, stage=0, laps=0 }
+
+# Cannon readiness histories (appearance spec section 11).
+# [[cannon_readiness]] is additive; it does not change any existing vector.
+# initial_delay and expected_delay are 0..2 eligible control observations left.
+# Each steps element is controls/choose_controls/complete_controls, initialize,
+# draw, skip, outside_selection, unrelated or save_restore. Controls carry the
+# actual before/after selected item identities, independently of one-shot mode
+# and switched. A draw observes only expected_may_follow; all other operations
+# compare complete readiness and pending/consumed actual-control progress.
+# SerializeDropDeserializeAtEveryBoundary requires fresh restored instances
+# before a choice, with its retained answer, and after its completed effects.
+# The R histories use RAM observations only; no game content or source encoding.
+
+[[cannon_readiness]]
+id = "C-cannon-change"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-deselect"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "Missiles", item_after = "None", eligible = true, switched = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-rechange"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "Missiles", item_after = "SuperMissiles", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "SuperMissiles", item_after = "PowerBombs", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "PowerBombs", item_after = "PowerBombs", eligible = true, expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-same-event"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, switched = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-mode-only"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, one_shot_before = true, one_shot_after = false, switched = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, one_shot_before = false, one_shot_after = true, expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-ready"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "Grapple", item_after = "Grapple", eligible = true, switched = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "controls", item_before = "Xray", item_after = "Xray", eligible = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-disabled"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = false, expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-skipped"
+source = "constructed"
+entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 2
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "skip", expected_delay = 2, expected_may_follow = false },
+  { kind = "draw", expected_delay = 2, expected_may_follow = false },
+  { kind = "skip", expected_delay = 2, expected_may_follow = false },
+  { kind = "draw", expected_delay = 2, expected_may_follow = false },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-frozen"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "None", item_after = "None", eligible = false, world_paused = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, world_paused = true, expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-initialize"
+source = "constructed"
+entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "initialize", expected_delay = 2, expected_may_follow = false },
+  { kind = "draw", expected_delay = 2, expected_may_follow = false },
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-reset-during-wait"
+source = "constructed"
+entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "initialize", expected_delay = 2, expected_may_follow = false },
+  { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-unrelated"
+source = "constructed"
+entries = ["CannonReadinessReset", "CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "unrelated", event = "PoseChange", expected_delay = 1, expected_may_follow = false },
+  { kind = "unrelated", event = "ClipChange", expected_delay = 1, expected_may_follow = false },
+  { kind = "unrelated", event = "PassageWithoutInitialization", expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-external-drop"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "outside_selection", item_before = "Missiles", item_after = "None", expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-retained-change"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "choose_controls", item_before = "None", item_after = "Missiles", eligible = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
+  { kind = "outside_selection", item_before = "Missiles", item_after = "None", expected_delay = 0, expected_may_follow = true },
+  { kind = "complete_controls", expected_delay = 1, expected_may_follow = false },
+  { kind = "save_restore", expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-retained-same"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "choose_controls", item_before = "Missiles", item_after = "Missiles", eligible = true, one_shot_before = true, one_shot_after = false, switched = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "save_restore", expected_delay = 1, expected_may_follow = false },
+  { kind = "complete_controls", expected_delay = 0, expected_may_follow = true },
+  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "C-cannon-save-ready"
+source = "constructed"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+  { kind = "save_restore", expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "R-cannon-select"
+source = "chain-0059-A293:428"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "None", item_after = "Missiles", eligible = true, switched = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+]
+
+[[cannon_readiness]]
+id = "R-cannon-follow"
+source = "chain-0059-A293:429"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "Missiles", item_after = "Missiles", eligible = true, switched = false, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "R-cannon-same-item"
+source = "chain-0059-A293:20"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "None", item_after = "None", eligible = true, switched = true, expected_delay = 0, expected_may_follow = true },
+  { kind = "draw", expected_delay = 0, expected_may_follow = true },
+]
+
+[[cannon_readiness]]
+id = "R-cannon-lag"
+source = "boss-kraid-defeated:800"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 1
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "skip", expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+]
+
+[[cannon_readiness]]
+id = "R-cannon-deselect"
+source = "area-maridia:255"
+entries = ["CannonItemDelay", "RetainedCannonReadiness"]
+initial_delay = 0
+restoration = "SerializeDropDeserializeAtEveryBoundary"
+steps = [
+  { kind = "controls", item_before = "Grapple", item_after = "None", eligible = true, switched = true, expected_delay = 1, expected_may_follow = false },
+  { kind = "draw", expected_delay = 1, expected_may_follow = false },
+]
+
+# Ordinary dry-run palette histories (spec section 12).
+# Each history starts from complete palette metadata and both ordered colour banks.
+# Each invented fixture names a red level. Slot i (0 through 255) has RGB components
+# [red, i % 32, i // 32]. All slots within a bank and all fixtures are distinguishable.
+# A recorded witness observes both complete banks privately; substitute the invented patterns
+# for the unexported colours and the supplied valid Running figure and position for geometry.
+# The recorded admission, metadata and application count are checked at the bounded opportunity.
+# The shared observations are actual current inputs for a Running Power figure in standard
+# room colours, with absent surfaces, a dormant tether and no active colour effects.
+# A history supplies its current valid figure/position; other fields override shared inputs.
+# A pending check reads before metadata and the latest value of both palettes, with no
+# application yet. Each palette_updates item applies a separate shared-palette change
+# while pending. Check both full palettes after each update, and again after restore.
+# Restoring drops the prior owner and reconstructs the full state and progress at the named cuts.
+# After completion compare after metadata, both banks against their latest values, no requests, and
+# the number of applications even if before equals after. Animation and cannon are unchanged.
+# "replacements" are independent cases changing one shared observation before admission.
+# "later_change" replaces the neighbour after an opportunity is already pending.
+
+[ordinary_run_colours.observations]
+action = "Running"
+suit = "Power"
+room_colours = "Standard"
+water_present = false
+lava_present = false
+grapple = "Dormant"
+stored_glow = false
+weapon_charging = false
+override_colours = false
+special_colours = false
+speed_glow = false
+hit_colour_pulse = false
+
+[ordinary_run_colours.invented_palettes]
+current = 1
+target = 2
+different_current = 3
+different_target = 4
+
+[[ordinary_run_colours.history]]
+id = "R-ordinary-run-colours"
+source = "recorded palette opportunity"
+# Observed: all shared observations above, including Running action, current suit and
+# all admitted neighbour facts. Also observed: before and after metadata, applications,
+# and unchanged colours at every slot of both banks.
+# Invented: the detailed figure (apart from Running action), position and palette fixtures.
+entries = ["OrdinaryRunColours"]
+figure = "Upright Running Left Forward Striding"
+position = [121, 152]
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+applications = 1
+
+[[ordinary_run_colours.history]]
+id = "C-ordinary-stale"
+source = "constructed"
+entries = ["OrdinaryRunColours", "RetainedRunColours"]
+figure = "Upright Running Left Forward Striding"
+position = [36, 184]
+before = { visor_delay = 19, visor_step = 2, charge_glow_position = 4 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+restore = ["Unobserved", "Pending", "Completed"]
+later_change = { room_colours = "RedBackground", weapon_charging = true }
+applications = 1
+
+[[ordinary_run_colours.history]]
+id = "C-ordinary-other-stride"
+source = "constructed"
+entries = ["OrdinaryRunColours"]
+figure = "Upright Running Right Forward Striding"
+position = [215, 63]
+before = { visor_delay = 0, visor_step = 5, charge_glow_position = 2 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["different_current", "different_target"]
+applications = 1
+
+[[ordinary_run_colours.history]]
+id = "C-ordinary-already-ready"
+source = "constructed"
+entries = ["OrdinaryRunColours", "RetainedRunColours"]
+figure = "Upright Running Right Forward Striding"
+position = [68, 250]
+before = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["different_current", "target"]
+restore = ["Unobserved", "Pending", "Completed"]
+applications = 1
+
+[[ordinary_run_colours.history]]
+id = "C-ordinary-shared-colours"
+source = "constructed"
+entries = ["OrdinaryRunColours", "RetainedRunColours"]
+figure = "Upright Running Right Forward Striding"
+position = [89, 134]
+before = { visor_delay = 91, visor_step = 1, charge_glow_position = 5 }
+after = { visor_delay = 1, visor_step = 3, charge_glow_position = 0 }
+palettes = ["current", "target"]
+palette_updates = [
+    { bank = "current", colours = "different_current" },
+    { bank = "target", colours = "different_target" },
+]
+restore = ["Unobserved", "Pending", "Completed"]
+applications = 1
+
+[ordinary_run_colours.boundary]
+id = "C-ordinary-boundary"
+source = "constructed"
+based_on = "C-ordinary-stale"
+outcome = "Unsupported"
+applications = 0
+replacements = [
+    { action = "Standing" },
+    { suit = "Gravity" },
+    { suit = "Varia" },
+    { room_colours = "RedBackground" },
+    { room_colours = "OrangeBackground" },
+    { room_colours = "Unavailable" },
+    { water_present = true },
+    { lava_present = true },
+    { grapple = "Busy" },
+    { grapple = "Unavailable" },
+    { stored_glow = true },
+    { weapon_charging = true },
+    { override_colours = true },
+    { special_colours = true },
+    { speed_glow = true },
+    { hit_colour_pulse = true },
+]

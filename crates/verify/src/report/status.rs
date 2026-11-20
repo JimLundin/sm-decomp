@@ -143,13 +143,14 @@ enum Area {
     Boss,
     Interface,
     Run,
+    Game,
     Screens,
     Audio,
 }
 
 impl Area {
     /// Every area, in the plan's order.
-    const ALL: [Self; 9] = [
+    const ALL: [Self; 10] = [
         Self::Samus,
         Self::Weapons,
         Self::World,
@@ -157,6 +158,7 @@ impl Area {
         Self::Boss,
         Self::Interface,
         Self::Run,
+        Self::Game,
         Self::Screens,
         Self::Audio,
     ];
@@ -171,6 +173,7 @@ impl Area {
             Self::Boss => "boss",
             Self::Interface => "interface",
             Self::Run => "run",
+            Self::Game => "game",
             Self::Screens => "screens",
             Self::Audio => "audio",
         }

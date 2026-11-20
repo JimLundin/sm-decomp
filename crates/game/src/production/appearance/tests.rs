@@ -4,7 +4,7 @@ use samus_appearance::{
 };
 use types::{Action, BoostStage};
 
-fn work() -> Work {
+pub(super) fn work() -> Work {
     Work::new(SuspendedAppearance::new(
         State {
             playhead: Playhead {

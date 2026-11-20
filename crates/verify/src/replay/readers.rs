@@ -14,6 +14,7 @@ use game::production::{
 use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
+    Frame(super::frame::Inputs),
     NativeSearch(Box<super::native_search::Inputs>),
     Recorded(Box<super::recorded::Inputs>),
     Audio(Box<audio::InputTape>),
@@ -24,6 +25,7 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
+    Frame(Box<super::frame::Expected>),
     NativeSearch(super::native_search::Expected),
     Recorded(Box<super::recorded::Expected>),
     Audio(Box<audio::ExpectedTape>),
@@ -32,6 +34,7 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone)]
 pub(super) enum ActualReader {
+    Frame(super::frame::Actual),
     NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
     Audio {
@@ -77,6 +80,7 @@ impl InputReader {
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::Frame(inputs) => inputs.advance(production, cut),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
             Self::Recorded(reader) => reader.advance(production, cut),
             Self::Audio(tape) => {
@@ -142,6 +146,9 @@ impl ActualReader {
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
+            (Self::Frame(actual), InputReader::Frame(_), ProductionOutputs::Frame(outputs)) => {
+                actual.accept(production, outputs, cut)
+            }
             (
                 Self::NativeSearch(retained),
                 InputReader::NativeSearch(_),
@@ -205,6 +212,7 @@ impl ActualReader {
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
+            Self::Frame(actual) => actual.initial(production),
             Self::NativeSearch(_) => {
                 let mut fields = super::native_search::initial();
                 fields.extend(super::full_movement::initial()?);
@@ -245,8 +253,9 @@ impl ActualReader {
         }
     }
 
-    pub const fn publication_count(&self) -> usize {
+    pub fn publication_count(&self) -> usize {
         match self {
+            Self::Frame(actual) => actual.publication_count(),
             Self::Audio { publications, .. } => publications.len(),
             Self::NativeSearch(_) | Self::Movement | Self::Recorded(_) => 0,
         }
@@ -256,6 +265,7 @@ impl ActualReader {
 impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
+            Self::Frame(reader) => reader.read(cut, case.compares_final_frame_health()),
             Self::NativeSearch(expected) => {
                 let fields = expected.read(cut)?;
                 Ok(ExpectedCut {

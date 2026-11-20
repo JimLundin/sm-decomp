@@ -40,6 +40,11 @@ pub struct Content {
 }
 
 impl Content {
+    /// The checked immutable image used to validate physical movement operands.
+    pub(crate) const fn rom(&self) -> &Rom {
+        &self.rom
+    }
+
     pub fn load(path: &std::path::Path) -> Result<Self, Outcome> {
         let image = std::fs::read(path).map_err(|_| data_failure(None, "player ROM file"))?;
         let rom = Rom::new(image).map_err(|_| data_failure(None, "player ROM pin"))?;
@@ -196,7 +201,7 @@ pub struct Input {
     pub world: MovementWorld,
 }
 
-fn pad(value: u16) -> Buttons {
+pub(super) fn pad(value: u16) -> Buttons {
     use types::button as B;
     [
         (0x8000, B::RUN),
@@ -216,7 +221,7 @@ fn pad(value: u16) -> Buttons {
     })
 }
 
-fn items(value: u16) -> Set<Item> {
+pub(super) fn items(value: u16) -> Set<Item> {
     let mut items = Set::default();
     for (bit, item) in [
         (0x0001, Item::VariaSuit),
@@ -389,11 +394,21 @@ fn enemy_roster(wram: &[u8]) -> Result<Vec<types::Hitbox>, Outcome> {
     Ok(boxes)
 }
 
-fn level_world(
+pub(super) fn level_world(
     wram: &[u8],
     content: &Content,
     enemies: Vec<types::Hitbox>,
 ) -> Result<MovementWorld, Outcome> {
+    let (width, cells, permissions) = level_blocks(wram, content)?;
+    MovementWorld::new(width, cells, permissions, enemies, Boundary::Air)
+        .map_err(|_| data_failure(None, "admitted movement world relation"))
+}
+
+/// Decode current immutable room blocks without inventing an actor provider.
+pub(super) fn level_blocks(
+    wram: &[u8],
+    content: &Content,
+) -> Result<(u16, Vec<types::Block>, Vec<bool>), Outcome> {
     let width = word(wram, source::ROOM_WIDTH_IN_BLOCKS)?;
     let height = word(wram, source::ROOM_HEIGHT_IN_BLOCKS)?;
     if width > 255 {
@@ -491,8 +506,7 @@ fn level_world(
         };
         cells.push(cell);
     }
-    MovementWorld::new(width, cells, permissions, enemies, Boundary::Air)
-        .map_err(|_| data_failure(None, "admitted movement world relation"))
+    Ok((width, cells, permissions))
 }
 
 pub fn expected(
@@ -529,105 +543,68 @@ fn expected_field(
     row: &str,
     cut: u64,
 ) -> Result<Observation, Outcome> {
-    let (name, value) = match field {
-        ObservationId::PositionX => (
+    use ObservationId as O;
+    use types::Direction;
+
+    for (id, name, whole, fraction) in [
+        (
+            O::PositionX,
             "movement.position.x",
-            i64::from(fixed(wram, source::SAMUS_X_POS, source::SAMUS_X_SUBPOS)?.0),
+            source::SAMUS_X_POS,
+            source::SAMUS_X_SUBPOS,
         ),
-        ObservationId::PositionY => (
+        (
+            O::PositionY,
             "movement.position.y",
-            i64::from(fixed(wram, source::SAMUS_Y_POS, source::SAMUS_Y_SUBPOS)?.0),
+            source::SAMUS_Y_POS,
+            source::SAMUS_Y_SUBPOS,
         ),
-        ObservationId::VerticalSpeed => (
+        (
+            O::VerticalSpeed,
             "movement.vertical_speed",
-            i64::from(fixed(wram, source::SAMUS_Y_SPEED, source::SAMUS_Y_SUBSPEED)?.0),
+            source::SAMUS_Y_SPEED,
+            source::SAMUS_Y_SUBSPEED,
         ),
-        ObservationId::TravelLeft => travel_quantity(travels, types::Direction::Left),
-        ObservationId::TravelRight => travel_quantity(travels, types::Direction::Right),
-        ObservationId::TravelUp => travel_quantity(travels, types::Direction::Up),
-        ObservationId::TravelDown => travel_quantity(travels, types::Direction::Down),
-        ObservationId::WallTest if row == "item-morph-ball" && cut == 817 => {
-            ("movement.wall_test", 0)
-        }
-        ObservationId::Reached if row == "item-morph-ball" && cut == 817 => {
-            return Ok(Observation {
-                field: "movement.reached".to_owned(),
-                bytes: reached_w15(),
-            });
-        }
-        ObservationId::WallTest | ObservationId::Reached => {
-            return Err(data_failure(
-                Some(cut),
-                "named reached-cell witness row and cut",
+    ] {
+        if field == id {
+            return Ok(Observation::quantity(
+                name,
+                i64::from(fixed(wram, whole, fraction)?.0),
             ));
         }
-        ObservationId::MovementStateComplete
-        | ObservationId::AppearancePlaying
-        | ObservationId::MovementWork
-        | ObservationId::MovementTests
-        | ObservationId::CompleteReached
-        | ObservationId::Inside
-        | ObservationId::MovementSkip
-        | ObservationId::FirstMotionSearch
-        | ObservationId::FirstMotionCandidates
-        | ObservationId::FirstMotionTerrain
-        | ObservationId::AudioSemantic
-        | ObservationId::AppearanceStep
-        | ObservationId::AppearanceTimeLeft
-        | ObservationId::AppearanceBoostStage
-        | ObservationId::AppearanceLapsLeft
-        | ObservationId::ProgressPlanetAwake
-        | ObservationId::ProgressMotherBrainTankBroken
-        | ObservationId::ProgressPhantoonStatueGrey
-        | ObservationId::ProgressRidleyStatueGrey
-        | ObservationId::ProgressDraygonStatueGrey
-        | ObservationId::ProgressKraidStatueGrey
-        | ObservationId::ProgressTourianOpen
-        | ObservationId::ProgressGlassTunnelBroken
-        | ObservationId::ProgressAcidReceded
-        | ObservationId::ProgressShaktoolPath
-        | ObservationId::ProgressTimeBombSet
-        | ObservationId::ProgressAnimalsFreed
-        | ObservationId::ProgressMetroidRoom1Empty
-        | ObservationId::ProgressMetroidRoom2Empty
-        | ObservationId::ProgressMetroidRoom3Empty
-        | ObservationId::ProgressMetroidRoom4Empty
-        | ObservationId::ProgressTourianRoomsUnset
-        | ObservationId::ProgressLavaQuakeOutrun
-        | ObservationId::ProgressZebetites
-        | ObservationId::AudioPublications
-        | ObservationId::AudioReplies
-        | ObservationId::AudioPendingMusic
-        | ObservationId::CeresPhase
-        | ObservationId::CeresWait
-        | ObservationId::CeresFigure
-        | ObservationId::CeresShown
-        | ObservationId::CeresSolid
-        | ObservationId::CameraViewXPixel
-        | ObservationId::CameraViewXFraction
-        | ObservationId::CameraViewYPixel
-        | ObservationId::CameraViewYFraction
-        | ObservationId::CameraRememberedXPixel
-        | ObservationId::CameraRememberedXFraction
-        | ObservationId::CameraRememberedYPixel
-        | ObservationId::CameraRememberedYFraction
-        | ObservationId::CameraVerticalFraction
-        | ObservationId::WeaponsState
-        | ObservationId::ContactConsumedMarkers
-        | ObservationId::HudGrid
-        | ObservationId::HudExplored
-        | ObservationId::HudEnergy
-        | ObservationId::HudMissiles
-        | ObservationId::HudSupers
-        | ObservationId::HudBombs
-        | ObservationId::HudHighlighted
-        | ObservationId::HudSelected
-        | ObservationId::HudOneShot
-        | ObservationId::HudMapOff => {
-            return Err(data_failure(None, "movement observation scope"));
+    }
+    for (id, direction) in [
+        (O::TravelLeft, Direction::Left),
+        (O::TravelRight, Direction::Right),
+        (O::TravelUp, Direction::Up),
+        (O::TravelDown, Direction::Down),
+    ] {
+        if field == id {
+            let (name, value) = travel_quantity(travels, direction);
+            return Ok(Observation::quantity(name, value));
         }
-    };
-    Ok(Observation::quantity(name, value))
+    }
+    if matches!(field, O::WallTest | O::Reached) {
+        return reached_observation(field, row, cut);
+    }
+    Err(data_failure(None, "movement observation scope"))
+}
+
+fn reached_observation(field: ObservationId, row: &str, cut: u64) -> Result<Observation, Outcome> {
+    if row != "item-morph-ball" || cut != 817 {
+        return Err(data_failure(
+            Some(cut),
+            "named reached-cell witness row and cut",
+        ));
+    }
+    if field == ObservationId::WallTest {
+        Ok(Observation::quantity("movement.wall_test", 0))
+    } else {
+        Ok(Observation {
+            field: "movement.reached".to_owned(),
+            bytes: reached_w15(),
+        })
+    }
 }
 
 /// Observer's named W15 ordered reached-cell witness, in pixel coordinates.

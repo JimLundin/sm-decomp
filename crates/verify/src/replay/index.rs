@@ -26,6 +26,8 @@ pub enum CaseKind {
 #[serde(rename_all = "kebab-case")]
 /// An existing selected production owner.
 pub enum Responsibility {
+    /// The complete retained frame caller and physical time owner.
+    Frame,
     /// The existing movement and semantic pose owner.
     Movement,
     /// The existing native audio transport owner.
@@ -50,6 +52,12 @@ pub enum Responsibility {
     Doors,
     /// The complete CPU audio sender queue and pending service.
     AudioSender,
+    /// Complete live health, including fractional energy and pending periodic loss.
+    Health,
+    /// Complete play-clock state after the admitted gameplay opportunity.
+    GameTime,
+    /// Complete room quake timer and phase after its quiet opportunity.
+    WorldQuake,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -112,6 +120,8 @@ pub struct End {
 pub enum InputProvider {
     /// Authenticated actual-use snapshots for the connected ordinary family.
     ConnectedOrdinaryInputs,
+    /// Qualified current owner inputs and explicitly borrowed unselected completions.
+    NativeFrameOwners,
     /// Independently admitted selector-time Frame and actor-selection-time geometry.
     NativeSearchInputs,
     /// Causal neighbours from the preceding pinned cut.
@@ -158,6 +168,8 @@ pub enum ContentProvider {
 #[serde(rename_all = "kebab-case")]
 /// Oracle source used only for comparison.
 pub enum ExpectedProvider {
+    /// Independent frozen ordered physical callbacks and completed-return wall time.
+    NativeFrameCallbacks,
     /// Frozen complete source-derived movement work, with independent captured input packets.
     NativeCompleteMovementWork,
     /// Independent pinned oracle records.
@@ -175,6 +187,45 @@ pub enum ObservationId {
     /// Complete currently playing Figure.
     #[serde(rename = "appearance.playing")]
     AppearancePlaying,
+    /// Exact completed-return wall time from the retained physical owner.
+    #[serde(rename = "frame.time")]
+    FrameTime,
+    /// Complete ordered physical callback stream, including equal-time multiplicity.
+    #[serde(rename = "frame.outputs")]
+    FrameOutputs,
+    /// Whole hours carried by the play clock.
+    #[serde(rename = "frame.play_time.hours")]
+    PlayTimeHours,
+    /// Minutes within the play-clock hour.
+    #[serde(rename = "frame.play_time.minutes")]
+    PlayTimeMinutes,
+    /// Seconds within the play-clock minute.
+    #[serde(rename = "frame.play_time.seconds")]
+    PlayTimeSeconds,
+    /// Frames within the play-clock second.
+    #[serde(rename = "frame.play_time.frames")]
+    PlayTimeFrames,
+    /// Complete current room-shake timer.
+    #[serde(rename = "frame.room_shake.timer")]
+    RoomShakeTimer,
+    /// Complete current room-shake phase.
+    #[serde(rename = "frame.room_shake.phase")]
+    RoomShakePhase,
+    /// Whole energy after Maintenance.
+    #[serde(rename = "frame.health.energy.whole")]
+    HealthEnergyWhole,
+    /// Fractional energy after Maintenance.
+    #[serde(rename = "frame.health.energy.fraction")]
+    HealthEnergyFraction,
+    /// Whole pending energy loss.
+    #[serde(rename = "frame.health.pending_loss.whole")]
+    HealthPendingWhole,
+    /// Fractional pending energy loss.
+    #[serde(rename = "frame.health.pending_loss.fraction")]
+    HealthPendingFraction,
+    /// Current requested low-energy warning.
+    #[serde(rename = "frame.health.warning")]
+    HealthWarning,
     /// Every ordered Motion, Support and nested `BodyFit` receipt.
     #[serde(rename = "movement.work")]
     MovementWork,
@@ -519,6 +570,15 @@ fn rule_exists(rule: &str) -> bool {
         || run_progress::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("run-progress/{id:?}"))
+        || world_quake::CATALOGUE
+            .iter()
+            .any(|entry| rule == format!("world-quake/{:?}", entry.id))
+        || game_time::BEHAVIOURS
+            .iter()
+            .any(|entry| rule == format!("game-time/{:?}", entry.id))
+        || samus_health::BehaviourId::ALL
+            .iter()
+            .any(|id| rule == format!("samus-health/{id:?}"))
         || weapons_projectiles::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("weapons-projectiles/{id:?}"))
@@ -533,6 +593,17 @@ fn rule_exists(rule: &str) -> bool {
 
 const fn observation_owner(field: ObservationId) -> Responsibility {
     match field {
+        ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
+        ObservationId::PlayTimeHours
+        | ObservationId::PlayTimeMinutes
+        | ObservationId::PlayTimeSeconds
+        | ObservationId::PlayTimeFrames => Responsibility::GameTime,
+        ObservationId::RoomShakeTimer | ObservationId::RoomShakePhase => Responsibility::WorldQuake,
+        ObservationId::HealthEnergyWhole
+        | ObservationId::HealthEnergyFraction
+        | ObservationId::HealthPendingWhole
+        | ObservationId::HealthPendingFraction
+        | ObservationId::HealthWarning => Responsibility::Health,
         ObservationId::MovementWork
         | ObservationId::MovementTests
         | ObservationId::CompleteReached
@@ -619,6 +690,9 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("interface-hud/", Responsibility::Hud),
         ("samus-appearance/", Responsibility::Appearance),
         ("run-progress/", Responsibility::Progress),
+        ("samus-health/", Responsibility::Health),
+        ("game-time/", Responsibility::GameTime),
+        ("world-quake/", Responsibility::WorldQuake),
     ]
     .iter()
     .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
@@ -908,6 +982,45 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     }
 }
 
+const FINAL_OWNER_FIELDS: [ObservationId; 7] = [
+    ObservationId::FrameTime,
+    ObservationId::PlayTimeHours,
+    ObservationId::PlayTimeMinutes,
+    ObservationId::PlayTimeSeconds,
+    ObservationId::PlayTimeFrames,
+    ObservationId::RoomShakeTimer,
+    ObservationId::RoomShakePhase,
+];
+
+const FINAL_HEALTH_FIELDS: [ObservationId; 5] = [
+    ObservationId::HealthEnergyWhole,
+    ObservationId::HealthEnergyFraction,
+    ObservationId::HealthPendingWhole,
+    ObservationId::HealthPendingFraction,
+    ObservationId::HealthWarning,
+];
+
+pub(super) const PLAY_TIME_RULE: &str = "game-time/PlayTimeAdvance";
+pub(super) const ROOM_QUAKE_RULE: &str = "world-quake/QuietQuakePhase";
+
+impl Case {
+    pub(super) fn compares_final_frame_health(&self) -> bool {
+        self.expectations
+            .fields
+            .strip_prefix(FINAL_OWNER_FIELDS.as_slice())
+            == Some(FINAL_HEALTH_FIELDS.as_slice())
+    }
+
+    pub(super) fn compares_final_frame_owners(&self) -> bool {
+        (self.expectations.fields == FINAL_OWNER_FIELDS || self.compares_final_frame_health())
+            && self.responsibilities.contains(&Responsibility::GameTime)
+            && self.responsibilities.contains(&Responsibility::WorldQuake)
+            && [PLAY_TIME_RULE, ROOM_QUAKE_RULE]
+                .into_iter()
+                .all(|id| self.rules.iter().any(|rule| rule == id))
+    }
+}
+
 fn scope_valid(case: &Case) -> bool {
     let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
     if owners.len() != case.responsibilities.len()
@@ -929,6 +1042,41 @@ fn scope_valid(case: &Case) -> bool {
         .any(|field| !owners.contains(&observation_owner(*field)))
     {
         return false;
+    }
+    if case.inputs == InputProvider::NativeFrameOwners {
+        let mut frame_owners = owners.clone();
+        frame_owners.remove(&Responsibility::Health);
+        let compares_final_owners = case.compares_final_frame_owners();
+        if compares_final_owners {
+            frame_owners.remove(&Responsibility::GameTime);
+            frame_owners.remove(&Responsibility::WorldQuake);
+        }
+        return case.kind == CaseKind::Integrated
+            && case.content == ContentProvider::PlayerRomImport
+            && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
+            && matches!(case.start, Start::NativeSeed { .. })
+            && frame_owners
+                == BTreeSet::from([
+                    Responsibility::Frame,
+                    Responsibility::Movement,
+                    Responsibility::Hud,
+                    Responsibility::Appearance,
+                    Responsibility::AudioSender,
+                ])
+            && (compares_final_owners || case.expectations.fields == [ObservationId::FrameTime])
+            && case.expectations.outputs == [ObservationId::FrameOutputs]
+            && case.expectations.output_cut.is_none()
+            && !case.borrowed.is_empty()
+            && case.rules.iter().all(|rule| {
+                let owner = match rule.as_str() {
+                    "audio-transport/OfferAcceptance"
+                    | "audio-transport/RequestDelivery"
+                    | "audio-transport/RequestRelease"
+                    | "audio-transport/SenderTiming" => Some(Responsibility::AudioSender),
+                    _ => rule_owner(rule),
+                };
+                owner.is_some_and(|owner| owners.contains(&owner))
+            });
     }
     for rule in &case.rules {
         if rule_owner(rule).is_none_or(|owner| !owners.contains(&owner)) {
@@ -1037,6 +1185,10 @@ impl Case {
                 frame.checked_add(1)
             }
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
+            // A retained frame compares its single return, after the native admission.
+            Start::NativeSeed { .. } if matches!(self.inputs, InputProvider::NativeFrameOwners) => {
+                Some(self.end.cut_inclusive)
+            }
             Start::NativeSeed { .. } | Start::PowerOn => Some(0),
         }
     }

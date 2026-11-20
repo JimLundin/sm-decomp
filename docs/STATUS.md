@@ -110,7 +110,7 @@ outcomes, counts and observation digests; they are reviewed obligations, not fre
 Borrowed providers, phases, fields and limits stay in the declaration and do not become rule
 proof. File links express declared relevance, not exhaustive impact or measured coverage.
 
-The default query shows all 21 cases, including three empty-rule boundaries with empty code
+The default query shows all indexed cases, including three empty-rule boundaries with empty code
 links. A travel-file query includes the scoped witness and the integrated and movie held
 Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
 Mapping queries never select or skip landing checks; the complete index remains required.
@@ -191,3 +191,22 @@ stepped and ceiling terrain remain unsupported. Complete ordinary and internal y
 uses the same production entry. The stale-Run fault is caught at cut141's complete movement State.
 The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its admission and source
 identity separate from the first witness. The same borrowed producers and omitted consumers apply.
+
+## Retained native frame
+
+`frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.
+Its hardware clock advances 359,922 master ticks to the requested NMI return. Replay compares
+2,295 ordered callbacks by time, class, register and value. The twelve endpoint fields cover
+elapsed time, play time, room shake and five Health quantities. The five Health values stay
+equal to their admitted values in this case. The null model completes zero cuts.
+
+The indexed checkpoint reopens the completed state. Two fixture tests also resume from
+the HUD interruption and native NMI entry, run through return, and compare the full callback
+stream, endpoint observations and terminal state. A second request on the completed state
+is rejected. Service-marker callbacks carry no service-slot identity, and internal hardware
+events outside the callback stream are outside the comparison.
+
+The [case declaration](../scenarios/replay/index.toml) lists the borrowed preparation, actor,
+scene and native video inputs. The [fixture loader](../tools/ci/fetch_retained_frame.sh)
+fetches the pinned inputs and independent observations under the replay native directory.
+The power-on milestone is measured separately using movie inputs alone.

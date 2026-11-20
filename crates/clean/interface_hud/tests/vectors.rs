@@ -32,6 +32,173 @@ mod shape {
     pub struct VectorFile {
         pub pictures: PicturesIn,
         pub vector: Vec<VectorIn>,
+        #[serde(default)]
+        pub hud_work: Vec<WorkIn>,
+        #[serde(default)]
+        pub hud_resume: Vec<ResumeIn>,
+        pub hud_observed: Vec<ObservedIn>,
+        #[serde(default)]
+        pub countdown: Vec<CountdownIn>,
+    }
+
+    /// Countdown scope distinguishes actual model vectors from neighboring producer obligations.
+    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum CountdownScope {
+        Model,
+        IntegrationAdmission,
+    }
+
+    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum CountdownCurrentIn {
+        Dormant,
+        Active,
+        Expired,
+    }
+
+    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum SceneIn {
+        MaintainCountdown,
+        PresentationOnly,
+        Unknown,
+    }
+
+    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum CountdownBoundary {
+        Unread,
+        Chosen,
+        Completed,
+    }
+
+    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum CountdownExpected {
+        Pass,
+        Unsupported,
+    }
+
+    #[derive(Deserialize)]
+    pub enum CountdownSource {
+        #[serde(rename = "recorded")]
+        Recorded,
+        #[serde(rename = "constructed")]
+        Constructed,
+    }
+
+    /// Strict vector shape only, not an integration admission implementation.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct CountdownIn {
+        pub id: String,
+        pub scope: CountdownScope,
+        #[serde(rename = "source")]
+        pub _source: CountdownSource,
+        pub entries: Vec<String>,
+        pub before: CountdownCurrentIn,
+        pub scene: SceneIn,
+        pub opportunities: usize,
+        pub boundary: CountdownBoundary,
+        pub restore: bool,
+        pub later_scene: SceneIn,
+        pub expected: CountdownExpected,
+        pub after: CountdownCurrentIn,
+        pub answers: Vec<interface_hud::CountdownExpiry>,
+        pub pictures: Vec<interface_hud::CountdownPicture>,
+        pub energy: Option<u16>,
+        /// Neighboring quantity, deliberately not an input of the model.
+        #[serde(rename = "protection_frames")]
+        pub _protection_frames: Option<u16>,
+    }
+
+    /// Additive staged-frame tables, recursively validated using the ordinary strict shapes.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct WorkIn {
+        pub id: String,
+        #[serde(rename = "source")]
+        pub _source: Source,
+        pub entries: Vec<String>,
+        #[serde(default)]
+        pub before: BeforeIn,
+        #[serde(default)]
+        pub controls: toml::Table,
+        #[serde(default)]
+        pub mini_map: toml::Table,
+        #[serde(default)]
+        pub status: toml::Table,
+        #[serde(default)]
+        pub frame: u8,
+        #[serde(default)]
+        pub controls_after: toml::Table,
+        pub map_after: Option<toml::Table>,
+        pub after: toml::Table,
+        pub pose_after: Option<[u16; 2]>,
+        pub energy_at_map: Option<[u16; 2]>,
+        pub owner_at_map: Option<OwnerIn>,
+        pub owner_at_status: Option<OwnerIn>,
+    }
+
+    /// A change at an offered or chosen observation of a base work case.
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct ResumeIn {
+        pub id: String,
+        #[serde(rename = "source")]
+        pub _source: Source,
+        pub entries: Vec<String>,
+        pub base: String,
+        pub opportunity: Stage,
+        pub cut: CutIn,
+        pub patch: toml::Table,
+        #[serde(default)]
+        pub expect_controls_after: toml::Table,
+        #[serde(default)]
+        pub expect_map_after: toml::Table,
+        pub expect_after: toml::Table,
+    }
+
+    #[derive(Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Stage {
+        ItemControls,
+        MiniMapUpdate,
+        StatusRefresh,
+    }
+
+    #[derive(Deserialize, Clone, Copy, PartialEq, Eq)]
+    pub enum CutIn {
+        BeforeAnswer,
+        AfterAnswer,
+        AfterEffect,
+    }
+
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(deny_unknown_fields)]
+    pub struct OwnerIn {
+        pub position: [u16; 2],
+        pub energy: [u16; 2],
+    }
+
+    #[derive(Deserialize)]
+    pub enum ObservedSource {
+        #[serde(rename = "ordinary-play-pair")]
+        OrdinaryPlayPair,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    #[expect(
+        clippy::struct_excessive_bools,
+        reason = "independent recorded relations, not work state flags"
+    )]
+    pub struct ObservedIn {
+        pub id: String,
+        #[serde(rename = "source")]
+        pub _source: ObservedSource,
+        pub cut: u16,
+        pub entries: Vec<String>,
+        pub map_runs: bool,
+        pub map_window_changed_by_movement: bool,
+        pub map_retained_through_status: bool,
+        pub energy_read_after_drawing: bool,
+        pub gauge_retained_through_status: bool,
     }
 
     /// `[pictures]`: the HUD's pictures by name.
@@ -280,6 +447,7 @@ mod shape {
     /// Why a switch makes no click.
     #[derive(Deserialize, Clone, Copy)]
     pub enum MuteIn {
+        None,
         Grapple,
         SpinJump,
         TimeStopped,
@@ -415,7 +583,7 @@ mod shape {
             let item: ItemName = toml::Value::String(item.to_owned())
                 .try_into()
                 .map_err(|_| format!("unknown item in {text}"))?;
-            Ok(Self(HudEvent::Switched(item.item())))
+            Ok(Self(HudEvent::Switched { item: item.item() }))
         }
     }
 
@@ -454,17 +622,19 @@ mod convert {
 
     use enum_map::enum_map;
     use interface_hud::{
-        Alternation, Ammo, Ammunition, Boss, CancelButton, Controls, Dropped, Energy, Equipped,
-        FrameCount, FrameInputs, HerMap, HudEvent, HudGrid, HudPictures, HudState, Icons, Look,
-        MapCellSet, MapPictures, MiniMapInputs, MiniMapPower, Mute, NewArea, OutOfPlayInputs, Pair,
-        Place, Reserve, ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection,
-        Shown, Status, Stock,
+        Alternation, Ammo, Ammunition, Boss, CancelButton, Controls, DisplayInputs, Dropped,
+        Energy, Equipped, FrameCount, FrameInputs, HerMap, HudEvent, HudGrid, HudPictures,
+        HudState, HudWork, Icons, ItemControlInputs, Look, MapCellSet, MapPictures, MiniMapInputs,
+        MiniMapPower, MovementInputs, Mute, NewArea, Observation, OutOfPlayInputs, Pair, Place,
+        Reserve, ReserveMode, Room, Rules, Screen, SelectButton, SelectableItem, Selection, Shown,
+        Status, Stock,
     };
 
     use super::shape::{
         AfterIn, BeforeIn, BossName, BossScreensIn, CancelIn, DropWhatIn, DropWhenIn, DroppedIn,
         Equipment, IconsIn, InputsIn, ItemName, MapIn, MiniMapIn, MuteIn, PictureIn, PicturesIn,
-        PlaceIn, RoomIn, RulesIn, SelectIn, ShownIn, StepIn, VectorFile, VectorIn,
+        PlaceIn, ResumeIn, RoomIn, RulesIn, SelectIn, ShownIn, StepIn, VectorFile, VectorIn,
+        WorkIn,
     };
 
     /// The vector file.
@@ -525,7 +695,9 @@ mod convert {
 
     /// A vector file's text, read.
     fn load_text(text: &str) -> Result<VectorFile, String> {
-        toml::from_str(text).map_err(|error| error.to_string())
+        let file: VectorFile = toml::from_str(text).map_err(|error| error.to_string())?;
+        validate_work_tables(&file)?;
+        Ok(file)
     }
 
     /// The HUD's pictures. The blank's flips and the diagonal's are read by no rule (§1.4), so
@@ -579,6 +751,27 @@ mod convert {
             let step = self.step(&map, new_area.as_ref())?;
             let mut after = before.clone();
             let events = step.take(&mut after, &rules, pictures);
+            if let Step::FrameOfPlay(inputs) = &step {
+                let complete = complete_staged(
+                    before.clone(),
+                    ItemControlInputs::from_frame(inputs),
+                    &DisplayInputs::from_frame(inputs),
+                    &rules,
+                    pictures,
+                );
+                assert_eq!(
+                    complete.state(),
+                    &after,
+                    "{} full ordinary/staged State",
+                    self.id
+                );
+                assert_eq!(
+                    complete.events(),
+                    events,
+                    "{} complete ordered events",
+                    self.id
+                );
+            }
             let expected = expected_state(&self.after, &before)?;
             let expected_events: Vec<HudEvent> = self.after.events.iter().map(|e| e.0).collect();
             Ok(differences(&expected, &after, &expected_events, &events))
@@ -605,6 +798,269 @@ mod convert {
             }
         }
     }
+
+    /// Execute only admitted Model cases through the public countdown model. This harness
+    /// has no scene admission decision: the producer's qualified input is supplied directly.
+    pub fn run_countdown(vector: &super::shape::CountdownIn, pictures: &HudPictures) {
+        use interface_hud::{Countdown, CountdownOpportunity, CountdownWork};
+
+        use super::shape::{
+            CountdownBoundary, CountdownCurrentIn, CountdownExpected, CountdownScope, SceneIn,
+        };
+
+        assert_eq!(vector.scope, CountdownScope::Model);
+        assert_eq!(vector.before, CountdownCurrentIn::Dormant);
+        assert_eq!(vector.after, CountdownCurrentIn::Dormant);
+        assert_eq!(vector.scene, SceneIn::MaintainCountdown);
+        assert_eq!(vector.expected, CountdownExpected::Pass);
+        // Later scene input is deliberately not supplied to already chosen work. Qualification
+        // of an unread PresentationOnly contrast is outside this model and is not tested here.
+        assert!(matches!(
+            vector.later_scene,
+            SceneIn::MaintainCountdown | SceneIn::PresentationOnly
+        ));
+        assert_ne!(vector.boundary, CountdownBoundary::Unread);
+        let mut current = countdown_fixture(pictures);
+        if let Some(energy) = vector.energy {
+            refresh_countdown_fixture(&mut current, pictures, energy);
+        }
+        // Protection is external to this domain and deliberately not supplied to the model.
+        current.countdown = Countdown::Dormant;
+        let initial = current.clone();
+        let mut answers = Vec::new();
+        let mut contributions = Vec::new();
+        for _ in 0..vector.opportunities {
+            let mut work = CountdownWork::new(current);
+            assert_eq!(work.answer(), &Observation::Unread);
+            assert!(work.publication().is_none());
+            assert!(!work.apply());
+            assert!(work.choose(CountdownOpportunity::MaintainCountdown));
+            let Observation::Chosen(chosen) = work.answer() else {
+                panic!("{}: no actual chosen model answer", vector.id);
+            };
+            assert_eq!(chosen.expiry, interface_hud::CountdownExpiry::NoExpiry);
+            assert_eq!(chosen.picture, interface_hud::CountdownPicture::Absent);
+            assert_eq!(chosen.opportunity, CountdownOpportunity::MaintainCountdown);
+            assert_eq!(work.state(), &initial);
+            assert!(work.publication().is_none());
+            assert!(!work.choose(CountdownOpportunity::MaintainCountdown));
+            if vector.boundary == CountdownBoundary::Completed {
+                assert!(work.apply());
+            }
+            if vector.restore {
+                work = restore_countdown(work);
+            }
+            let completed_now = work.apply();
+            assert_eq!(completed_now, vector.boundary == CountdownBoundary::Chosen);
+            assert!(!work.apply());
+            let (state, answer) = work.publication().expect("completed countdown publication");
+            assert_eq!(work.answer(), &Observation::Completed(*answer));
+            assert_eq!(state, &initial, "{}: complete HUD preserved", vector.id);
+            answers.push(answer.expiry);
+            contributions.push(answer.picture);
+            current = state.clone();
+        }
+        assert_eq!(
+            answers, vector.answers,
+            "{}: ordered expiry answers",
+            vector.id
+        );
+        assert_eq!(
+            contributions, vector.pictures,
+            "{}: ordered picture contributions",
+            vector.id
+        );
+        assert_eq!(current, initial);
+    }
+
+    /// Independently varied grid, caches, selection, explored map and map power.
+    #[expect(
+        clippy::arithmetic_side_effects,
+        reason = "invented grid numbers and palettes have known bounded ranges"
+    )]
+    fn countdown_fixture(pictures: &HudPictures) -> HudState {
+        let mut hud = state(&BeforeIn::default(), pictures).expect("countdown fixture");
+        for y in 0..HUD_ROWS {
+            for x in 0..HUD_COLUMNS {
+                let number = u16::try_from(y * HUD_COLUMNS + x).expect("invented cell");
+                hud.grid.set(
+                    Pair { x, y },
+                    interface_hud::Tile::new(
+                        Look {
+                            picture: interface_hud::Picture::new(number).expect("invented picture"),
+                            flip: interface_hud::Flip::Both,
+                        },
+                        interface_hud::ColourSet::new(u8::try_from(number % 8).expect("palette"))
+                            .expect("invented colours"),
+                    ),
+                );
+            }
+        }
+        hud.shown.energy = 299;
+        hud.shown.ammo =
+            enum_map! { Ammo::Missiles => 5, Ammo::SuperMissiles => 99, Ammo::PowerBombs => 7 };
+        hud.shown.highlighted = Some(SelectableItem::XRayScope);
+        hud.selection = Selection::OneShot(SelectableItem::GrappleBeam);
+        hud.explored.insert(Pair { x: 31, y: 30 });
+        hud.explored.insert(Pair { x: 32, y: 31 });
+        hud.explored.insert(Pair { x: 63, y: 31 });
+        hud.mini_map = MiniMapPower::Off;
+        hud
+    }
+
+    /// The independent-health vector supplies actual status inputs to the ordinary HUD first.
+    fn refresh_countdown_fixture(hud: &mut HudState, pictures: &HudPictures, energy: u16) {
+        let inputs = InputsIn {
+            energy: Some([energy, 1499]),
+            can_switch: Some(false),
+            ..InputsIn::default()
+        };
+        let map = HerMap {
+            pictures: MapPictures::filled(pictures.map_blank),
+            charted: MapCellSet::default(),
+        };
+        let frame = frame_inputs(FrameCount(0), &inputs, &map).expect("fixture frame inputs");
+        assert_eq!(
+            hud.frame_of_play(&Rules::reference(), pictures, &frame),
+            [HudEvent::Click]
+        );
+        assert_eq!(hud.shown.energy, energy);
+        assert_eq!(hud.countdown, interface_hud::Countdown::Dormant);
+    }
+
+    /// Whole-value fresh restoration: discard the work, not just its State projection.
+    #[expect(
+        clippy::drop_non_drop,
+        reason = "whole-work serde restoration explicitly discards its original"
+    )]
+    fn restore_countdown(original: interface_hud::CountdownWork) -> interface_hud::CountdownWork {
+        let text = toml::to_string(&original).expect("serialize countdown work");
+        drop(original);
+        toml::from_str(&text).expect("restore fresh countdown work")
+    }
+
+    /// Recursively apply a table patch; arrays and scalar answers replace whole values.
+    fn merge(target: &mut toml::Table, patch: &toml::Table) {
+        for (key, value) in patch {
+            match (target.get_mut(key), value) {
+                (Some(toml::Value::Table(old)), toml::Value::Table(new)) => merge(old, new),
+                _ => {
+                    target.insert(key.clone(), value.clone());
+                }
+            }
+        }
+    }
+
+    /// Additive defaults only. The ordinary parser's requirements remain unchanged.
+    fn work_inputs(table: &toml::Table) -> Result<(u8, InputsIn), String> {
+        let mut table = table.clone();
+        let frame = table
+            .remove("frame")
+            .map_or(Ok(0), toml::Value::try_into)
+            .map_err(|error: toml::de::Error| error.to_string())?;
+        table
+            .entry("energy")
+            .or_insert(toml::Value::Array(vec![0.into(), 0.into()]));
+        if let Some(toml::Value::Table(mini_map)) = table.get_mut("mini_map") {
+            mini_map
+                .entry("map")
+                .or_insert(toml::Value::Table(toml::Table::new()));
+        }
+        let inputs = toml::Value::Table(table)
+            .try_into()
+            .map_err(|error: toml::de::Error| error.to_string())?;
+        Ok((frame, inputs))
+    }
+
+    fn after_table(table: &toml::Table) -> Result<AfterIn, String> {
+        toml::Value::Table(table.clone())
+            .try_into()
+            .map_err(|error| error.to_string())
+    }
+
+    /// Even recursive patches are checked against the appropriate stage's shape at load.
+    fn validate_work_tables(file: &VectorFile) -> Result<(), String> {
+        let pictures = pictures(&file.pictures);
+        for work in &file.hud_work {
+            WorkCase::load(work, None, &pictures)?;
+        }
+        for resume in &file.hud_resume {
+            WorkCase::load(resume.base(file)?, Some(resume), &pictures)?;
+        }
+        Ok(())
+    }
+
+    /// The public staged path for inputs already known to describe a complete frame.
+    fn complete_staged(
+        before: HudState,
+        controls: ItemControlInputs,
+        display: &DisplayInputs,
+        rules: &Rules,
+        pictures: &HudPictures,
+    ) -> HudWork {
+        let mut work = HudWork::begin(before, display.frame);
+        assert!(work.choose_controls(controls));
+        assert!(work.apply());
+        let movement = MovementInputs::capture(&display.mini_map(), display.mother_brain_falls);
+        assert!(work.choose_mini_map(rules, pictures, movement));
+        assert!(work.apply());
+        assert!(work.choose_status(rules, pictures, display.status_inputs()));
+        assert!(work.apply());
+        work
+    }
+
+    /// Additive after tables leave omitted shown values independent, as they were before.
+    fn work_expected(
+        table: &toml::Table,
+        before: &HudState,
+    ) -> Result<(HudState, Vec<HudEvent>), String> {
+        let after = after_table(table)?;
+        let mut expected = expected_state(&after, before)?;
+        if let Some(toml::Value::Table(shown_patch)) = table.get("shown") {
+            if !shown_patch.contains_key("energy") {
+                expected.shown.energy = before.shown.energy;
+            }
+            if !shown_patch.contains_key("selection") {
+                expected.shown.highlighted = before.shown.highlighted;
+            }
+            for (key, ammo) in [
+                ("missiles", Ammo::Missiles),
+                ("super_missiles", Ammo::SuperMissiles),
+                ("power_bombs", Ammo::PowerBombs),
+            ] {
+                if !shown_patch.contains_key(key) {
+                    expected.shown.ammo[ammo] = before.shown.ammo[ammo];
+                }
+            }
+        }
+        Ok((expected, after.events.iter().map(|event| event.0).collect()))
+    }
+
+    fn chosen_inputs(table: &toml::Table, pictures: &HudPictures) -> Result<DisplayInputs, String> {
+        let (frame, inputs) = work_inputs(table)?;
+        let map = her_map(inputs.mini_map.as_ref(), pictures)?;
+        Ok(DisplayInputs::from_frame(&frame_inputs(
+            FrameCount(frame),
+            &inputs,
+            &map,
+        )?))
+    }
+
+    fn chosen_controls(
+        table: &toml::Table,
+        pictures: &HudPictures,
+    ) -> Result<ItemControlInputs, String> {
+        let (frame, inputs) = work_inputs(table)?;
+        let map = her_map(inputs.mini_map.as_ref(), pictures)?;
+        Ok(ItemControlInputs::from_frame(&frame_inputs(
+            FrameCount(frame),
+            &inputs,
+            &map,
+        )?))
+    }
+
+    mod staged_vectors;
+    use staged_vectors::WorkCase;
 
     /// The rules a vector runs under: the game's, with each value the vector gives in its place.
     fn rules(given: &RulesIn) -> Rules {
@@ -838,11 +1294,12 @@ mod convert {
                 Some(CancelIn::Held) => CancelButton::Held,
             },
             can_switch: inputs.can_switch.unwrap_or(true),
-            muted_by: inputs.muted_by.map(|mute| match mute {
-                MuteIn::Grapple => Mute::Grapple,
-                MuteIn::SpinJump => Mute::SpinJump,
-                MuteIn::TimeStopped => Mute::TimeStopped,
-                MuteIn::WallJump => Mute::WallJump,
+            muted_by: inputs.muted_by.and_then(|mute| match mute {
+                MuteIn::None => None,
+                MuteIn::Grapple => Some(Mute::Grapple),
+                MuteIn::SpinJump => Some(Mute::SpinJump),
+                MuteIn::TimeStopped => Some(Mute::TimeStopped),
+                MuteIn::WallJump => Some(Mute::WallJump),
             }),
         }
     }
@@ -952,6 +1409,7 @@ mod convert {
             selection: selection(before.selection.item(), before.one_shot)?,
             explored: cell_set(&before.explored)?,
             mini_map: power(before.mini_map_off),
+            countdown: interface_hud::Countdown::Dormant,
         })
     }
 
@@ -976,6 +1434,7 @@ mod convert {
                 .as_ref()
                 .map_or(Ok(before.explored), |cells| cell_set(cells))?,
             mini_map: after.mini_map_off.map_or(before.mini_map, power),
+            countdown: before.countdown,
         })
     }
 
@@ -1037,6 +1496,12 @@ mod convert {
         actual_events: &[HudEvent],
     ) -> Vec<String> {
         let mut problems = grid_differences(&expected.grid, &actual.grid);
+        if expected.countdown != actual.countdown {
+            problems.push(format!(
+                "countdown: expected {:?}, got {:?}",
+                expected.countdown, actual.countdown
+            ));
+        }
         if expected.shown != actual.shown {
             problems.push(format!(
                 "shown: expected {:?}, got {:?}",
@@ -1233,7 +1698,7 @@ mod tests {
     /// (spec: `Switching`, `SwitchClick`).
     fn exercised(vector: &VectorIn) -> impl Iterator<Item = String> + '_ {
         let outputs = vector.after.events.iter().map(|event| match event.0 {
-            HudEvent::Switched(_) => "Switching".to_owned(),
+            HudEvent::Switched { .. } => "Switching".to_owned(),
             HudEvent::Click => "SwitchClick".to_owned(),
         });
         vector.entries.iter().cloned().chain(outputs)
@@ -1260,6 +1725,195 @@ mod tests {
             file.vector.len(),
             failures.join("\n")
         );
+    }
+
+    #[test]
+    fn five_countdown_model_vectors_pass() {
+        let file = load().unwrap();
+        let pictures = pictures(&file.pictures);
+        let model: Vec<_> = file
+            .countdown
+            .iter()
+            .filter(|v| v.scope == super::shape::CountdownScope::Model)
+            .collect();
+        assert_eq!(model.len(), 5);
+        for vector in model {
+            super::convert::run_countdown(vector, &pictures);
+        }
+        let neighboring: Vec<_> = file
+            .countdown
+            .iter()
+            .filter(|v| v.scope == super::shape::CountdownScope::IntegrationAdmission)
+            .collect();
+        assert_eq!(neighboring.len(), 5);
+        // Descriptions only: no admission evaluator runs and none earn model coverage.
+        for vector in neighboring {
+            assert_eq!(
+                vector.expected,
+                super::shape::CountdownExpected::Unsupported
+            );
+            let no_answers: [interface_hud::CountdownExpiry; 0] = [];
+            let no_pictures: [interface_hud::CountdownPicture; 0] = [];
+            assert_eq!(vector.answers, no_answers);
+            assert_eq!(vector.pictures, no_pictures);
+        }
+    }
+
+    #[test]
+    fn countdown_catalogue_metadata_matches_spec() {
+        for (id, kind) in [
+            (BehaviourId::EscapeCountdown, interface_hud::Kind::Mechanic),
+            (
+                BehaviourId::CountdownContinuation,
+                interface_hud::Kind::Timing,
+            ),
+        ] {
+            let entry = CATALOGUE.iter().find(|b| b.id == id).unwrap();
+            assert_eq!(entry.kind, kind);
+            assert_eq!(entry.switch, interface_hud::Switch::Fixed);
+            assert_eq!(entry.checked, Checked::ByVectors);
+        }
+    }
+
+    #[test]
+    fn countdown_unknown_fields_and_names_are_rejected() {
+        for (from, to) in [
+            (
+                "id = \"R-countdown-dormant\"",
+                "id = \"R-countdown-dormant\"\nspeed = 1",
+            ),
+            ("scope = \"Model\"", "scope = \"Anything\""),
+            ("before = \"Dormant\"", "before = \"Other\""),
+            (
+                "scene = \"MaintainCountdown\"",
+                "scene = \"InventedChoice\"",
+            ),
+            ("boundary = \"Completed\"", "boundary = \"AppliedTwice\""),
+            ("answers = [\"NoExpiry\"]", "answers = [\"Expiry\"]"),
+            ("pictures = [\"Absent\"]", "pictures = [\"Digits\"]"),
+        ] {
+            assert!(load_changed(from, to).is_err(), "accepted {to}");
+        }
+    }
+
+    #[test]
+    fn additive_work_and_resume_vectors_pass() {
+        let file = load().unwrap();
+        let pictures = pictures(&file.pictures);
+        assert_eq!(file.hud_work.len(), 8);
+        assert_eq!(file.hud_resume.len(), 11);
+        for work in &file.hud_work {
+            let problems = work.run(&pictures).unwrap();
+            assert!(problems.is_empty(), "{}: {}", work.id, problems.join("; "));
+        }
+        for resume in &file.hud_resume {
+            let problems = resume.run(&file, &pictures).unwrap();
+            assert!(
+                problems.is_empty(),
+                "{}: {}",
+                resume.id,
+                problems.join("; ")
+            );
+        }
+    }
+
+    #[test]
+    fn additive_unknown_fields_and_names_are_rejected() {
+        for (from, to) in [
+            (
+                "id = \"H-controls-drop\"",
+                "id = \"H-controls-drop\"\nspeed = 1",
+            ),
+            ("[hud_work.controls]", "[hud_work.controls]\nspeed = 1"),
+            ("[hud_work.status]", "[hud_work.status]\nspeed = 1"),
+            (
+                "[hud_work.controls]",
+                "[hud_work.controls]\nenergy = [0, 0]",
+            ),
+            ("[hud_work.map_after]", "[hud_work.map_after]\nspeed = 1"),
+            ("[hud_observed]]", "[hud_observed]]\nspeed = 1"),
+            (
+                "[hud_work.controls_after]",
+                "[hud_work.controls_after]\nspeed = 1",
+            ),
+            ("[hud_work.after]", "[hud_work.after]\nspeed = 1"),
+            ("[hud_work.before]", "[hud_work.before]\nspeed = 1"),
+            ("[hud_work.mini_map]", "[hud_work.mini_map]\nspeed = 1"),
+            (
+                "id = \"H-controls-before\"",
+                "id = \"H-controls-before\"\nspeed = 1",
+            ),
+            (
+                "patch = { missiles = [0, 10],",
+                "patch = { speed = 1, missiles = [0, 10],",
+            ),
+            ("expect_after = {}", "expect_after = { speed = 1 }"),
+            (
+                "owner_at_map = { position = [256, 16], energy = [119, 199] }",
+                "owner_at_map = { position = [256, 16], energy = [119, 199], speed = 1 }",
+            ),
+            ("\ncut = \"BeforeAnswer\"", "\ncut = \"BeforeReading\""),
+            ("opportunity = \"ItemControls\"", "opportunity = \"Move\""),
+        ] {
+            assert!(load_changed(from, to).is_err(), "accepted {to}");
+        }
+    }
+
+    #[test]
+    fn recorded_pair_checks_only_the_exported_relations() {
+        let file = load().unwrap();
+        let [first, second] = file.hud_observed.as_slice() else {
+            panic!("successive recorded frames")
+        };
+        assert_eq!((first.cut, second.cut), (127, 128));
+        assert!(!first.map_window_changed_by_movement);
+        assert!(second.map_window_changed_by_movement);
+        for observation in [first, second] {
+            assert!(observation.map_runs);
+            assert!(observation.map_retained_through_status);
+            assert!(observation.energy_read_after_drawing);
+            assert!(observation.gauge_retained_through_status);
+        }
+        // No native state, energy or picture numbers are supplied by these witnesses.
+        // The H vectors separately execute the model with invented content and inputs.
+    }
+
+    #[test]
+    fn staged_catalogue_metadata_matches_spec() {
+        for id in [
+            BehaviourId::ItemControls,
+            BehaviourId::MiniMapUpdate,
+            BehaviourId::StatusRefresh,
+            BehaviourId::RetainedHudWork,
+        ] {
+            let entry = CATALOGUE.iter().find(|b| b.id == id).unwrap();
+            assert_eq!(entry.kind, interface_hud::Kind::Timing);
+            assert_eq!(entry.switch, interface_hud::Switch::Fixed);
+            assert_eq!(entry.checked, Checked::ByVectors);
+        }
+    }
+
+    #[test]
+    fn additive_ids_and_catalogue_entries_are_checked() {
+        let file = load().unwrap();
+        let mut ids = std::collections::BTreeSet::new();
+        let rows = file
+            .vector
+            .iter()
+            .map(|v| (&v.id, &v.entries))
+            .chain(file.hud_work.iter().map(|v| (&v.id, &v.entries)))
+            .chain(file.hud_resume.iter().map(|v| (&v.id, &v.entries)))
+            .chain(file.countdown.iter().map(|v| (&v.id, &v.entries)))
+            .chain(file.hud_observed.iter().map(|v| (&v.id, &v.entries)));
+        for (id, entries) in rows {
+            assert!(ids.insert(id), "duplicate {id}");
+            for entry in entries {
+                assert!(
+                    CATALOGUE.iter().any(|b| name(b.id) == *entry),
+                    "{id}: unknown {entry}"
+                );
+            }
+        }
     }
 
     #[test]
@@ -1296,7 +1950,12 @@ mod tests {
         for behaviour in checked {
             let name = name(behaviour.id);
             assert!(
-                file.vector.iter().any(|v| exercised(v).any(|e| e == name)),
+                file.vector.iter().any(|v| exercised(v).any(|e| e == name))
+                    || file.hud_work.iter().any(|v| v.entries.contains(&name))
+                    || file.hud_resume.iter().any(|v| v.entries.contains(&name))
+                    || file.countdown.iter().any(|v| {
+                        v.scope == super::shape::CountdownScope::Model && v.entries.contains(&name)
+                    }),
                 "no vector exercises {name}"
             );
         }
