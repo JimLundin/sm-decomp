@@ -218,6 +218,7 @@ fn hud_boss_entry_keeps_selection_and_refuses_an_incomplete_checkpoint() {
         interface_hud::Ammo::Missiles,
     ));
     let state = interface_hud::HudState {
+        countdown: interface_hud::Countdown::Dormant,
         grid: interface_hud::HudGrid::filled(interface_hud::Tile::new(
             types::Look::default(),
             interface_hud::ColourSet::new(0).unwrap(),
@@ -252,6 +253,7 @@ fn hud_boss_entry_keeps_selection_and_refuses_an_incomplete_checkpoint() {
 fn hud_play_selects_once_and_preserves_both_ordered_events() {
     use interface_hud as hud;
     let state = hud::HudState {
+        countdown: interface_hud::Countdown::Dormant,
         grid: hud::HudGrid::filled(hud::Tile::new(
             types::Look::default(),
             hud::ColourSet::new(0).unwrap(),
@@ -312,7 +314,9 @@ fn hud_play_selects_once_and_preserves_both_ordered_events() {
     assert_eq!(
         production.advance(AdvanceInput::Hud(HudInput::Play(&inputs))),
         Ok(ProductionOutputs::Hud(vec![
-            hud::HudEvent::Switched(Some(missiles)),
+            hud::HudEvent::Switched {
+                item: Some(missiles)
+            },
             hud::HudEvent::Click
         ]))
     );

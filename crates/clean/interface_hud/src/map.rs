@@ -2,6 +2,7 @@
 //! with its flips, its beyond pictures, and the cells it charts; and the sets of its cells. A
 //! cell of her map is a `Place`, which may lie outside it (§1.5).
 
+use serde::{Deserialize, Serialize};
 use types::Look;
 
 use crate::grid::Grid;
@@ -21,7 +22,7 @@ pub type MapPictures = Grid<Look, 66, 32>;
 ///
 /// Its default, every picture `000` unflipped and nothing charted, is a stand-in for a caller
 /// with nothing imported yet: no rule says what it shows (§1.4).
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub struct HerMap {
     /// Each cell's picture with its flips, then the beyond pictures.
     pub pictures: MapPictures,

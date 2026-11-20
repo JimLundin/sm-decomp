@@ -8,6 +8,8 @@ mod vectors {
         reason = "the assertion seeks only initialization receipts"
     )]
     mod additional;
+    mod cannon_vectors;
+    mod colour_vectors;
     #[expect(
         clippy::wildcard_enum_match_arm,
         reason = "strict test fixtures and assertion failures use known vector indices and exhaustive rejection fallbacks"
@@ -43,6 +45,8 @@ mod vectors {
         appearance_work: Vec<AppearanceWork>,
         suspended_update: Vec<suspended_vectors::SuspendedVector>,
         resume_case: Vec<suspended_vectors::ResumeCase>,
+        cannon_readiness: Vec<cannon_vectors::CannonHistory>,
+        ordinary_run_colours: colour_vectors::ColourVectors,
     }
 
     #[derive(Deserialize)]
@@ -956,6 +960,12 @@ mod vectors {
                     .iter()
                     .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
             )
+            .chain(
+                file.cannon_readiness
+                    .iter()
+                    .flat_map(|vector| vector.entries.iter().map(|entry| behaviour(entry))),
+            )
+            .chain(file.ordinary_run_colours.entries().map(behaviour))
             .collect();
         let missing: Vec<BehaviourId> = CATALOGUE
             .iter()

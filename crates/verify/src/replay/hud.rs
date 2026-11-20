@@ -70,7 +70,7 @@ impl Content {
             maps: converted,
         })
     }
-    fn map(&self, wram: &[u8]) -> Result<&HerMap, Outcome> {
+    pub(super) fn map(&self, wram: &[u8]) -> Result<&HerMap, Outcome> {
         let area = data::room::Area::try_from(
             u8::try_from(word(wram, 0x079f)?).map_err(|_| data_failure(None, "HUD area width"))?,
         )
@@ -142,6 +142,30 @@ fn bitmap(wram: &[u8]) -> Result<MapCellSet, Outcome> {
     Ok(set)
 }
 pub fn seed(wram: &[u8], _content: &Content) -> Result<HudState, Outcome> {
+    let state = decode_state(wram)?;
+    if state.selection != Selection::None || state.mini_map != MiniMapPower::On {
+        return Err(Outcome::Unsupported {
+            cut: None,
+            dependency: "HUD drop/turn-on equivalence requires unselected powered-on seed"
+                .to_owned(),
+        });
+    }
+    Ok(state)
+}
+
+/// Decode independently observed countdown status; active and unknown values stay unsupported.
+pub fn countdown_origin(wram: &[u8]) -> Result<interface_hud::Countdown, Outcome> {
+    if word(wram, 0x0943)? != 0 {
+        return Err(data_failure(
+            None,
+            "HUD current countdown outside dormant scope",
+        ));
+    }
+    Ok(interface_hud::Countdown::Dormant)
+}
+
+/// Decode every independently observed HUD field without choosing a replay scope.
+pub fn decode_state(wram: &[u8]) -> Result<HudState, Outcome> {
     let first = word(wram, 0xc608)?;
     let mut grid = HudGrid::filled(Tile::new(
         look(first)?,
@@ -169,14 +193,8 @@ pub fn seed(wram: &[u8], _content: &Content) -> Result<HudState, Outcome> {
         (Some(i), Some(j)) if i == j => Selection::OneShot(i),
         _ => return Err(data_failure(None, "HUD one-shot relation")),
     };
-    if selection != Selection::None || word(wram, 0x05f7)? != 0 {
-        return Err(Outcome::Unsupported {
-            cut: None,
-            dependency: "HUD drop/turn-on equivalence requires unselected powered-on seed"
-                .to_owned(),
-        });
-    }
     Ok(HudState {
+        countdown: countdown_origin(wram)?,
         grid,
         selection,
         explored: bitmap(wram)?,
@@ -417,23 +435,9 @@ const fn item_code(item: Option<SelectableItem>) -> u16 {
         Some(SelectableItem::XRayScope) => 5,
     }
 }
-pub fn initial(state: &HudState, _content: &Content) -> Vec<Observation> {
-    let mut tiles = Vec::new();
-    for cell in 0_usize..96 {
-        if let Some(tile) = state.grid.get(place(cell % 32, cell / 32)) {
-            let flip = match tile.look.flip {
-                Flip::None => 0,
-                Flip::Across => 0x4000,
-                Flip::Down => 0x8000,
-                Flip::Both => 0xc000,
-            };
-            let value = tile.look.picture.index()
-                | (u16::from(tile.colours.number()) << 10)
-                | 0x2000
-                | flip;
-            tiles.extend(value.to_le_bytes());
-        }
-    }
+pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>, Outcome> {
+    let tiles = game::production::frame::hud::tilemap(state)
+        .map_err(|_| data_failure(None, "HUD complete tilemap"))?;
     let mut explored = Vec::new();
     for index in 0_usize..256 {
         let byte = (0..8).fold(0_u8, |byte, bit| {
@@ -478,8 +482,74 @@ pub fn initial(state: &HudState, _content: &Content) -> Vec<Observation> {
         "hud.map-off",
         i64::from(state.mini_map == MiniMapPower::Off),
     ));
-    fields
+    Ok(fields)
 }
-pub fn actual(state: &HudState, _events: &[HudEvent], content: &Content) -> Vec<Observation> {
+pub fn actual(
+    state: &HudState,
+    _events: &[HudEvent],
+    content: &Content,
+) -> Result<Vec<Observation>, Outcome> {
     initial(state, content)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[ignore = "requires independently qualified corrected-origin WRAM"]
+    fn complete_origin_restore_and_actual_tilemap_preserve_observations() {
+        let path = std::env::var_os("SM_FRAME_HUD_WRAM").expect("independent first-cut WRAM");
+        let wram = std::fs::read(path).unwrap();
+        let state = decode_state(&wram).unwrap();
+        let owner = game::production::frame::hud::Hud::new(state.clone());
+        let restored: game::production::frame::hud::Hud =
+            canonical::from_bytes(&canonical::to_bytes(&owner)).unwrap();
+        assert!(restored.eq(&owner));
+        let actual = game::production::frame::hud::tilemap(restored.state()).unwrap();
+        assert_eq!(actual.len(), 192);
+        assert!(actual.iter().eq(wram.get(0xc608..0xc6c8).unwrap()));
+        let mut changed_health = wram.clone();
+        changed_health
+            .get_mut(0x09c2..0x09c4)
+            .unwrap()
+            .copy_from_slice(&state.shown.energy.wrapping_add(1).to_le_bytes());
+        assert!(decode_state(&changed_health).unwrap().eq(&state));
+        for (at, value) in [
+            (0xc608_usize, word(&wram, 0xc608).unwrap() & !0x2000),
+            (0x09d2, 0),
+        ] {
+            let mut invalid = wram.clone();
+            invalid
+                .get_mut(at..at.saturating_add(2))
+                .unwrap()
+                .copy_from_slice(&value.to_le_bytes());
+            if at == 0x09d2 {
+                invalid
+                    .get_mut(0x0a04..0x0a06)
+                    .unwrap()
+                    .copy_from_slice(&1_u16.to_le_bytes());
+            }
+            assert!(decode_state(&invalid).is_err());
+        }
+        let mut selected = wram;
+        selected
+            .get_mut(0x09d2..0x09d4)
+            .unwrap()
+            .copy_from_slice(&4_u16.to_le_bytes());
+        selected
+            .get_mut(0x0a04..0x0a06)
+            .unwrap()
+            .copy_from_slice(&4_u16.to_le_bytes());
+        selected
+            .get_mut(0x05f7..0x05f9)
+            .unwrap()
+            .copy_from_slice(&1_u16.to_le_bytes());
+        let decoded = decode_state(&selected).unwrap();
+        assert_eq!(
+            decoded.selection,
+            Selection::OneShot(SelectableItem::GrappleBeam)
+        );
+        assert_eq!(decoded.mini_map, MiniMapPower::Off);
+    }
 }

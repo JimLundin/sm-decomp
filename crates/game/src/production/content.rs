@@ -76,6 +76,8 @@ impl MovementContent {
 pub enum ProductionContent {
     /// Checked shared connected movement/appearance content.
     Connected(Box<super::connected::Content>),
+    /// Complete selected frame producer content.
+    Frame(Box<super::frame::Content>),
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
     Movement(MovementContent),
     /// Checked movement content with fixed clean Ceres geometry.
@@ -107,6 +109,8 @@ pub enum ProductionContent {
 pub enum ProductionRules {
     /// Complete parameters for every connected selected owner.
     Connected(Box<super::connected::Rules>),
+    /// Complete selected frame producer rules.
+    Frame(Box<super::frame::Rules>),
     /// The existing movement model's complete rules.
     Movement(samus_movement::Rules),
     /// Complete parameters for both connected owners.

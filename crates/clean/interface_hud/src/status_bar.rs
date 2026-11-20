@@ -23,6 +23,29 @@ const ENERGY_PER_TANK: u16 = 100;
 const DECIMAL: u16 = 10;
 
 impl HudState {
+    /// Spec: StatusRefresh, SwitchClick. Draw the late status without revisiting movement.
+    pub(crate) fn refresh_status(
+        &mut self,
+        rules: &Rules,
+        pictures: &HudPictures,
+        inputs: &crate::inputs::StatusInputs,
+        frame: crate::inputs::FrameCount,
+        initial_highlight: Option<SelectableItem>,
+    ) -> Option<crate::events::HudEvent> {
+        self.selection.apply_drop(inputs.dropped_before_status_bar);
+        self.energy_gauge(pictures, inputs.energy);
+        self.ammo_counts(pictures, &inputs.ammunition);
+        self.reserve_sign(pictures, inputs.reserve);
+        if let Some(item) = inputs.collected {
+            self.icon_appears(pictures, item);
+        }
+        self.highlight(pictures);
+        self.one_shot_flash(rules, pictures, frame);
+        self.selection.apply_drop(inputs.dropped_after_status_bar);
+        (self.shown.highlighted != initial_highlight && inputs.muted_by.is_none())
+            .then_some(crate::events::HudEvent::Click)
+    }
+
     /// Spec: EnergyGauge. When her energy isn't the energy last shown, it becomes the one shown:
     /// one tank per 100 of her capacity, as many as fit (14), full while whole hundreds remain
     /// and empty after, and her energy's last two digits. Cells past her capacity keep what they

@@ -17,8 +17,8 @@ use types::{BoostStage, Set};
 pub(super) struct SuspendedVector {
     id: String,
     source: String,
-    base_kind: String,
-    base: String,
+    pub(super) base_kind: String,
+    pub(super) base: String,
     pub(super) entries: Vec<String>,
     #[serde(default)]
     rules: RulesTable,

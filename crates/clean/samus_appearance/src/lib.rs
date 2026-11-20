@@ -1,6 +1,19 @@
-//! The samus-appearance model, built from its behaviour spec alone: her animation's timing.
+//! The samus-appearance model, built from its behaviour spec alone: her animation's timing,
+//! appearance opportunities and independent cannon readiness.
 //!
-//! Each frame a caller runs two things, in this order:
+//! Retain [`Look`] for animation and cannon readiness: its `animation` is [`State`],
+//! the four animation quantities, and its `cannon` is the independent [`CannonDelay`].
+//! For ordinary dry-run colours, also retain [`ColourSequences`] and the shared [`Palettes`].
+//! Spec: `CannonItemDelay`, `RetainedCannonReadiness`. Keeping animation alone is not enough
+//! to preserve the whole look; cannon readiness cannot be reconstructed from animation or HUD
+//! selection. It advances only at actual eligible item-control completion, not animation or
+//! drawing, and resets only at full Samus initialization (`CannonReadinessReset`). Interrupted
+//! callers also preserve the actual [`CannonObservation`] alongside the look, interrupted
+//! animation work, independently retained preparation inputs and their own input/read/output
+//! delivery progress. Save and restore these together; model completion is not external
+//! delivery acknowledgement.
+//!
+//! For an ordinary animation frame, a caller runs two things, in this order:
 //!
 //! 1. Before samus-movement's step, `Ahead::of`, on the playhead it kept and the clip of her
 //!    figure: the end her clip reaches this frame, and whether her spin has turned far enough to
@@ -10,19 +23,24 @@
 //!    (`Rules`, the spec's parameters: `Rules::VANILLA` is the game). It gives back the `State`
 //!    to keep for the next frame, and the sound asked for, which only the frame itself can tell.
 //!
-//! The `State` is all the model remembers: her step and the time left on it (`Playhead`), the
+//! The `State` is all the animation remembers: her step and the time left on it (`Playhead`), the
 //! boost stage and the laps left (`LapsLeft`). A caller may set each to any value the spec
 //! allows, and gives it back as `update` left it. Her clips are data: each `Clip` is a list of
 //! steps, each one shown for a `Hold` or a `Control`; `Playhead::run_down` tells what her clip
 //! does as the time runs down (`RunDown`).
 
-//! ## Caller example: ordinary work and frozen drawing
+//! ## Caller example: animation and its shown opportunities
+//!
+//! This example is scoped to animation, stride/selection sounds and frozen drawing/passage
+//! opportunities. It does not show cannon item controls or complete persistent look retention,
+//! nor a full scheduler; callers still retain cannon readiness as described above.
 //!
 //! Spec: `FootContact`, `SpinStarts`, `SpinEnds`, `AtTheDoor`. The caller supplies real
 //! opportunity-time inputs from their owners. The two functions below show one ordinary work
-//! and one first-passage work; neither retries a sound or performs movement. Movement reads
-//! `Ahead::of` before producing `Inputs`; stride/selection inputs are captured at their named
-//! opportunities. Part 2 receives every retained graphical contact, with room/liquid context.
+//! and one first-passage work in that scope; neither retries a sound or performs movement.
+//! Movement reads `Ahead::of` before producing `Inputs`; stride/selection inputs are captured
+//! at their named opportunities. Part 2 receives every retained graphical contact, with
+//! room/liquid context.
 //! The sound owner receives every request in order, including the existing animation request.
 //! This example leaves `Boosting` in the existing animation interface rather than inventing
 //! an admission limit for it. Engine admission predicates for other drawing effects must be
@@ -151,9 +169,60 @@
 //! `update()` uses this same engine without pauses. Appearance-only frozen work has no
 //! animation inputs and contains only the actual drawing or passage opportunities.
 
+//! # Cannon readiness
+//!
+//! Spec: `CannonItemDelay`, `CannonReadinessReset`, `RetainedCannonReadiness`.
+//! Carry `Look { animation, cannon }` for animation and cannon readiness. Construct
+//! `CannonDelay::new(n)` with `n` in 0..=2 for part-way starts, or use `CannonDelay::INITIAL`
+//! at full initialization. `initialize()` resets only readiness; the existing
+//! animation initialization remains its own contract.
+//!
+//! At actual item controls, supply `ItemControlAnswer` identities and eligibility.
+//! Ordinary work calls `controls_completed()` once after effects complete. Interrupted
+//! work carries `CannonObservation::Unmade`, calls `choose()` at the actual choice,
+//! then `complete(&mut look)` only when those effects complete. Retain the observation
+//! alongside `Look` and existing `SuspendedAppearance` and caller-owned progress;
+//! serialize all of them, discard them and deserialize fresh instances. Completed
+//! observations cannot apply again, and chosen answers cannot be replaced.
+//! No observation is made for skipped controls. A new observation belongs only to
+//! the next actual controls, never a redraw, pose change or sound retry.
+//! At drawing, read readiness after those actual controls have completed.
+//! Read `remaining()` or `may_follow()` without effects. HUD one-shot mode, switch
+//! events, outside selection changes, gun pictures and external delivery acknowledgements
+//! are not readiness inputs. Neither readiness update nor inspection advances animation
+//! or publishes a sound/graphic.
+
+//! # Ordinary dry-run colours
+//!
+//! Spec: `OrdinaryRunColours`, `RetainedRunColours`. For each actual palette opportunity,
+//! carry [`RunColourWork::UNOBSERVED`] until the current figure, position and suit are selected.
+//! Before health maintenance, gather the actual neighbour answers in [`RunColourFacts`] and call
+//! [`RunColourWork::observe`]. Report unsupported if admission fails; a skipped opportunity needs
+//! no call. While admitted work is pending, consumers still read the old [`ColourSequences`].
+//! Other colour owners can write either bank in the same shared [`Palettes`] at any time.
+//! [`RunColourWork::complete`] publishes the prepared sequences once, before later drawing or
+//! palette upload. It needs neither fresh facts nor palette access. Video reads the current bank;
+//! transitions can also read the target bank. No figure, animation, cannon or other look work is
+//! consumed, and there are no requests to deliver from the reset.
+//!
+//! Save the sequences, both live banks, and the work together with the selected figure, the
+//! rest of the look and caller-owned opportunity and delivery progress. Restore fresh instances
+//! of all of them. Unobserved work still needs current facts; pending work keeps its own admitted
+//! facts; completed work cannot reset again. Reading or saving any of these does not apply work.
+
 mod ahead;
+mod cannon;
 mod catalogue;
+pub use cannon::{
+    CannonDelay, CannonObservation, ControlEligibility, ItemControlAnswer, Look, SelectedItem,
+};
 mod clip;
+mod colours;
+pub use colours::{
+    ChargeGlowPosition, ColourEffect, ColourSequences, GrappleActivity, LiquidLevel, RoomColours,
+    RunColourFacts, RunColourWork, Suit, UnsupportedRunColours, VisorDelay, VisorStep,
+};
+pub use types::{PALETTE_SLOTS, Palette, Palettes};
 mod inputs;
 mod moves;
 mod opportunity;

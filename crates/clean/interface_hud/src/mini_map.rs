@@ -136,6 +136,31 @@ fn window() -> impl Iterator<Item = (Place, Place)> {
 }
 
 impl HudState {
+    /// Spec: MiniMapStill, OutOfPlay. Turn-on holds even on steps that do not draw.
+    pub(crate) const fn mini_map_turned_on(&mut self, turned_on: bool) {
+        if turned_on {
+            self.mini_map = MiniMapPower::On;
+        }
+    }
+
+    /// Spec: MiniMapUpdate. Turn-on precedes the fall, which can stop this frame's draw.
+    pub(crate) fn movement_map(
+        &mut self,
+        rules: &Rules,
+        pictures: &HudPictures,
+        inputs: &MiniMapInputs<'_>,
+        mother_brain_falls: bool,
+        frame: FrameCount,
+    ) {
+        self.mini_map_turned_on(inputs.turned_on);
+        if mother_brain_falls {
+            self.boss_blanks_the_map(rules, pictures, Boss::MotherBrain, inputs.room.cell);
+        }
+        if self.mini_map_updates(inputs) {
+            self.explore_and_draw_mini_map(rules, pictures, inputs, frame);
+        }
+    }
+
     /// Spec: MiniMapStill. Whether the mini-map updates this frame: it runs, it isn't off, and
     /// she lies within her room's blocks, her position read as 0 to 65,535 so that one left of
     /// or above the room reads as past it.

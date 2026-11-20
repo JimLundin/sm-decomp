@@ -1,4 +1,4 @@
-# How Samus looks, part 1, her animation's timing: behaviour spec
+# How Samus looks, part 1, animation timing and ordinary palette preparation: behaviour spec
 
 What the player sees of Samus's animation from one frame to the next: which step of her pose's
 clip shows and for how long, how a clip loops, branches and ends, where the clip of the pose she
@@ -9,19 +9,27 @@ to boosting. Written behaviour first, from the oracle's records over time. Vecto
 
 ## Header
 
-**Scope.** Part 1 of the domain "how Samus looks": her animation's timing and its sound opportunities (§9). One domain with her
-sprite and colours (part 2), because the player sees one thing, her figure; this part is the
-clock that the sprite reads. It covers the step her clip shows, the time left on it, the end of
+**Scope.** Part 1 of the domain "how Samus looks": her animation's timing, its sound opportunities (§9),
+when her cannon may follow the selected item (§11), and the ordinary dry-run palette opportunity (§12).
+Her sprite and colours belong to the same domain because the player sees one figure.
+The animation contract covers the step her clip shows, the time left on it, the end of
 a clip (which [samus-movement](samus-movement.md) reads as `AnimationEnds`), whether her spin has
 turned far enough to kick off a wall (samus-movement's input "spin turned far"), and the boost: her
 run's stages up to boosting, which the shinespark, the echoes, her glow, the blocks that only a
-boost breaks, and the enemies she touches read.
+boost breaks, and the enemies she touches read. Cannon readiness is a separate visible delay;
+it does not choose a weapon, fire a shot or animate how her gun changes shape.
 
 **What it reads** (§1.3, each from the domain that owns it): her pose at the frame's start and at
 its end, and what her moves did this frame (samus-movement); her clips and the run's paces (the
-importer, §1.4); her energy and the items switched on (progress); the pad's run button; the
+importer, §1.4); her current energy ([health](samus-health.md)) and the items switched on
+(progress); the pad's run button; the
 slowdown and whether she is submerged (the liquids); how many sounds are waiting (the sound
 domain).
+
+**Palette neighbours.** Movement supplies the selected figure and position. Equipment,
+room effects, Environment, Grapple and the charge and effect owners supply current facts
+(§12). Appearance owns the ordinary visor and charge-glow reset. Room palette objects
+supply their own palette changes, and video owns delivery of the current palette.
 
 **What it leaves to others**: which pose follows a clip's end (samus-movement, `AnimationEnds`);
 which picture each step shows, where it is drawn and in which colours, the flicker while she is
@@ -456,9 +464,9 @@ step the same frame (C-ready), and a clip that ends hands over in the frame it e
 ## 7. Out of scope, and who supplies it
 
 - **Part 2 of this domain:** her sprite (the picture each step shows, where its halves sit, what
-  it uploads), her palettes (her suits, the visor, the charge's flash, the speed booster's glow
-  and the screw attack's, the flash when she is hurt), the flicker while she is invincible, the
-  splashes and dust, and the echoes' pictures. They read her step and the boost stage.
+  it uploads), her suits and active palette effects (visor, charge, booster glow, screw attack,
+  hit colour pulse), the flicker while she is invincible, splashes and dust, and the echoes'
+  pictures. They read her step and the boost stage.
 - **Poses other domains drive**, whose clips those domains step or set: the x-ray scope, the
   grapple beam, the shinespark (its windup sets the stage to 4 and its end clears it; the crouch's
   shine keeps it), knockback and her hurt, a metroid draining her, the crystal flash, her
@@ -697,3 +705,164 @@ objects. A clone or memory-only checkpoint is insufficient. All four animation q
 actual figures, pending answers and completed sound/graphic progress survive; each actual effect
 and read-only opportunity publishes once. Compare complete State and all outputs, beyond the
 listed observation subsequence. No storage layout, method list or stage enum is prescribed.
+
+## 11. When the cannon may follow her selected item
+
+The HUD owns the selected item. Her look owns the delay before her cannon may follow that
+item: a selection change can leave the cannon showing its previous open or closed state for
+one item-control opportunity. This is independent of the animation playhead, boost and sounds.
+Opening or closing the cannon, its pictures, and which selected items need it open remain
+downstream appearance rules; readiness does not assert that the cannon has finished moving.
+
+| Quantity | Units and domain type | Why the player can tell | Read by |
+| --- | --- | --- | --- |
+| cannon selection delay | `CannonDelay`, 0 to 2 eligible item-control opportunities remaining | her cannon can keep its previous open or closed state while the newly selected item is already highlighted | `CannonItemDelay`, `CannonReadinessReset`; output (the picture of her gun) |
+| cannon may follow the selection | readiness: delay is zero | the cannon may begin responding to the currently selected item | output (the picture of her gun) |
+
+The delay is separate persistent appearance memory. A caller can construct it at every value
+in its range, read it, and serialize/deserialize its complete owner. The existing four animation
+quantities and their interrupted work remain complete and unchanged; a caller carrying the
+whole look also carries cannon readiness. It is not reconstructed from the selected item,
+whether her gun is open, a frame number, or an event retained by the HUD.
+
+**Inputs and neighbours.** One actual item-control observation supplies whether controls are
+eligible (the HUD's `can switch`) and the selected item identities immediately before and
+after those controls. An identity is none, missiles, super missiles, power bombs, the x-ray
+scope or the grapple beam. The HUD's one-shot mode is independent: `Item(item)` and
+`OneShot(item)` have the same identity. The event `Switched` also is independent: item cancel
+on none and cycling back to the same available identity still report an event.
+
+These identities belong to the actual control answer and its starting selection. They are not
+the displayed highlight, an animation figure, or a selection read after a later weapon
+drop. Controls that cannot switch do not advance this clock. Its unit is a performed eligible
+control observation, not a video interrupt, a lag frame, an animation update or a drawing call. Frozen
+time alone does not suppress an eligible control observation. An ordinary skipped control
+observation, including facing the screen or being controlled by another domain, leaves it alone.
+
+### CannonItemDelay
+- kind: mechanic.
+- summary: after her selected item changes, the cannon waits for one more eligible control observation before it may follow that item.
+- params: none.
+- switch: none.
+- Eligible controls complete with different selected item identities before and after them → the delay becomes 1, including a change to none and another change during a delay [C-cannon-change, C-cannon-deselect, C-cannon-rechange, R-cannon-select, R-cannon-deselect].
+- Eligible controls complete with the same selected item identity → the delay becomes `max(0, delay - 1)`, irrespective of a same-item switch event or a change in one-shot mode [C-cannon-change, C-cannon-same-event, C-cannon-mode-only, C-cannon-ready, R-cannon-follow, R-cannon-same-item].
+- Controls are ineligible or are skipped → the delay stays as it is [C-cannon-disabled, C-cannon-skipped, C-cannon-frozen, R-cannon-lag].
+- checked: oracle (the R cases); constructed (the C cases).
+
+### CannonReadinessReset
+- kind: mechanic.
+- summary: a newly initialized Samus needs two eligible unchanged item-control observations before her cannon may follow the selection.
+- params: none.
+- switch: none.
+- Samus is initialized for arrival at Ceres or Zebes, or a demo is initialized → the delay becomes 2 [C-cannon-initialize, C-cannon-reset-during-wait].
+- A pose or clip changes, drawing repeats, the game lags or a passage only moves her to another room without reinitializing Samus → keep this delay; only `CannonItemDelay` and actual initialization change it [C-cannon-unrelated, C-cannon-skipped, R-cannon-lag].
+- checked: original only (initialization); constructed (the C cases). No recorded initialization-delay history is claimed.
+
+### RetainedCannonReadiness
+- kind: timing.
+- summary: cannon readiness follows one actual completed control answer, survives interruption, and is read without advancing it.
+- params: none.
+- switch: none.
+- An eligible control answer has been chosen but has not completed → preserve the current readiness until that actual answer's effects complete; the completed look applies its retained before/after item identities once [C-cannon-retained-change, C-cannon-retained-same].
+- Suspend with an unmade readiness observation, an actual chosen answer or completed readiness effects → serialize complete readiness, any pending actual answer and consumed control/read progress, discard the objects, and deserialize fresh instances; continuation produces exactly the uninterrupted readiness and outputs without repeating a completed update [C-cannon-retained-change, C-cannon-retained-same, C-cannon-save-ready].
+- Read readiness for the picture of her gun, or save or inspect the owner → report whether its delay is zero, without changing the delay or advancing animation or sounds [C-cannon-change, C-cannon-initialize, C-cannon-save-ready, C-cannon-unrelated].
+- checked: constructed (the C cases at the unmade, chosen and completed boundaries).
+
+**Order that matters.** The actual eligible control observation changes readiness before the
+cannon reads it for that drawing opportunity. A changed selection has delay 1 during the
+first draw after those controls. At the next eligible unchanged observation it reaches zero,
+so the following draw may follow the item. An intervening selection drop outside item controls
+does not itself age or restart this clock; drawing reads the actual current selected item with
+the existing readiness [C-cannon-external-drop]. All cannon animation, weapon selection,
+weapon-charge effects and suit colour changes and rendering outputs remain their existing neighbouring contracts.
+
+The additive `cannon_readiness` vectors in the existing appearance vector file contain complete
+histories of these observations. They supply item identities and one-shot mode separately and
+compare readiness after every operation. Existing ordinary, opportunity and changed-resume
+vectors retain their inputs and results. The implementation chooses the interface and shape;
+no source counter, callback, method list or original state encoding is specified.
+
+## 12. Samus's colours during an ordinary dry run
+
+Appearance owns the visor sequence and charge-glow position, alongside animation and
+cannon readiness. The complete state at this opportunity includes both ordered palettes.
+Keep a single current palette and a single palette for target colours shared by their producers and
+consumers. Appearance's ordinary reset needs no reads or writes of either palette. Room
+palette objects and other producers make their own changes to those same palettes. Video
+reads the current colours for presentation, and colour transitions can read the target
+colours. The same palettes remain authoritative while the reset is pending. A colour
+producer can change either palette during that time. Completion keeps the latest colours
+at their exact slots and emits no colour replacement, graphics, sound or hardware request.
+
+### 12.1 Persistent quantities
+
+| Quantity | Type and units | Read by |
+| --- | --- | --- |
+| visor delay | `VisorDelay`, 0 to 255 eligible palette ticks remaining | `OrdinaryRunColours`; visor sequence |
+| visor sequence position | `VisorStep`, entry in the visor's colour sequence, numbered from zero | `OrdinaryRunColours`; visor sequence |
+| charge-glow position | `ChargeGlowPosition`, a picture in the charge glow's sequence, numbered from zero, with zero the reset position | `OrdinaryRunColours`; charge-glow sequence |
+| current colours | `Palette`, 256 ordered RGB colours with 0 to 31 levels per component | output (video and colour transitions) |
+| target colours | `Palette`, 256 ordered RGB colours with 0 to 31 levels per component | output (colour transitions) |
+| actual palette opportunity progress | before observation, a pending admitted observation, or completed for the same opportunity | `RetainedRunColours`; continuation |
+
+A caller can supply and read back the entire palette state, including when the palettes
+are stored in a shared owner. A complete save and restore preserves both palettes at their
+current values along with Appearance's reset state and applicable progress. A reset charge-glow position
+describes the sequence's first picture. The current beam and effect facts govern
+whether a glow is active. The caller also retains the rest of the look and the actual
+opportunity's identity and delivery progress, so one completed opportunity cannot be
+applied twice. An application count, when observed, counts completions, including a
+completion that leaves the values equal. It does not count colour writes or frames.
+
+### 12.2 Current observations
+
+| Observation | Type and owner | Read by |
+| --- | --- | --- |
+| selected figure and position | valid current pose including `Action`, and current position in pixels/subpixels, from Movement after selection | `OrdinaryRunColours` |
+| current suit selection | `Suit` (Power, Varia or Gravity), the actual equipment-dependent selection supplied for current use | `OrdinaryRunColours` |
+| room colour treatment | `RoomColours` (standard, red background or orange background), from room effects | `OrdinaryRunColours` |
+| water and magma levels | independently present or absent, from room effects and the current Environment | `OrdinaryRunColours` |
+| grapple activity | dormant or busy, from Grapple | `OrdinaryRunColours` |
+| lingering glow after firing and weapon charging | independently inactive or active, from the shot/charge owners | `OrdinaryRunColours` |
+| appearance override and special colouring | independently inactive or active, from the current colour-effect owners | `OrdinaryRunColours` |
+| speed glow and hit colour pulse | independently inactive or active, from current boost activity and the damage appearance owner | `OrdinaryRunColours` |
+
+Use the current suit selection. With Gravity enabled it is Gravity, otherwise with Varia
+enabled it is Varia, otherwise it is Power. A value once observed before a current selection
+cannot stand for the completed selection, even if it describes the same suit. Similar-looking
+facts such as a camera's tether-related scrolling status or which layers haze blends do not establish
+the grapple or room effects observations above.
+
+### OrdinaryRunColours
+
+- kind: mechanic.
+- summary: during an ordinary dry run the visor and charge-glow sequences are readied while the present and target colours stay as they were.
+- params: none.
+- switch: none.
+- An actual palette opportunity observes a current valid Running figure in the Power suit, standard room colours, neither water nor magma present, dormant grapple, and all six current activity observations inactive → set visor delay to one eligible palette tick, visor position to the fourth entry (zero-based entry 3), and charge-glow position to reset. The input sequence positions and delay may differ from these values. Preserve all 256 current and 256 target colours at their positions, even with different valid running poses, positions or initial palettes [R-ordinary-run-colours, C-ordinary-stale, C-ordinary-other-stride, C-ordinary-already-ready].
+- checked: oracle (recorded application and preservation, R-ordinary-run-colours); original and constructed (stale reset and varied inputs).
+
+**Admission.** The surrounding caller reports unsupported for an actual palette opportunity
+outside this arm: other actions or suits, water or magma present, busy grapple, active stored
+glow, weapon charging, special colouring, appearance override, speed glow or hit colour pulse, and
+unrecognized or unavailable current facts or unrepresentable colours. Red and orange room backgrounds can advance the
+visor sequence clock and are outside the ordinary reset. The attempt leaves the palette and
+application progress unchanged on refusal. Idle time, skipped opportunities and observation
+or drawing alone do not apply this rule. `C-ordinary-boundary` changes each premise independently.
+
+### RetainedRunColours
+
+- kind: timing.
+- summary: one actual ordinary palette opportunity survives interruption and applies its reset once.
+- params: none.
+- switch: none.
+- The palette opportunity is admitted but its effects are pending → the complete prior palette state is still readable. Retain the actual admitted observation across suspension so a newer neighbouring value cannot substitute for the one already observed. Before observation the caller must still ask the current owners [C-ordinary-stale, C-ordinary-boundary].
+- The admitted opportunity's effects complete → publish the reset and preserved palettes once. Saving, restoring, inspecting or continuing a completed opportunity does not apply it again. Save and restore the complete state and applicable progress at unobserved, pending and completed cuts, then compare the continued result with an uninterrupted execution [C-ordinary-stale, C-ordinary-already-ready, C-ordinary-shared-colours].
+- checked: constructed (interruption, changed neighbours and independent writes to both palettes).
+
+**Order that matters.** Observe this opportunity after the current selected figure, position
+and suit answer are available, before health maintenance and later drawing or palette upload.
+Its completion makes the updated metadata available to later opportunities. It does not
+advance animation, cannon readiness, movement, room palette objects or health. The model
+chooses its API and representation. The palette histories in the vector file specify the
+visible outcomes and retention cuts.

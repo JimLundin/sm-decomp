@@ -3,6 +3,7 @@
 //! map; outside play, the mini-map's turn-on, a new area and a drop.
 
 use enum_map::EnumMap;
+use serde::{Deserialize, Serialize};
 use types::Pair;
 
 use crate::grid::Place;
@@ -11,11 +12,11 @@ use crate::map::{HerMap, MapCellSet};
 
 /// The count of frames the game has finished, mod 256, as this frame begins; a lag frame isn't
 /// one (§1.3).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct FrameCount(pub u8);
 
 /// Her energy now and her capacity (§1.3).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Energy {
     /// Her energy now.
     pub now: u16,
@@ -24,7 +25,7 @@ pub struct Energy {
 }
 
 /// Whether the reserve tanks refill on their own.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum ReserveMode {
     /// They refill on their own (`auto`).
     Auto,
@@ -33,7 +34,7 @@ pub enum ReserveMode {
 }
 
 /// Her reserve tanks: the energy in them and how they refill (§1.3).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Reserve {
     /// The energy in the reserve tanks.
     pub energy: u16,
@@ -51,7 +52,7 @@ const fn largest_allowed(ammo: Ammo) -> u16 {
 }
 
 /// A count of one ammunition and how many she can carry (§1.3).
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub struct Stock {
     /// How many she has.
     pub count: u16,
@@ -60,8 +61,17 @@ pub struct Stock {
 }
 
 /// Her stock of each ammunition, each within the HUD's domain (§1.5).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "EnumMap<Ammo, Stock>")]
 pub struct Ammunition(EnumMap<Ammo, Stock>);
+
+impl TryFrom<EnumMap<Ammo, Stock>> for Ammunition {
+    type Error = &'static str;
+
+    fn try_from(stocks: EnumMap<Ammo, Stock>) -> Result<Self, Self::Error> {
+        Self::new(stocks).ok_or("ammunition outside the HUD's domain")
+    }
+}
 
 impl Ammunition {
     /// Her stocks, or `None` if a count or capacity is past what the HUD is defined on (§1.5).
@@ -86,7 +96,7 @@ impl Ammunition {
 }
 
 /// The items she has on that the HUD can select without a count (§1.3).
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Equipped {
     /// She has the grapple beam on.
     pub grapple_beam: bool,
@@ -95,7 +105,7 @@ pub struct Equipped {
 }
 
 /// What other domains report about her that the status bar shows (§1.3).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Status {
     /// Her energy.
     pub energy: Energy,
@@ -107,21 +117,61 @@ pub struct Status {
     pub equipped: Equipped,
 }
 
-impl Status {
+/// Spec: ItemControls. Only the actual controls and selection availability read before movement.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ItemControlInputs {
+    /// Item select this frame.
+    pub select: SelectButton,
+    /// Item cancel this frame.
+    pub cancel: CancelButton,
+    /// Whether controls may change the selection.
+    pub can_switch: bool,
+    /// Current ammunition availability.
+    pub ammunition: Ammunition,
+    /// Current equipped items.
+    pub equipped: Equipped,
+}
+
+impl ItemControlInputs {
+    /// Spec: ItemControls. Extract controls and availability, without capturing future display inputs.
+    #[must_use]
+    pub const fn from_frame(inputs: &FrameInputs<'_>) -> Self {
+        Self {
+            select: inputs.controls.select,
+            cancel: inputs.controls.cancel,
+            can_switch: inputs.controls.can_switch,
+            ammunition: inputs.status.ammunition,
+            equipped: inputs.status.equipped,
+        }
+    }
+
     /// Spec: CyclingItems. Whether Select can land on `item`: an ammunition with a count above 0,
     /// or an item she has on.
     #[must_use]
     pub fn has(&self, item: SelectableItem) -> bool {
-        match item {
-            SelectableItem::Ammo(ammo) => self.ammunition.of(ammo).count != 0,
-            SelectableItem::GrappleBeam => self.equipped.grapple_beam,
-            SelectableItem::XRayScope => self.equipped.x_ray_scope,
-        }
+        available(&self.ammunition, self.equipped, item)
+    }
+}
+
+impl Status {
+    /// Spec: CyclingItems. Whether the current stocks or equipped items make this item available.
+    #[must_use]
+    pub fn has(&self, item: SelectableItem) -> bool {
+        available(&self.ammunition, self.equipped, item)
+    }
+}
+
+/// Spec: CyclingItems. Ammunition needs a nonzero count; equipment needs to be on.
+fn available(ammunition: &Ammunition, equipped: Equipped, item: SelectableItem) -> bool {
+    match item {
+        SelectableItem::Ammo(ammo) => ammunition.of(ammo).count != 0,
+        SelectableItem::GrappleBeam => equipped.grapple_beam,
+        SelectableItem::XRayScope => equipped.x_ray_scope,
     }
 }
 
 /// Item select this frame (§1.3).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum SelectButton {
     /// It didn't go down this frame.
     NotPressed,
@@ -130,7 +180,7 @@ pub enum SelectButton {
 }
 
 /// Item cancel this frame (§1.3).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum CancelButton {
     /// Neither pressed this frame nor held from before.
     NotPressed,
@@ -142,7 +192,7 @@ pub enum CancelButton {
 
 /// Why a switch makes no click (§1.3; spec: SwitchClick). Listed alphabetically; the order means
 /// nothing.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Mute {
     /// The grapple beam is out.
     Grapple,
@@ -155,7 +205,7 @@ pub enum Mute {
 }
 
 /// The buttons and what lets them act (§1.3).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Controls {
     /// Item select.
     pub select: SelectButton,
@@ -169,7 +219,7 @@ pub struct Controls {
 }
 
 /// Her room on her map (§1.3).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Room {
     /// Its top-left cell on her map.
     pub cell: Place,
@@ -202,7 +252,7 @@ pub struct MiniMapInputs<'map> {
 /// The selection dropped (§1.3): what another domain drops at one point of a step, if anything.
 ///
 /// When two drops arrive at one point, the selection's wins: the caller gives `Selection`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Dropped {
     /// Nothing is dropped.
     Nothing,
@@ -234,6 +284,41 @@ pub struct FrameInputs<'map> {
     pub mother_brain_falls: bool,
     /// What the mini-map reads.
     pub mini_map: MiniMapInputs<'map>,
+}
+
+/// Spec: StatusRefresh. Only quantities observed at late status, after intervening play.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StatusInputs {
+    /// Current energy and capacity.
+    pub energy: Energy,
+    /// Current reserve count and mode.
+    pub reserve: Reserve,
+    /// Current counts and capacities.
+    pub ammunition: Ammunition,
+    /// Current reason to suppress a click, if any.
+    pub muted_by: Option<Mute>,
+    /// Pickup drawing an icon this frame, if any.
+    pub collected: Option<SelectableItem>,
+    /// Drop to apply before drawing.
+    pub dropped_before_status_bar: Dropped,
+    /// Drop to apply after drawing.
+    pub dropped_after_status_bar: Dropped,
+}
+
+impl StatusInputs {
+    /// Take the late status observation of an already complete frame input.
+    #[must_use]
+    pub const fn from_frame(inputs: &FrameInputs<'_>) -> Self {
+        Self {
+            energy: inputs.status.energy,
+            reserve: inputs.status.reserve,
+            ammunition: inputs.status.ammunition,
+            muted_by: inputs.controls.muted_by,
+            collected: inputs.collected,
+            dropped_before_status_bar: inputs.dropped_before_status_bar,
+            dropped_after_status_bar: inputs.dropped_after_status_bar,
+        }
+    }
 }
 
 /// A new area (§1.3): whether a step outside play leads into another area.

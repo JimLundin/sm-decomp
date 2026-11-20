@@ -400,6 +400,8 @@ together, not split by area.
   SuspendedAppearance
 - Area moves: StandingRestart, WallJumpReady, SpinTurnedFar, FastFall, RisingHold
 - Area run: RunPace, BoostStages, BoostingLap
+- Area cannon: CannonItemDelay, CannonReadinessReset, RetainedCannonReadiness
+- Area palette (old 183): OrdinaryRunColours, RetainedRunColours
 
 
 ## Stride, spin and passage sound opportunities
@@ -642,3 +644,211 @@ requerying/recomputing actual retained answers, repeating a completed contact an
 pending answer during restoration. These are selected reference decisions, not a claim that
 actual clean model State or all ordinary vectors have been serialized and replayed. The
 confined implementation retains that complete actual-model proof obligation.
+
+## Cannon selection readiness
+
+### Responsibility and the observed seam
+
+Appearance owns readiness because the visible effect is the cannon retaining its former
+open/closed disposition while a new HUD item is already selected. HUD owns selection and
+one-shot mode; its `Switching` entry explicitly leaves effects to weapons and her look.
+The uncharged power-beam contract owns firing eligibility, not this visual delay. Neither
+ordinary animation playhead changes nor a switch event determines readiness.
+
+The canonical retained lean cache was recovered from
+`lockstep-cache-5663de2c4b548c68.tar.xz.enc`, SHA-256
+`4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f`.
+Watching 63 rows / 40,898 records found 129 selected-item changes, 239 ready/not-ready
+transitions and 171 changes of cannon open state, but no one-shot-mode-only record transition.
+This watch precedes the source derivation. On `chain-0059-A293`, the HUD selects missiles at
+429 while the cannon is still closed; at 430 readiness returns and its open disposition changes.
+Changing to super missiles at 431 waits again, though both items need the cannon open.
+`boss-kraid-defeated` 800..802 demonstrates that an intervening NMI can leave readiness alone.
+The opportunity count comes from independent watched control execution, not a final pose or
+a frame counter that may cross a lag cut at another point.
+
+### Sources by entry and RAM mapping
+
+- `CannonItemDelay`: `$90:C4B5..C534` observes the starting item in `$12`, then compares the
+  final HUD item at `$C519..C51E`. Changed identity stores 1 at `$C531..C534`; unchanged
+  identity advances the retained quantity, stopping at 2, at `$C520..C52C`.
+  `$90:DCDD..DCED` performs this observation only when her HUD controls run and she does
+  not face forward. The normal/demo callers are `$90:E695` and `$90:E6C9`; frozen time is
+  checked after the observation, so it is not itself a readiness suppressor.
+- `CannonReadinessReset`: `$91:E00D..E027` initializes Samus for starting at Ceres/Zebes or
+  loading a demo, clearing `$0A02..0E0B`, including the readiness word. Pose initialization
+  at `$91:F433..FB07` is a different operation and supplies no reset of this quantity.
+- `RetainedCannonReadiness`: `$90:C5C4..C5F7` reads readiness before the selected HUD item,
+  while the cannon is not already opening/closing. `$90:C5EE` compares against ready; when
+  readiness is absent it does not change the open disposition. Source observations happen
+  inside the current operation; interruption must retain the actual selected-input answer
+  and update it once, without rebuilding it from a later selection.
+
+| Semantic quantity | Source | Validation-only encoding |
+| --- | --- | --- |
+| selected item identity | `$09D2` | none 0, missiles 1, super missiles 2, power bombs 3, grapple 4, x-ray 5 |
+| one-shot selection mode | `$0A04` | independent of identity; zero or the selected item's encoding |
+| eligible opportunities remaining | `$0AAA`, word | `2 - source_word`, for source states 0..2 |
+| cannon may follow selection | `$0AAA` read at `$90:C5EB` | ready exactly when source word is 2 |
+| source open disposition, observed only | `$0AA6`, low byte | separate from readiness; cannon animation/draw remains downstream |
+| physical select/cancel evidence | `$008F` against `$09BA` / `$09B8` | newly pressed physical masks; decoded independently of readiness |
+
+No native gate or later expected readiness is a production initializer. An initial current
+readiness owner must be admitted from an independent initial observation or the actual clean
+initialization output, and then carried. The accepted bounded Drawing source projection's
+reached ready branch is insufficient to initialize the delay histories. The source word is
+incidental storage; the clean quantity is the remaining number of eligible control observations.
+The model decides its representation and updates. Source branches belong here, never in an adapter.
+
+### Vectors, reference proof and limits
+
+The additive `cannon_readiness` table supplies 16 constructed and five recorded histories.
+It leaves every existing ordinary, sound, opportunity and changed-resume vector untouched.
+
+| Recorded vector | Preceding record | Compared record | Witness |
+| --- | --- | --- | --- |
+| `R-cannon-select` | chain-0059-A293 428 | 429 | changed item waits |
+| `R-cannon-follow` | chain-0059-A293 429 | 430 | unchanged next controls become ready |
+| `R-cannon-same-item` | chain-0059-A293 20 | 21 | actual same-item control event does not restart delay |
+| `R-cannon-lag` | boss-kraid-defeated 800 | 801 | no performed control observation; delay remains |
+| `R-cannon-deselect` | area-maridia 255 | 256 | changed identity to none waits |
+
+Private observer evidence lives at `retained-time-479/cannon-readiness-observer/`:
+`OBSERVATIONS.private.toml`, `RECORD-PROOF.private.toml`, `watch.py`, `reference.py` and
+`prove_records.py`. The reference agrees with all 21 histories, including 91 complete
+serialize/drop/deserialize boundaries; 11 faults distinguish missing or immediate updates,
+event/mode comparison, aging ineligible/skipped/draw work, the wrong reset delay, early
+chosen effects, lost pending input and selection drops incorrectly restarting delay.
+
+The carried scoped reference agrees on 26,608 observations over 63 contiguous segments;
+the same segments' do-nothing owner agrees on 24,526. It includes 123 changed-control
+selections and 16 performed same-item control events. Start readiness is independently
+observed once per segment and carried, never replaced from the next expected readiness.
+Independent watched `$90:C4BD` hits supply the performed control opportunities. The
+selected-item neighbour is observed, not modeled by this reference; this is not runtime,
+full-frame or indexed acceptance. Two external-selection-change pairs are explicitly excluded
+from inferring the control answer from end-of-frame selection; constructed external-drop
+histories cover the unchanged clock. Out-of-play boundaries and uninitialized source words
+are outside this scoped record comparison, not silently passing cases.
+
+Initialization's full two-observation history, mode-only changes, interruption and pending-input
+replacement are constructed from source-qualified rules, not claimed as recorded histories.
+Cannon opening/closing animation, pictures, the open-target table, charge/palette switch effects
+and arbitrary corrupted source words are outside this amendment. Source initialization resets
+readiness, but an ordinary pose/clip change or room passage without reinitializing Samus does not.
+No ordinary or suspended animation contract changes, and no new timing-profile admission is claimed.
+
+## Ordinary dry-run palette preparation
+
+### Responsibility and recorded opportunity
+
+Appearance owns the reached Samus palette reset alongside the animation and cannon parts of
+the look. The historical `samus_palette` module only partially implemented this responsibility.
+The separately qualified room palette-object opportunity supplies room effects. Its empty-slot
+result has no bearing on whether the Samus reset applies. The preserved current palette remains
+available for video upload. The target palette and the reset metadata remain available for
+their later readers. Keep one authority for the current and target palettes across both
+producers. Only the sequence metadata is owned and changed by the ordinary Samus reset.
+
+`R-ordinary-run-colours` is the first retained source frame of `chain-any-0003-DFD7`, between
+the selected-pose work and Health Maintenance, source records 4142–4228 inclusive. The retained
+source packet `frame-work-contract-549/selector-s5-display/palette-source-v2/manifest.toml` pins
+the source with SHA-256 `310e39057995f2589b3c8dc6f89729a791536443ebc1464fa651364194318b83`.
+The independent review `review-selector-s5-palette-v2/adversary-palette-v2.md` is pinned at
+`ce7ae70be0c44dafbba3e77b84b192fc371e7d9fff33cafae96ae555ccb9854f`.
+Those private packets supply one bounded source proof and 36 controls. Exported RGB patterns
+and detailed example geometry are invented. The recorded action, admitted neighbour classes,
+metadata and application count are checked against the retained source. No ROM colours
+are serialized in the vectors.
+
+### Sources and exact mapping
+
+- `OrdinaryRunColours`: bank 90's ordinary pose work and palette opportunity, followed by
+  Health Maintenance. Bank 91's palette path `$91:D6F7..D705` reaches the inactive charge
+  reset at `$91:D7B0`, the visor decision `$91:D83F..D8A4` and the ordinary unchanged-colour
+  path in `$91:D9B2` onward. The standard-room visor reset is the store at `$91:D8A0`.
+  The red and orange alternatives admit separate source branches through `$91:D856..D867`,
+  which decrement the sequence delay and may advance the sequence. Their future colour output
+  belongs to the corresponding unqualified effects.
+- Suit selection: bank 90 tests the currently enabled Gravity and Varia items in that order and
+  produces the neutral Power or the Varia/Gravity selection. The packet checks those item tests,
+  branch destinations and latch stores independently of the palette snapshot. The output of
+  the completed SuitPalette opportunity is distinct from a numerically equal initial latch.
+- Grapple: bank 9B's dormant callee `$9B:C4F0` tests a newly pressed bound-fire input and can
+  reach FireOrCancel, `$9B:C51E`. The packet binds the four dormant publishers, both current
+  classes and the palette comparison. Other grapple representations remain unsupported.
+- Room treatment: bank 88's actual blending dispatcher and standard screen setup at
+  `$88:807D/$88:8081` place BG1/BG2 and sprites on the main screen and BG3 on the subscreen.
+  Its red and orange setups supply the alternative classes. The source check binds these
+  to the visor decision and validates the backdrop literal stores independently.
+- `RetainedRunColours`: constructed whole-owner observation, pending and completed cuts.
+  For indexed replay, physical work and effect delivery need their own actual opportunity
+  identity and progress. The reference checks the semantic reset's once-only completion.
+
+| Semantic quantity | Source mapping |
+| --- | --- |
+| appearance override | `$0A4A`, inactive at zero in the bounded proof |
+| stored glow from a charged shot; beam charging | `$0B18`, `$0CD0`, each inactive at zero |
+| special colouring | `$0ACC`, inactive at zero |
+| charge-glow position | `$0B62`, reset at zero. Ordinary charge sequence advances by two source units per picture at `$91:D782..D78F`. Other effects reuse this storage; their representations require separate qualification |
+| visor delay and sequence position | `$0A72`, low byte is eligible ticks left, high byte divided by two is the zero-based sequence entry. The ordinary store sets one and entry three |
+| suit selection | `$0A74`, independently produced by bank 90. Decoder admits Power, Varia and Gravity. Only Power selects this arm |
+| dormant or busy grapple | `$0D32`, bounded semantic decoder as above |
+| room colour treatment | `$1982`, standard/red/orange only, as above |
+| water and lava levels | `$195E`, `$1962`, absent when the corresponding signed surface is negative |
+| current figure and position | `$0A1C`, `$0A1F`, `$0AFA` plus one immutable pose geometry read. The bottom calculation uses current pose and current vertical pixel position. Dry admitted poses and positions give the same palette outcome |
+| speed glow and hit colour pulse | `$0B3E`, `$0A48`, each inactive at zero in the bounded proof |
+| current and target palettes | `$C000..C1FF`, `$C200..C3FF`, both complete ordered RGB555 palettes. Source checks preserve every byte. Admit this RGB555 representation only if all 512 high bits are clear at the edge; otherwise report unsupported. The recorded state meets that condition |
+
+### Harness, causality and limits
+
+Compare the three metadata quantities at entry, pending and completion. Compare all 256
+entries of each independently retained palette, the absence of recolouring requests, and
+the actual completion count. Neither colour bank is read or written by the source interval.
+The observed reset performs both stores once and leaves three already-ready metadata
+quantities equal. Do-nothing matches all three recorded metadata values, but misses the
+observed application. The stale reset vectors are constructed contrasts, independently of
+this same-value recorded write. Temporary pose geometry scratch and stack activity have no
+persistent palette owner and are excluded from this comparison. The packet verifies all
+18 RAM uses / 36 bytes, one geometry content use / two bytes and four persistent bytes of
+writes. The retained frame's hardware replay still owns the actual timed physical work.
+
+For the captured frame only, `one-frame-479/palette-evidence/watch.py` cross-checks the
+origin in `retained-time-479/receipt-profile-bridge/origin-wram-v1/` (corrected-origin WRAM
+SHA-256 `bfee6ac13da413a36ad42194a36aa3224af6a84e818092b1e7040ed4782f03db`) against the
+source's completed-return origin and the pre-use snapshot. It checks intervening writes
+using WRAM address normalization, including CPU mirrors. The ten independent guard
+observations besides suit and current figure/position must be current from their owners;
+an origin carry for a borrowed fact requires the actual bounded writer-free history,
+including interruption preservation. The first-frame diagnosis does not itself supply a runtime receipt. The checked origin ranges cover ten non-suit guard
+fields, both metadata words and both banks. Every such range was equal and had zero
+intervening writer sites in the captured interval. The suit latch was equal but had one
+intervening writer, verified against the actual Power producer site. An origin-only
+value therefore cannot establish that suit. Revalidate the actual selected Movement and
+Appearance publications, completed equipment-dependent suit selection, actual Environment
+and qualified room and grapple owners before the opportunity. Missing provenance, a later
+writer (including a same-value write), an unqualified interrupt or an unsupported
+neighbour stops admission. A source snapshot, a display layer blend for haze, a camera
+scroll predicate and the room's empty palette-object return each have different contracts
+from the required current observations.
+
+`one-frame-479/palette-evidence/ref-v2.py --record` runs the observer reference and
+source record check. Five histories, nine restore cuts, and 16 unsupported alternatives
+pass, with 17 caught faults. Across constructed and recorded histories the metadata
+comparison is 15/15 versus 6/15 for do-nothing. The strictly recorded comparison remains
+3/3 for both, and one application versus zero for do-nothing. The constructed shared
+palette history changes current and target colours independently while the reset is
+pending, restores the latest full banks and metadata into a fresh authority, and compares
+both updated banks at completion. Each of the 1,024 invented colours identifies its
+fixture and slot. Restoring retired colours, rotating four slots, swapping positions and
+swapping banks each fail. Only the source witness checks actual physical sites and
+complete preserved source banks. Runtime integration must still prove the required indexed
+replay and the current unsupported frame boundary. The wider colour effects remain outside
+this amendment.
+
+### Palette budget
+
+The old implementation is the palette area of the [domain inventory](../architecture/domains.md):
+183 tokens for `samus_palette`, using its old-engine baseline. The bounded entries contribute 3.0 units (one arm for
+OrdinaryRunColours and two for RetainedRunColours). At k = 37.5 the increment is 112.5.
+The general active colour effects remain outside this allowance.

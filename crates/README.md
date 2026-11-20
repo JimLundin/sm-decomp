@@ -6,7 +6,7 @@ The rebuild's crates, as planned in
 | Crate | Owns | May depend on (workspace) |
 | --- | --- | --- |
 | `data` | IDs and stable keys, the ROM decoder and its tables, typed content, profiles, the portable records, the address map, the shared digest. No mutable state or rules. | `canonical`, `types` (the asset key is the clean room's pose) |
-| `game` | production admission, complete owned clean State, concrete selected recipes and their adapters. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions`, `world_doors`, `audio_transport` |
+| `game` | production admission, complete owned clean State, concrete selected recipes and their adapters. No pixels, samples, files, devices or addresses. | `data`, `canonical`, `types`, `samus_movement`, `samus_appearance`, `world_blocks`, `world_camera`, `interface_hud`, `run_progress`, `boss_ceres_ridley`, `weapons_projectiles`, `enemy_interactions`, `world_doors`, `audio_transport`, `game_time`, `samus_health`, `world_quake` |
 | `runtime` | the line compositor. Presentation, sound backends and storage are planned; compositor output feeds nothing back into production State. | `data` |
 | `app` | the production application coordinator, admission and effect delivery. No gameplay. Its binary is `super-metroid`. | `data`, `import` (the player's ROM at startup), `game`, `runtime` |
 | `import` | the importers ([assets.md §5](../docs/architecture/assets.md#5-the-importers)): the only code that knows the ROM's layout of the content it writes, into `data`'s formats, and the content cache ([assets.md §6](../docs/architecture/assets.md#6-loading-at-runtime)). `game` and `runtime` never reach it. | `data`, `canonical` (the cache is written with the codec) |
@@ -28,6 +28,9 @@ The rebuild's crates, as planned in
 | `boss_ceres_ridley` | Ceres door behaviour and its catalogue (`crates/clean/boss_ceres_ridley`). | `types` |
 | `world_doors` | Admitted door travel and its catalogue (`crates/clean/world_doors`). | `types` |
 | `audio_transport` | admitted request delivery, resident music/effect progress and timed physical reply publications (`crates/clean/audio_transport`), built from its spec in the clean room, and its catalogue. | `types` |
+| `game_time` | elapsed play time and advancement at qualified gameplay opportunities. | `types` |
+| `samus_health` | current energy, periodic loss and low-energy warning requests. | `types` |
+| `world_quake` | room quake duration and phase, quiet-room advancement and displacement. | `types` |
 
 The clean crates are the folders of `crates/clean/`, one level deep, each a workspace member
 (`crates/clean/*`). A model's package is its domain's name with dashes as underscores, and the

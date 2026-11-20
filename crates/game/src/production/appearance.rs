@@ -4,6 +4,8 @@ use canonical::Canonical;
 use canonical::model::{Model, Pinned};
 
 #[cfg(test)]
+mod cannon_tests;
+#[cfg(test)]
 mod tests;
 
 /// Complete interrupted animation and read-only opportunity state.
@@ -14,12 +16,34 @@ impl Pinned for WorkPin {
     const SHAPE: u64 = 0xBCB5_B96E_127E_8E92;
 }
 
+/// Complete independently retained cannon selection delay.
+pub struct CannonDelayPin;
+impl Pinned for CannonDelayPin {
+    type State = samus_appearance::CannonDelay;
+    const NAME: &'static str = "production-cannon-delay";
+    const SHAPE: u64 = 0x1C2D_9610_8473_F464;
+}
+
+/// Complete chosen and consumed actual item-control observation.
+pub struct CannonObservationPin;
+impl Pinned for CannonObservationPin {
+    type State = samus_appearance::CannonObservation;
+    const NAME: &'static str = "production-cannon-observation";
+    const SHAPE: u64 = 0x645D_83DD_3E18_0090;
+}
+
 /// Engine-owned animation continuation and external delivery progress.
 /// The clean work is the sole current animation state while it is active.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Work {
     /// Pending decisions, complete current quantities and retained produced intents.
     pub model: Model<WorkPin>,
+    /// Independently admitted readiness; scoped animation alone does not supply it.
+    pub cannon: Option<Model<CannonDelayPin>>,
+    /// Actual control answer retained independently of later HUD selection changes.
+    pub cannon_observation: Model<CannonObservationPin>,
+    /// Read-only admitted pre-control receipt used to qualify the current delay.
+    pub cannon_before: Option<Model<CannonDelayPin>>,
     sounds_delivered: u64,
     graphics_delivered: u64,
 }
@@ -38,6 +62,8 @@ pub struct Outputs {
 pub enum WorkFault {
     /// Consumed operation metadata still has pending work or unpublished intents.
     Retirement,
+    /// A cannon consumer lacks independently admitted readiness or its actual controls.
+    Cannon,
     /// A delivery cursor exceeds its retained produced intents.
     DeliveryCursor,
     /// The consumed opportunity cursor exceeds the retained plan.
@@ -75,9 +101,111 @@ impl Work {
     pub const fn new(model: samus_appearance::SuspendedAppearance) -> Self {
         Self {
             model: Model(model),
+            cannon: None,
+            cannon_observation: Model(samus_appearance::CannonObservation::Unmade),
+            cannon_before: None,
             sounds_delivered: 0,
             graphics_delivered: 0,
         }
+    }
+
+    /// Retain initial readiness from an independent observation with the animation owner.
+    #[must_use]
+    pub const fn with_cannon(
+        model: samus_appearance::SuspendedAppearance,
+        cannon: samus_appearance::CannonDelay,
+    ) -> Self {
+        let mut work = Self::new(model);
+        work.cannon = Some(Model(cannon));
+        work.cannon_before = Some(Model(cannon));
+        work
+    }
+
+    /// Retain identities from the actual starting HUD selection and chosen controls.
+    /// # Errors
+    /// Missing readiness or a repeated observation rejects before changing the owner.
+    pub fn choose_cannon(
+        &mut self,
+        before: interface_hud::Selection,
+        answer: &interface_hud::ControlAnswer,
+    ) -> Result<(), WorkFault> {
+        if self.cannon.is_none()
+            || self.cannon != self.cannon_before
+            || !self
+                .cannon_observation
+                .0
+                .choose(cannon_answer(before, answer))
+        {
+            return Err(WorkFault::Cannon);
+        }
+        self.cannon_before = self.cannon;
+        Ok(())
+    }
+
+    /// Join the actual still-starting selection and retained chosen controls at a hold.
+    /// # Errors
+    /// Replaced controls or changed lifecycle rejects without changing readiness.
+    pub fn validate_cannon_choice(
+        &self,
+        before: interface_hud::Selection,
+        answer: &interface_hud::ControlAnswer,
+    ) -> Result<(), WorkFault> {
+        if self.cannon.is_none()
+            || self.cannon != self.cannon_before
+            || self.cannon_observation.0
+                != samus_appearance::CannonObservation::Chosen(cannon_answer(before, answer))
+        {
+            return Err(WorkFault::Cannon);
+        }
+        Ok(())
+    }
+
+    /// Consume the retained clean answer only with the actual completed HUD answer.
+    /// # Errors
+    /// Missing readiness, a replaced answer or repeated completion rejects atomically.
+    pub fn complete_cannon(
+        &mut self,
+        answer: &interface_hud::ControlAnswer,
+    ) -> Result<(), WorkFault> {
+        use samus_appearance::{CannonObservation, Look};
+        let CannonObservation::Chosen(chosen) = self.cannon_observation.0 else {
+            return Err(WorkFault::Cannon);
+        };
+        if self.cannon != self.cannon_before
+            || chosen.after != selected_item(answer.selection)
+            || chosen.eligibility != eligibility(answer.inputs.can_switch)
+        {
+            return Err(WorkFault::Cannon);
+        }
+        let cannon = self.cannon.as_mut().ok_or(WorkFault::Cannon)?;
+        let mut look = Look {
+            animation: self.model.0.state,
+            cannon: cannon.0,
+        };
+        if !self.cannon_observation.0.complete(&mut look) {
+            return Err(WorkFault::Cannon);
+        }
+        self.model.0.state = look.animation;
+        cannon.0 = look.cannon;
+        Ok(())
+    }
+
+    /// Join the retained consumed observation to its actual completed HUD producer.
+    /// # Errors
+    /// Missing, altered or unconsumed readiness and a replaced producer reject.
+    pub fn validate_cannon_completion(
+        &self,
+        before: interface_hud::Selection,
+        answer: &interface_hud::ControlAnswer,
+    ) -> Result<(), WorkFault> {
+        self.validate()?;
+        if self.cannon.is_none()
+            || self.cannon_observation.0
+                != samus_appearance::CannonObservation::Completed(cannon_answer(before, answer))
+        {
+            return Err(WorkFault::Cannon);
+        }
+        Ok(())
     }
 
     /// Validate engine-owned cursor bounds before admitting a restored continuation.
@@ -85,6 +213,26 @@ impl Work {
     /// # Errors
     /// Cursor positions outside their owned sequences.
     pub fn validate(&self) -> Result<(), WorkFault> {
+        use samus_appearance::CannonObservation;
+        match self.cannon_observation.0 {
+            CannonObservation::Unmade => {
+                if self.cannon != self.cannon_before {
+                    return Err(WorkFault::Cannon);
+                }
+            }
+            CannonObservation::Chosen(_) => {
+                if self.cannon.is_none() || self.cannon != self.cannon_before {
+                    return Err(WorkFault::Cannon);
+                }
+            }
+            CannonObservation::Completed(answer) => {
+                let mut expected = self.cannon_before.ok_or(WorkFault::Cannon)?;
+                expected.0.controls_completed(answer);
+                if self.cannon.as_ref() != Some(&expected) {
+                    return Err(WorkFault::Cannon);
+                }
+            }
+        }
         if usize::try_from(self.sounds_delivered)
             .map_or(true, |position| position > self.model.0.sounds.len())
             || usize::try_from(self.graphics_delivered)
@@ -146,6 +294,38 @@ impl Work {
         self.sounds_delivered = sounds_delivered;
         self.graphics_delivered = graphics_delivered;
         Ok(outputs)
+    }
+}
+
+const fn selected_item(selection: interface_hud::Selection) -> samus_appearance::SelectedItem {
+    use interface_hud::{Ammo, SelectableItem};
+    use samus_appearance::SelectedItem;
+    match selection.item() {
+        None => SelectedItem::None,
+        Some(SelectableItem::Ammo(Ammo::Missiles)) => SelectedItem::Missiles,
+        Some(SelectableItem::Ammo(Ammo::SuperMissiles)) => SelectedItem::SuperMissiles,
+        Some(SelectableItem::Ammo(Ammo::PowerBombs)) => SelectedItem::PowerBombs,
+        Some(SelectableItem::GrappleBeam) => SelectedItem::Grapple,
+        Some(SelectableItem::XRayScope) => SelectedItem::Xray,
+    }
+}
+
+const fn eligibility(can_switch: bool) -> samus_appearance::ControlEligibility {
+    if can_switch {
+        samus_appearance::ControlEligibility::Eligible
+    } else {
+        samus_appearance::ControlEligibility::Ineligible
+    }
+}
+
+const fn cannon_answer(
+    before: interface_hud::Selection,
+    answer: &interface_hud::ControlAnswer,
+) -> samus_appearance::ItemControlAnswer {
+    samus_appearance::ItemControlAnswer {
+        before: selected_item(before),
+        after: selected_item(answer.selection),
+        eligibility: eligibility(answer.inputs.can_switch),
     }
 }
 

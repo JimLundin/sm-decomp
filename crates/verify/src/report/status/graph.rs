@@ -2,7 +2,7 @@
 //! that holds the clean crates and their bridges to it ([`undeclared`]).
 //!
 //! A clean crate is `crates/clean/<crate>`, a model's name with underscores for dashes, and its
-//! bridge the engine's files `crates/game/src/<crate>_bridge*`. Either may use the shared
+//! bridge the engine files registered for that model. Either may use the shared
 //! `types`, its own crate and the crates of the domains its domains read, and no other clean
 //! crate: a use the plan doesn't declare is a dependency the domain graph hides.
 
@@ -12,7 +12,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use super::{Area, PLAN, Plan, Stage};
-use crate::report::{ENGINE, prefixed, read, relative};
+use crate::report::{DOMAINS, ENGINE, bridge_roots, prefixed, read, relative};
 
 /// The clean crates' folder.
 const CLEAN: &str = "crates/clean";
@@ -179,7 +179,14 @@ pub(in crate::report) fn undeclared(root: &Path, plan: &Plan) -> Result<(), Stri
             .map_err(|e| format!("{}: {e}", relative(root, &manifest)))?;
         let mut checked = vec![(relative(root, &manifest), depends)];
         let mut bridge = Vec::new();
-        for path in prefixed(&root.join(ENGINE).join("src"), &format!("{name}_bridge"))? {
+        let paths = match DOMAINS
+            .iter()
+            .find(|domain| domain.name.replace('-', "_") == *name)
+        {
+            Some(domain) => bridge_roots(root, domain)?,
+            None => prefixed(&root.join(ENGINE).join("src"), &format!("{name}_bridge"))?,
+        };
+        for path in paths {
             rust_files(&path, &mut bridge)?;
         }
         bridge.sort();

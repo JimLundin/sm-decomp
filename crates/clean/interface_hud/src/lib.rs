@@ -8,8 +8,10 @@
 //! - `HudState::frame_of_play`, with the rules, the HUD's pictures (content the importer
 //!   supplies) and what other domains report (her energy, ammunition and reserve, the items she
 //!   has on, the buttons, the selection dropped before the status bar and after it, where she is
-//!   on her map). It returns the `HudEvent`s it reports: `Switched` for the weapons and her
-//!   look, `Click` for the sound domain.
+//!   on her map). It returns the `HudEvent`s it reports: `HudEvent::Switched { item }` for
+//!   the weapons and her look (`item: None` still reports a switch), `HudEvent::Click` for
+//!   the sound domain. Events use ordinary externally tagged derived Serde; the named optional
+//!   payload keeps a switch to no item distinct from a click through TOML restoration.
 //! - `HudState::out_of_play`: a step between frames of play, where only the mini-map's turn-on,
 //!   a new area's explored cells and a drop of the selection change anything.
 //! - `HudState::boss_blanks_the_map`: a boss met on entering its room, which blanks the
@@ -19,8 +21,23 @@
 //! and written at a `Place`, column first; a place outside a grid has no cell. A picture with
 //! its flips is the shared `Look`; a HUD cell, a `Tile`, is a look in one of its colour sets.
 //! The content a caller lends, `HudPictures` and `HerMap`, is always supplied by the importer;
-//! each one's `Default` is an empty stand-in for a caller with nothing imported yet, which no
-//! rule reads.
+//! each one's `Default` is an empty stand-in for a caller with nothing imported yet. No
+//! meaningful drawing is defined for unimported content. Caches and visible cells are
+//! independent: neither is reconstructed from the other. `Click` is a sound request, not a
+//! promise that a sound is heard.
+//!
+//! For staged frames, call `HudWork::begin` with the full State and frame-start count. Choose
+//! and apply controls, movement mini-map and late status in that order. Inspect each chosen
+//! answer before applying it. After movement application the map is already visible on the
+//! carried HUD; only after status does `publication` give the complete HUD and event history.
+//! Save the entire `HudWork` and any caller-owned `EventCursor` values to restore and continue.
+//!
+//! Spec: EscapeCountdown, CountdownContinuation. `HudState::countdown` owns the admitted
+//! `Countdown::Dormant` value. A distinct `CountdownWork` receives the producer's qualified
+//! `CountdownOpportunity`, exposes its chosen expiry/picture answer, and completes it once.
+//! Ordinary HUD refresh never schedules countdown maintenance. Whole-work serde restoration
+//! retains the full HUD and chosen/completed progress; scene qualification and active escape
+//! countdowns remain unsupported neighboring responsibilities.
 //!
 //! The values the rules read, every Parameter the spec lists, are in `Rules`: `Rules::reference`,
 //! its default, holds the spec's. `CATALOGUE` lists one behaviour per spec entry.
@@ -30,6 +47,8 @@
 )]
 
 mod catalogue;
+mod countdown;
+mod countdown_work;
 mod events;
 mod grid;
 mod inputs;
@@ -44,14 +63,24 @@ mod state;
 mod status_bar;
 mod step;
 mod tile;
+mod work;
+
+pub use work::{
+    ControlAnswer, DisplayAnswer, DisplayInputs, EventCursor, HudOpportunity, HudWork, MapAnswer,
+    MovementInputs, Observation, StatusAnswer,
+};
 
 pub use catalogue::{Behaviour, BehaviourId, CATALOGUE};
+pub use countdown::{
+    Countdown, CountdownAnswer, CountdownExpiry, CountdownOpportunity, CountdownPicture,
+};
+pub use countdown_work::CountdownWork;
 pub use events::HudEvent;
 pub use grid::{Grid, Place};
 pub use inputs::{
     Ammunition, CancelButton, Controls, Dropped, Energy, Equipped, FrameCount, FrameInputs,
-    MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve, ReserveMode, Room, SelectButton,
-    Status, Stock,
+    ItemControlInputs, MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve, ReserveMode, Room,
+    SelectButton, Status, StatusInputs, Stock,
 };
 pub use item::{Ammo, SelectableItem};
 pub use map::{HerMap, MapCellSet, MapPictures};

@@ -1,6 +1,13 @@
-//! What the domain remembers from one frame to the next: her step, the time left on it, the boost
-//! stage and the laps left. A caller may build each at any value the spec allows and read it
-//! back, and keeps them between frames as `update` left them: nothing else carries over.
+//! The four persistent animation quantities: her step, the time left on it, the boost stage
+//! and the laps left. A caller may build each at any value the spec allows, read it back, and
+//! keep it between frames as `update` left it.
+//!
+//! Spec: `CannonItemDelay`, `RetainedCannonReadiness`. Animation [`State`] is only part of the
+//! complete persistent appearance owner, [`Look`](crate::Look), which also carries independent
+//! [`CannonDelay`](crate::CannonDelay). Keep cannon readiness alongside animation; it cannot be
+//! reconstructed from animation or the selected item. Interrupted callers also preserve the
+//! actual [`CannonObservation`](crate::CannonObservation), interrupted animation work, the
+//! independently retained prepared action and their own input/read/output delivery progress.
 
 use core::num::NonZeroU8;
 
@@ -114,10 +121,18 @@ impl LapsLeft {
     }
 }
 
-/// The State: everything the domain remembers from one frame to the next.
+/// Spec: `ClipPlays`, `BoostStages`. The four persistent animation quantities: her step,
+/// the time left, the boost stage and the laps left.
+///
+/// This is the animation part of [`Look`](crate::Look), not the complete persistent appearance
+/// owner. Spec: `CannonItemDelay`, `RetainedCannonReadiness`. Callers retaining the whole look
+/// must also keep its independent cannon readiness. On interruption, preserve the actual
+/// [`CannonObservation`](crate::CannonObservation), interrupted animation work and caller-owned
+/// input/read/output delivery progress alongside that look.
 ///
 /// The end, whether her spin has turned far, where the clip of the pose she takes starts, the
-/// slowdowns and what her moves did are each worked out within the frame.
+/// slowdowns and what her moves did are each worked out within the frame; they are not extra
+/// persistent animation quantities.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct State {
     /// Her step and the time left on it.

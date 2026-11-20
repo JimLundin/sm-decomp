@@ -11,7 +11,7 @@ pub struct WorkPin;
 impl Pinned for WorkPin {
     type State = Box<SuspendedMovement>;
     const NAME: &'static str = "production-movement-work";
-    const SHAPE: u64 = 0xe057_be29_1b46_4f8c;
+    const SHAPE: u64 = 0xE057_BE29_1B46_4F8C;
 }
 
 /// Actual completed decisions, retained by the caller rather than reconstructed later.
@@ -19,7 +19,7 @@ pub struct ReceiptsPin;
 impl Pinned for ReceiptsPin {
     type State = Vec<MovementDecision>;
     const NAME: &'static str = "production-movement-completed-decisions";
-    const SHAPE: u64 = 0x7913_7573_1460_87b8;
+    const SHAPE: u64 = 0x7913_7573_1460_87B8;
 }
 
 /// Sole current model and immutable actual decisions already completed in this update.
@@ -80,7 +80,9 @@ impl Movement {
         }
     }
 
-    /// Actual publications at the current consumed movement opportunity.
+    /// Read publications already produced by actual completed movement decisions.
+    /// Their extent can precede final pose initialization; callers must qualify the
+    /// specific opportunity before consuming them as an animation dependency.
     #[must_use]
     pub const fn outputs(&self) -> Option<&samus_movement::Outcome> {
         match self {
@@ -89,13 +91,49 @@ impl Movement {
         }
     }
 
-    /// The consumed offered decisions of the current ordinary opportunity.
+    /// The consumed decisions of the current ordinary opportunity.
     #[must_use]
-    pub fn decisions(&self) -> &[samus_movement::suspended::MovementDecision] {
+    pub fn decisions(&self) -> &[MovementDecision] {
         match self {
             Self::Initial(_) => &[],
             Self::Work(work) => &work.completed.0,
         }
+    }
+
+    pub(super) fn selected_running_figures(
+        &self,
+        playing: samus_appearance::Figure,
+        content: &crate::production::AppearanceContent,
+    ) -> Option<(samus_appearance::Figure, samus_appearance::Figure)> {
+        use samus_movement::suspended::LocalRule;
+        let MovementDecision::Local {
+            rule: LocalRule::PoseInitialization { accepted },
+            before,
+            answer,
+            ..
+        } = self.decisions().last()?
+        else {
+            return None;
+        };
+        if answer != self.state() || answer.pose != accepted.pose {
+            return None;
+        }
+        let from = samus_appearance::Figure {
+            pose: before.pose,
+            sprite: playing.sprite,
+        };
+        let selected = samus_appearance::Figure {
+            pose: accepted.pose,
+            sprite: playing.sprite,
+        };
+        if from.pose.action != types::Action::Running
+            || selected.pose.action != types::Action::Running
+            || content.get(from).is_none()
+            || content.get(selected).is_none()
+        {
+            return None;
+        }
+        Some((from, selected))
     }
 
     /// Begin one ordinary update from the actual current quantities.

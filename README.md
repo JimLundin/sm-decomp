@@ -18,7 +18,7 @@ worlds and opt-in mechanics, is the first use case. To build it and run the chec
 
 ## Where it stands
 
-**Power-on through Ceres**: the any movie from power-on through frame 15,196. Still needed: 33 of 33: S1, S2, S5, CAM, H2, P1, W1, W2, C1, B8, R1, U1, E1, E2, AF0 (in progress); S4, H1, P2, R3, R4, F2, F4, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, R2, T1, V2 (not started).
+**Power-on through Ceres**: the any movie from power-on through frame 15,196. Still needed: 33 of 33: S1, S2, S5, CAM, H1, H2, P1, W1, W2, C1, B8, R1, R3, U1, E1, E2, AF0 (in progress); S4, P2, R4, F2, F4, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, R2, T1, V2 (not started).
 
 Whole-movie acceptance requires a complete movie case. Scoped cases and partial integrated cases earn no whole-movie credit.
 
@@ -72,11 +72,13 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | movement-ceres/carried-position-proximity | Pass | 4 | 0 | 4 | 28 | 0 | 0 |
 | connected-ordinary/carried-running-camera | Pass | 9 | 0 | 9 | 153 | 36 | 9 |
 | connected-ordinary/run-release-floor-aim | Pass | 16 | 0 | 16 | 272 | 64 | 16 |
+| frame/ordinary-requested-nmi-return | Pass | 1 | 0 | 1 | 12 | 2295 | 1 |
 
 - **integrated/missing-dependency-closure** witnesses samus-movement/TravelledDistances. Limits: complete production dependency closure unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-ceres/carried-position-proximity** witnesses samus-movement/MovesAsShePosed, boss-ceres-ridley/Waiting, boss-ceres-ridley/SheIsNear, boss-ceres-ridley/Polling, boss-ceres-ridley/Closing, boss-ceres-ridley/Shown, boss-ceres-ridley/Solid. Limits: only carried prior whole-pixel movement to door proximity integrated; complete outputs retained but only declared position and door fields compared; unselected producers remain external; prior roster empty; current actor selection and timing unproved; appearance ahead remains external feedback; no durable Ceres codec, pixels, app, power-on or played-alone claim.
 - **connected-ordinary/carried-running-camera** witnesses samus-movement/MovesAsShePosed, samus-appearance/ClipPlays, world-camera/FollowingHer, world-camera/Remembering, world-camera/RememberedHeightFraction. Limits: Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved..
 - **connected-ordinary/run-release-floor-aim** witnesses samus-movement/MovesAsShePosed, samus-movement/Dash, samus-movement/AimingAndShooting, samus-movement/SlopesCarry, samus-movement/SlopesSlowTheWalk, samus-movement/FollowingTheGround, samus-appearance/ClipPlays, world-camera/FollowingHer, world-camera/Remembering, world-camera/RememberedHeightFraction. Limits: Movement, Appearance and Camera share one carried production owner; actual-use external geometry, controls, room settings and Contact guards remain borrowed. Reached Air/Solid/Floor Surface only; all support checks remain unseated. Control hardware/bindings, equipment, parity/clock, energy/health, liquid, actors, room scripts, camera tuning and sound transport remain borrowed. Health, hardware time, actor lifecycle and played-alone Frame production remain unproved..
+- **frame/ordinary-requested-nmi-return** witnesses world-quake/QuietQuakePhase, game-time/PlayTimeAdvance, samus-movement/TravelledDistances, samus-appearance/ClipPlays, interface-hud/RetainedHudWork, interface-hud/EscapeCountdown, interface-hud/CountdownContinuation, audio-transport/SenderTiming, samus-health/PeriodicLoss, samus-health/LowEnergyWarning. Limits: one native admission through the requested NMI return on this retained frame; unselected preparation, actor and native-video semantics externally borrowed; selected movement, HUD, appearance, sender and physical progression require actual production owners; selected HUD countdown executes actual clean model; coarse MainGameplay route does not authorize countdown selection; countdown result and later Maintenance DTO never supply scene choice; missing/stale/unsupported scene input rejects before dependent effects; source qualification alone does not admit runtime or complete frame; current surfaces as history; later snapshot initializer; Environment-generated history; general liquid physics; non-Air transition; selected Appearance outputs; static source flags as runtime receipts.
 
 ### Whole-movie cases
 
@@ -93,13 +95,13 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | Target | Start | End | Still needed |
 | --- | --- | --- | --- |
 | M0 Ceres's third room, across its door | any-boundary:3 | any-boundary:4 | 19 of 19: S1, W1, S5, CAM, H2, P1, C1, B8, R1, E1, E2, AF0 (in progress); R2, A1, AF1, AF2, AF3, AF4a, V3 (not started) |
-| M1 Ceres's rooms 1 to 5, down to Ridley's door | any-boundary:1 | any-boundary:6 | 23 of 23: S1, W1, S5, CAM, H2, P1, C1, B8, R1, E1, E2, AF0 (in progress); R2, R3, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
-| M2 Ceres with Ridley and the escape | any-boundary:1 | any-boundary:11 | 27 of 27: S1, S2, S5, CAM, H2, P1, W1, W2, C1, B8, R1, E1, E2, AF0 (in progress); S4, H1, R2, R3, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M1 Ceres's rooms 1 to 5, down to Ridley's door | any-boundary:1 | any-boundary:6 | 23 of 23: S1, W1, S5, CAM, H2, P1, C1, B8, R1, R3, E1, E2, AF0 (in progress); R2, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
+| M2 Ceres with Ridley and the escape | any-boundary:1 | any-boundary:11 | 27 of 27: S1, S2, S5, CAM, H1, H2, P1, W1, W2, C1, B8, R1, R3, E1, E2, AF0 (in progress); S4, R2, E3, E4, A1, AF1, AF2, AF3, AF4a, AF5, V3 (not started) |
 
 M0: **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
 
-Of the 37 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **12 are in progress** and **0 done**; 25 have not started. **62 rounds** have landed on 11 models; the plan estimates 157 rounds for the whole game.
+Of the 38 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **15 are in progress** and **0 done**; 23 have not started. **69 rounds** have landed on 14 models; the plan estimates 158 rounds for the whole game.
 
 ### The models
 
@@ -113,11 +115,14 @@ Model implementation and vectors are separate from the replay evidence above.
 | samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 25 | 501 | 18,405 | 10,786 | 1.71 |
 | world-camera | CAM (in progress) | in progress | 7 | 103 | 1,932 | 1,962 | 0.98 |
 | run-progress | P1 (in progress) | in progress | 8 | 76 | 819 | 1,061 | 0.77 |
-| interface-hud | H2 (in progress) | in progress | 6 | 95 | 2,700 | 2,337 | 1.16 |
+| interface-hud | H2 (in progress) | in progress | 8 | 126 | 4,715 | 2,749 | 1.72 |
 | world-blocks | W2 (in progress) | in progress | 4 | 100 | 2,395 | 2,074 | 1.15 |
-| samus-appearance | S5 (in progress) | in progress | 7 | 157 | 4,137 | 2,125 | 1.95 |
+| samus-appearance | S5 (in progress) | in progress | 9 | 184 | 4,506 | 2,562 | 1.76 |
 | boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 1,299 | 1,150 | 1.13 |
 | world-doors | R1 (in progress) | in progress | 1 | 70 | 3,374 | 2,912 | 1.16 |
+| samus-health | H1 (in progress) | in progress | 1 | 19 | 278 | 187 | 1.49 |
+| game-time | G1 (in progress) | in progress | 1 | 11 | 298 | 187 | 1.59 |
+| world-quake | R3 (in progress) | in progress | 1 | 7 | 145 | 62 | 2.33 |
 
 ### The whole-game plan
 
@@ -127,8 +132,8 @@ The plan's waves ([domains.md §4](docs/architecture/domains.md#4-order)), each 
 | --- | --- | --- | ---: | ---: |
 | 0 | **S1 Samus's motion: follow-ups** (in progress); **CAM The camera** (in progress) | V1 Tooling: domain free run, RNG per consumer, cache tier (3); V3 The free-run gate and lockstep start Ceres's chain rows (1) | 2 of 2 | 2 |
 | 1 | **S2 Liquids and pushes** (in progress); **S5 How Samus looks** (in progress); **H2 The HUD and the mini-map** (in progress); **W2 Blocks that react** (in progress); **P1 Progress** (in progress) | E1 Sprite drawing (2); E2 Tile writes (3); E5 The engine's State holds the models' States (3); A1 Instruction lists as assets (3); AF0 Asset formats: the shared shapes, the import crate, the content cache (2); AF1 Asset formats: the world, rooms, levels and doors (3); AF2 Asset formats: tilesets and palettes (2) | 5 of 5 | 15 |
-| 2 | **R1 Doors and elevators** (in progress); **W1 Beams, missiles and bombs** (in progress); **C1 Fighting enemies** (in progress); H1 Energy, reserves and death; S4 Hurt and knockback, bomb jumps | R2 Room loading (2); AF3 Asset formats: enemies, projectiles and sprite objects (3); AF4a Asset formats: HUD art and area maps (1); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 3 of 5 | 21 |
-| 3 | **B8 Ceres Ridley and the escape** (in progress); F2 Title, intro, file select, options; F4 Cinematics and credits; R3 Liquids and room weather; R4 Room ambience; P2 Saving, loading and stations; **U1 Audio, the CPU side** (in progress) | AF5 Asset formats: scenes and Mode 7 (4); E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 2 of 7 | 30 |
+| 2 | **R1 Doors and elevators** (in progress); **W1 Beams, missiles and bombs** (in progress); **C1 Fighting enemies** (in progress); **H1 Energy, reserves and death** (in progress); S4 Hurt and knockback, bomb jumps | R2 Room loading (2); AF3 Asset formats: enemies, projectiles and sprite objects (3); AF4a Asset formats: HUD art and area maps (1); V2 Whole-movie run: one free run from power-on, sparse then dense checkpoints (2) | 4 of 5 | 21 |
+| 3 | **B8 Ceres Ridley and the escape** (in progress); F2 Title, intro, file select, options; F4 Cinematics and credits; **R3 Liquids and room weather** (in progress); **G1 Play time** (in progress); R4 Room ambience; P2 Saving, loading and stations; **U1 Audio, the CPU side** (in progress) | AF5 Asset formats: scenes and Mode 7 (4); E3 The line program (3); E4 Mode 7 and mid-line writes (2); T1 Slowdown and loading time (6) | 4 of 8 | 31 |
 | 4 | W3 Items to pick up; H3 Message boxes; C2-C11 Enemy families; B1 Spore Spawn; B2 Bomb Torizo, Golden Torizo; B3 Botwoon; B4 Crocomire; B5 Kraid; B6 Phantoon; B7 Draygon; B9 Ridley; B10 Mother Brain and the escape | AF4b Asset formats: the font, messages and the pause screens (2) | 0 of 12 | 66 |
 | 5 | U2 The music and sound sequencer; S3 The shinespark and echoes; S6 The grapple beam; S7 The x-ray scope; F1 The pause screen; F3 Game over | A3 Asset formats: songs, instruments, PCM samples and sound effects (3); E6 The audio mixer in runtime, not compared (1) | 0 of 6 | 23 |
 

@@ -21,6 +21,7 @@ use types::{Block, Pair, Pose, Set, Sprite};
 mod continuation;
 mod entries;
 mod fixtures;
+mod frame_movement;
 mod sender;
 mod weapons;
 

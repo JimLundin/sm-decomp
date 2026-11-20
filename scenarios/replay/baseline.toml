@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "c56fa5e8f087c219aa5c26ea9422148ac5f61cfb92477efe3303428256a9b06f"
+index_sha256 = "c47a515156800115573299a5d8b039ed1d5a0cc27aae4be120c4cf3510281096"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -345,3 +345,21 @@ claim = "behaviour"
 expected = { status = "pass" }
 counts = { cuts = 16, fields = 272, null_cuts = 0, null_fields = 143, outputs = 64, pending_boundaries = 0, pending_restorations = 0, publications = 0, replies = 0, restorations = 16 }
 observation_sha256 = "87211bf9f0ad6e49edd3d5181beeefaedf2175ff58cb53fcb515734b048ea40c"
+
+[[case]]
+id = "frame/ordinary-requested-nmi-return"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "045ff4f57f2b22edd26782868194f02bc76d11c7bbd08f10b11be9ed4608d93d"
+
+[case.counts]
+cuts = 1
+fields = 12
+outputs = 2295
+publications = 2295
+replies = 0
+null_cuts = 0
+null_fields = 9
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
