@@ -6,11 +6,20 @@ license = "MIT"
 publish = false
 description = "The command line over the engine, the oracle and the comparison"
 
+[features]
+default = ["engine-cli"]
+engine-cli = ["dep:runtime", "dep:verify", "dep:serde", "dep:toml"]
+
+[[bin]]
+name = "tools"
+path = "src/main.rs"
+required-features = ["engine-cli"]
+
 [dependencies]
-runtime = { path = "../runtime" }
-verify = { path = "../verify" }
-serde = { version = "=1.0.229", features = ["derive"] }
-toml = "=1.2.1"
+runtime = { path = "../runtime", optional = true }
+verify = { path = "../verify", optional = true }
+serde = { version = "=1.0.229", features = ["derive"], optional = true }
+toml = { version = "=1.2.1", optional = true }
 
 [lints]
 workspace = true
