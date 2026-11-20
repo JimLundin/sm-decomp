@@ -80,7 +80,7 @@ ROM-derived bytes never go in commits or logs.
     commit ([PROCESS](cleanroom/PROCESS.md#a-round), decision 20).
 18. At most three lanes, one round in flight per domain
     ([PROCESS](cleanroom/PROCESS.md#what-can-run-at-once)).
-18a. Lane sub-agents use GPT-6.1 Sol ([PROCESS](cleanroom/PROCESS.md#roles)).
+18a. Lane sub-agents default to GPT-6.2 Sol ([PROCESS](cleanroom/PROCESS.md#roles)).
 19. Shift end stops new scope; active work finishes. New rounds start nightly; off-hours
     structural tasks may run in parallel
     ([PROCESS](cleanroom/PROCESS.md#working-hours)).

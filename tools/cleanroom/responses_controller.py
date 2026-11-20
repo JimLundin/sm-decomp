@@ -20,11 +20,11 @@ from typing import Any
 # Only this trusted directory supplies broker helpers, including under python -I.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-MODEL = "gpt-6.1-sol"
-OBSERVED_MODEL = "global.openai.gpt-6.1-sol"
-# This provider returns either the canonical identifier or its deployment labels for
-# the same fixed Sol request. No other label, request model or route is accepted.
-OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-1-sol-dz", "gpt-6-1-sol-gs"})
+MODEL = "gpt-6.2-sol"
+OBSERVED_MODEL = "global.openai.gpt-6.2-sol"
+# Require the canonical identity for the fixed request. Deployment aliases need
+# independent provider evidence before they can be accepted.
+OBSERVED_MODELS = frozenset({OBSERVED_MODEL})
 PAGE_CHARACTERS = 25000
 COMMAND_CHARACTERS = 100000
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",

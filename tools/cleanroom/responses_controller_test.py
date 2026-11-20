@@ -463,13 +463,17 @@ class Contract(unittest.TestCase):
             requests.append(json.loads(json.dumps(request)))
             return first if len(requests) == 1 else final
         response_loop(self.broker, "Invented brief", send, self.lane / "transcript")
+        self.assertEqual(requests[0]["model"], "gpt-6.2-sol")
         self.assertIn(reasoning, requests[1]["input"])
         self.assertEqual(requests[0]["include"], ["reasoning.encrypted_content"])
         self.assertEqual(len(requests[0]["tools"]), 1)
         self.assertFalse(requests[0]["store"])
-        for label in (OBSERVED_MODEL, "gpt-6-1-sol-dz", "gpt-6-1-sol-gs"):
-            response_loop(self.broker, "Invented", lambda _: dict(final, model=label), self.lane / "transcript")
-        for mutant in [dict(final, model="other"), dict(final, model="gpt-6-1-sol-dz-other"),
+        response_loop(self.broker, "Invented",
+                      lambda _: dict(final, model="global.openai.gpt-6.2-sol"), self.lane / "transcript")
+        for mutant in [dict(final, model="global.openai.gpt-6.1-sol"),
+                       dict(final, model="gpt-6-1-sol-dz"), dict(final, model="gpt-6-1-sol-gs"),
+                       dict(final, model="gpt-6.2-sol"), dict(final, model="gpt-6-2-sol-dz"),
+                       dict(final, model="other"), dict(final, model="gpt-6-1-sol-dz-other"),
                        dict(final, model="gpt-6-1-sol-gs-other"),
                        dict(final, model="global.openai.gpt-6-sol"), dict(final, model="gpt-6.1-sol"),
                        dict(final, status="incomplete"),
