@@ -471,7 +471,10 @@ impl Production {
                 ProductionContent::Frame(content),
                 ProductionRules::Frame(rules),
                 AdvanceInput::Frame { budget },
-            ) => ProductionOutputs::Frame(state.advance(content, rules, budget)?),
+            ) => {
+                // The outer candidate already makes this caller's changes atomic.
+                ProductionOutputs::Frame(state.advance_caller(content, rules, budget)?)
+            }
             (
                 OwnedState::MovementCeres(state),
                 ProductionContent::MovementCeres(content),

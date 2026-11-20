@@ -1534,7 +1534,8 @@ impl State {
         Ok(outputs)
     }
 
-    fn advance_caller(
+    /// Advance a private candidate. The caller must discard it on error.
+    pub(in crate::production) fn advance_caller(
         &mut self,
         content: &Content,
         rules: &Rules,

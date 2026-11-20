@@ -476,6 +476,71 @@ fn actual_native_admission_restores_complete_return() {
     });
 }
 
+#[test]
+#[ignore = "requires the retained native frame and checked player ROM"]
+fn actual_native_late_publication_failure_rolls_back_production() {
+    use game::production::{ProductionOutputs, timing::Stage};
+
+    let (_, mut admitted) = super::runtime_helpers::retained_return();
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("frame inputs")
+    };
+    let budget = inputs.budget;
+    advance_until(&mut admitted, budget, |state| {
+        state.timing.work.last().is_some_and(|work| {
+            work.cursor.stage == Stage::Publish
+                && usize::try_from(work.cursor.run)
+                    .ok()
+                    .and_then(|run| work.profile.runs.get(run))
+                    .is_some_and(|run| {
+                        matches!(run.exposure.effect, data::timing::DeviceEffect::Publish(_))
+                    })
+        })
+    });
+
+    let OwnedState::Frame(state) = admitted.production.state() else {
+        panic!("frame state")
+    };
+    let mut blocked = state.clone();
+    // The retained stream is ordered, but its last timestamp blocks the next actual write.
+    blocked.publications.events.push(Event {
+        at: data::timing::MasterTicks(state.timing.hardware.now.0.checked_add(1).unwrap()),
+        kind: EventKind::ControllerCommitted,
+    });
+
+    let ProductionOutputs::Frame(output) = admitted
+        .production
+        .advance(AdvanceInput::Frame { budget })
+        .unwrap()
+    else {
+        panic!("frame output")
+    };
+    assert!(
+        output
+            .events
+            .iter()
+            .any(|event| { matches!(event.kind, EventKind::Publication(_)) })
+    );
+    let mut production = Production::admit(
+        ProductionSeed::Frame(blocked),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let before = production.save().unwrap();
+    let mut restored = Production::restore(&before, admitted.content, admitted.rules).unwrap();
+    for production in [&mut production, &mut restored] {
+        assert!(matches!(
+            production.advance(AdvanceInput::Frame { budget }),
+            Err(ProductionFault::FramePublications(
+                frame::PublicationFault::Order
+            ))
+        ));
+        // The checkpoint covers the hardware cursor, output prefix and delivery cursor.
+        assert_observation_eq!(production.save().unwrap(), before);
+    }
+}
+
 fn check_complete_frame_from(reached: impl Fn(&frame::State) -> bool) {
     let (case, mut admitted) = super::runtime_helpers::retained_return();
     let InputReader::Frame(inputs) = &admitted.inputs else {
