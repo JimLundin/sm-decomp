@@ -283,7 +283,8 @@ Each work issue contains:
   change in the relevant boundary or comparison; if the work supplies a prerequisite without
   increasing played frames, say so.
 - **Evidence:** the landed commit and PR for code, the reviewed result for research, applicable
-  test/CI receipts, and actual versus intended results, including unchanged figures.
+  test/CI receipts, and actual versus intended results, including unchanged figures. For a
+  delivered feature, link its [feature architecture review](#feature-architecture-review).
 
 Open work uses one current-state label: `status:backlog` for work awaiting scope or priority,
 `status:ready` when its prerequisites and acceptance conditions are clear, `status:in-progress`
@@ -307,6 +308,23 @@ removing their worktree. Held work retains an explicit issue and branch link. Br
 working copies; the tracker, commits and review evidence retain the work's status and history.
 These tracking rules change neither the lowest-rung scope limit nor the clean-room roles and
 mandatory gates.
+
+## Feature architecture review
+
+At the end of every feature, after delivery and any planned trial, the root reviews the
+feature before closing its work issue. For a feature delivered across several rounds or PRs,
+use the issue that owns the complete feature. Pin the delivered commit and acceptance
+receipts. Scope the review to the feature, its callers and the responsibilities it touches.
+
+Use the [project architecture review](../../.agents/skills/architecture-review/SKILL.md) to
+trace the feature from a real caller through its owners and its proof. Give a fresh reviewer
+the same revision, scope and evidence under [Who sees what](#who-sees-what). Have them run
+Matt Pocock's `improve-codebase-architecture` skill before sharing the project findings.
+
+The root compares the two reports on the feature issue. Cite where they agree, what either
+pass added, and how the source or trial resolves any disagreement. Record a disposition for
+each material finding, with an owner and a distinguishing check for follow-up work. When
+both passes recommend keeping the existing design, record the reasoning and close the review.
 
 ## Working hours
 

@@ -86,6 +86,7 @@ ROM-derived bytes never go in commits or logs.
     ([PROCESS](cleanroom/PROCESS.md#working-hours)).
 20. The root decides a cut from independent findings and the size guideline (decision 19,
     [PROCESS](cleanroom/PROCESS.md#the-loop)).
+20a. Close each delivered feature with its [feature architecture review](cleanroom/PROCESS.md#feature-architecture-review).
 21. The root alone lands on `main`, by fast-forward through `tools/lane/land.sh`
     ([AGENTS](../AGENTS.md), [root](../.agents/skills/root/SKILL.md#landing)).
 22. Commits: one change, a title naming its area that says what is true afterwards, its kind
