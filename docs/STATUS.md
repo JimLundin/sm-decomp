@@ -200,10 +200,11 @@ Its hardware clock advances 359,922 master ticks to the requested NMI return. Re
 elapsed time, play time, room shake and five Health quantities. The five Health values stay
 equal to their admitted values in this case. The null model completes zero cuts.
 
-The indexed checkpoint reopens the completed state. Two fixture tests also resume from
-the HUD interruption and native NMI entry, run through return, and compare the full callback
-stream, endpoint observations and terminal state. A second request on the completed state
-is rejected. Service-marker callbacks carry no service-slot identity, and internal hardware
+The indexed checkpoint reopens the completed state. Fixture tests also resume from the
+HUD interruption, in-flight late HUD status work and native NMI entry. They compare the
+full callback stream, endpoint observations and terminal state through return. The late HUD
+test tracks one queued request through its VRAM payload and retirement. A second request
+on the completed state is rejected. Service-marker callbacks carry no service-slot identity, and internal hardware
 events outside the callback stream are outside the comparison.
 
 The [case declaration](../scenarios/replay/index.toml) lists the borrowed preparation, actor,

@@ -1,13 +1,13 @@
-//! Late status and its immediate upload request, after actual Drawing.
+//! Drawing through Background, including the late status producer and upload request.
 
-use super::{Buffer, Content, Dependency, Rules, State, hud, suffix_caller};
+use super::{Buffer, Content, Dependency, Rules, State, hud, s6_drawing, suffix_caller};
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
 use data::timing::Profile;
 use types::Parts;
 
-pub(super) const ENEMY_BACKGROUND: timing::WorkId = timing::WorkId(1323);
-pub(super) const STATUS: timing::WorkId = timing::WorkId(1324);
+const ENEMY_BACKGROUND: timing::WorkId = timing::WorkId(1323);
+const STATUS: timing::WorkId = timing::WorkId(1324);
 
 /// Immutable complete bounded late HUD and queue work.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -48,7 +48,52 @@ const fn missing() -> ProductionFault {
 }
 
 impl State {
-    pub(super) fn advance_late_hud(
+    pub(super) fn advance_drawing_tail(
+        &mut self,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<bool, ProductionFault> {
+        if self.s6_drawing.builder().is_none() {
+            self.advance_live_drawing(content)?;
+        } else if !matches!(self.late_hud, Stage::Completed(_)) {
+            self.advance_late_hud(content, rules)?;
+        } else if !matches!(
+            self.background,
+            suffix_caller::BackgroundScroll::Complete(_)
+        ) {
+            self.advance_background(content)?;
+        } else {
+            return Ok(false);
+        }
+        Ok(true)
+    }
+
+    pub(super) fn sample_drawing_tail(
+        &mut self,
+        active: Option<timing::WorkId>,
+        events: &[timing::Event],
+    ) -> Result<(), ProductionFault> {
+        if active == Some(suffix_caller::BACKGROUND_SCROLL) {
+            self.sample_background(events)?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn complete_drawing_tail(
+        &mut self,
+        id: timing::WorkId,
+        content: &Content,
+    ) -> Result<bool, ProductionFault> {
+        match id {
+            s6_drawing::BRIDGE | s6_drawing::DRAWING => self.complete_drawing_work(id)?,
+            ENEMY_BACKGROUND | STATUS => self.complete_late_hud(id, content)?,
+            suffix_caller::BACKGROUND_SCROLL => self.complete_background(content)?,
+            _ => return Ok(false),
+        }
+        Ok(true)
+    }
+
+    fn advance_late_hud(
         &mut self,
         content: &Content,
         rules: &Rules,
@@ -56,8 +101,7 @@ impl State {
         let contract = content.late_hud.as_ref().ok_or_else(missing)?;
         let energy = self.maintenance.energy().ok_or_else(missing)?;
         let origins = self.drawing_origins.as_ref().ok_or_else(missing)?;
-        if self.s6_drawing.builder().is_none()
-            || origins.actors.background_upload
+        if origins.actors.background_upload
             || origins.actors.background_hook
             || !self.hud.map_ready()
             || !self.hud_map.is_complete()
@@ -129,7 +173,7 @@ impl State {
         }
     }
 
-    pub(super) fn complete_late_hud(
+    fn complete_late_hud(
         &mut self,
         id: timing::WorkId,
         content: &Content,

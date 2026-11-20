@@ -56,6 +56,9 @@ mod hud_display;
 mod hud_map_tests;
 #[path = "frame_interrupt_inputs.rs"]
 mod interrupt_inputs;
+#[cfg(test)]
+#[path = "frame_origin/late_hud_tests.rs"]
+mod late_hud_tests;
 #[path = "frame_layer_blend_receipt.rs"]
 mod layer_blend_receipt;
 #[path = "frame_prelude_receipts.rs"]

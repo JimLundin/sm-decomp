@@ -170,6 +170,7 @@ jobs:
           SM_AUDIO_NATIVE: ${{ runner.temp }}/audio-native
         run: |
           cargo test --locked --profile verify -p verify --lib replay::frame_origin::health_owner_tests::actual_native_ -- --ignored
+          cargo test --locked --profile verify -p verify --lib replay::frame_origin::late_hud_tests:: -- --ignored
           cargo test --locked --profile verify -p verify --lib replay::frame_origin::cannon_tests::unready_cannon_rejects_the_ready_drawing_profile -- --exact --ignored
       - name: Build the shared replay command
         run: cargo build --locked --profile verify -p tools

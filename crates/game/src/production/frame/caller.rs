@@ -2028,15 +2028,7 @@ impl State {
             self.advance_maintenance(content)?;
         } else if self.s6_camera.following().is_none() {
             self.advance_before_drawing(content)?;
-        } else if self.s6_drawing.builder().is_none() {
-            self.advance_live_drawing(content)?;
-        } else if !matches!(self.late_hud, super::late_hud::Stage::Completed(_)) {
-            self.advance_late_hud(content, rules)?;
-        } else if !matches!(
-            self.background,
-            super::suffix_caller::BackgroundScroll::Complete(_)
-        ) {
-            self.advance_background(content)?;
+        } else if self.advance_drawing_tail(content, rules)? {
         } else if !matches!(self.room_tail, super::room_tail::Stage::Completed(_)) {
             self.advance_room_tail(content)?;
         } else if !self.play_time.is_complete() {
@@ -2054,9 +2046,7 @@ impl State {
         active: Option<WorkId>,
         events: &[timing::Event],
     ) -> Result<(), ProductionFault> {
-        if active == Some(super::suffix_caller::BACKGROUND_SCROLL) {
-            self.sample_background(events)?;
-        }
+        self.sample_drawing_tail(active, events)?;
         if active == Some(super::s6_camera::CAMERA) {
             self.sample_current_camera(events)?;
         }
@@ -2215,28 +2205,15 @@ impl State {
             ) => {
                 self.complete_camera_work(identity, content)?;
             }
-            timing::Progress::Completed(
-                identity @ (super::s6_drawing::BRIDGE | super::s6_drawing::DRAWING),
-            ) => {
-                self.complete_drawing_work(identity)?;
-            }
             timing::Progress::Completed(identity) if identity == super::samus_palette::WORK => {
                 self.complete_palette(content)?;
-            }
-            timing::Progress::Completed(identity)
-                if identity == super::suffix_caller::BACKGROUND_SCROLL =>
-            {
-                self.complete_background(content)?;
             }
             timing::Progress::Completed(identity) if identity == super::frame_return::FINALIZE => {
                 self.complete_finalization(content)?;
             }
             timing::Progress::Completed(identity) if sender_active == Some(identity) => {}
-            timing::Progress::Completed(
-                identity @ (super::late_hud::ENEMY_BACKGROUND | super::late_hud::STATUS),
-            ) => {
-                self.complete_late_hud(identity, content)?;
-            }
+            timing::Progress::Completed(identity)
+                if self.complete_drawing_tail(identity, content)? => {}
             timing::Progress::Completed(super::room_quake::WORK) => {
                 self.complete_room_quake(content)?;
             }
