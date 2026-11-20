@@ -41,10 +41,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          key: cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
-            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
-            cargo-${{ github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
       - &rom
         name: Fetch the encrypted ROM
         uses: actions/checkout@v4
@@ -83,9 +83,8 @@ jobs:
   # One complete index and baseline hold all currently admitted replay claims.
   replay:
     runs-on: ubuntu-24.04
-    # The fault suite rebuilds each changed producer and replays the restored native frame.
     timeout-minutes: 120
-    env:
+    env: &replay_fixtures
       CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
       CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
       # Root pins the validated fixture set after uploading its ciphertext.
@@ -94,7 +93,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - *cache
-      - name: Fetch the record cache and check its pin
+      - &fetch_cache
+        name: Fetch the record cache and check its pin
         run: |
           if ! grep -qE '^[0-9a-f]{64}$' <<<"$CACHE_SHA256"; then
             echo "::error::CACHE_SHA256 is not pinned: upload $CACHE_ASSET to ci-data and set its SHA-256"
@@ -111,7 +111,8 @@ jobs:
           echo "$CACHE_SHA256  $RUNNER_TEMP/cache.tar.xz.enc" | sha256sum --check
       - *rom
       - *decrypt
-      - name: Decrypt and unpack the record cache
+      - &unpack_cache
+        name: Decrypt and unpack the record cache
         run: |
           # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (docs/ORACLE.md).
           SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
@@ -121,21 +122,28 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
             -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
           rm "$RUNNER_TEMP/cache.tar.xz.enc"
-      - name: Fetch and validate the pinned native fixtures and continuation seed
+      - &audio_native
+        name: Fetch and validate the pinned native fixtures and continuation seed
         run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch the reviewed movement opportunity evidence
+      - &movement_opportunities
+        name: Fetch the reviewed movement opportunity evidence
         run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch the reviewed connected ordinary opportunities
+      - &connected_ordinary
+        name: Fetch the reviewed connected ordinary opportunities
         run: |
           bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
           bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch retained native frame inputs and return observations
+      - &retained_frame
+        name: Fetch retained native frame inputs and return observations
         run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch and qualify the pinned complete scoped search inputs
+      - &native_search
+        name: Fetch and qualify the pinned complete scoped search inputs
         run: bash tools/ci/fetch_native_search.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch and qualify the pinned derived enemy-stop source
+      - &native_search_order
+        name: Fetch and qualify the pinned derived enemy-stop source
         run: bash tools/ci/fetch_native_search_order.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch and qualify the independently reviewed complete movement observations
+      - &native_search_work
+        name: Fetch and qualify the independently reviewed complete movement observations
         run: bash tools/ci/fetch_native_search_work.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Test independently admitted scoped search contracts
         env:
@@ -170,11 +178,50 @@ jobs:
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
             bash tools/ci/replay.sh --write "$RUNNER_TEMP/replay-receipt.toml"
-      - name: Verify recorded bridge fault rejection and exact restoration
-        run: |
-          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
-            SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
-            python3 tools/check_mutants.py
       - name: Check retained imported content and progress supply
         run: SM_ROM="$PWD/rom/sm.smc" cargo test --locked --profile verify -p verify --lib tests::content -- --ignored
       - *cache_save
+
+  fault-plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Plan the exhaustive fault matrix
+        id: plan
+        run: |
+          matrix=$(python3 tools/check_mutants.py plan)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  # Each runner owns its checkout and mutable Cargo target. Only replay saves this cache family.
+  faults:
+    needs: fault-plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.fault-plan.outputs.matrix) }}
+    env: *replay_fixtures
+    steps:
+      - uses: actions/checkout@v4
+      - *cache
+      - *fetch_cache
+      - *rom
+      - *decrypt
+      - *unpack_cache
+      - *audio_native
+      - *movement_opportunities
+      - *connected_ordinary
+      - *retained_frame
+      - *native_search
+      - *native_search_order
+      - *native_search_work
+      - name: Verify recorded bridge fault rejection and exact restoration
+        env:
+          WORKER: ${{ matrix.worker }}
+        run: |
+          SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
+            SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
+            python3 tools/check_mutants.py worker "$WORKER"

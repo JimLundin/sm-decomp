@@ -4,6 +4,7 @@ Run while the coordinator has frozen the worktree, Cargo environment and externa
 ROM/cache/native inputs. Restore exact source bytes after every mutation, then
 require a fresh Pass from an immutable vanilla executable. Print safe identities.
 """
+import argparse
 import json
 import os
 import shutil
@@ -12,9 +13,12 @@ import sys
 import tempfile
 import time
 import tomllib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+WORKER_COUNT = 4
 
 @dataclass(frozen=True)
 class Fault:
@@ -162,7 +166,7 @@ def check_fault(root: Path, fault: Fault, baseline: dict[str, Any],
     print(f"RESTORED PASS {fault.case}", flush=True)
     return killed
 
-def validate_coverage(root: Path, faults: list[Fault]) -> None:
+def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
     """Every responsibility with a reviewed Pass needs its own production fault."""
     with (root / "scenarios/replay/index.toml").open("rb") as stream:
         cases = {case["id"]: case for case in tomllib.load(stream)["case"]}
@@ -177,14 +181,42 @@ def validate_coverage(root: Path, faults: list[Fault]) -> None:
     if {fault.responsibility for fault in faults} != required:
         raise ValueError("every supported replay responsibility needs a production fault")
 
-def main() -> int:
+def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]:
+    """Assign each manifest row to one worker in manifest order."""
+    worker_count = min(WORKER_COUNT, len(faults))
+    if worker_count == 0:
+        raise ValueError("cannot partition an empty fault manifest")
+    return tuple(faults[worker::worker_count] for worker in range(worker_count))
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    commands = parser.add_subparsers(dest="command")
+    commands.add_parser("plan", help="print the CI worker matrix")
+    worker = commands.add_parser("worker", help="run one partition of the fault manifest")
+    worker.add_argument("index", choices=tuple(map(str, range(WORKER_COUNT))))
+    args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
-    with (root / "tools/mutants.toml").open("rb") as stream:
-        faults = [Fault(**row) for row in tomllib.load(stream)["fault"]]
-    if not faults or any(not fault.name for fault in faults) or len({fault.name for fault in faults}) != len(faults):
+    manifest = root / "tools/mutants.toml"
+    raw_manifest = manifest.read_bytes()
+    roster = tuple(Fault(**row) for row in tomllib.loads(raw_manifest.decode())["fault"])
+    if not roster or any(not fault.name for fault in roster) or len({fault.name for fault in roster}) != len(roster):
         raise ValueError("fault names must be nonempty and unique")
-    validate_coverage(root, faults)
+    validate_coverage(root, roster)
+    if args.command:
+        partitions = partition_faults(roster)
+        if args.command == "plan":
+            print(json.dumps({"worker": list(range(len(partitions)))}))
+            return 0
+        index = int(args.index)
+        if index >= len(partitions):
+            parser.error(f"worker {index} is absent from this fault manifest")
+        faults = partitions[index]
+    else:
+        faults = roster
     inputs = FrozenInputs.capture(root)
+    if inputs.files.get(manifest) != raw_manifest:
+        raise ValueError("fault manifest changed while planning")
     # Cargo's output is overwritten by mutant builds. The saved binary is private;
     # every baseline/restored receipt still comes from a newly executed process.
     with tempfile.TemporaryDirectory(prefix="sm-mutants-") as directory:

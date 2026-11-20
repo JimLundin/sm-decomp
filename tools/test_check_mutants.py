@@ -1,5 +1,7 @@
 """Bridge fault credit requires an exact recorded difference and restored Pass."""
 import tempfile
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 import json
 import subprocess
 import tomllib
@@ -26,7 +28,7 @@ def pass_receipt() -> dict[str, Any]:
 class MutantCheck(unittest.TestCase):
     def test_success_leaves_normal_artifact_vanilla_for_direct_replay(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             source = root / "crates/game/src/production.rs"
             source.parent.mkdir(parents=True)
             original = b"let elapsed = measured;\n"
@@ -69,10 +71,43 @@ field = "audio.reply0"
                  patch("check_mutants.input_paths", return_value=set(inputs.files)), \
                  patch("check_mutants.build_executable", side_effect=compile_source), \
                  patch("check_mutants.subprocess.run", side_effect=execute):
-                self.assertEqual(check_mutants.main(), 0)
+                self.assertEqual(check_mutants.main([]), 0)
                 self.assertEqual(source.read_bytes(), original)
                 self.assertTrue(check_mutants.passed(run_case(root, "audio/example", target), "audio/example"))
                 self.assertEqual(target.read_bytes(), original)
+
+    def test_plan_and_worker_partition_exhaustive_rosters(self) -> None:
+        template = Fault("fault", "audio", "crates/game/src/production.rs",
+                         "measured", "zero", "audio/example", 3, "audio.reply0")
+        for count in [1, 3, 4, 5, 9, 25]:
+            roster = tuple(replace(template, name=f"fault-{index}") for index in range(count))
+            workers = check_mutants.partition_faults(roster)
+            self.assertEqual(len(workers), min(count, 4))
+            self.assertTrue(all(workers))
+            self.assertCountEqual([fault for worker in workers for fault in worker], roster)
+        with self.assertRaises(ValueError):
+            check_mutants.partition_faults(())
+
+        output = StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(check_mutants.main(["plan"]), 0)
+        self.assertEqual(json.loads(output.getvalue()), {"worker": [0, 1, 2, 3]})
+
+        output = StringIO()
+        with patch("check_mutants.partition_faults", return_value=((template,),)), redirect_stdout(output):
+            self.assertEqual(check_mutants.main(["plan"]), 0)
+            with redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
+                check_mutants.main(["worker", "1"])
+            self.assertEqual(error.exception.code, 2)
+        self.assertEqual(json.loads(output.getvalue()), {"worker": [0]})
+
+    def test_invalid_worker_commands_fail_before_build(self) -> None:
+        for args in [["worker"], ["worker", "-1"], ["worker", "4"], ["worker", "01"],
+                     ["worker", "0", "0"], ["worker", "0", "worker", "1"],
+                     ["plan", "worker", "0"]]:
+            with self.subTest(args=args), redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
+                check_mutants.main(args)
+            self.assertEqual(error.exception.code, 2)
 
     def test_build_failure_cannot_execute_a_stale_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
