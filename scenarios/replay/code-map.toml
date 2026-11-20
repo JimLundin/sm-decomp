@@ -328,3 +328,48 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },
   { role = "adapter", path = "crates/game/src/production/movement_work.rs" },
 ]
+
+[[rule]]
+id = "samus-movement/Dash"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/run.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/world.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/AimingAndShooting"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/chart.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/world.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/SlopesCarry"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/world.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/SlopesSlowTheWalk"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/collide.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/world.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/FollowingTheGround"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/vertical.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/world.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]

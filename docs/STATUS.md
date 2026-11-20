@@ -110,7 +110,7 @@ outcomes, counts and observation digests; they are reviewed obligations, not fre
 Borrowed providers, phases, fields and limits stay in the declaration and do not become rule
 proof. File links express declared relevance, not exhaustive impact or measured coverage.
 
-The default query shows all 20 cases, including three empty-rule boundaries with empty code
+The default query shows all 21 cases, including three empty-rule boundaries with empty code
 links. A travel-file query includes the scoped witness and the integrated and movie held
 Unsupported boundaries. A boundary's rule references do not make it a passing behaviour proof.
 Mapping queries never select or skip landing checks; the complete index remains required.
@@ -125,7 +125,7 @@ the index's lock path and source declarations; it supplies no movie-global offse
 
 
 `CACHE` is made by `oracle corpus ROM scenarios/lock.toml DATA --oracle lsnes --native-seeds
-BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE Â§6): lsnes plays the row's
+BUNDLE/seeds --from-frame-pads PADS --cache CACHE --only ROW` (ORACLE Ãƒâ€šÃ‚Â§6): lsnes plays the row's
 frame pads from its native seed and writes the lean tier, `CACHE/ROW/lean.bin` and, last,
 `lean.txt` with the lock pins `verify::cache` checks: about 2 KB a frame, each frame's memory
 changes with the whole memories every 256th frame. `DATA` is the old lock's decrypted bundles
@@ -182,3 +182,12 @@ health arithmetic, elapsed hardware time, complete Frame scheduling and played-a
 production remain outside this witness. Its package is fetched by
 [the pinned connected fixture script](../tools/ci/fetch_connected_ordinary.sh); the declaration,
 reviewed outcome and code navigation are in the existing replay index, baseline and mapping.
+
+The second ordinary witness admits once at cut126 and carries the same selected owners through
+cut142. It exercises current Run release and resumed growth, alternating Forward/DownForward
+aim selection and its extra horizontal move, and reached non-square Floor/Surface terrain.
+Its floor factors, vertical surface responses and unseated support checks are bounded witnesses;
+stepped and ceiling terrain remain unsupported. Complete ordinary and internal yield restoration
+uses the same production entry. The stale-Run fault is caught at cut141's complete movement State.
+The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its admission and source
+identity separate from the first witness. The same borrowed producers and omitted consumers apply.

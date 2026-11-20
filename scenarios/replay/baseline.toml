@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "1500501a2455d8ecc4276293144dde482d31df150e01728bebf85c7b086c1358"
+index_sha256 = "c56fa5e8f087c219aa5c26ea9422148ac5f61cfb92477efe3303428256a9b06f"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -338,3 +338,10 @@ claim = "behaviour"
 expected = { status = "pass" }
 counts = { cuts = 9, fields = 153, outputs = 36, publications = 0, replies = 0, null_cuts = 0, null_fields = 92, restorations = 9, pending_boundaries = 0, pending_restorations = 0 }
 observation_sha256 = "e3ece86289758b83462b54712825a78389e4c5504a2e9ce186da225989a2fcac"
+
+[[case]]
+id = "connected-ordinary/run-release-floor-aim"
+claim = "behaviour"
+expected = { status = "pass" }
+counts = { cuts = 16, fields = 272, null_cuts = 0, null_fields = 143, outputs = 64, pending_boundaries = 0, pending_restorations = 0, publications = 0, replies = 0, restorations = 16 }
+observation_sha256 = "87211bf9f0ad6e49edd3d5181beeefaedf2175ff58cb53fcb515734b048ea40c"

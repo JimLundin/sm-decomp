@@ -48,6 +48,17 @@ struct Manifest {
     file: Vec<File>,
 }
 
+pub(super) const RUN_SLOPE_MANIFEST: &str =
+    "f6440b4daf6ddf75fa62172108d706fa33e8b462c4429358082c100924e70e4d";
+
+pub(super) fn fixture(case: &super::index::Case) -> Result<&'static str, Outcome> {
+    match case.id.0.as_str() {
+        "connected-ordinary/carried-running-camera" => Ok("connected-ordinary-v1"),
+        "connected-ordinary/run-release-floor-aim" => Ok("connected-run-slope-v1"),
+        _ => Err(data_failure(None, "connected reviewed case")),
+    }
+}
+
 pub(super) struct Content {
     pub movement: movement::Content,
     pub appearance: appearance::Content,
@@ -201,27 +212,44 @@ impl Inputs {
     pub fn load(root: &Path, content: &Content) -> Result<Self, Outcome> {
         let raw = std::fs::read(root.join("manifest.toml"))
             .map_err(|_| data_failure(None, "connected input manifest"))?;
-        if Sha256::of(&raw)
-            != Sha256::try_from(MANIFEST).map_err(|_| data_failure(None, "connected input pin"))?
-        {
+        let pin = Sha256::of(&raw).to_string();
+        if pin != MANIFEST && pin != RUN_SLOPE_MANIFEST {
             return Err(data_failure(None, "connected input pin"));
         }
         let manifest: Manifest = toml::from_str(
             std::str::from_utf8(&raw).map_err(|_| data_failure(None, "connected input text"))?,
         )
         .map_err(|_| data_failure(None, "connected input schema"))?;
+        let reviewed = match pin.as_str() {
+            MANIFEST => {
+                manifest.initial_cut == 6
+                    && manifest.last_cut == 15
+                    && manifest.source_v1
+                        == "e37b5523e368d84c00a0b9625d9ea13f0e88ba553d74839e95f97f9e910f442d"
+                    && manifest.source_v2
+                        == "9904841986a89999ab1a2f5f6c2601c5551b1609b1c584c3e4c4dc2eb0bbed5f"
+                    && manifest.source_v3
+                        == "0f5926a507f54c85dfe36e2fcbc05187d919d857c929128b501d7dd253e7c727"
+                    && manifest.extension
+                        == "0556ce279ca4375be03e5060bc665598645c76fa9e7f1cf16def69667cb79d00"
+            }
+            RUN_SLOPE_MANIFEST => {
+                manifest.initial_cut == 126
+                    && manifest.last_cut == 142
+                    && manifest.source_v1
+                        == "514ca9649b265dbcca139fc1f7607415ea236f1b76df2aef0710ec9d976276f3"
+                    && manifest.source_v2
+                        == "ba6dd5da351381c431badca440fc3f253e45b131bb685674223d7fcf13399e58"
+                    && manifest.source_v3
+                        == "87e42123a8e2f269e8c0d8b3527dc2b6fab4b7dbb603b00b5eab00df619a1ece"
+                    && manifest.extension
+                        == "4d769f8f398f1d8dfba35c21082c953d238bb02879ee369bcc4b2cbb979cdcc3"
+            }
+            _ => false,
+        };
         if manifest.format != "connected-ordinary-inputs-v1"
             || manifest.row != "chain-any-0003-DFD7"
-            || manifest.initial_cut != 6
-            || manifest.last_cut != 15
-            || manifest.source_v1
-                != "e37b5523e368d84c00a0b9625d9ea13f0e88ba553d74839e95f97f9e910f442d"
-            || manifest.source_v2
-                != "9904841986a89999ab1a2f5f6c2601c5551b1609b1c584c3e4c4dc2eb0bbed5f"
-            || manifest.source_v3
-                != "0f5926a507f54c85dfe36e2fcbc05187d919d857c929128b501d7dd253e7c727"
-            || manifest.extension
-                != "0556ce279ca4375be03e5060bc665598645c76fa9e7f1cf16def69667cb79d00"
+            || !reviewed
         {
             return Err(data_failure(None, "connected reviewed scope"));
         }
@@ -250,10 +278,12 @@ impl Inputs {
                 return Err(data_failure(None, "connected unique opportunity"));
             }
         }
-        if steps.keys().copied().collect::<Vec<_>>() != (7..=15).collect::<Vec<_>>() {
+        if steps.keys().copied().collect::<Vec<_>>()
+            != (manifest.initial_cut.saturating_add(1)..=manifest.last_cut).collect::<Vec<_>>()
+        {
             return Err(data_failure(None, "connected complete interval"));
         }
-        let records = (6..=15)
+        let records = (manifest.initial_cut..=manifest.last_cut)
             .map(|cut| {
                 let name = format!("record-{cut:02}.bin");
                 let bytes = files
@@ -419,30 +449,37 @@ mod tests {
     #[test]
     #[ignore = "private connected source, cache and player ROM"]
     fn connected_every_semantic_yield_restores_without_repeating_intents() {
+        yield_restorations("connected-ordinary/carried-running-camera");
+    }
+    #[test]
+    #[ignore = "private connected source, cache and player ROM"]
+    fn connected_run_slope_every_semantic_yield_restores_without_repeating_intents() {
+        yield_restorations("connected-ordinary/run-release-floor-aim");
+    }
+    fn yield_restorations(id: &str) {
         use game::production::connected::{Advance, Progress};
         use game::production::{AdvanceInput, Production, ProductionOutputs};
         use game::state::owned::OwnedState;
         let index = index();
-        let case = index
-            .cases
-            .iter()
-            .find(|case| case.id.0 == "connected-ordinary/carried-running-camera")
-            .unwrap();
+        let case = index.cases.iter().find(|case| case.id.0 == id).unwrap();
         let sources = sources();
         let admitted = super::super::recorded::admit(case, &sources).unwrap();
         let content = super::Content {
             movement: super::movement::Content::load(&sources.rom).unwrap(),
             appearance: super::appearance::Content::load(&sources.rom).unwrap(),
         };
-        let inputs =
-            super::Inputs::load(&sources.native.join("connected-ordinary-v1"), &content).unwrap();
+        let inputs = super::Inputs::load(
+            &sources.native.join(super::fixture(case).unwrap()),
+            &content,
+        )
+        .unwrap();
         let mut production = admitted.production;
         let mut boundaries = 0usize;
         let mut movement_offers = 0usize;
         let mut appearance_answers = 0usize;
         let mut rejected_changes = 0usize;
         let mut max_history = 0usize;
-        for cut in 7..=15 {
+        for cut in case.first_cut().unwrap()..=case.end.cut_inclusive {
             let input = inputs.current(cut).unwrap();
             let mut reference = production.clone();
             let ProductionOutputs::Connected(expected) = reference
@@ -475,9 +512,11 @@ mod tests {
                 };
                 max_history = max_history.max(state.appearance.model.0.steps.len());
                 if let game::production::movement_work::Movement::Work(work) = &state.movement {
-                    movement_offers += usize::from(work.model.0.offered.is_some());
+                    movement_offers =
+                        movement_offers.saturating_add(usize::from(work.model.0.offered.is_some()));
                 }
-                appearance_answers += usize::from(state.appearance.model.0.pending.is_some());
+                appearance_answers = appearance_answers
+                    .saturating_add(usize::from(state.appearance.model.0.pending.is_some()));
                 let saved = production.save().unwrap();
                 let restored =
                     Production::restore(&saved, admitted.content.clone(), admitted.rules.clone())
@@ -503,9 +542,9 @@ mod tests {
                 );
                 let equal_owners = rejected == restored;
                 assert!(equal_owners);
-                rejected_changes += 1;
+                rejected_changes = rejected_changes.saturating_add(1);
                 production = restored;
-                boundaries += 1;
+                boundaries = boundaries.saturating_add(1);
             }
             assert_eq!(sounds, expected.sounds);
             assert_eq!(graphics, expected.graphics);
@@ -517,7 +556,7 @@ mod tests {
         // Every opportunity retires only delivered history; no cross-opportunity growth remains.
         assert!(max_history < 32);
         diagnostic(format_args!(
-            "CONNECTED_PENDING boundaries={boundaries} movement_offers={movement_offers} appearance_answers={appearance_answers} changed_inputs_rejected={rejected_changes} max_history={max_history}"
+            "CONNECTED_PENDING id={id} boundaries={boundaries} movement_offers={movement_offers} appearance_answers={appearance_answers} changed_inputs_rejected={rejected_changes} max_history={max_history}"
         ));
     }
     #[test]

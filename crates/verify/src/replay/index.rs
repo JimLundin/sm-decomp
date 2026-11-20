@@ -634,6 +634,13 @@ fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
             &[O::MovementWork]
         }
         "samus-movement/MovesAsShePosed" => &[O::PositionX, O::PositionY],
+        "samus-movement/Dash" => &[O::MovementStateComplete],
+        "samus-movement/AimingAndShooting"
+        | "samus-movement/SlopesCarry"
+        | "samus-movement/SlopesSlowTheWalk"
+        | "samus-movement/FollowingTheGround" => {
+            &[O::MovementStateComplete, O::PositionX, O::PositionY]
+        }
         "samus-movement/TravelledDistances" => {
             &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
         }
@@ -779,8 +786,17 @@ fn ordinary_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) 
 
     case.kind == CaseKind::Integrated
         && case.expectations.provider == ExpectedProvider::PinnedRecordCache
-        && matches!(case.start, Start::CacheCut { frame: 6 })
-        && (10..=15).contains(&case.end.cut_inclusive)
+        && match case.id.0.as_str() {
+            "connected-ordinary/carried-running-camera" => {
+                matches!(case.start, Start::CacheCut { frame: 6 })
+                    && (10..=15).contains(&case.end.cut_inclusive)
+            }
+            "connected-ordinary/run-release-floor-aim" => {
+                matches!(case.start, Start::CacheCut { frame: 126 })
+                    && case.end.cut_inclusive == 142
+            }
+            _ => false,
+        }
         && case.row == "chain-any-0003-DFD7"
         && case.content == ContentProvider::PlayerRomImport
         && case.inputs == InputProvider::ConnectedOrdinaryInputs

@@ -125,7 +125,9 @@ jobs:
       - name: Fetch the reviewed movement opportunity evidence
         run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch the reviewed connected ordinary opportunities
-        run: bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+        run: |
+          bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+          bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch and qualify the pinned complete scoped search inputs
         run: bash tools/ci/fetch_native_search.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch and qualify the pinned derived enemy-stop source

@@ -210,3 +210,13 @@ after = '''    *camera = camera.with_view(world_camera::ViewPosition(types::Pair
 case = "connected-ordinary/carried-running-camera"
 cut = 7
 field = "camera.view.x.fraction"
+
+[[fault]]
+name = "connected-stale-run"
+responsibility = "movement"
+file = "crates/game/src/production/connected.rs"
+before = "            pad: ctx.inputs.0.held,"
+after = "            pad: types::Buttons(ctx.inputs.0.held.0 | types::button::RUN.0),"
+case = "connected-ordinary/run-release-floor-aim"
+cut = 141
+field = "movement.state.complete"
