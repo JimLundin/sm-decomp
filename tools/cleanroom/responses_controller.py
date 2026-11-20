@@ -22,9 +22,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 MODEL = "gpt-6.2-sol"
 OBSERVED_MODEL = "global.openai.gpt-6.2-sol"
-# Require the canonical identity for the fixed request. Deployment aliases need
-# independent provider evidence before they can be accepted.
-OBSERVED_MODELS = frozenset({OBSERVED_MODEL})
+# The configured provider can return this deployment label for the fixed request.
+OBSERVED_MODELS = frozenset({OBSERVED_MODEL, "gpt-6-2-sol-gs"})
 PAGE_CHARACTERS = 25000
 COMMAND_CHARACTERS = 100000
 ACTIONS = ("read", "list", "search", "write", "edit", "delete", "check", "clippy",

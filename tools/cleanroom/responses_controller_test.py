@@ -470,7 +470,13 @@ class Contract(unittest.TestCase):
         self.assertFalse(requests[0]["store"])
         response_loop(self.broker, "Invented",
                       lambda _: dict(final, model="global.openai.gpt-6.2-sol"), self.lane / "transcript")
-        for mutant in [dict(final, model="global.openai.gpt-6.1-sol"),
+        def deployment_send(request: dict[str, Any]) -> dict[str, Any]:
+            self.assertEqual(request["model"], "gpt-6.2-sol")
+            return dict(final, model="gpt-6-2-sol-gs")
+
+        response_loop(self.broker, "Invented", deployment_send, self.lane / "transcript")
+        for mutant in [dict(final, model="gpt-6-2-sol-gs-other"),
+                       dict(final, model="global.openai.gpt-6.1-sol"),
                        dict(final, model="gpt-6-1-sol-dz"), dict(final, model="gpt-6-1-sol-gs"),
                        dict(final, model="gpt-6.2-sol"), dict(final, model="gpt-6-2-sol-dz"),
                        dict(final, model="other"), dict(final, model="gpt-6-1-sol-dz-other"),
