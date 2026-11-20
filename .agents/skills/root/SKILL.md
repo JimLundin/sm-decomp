@@ -16,7 +16,7 @@ barrier; every other role does one step.
    and hash) and its done-condition.
 2. **Brief** a fresh session for it (below). Done when the brief is saved under
    `~/.cleanroom/briefs/` or sent as the agent's prompt.
-3. **Wait** for its report. Start other work only where [What can run at once](../../../docs/cleanroom/PROCESS.md#what-can-run-at-once) allows, within its limit of three lanes.
+3. **Wait** for its report. Start other work only where [What can run at once](../../../docs/cleanroom/PROCESS.md#what-can-run-at-once) allows and within the limit Jim sets for the session.
 4. **Check** the report against the step's done-condition: open the branch and run the cheap
    checks yourself (scan, doc links, the vector count, the gate line). Done when every claim you
    relay comes from output you saw. After independent review of a round or engineering task,
@@ -26,7 +26,8 @@ barrier; every other role does one step.
    results, with scoped and whole-movie claims kept separate; give size as one line of the round's delta, a diagnostic (MODEL §1
    decision 19), and cite `docs/REPORT.md` once a change lands.
 6. **Record** the step in the coordination log (`$TEMP/collab/reviews/coord-log.md`): heads,
-   verdicts, and the queue. Done when a fresh root could resume from the log alone.
+   verdicts, and the queue so a fresh root can resume from the log alone. When another root takes over, point its [handoff](../handoff/SKILL.md)
+   to that record and the first open action.
 
 ## Briefs
 

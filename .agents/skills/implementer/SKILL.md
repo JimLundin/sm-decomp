@@ -48,8 +48,6 @@ report.
 8. **Commit** under the two clean crates only, in the form `CLEANROOM.md` gives, ending with the
    trailer `Role: implementer`. Done when `git status` is clean and no stray file remains.
 
-Take the time and the context the work needs; finish the task.
-
 ## Gaps
 
 When a vector won't pass and the spec doesn't say why, the spec is what needs to change, so the
@@ -59,6 +57,6 @@ later round brings the amended entry.
 
 ## Report
 
-What you built, the public interface a caller uses, how many vectors pass, the gaps, and one line
-on whether you read anything outside this workspace or used anything you remember about how the
-original game is programmed.
+Give the committed export tip, the public interface you built, the runner result and the number
+of passing vectors. List each unresolved entry under Gaps. Say whether you read anything outside
+this workspace or used anything you remember about how the original game is programmed.

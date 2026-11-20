@@ -8,10 +8,12 @@ Read only the relevant sections of linked references, and follow their explicit 
 
 | Task or role | Required reading before work |
 | --- | --- |
-| Repository engineer (tools, oracle, CI, docs) | [lane](.agents/skills/lane/SKILL.md); task references below |
+| Repository engineer (tools, oracle, CI, docs) | [lane](.agents/skills/lane/SKILL.md), then [implement](.agents/skills/implement/SKILL.md) for an assigned change or [architecture-review](.agents/skills/architecture-review/SKILL.md) for an interface or ownership review |
 | Root coordinator | lane, [root](.agents/skills/root/SKILL.md), [PROCESS](docs/cleanroom/PROCESS.md) |
 | Observer, adversary, integrator | lane, the [role skill](docs/cleanroom/PROCESS.md#roles), PROCESS's Roles, Who sees what and A round sections; role skill steps select further references |
 | Confined implementer or blind reviewer | Use only the export's instructions and assigned skill. Repository startup documents and original sources stay outside the export. |
+
+When transferring or resuming repository work, use [handoff](.agents/skills/handoff/SKILL.md).
 
 ## Task references
 

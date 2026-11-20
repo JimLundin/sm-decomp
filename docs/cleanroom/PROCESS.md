@@ -52,7 +52,7 @@ session. The root starts each session with a brief.
 | implementer | builds the model from the spec alone, confined to an export | [implementer](../../.agents/skills/implementer/SKILL.md) |
 | blind reviewer | reads the model's code cold, confined, and reviews it as code | [blind-reviewer](../../.agents/skills/blind-reviewer/SKILL.md) |
 | integrator | wires the model into the engine, wires its indexed replay witnesses, deletes the old code | [integrator](../../.agents/skills/integrator/SKILL.md) |
-| engineer | builds tools, checks and CI outside a round | [lane](../../.agents/skills/lane/SKILL.md) |
+| engineer | changes tools, CI or docs outside a round, or reviews an assigned architecture question | [engineering task routes](../../AGENTS.md#start-by-task) |
 
 Every role except the confined two (implementer, blind reviewer) also follows the
 [lane](../../.agents/skills/lane/SKILL.md) skill for its worktree, commits, proof and report.
@@ -275,7 +275,8 @@ Each work issue contains:
 
 - **Outcome and scope:** the concrete change, its current boundary and what remains outside it.
 - **Owner and stage:** the responsible role, the active branch or PR when one exists, and the
-  next action. A handoff updates these fields.
+  next action. At transfer the root updates these fields from the repository
+  [handoff](../../.agents/skills/handoff/SKILL.md).
 - **Dependencies:** links to prerequisite issues and the specific input or decision each must
   supply. A missing contract becomes a linked issue before the lane broadens its scope.
 - **Done when:** observable acceptance conditions and the required checks. State the expected

@@ -17,9 +17,7 @@ for startup reading. Engineering tasks do not load the round procedure unless th
 ## Your role
 
 [PROCESS](../../../docs/cleanroom/PROCESS.md#roles) names the roles of a clean-room round. Load the
-skill your brief names after this one; an engineer's task (oracle, tools, CI, docs) needs only
-this skill. Work by mechanism: a replay's first differing cut and field identifies the affected
-behaviour; its specification determines the implementation.
+role skill your brief names. For engineering work, follow the task route in AGENTS.
 
 ## Commit rules
 
@@ -38,9 +36,7 @@ behaviour; its specification determines the implementation.
 
 ## Prove it
 
-- Every commit: `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`. It runs
-  `cargo fmt --check`, clippy on every crate with `-D warnings`, `tools/check_crate_rules.sh` and
-  `tools/check_doc_links.sh` (every relative Markdown link and anchor), as Quality does.
+- For every commit, run `bash tools/lane/gate.sh` until it prints `GATE OK <hash> <branch>`.
 - Tests: `bash tools/lane/run_tests.sh <crate>... [-- <libtest args>]`. On Windows, Defender blocks
   fresh test executables (exit 126), so it links each test target as a DLL and runs it through
   Python (`tools/lane/test_dll.py`; overrides `SM_RUST_BIN`, `SM_PY`, `SM_TEST_DLL_DIR`). This is
@@ -57,8 +53,10 @@ behaviour; its specification determines the implementation.
   before trying the next. The regression test asserts the property that was reported, not the
   mechanism of the fix.
 
-**Triage a difference:** use the replay's first differing cut and field → observer: find the writer in the bank log and amend the spec → implementer: fix the model
-→ or a LEGACY entry naming the cause, the rows and the frames. Green never falls.
+For a replay difference, start at the first differing cut and field. The integrator checks the
+adapter and replay wiring. The observer resolves a spec gap from the records, and a confined
+implementer fixes model behaviour against the approved spec. Record any retained difference
+under the commit rules above.
 
 ## Guardrails and traps
 
@@ -94,11 +92,8 @@ Branch <branch>, based on <base hash>. GATE OK <tip hash>.
 - **Found:** bugs, spec gaps, stale data, anything a teammate's work hit. Keep what you couldn't run
   under "Not run", with the reason. Every number comes from output you saw.
 
-When done, or when your context is long, write a handoff of at most 60 lines in
-`$TEMP/collab/<lane>/HANDOFF.md`: **State** (what is on your branch, by hash), **Next** (ordered, each
-with its first concrete step), **How** (scripts and commands that worked), **Traps** (what cost time,
-and what to do instead), **Cleanup** (worktrees and their size, which are safe to delete). Stop your
-background jobs and send the path. Say "I couldn't" plainly, with the reason.
+At completion, transfer or a context change, use [handoff](../handoff/SKILL.md).
+Link the batch report and its receipts where they already contain the proof.
 
 ## Land (root only)
 

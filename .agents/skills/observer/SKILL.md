@@ -28,8 +28,9 @@ engine's current code for your domain.
    and every quantity has its units, a domain type and **Read by**.
 4. **Vectors.** Take recorded ones from the records, naming the row and frame. Construct the
    cases no record reaches, and each switch's other variants. A vector holds RAM observations and
-   invented content only (MODEL §1 decision 13): a case that needs the game's content is a harness
-   case, named in the decode notes. Each entry whose switch is `Parameter` gets at least one
+   invented content only (MODEL §1 decision 13). If a recorded case needs the game's content,
+   name its row and frame in the decode notes for indexed replay. Construct a vector with
+   invented content to exercise the rule. Each entry whose switch is `Parameter` gets at least one
    vector at a value other than the reference one: it names the entry and overrides the
    reference rules in the vector's `rules` table, the form the vector file's header states.
    Done when every arm that says `checked: oracle` has a vector, every constructed vector's
@@ -47,14 +48,14 @@ engine's current code for your domain.
      from `tools spec-units`, and the budget.
 
    Everything about addresses and size lives here, and nowhere in the spec. Done when an
-   integrator could write the harness from the note alone.
+   integrator could locate the records and wire the declared replay comparisons from the note.
 7. **Read it as the adversary will.** Look for routine-named headings, a step list that follows
    a routine, an enum ordered like a RAM code, and a word the lexicon flags. Run
    `bash tools/cleanroom/scan.sh` on the spec and vectors, and `bash tools/check_doc_links.sh`.
    Done when both report 0.
 8. **Commit** with the trailer `Role: observer` and push your branch. Report: scope, units, the
    vectors (recorded and constructed), the reference model's agreement, the scan, open questions,
-   and the head.
+   and the head. Link the receipts and state which assigned rules still lack proof.
 
 ## Answer gaps and findings
 
