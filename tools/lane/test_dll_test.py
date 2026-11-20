@@ -68,7 +68,7 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(self.wrapper_status([result(0), result(0)]), 0)
         self.assertEqual(self.wrapper_status([result(0), result(101)]), 1)
         for outcomes in [[result(126)], [result(1)], [OSError()],
-                         [result(0), result(126)], [result(0), result(-9)],
+                         [result(0), result(126)], [result(0), result(-9)], [result(0), result(1)],
                          [result(0), OSError()]]:
             self.assertEqual(self.wrapper_status(outcomes), 2)
         selected = [("sample", "--lib", "", Path(".")), ("sample", "--test", "other", Path("."))]
@@ -113,6 +113,47 @@ class CoverageTests(unittest.TestCase):
         for kind, name in [("--lib", ""), ("--test", "integration")]:
             command = test_dll.build_command("cargo", "sample", kind, name, Path("sample.dll"))
             self.assertNotIn("--test", command[command.index("--") + 1:])
+
+    def test_every_suite_exports_only_main_and_forwards_libtest_arguments(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            selected = [("sample", kind, name, root) for kind, name in
+                        [("--lib", ""), ("--bin", "tool"), ("--test", "integration")]]
+            builds = []
+            runs = []
+
+            def run(command, **kwargs):
+                if command[0] == "cargo":
+                    definitions = [Path(arg.removeprefix("link-arg=")) for arg in command
+                                   if arg.startswith("link-arg=") and arg.endswith(".def")]
+                    self.assertEqual(len(definitions), 1)
+                    self.assertEqual(definitions[0].read_bytes(), b"EXPORTS\nmain\n")
+                    builds.append(command)
+                else:
+                    self.assertEqual(command[-3:], ["--exact", "invented test", "--nocapture"])
+                    self.assertEqual(kwargs["cwd"], root)
+                    runs.append(command)
+                return subprocess.CompletedProcess(command, 0)
+
+            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample",
+                                           "--", "--exact", "invented test", "--nocapture"]), \
+                 patch.object(test_dll, "targets", return_value=selected), \
+                 patch.object(test_dll.subprocess, "run", side_effect=run), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(test_dll.main(), 0)
+            self.assertEqual(len(builds), 3)
+            self.assertEqual(len(runs), 3)
+
+    def test_failed_export_preparation_does_not_build_or_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample"]), \
+                 patch.object(test_dll, "targets", return_value=[("sample", "--lib", "", root)]), \
+                 patch.object(Path, "write_text", side_effect=OSError()), \
+                 patch.object(test_dll.subprocess, "run") as run, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(test_dll.main(), 2)
+                run.assert_not_called()
 
 
 if __name__ == "__main__":

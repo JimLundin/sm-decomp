@@ -2,7 +2,8 @@
 //! CyclingItems, CancellingTheItem, OneShotItem, Switching).
 
 use crate::events::HudEvent;
-use crate::inputs::{CancelButton, Controls, Dropped, SelectButton, Status};
+use crate::inputs::ItemControlInputs;
+use crate::inputs::{CancelButton, Dropped, SelectButton};
 use crate::item::SelectableItem;
 use crate::state::{HudState, Selection};
 
@@ -23,7 +24,7 @@ impl Selection {
     /// before the end, past the x-ray scope, to none. Spec: OneShotItem. With item cancel held
     /// the item it lands on is the one-shot item; otherwise it isn't (item cancel pressed drops
     /// the selection instead of cycling).
-    fn cycle(&mut self, status: &Status, cancel: CancelButton) {
+    fn cycle(&mut self, status: &ItemControlInputs, cancel: CancelButton) {
         let current = self.item();
         let next = SelectableItem::ORDER
             .into_iter()
@@ -42,19 +43,25 @@ impl HudState {
     /// Spec: CyclingItems. While she can't switch, nothing changes. Spec: CancellingTheItem. Item
     /// cancel pressed drops the selection, whatever Select does. Otherwise Select pressed cycles.
     /// Spec: Switching. Either acting reports the item it lands on.
-    pub(crate) fn press_buttons(
-        &mut self,
-        controls: Controls,
-        status: &Status,
-    ) -> Option<HudEvent> {
+    /// Spec: ItemControls. Complete the ordinary controls stage immediately, returning its
+    /// actual switch request. Grid, caches and map are untouched. For an interruptible frame
+    /// with a retained frame-start highlight and consumed progress, use `HudWork` instead.
+    pub fn item_controls(&mut self, controls: &ItemControlInputs) -> Option<HudEvent> {
+        self.selection.apply_item_controls(controls)
+    }
+}
+
+impl Selection {
+    /// Spec: ItemControls. The control choice needs only the selection, not any drawn cells.
+    pub(crate) fn apply_item_controls(&mut self, controls: &ItemControlInputs) -> Option<HudEvent> {
         if !controls.can_switch {
             return None;
         }
         match (controls.cancel, controls.select) {
-            (CancelButton::Pressed, _) => self.selection.apply_drop(Dropped::Selection),
-            (cancel, SelectButton::Pressed) => self.selection.cycle(status, cancel),
+            (CancelButton::Pressed, _) => self.apply_drop(Dropped::Selection),
+            (cancel, SelectButton::Pressed) => self.cycle(controls, cancel),
             (_, SelectButton::NotPressed) => return None,
         }
-        Some(HudEvent::Switched(self.selection.item()))
+        Some(HudEvent::Switched { item: self.item() })
     }
 }

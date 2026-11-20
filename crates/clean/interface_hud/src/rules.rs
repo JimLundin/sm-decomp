@@ -2,6 +2,7 @@
 //! adjusted game.
 
 use enum_map::{Enum, EnumMap};
+use serde::{Deserialize, Serialize};
 use types::Screen;
 
 use crate::inputs::FrameCount;
@@ -10,7 +11,7 @@ use crate::inputs::FrameCount;
 ///
 /// Each but Mother Brain is met on entering its room while it lives, a step of its own outside
 /// a frame of play; Mother Brain blanks it when her first form falls, during a frame.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Enum, Serialize, Deserialize)]
 pub enum Boss {
     /// Kraid.
     Kraid,
@@ -56,7 +57,7 @@ const fn reference_screens(boss: Boss) -> &'static [Screen] {
 }
 
 /// A blink or a flash: so many frames one way, then as many the other, by the frame count.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Alternation {
     /// The frames each way.
     pub frames_each_way: u8,
@@ -85,7 +86,7 @@ const REFERENCE_HER_BLINK_FRAMES: u8 = 8;
 /// They are the frames each way of the one-shot item's flash and of her cell's blink, and the
 /// screens each boss explores. Its default is the reference profile, the spec's values; a caller
 /// holds it and may adjust each.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Rules {
     /// Spec: OneShotFlash. The one-shot item's flash.
     pub one_shot_flash: Alternation,

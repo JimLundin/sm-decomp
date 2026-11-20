@@ -857,10 +857,10 @@ indicator: the fit is score ÷ budget, and being over it costs in proportion to 
 as a wall; the old-code comparison is a guideline assessed under MODEL §1 decision 19.
 
 - Area status (old 1,069): 1, 1.4, EnergyGauge, AmmoCounts, AutoReserveSign, SelectionHighlight,
-  SwitchClick, OneShotFlash, IconsAppear
-- Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching
+  SwitchClick, OneShotFlash, IconsAppear, StatusRefresh, EscapeCountdown, CountdownContinuation
+- Area selection: CyclingItems, CancellingTheItem, OneShotItem, Switching, ItemControls
 - Area minimap (old 1,673): Exploring, MiniMapWindow, HerBlink, MiniMapStill, OutOfPlay,
-  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift
+  BossBlanksTheMap, DiagonalPicture, FirstColumnsShift, LastColumnsShift, MiniMapUpdate
 
 Round 3 adds one arm (`MiniMapStill`: the mini-map turned on clears its off, now State) and
 one operator (`DiagonalPicture`'s modulus on both sides): 55.0 → 56.3 units, minimap 936 → 984.
@@ -889,3 +889,150 @@ Adversary 112's C3 (§Adversary 112's C3) folds the shot's input into `Cancellin
 before the status bar, an arm that already named it: no arm or operator changes. 62.3 units.
 
 Budget: 37.5 × 62.3 units = 2,337 (status 787, selection 375, minimap 1,175)
+
+
+## Dormant escape countdown contract
+
+`EscapeCountdown` is the H2 countdown ownership boundary: the current retained countdown
+status, expiry result and conditional sprite presentation belong together, independently of
+energy, Samus protection from hits, animation and the HUD's display caches. `CountdownContinuation`
+is complete retained HUD work, not a second scene service.
+
+Sources: [bank 80](https://patrickjohnston.org/bank/80), process timer at $80:9DE7,
+timer drawing at $80:9F6C and $80:9FB3; the gameplay scene wrapper's selected countdown service
+and its two current status reads. Current status is $0943: zero means Dormant. The admitted
+owner stores the semantic Dormant quantity, not a raw status word. A nonzero status requires
+unsupported admission until the active rules are observed and specified. Carry clear from the
+reached countdown work means NoExpiry; the current zero status suppresses timer presentation.
+These codes and call relationships stay outside the clean specification.
+
+Recorded witness R-countdown-dormant is the independent retained ordinary gameplay source
+packet audited in `$TEMP/collab/retained-time-479/timer-source-563/check.py`. It reconstructs the
+physical observations from pinned first-record input, not engine predictions. Source groups
+3568 and 3580 read the same live zero countdown status; 3573 supplies the explicit no-expiry
+answer; 3579 and 3581 prove the actual return/presentation branches. The scene-selected service
+at 3561 is joined to the later current scene-controller read at 4277. The private manifest
+SHA256 is 8af8a5601abeefb1a17ccfd029014a3a8e27db3a557d83f01ec1b4030380bf9e;
+checker SHA256 is 36021f3737ce4f8e2cf90f844e8de17c9f484f5b013df079df5ac0f6aba04b4a.
+The independent re-gate is `$TEMP/collab/retained-time-479/timer-source-review/REGATE.md`,
+SHA256 2f1a51e3bb9a89efde92f70e492ec4b05562bc8c0c45b074ac70586f79859986.
+The recorded case carries semantic observed current status and result only; its source
+coordinates and receipts are private harness evidence, not clean inputs or scheduling authority.
+
+Integration must decode/set the complete countdown owner once on admission, carry it without
+oracle next-state feedback, read that same owner at both actual dependent uses and encode its
+actual answer/picture. Compare current countdown, expiry result and absent countdown
+contribution; do not claim pixels from absent contribution alone. Native stack writes are
+excluded from the domain's retained State because they belong to source execution machinery;
+there are no persistent countdown writes in this reached witness. No countdown mask based on
+energy, protection, unrelated zero values, endpoint or final presentation is allowed.
+
+The scene's MaintainCountdown versus PresentationOnly choice is a distinct neighboring input.
+A scoped independent observation may provide that stimulus only with producer/timing explicitly
+unproved. Integrated execution needs an actual qualified scene scheduling producer; no existing
+clean scene API supplies this choice or these opportunities at the fixed base.
+`game::production::frame::borrowed_gameplay` supplies only `SceneController::MainGameplay`
+versus `Other` and a coarse completed `GameplayDispatchReceipt`; neither that completion nor
+`Prelude.scene_current`/`Preparation.gameplay` retains or produces countdown service selection. Missing scheduling,
+active/expired countdown or presentation-only execution remains Unsupported before dependent
+effects. B8 doors/station stage and ordinary HUD refresh do not supply countdown scheduling.
+Expiry effects, digits and active advancement are deliberately not inferred from this dormant
+witness. Complete set/read/save/restore covers existing HUD State plus countdown and pending
+chosen answers/completion; no partial durable codec or startup reconstruction is sufficient.
+
+Reference evidence: `$TEMP/collab/retained-time-479/countdown-spec-564/reference.py` runs the
+countdown vectors, preserves the preexisting ordinary HUD vectors using a retained local copy
+of the HUD reference, and reruns the pinned physical recorded witness. Constructed active,
+expired, presentation-only and unknown scene contrasts test unsupported admission; they assert
+no unobserved active countdown behavior. Repeated distinct opportunities each return an answer;
+a chosen/completed opportunity restored into fresh instances is not repeated. Unread restoration
+uses a changed current scene choice. The independence contrast keeps nonzero energy/protection
+untouched. Planted expiry, presentation, collapsed repeated answers, stale unread scene choice,
+reread chosen choice, repeated completion and protection alias faults must fail.
+
+Countdown belongs to the status area's budget accounting. Existing old-code baseline remains
+unchanged; it contains no complete countdown owner. No extra old-code allowance is claimed.
+The root regenerates official spec units and budget at its normal post-review accounting step.
+
+
+Reference check results for the bounded contract: five executable model cases agree, including
+one recorded dormant opportunity and four constructed output/completion/independence cases.
+The no-output do-nothing comparison agrees with zero of those five: its gain is explicit
+NoExpiry/Absent results and once-only completion, not a changed countdown quantity. Five
+integration-admission contrasts agree and receive no model credit. Nine reference faults
+are rejected; stale unread choice is an admission fault, while expiry, picture, collapsed
+repetition, reread chosen choice, repeated completion, protection alias and omission/corruption
+of an already chosen answer exercise executable
+outputs or retained work. All 95 existing ordinary HUD vectors agree, with 95 fresh full-State
+restorations. Countdown has its own opportunity and continuation; see the HUD frame opportunities below.
+The retained read-only scanner reports zero in every class on the spec and vectors. The new
+Budget accounting is held for the root's official post-review measurement, not supplied to
+independent or confined roles.
+
+Chosen restoration reference work selects the actual expiry answer and picture before saving,
+serializes those chosen outputs alongside complete State and progress, discards the originals,
+and completes that retained pair after restoring fresh instances. It never regenerates a
+chosen answer from the current scene/countdown. Separate omission and corruption faults reject
+this proof; fresh selection alone is insufficient to establish chosen-answer restoration.
+
+## HUD frame opportunities
+
+The frame contract separates current item controls, movement mini-map and late status.
+The controls read in the current handler (bank $90:E6C0 and $90:DCED) are distinct from
+the map call after movement ($90:E731, $90:E734). The map returns at $90:E738 before
+pose placement and Maintenance ($90:E74D). The main gameplay path calls Samus Drawing
+($82:8B98) before status ($82:8BA0). Status's whole-energy load ($80:9B8B, callback
+$80:9B8E) compares against the shown cache; its redraw's separate energy load is at
+$80:9B96. The bank log references above and the status/mini-map harness field maps still
+apply. Health supplies whole current energy, independently of capacity and HUD caches.
+
+**Recorded relational witnesses.** The vector alias ordinary-play-pair is
+chain-any-0003-DFD7, seed cut 126 and ordinary cuts 127 and 128. Use the retained full WRAM
+images, instruction markers and bus callbacks in the qualified capture, with its independent
+record cuts and pinned controller/animation projections. At each cut verify the map inputs
+at the movement return, before Maintenance, and check the map's 15 cells and complete explored
+bitmap at the return, Drawing, ordinary return and independent cut. Both maps ran: three map
+area word reads per cut. The map center changed palette by movement return at cut 128. Both
+positions differed in pixels at the two observations while their block and screen quotients
+agreed. Do not substitute late position when Movement is selected.
+
+For status verify one complete physical whole-energy read after both Drawing reads in each
+opportunity. At Drawing, ordinary return and independent cut compare the status input bracket
+and the gauge's last-shown energy and 16 cells. The 16 gauge cells and cache held through the
+independent cuts; neither opportunity reached the redraw energy read. This is recorded zero
+loss with no current-energy change. Capacity has bracket evidence, with no reached redraw
+load on this pair. The gauge fixture uses an independently constructed changing-energy
+answer instead of treating these two frames as proof of a reached loss or redraw.
+
+Reproduce original qualification with the private
+`$TEMP/collab/health-connected-integration/source/check.py` and its pinned captures.
+For this observer delta run
+`$TEMP/collab/one-frame-479/hud-evidence/reference.py scenarios/vectors/interface-hud.toml`
+for the HUD vectors and `recorded.py scenarios/vectors/interface-hud.toml` in that same
+evidence directory for the two recorded comparisons. The recorded reference checks the
+projected mini-map window, complete explored bitmap and gauge (including cache); it reports
+the reference and null agreements on those projections. Original phase samples supply the
+explicitly scoped premises, including prior rendered map pictures. The reference is a
+bounded prediction with stable non-center pictures and a center known explored, supplemented
+by the independent bus/source qualification. It provides no new integrated replay credit,
+full native HUD field coverage or changing Health producer.
+
+**Constructed discriminators.** At x = 256 and y = 16, the room origin (10, 10) gives
+(11, 10); x = 255 gives (10, 10). The two pictured center cells differ and each case records
+its own explored cell. Later pose placement at x = 512 would have explored (12, 10). The
+frame count 8 leaves the center in explored colours. At map completion energy 0 is still
+shown, regardless of the mock early energy of 119. Late energy 107 with capacity 199 draws
+one full tank and digits 0 and 7. The late
+input replacement before choice reaches 109 and a click, after choice the original 107 and
+mute are kept. The same gauge changes with the map off. A second application of the diagonal case would
+draw the freshly explored cell above her before the next frame. The controls/drop, pickup/highlight,
+flash and turn-on/fall cases compare partial State and ordered events as well as final output.
+The observed pair documents active map and stable gauge; the constructed cases distinguish
+stale position, moved map and changed energy and establish continuation for the clean model.
+
+**Integration boundary.** Original qualification does not admit item permission and availability,
+every intervening drop/pickup/status writer, the physical gauge cache or capacity operand, or
+hardware transfer. The engine orders current owners and has to prove those joins independently.
+Its replay must compare early effects separately from the sole final HUD publication, carry
+complete State through a fresh restore, and distinguish early event consumption from later
+final ordered output. Existing Ceres and HUD replay claims do not change at the spec amendment.

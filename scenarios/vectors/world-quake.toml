@@ -1,0 +1,54 @@
+# A vector is one quiet room opportunity. The complete State of the room
+# quake is required before and after. An independent start uses its own full
+# State. A continuation preserves both values in a fresh restoration.
+# The active-duration admission case exercises the production boundary.
+
+[[vector]]
+id = "R-quiet-frame"
+source = "recorded"
+entries = ["QuietQuakePhase"]
+before = { remaining = 0, phase = 402 }
+after = { remaining = 0, phase = 403 }
+
+[[vector]]
+id = "C-other-phase"
+source = "constructed"
+entries = ["QuietQuakePhase"]
+before = { remaining = 0, phase = 290 }
+after = { remaining = 0, phase = 291 }
+
+[[vector]]
+id = "C-mid-cycle"
+source = "constructed"
+entries = ["QuietQuakePhase"]
+before = { remaining = 0, phase = 32767 }
+after = { remaining = 0, phase = 32768 }
+
+[[vector]]
+id = "C-wrap"
+source = "constructed"
+entries = ["QuietQuakePhase"]
+before = { remaining = 0, phase = 65535 }
+after = { remaining = 0, phase = 0 }
+
+[[vector]]
+id = "C-after-wrap"
+source = "constructed"
+entries = ["QuietQuakePhase"]
+before = { remaining = 0, phase = 0 }
+after = { remaining = 0, phase = 1 }
+continues = "C-wrap"
+
+[[vector]]
+id = "C-restored-next"
+source = "constructed"
+entries = ["QuietQuakePhase"]
+before = { remaining = 0, phase = 291 }
+after = { remaining = 0, phase = 292 }
+continues = "C-other-phase"
+
+[[admission]]
+id = "A-active-duration"
+before = { remaining = 5, phase = 42 }
+outcome = "Unsupported"
+after = { remaining = 5, phase = 42 }

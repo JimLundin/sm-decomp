@@ -12,6 +12,7 @@ mod camera_semantic;
 pub mod connected;
 mod content;
 mod entries;
+pub mod frame;
 mod immutable;
 mod movement;
 mod movement_ceres;
@@ -20,6 +21,7 @@ pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState}
 mod sender;
 #[cfg(test)]
 mod tests;
+pub mod timing;
 pub mod weapons;
 pub mod world;
 pub use animation::{AppearanceContent, ClipFault, FigureClip};
@@ -34,6 +36,8 @@ pub use sender::SenderInput;
 pub enum Scope {
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
+    /// Complete retained CPU frame.
+    Frame,
     /// Movement and semantic pose.
     Movement,
     /// Movement position consumed by one Ceres door.
@@ -65,6 +69,8 @@ pub enum Scope {
 pub enum ProductionSeed {
     /// Complete coupled owners and any actual pending semantic work.
     Connected(Box<connected::State>),
+    /// Complete caller, selected owners, hardware and delivery continuation.
+    Frame(Box<frame::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
     /// Both complete owners admitted at the same boundary.
@@ -99,6 +105,11 @@ pub enum AdvanceInput<'a> {
         inputs: &'a connected::inputs::Inputs,
         /// A semantic yield or genuine opportunity completion.
         advance: connected::Advance,
+    },
+    /// Pause budget for the actual retained frame caller.
+    Frame {
+        /// Intrinsic host pause budget.
+        budget: data::timing::MasterTicks,
     },
     /// One independently admitted ordinary opportunity for connected owners.
     MovementCeres {
@@ -158,6 +169,8 @@ pub enum AdvanceInput<'a> {
 pub enum ProductionOutputs {
     /// Complete new selected outputs and actual semantic progress.
     Connected(Box<connected::Outputs>),
+    /// Actual frame progress and ordered fresh physical outputs.
+    Frame(frame::Outputs),
     /// Every movement receipt, including requests and placements.
     Movement(samus_movement::Outcome),
     /// Complete outputs committed with both owners.
@@ -189,6 +202,8 @@ pub enum ProductionOutputs {
 pub enum AdmissionFault {
     /// Complete connected owner/content relation is invalid.
     Connected(connected::Fault),
+    /// Complete frame continuation failed validation.
+    Frame(Box<frame::Fault>),
     /// State, content and rules must select the same entry.
     WrongScope,
     /// A selectable semantic pose has no body content.
@@ -218,6 +233,8 @@ pub enum AdmissionFault {
 pub enum Unsupported {
     /// A produced Appearance request has no selected receiver mapping.
     AppearanceSound(samus_appearance::PublishedSound),
+    /// A current causal frame prerequisite has no admitted owner.
+    Frame(frame::Dependency),
     /// No independent value or producer for the selected entry.
     MissingInput(Scope),
     /// A selected pose requires unavailable semantic content.
@@ -243,6 +260,10 @@ pub enum Unsupported {
 pub enum ProductionFault {
     /// A connected opportunity lacks actual current owners or supported inputs.
     Connected(connected::Fault),
+    /// Invalid or unavailable current frame hardware continuation.
+    FrameHardware(timing::Fault),
+    /// Invalid retained frame output ordering or delivery cursor.
+    FramePublications(frame::PublicationFault),
     /// Input belongs to another admitted entry.
     WrongScope,
     /// Required production behaviour is unavailable.
@@ -303,6 +324,7 @@ impl Production {
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
             ProductionSeed::Connected(_) => Scope::Connected,
+            ProductionSeed::Frame(_) => Scope::Frame,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
@@ -325,6 +347,20 @@ impl Production {
                 content.movement.validate()?;
                 state.validate(content).map_err(AdmissionFault::Connected)?;
                 OwnedState::Connected(state)
+            }
+            (
+                ProductionSeed::Frame(state),
+                ProductionContent::Frame(content),
+                ProductionRules::Frame(_),
+            ) => {
+                state
+                    .validate()
+                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
+                content.movement.validate()?;
+                state
+                    .current_clip(&content.appearance)
+                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
+                OwnedState::Frame(state)
             }
             (
                 ProductionSeed::MovementCeres(state),
@@ -389,6 +425,7 @@ impl Production {
     pub const fn scope(&self) -> Scope {
         match self.state {
             OwnedState::Connected(_) => Scope::Connected,
+            OwnedState::Frame(_) => Scope::Frame,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
@@ -429,6 +466,12 @@ impl Production {
                     .advance(inputs, content, rules, advance)
                     .map_err(ProductionFault::Connected)?,
             )),
+            (
+                OwnedState::Frame(state),
+                ProductionContent::Frame(content),
+                ProductionRules::Frame(rules),
+                AdvanceInput::Frame { budget },
+            ) => ProductionOutputs::Frame(state.advance(content, rules, budget)?),
             (
                 OwnedState::MovementCeres(state),
                 ProductionContent::MovementCeres(content),
@@ -506,6 +549,7 @@ impl Production {
     pub fn save(&self) -> Result<SavedProduction, SaveFault> {
         let state = match &self.state {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
+            OwnedState::Frame(state) => CodecState::Frame(state.clone()),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => CodecState::Audio(state.clone()),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
@@ -549,6 +593,7 @@ impl Production {
         }
         let seed = match checkpoint.state {
             CodecState::Connected(state) => ProductionSeed::Connected(state),
+            CodecState::Frame(state) => ProductionSeed::Frame(state),
             CodecState::Movement(state) => ProductionSeed::Movement(state.0),
             CodecState::Audio(state) => ProductionSeed::Audio(state.0),
             CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
@@ -573,6 +618,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
                 .and_then(|()| pin_holds::<crate::state::owned::CameraPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
         }
+        Scope::Frame => frame::validate_pins(),
         Scope::Movement | Scope::MovementCeres => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
         }

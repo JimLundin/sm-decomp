@@ -83,7 +83,8 @@ jobs:
   # One complete index and baseline hold all currently admitted replay claims.
   replay:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The fault suite rebuilds each changed producer and replays the restored native frame.
+    timeout-minutes: 120
     env:
       CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
       CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
@@ -128,6 +129,8 @@ jobs:
         run: |
           bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
           bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch retained native frame inputs and return observations
+        run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch and qualify the pinned complete scoped search inputs
         run: bash tools/ci/fetch_native_search.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch and qualify the pinned derived enemy-stop source
@@ -153,6 +156,13 @@ jobs:
           SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
         run: |
           cargo test --locked --profile verify -p verify --lib replay::connected::tests:: -- --ignored --skip connected_complete_index_preserves_all_reviewed_floors
+      - name: Compare retained-frame continuations through native return
+        env:
+          SM_ROM: ${{ github.workspace }}/rom/sm.smc
+          SM_AUDIO_NATIVE: ${{ runner.temp }}/audio-native
+        run: |
+          cargo test --locked --profile verify -p verify --lib replay::frame_origin::health_owner_tests::actual_native_ -- --ignored
+          cargo test --locked --profile verify -p verify --lib replay::frame_origin::cannon_tests::unready_cannon_rejects_the_ready_drawing_profile -- --exact --ignored
       - name: Build the shared replay command
         run: cargo build --locked --profile verify -p tools
       - name: Check every indexed case against the reviewed baseline

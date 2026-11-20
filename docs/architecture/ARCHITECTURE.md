@@ -122,7 +122,10 @@ State nor publications. Runtime rendering is downstream and cannot affect gamepl
 
 ### 6.1 What a Tick is
 
-A declared cut-to-cut advance carries selected State; native audio uses transport milestones.
+A declared cut-to-cut advance carries selected State. Native audio uses transport milestones.
+In the retained Frame recipe a host budget bounds each call to advance. The hardware owner
+charges elapsed master ticks across calls. The frame completes on return from the requested
+native NMI handler.
 
 ### 6.2 The beam-sync point
 
@@ -134,15 +137,18 @@ The concrete selected recipe orders actual clean calls and routes actual outputs
 
 ### 6.4 NMI timing and lag
 
-Lag is observable; captured parity or intervals do not establish a production clock owner.
+The retained Frame owner progresses from its admitted beam phase through the software
+request, hardware wait, NMI entry and handler return. Other recipes that borrow parity or
+clock intervals establish only their declared comparisons.
 
 ### 6.5 Named CPU costs
 
-Whole-frame CPU timing is not implemented. [T1](domains.md#platform-and-tracks-not-clean-room-hardware-formats-or-the-originals-timing)
-is platform engineering outside the clean room: named CPU costs, beam scheduling, hardware
-arbitration and the time coordinator. It is not a new clean gameplay domain. Costs describe
-actual named work, rather than executing the original's opcodes or routine structure or replaying
-an expected-time cost tape.
+The integrated `frame/ordinary-requested-nmi-return` case exercises the hardware time
+coordinator for one complete retained frame. [T1](domains.md#platform-and-tracks-not-clean-room-hardware-formats-or-the-originals-timing)
+owns named CPU costs, beam scheduling and hardware arbitration outside the clean room.
+The scheduler charges selected work and stalls. Frame-specific physical profiles and
+borrowed preparation, actor, scene and native video inputs bound this witness. Independent
+output times and final observations enter at comparison.
 
 The existing `AudioSender` production entry retains CPU master ticks and advances the clean
 sender's intrinsic timed service under an admitted timing profile and ordered physical replies.

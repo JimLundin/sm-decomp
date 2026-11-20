@@ -141,7 +141,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | S2 | **Samus in water, lava and sand; pushes** (samus-movement rounds) | other speeds and gravity in liquids, the speed booster's dash cap and higher jump (the booster's stages are S5's), quicksand, conveyors, Ceres pushes, the steep blocks' corners | reads the liquid's level (R3) as an input; same speed quantities, so it extends samus-movement | in `samus_movement_bridge`/model already; old port movement | cached (chain-0220/0224/0232, area-maridia, terrain-quicksand, samus-ceres-push) | S1 | 4 |
 | S3 | **The shinespark and echoes** (samus-movement rounds) | charge store, the spark's directions, its end, the echoes' positions | exports the echoes to S5 | none | cached (samus-shinespark-*) | S2 | 2 |
 | S4 | **Hurt and knockback; bomb jumps** (samus-movement rounds) | knockback motion and its turn of the camera lead (camera C4), bomb-jump launch | reads a hit event (C1) and a bomb blast (W1) | none | cached (chain-0106, samus-bomb-jump-vertical) | S2 | 2 |
-| S5 | **How Samus looks** | animation timing (`AnimationEnds` becomes an output; the run's pace and the speed booster's stages up to boosting, the clock the shinespark, the echoes, the glow, the blocks and the enemies read), her sprite (clips), palette (suits, visor, charge flash, screw attack, speed booster glow, hurt flash), atmospheric splashes and dust, the i-frame flicker | reads her pose; exports `SpriteDraw`, palette intents; samus-movement reads its "animation ended" | `animation` 1,246, `samus_drawing` 605, `samus_palette` 183, `atmospheric` 1,082 (3,116) | cached, OAM and CGRAM streams | E1 | 3 |
+| S5 | **How Samus looks** | animation timing (`AnimationEnds` becomes an output; the run's pace and the speed booster's stages up to boosting, the clock the shinespark, the echoes, the glow, the blocks and the enemies read), her sprite (clips), palette (suits, visor, charge flash, screw attack, speed booster glow, hurt flash), atmospheric splashes and dust, the i-frame flicker | reads her pose and current item controls (H2); exports `SpriteDraw`, palette intents; samus-movement reads its "animation ended" | `animation` 1,246, `samus_drawing` 605, `samus_palette` 183, `atmospheric` 1,082 (3,116) | cached, OAM and CGRAM streams | E1 | 3 |
 | S6 | **The grapple beam** | aim, fire, latch, swing (angle, length), release hand-off, grapple blocks | owns her position on attached frames; reads grapple block kinds; exports release speeds | none (old port 11k) | cached (samus-grapple-*); boss-draygon-grapple-* | S2, W2 | 3 |
 | S7 | **The x-ray scope** | the cone, its sweep, time stopped (camera's `TimeStopped`), revealed blocks | exports time-stopped and the cone to R4 | none | cache `xray-scan-*` (4 rows) | E2 | 2 |
 
@@ -159,7 +159,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | --- | --- | --- | --- | --- | --- | --- | ---: |
 | R1 | **Doors and elevators between rooms** | the door's passage (the screen scrolling over, the fade, the new room's placement of Samus and the view, the camera's `ScreensRunOn`), elevators between areas, the room state chosen by events (P1), loading time as a Timing behaviour | reads the door it entered; exports the new room, her and the view's placement, the spawn calls to each family | none in the clean sense; `state/room` reset | cached chains (each crosses a door), `door-transition`, `door-loading-lag-nmi`, `elevator-traversal` | E2, P1 | 6 |
 | R2 | **Room loading** (platform, not clean-room) | the load sequence over AF1's rooms and AF2's tilesets: the VRAM and CGRAM uploads, the work RAM image of the level, each record's load cost | reads our room and tileset formats; outputs video writes | `data::room`, `level`, `compression` (their decoding moves to AF1 and AF2) | as R1 | E2, AF1, AF2 | 2 lanes |
-| R3 | **Liquids and room weather** | the liquid's level, its rise and fall (Tourian acid, lava quakes), rain, fog, heat, the room's quakes and the room code that moves the view (camera's "room rules") | exports the liquid level (S2), the view's shake | none | cache `area-maridia`, `volcano-room-lavaquake`, `terrain-*-hand`, chains | R1 | 4 |
+| R3 | **Liquids and room weather** | the liquid's level, its rise and fall (Tourian acid, lava quakes), rain, fog, heat, the room's quakes and the room code that moves the view (camera's "room rules") | exports the liquid level (S2), the view's shake | `world-quake` holds the quiet phase and Drawing displacement | cache `area-maridia`, `volcano-room-lavaquake`, `terrain-*-hand`, chains | R1 | 4 |
 | R4 | **Room ambience** | animated tiles, palette cycles (palette FX objects), the sky's scroll, layer 2's own motion, HDMA visuals | output only (tile, palette, line intents) | `scrolling` 252, `bg_graphics` (part) | chains | E2, E3 | 3 |
 
 ### Combat and enemies
@@ -167,7 +167,7 @@ Rounds are pipeline rounds (observer spec + adversary + implementer + integrator
 | # | Domain | Scope | Reads / exports | Old code | Rows | Depends | Rounds |
 | --- | --- | --- | --- | --- | --- | --- | ---: |
 | C1 | **Fighting enemies** (the framework) | which enemies run (the window), contact with her (hurt, solid), with her projectiles (hit, vulnerability table, freeze with ice, frozen as platform), death explosion, drops (drop chance and RNG), corpses, respawn | reads enemy hitboxes and positions (species), W1's projectiles; exports hits to H1 and S4 and species | `enemy` 4,567 (part), `collision/solid_enemy` | cached chains (zoomers, wavers, fish); cache `enemy-*` (19 rows) | W1, A1, AF3 | 6 |
-| H1 | **Energy, reserves and death** | energy, tanks, reserves (auto and manual), suit damage reduction, i-frames, low-energy alarm, death and its sequence, game over hand-off | reads hits (C1, W2 spikes, R3 lava); exports values to H2, the death to F3 | none | cached (chain-0106 hits); cache `death`, `samus-square-slope-reserve` | C1 | 2 |
+| H1 | **Energy, reserves and death** | energy, tanks, reserves (auto and manual), suit damage reduction, i-frames, low-energy alarm, death and its sequence, game over hand-off | reads hits (C1, W2 spikes, R3 lava); exports current energy to H2 and G1, the death to F3 | `samus-health` owns periodic loss and low-energy warning | cached (chain-0106 hits); cache `death`, `samus-square-slope-reserve` | C1 | 2 |
 | C2-C11 | **Enemy families**, about 10 domains by movement shape: crawlers (zoomer, geemer, wall crawlers), hoppers (sidehopper, dessgeega), fliers (waver, skree, mellow, fireflea), swimmers (Maridia fish, skultera, choot), turrets and spawners (pipes, rinka, cannons), space pirates and ki-hunters, metroids (latch, drain, ice shatter), friendly animals (etecoons, dachora), Wrecked Ship robots and shutters, room hazards (boulders, magdollite, lava-dwellers) | each its AI and its own projectiles; reads her position, the level | species `eye`, `face_block` | cache `enemy-*`, `coverage-metroid-*`, chain rows per area | C1, A1 | 25-30 total |
 
 ### Bosses (D14 phase tables)
@@ -193,7 +193,8 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 
 | # | Domain | Scope | Old code | Rows | Depends | Rounds |
 | --- | --- | --- | --- | --- | --- | ---: |
-| H2 | **The HUD and the mini-map** | what the HUD shows (values, item selection and its cycling, auto reserve sign), the mini-map and exploration | `hud` 1,058, `mini_map` 1,146 | cached | E2 | 2 |
+| H2 | **The HUD and the mini-map** | what the HUD shows (values from H1, item selection and its cycling, auto reserve sign), the mini-map and exploration from S1's current position and action | `hud` 1,058, `mini_map` 1,146 | cached | E2 | 2 |
+| G1 | **Play time** | advances the carried hours, minutes, seconds and frames during eligible play | `game-time` reads current whole energy from H1 at the ordinary frame opportunity | retained native frame | H1 | 1 |
 | H3 | **Message boxes** | item texts, the save prompt's yes and no, their lag waits (C5's waits) | `message_box` 1,925 | cached (item-morph-ball, samus-square-slope-reserve) | E2 | 2 |
 | P1 | **Progress** | events, boss flags, collected items, map stations, the percentage; which room state a room loads | none | chains | none | 1 |
 | P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums (its encoder, `exact::sram`, is a lane of P2's: [assets.md §3.8](assets.md#38-saves)), the load flow, energy and missile refill stations, map stations | `state/sram` | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |
@@ -238,9 +239,9 @@ Two rules hold for the platform work whatever lane carries it:
   whole frames, at most a capped number per host frame, and drops the rest of the debt rather
   than run ahead in a burst. Neither the renderer nor the audio backend advances the game.
 
-T1 is platform engineering, not a clean timing-domain round. Its named costs and hardware
-scheduling do not recreate gameplay producers. Current whole-frame timing is absent; the
-scoped sender service and missing clean-rule boundaries are described in
+T1 owns platform timing. The retained Frame recipe runs from its admitted clock through one
+requested NMI return. The scoped sender service, the frame's borrowed inputs and the limits
+of its timing evidence are described in
 [ARCHITECTURE §6.5](ARCHITECTURE.md#65-named-cpu-costs) and
 [§15](ARCHITECTURE.md#15-build-order).
 
@@ -486,7 +487,7 @@ domain is then witnessed through actual production replay on the indexed cases w
 About 21 rounds.
 
 **Wave 3, Ceres and the opening; the milestone closes with it:** B8 (4), F2 (8), F4 (5), R3 (4),
-R4 (3) with E3, P2 (3), U1 (3); AF5 first, then E4 and T1 alongside. F4's Ceres
+R4 (3) with E3, P2 (3), U1 (3), G1 (1) after H1. AF5 first, then E4 and T1 alongside. F4's Ceres
 scenes come first; its ending and credits can wait for the movie's end. About 30 rounds.
 
 **Wave 4 (widest), the movie's next stretches:** W3 (2) and H3 (2) with AF4b, the first things

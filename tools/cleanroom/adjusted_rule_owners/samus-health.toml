@@ -1,0 +1,2 @@
+[owners]
+warning_threshold = ["LowEnergyWarning"]

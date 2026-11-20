@@ -4,6 +4,8 @@ use core::num::Wrapping;
 
 use enum_map::{Enum, EnumMap};
 
+pub mod quake;
+
 /// Spec: `TransitionFiringAim`. Named cannon directions from pose content, independent of
 /// motion's `Heading`. Vertical shots retain the body's facing; no supplied choice is rounded.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -138,56 +140,11 @@ pub const fn below(a: u16, b: u16) -> bool {
     part_below(a, b)
 }
 
-/// A colour of the screen: 15 bits, three channels of 5 bits each, red in bits 0 to 4, green in
-/// 5 to 9 and blue in 10 to 14.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Colour(u16);
+mod play_time;
+pub use play_time::{PlayFrames, PlayHours, PlayMinutes, PlaySeconds, PlayTime};
 
-/// The highest colour: every channel at 31, white.
-const LAST_COLOUR: u16 = 0x7FFF;
-/// A channel's 5 bits.
-const CHANNEL: u16 = 0x1F;
-/// Where green starts in a colour's bits.
-const GREEN_AT: u32 = 5;
-/// Where blue starts in a colour's bits.
-const BLUE_AT: u32 = 10;
-
-impl Colour {
-    /// Black: every channel 0.
-    pub const BLACK: Self = Self(0);
-
-    /// The colour of these 15 bits, if they are 15 bits (`0000` to `7FFF`).
-    #[must_use]
-    pub const fn new(bits: u16) -> Option<Self> {
-        if bits <= LAST_COLOUR {
-            Some(Self(bits))
-        } else {
-            None
-        }
-    }
-
-    /// Its 15 bits.
-    #[must_use]
-    pub const fn bits(self) -> u16 {
-        self.0
-    }
-
-    /// Its channels, red, green and blue, each 0 to 31.
-    #[must_use]
-    pub const fn channels(self) -> [u16; 3] {
-        [
-            self.0 & CHANNEL,
-            (self.0 >> GREEN_AT) & CHANNEL,
-            (self.0 >> BLUE_AT) & CHANNEL,
-        ]
-    }
-
-    /// The colour of these channels, red, green and blue; each keeps its low 5 bits.
-    #[must_use]
-    pub const fn from_channels([red, green, blue]: [u16; 3]) -> Self {
-        Self((red & CHANNEL) | ((green & CHANNEL) << GREEN_AT) | ((blue & CHANNEL) << BLUE_AT))
-    }
-}
+mod palette;
+pub use palette::{Colour, PALETTE_SLOTS, Palette, Palettes};
 
 /// A value for each axis: x rightward, y downward.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -1246,8 +1203,23 @@ pub const LAST_PICTURE: u16 = 0x3FF;
 /// The HUD's pictures and her map's are numbered the same way, by the importer.
 ///
 /// Its default, picture `000`, stands in for content not yet imported.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u16", into = "u16")]
 pub struct Picture(u16);
+
+impl TryFrom<u16> for Picture {
+    type Error = &'static str;
+
+    fn try_from(index: u16) -> Result<Self, Self::Error> {
+        Self::new(index).ok_or("picture index must be 000 to 3FF")
+    }
+}
+
+impl From<Picture> for u16 {
+    fn from(picture: Picture) -> Self {
+        picture.index()
+    }
+}
 
 impl Picture {
     /// The picture of this index, if the tileset has one (`000` to `3FF`).
@@ -1268,7 +1240,7 @@ impl Picture {
 }
 
 /// How a picture is flipped as a cell shows it. Its default is `None`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub enum Flip {
     /// As it is.
     #[default]
@@ -1285,7 +1257,7 @@ pub enum Flip {
 /// of the room, a cell of the HUD or of her map alike.
 ///
 /// Its default, picture `000` unflipped, stands in for content not yet imported.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub struct Look {
     /// The tileset's picture.
     pub picture: Picture,

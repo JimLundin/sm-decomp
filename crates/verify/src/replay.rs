@@ -10,6 +10,39 @@ mod camera;
 mod ceres;
 mod compare;
 mod connected;
+mod frame;
+pub(crate) mod frame_appearance_inputs;
+pub(crate) mod frame_appearance_owner;
+pub(super) mod frame_camera_inputs;
+pub(crate) mod frame_contact_owner;
+pub(crate) mod frame_countdown_owner;
+pub(crate) mod frame_countdown_scene;
+pub(crate) mod frame_drawing_owners;
+pub(crate) mod frame_hdma_content;
+pub(crate) mod frame_health_inputs;
+mod frame_history_inputs;
+pub(crate) mod frame_hud_camera_owner;
+pub(crate) mod frame_hud_controls_inputs;
+pub(crate) mod frame_hud_controls_owner;
+pub(crate) mod frame_hud_inputs;
+pub(crate) mod frame_inside_contract;
+pub(crate) mod frame_liquid_inputs;
+pub(crate) mod frame_motion_reset_contract;
+pub(crate) mod frame_movement_down_owner;
+pub(crate) mod frame_movement_ground_owner;
+pub(crate) mod frame_movement_owner;
+pub(crate) mod frame_movement_pair_owner;
+pub(crate) mod frame_movement_support_owner;
+mod frame_origin;
+mod frame_palette;
+pub(crate) mod frame_player_inputs;
+pub(crate) mod frame_player_preparation_receipts;
+pub(crate) mod frame_post_down_owner;
+pub(crate) mod frame_sender_contract;
+pub(crate) mod frame_sender_inputs;
+pub(crate) mod frame_suffix_owner;
+pub mod frame_tiles;
+mod frame_timing;
 mod full_movement;
 mod hud;
 pub mod index;
@@ -90,6 +123,28 @@ fn production_failure(cut: u64, fault: game::production::ProductionFault) -> Out
             cut: Some(cut),
             dependency: format!("connected ordinary {fault:?}"),
         },
+        game::production::ProductionFault::FrameHardware(fault) => {
+            use game::production::timing::Fault;
+            match fault {
+                Fault::MissingContent
+                | Fault::UnsupportedDevice
+                | Fault::NestedTransfer
+                | Fault::InterruptBoundary => Outcome::Unsupported {
+                    cut: Some(cut),
+                    dependency: "frame hardware mechanism".to_owned(),
+                },
+                Fault::InvalidState
+                | Fault::InvalidProfile
+                | Fault::InvalidCharge
+                | Fault::TimeOverflow
+                | Fault::ContentOverlap
+                | Fault::MathBusy
+                | Fault::WorkBusy => data_failure(Some(cut), "frame hardware continuation"),
+            }
+        }
+        game::production::ProductionFault::FramePublications(_) => {
+            data_failure(Some(cut), "frame publication order/cursor")
+        }
         game::production::ProductionFault::Unsupported(dependency) => Outcome::Unsupported {
             cut: Some(cut),
             dependency: format!("{dependency:?}"),

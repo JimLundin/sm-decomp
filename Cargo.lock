@@ -107,9 +107,11 @@ dependencies = [
  "data",
  "enemy_interactions",
  "enum-map",
+ "game_time",
  "interface_hud",
  "run_progress",
  "samus_appearance",
+ "samus_health",
  "samus_movement",
  "serde",
  "types",
@@ -117,6 +119,17 @@ dependencies = [
  "world_blocks",
  "world_camera",
  "world_doors",
+ "world_quake",
+]
+
+[[package]]
+name = "game_time"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
 ]
 
 [[package]]
@@ -149,6 +162,7 @@ version = "0.1.0"
 dependencies = [
  "enum-map",
  "serde",
+ "serde-big-array",
  "toml",
  "types",
 ]
@@ -246,6 +260,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "samus_health"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
 name = "samus_movement"
 version = "0.1.0"
 dependencies = [
@@ -261,6 +285,15 @@ version = "1.0.229"
 dependencies = [
  "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11fc7cc2c76d73e0f27ee52abbd64eec84d46f370c88371120433196934e4b7f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -378,12 +411,14 @@ dependencies = [
  "enemy_interactions",
  "enum-map",
  "game",
+ "game_time",
  "import",
  "interface_hud",
  "oracle_record",
  "run_progress",
  "runtime",
  "samus_appearance",
+ "samus_health",
  "samus_movement",
  "serde",
  "toml",
@@ -392,6 +427,7 @@ dependencies = [
  "world_blocks",
  "world_camera",
  "world_doors",
+ "world_quake",
 ]
 
 [[package]]
@@ -431,6 +467,16 @@ dependencies = [
 
 [[package]]
 name = "world_doors"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "world_quake"
 version = "0.1.0"
 dependencies = [
  "enum-map",

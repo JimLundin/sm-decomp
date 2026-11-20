@@ -7,7 +7,7 @@
 # and only those.
 #
 # [[domain]]: a clean-room domain of the plan. `area` is the part of the game it belongs to:
-# samus, weapons, world, enemy, boss, interface, run, screens or audio, and the first word of
+# samus, weapons, world, enemy, boss, interface, run, game, screens or audio, and the first word of
 # its model's name; `rounds` is the plan's estimate of its rounds; `model` the model crate that
 # holds it, once one does; `status` is "not-started" (the default), "in-progress" or "done", and
 # a domain past "not-started" names its model.
@@ -19,7 +19,7 @@
 # other domain's output or a Depends entry, has an `# Inferred:` comment above it saying why.
 # Audio is one convention, not edges: any domain may send U1 a sound request, so none reads U1
 # for one and U1 reads none for them; U1 reads R1 for the room's track. The report's tests hold
-# the code to the graph: a clean crate, and its engine bridge `crates/game/src/<crate>_bridge`,
+# the code to the graph: a clean crate and its registered engine adapters
 # uses only `types` and the clean crates of its own domains and of the domains they read.
 #
 # A rung's order (the README, under the ladder) comes from these edges, within its needs: an
@@ -49,7 +49,7 @@ rounds = 8
 
 [[model]]
 name = "interface-hud"
-rounds = 6
+rounds = 8
 
 [[model]]
 name = "world-blocks"
@@ -57,7 +57,7 @@ rounds = 4
 
 [[model]]
 name = "samus-appearance"
-rounds = 7
+rounds = 9
 
 [[model]]
 name = "boss-ceres-ridley"
@@ -73,6 +73,18 @@ rounds = 1
 
 [[model]]
 name = "enemy-interactions"
+rounds = 1
+
+[[model]]
+name = "samus-health"
+rounds = 1
+
+[[model]]
+name = "world-quake"
+rounds = 1
+
+[[model]]
+name = "game-time"
 rounds = 1
 
 # Wave 0
@@ -134,8 +146,8 @@ name = "How Samus looks"
 area = "samus"
 wave = 1
 rounds = 3
-# Inferred: H1 for the hurt flash and i-frames.
-reads = ["S1", "S3", "H1"]
+# Inferred: H1 for the hurt flash and i-frames; H2 for current item controls.
+reads = ["S1", "S3", "H1", "H2"]
 model = "samus-appearance"
 status = "in-progress"
 
@@ -145,8 +157,8 @@ name = "The HUD and the mini-map"
 area = "interface"
 wave = 1
 rounds = 2
-# Inferred: W3 for item selection; P1 for map stations.
-reads = ["W3", "H1", "P1"]
+# Inferred: S1 for the current position and action; W3 for item selection; P1 for map stations.
+reads = ["S1", "W3", "H1", "P1"]
 model = "interface-hud"
 status = "in-progress"
 
@@ -269,6 +281,8 @@ wave = 2
 rounds = 2
 # Inferred: P2 for refill stations.
 reads = ["W2", "R3", "C1", "P2"]
+model = "samus-health"
+status = "in-progress"
 
 [[domain]]
 id = "S4"
@@ -343,6 +357,18 @@ area = "world"
 wave = 3
 rounds = 4
 reads = ["R1"]
+model = "world-quake"
+status = "in-progress"
+
+[[domain]]
+id = "G1"
+name = "Play time"
+area = "game"
+wave = 3
+rounds = 1
+reads = ["H1"]
+model = "game-time"
+status = "in-progress"
 
 [[domain]]
 id = "R4"

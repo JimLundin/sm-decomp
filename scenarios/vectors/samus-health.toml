@@ -1,0 +1,185 @@
+# Vectors for samus-health.md. Each vector is one health opportunity.
+# All before/after fields are mandatory complete State; no implicit defaults.
+# Energy and pending fractions are integer multiples of 1/65536 energy.
+# inputs qualify a supported opportunity; wider values are IntegrationAdmission
+# evidence only, never clean model inputs or catalogue credit.
+# sound: None/Start/Stop, a request, not proof of audible playback.
+# Optional rules overrides warning_threshold (reference 30).
+# continues names a previous vector whose after equals this before; restoration
+# must preserve all five quantities. Unsupported has no after or sound and
+# requires no state mutation. Recorded source identity is resolved in decode.
+
+[[vector]]
+id = "R-maintenance-current"
+source = "recorded"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { pending_fraction = 0, energy_fraction = 0, pending_whole = 0, energy_whole = 99, warning = "Off" }
+after = { pending_fraction = 0, energy_fraction = 0, pending_whole = 0, energy_whole = 99, warning = "Off" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-zero"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+after = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-whole-loss"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 3, pending_fraction = 0, warning = "Off" }
+after = { energy_whole = 96, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-fraction-loss"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 99, energy_fraction = 500, pending_whole = 0, pending_fraction = 100, warning = "Off" }
+after = { energy_whole = 99, energy_fraction = 400, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-borrow"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off" }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-borrow-once"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+continues = "C-borrow"
+
+[[vector]]
+id = "C-fraction-equal"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 99, energy_fraction = 100, pending_whole = 0, pending_fraction = 100, warning = "Off" }
+after = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-empty-clamp"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 1, energy_fraction = 0, pending_whole = 2, pending_fraction = 1, warning = "Off" }
+after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-zero-fraction-clamp"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off" }
+after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-threshold-low"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-threshold-high"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+after = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+sound = "Stop"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-warning-repeat"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+continues = "C-threshold-low"
+
+[[vector]]
+id = "C-restored-before-borrow"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off" }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-restored-after-borrow"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit" }
+continues = "C-restored-before-borrow"
+
+[[vector]]
+id = "C-maximum-loss"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 0, energy_fraction = 0, pending_whole = 32767, pending_fraction = 65535, warning = "Off" }
+after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+
+[[vector]]
+id = "C-adjusted-threshold"
+source = "constructed"
+entries = ["PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+after = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit" }
+rules = { warning_threshold = 40 }
+
+[[vector]]
+id = "C-stopped-missing"
+source = "constructed"
+entries = []
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off" }
+inputs = { time = "Stopped", suit = "NeitherSuit" }
+evidence_kind = "IntegrationAdmission"
+unsupported = true
+
+[[vector]]
+id = "C-varia-missing"
+source = "constructed"
+entries = []
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off" }
+inputs = { time = "Running", suit = "VariaSuit" }
+evidence_kind = "IntegrationAdmission"
+unsupported = true
+
+[[vector]]
+id = "C-gravity-missing"
+source = "constructed"
+entries = []
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off" }
+inputs = { time = "Running", suit = "GravitySuit" }
+evidence_kind = "IntegrationAdmission"
+unsupported = true

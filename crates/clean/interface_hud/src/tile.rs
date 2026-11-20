@@ -9,8 +9,23 @@ use crate::grid::Grid;
 const COLOUR_SETS: u8 = 8;
 
 /// One of the HUD's eight colour sets, 0 to 7 (§1.4).
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(try_from = "u8", into = "u8")]
 pub struct ColourSet(u8);
+
+impl TryFrom<u8> for ColourSet {
+    type Error = &'static str;
+
+    fn try_from(number: u8) -> Result<Self, Self::Error> {
+        Self::new(number).ok_or("colour set must be 0 to 7")
+    }
+}
+
+impl From<ColourSet> for u8 {
+    fn from(colours: ColourSet) -> Self {
+        colours.number()
+    }
+}
 
 impl ColourSet {
     /// Colour set `number`, or `None` past the eight.
@@ -31,7 +46,7 @@ impl ColourSet {
 }
 
 /// What one of the HUD's cells shows: a picture with its flips, in a colour set.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Tile {
     /// The picture and its flips.
     pub look: Look,

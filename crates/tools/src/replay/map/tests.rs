@@ -27,14 +27,14 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
     let (root, index, mapping, baseline) = fixture();
     mapping.validate(&index, &root).unwrap();
     let selected = mapping.select(&index, &Selection::default()).unwrap();
-    assert_eq!(selected.len(), 21);
+    assert_eq!(selected.len(), 22);
     let views = views(&mapping, &baseline, &selected).unwrap();
     assert_eq!(
         views
             .iter()
             .filter(|view| view.reviewed_requirement.claim == Claim::Behaviour)
             .count(),
-        16
+        17
     );
     assert_eq!(
         views
@@ -79,13 +79,13 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
         by_file.iter().map(|case| &case.id).collect::<Vec<_>>()
     );
     let report = views(&mapping, &baseline, &by_file).unwrap();
-    assert_eq!(report.len(), 3);
+    assert_eq!(report.len(), 4);
     assert_eq!(
         report
             .iter()
             .filter(|view| view.reviewed_requirement.expected == Outcome::Pass)
             .count(),
-        1
+        2
     );
     assert_eq!(
         report
@@ -379,13 +379,13 @@ fn command_queries_round_trip_typed_contracts_and_reviewed_requirements() {
     ];
     for (flag, selector, count) in [
         ("--case", "movement/W15", 1),
-        ("--rule", "samus-movement/TravelledDistances", 3),
+        ("--rule", "samus-movement/TravelledDistances", 4),
         ("--rule", "samus-movement/MotionAttempts", 2),
         ("--rule", "samus-movement/ReachedEnemyCandidates", 2),
         ("--rule", "samus-movement/PerformedCollisionTests", 2),
         ("--rule", "samus-movement/PerformedSupportChecks", 2),
         ("--rule", "samus-movement/PerformedBodyFit", 2),
-        ("--path", "crates/clean/samus_movement/src/travel.rs", 3),
+        ("--path", "crates/clean/samus_movement/src/travel.rs", 4),
     ] {
         let mut args = prefix.clone();
         args.extend([flag.to_owned(), selector.to_owned()]);

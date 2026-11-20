@@ -73,6 +73,14 @@ other capacity and count at 0, the reserve mode `NoTank`, no items or beams, her
 and no locations emptied, doors open, maps or stations, no events or bosses defeated, and no
 items placed (C-new-file).
 
+**Current energy ownership.** This domain's inventory energy supports its pickup rules.
+[Health](samus-health.md) defines the live current energy, including fractional loss.
+Integrated pickups require a fresh whole-energy projection into the pickup model and
+an explicit exchange of its result back to that owner. The fractional and pending-loss
+effects of that exchange remain a health gap. The existing Inventory API does not yet
+provide the exchange; these contracts do not establish a second writable live energy.
+This clarification does not change the pickup rules below.
+
 ### 1.2 What has happened, and what the places remember
 
 | Quantity | Units | Why the player can tell | Read by |
@@ -418,7 +426,7 @@ percentage (`ItemPercentage`).
   damage, the reserves, the stations that refill her).
 - **What each domain does with what it asks**: whether an item shows, a door is drawn open, a
   boss appears.
-- **Play time** (game-time), **the options and controls** (F2).
+- **[Play time](game-time.md)**, **the options and controls** (F2).
 
 ## 9. Open questions
 

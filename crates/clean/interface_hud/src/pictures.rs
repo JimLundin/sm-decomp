@@ -6,6 +6,7 @@
 //! The pictures are always supplied (§1.4). Each type's default, every picture `000` unflipped,
 //! is a stand-in for a caller with nothing imported yet: no rule says what it shows.
 
+use serde::{Deserialize, Serialize};
 use types::{Look, Picture};
 
 use crate::item::{Ammo, SelectableItem};
@@ -13,7 +14,7 @@ use crate::tile::{BLANK_COLOURS, Tile};
 
 /// Each item's icon: two rows, the top first, of three pictures for the missiles and two for
 /// every other item, each with its flips (§1.4).
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub struct Icons {
     /// The missiles' icon.
     pub missiles: [[Look; 3]; 2],
@@ -49,7 +50,7 @@ pub fn rows<const ACROSS: usize, const DOWN: usize>(
 }
 
 /// The HUD's pictures, by the names §1.4 gives them.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub struct HudPictures {
     /// The blank: a picture alone, as the highlight tests it unflipped and a pickup tests the
     /// picture alone.

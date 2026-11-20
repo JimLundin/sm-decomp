@@ -2,6 +2,7 @@
 //! her map's cells are each one. A place outside the grid has no cell: reading it gives nothing
 //! and writing it changes nothing. Every cell keeps its value until a rule writes it.
 
+use serde_big_array::Array;
 use types::Pair;
 
 /// A place on one of the HUD's grids, column first (Notation): `x` its column, counted across
@@ -20,9 +21,10 @@ pub const fn plus(place: Place, by: Place) -> Place {
 }
 
 /// A grid `COLUMNS` across by `ROWS` down, each cell holding a `T`.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Grid<T, const COLUMNS: usize, const ROWS: usize> {
-    rows: [[T; COLUMNS]; ROWS],
+    // Transparent fixed-size wrappers support serde at any row and column extent.
+    rows: Array<Array<T, COLUMNS>, ROWS>,
 }
 
 impl<T: Copy, const COLUMNS: usize, const ROWS: usize> Grid<T, COLUMNS, ROWS> {
@@ -30,7 +32,7 @@ impl<T: Copy, const COLUMNS: usize, const ROWS: usize> Grid<T, COLUMNS, ROWS> {
     #[must_use]
     pub const fn filled(value: T) -> Self {
         Self {
-            rows: [[value; COLUMNS]; ROWS],
+            rows: Array([Array([value; COLUMNS]); ROWS]),
         }
     }
 
