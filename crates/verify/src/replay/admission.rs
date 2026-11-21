@@ -38,6 +38,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     }
     match case.responsibilities.as_slice() {
         [Responsibility::Audio] => audio(case, sources),
+        [Responsibility::AudioSender] => super::sender_offer::admit(case, sources),
         [Responsibility::Movement] => movement(case, sources),
         [
             Responsibility::Ceres
@@ -83,7 +84,11 @@ fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
             };
             (path, sha256, Some((seed_path, seed_sha256, *frame)))
         }
-        Start::NativeOpportunity { .. } | Start::CacheCut { .. } | Start::PowerOn => {
+        Start::NativeOpportunity { .. }
+        | Start::CacheCut { .. }
+        | Start::NativeSenderOffer { .. }
+        | Start::ConstructedSenderOffer { .. }
+        | Start::PowerOn => {
             return Err(data_failure(None, "audio start contract"));
         }
     };

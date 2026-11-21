@@ -19,25 +19,18 @@ fn fixture() -> (PathBuf, Index, Mapping, Baseline) {
 
 #[test]
 fn committed_inventory_has_valid_targets_and_every_required_case() {
+    #[derive(Deserialize)]
+    struct InventoryCase {
+        declaration: Case,
+        reviewed_requirement: Floor,
+    }
+    #[derive(Deserialize)]
+    struct Inventory {
+        case: Vec<InventoryCase>,
+    }
+
     let (root, index, mapping, baseline) = fixture();
     mapping.validate(&index, &root).unwrap();
-    let selected = mapping.select(&index, &Selection::default()).unwrap();
-    assert_eq!(selected.len(), 24);
-    let views = views(&mapping, &baseline, &selected).unwrap();
-    assert_eq!(
-        views
-            .iter()
-            .filter(|view| view.reviewed_requirement.claim == Claim::Behaviour)
-            .count(),
-        17
-    );
-    assert_eq!(
-        views
-            .iter()
-            .filter(|view| view.reviewed_requirement.claim == Claim::Boundary)
-            .count(),
-        7
-    );
     let args = vec![
         root.join("scenarios/replay/index.toml")
             .to_string_lossy()
@@ -45,7 +38,28 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
         "--repo".to_owned(),
         root.to_string_lossy().into_owned(),
     ];
-    assert!(run(&args).is_ok());
+    let report: Inventory = toml::from_str(&run(&args).unwrap()).unwrap();
+    assert!(
+        report
+            .case
+            .iter()
+            .map(|view| toml::to_string(&view.declaration).unwrap())
+            .eq(index
+                .cases
+                .iter()
+                .map(|case| toml::to_string(case).unwrap()))
+    );
+    for view in report.case {
+        let required = baseline
+            .cases
+            .iter()
+            .find(|floor| floor.id == view.declaration.id)
+            .unwrap();
+        assert_eq!(
+            toml::to_string(&view.reviewed_requirement).unwrap(),
+            toml::to_string(required).unwrap()
+        );
+    }
 }
 
 #[test]
