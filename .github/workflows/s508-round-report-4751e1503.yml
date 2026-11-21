@@ -1,0 +1,68 @@
+name: Generate saved pitch round report and coordinator counters
+on:
+  push:
+    branches: [lane/s508-round-report-4751e1503]
+    paths: ['.github/workflows/s508-round-report-4751e1503.yml']
+permissions:
+  contents: read
+jobs:
+  reports:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - stage: source
+            head: 4751e1503edd8fc28b3b2d58039b5d63149a3c38
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.head }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-quality-Linux-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ matrix.head }}
+          restore-keys: |
+            cargo-quality-Linux-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - name: Generate and check the published reports
+        env:
+          CHECKED_HEAD: ${{ matrix.head }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CHECKED_HEAD"
+          rustup toolchain install
+          cargo run --locked -p tools --bin tools -- report --write
+          cargo run --locked -p tools --bin tools -- report --check
+          git diff --exit-code -- . ':(exclude)docs/REPORT.md' ':(exclude)docs/timeline.svg' ':(exclude)README.md'
+          git diff --binary --full-index -- docs/REPORT.md docs/timeline.svg README.md > "$RUNNER_TEMP/report.patch"
+          git diff --stat
+      - name: Measure the reviewed round against its parent
+        run: |
+          set -euo pipefail
+          git worktree add --detach "$RUNNER_TEMP/before" 84945baf61c36aa199244fdcab131de240116c3b
+          tool="$PWD/target/debug/tools"
+          for tree in "$RUNNER_TEMP/before" "$PWD"; do
+            (
+              cd "$tree"
+              echo "revision $(git rev-parse HEAD)"
+              "$tool" spec-units docs/behaviours/audio-transport.md scenarios/vectors/audio-transport.toml --notes docs/behaviours/audio-transport.decode.md
+              for source in crates/clean/audio_transport/src crates/clean/types/src/pitch.rs crates/canonical/src/model/shape.rs crates/game/src/state/owned.rs; do
+                echo "$source"
+                "$tool" size "$source"
+              done
+            )
+          done | tee "$RUNNER_TEMP/measurements.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pitch-coordinator-counters
+          path: ${{ runner.temp }}/measurements.txt
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: s508-round-report-4751e1503-${{ matrix.stage }}
+          path: ${{ runner.temp }}/report.patch
+          retention-days: 7
