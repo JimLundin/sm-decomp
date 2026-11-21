@@ -3,9 +3,25 @@ use serde::{Deserialize, Serialize};
 const MUSIC_MIN: u8 = 19;
 const MUSIC_MAX: u8 = 51;
 const EFFECT_MAX: u8 = 71;
+// Spec: Saved quantities. Keep each saved newtype's name and integer representation,
+// but pass the restored semitone through the same check as a newly constructed pitch.
+#[derive(Deserialize)]
+#[serde(rename = "MusicalPitch")]
+struct SavedMusicalPitch(u8);
+
 /// Semitone in the admitted non-noise musical range.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "SavedMusicalPitch")]
 pub struct MusicalPitch(u8);
+
+impl TryFrom<SavedMusicalPitch> for MusicalPitch {
+    type Error = &'static str;
+
+    fn try_from(saved: SavedMusicalPitch) -> Result<Self, Self::Error> {
+        Self::new(saved.0).ok_or("musical pitch must be in 19..=51 semitones")
+    }
+}
+
 impl MusicalPitch {
     /// Refuse pitches outside the admitted musical range.
     #[must_use]
@@ -22,9 +38,23 @@ impl MusicalPitch {
         self.0
     }
 }
+#[derive(Deserialize)]
+#[serde(rename = "EffectPitch")]
+struct SavedEffectPitch(u8);
+
 /// Semitone in the admitted effect range.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "SavedEffectPitch")]
 pub struct EffectPitch(u8);
+
+impl TryFrom<SavedEffectPitch> for EffectPitch {
+    type Error = &'static str;
+
+    fn try_from(saved: SavedEffectPitch) -> Result<Self, Self::Error> {
+        Self::new(saved.0).ok_or("effect pitch must be in 0..=71 semitones")
+    }
+}
+
 impl EffectPitch {
     /// Refuse pitches above the admitted effect bound.
     #[must_use]
