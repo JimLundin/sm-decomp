@@ -1,0 +1,47 @@
+name: Repository gate 508 65e617bc9
+on:
+  push:
+    branches: [lane/s640-508-65e617bc9-gate]
+    paths: ['.github/workflows/s640-508-65e617bc9.yml']
+permissions:
+  contents: read
+jobs:
+  landing-gate:
+    runs-on: ubuntu-24.04
+    env:
+      RUSTC_BOOTSTRAP: '1'
+      CARGO_UNSTABLE_CHECKSUM_FRESHNESS: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 65e617bc9c63227117a1c90932f030557f4e7811
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify the landing commit
+        run: |
+          git switch -c lane/saved-pitch-round-508
+          test "$(git rev-parse HEAD)" = 65e617bc9c63227117a1c90932f030557f4e7811
+          test "$(git rev-parse HEAD^)" = 4751e1503edd8fc28b3b2d58039b5d63149a3c38
+          test "$(git rev-parse HEAD^{tree})" = 1456661bc6567af4b844a0ebd2e7488689ee4d7a
+          test -z "$(git status --porcelain)"
+          rustup toolchain install
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-quality-Linux-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-65e617bc9c63227117a1c90932f030557f4e7811
+          restore-keys: |
+            cargo-quality-Linux-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - name: Run the repository gate
+        run: |
+          set -euo pipefail
+          bash tools/lane/gate.sh | tee "$RUNNER_TEMP/s640-508-65e617bc9.txt"
+          grep -Fx "GATE OK $(git rev-parse --short HEAD) lane/saved-pitch-round-508" "$RUNNER_TEMP/s640-508-65e617bc9.txt"
+          test -z "$(git status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: s640-508-65e617bc9
+          path: ${{ runner.temp }}/s640-508-65e617bc9.txt
+          retention-days: 7
