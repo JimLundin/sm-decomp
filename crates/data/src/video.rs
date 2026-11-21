@@ -105,8 +105,8 @@ pub struct LineWrite {
     pub value: u8,
 }
 
-/// Everything a frame's picture is composed from besides the video memory: the registers as
-/// the frame begins and each change the line program makes while it is shown (D11).
+/// Starting register state and ordered writes tagged with their first visible line.
+/// The compositor reads these alongside video memory (D11).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DisplayFrame {
     /// The registers as line 1 begins.

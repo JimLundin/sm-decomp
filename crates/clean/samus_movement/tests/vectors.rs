@@ -722,9 +722,9 @@ struct After {
     dash_began: Option<bool>,
     /// Whether her dash was lost this frame.
     dash_lost: Option<bool>,
-    /// Whether an animation end selected a pose this frame, independently of later fitting.
-    /// The same selected end supplies held-jump history; taller supplied targets remain an
-    /// open model gap and need not be the final accepted pose.
+    /// Spec: `AnimationEnds`, `PerformedBodyFit`. Whether an animation end hands over its
+    /// pose rather than giving way. Even a taller supplied target is accepted without fit
+    /// consideration, clearance, or fit placement (`C-attempt-taller-animation-handover`).
     handed_over: Option<bool>,
     /// Whether she is heading down as her moves leave her.
     heading_down: Option<bool>,

@@ -169,10 +169,11 @@ pub struct Outcome {
     /// §1.4, `Dashing`: she was dashing at the frame's start or from a run in her moves, and
     /// isn't at the frame's end. A run into a wall that starts her dashing reports both.
     pub dash_lost: bool,
-    /// §1.4, `AnimationEnds`: an animation end selected a pose this frame, independently of
-    /// later fitting. The same selected end supplies held-jump history (`Jumping`). With
-    /// imported game bodies its pose is final; taller supplied targets remain an open model
-    /// gap and may be refused or substituted by `PoseFitAfterMoves`.
+    /// Spec: `AnimationEnds`, `PerformedBodyFit`. True when an animation end hands over its
+    /// pose rather than giving way. The pose is accepted without fit consideration, clearance,
+    /// or fit placement, even when the supplied target is taller.
+    /// This does not report floor contact. A turn or landing animation that hands over counts
+    /// toward next frame's held-jump history (`Jumping`) even without floor contact.
     pub handed_over: bool,
     /// §1.4, `RisingAndFalling`: she is heading down as her moves leave her, before what they
     /// met acts and before the pose change: falling (in the air, or on the ground at 0), or

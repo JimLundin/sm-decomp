@@ -1,8 +1,8 @@
 //! Dense content IDs and the engine-wide quantities the portable records share (D15).
 //!
 //! An ID is a dense index into the loaded content, fast to compare and compact in the State.
-//! It is only meaningful against the content it was made with, which is why the Checkpoint
-//! carries the content fingerprint. Persisted and exchanged data uses stable keys instead.
+//! It is only meaningful against the content it was made with. Use stable keys for persisted
+//! and exchanged data.
 
 use canonical::Canonical;
 

@@ -26,7 +26,8 @@ format ahead of the domain that consumes it.
    original's places to our ids and holds no ROM bytes, as the pose map does. sm-json-data's
    names and ids (through sm-json-data-rs) are labels attached to our ids, for reading and for
    D26's strats, never the key, so an upstream rename changes only the label table. Inside the
-   engine ids are dense (D15); checkpoints carry the content fingerprint.
+   engine ids are dense (D15). The durable format targets a content fingerprint. The current
+   production checkpoint retains the admitted content in memory and checks equality on restore.
 2. **One shape per kind of thing** (§2). A new content type reuses a shape before it defines one.
 3. **Lossless against what is observed.** Each format has one encoder in `game::exact` to the
    bytes the original puts in VRAM, CGRAM, OAM, WRAM or SRAM. The importer checks

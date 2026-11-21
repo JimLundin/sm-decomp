@@ -9,8 +9,8 @@ implementation and unsupported boundaries are described below. See
 
 The engine admits complete clean model state through `game::production::Production` and
 advances selected responsibilities with typed inputs. `verify::replay` calls this entry; the
-application refuses unsupported power-on and does not yet run it. Previous executable gameplay and writable shadow State are
-absent. Required missing behaviour returns explicit `Unsupported`.
+`super-metroid` entry returns `UnsupportedPowerOn`. Previous executable gameplay and writable
+shadow State are absent. Required missing behaviour returns explicit `Unsupported`.
 
 ```mermaid
 flowchart LR
@@ -158,11 +158,16 @@ Required missing timing remains unsupported.
 
 ### 6.6 Strands and continuations
 
-Clean pending State is retained; the old strand stack cannot supply missing scene or passage work.
+The retained Frame stores its caller stage, pending hardware work and clean owner continuations
+across budget-limited calls. `Progress::Completed` identifies the requested NMI return.
+D10 describes the general strand design.
 
 ### 6.7 The line program
 
-Runtime composition is available for display records. Production display generation requires a selected owner.
+The retained Frame recipe advances hardware and publishes timed events. The compositor takes a
+separate `DisplayFrame` with line-1 registers, writes ordered by their first visible line,
+overscan and field parity, plus `VideoMemory`. The retained Frame path does not assemble
+that compositor input.
 
 ### 6.8 Input, RNG and failures
 
@@ -203,22 +208,20 @@ ID decides gameplay. See [assets](assets.md).
 
 Production publishes complete selected model outputs. Replay compares the fields and outputs
 its plan declares. Motion, semantic pose, contacts, travel and intents can be compared without
-pixels; omitted downstream consumers are explicit limits. `runtime` presents immutable output
-and feeds nothing back into production. A compositor check on admitted display records does
-not prove production supplied them.
+pixels. `runtime` composes immutable display records into pictures. D17 describes the window
+presentation target.
 
 Native audio holds committed and pending transport State and publishes actual model milestones
 from admitted clock and physical requests. This does not prove the CPU request producer or
 whole-engine timing. No sound-driver code is emulated. Audio waveforms are not compared.
 
-Available checkpoints encode complete selected State and restore directly without initialization
-or input replay, checking schema, content and rules. In-memory saved context is not a durable
-file format. A selected owner without a complete codec reports unavailable save support;
-live stepping remains available. Old strand saves are not silently defaulted.
-
 ### 9.1 Exact output and intent output
 
-Compare actual model receipts and selected exact encodings; unselected outputs remain unproved.
+Compare actual model receipts and selected exact encodings. The scoped HUD entry returns
+semantic events. The retained Frame consumes selected HUD results for display and routes the
+admitted neutral selection through cannon preparation. This path requires no Select or Cancel
+press and no switch event. Delivery of item switches and click requests remains outside that
+path.
 
 ### 9.2 The presentation boundary
 
@@ -230,11 +233,24 @@ Compositing independently admitted records proves the compositor, not production
 
 ### 9.4 Sound
 
-Native transport compares timed publications. CPU requests, clock ownership and waveform synthesis are separate claims.
+`Scope::Audio` advances transport from admitted presentation times. `Scope::AudioSender`
+advances sender service under its admitted profile. The retained Frame recipe can offer
+selected Appearance requests and publish admitted sender writes on its hardware clock.
+End-to-end gameplay sound requires the remaining request and transport wiring. D18 describes
+the target for Session ownership and runtime synthesis.
 
 ### 9.5 Saves
 
-Complete available checkpoints restore directly. Missing codecs and durable context support remain explicit.
+`Production::save` can capture a successful suspended Frame advance as well as a completed
+NMI return. `SavedProduction` holds canonical bytes containing the State schema and selected
+State, plus the immutable context and frame completion status in memory. `Production::restore`
+decodes the bytes, checks content and rules by value equality, and runs admission again.
+Scopes lacking a codec return `SaveFault::Unsupported`.
+
+The retained Frame replay calls `Production::save_completed_frame` after a successful native
+return. A partial advance or a newly scheduled controller change clears eligibility. A failed
+advance preserves the last committed state. `Production::restore_completed_frame` resumes the
+saved clock and publication cursor through the same content, rules and state checks. Both checkpoint types are in-memory values.
 
 ## 10. Options and profiles
 

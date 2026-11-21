@@ -338,7 +338,8 @@ impl Production {
     /// Admit a complete initial state and its matching imported context.
     ///
     /// # Errors
-    /// Scope, content, and schema faults are refused before any model runs.
+    /// Scope mismatches, shape-pin failures and invalid state or content are refused.
+    /// Owner-specific faults identify the rejected continuation or content relation.
     pub fn admit(
         seed: ProductionSeed,
         content: ProductionContent,
@@ -604,7 +605,8 @@ impl Production {
         Ok(outputs)
     }
 
-    /// Save complete clean state, pending work and the exact immutable context.
+    /// Save the selected state and pending work with its immutable context in memory.
+    /// A suspended Frame can be saved before the requested NMI return.
     ///
     /// # Errors
     /// A model without a complete codec reports its selected scope explicitly.
@@ -676,7 +678,7 @@ impl Production {
     /// Restore directly; no initialization, model step or input replay occurs.
     ///
     /// # Errors
-    /// A different schema, content or rule set is refused.
+    /// Checkpoint decoding, content and rule equality, and admission must all succeed.
     pub fn restore(
         saved: &SavedProduction,
         content: ProductionContent,
