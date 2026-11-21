@@ -317,6 +317,20 @@ impl State {
                 if charging || done.work != work {
                     return Err(InvalidPlayerEntry);
                 }
+                if self.publications.original_interval()
+                    && !done
+                        .receipt
+                        .chosen
+                        .model
+                        .0
+                        .pending
+                        .as_ref()
+                        .is_some_and(|answer| {
+                            Some(answer.inputs.energy) == self.original_animation_energy(content)
+                        })
+                {
+                    return Err(InvalidPlayerEntry);
+                }
                 // Appearance has consumed the answer. Its retained receipt still identifies
                 // the physical family that could have completed at this opportunity.
                 content

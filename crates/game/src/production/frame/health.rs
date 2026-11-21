@@ -263,14 +263,23 @@ impl Health {
         admission: &Admission,
         actors: &actors::ActorUpdateCompletion,
     ) -> Result<u16, Fault> {
-        self.validate_origin(admission)?;
-        if self.maintained
-            || self.actor.as_ref().map(|receipt| &receipt.0) != Some(actors)
-            || self.interrupts != InterruptHistory::Returned
-        {
+        self.validate_animation_origin(admission, actors)?;
+        if self.maintained {
             return Err(Fault::Owner);
         }
         Ok(self.current.0.energy.whole.get())
+    }
+
+    fn validate_animation_origin(
+        &self,
+        admission: &Admission,
+        actors: &actors::ActorUpdateCompletion,
+    ) -> Result<(), Fault> {
+        self.validate_origin(admission)?;
+        if self.actor() != Some(actors) || self.interrupts != InterruptHistory::Returned {
+            return Err(Fault::Owner);
+        }
+        Ok(())
     }
 
     pub(super) fn complete_maintenance(
@@ -364,6 +373,19 @@ impl super::State {
                     })
                     .eq([Irq, Irq, Nmi])
         })
+    }
+
+    pub(super) fn original_animation_energy(&self, content: &super::Content) -> Option<u16> {
+        let super::Caller::PlayerContinuation { remaining, .. } = &self.caller else {
+            return None;
+        };
+        let admission = content.health.as_ref()?;
+        self.health
+            .as_ref()?
+            .validate_animation_origin(admission, remaining.0.actors.as_ref()?)
+            .ok()?;
+        // Maintenance is the first writer in this qualified interval and follows Animation.
+        Some(admission.initial.0.energy.whole.get())
     }
 
     pub(crate) fn validate_carried_health(

@@ -541,6 +541,171 @@ fn actual_native_late_publication_failure_rolls_back_production() {
     }
 }
 
+#[test]
+#[ignore = "requires the retained native frame and checked player ROM"]
+fn actual_native_completed_animation_binds_historical_health() {
+    use data::timing::MasterTicks;
+
+    let (_, mut admitted) = super::runtime_helpers::retained_return();
+    let budget = MasterTicks(1);
+    advance_to_countdown_return(&mut admitted, budget);
+    let altered = complete_counterfactual_animation(&mut admitted, budget);
+    assert_animation_checkpoint_restores(&admitted);
+    reject_animation_energy_checkpoint(&admitted, altered);
+
+    let (_, mut with_loss) = super::runtime_helpers::retained_return();
+    add_pending_loss(&mut with_loss);
+    advance_to_countdown_return(&mut with_loss, budget);
+    advance_to_animation_return(&mut with_loss, budget);
+    let before = current_whole_energy(&with_loss);
+    advance_until(&mut with_loss, budget, |state| {
+        state.maintenance.energy().is_some()
+    });
+    assert_observation_eq!(
+        Some(before),
+        current_whole_energy(&with_loss).checked_add(1)
+    );
+    assert_animation_checkpoint_restores(&with_loss);
+}
+
+fn advance_to_countdown_return(admitted: &mut AdmittedCase, budget: data::timing::MasterTicks) {
+    advance_until(admitted, budget, |state| {
+        matches!(
+            state.countdown,
+            frame::countdown_caller::Stage::Complete { .. }
+        )
+    });
+}
+
+fn current_whole_energy(admitted: &AdmittedCase) -> u16 {
+    let OwnedState::Frame(state) = admitted.production.state() else {
+        panic!("frame state");
+    };
+    state.health.as_ref().unwrap().state().energy.whole.get()
+}
+
+fn add_pending_loss(admitted: &mut AdmittedCase) {
+    let OwnedState::Frame(initial) = admitted.production.state() else {
+        panic!("frame state");
+    };
+    let ProductionContent::Frame(content) = &mut admitted.content else {
+        panic!("frame content");
+    };
+    let health = content.health.as_mut().unwrap();
+    health.initial.0.pending_loss.whole = samus_health::WholeEnergy::new(1).unwrap();
+    let mut initial = initial.clone();
+    initial.health = Some(frame::health::Health::from_origin(health.clone()).unwrap());
+    admitted.production = Production::admit(
+        ProductionSeed::Frame(initial),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+}
+
+fn complete_counterfactual_animation(
+    admitted: &mut AdmittedCase,
+    budget: data::timing::MasterTicks,
+) -> Box<frame::State> {
+    use frame::appearance_caller::{Kind, Stage};
+
+    let OwnedState::Frame(state) = admitted.production.state() else {
+        panic!("frame state");
+    };
+    let ProductionContent::Frame(content) = &admitted.content else {
+        panic!("frame content");
+    };
+    let ProductionRules::Frame(rules) = &admitted.rules else {
+        panic!("frame rules");
+    };
+    let mut replacement = state.as_ref().clone();
+    let mut inputs = state.fresh_animation_inputs(content).unwrap();
+    let actual_energy = inputs.energy;
+    let substituted_energy = actual_energy ^ 1;
+    inputs.energy = substituted_energy;
+    let mut selection = Stage::Idle;
+    selection
+        .animation(
+            &mut replacement,
+            &content.appearance,
+            inputs,
+            rules.appearance.clone(),
+        )
+        .unwrap();
+    content
+        .animation
+        .as_ref()
+        .unwrap()
+        .qualify(
+            &selection,
+            &replacement,
+            &content.movement,
+            &content.appearance,
+        )
+        .unwrap();
+    let work = Kind::Animation.identity();
+    selection.bind(work).unwrap();
+    let (completion, _) = selection.complete(&mut replacement, work).unwrap();
+    advance_to_animation_return(admitted, budget);
+    let OwnedState::Frame(state) = admitted.production.state() else {
+        panic!("frame state");
+    };
+    let frame::animation_caller::Stage::Complete(original) = &state.animation else {
+        panic!("completed Animation");
+    };
+    let original_answer = original.receipt.chosen.model.0.pending.as_ref().unwrap();
+    let substituted_answer = completion.receipt.chosen.model.0.pending.as_ref().unwrap();
+    assert_eq!(original_answer.answer, samus_appearance::Answer::Advance);
+    assert_eq!(substituted_answer.answer, original_answer.answer);
+    assert_observation_eq!(original_answer.inputs.energy, actual_energy);
+    assert_observation_eq!(substituted_answer.inputs.energy, substituted_energy);
+    assert_observation_eq!(
+        original.receipt.result.model.0.state,
+        completion.receipt.result.model.0.state
+    );
+    assert_observation_eq!(
+        state.health.as_ref().unwrap().state().energy.whole.get(),
+        actual_energy
+    );
+    assert!(state.maintenance.energy().is_none());
+    let mut altered = state.clone();
+    altered.appearance = replacement.appearance;
+    altered.animation = frame::animation_caller::Stage::Complete(completion);
+    altered
+}
+
+fn assert_animation_checkpoint_restores(admitted: &AdmittedCase) {
+    let restored = Production::restore(
+        &admitted.production.save().unwrap(),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_observation_eq!(restored.state(), admitted.production.state());
+}
+
+fn reject_animation_energy_checkpoint(admitted: &AdmittedCase, altered: Box<frame::State>) {
+    use game::production::AdmissionFault;
+
+    altered.validate().unwrap();
+    let attempted = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .and_then(|production| {
+        Production::restore(
+            &production.save().unwrap(),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+    });
+    assert!(matches!(
+        attempted,
+        Err(AdmissionFault::Frame(fault)) if *fault == frame::Fault::InvalidPlayerEntry
+    ));
+}
+
 fn check_complete_frame_from(reached: impl Fn(&frame::State) -> bool) {
     let (case, mut admitted) = super::runtime_helpers::retained_return();
     let InputReader::Frame(inputs) = &admitted.inputs else {
