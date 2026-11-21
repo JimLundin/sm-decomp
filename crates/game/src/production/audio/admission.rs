@@ -323,7 +323,37 @@ pub(super) fn validate_resident_state(
     if deadline < seed.now || (deadline == seed.now && seed.now != time::cycles(0)) {
         return Err(Fault::Invalid("past transport deadline"));
     }
-    Ok(())
+    validate_phase_window(seed, &deadline)
+}
+
+fn validate_phase_window(
+    seed: &State,
+    deadline: &audio_transport::AudioInstant,
+) -> Result<(), Fault> {
+    use audio_transport::{ReplyLine, time};
+
+    let valid = match &seed.phase {
+        // A nonempty clock read schedules distribution 53 half cycles later.
+        AudioPhase::Distribute { .. } => deadline.difference(&seed.now) <= time::halves(53),
+        // Contact's second read is at anchor + 19/2, with Music scheduled at anchor + 57.
+        // Distribution without Effects schedules Music only 29 cycles ahead.
+        AudioPhase::MusicStart { .. } => deadline.difference(&seed.now) <= time::halves(95),
+        AudioPhase::Idle { .. } => {
+            !seed.music_due && deadline.difference(&seed.now) <= time::halves(1747)
+        }
+        AudioPhase::Sample { sample, .. } => match sample.line {
+            // Music clears its due flag at selection and always samples Absent.
+            ReplyLine::Music => !seed.music_due && sample.anchor <= seed.now,
+            // A mismatch advances the anchor by 14 cycles at the second read (19/2).
+            ReplyLine::Group(_) => sample.anchor <= seed.now.sum(&time::halves(9)),
+        },
+        AudioPhase::ObserveClock { .. } | AudioPhase::Work { .. } => true,
+    };
+    if valid {
+        Ok(())
+    } else {
+        Err(Fault::Invalid("resident phase window"))
+    }
 }
 
 // Requests and timer accrual can change during work. The committed turn inputs stay held until publication.

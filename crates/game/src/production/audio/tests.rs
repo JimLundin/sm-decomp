@@ -740,3 +740,5 @@ fn resident_work_keeps_rational_inputs_and_checks_its_scheduler_fields() {
         ));
     }
 }
+
+mod phase_tests;
