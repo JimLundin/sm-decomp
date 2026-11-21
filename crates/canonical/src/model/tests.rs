@@ -353,3 +353,49 @@ fn constrained_integer_states_trace_and_keep_their_exact_encoding() {
     );
     assert!(from_bytes::<Model<PositivePin>>(&[3, 0, 0, 0, 0, 0xfd, 0xff]).is_err());
 }
+
+#[test]
+fn specimen_values_trace_checked_newtypes_without_changing_their_shape() {
+    use std::num::NonZeroU8;
+
+    #[derive(Deserialize, Serialize)]
+    #[serde(try_from = "u8")]
+    struct Exact<const VALUE: u8>(u8);
+
+    impl<const VALUE: u8> TryFrom<u8> for Exact<VALUE> {
+        type Error = &'static str;
+
+        fn try_from(value: u8) -> Result<Self, Self::Error> {
+            (value == VALUE).then_some(Self(value)).ok_or("wrong value")
+        }
+    }
+
+    #[derive(Deserialize, Serialize)]
+    struct Zero<T>(T);
+
+    #[derive(Deserialize, Serialize)]
+    struct Other<T>(T);
+
+    #[derive(Deserialize, Serialize)]
+    struct Wrapped(Option<NonZeroU8>);
+
+    type Checked = (Zero<Exact<0>>, Other<Exact<23>>, NonZeroU8, Wrapped);
+    type Raw = (Zero<u8>, Other<u8>, u8, Wrapped);
+
+    struct CheckedPin;
+    impl Pinned for CheckedPin {
+        type State = Checked;
+        const NAME: &'static str = "checked";
+        const SHAPE: u64 = 0;
+        const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] =
+            &[("Zero", 0), ("Other", 23), ("Wrapped", 0)];
+    }
+
+    assert!(shape::<Checked>().is_err());
+    assert_eq!(super::trace_shape::<CheckedPin>(), shape::<Raw>());
+    assert!(super::trace_shape::<CheckedPin>().is_ok());
+    assert!(matches!(
+        from_bytes::<Model<CheckedPin>>(&[5, 0, 0, 0, 1, 23, 1, 1, 1]),
+        Err(DecodeError::Refused)
+    ));
+}
