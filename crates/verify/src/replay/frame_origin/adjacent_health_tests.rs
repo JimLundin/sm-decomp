@@ -20,25 +20,6 @@ pub(super) fn check_animation_energy(admitted: &AdmittedCase, direct: &Productio
             Ok(maintained.state().energy.whole.get())
         );
     }
-    let game::production::ProductionRules::Frame(rules) = &admitted.rules else {
-        panic!("frame rules")
-    };
-    check_animation_offer(admitted, &restored, content, rules);
-    for mut production in [direct.clone(), restored.clone()] {
-        let before = production.save().unwrap();
-        assert_eq!(
-            production
-                .advance(AdvanceInput::Frame {
-                    budget: MasterTicks(1)
-                })
-                .err(),
-            Some(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::AnimationPreparation
-            ))),
-            "adjacent Animation must admit the Health input before requesting physical work"
-        );
-        assert_observation_eq!(production.save().unwrap(), before);
-    }
     check_carried_amount(admitted, &restored);
     let state = current(&restored);
     let mut stale_actor = state.clone();
@@ -68,76 +49,10 @@ pub(super) fn check_animation_energy(admitted: &AdmittedCase, direct: &Productio
     }
 }
 
-fn check_animation_offer(
-    admitted: &AdmittedCase,
-    production: &Production,
+pub(super) fn first_animation_bill(
+    first: &State,
     content: &frame::Content,
-    rules: &frame::Rules,
-) {
-    use frame::appearance_caller::{Fault, Stage};
-    let state = current(production);
-    let mut candidate = state.clone();
-    let inputs = state.fresh_animation_inputs(content).unwrap();
-    let mut selection = Stage::Idle;
-    selection
-        .animation(
-            &mut candidate,
-            &content.appearance,
-            inputs,
-            rules.appearance.clone(),
-        )
-        .unwrap();
-    let answer = selection
-        .receipt()
-        .unwrap()
-        .chosen
-        .model
-        .0
-        .pending
-        .as_ref()
-        .unwrap();
-    assert_observation_eq!(
-        answer.inputs.energy,
-        state.health.as_ref().unwrap().state().energy.whole.get()
-    );
-    assert_eq!(answer.answer, samus_appearance::Answer::CountDown);
-    assert!(matches!(
-        content.animation.as_ref().unwrap().qualify(
-            &selection,
-            &candidate,
-            &content.movement,
-            &content.appearance
-        ),
-        Err(Fault::Sequence)
-    ));
-
-    let work = frame::appearance_caller::Kind::Animation.identity();
-    selection.bind(work).unwrap();
-    candidate.animation = frame::animation_caller::Stage::Charging(selection.clone());
-    let charging = super::super::rejects_changed_frame(admitted, production, |saved| {
-        saved.clone_from(&candidate);
-    });
-    // Use the authentic first Animation bill with the adjacent CountDown offer.
-    // The work identity and stack depth then match a real charge.
-    let bill = first_animation_bill(current(&admitted.production), content);
-    let wrong_family = super::super::rejects_changed_frame(admitted, production, |saved| {
-        saved.clone_from(&candidate);
-        saved.timing.begin(work, bill).unwrap();
-        assert!(saved.validate().is_ok());
-    });
-    let (returned, _) = selection.complete(&mut candidate, work).unwrap();
-    candidate.animation = frame::animation_caller::Stage::Complete(returned);
-    let complete = super::super::rejects_changed_frame(admitted, production, |saved| {
-        saved.clone_from(&candidate);
-    });
-    assert_eq!(
-        [charging, wrong_family, complete],
-        [true; 3],
-        "Animation cannot charge or return an unsupported physical profile"
-    );
-}
-
-fn first_animation_bill(first: &State, content: &frame::Content) -> data::timing::Profile {
+) -> data::timing::Profile {
     let frame::animation_caller::Stage::Complete(done) = &first.animation else {
         panic!("completed first Animation")
     };

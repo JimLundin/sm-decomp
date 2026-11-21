@@ -398,6 +398,8 @@ pub enum Requirement {
         /// Imported current-only step equality, never a playhead initializer.
         step: samus_appearance::Step,
     },
+    /// The current shown running step has a non-last hold.
+    RunningHold,
     /// Actual selected Running figure keeps the already completed playing result.
     RunningInitialization,
 }
@@ -407,6 +409,43 @@ pub enum Requirement {
 pub struct PhysicalContract {
     requirement: Requirement,
     template: data::timing::Template,
+}
+
+fn qualify_running_hold(
+    receipt: &Receipt,
+    movement: &crate::production::MovementContent,
+    answer: &samus_appearance::OfferedDecision,
+    data: &samus_appearance::AnimationInputs,
+) -> Result<(), Fault> {
+    let before = &receipt.before.model.0.state;
+    let step = before.playhead.step;
+    let remaining = before.playhead.time_left.0.checked_sub(1);
+    if receipt.kind != Kind::Animation
+        || answer.rule != AnimationDecision::ClipPlaying
+        || data.selected_from != receipt.playing.0
+        || answer.inputs != data.inputs
+        || answer.clip != data.current_clip
+        || answer.paces != data.paces
+        || answer.rules != data.rules
+        || answer.inputs.figure.pose.action != types::Action::Running
+        || movement.radius(answer.inputs.figure.pose).is_none()
+        || before.stage != types::BoostStage::Stage0
+        || answer.inputs.items[types::Item::SpeedBooster]
+        || answer.inputs.liquid != samus_appearance::Liquid::NONE
+        || !matches!(
+            answer.clip.at(step),
+            Some(samus_appearance::Instruction::Show(_))
+        )
+        || answer.answer != samus_appearance::Answer::CountDown
+        || answer.sound.is_some()
+        || answer.after.playhead.step != step
+        || remaining.filter(|left| *left != 0) != Some(answer.after.playhead.time_left.0)
+        || answer.after.stage != before.stage
+        || answer.after.laps_left != before.laps_left
+    {
+        return Err(Fault::Sequence);
+    }
+    Ok(())
 }
 
 impl PhysicalContract {
@@ -498,6 +537,7 @@ impl PhysicalContract {
                     return Err(Fault::Sequence);
                 }
             }
+            Requirement::RunningHold => qualify_running_hold(receipt, movement, answer, data)?,
             Requirement::RunningInitialization => {
                 let previous = movement
                     .radius(data.selected_from.pose)

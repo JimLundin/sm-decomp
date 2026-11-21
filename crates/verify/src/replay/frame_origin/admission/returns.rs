@@ -200,6 +200,7 @@ pub(super) fn prepare(
         expected: frame::Expected {
             returns: expected,
             random,
+            adjacent_animation: None,
         },
         schedule,
         pads,
@@ -332,6 +333,116 @@ fn read_quiet_profile(
                 .map_err(|_| data_failure(None, &format!("native {name} physical profile")))
         })
         .transpose()
+}
+
+impl Prepared {
+    pub(super) fn bind_animation(
+        &mut self,
+        case: &Case,
+        sources: &Sources,
+        wram: &[u8],
+        content: &mut game::production::frame::Content,
+        clips: game::samus_appearance_bridge::Clips,
+    ) -> Result<(), Outcome> {
+        content.adjacent_animation = adjacent_animation(
+            case,
+            sources,
+            wram,
+            self.pad_origin.as_ref().map(|pad| &pad.schedule_sha256),
+        )?;
+        if content.adjacent_animation.is_some() {
+            self.expected.adjacent_animation = Some(frame::adjacent_animation::Source::new(
+                &sources.native,
+                clips,
+            ));
+        }
+        Ok(())
+    }
+}
+
+fn adjacent_animation(
+    case: &Case,
+    sources: &Sources,
+    origin: &[u8],
+    pad: Option<&crate::lock::Sha256>,
+) -> Result<Option<game::production::frame::animation_caller::Adjacent>, Outcome> {
+    use crate::lock::Sha256;
+    use game::production::frame::{
+        animation_caller::Adjacent,
+        appearance_caller::{PhysicalContract, Requirement},
+    };
+
+    let mut declared = case
+        .borrowed
+        .iter()
+        .filter(|source| source.dependency == "frame.adjacent-animation");
+    let Some(source) = declared.next() else {
+        return Ok(None);
+    };
+    let fault = || {
+        data_failure(
+            None,
+            "adjacent running Animation room and physical provenance",
+        )
+    };
+    let origin_pin = Sha256::of(origin);
+    let approved_pads = [
+        "0842ac84e469ea39847459083110cff9c36c7de3993c333a216f602f1ae918d0",
+        "4c7ad2f8ed191a89273bd15d5c301843238cca3da4cf46da39c7b389d61ffe66",
+    ];
+    if origin_pin.to_string() != "bfee6ac13da413a36ad42194a36aa3224af6a84e818092b1e7040ed4782f03db"
+        || !approved_pads
+            .into_iter()
+            .any(|pin| Sha256::try_from(pin).is_ok_and(|expected| Some(&expected) == pad))
+        || case.first_cut() != Some(1)
+        || case.end.cut_inclusive != 2
+        || declared.next().is_some()
+        || source.provider != "independently-qualified-retained-room-animation"
+        || source.fields
+            != [
+                "same-room",
+                "quiet-fx-dispatch",
+                "zero-x-divisor",
+                "running-hold-exposures",
+            ]
+        || source.phase != "original-frame-admission-through-adjacent-animation-return"
+        || source.claim
+            != "original room and physical work only; carried Appearance selects and applies the live answer"
+    {
+        return Err(fault());
+    }
+    let word = |at: usize| {
+        let pair = origin.get(at..at.saturating_add(2)).ok_or_else(fault)?;
+        Ok(u16::from_le_bytes(pair.try_into().map_err(|_| fault())?))
+    };
+    let room_pointer = word(0x079b)?;
+    if room_pointer == 0 {
+        return Err(fault());
+    }
+    let room = import::world::id(data::room::RoomKey::from_room_pointer(room_pointer))
+        .ok_or_else(fault)?;
+    let quiet_fx = word(0x196e)?.trailing_zeros() >= 4;
+    let x_divisor = word(0x0a66)?;
+    if !quiet_fx || x_divisor != 0 {
+        return Err(fault());
+    }
+    let template = read_quiet_profile(
+        Some(Member {
+            path: "adjacent-animation-v1/profiles.toml".into(),
+            sha256: "18682d2059192200d49bb350f1cc39a7bd16a1bdd154087ef25528820743879c".to_owned(),
+        }),
+        &sources.native,
+        "AdjacentRunningHold",
+        [177, 1158],
+    )?
+    .ok_or_else(fault)?;
+    Ok(Some(Adjacent {
+        room,
+        origin: origin_pin.0,
+        quiet_fx,
+        x_divisor,
+        physical: PhysicalContract::new(Requirement::RunningHold, template),
+    }))
 }
 
 fn read_pads(member: &Member, pads: &Member) -> Result<(PadOrigin, Vec<PadChange>), Outcome> {

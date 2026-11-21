@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "fba54981d00ce6c762cc6c68cb9a0014b8b71078519bead9dbde1f17d913a544"
+index_sha256 = "fb9a27961b3394df8aa41e384af398e6f2a7609fd530ceb078e39616a8f1f495"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -367,7 +367,7 @@ pending_restorations = 0
 [[case]]
 id = "frame/adjacent-actual-trial"
 claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(AnimationPreparation)" }
+expected = { status = "unsupported", cut = 2, dependency = "Frame(InterruptionPreparation)" }
 observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]
@@ -385,7 +385,7 @@ pending_restorations = 0
 [[case]]
 id = "frame/adjacent-held-trial"
 claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(AnimationPreparation)" }
+expected = { status = "unsupported", cut = 2, dependency = "Frame(InterruptionPreparation)" }
 observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]

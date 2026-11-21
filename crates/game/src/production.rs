@@ -390,7 +390,7 @@ impl Production {
                 state.validate_hud_checkpoint(content, rules)?;
                 state.validate_scene_checkpoint(content)?;
                 state.validate_countdown_checkpoint(content, rules)?;
-                state.validate_animation_checkpoint(content)?;
+                state.validate_animation_checkpoint(content, rules)?;
                 OwnedState::Frame(state)
             }
             (

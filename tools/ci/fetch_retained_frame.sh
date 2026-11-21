@@ -11,3 +11,6 @@ bash "$(dirname "$0")/fetch_native_fixture.sh" "$1" "$2" retained-frame-return-v
 echo 'RETAINED FRAME RETURN FIXTURE PIN OK'
 bash "$(dirname "$0")/fetch_retained_haze.sh" "$1" "$2"
 bash "$(dirname "$0")/fetch_random_draw_observations.sh" "$1" "$2"
+bash "$(dirname "$0")/fetch_native_fixture.sh" "$1" "$2" adjacent-animation-v1 \
+  adjacent-animation-b3423893b9b86aac.tar.gz.enc \
+  b3423893b9b86aacc0d2dc734f9ac1362820ac6a3c9f88fadeacec2c8b4980ec 912 2

@@ -17,6 +17,8 @@ use game::production::{
 };
 use interface_hud::{CountdownAnswer, CountdownExpiry, CountdownOpportunity, CountdownPicture};
 
+#[path = "adjacent_animation_tests.rs"]
+mod adjacent_animation_tests;
 #[path = "adjacent_health_tests.rs"]
 mod adjacent_health_tests;
 
@@ -153,7 +155,12 @@ pub(super) fn check_hud_map(case: &Case, sources: &Sources, admitted: &AdmittedC
         return Dependency::HealthCurrentInputs;
     }
     adjacent_health_tests::check_animation_energy(admitted, &direct);
-    Dependency::AnimationPreparation
+    if content.adjacent_animation.is_some() {
+        adjacent_animation_tests::check(admitted, direct, origin, case.end.cut_inclusive);
+        Dependency::InterruptionPreparation
+    } else {
+        Dependency::AnimationPreparation
+    }
 }
 
 fn hud_work_in_flight(state: &State, identity: WorkId) -> bool {

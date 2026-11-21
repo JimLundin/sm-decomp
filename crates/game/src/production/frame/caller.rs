@@ -86,6 +86,8 @@ pub struct Content {
     pub liquid_history: Option<super::liquid_history::Admission>,
     /// Complete qualified ordinary Animation owner.
     pub animation: Option<super::appearance_caller::PhysicalContract>,
+    /// Independently qualified quiet FX, divisor and CPU envelope in the retained room.
+    pub adjacent_animation: Option<super::animation_caller::Adjacent>,
     /// Independently qualified inactive interruption continuation.
     pub interruption: Option<super::interruption_caller::Contract>,
     /// Complete late movement envelopes for the qualified actual pose choice.

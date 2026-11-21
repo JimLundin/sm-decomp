@@ -89,10 +89,13 @@ impl CutReader<'_> {
         cut: u64,
         held: &mut HeldAdvance,
     ) -> Result<ExpectedCut, Outcome> {
-        let output = self
-            .inputs
-            .advance_observing_stop(production, cut, held)
-            .map_err(|outcome| at_cut(outcome, cut))?;
+        let output = match self.inputs.advance_observing_stop(production, cut, held) {
+            Ok(output) => output,
+            Err(outcome) => {
+                held.compare_boundary(self.expected, production, cut)?;
+                return Err(at_cut(outcome, cut));
+            }
+        };
         let observed = actual.accept_observing_stop(self.inputs, production, output, cut, held)?;
         let expected = self
             .expected

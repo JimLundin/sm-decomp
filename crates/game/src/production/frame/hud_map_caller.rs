@@ -150,7 +150,7 @@ impl State {
         else {
             return Err(missing());
         };
-        if !post_down.owners_hold(self) {
+        if !self.animation_prefix_holds(post_down) {
             return Err(missing());
         }
         let current = content.hud_refresh.as_ref().ok_or_else(missing)?;

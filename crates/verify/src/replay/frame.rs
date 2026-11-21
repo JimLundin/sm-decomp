@@ -7,6 +7,7 @@ use game::production::{
 };
 use game::state::owned::OwnedState;
 
+pub(super) mod adjacent_animation;
 mod callbacks;
 pub(super) mod random;
 use crate::lock::Sha256;
@@ -20,6 +21,7 @@ use std::{
 pub(super) struct Expected {
     pub returns: BTreeMap<u64, Return>,
     pub(super) random: Option<random::Source>,
+    pub(super) adjacent_animation: Option<adjacent_animation::Source>,
 }
 
 /// Outputs and terminal owners from one independently captured return.
@@ -214,6 +216,25 @@ pub(super) struct HeldAdvance {
 }
 
 impl HeldAdvance {
+    pub(super) fn compare_boundary(
+        &self,
+        expected: &super::readers::ExpectedReader,
+        production: &Production,
+        cut: u64,
+    ) -> Result<(), Outcome> {
+        if let (
+            super::readers::ExpectedReader::Frame(expected),
+            Some(ProductionFault::Unsupported(game::production::Unsupported::Frame(
+                frame::Dependency::InterruptionPreparation,
+            ))),
+        ) = (expected, &self.fault)
+            && let Some(source) = &expected.adjacent_animation
+        {
+            source.compare(expected, production, cut, &self.events)?;
+        }
+        Ok(())
+    }
+
     pub(super) fn retain_events(&mut self, events: Vec<timing::Event>) {
         self.events = events;
     }

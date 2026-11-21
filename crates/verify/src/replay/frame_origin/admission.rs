@@ -19,7 +19,10 @@ use crate::replay::{
     result::Outcome,
 };
 use canonical::model::Model;
-use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed, frame};
+use game::{
+    production::{Production, ProductionContent, ProductionRules, ProductionSeed, frame},
+    samus_appearance_bridge::Clips,
+};
 use seed::{EntrySeed, entry_seed, read_manifest};
 
 struct DrawingWork {
@@ -373,7 +376,7 @@ fn assemble(
     content: movement::Content,
     seed: EntrySeed,
     settling_haze: Option<data::timing::Template>,
-) -> Result<(frame::State, frame::Content), Outcome> {
+) -> Result<(frame::State, frame::Content, Clips), Outcome> {
     let mut state = seed.state;
     let admit = Admission {
         case,
@@ -413,10 +416,10 @@ fn assemble(
     let animation = admit.animation()?;
     let health = admit.bind_health(&mut state)?;
     let countdown = admit.countdown()?;
-    let ground_pull = admit.ground_pull()?;
     Ok((
         state,
         frame::Content {
+            ground_pull: admit.ground_pull()?,
             acknowledgment: required.acknowledgment,
             music: required.music,
             haze: required.haze,
@@ -465,13 +468,14 @@ fn assemble(
             frame_tail: tail.frame_tail,
             pose_fit,
             animation,
+            adjacent_animation: None,
             health,
             adjacent_health_context: None,
             countdown,
             scene_countdown: seed.scene_countdown.map(|(admission, _)| admission),
             adjacent_scene_countdown: None,
-            ground_pull,
         },
+        appearance.clips,
     ))
 }
 
@@ -490,7 +494,7 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
     let first_cut = case
         .first_cut()
         .ok_or_else(|| data_failure(None, "first native return"))?;
-    let returns = returns::prepare(case, sources, &manifest, first_cut, seed.next_pad)?;
+    let mut returns = returns::prepare(case, sources, &manifest, first_cut, seed.next_pad)?;
     if let Some(pad) = &returns.pad_origin {
         let controller = &mut seed.state.timing.hardware.controller;
         if controller.words.first().copied() != Some(pad.previous_sample.0) {
@@ -499,15 +503,16 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         // A completed poll remains readable after the host has presented the next pad.
         controller.committed_pad = pad.presented;
     }
-    let (state, mut content) = assemble(
+    let (state, mut content, clips) = assemble(
         case,
         sources,
         &manifest,
         &wram,
         content,
         seed,
-        returns.settling_haze,
+        returns.settling_haze.take(),
     )?;
+    returns.bind_animation(case, sources, &wram, &mut content, clips)?;
     content.player_entry.recurring_pose_input = returns.adjacent_pose_input;
     if let Some([down, contact]) = returns.adjacent_down_contact {
         content

@@ -345,11 +345,10 @@ impl super::State {
             || !self.adjacent_health_history_holds()
             || !self.drawing_irqs_returned(gameplay)
             || !owner.holds_recurring_actor(origin, actors)
-            || !matches!(
-                self.animation,
-                super::animation_caller::Stage::Pending
-                    | super::animation_caller::Stage::Charging(_)
-            )
+            // The completed answer still needs its current Health join when restored
+            // at Animation's return. A later service has its own lifetime.
+            || (matches!(self.animation, super::animation_caller::Stage::Complete(_))
+                && !matches!(self.interruption, super::interruption_caller::Stage::Pending))
         {
             return Err(missing());
         }

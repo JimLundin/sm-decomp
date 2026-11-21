@@ -5,7 +5,7 @@ use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
 use samus_appearance::{Dash, MoveEvent, SoundsWaiting};
 use samus_movement::{Dashing, StandingAnimation, WallTest};
-use types::Set;
+use types::{Parts, Set};
 
 /// Actual chosen and consumed Animation, independently from Countdown progress.
 #[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
@@ -21,6 +21,21 @@ pub enum Stage {
 
 const fn missing(dependency: Dependency) -> ProductionFault {
     ProductionFault::Unsupported(Unsupported::Frame(dependency))
+}
+
+/// Admitted room-dependent conditions for the adjacent ordinary Animation hold.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Adjacent {
+    /// Actual origin room independently shown unchanged through the hold.
+    pub room: data::id::RoomId,
+    /// Complete independently admitted original image identity.
+    pub origin: [u8; 32],
+    /// Whether the retained FX dispatch takes its quiet branch.
+    pub quiet_fx: bool,
+    /// Independently observed horizontal slowdown divisor.
+    pub x_divisor: u16,
+    /// Effect-free CPU envelope for the hold.
+    pub physical: appearance_caller::PhysicalContract,
 }
 
 struct AnimationNeighbors {
@@ -185,6 +200,44 @@ impl State {
         Ok(neighbors.with_movement(self.playing_figure.0, outcome))
     }
 
+    fn animation_contract<'a>(
+        &self,
+        content: &'a Content,
+    ) -> Result<&'a appearance_caller::PhysicalContract, ProductionFault> {
+        let unavailable = || missing(Dependency::AnimationPreparation);
+        if self.publications.original_interval() {
+            return content.animation.as_ref().ok_or_else(unavailable);
+        }
+        let adjacent = content
+            .adjacent_animation
+            .as_ref()
+            .ok_or_else(unavailable)?;
+        let origin = content.liquid_history.as_ref().ok_or_else(unavailable)?;
+        let samus = self.movement.state();
+        let centre = samus.position.y.pixel().0;
+        let height = content
+            .movement
+            .radius(self.playing_figure.0.pose)
+            .ok_or_else(unavailable)?
+            .y
+            .0;
+        // The reached dry branch still reads the current figure's body edges.
+        let ordinary_edges = height
+            .checked_sub(1)
+            .and_then(|below| centre.checked_add(below))
+            .is_some()
+            && centre.checked_sub(height).is_some();
+        if adjacent.origin != origin.origin
+            || !ordinary_edges
+            || self.validate_room_owner(content) != Ok(adjacent.room)
+            || !adjacent.quiet_fx
+            || adjacent.x_divisor != 0
+        {
+            return Err(unavailable());
+        }
+        Ok(&adjacent.physical)
+    }
+
     fn animation_profile(
         &self,
         content: &Content,
@@ -193,10 +246,7 @@ impl State {
         if !self.animation_energy_matches(selection) {
             return Err(missing(Dependency::HealthCurrentInputs));
         }
-        content
-            .animation
-            .as_ref()
-            .ok_or_else(|| missing(Dependency::AnimationPreparation))?
+        self.animation_contract(content)?
             .qualify(selection, self, &content.movement, &content.appearance)
             .map_err(|_| missing(Dependency::AnimationPreparation))
     }
@@ -239,6 +289,9 @@ impl State {
                 if content.animation.is_none() && content.liquid_history.is_none() {
                     return Err(missing(Dependency::AnimationPreparation));
                 }
+                if !self.publications.original_interval() && content.adjacent_animation.is_some() {
+                    self.animation_contract(content)?;
+                }
                 self.countdown_scene_offer(content, rules)?;
                 let inputs = self.fresh_animation_inputs(content)?;
                 let mut stage = appearance_caller::Stage::Idle;
@@ -255,7 +308,7 @@ impl State {
                     .map_err(ProductionFault::FrameHardware)?;
                 self.animation = Stage::Charging(stage);
             }
-            Stage::Charging(stage) => self.validate_animation_charge(content, stage)?,
+            Stage::Charging(stage) => self.validate_animation_charge(content, rules, stage)?,
             Stage::Complete(_) => return Err(missing(Dependency::InterruptionPreparation)),
         }
         Ok(())
@@ -264,6 +317,7 @@ impl State {
     fn validate_animation_charge(
         &self,
         content: &Content,
+        rules: &Rules,
         selection: &appearance_caller::Stage,
     ) -> Result<(), ProductionFault> {
         let identity = appearance_caller::Kind::Animation.identity();
@@ -272,8 +326,18 @@ impl State {
         {
             return Err(unexpected());
         }
-        self.fresh_animation_inputs(content)?;
+        let inputs = self.fresh_animation_inputs(content)?;
         let expected = self.animation_profile(content, selection)?;
+        if !self.publications.original_interval() {
+            self.countdown_scene_offer(content, rules)?;
+            if !Self::retained_inputs_match(
+                selection.receipt().ok_or_else(unexpected)?,
+                inputs,
+                rules,
+            ) {
+                return Err(unexpected());
+            }
+        }
         let mut charges = self
             .timing
             .work
@@ -285,9 +349,24 @@ impl State {
         Ok(())
     }
 
+    fn retained_inputs_match(
+        receipt: &appearance_caller::Receipt,
+        inputs: samus_appearance::Inputs,
+        rules: &Rules,
+    ) -> bool {
+        receipt
+            .chosen
+            .model
+            .0
+            .animation
+            .as_ref()
+            .is_some_and(|data| data.inputs == inputs && data.rules == rules.appearance)
+    }
+
     pub(crate) fn validate_animation_checkpoint(
         &self,
         content: &Content,
+        rules: &Rules,
     ) -> Result<(), super::Fault> {
         use super::Fault::InvalidPlayerEntry;
         let work = appearance_caller::Kind::Animation.identity();
@@ -311,7 +390,7 @@ impl State {
                 }
             }
             Stage::Charging(selection) => self
-                .validate_animation_charge(content, selection)
+                .validate_animation_charge(content, rules, selection)
                 .map_err(|_| InvalidPlayerEntry)?,
             Stage::Complete(done) => {
                 if charging || done.work != work {
@@ -331,12 +410,20 @@ impl State {
                 {
                     return Err(InvalidPlayerEntry);
                 }
+                if !self.publications.original_interval() {
+                    self.countdown_scene_offer(content, rules)
+                        .map_err(|_| InvalidPlayerEntry)?;
+                    let inputs = self
+                        .fresh_animation_inputs(content)
+                        .map_err(|_| InvalidPlayerEntry)?;
+                    if !Self::retained_inputs_match(&done.receipt, inputs, rules) {
+                        return Err(InvalidPlayerEntry);
+                    }
+                }
                 // Appearance has consumed the answer. Its retained receipt still identifies
                 // the physical family that could have completed at this opportunity.
-                content
-                    .animation
-                    .as_ref()
-                    .ok_or(InvalidPlayerEntry)?
+                self.animation_contract(content)
+                    .map_err(|_| InvalidPlayerEntry)?
                     .profile_for_receipt(
                         &done.receipt,
                         self,

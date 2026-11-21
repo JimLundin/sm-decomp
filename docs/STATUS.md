@@ -242,12 +242,17 @@ The mini-map returns at 91,486 ticks into the second interval. Timer hands off a
 with one countdown answer and no additional device outputs. Both trials match all 203 ordered
 callbacks through that handoff. Animation receives current whole energy from the
 first Maintenance result after the adjacent no-hurt actor and both drawing interrupts
-return. Public restore checks all five carried Health quantities. Neither recorded
-Animation branch reads whole energy. Both cases stop at `Frame(AnimationPreparation)`
-on cut 2, before the later Ceres scene read. Indexed replay restores each completed cut-one
-checkpoint and checks that the resumed run reaches the same typed stop, carried state and ordered
-publications as the uninterrupted run. The captured Ceres read independently qualifies the scene
-through that use. See the [reviewed baseline](../scenarios/replay/baseline.toml). The
-[adjacent fixture](../tools/ci/fetch_retained_haze.sh) includes independent callback streams
-and terminal observations for both intervals. The second full callback stream, second
+return. Public restore checks all five carried Health quantities. The carried playhead selects
+the current running hold in the second interval. Both arms compare the return at +93,464 ticks,
+including the same mapped step, one hold decrement, unchanged boost stage and laps, complete
+Health and 203 ordered callbacks. The CPU profile supplies 177 exposures and 1,158 intrinsic
+ticks. Hardware contributes a 40-tick refresh and a 24-tick descriptor-only HDMA service.
+Both cases stop at `Frame(InterruptionPreparation)` on cut 2. Indexed replay restores each
+completed cut-one checkpoint and checks the same held return, typed stop and ordered publications.
+Fixture tests also restore at Timer handoff, during Animation charge and at Animation return.
+The captured Ceres read independently qualifies the scene through that use. See the
+[reviewed baseline](../scenarios/replay/baseline.toml). The
+[adjacent native fixture](../tools/ci/fetch_retained_haze.sh) provides ordered callbacks.
+The [retained fixture installer](../tools/ci/fetch_retained_frame.sh) also provides the
+independently qualified CPU profile and playhead comparison. The second full callback stream, second
 controller latch, later Health maintenance and second requested NMI return remain unverified.
