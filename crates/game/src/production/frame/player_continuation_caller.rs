@@ -213,7 +213,7 @@ impl State {
                 prepared,
                 &selected,
                 &expected_interaction,
-                remaining.0.actors.as_ref(),
+                &remaining.0,
             );
         }
         self.remaining_origin_candidate(content, stage, prepared, &selected, &remaining.0)
@@ -226,13 +226,14 @@ impl State {
         prepared: &super::Preparation,
         selected: &CompletedPlayerSelection<'_>,
         interaction: &SamusInteractionCompletion,
-        actual: Option<&ActorUpdateCompletion>,
+        remaining: &super::borrowed_player_preparation::PlayerContinuationCompletions,
     ) -> Result<Completion, ProductionFault> {
         let fault = missing();
         let owners = self.recurring_player.as_ref().ok_or(fault)?;
+        let actual = remaining.actors.as_ref();
         let input = match (stage, actual, owners.completed_poll_input) {
             (Stage::Actors, None, None) => owners.doors,
-            (Stage::Sprites, Some(_), Some(input)) => input,
+            (Stage::Sprites | Stage::Contact, Some(_), Some(input)) => input,
             _ => return Err(fault),
         };
         let (next, result) =
@@ -246,9 +247,22 @@ impl State {
             if &result != actual || next != owners.doors || !health_holds {
                 return Err(fault);
             }
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::SpriteObjectsPreparation,
-            )));
+            let sprites = owners.sprites.complete_quiet(actual).map_err(|_| {
+                ProductionFault::Unsupported(Unsupported::Frame(
+                    Dependency::SpriteObjectsPreparation,
+                ))
+            })?;
+            if stage == Stage::Sprites {
+                return Ok(Completion::Sprites(sprites));
+            }
+            if remaining.sprites.as_ref() != Some(&sprites) {
+                return Err(fault);
+            }
+            return owners
+                .contact_reset
+                .complete_reset(actual, &sprites)
+                .map(Completion::Contact)
+                .map_err(|_| fault);
         }
         Ok(Completion::Actors(result, Some(next)))
     }
@@ -288,7 +302,7 @@ impl State {
         {
             return Err(fault);
         }
-        let samus = self.movement.state();
+        let samus = &selected.motion_reset.previous.0;
         let radius = content.movement.radius(samus.pose).ok_or(fault)?;
         let inside = selected.inside_hud.inside;
         let Some(MovementDecision::InsideRequest(bounds)) = inside.receipt.decisions.0.first()
@@ -509,22 +523,63 @@ impl State {
     }
 
     pub(crate) fn validate_committed_actors(&self, content: &Content) -> Result<(), super::Fault> {
-        if let Caller::PlayerContinuation {
+        let Caller::PlayerContinuation {
             prepared,
-            stage: Stage::Sprites,
-            charging,
+            controls,
+            motion_reset,
+            remaining,
             ..
         } = &self.caller
-            && prepared.prelude.origin().is_none()
-            && (*charging
-                || !matches!(
-                    self.remaining_candidate(content),
-                    Err(ProductionFault::Unsupported(Unsupported::Frame(
-                        Dependency::SpriteObjectsPreparation,
-                    )))
-                ))
-        {
-            return Err(super::Fault::InvalidPlayerEntry);
+        else {
+            return Ok(());
+        };
+        let Some(actual) = remaining.0.actors.as_ref() else {
+            return Ok(());
+        };
+        if prepared.prelude.origin().is_some() {
+            return Ok(());
+        }
+        let fault = || super::Fault::InvalidPlayerEntry;
+        let owners = self.recurring_player.as_ref().ok_or_else(fault)?;
+        let selected = CompletedPlayerSelection {
+            inside_hud: CompletedInsideAndHudWeapons {
+                inside: self.inside_completed.as_ref().ok_or_else(fault)?,
+                controls,
+            },
+            motion_reset: motion_reset.as_ref().ok_or_else(fault)?,
+        };
+        let interaction = remaining.0.interaction.as_ref().ok_or_else(fault)?;
+        let (next, result) = self
+            .recurring_poll(
+                content,
+                prepared,
+                &selected,
+                interaction,
+                owners.completed_poll_input.ok_or_else(fault)?,
+            )
+            .map_err(|_| fault())?;
+        let health_holds = match (&self.health, &content.health) {
+            (Some(owner), Some(admission)) => owner.holds_recurring_actor(admission, actual),
+            (None, None) => true,
+            _ => false,
+        };
+        if &result != actual || next != owners.doors || !health_holds {
+            return Err(fault());
+        }
+        if let Some(sprites) = remaining.0.sprites.as_ref() {
+            if &owners.sprites.complete_quiet(actual).map_err(|_| fault())? != sprites {
+                return Err(fault());
+            }
+            if let Some(contact) = remaining.0.contact.as_ref()
+                && (contact.execution_counter != owners.contact_reset.execution_counter
+                    || &contact
+                        .dependency
+                        .complete_reset(actual, sprites)
+                        .map_err(|_| fault())?
+                        != contact)
+            {
+                return Err(fault());
+            }
         }
         Ok(())
     }
@@ -618,7 +673,12 @@ impl State {
                 remaining.0.actors = Some(result);
             }
             Completion::Sprites(result) => remaining.0.sprites = Some(result),
-            Completion::Contact(result) => remaining.0.contact = Some(result),
+            Completion::Contact(result) => {
+                if let Some(owners) = &mut self.recurring_player {
+                    owners.contact_reset.execution_counter = result.execution_counter;
+                }
+                remaining.0.contact = Some(result);
+            }
         }
         remaining_work.push(work);
         *stage = stage.next().ok_or(ProductionFault::WrongScope)?;

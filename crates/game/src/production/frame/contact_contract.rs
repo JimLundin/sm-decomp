@@ -93,6 +93,7 @@ pub enum Fault {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PhysicalContract {
     template: data::timing::Template,
+    quiet: Option<data::timing::Template>,
 }
 
 /// Whole-owner qualification, retaining actual inputs and outputs through charging.
@@ -103,9 +104,7 @@ pub struct Qualified {
     /// Actual retained Contact receipt.
     pub receipt: Receipt,
     /// Actual graphical output available to the later Part2 owner.
-    pub graphic: GraphicalContact,
-    /// Actual semantic sound request; transport owns admission.
-    pub sound: SoundRequest,
+    pub graphic: Option<GraphicalContact>,
     current: Current,
 }
 
@@ -113,7 +112,15 @@ impl PhysicalContract {
     /// Retain an independently qualified complete envelope.
     #[must_use]
     pub const fn new(template: data::timing::Template) -> Self {
-        Self { template }
+        Self {
+            template,
+            quiet: None,
+        }
+    }
+
+    /// Admit the source-qualified nonlast-frame physical owner.
+    pub fn set_quiet(&mut self, template: data::timing::Template) {
+        self.quiet = Some(template);
     }
 
     /// Qualify the actual pre-animation Contact read and its complete clean result.
@@ -129,11 +136,16 @@ impl PhysicalContract {
         stage.validate(frame).map_err(|_| Fault::Receipt)?;
         let receipt = stage.receipt().ok_or(Fault::Receipt)?;
         let graphic = contact(receipt, content, current)?;
-        if frame.movement.state().pose != graphic.figure.pose {
+        if frame.movement.state().pose != receipt.playing.0.pose {
             return Err(Fault::Current);
         }
+        let (template, expected_ticks) = if graphic.is_some() {
+            (&self.template, 840)
+        } else {
+            (self.quiet.as_ref().ok_or(Fault::Profile)?, 188)
+        };
         let mut ticks = 0_u64;
-        for run in &self.template.runs {
+        for run in &template.runs {
             if !matches!(run.effect, data::timing::TemplateEffect::None) {
                 return Err(Fault::Profile);
             }
@@ -141,15 +153,14 @@ impl PhysicalContract {
                 .checked_add(u64::from(run.count).saturating_mul(u64::from(run.cycle.ticks())))
                 .ok_or(Fault::Profile)?;
         }
-        if ticks != 840 {
+        if ticks != expected_ticks {
             return Err(Fault::Profile);
         }
-        let profile = self.template.bind(&[]).map_err(|_| Fault::Profile)?;
+        let profile = template.bind(&[]).map_err(|_| Fault::Profile)?;
         Ok(Qualified {
             profile,
             receipt: receipt.clone(),
             graphic,
-            sound: SoundRequest::Footstep,
             current,
         })
     }
@@ -159,7 +170,7 @@ fn contact(
     receipt: &Receipt,
     content: &AppearanceContent,
     current: Current,
-) -> Result<GraphicalContact, Fault> {
+) -> Result<Option<GraphicalContact>, Fault> {
     receipt.validate().map_err(|_| Fault::Receipt)?;
     let work = &receipt.chosen.model.0;
     let Some(samus_appearance::WorkStep::Appearance(AppearanceRead::Contact {
@@ -176,12 +187,10 @@ fn contact(
         || *figure != receipt.playing.0
         || figure.pose.action != types::Action::Running
         || *playhead != receipt.before.model.0.state.playhead
-        || playhead.time_left != samus_appearance::Frames::LAST
         || *stage != types::BoostStage::Stage0
         || *stage != receipt.before.model.0.state.stage
         || content.get(*figure) != Some(clip)
         || clip.hold(playhead.step).is_none()
-        || !clip.contacts.contains(&playhead.step)
         || *suppressors != current.suppressors
         || suppressors.values().any(|active| *active)
         || current.context.area != types::Area::Ceres
@@ -191,16 +200,21 @@ fn contact(
     {
         return Err(Fault::Current);
     }
-    let graphic = GraphicalContact {
+    let graphic = (playhead.time_left == samus_appearance::Frames::LAST
+        && clip.contacts.contains(&playhead.step))
+    .then_some(GraphicalContact {
         figure: *figure,
         playhead: *playhead,
-    };
+    });
     let Some(samus_appearance::Receipt::Appearance { output, .. }) =
         receipt.result.model.0.completed.last()
     else {
         return Err(Fault::Output);
     };
-    if output.contact != Some(graphic) || output.sound != Some(SoundRequest::Footstep) {
+    if (graphic.is_none() && playhead.time_left <= samus_appearance::Frames::LAST)
+        || output.contact != graphic
+        || output.sound != graphic.map(|_| SoundRequest::Footstep)
+    {
         return Err(Fault::Output);
     }
     Ok(graphic)
@@ -221,7 +235,7 @@ impl Qualified {
         if current != self.current
             || stage.receipt() != Some(&self.receipt)
             || contact(&self.receipt, content, current)? != self.graphic
-            || frame.movement.state().pose != self.graphic.figure.pose
+            || frame.movement.state().pose != self.receipt.playing.0.pose
         {
             return Err(Fault::Current);
         }
@@ -239,9 +253,12 @@ impl Qualified {
     ) -> Result<(), Fault> {
         if completion.work != Kind::Contact.identity()
             || completion.receipt != self.receipt
-            || output.graphics.as_slice() != [self.graphic]
+            || output.graphics.as_slice() != self.graphic.as_slice()
             || output.sounds.as_slice()
-                != [samus_appearance::PublishedSound::Appearance(self.sound)]
+                != self
+                    .graphic
+                    .map(|_| samus_appearance::PublishedSound::Appearance(SoundRequest::Footstep))
+                    .as_slice()
         {
             return Err(Fault::Output);
         }
@@ -257,7 +274,7 @@ impl Qualified {
         context: Context,
         stage: types::BoostStage,
     ) -> Result<(), Fault> {
-        if graphic != self.graphic
+        if Some(graphic) != self.graphic
             || context != self.current.context
             || stage == types::BoostStage::Boosting
         {

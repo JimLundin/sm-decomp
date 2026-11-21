@@ -1821,7 +1821,7 @@ impl State {
             | Caller::RandomRunning { .. } => self.start_prelude(content)?,
             Caller::PlayerContinuation { .. } => {
                 if self.start_player_motion(content, rules)?
-                    || self.start_player_contact(content)?
+                    || self.start_player_contact(content, rules)?
                 {
                     return Ok(None);
                 }
@@ -2115,24 +2115,34 @@ impl State {
         Ok(true)
     }
 
-    fn start_player_contact(&mut self, content: &Content) -> Result<bool, ProductionFault> {
+    fn start_player_contact(
+        &mut self,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<bool, ProductionFault> {
         match &self.caller {
             Caller::PlayerContinuation {
                 down: super::movement_down_contract::Stage::Complete(_),
                 post_down: super::post_down_caller::Stage::Idle,
                 charging: false,
                 ..
-            } => self.begin_stride_contact(content)?,
+            } => self.begin_stride_contact(content, rules)?,
             Caller::PlayerContinuation {
                 post_down: super::post_down_caller::Stage::Contact { .. },
                 charging: true,
                 ..
             } => self.validate_stride_contact(content)?,
             Caller::PlayerContinuation {
-                post_down: super::post_down_caller::Stage::ContactComplete(_),
+                post_down: super::post_down_caller::Stage::ContactComplete(contact),
                 charging: false,
                 ..
-            } => self.begin_footstep_offer(content)?,
+            } => {
+                if contact.quiet() {
+                    self.begin_poststep(content, rules)?;
+                } else {
+                    self.begin_footstep_offer(content)?;
+                }
+            }
             Caller::PlayerContinuation {
                 post_down: super::post_down_caller::Stage::SoundOffer { .. },
                 charging: true,
@@ -2142,7 +2152,7 @@ impl State {
                 post_down: super::post_down_caller::Stage::SoundComplete(_),
                 charging: false,
                 ..
-            } => self.begin_poststep(content)?,
+            } => self.begin_poststep(content, rules)?,
             Caller::PlayerContinuation {
                 post_down: super::post_down_caller::Stage::Poststep { .. },
                 charging: true,

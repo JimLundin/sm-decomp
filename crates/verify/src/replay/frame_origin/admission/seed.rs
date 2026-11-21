@@ -439,6 +439,8 @@ pub(super) fn entry_seed(
             completed_poll_input: None,
             actor_scene: current.0.actors.scene,
             contact: current.0.actors.contact,
+            sprites: current.0.sprites.clone(),
+            contact_reset: current.0.contact,
         });
     }
     Ok(EntrySeed {

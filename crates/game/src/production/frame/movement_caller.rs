@@ -605,6 +605,8 @@ pub struct RunRequired {
 
 /// Actual completed producers needed by the selected Run predicate.
 pub struct RunDependencies<'a> {
+    /// This opportunity uses the carried running state after a native return.
+    pub recurring: bool,
     /// Actual completed current environment, including liquid and equipment premises.
     pub environment: &'a super::borrowed_player_preparation::EnvironmentCompletion,
     /// Actual completed Inside, HUD and `MotionReset` receipts.
@@ -766,8 +768,9 @@ impl RunContract {
             || initial.run.carry != samus_movement::Carry::FollowsPad
             || initial.run.dashing != samus_movement::Dashing::On
             || initial.run.way != types::Side::Right
-            || initial.run.dash != self.required.dash_before
-            || initial.run.speed != self.required.speed_before
+            || (!dependencies.recurring
+                && (initial.run.dash != self.required.dash_before
+                    || initial.run.speed != self.required.speed_before))
         {
             return Err(Fault::Dependency);
         }

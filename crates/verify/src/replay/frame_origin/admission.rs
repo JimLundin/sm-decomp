@@ -507,6 +507,18 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         returns.settling_haze,
     )?;
     content.player_entry.recurring_pose_input = returns.adjacent_pose_input;
+    if let Some([down, contact]) = returns.adjacent_down_contact {
+        content
+            .ground_following_down
+            .as_mut()
+            .ok_or_else(|| data_failure(None, "native Down owner"))?
+            .set_odd_two_column(down);
+        content
+            .contact
+            .as_mut()
+            .ok_or_else(|| data_failure(None, "native FootContact owner"))?
+            .set_quiet(contact);
+    }
     if let Some(actors) = returns.adjacent_actor_update {
         let continuation = content
             .player_continuation

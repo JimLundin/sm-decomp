@@ -16,6 +16,7 @@ struct Supplement {
     settling_haze: Option<Member>,
     adjacent_pose_input: Option<Member>,
     adjacent_actor_update: Option<Member>,
+    adjacent_down_contact: Option<Member>,
     returns: Vec<Return>,
 }
 
@@ -82,6 +83,7 @@ pub(super) struct Prepared {
     pub(super) settling_haze: Option<data::timing::Template>,
     pub(super) adjacent_pose_input: Option<data::timing::Template>,
     pub(super) adjacent_actor_update: Option<data::timing::Template>,
+    pub(super) adjacent_down_contact: Option<[data::timing::Template; 2]>,
 }
 
 pub(super) fn prepare(
@@ -98,65 +100,72 @@ pub(super) fn prepare(
         final_owners: manifest.final_owners.clone(),
     };
     let mut expected = BTreeMap::from([(first_cut, first_return.expected()?)]);
-    let (pad_origin, pads, settling_haze, adjacent_pose_input, adjacent_actor_update) =
-        if let Some(reference) = &case.end.native_returns {
-            let path = sources.native.join(&reference.path);
-            let root = path
-                .parent()
-                .ok_or_else(|| data_failure(None, "native return supplement directory"))?
-                .to_path_buf();
-            let mut supplement: Supplement = toml::from_str(
-                &Member {
-                    path,
-                    sha256: reference.sha256.clone(),
-                }
-                .text()?,
-            )
-            .map_err(|_| data_failure(None, "native return supplement"))?;
-            let schedule_fault = || data_failure(None, "consecutive native returns");
-            if supplement.format != 1 {
+    let (
+        pad_origin,
+        pads,
+        settling_haze,
+        adjacent_pose_input,
+        adjacent_actor_update,
+        adjacent_down_contact,
+    ) = if let Some(reference) = &case.end.native_returns {
+        let path = sources.native.join(&reference.path);
+        let root = path
+            .parent()
+            .ok_or_else(|| data_failure(None, "native return supplement directory"))?
+            .to_path_buf();
+        let mut supplement: Supplement = toml::from_str(
+            &Member {
+                path,
+                sha256: reference.sha256.clone(),
+            }
+            .text()?,
+        )
+        .map_err(|_| data_failure(None, "native return supplement"))?;
+        let schedule_fault = || data_failure(None, "consecutive native returns");
+        if supplement.format != 1 {
+            return Err(schedule_fault());
+        }
+        let mut prior_cut = first_cut;
+        for mut next in supplement.returns {
+            if prior_cut.checked_add(1) != Some(next.cut)
+                || next.final_owners.is_some() != case.compares_final_frame_owners()
+            {
                 return Err(schedule_fault());
             }
-            let mut prior_cut = first_cut;
-            for mut next in supplement.returns {
-                if prior_cut.checked_add(1) != Some(next.cut)
-                    || next.final_owners.is_some() != case.compares_final_frame_owners()
-                {
-                    return Err(schedule_fault());
-                }
-                prior_cut = next.cut;
-                next.resolve(&root);
-                expected.insert(next.cut, next.expected()?);
-            }
-            if prior_cut != case.end.cut_inclusive {
-                return Err(schedule_fault());
-            }
-            supplement.pad_schedule.resolve(&root);
-            let (pad_origin, pads) = read_pads(&supplement.pad_schedule, &manifest.pads)?;
-            if pads.first().is_none_or(|pad| pad.at != next_pad.at) {
-                return Err(data_failure(
-                    None,
-                    "native physical pad schedule starts at admission",
-                ));
-            }
-            let settling =
-                read_quiet_profile(supplement.settling_haze, &root, "SettlingHaze", [159, 1044])?;
-            let pose = read_quiet_profile(
-                supplement.adjacent_pose_input,
-                &root,
-                "AdjacentPoseInput",
-                [731, 4672],
-            )?;
-            let actors = read_quiet_profile(
-                supplement.adjacent_actor_update,
-                &root,
-                "AdjacentActorUpdate",
-                [1810, 11822],
-            )?;
-            (Some(pad_origin), pads, settling, pose, actors)
-        } else {
-            (None, vec![next_pad], None, None, None)
-        };
+            prior_cut = next.cut;
+            next.resolve(&root);
+            expected.insert(next.cut, next.expected()?);
+        }
+        if prior_cut != case.end.cut_inclusive {
+            return Err(schedule_fault());
+        }
+        supplement.pad_schedule.resolve(&root);
+        let (pad_origin, pads) = read_pads(&supplement.pad_schedule, &manifest.pads)?;
+        if pads.first().is_none_or(|pad| pad.at != next_pad.at) {
+            return Err(data_failure(
+                None,
+                "native physical pad schedule starts at admission",
+            ));
+        }
+        let settling =
+            read_quiet_profile(supplement.settling_haze, &root, "SettlingHaze", [159, 1044])?;
+        let pose = read_quiet_profile(
+            supplement.adjacent_pose_input,
+            &root,
+            "AdjacentPoseInput",
+            [731, 4672],
+        )?;
+        let actors = read_quiet_profile(
+            supplement.adjacent_actor_update,
+            &root,
+            "AdjacentActorUpdate",
+            [1810, 11822],
+        )?;
+        let down_contact = read_down_contact(supplement.adjacent_down_contact, &root)?;
+        (Some(pad_origin), pads, settling, pose, actors, down_contact)
+    } else {
+        (None, vec![next_pad], None, None, None, None)
+    };
     let schedule = expected.keys().copied().collect();
     let random = case
         .expectations
@@ -181,7 +190,21 @@ pub(super) fn prepare(
         settling_haze,
         adjacent_pose_input,
         adjacent_actor_update,
+        adjacent_down_contact,
     })
+}
+
+fn read_down_contact(
+    member: Option<Member>,
+    root: &Path,
+) -> Result<Option<[data::timing::Template; 2]>, Outcome> {
+    member
+        .map(|mut member| {
+            member.resolve(root);
+            quiet_profile::down_contact(&member.text()?)
+                .map_err(|_| data_failure(None, "native Down and FootContact profiles"))
+        })
+        .transpose()
 }
 
 fn read_quiet_profile(

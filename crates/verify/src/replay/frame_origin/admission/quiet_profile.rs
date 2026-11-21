@@ -1,6 +1,7 @@
 //! Admit finite byte-free physical profiles independently of expected observations.
 
 use super::super::profiles::{ProfileFault, RawRun, cycle};
+use data::timing::{Sample, Template, TemplateEffect, TemplateRun};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -22,25 +23,55 @@ pub(super) fn decode(
     name: &str,
     expected: [u64; 2],
 ) -> Result<data::timing::Template, ProfileFault> {
-    use data::timing::{Template, TemplateEffect, TemplateRun};
-
     let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
     let [profile] = file.profile.as_slice() else {
         return Err(ProfileFault::Format);
     };
-    if file.format != 1
-        || profile.name != name
-        || [profile.exposures, profile.intrinsic_ticks] != expected
-    {
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    admit(profile, name, expected, false)
+}
+
+pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [down, contact] = file.profile.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    Ok([
+        admit(down, "OddTwoColumnDown", [815, 5340], true)?,
+        admit(contact, "QuietFootContact", [29, 188], false)?,
+    ])
+}
+
+fn admit(
+    profile: &Profile,
+    name: &str,
+    expected: [u64; 2],
+    math: bool,
+) -> Result<Template, ProfileFault> {
+    if profile.name != name || [profile.exposures, profile.intrinsic_ticks] != expected {
         return Err(ProfileFault::Profile);
     }
     let mut exposures = 0_u64;
     let mut ticks = 0_u64;
     let mut runs = Vec::new();
     for run in &profile.run {
-        if !run.device.is_empty() || !run.event_phase.is_empty() {
-            return Err(ProfileFault::Binding);
-        }
+        let effect = match (run.device.as_str(), run.event_phase.as_str()) {
+            ("", "") => TemplateEffect::None,
+            ("Multiplicand", "publication") if math => {
+                TemplateEffect::Publish(data::timing::MULTIPLICAND_PORT)
+            }
+            ("Multiplier", "publication") if math => {
+                TemplateEffect::Publish(data::timing::MULTIPLIER_PORT)
+            }
+            ("ProductLow", "sample") if math => TemplateEffect::Sample(Sample::ProductLow),
+            ("ProductHigh", "sample") if math => TemplateEffect::Sample(Sample::ProductHigh),
+            _ => return Err(ProfileFault::Binding),
+        };
         let (cycle, kind) = cycle(run)?;
         let count = u64::from(run.count);
         exposures = exposures.checked_add(count).ok_or(ProfileFault::Profile)?;
@@ -53,7 +84,7 @@ pub(super) fn decode(
             cycle,
             kind,
             poll_before: run.poll_before,
-            effect: TemplateEffect::None,
+            effect,
         });
     }
     if exposures != profile.exposures || ticks != profile.intrinsic_ticks {

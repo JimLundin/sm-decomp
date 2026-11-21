@@ -1,7 +1,8 @@
 //! Ordered remaining player owners and their complete physical envelopes.
 
 use super::borrowed_player_preparation::{
-    ActorScene, OrdinaryActorContact, ProjectilesOrigin, SamusInteractionOrigin,
+    ActorScene, ContactResetOrigin, OrdinaryActorContact, ProjectilesOrigin,
+    SamusInteractionOrigin, SpriteObjectsOrigin,
 };
 use crate::production::timing::WorkId;
 use canonical::Canonical;
@@ -22,6 +23,10 @@ pub struct RecurringPlayer {
     pub actor_scene: ActorScene,
     /// Current ordinary contact guards, independent of door waits and outputs.
     pub contact: OrdinaryActorContact,
+    /// Current ordered sprite slots and simulation clocks.
+    pub sprites: SpriteObjectsOrigin,
+    /// Current administrative contact-reset counter.
+    pub contact_reset: ContactResetOrigin,
 }
 
 /// Actual owner following completed Inside and early HUD controls.

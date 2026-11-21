@@ -351,7 +351,7 @@ impl Production {
             (
                 ProductionSeed::Frame(state),
                 ProductionContent::Frame(content),
-                ProductionRules::Frame(_),
+                ProductionRules::Frame(rules),
             ) => {
                 state
                     .validate()
@@ -365,6 +365,9 @@ impl Production {
                     .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
                 state
                     .validate_committed_actors(content)
+                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
+                state
+                    .validate_grounded_checkpoint(content, rules)
                     .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
                 OwnedState::Frame(state)
             }

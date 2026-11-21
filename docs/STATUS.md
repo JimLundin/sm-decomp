@@ -228,7 +228,11 @@ Each completes its poll with wait two, the same geometry and a graphics update. 
 actor charge rejects the stale pose and the earlier door waits. The returned actor result
 supplies the no-hurt Health join.
 
-Both adjacent cases hold the exact cut-2 `Frame(SpriteObjectsPreparation)` boundary in the
+SpriteObjects and ContactReset read current state. Run consumes the current controller and
+inventory. On odd parity, Down tests the right-hand floor cell first and stops with no
+displacement. The non-last animation hold suppresses the footstep, so FootContact completes
+and Poststep runs without queuing sound. The two adjacent trials now hold the exact cut-2
+`Frame(HudDisplayPreparation)` boundary in the
 [reviewed baseline](../scenarios/replay/baseline.toml). The
 [adjacent fixture](../tools/ci/fetch_retained_haze.sh) includes independent callback streams
 and terminal observations for both intervals. The second full callback stream, second

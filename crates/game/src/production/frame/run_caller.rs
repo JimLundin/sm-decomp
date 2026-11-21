@@ -38,6 +38,7 @@ impl State {
             return Err(ProductionFault::WrongScope);
         };
         Ok(RunDependencies {
+            recurring: !self.publications.original_interval(),
             environment: completed.0.environment.as_ref().ok_or_else(missing)?,
             selection: CompletedPlayerSelection {
                 inside_hud: CompletedInsideAndHudWeapons {

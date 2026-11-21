@@ -287,7 +287,7 @@ pub struct DeferredProjectilesReceipt {
 }
 
 /// One actual ordered sprite-object instruction owner.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpriteInstruction {
     /// Actual physical owner identity.
     pub identity: InstructionSlotIdentity,
@@ -296,7 +296,7 @@ pub struct SpriteInstruction {
 }
 
 /// Complete current sprite-object collection owner.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpriteObjectsOrigin {
     /// All actual physical slot owners in traversal order.
     pub slots: [SpriteInstruction; 32],
@@ -321,7 +321,7 @@ pub struct DeferredSpriteObjectsReceipt {
 }
 
 /// Actual retained administrative counter; its value never selects a gameplay arm.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AdministrativeCounter(pub u16);
 
 /// Explicit separately qualified administrative counter effect.
@@ -332,7 +332,7 @@ pub enum CounterEffect {
 }
 
 /// Current contact-reset owner; overwritten identities/distances are not input predicates.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContactResetOrigin {
     /// Actual retained execution counter.
     pub execution_counter: AdministrativeCounter,
@@ -1039,12 +1039,21 @@ impl DeferredSpriteObjectsReceipt {
         current: &SpriteObjectsOrigin,
         actors: &ActorUpdateCompletion,
     ) -> Result<SpriteObjectsCompletion, PlayerPreparationFault> {
-        let _ = actors.solid_boxes()?;
         if current != &self.dependency || self.terminal.slots != current.slots {
             return Err(PlayerPreparationFault::Dependency);
         }
-        running(current.clocks)?;
-        for (index, slot) in current.slots.iter().enumerate() {
+        current.complete_quiet(actors)
+    }
+}
+
+impl SpriteObjectsOrigin {
+    pub(super) fn complete_quiet(
+        &self,
+        actors: &ActorUpdateCompletion,
+    ) -> Result<SpriteObjectsCompletion, PlayerPreparationFault> {
+        let _ = actors.solid_boxes()?;
+        running(self.clocks)?;
+        for (index, slot) in self.slots.iter().enumerate() {
             if usize::from(slot.identity.0) != index
                 || slot.instruction != InstructionDisposition::Empty
             {
@@ -1052,8 +1061,8 @@ impl DeferredSpriteObjectsReceipt {
             }
         }
         Ok(SpriteObjectsCompletion {
-            dependency: self.dependency,
-            terminal: self.terminal,
+            dependency: self.clone(),
+            terminal: SpriteObjectsTerminal { slots: self.slots },
         })
     }
 }
@@ -1068,33 +1077,37 @@ impl DeferredContactResetReceipt {
         actors: &ActorUpdateCompletion,
         sprites: &SpriteObjectsCompletion,
     ) -> Result<ContactResetCompletion, PlayerPreparationFault> {
-        let _ = actors.solid_boxes()?;
-        if current != self.dependency || sprites.terminal.slots != sprites.dependency.slots {
+        if current != self.dependency {
             return Err(PlayerPreparationFault::Dependency);
         }
-        running(sprites.dependency.clocks)?;
-        if sprites
+        if self
             .terminal
-            .slots
+            .contacts
             .iter()
-            .any(|slot| slot.instruction != InstructionDisposition::Empty)
-            || self
-                .terminal
-                .contacts
-                .iter()
-                .any(|contact| contact.actor.is_some() || contact.distance.is_some())
+            .any(|contact| contact.actor.is_some() || contact.distance.is_some())
         {
             return Err(PlayerPreparationFault::Unsupported);
         }
-        let execution_counter = match self.terminal.execution_counter {
-            CounterEffect::WrappingIncrementOne => {
-                AdministrativeCounter(current.execution_counter.0.wrapping_add(1))
-            }
-        };
+        current.complete_reset(actors, sprites)
+    }
+}
+
+impl ContactResetOrigin {
+    pub(super) fn complete_reset(
+        self,
+        actors: &ActorUpdateCompletion,
+        sprites: &SpriteObjectsCompletion,
+    ) -> Result<ContactResetCompletion, PlayerPreparationFault> {
+        if sprites != &sprites.dependency.complete_quiet(actors)? {
+            return Err(PlayerPreparationFault::Dependency);
+        }
         Ok(ContactResetCompletion {
-            dependency: self.dependency,
-            execution_counter,
-            contacts: self.terminal.contacts,
+            dependency: self,
+            execution_counter: AdministrativeCounter(self.execution_counter.0.wrapping_add(1)),
+            contacts: [SolidContact {
+                actor: None,
+                distance: None,
+            }; 4],
         })
     }
 }

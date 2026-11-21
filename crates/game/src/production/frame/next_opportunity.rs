@@ -87,7 +87,6 @@ impl State {
         self.graphical_contacts = super::rendering_stage::Contacts::default();
         self.rendering = super::rendering_stage::Stage::default();
         self.drawing_origins = None;
-        self.contact_current = None;
         self.sound_offer_current = None;
         self.movement_inputs = None;
         self.world = None;

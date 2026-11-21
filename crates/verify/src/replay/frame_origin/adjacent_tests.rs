@@ -218,7 +218,7 @@ fn advance_frame(
             .advance(AdvanceInput::Frame {
                 budget: MasterTicks(13),
             })
-            .unwrap()
+            .unwrap_or_else(|fault| panic!("{fault:?} at wall {tick}, cursor {cursor:?}"))
         else {
             panic!("frame outputs");
         };
@@ -317,7 +317,11 @@ fn compare_continuation(
         check_preparation_checkpoints(admitted);
         let (entry, origin) = check_player_entry_checkpoints(admitted);
         check_remaining_player(admitted, entry, origin, original_doors);
-        Dependency::SpriteObjectsPreparation
+        if admitted_odd_ground(admitted) {
+            Dependency::HudDisplayPreparation
+        } else {
+            Dependency::PlayerContinuationPreparation
+        }
     } else {
         Dependency::HazePreparation
     };
@@ -1058,6 +1062,388 @@ fn check_recurring_doors(
     }
     assert_observation_eq!(direct.state(), restored.state());
     check_committed_actor_checkpoint(admitted, &direct);
+    check_post_actor_prefix(admitted, direct, origin);
+}
+
+fn check_post_actor_prefix(admitted: &AdmittedCase, mut direct: Production, origin: u64) {
+    use player_continuation::Stage;
+
+    for (stage, edge) in [(Stage::Contact, 55934), (Stage::Run, 56348)] {
+        advance_to_prelude_stage(
+            &mut direct,
+            origin.checked_add(edge).unwrap().checked_add(128).unwrap(),
+            |caller| remaining_at(caller, stage, false),
+        );
+        let OwnedState::Frame(state) = direct.state() else {
+            panic!("frame production");
+        };
+        assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(edge));
+    }
+    check_committed_actor_checkpoint(admitted, &direct);
+    reject_stale_contact_counter(admitted, &direct);
+    let checkpoint = direct.save().unwrap();
+    let mut restored = Production::restore(
+        &checkpoint,
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    for production in [&mut direct, &mut restored] {
+        advance_frame_until(production, origin.checked_add(62322).unwrap(), |state| {
+            state.movement_inputs.is_some()
+        });
+        let OwnedState::Frame(state) = production.state() else {
+            panic!("frame production");
+        };
+        assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(62194));
+        assert_observation_eq!(
+            state.movement_inputs.as_ref().unwrap().0.parity,
+            types::Parity::Odd
+        );
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+    if admitted_odd_ground(admitted) {
+        check_grounded_down_checkpoint(admitted, direct, origin);
+    }
+}
+
+fn admitted_odd_ground(admitted: &AdmittedCase) -> bool {
+    matches!(&admitted.content, ProductionContent::Frame(content)
+    if content.ground_following_down.as_ref().is_some_and(
+        game::production::frame::movement_down_contract::PhysicalContract::has_odd_two_column
+    ))
+}
+
+fn reject_stale_contact_counter(admitted: &AdmittedCase, production: &Production) {
+    use game::production::{AdmissionFault, frame::Fault};
+
+    let OwnedState::Frame(state) = production.state() else {
+        panic!("frame production");
+    };
+    let mut altered = state.clone();
+    let Caller::PlayerContinuation { remaining, .. } = &mut altered.caller else {
+        panic!("completed ContactReset");
+    };
+    remaining.0.contact.as_mut().unwrap().execution_counter.0 ^= 1;
+    let result = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    );
+    assert!(
+        matches!(result, Err(AdmissionFault::Frame(fault)) if *fault == Fault::InvalidPlayerEntry)
+    );
+}
+
+fn check_grounded_down_checkpoint(admitted: &AdmittedCase, mut direct: Production, origin: u64) {
+    use data::timing::Sample;
+    use game::production::{
+        frame::movement_down_contract::{Pending, Stage as Down},
+        timing::{EventKind, SampleValue, WorkId},
+    };
+    use std::cell::Cell;
+    let charging = |caller: &Caller| {
+        matches!(
+            caller,
+            Caller::PlayerContinuation {
+                down: Down::Charging { .. },
+                ..
+            }
+        )
+    };
+    let low = Cell::new(None);
+    let deadline = origin.checked_add(79742).unwrap();
+    let down_operands = origin.checked_add(77000).unwrap();
+    advance_frame(
+        &mut direct,
+        origin.checked_add(77368).unwrap(),
+        |_| low.get().is_some(),
+        |outputs| {
+            for event in outputs.events {
+                if let EventKind::Sample(Sample::ProductLow, SampleValue::Byte(byte)) = event.kind
+                    && event.at.0 >= down_operands
+                {
+                    low.set(Some(byte));
+                }
+            }
+        },
+    );
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    let OwnedState::Frame(state) = restored.state() else {
+        panic!("frame production");
+    };
+    let mut altered = state.clone();
+    let Caller::PlayerContinuation {
+        down: Down::Charging { pending, .. },
+        ..
+    } = &mut altered.caller
+    else {
+        panic!("active Down arithmetic");
+    };
+    let down_bill_rejected = rejects_changed_physical_bill(admitted, &restored, WorkId(1004));
+    let mut corrupt = Pending::new(WorkId(1004), pending.requests()).unwrap();
+    corrupt
+        .sample(WorkId(1004), Sample::ProductLow, low.get().unwrap() ^ 1)
+        .unwrap();
+    *pending = corrupt;
+    let mut invalid = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_atomic_rejection(
+        &mut invalid,
+        Dependency::PlayerContinuationPreparation,
+        deadline,
+        charging,
+    );
+    let [down_receipt_rejected, contact_bill_rejected] =
+        check_down_and_contact_checkpoints(admitted, &mut direct, &mut restored, deadline);
+    let (coherent_copies_rejected, poststep_bill_rejected) =
+        check_quiet_poststep(admitted, &mut direct, &mut restored, deadline);
+    assert_eq!(
+        [
+            down_bill_rejected,
+            down_receipt_rejected,
+            contact_bill_rejected
+        ],
+        [true; 3],
+        "forged Down bill, completed Down receipt, and quiet Contact bill must all reject"
+    );
+    assert_eq!(
+        coherent_copies_rejected, [true; 3],
+        "forged Down copies must reject after Contact and during and after Poststep"
+    );
+    assert!(
+        poststep_bill_rejected,
+        "forged quiet Poststep bill restored"
+    );
+}
+
+fn check_quiet_poststep(
+    admitted: &AdmittedCase,
+    direct: &mut Production,
+    restored: &mut Production,
+    deadline: u64,
+) -> ([bool; 3], bool) {
+    use game::production::{frame::post_down_caller::Stage as Post, timing::WorkId};
+    let phases: [fn(&Caller) -> bool; 3] = [
+        |caller| {
+            matches!(
+                caller,
+                Caller::PlayerContinuation {
+                    post_down: Post::ContactComplete(_),
+                    charging: false,
+                    ..
+                }
+            )
+        },
+        |caller| {
+            matches!(
+                caller,
+                Caller::PlayerContinuation {
+                    post_down: Post::Poststep { .. },
+                    charging: true,
+                    ..
+                }
+            )
+        },
+        |caller| {
+            matches!(
+                caller,
+                Caller::PlayerContinuation {
+                    post_down: Post::Complete(_),
+                    ..
+                }
+            )
+        },
+    ];
+    let mut poststep_bill_rejected = false;
+    let rejected = phases.map(|reached| {
+        for production in [&mut *direct, &mut *restored] {
+            advance_to_prelude_stage(production, deadline, reached);
+        }
+        assert_observation_eq!(direct.state(), restored.state());
+        if matches!(direct.state(), OwnedState::Frame(state)
+            if matches!(state.caller, Caller::PlayerContinuation { post_down: Post::Poststep { .. }, charging: true, .. }))
+        {
+            poststep_bill_rejected = rejects_changed_physical_bill(admitted, direct, WorkId(1106));
+        }
+        rejects_coherent_down_forgery(admitted, direct)
+    });
+    let OwnedState::Frame(state) = direct.state() else {
+        panic!("frame production");
+    };
+    let Caller::PlayerContinuation { post_down, .. } = &state.caller else {
+        panic!("completed Poststep");
+    };
+    assert_eq!(
+        post_down.completed_identities(),
+        [WorkId(1100), WorkId(1106)]
+    );
+    (rejected, poststep_bill_rejected)
+}
+
+fn rejects_coherent_down_forgery(admitted: &AdmittedCase, production: &Production) -> bool {
+    use canonical::{from_bytes, to_bytes};
+    use game::production::frame::movement_down_contract::Stage as Down;
+    rejects_changed_frame(admitted, production, |state| {
+        let Caller::PlayerContinuation {
+            down: Down::Complete(down),
+            post_down,
+            ..
+        } = &mut state.caller
+        else {
+            panic!("completed quiet Contact");
+        };
+        let authentic = to_bytes(down);
+        down.receipt.decisions.0.clear();
+        let changed = to_bytes(down);
+        let mut bytes = to_bytes(post_down);
+        let mut copies = bytes
+            .windows(authentic.len())
+            .enumerate()
+            .filter(|(_, field)| *field == authentic);
+        let (offset, _) = copies.next().unwrap();
+        assert!(copies.next().is_none());
+        let end = offset.checked_add(authentic.len()).unwrap();
+        drop(bytes.splice(offset..end, changed));
+        *post_down = from_bytes(&bytes).unwrap();
+    })
+}
+
+fn check_down_and_contact_checkpoints(
+    admitted: &AdmittedCase,
+    direct: &mut Production,
+    restored: &mut Production,
+    deadline: u64,
+) -> [bool; 2] {
+    use game::production::{
+        frame::{movement_down_contract::Stage as Down, post_down_caller::Stage as Post},
+        timing::WorkId,
+    };
+    for production in [&mut *direct, &mut *restored] {
+        advance_to_prelude_stage(production, deadline, |caller| {
+            matches!(
+                caller,
+                Caller::PlayerContinuation {
+                    down: Down::Complete(_),
+                    post_down: Post::Idle,
+                    charging: false,
+                    ..
+                }
+            )
+        });
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+    let down_receipt = rejects_forged_down_completion(admitted, direct);
+    for production in [&mut *direct, &mut *restored] {
+        advance_to_prelude_stage(production, deadline, |caller| {
+            matches!(
+                caller,
+                Caller::PlayerContinuation {
+                    post_down: Post::Contact { .. },
+                    charging: true,
+                    ..
+                }
+            )
+        });
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+    [
+        down_receipt,
+        rejects_changed_physical_bill(admitted, direct, WorkId(1100)),
+    ]
+}
+
+fn rejects_forged_down_completion(admitted: &AdmittedCase, production: &Production) -> bool {
+    use game::production::frame::movement_down_contract::Stage as Down;
+    rejects_changed_frame(admitted, production, |state| {
+        let Caller::PlayerContinuation {
+            down: Down::Complete(completed),
+            ..
+        } = &mut state.caller
+        else {
+            panic!("completed Down");
+        };
+        completed.receipt.decisions.0.clear();
+    })
+}
+
+fn rejects_changed_physical_bill(
+    admitted: &AdmittedCase,
+    production: &Production,
+    identity: game::production::timing::WorkId,
+) -> bool {
+    use data::timing::DeviceEffect;
+    use game::production::timing::WorkKind;
+    rejects_changed_frame(admitted, production, |state| {
+        let work = state
+            .timing
+            .work
+            .iter_mut()
+            .find(|work| work.kind == WorkKind::Semantic(identity))
+            .unwrap();
+        let future = usize::try_from(work.cursor.run)
+            .unwrap()
+            .checked_add(1)
+            .unwrap();
+        let run = work
+            .profile
+            .runs
+            .iter_mut()
+            .skip(future)
+            .find(|run| run.exposure.effect == DeviceEffect::None)
+            .unwrap();
+        run.count = run.count.checked_add(1).unwrap();
+    })
+}
+
+fn rejects_changed_frame(
+    admitted: &AdmittedCase,
+    production: &Production,
+    change: impl FnOnce(&mut State),
+) -> bool {
+    use game::production::{AdmissionFault, frame::Fault};
+    let restore = |production: &Production| {
+        Production::restore(
+            &production.save().unwrap(),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+    };
+    let OwnedState::Frame(before) = production.state() else {
+        panic!("frame production");
+    };
+    let pending = before.timing.work.iter().find_map(|work| match work.kind {
+        game::production::timing::WorkKind::Semantic(identity) => Some(identity),
+        game::production::timing::WorkKind::Wait(_)
+        | game::production::timing::WorkKind::Native { .. }
+        | game::production::timing::WorkKind::Handler { .. } => None,
+    });
+    let at = before.timing.hardware.now.0;
+    let authentic = restore(production).unwrap_or_else(|fault| {
+        panic!(
+            "authentic checkpoint at wall {at} with semantic work {pending:?} rejected: {fault:?}"
+        )
+    });
+    assert_observation_eq!(authentic.state(), production.state());
+    let OwnedState::Frame(state) = authentic.state() else {
+        panic!("frame production");
+    };
+    let mut altered = state.clone();
+    change(&mut altered);
+    matches!(
+        Production::admit(
+            ProductionSeed::Frame(altered),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        ).and_then(|admitted| restore(&admitted)),
+        Err(AdmissionFault::Frame(fault)) if *fault == Fault::InvalidPlayerEntry
+    )
 }
 
 fn check_committed_actor_checkpoint(admitted: &AdmittedCase, complete: &Production) {

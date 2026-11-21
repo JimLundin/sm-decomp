@@ -540,7 +540,7 @@ id = "frame/adjacent-actual-trial"
 kind = "integrated"
 row = "chain-any-0003-DFD7"
 start = { source = "native-seed", path = "retained-frame-return-v2/manifest.toml", sha256 = "1e040c393ed88ec8a0b46184879e0681bc110355e928b8160c50170c533abc15" }
-end = { cut_inclusive = 2, native_returns = { first_cut = 1, path = "adjacent-native-frame-v1/actual.toml", sha256 = "e7ed1bf83502c643853e6a8fbc765e94b276ba39b8d7b0f1a4c3b65d1437c3af" }}
+end = { cut_inclusive = 2, native_returns = { first_cut = 1, path = "adjacent-native-frame-v1/actual.toml", sha256 = "96239a14d8000a6b2f924297a871b2771d3c85f51e8f1c24264b52908dab7444" }}
 rules = ["game-random/AdvanceRandom", "world-haze/HazeBrightens", "world-haze/HazeSettles", "world-quake/QuietQuakePhase", "game-time/PlayTimeAdvance", "samus-movement/TravelledDistances", "samus-appearance/ClipPlays", "interface-hud/RetainedHudWork", "interface-hud/EscapeCountdown", "interface-hud/CountdownContinuation", "audio-transport/SenderTiming", "samus-health/PeriodicLoss", "samus-health/LowEnergyWarning"]
 profile = "reference"
 responsibilities = ["frame", "game-random", "world-haze", "game-time", "world-quake", "movement", "hud", "appearance", "audio-sender", "health"]
@@ -556,7 +556,7 @@ id = "frame/adjacent-held-trial"
 kind = "integrated"
 row = "chain-any-0003-DFD7"
 start = { source = "native-seed", path = "retained-frame-return-v2/manifest.toml", sha256 = "1e040c393ed88ec8a0b46184879e0681bc110355e928b8160c50170c533abc15" }
-end = { cut_inclusive = 2, native_returns = { first_cut = 1, path = "adjacent-native-frame-v1/held.toml", sha256 = "7c22e5cbf81985f39cdf8719dd4066c805c31e898809352388ada70a3f57c329" }}
+end = { cut_inclusive = 2, native_returns = { first_cut = 1, path = "adjacent-native-frame-v1/held.toml", sha256 = "258b4a21168b6fb507e4f8e472dadb1d5036c7d242f4809381c922f766e80493" }}
 rules = ["game-random/AdvanceRandom", "world-haze/HazeBrightens", "world-haze/HazeSettles", "world-quake/QuietQuakePhase", "game-time/PlayTimeAdvance", "samus-movement/TravelledDistances", "samus-appearance/ClipPlays", "interface-hud/RetainedHudWork", "interface-hud/EscapeCountdown", "interface-hud/CountdownContinuation", "audio-transport/SenderTiming", "samus-health/PeriodicLoss", "samus-health/LowEnergyWarning"]
 profile = "reference"
 responsibilities = ["frame", "game-random", "world-haze", "game-time", "world-quake", "movement", "hud", "appearance", "audio-sender", "health"]

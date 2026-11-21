@@ -284,6 +284,17 @@ impl Stage {
             return Err(Fault::Dependency);
         }
         pending.complete(work)?;
+        let candidate = Self::consume_identity(receipt, inputs)?;
+        let completion = Completion {
+            work,
+            receipt: receipt.clone(),
+        };
+        *movement = candidate;
+        *self = Self::Complete(completion.clone());
+        Ok(completion)
+    }
+
+    fn consume_identity(receipt: &Receipt, inputs: &Inputs<'_>) -> Result<Movement, Fault> {
         let mut candidate = receipt.chosen.clone();
         let state = *candidate.state();
         let outputs = candidate.outputs().cloned().ok_or(Fault::Dependency)?;
@@ -298,13 +309,27 @@ impl Stage {
         if query.0.get() || candidate.state() != &state || candidate.outputs() != Some(&outputs) {
             return Err(Fault::Query);
         }
-        let completion = Completion {
-            work,
-            receipt: receipt.clone(),
-        };
-        *movement = candidate;
-        *self = Self::Complete(completion.clone());
-        Ok(completion)
+        Ok(candidate)
+    }
+}
+
+impl Completion {
+    pub(super) fn validate(
+        &self,
+        movement: &Movement,
+        inputs: &Inputs<'_>,
+        contract: &PhysicalContract,
+    ) -> Result<(), Fault> {
+        let mut expected = Stage::Idle;
+        expected.choose(&self.receipt.before, inputs)?;
+        if self.work != WorkId(1004)
+            || expected.receipt() != Some(self.receipt.as_ref())
+            || &Stage::consume_identity(&self.receipt, inputs)? != movement
+        {
+            return Err(Fault::Dependency);
+        }
+        contract.physical(&expected, &self.receipt.before, inputs)?;
+        Ok(())
     }
 }
 
@@ -313,6 +338,7 @@ impl Stage {
 pub struct PhysicalContract {
     admission: SourceAdmission,
     template: data::timing::Template,
+    odd_two_column: Option<data::timing::Template>,
 }
 impl PhysicalContract {
     /// Retain independently gated current predicates and the complete physical envelope.
@@ -321,7 +347,19 @@ impl PhysicalContract {
         Self {
             admission,
             template,
+            odd_two_column: None,
         }
+    }
+
+    /// Admit the independently qualified odd-parity, two-column physical owner.
+    pub fn set_odd_two_column(&mut self, template: data::timing::Template) {
+        self.odd_two_column = Some(template);
+    }
+
+    /// Whether admission includes the distinct odd-parity physical owner.
+    #[must_use]
+    pub const fn has_odd_two_column(&self) -> bool {
+        self.odd_two_column.is_some()
     }
     /// Validate every actual query and producer before any physical advance or return.
     /// # Errors
@@ -367,12 +405,13 @@ impl PhysicalContract {
             return Err(Fault::Query);
         };
         Self::validate_enemy_miss(request, attempt, body, inputs)?;
-        let row = self.validate_terrain_stop(
+        let (row, template) = self.validate_terrain_stop(
             request,
             answered,
             &attempt.effect,
             movement.state().vertical.speed,
             inputs.room,
+            inputs.current.inputs.parity,
         )?;
         let mut expected_state = *movement.state();
         expected_state.position = answer.to;
@@ -414,7 +453,7 @@ impl PhysicalContract {
         if requests.width == 0 {
             return Err(Fault::Query);
         }
-        Ok((requests.bind(&self.template)?, requests))
+        Ok((requests.bind(template)?, requests))
     }
 
     fn ground_intent(
@@ -442,7 +481,6 @@ impl PhysicalContract {
                 != super::borrowed_player_preparation::ClockDisposition::Running
             || actors.dependency.clocks.enemy
                 != super::borrowed_player_preparation::ClockDisposition::Running
-            || inputs.current.inputs.parity != types::Parity::Even
             || inputs.room.boundary != crate::production::world::Boundary::Air
         {
             return Err(Fault::Dependency);
@@ -553,7 +591,8 @@ impl PhysicalContract {
         effect: &types::RequestEffect,
         speed: types::Fixed,
         room: &Room,
-    ) -> Result<u8, Fault> {
+        parity: types::Parity,
+    ) -> Result<(u8, &data::timing::Template), Fault> {
         use types::Parts;
         let MovementDecision::MotionAnswer {
             answer, outputs, ..
@@ -588,10 +627,17 @@ impl PhysicalContract {
             .checked_add(request.distance.pixel().0)
             .and_then(|whole| whole.checked_add(body.y.0))
             .ok_or(Fault::Query)?;
-        let cell = types::Cell {
-            x: left >> 4,
-            y: leading >> 4,
+        let left_column = left >> 4;
+        let right_column = right >> 4;
+        let (x, template) = match parity {
+            types::Parity::Even if left_column == right_column => (left_column, &self.template),
+            types::Parity::Odd if left_column.checked_add(1) == Some(right_column) => (
+                right_column,
+                self.odd_two_column.as_ref().ok_or(Fault::Dependency)?,
+            ),
+            types::Parity::Even | types::Parity::Odd => return Err(Fault::Query),
         };
+        let cell = types::Cell { x, y: leading >> 4 };
         let index = usize::from(cell.y)
             .checked_mul(usize::from(room.width))
             .and_then(|base| base.checked_add(usize::from(cell.x)))
@@ -613,7 +659,6 @@ impl PhysicalContract {
         if left > right
             || right >= 4096
             || leading >= 4096
-            || left >> 4 != right >> 4
             || cell.x >= room.width
             || index >= 32768
             || gap >= 32768
@@ -632,6 +677,7 @@ impl PhysicalContract {
             || answer.to.x != request.bounds.at.x
             || answer.to.y.pixel().0 != centre
             || answer.to.y.sub() != 65535
+            || (parity == types::Parity::Odd && (gap != 0 || answer.to != request.bounds.at))
             || *effect != types::RequestEffect::Travel(answer.accepted)
             || outputs.pending_aim.is_some()
             || outputs
@@ -640,7 +686,7 @@ impl PhysicalContract {
         {
             return Err(Fault::Query);
         }
-        u8::try_from(cell.y).map_err(|_| Fault::Query)
+        Ok((u8::try_from(cell.y).map_err(|_| Fault::Query)?, template))
     }
 }
 
@@ -712,6 +758,12 @@ pub struct Pending {
 }
 
 impl Pending {
+    /// The actual current operands bound to this in-flight hardware request.
+    #[must_use]
+    pub const fn requests(&self) -> Requests {
+        self.requests
+    }
+
     /// Retain actual derived request operands; source products never initialize these bytes.
     /// # Errors
     /// The requests belong to another actual owner or have an invalid room width.

@@ -1,6 +1,6 @@
 //! Distinct actual Contact, transport and poststep completion boundaries.
 
-use super::{Caller, Content, Dependency, State, appearance_caller, contact_contract};
+use super::{Caller, Content, Dependency, Rules, State, appearance_caller, contact_contract};
 use crate::production::{ProductionFault, Unsupported, timing::WorkId};
 use canonical::{Canonical, model::Model};
 
@@ -53,7 +53,7 @@ pub enum Stage {
     /// Actual ordinary travel and Stage0 echo disposition await Poststep return.
     Poststep {
         /// Actual preceding completed producers.
-        sound: Box<SoundCompleted>,
+        source: PoststepSource,
         /// Actual borrowed Stage0 appearance owner at this opportunity.
         appearance: Box<crate::production::appearance::Work>,
     },
@@ -84,7 +84,7 @@ pub struct SoundCompleted {
     /// Actual completed transport queues and progress.
     senders: super::Senders,
     /// Actual completed sound consumer position.
-    offers: super::sender_stage::Offers,
+    sound_offers: super::sender_stage::Offers,
     /// Actual completed physical ring advancement.
     queues: super::sender_contract::Queues,
 }
@@ -95,9 +95,42 @@ pub struct PoststepCompleted {
     /// Actual matching physical identity returned by Poststep.
     work: WorkId,
     /// Actual completed upstream producer chain.
-    sound: Box<SoundCompleted>,
+    source: PoststepSource,
     /// Actual borrowed echo disposition consumed by this Stage0 return.
     appearance: Box<crate::production::appearance::Work>,
+}
+
+/// Actual upstream result that authorizes the common Poststep return.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub enum PoststepSource {
+    /// A completed physical sound offer.
+    Enqueued(Box<SoundCompleted>),
+    /// A completed contact which made no sound request.
+    Quiet(Box<ContactCompleted>),
+}
+
+impl PoststepSource {
+    fn contact(&self) -> &ContactCompleted {
+        match self {
+            Self::Enqueued(sound) => &sound.contact,
+            Self::Quiet(contact) => contact,
+        }
+    }
+
+    fn holds(&self, state: &State) -> Result<(), ProductionFault> {
+        match self {
+            Self::Enqueued(sound) => sound.holds(state),
+            Self::Quiet(contact) if contact.quiet() => contact.holds(state),
+            Self::Quiet(_) => Err(missing()),
+        }
+    }
+
+    fn identities(&self) -> Vec<WorkId> {
+        match self {
+            Self::Enqueued(sound) => vec![sound.contact.completion.work, sound.work],
+            Self::Quiet(contact) => vec![contact.completion.work],
+        }
+    }
 }
 
 const fn missing() -> ProductionFault {
@@ -106,7 +139,50 @@ const fn missing() -> ProductionFault {
     ))
 }
 
+fn choose_contact_graphics(
+    qualified: &contact_contract::Qualified,
+    current: contact_contract::Current,
+    contacts: &mut super::rendering_stage::Contacts,
+    work: WorkId,
+) -> Result<(), ProductionFault> {
+    if qualified.graphic.is_some() {
+        super::rendering_stage::choose_contacts(
+            contacts,
+            &qualified.receipt.result,
+            super::rendering_stage::Part2Premises {
+                dry_ceres: current.context.area == types::Area::Ceres
+                    && current.context.water == contact_contract::Surface::Absent
+                    && current.context.lava == contact_contract::Surface::Absent,
+            },
+            work,
+        )
+        .map_err(|_| missing())?;
+    }
+    Ok(())
+}
+
 impl Stage {
+    pub(super) fn down_history(
+        &self,
+    ) -> Result<Option<(&super::movement::Movement, &appearance_caller::Receipt)>, ProductionFault>
+    {
+        let contact = match self {
+            Self::Idle => return Ok(None),
+            Self::Contact {
+                appearance,
+                movement,
+                ..
+            } => {
+                return Ok(Some((movement, appearance.receipt().ok_or_else(missing)?)));
+            }
+            Self::ContactComplete(contact) | Self::SoundOffer { contact, .. } => contact,
+            Self::SoundComplete(sound) => &sound.contact,
+            Self::Poststep { source, .. } => source.contact(),
+            Self::Complete(poststep) => poststep.source.contact(),
+        };
+        Ok(Some((&contact.movement, &contact.completion.receipt)))
+    }
+
     pub(super) fn owners_hold(&self, state: &State) -> bool {
         match self {
             Self::Idle => true,
@@ -147,12 +223,12 @@ impl Stage {
                     && state.sound_offer_current == Some(*current)
             }
             Self::SoundComplete(sound) => sound.holds(state).is_ok(),
-            Self::Poststep { sound, appearance } => {
-                sound.holds(state).is_ok() && state.appearance == **appearance
+            Self::Poststep { source, appearance } => {
+                source.holds(state).is_ok() && state.appearance == **appearance
             }
             Self::Complete(poststep) => {
                 poststep.work == WorkId(1106)
-                    && poststep.sound.holds(state).is_ok()
+                    && poststep.source.holds(state).is_ok()
                     && *poststep.appearance == state.appearance
                     && poststep.appearance.model.0.state.stage == types::BoostStage::Stage0
             }
@@ -167,14 +243,13 @@ impl Stage {
             Self::ContactComplete(contact) | Self::SoundOffer { contact, .. } => {
                 vec![contact.completion.work]
             }
-            Self::SoundComplete(sound) | Self::Poststep { sound, .. } => {
-                vec![sound.contact.completion.work, sound.work]
+            Self::SoundComplete(sound) => vec![sound.contact.completion.work, sound.work],
+            Self::Poststep { source, .. } => source.identities(),
+            Self::Complete(poststep) => {
+                let mut identities = poststep.source.identities();
+                identities.push(poststep.work);
+                identities
             }
-            Self::Complete(poststep) => vec![
-                poststep.sound.contact.completion.work,
-                poststep.sound.work,
-                poststep.work,
-            ],
         }
     }
 
@@ -193,6 +268,14 @@ impl Stage {
 }
 
 impl ContactCompleted {
+    pub(super) fn quiet(&self) -> bool {
+        let receipt = &self.completion.receipt;
+        receipt.before.model.0.state.playhead.time_left > samus_appearance::Frames::LAST
+            && matches!(receipt.result.model.0.completed.last(),
+                Some(samus_appearance::Receipt::Appearance { output, .. })
+                    if output.contact.is_none() && output.sound.is_none())
+    }
+
     fn holds(&self, state: &State) -> Result<(), ProductionFault> {
         self.completion.receipt.validate().map_err(|_| missing())?;
         let Caller::PlayerContinuation {
@@ -205,6 +288,7 @@ impl ContactCompleted {
         if self.completion.work != appearance_caller::Kind::Contact.identity()
             || self.down != *down
             || self.movement != state.movement
+            || state.contact_current.as_ref() != Some(&self.current)
             || self.completion.receipt.result.model != state.appearance.model
             || state.graphical_contacts.consumed()
                 != u64::try_from(state.appearance.model.0.graphics.len()).map_err(|_| missing())?
@@ -219,8 +303,9 @@ impl SoundCompleted {
     fn holds(&self, state: &State) -> Result<(), ProductionFault> {
         self.contact.holds(state)?;
         if self.work != WorkId(1105)
+            || self.contact.quiet()
             || self.senders != state.senders
-            || self.offers != state.sound_offers
+            || self.sound_offers != state.sound_offers
             || state.sender_queues.as_ref() != Some(&self.queues)
         {
             return Err(missing());
@@ -396,7 +481,7 @@ impl State {
             work,
             contact: contact.clone(),
             senders: senders_chosen.clone(),
-            offers: offers_chosen.clone(),
+            sound_offers: offers_chosen.clone(),
             queues: queues_chosen.clone(),
         }));
         let Caller::PlayerContinuation {
@@ -413,16 +498,33 @@ impl State {
         Ok(())
     }
 
-    pub(super) fn begin_poststep(&mut self, content: &Content) -> Result<(), ProductionFault> {
+    pub(super) fn begin_poststep(
+        &mut self,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<(), ProductionFault> {
+        self.validate_completed_down(content, rules)?;
         let Caller::PlayerContinuation {
-            post_down: Stage::SoundComplete(sound),
+            post_down,
             charging: false,
             ..
         } = &self.caller
         else {
             return Err(missing());
         };
-        sound.holds(self)?;
+        let source = match post_down {
+            Stage::SoundComplete(sound) => PoststepSource::Enqueued(sound.clone()),
+            Stage::ContactComplete(contact) if contact.quiet() => {
+                PoststepSource::Quiet(contact.clone())
+            }
+            Stage::Idle
+            | Stage::Contact { .. }
+            | Stage::ContactComplete(_)
+            | Stage::SoundOffer { .. }
+            | Stage::Poststep { .. }
+            | Stage::Complete(_) => return Err(missing()),
+        };
+        source.holds(self)?;
         // The retained actual Movement contains both travels and centre; later Aim never supplies either.
         self.movement.outputs().ok_or_else(missing)?;
         let profile = content
@@ -432,7 +534,7 @@ impl State {
             .poststep(self.appearance.model.0.state.stage)
             .map_err(|_| missing())?;
         let retained = Stage::Poststep {
-            sound: sound.clone(),
+            source,
             appearance: Box::new(self.appearance.clone()),
         };
         self.timing
@@ -452,15 +554,26 @@ impl State {
     }
 
     pub(super) fn validate_poststep(&self, content: &Content) -> Result<(), ProductionFault> {
+        let profile = self.poststep_profile(content)?;
+        if !self.has_physical_bill(WorkId(1106), &profile) {
+            return Err(missing());
+        }
+        Ok(())
+    }
+
+    fn poststep_profile(
+        &self,
+        content: &Content,
+    ) -> Result<data::timing::Profile, ProductionFault> {
         let Caller::PlayerContinuation {
-            post_down: Stage::Poststep { sound, appearance },
+            post_down: Stage::Poststep { source, appearance },
             charging: true,
             ..
         } = &self.caller
         else {
             return Err(missing());
         };
-        sound.holds(self)?;
+        source.holds(self)?;
         if self.appearance != **appearance {
             return Err(missing());
         }
@@ -469,8 +582,7 @@ impl State {
             .as_ref()
             .ok_or_else(missing)?
             .poststep(self.appearance.model.0.state.stage)
-            .map_err(|_| missing())?;
-        Ok(())
+            .map_err(|_| missing())
     }
 
     pub(super) fn complete_poststep(
@@ -478,12 +590,12 @@ impl State {
         work: WorkId,
         content: &Content,
     ) -> Result<(), ProductionFault> {
-        self.validate_poststep(content)?;
+        self.poststep_profile(content)?;
         if work != WorkId(1106) {
             return Err(missing());
         }
         let Caller::PlayerContinuation {
-            post_down: Stage::Poststep { sound, appearance },
+            post_down: Stage::Poststep { source, appearance },
             ..
         } = &self.caller
         else {
@@ -491,7 +603,7 @@ impl State {
         };
         let retained = Stage::Complete(Box::new(PoststepCompleted {
             work,
-            sound: sound.clone(),
+            source: source.clone(),
             appearance: appearance.clone(),
         }));
         let Caller::PlayerContinuation {
@@ -510,7 +622,9 @@ impl State {
     pub(super) fn begin_stride_contact(
         &mut self,
         content: &Content,
+        rules: &Rules,
     ) -> Result<(), ProductionFault> {
+        self.validate_completed_down(content, rules)?;
         let room = self.validate_room_owner(content)?;
         let Caller::PlayerContinuation {
             down: super::movement_down_contract::Stage::Complete(down),
@@ -545,17 +659,7 @@ impl State {
             .map_err(|_| missing())?;
         let work = appearance_caller::Kind::Contact.identity();
         let mut graphics_chosen = self.graphical_contacts.clone();
-        super::rendering_stage::choose_contacts(
-            &mut graphics_chosen,
-            &qualified.receipt.result,
-            super::rendering_stage::Part2Premises {
-                dry_ceres: current.context.area == types::Area::Ceres
-                    && current.context.water == contact_contract::Surface::Absent
-                    && current.context.lava == contact_contract::Surface::Absent,
-            },
-            work,
-        )
-        .map_err(|_| missing())?;
+        choose_contact_graphics(&qualified, current, &mut graphics_chosen, work)?;
         candidate
             .timing
             .begin(work, qualified.profile)
@@ -584,6 +688,17 @@ impl State {
     }
 
     pub(super) fn validate_stride_contact(&self, content: &Content) -> Result<(), ProductionFault> {
+        let profile = self.stride_contact_profile(content)?;
+        if !self.has_physical_bill(appearance_caller::Kind::Contact.identity(), &profile) {
+            return Err(missing());
+        }
+        Ok(())
+    }
+
+    fn stride_contact_profile(
+        &self,
+        content: &Content,
+    ) -> Result<data::timing::Profile, ProductionFault> {
         let room = self.validate_room_owner(content)?;
         let Caller::PlayerContinuation {
             down: super::movement_down_contract::Stage::Complete(actual_down),
@@ -619,21 +734,16 @@ impl State {
             .qualify(appearance, self, &content.appearance, current.0)
             .map_err(|_| missing())?;
         let mut graphics = graphics_before.clone();
-        super::rendering_stage::choose_contacts(
+        choose_contact_graphics(
+            &qualified,
+            current.0,
             &mut graphics,
-            &qualified.receipt.result,
-            super::rendering_stage::Part2Premises {
-                dry_ceres: current.0.context.area == types::Area::Ceres
-                    && current.0.context.water == contact_contract::Surface::Absent
-                    && current.0.context.lava == contact_contract::Surface::Absent,
-            },
             appearance_caller::Kind::Contact.identity(),
-        )
-        .map_err(|_| missing())?;
+        )?;
         if graphics != *graphics_chosen {
             return Err(missing());
         }
-        Ok(())
+        Ok(qualified.profile)
     }
 
     pub(super) fn complete_stride_contact(
@@ -641,7 +751,7 @@ impl State {
         work: WorkId,
         content: &Content,
     ) -> Result<(), ProductionFault> {
-        self.validate_stride_contact(content)?;
+        self.stride_contact_profile(content)?;
         let Caller::PlayerContinuation {
             post_down:
                 Stage::Contact {
@@ -671,15 +781,17 @@ impl State {
         qualified
             .completed(&completion, &outputs)
             .map_err(|_| missing())?;
-        qualified
-            .graphical(
-                qualified.graphic,
-                current.0.context,
-                candidate.appearance.model.0.state.stage,
-            )
-            .map_err(|_| missing())?;
         let mut graphics = graphics_chosen.clone();
-        super::rendering_stage::consume_contacts(&mut graphics, work).map_err(|_| missing())?;
+        if let Some(graphic) = qualified.graphic {
+            qualified
+                .graphical(
+                    graphic,
+                    current.0.context,
+                    candidate.appearance.model.0.state.stage,
+                )
+                .map_err(|_| missing())?;
+            super::rendering_stage::consume_contacts(&mut graphics, work).map_err(|_| missing())?;
+        }
         candidate.graphical_contacts = graphics;
         let retained = Stage::ContactComplete(Box::new(ContactCompleted {
             completion,

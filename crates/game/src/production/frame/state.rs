@@ -243,6 +243,19 @@ pub enum Fault {
 }
 
 impl State {
+    pub(super) fn has_physical_bill(
+        &self,
+        identity: timing::WorkId,
+        profile: &data::timing::Profile,
+    ) -> bool {
+        let mut active = self
+            .timing
+            .work
+            .iter()
+            .filter(|work| work.kind == timing::WorkKind::Semantic(identity));
+        active.next().is_some_and(|work| &work.profile == profile) && active.next().is_none()
+    }
+
     /// Read the current shared number without advancing the sequence.
     #[must_use]
     pub fn current_random(&self) -> Option<u16> {
