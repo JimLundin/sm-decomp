@@ -46,6 +46,32 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | audio-sender/missing-service-inputs | Unsupported at None: independent CPU sender seed and ordered queue/service inputs | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | movement-native-occupied-first-search | Pass | 1 | 0 | 1 | 7 | 0 | 1 |
 | movement-native-enemy-stop-terrain-absence | Pass | 1 | 0 | 1 | 8 | 0 | 1 |
+| sender-offer/native-00 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-01 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-02 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-03 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-04 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-05 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-06 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-07 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-08 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-09 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-10 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-11 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-12 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-13 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-14 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-15 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-16 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-17 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-18 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/ordered-pair | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/repeat-at-five | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/deny-at-six | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-smaller-limit | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-disabled | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-demo | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-explosion | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
 
 - **movement/D-inherited-cut** witnesses samus-movement/TravelledDistances. Limits: one-step travel witness; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; movement receipts and downstream consumers outside declared comparisons; pixel composition omitted.
 - **movement/W15** witnesses samus-movement/WallJump, samus-movement/TouchedCells. Limits: appearance feedback externally admitted; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; camera and pixel composition omitted.
@@ -63,6 +89,32 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **audio-sender/missing-service-inputs** declares no rule witness. Limits: independent CPU sender seed and ordered queue/service inputs unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-native-occupied-first-search** witnesses samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedCollisionTests, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared; Motion ordinal0 also retains complete request and ordered considered candidate semantics.; One Miss candidate is order-insensitive; the separate derived enemy-stop witness checks forbidden ordinary-right terrain absence. Elapsed CPU timing remains unproved.; Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change..
 - **movement-native-enemy-stop-terrain-absence** witnesses samus-movement/PerformedCollisionTests, samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.; Independent Motion ordinal0 is the unique ordinary-right request; compare its forbidden ordinary-right CollisionTests first, then its complete request and ordered considered candidate semantics.; Native enemy stop skips ordinary terrain while retaining separate support and later downward terrain. The production fault omits the required eligible enemy input/stage, exposing actual forbidden terrain work; no internal clean-model reorder mutant was executed.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared. Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically..
+- **sender-offer/native-00** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-01** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-02** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-03** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-04** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-05** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-06** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-07** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-08** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-09** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-10** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-11** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-12** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-13** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-14** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-15** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-16** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-17** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-18** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/ordered-pair** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/repeat-at-five** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-at-six** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-smaller-limit** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-disabled** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-demo** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-explosion** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
 
 ### Integrated cases
 
@@ -105,7 +157,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 M0: **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
 
-Of the 39 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **16 are in progress** and **0 done**; 23 have not started. **71 rounds** have landed on 16 models; the plan estimates 159 rounds for the whole game.
+Of the 39 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **16 are in progress** and **0 done**; 23 have not started. **72 rounds** have landed on 16 models; the plan estimates 159 rounds for the whole game.
 
 ### The models
 
@@ -113,7 +165,7 @@ Model implementation and vectors are separate from the replay evidence above.
 
 | Model | Plan | Status | Rounds | Vectors | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| audio-transport | U1 (in progress) | in progress | 1 | 112 | 8,053 | 2,711 | 2.97 |
+| audio-transport | U1 (in progress) | in progress | 2 | 112 | 8,053 | 2,711 | 2.97 |
 | enemy-interactions | C1 (in progress) | in progress | 1 | 30 | 264 | 362 | 0.73 |
 | weapons-projectiles | W1 (in progress) | in progress | 1 | 81 | 4,035 | 2,062 | 1.96 |
 | samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 25 | 501 | 18,405 | 10,786 | 1.71 |

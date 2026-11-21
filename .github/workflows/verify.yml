@@ -125,6 +125,9 @@ jobs:
       - &audio_native
         name: Fetch and validate the pinned native fixtures and continuation seed
         run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &sender_offers
+        name: Fetch observed sender offer windows
+        run: bash tools/ci/fetch_sender_offers.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &movement_opportunities
         name: Fetch the reviewed movement opportunity evidence
         run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
@@ -191,6 +194,7 @@ jobs:
       - *decrypt
       - *unpack_cache
       - *audio_native
+      - *sender_offers
       - *movement_opportunities
       - *connected_ordinary
       - *retained_frame

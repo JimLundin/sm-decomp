@@ -339,3 +339,14 @@ after = """
 case = "frame/ordinary-requested-nmi-return"
 cut = 1
 field = "frame.random"
+
+
+[[fault]]
+name = "sender-offer-demo-bypassed"
+responsibility = "audio-sender"
+file = "crates/game/src/production/sender.rs"
+before = "audio_transport::sender::offer(state, cue, allowance, permission);"
+after = "audio_transport::sender::offer(state, cue, allowance, if permission == OfferPermission::Demo { OfferPermission::Enabled } else { permission });"
+case = "sender-offer/deny-demo"
+cut = 0
+field = "sender.queue"

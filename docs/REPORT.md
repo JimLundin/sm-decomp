@@ -56,6 +56,32 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | audio-sender/missing-service-inputs | Unsupported at None: independent CPU sender seed and ordered queue/service inputs | 0 | 0 | unaccepted prefix | 0 | 0 | 0 |
 | movement-native-occupied-first-search | Pass | 1 | 0 | 1 | 7 | 0 | 1 |
 | movement-native-enemy-stop-terrain-absence | Pass | 1 | 0 | 1 | 8 | 0 | 1 |
+| sender-offer/native-00 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-01 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-02 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-03 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-04 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-05 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-06 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-07 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-08 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-09 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-10 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-11 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-12 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-13 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-14 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-15 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-16 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-17 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/native-18 | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/ordered-pair | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/repeat-at-five | Pass | 1 | 0 | 1 | 2 | 0 | 1 |
+| sender-offer/deny-at-six | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-smaller-limit | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-disabled | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-demo | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| sender-offer/deny-explosion | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
 
 - **movement/D-inherited-cut** witnesses samus-movement/TravelledDistances. Limits: one-step travel witness; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; movement receipts and downstream consumers outside declared comparisons; pixel composition omitted.
 - **movement/W15** witnesses samus-movement/WallJump, samus-movement/TouchedCells. Limits: appearance feedback externally admitted; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; camera and pixel composition omitted.
@@ -73,6 +99,32 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **audio-sender/missing-service-inputs** declares no rule witness. Limits: independent CPU sender seed and ordered queue/service inputs unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-native-occupied-first-search** witnesses samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedCollisionTests, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Direct selector-time scoped seed at within-video9233 source index424; completion4283 is not an NMI cut or preceding-cut continuation.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared; Motion ordinal0 also retains complete request and ordered considered candidate semantics.; One Miss candidate is order-insensitive; the separate derived enemy-stop witness checks forbidden ordinary-right terrain absence. Elapsed CPU timing remains unproved.; Actor selection, Frame production, full dispatcher and played-alone production remain external; actual outside-grid queries reject before retained state or outputs change..
 - **movement-native-enemy-stop-terrain-absence** witnesses samus-movement/PerformedCollisionTests, samus-movement/MotionAttempts, samus-movement/ReachedEnemyCandidates, samus-movement/PerformedSupportChecks, samus-movement/PerformedBodyFit. Limits: Derived native seed changes exactly two actor centre words; unchanged private ROM and pads. Direct selector424 seed and complete opportunity4052 are within-video9233, not an NMI cut or preceding-cut continuation.; Independent Motion ordinal0 is the unique ordinary-right request; compare its forbidden ordinary-right CollisionTests first, then its complete request and ordered considered candidate semantics.; Native enemy stop skips ordinary terrain while retaining separate support and later downward terrain. The production fault omits the required eligible enemy input/stage, exposing actual forbidden terrain work; no internal clean-model reorder mutant was executed.; Complete ordered Motion/Support/BodyFit work, nested BodyFit checks, CollisionTests, reached cells, inside cells and skip status are compared. Actor selection, Frame producers, full dispatcher, elapsed CPU timing and played-alone production remain external. Actual unadmitted grid queries reject atomically..
+- **sender-offer/native-00** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-01** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-02** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-03** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-04** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-05** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-06** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-07** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-08** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-09** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-10** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-11** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-12** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-13** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-14** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-15** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-16** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-17** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/native-18** witnesses audio-transport/OfferAcceptance. Limits: independent start for one selected group; producer and permission flags externally observed; no clock, reply advance or physical service selected; comparison at the first following service entry.
+- **sender-offer/ordered-pair** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/repeat-at-five** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-at-six** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-smaller-limit** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-disabled** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-demo** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **sender-offer/deny-explosion** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
 
 ### Integrated cases
 
@@ -357,7 +409,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,604 | 2,706 | 5,717 | 130 | 33 | 0 | 0 | 1,525 |
+| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,643 | 2,776 | 5,779 | 130 | 33 | 0 | 0 | 1,545 |
 
 ## Lines
 
@@ -379,8 +431,8 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | world-quake | 95 | 43 | 52 | 24 |
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
-| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,525 | 1,355 | 170 | 267 |
-| total | 17,615 | 8,258 | 9,357 | 8,741 |
+| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,545 | 1,355 | 190 | 274 |
+| total | 17,635 | 8,258 | 9,377 | 8,748 |
 
 ## Spec, budget and fit by area
 
@@ -643,9 +695,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 111 | 30,233 | 181,400 | 144,641 | 25,398 | 2,062 | 10,671 | 44,961 | 2,668 | 27,876 |
+| production and exact services | 111 | 30,233 | 181,400 | 144,641 | 25,412 | 2,068 | 10,671 | 44,961 | 2,668 | 27,877 |
 | bridges | 16 | 3,192 | 19,153 | 18,878 | 2,278 | 518 | 1,536 | 1,760 | 88 | 3,390 |
-| rebuilt models, shared types included | 123 | 8,741 | 52,446 | 58,294 | 24,088 | 18,486 | 3,624 | 3,811 | 1,013 | 17,615 |
+| rebuilt models, shared types included | 123 | 8,748 | 52,485 | 58,364 | 24,150 | 18,486 | 3,624 | 3,811 | 1,013 | 17,635 |
 
 ## Domain graph
 
@@ -2476,12 +2528,12 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | audio-transport | `crates/game/src/production/frame/state.rs` | names it | `SenderState`, `SoundGroup`, `sender` | 1,707 | 333 |
 | audio-transport | `crates/game/src/production/sender.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `QueueAllowance`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 780 | 115 |
 | audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `SenderState`, `State`, `sender`, `transport` | 2,580 | 562 |
-| audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 66 |
+| audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 67 |
 | enemy-interactions | `crates/game/src/enemy_interactions_bridge.rs` | bridge | - | 234 | 39 |
 | enemy-interactions | `crates/game/src/production/weapons.rs` | names it | `ContactConditions`, `DoorContact` | 1,714 | 257 |
 | weapons-projectiles | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 2,580 | 562 |
-| weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 66 |
+| weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 67 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
 | samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Samus` | 309 | 75 |
 | samus-movement | `crates/game/src/production/connected/appearance.rs` | names it | `Dashing`, `Samus`, `WallTest`, `suspended` | 1,037 | 179 |
@@ -2513,16 +2565,16 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 167 | 43 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 938 | 172 |
 | samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 2,580 | 562 |
-| samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 66 |
+| samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 67 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 309 | 75 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 2,346 | 395 |
 | world-camera | `crates/game/src/production/frame/camera_stage.rs` | names it | `Frame`, `Heights`, `LeadSetting`, `Leads`, `Room`, `RoomError`, `Rules`, `Samus` | 1,433 | 308 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 2,580 | 562 |
-| world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 66 |
+| world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 67 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 2,580 | 562 |
-| run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 66 |
+| run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 67 |
 | interface-hud | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `Ammo`, `Ammunition`, `CancelButton`, `ControlAnswer`, `Equipped`, `HudEvent`, `ItemControlInputs`, `SelectButton`, `SelectableItem`, `Selection` | 832 | 85 |
 | interface-hud | `crates/game/src/production/appearance.rs` | names it | `ControlAnswer`, `Selection` | 1,611 | 298 |
 | interface-hud | `crates/game/src/production/content.rs` | names it | `HudPictures` | 285 | 94 |
@@ -2548,11 +2600,11 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 2,318 | 276 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 2,580 | 562 |
-| interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 66 |
+| interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 67 |
 | world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 970 | 201 |
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 2,580 | 562 |
-| world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 66 |
+| world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 67 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AnimationInputs`, `Clip`, `Content`, `Figure`, `Inputs`, `Paces`, `Rules`, `State`, `update` | 446 | 105 |
 | samus-appearance | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `CannonDelay` | 832 | 85 |
 | samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Ahead`, `CannonDelay`, `CannonObservation`, `Clip`, `ControlEligibility`, `GraphicalContact`, `ItemControlAnswer`, `OfferedDecision`, `PublishedSound`, `SelectedItem`, `SoundRequest`, `State`, `SuspendedAppearance`, `WorkStep` | 1,611 | 298 |
@@ -2579,13 +2631,13 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 2,580 | 562 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,683 | 270 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
-| samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 66 |
+| samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 67 |
 | boss-ceres-ridley | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 970 | 201 |
 | boss-ceres-ridley | `crates/game/src/production/frame/actor_doors.rs` | bridge | `CeresDoor`, `DoorKind`, `Inputs`, `Phase`, `Rules`, `Stage`, `Wait` | 1,638 | 301 |
 | boss-ceres-ridley | `crates/game/src/production/movement_ceres.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 167 | 43 |
 | boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 2,580 | 562 |
-| boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 66 |
+| boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 67 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 970 | 201 |
 | world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 2,580 | 562 |
