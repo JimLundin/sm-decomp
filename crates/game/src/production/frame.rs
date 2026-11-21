@@ -68,6 +68,7 @@ pub mod pose_input;
 pub mod post_down_caller;
 pub mod post_down_contract;
 pub mod random;
+pub mod recurring_hud_map;
 pub mod rendering_stage;
 /// Actual quiet room-quake opportunity and Drawing input.
 pub mod room_quake;

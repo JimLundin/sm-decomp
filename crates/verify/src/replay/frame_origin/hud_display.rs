@@ -2,6 +2,44 @@
 
 use super::{Member, Model, Outcome, Sha256, buffer_address, data_failure, frame, profiles};
 
+/// Source-qualified physical predicates alone, independent of expected Ready observations.
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct AdjacentShape {
+    format: u16,
+    centre: [i32; 2],
+    explored_after_marking: [bool; 15],
+    map_events: frame::recurring_hud_map::MapEvents,
+}
+
+impl AdjacentShape {
+    pub(super) fn qualify(
+        self,
+        source: &frame::hud_stage::DisplayReceipt,
+    ) -> Result<frame::recurring_hud_map::RecurringDisplay, Outcome> {
+        let [x, y] = self.centre;
+        if self.format != 1
+            || !(2..=61).contains(&x)
+            || !(1..=30).contains(&y)
+            || !(2..=29).contains(&x.rem_euclid(32))
+        {
+            return Err(data_failure(None, "adjacent HUD quiet physical arm"));
+        }
+        Ok(frame::recurring_hud_map::RecurringDisplay {
+            frame: interface_hud::FrameCount(source.premises.frame.0.wrapping_add(1)),
+            room: source.premises.room,
+            centre: interface_hud::Place { x, y },
+            explored: self.explored_after_marking,
+            energy_capacity: source.status.energy.capacity,
+            reserve: source.status.reserve,
+            mute: source.premises.mute,
+            map_events: self.map_events,
+            runs: source.premises.runs,
+            map_collected: source.premises.map_collected,
+        })
+    }
+}
+
 pub(super) fn origin(
     bytes: &[u8],
     member: &Member,
@@ -40,6 +78,7 @@ pub(super) fn origin(
             source: display.clone(),
             room,
             address: buffer_address(buffers, "HudTilemap", 192)?,
+            recurring: None,
         },
         Model(Box::new(display)),
     ))

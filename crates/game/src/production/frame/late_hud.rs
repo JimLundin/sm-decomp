@@ -108,6 +108,12 @@ impl State {
         {
             return Err(missing());
         }
+        if !self.publications.original_interval()
+            && matches!(self.late_hud, Stage::StatusReady | Stage::Charging { .. })
+        {
+            // The adjacent map only establishes event facts at its own opportunity.
+            return Err(missing());
+        }
         match &self.late_hud {
             Stage::Pending => {
                 self.timing

@@ -26,6 +26,9 @@ use game::{
 };
 use std::path::Path;
 
+#[path = "adjacent_hud_tests.rs"]
+mod adjacent_hud_tests;
+
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Controller {
@@ -196,6 +199,16 @@ fn advance_frame(
     production: &mut Production,
     deadline: u64,
     reached: impl Fn(&State) -> bool,
+    collect: impl FnMut(game::production::frame::Outputs),
+) {
+    advance_frame_with_budget(production, deadline, MasterTicks(13), reached, collect);
+}
+
+fn advance_frame_with_budget(
+    production: &mut Production,
+    deadline: u64,
+    budget: MasterTicks,
+    reached: impl Fn(&State) -> bool,
     mut collect: impl FnMut(game::production::frame::Outputs),
 ) {
     loop {
@@ -215,9 +228,7 @@ fn advance_frame(
             "expected stage absent at wall {tick}, deadline {deadline}, cursor {cursor:?}"
         );
         let ProductionOutputs::Frame(outputs) = production
-            .advance(AdvanceInput::Frame {
-                budget: MasterTicks(13),
-            })
+            .advance(AdvanceInput::Frame { budget })
             .unwrap_or_else(|fault| panic!("{fault:?} at wall {tick}, cursor {cursor:?}"))
         else {
             panic!("frame outputs");
@@ -317,7 +328,12 @@ fn compare_continuation(
         check_preparation_checkpoints(admitted);
         let (entry, origin) = check_player_entry_checkpoints(admitted);
         check_remaining_player(admitted, entry, origin, original_doors);
-        if admitted_odd_ground(admitted) {
+        if matches!(&admitted.content, ProductionContent::Frame(content)
+            if content.hud_refresh.as_ref().is_some_and(|hud| hud.recurring.is_some()))
+        {
+            adjacent_hud_tests::check_hud_map(case, sources, admitted);
+            Dependency::CountdownSceneScheduling
+        } else if admitted_odd_ground(admitted) {
             Dependency::HudDisplayPreparation
         } else {
             Dependency::PlayerContinuationPreparation

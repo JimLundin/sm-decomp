@@ -1,5 +1,7 @@
 //! Fresh HUD inputs, complete tilemap readiness and its separate physical return.
 
+use super::recurring_hud_map::RecurringDisplay;
+
 use super::{Caller, Dependency, State, hud::Hud, hud_camera_caller, hud_stage};
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::{Canonical, model::Model};
@@ -17,6 +19,8 @@ pub struct Content {
     pub room: data::id::RoomId,
     /// Exact destination of the actual completed tilemap producer.
     pub address: data::dma::BusAddress,
+    /// Scoped unchanged external owners and physical branch of the adjacent opportunity.
+    pub recurring: Option<RecurringDisplay>,
 }
 
 /// Read-only causal inputs and full actual HUD results retained during this consumer.
@@ -134,7 +138,10 @@ impl Stage {
 }
 
 impl State {
-    fn hud_map_prefix(&self, content: &super::Content) -> Result<(), ProductionFault> {
+    fn hud_map_prefix<'a>(
+        &self,
+        content: &'a super::Content,
+    ) -> Result<&'a Content, ProductionFault> {
         let Caller::PlayerContinuation {
             post_down: post_down @ super::post_down_caller::Stage::Complete(_),
             charging: false,
@@ -147,16 +154,41 @@ impl State {
             return Err(missing());
         }
         let current = content.hud_refresh.as_ref().ok_or_else(missing)?;
-        if self.validate_room_owner(content).map_err(|_| missing())? != current.room
-            || self
-                .hud_display_current
-                .as_ref()
-                .map(|owner| owner.0.as_ref())
-                != Some(&current.source)
+        if self.validate_room_owner(content).map_err(|_| missing())? != current.room {
+            return Err(missing());
+        }
+        Ok(current)
+    }
+
+    fn current_display(
+        &self,
+        admitted: &Content,
+        before: &Hud,
+        rules: &super::Rules,
+    ) -> Result<Model<hud_stage::DisplayReceiptPin>, ProductionFault> {
+        if self.publications.original_interval() {
+            let retained = self.hud_display_current.as_ref().ok_or_else(missing)?;
+            if retained.0.as_ref() != &admitted.source {
+                return Err(missing());
+            }
+            return Ok(retained.clone());
+        }
+        let receipt = admitted
+            .recurring
+            .as_ref()
+            .and_then(|scope| {
+                scope.current(self, before, rules.hud.get(), &admitted.source.premises.map)
+            })
+            .ok_or_else(missing)?;
+        let actual = Model(Box::new(receipt));
+        if self
+            .hud_display_current
+            .as_ref()
+            .is_some_and(|retained| retained != &actual)
         {
             return Err(missing());
         }
-        Ok(())
+        Ok(actual)
     }
 
     fn fresh_hud_choice(
@@ -164,13 +196,12 @@ impl State {
         before: &Hud,
         content: &super::Content,
         rules: &super::Rules,
+        current: &hud_stage::DisplayReceipt,
     ) -> Result<(Hud, Hud, Profile), ProductionFault> {
-        self.hud_map_prefix(content)?;
         let Caller::PlayerContinuation { controls, .. } = &self.caller else {
             return Err(missing());
         };
         let admitted = content.hud_refresh.as_ref().ok_or_else(missing)?;
-        let current = &self.hud_display_current.as_ref().ok_or_else(missing)?.0;
         let samus = self.movement.state();
         let mut hud = before.clone();
         let mut refresh = hud_camera_caller::Refresh::Pending;
@@ -190,7 +221,7 @@ impl State {
                     event_owner: Some(&current.premises.events),
                 },
                 (rules.hud.get(), &content.hud),
-                (&admitted.source, &admitted.physical),
+                (current, &admitted.physical),
             )
             .map_err(|_| missing())?;
         let mut result = hud.clone();
@@ -214,11 +245,13 @@ impl State {
         }
         match &self.hud_map {
             Stage::Pending => {
-                let (chosen, result, profile) = self.fresh_hud_choice(&self.hud, content, rules)?;
+                let admitted = self.hud_map_prefix(content)?;
+                let current = self.current_display(admitted, &self.hud, rules)?;
+                let (chosen, result, profile) =
+                    self.fresh_hud_choice(&self.hud, content, rules, &current.0)?;
                 let Caller::PlayerContinuation { controls, .. } = &self.caller else {
                     return Err(missing());
                 };
-                let admitted = content.hud_refresh.as_ref().ok_or_else(missing)?;
                 let owner = Context {
                     before: self.hud.clone(),
                     chosen: chosen.clone(),
@@ -226,12 +259,13 @@ impl State {
                     produced: None,
                     movement: self.movement.clone(),
                     controls: controls.clone(),
-                    source: Model(Box::new(admitted.source.clone())),
+                    source: current.clone(),
                     room: admitted.room,
                 };
                 self.timing
                     .begin(hud_camera_caller::HUD_REFRESH, profile)
                     .map_err(ProductionFault::FrameHardware)?;
+                self.hud_display_current = Some(current);
                 self.hud = chosen;
                 self.hud_map = Stage::Active {
                     phase: hud_camera_caller::Refresh::Charging,
@@ -273,20 +307,33 @@ impl State {
         Ok(())
     }
 
+    pub(crate) fn validate_hud_checkpoint(
+        &self,
+        content: &super::Content,
+        rules: &super::Rules,
+    ) -> Result<(), super::Fault> {
+        if self.hud_map.identity().is_some() {
+            self.validate_hud_map(content, rules)
+                .map_err(|_| super::Fault::InvalidPlayerEntry)?;
+        }
+        Ok(())
+    }
+
     pub(super) fn validate_hud_map(
         &self,
         content: &super::Content,
         rules: &super::Rules,
     ) -> Result<(), ProductionFault> {
-        self.hud_map_prefix(content)?;
+        let admitted = self.hud_map_prefix(content)?;
         if !self.hud_map.holds(self) {
             return Err(missing());
         }
         let Stage::Active { phase, context } = &self.hud_map else {
             return Err(missing());
         };
-        let admitted = content.hud_refresh.as_ref().ok_or_else(missing)?;
-        let (chosen, result, producer) = self.fresh_hud_choice(&context.before, content, rules)?;
+        let current = self.current_display(admitted, &context.before, rules)?;
+        let (chosen, result, producer) =
+            self.fresh_hud_choice(&context.before, content, rules, &current.0)?;
         if chosen != context.chosen || result != context.result || admitted.room != context.room {
             return Err(missing());
         }
@@ -332,11 +379,10 @@ impl State {
         rules: &super::Rules,
     ) -> Result<(), ProductionFault> {
         // The returned operation is no longer in timing's retained active work.
-        self.hud_map_prefix(content)?;
+        let admitted = self.hud_map_prefix(content)?;
         if !self.hud_map.owners_hold(self) || self.hud_map.identity() != Some(work) {
             return Err(missing());
         }
-        let admitted = content.hud_refresh.as_ref().ok_or_else(missing)?;
         let Stage::Active { phase, context } = &mut self.hud_map else {
             return Err(missing());
         };

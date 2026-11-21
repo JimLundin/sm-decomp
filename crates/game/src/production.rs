@@ -228,6 +228,12 @@ pub enum AdmissionFault {
     StatePin(canonical::model::Unpinned),
 }
 
+impl From<frame::Fault> for AdmissionFault {
+    fn from(fault: frame::Fault) -> Self {
+        Self::Frame(Box::new(fault))
+    }
+}
+
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
@@ -353,22 +359,17 @@ impl Production {
                 ProductionContent::Frame(content),
                 ProductionRules::Frame(rules),
             ) => {
-                state
-                    .validate()
-                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
+                state.validate()?;
                 content.movement.validate()?;
-                content.random_requests.multiplier.checked().map_err(|_| {
-                    AdmissionFault::Frame(Box::new(frame::Fault::InvalidRandomWork))
-                })?;
-                state
-                    .current_clip(&content.appearance)
-                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
-                state
-                    .validate_committed_actors(content)
-                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
-                state
-                    .validate_grounded_checkpoint(content, rules)
-                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
+                content
+                    .random_requests
+                    .multiplier
+                    .checked()
+                    .map_err(|_| frame::Fault::InvalidRandomWork)?;
+                state.current_clip(&content.appearance)?;
+                state.validate_committed_actors(content)?;
+                state.validate_grounded_checkpoint(content, rules)?;
+                state.validate_hud_checkpoint(content, rules)?;
                 OwnedState::Frame(state)
             }
             (

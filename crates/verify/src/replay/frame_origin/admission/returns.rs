@@ -17,6 +17,9 @@ struct Supplement {
     adjacent_pose_input: Option<Member>,
     adjacent_actor_update: Option<Member>,
     adjacent_down_contact: Option<Member>,
+    adjacent_hud_map: Option<Member>,
+    #[serde(rename = "adjacent_hud_observations")]
+    _adjacent_hud_observations: Option<Member>,
     returns: Vec<Return>,
 }
 
@@ -84,6 +87,7 @@ pub(super) struct Prepared {
     pub(super) adjacent_pose_input: Option<data::timing::Template>,
     pub(super) adjacent_actor_update: Option<data::timing::Template>,
     pub(super) adjacent_down_contact: Option<[data::timing::Template; 2]>,
+    pub(super) adjacent_hud_map: Option<super::super::hud_display::AdjacentShape>,
 }
 
 pub(super) fn prepare(
@@ -107,6 +111,7 @@ pub(super) fn prepare(
         adjacent_pose_input,
         adjacent_actor_update,
         adjacent_down_contact,
+        adjacent_hud_map,
     ) = if let Some(reference) = &case.end.native_returns {
         let path = sources.native.join(&reference.path);
         let root = path
@@ -121,24 +126,10 @@ pub(super) fn prepare(
             .text()?,
         )
         .map_err(|_| data_failure(None, "native return supplement"))?;
-        let schedule_fault = || data_failure(None, "consecutive native returns");
         if supplement.format != 1 {
-            return Err(schedule_fault());
+            return Err(data_failure(None, "consecutive native returns"));
         }
-        let mut prior_cut = first_cut;
-        for mut next in supplement.returns {
-            if prior_cut.checked_add(1) != Some(next.cut)
-                || next.final_owners.is_some() != case.compares_final_frame_owners()
-            {
-                return Err(schedule_fault());
-            }
-            prior_cut = next.cut;
-            next.resolve(&root);
-            expected.insert(next.cut, next.expected()?);
-        }
-        if prior_cut != case.end.cut_inclusive {
-            return Err(schedule_fault());
-        }
+        extend_expected_returns(&mut expected, supplement.returns, case, first_cut, &root)?;
         supplement.pad_schedule.resolve(&root);
         let (pad_origin, pads) = read_pads(&supplement.pad_schedule, &manifest.pads)?;
         if pads.first().is_none_or(|pad| pad.at != next_pad.at) {
@@ -162,9 +153,18 @@ pub(super) fn prepare(
             [1810, 11822],
         )?;
         let down_contact = read_down_contact(supplement.adjacent_down_contact, &root)?;
-        (Some(pad_origin), pads, settling, pose, actors, down_contact)
+        let hud_map = read_hud_map(supplement.adjacent_hud_map, &root)?;
+        (
+            Some(pad_origin),
+            pads,
+            settling,
+            pose,
+            actors,
+            down_contact,
+            hud_map,
+        )
     } else {
-        (None, vec![next_pad], None, None, None, None)
+        (None, vec![next_pad], None, None, None, None, None)
     };
     let schedule = expected.keys().copied().collect();
     let random = case
@@ -191,7 +191,46 @@ pub(super) fn prepare(
         adjacent_pose_input,
         adjacent_actor_update,
         adjacent_down_contact,
+        adjacent_hud_map,
     })
+}
+
+fn extend_expected_returns(
+    expected: &mut BTreeMap<u64, frame::Return>,
+    returns: Vec<Return>,
+    case: &Case,
+    first_cut: u64,
+    root: &Path,
+) -> Result<(), Outcome> {
+    let schedule_fault = || data_failure(None, "consecutive native returns");
+    let mut prior_cut = first_cut;
+    for mut next in returns {
+        if prior_cut.checked_add(1) != Some(next.cut)
+            || next.final_owners.is_some() != case.compares_final_frame_owners()
+        {
+            return Err(schedule_fault());
+        }
+        prior_cut = next.cut;
+        next.resolve(root);
+        expected.insert(next.cut, next.expected()?);
+    }
+    if prior_cut != case.end.cut_inclusive {
+        return Err(schedule_fault());
+    }
+    Ok(())
+}
+
+fn read_hud_map(
+    member: Option<Member>,
+    root: &Path,
+) -> Result<Option<super::super::hud_display::AdjacentShape>, Outcome> {
+    member
+        .map(|mut member| {
+            member.resolve(root);
+            toml::from_str(&member.text()?)
+                .map_err(|_| data_failure(None, "adjacent HUD input shape"))
+        })
+        .transpose()
 }
 
 fn read_down_contact(

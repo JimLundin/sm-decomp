@@ -27,7 +27,7 @@
 <text x="20" y="690">connected-ordinary/carried-running-camera | Integrated cases | Pass | 9 compared cuts</text>
 <text x="20" y="722">connected-ordinary/run-release-floor-aim | Integrated cases | Pass | 16 compared cuts</text>
 <text x="20" y="754">frame/ordinary-requested-nmi-return | Integrated cases | Pass | 1 compared cuts</text>
-<text x="20" y="786">frame/adjacent-actual-trial | Integrated cases | Unsupported at Some(2): Frame(HudDisplayPreparation) | 1 compared cuts</text>
-<text x="20" y="818">frame/adjacent-held-trial | Integrated cases | Unsupported at Some(2): Frame(HudDisplayPreparation) | 1 compared cuts</text>
+<text x="20" y="786">frame/adjacent-actual-trial | Integrated cases | Unsupported at Some(2): Frame(CountdownSceneScheduling) | 1 compared cuts</text>
+<text x="20" y="818">frame/adjacent-held-trial | Integrated cases | Unsupported at Some(2): Frame(CountdownSceneScheduling) | 1 compared cuts</text>
 </g>
 </svg>

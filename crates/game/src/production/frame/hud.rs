@@ -196,6 +196,13 @@ impl Hud {
         matches!(work.0.answer(), interface_hud::Observation::Completed(_)) && ordinary.0.apply()
     }
 
+    pub(super) const fn frame_count(&self) -> Option<interface_hud::FrameCount> {
+        match self {
+            Self::Initial(_) => None,
+            Self::Work(work) | Self::Countdown { ordinary: work, .. } => work.0.frame_count(),
+        }
+    }
+
     /// Next actual controls or display opportunity; no inputs are captured by inspection.
     #[must_use]
     pub fn opportunity(&self) -> Option<interface_hud::HudOpportunity> {

@@ -435,9 +435,7 @@ const fn item_code(item: Option<SelectableItem>) -> u16 {
         Some(SelectableItem::XRayScope) => 5,
     }
 }
-pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>, Outcome> {
-    let tiles = game::production::frame::hud::tilemap(state)
-        .map_err(|_| data_failure(None, "HUD complete tilemap"))?;
+pub(super) fn explored_bitmap(state: &HudState) -> Vec<u8> {
     let mut explored = Vec::new();
     for index in 0_usize..256 {
         let byte = (0..8).fold(0_u8, |byte, bit| {
@@ -454,6 +452,12 @@ pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>,
         });
         explored.push(byte);
     }
+    explored
+}
+
+pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>, Outcome> {
+    let tiles = game::production::frame::hud::tilemap(state)
+        .map_err(|_| data_failure(None, "HUD complete tilemap"))?;
     let mut fields = vec![
         Observation {
             field: "hud.grid".to_owned(),
@@ -461,7 +465,7 @@ pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>,
         },
         Observation {
             field: "hud.explored".to_owned(),
-            bytes: explored,
+            bytes: explored_bitmap(state),
         },
     ];
     for (name, value) in [

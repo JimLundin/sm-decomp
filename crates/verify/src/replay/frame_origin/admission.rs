@@ -519,6 +519,13 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
             .ok_or_else(|| data_failure(None, "native FootContact owner"))?
             .set_quiet(contact);
     }
+    if let Some(shape) = returns.adjacent_hud_map {
+        let display = content
+            .hud_refresh
+            .as_mut()
+            .ok_or_else(|| data_failure(None, "native HUD display owner"))?;
+        display.recurring = Some(shape.qualify(&display.source)?);
+    }
     if let Some(actors) = returns.adjacent_actor_update {
         let continuation = content
             .player_continuation
