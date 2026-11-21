@@ -145,7 +145,7 @@ jobs:
       - &native_search_work
         name: Fetch and qualify the independently reviewed complete movement observations
         run: bash tools/ci/fetch_native_search_work.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Test independently admitted scoped search contracts
+      - name: Run required fixture-backed verification witnesses
         env:
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
           SM_SEARCH_PACKET: ${{ runner.temp }}/audio-native/native-search-inputs-v1
@@ -153,29 +153,11 @@ jobs:
           SM_SEARCH_FAULT_RECEIPT: ${{ runner.temp }}/search-fault-control.toml
           SM_TOUCH_PACKET: ${{ runner.temp }}/audio-native/native-search-order-v1
           SM_TOUCH_RECEIPT: ${{ runner.temp }}/search-touch-receipt.toml
-        run: |
-          cargo test --locked -p verify --lib native_search_ -- --ignored
-          cargo test --locked -p verify --lib native_touch_ -- --ignored
-      - name: Test connected ordinary continuation and delivery
-        env:
-          SM_ROM: ${{ github.workspace }}/rom/sm.smc
           SM_CACHE: ${{ runner.temp }}/cache
           SM_CONNECTED_SOURCE: ${{ runner.temp }}/audio-native
           SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
-        run: |
-          cargo test --locked --profile verify -p verify --lib replay::connected::tests:: -- --ignored --skip connected_complete_index_preserves_all_reviewed_floors
-      - name: Compare retained-frame continuations through native return
-        env:
-          SM_ROM: ${{ github.workspace }}/rom/sm.smc
           SM_AUDIO_NATIVE: ${{ runner.temp }}/audio-native
-        run: |
-          cargo test --locked --profile verify -p verify --lib replay::frame_origin::health_owner_tests::actual_native_ -- --ignored
-          cargo test --locked --profile verify -p verify --lib replay::frame_origin::late_hud_tests:: -- --ignored
-          cargo test --locked --profile verify -p verify --lib replay::frame_origin::cannon_tests::unready_cannon_rejects_the_ready_drawing_profile -- --exact --ignored
-          cargo test --locked --profile verify -p verify --lib replay::frame_origin::pad_ingress_tests::actual_frame_samples_host_changes_through_the_physical_latch_after_restore -- --exact --ignored
-          cargo test --locked --profile verify -p verify --lib \
-            replay::frame_origin::adjacent_tests::contiguous_native_returns_keep_independent_observations_and_inputs \
-            -- --exact --ignored
+        run: python3 tools/ci/required_witnesses.py
       - name: Build the shared replay command
         run: cargo build --locked --profile verify -p tools
       - name: Check every indexed case against the reviewed baseline
@@ -183,8 +165,6 @@ jobs:
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
             bash tools/ci/replay.sh --write "$RUNNER_TEMP/replay-receipt.toml"
-      - name: Check retained imported content and progress supply
-        run: SM_ROM="$PWD/rom/sm.smc" cargo test --locked --profile verify -p verify --lib tests::content -- --ignored
       - *cache_save
 
   fault-plan:
