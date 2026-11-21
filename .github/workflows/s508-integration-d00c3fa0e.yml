@@ -1,0 +1,144 @@
+name: Test saved pitch production admission d00c3fa0e
+on:
+  push:
+    branches: [lane/s508-integration-d00c3fa0e]
+    paths: [.github/workflows/s508-integration-d00c3fa0e.yml]
+permissions:
+  contents: read
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env: &replay_fixtures
+      CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
+      CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
+      # Root pins the validated fixture set after uploading its ciphertext.
+      AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
+      AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d00c3fa0e597825617f32c9fef799ecf8f3b174c
+          persist-credentials: false
+      - &cache
+        name: Restore the cargo registry and the build
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+      - &fetch_cache
+        name: Fetch the record cache and check its pin
+        run: |
+          if ! grep -qE '^[0-9a-f]{64}$' <<<"$CACHE_SHA256"; then
+            echo "::error::CACHE_SHA256 is not pinned: upload $CACHE_ASSET to ci-data and set its SHA-256"
+            exit 1
+          fi
+          # The release host answers 504 at times: back off for up to ten minutes.
+          if ! curl --fail --silent --show-error --location \
+            --retry 8 --retry-delay 15 --retry-all-errors --retry-max-time 600 \
+            --output "$RUNNER_TEMP/cache.tar.xz.enc" \
+            "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$CACHE_ASSET"; then
+            echo "::error::$CACHE_ASSET could not be fetched from the ci-data release"
+            exit 1
+          fi
+          echo "$CACHE_SHA256  $RUNNER_TEMP/cache.tar.xz.enc" | sha256sum --check
+      - &rom
+        name: Fetch the encrypted ROM
+        uses: actions/checkout@v4
+        with:
+          repository: JimLundin/ci-data
+          ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
+          path: .ci-data
+          persist-credentials: false
+      - &decrypt
+        name: Decrypt the ROM
+        env:
+          SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+        run: |
+          mkdir -p rom
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
+          if ! echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check; then
+            rm -f rom/sm.smc
+            echo "wrong ROM"
+            exit 1
+          fi
+          rm -rf .ci-data
+      - &unpack_cache
+        name: Decrypt and unpack the record cache
+        run: |
+          # The seed bundles' passphrase: sha256("sm-decomp-seeds-v1" + ROM) (docs/ORACLE.md).
+          SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat rom/sm.smc; } | sha256sum | cut -d' ' -f1)
+          export SM_SEED_PASSPHRASE
+          set -o pipefail
+          mkdir -p "$RUNNER_TEMP/cache"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
+            -in "$RUNNER_TEMP/cache.tar.xz.enc" | tar -xJ -C "$RUNNER_TEMP/cache"
+          rm "$RUNNER_TEMP/cache.tar.xz.enc"
+      - &audio_native
+        name: Fetch and validate the pinned native fixtures and continuation seed
+        run: bash tools/ci/fetch_audio_native.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &movement_opportunities
+        name: Fetch the reviewed movement opportunity evidence
+        run: bash tools/ci/fetch_movement_opportunities.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &connected_ordinary
+        name: Fetch the reviewed connected ordinary opportunities
+        run: |
+          bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+          bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &retained_frame
+        name: Fetch retained native frame inputs and return observations
+        run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &native_search
+        name: Fetch and qualify the pinned native search packets
+        run: bash tools/ci/fetch_native_search_packets.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Build and measure the selected source
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD)" = "d00c3fa0e597825617f32c9fef799ecf8f3b174c"
+          cargo build --locked --profile verify -p tools
+          target/verify/tools replay check scenarios/replay/index.toml --baseline scenarios/replay/baseline.toml --all --cache "$RUNNER_TEMP/cache" --rom rom/sm.smc --native "$RUNNER_TEMP/audio-native" --bundle "" --write "$RUNNER_TEMP/held-results.toml"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: s508-integration-d00c3fa0e
+          path: ${{ runner.temp }}/held-results.toml
+          if-no-files-found: error
+          retention-days: 7
+
+  checkpoint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d00c3fa0e597825617f32c9fef799ecf8f3b174c
+          persist-credentials: false
+      - name: Restore the cargo registry and the build
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Verify the codec and complete audio production checkpoints
+        run: |
+          set -o pipefail
+          cargo test --profile verify --locked -p canonical --lib
+          cargo test --profile verify --locked -p game --lib production::tests::audio | tee "$RUNNER_TEMP/pitch-checkpoints.txt"
+          grep -E 'test result: ok\. [1-9][0-9]* passed; 0 failed' "$RUNNER_TEMP/pitch-checkpoints.txt"
