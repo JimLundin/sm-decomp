@@ -179,6 +179,64 @@ impl State {
         }
     }
 
+    pub(super) fn completed_late_hud_queue(
+        &self,
+        content: &Content,
+    ) -> Result<Option<suffix_caller::HudQueue>, ProductionFault> {
+        Ok(self
+            .completed_late_hud_transfer(content)?
+            .map(|(queue, _)| queue.clone()))
+    }
+
+    pub(super) fn validate_completed_late_hud_queue(
+        &self,
+        content: &Content,
+    ) -> Result<(), ProductionFault> {
+        if let Some((_, contract)) = self.completed_late_hud_transfer(content)? {
+            self.late_hud_queue_from(&self.hud, contract)?;
+        }
+        Ok(())
+    }
+
+    fn completed_late_hud_transfer<'a>(
+        &'a self,
+        content: &'a Content,
+    ) -> Result<Option<(&'a suffix_caller::HudQueue, &'a Contract)>, ProductionFault> {
+        let Stage::Completed(retained) = &self.late_hud else {
+            return Ok(None);
+        };
+        let contract = content.late_hud.as_ref().ok_or_else(missing)?;
+        let suffix_caller::HudQueue::Queued(request) = retained else {
+            return Err(missing());
+        };
+        if request.template != contract.queue {
+            return Err(missing());
+        }
+        Ok(Some((retained, contract)))
+    }
+
+    fn late_hud_queue_from(
+        &self,
+        hud: &hud::Hud,
+        contract: &Contract,
+    ) -> Result<suffix_caller::HudQueue, ProductionFault> {
+        let (status, _) = hud.publication().ok_or_else(missing)?;
+        let tilemap = hud::tilemap(status).map_err(|_| missing())?;
+        let ready = self
+            .content
+            .ready_buffer(Buffer::HudTilemap)
+            .ok_or_else(missing)?;
+        if ready.region.bytes != tilemap {
+            return Err(missing());
+        }
+        let mut queue = suffix_caller::HudQueue::Empty;
+        contract
+            .queue
+            .append_hud(&ready.region, &mut queue)
+            .map_err(|_| missing())?;
+        Ok(queue)
+    }
+
     fn complete_late_hud(
         &mut self,
         id: timing::WorkId,
@@ -195,20 +253,7 @@ impl State {
                 if !hud.apply_late_status() || hud.events() != self.hud.events() {
                     return Err(missing());
                 }
-                let (status, _) = hud.publication().ok_or_else(missing)?;
-                let tilemap = hud::tilemap(status).map_err(|_| missing())?;
-                let ready = self
-                    .content
-                    .ready_buffer(Buffer::HudTilemap)
-                    .ok_or_else(missing)?;
-                if ready.region.bytes != tilemap {
-                    return Err(missing());
-                }
-                let mut queue = suffix_caller::HudQueue::Empty;
-                contract
-                    .queue
-                    .append_hud(&ready.region, &mut queue)
-                    .map_err(|_| missing())?;
+                let queue = self.late_hud_queue_from(&hud, contract)?;
                 self.hud = hud;
                 self.late_hud = Stage::Completed(queue);
             }

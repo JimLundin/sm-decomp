@@ -316,6 +316,8 @@ impl State {
             self.validate_hud_map(content, rules)
                 .map_err(|_| super::Fault::InvalidPlayerEntry)?;
         }
+        self.validate_completed_late_hud_queue(content)
+            .map_err(|_| super::Fault::InvalidPlayerEntry)?;
         Ok(())
     }
 

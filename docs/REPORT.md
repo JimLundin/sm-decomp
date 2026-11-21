@@ -615,7 +615,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | run-progress | replay provider | 1 | 987 | 1,003 | 65 | 335 | 90 | 64 | 16 | 187 |
-| interface-hud | bridge | 4 | 6,744 | 5,755 | 559 | 55 | 571 | 1,191 | 66 | 1,022 |
+| interface-hud | bridge | 4 | 6,967 | 6,030 | 559 | 55 | 559 | 1,211 | 66 | 1,065 |
 | interface-hud | replay provider | 3 | 5,065 | 4,650 | 436 | 347 | 325 | 653 | 16 | 880 |
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -635,7 +635,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 1 | 653 | 822 | 168 | 62 | 21 | 14 | 0 | 176 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 42,450 | 40,189 | 3,646 | 1,708 | 3,514 | 4,276 | 325 | 6,938 |
+| total | | | 42,673 | 40,464 | 3,646 | 1,708 | 3,502 | 4,296 | 325 | 6,981 |
 
 ## Engine services
 
@@ -643,8 +643,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 111 | 29,738 | 178,427 | 141,903 | 25,233 | 2,062 | 10,578 | 44,420 | 2,600 | 27,431 |
-| bridges | 16 | 3,053 | 18,317 | 17,885 | 2,278 | 518 | 1,529 | 1,741 | 66 | 3,245 |
+| production and exact services | 111 | 29,735 | 178,411 | 141,891 | 25,233 | 2,062 | 10,574 | 44,420 | 2,600 | 27,431 |
+| bridges | 16 | 3,090 | 18,540 | 18,160 | 2,278 | 518 | 1,517 | 1,761 | 66 | 3,288 |
 | rebuilt models, shared types included | 123 | 8,741 | 52,446 | 58,294 | 24,088 | 18,486 | 3,624 | 3,811 | 1,013 | 17,615 |
 
 ## Domain graph
@@ -2538,10 +2538,10 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/hud_camera_caller.rs` | names it | `HudOpportunity`, `HudPictures`, `MiniMapPower`, `MovementInputs`, `Observation`, `Rules`, `Selection` | 1,097 | 191 |
 | interface-hud | `crates/game/src/production/frame/hud_controls_inputs.rs` | names it | `Ammo`, `Ammunition`, `CancelButton`, `Equipped`, `ItemControlInputs`, `SelectButton`, `Stock` | 429 | 116 |
 | interface-hud | `crates/game/src/production/frame/hud_controls_owner.rs` | names it | `CancelButton`, `Observation`, `SelectButton`, `Selection` | 286 | 45 |
-| interface-hud | `crates/game/src/production/frame/hud_map_caller.rs` | bridge | - | 2,637 | 376 |
+| interface-hud | `crates/game/src/production/frame/hud_map_caller.rs` | bridge | - | 2,671 | 378 |
 | interface-hud | `crates/game/src/production/frame/hud_stage/controls_tests.rs` | names it | `Ammunition`, `CancelButton`, `Countdown`, `Equipped`, `HudGrid`, `HudState`, `MapCellSet`, `SelectButton`, `SelectableItem`, `Shown`, `Stock` | 878 | 96 |
 | interface-hud | `crates/game/src/production/frame/hud_stage.rs` | names it | `ControlAnswer`, `DisplayInputs`, `Dropped`, `FrameCount`, `HerMap`, `HudEvent`, `HudOpportunity`, `HudPictures`, `ItemControlInputs`, `MiniMapPower`, `Mute`, `Observation`, `Room`, `Rules`, `SelectableItem`, `Selection`, `Status` | 906 | 239 |
-| interface-hud | `crates/game/src/production/frame/late_hud.rs` | bridge | - | 1,372 | 193 |
+| interface-hud | `crates/game/src/production/frame/late_hud.rs` | bridge | - | 1,560 | 234 |
 | interface-hud | `crates/game/src/production/frame/motion_reset_contract.rs` | names it | `CancelButton`, `Observation`, `SelectButton`, `Selection` | 570 | 107 |
 | interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation` | 5,623 | 662 |
 | interface-hud | `crates/game/src/production/frame/recurring_hud_map.rs` | names it | `Dropped`, `Energy`, `FrameCount`, `HerMap`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `Status` | 808 | 141 |

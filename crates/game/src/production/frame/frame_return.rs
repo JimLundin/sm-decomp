@@ -310,10 +310,10 @@ impl State {
         } else if self.frame_tail != Tail::Complete {
             self.advance_frame_tail(content)?;
         } else {
-            let super::late_hud::Stage::Completed(queue) = &self.late_hud else {
-                return Err(missing());
-            };
-            return self.advance_s7(content, &queue.clone(), budget).map(Some);
+            let queue = self
+                .completed_late_hud_queue(content)?
+                .ok_or_else(missing)?;
+            return self.advance_s7(content, &queue, budget).map(Some);
         }
         Ok(None)
     }

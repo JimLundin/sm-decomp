@@ -62,6 +62,43 @@ fn actual_status_in_flight_restores_one_hud_upload_through_native_return() {
     super::super::compared(cut, &expected.fields, &observed).unwrap();
 }
 
+#[test]
+#[ignore = "requires the retained native frame and checked player ROM"]
+fn completed_hud_queue_rejects_a_changed_destination_at_checkpoint_admission() {
+    use game::production::{AdmissionFault, SavedProduction};
+
+    let (_, mut admitted) = retained_return();
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("frame inputs");
+    };
+    let budget = inputs.budget;
+    advance_until(&mut admitted, budget, |state| {
+        matches!(state.late_hud, Stage::Completed(HudQueue::Queued(_)))
+    });
+    let checkpoint = admitted.production.save().unwrap();
+    let restore = |saved: &SavedProduction| {
+        Production::restore(saved, admitted.content.clone(), admitted.rules.clone())
+    };
+    let restored = restore(&checkpoint).unwrap();
+    assert_observation_eq!(restored.state(), admitted.production.state());
+
+    let mut altered = frame_state(&restored).clone();
+    let Stage::Completed(HudQueue::Queued(request)) = &mut altered.late_hud else {
+        panic!("queued HUD request");
+    };
+    request.template.target.0 ^= 1;
+    let forged = Production::admit(
+        ProductionSeed::Frame(Box::new(altered)),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .and_then(|production| restore(&production.save().unwrap()));
+    assert!(matches!(
+        forged,
+        Err(AdmissionFault::Frame(fault)) if *fault == frame::Fault::InvalidPlayerEntry
+    ));
+}
+
 fn frame_state(production: &Production) -> &frame::State {
     let OwnedState::Frame(state) = production.state() else {
         panic!("frame state");
