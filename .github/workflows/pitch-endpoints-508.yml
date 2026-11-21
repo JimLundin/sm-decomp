@@ -1,0 +1,81 @@
+name: M0 saved pitch admission before correction
+on:
+  push:
+    branches: [lane/s640-pitch-endpoints-508]
+    paths: ['.github/workflows/pitch-endpoints-508.yml']
+permissions:
+  contents: read
+jobs:
+  pitch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c8887ed0682f33b4d1e293d3943e48753df4aec2
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-quality-Linux-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-c8887ed0682f33b4d1e293d3943e48753df4aec2
+          restore-keys: |
+            cargo-quality-Linux-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - name: Compare construction and real canonical restore with invented pitch values
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = c8887ed0682f33b4d1e293d3943e48753df4aec2
+          rustup toolchain install
+          mkdir -p crates/game/tests
+          cat > crates/game/tests/pitch_probe.rs <<'RUST'
+          //! Invented endpoint and admission probes for canonical pitch decoding.
+          /* Paste into a repository-side Rust test target with canonical, types and serde.
+             The second test records the existing bug. Reverse its three decode assertions once fixed.
+             This recipe uses invented values only. */
+          use canonical::{
+              from_bytes, to_bytes,
+              model::{Model, Pinned},
+          };
+          use types::audio::{EffectPitch, MusicalPitch};
+
+          struct Music;
+          impl Pinned for Music {
+              type State = MusicalPitch;
+              const NAME: &'static str = "synthetic-musical-pitch";
+              const SHAPE: u64 = 0;
+          }
+
+          struct Effect;
+          impl Pinned for Effect {
+              type State = EffectPitch;
+              const NAME: &'static str = "synthetic-effect-pitch";
+              const SHAPE: u64 = 0;
+          }
+
+          #[test]
+          fn invented_valid_pitch_endpoints() {
+              for pitch in [19, 51] {
+                  let bytes = to_bytes(&Model::<Music>(MusicalPitch::new(pitch).unwrap()));
+                  assert_eq!(bytes, [1, 0, 0, 0, pitch]);
+                  assert_eq!(from_bytes::<Model<Music>>(&bytes).unwrap().0.get(), pitch);
+              }
+              for pitch in [0, 71] {
+                  let bytes = to_bytes(&Model::<Effect>(EffectPitch::new(pitch).unwrap()));
+                  assert_eq!(bytes, [1, 0, 0, 0, pitch]);
+                  assert_eq!(from_bytes::<Model<Effect>>(&bytes).unwrap().0.get(), pitch);
+              }
+          }
+
+          #[test]
+          fn invented_invalid_pitch_currently_bypasses_construction() {
+              for pitch in [18, 52] {
+                  assert!(MusicalPitch::new(pitch).is_none());
+                  assert_eq!(from_bytes::<Model<Music>>(&[1, 0, 0, 0, pitch]).unwrap().0.get(), pitch);
+              }
+              assert!(EffectPitch::new(72).is_none());
+              assert_eq!(from_bytes::<Model<Effect>>(&[1, 0, 0, 0, 72]).unwrap().0.get(), 72);
+          }
+          RUST
+          cargo test --locked -p game --test pitch_probe | tee "$RUNNER_TEMP/pitch.log"
+          grep -F '2 passed; 0 failed' "$RUNNER_TEMP/pitch.log"
