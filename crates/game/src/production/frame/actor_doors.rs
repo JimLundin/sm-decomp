@@ -172,6 +172,7 @@ impl Door {
         }
     }
 
+    #[cfg(test)]
     fn matches(self, actor: &CurrentActor) -> bool {
         self.identity == actor.identity
             && self.body.geometry() == actor.geometry
@@ -276,6 +277,14 @@ impl Doors {
                 .copied()
                 .eq(self.0.iter().map(|door| door.identity))
             || membership.active.get(1..) != Some(membership.interactive.as_slice())
+            || self.0.iter().any(|door| {
+                let touch = if membership.interactive.contains(&door.identity) {
+                    ActorTouch::Tangible
+                } else {
+                    ActorTouch::Intangible
+                };
+                door.body.touch != touch
+            })
         {
             return None;
         }
@@ -328,6 +337,7 @@ impl Doors {
         Some((next, output))
     }
 
+    #[cfg(test)]
     pub(super) fn matches(self, output: &ActorUpdateCompletion) -> bool {
         self.0
             .into_iter()

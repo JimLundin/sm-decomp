@@ -78,7 +78,7 @@ impl State {
             drawing.begin_opportunity();
         }
         if let Some(owners) = &mut self.recurring_player {
-            owners.completed_poll_input = None;
+            owners.completed_door_input = None;
         }
         self.movement_stage = super::movement_stage::Stage::default();
         self.inside_inputs = None;

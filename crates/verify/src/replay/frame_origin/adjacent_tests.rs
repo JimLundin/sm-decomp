@@ -1462,7 +1462,73 @@ fn rejects_changed_frame(
     )
 }
 
+fn origin_actor_controls(admitted: &AdmittedCase) -> ([bool; 2], bool) {
+    use player_continuation::Stage;
+    let mut genuine = admitted.production.clone();
+    let deadline = 37_500;
+    advance_to_prelude_stage(&mut genuine, deadline, |caller| {
+        remaining_at(caller, Stage::Actors, false)
+    });
+    let OwnedState::Frame(before) = genuine.state() else {
+        panic!("frame production");
+    };
+    let mut swapped = before.clone();
+    advance_to_prelude_stage(&mut genuine, 50_000, |caller| {
+        remaining_at(caller, Stage::Sprites, false)
+    });
+    let OwnedState::Frame(after) = genuine.state() else {
+        panic!("frame production");
+    };
+    swapped.recurring_player.as_mut().unwrap().doors =
+        after.recurring_player.as_ref().unwrap().doors;
+    let mut swapped = Production::admit(
+        ProductionSeed::Frame(swapped),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let before = swapped.state().clone();
+    let rejected = swapped
+        .advance(AdvanceInput::Frame {
+            budget: MasterTicks(13),
+        })
+        .is_err_and(|fault| {
+            fault
+                == ProductionFault::Unsupported(Unsupported::Frame(
+                    Dependency::PlayerContinuationPreparation,
+                ))
+        });
+    if rejected {
+        assert_observation_eq!(swapped.state(), &before);
+    }
+    let checks = committed_actor_controls(admitted, &genuine, 1);
+    let mut restored = Production::restore(
+        &genuine.save().unwrap(),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    for production in [&mut genuine, &mut restored] {
+        advance_to_prelude_stage(production, 58_000, |caller| {
+            remaining_at(caller, Stage::Run, false)
+        });
+    }
+    assert_observation_eq!(genuine.state(), restored.state());
+    (checks, rejected)
+}
+
 fn check_committed_actor_checkpoint(admitted: &AdmittedCase, complete: &Production) {
+    assert_eq!(
+        committed_actor_controls(admitted, complete, 2),
+        [true, true]
+    );
+}
+
+fn committed_actor_controls(
+    admitted: &AdmittedCase,
+    complete: &Production,
+    stale_wait: u16,
+) -> [bool; 2] {
     use game::production::{AdmissionFault, frame::Fault};
 
     let restore = |production: &Production| {
@@ -1477,7 +1543,7 @@ fn check_committed_actor_checkpoint(admitted: &AdmittedCase, complete: &Producti
     let OwnedState::Frame(state) = authentic.state() else {
         panic!("frame production");
     };
-    let rejected = [false, true].map(|change_view| {
+    [false, true].map(|change_view| {
         let mut invalid = state.clone();
         let Caller::PlayerContinuation { remaining, .. } = &mut invalid.caller else {
             panic!("completed ActorUpdate");
@@ -1488,7 +1554,7 @@ fn check_committed_actor_checkpoint(admitted: &AdmittedCase, complete: &Producti
             use game::production::frame::borrowed_player_preparation::ActorViewDisposition;
             completion.actors[0].view = ActorViewDisposition::BelowPaddedView;
         } else {
-            completion.dependency.actors[0].instruction_timer = 2;
+            completion.dependency.actors[0].instruction_timer = stale_wait;
         }
         let health = invalid.health.as_mut().unwrap();
         replace_health_actor(health, &actual, completion);
@@ -1503,12 +1569,7 @@ fn check_committed_actor_checkpoint(admitted: &AdmittedCase, complete: &Producti
                 fault, AdmissionFault::Frame(frame) if *frame == Fault::InvalidPlayerEntry
             )
         })
-    });
-    assert_eq!(
-        rejected,
-        [true, true],
-        "stale actor wait and view checkpoint controls"
-    );
+    })
 }
 
 fn replace_health_actor(
@@ -1628,6 +1689,7 @@ fn contiguous_native_returns_keep_independent_observations_and_inputs() {
     ));
     assert!(!core::cmp::PartialEq::eq(&control.actual.second[1], &0));
     assert_observation_eq!(control.held.second, control.held.first);
+    let mut origin_controls = Vec::new();
     for (id, controller) in [
         ("frame/adjacent-actual-trial", &control.actual),
         ("frame/adjacent-held-trial", &control.held),
@@ -1644,7 +1706,13 @@ fn contiguous_native_returns_keep_independent_observations_and_inputs() {
             panic!("frame production");
         };
         let original_doors = initial.recurring_player.as_ref().unwrap().doors;
+        origin_controls.push(origin_actor_controls(&admitted));
         observe_first_return(case, &mut admitted, controller);
         compare_continuation(case, &sources, &mut admitted, controller, original_doors);
     }
+    assert_eq!(
+        origin_controls,
+        [([true, true], true); 2],
+        "origin actor checkpoint wait/view and live carried wait controls"
+    );
 }

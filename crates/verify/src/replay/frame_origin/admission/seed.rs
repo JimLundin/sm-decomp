@@ -436,7 +436,7 @@ pub(super) fn entry_seed(
             projectiles: current.0.projectiles.clone(),
             interaction: current.0.interaction,
             doors: super::player::admit_actor_doors(wram, &current.0.actors.actors)?,
-            completed_poll_input: None,
+            completed_door_input: None,
             actor_scene: current.0.actors.scene,
             contact: current.0.actors.contact,
             sprites: current.0.sprites.clone(),

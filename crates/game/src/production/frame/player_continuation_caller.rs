@@ -231,7 +231,7 @@ impl State {
         let fault = missing();
         let owners = self.recurring_player.as_ref().ok_or(fault)?;
         let actual = remaining.actors.as_ref();
-        let input = match (stage, actual, owners.completed_poll_input) {
+        let input = match (stage, actual, owners.completed_door_input) {
             (Stage::Actors, None, None) => owners.doors,
             (Stage::Sprites | Stage::Contact, Some(_), Some(input)) => input,
             _ => return Err(fault),
@@ -355,20 +355,28 @@ impl State {
     ) -> Result<Completion, ProductionFault> {
         let fault = missing();
         let (current, offers) = remaining_sources(prepared)?;
+        let input = match (&self.recurring_player, &remaining.actors) {
+            (Some(owners), None) if owners.completed_door_input.is_none() => Some(owners.doors),
+            (Some(owners), Some(_)) => Some(owners.completed_door_input.ok_or(fault)?),
+            (None, _) => None,
+            _ => return Err(fault),
+        };
         let complete_actors = || {
             self.remaining_actors(
                 content,
                 prepared,
                 selected,
-                &current.actors,
-                &offers.actors,
                 remaining.interaction.as_ref().ok_or(fault)?,
+                input,
             )
         };
-        if let Some(actual) = &remaining.actors
-            && !self.actor_history_matches(actual, complete_actors)?
-        {
-            return Err(fault);
+        if let Some(actual) = &remaining.actors {
+            let (expected, next) = complete_actors()?;
+            if actual != &expected
+                || next != self.recurring_player.as_ref().map(|owner| owner.doors)
+            {
+                return Err(fault);
+            }
         }
         let complete_sprites = || {
             offers
@@ -403,33 +411,21 @@ impl State {
         }
     }
 
-    fn actor_history_matches(
-        &self,
-        actual: &ActorUpdateCompletion,
-        original: impl FnOnce() -> Result<
-            (ActorUpdateCompletion, Option<super::actor_doors::Doors>),
-            ProductionFault,
-        >,
-    ) -> Result<bool, ProductionFault> {
-        if let Some(owners) = &self.recurring_player {
-            return Ok(owners.doors.matches(actual));
-        }
-        Ok(actual.eq(&original()?.0))
-    }
-
     fn remaining_actors(
         &self,
         content: &Content,
         prepared: &super::Preparation,
         selected: &CompletedPlayerSelection<'_>,
-        current: &super::borrowed_player_preparation::ActorUnselectedOrigin,
-        offer: &super::borrowed_player_preparation::DeferredActorUpdateReceipt,
         interaction: &SamusInteractionCompletion,
+        doors: Option<super::actor_doors::Doors>,
     ) -> Result<(ActorUpdateCompletion, Option<super::actor_doors::Doors>), ProductionFault> {
         let fault = missing();
+        let (current, offers) = remaining_sources(prepared)?;
+        let current = &current.actors;
+        let offer = &offers.actors;
         let position = self.camera.0.position();
         let view = ActorView {
-            samus: self.movement.state(),
+            samus: &selected.motion_reset.previous.0,
             content: &content.movement,
             camera: types::Pair {
                 x: position.x.pixel().0,
@@ -437,16 +433,17 @@ impl State {
             },
         };
         let membership = prepared.actors.as_ref().ok_or(fault)?;
-        if let Some(owners) = &self.recurring_player {
+        if let Some(doors) = doors {
+            if doors.path() != Some(super::actor_doors::Path::Waiting)
+                || doors.current_actors() != current.actors
+            {
+                return Err(fault);
+            }
             offer
                 .validate_dependencies(current, selected, view, membership, interaction)
                 .map_err(|_| fault)?;
-            let [x, y] = [
-                self.movement.state().position.x.pixel(),
-                self.movement.state().position.y.pixel(),
-            ];
-            let (next, completion) = owners
-                .doors
+            let [x, y] = [view.samus.position.x.pixel(), view.samus.position.y.pixel()];
+            let (next, completion) = doors
                 .run(
                     current,
                     offer.required.views,
@@ -472,11 +469,8 @@ impl State {
     ) -> Result<Profile, ProductionFault> {
         let profiles = content.player_continuation.as_ref().ok_or_else(missing)?;
         let template = if stage == Stage::Actors
-            && self
-                .recurring_player
-                .as_ref()
-                .and_then(|owners| owners.doors.path())
-                == Some(super::actor_doors::Path::Polling)
+            && matches!(&self.caller, Caller::PlayerContinuation { prepared, .. }
+                if prepared.prelude.origin().is_none())
         {
             profiles.recurring_actors.as_ref().ok_or_else(missing)?
         } else {
@@ -536,7 +530,8 @@ impl State {
         let Some(actual) = remaining.0.actors.as_ref() else {
             return Ok(());
         };
-        if prepared.prelude.origin().is_some() {
+        let original = prepared.prelude.origin().is_some();
+        if original && self.recurring_player.is_none() {
             return Ok(());
         }
         let fault = || super::Fault::InvalidPlayerEntry;
@@ -549,22 +544,29 @@ impl State {
             motion_reset: motion_reset.as_ref().ok_or_else(fault)?,
         };
         let interaction = remaining.0.interaction.as_ref().ok_or_else(fault)?;
-        let (next, result) = self
-            .recurring_poll(
-                content,
-                prepared,
-                &selected,
-                interaction,
-                owners.completed_poll_input.ok_or_else(fault)?,
-            )
-            .map_err(|_| fault())?;
+        let input = owners.completed_door_input.ok_or_else(fault)?;
+        let (next, result) = if original {
+            let (result, next) = self
+                .remaining_actors(content, prepared, &selected, interaction, Some(input))
+                .map_err(|_| fault())?;
+            (next.ok_or_else(fault)?, result)
+        } else {
+            self.recurring_poll(content, prepared, &selected, interaction, input)
+                .map_err(|_| fault())?
+        };
         let health_holds = match (&self.health, &content.health) {
+            (Some(owner), Some(admission)) if original => {
+                owner.validate_origin(admission).is_ok() && owner.actor() == Some(actual)
+            }
             (Some(owner), Some(admission)) => owner.holds_recurring_actor(admission, actual),
             (None, None) => true,
             _ => false,
         };
         if &result != actual || next != owners.doors || !health_holds {
             return Err(fault());
+        }
+        if original {
+            return Ok(());
         }
         if let Some(sprites) = remaining.0.sprites.as_ref() {
             if &owners.sprites.complete_quiet(actual).map_err(|_| fault())? != sprites {
@@ -644,7 +646,6 @@ impl State {
         let Caller::PlayerContinuation {
             remaining,
             remaining_work,
-            prepared,
             charging,
             stage,
             ..
@@ -658,9 +659,7 @@ impl State {
             Completion::Actors(result, next) => {
                 if let Some(next) = next {
                     let owners = self.recurring_player.as_mut().ok_or_else(missing)?;
-                    if prepared.prelude.origin().is_none() {
-                        owners.completed_poll_input = Some(owners.doors);
-                    }
+                    owners.completed_door_input = Some(owners.doors);
                     owners.doors = next;
                 }
                 if let Some(owner) = &mut self.health {

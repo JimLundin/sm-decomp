@@ -464,6 +464,30 @@ fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
             && actor.graphics_updated == GraphicsUpdated::Set
             && actor.frame_counter == AdministrativeCounter(1)
     }));
+    let mut mismatched = first_window.dependency.clone();
+    for (source, elapsed) in mismatched.actors.iter_mut().zip(&first_window.actors) {
+        source.instruction_timer = elapsed.instruction_timer;
+        source.graphics_updated = elapsed.graphics_updated;
+        source.frame_counter = elapsed.frame_counter;
+    }
+    mismatched.actors[1].touch = ActorTouch::Intangible;
+    let [a, b] = &mismatched.actors;
+    let wait = Wait::new(1).unwrap();
+    let inconsistent = Doors::new(
+        [
+            (ActorSlotIdentity(3), door(Phase::Open { wait }, a)),
+            (ActorSlotIdentity(9), door(Phase::Closed { wait }, b)),
+        ],
+        &mismatched.actors,
+        [true, false],
+    )
+    .unwrap();
+    assert!(
+        inconsistent
+            .run(&mismatched, views, membership, near, 456)
+            .is_none(),
+        "carried actor touch contradicts the selected interactive slot"
+    );
     assert!(!doors.matches(&first_window));
     assert!(!restored.matches(&second_window));
 }

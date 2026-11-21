@@ -17,8 +17,8 @@ pub struct RecurringPlayer {
     pub interaction: SamusInteractionOrigin,
     /// Current ordinary Ceres door actors.
     pub doors: super::actor_doors::Doors,
-    /// Actual door state consumed by this interval's completed recurring poll.
-    pub completed_poll_input: Option<super::actor_doors::Doors>,
+    /// Actual door state consumed by this interval's completed door update.
+    pub completed_door_input: Option<super::actor_doors::Doors>,
     /// Current pre-escape actor scene.
     pub actor_scene: ActorScene,
     /// Current ordinary contact guards, independent of door waits and outputs.
