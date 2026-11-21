@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="794" viewBox="0 0 1100 794" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="858" viewBox="0 0 1100 858" role="img" aria-labelledby="title description">
 <title id="title">Indexed replay requirements</title>
 <desc id="description">Each line is an independent case scope. Counts do not represent whole-movie coverage.</desc>
-<rect width="1100" height="794" fill="#fcfcfb"/>
+<rect width="1100" height="858" fill="#fcfcfb"/>
 <g font-family="sans-serif" font-size="14" fill="#202020">
 <text x="20" y="28" font-size="19">Indexed replay requirements</text>
 <text x="20" y="52">Separate scopes; compared cuts are not whole-movie progress.</text>
@@ -27,5 +27,7 @@
 <text x="20" y="690">connected-ordinary/carried-running-camera | Integrated cases | Pass | 9 compared cuts</text>
 <text x="20" y="722">connected-ordinary/run-release-floor-aim | Integrated cases | Pass | 16 compared cuts</text>
 <text x="20" y="754">frame/ordinary-requested-nmi-return | Integrated cases | Pass | 1 compared cuts</text>
+<text x="20" y="786">frame/adjacent-actual-trial | Integrated cases | Unsupported at Some(2): Frame(RandomPreparation) | 1 compared cuts</text>
+<text x="20" y="818">frame/adjacent-held-trial | Integrated cases | Unsupported at Some(2): Frame(RandomPreparation) | 1 compared cuts</text>
 </g>
 </svg>

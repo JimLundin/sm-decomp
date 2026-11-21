@@ -38,8 +38,8 @@ Weapons and contact have separate faults in their shared case. The movement/Cere
 has a separate fault substituting the door centre for held movement proximity.
 
 These faults exercise movement scheduling, elapsed audio time, cannon permission, contact
-permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres
-scheduling. They prove the named comparisons detect those errors within the existing scoped
+permission, camera following, HUD clock input, animation scheduling, event delivery, Ceres
+scheduling and the Haze band's native colour write. They prove the named comparisons detect those errors within the existing scoped
 cases and the narrowly integrated movement/Ceres connection. They do not prove all rules,
 borrowed producers, omitted outputs or pixels. Unsupported
 cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
@@ -203,11 +203,25 @@ equal to their admitted values in this case. The null model completes zero cuts.
 The indexed checkpoint reopens the completed state. Fixture tests also resume from the
 HUD interruption, in-flight late HUD status work and native NMI entry. They compare the
 full callback stream, endpoint observations and terminal state through return. The late HUD
-test tracks one queued request through its VRAM payload and retirement. A second request
-on the completed state is rejected. Service-marker callbacks carry no service-slot identity, and internal hardware
-events outside the callback stream are outside the comparison.
+test tracks one queued request through its VRAM payload and retirement. On the next advance,
+production consumes the acknowledged request and executes the quiet Music opportunity from
+carried state. Service-marker callbacks carry no service-slot identity, and the comparison
+excludes internal hardware events.
 
 The [case declaration](../scenarios/replay/index.toml) lists the borrowed preparation, actor,
 scene and native video inputs. The [fixture loader](../tools/ci/fetch_retained_frame.sh)
 fetches the pinned inputs and independent observations under the replay native directory.
 The power-on milestone is measured separately using movie inputs alone.
+
+The indexed adjacent Haze cases each admit once and
+repeat the first return's 2,295 callback and 12 field comparisons. The oracle runs use the
+recorded pad change and a held-input control. Production checks the actual first sampled word
+and its new presses, carries the returned Haze owner into settling, preserves the live band
+buffer, and compares the settling readiness, completion and LayerBlend clocks. The restored
+continuation compares all nine LayerBlend settings with the independently recorded writes.
+
+Both cases hold the exact cut-2 `Frame(RandomPreparation)` boundary in the
+[reviewed baseline](../scenarios/replay/baseline.toml). The pinned
+[adjacent fixture](../tools/ci/fetch_retained_haze.sh) has independent callback streams and
+terminal observations for each interval. Production reaches the Random boundary before the
+second return and its controller latch. The second interval's observations remain unverified.

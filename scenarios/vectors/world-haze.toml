@@ -1,0 +1,70 @@
+# Fade and bands are complete carried state together with colour.
+# Peak is present during brightening. Band positions run dim to bright.
+
+[[vector]]
+id = "R-bright-edge"
+source = "recorded"
+entries = ["HazeBrightens"]
+before = { colour = "blue", fade = "brightening", bands = [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], peak = 15 }
+after = { colour = "blue", fade = "brightening", bands = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], peak = 16 }
+output = { bands = "replace", backdrop = "black", excludes_third_background = true }
+
+[[vector]]
+id = "R-reaches-steady"
+source = "recorded"
+entries = ["HazeSettles"]
+before = { colour = "blue", fade = "brightening", bands = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], peak = 16 }
+after = { colour = "blue", fade = "steady", bands = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+output = { bands = "retain", backdrop = "black", excludes_third_background = true }
+continues = "R-bright-edge"
+
+[[vector]]
+id = "R-steady"
+source = "recorded"
+entries = ["HazeHolds"]
+before = { colour = "blue", fade = "steady", bands = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+after = { colour = "blue", fade = "steady", bands = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+output = { bands = "retain", backdrop = "black", excludes_third_background = true }
+continues = "R-reaches-steady"
+
+[[vector]]
+id = "C-early-ramp"
+source = "constructed"
+entries = ["HazeBrightens"]
+before = { colour = "red", fade = "brightening", peak = 0, bands = [12, 0, 7, 4, 8, 2, 3, 1, 2, 4, 15, 9, 9, 10, 11, 5] }
+after = { colour = "red", fade = "brightening", peak = 1, bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
+output = { bands = "replace", backdrop = "black", excludes_third_background = true }
+
+[[vector]]
+id = "C-one-step"
+source = "constructed"
+entries = ["HazeBrightens"]
+before = { colour = "red", fade = "brightening", peak = 1, bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
+after = { colour = "red", fade = "brightening", peak = 2, bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] }
+output = { bands = "replace", backdrop = "black", excludes_third_background = true }
+continues = "C-early-ramp"
+
+[[vector]]
+id = "C-same-green-levels"
+source = "constructed"
+entries = ["HazeBrightens"]
+before = { colour = "green", fade = "brightening", peak = 7, bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7] }
+after = { colour = "green", fade = "brightening", peak = 8, bands = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7] }
+output = { bands = "replace", backdrop = "black", excludes_third_background = true }
+
+[[vector]]
+id = "C-restored-settle"
+source = "constructed"
+entries = ["HazeSettles"]
+before = { colour = "green", fade = "brightening", peak = 16, bands = [12, 0, 7, 4, 8, 2, 3, 1, 2, 4, 15, 9, 9, 10, 11, 5] }
+after = { colour = "green", fade = "steady", bands = [12, 0, 7, 4, 8, 2, 3, 1, 2, 4, 15, 9, 9, 10, 11, 5] }
+output = { bands = "retain", backdrop = "black", excludes_third_background = true }
+
+[[vector]]
+id = "C-restored-hold"
+source = "constructed"
+entries = ["HazeHolds"]
+before = { colour = "green", fade = "steady", bands = [12, 0, 7, 4, 8, 2, 3, 1, 2, 4, 15, 9, 9, 10, 11, 5] }
+after = { colour = "green", fade = "steady", bands = [12, 0, 7, 4, 8, 2, 3, 1, 2, 4, 15, 9, 9, 10, 11, 5] }
+output = { bands = "retain", backdrop = "black", excludes_third_background = true }
+continues = "C-restored-settle"

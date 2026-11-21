@@ -40,14 +40,11 @@ fn complete_origin_required_before_import() {
 }
 
 #[test]
-#[ignore = "requires qualified origin and separate actual builder and actor completion artifacts"]
-fn builder_and_actor_receipts_join_complete_actual_origins() {
+#[ignore = "requires qualified origin and independent builder and actor observations"]
+fn live_builder_and_borrowed_actor_use_the_current_origins() {
     let current = frame_prelude_seed::decode(&origin().unwrap()).unwrap();
-    let builder_projection = projection("BUILDER-COMPLETION.private.toml").unwrap();
     let content = std::fs::read(member("BUILDER-TERMINAL-CONTENT.private.bin").unwrap()).unwrap();
-    let builder =
-        frame_preparation_receipts::builder(&current.builder, &builder_projection, &content)
-            .unwrap();
+    let builder = BuilderCompletionReceipt::reset(current.builder.clone());
     assert!(builder.dependency.eq(&current.builder));
     assert!(builder.terminal.backing.as_slice().eq(&content));
     let restored: BuilderCompletionReceipt =
@@ -55,19 +52,23 @@ fn builder_and_actor_receipts_join_complete_actual_origins() {
     assert!(restored.eq(&builder));
     let mut changed = current.builder.clone();
     changed.backing[0] ^= 1;
+    changed.backing[512] ^= 1;
+    let changed = BuilderCompletionReceipt::reset(changed);
     assert!(
-        frame_preparation_receipts::builder(&changed, &builder_projection, &content)
-            .is_err_and(|fault| fault == PreparationFault::Dependency)
+        !changed
+            .terminal
+            .backing
+            .iter()
+            .take(512)
+            .eq(content.iter().take(512))
     );
-    let mut corrupt_content = content;
-    corrupt_content[512] ^= 1;
     assert!(
-        frame_preparation_receipts::builder(
-            &current.builder,
-            &builder_projection,
-            &corrupt_content
-        )
-        .is_err_and(|fault| fault == PreparationFault::Content)
+        changed
+            .terminal
+            .backing
+            .iter()
+            .skip(512)
+            .eq(content.iter().skip(512))
     );
     let actor_projection = projection("ACTOR-ELIGIBILITY-COMPLETION.private.toml").unwrap();
     let actors = frame_preparation_receipts::actors(&current.actors, &actor_projection).unwrap();

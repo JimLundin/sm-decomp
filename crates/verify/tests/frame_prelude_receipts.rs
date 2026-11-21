@@ -1,14 +1,15 @@
 //! External Haze owner receipt and exact band encoding development evidence.
-#[path = "../src/replay/frame_prelude_receipts.rs"]
+#[path = "support/frame_prelude_receipts.rs"]
 mod frame_prelude_receipts;
 #[path = "../src/replay/frame_prelude_seed.rs"]
 mod frame_prelude_seed;
-use frame_prelude_receipts::PreludeReceiptFault;
+use frame_prelude_receipts::{
+    HazeBandsReceipt, HazeReadyOwnerReceipt, HazeTerminalReceipt, PreludeReceiptFault,
+};
 use game::production::frame::borrowed::ColourComponent;
 use game::production::frame::borrowed_prelude_receipts::{
-    BackdropBand, BandEncodingFault, BandIntensity, HazeBandsReceipt, HazeReadyOwnerReceipt,
-    HazeTerminalReceipt, LayerBlendDisposition, PreparedFixedColour, WindowTwoDisposition,
-    encode_bands, encode_fixed_colour,
+    BackdropBand, BandEncodingFault, BandIntensity, LayerBlendDisposition, PreparedFixedColour,
+    WindowTwoDisposition, encode_bands, encode_fixed_colour,
 };
 
 #[test]

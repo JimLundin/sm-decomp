@@ -1,11 +1,46 @@
 //! Independently qualified external prelude completions and exact output encoding.
+use canonical::Canonical;
 use data::timing::ChannelSlot;
 use game::production::frame::borrowed::{ColourComponent, DefaultLayerBlend, HazeOrigin, HazeSlot};
 use game::production::frame::borrowed_prelude_receipts::{
-    BackdropBand, BandIntensity, HazeBandsReceipt, HazeReadyOwnerReceipt, HazeTerminalReceipt,
-    LayerBlendDisposition, PreparedFixedColour,
+    BackdropBand, BandIntensity, LayerBlendDisposition, PreparedFixedColour,
 };
 use serde::Deserialize;
+
+/// Narrow backdrop buffer completion; it does not complete the remaining Haze work.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct HazeBandsReceipt {
+    /// Actual current Haze inputs, revalidated before applying this completion.
+    pub dependency: HazeOrigin,
+    /// Complete actual generated buffer in physical storage order.
+    pub bands: [BackdropBand; 16],
+    /// Actual producer maximum after its completed band operation.
+    pub maximum: u16,
+}
+
+/// Actual owner stage accompanying narrow band Ready, with the broader tail pending.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct HazeReadyOwnerReceipt {
+    /// Actual original Haze dependency.
+    pub dependency: HazeOrigin,
+    /// Complete owner fields at the qualified narrow Ready gate.
+    pub ready: HazeOrigin,
+    /// Actual completed prepared fixed colour.
+    pub fixed_colour: PreparedFixedColour,
+}
+
+/// Complete Haze owner result, separate from the earlier narrow band publication.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct HazeTerminalReceipt {
+    /// Actual original owner inputs retained for dependency revalidation.
+    pub dependency: HazeOrigin,
+    /// Complete terminal owner fields supplied by the external actual completion.
+    pub terminal: HazeOrigin,
+    /// Actual enabled physical channels in owner order.
+    pub enabled_channels: Vec<ChannelSlot>,
+    /// Actual completed layer-blend choice consumed by later blending.
+    pub blend: LayerBlendDisposition,
+}
 
 /// Invalid external prelude receipt or its complete actual dependencies.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

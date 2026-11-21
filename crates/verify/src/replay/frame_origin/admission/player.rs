@@ -44,6 +44,7 @@ impl Admission<'_> {
         };
         let player_entry = frame::PlayerEntryContent {
             pose_input: portion(templates, "S2.PoseInput")?,
+            recurring_pose_input: None,
             suit_palette: portion(templates, "S2.SuitPalette")?,
             environment: portion(templates, "S2.Environment")?,
             reference_acceleration,

@@ -9,6 +9,7 @@ pub struct Publications {
     /// Complete ordered stream, including already delivered effects.
     pub events: Vec<Event>,
     delivered: u64,
+    interval: u64,
 }
 
 /// Invalid imported publication progress or out-of-order physical effects.
@@ -53,13 +54,32 @@ impl Publications {
         Ok(outputs)
     }
 
+    pub(super) fn begin_interval(&mut self) -> Result<(), PublicationFault> {
+        if usize::try_from(self.delivered) != Ok(self.events.len()) {
+            return Err(PublicationFault::Cursor);
+        }
+        self.interval = self.delivered;
+        Ok(())
+    }
+
+    pub(super) const fn original_interval(&self) -> bool {
+        self.interval == 0
+    }
+
+    pub(super) fn active(&self) -> Result<&[Event], PublicationFault> {
+        usize::try_from(self.interval)
+            .ok()
+            .and_then(|index| self.events.get(index..))
+            .ok_or(PublicationFault::Cursor)
+    }
+
     /// Validate the complete imported publication continuation.
     ///
     /// # Errors
     /// Cursor outside the stream or nonmonotone retained physical time.
     pub fn validate(&self) -> Result<(), PublicationFault> {
         let position = usize::try_from(self.delivered).map_err(|_| PublicationFault::Cursor)?;
-        if position > self.events.len() {
+        if self.interval > self.delivered || position > self.events.len() {
             return Err(PublicationFault::Cursor);
         }
         let mut previous = None;

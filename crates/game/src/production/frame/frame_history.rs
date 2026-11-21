@@ -102,6 +102,25 @@ impl History {
         )
     }
 
+    pub(super) const fn begin_opportunity(&mut self) {
+        self.progress = Progress::Initial;
+    }
+
+    /// Current held and newly pressed controller words.
+    #[must_use]
+    pub const fn controller(&self) -> [u16; 2] {
+        [self.held, self.pressed]
+    }
+
+    /// The current held and pressed words captured by the completed native return.
+    #[must_use]
+    pub const fn native_controller(&self) -> Option<[u16; 2]> {
+        match self.progress {
+            Progress::Native => Some(self.controller()),
+            Progress::Initial | Progress::Drawn | Progress::Finalized => None,
+        }
+    }
+
     /// The actual Drawing history is complete before any final history.
     #[must_use]
     pub const fn drawn(&self) -> bool {

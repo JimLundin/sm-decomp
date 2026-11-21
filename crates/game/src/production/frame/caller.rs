@@ -2,32 +2,21 @@
 
 use super::borrowed_player_preparation::{
     PlayerContinuationCompletionsPin, PlayerContinuationOffersPin, PlayerContinuationOriginsPin,
-    PlayerEntryCompletions, PlayerEntryCompletionsPin, PlayerEntryOffersPin, PlayerEntryOriginsPin,
-};
-use super::borrowed_prelude_receipts::{
-    HazeBandsReceipt, HazeReadyOwnerReceipt, HazeTerminalReceipt,
+    PlayerEntryCompletions, PlayerEntryCompletionsPin, PlayerEntryOffers, PlayerEntryOffersPin,
+    PlayerEntryOrigins, PlayerEntryOriginsPin,
 };
 use super::{
     State,
-    borrowed::PreludeSeed,
-    borrowed_receipts::{FrameContinuationAfterNmi, MusicCompletionReceipt, MusicServiceReceipt},
+    borrowed::ActorEligibilityOrigin,
+    borrowed_receipts::{
+        FrameContinuationAfterNmi, MusicCompletionReceipt, MusicCountdown, MusicQueue, MusicRequest,
+    },
 };
 use crate::production::timing::{self, WorkId};
 use crate::production::{ProductionFault, Unsupported};
 use canonical::Canonical;
 use canonical::model::Model;
 use data::timing::MasterTicks;
-
-/// Independently borrowed Haze outputs, consumed at distinct actual opportunities.
-#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
-pub struct HazeCompletion {
-    /// Narrow completed bands and their original dependency.
-    pub bands: HazeBandsReceipt,
-    /// Owner at narrow Ready; countdown writers remain pending.
-    pub ready: HazeReadyOwnerReceipt,
-    /// Complete terminal owner after the physical tail.
-    pub terminal: HazeTerminalReceipt,
-}
 
 /// Complete content for the selected movement, appearance and HUD producers.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -38,6 +27,8 @@ pub struct Content {
     pub music: data::timing::Template,
     /// Physical preparation through narrow bands Ready.
     pub haze: data::timing::Template,
+    /// Qualified physical head for the live fade settling opportunity.
+    pub settling_haze: Option<data::timing::Template>,
     /// Remaining Haze work after narrow Ready.
     pub haze_tail: data::timing::Template,
     /// Native transfer address of the actual completed bands.
@@ -47,7 +38,7 @@ pub struct Content {
     /// Current layer-blend physical work.
     pub layer_blend: data::timing::Template,
     /// Actual immutable defaults offered to layer preparation.
-    pub layer_defaults: super::borrowed_layer_blend::LayerBlendDefaults,
+    pub layer_defaults: super::layer_blend::LayerBlendDefaults,
     /// Complete physical Random preparation, requests, samples and tail.
     pub random: data::timing::Template,
     /// Qualified original-seed requests and checked immutable multiplier.
@@ -156,6 +147,8 @@ pub struct PreparationContent {
 pub struct PlayerEntryContent {
     /// Full ordinary pose input.
     pub pose_input: data::timing::Template,
+    /// Distinct finite pose work after releasing aim while continuing to run.
+    pub recurring_pose_input: Option<data::timing::Template>,
     /// Full suit palette preparation.
     pub suit_palette: data::timing::Template,
     /// Full environment preparation.
@@ -249,22 +242,14 @@ pub struct Rules {
 /// Current explicitly borrowed preparation owners and unread external completion.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Prelude {
-    /// Current actual Haze, builder and actor origins.
-    pub origin: PreludeSeed,
-    /// Current unselected music owner; absent when independently unavailable.
-    pub music_current: Option<MusicServiceReceipt>,
+    /// Current independently decoded actor eligibility.
+    pub actors_origin: ActorEligibilityOrigin,
     /// Independently borrowed completion, unread until the actual music opportunity.
     pub music_completion: Option<MusicCompletionReceipt>,
-    /// Separate Haze completion, unread until actual preparation.
-    pub haze_completion: Option<HazeCompletion>,
-    /// Unread borrowed layer-blend result.
-    pub layer_completion: Option<super::borrowed_layer_blend::LayerBlendReceipt>,
     /// Actual current original seed; later terminal updates happen only after live samples.
     pub random_current: Option<super::borrowed_preparation::RandomSeed>,
     /// External terminal with required-product predicates, never device inputs.
     pub random_completion: Option<super::borrowed_preparation::DeferredRandomReceipt>,
-    /// Current complete builder reset offer, consumed after physical completion.
-    pub builder_completion: Option<super::borrowed_preparation::BuilderCompletionReceipt>,
     /// Independently current scene controller, separate from Haze simulation.
     pub scene_current: Option<super::borrowed_gameplay::SceneController>,
     /// Current gameplay route offer, unread until actual dispatch.
@@ -294,16 +279,16 @@ pub struct Prelude {
 /// Completed preparation history and still-current borrowed owners.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Preparation {
-    /// Current owners and unread future opportunities.
-    pub prelude: Prelude,
+    /// Current available inputs for later opportunities.
+    pub prelude: PreludeSource,
     /// Completed prior acknowledgment.
     pub publication: FrameContinuationAfterNmi,
     /// Completed Music.
     pub music: MusicCompletionReceipt,
     /// Completed Haze.
-    pub haze: HazeCompletion,
+    pub haze: super::haze::Prepared,
     /// Completed layers.
-    pub layers: super::borrowed_layer_blend::LayerBlendReceipt,
+    pub layers: super::layer_blend::LayerBlendReceipt,
     /// Actual completed Random owner.
     pub random: super::borrowed_preparation::RandomCompletionReceipt,
     /// Actual completed builder reset, absent until its physical work completes.
@@ -316,6 +301,16 @@ pub struct Preparation {
     pub debug: Option<super::borrowed_preparation::DebugCompletionReceipt>,
     /// Actual completed palette disposition.
     pub palette: Option<super::borrowed_preparation::PaletteCompletionReceipt>,
+}
+
+impl Preparation {
+    fn entry_origins(&self) -> Option<&PlayerEntryOrigins> {
+        Some(&self.prelude.origin()?.player_entry_current.as_ref()?.0)
+    }
+
+    fn entry_offers(&self) -> Option<&PlayerEntryOffers> {
+        Some(&self.prelude.origin()?.player_entry_offers.as_ref()?.0)
+    }
 }
 
 /// Current remaining preparation opportunity, independent of source coordinates.
@@ -354,6 +349,35 @@ pub struct MotionResetContent {
     pub whole: data::timing::Template,
 }
 
+/// Prelude inputs available at the current opportunity.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub enum PreludeSource {
+    /// Current neighbour effects at the admitted start.
+    Origin(Box<Prelude>),
+    /// Current neighbours must come from the retained game.
+    Recurring,
+}
+
+impl PreludeSource {
+    /// Scoped origin inputs that remain available in the first opportunity.
+    #[must_use]
+    pub const fn origin(&self) -> Option<&Prelude> {
+        match self {
+            Self::Origin(prelude) => Some(prelude),
+            Self::Recurring => None,
+        }
+    }
+
+    /// Scoped origin inputs still owned by the active first opportunity.
+    #[must_use]
+    pub fn origin_mut(&mut self) -> Option<&mut Prelude> {
+        match self {
+            Self::Origin(prelude) => Some(prelude),
+            Self::Recurring => None,
+        }
+    }
+}
+
 /// Actual software continuation; hardware pending interrupts have a separate owner.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub enum Caller {
@@ -361,35 +385,35 @@ pub enum Caller {
     /// Origin inputs alone do not establish acknowledgment or prepared producer results.
     AwaitingAcknowledgment {
         /// Current unselected producer origins, still unread by preparation.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Current actual software owner receipt, absent when unavailable.
         receipt: Option<FrameContinuationAfterNmi>,
     },
     /// The acknowledged caller's physical work is retained by the hardware owner.
     Acknowledgment {
         /// Still-needed preparation origins.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Consumed owner receipt, never reconsidered while charging.
         receipt: FrameContinuationAfterNmi,
     },
     /// Prior publication continuation completed; current music work must be admitted next.
     Music {
         /// Still-needed preparation origins.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Completed prior owner receipt.
         publication: FrameContinuationAfterNmi,
     },
     /// The selected current music service is physically charging before borrowed completion.
     MusicRunning {
         /// Current unselected owners and actual dependency chosen for this service.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Completed prior publication acknowledgment.
         publication: FrameContinuationAfterNmi,
     },
-    /// Music completed once; Haze now requires a current admitted borrowed preparation.
+    /// Music completed; the current Haze opportunity can be selected.
     Haze {
         /// Current preparation owners after completed music work.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Completed prior acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Actual consumed music completion, retained independently from unread inputs.
@@ -397,58 +421,62 @@ pub enum Caller {
     },
     /// Actual Haze preparation is physically charging.
     HazeRunning {
-        /// Retained owners and unread terminal result.
-        prelude: Prelude,
+        /// Current available neighbour inputs.
+        prelude: PreludeSource,
         /// Completed publication acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Completed Music service.
         music: MusicCompletionReceipt,
+        /// Private selected result while the head charges.
+        work: super::haze::Work,
     },
     /// Bands are Ready; the owner tail remains active physical work.
     HazeTail {
-        /// Current owners after narrow Ready.
-        prelude: Prelude,
+        /// Current available neighbour inputs.
+        prelude: PreludeSource,
         /// Prior acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Prior Music service.
         music: MusicCompletionReceipt,
-        /// Original dependency and narrow/terminal borrowed outputs.
-        completion: HazeCompletion,
+        /// Current display preparation, with transport still charging.
+        prepared: super::haze::Prepared,
     },
     /// Haze fully completed; layer preparation is the next actual prerequisite.
     LayerBlend {
         /// Current owners after full Haze completion.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Prior acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Prior Music service.
         music: MusicCompletionReceipt,
         /// Consumed Haze outputs, retained for later prepared video.
-        haze: HazeCompletion,
+        haze: super::haze::Prepared,
     },
     /// Current layer operation is physically charging.
     LayerBlendRunning {
         /// Remaining current owners.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Completed acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Completed Music.
         music: MusicCompletionReceipt,
         /// Completed Haze.
-        haze: HazeCompletion,
+        haze: super::haze::Prepared,
+        /// Current prepared effects held until the physical completion.
+        layers: super::layer_blend::LayerBlendReceipt,
     },
     /// Layers completed; current Random hardware work is needed next.
     Random {
         /// Remaining current owners.
-        prelude: Prelude,
+        prelude: PreludeSource,
         /// Completed acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Completed Music.
         music: MusicCompletionReceipt,
         /// Completed Haze.
-        haze: HazeCompletion,
+        haze: super::haze::Prepared,
         /// Actual completed prepared layer settings.
-        layers: super::borrowed_layer_blend::LayerBlendReceipt,
+        layers: super::layer_blend::LayerBlendReceipt,
     },
     /// The current Random owner is charging with actual device samples retained.
     RandomRunning {
@@ -459,9 +487,9 @@ pub enum Caller {
         /// Completed Music.
         music: MusicCompletionReceipt,
         /// Completed Haze.
-        haze: HazeCompletion,
+        haze: super::haze::Prepared,
         /// Completed prepared layers.
-        layers: super::borrowed_layer_blend::LayerBlendReceipt,
+        layers: super::layer_blend::LayerBlendReceipt,
         /// Actual live result bytes, preserved through pauses and interrupts.
         samples: super::random::Samples,
     },
@@ -525,7 +553,7 @@ pub enum Caller {
 /// A current causal prerequisite absent from the admitted frame continuation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Dependency {
-    /// The prior software publication has no independently admitted current acknowledgment.
+    /// The preceding software publication has no valid acknowledgment.
     FramePublicationAcknowledgment,
     /// Current music disposition does not yet include admitted actual owner effects.
     MusicPreparation,
@@ -680,11 +708,15 @@ impl State {
             super::borrowed_player_preparation::CompletedInsideAndHudWeapons { inside, controls };
         let current = prepared
             .prelude
+            .origin()
+            .ok_or(fault)?
             .player_continuation_current
             .as_ref()
             .ok_or(fault)?;
         let offers = prepared
             .prelude
+            .origin()
+            .ok_or(fault)?
             .player_continuation_offers
             .as_ref()
             .ok_or(fault)?;
@@ -707,10 +739,21 @@ impl State {
                 bindings: content.early_hud_controls.as_ref().ok_or(fault)?,
                 control_inputs: super::hud_controls_inputs::CurrentControls {
                     gameplay: prepared.gameplay.as_ref().ok_or(fault)?,
-                    scene: prepared.prelude.scene_current.ok_or(fault)?,
+                    scene: prepared
+                        .prelude
+                        .origin()
+                        .ok_or(fault)?
+                        .scene_current
+                        .ok_or(fault)?,
                     pose_input: completed.0.pose_input.as_ref().ok_or(fault)?,
                     pose: self.movement.state().pose,
-                    inventory: prepared.prelude.hud_inventory.as_ref().ok_or(fault)?,
+                    inventory: prepared
+                        .prelude
+                        .origin()
+                        .ok_or(fault)?
+                        .hud_inventory
+                        .as_ref()
+                        .ok_or(fault)?,
                 },
             },
             source.facing,
@@ -938,6 +981,21 @@ impl State {
     }
 
     pub(super) fn validate_player_entry(&self) -> Result<(), super::Fault> {
+        let pose_charging = matches!(
+            self.caller,
+            Caller::Player {
+                stage: PlayerEntryStage::PoseInput,
+                charging: true,
+                ..
+            },
+        );
+        if pose_charging
+            != self
+                .pose_input_configuration
+                .is_some_and(super::pose_input::Configuration::charging)
+        {
+            return Err(super::Fault::InvalidPlayerEntry);
+        }
         if matches!(self.caller, Caller::PlayerContinuation { .. }) {
             return self.validate_continuation_entry();
         }
@@ -976,7 +1034,10 @@ impl State {
             || (!matches!(
                 stage,
                 PlayerEntryStage::Inside | PlayerEntryStage::HudWeapons
-            ) && prepared.prelude.player_entry_current.is_some()
+            ) && prepared
+                .prelude
+                .origin()
+                .is_some_and(|origin| origin.player_entry_current.is_some())
                 && !self.entry_current_matches(prepared, *stage))
         {
             return Err(super::Fault::InvalidPlayerEntry);
@@ -997,6 +1058,35 @@ impl State {
         Ok(())
     }
 
+    pub(super) fn validate_prelude(&self) -> Result<(), super::Fault> {
+        let (source, expected) = match &self.caller {
+            Caller::AwaitingAcknowledgment { prelude, .. }
+            | Caller::Music { prelude, .. }
+            | Caller::Haze { prelude, .. }
+            | Caller::LayerBlend { prelude, .. }
+            | Caller::Random { prelude, .. } => (prelude, None),
+            Caller::Acknowledgment { prelude, .. } => (prelude, Some(ACKNOWLEDGMENT)),
+            Caller::MusicRunning { prelude, .. } => (prelude, Some(MUSIC)),
+            Caller::HazeRunning { prelude, .. } => (prelude, Some(HAZE)),
+            Caller::HazeTail { prelude, .. } => (prelude, Some(HAZE_TAIL)),
+            Caller::LayerBlendRunning { prelude, .. } => (prelude, Some(LAYERS)),
+            Caller::RandomRunning { .. }
+            | Caller::Preparation { .. }
+            | Caller::Player { .. }
+            | Caller::PlayerContinuation { .. } => return Ok(()),
+        };
+        let original = matches!(source, PreludeSource::Origin(_));
+        if original != self.publications.original_interval() {
+            return Err(super::Fault::InvalidPlayerEntry);
+        }
+        let work = self.timing.work.as_slice();
+        if !original && !expected.map_or(work.is_empty(), |identity| {
+            matches!(work, [work] if work.kind == timing::WorkKind::Semantic(identity))
+        }) {
+            return Err(super::Fault::InvalidPlayerEntry);
+        }
+        Ok(())
+    }
     fn validate_continuation_entry(&self) -> Result<(), super::Fault> {
         let Caller::PlayerContinuation {
             prepared,
@@ -1045,9 +1135,19 @@ impl State {
             || motion_reset
                 .as_ref()
                 .is_some_and(|completion| completion.work != WorkId(18))
-            || prepared.prelude.player_continuation_current.is_some()
-                != prepared.prelude.player_continuation_offers.is_some()
-            || ((count != 0 || *charging) && prepared.prelude.player_continuation_current.is_none())
+            || prepared
+                .prelude
+                .origin()
+                .is_some_and(|origin| origin.player_continuation_current.is_some())
+                != prepared
+                    .prelude
+                    .origin()
+                    .is_some_and(|origin| origin.player_continuation_offers.is_some())
+            || ((count != 0 || *charging)
+                && prepared
+                    .prelude
+                    .origin()
+                    .is_none_or(|origin| origin.player_continuation_current.is_none()))
             || completed.0.pose_input.is_none()
             || completed.0.suit_palette.is_none()
             || completed.0.environment.is_none()
@@ -1220,27 +1320,47 @@ impl State {
 
     fn entry_current_matches(&self, prepared: &Preparation, stage: PlayerEntryStage) -> bool {
         use types::Parts;
-        let Some(current) = &prepared.prelude.player_entry_current else {
+        let Some(current) = prepared.entry_origins() else {
             return false;
         };
         let samus = self.movement.state();
         match stage {
             PlayerEntryStage::PoseInput => {
-                current.0.pose_input.pose == samus.pose
-                    && current.0.pose_input.action == samus.pose.action
+                current.pose_input.pose == samus.pose
+                    && current.pose_input.action == samus.pose.action
             }
             PlayerEntryStage::SuitPalette => {
-                current.0.suit_palette.equipment == current.0.environment.equipment
+                current.suit_palette.equipment == current.environment.equipment
             }
             PlayerEntryStage::Environment => {
-                current.0.environment.pose == samus.pose
-                    && current.0.environment.centre_y == samus.position.y.pixel().0
+                current.environment.pose == samus.pose
+                    && current.environment.centre_y == samus.position.y.pixel().0
             }
             PlayerEntryStage::Inside | PlayerEntryStage::HudWeapons => false,
         }
     }
 
-    fn begin_player_entry(&mut self, content: &PlayerEntryContent) -> Result<(), ProductionFault> {
+    fn current_pose_input(
+        &self,
+        prepared: &Preparation,
+        content: &Content,
+    ) -> Option<super::pose_input::Decision> {
+        let route = prepared.gameplay.as_ref()?;
+        let words = if self.publications.original_interval() {
+            let current = &prepared.entry_origins()?.pose_input;
+            [current.held.0, current.pressed.0]
+        } else {
+            self.frame_history.as_ref()?.controller()
+        };
+        self.pose_input_configuration?.decide(
+            self.movement.state().pose,
+            words,
+            route,
+            &content.movement,
+        )
+    }
+
+    fn begin_player_entry(&mut self, content: &Content) -> Result<(), ProductionFault> {
         let Caller::Player {
             prepared,
             stage,
@@ -1260,18 +1380,36 @@ impl State {
             Dependency::PlayerPreparation
         };
         let fault = ProductionFault::Unsupported(Unsupported::Frame(dependency));
-        if !self.entry_current_matches(prepared, *stage)
-            || prepared.prelude.player_entry_offers.is_none()
-        {
-            return Err(fault);
-        }
-        let template = content.profile(*stage).ok_or(fault)?;
+        let entry = &content.player_entry;
+        let pose_input = (*stage == PlayerEntryStage::PoseInput)
+            .then(|| self.current_pose_input(prepared, content).ok_or(fault))
+            .transpose()?;
+        let template = if let Some(decision) = &pose_input {
+            match decision.path {
+                super::pose_input::Path::AimDown => &entry.pose_input,
+                super::pose_input::Path::ReleaseAim => {
+                    entry.recurring_pose_input.as_ref().ok_or(fault)?
+                }
+            }
+        } else {
+            if !self.entry_current_matches(prepared, *stage) || prepared.entry_offers().is_none() {
+                return Err(fault);
+            }
+            entry.profile(*stage).ok_or(fault)?
+        };
         let profile = template
             .bind(&[])
             .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
         self.timing
             .begin(stage.identity(), profile)
             .map_err(ProductionFault::FrameHardware)?;
+        if let Some(decision) = &pose_input {
+            self.pose_input_configuration
+                .as_mut()
+                .ok_or(fault)?
+                .begin(decision)
+                .ok_or(fault)?;
+        }
         self.caller = Caller::Player {
             prepared: prepared.clone(),
             stage: *stage,
@@ -1298,21 +1436,14 @@ impl State {
         else {
             return Err(ProductionFault::WrongScope);
         };
-        if identity != stage.identity() || !self.entry_current_matches(prepared, *stage) {
+        if identity != stage.identity()
+            || (*stage != PlayerEntryStage::PoseInput
+                && !self.entry_current_matches(prepared, *stage))
+        {
             return Err(fault);
         }
-        let current = &prepared
-            .prelude
-            .player_entry_current
-            .as_ref()
-            .ok_or(fault)?
-            .0;
-        let offers = &prepared
-            .prelude
-            .player_entry_offers
-            .as_ref()
-            .ok_or(fault)?
-            .0;
+        let current = || prepared.entry_origins().ok_or(fault);
+        let offers = || prepared.entry_offers().ok_or(fault);
         let route = prepared.gameplay.as_ref().ok_or(fault)?;
         let mut completed = completed.clone();
         let mut completion_work = completion_work.clone();
@@ -1321,12 +1452,13 @@ impl State {
                 if completed.0.pose_input.is_some() {
                     return Err(fault);
                 }
+                let decision = self.current_pose_input(prepared, content).ok_or(fault)?;
                 completed.0.pose_input = Some(
-                    offers
-                        .pose_input
-                        .clone()
-                        .complete(&current.pose_input, &content.movement, route)
-                        .map_err(|_| fault)?,
+                    self.pose_input_configuration
+                        .as_mut()
+                        .ok_or(fault)?
+                        .finish(decision)
+                        .ok_or(fault)?,
                 );
                 PlayerEntryStage::SuitPalette
             }
@@ -1335,10 +1467,10 @@ impl State {
                     return Err(fault);
                 }
                 completed.0.suit_palette = Some(
-                    offers
+                    offers()?
                         .suit_palette
                         .clone()
-                        .complete(&current.suit_palette, route)
+                        .complete(&current()?.suit_palette, route)
                         .map_err(|_| fault)?,
                 );
                 PlayerEntryStage::Environment
@@ -1348,11 +1480,11 @@ impl State {
                     return Err(fault);
                 }
                 completed.0.environment = Some(
-                    offers
+                    offers()?
                         .environment
                         .clone()
                         .complete(
-                            &current.environment,
+                            &current()?.environment,
                             content.player_entry.reference_acceleration,
                             route,
                         )
@@ -1389,34 +1521,28 @@ impl State {
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let prelude = &prepared.prelude;
-        let ready = match stage {
-            PreparationStage::Builder => prelude
-                .builder_completion
-                .as_ref()
-                .is_some_and(|offer| offer.dependency == prelude.origin.builder),
-            PreparationStage::Gameplay => {
-                prepared
-                    .builder
-                    .as_ref()
-                    .is_some_and(|builder| builder.terminal == prelude.origin.builder)
+        let ready = match (stage, prepared.prelude.origin()) {
+            (PreparationStage::Builder, _) => self.sprite_builder.is_some(),
+            (_, None) => false,
+            (PreparationStage::Gameplay, Some(prelude)) => {
+                prepared.builder.is_some()
                     && prelude
                         .gameplay_completion
                         .as_ref()
                         .is_some_and(|offer| Some(offer.dependency) == prelude.scene_current)
             }
-            PreparationStage::Actors => {
+            (PreparationStage::Actors, Some(prelude)) => {
                 prepared.gameplay.is_some()
                     && prelude
                         .actor_completion
                         .as_ref()
-                        .is_some_and(|offer| offer.dependency == prelude.origin.actors)
+                        .is_some_and(|offer| offer.dependency == prelude.actors_origin)
             }
-            PreparationStage::Debug => prelude
+            (PreparationStage::Debug, Some(prelude)) => prelude
                 .debug_completion
                 .as_ref()
                 .is_some_and(|offer| Some(&offer.dependency) == prelude.debug_current.as_ref()),
-            PreparationStage::Palette => prelude
+            (PreparationStage::Palette, Some(prelude)) => prelude
                 .palette_completion
                 .as_ref()
                 .is_some_and(|offer| Some(&offer.dependency) == prelude.palette_current.as_ref()),
@@ -1455,36 +1581,33 @@ impl State {
         }
         let mut prepared = prepared.clone();
         let fault = ProductionFault::Unsupported(Unsupported::Frame(stage.dependency()));
-        let prelude = &mut prepared.prelude;
         let next = match stage {
             PreparationStage::Builder => {
-                let builder = prelude.builder_completion.take().ok_or(fault)?;
-                if builder.dependency != prelude.origin.builder {
-                    return Err(fault);
-                }
-                prelude.origin.builder = builder.terminal.clone();
-                prepared.builder = Some(builder);
+                let builder = self.sprite_builder.take().ok_or(fault)?;
+                prepared.builder =
+                    Some(super::borrowed_preparation::BuilderCompletionReceipt::reset(builder));
                 Some(PreparationStage::Gameplay)
             }
             PreparationStage::Gameplay => {
+                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
                 let current = prelude.scene_current.ok_or(fault)?;
                 let offer = prelude.gameplay_completion.take().ok_or(fault)?;
                 let builder = prepared.builder.as_ref().ok_or(fault)?;
-                if builder.terminal != prelude.origin.builder {
-                    return Err(fault);
-                }
+
                 prepared.gameplay = Some(offer.complete(current, builder).map_err(|_| fault)?);
                 Some(PreparationStage::Actors)
             }
             PreparationStage::Actors => {
+                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
                 let actors = prelude.actor_completion.take().ok_or(fault)?;
-                if actors.dependency != prelude.origin.actors {
+                if actors.dependency != prelude.actors_origin {
                     return Err(fault);
                 }
                 prepared.actors = Some(actors);
                 Some(PreparationStage::Debug)
             }
             PreparationStage::Debug => {
+                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
                 let debug = prelude.debug_completion.take().ok_or(fault)?;
                 if Some(&debug.dependency) != prelude.debug_current.as_ref() {
                     return Err(fault);
@@ -1493,6 +1616,7 @@ impl State {
                 Some(PreparationStage::Palette)
             }
             PreparationStage::Palette => {
+                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
                 let palette = prelude.palette_completion.take().ok_or(fault)?;
                 if Some(&palette.dependency) != prelude.palette_current.as_ref() {
                     return Err(fault);
@@ -1541,6 +1665,7 @@ impl State {
         rules: &Rules,
         budget: MasterTicks,
     ) -> Result<Outputs, ProductionFault> {
+        self.begin_next_opportunity()?;
         self.validate_cannon_history()?;
         let (gameplay, native_admitted) = self.gameplay_publications()?;
         self.validate_scene_preservation(content, gameplay, native_admitted)?;
@@ -1615,7 +1740,7 @@ impl State {
             } => self.validate_early_hud_current(content)?,
             Caller::Player {
                 charging: false, ..
-            } => self.begin_player_entry(&content.player_entry)?,
+            } => self.begin_player_entry(content)?,
             Caller::Preparation { charging: true, .. } | Caller::Player { charging: true, .. } => {}
             Caller::AwaitingAcknowledgment { .. }
             | Caller::Acknowledgment { .. }
@@ -1716,11 +1841,13 @@ impl State {
                 prelude,
                 publication,
             } => {
-                let ready = prelude
-                    .music_completion
-                    .as_ref()
-                    .is_some_and(|completion| Some(completion.dependency) == prelude.music_current);
-                if !ready {
+                self.music_result(prelude)?;
+                if content
+                    .music
+                    .runs
+                    .iter()
+                    .any(|run| run.effect != data::timing::TemplateEffect::None)
+                {
                     return Err(ProductionFault::Unsupported(Unsupported::Frame(
                         Dependency::MusicPreparation,
                     )));
@@ -1744,15 +1871,12 @@ impl State {
                 music,
                 haze,
             } => {
-                let ready = prelude.layer_completion.as_ref().is_some_and(|receipt| {
-                    receipt.dependency == content.layer_defaults
-                        && receipt.haze == haze.terminal.blend
-                });
-                if !ready {
-                    return Err(ProductionFault::Unsupported(Unsupported::Frame(
+                let layers = content.layer_defaults.prepare(haze.blend);
+                super::layer_blend::encode(layers.terminal).map_err(|_| {
+                    ProductionFault::Unsupported(Unsupported::Frame(
                         Dependency::LayerBlendPreparation,
-                    )));
-                }
+                    ))
+                })?;
                 let profile = content
                     .layer_blend
                     .bind(&[])
@@ -1765,6 +1889,7 @@ impl State {
                     publication: *publication,
                     music: music.clone(),
                     haze: haze.clone(),
+                    layers,
                 };
             }
             Caller::Random { .. } => self.start_random(content)?,
@@ -1780,20 +1905,11 @@ impl State {
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let ready = prelude.haze_completion.as_ref().is_some_and(|completion| {
-            completion.bands.dependency == prelude.origin.haze
-                && completion.ready.dependency == prelude.origin.haze
-                && completion.terminal.dependency == prelude.origin.haze
-        });
-        if !ready {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::HazePreparation,
-            )));
-        }
-        let profile = content
+        let (work, profile) = self
             .haze
-            .bind(&[])
-            .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
+            .as_ref()
+            .ok_or_else(super::haze::missing)?
+            .choose(&content.haze, content.settling_haze.as_ref())?;
         self.timing
             .begin(HAZE, profile)
             .map_err(ProductionFault::FrameHardware)?;
@@ -1801,6 +1917,7 @@ impl State {
             prelude: prelude.clone(),
             publication: *publication,
             music: music.clone(),
+            work,
         };
         Ok(())
     }
@@ -1815,6 +1932,11 @@ impl State {
         } = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
+        };
+        let PreludeSource::Origin(prelude) = prelude else {
+            return Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::RandomPreparation,
+            )));
         };
         let current =
             prelude
@@ -1841,7 +1963,7 @@ impl State {
             .begin(RANDOM, profile)
             .map_err(ProductionFault::FrameHardware)?;
         self.caller = Caller::RandomRunning {
-            prelude: prelude.clone(),
+            prelude: prelude.as_ref().clone(),
             publication: *publication,
             music: music.clone(),
             haze: haze.clone(),
@@ -2174,7 +2296,7 @@ impl State {
             timing::Progress::Completed(MUSIC) => self.complete_music()?,
             timing::Progress::Completed(HAZE) => self.complete_haze(content)?,
             timing::Progress::Completed(HAZE_TAIL) => self.complete_haze_tail()?,
-            timing::Progress::Completed(LAYERS) => self.complete_layers(content)?,
+            timing::Progress::Completed(LAYERS) => self.complete_layers()?,
             timing::Progress::Completed(RANDOM) => self.complete_random()?,
             timing::Progress::Completed(identity)
                 if self.finish_player_work(identity, content, rules)? => {}
@@ -2416,6 +2538,27 @@ impl State {
         Ok(())
     }
 
+    fn music_result(
+        &self,
+        prelude: &PreludeSource,
+    ) -> Result<MusicCompletionReceipt, ProductionFault> {
+        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::MusicPreparation));
+        let current = self.music.ok_or(fault)?;
+        let result = match (current.countdown, current.queue) {
+            (MusicCountdown::Ready, MusicQueue::Empty) => MusicCompletionReceipt {
+                dependency: current,
+                terminal: current,
+                request: MusicRequest::None,
+            },
+        };
+        if let PreludeSource::Origin(source) = prelude
+            && source.music_completion.as_ref() != Some(&result)
+        {
+            return Err(fault);
+        }
+        Ok(result)
+    }
+
     fn complete_music(&mut self) -> Result<(), ProductionFault> {
         let Caller::MusicRunning {
             prelude,
@@ -2424,19 +2567,12 @@ impl State {
         else {
             return Err(ProductionFault::WrongScope);
         };
+        let music = self.music_result(prelude)?;
         let mut prelude = prelude.clone();
-        let music = prelude
-            .music_completion
-            .take()
-            .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::MusicPreparation,
-            )))?;
-        if Some(music.dependency) != prelude.music_current {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::MusicPreparation,
-            )));
+        if let PreludeSource::Origin(prelude) = &mut prelude {
+            prelude.music_completion = None;
         }
-        prelude.music_current = Some(music.terminal);
+        self.music = Some(music.terminal);
         self.caller = Caller::Haze {
             prelude,
             publication: *publication,
@@ -2450,53 +2586,25 @@ impl State {
             prelude,
             publication,
             music,
+            work,
         } = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let mut prelude = prelude.clone();
-        let completion = prelude
-            .haze_completion
-            .take()
-            .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::HazePreparation,
-            )))?;
-        if completion.bands.dependency != prelude.origin.haze
-            || completion.ready.dependency != prelude.origin.haze
-            || completion.terminal.dependency != prelude.origin.haze
-        {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::HazePreparation,
-            )));
-        }
-        let bytes = super::borrowed_prelude_receipts::encode_bands(&completion.bands.bands)
-            .map_err(|_| {
-                ProductionFault::Unsupported(Unsupported::Frame(Dependency::HazePreparation))
-            })?;
-        self.content
-            .complete(super::Materialization {
-                buffer: super::Buffer::HazeBackdropBands,
-                region: data::timing::ContentRegion {
-                    start: content.haze_bands_address,
-                    bytes: bytes.to_vec(),
-                },
-            })
-            .map_err(|_| {
-                ProductionFault::Unsupported(Unsupported::Frame(Dependency::HazePreparation))
-            })?;
-        prelude.origin.haze = completion.ready.ready.clone();
-        let profile = content
-            .haze_tail
-            .bind(&[])
-            .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
+        let prepared = self
+            .haze
+            .as_mut()
+            .ok_or_else(super::haze::missing)?
+            .complete_head(work, &mut self.content, content.haze_bands_address)?;
+        let profile = super::haze::quiet_profile(&content.haze_tail)?;
         self.timing
             .begin(HAZE_TAIL, profile)
             .map_err(ProductionFault::FrameHardware)?;
         self.caller = Caller::HazeTail {
-            prelude,
+            prelude: prelude.clone(),
             publication: *publication,
             music: music.clone(),
-            completion,
+            prepared,
         };
         Ok(())
     }
@@ -2506,58 +2614,40 @@ impl State {
             prelude,
             publication,
             music,
-            completion,
+            prepared,
         } = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
         };
-        if prelude.origin.haze != completion.ready.ready {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::HazePreparation,
-            )));
-        }
-        let mut prelude = prelude.clone();
-        prelude.origin.haze = completion.terminal.terminal.clone();
+        self.haze
+            .as_mut()
+            .ok_or_else(super::haze::missing)?
+            .complete_tail()?;
         self.caller = Caller::LayerBlend {
-            prelude,
+            prelude: prelude.clone(),
             publication: *publication,
             music: music.clone(),
-            haze: completion.clone(),
+            haze: prepared.clone(),
         };
         Ok(())
     }
-
-    fn complete_layers(&mut self, content: &Content) -> Result<(), ProductionFault> {
+    fn complete_layers(&mut self) -> Result<(), ProductionFault> {
         let Caller::LayerBlendRunning {
             prelude,
             publication,
             music,
             haze,
+            layers,
         } = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let mut prelude = prelude.clone();
-        let layers = prelude
-            .layer_completion
-            .take()
-            .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::LayerBlendPreparation,
-            )))?;
-        if layers.dependency != content.layer_defaults || layers.haze != haze.terminal.blend {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::LayerBlendPreparation,
-            )));
-        }
-        super::borrowed_layer_blend::encode(layers.terminal).map_err(|_| {
-            ProductionFault::Unsupported(Unsupported::Frame(Dependency::LayerBlendPreparation))
-        })?;
         self.caller = Caller::Random {
-            prelude,
+            prelude: prelude.clone(),
             publication: *publication,
             music: music.clone(),
             haze: haze.clone(),
-            layers,
+            layers: layers.clone(),
         };
         Ok(())
     }
@@ -2596,7 +2686,7 @@ impl State {
         prelude.random_current = Some(random.terminal);
         self.caller = Caller::Preparation {
             prepared: Preparation {
-                prelude,
+                prelude: PreludeSource::Origin(Box::new(prelude)),
                 publication: *publication,
                 music: music.clone(),
                 haze: haze.clone(),

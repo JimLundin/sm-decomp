@@ -402,6 +402,14 @@ const DOMAINS: &[Domain] = &[
         areas: &[("quiet-quake", &["lib.rs"])],
         apart: &[],
     },
+    Domain {
+        name: "world-haze",
+        bridge: None,
+        adapters: &["production/frame/haze.rs"],
+        providers: &[],
+        areas: &[("backdrop", &["lib.rs"])],
+        apart: &[],
+    },
 ];
 
 /// A body of code's size and lines, the score's parts in eighths of a token as `size` keeps them.

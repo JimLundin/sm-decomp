@@ -150,6 +150,12 @@ impl Palette {
         }
     }
 
+    pub(super) const fn retire_opportunity(&mut self) {
+        self.origin = None;
+        self.work.0 = RunColourWork::UNOBSERVED;
+        self.completed = false;
+    }
+
     pub(super) fn holds(&self, state: &State) -> bool {
         let mut active = state
             .timing
@@ -160,7 +166,6 @@ impl Palette {
         active.next().is_some() == pending
             && active.next().is_none()
             && self.completed == (!pending && self.work.0 != RunColourWork::UNOBSERVED)
-            && (self.completed || self.origin.is_some())
             && self
                 .palettes
                 .current

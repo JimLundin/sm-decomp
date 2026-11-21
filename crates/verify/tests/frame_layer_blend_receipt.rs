@@ -1,12 +1,12 @@
 //! Actual immutable default inputs and separate external prepared-setting receipt evidence.
 #[path = "../src/replay/frame_layer_blend_receipt.rs"]
 mod frame_layer_blend_receipt;
-#[path = "../src/replay/frame_prelude_receipts.rs"]
+#[path = "support/frame_prelude_receipts.rs"]
 mod frame_prelude_receipts;
 #[path = "../src/replay/frame_prelude_seed.rs"]
 mod frame_prelude_seed;
 use frame_layer_blend_receipt::LayerBlendFault;
-use game::production::frame::borrowed_layer_blend::{
+use game::production::frame::layer_blend::{
     LayerBlendReceipt, LayerEncodingFault, PreparedLayerSettings, encode,
 };
 use game::state::video::{ColourMathLayers, ColourMathSelect, Layer, Layers, WindowSettings};
@@ -34,7 +34,7 @@ fn exact_prepared_setting_encoding_validates_complete_layers() {
 
 #[test]
 #[ignore = "requires qualified player ROM, current origin and external owner receipts"]
-fn source_completion_requires_actual_default_operands_and_completed_haze() {
+fn live_blend_matches_all_independently_prepared_settings() {
     let rom_bytes = std::fs::read(std::env::var_os("SM_FRAME_ROM").unwrap()).unwrap();
     let mut changed_rom = rom_bytes.clone();
     let rom = data::rom::Rom::new(rom_bytes).unwrap();
@@ -52,32 +52,14 @@ fn source_completion_requires_actual_default_operands_and_completed_haze() {
     let haze = frame_prelude_receipts::haze_terminal(&current, &haze_projection).unwrap();
     let projection = std::fs::read_to_string(std::env::var_os("SM_LAYER_BLEND").unwrap()).unwrap();
     let defaults = frame_layer_blend_receipt::defaults(&rom, &projection).unwrap();
-    let completion = frame_layer_blend_receipt::completion(defaults, &haze, &projection).unwrap();
+    let completion = defaults.prepare(haze.blend);
     assert!(completion.dependency.eq(&defaults));
     let restored: LayerBlendReceipt =
         canonical::from_bytes(&canonical::to_bytes(&completion)).unwrap();
     assert!(restored.eq(&completion));
     let external: toml::Value = toml::from_str(&projection).unwrap();
-    let expected: Vec<u8> = [
-        "REG_W12SEL",
-        "REG_W34SEL",
-        "REG_WOBJSEL",
-        "REG_TM",
-        "REG_TS",
-        "REG_TMW",
-        "REG_TSW",
-        "NEXT_GAMEPLAY_CGWSEL",
-        "NEXT_GAMEPLAY_CGADSUB",
-    ]
-    .iter()
-    .map(|name| u8::try_from(external["terminal"][name].as_integer().unwrap()).unwrap())
-    .collect();
-    assert!(
-        encode(completion.terminal)
-            .unwrap()
-            .as_slice()
-            .eq(&expected)
-    );
+    let expected = frame_layer_blend_receipt::observed(&projection).unwrap();
+    assert!(encode(completion.terminal).unwrap().eq(&expected));
     let offset = usize::try_from(
         external["immutable_default_input"][0]["private_rom_file_offset"]
             .as_integer()
@@ -89,8 +71,10 @@ fn source_completion_requires_actual_default_operands_and_completed_haze() {
     let mut changed_default = defaults;
     changed_default.colour_math_select.0 ^= 1;
     assert!(
-        frame_layer_blend_receipt::completion(changed_default, &haze, &projection)
-            .is_err_and(|fault| fault == LayerBlendFault::Content)
+        !changed_default
+            .prepare(haze.blend)
+            .terminal
+            .eq(&completion.terminal)
     );
     assert!(
         frame_layer_blend_receipt::defaults(&rom, "")
@@ -113,7 +97,7 @@ fn source_completion_requires_actual_default_operands_and_completed_haze() {
         let invalid = projection.replace(from, to);
         assert!(invalid.ne(&projection));
         assert!(
-            frame_layer_blend_receipt::completion(defaults, &haze, &invalid)
+            frame_layer_blend_receipt::defaults(&rom, &invalid)
                 .is_err_and(|fault| fault == LayerBlendFault::Unsupported)
         );
     }

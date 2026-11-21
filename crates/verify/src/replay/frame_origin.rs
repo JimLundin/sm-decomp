@@ -26,6 +26,9 @@ macro_rules! assert_observation_eq {
     };
 }
 
+#[cfg(test)]
+#[path = "frame_origin/adjacent_tests.rs"]
+mod adjacent_tests;
 #[path = "frame_appearance_seed.rs"]
 mod appearance_seed;
 #[path = "frame_borrowed_receipts.rs"]
@@ -61,8 +64,9 @@ mod interrupt_inputs;
 mod late_hud_tests;
 #[path = "frame_layer_blend_receipt.rs"]
 mod layer_blend_receipt;
-#[path = "frame_prelude_receipts.rs"]
-mod prelude_receipts;
+#[cfg(test)]
+#[path = "frame_origin/pad_ingress_tests.rs"]
+mod pad_ingress_tests;
 #[path = "frame_prelude_seed.rs"]
 mod prelude_seed;
 #[path = "frame_preparation_receipts.rs"]
@@ -78,7 +82,7 @@ mod runtime_helpers;
 mod sender_seed;
 pub(super) use admission::admit;
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Member {
     path: PathBuf,
@@ -132,9 +136,12 @@ struct Manifest {
     apuram: Member,
     profiles: [Member; 6],
     music_completion: Member,
-    haze_bands: Member,
-    haze_ready: Member,
-    haze_terminal: Member,
+    #[serde(rename = "haze_bands")]
+    _haze_bands: Option<Member>,
+    #[serde(rename = "haze_ready")]
+    _haze_ready: Option<Member>,
+    #[serde(rename = "haze_terminal")]
+    _haze_terminal: Option<Member>,
     buffer_regions: Member,
     irq_current: Member,
     irq_recipe: Member,
@@ -143,8 +150,10 @@ struct Manifest {
     random_requests: Member,
     random_import: Member,
     random_completion: Member,
-    builder_completion: Member,
-    builder_terminal: Member,
+    #[serde(rename = "builder_completion")]
+    _builder_completion: Option<Member>,
+    #[serde(rename = "builder_terminal")]
+    _builder_terminal: Option<Member>,
     gameplay_completion: Member,
     actor_completion: Member,
     debug_completion: Member,
@@ -301,9 +310,6 @@ impl Manifest {
             &mut self.pads,
             &mut self.apuram,
             &mut self.music_completion,
-            &mut self.haze_bands,
-            &mut self.haze_ready,
-            &mut self.haze_terminal,
             &mut self.buffer_regions,
             &mut self.irq_current,
             &mut self.irq_recipe,
@@ -312,8 +318,6 @@ impl Manifest {
             &mut self.random_requests,
             &mut self.random_import,
             &mut self.random_completion,
-            &mut self.builder_completion,
-            &mut self.builder_terminal,
             &mut self.gameplay_completion,
             &mut self.actor_completion,
             &mut self.debug_completion,
@@ -637,7 +641,6 @@ fn buffer_address(text: &str, name: &str, length: usize) -> Result<data::dma::Bu
 }
 
 pub(super) struct PreparationInputs {
-    builder: frame::borrowed_preparation::BuilderCompletionReceipt,
     scene: frame::borrowed_gameplay::SceneController,
     gameplay: frame::borrowed_gameplay::GameplayDispatchOffer,
     actors: frame::borrowed_preparation::ActorEligibilityReceipt,
@@ -650,12 +653,7 @@ pub(super) struct PreparationInputs {
 fn preparation_inputs(wram: &[u8], manifest: &Manifest) -> Result<PreparationInputs, Outcome> {
     let origin = prelude_seed::decode(wram)
         .map_err(|_| data_failure(None, "frame preparation current origins"))?;
-    let builder = preparation_receipts::builder(
-        &origin.builder,
-        &manifest.builder_completion.text()?,
-        &manifest.builder_terminal.read()?,
-    )
-    .map_err(|_| data_failure(None, "frame complete builder reset offer"))?;
+
     let gameplay_text = manifest.gameplay_completion.text()?;
     let scene = gameplay_receipt::current(wram, &gameplay_text)
         .map_err(|_| data_failure(None, "frame independent current scene controller"))?;
@@ -674,7 +672,6 @@ fn preparation_inputs(wram: &[u8], manifest: &Manifest) -> Result<PreparationInp
         preparation_receipts::palette(palette_current, &manifest.palette_completion.text()?)
             .map_err(|_| data_failure(None, "frame current palette completion offer"))?;
     Ok(PreparationInputs {
-        builder,
         scene,
         gameplay,
         actors,
@@ -688,6 +685,51 @@ fn preparation_inputs(wram: &[u8], manifest: &Manifest) -> Result<PreparationInp
 #[cfg(test)]
 mod tests;
 
+fn live_haze(
+    wram: &[u8],
+    origin: &frame::borrowed::HazeOrigin,
+) -> Result<frame::haze::Haze, Outcome> {
+    use frame::borrowed::{ColourComponent, HazeSlot};
+    use types::haze::{
+        HAZE_BAND_COUNT, HazeBands, HazeColour, HazeFade, HazeLevel, HazePeak, HazeState,
+    };
+
+    const BANDS_START: usize = 0x9d00;
+    let fault = || data_failure(None, "frame current Haze state and transport");
+    let Some(HazeSlot::BackdropRamp {
+        component, maximum, ..
+    }) = origin.slots.first()
+    else {
+        return Err(fault());
+    };
+    let (colour, encoding) = match component {
+        ColourComponent::Red => (HazeColour::Red, 0x20),
+        ColourComponent::Green => (HazeColour::Green, 0x40),
+        ColourComponent::Blue => (HazeColour::Blue, 0x80),
+    };
+    let bands = wram
+        .get(BANDS_START..BANDS_START.wrapping_add(HAZE_BAND_COUNT))
+        .ok_or_else(fault)?
+        .iter()
+        .map(|byte| {
+            if byte & 0xe0 != encoding {
+                return Err(fault());
+            }
+            HazeLevel::new(byte & 0x1f).ok_or_else(fault)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let peak = u8::try_from(*maximum)
+        .ok()
+        .and_then(HazePeak::new)
+        .ok_or_else(fault)?;
+    let state = HazeState {
+        colour,
+        fade: HazeFade::Brightening(peak),
+        bands: HazeBands(bands.try_into().map_err(|_| fault())?),
+    };
+    frame::haze::Haze::from_origin(state, origin).map_err(|_| fault())
+}
+
 /// Independently decoded initial physical owners; unavailable owners are not defaulted.
 pub(super) struct Origin<'a> {
     pub wram: &'a [u8],
@@ -695,9 +737,7 @@ pub(super) struct Origin<'a> {
     pub senders: frame::Senders,
     pub content: frame::TransferContent,
     pub music: Option<frame::borrowed_receipts::MusicCompletionReceipt>,
-    pub haze: Option<frame::HazeCompletion>,
     pub drawing: Option<frame::interrupts::DrawingState>,
-    pub layers: Option<frame::borrowed_layer_blend::LayerBlendReceipt>,
     pub random: Option<(
         frame::borrowed_preparation::RandomSeed,
         frame::borrowed_preparation::DeferredRandomReceipt,
@@ -719,27 +759,27 @@ pub(super) fn decode(
     let receipt = borrowed_receipts::publication(origin.wram)
         .map_err(|_| data_failure(None, "frame current publication owner"))?;
     let state = frame::State {
+        music: Some(
+            borrowed_receipts::music(origin.wram)
+                .map_err(|_| data_failure(None, "frame current music owner"))?,
+        ),
+        haze: Some(live_haze(origin.wram, &prelude.haze)?),
+        sprite_builder: Some(prelude.builder),
         sender_current: None,
         sender_queues: None,
         drawing: origin.drawing,
         caller: frame::Caller::AwaitingAcknowledgment {
-            prelude: frame::Prelude {
-                origin: prelude,
+            prelude: frame::PreludeSource::Origin(Box::new(frame::Prelude {
+                actors_origin: prelude.actors,
                 player_entry_current: None,
                 player_entry_offers: None,
                 hud_inventory: None,
                 player_continuation_current: None,
                 player_continuation_offers: None,
-                music_current: Some(
-                    borrowed_receipts::music(origin.wram)
-                        .map_err(|_| data_failure(None, "frame current music owner"))?,
-                ),
+
                 music_completion: origin.music,
-                haze_completion: origin.haze,
-                layer_completion: origin.layers,
                 random_current: origin.random.as_ref().map(|(seed, _)| *seed),
                 random_completion: origin.random.map(|(_, offer)| offer),
-                builder_completion: Some(origin.preparation.builder),
                 scene_current: Some(origin.preparation.scene),
                 gameplay_completion: Some(origin.preparation.gameplay),
                 actor_completion: Some(origin.preparation.actors),
@@ -747,7 +787,7 @@ pub(super) fn decode(
                 debug_completion: Some(origin.preparation.debug),
                 palette_current: Some(origin.preparation.palette_current),
                 palette_completion: Some(origin.preparation.palette),
-            },
+            })),
             receipt: Some(receipt),
         },
         timing: origin.timing,
@@ -787,6 +827,7 @@ pub(super) fn decode(
         sender_history: None,
         late_hud: frame::late_hud::Stage::Pending,
         frame_history: None,
+        pose_input_configuration: None,
         room_tail_origin: None,
         room_tail: frame::room_tail::Stage::Pending,
         play_time: frame::play_time::Stage::default(),

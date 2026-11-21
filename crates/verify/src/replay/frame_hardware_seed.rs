@@ -8,7 +8,7 @@ use data::timing::{
 };
 use game::production::timing::{
     Beam, BeamPosition, Channel, Controller, Hardware, InterruptLine, Interrupts, LineStatus,
-    LineTransfer, Math, PhysicalLine, State, Thresholds, Transfers,
+    LineTransfer, Math, PhysicalLine, PhysicalPad, State, Thresholds, Transfers,
 };
 
 /// Invalid raw ABI or an origin outside the qualified mechanism.
@@ -66,7 +66,7 @@ impl Context<'_> {
             pending: self.flag(at.wrapping_add(3))?,
         })
     }
-    fn controller(&self, current: u16, preview: u16) -> Result<Controller, SeedFault> {
+    fn controller(&self, current: PhysicalPad) -> Result<Controller, SeedFault> {
         Ok(Controller {
             accumulator: u64::from(self.integer(402)),
             iteration: self.integer(398),
@@ -80,7 +80,7 @@ impl Context<'_> {
                 self.word(460),
             ],
             committed_pad: current,
-            preview_pad: Some(preview),
+            pending_pad: Vec::new(),
         })
     }
     fn math(&self) -> Math {
@@ -161,14 +161,21 @@ impl Context<'_> {
 ///
 /// # Errors
 /// Returns [`SeedFault::Range`] for a malformed or overflowing row.
-pub fn pads(current: &str, preview: &str) -> Result<(u16, u16), SeedFault> {
-    fn row(text: &str) -> Result<u16, SeedFault> {
-        if text.is_empty() || !text.bytes().all(|byte| byte.is_ascii_hexdigit()) {
-            return Err(SeedFault::Range);
-        }
-        u16::from_str_radix(text, 16).map_err(|_| SeedFault::Range)
+pub fn pads(current: &str, preview: &str) -> Result<(PhysicalPad, PhysicalPad), SeedFault> {
+    Ok((pad(current)?, pad(preview)?))
+}
+
+/// Decode one authenticated physical action row.
+///
+/// # Errors
+/// Returns [`SeedFault::Range`] for a malformed or overflowing row.
+pub fn pad(text: &str) -> Result<PhysicalPad, SeedFault> {
+    if text.is_empty() || !text.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err(SeedFault::Range);
     }
-    Ok((row(current)?, row(preview)?))
+    u16::from_str_radix(text, 16)
+        .map(PhysicalPad)
+        .map_err(|_| SeedFault::Range)
 }
 
 /// Import the complete hardware owner at the independently qualified idle origin.
@@ -179,12 +186,7 @@ pub fn pads(current: &str, preview: &str) -> Result<(u16, u16), SeedFault> {
 ///
 /// # Errors
 /// Rejects truncated, malformed, unsupported or invalid complete hardware state.
-pub fn decode(
-    bytes: &[u8],
-    policy: IrqPolicy,
-    current: u16,
-    preview: u16,
-) -> Result<State, SeedFault> {
+pub fn decode(bytes: &[u8], policy: IrqPolicy, current: PhysicalPad) -> Result<State, SeedFault> {
     if bytes.len() != 494 {
         return Err(SeedFault::Length);
     }
@@ -254,7 +256,7 @@ pub fn decode(
             },
             interrupts: c.interrupts(policy)?,
             math: c.math(),
-            controller: c.controller(current, preview)?,
+            controller: c.controller(current)?,
             transfers: Transfers {
                 channels,
                 active: false,

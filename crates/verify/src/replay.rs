@@ -133,6 +133,9 @@ fn production_failure(cut: u64, fault: game::production::ProductionFault) -> Out
                     cut: Some(cut),
                     dependency: "frame hardware mechanism".to_owned(),
                 },
+                Fault::PadChangeInPast | Fault::PadChangesUnordered => {
+                    data_failure(Some(cut), "frame physical pad input order")
+                }
                 Fault::InvalidState
                 | Fault::InvalidProfile
                 | Fault::InvalidCharge

@@ -1,11 +1,11 @@
 //! Named current-player owners and externally borrowed preparation effects.
 
 use data::assets::samus::map;
-use data::pose::{
-    PoseId,
-    transition::{Control, Controls, PoseTransitions},
-};
+use data::pose::PoseId;
+#[cfg(test)]
+use data::pose::transition::{Control, Controls, PoseTransitions};
 use data::rom::{Rom, RomAddress};
+#[cfg(test)]
 use game::production::MovementContent;
 use game::production::frame::borrowed_player_preparation::{
     ActorContentDisposition, ActorEffects, ActorGeometry, ActorRequiredDependencies, ActorScene,
@@ -20,13 +20,22 @@ use game::production::frame::borrowed_player_preparation::{
     SolidContact, SpriteInstruction, SpriteObjectsOrigin, SpriteObjectsTerminal,
 };
 use game::production::frame::borrowed_player_preparation::{
-    BombJumpDirection, DeferredEnvironmentReceipt, DeferredPoseInputReceipt,
-    DeferredSuitPaletteReceipt, EnvironmentOrigin, InputBindings, LiquidSurface, PhysicalButtons,
-    PoseCommand, PoseInputOrigin, PoseInputTerminal, PreparedEnvironment, SuitPaletteDisposition,
+    DeferredEnvironmentReceipt, DeferredSuitPaletteReceipt, EnvironmentOrigin, InputBindings,
+    LiquidSurface, PhysicalButtons, PoseInputOrigin, PreparedEnvironment, SuitPaletteDisposition,
     SuitPaletteOrigin,
 };
+#[cfg(test)]
+use game::production::frame::{
+    borrowed_gameplay::{GameplayDispatchReceipt, GameplayRoute, SceneController},
+    borrowed_player_preparation::{
+        BombJumpDirection, PlayerPreparationFault, PoseCommand, PoseInputCompletion,
+        PoseInputTerminal,
+    },
+};
 use serde::Deserialize;
-use types::{Action, Buttons, Pose, button};
+use types::{Action, Pose};
+#[cfg(test)]
+use types::{Buttons, button};
 
 #[cfg(test)]
 #[path = "frame_player_preparation_receipts/tests.rs"]
@@ -227,6 +236,7 @@ struct ImportedContent {
     routine_dispatch_from_native_pointer: ContractFlag,
 }
 
+#[cfg(test)]
 #[derive(Deserialize)]
 struct TransitionRow {
     row_order: usize,
@@ -248,7 +258,9 @@ struct Projection {
     prospective_pose_is_deferred_to_actual_later_pose_choice: ContractFlag,
     unused_source_scratch_is_not_gameplay_state: ContractFlag,
     named_imported_content_guard_required: ContractFlag,
+    #[cfg(test)]
     translated_pressed_actions: Vec<String>,
+    #[cfg(test)]
     translated_held_actions: Vec<String>,
     translated_actions_authority: String,
     pending_clears_then_prospective_selection_are_ordered_effects: ContractFlag,
@@ -256,6 +268,7 @@ struct Projection {
     current_field: Vec<CurrentField>,
     borrowed_terminal_field: Vec<TerminalField>,
     imported_content: Vec<ImportedContent>,
+    #[cfg(test)]
     transition_prefix: Vec<TransitionRow>,
 }
 
@@ -442,6 +455,7 @@ fn ordinary_equipment(encoded: u16) -> Result<types::Set<types::Item>, PlayerRec
     Ok(equipment)
 }
 
+#[cfg(test)]
 fn actions(names: &[String]) -> Result<Buttons, PlayerReceiptFault> {
     if names != ["Right", "Run", "AimDown"] {
         return Err(PlayerReceiptFault::Unsupported);
@@ -451,6 +465,7 @@ fn actions(names: &[String]) -> Result<Buttons, PlayerReceiptFault> {
     ))
 }
 
+#[cfg(test)]
 fn controls(names: &[String]) -> Result<Controls, PlayerReceiptFault> {
     let controls = names
         .iter()
@@ -505,12 +520,62 @@ pub fn current_pose(bytes: &[u8], projection: &str) -> Result<PoseInputOrigin, P
     })
 }
 
-/// Import external pose-input effects with actual current predicates and checked ROM content.
-/// The four-row witness is compared to imported content; no transition selector is executed.
-/// Completion remains deferred and requires fresh current-owner validation in game.
-/// # Errors
-/// Rejects malformed/changed dependencies, content witnesses and unsupported terminal arms.
-pub fn pose_offer(
+// Independently observed origin and completion for verifier tests.
+#[cfg(test)]
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct DeferredPoseInputReceipt {
+    /// Complete independently admitted current dependency.
+    pub dependency: PoseInputOrigin,
+    /// Separately borrowed terminal effects, with imported content checked at admission.
+    pub terminal: PoseInputTerminal,
+}
+
+#[cfg(test)]
+impl DeferredPoseInputReceipt {
+    /// Consume once after the complete actual physical operation.
+    /// Imported transition content and external effects must have been admitted independently.
+    /// This validates the current owner and radius without choosing a transition.
+    /// # Errors
+    /// Rejects changed current input, unsupported action/route or changed imported radius.
+    pub fn complete(
+        self,
+        current: &PoseInputOrigin,
+        content: &MovementContent,
+        route: &GameplayDispatchReceipt,
+    ) -> Result<PoseInputCompletion, PlayerPreparationFault> {
+        if route.scene != SceneController::MainGameplay
+            || route.route != GameplayRoute::MainGameplay
+        {
+            return Err(PlayerPreparationFault::Unsupported);
+        }
+        if current != &self.dependency {
+            return Err(PlayerPreparationFault::Dependency);
+        }
+        if current.action != Action::Running
+            || current.pose.action != Action::Running
+            || self.terminal.special.is_some()
+            || self.terminal.super_special.is_some()
+            || self.terminal.pressed_actions
+                != Buttons(button::RIGHT.0 | button::RUN.0 | button::AIM_DOWN.0)
+            || self.terminal.held_actions
+                != Buttons(button::RIGHT.0 | button::RUN.0 | button::AIM_DOWN.0)
+        {
+            return Err(PlayerPreparationFault::Unsupported);
+        }
+        if content.radius(current.pose) != Some(self.terminal.radius)
+            || content.radius(self.terminal.prospective).is_none()
+        {
+            return Err(PlayerPreparationFault::Content);
+        }
+        Ok(PoseInputCompletion {
+            dependency: self.dependency,
+            terminal: self.terminal,
+        })
+    }
+}
+
+#[cfg(test)]
+fn pose_offer(
     bytes: &[u8],
     projection: &str,
     labels: &str,

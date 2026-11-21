@@ -4,11 +4,15 @@ mod frame_hardware_seed;
 
 use data::timing::IrqPolicy;
 use frame_hardware_seed::{SeedFault, decode, pads};
+use game::production::timing::PhysicalPad;
 
 #[test]
 fn hexadecimal_physical_actions() {
-    assert_eq!(pads("0080", "0100"), Ok((0x80, 0x100)));
-    assert_eq!(pads("10", "20"), Ok((16, 32)));
+    assert_eq!(
+        pads("0080", "0100"),
+        Ok((PhysicalPad(0x80), PhysicalPad(0x100)))
+    );
+    assert_eq!(pads("10", "20"), Ok((PhysicalPad(16), PhysicalPad(32))));
     for invalid in ["", "-1", "0x10", "10000", " 10"] {
         assert!(pads(invalid, "0").is_err());
     }
@@ -18,7 +22,11 @@ fn hexadecimal_physical_actions() {
 fn incomplete_context_rejected() {
     for length in [0, 82, 330, 493, 495] {
         assert_eq!(
-            decode(&vec![0; length], IrqPolicy::Eligible, 0, 0),
+            decode(
+                &vec![0; length],
+                IrqPolicy::Eligible,
+                PhysicalPad::default()
+            ),
             Err(SeedFault::Length)
         );
     }
@@ -35,8 +43,8 @@ fn qualified_source_origin_and_mutations() {
         std::env::var_os("SM_FRAME_HARDWARE_PADS").expect("independent pad rows required");
     let rows = std::fs::read_to_string(pad_path).unwrap();
     let mut lines = rows.lines();
-    let (current, preview) = pads(lines.next().unwrap(), lines.next().unwrap()).unwrap();
-    let state = decode(&bytes, IrqPolicy::Eligible, current, preview).unwrap();
+    let (current, _) = pads(lines.next().unwrap(), lines.next().unwrap()).unwrap();
+    let state = decode(&bytes, IrqPolicy::Eligible, current).unwrap();
     state.validate().unwrap();
     assert_eq!(state.work.len(), 0);
     assert_eq!(state.hardware.now.0, 0);
@@ -51,6 +59,9 @@ fn qualified_source_origin_and_mutations() {
     ] {
         let mut mutated = bytes.clone();
         mutated[offset] = value;
-        assert!(decode(&mutated, IrqPolicy::Eligible, 0, 0).is_err_and(|actual| actual == fault));
+        assert!(
+            decode(&mutated, IrqPolicy::Eligible, PhysicalPad::default())
+                .is_err_and(|actual| actual == fault)
+        );
     }
 }

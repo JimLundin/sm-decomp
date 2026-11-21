@@ -167,6 +167,10 @@ Runtime composition is available for display records. Production display generat
 ### 6.8 Input, RNG and failures
 
 Independent typed stimuli enter production; candidate State and outputs commit together on success.
+Hosts and retained-frame replay schedule timestamped first-port button states on the live Frame.
+The retained hardware samples the latest eligible state when its beam enters line 241 and holds
+it for automatic controller polling. Pending changes travel with the Frame checkpoint, including
+changes whose time has passed while the beam has yet to reach the latch.
 
 ## 7. Actors, slots and the interpreter
 

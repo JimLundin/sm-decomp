@@ -37,7 +37,7 @@ fn remaining_sources(
     ProductionFault,
 > {
     let fault = missing();
-    let prelude = &prepared.prelude;
+    let prelude = prepared.prelude.origin().ok_or(fault)?;
     Ok((
         &prelude.player_continuation_current.as_ref().ok_or(fault)?.0,
         &prelude.player_continuation_offers.as_ref().ok_or(fault)?.0,
@@ -122,8 +122,18 @@ impl State {
                 .is_some_and(|motion| motion.work != WorkId(18))
             || prepared.gameplay.is_none()
             || prepared.actors.is_none()
-            || prepared.prelude.player_continuation_current.is_none()
-            || prepared.prelude.player_continuation_offers.is_none()
+            || prepared
+                .prelude
+                .origin()
+                .ok_or(fault)?
+                .player_continuation_current
+                .is_none()
+            || prepared
+                .prelude
+                .origin()
+                .ok_or(fault)?
+                .player_continuation_offers
+                .is_none()
         {
             return Err(fault);
         }

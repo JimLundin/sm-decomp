@@ -47,7 +47,8 @@ fn actual_scene_owner_offer_is_current_distinct_and_atomic_at_timer() {
     let frame::Caller::PlayerContinuation { prepared, .. } = &mut unrelated.caller else {
         panic!("frame caller")
     };
-    prepared.prelude.scene_current = Some(frame::borrowed_gameplay::SceneController::Other);
+    prepared.prelude.origin_mut().unwrap().scene_current =
+        Some(frame::borrowed_gameplay::SceneController::Other);
     assert_observation_eq!(
         unrelated
             .countdown_scene_offer(content, rules)

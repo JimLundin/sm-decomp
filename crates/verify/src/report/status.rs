@@ -123,13 +123,33 @@ struct PlanDomain {
     wave: u8,
     /// The plan's estimate of its rounds.
     rounds: usize,
-    /// The model crate that holds it, once one does.
-    model: Option<String>,
+    /// The model crates that hold it, once work starts.
+    #[serde(default, deserialize_with = "model_owners")]
+    model: Vec<String>,
     #[serde(default)]
     status: Stage,
     /// The ids of the domains whose exports it reads.
     #[serde(default)]
     reads: Vec<String>,
+}
+
+fn model_owners<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Vec<String>, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Owners {
+        Single(String),
+        Multiple(Vec<String>),
+    }
+
+    match Owners::deserialize(deserializer)? {
+        Owners::Single(model) => Ok(vec![model]),
+        Owners::Multiple(models) if models.is_empty() => {
+            Err(serde::de::Error::custom("empty domain model list"))
+        }
+        Owners::Multiple(models) => Ok(models),
+    }
 }
 
 /// The part of the game a domain belongs to, and the first word of its model's name.
@@ -226,8 +246,8 @@ impl Stage {
 
 impl Plan {
     /// The plan in `text`, checked against the rebuilt domains: the models are the report's
-    /// domains, each domain's model is one of them and named in its area, a started domain
-    /// names its model, each domain reads only other domains of the plan, platform work comes
+    /// domains, each domain's models occur once and are named in its area, a started domain
+    /// names at least one model, each domain reads only other domains of the plan, platform work comes
     /// before only other work of the plan, and the milestone and each rung need plan items, with
     /// the platform work that comes before them.
     pub(super) fn parse(text: &str, rebuilt: &BTreeSet<&str>) -> Result<Self, String> {
@@ -239,25 +259,28 @@ impl Plan {
             ));
         }
         for domain in &plan.domain {
-            match (&domain.model, domain.status) {
-                (Some(model), _) if !listed.contains(model.as_str()) => {
+            if domain.model.is_empty() && domain.status != Stage::NotStarted {
+                return Err(format!(
+                    "{PLAN}: {}: {} without a model",
+                    domain.id,
+                    domain.status.label()
+                ));
+            }
+            let mut owners = BTreeSet::new();
+            for model in &domain.model {
+                if !listed.contains(model.as_str()) {
                     return Err(format!("{PLAN}: {}: no model {model}", domain.id));
                 }
-                (Some(model), _) if !domain.area.names(model) => {
+                if !domain.area.names(model) {
                     return Err(format!(
                         "{PLAN}: {}: the model {model} is not in its area, {}",
                         domain.id,
                         domain.area.word()
                     ));
                 }
-                (None, Stage::InProgress | Stage::Done) => {
-                    return Err(format!(
-                        "{PLAN}: {}: {} without a model",
-                        domain.id,
-                        domain.status.label()
-                    ));
+                if !owners.insert(model) {
+                    return Err(format!("{PLAN}: {}: repeated model {model}", domain.id));
                 }
-                (Some(_) | None, _) => {}
             }
             if let Some(read) = domain.reads.iter().find(|read| {
                 **read == domain.id || !plan.domain.iter().any(|other| other.id == **read)
@@ -403,7 +426,7 @@ impl Plan {
     fn holding<'a>(&'a self, model: &'a str) -> impl Iterator<Item = &'a PlanDomain> {
         self.domain
             .iter()
-            .filter(move |domain| domain.model.as_deref() == Some(model))
+            .filter(move |domain| domain.model.iter().any(|owner| owner == model))
     }
 
     /// A model's stage: done once every plan domain it holds is done.

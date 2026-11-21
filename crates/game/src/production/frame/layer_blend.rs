@@ -1,4 +1,4 @@
-//! Actual borrowed layer-blend defaults and prepared completion, without blending rules.
+//! Current Haze intent and immutable operands produce the prepared display settings.
 use super::borrowed_prelude_receipts::{LayerBlendDisposition, WindowTwoDisposition};
 use crate::state::video::{ColourMathLayers, ColourMathSelect, Layers, WindowSettings};
 use canonical::Canonical;
@@ -35,7 +35,7 @@ pub struct PreparedLayerSettings {
     pub colour_math_layers: ColourMathLayers,
 }
 
-/// Separately sourced actual layer-blend owner completion.
+/// Completed layer-blend display preparation.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct LayerBlendReceipt {
     /// Actual current immutable defaults consumed by this owner.
@@ -46,6 +46,30 @@ pub struct LayerBlendReceipt {
     pub terminal: PreparedLayerSettings,
     /// Actual completed second-window disposition.
     pub window_two: WindowTwoDisposition,
+}
+
+impl LayerBlendDefaults {
+    /// Prepare the live Haze display arm without changing window edges or logic.
+    #[must_use]
+    pub fn prepare(self, haze: LayerBlendDisposition) -> LayerBlendReceipt {
+        let colour_math_select = match haze {
+            LayerBlendDisposition::NoBackgroundThree => self.colour_math_select.fixed_operand(),
+        };
+        LayerBlendReceipt {
+            dependency: self,
+            haze,
+            terminal: PreparedLayerSettings {
+                window_select: [WindowSettings::default(); 3],
+                main_screen: self.main_screen,
+                sub_screen: self.sub_screen,
+                main_window_mask: Layers::default(),
+                sub_window_mask: Layers::default(),
+                colour_math_select,
+                colour_math_layers: self.colour_math_layers,
+            },
+            window_two: WindowTwoDisposition::Unchanged,
+        }
+    }
 }
 
 /// Invalid restored layer membership at the exact output edge.

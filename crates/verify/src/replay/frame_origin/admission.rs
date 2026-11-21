@@ -2,6 +2,8 @@
 
 mod native;
 mod player;
+mod quiet_profile;
+mod returns;
 mod seed;
 
 use super::{
@@ -369,6 +371,7 @@ fn assemble(
     wram: &[u8],
     content: movement::Content,
     seed: EntrySeed,
+    settling_haze: Option<data::timing::Template>,
 ) -> Result<(frame::State, frame::Content), Outcome> {
     let mut state = seed.state;
     let admit = Admission {
@@ -416,6 +419,7 @@ fn assemble(
             acknowledgment: required.acknowledgment,
             music: required.music,
             haze: required.haze,
+            settling_haze,
             haze_tail: required.haze_tail,
             haze_bands_address: drawing.haze_bands_address,
             drawing: drawing.drawing,
@@ -468,19 +472,47 @@ fn assemble(
     ))
 }
 
+#[cfg(test)]
+pub(super) fn observed_layer_blend(case: &Case, sources: &Sources) -> Result<[u8; 9], Outcome> {
+    let manifest = read_manifest(case, sources)?;
+    super::layer_blend_receipt::observed(&manifest.layer_blend.text()?)
+        .map_err(|_| data_failure(None, "recorded LayerBlend settings"))
+}
+
 pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
     let manifest = read_manifest(case, sources)?;
     let content = movement::Content::load(&sources.rom)?;
     let wram = manifest.wram.read()?;
-    let seed = entry_seed(case, sources, &manifest, &content, &wram)?;
-    let (state, content) = assemble(case, sources, &manifest, &wram, content, seed)?;
+    let mut seed = entry_seed(case, sources, &manifest, &content, &wram)?;
+    let first_cut = case
+        .first_cut()
+        .ok_or_else(|| data_failure(None, "first native return"))?;
+    let returns = returns::prepare(case, sources, &manifest, first_cut, seed.next_pad)?;
+    if let Some(pad) = returns.pad_origin {
+        let controller = &mut seed.state.timing.hardware.controller;
+        if controller.words.first().copied() != Some(pad.previous_sample.0) {
+            return Err(data_failure(None, "native previous controller sample"));
+        }
+        // A completed poll remains readable after the host has presented the next pad.
+        controller.committed_pad = pad.presented;
+    }
+    let (state, mut content) = assemble(
+        case,
+        sources,
+        &manifest,
+        &wram,
+        content,
+        seed,
+        returns.settling_haze,
+    )?;
+    content.player_entry.recurring_pose_input = returns.adjacent_pose_input;
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {
         movement: samus_movement::Rules::default(),
         appearance: samus_appearance::Rules::VANILLA,
         hud: game::production::HudRules::new(interface_hud::Rules::reference()),
     }));
-    let production = Production::admit(
+    let mut production = Production::admit(
         ProductionSeed::Frame(Box::new(state)),
         frame_assets.clone(),
         rules.clone(),
@@ -491,19 +523,9 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
             &format!("frame complete production admission {fault:?}"),
         )
     })?;
-    let expected = replay::frame::Expected {
-        callbacks_sha256: manifest.callbacks.pin()?,
-        callbacks: manifest.callbacks.path,
-        endpoint_sha256: manifest.endpoint.pin()?,
-        endpoint: manifest.endpoint.path,
-        final_owners: manifest
-            .final_owners
-            .map(|member| {
-                let pin = member.pin()?;
-                Ok((member.path, pin))
-            })
-            .transpose()?,
-    };
+    production
+        .schedule_frame_pad_changes(&returns.pads)
+        .map_err(|fault| replay::production_failure(first_cut, fault))?;
     Ok(AdmittedCase {
         production,
         content: frame_assets,
@@ -511,8 +533,8 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         inputs: InputReader::Frame(replay::frame::Inputs {
             budget: data::timing::MasterTicks(manifest.host_budget),
         }),
-        expected: ExpectedReader::Frame(Box::new(expected)),
+        expected: ExpectedReader::Frame(Box::new(returns.expected)),
         actual: ActualReader::Frame(replay::frame::Actual::default()),
-        schedule: vec![case.end.cut_inclusive],
+        schedule: returns.schedule,
     })
 }

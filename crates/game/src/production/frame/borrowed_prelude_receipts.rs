@@ -1,7 +1,6 @@
-//! Separately borrowed prelude producer completions and their actual dependencies.
-use super::borrowed::{ColourComponent, HazeOrigin};
+//! Physical backdrop and prepared colour encodings.
+use super::borrowed::ColourComponent;
 use canonical::Canonical;
-use data::timing::ChannelSlot;
 
 /// Actual intensity in a completed backdrop band.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -16,33 +15,11 @@ pub struct BackdropBand {
     pub intensity: BandIntensity,
 }
 
-/// Narrow backdrop buffer completion; it does not complete the remaining Haze work.
-#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
-pub struct HazeBandsReceipt {
-    /// Actual current Haze inputs, revalidated before applying this completion.
-    pub dependency: HazeOrigin,
-    /// Complete actual generated buffer in physical storage order.
-    pub bands: [BackdropBand; 16],
-    /// Actual producer maximum after its completed band operation.
-    pub maximum: u16,
-}
-
 /// Actual prepared fixed-colour disposition from completed Haze preparation.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PreparedFixedColour {
     /// Logical black, encoded with each physical colour component selected.
     Black,
-}
-
-/// Actual owner stage accompanying narrow band Ready, with the broader tail pending.
-#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
-pub struct HazeReadyOwnerReceipt {
-    /// Actual original Haze dependency.
-    pub dependency: HazeOrigin,
-    /// Complete owner fields at the qualified narrow Ready gate.
-    pub ready: HazeOrigin,
-    /// Actual completed prepared fixed colour.
-    pub fixed_colour: PreparedFixedColour,
 }
 
 /// Actual completed Haze layer-blend choice.
@@ -57,19 +34,6 @@ pub enum LayerBlendDisposition {
 pub enum WindowTwoDisposition {
     /// The completed choice requests no additional window transformation.
     Unchanged,
-}
-
-/// Complete Haze owner result, separate from the earlier narrow band publication.
-#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
-pub struct HazeTerminalReceipt {
-    /// Actual original owner inputs retained for dependency revalidation.
-    pub dependency: HazeOrigin,
-    /// Complete terminal owner fields supplied by the external actual completion.
-    pub terminal: HazeOrigin,
-    /// Actual enabled physical channels in owner order.
-    pub enabled_channels: Vec<ChannelSlot>,
-    /// Actual completed layer-blend choice consumed by later blending.
-    pub blend: LayerBlendDisposition,
 }
 
 /// Invalid completed-band physical encoding.

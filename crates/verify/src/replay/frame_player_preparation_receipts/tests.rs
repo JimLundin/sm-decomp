@@ -138,7 +138,6 @@ fn first_three_receipts_reopen_current_offers_and_completions() {
         canonical::from_bytes(&canonical::to_bytes(&origins)).unwrap();
     assert!(restored_origins.eq(&origins));
     let offers = Model::<PlayerEntryOffersPin>(Box::new(PlayerEntryOffers {
-        pose_input: fixture.pose(),
         suit_palette: fixture.suit(),
         environment: fixture.environment(),
     }));
@@ -149,8 +148,8 @@ fn first_three_receipts_reopen_current_offers_and_completions() {
     let offers = restored_offers.0;
     let completions = Model::<PlayerEntryCompletionsPin>(Box::new(PlayerEntryCompletions {
         pose_input: Some(
-            offers
-                .pose_input
+            fixture
+                .pose()
                 .complete(&origins.pose_input, &fixture.content, &route())
                 .unwrap(),
         ),
