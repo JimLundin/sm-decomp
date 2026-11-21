@@ -46,6 +46,9 @@ impl State {
         {
             return Err(missing());
         }
+        self.validate_carried_health(content).map_err(|_| {
+            ProductionFault::Unsupported(Unsupported::Frame(Dependency::HealthCurrentInputs))
+        })?;
         let scene = self.scene_after_native_return(content, native_admitted)?;
         self.publications
             .begin_interval()

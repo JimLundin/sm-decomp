@@ -240,9 +240,11 @@ Both controller trials carry the borrowed scene choice across the first native r
 adjacent Timer reads it after the two drawing interrupts and runs the HUD's dormant countdown.
 The mini-map returns at 91,486 ticks into the second interval. Timer hands off at 92,242 ticks
 with one countdown answer and no additional device outputs. Both trials match all 203 ordered
-callbacks through that handoff. The next Animation opportunity
-requires current Health inputs. Both cases stop at `Frame(HealthCurrentInputs)` on cut 2,
-before production reaches the later Ceres scene read. The captured Ceres read independently
+callbacks through that handoff. Animation receives current whole energy from the
+first Maintenance result after the adjacent no-hurt actor and both drawing interrupts
+return. Public restore checks all five carried Health quantities. Neither recorded
+Animation branch reads whole energy. Both cases stop at `Frame(AnimationPreparation)`
+on cut 2, before the later Ceres scene read. The captured Ceres read independently
 qualifies the scene through that use. See the [reviewed baseline](../scenarios/replay/baseline.toml). The
 [adjacent fixture](../tools/ci/fetch_retained_haze.sh) includes independent callback streams
 and terminal observations for both intervals. The second full callback stream, second

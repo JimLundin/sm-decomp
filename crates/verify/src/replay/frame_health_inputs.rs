@@ -4,6 +4,54 @@ use crate::lock::Sha256;
 use canonical::model::Model;
 use game::production::frame::health::{Activity, Admission, Context, Region, Suits, Time};
 
+/// Bind the no-writer interval to the checked native origin and causal controller schedules.
+pub(super) fn adjacent_context(
+    case: &super::index::Case,
+    pad_source: Option<&Sha256>,
+    origin: Option<&Admission>,
+) -> Result<Option<Context>, super::result::Outcome> {
+    use super::index::Start;
+    let mut declarations = case
+        .borrowed
+        .iter()
+        .filter(|borrow| borrow.dependency == "frame.adjacent-health-context");
+    let Some(borrow) = declarations.next() else {
+        return Ok(None);
+    };
+    let qualified_origin = matches!(&case.start, Start::NativeSeed { sha256, .. }
+        if sha256 == "1e040c393ed88ec8a0b46184879e0681bc110355e928b8160c50170c533abc15");
+    let qualified_pads = [
+        "0842ac84e469ea39847459083110cff9c36c7de3993c333a216f602f1ae918d0",
+        "4c7ad2f8ed191a89273bd15d5c301843238cca3da4cf46da39c7b389d61ffe66",
+    ]
+    .into_iter()
+    .any(|pin| Sha256::try_from(pin).is_ok_and(|expected| Some(&expected) == pad_source));
+    if !qualified_origin
+        || !qualified_pads
+        || declarations.next().is_some()
+        || case.first_cut() != Some(1)
+        || case.end.cut_inclusive != 2
+        || borrow.provider != "qualified-adjacent-health-writer-history"
+        || borrow.phase != "first-maintenance-return-through-adjacent-animation"
+        || borrow.fields
+            != [
+                "health-and-context-writer-history",
+                "current-actor-protection",
+                "drawing-interrupt-preservation",
+            ]
+        || borrow.claim
+            != "external writers and context only; Animation reads carried production Health"
+    {
+        return Err(super::data_failure(
+            None,
+            "adjacent Health preservation scope",
+        ));
+    }
+    origin
+        .map(|source| Some(source.context))
+        .ok_or_else(|| super::data_failure(None, "carried Health origin"))
+}
+
 /// Independent origin, mapping or finite context was not qualified.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {

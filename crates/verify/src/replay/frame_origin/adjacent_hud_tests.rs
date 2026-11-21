@@ -17,6 +17,9 @@ use game::production::{
 };
 use interface_hud::{CountdownAnswer, CountdownExpiry, CountdownOpportunity, CountdownPicture};
 
+#[path = "adjacent_health_tests.rs"]
+mod adjacent_health_tests;
+
 #[derive(serde::Deserialize)]
 struct Supplement {
     adjacent_hud_observations: Member,
@@ -146,7 +149,11 @@ pub(super) fn check_hud_map(case: &Case, sources: &Sources, admitted: &AdmittedC
     assert!(super::super::admit(&undeclared, sources).is_err());
     check_timer(admitted, &mut direct, origin, countdown.timer_boundaries());
     compare_timer_outputs(case, admitted, current(&direct));
-    Dependency::HealthCurrentInputs
+    if content.adjacent_health_context.is_none() {
+        return Dependency::HealthCurrentInputs;
+    }
+    adjacent_health_tests::check_animation_energy(admitted, &direct);
+    Dependency::AnimationPreparation
 }
 
 fn hud_work_in_flight(state: &State, identity: WorkId) -> bool {

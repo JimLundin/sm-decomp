@@ -466,6 +466,7 @@ fn assemble(
             pose_fit,
             animation,
             health,
+            adjacent_health_context: None,
             countdown,
             scene_countdown: seed.scene_countdown.map(|(admission, _)| admission),
             adjacent_scene_countdown: None,
@@ -490,7 +491,7 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         .first_cut()
         .ok_or_else(|| data_failure(None, "first native return"))?;
     let returns = returns::prepare(case, sources, &manifest, first_cut, seed.next_pad)?;
-    if let Some(pad) = returns.pad_origin {
+    if let Some(pad) = &returns.pad_origin {
         let controller = &mut seed.state.timing.hardware.controller;
         if controller.words.first().copied() != Some(pad.previous_sample.0) {
             return Err(data_failure(None, "native previous controller sample"));
@@ -545,6 +546,11 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         }
         content.adjacent_scene_countdown = Some(admission);
     }
+    content.adjacent_health_context = replay::frame_health_inputs::adjacent_context(
+        case,
+        returns.pad_origin.as_ref().map(|pad| &pad.schedule_sha256),
+        content.health.as_ref(),
+    )?;
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {
         movement: samus_movement::Rules::default(),

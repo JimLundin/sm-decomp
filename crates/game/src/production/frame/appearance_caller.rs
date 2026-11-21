@@ -431,7 +431,21 @@ impl PhysicalContract {
         content: &AppearanceContent,
     ) -> Result<data::timing::Profile, Fault> {
         stage.validate(frame)?;
-        let receipt = stage.receipt().ok_or(Fault::Order)?;
+        self.profile_for_receipt(
+            stage.receipt().ok_or(Fault::Order)?,
+            frame,
+            movement,
+            content,
+        )
+    }
+
+    pub(super) fn profile_for_receipt(
+        &self,
+        receipt: &Receipt,
+        frame: &State,
+        movement: &crate::production::MovementContent,
+        content: &AppearanceContent,
+    ) -> Result<data::timing::Profile, Fault> {
         let before = &receipt.before.model.0.state;
         let chosen = &receipt.chosen.model.0;
         let answer = chosen.pending.as_ref().ok_or(Fault::Sequence)?;

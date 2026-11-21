@@ -1,13 +1,13 @@
 //! Explicitly borrowed scene scheduling, independent of countdown and coarse gameplay.
 
+use super::publications::writes_wram;
 use super::{
-    Caller, Content, Dependency, State,
-    countdown_caller::Stage as CountdownStage,
-    interrupts::{DrawingRequest, DrawingState},
+    Caller, Content, Dependency, State, countdown_caller::Stage as CountdownStage,
+    interrupts::DrawingRequest,
 };
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::{Canonical, model::Pinned};
-use data::timing::{Interrupt, WRAM_DATA_PORT};
+use data::timing::Interrupt;
 use serde::{Deserialize, Serialize};
 
 /// Semantic service selected by the separately qualified current scene owner.
@@ -189,20 +189,6 @@ const fn missing() -> ProductionFault {
     ProductionFault::Unsupported(Unsupported::Frame(Dependency::CountdownSceneScheduling))
 }
 
-fn scene_writer(event: &timing::Event) -> bool {
-    match &event.kind {
-        timing::EventKind::Publication(write) => write.port == WRAM_DATA_PORT,
-        timing::EventKind::Payload(payload) => payload.target.publication_port() == WRAM_DATA_PORT,
-        timing::EventKind::Sample(..)
-        | timing::EventKind::BulkService(_)
-        | timing::EventKind::LineService(_)
-        | timing::EventKind::Interrupt(_)
-        | timing::EventKind::ControllerStart
-        | timing::EventKind::ControllerEnd
-        | timing::EventKind::ControllerCommitted => false,
-    }
-}
-
 fn contains_one_nmi(events: &[timing::Event]) -> bool {
     let mut nmis = events
         .iter()
@@ -228,7 +214,7 @@ impl State {
             || owner.interrupts != Interrupts::Returned
             || owner.validate(initial).is_err()
             || initial != adjacent
-            || self.publications.events.iter().any(scene_writer)
+            || self.publications.events.iter().any(writes_wram)
         {
             return Err(missing());
         }
@@ -275,7 +261,7 @@ impl State {
         if matches!(owner.scope, Scope::Adjacent(_))
             && (adjacent.is_none()
                 || content.scene_countdown != adjacent
-                || prior.iter().any(scene_writer))
+                || prior.iter().any(writes_wram))
         {
             return Err(super::Fault::InvalidPlayerEntry);
         }
@@ -313,22 +299,7 @@ impl State {
         if !matches!(owner.scope, Scope::Adjacent(_)) {
             return Ok(());
         }
-        let irq_count = gameplay
-            .iter()
-            .filter(|event| event.kind == timing::EventKind::Interrupt(Interrupt::Irq))
-            .count();
-        // The scene records actual admissions. The drawing owner retires End on return.
-        if owner.interrupts != Interrupts::Returned
-            || irq_count != 2
-            || !matches!(
-                self.drawing,
-                Some(DrawingState {
-                    active: None,
-                    recurring_due: None,
-                    ..
-                })
-            )
-        {
+        if owner.interrupts != Interrupts::Returned || !self.drawing_irqs_returned(gameplay) {
             return Err(missing());
         }
         Ok(())
@@ -360,7 +331,7 @@ impl State {
             .validate(self.scene_admission(content, &owner.0)?)
             .map_err(|_| missing())?;
         if gameplay_publications.iter().any(|event| {
-            scene_writer(event) || event.kind == timing::EventKind::Interrupt(Interrupt::Nmi)
+            writes_wram(event) || event.kind == timing::EventKind::Interrupt(Interrupt::Nmi)
         }) {
             return Err(missing());
         }

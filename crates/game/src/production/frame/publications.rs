@@ -1,7 +1,8 @@
 //! Complete ordered physical outputs and their independently retained delivery progress.
 
-use crate::production::timing::Event;
+use crate::production::timing::{self, Event};
 use canonical::Canonical;
+use data::timing::WRAM_DATA_PORT;
 
 /// Physical effects already produced by hardware, with external delivery continuation.
 #[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
@@ -19,6 +20,20 @@ pub enum PublicationFault {
     Cursor,
     /// A new actual output precedes an already produced output.
     Order,
+}
+
+pub(super) fn writes_wram(event: &timing::Event) -> bool {
+    match &event.kind {
+        timing::EventKind::Publication(write) => write.port == WRAM_DATA_PORT,
+        timing::EventKind::Payload(payload) => payload.target.publication_port() == WRAM_DATA_PORT,
+        timing::EventKind::Sample(..)
+        | timing::EventKind::BulkService(_)
+        | timing::EventKind::LineService(_)
+        | timing::EventKind::Interrupt(_)
+        | timing::EventKind::ControllerStart
+        | timing::EventKind::ControllerEnd
+        | timing::EventKind::ControllerCommitted => false,
+    }
 }
 
 impl Publications {

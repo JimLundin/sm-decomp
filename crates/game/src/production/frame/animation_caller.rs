@@ -116,7 +116,10 @@ impl State {
         }
     }
 
-    pub(super) fn fresh_animation_inputs(
+    /// Read the live Movement, Health and Appearance neighbours for the selected figure.
+    /// # Errors
+    /// The current Run, actor, interrupt and input lifetimes must all be qualified.
+    pub fn fresh_animation_inputs(
         &self,
         content: &Content,
     ) -> Result<samus_appearance::Inputs, ProductionFault> {
@@ -142,22 +145,12 @@ impl State {
                 run,
             )
             .map_err(|_| missing(Dependency::AnimationLiquidHistory))?;
-        let energy = self
-            .health
+        let actors = remaining
+            .0
+            .actors
             .as_ref()
-            .ok_or_else(|| missing(Dependency::HealthCurrentInputs))?
-            .at_animation(
-                content
-                    .health
-                    .as_ref()
-                    .ok_or_else(|| missing(Dependency::HealthCurrentInputs))?,
-                remaining
-                    .0
-                    .actors
-                    .as_ref()
-                    .ok_or_else(|| missing(Dependency::HealthCurrentInputs))?,
-            )
-            .map_err(|_| missing(Dependency::HealthCurrentInputs))?;
+            .ok_or_else(|| missing(Dependency::HealthCurrentInputs))?;
+        let energy = self.energy_for_animation(content, actors)?;
         self.senders
             .validate()
             .map_err(|_| missing(Dependency::AnimationPreparation))?;
@@ -190,6 +183,32 @@ impl State {
             sounds_waiting,
         };
         Ok(neighbors.with_movement(self.playing_figure.0, outcome))
+    }
+
+    fn animation_profile(
+        &self,
+        content: &Content,
+        selection: &appearance_caller::Stage,
+    ) -> Result<data::timing::Profile, ProductionFault> {
+        if !self.animation_energy_matches(selection) {
+            return Err(missing(Dependency::HealthCurrentInputs));
+        }
+        content
+            .animation
+            .as_ref()
+            .ok_or_else(|| missing(Dependency::AnimationPreparation))?
+            .qualify(selection, self, &content.movement, &content.appearance)
+            .map_err(|_| missing(Dependency::AnimationPreparation))
+    }
+
+    fn animation_energy_matches(&self, selection: &appearance_caller::Stage) -> bool {
+        let Some(health) = &self.health else {
+            return false;
+        };
+        selection
+            .receipt()
+            .and_then(|receipt| receipt.chosen.model.0.pending.as_ref())
+            .is_some_and(|answer| answer.inputs.energy == health.state().energy.whole.get())
     }
 
     pub(super) fn advance_animation(
@@ -226,12 +245,7 @@ impl State {
                 stage
                     .animation(self, &content.appearance, inputs, rules.appearance.clone())
                     .map_err(|_| missing(Dependency::AnimationPreparation))?;
-                let profile = content
-                    .animation
-                    .as_ref()
-                    .ok_or_else(|| missing(Dependency::AnimationPreparation))?
-                    .qualify(&stage, self, &content.movement, &content.appearance)
-                    .map_err(|_| missing(Dependency::AnimationPreparation))?;
+                let profile = self.animation_profile(content, &stage)?;
                 let work = appearance_caller::Kind::Animation.identity();
                 stage
                     .bind(work)
@@ -241,45 +255,82 @@ impl State {
                     .map_err(ProductionFault::FrameHardware)?;
                 self.animation = Stage::Charging(stage);
             }
-            Stage::Charging(stage) => {
-                stage
-                    .validate(self)
-                    .map_err(|_| missing(Dependency::AnimationPreparation))?;
-                self.fresh_animation_inputs(content)?;
-                let profile = content
-                    .animation
-                    .as_ref()
-                    .ok_or_else(|| missing(Dependency::AnimationPreparation))?
-                    .qualify(stage, self, &content.movement, &content.appearance)
-                    .map_err(|_| missing(Dependency::AnimationPreparation))?;
-                if self
-                    .timing
-                    .work
-                    .iter()
-                    .filter(|work| {
-                        work.kind
-                            == timing::WorkKind::Semantic(
-                                appearance_caller::Kind::Animation.identity(),
-                            )
-                    })
-                    .count()
-                    != 1
-                    || self
-                        .timing
-                        .work
-                        .iter()
-                        .find(|work| {
-                            work.kind
-                                == timing::WorkKind::Semantic(
-                                    appearance_caller::Kind::Animation.identity(),
-                                )
-                        })
-                        .is_none_or(|work| work.profile != profile)
-                {
-                    return Err(missing(Dependency::AnimationPreparation));
+            Stage::Charging(stage) => self.validate_animation_charge(content, stage)?,
+            Stage::Complete(_) => return Err(missing(Dependency::InterruptionPreparation)),
+        }
+        Ok(())
+    }
+
+    fn validate_animation_charge(
+        &self,
+        content: &Content,
+        selection: &appearance_caller::Stage,
+    ) -> Result<(), ProductionFault> {
+        let identity = appearance_caller::Kind::Animation.identity();
+        let unexpected = || missing(Dependency::AnimationPreparation);
+        if !matches!(selection, appearance_caller::Stage::Charging { work, .. } if *work == identity)
+        {
+            return Err(unexpected());
+        }
+        self.fresh_animation_inputs(content)?;
+        let expected = self.animation_profile(content, selection)?;
+        let mut charges = self
+            .timing
+            .work
+            .iter()
+            .filter(|work| work.kind == timing::WorkKind::Semantic(identity));
+        if charges.next().is_none_or(|work| work.profile != expected) || charges.next().is_some() {
+            return Err(unexpected());
+        }
+        Ok(())
+    }
+
+    pub(crate) fn validate_animation_checkpoint(
+        &self,
+        content: &Content,
+    ) -> Result<(), super::Fault> {
+        use super::Fault::InvalidPlayerEntry;
+        let work = appearance_caller::Kind::Animation.identity();
+        let charging = self
+            .timing
+            .work
+            .iter()
+            .any(|item| item.kind == timing::WorkKind::Semantic(work));
+        if !matches!(self.animation, Stage::Pending)
+            && !matches!(
+                self.countdown,
+                super::countdown_caller::Stage::Complete { .. }
+            )
+        {
+            return Err(InvalidPlayerEntry);
+        }
+        match &self.animation {
+            Stage::Pending => {
+                if charging {
+                    return Err(InvalidPlayerEntry);
                 }
             }
-            Stage::Complete(_) => return Err(missing(Dependency::InterruptionPreparation)),
+            Stage::Charging(selection) => self
+                .validate_animation_charge(content, selection)
+                .map_err(|_| InvalidPlayerEntry)?,
+            Stage::Complete(done) => {
+                if charging || done.work != work {
+                    return Err(InvalidPlayerEntry);
+                }
+                // Appearance has consumed the answer. Its retained receipt still identifies
+                // the physical family that could have completed at this opportunity.
+                content
+                    .animation
+                    .as_ref()
+                    .ok_or(InvalidPlayerEntry)?
+                    .profile_for_receipt(
+                        &done.receipt,
+                        self,
+                        &content.movement,
+                        &content.appearance,
+                    )
+                    .map_err(|_| InvalidPlayerEntry)?;
+            }
         }
         Ok(())
     }

@@ -313,16 +313,111 @@ impl Health {
     }
 }
 
+const fn missing() -> crate::production::ProductionFault {
+    crate::production::ProductionFault::Unsupported(crate::production::Unsupported::Frame(
+        super::Dependency::HealthCurrentInputs,
+    ))
+}
+
 impl super::State {
+    pub(super) fn energy_for_animation(
+        &self,
+        content: &super::Content,
+        actors: &actors::ActorUpdateCompletion,
+    ) -> Result<u16, crate::production::ProductionFault> {
+        let owner = self.health.as_ref().ok_or_else(missing)?;
+        let origin = content.health.as_ref().ok_or_else(missing)?;
+        if self.publications.original_interval() {
+            return owner.at_animation(origin, actors).map_err(|_| missing());
+        }
+        let (gameplay, in_nmi) = self.gameplay_publications()?;
+        if in_nmi
+            || content.adjacent_health_context != Some(origin.context)
+            || !self.adjacent_health_history_holds()
+            || !self.drawing_irqs_returned(gameplay)
+            || !owner.holds_recurring_actor(origin, actors)
+            || !matches!(
+                self.animation,
+                super::animation_caller::Stage::Pending
+                    | super::animation_caller::Stage::Charging(_)
+            )
+        {
+            return Err(missing());
+        }
+        self.validate_health_preservation(content, gameplay)?;
+        Ok(owner.state().energy.whole.get())
+    }
+
+    fn adjacent_health_history_holds(&self) -> bool {
+        use crate::production::timing::EventKind;
+        use data::timing::Interrupt::{Irq, Nmi};
+        self.publications.preceding().is_ok_and(|prior| {
+            !prior.iter().any(super::publications::writes_wram)
+                && prior
+                    .iter()
+                    .filter_map(|event| {
+                        if let EventKind::Interrupt(interrupt) = event.kind {
+                            Some(interrupt)
+                        } else {
+                            None
+                        }
+                    })
+                    .eq([Irq, Irq, Nmi])
+        })
+    }
+
+    pub(crate) fn validate_carried_health(
+        &self,
+        content: &super::Content,
+    ) -> Result<(), super::Fault> {
+        use super::Fault::InvalidPlayerEntry;
+        let Some(neighbours) = content.adjacent_health_context else {
+            return Ok(());
+        };
+        let owner = self.health.as_ref().ok_or(InvalidPlayerEntry)?;
+        let admission = content.health.as_ref().ok_or(InvalidPlayerEntry)?;
+        if neighbours != admission.context || owner.context != neighbours {
+            return Err(InvalidPlayerEntry);
+        }
+        if self.publications.original_interval() {
+            owner
+                .validate_origin(admission)
+                .map_err(|_| InvalidPlayerEntry)?;
+            if !owner.maintained {
+                return match self.return_progress {
+                    super::frame_return::Stage::Pending => Ok(()),
+                    super::frame_return::Stage::Finalizing(_)
+                    | super::frame_return::Stage::Ready { .. } => Err(InvalidPlayerEntry),
+                };
+            }
+        } else {
+            let (gameplay, _) = self
+                .gameplay_publications()
+                .map_err(|_| InvalidPlayerEntry)?;
+            self.validate_health_preservation(content, gameplay)
+                .map_err(|_| InvalidPlayerEntry)?;
+            if owner.freshness != Freshness::Retired || !self.adjacent_health_history_holds() {
+                return Err(InvalidPlayerEntry);
+            }
+        }
+        // Validate the saved result of the first Maintenance on a private copy.
+        // The live owner is advanced only by the scheduled Maintenance return.
+        let mut maintained = admission.initial.0;
+        if maintained.health_opportunity(&samus_health::Rules::REFERENCE)
+            != samus_health::WarningSound::None
+            || owner.state() != &maintained
+        {
+            return Err(InvalidPlayerEntry);
+        }
+        Ok(())
+    }
+
     pub(super) fn validate_health_preservation(
         &self,
         content: &super::Content,
         gameplay_publications: &[crate::production::timing::Event],
     ) -> Result<(), crate::production::ProductionFault> {
-        use crate::production::{ProductionFault, Unsupported, timing};
-        let missing = || {
-            ProductionFault::Unsupported(Unsupported::Frame(super::Dependency::HealthCurrentInputs))
-        };
+        use crate::production::timing;
         let (Some(owner), Some(admission)) = (&self.health, &content.health) else {
             return if self.health.is_none() && content.health.is_none() {
                 Ok(())
@@ -353,29 +448,11 @@ impl super::State {
         {
             return Err(missing());
         }
-        for event in gameplay_publications {
-            match &event.kind {
-                timing::EventKind::Interrupt(data::timing::Interrupt::Nmi) => return Err(missing()),
-                timing::EventKind::Publication(write)
-                    if write.port == data::timing::WRAM_DATA_PORT =>
-                {
-                    return Err(missing());
-                }
-                timing::EventKind::Payload(payload)
-                    if payload.target.publication_port() == data::timing::WRAM_DATA_PORT =>
-                {
-                    return Err(missing());
-                }
-                timing::EventKind::Publication(_)
-                | timing::EventKind::Sample(..)
-                | timing::EventKind::Payload(_)
-                | timing::EventKind::BulkService(_)
-                | timing::EventKind::LineService(_)
-                | timing::EventKind::Interrupt(_)
-                | timing::EventKind::ControllerStart
-                | timing::EventKind::ControllerEnd
-                | timing::EventKind::ControllerCommitted => {}
-            }
+        if gameplay_publications.iter().any(|event| {
+            event.kind == timing::EventKind::Interrupt(data::timing::Interrupt::Nmi)
+                || super::publications::writes_wram(event)
+        }) {
+            return Err(missing());
         }
         Ok(())
     }

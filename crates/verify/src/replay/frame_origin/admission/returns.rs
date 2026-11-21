@@ -89,6 +89,7 @@ impl Return {
 }
 
 pub(super) struct PadOrigin {
+    pub(super) schedule_sha256: crate::lock::Sha256,
     pub(super) presented: PhysicalPad,
     pub(super) previous_sample: PhysicalPad,
 }
@@ -333,9 +334,9 @@ fn read_quiet_profile(
         .transpose()
 }
 
-fn read_pads(schedule: &Member, pads: &Member) -> Result<(PadOrigin, Vec<PadChange>), Outcome> {
+fn read_pads(member: &Member, pads: &Member) -> Result<(PadOrigin, Vec<PadChange>), Outcome> {
     let fault = || data_failure(None, "native return physical pad schedule");
-    let schedule: PadSchedule = toml::from_str(&schedule.text()?).map_err(|_| fault())?;
+    let schedule: PadSchedule = toml::from_str(&member.text()?).map_err(|_| fault())?;
     let pads = pads.text()?;
     let rows: Vec<_> = pads.lines().collect();
     let decode = |row| {
@@ -343,6 +344,7 @@ fn read_pads(schedule: &Member, pads: &Member) -> Result<(PadOrigin, Vec<PadChan
         hardware_seed::pad(raw).map_err(|_| fault())
     };
     let origin = PadOrigin {
+        schedule_sha256: member.pin()?,
         presented: decode(schedule.initial_row)?,
         previous_sample: decode(schedule.previous_sample_row)?,
     };

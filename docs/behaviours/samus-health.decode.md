@@ -88,6 +88,24 @@ and 183 eligible adjacent pairs. Reference health compatibility and null equalit
 both match all 183 pairs. This provides no gain and no health opportunity selection
 proof; the reference must not manufacture gameplay opportunities from these records.
 
+### Adjacent Animation
+
+On the recorded and held controller schedules, the four stores of the first
+Maintenance are the last Health writers before the adjacent Animation. Both
+captures preserve the five Health words and six context words across the prior
+NMI, both current drawing interrupts and the returned no-hurt actor operation.
+The adjacent actor reads the same invincibility word at +43,020 ticks.
+Neither Animation branch reads whole energy. Its first physical read in the
+adjacent interval occurs at Maintenance, +108,126 ticks after the native return.
+
+The private adjacent source manifest has SHA-256
+`b3f99e3019a7c238f992ee5fb24aa25e686c7e068b3248972c3efd8339a1803d`.
+The [retained fixture loader](../../tools/ci/fetch_retained_frame.sh) pins the
+origin and both controller schedules. Both source captures reconstruct complete
+WRAM across both native returns. The checked controller
+schedule and origin identify the finite borrowed context. Only the first
+production Maintenance supplies the carried Health result.
+
 ## Harness contract
 
 Call the actual production health entry with carried complete State, selected by

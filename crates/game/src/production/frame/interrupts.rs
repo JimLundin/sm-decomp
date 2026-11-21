@@ -91,6 +91,28 @@ pub struct DrawingState {
     pub recurring_due: Option<DrawingRequest>,
 }
 
+impl super::State {
+    pub(super) fn drawing_irqs_returned(
+        &self,
+        events: &[crate::production::timing::Event],
+    ) -> bool {
+        use crate::production::timing::EventKind;
+        let irqs = events
+            .iter()
+            .filter(|event| event.kind == EventKind::Interrupt(data::timing::Interrupt::Irq));
+        // End is admitted before the physical handler returns and retires the request.
+        irqs.count() == 2
+            && matches!(
+                self.drawing,
+                Some(DrawingState {
+                    active: None,
+                    recurring_due: None,
+                    ..
+                })
+            )
+    }
+}
+
 impl DrawingState {
     pub(super) fn begin_opportunity(&mut self) {
         self.begin = None;

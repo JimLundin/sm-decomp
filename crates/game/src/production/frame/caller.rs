@@ -80,6 +80,8 @@ pub struct Content {
     pub countdown: Option<super::countdown_caller::Physical>,
     /// Complete independent health origin and finite neighbouring qualification.
     pub health: Option<super::health::Admission>,
+    /// Neighbouring inputs preserved through Animation after the first native return.
+    pub adjacent_health_context: Option<super::health::Context>,
     /// Authenticated original retained liquid history.
     pub liquid_history: Option<super::liquid_history::Admission>,
     /// Complete qualified ordinary Animation owner.
