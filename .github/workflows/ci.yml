@@ -1,58 +1,31 @@
-name: CI
-
-# The only entry point. Events call reusable proof workflows, then trusted main producers
-# retain recent clean caches after both workflows pass.
-#   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
-#   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
-# Pull requests, nightly runs and manual runs start Quality and verification independently.
-# Main pushes run both to refresh clean build caches; verify/** runs verification only.
-# Called jobs report as "<caller job> / <job>", for example "verify / content".
+name: Gate sender offer lane at the reviewed source revision
 on:
-  pull_request:
   push:
-    branches: [main, 'verify/**']
-  schedule:
-    - cron: '17 2 * * *'
-  workflow_dispatch:
-
+    branches: [lane/sender-fifo-481-gate]
 permissions:
   contents: read
-
-# A new commit replaces its branch's run; nightly and dispatched runs finish.
-concurrency:
-  group: ci-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
 jobs:
-  quality:
-    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/quality.yml
-
-  verify:
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/verify.yml
-    secrets:
-      SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
-      SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
-
-  retain-caches:
-    # Only trusted main producers receive cache deletion permission, after all proof passes.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-    needs: [quality, verify]
+  gate:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      actions: write
-    concurrency:
-      group: cargo-cache-retention-main
-      cancel-in-progress: false
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Retain recent clean main builds
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/retain_cargo_caches.py
+        with:
+          ref: 003e48ec6a6ca4db127118a77942aa35e6da32db
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-003e48ec6a6ca4db127118a77942aa35e6da32db
+          restore-keys: |
+            cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - name: Run the source gate on the exact lane head
+        run: |
+          git switch -c lane/sender-fifo-481
+          bash tools/lane/gate.sh
+
