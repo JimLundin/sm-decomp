@@ -235,3 +235,159 @@ fn complete_public_caller_example() {
     assert_eq!(resumed, expected);
     assert_eq!(restored, uninterrupted);
 }
+
+// Spec: Saved quantities. Edit one saved field at a time so neither a different invalid
+// quantity nor a constructor can account for a failed restore.
+fn restore_pitch<T>(
+    original: &T,
+    field: fn(&mut toml::Value) -> &mut toml::Value,
+    pitch: u8,
+    invalid: &[toml::Value],
+) -> T
+where
+    T: serde::Serialize + serde::de::DeserializeOwned + PartialEq + std::fmt::Debug,
+{
+    let mut saved = toml::Value::try_from(original).expect("save pitch fixture");
+    assert_eq!(*field(&mut saved), toml::Value::Integer(i64::from(pitch)));
+    let restored: T = saved.clone().try_into().expect("restore admitted endpoint");
+    assert_eq!(&restored, original);
+    assert_eq!(toml::Value::try_from(&restored).expect("resave"), saved);
+    for bad in invalid {
+        *field(&mut saved) = bad.clone();
+        assert!(saved.clone().try_into::<T>().is_err(), "restored {bad}");
+    }
+    restored
+}
+
+fn resume_pending_pitch(mut restored: State, mut direct: State, content: &Content) {
+    let deadline = if let AudioPhase::Work { at, .. } = &direct.phase {
+        Some(at.clone())
+    } else {
+        None
+    };
+    let at = deadline.expect("pending pitch work");
+    assert_eq!(restored.now, time::cycles(1603));
+    assert_eq!(
+        transport::advance(&mut restored, content, time::cycles(0), &[]),
+        []
+    );
+    assert_eq!(restored, direct);
+
+    let inputs = [transport::Input::cue(time::cycles(1608), CueId::Beam)];
+    let before = time::subtract(time::subtract(&at, &restored.now), time::halves(1));
+    assert_eq!(
+        transport::advance(&mut restored, content, before, &inputs),
+        []
+    );
+    assert_eq!(
+        restored.requests[SoundGroup::Action],
+        Request::Cue(CueId::Beam)
+    );
+    let output = transport::advance(&mut restored, content, time::halves(1), &[]);
+    assert!(
+        matches!(output.as_slice(), [transport::Output::Publication { at: instant, .. }] if instant == &at)
+    );
+    let elapsed = time::subtract(&at, &direct.now);
+    assert_eq!(
+        output,
+        transport::advance(&mut direct, content, elapsed, &inputs)
+    );
+    assert_eq!(restored, direct);
+    assert_eq!(
+        transport::advance(&mut restored, content, time::cycles(0), &[]),
+        []
+    );
+}
+
+#[test]
+fn restore_musical_pitch_at_saved_boundaries() {
+    let invalid = [
+        toml::Value::Integer(18),
+        toml::Value::Integer(52),
+        toml::Value::Float(19.5),
+    ];
+    for pitch in [19, 51] {
+        let mut content = invented_content();
+        // The first track sustains its saved pitch while the second reads a saved tone.
+        content.tracks[0].phrases[0][1] = MusicEvent::Sustain;
+        content.tracks[1].phrases[0][1] = MusicEvent::Tone(mp(pitch));
+        let content = restore_pitch(
+            &content,
+            |saved| &mut saved["tracks"][1]["phrases"][0][1]["Tone"],
+            pitch,
+            &invalid,
+        );
+        let mut audio = initialized_audio();
+        audio.song.tracks[0].pitch = mp(pitch);
+        audio.cadence.effect = 0;
+        transport::advance(&mut audio, &content, time::cycles(1603), &[]);
+        let restored = restore_pitch(
+            &audio,
+            |saved| &mut saved["song"]["tracks"][0]["pitch"],
+            pitch,
+            &invalid,
+        );
+        let restored = restore_pitch(
+            &restored,
+            |saved| &mut saved["phase"]["Work"]["result"]["Music"]["tracks"][0]["pitch"],
+            pitch,
+            &invalid,
+        );
+        resume_pending_pitch(restored, audio, &content);
+    }
+}
+
+#[test]
+fn restore_effect_pitch_at_saved_boundaries() {
+    let invalid = [toml::Value::Integer(-1), toml::Value::Integer(72)];
+    for pitch in [0, 71] {
+        let mut content = invented_content();
+        content
+            .effects
+            .get_mut(&CueId::Spin)
+            .expect("spin clip")
+            .parts[0]
+            .spans[0]
+            .pitch = ep(pitch);
+        let content = restore_pitch(
+            &content,
+            |saved| &mut saved["effects"]["Spin"]["parts"][0]["spans"][0]["pitch"],
+            pitch,
+            &invalid,
+        );
+        let mut audio = initialized_audio();
+        let action = &mut audio.groups[SoundGroup::Action];
+        action.staged = Request::Cue(CueId::Spin);
+        action.handled = action.staged;
+        // Pitch is retained during release while the instruction countdown wraps.
+        action.history[0] = ReleaseMemory::Active(positive(2));
+        action.playback = Playback::Active {
+            cue: CueId::Spin,
+            parts: vec![PartState::Live(LivePart {
+                voice: EffectVoiceId::V7,
+                cursor: 1,
+                instruction: 0,
+                pitch: ep(pitch),
+                fraction: 31,
+                motion: None,
+            })],
+        };
+        transport::advance(&mut audio, &content, time::cycles(1603), &[]);
+        let restored = restore_pitch(
+            &audio,
+            |saved| &mut saved["groups"]["Action"]["playback"]["Active"]["parts"][0]["Live"]["pitch"],
+            pitch,
+            &invalid,
+        );
+        let restored = restore_pitch(
+            &restored,
+            |saved| {
+                &mut saved["phase"]["Work"]["result"]["Effect"]["result"]["playback"]["Active"]["parts"]
+                    [0]["Live"]["pitch"]
+            },
+            pitch,
+            &invalid,
+        );
+        resume_pending_pitch(restored, audio, &content);
+    }
+}
