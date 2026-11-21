@@ -6,7 +6,7 @@ use super::index::{Case, ObservationId};
 use super::result::Outcome;
 use super::{
     AudioExpectedReader, AudioInputReader, actual_audio, actual_audio_from, add_publications,
-    audio, data_failure, movement, production_failure,
+    audio, data_failure, movement,
 };
 use crate::cache::Cache;
 use game::production::{
@@ -111,6 +111,7 @@ impl InputReader {
                 let OwnedState::Movement(samus) = production.state() else {
                     return Err(data_failure(Some(cut), "movement owned scope"));
                 };
+                let initial_pose = samus.0.pose;
                 let inputs = movement::input(
                     &record(
                         cache,
@@ -118,35 +119,22 @@ impl InputReader {
                             .ok_or_else(|| data_failure(Some(cut), "movement preceding cut"))?,
                     )?
                     .wram,
-                    samus.0.pose,
+                    initial_pose,
                     content,
                 )?;
-                let radius = content
-                    .movement
-                    .radius(samus.0.pose)
-                    .ok_or_else(|| data_failure(Some(cut), "admitted movement body content"))?;
-                // Production replaces these callbacks with its checked imported pose mapping.
-                let body = |_| radius;
-                let heading = |pose| content.movement.cannon_heading(pose);
-                let frame = samus_movement::Frame {
-                    sprite_before_movement: inputs.sprite,
-                    cinematic_active: inputs.cinematic,
-                    pad: inputs.pad,
-                    pressed: inputs.pressed,
-                    items: inputs.items,
-                    spin_turned_far: inputs.ahead.turned_far,
-                    elevator_moving: inputs.elevator,
-                    parity: inputs.parity,
-                    animation_ends: inputs.ahead.end,
-                    body: &body,
-                    cannon_heading: &heading,
-                };
                 production
                     .advance(AdvanceInput::Movement {
-                        frame,
+                        inputs: inputs.stimuli(),
                         world: &inputs.world,
                     })
-                    .map_err(|fault| production_failure(cut, fault))
+                    .map_err(|fault| {
+                        movement::advance_failure(
+                            cut,
+                            initial_pose,
+                            "admitted movement body content",
+                            fault,
+                        )
+                    })
             }
         }
     }

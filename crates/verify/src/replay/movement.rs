@@ -201,6 +201,35 @@ pub struct Input {
     pub world: MovementWorld,
 }
 
+impl Input {
+    pub(super) const fn stimuli(&self) -> game::production::MovementInputs {
+        game::production::MovementInputs {
+            sprite_before_movement: self.sprite,
+            cinematic_active: self.cinematic,
+            pad: self.pad,
+            pressed: self.pressed,
+            items: self.items,
+            spin_turned_far: self.ahead.turned_far,
+            elevator_moving: self.elevator,
+            parity: self.parity,
+            animation_ends: self.ahead.end,
+        }
+    }
+}
+
+pub(super) fn advance_failure(
+    cut: u64,
+    initial_pose: Pose,
+    missing_seed: &str,
+    fault: game::production::ProductionFault,
+) -> Outcome {
+    use game::production::{ProductionFault, Unsupported};
+    if fault == ProductionFault::Unsupported(Unsupported::PoseContent(initial_pose)) {
+        return data_failure(Some(cut), missing_seed);
+    }
+    super::production_failure(cut, fault)
+}
+
 pub(super) fn pad(value: u16) -> Buttons {
     use types::button as B;
     [

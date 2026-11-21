@@ -150,3 +150,7 @@ pub(super) struct Context {
     pub content: ProductionContent,
     pub rules: ProductionRules,
 }
+
+#[cfg(test)]
+#[path = "tests/missing_selected_pose.rs"]
+mod tests;
