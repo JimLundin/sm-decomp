@@ -80,6 +80,8 @@ pub enum ProductionContent {
     Frame(Box<super::frame::Content>),
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
     Movement(MovementContent),
+    /// Checked body and cannon content shared by the live touchdown caller.
+    MovementTouchdown(MovementContent),
     /// Checked movement content with fixed clean Ceres geometry.
     MovementCeres(MovementContent),
     /// Imported resident effects and arrangement.
@@ -115,6 +117,8 @@ pub enum ProductionRules {
     Frame(Box<super::frame::Rules>),
     /// The existing movement model's complete rules.
     Movement(samus_movement::Rules),
+    /// Existing Movement rules; the Contact owner uses fixed transport rules.
+    MovementTouchdown(samus_movement::Rules),
     /// Complete parameters for both connected owners.
     MovementCeres {
         /// Movement tuning.

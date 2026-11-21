@@ -88,6 +88,27 @@ The constructed cases exercise same-group order, duplicates, capacity, reduced a
 and three suppressors. The saved final cut checks restoration of the complete scoped
 sender, including the seed reply. Each native case has one independent seed.
 
+## Live soft touchdown
+
+The two Magnet Stairs windows start at their own locked predecessors. Each decodes Movement's
+complete prior state and committed figure and supplies the observed controls, prior terrain and
+two solid actors in their current Movement-entry order. The scoped caller runs Movement and
+pose fit. It sends the actual Land request to the Contact FIFO with the producer's allowance and
+current suppression, then passes the separate graphics opportunity and selected figure to the
+dry Appearance arm. The replay compares the floor clip, ordered fit, accepted response,
+Contact offer and Appearance clear publication. The scoped Contact owner stops after the offer.
+The next native service-entry snapshot independently corroborates its FIFO. The pinned bracket
+contains no intervening Contact offer or service, and the case advances neither the intervening
+clock nor the service. The offer and clear command count as two scoped outputs. The publication
+counter measures physical callback streams and is zero here.
+
+Install the [touchdown fixture](../tools/ci/fetch_movement_touchdown.sh) and the sender-offer
+fixture under the same native source directory. Use the common replay command with
+`--case movement/soft-touchdown-57 --case movement/soft-touchdown-124`. The checkpoints
+restore each disjoint window from its own starting owners. The physical ring and Contact port
+service have separate boundaries. The retained Frame still requires the timed body-growth
+and fit work profile and the actual touchdown dispatch and graphics opportunities.
+
 ## Finding the code for a replay segment
 
 The read-only `map` command joins the typed index and validated reviewed baseline with

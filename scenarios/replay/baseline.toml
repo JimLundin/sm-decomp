@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "51d5dfb894d7f120221575e70f44f0a9627207dd16d74425cfe160d3ec3a49e8"
+index_sha256 = "a5daa339c7850c5c70905e1746a5b2fe94098d18e9a8eeedd5a52b4799f1ec87"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -882,6 +882,42 @@ publications = 0
 replies = 0
 null_cuts = 1
 null_fields = 2
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/soft-touchdown-57"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "eae0e49cfe829b7d3257c4f7e1c46956e6b325a2f44925b8724d3d0ee6e444c8"
+
+[case.counts]
+cuts = 1
+fields = 8
+outputs = 2
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "movement/soft-touchdown-124"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "0614c4ce5e3cbf79b4e72744ae2c7586184042add75d3cf2680948c8045479ee"
+
+[case.counts]
+cuts = 1
+fields = 8
+outputs = 2
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
 restorations = 1
 pending_boundaries = 0
 pending_restorations = 0

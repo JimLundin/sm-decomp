@@ -46,3 +46,8 @@ audio_assets = [
     "replay::audio::room_load::tests::room_load_joins_the_cpu_request_latch",
     "replay::audio::room_load::tests::room_load_joins_the_transport_reply_latch",
 ]
+
+touchdown = [
+    "replay::movement_touchdown::tests::graphics_and_contact_obey_separate_permissions",
+    "replay::movement_touchdown::tests::repeated_contact_opportunity_refuses_after_restore",
+]

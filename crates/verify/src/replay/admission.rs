@@ -9,6 +9,9 @@ use crate::lock::{Lock, RowId};
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    if case.inputs == InputProvider::NativeTouchdownInputs {
+        return super::movement_touchdown::admit(case, sources);
+    }
     if case.inputs == InputProvider::NativeFrameOwners {
         return super::frame_origin::admit(case, sources);
     }

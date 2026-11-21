@@ -16,6 +16,7 @@ use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
     SenderOffer(Vec<super::sender_offer::Offer>),
+    MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     Frame(super::frame::Inputs),
     NativeSearch(Box<super::native_search::Inputs>),
     Recorded(Box<super::recorded::Inputs>),
@@ -28,6 +29,7 @@ pub(super) enum InputReader {
 
 pub(super) enum ExpectedReader {
     SenderOffer(Vec<Observation>),
+    MovementTouchdown(super::movement_touchdown::Expected),
     Frame(Box<super::frame::Expected>),
     NativeSearch(super::native_search::Expected),
     Recorded(Box<super::recorded::Expected>),
@@ -38,6 +40,7 @@ pub(super) enum ExpectedReader {
 #[derive(Clone)]
 pub(super) enum ActualReader {
     SenderOffer,
+    MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
     NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
@@ -94,6 +97,7 @@ impl InputReader {
         held: &mut HeldAdvance,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
@@ -168,6 +172,15 @@ impl ActualReader {
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
             (
+                Self::MovementTouchdown(retained),
+                InputReader::MovementTouchdown(_),
+                ProductionOutputs::MovementTouchdown(outputs),
+            ) => {
+                let fields = super::movement_touchdown::actual(production, &outputs)?;
+                *retained = Some(outputs);
+                Ok(fields)
+            }
+            (
                 Self::SenderOffer,
                 InputReader::SenderOffer(_),
                 ProductionOutputs::AudioSender(outputs),
@@ -241,6 +254,7 @@ impl ActualReader {
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
             Self::SenderOffer => super::sender_offer::actual(production),
+            Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::Frame(actual) => actual.initial(production),
             Self::NativeSearch(_) => {
                 let mut fields = super::native_search::initial();
@@ -285,6 +299,9 @@ impl ActualReader {
     pub fn same_publication_prefix(&self, direct: &Self) -> bool {
         match (self, direct) {
             (Self::Frame(restored), Self::Frame(direct)) => restored == direct,
+            (Self::MovementTouchdown(restored), Self::MovementTouchdown(direct)) => {
+                restored == direct
+            }
             (
                 Self::Audio {
                     publications: restored,
@@ -299,9 +316,8 @@ impl ActualReader {
                 Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
                 Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
             ) => true,
-            (Self::Frame(_) | Self::Audio { .. }, _) | (_, Self::Frame(_) | Self::Audio { .. }) => {
-                false
-            }
+            (Self::Frame(_) | Self::Audio { .. } | Self::MovementTouchdown(_), _)
+            | (_, Self::Frame(_) | Self::Audio { .. } | Self::MovementTouchdown(_)) => false,
         }
     }
 
@@ -309,7 +325,11 @@ impl ActualReader {
         match self {
             Self::Frame(actual) => actual.publication_count(),
             Self::Audio { publications, .. } => publications.len(),
-            Self::NativeSearch(_) | Self::Movement | Self::Recorded(_) | Self::SenderOffer => 0,
+            Self::NativeSearch(_)
+            | Self::Movement
+            | Self::Recorded(_)
+            | Self::SenderOffer
+            | Self::MovementTouchdown(_) => 0,
         }
     }
 }
@@ -317,6 +337,7 @@ impl ActualReader {
 impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
+            Self::MovementTouchdown(expected) => expected.read(cut),
             Self::SenderOffer(fields) => Ok(ExpectedCut {
                 fields: fields.clone(),
                 semantics: fields.clone(),

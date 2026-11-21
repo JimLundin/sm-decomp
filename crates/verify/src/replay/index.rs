@@ -173,6 +173,8 @@ pub enum InputProvider {
     NativeFrameOwners,
     /// Independently admitted selector-time Frame and actor-selection-time geometry.
     NativeSearchInputs,
+    /// Prior locked Movement state, actual solid actors and independent sender ingress.
+    NativeTouchdownInputs,
     /// Causal neighbours from the preceding pinned cut.
     PrecedingCutMovementInputs,
     /// Independent prior facts plus observed external Ceres run scheduling.
@@ -229,6 +231,8 @@ pub enum ExpectedProvider {
     NativeFrameCallbacks,
     /// Frozen complete source-derived movement work, with independent captured input packets.
     NativeCompleteMovementWork,
+    /// Live floor, fit and consumer observations, with the independent Contact FIFO.
+    NativeTouchdownObservations,
     /// Independent pinned oracle records.
     PinnedRecordCache,
     /// Independent queue and committed progress.
@@ -248,6 +252,21 @@ pub enum ObservationId {
     /// Complete committed sender progress.
     #[serde(rename = "sender.progress")]
     SenderProgress,
+    /// Initial downward request and terrain-clipped travel into the floor.
+    #[serde(rename = "movement.touchdown.floor_clip")]
+    TouchdownClip,
+    /// Selected body change and ordered clearance observations.
+    #[serde(rename = "movement.touchdown.body_fit")]
+    TouchdownFit,
+    /// Actual accepted floor response and its speed.
+    #[serde(rename = "movement.touchdown.floor_response")]
+    TouchdownResponse,
+    /// Ordered offer that reached Contact, including its allowance.
+    #[serde(rename = "sender.touchdown_offer")]
+    TouchdownOffer,
+    /// Ordered Appearance clear operation for the selected figure.
+    #[serde(rename = "appearance.touchdown_graphics")]
+    TouchdownGraphics,
     /// Complete retained movement owner.
     #[serde(rename = "movement.state.complete")]
     MovementStateComplete,
@@ -740,7 +759,9 @@ fn rule_exists(rule: &str) -> bool {
 
 const fn observation_owner(field: ObservationId) -> Responsibility {
     match field {
-        ObservationId::SenderQueue | ObservationId::SenderProgress => Responsibility::AudioSender,
+        ObservationId::SenderQueue
+        | ObservationId::SenderProgress
+        | ObservationId::TouchdownOffer => Responsibility::AudioSender,
         ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
         ObservationId::FrameRandom => Responsibility::GameRandom,
         ObservationId::PlayTimeHours
@@ -753,7 +774,10 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | ObservationId::HealthPendingWhole
         | ObservationId::HealthPendingFraction
         | ObservationId::HealthWarning => Responsibility::Health,
-        ObservationId::MovementWork
+        ObservationId::TouchdownClip
+        | ObservationId::TouchdownFit
+        | ObservationId::TouchdownResponse
+        | ObservationId::MovementWork
         | ObservationId::MovementTests
         | ObservationId::CompleteReached
         | ObservationId::Inside
@@ -806,7 +830,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         ObservationId::ContactConsumedMarkers | ObservationId::ContactReceivers => {
             Responsibility::Contact
         }
-        ObservationId::AppearancePlaying
+        ObservationId::TouchdownGraphics
+        | ObservationId::AppearancePlaying
         | ObservationId::AppearanceStep
         | ObservationId::AppearanceTimeLeft
         | ObservationId::AppearanceBoostStage
@@ -877,6 +902,11 @@ fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
         "samus-movement/TravelledDistances" => {
             &[O::TravelLeft, O::TravelRight, O::TravelUp, O::TravelDown]
         }
+        "samus-movement/PoseFitAfterMoves" => &[O::TouchdownFit, O::PositionX, O::PositionY],
+        "samus-movement/AcceptedFloorResponse" => {
+            &[O::TouchdownClip, O::TouchdownResponse, O::VerticalSpeed]
+        }
+        "samus-movement/TouchdownRequests" => &[O::TouchdownOffer, O::TouchdownGraphics],
         "samus-movement/WallJump" => &[O::WallTest],
         "samus-movement/TouchedCells" => &[O::Reached],
         "audio-transport/OfferAcceptance" => &[O::SenderQueue],
@@ -1062,6 +1092,36 @@ fn sender_offer_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
+fn touchdown_provider_valid(case: &Case) -> bool {
+    use ObservationId as O;
+    case.kind == CaseKind::Scoped
+        && case.row == super::sender_offer::SOURCE_ROW
+        && case.content == ContentProvider::PlayerRomImport
+        && case.inputs == InputProvider::NativeTouchdownInputs
+        && case.expectations.provider == ExpectedProvider::NativeTouchdownObservations
+        && super::movement_touchdown::WINDOWS
+            .iter()
+            .any(|(before, after, _)| {
+                case.start == Start::CacheCut { frame: *before } && case.end.cut_inclusive == *after
+            })
+        && case.expectations.fields
+            == [
+                O::PositionX,
+                O::PositionY,
+                O::VerticalSpeed,
+                O::TouchdownClip,
+                O::TouchdownFit,
+                O::TouchdownResponse,
+                O::SenderQueue,
+                O::SenderProgress,
+            ]
+        && case.expectations.outputs == [O::TouchdownOffer, O::TouchdownGraphics]
+        && case.expectations.output_cut.is_none()
+        && case.checkpoints
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+}
+
 fn weapons_provider_valid(case: &Case, recorded: bool) -> bool {
     use ObservationId as O;
     if case.content != ContentProvider::PlayerRomImport
@@ -1142,6 +1202,11 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         [Responsibility::Movement, Responsibility::Ceres] => {
             connected_provider_valid(case, observations)
         }
+        [
+            Responsibility::Movement,
+            Responsibility::Appearance,
+            Responsibility::AudioSender,
+        ] => touchdown_provider_valid(case),
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
         [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Ceres] => {

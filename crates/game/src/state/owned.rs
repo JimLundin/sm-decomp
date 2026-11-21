@@ -61,6 +61,8 @@ pub enum OwnedState {
     Frame(Box<crate::production::frame::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
+    /// Current Movement, Figure and Contact sender at an ordinary opportunity.
+    MovementTouchdown(Box<crate::production::movement_touchdown::State>),
     /// Complete owners connected by held movement position.
     MovementCeres(Box<crate::production::MovementCeresState>),
     /// Committed and pending transport quantities.

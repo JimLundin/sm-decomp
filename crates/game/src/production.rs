@@ -17,6 +17,7 @@ pub mod frame;
 mod immutable;
 mod movement;
 mod movement_ceres;
+pub mod movement_touchdown;
 pub mod movement_work;
 pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
 mod sender;
@@ -42,6 +43,8 @@ pub enum Scope {
     Frame,
     /// Movement and semantic pose.
     Movement,
+    /// Ordinary Movement carried through Contact and touchdown graphics.
+    MovementTouchdown,
     /// Movement position consumed by one Ceres door.
     MovementCeres,
     /// Admitted native audio transport.
@@ -77,6 +80,8 @@ pub enum ProductionSeed {
     Frame(Box<frame::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
+    /// Movement, preceding Figure and the current Contact queue.
+    MovementTouchdown(Box<movement_touchdown::State>),
     /// Both complete owners admitted at the same boundary.
     MovementCeres(Box<MovementCeresState>),
     /// Full committed and pending audio state; restoration never initializes it.
@@ -134,6 +139,8 @@ pub enum AdvanceInput<'a> {
         /// Queries must not mutate an external gameplay owner or publish outputs.
         world: &'a dyn types::World,
     },
+    /// Ordinary Movement with its admitted Contact and graphics opportunities.
+    MovementTouchdown(movement_touchdown::Input<'a>),
     /// Native transport time and physical presentations.
     Audio {
         /// Absolute stop, including every milestone through it.
@@ -193,6 +200,8 @@ pub enum ProductionOutputs {
     Frame(frame::Outputs),
     /// Every movement receipt, including requests and placements.
     Movement(samus_movement::Outcome),
+    /// Movement and completed touchdown consumer publications.
+    MovementTouchdown(Box<movement_touchdown::Outputs>),
     /// Complete outputs committed with both owners.
     MovementCeres(Box<MovementCeresOutputs>),
     /// Every ordered observation, staging and publication milestone.
@@ -232,6 +241,8 @@ pub enum AdmissionFault {
     MissingPose(types::Pose),
     /// Duplicate keys disagree about their data.
     ConflictingPose(types::Pose),
+    /// Carried touchdown Figure belongs to another movement pose.
+    MovementTouchdownFigure,
     /// Audio content has no complete two-track arrangement.
     AudioTracks,
     /// The resident session violates an audio admission invariant.
@@ -275,6 +286,10 @@ pub enum Unsupported {
     BeamWorld,
     /// A reached terrain cell requires geometry or a reaction outside this quiet recipe.
     ReactiveBeamWorld,
+    /// The supplied touchdown opportunity is stale or disagrees with the carried figure.
+    MovementTouchdownCurrent,
+    /// The reached Movement sound has no admitted Contact mapping.
+    MovementTouchdownSound(types::SoundRequest),
     /// A live, produced or muzzle envelope reaches an unsupported continuation.
     BeamContinuation,
     /// A possible clip radius can create an unsupported contact span.
@@ -375,6 +390,7 @@ impl Production {
             ProductionSeed::Connected(_) => Scope::Connected,
             ProductionSeed::Frame(_) => Scope::Frame,
             ProductionSeed::Movement(_) => Scope::Movement,
+            ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::ResidentAudio(_) => Scope::ResidentAudio,
@@ -432,6 +448,14 @@ impl Production {
                 OwnedState::MovementCeres(state)
             }
             (
+                ProductionSeed::MovementTouchdown(state),
+                ProductionContent::MovementTouchdown(content),
+                ProductionRules::MovementTouchdown(_),
+            ) => {
+                state.validate(content)?;
+                OwnedState::MovementTouchdown(state)
+            }
+            (
                 ProductionSeed::Movement(samus),
                 ProductionContent::Movement(content),
                 ProductionRules::Movement(_),
@@ -474,6 +498,7 @@ impl Production {
             OwnedState::Connected(_) => Scope::Connected,
             OwnedState::Frame(_) => Scope::Frame,
             OwnedState::Movement(_) => Scope::Movement,
+            OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::ResidentAudio(_) => Scope::ResidentAudio,
@@ -562,6 +587,14 @@ impl Production {
                 state, content, movement, ceres, &frame, world, neighbours,
             )?)),
             (
+                OwnedState::MovementTouchdown(state),
+                ProductionContent::MovementTouchdown(content),
+                ProductionRules::MovementTouchdown(rules),
+                AdvanceInput::MovementTouchdown(input),
+            ) => ProductionOutputs::MovementTouchdown(Box::new(movement_touchdown::advance(
+                state, content, rules, input,
+            )?)),
+            (
                 OwnedState::Movement(samus),
                 ProductionContent::Movement(content),
                 ProductionRules::Movement(rules),
@@ -612,6 +645,7 @@ impl Production {
             OwnedState::Connected(_)
             | OwnedState::Frame(_)
             | OwnedState::Movement(_)
+            | OwnedState::MovementTouchdown(_)
             | OwnedState::MovementCeres(_)
             | OwnedState::WeaponsContact(_)
             | OwnedState::Blocks(_)
@@ -637,6 +671,7 @@ impl Production {
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => CodecState::Audio(state.clone()),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
@@ -715,6 +750,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<audio::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::ResidentAudio(checkpoint.state)
+        } else if matches!(&content, ProductionContent::MovementTouchdown(_)) {
+            let checkpoint: Checkpoint<Box<movement_touchdown::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::MovementTouchdown(checkpoint.state)
         } else {
             let checkpoint: Checkpoint<CodecState> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -751,6 +790,11 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Frame => frame::validate_pins(),
         Scope::Movement | Scope::MovementCeres => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
+        }
+        Scope::MovementTouchdown => {
+            canonical::model::pin_holds::<crate::state::owned::MovementPin>()
+                .and_then(|()| canonical::model::pin_holds::<frame::inputs::FigurePin>())
+                .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>())
         }
         Scope::Audio => canonical::model::pin_holds::<crate::state::owned::AudioPin>(),
         Scope::ResidentAudio => canonical::model::pin_holds::<crate::state::owned::AudioPin>()

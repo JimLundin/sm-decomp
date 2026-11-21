@@ -73,6 +73,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | sender-offer/deny-disabled | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
 | sender-offer/deny-demo | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
 | sender-offer/deny-explosion | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
+| movement/soft-touchdown-57 | Pass | 1 | 0 | 1 | 8 | 2 | 1 |
+| movement/soft-touchdown-124 | Pass | 1 | 0 | 1 | 8 | 2 | 1 |
 
 - **movement/D-inherited-cut** witnesses samus-movement/TravelledDistances. Limits: one-step travel witness; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; movement receipts and downstream consumers outside declared comparisons; pixel composition omitted.
 - **movement/W15** witnesses samus-movement/WallJump, samus-movement/TouchedCells. Limits: appearance feedback externally admitted; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; camera and pixel composition omitted.
@@ -117,6 +119,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **sender-offer/deny-disabled** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
 - **sender-offer/deny-demo** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
 - **sender-offer/deny-explosion** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
+- **movement/soft-touchdown-57** witnesses samus-movement/PoseFitAfterMoves, samus-movement/AcceptedFloorResponse, samus-movement/TouchdownRequests, audio-transport/OfferAcceptance. Limits: one ordinary Movement opportunity through the Contact offer and separate Appearance publication; Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots; the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service; the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope; no native actor candidate visitation or individual terrain cell identities compared.
+- **movement/soft-touchdown-124** witnesses samus-movement/PoseFitAfterMoves, samus-movement/AcceptedFloorResponse, samus-movement/TouchdownRequests, audio-transport/OfferAcceptance. Limits: one ordinary Movement opportunity through the Contact offer and separate Appearance publication; Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots; the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service; the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope; no native actor candidate visitation or individual terrain cell identities compared.
 
 ### Integrated cases
 

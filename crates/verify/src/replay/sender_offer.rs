@@ -218,7 +218,12 @@ fn read_pinned<T: serde::de::DeserializeOwned>(path: &Path, pin: &str) -> Result
     toml::from_str(text).map_err(|_| data_failure(None, "sender offer fixture schema"))
 }
 
-fn native(path: &Path, source_id: usize, cut: u64) -> Result<Window, Outcome> {
+fn native_records(
+    path: &Path,
+    source_id: usize,
+    cut: u64,
+    require_no_intervening_contact: bool,
+) -> Result<(NativeOffer, Fifo), Outcome> {
     let path = path.join("sender-offers-v1");
     let inputs: Inputs = read_pinned(&path.join("inputs.toml"), INPUTS)?;
     let expected: Expected = read_pinned(&path.join("expected.toml"), EXPECTED)?;
@@ -236,34 +241,140 @@ fn native(path: &Path, source_id: usize, cut: u64) -> Result<Window, Outcome> {
     {
         return Err(data_failure(None, "sender offer source order or bracket"));
     }
-    let (offer, fifo) = inputs
+    if require_no_intervening_contact {
+        let (offer, fifo) = inputs
+            .offer
+            .get(source_id)
+            .zip(expected.fifo.get(source_id))
+            .ok_or_else(|| data_failure(Some(cut), "native Contact offer bracket"))?;
+        if offer.group != SoundGroup::Contact
+            || inputs.offer.iter().any(|later| {
+                later.group == SoundGroup::Contact
+                    && later.exec_master_ticks > offer.exec_master_ticks
+                    && later.prefetch_master_ticks < fifo.master_ticks
+            })
+        {
+            return Err(data_failure(
+                Some(cut),
+                "intervening Contact offer before FIFO observation",
+            ));
+        }
+    }
+    inputs
         .offer
         .into_iter()
         .zip(expected.fifo)
         .nth(source_id)
         .filter(|(offer, _)| offer.cut == cut)
-        .ok_or_else(|| data_failure(Some(cut), "sender offer source identity"))?;
+        .ok_or_else(|| data_failure(Some(cut), "sender offer source identity"))
+}
+
+fn native(path: &Path, source_id: usize, cut: u64) -> Result<Window, Outcome> {
+    let (offer, fifo) = native_records(path, source_id, cut, false)?;
     let request = Offer {
         cue: offer.cue,
         allowance: offer.allowance,
         permission: offer.permission()?,
     };
-    let reply = match (offer.seed.reply, offer.seed.reply_cue) {
-        (ReplyKind::Absent, None) => Request::Absent,
-        (ReplyKind::Cue, Some(cue)) => Request::Cue(cue),
-        _ => return Err(data_failure(Some(cut), "sender seed reply payload")),
-    };
     Ok(Window {
-        seed: SenderState {
-            now: CpuMasterTicks(offer.seed.now_master_ticks),
-            reply,
-            queue: offer.seed.queue,
-            progress: offer.seed.progress.decode()?,
-            pending: None,
-        },
         group: offer.group,
         offers: vec![request],
+        seed: offer.seed.decode(cut)?,
         expected: observations(&fifo.queue, &fifo.progress.decode()?),
+    })
+}
+
+impl Seed {
+    fn decode(self, cut: u64) -> Result<SenderState, Outcome> {
+        let reply = match (self.reply, self.reply_cue) {
+            (ReplyKind::Absent, None) => Request::Absent,
+            (ReplyKind::Cue, Some(cue)) => Request::Cue(cue),
+            _ => return Err(data_failure(Some(cut), "sender seed reply payload")),
+        };
+        Ok(SenderState {
+            now: CpuMasterTicks(self.now_master_ticks),
+            reply,
+            queue: self.queue,
+            progress: self.progress.decode()?,
+            pending: None,
+        })
+    }
+}
+
+pub(super) struct ContactIngress {
+    pub seed: SenderState,
+    pub at: CpuMasterTicks,
+    pub current: game::production::frame::post_down_contract::OfferCurrent,
+}
+
+pub(super) fn contact_ingress(
+    path: &Path,
+    source_id: usize,
+    cut: u64,
+) -> Result<ContactIngress, Outcome> {
+    use game::production::frame::post_down_contract::{Demo, OfferCurrent, PowerBomb, Sounds};
+    let inputs: Inputs = read_pinned(&path.join("sender-offers-v1/inputs.toml"), INPUTS)?;
+    if !inputs.header.valid() || inputs.offer.len() != NATIVE_WINDOWS {
+        return Err(data_failure(None, "native Contact ingress header"));
+    }
+    let offer = inputs
+        .offer
+        .into_iter()
+        .nth(source_id)
+        .filter(|offer| {
+            offer.source_id == source_id
+                && offer.cut == cut
+                && offer.group == SoundGroup::Contact
+                && offer.seed.boundary == StartBoundary::PrecedingCut
+                && offer.seed.cut.and_then(|prior| prior.checked_add(1)) == Some(cut)
+                && !offer.seed.service_pending
+                && offer.seed.now_master_ticks < offer.prefetch_master_ticks
+                && offer.prefetch_master_ticks.checked_add(2) == Some(offer.exec_master_ticks)
+        })
+        .ok_or_else(|| data_failure(Some(cut), "native Contact ingress bracket"))?;
+    offer.permission()?;
+    let current = OfferCurrent {
+        sounds: if offer.disabled {
+            Sounds::Disabled
+        } else {
+            Sounds::Enabled
+        },
+        demo: if offer.demo {
+            Demo::Active
+        } else {
+            Demo::Inactive
+        },
+        power_bomb: if offer.exploding {
+            PowerBomb::Active
+        } else {
+            PowerBomb::Inactive
+        },
+    };
+    Ok(ContactIngress {
+        seed: offer.seed.decode(cut)?,
+        at: CpuMasterTicks(offer.exec_master_ticks),
+        current,
+    })
+}
+
+pub(super) struct ContactFifo {
+    pub ingress_prefetch: u64,
+    pub at: CpuMasterTicks,
+    pub queue: VecDeque<CueId>,
+    pub progress: SenderProgress,
+}
+
+pub(super) fn contact_fifo(
+    path: &Path,
+    source_id: usize,
+    cut: u64,
+) -> Result<ContactFifo, Outcome> {
+    let (offer, fifo) = native_records(path, source_id, cut, true)?;
+    Ok(ContactFifo {
+        ingress_prefetch: offer.prefetch_master_ticks,
+        at: CpuMasterTicks(fifo.master_ticks),
+        queue: fifo.queue,
+        progress: fifo.progress.decode()?,
     })
 }
 
@@ -392,7 +503,7 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
     Ok(observations(&state.0.queue, &state.0.progress))
 }
 
-const fn cue_tag(cue: CueId) -> u8 {
+pub(super) const fn cue_tag(cue: CueId) -> u8 {
     match cue {
         CueId::Footstep => 0,
         CueId::Spin => 1,
@@ -405,7 +516,7 @@ const fn cue_tag(cue: CueId) -> u8 {
     }
 }
 
-fn observations(queue: &VecDeque<CueId>, progress: &SenderProgress) -> Vec<Observation> {
+pub(super) fn observations(queue: &VecDeque<CueId>, progress: &SenderProgress) -> Vec<Observation> {
     let progress = match *progress {
         SenderProgress::Ready => vec![0],
         SenderProgress::AwaitCue(cue) => vec![1, cue_tag(cue)],

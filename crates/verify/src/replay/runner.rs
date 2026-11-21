@@ -181,6 +181,7 @@ pub(super) fn run(
         (case.checkpoints && matches!(inputs, InputReader::Audio(_))).then(|| production.clone());
     let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
+    let mut origin = touchdown_checkpoint(case, &inputs, &production, &actual)?;
     let mut digest = Vec::new();
     let mut held = HeldAdvance::default();
     let mut stop = None;
@@ -202,8 +203,11 @@ pub(super) fn run(
             *cut,
         )?;
         if case.checkpoints {
-            let saved = save_cut(&inputs, &production, *cut)?;
-            checkpoints.push((*cut, saved, actual.clone()));
+            // A single-opportunity touchdown resumes across the actual advance.
+            checkpoints.push(origin.take().map_or_else(
+                || capture_checkpoint(&inputs, &production, &actual, *cut),
+                Ok,
+            )?);
         }
     }
     for (start, saved, mut restored_actual) in checkpoints {
@@ -244,6 +248,7 @@ pub(super) fn run(
         }
         if restored.state() != production.state()
             || restored_actual.publication_count() != actual.publication_count()
+            || !touchdown_outputs_hold(&inputs, &restored_actual, &actual)
         {
             return Err(failed);
         }
@@ -253,6 +258,40 @@ pub(super) fn run(
         return Err(outcome);
     }
     record_pending(audio_start, &inputs, &expectation, &content, &rules, result)
+}
+
+type CutCheckpoint = (u64, SavedCut, ActualReader);
+
+fn capture_checkpoint(
+    inputs: &InputReader,
+    production: &Production,
+    actual: &ActualReader,
+    cut: u64,
+) -> Result<CutCheckpoint, Outcome> {
+    Ok((cut, save_cut(inputs, production, cut)?, actual.clone()))
+}
+
+fn touchdown_checkpoint(
+    case: &Case,
+    inputs: &InputReader,
+    production: &Production,
+    actual: &ActualReader,
+) -> Result<Option<CutCheckpoint>, Outcome> {
+    if !case.checkpoints || !matches!(inputs, InputReader::MovementTouchdown(_)) {
+        return Ok(None);
+    }
+    let super::index::Start::CacheCut { frame } = case.start else {
+        return Err(data_failure(None, "touchdown checkpoint origin"));
+    };
+    capture_checkpoint(inputs, production, actual, frame).map(Some)
+}
+
+fn touchdown_outputs_hold(
+    inputs: &InputReader,
+    restored: &ActualReader,
+    direct: &ActualReader,
+) -> bool {
+    !matches!(inputs, InputReader::MovementTouchdown(_)) || restored.same_publication_prefix(direct)
 }
 
 fn record_pending(

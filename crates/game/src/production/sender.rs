@@ -191,3 +191,30 @@ pub(super) fn advance(
         }
     }
 }
+
+pub(super) fn offer_touchdown(
+    sender: &mut audio_transport::SenderState,
+    request: types::SoundRequest,
+    permission: OfferPermission,
+) -> Result<(CueId, QueueAllowance), ProductionFault> {
+    if request.identity != types::SoundIdentity::SamusLandedOrWallJumped
+        || request.library != types::SoundLibrary::Library3
+        || request.queue_allowance != types::QueueAllowance(6)
+    {
+        return Err(ProductionFault::Unsupported(
+            Unsupported::MovementTouchdownSound(request),
+        ));
+    }
+    let cue = CueId::Land;
+    let allowance = QueueAllowance::Six;
+    advance(
+        sender,
+        SoundGroup::Contact,
+        SenderInput::Offer {
+            cue,
+            allowance,
+            permission,
+        },
+    )?;
+    Ok((cue, allowance))
+}

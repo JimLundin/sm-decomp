@@ -24,6 +24,8 @@ id = "audio-transport/OfferAcceptance"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/sender.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },
   { role = "navigation", path = "docs/behaviours/audio-transport.md" },
 ]
 
@@ -502,4 +504,34 @@ targets = [
   { role = "model", path = "crates/clean/world_quake/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/frame/room_quake.rs" },
   { role = "navigation", path = "crates/clean/world_quake/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "samus-movement/AcceptedFloorResponse"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/suspended.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/PoseFitAfterMoves"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/suspended.rs" },
+  { role = "model", path = "crates/clean/samus_movement/src/fit.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
+]
+
+[[rule]]
+id = "samus-movement/TouchdownRequests"
+targets = [
+  { role = "model", path = "crates/clean/samus_movement/src/touchdown.rs" },
+  { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
+  { role = "adapter", path = "crates/game/src/production/sender.rs" },
+  { role = "adapter", path = "crates/game/src/production/appearance.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/movement_touchdown.rs" },
+  { role = "navigation", path = "docs/behaviours/samus-movement.md" },
 ]

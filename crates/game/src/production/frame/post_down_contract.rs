@@ -41,6 +41,18 @@ pub struct OfferCurrent {
 }
 
 impl OfferCurrent {
+    /// Current suppression for the ordinary sender offer, in native gate order.
+    #[must_use]
+    pub const fn transport_permission(self) -> audio_transport::OfferPermission {
+        use audio_transport::OfferPermission;
+        match (self.sounds, self.demo, self.power_bomb) {
+            (Sounds::Disabled, _, _) => OfferPermission::Disabled,
+            (Sounds::Enabled, Demo::Active, _) => OfferPermission::Demo,
+            (Sounds::Enabled, Demo::Inactive, PowerBomb::Active) => OfferPermission::Explosion,
+            (Sounds::Enabled, Demo::Inactive, PowerBomb::Inactive) => OfferPermission::Enabled,
+        }
+    }
+
     /// Qualify only the independently accepted unsuppressed transport arm.
     #[must_use]
     pub const fn permission(self) -> Option<audio_transport::OfferPermission> {

@@ -1175,3 +1175,61 @@ provider = "constructed-sender-queue"
 fields = ["seed.queue", "offer.group", "offer.cue", "offer.allowance", "offer.permission"]
 phase = "immediately before selected offer"
 claim = "fixed semantic queue and ordered offers"
+
+[[case]]
+id = "movement/soft-touchdown-57"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 56 }
+end = { cut_inclusive = 57 }
+rules = ["samus-movement/PoseFitAfterMoves", "samus-movement/AcceptedFloorResponse", "samus-movement/TouchdownRequests", "audio-transport/OfferAcceptance"]
+profile = "reference"
+responsibilities = ["movement", "appearance", "audio-sender"]
+content = "player-rom-import"
+inputs = "native-touchdown-inputs"
+expectations = { provider = "native-touchdown-observations", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed", "movement.touchdown.floor_clip", "movement.touchdown.body_fit", "movement.touchdown.floor_response", "sender.queue", "sender.progress"], outputs = ["sender.touchdown_offer", "appearance.touchdown_graphics"] }
+checkpoints = true
+limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope", "no native actor candidate visitation or individual terrain cell identities compared"]
+
+[[case.borrowed]]
+dependency = "movement.entry"
+provider = "locked predecessor cut and movement-touchdown-v1/borrowed.toml"
+fields = ["preceding movement state and committed figure", "held and pressed pad", "Ahead", "items", "elevator", "cinematic", "parity", "terrain", "two current solid actors in native order"]
+phase = "ordinary Movement entry"
+claim = "the independently qualified predecessor provides the Movement seed and terrain; the live actor roster replaces the predecessor roster"
+
+[[case.borrowed]]
+dependency = "sender.ingress and appearance.area"
+provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
+fields = ["Contact queue, progress and reply", "Contact ingress time and suppression owners", "dry touchdown graphics arm"]
+phase = "before the Contact offer and at the later graphics opportunity"
+claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
+
+[[case]]
+id = "movement/soft-touchdown-124"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 123 }
+end = { cut_inclusive = 124 }
+rules = ["samus-movement/PoseFitAfterMoves", "samus-movement/AcceptedFloorResponse", "samus-movement/TouchdownRequests", "audio-transport/OfferAcceptance"]
+profile = "reference"
+responsibilities = ["movement", "appearance", "audio-sender"]
+content = "player-rom-import"
+inputs = "native-touchdown-inputs"
+expectations = { provider = "native-touchdown-observations", fields = ["movement.position.x", "movement.position.y", "movement.vertical_speed", "movement.touchdown.floor_clip", "movement.touchdown.body_fit", "movement.touchdown.floor_response", "sender.queue", "sender.progress"], outputs = ["sender.touchdown_offer", "appearance.touchdown_graphics"] }
+checkpoints = true
+limits = ["one ordinary Movement opportunity through the Contact offer and separate Appearance publication", "Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots", "the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service", "the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope", "no native actor candidate visitation or individual terrain cell identities compared"]
+
+[[case.borrowed]]
+dependency = "movement.entry"
+provider = "locked predecessor cut and movement-touchdown-v1/borrowed.toml"
+fields = ["preceding movement state and committed figure", "held and pressed pad", "Ahead", "items", "elevator", "cinematic", "parity", "terrain", "two current solid actors in native order"]
+phase = "ordinary Movement entry"
+claim = "the independently qualified predecessor provides the Movement seed and terrain; the live actor roster replaces the predecessor roster"
+
+[[case.borrowed]]
+dependency = "sender.ingress and appearance.area"
+provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
+fields = ["Contact queue, progress and reply", "Contact ingress time and suppression owners", "dry touchdown graphics arm"]
+phase = "before the Contact offer and at the later graphics opportunity"
+claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
