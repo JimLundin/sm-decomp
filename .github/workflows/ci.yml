@@ -1,58 +1,170 @@
-name: CI
-
-# The only entry point. Events call reusable proof workflows, then trusted main producers
-# retain recent clean caches after both workflows pass.
-#   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
-#   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
-# Pull requests, nightly runs and manual runs start Quality and verification independently.
-# Main pushes run both to refresh clean build caches; verify/** runs verification only.
-# Called jobs report as "<caller job> / <job>", for example "verify / content".
+name: Qualify scoped sender offers
 on:
-  pull_request:
   push:
-    branches: [main, 'verify/**']
-  schedule:
-    - cron: '17 2 * * *'
+    branches: [lane/sender-fifo-481-proof3]
   workflow_dispatch:
-
 permissions:
   contents: read
-
-# A new commit replaces its branch's run; nightly and dispatched runs finish.
-concurrency:
-  group: ci-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
 jobs:
-  quality:
-    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/quality.yml
-
-  verify:
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/verify.yml
-    secrets:
-      SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
-      SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
-
-  retain-caches:
-    # Only trusted main producers receive cache deletion permission, after all proof passes.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-    needs: [quality, verify]
+  sender:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      actions: write
-    concurrency:
-      group: cargo-cache-retention-main
-      cancel-in-progress: false
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-      - name: Retain recent clean main builds
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-replay-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-replay-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - uses: actions/checkout@v4
+        with:
+          repository: JimLundin/ci-data
+          ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
+          path: .ci-data
+          persist-credentials: false
+      - name: Install the production fixture
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/retain_cargo_caches.py
+          SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+        run: |
+          mkdir -p rom "$RUNNER_TEMP/audio-native"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
+          echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check
+          rm -rf .ci-data
+          bash tools/ci/fetch_sender_offers.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Build the indexed runner and generate the measured receipt
+        run: |
+          cargo build --locked --profile verify -p tools
+          target/verify/tools replay run scenarios/replay/index.toml --rule audio-transport/OfferAcceptance --native "$RUNNER_TEMP/audio-native" --write "$RUNNER_TEMP/sender-receipt.toml"
+      - name: Generate candidate baseline and report from the clean result
+        run: |
+          python3 - <<'PY'
+          
+          from pathlib import Path
+          import hashlib, os, tomllib
+          task=Path(os.environ['RUNNER_TEMP'])
+          index=Path('scenarios/replay/index.toml')
+          baseline=Path('scenarios/replay/baseline.toml')
+          receipt=task/'sender-receipt.toml'
+          cases=tomllib.loads(index.read_text(encoding='utf-8'))['case']
+          selected=[case for case in cases if case['id'].startswith('sender-offer/')]
+          measured=tomllib.loads(receipt.read_text(encoding='utf-8'))['cases']
+          assert len(selected)==len(measured)==26
+          base=baseline.read_text(encoding='utf-8').split('\n',2)
+          assert base[0]=='format = 1' and base[1].startswith('index_sha256 = ')
+          assert all(not case['id'].startswith('sender-offer/') for case in tomllib.loads('\n'.join(base))['case'])
+          base[1]=f'index_sha256 = "{hashlib.sha256(index.read_bytes()).hexdigest()}"'
+          floors={'cuts':1,'fields':2,'outputs':0,'publications':0,'replies':0,
+                  'null_cuts':0,'null_fields':1,'restorations':1,
+                  'pending_boundaries':0,'pending_restorations':0}
+          parts=['\n'.join(base).rstrip()]
+          for position,(case,result) in enumerate(zip(selected,measured,strict=True)):
+           assert case['id']==result['id']
+           assert result['outcome']=={'status':'pass'}
+           assert result['end_cut']==case['end']['cut_inclusive']
+           assert result['row']==case['row']
+           assert result['limits']==case['limits']
+           counts=dict(floors)
+           if position>=21:
+            counts.update({'null_cuts':1,'null_fields':2})
+           assert result['counts']==counts,(result['id'],result['counts'])
+           digest=result['observation_sha256']
+           assert len(digest)==64 and all(c in '0123456789abcdef' for c in digest)
+           parts.append(f'''[[case]]
+          id = "{case["id"]}"
+          claim = "behaviour"
+          expected = {{ status = "pass" }}
+          observation_sha256 = "{digest}"
+          
+          [case.counts]
+          '''+ '\n'.join(f'{key} = {value}' for key,value in counts.items()))
+          baseline.write_text('\n\n'.join(parts)+'\n',encoding='utf-8',newline='\n')
+          print(f"Candidate baseline adds {len(selected)} measured Pass cases")
+          
+          PY
+          target/verify/tools report --write
+          mkdir -p "$RUNNER_TEMP/candidate/docs" "$RUNNER_TEMP/candidate/scenarios/replay"
+          cp README.md "$RUNNER_TEMP/candidate/"
+          cp docs/REPORT.md docs/timeline.svg "$RUNNER_TEMP/candidate/docs/"
+          cp scenarios/replay/baseline.toml "$RUNNER_TEMP/candidate/scenarios/replay/"
+          cp "$RUNNER_TEMP/sender-receipt.toml" "$RUNNER_TEMP/candidate/"
+          git restore README.md docs/REPORT.md docs/timeline.svg scenarios/replay/baseline.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sender-offer-candidate
+          path: ${{ runner.temp }}/candidate
+      - name: Check suppression fault containment
+        run: |
+          sed -i 's/offer(state, cue, allowance, permission);/offer(state, cue, allowance, if permission == OfferPermission::Demo { OfferPermission::Enabled } else { permission });/' crates/game/src/production/sender.rs
+          cargo build --locked --profile verify -p tools
+          if target/verify/tools replay run scenarios/replay/index.toml --case sender-offer/deny-demo --write "$RUNNER_TEMP/sender-fault.toml"; then
+            exit 1
+          fi
+          python3 - <<'PY'
+          import os, pathlib, tomllib
+          path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "sender-fault.toml"
+          receipt = tomllib.loads(path.read_text())
+          case, = receipt["cases"]
+          assert case["id"] == "sender-offer/deny-demo"
+          assert case["outcome"] == {"status": "difference", "cut": 0, "field": "sender.queue"}
+          PY
+          git restore crates/game/src/production/sender.rs
+      - name: Check native omission and constructed order faults
+        run: |
+          set -euo pipefail
+          source_file=crates/game/src/production/sender.rs
+          cp "$source_file" "$RUNNER_TEMP/sender-original.rs"
+          trap 'cp "$RUNNER_TEMP/sender-original.rs" "$source_file"' EXIT
+          check_fault() {
+            local case_id=$1 cut=$2 name=$3
+            cargo build --locked --profile verify -p tools
+            if target/verify/tools replay run scenarios/replay/index.toml --case "$case_id" --native "$RUNNER_TEMP/audio-native" --write "$RUNNER_TEMP/$name.toml"; then
+              exit 1
+            fi
+            python3 - "$case_id" "$cut" "$RUNNER_TEMP/$name.toml" <<'PY'
+          import pathlib, sys, tomllib
+          case_id, cut, file = sys.argv[1:]
+          case, = tomllib.loads(pathlib.Path(file).read_text())["cases"]
+          assert case["id"] == case_id
+          assert case["outcome"] == {"status": "difference", "cut": int(cut), "field": "sender.queue"}
+          PY
+            cp "$RUNNER_TEMP/sender-original.rs" "$source_file"
+            cmp "$RUNNER_TEMP/sender-original.rs" "$source_file"
+          }
+          sed -i 's/audio_transport::sender::offer(state, cue, allowance, permission);/if cue != CueId::Door { audio_transport::sender::offer(state, cue, allowance, permission); }/' "$source_file"
+          check_fault sender-offer/native-14 157 sender-fault-native-omission
+          sed -i 's/audio_transport::sender::offer(state, cue, allowance, permission);/audio_transport::sender::offer(state, cue, allowance, permission); if state.queue.len() == 6 { state.queue.swap(4, 5); }/' "$source_file"
+          check_fault sender-offer/ordered-pair 0 sender-fault-order
+          cargo build --locked --profile verify -p tools
+          target/verify/tools replay run scenarios/replay/index.toml --rule audio-transport/OfferAcceptance --native "$RUNNER_TEMP/audio-native" --write "$RUNNER_TEMP/sender-restored.toml"
+          cmp "$RUNNER_TEMP/sender-receipt.toml" "$RUNNER_TEMP/sender-restored.toml"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sender-offer-receipts
+          path: |
+            ${{ runner.temp }}/sender-receipt.toml
+            ${{ runner.temp }}/sender-fault*.toml
+            ${{ runner.temp }}/sender-restored.toml
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - run: cargo clippy --locked -p verify -p tools --all-targets --no-deps -- -D warnings
+
