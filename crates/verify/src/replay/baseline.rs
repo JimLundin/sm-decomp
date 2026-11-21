@@ -202,7 +202,11 @@ impl Baseline {
                 .ok_or_else(|| BaselineFault::MissingCase(result.id.clone()))?;
             let start_cut = match case.start {
                 Start::CacheCut { frame } | Start::NativeCheckpoint { frame, .. } => Some(frame),
-                Start::NativeOpportunity { .. } | Start::NativeSeed { .. } | Start::PowerOn => None,
+                Start::NativeOpportunity { .. }
+                | Start::NativeSeed { .. }
+                | Start::NativeSenderOffer { .. }
+                | Start::ConstructedSenderOffer { .. }
+                | Start::PowerOn => None,
             };
             if result.kind != case.kind
                 || result.row != case.row

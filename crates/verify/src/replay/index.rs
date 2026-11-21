@@ -81,6 +81,16 @@ pub enum Start {
         /// Independent complete opportunity return coordinate.
         source_completion_index: u64,
     },
+    /// One independent recorded sender offer.
+    NativeSenderOffer {
+        /// Identity in the frozen ingress sequence.
+        source_id: usize,
+    },
+    /// One independent constructed sender control.
+    ConstructedSenderOffer {
+        /// Starting queue and ordered offers.
+        control: SenderOfferControl,
+    },
     /// Initial selected state from one pinned record cut.
     CacheCut {
         /// The original record cut used only for initial selected state.
@@ -161,6 +171,8 @@ pub enum InputProvider {
     ObservedFixedProgressEvents,
     /// A declared capability boundary with no admitted changing-input provider.
     Unavailable,
+    /// Independently observed or constructed queue offers.
+    SenderOffers,
     /// Physical port presentations and measured clock stops.
     NativePhysicalPresentations,
     /// Power-on play using movie inputs.
@@ -175,6 +187,8 @@ pub enum ContentProvider {
     PlayerRomImport,
     /// Resident content in the independent pinned fixture.
     NativeResidentContent,
+    /// Fixed group selected by the sender offer case.
+    SenderGroup,
     /// Static figures and geometry in the existing Ceres model.
     CeresReference,
     /// Independently observed room scroll kinds and dimensions.
@@ -193,6 +207,8 @@ pub enum ExpectedProvider {
     NativeCompleteMovementWork,
     /// Independent pinned oracle records.
     PinnedRecordCache,
+    /// Independent queue and committed progress.
+    SenderOfferQueue,
     /// Independent decoded native cuts.
     NativeDecodedCuts,
 }
@@ -200,6 +216,12 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Complete pending sound queue, oldest first.
+    #[serde(rename = "sender.queue")]
+    SenderQueue,
+    /// Complete committed sender progress.
+    #[serde(rename = "sender.progress")]
+    SenderProgress,
     /// Complete retained movement owner.
     #[serde(rename = "movement.state.complete")]
     MovementStateComplete,
@@ -680,6 +702,7 @@ fn rule_exists(rule: &str) -> bool {
 
 const fn observation_owner(field: ObservationId) -> Responsibility {
     match field {
+        ObservationId::SenderQueue | ObservationId::SenderProgress => Responsibility::AudioSender,
         ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
         ObservationId::FrameRandom => Responsibility::GameRandom,
         ObservationId::PlayTimeHours
@@ -768,6 +791,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
 }
 
 fn rule_owner(rule: &str) -> Option<Responsibility> {
+    if rule == "audio-transport/OfferAcceptance" {
+        return Some(Responsibility::AudioSender);
+    }
     [
         ("samus-movement/", Responsibility::Movement),
         ("audio-transport/", Responsibility::Audio),
@@ -810,6 +836,7 @@ fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
         }
         "samus-movement/WallJump" => &[O::WallTest],
         "samus-movement/TouchedCells" => &[O::Reached],
+        "audio-transport/OfferAcceptance" => &[O::SenderQueue],
         "audio-transport/MusicalProgress"
         | "audio-transport/WholeArrangement"
         | "audio-transport/FinitePhrases" => &[O::AudioSemantic],
@@ -921,6 +948,8 @@ fn native_search_provider_valid(case: &Case, observations: &BTreeSet<Observation
         | Start::NativeSeed { .. }
         | Start::NativeCheckpoint { .. }
         | Start::CacheCut { .. }
+        | Start::NativeSenderOffer { .. }
+        | Start::ConstructedSenderOffer { .. }
         | Start::PowerOn => false,
     };
     source
@@ -995,6 +1024,20 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             connected_provider_valid(case, observations)
         }
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
+        [Responsibility::AudioSender] => {
+            case.kind == CaseKind::Scoped
+                && case.content == ContentProvider::SenderGroup
+                && case.inputs == InputProvider::SenderOffers
+                && case.expectations.provider == ExpectedProvider::SenderOfferQueue
+                && matches!(
+                    case.start,
+                    Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. }
+                )
+                && case.expectations.fields == [O::SenderQueue, O::SenderProgress]
+                && case.expectations.outputs.is_empty()
+                && !case.borrowed.is_empty()
+                && !case.limits.is_empty()
+        }
         [Responsibility::Audio] => {
             case.kind == CaseKind::Scoped
                 && case.content == ContentProvider::NativeResidentContent
@@ -1257,6 +1300,13 @@ impl Case {
                     && valid_hash(seed_sha256)
                     && *frame < case.end.cut_inclusive
             }
+            Start::NativeSenderOffer { source_id } => {
+                *source_id < super::sender_offer::NATIVE_WINDOWS
+                    && case.row == super::sender_offer::SOURCE_ROW
+            }
+            Start::ConstructedSenderOffer { .. } => {
+                case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
+            }
             Start::PowerOn => case.kind == CaseKind::Movie && case.borrowed.is_empty(),
         };
         if case.id.0.is_empty()
@@ -1310,6 +1360,9 @@ impl Case {
                 frame.checked_add(1)
             }
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
+            Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {
+                Some(self.end.cut_inclusive)
+            }
             Start::NativeSeed { .. } if matches!(self.inputs, InputProvider::NativeFrameOwners) => {
                 Some(match &self.end.native_returns {
                     Some(returns) => returns.first_cut,
@@ -1425,7 +1478,7 @@ mod tests {
             index.cases.len()
         );
         assert!(matches!(
-            index.select(&[], Some("audio-transport/OfferAcceptance"), None),
+            index.select(&[], Some("audio-transport/RequestDelivery"), None),
             Err(IndexFault::Empty)
         ));
         let id = CaseId("audio/native-control".to_owned());
@@ -1469,4 +1522,24 @@ mod tests {
         };
         assert!(matches!(case.validate(), Err(IndexFault::InvalidCase(_))));
     }
+}
+
+/// Constructed controls for queue behavior absent from the recording.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum SenderOfferControl {
+    /// Two different cues append in offer order.
+    OrderedPair,
+    /// A second offer of an already pending cue can enter.
+    RepeatAtFive,
+    /// Occupancy equal to the allowance denies the offer.
+    DenyAtSix,
+    /// A reduced allowance preserves the existing queue.
+    DenySmallerLimit,
+    /// Disabled sound denies the offer.
+    DenyDisabled,
+    /// Demo playback denies the offer.
+    DenyDemo,
+    /// Explosion suppression denies the offer.
+    DenyExplosion,
 }
