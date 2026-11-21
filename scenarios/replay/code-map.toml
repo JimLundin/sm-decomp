@@ -18,6 +18,14 @@ targets = [
 ]
 
 [[rule]]
+id = "audio-transport/OfferAcceptance"
+targets = [
+  { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
+  { role = "adapter", path = "crates/game/src/production/sender.rs" },
+  { role = "navigation", path = "docs/behaviours/audio-transport.md" },
+]
+
+[[rule]]
 id = "audio-transport/ReplyCadence"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },

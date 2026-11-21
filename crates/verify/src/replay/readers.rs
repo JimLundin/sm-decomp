@@ -15,6 +15,7 @@ use game::production::{
 use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
+    SenderOffer(Vec<super::sender_offer::Offer>),
     Frame(super::frame::Inputs),
     NativeSearch(Box<super::native_search::Inputs>),
     Recorded(Box<super::recorded::Inputs>),
@@ -26,6 +27,7 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
+    SenderOffer(Vec<Observation>),
     Frame(Box<super::frame::Expected>),
     NativeSearch(super::native_search::Expected),
     Recorded(Box<super::recorded::Expected>),
@@ -35,6 +37,7 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone)]
 pub(super) enum ActualReader {
+    SenderOffer,
     Frame(super::frame::Actual),
     NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
@@ -91,6 +94,7 @@ impl InputReader {
         held: &mut HeldAdvance,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
             Self::Recorded(reader) => reader.advance(production, cut),
@@ -175,6 +179,11 @@ impl ActualReader {
         held: &mut HeldAdvance,
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
+            (
+                Self::SenderOffer,
+                InputReader::SenderOffer(_),
+                ProductionOutputs::AudioSender(outputs),
+            ) if outputs.is_empty() => super::sender_offer::actual(production),
             (Self::Frame(actual), InputReader::Frame(_), ProductionOutputs::Frame(outputs)) => {
                 actual
                     .accept(production, &outputs, cut)
@@ -243,6 +252,7 @@ impl ActualReader {
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
+            Self::SenderOffer => super::sender_offer::actual(production),
             Self::Frame(actual) => actual.initial(production),
             Self::NativeSearch(_) => {
                 let mut fields = super::native_search::initial();
@@ -298,8 +308,8 @@ impl ActualReader {
                 },
             ) => restored == direct && restored_replies == direct_replies,
             (
-                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement,
-                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement,
+                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
+                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
             ) => true,
             (Self::Frame(_) | Self::Audio { .. }, _) | (_, Self::Frame(_) | Self::Audio { .. }) => {
                 false
@@ -311,7 +321,7 @@ impl ActualReader {
         match self {
             Self::Frame(actual) => actual.publication_count(),
             Self::Audio { publications, .. } => publications.len(),
-            Self::NativeSearch(_) | Self::Movement | Self::Recorded(_) => 0,
+            Self::NativeSearch(_) | Self::Movement | Self::Recorded(_) | Self::SenderOffer => 0,
         }
     }
 }
@@ -319,6 +329,13 @@ impl ActualReader {
 impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
+            Self::SenderOffer(fields) => Ok(ExpectedCut {
+                fields: fields.clone(),
+                semantics: fields.clone(),
+                semantic_count: fields.len(),
+                output_count: 0,
+                replies: 0,
+            }),
             Self::Frame(reader) => reader.read(cut, case.compares_final_frame_health()),
             Self::NativeSearch(expected) => {
                 let fields = expected.read(cut)?;
