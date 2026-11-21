@@ -105,7 +105,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 M0: **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
 
-Of the 39 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **16 are in progress** and **0 done**; 23 have not started. **71 rounds** have landed on 16 models; the plan estimates 159 rounds for the whole game.
+Of the 39 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **16 are in progress** and **0 done**; 23 have not started. **72 rounds** have landed on 16 models; the plan estimates 159 rounds for the whole game.
 
 ### The models
 
@@ -113,7 +113,7 @@ Model implementation and vectors are separate from the replay evidence above.
 
 | Model | Plan | Status | Rounds | Vectors | Score | Budget | Fit |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| audio-transport | U1 (in progress) | in progress | 1 | 112 | 8,053 | 2,711 | 2.97 |
+| audio-transport | U1 (in progress) | in progress | 2 | 112 | 8,053 | 2,711 | 2.97 |
 | enemy-interactions | C1 (in progress) | in progress | 1 | 30 | 264 | 362 | 0.73 |
 | weapons-projectiles | W1 (in progress) | in progress | 1 | 81 | 4,035 | 2,062 | 1.96 |
 | samus-movement | S1, S2 (in progress); S4, S3 (not started) | in progress | 25 | 501 | 18,405 | 10,786 | 1.71 |

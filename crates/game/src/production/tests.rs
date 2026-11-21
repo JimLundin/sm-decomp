@@ -18,6 +18,7 @@ use crate::state::owned::OwnedState;
 use core::num::Wrapping;
 use types::{Block, Pair, Pose, Set, Sprite};
 
+mod audio_checkpoint;
 mod continuation;
 mod entries;
 mod fixtures;

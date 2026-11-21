@@ -17,6 +17,7 @@ impl Pinned for AudioPin {
     type State = Box<audio_transport::State>;
     const NAME: &'static str = "production-audio";
     const SHAPE: u64 = 0x8296_0EDF_19A5_1FC5;
+    const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] = &[("MusicalPitch", 19)];
 }
 
 /// The full ordinary power state, including fractions, trails and spacing.
