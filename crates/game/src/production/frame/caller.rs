@@ -1727,6 +1727,7 @@ impl State {
         budget: MasterTicks,
     ) -> Result<Outputs, ProductionFault> {
         self.begin_next_opportunity(content)?;
+        self.validate_late_status_work(content)?;
         self.validate_cannon_history()?;
         let (gameplay, native_admitted) = self.gameplay_publications()?;
         self.validate_scene_preservation(content, gameplay, native_admitted)?;

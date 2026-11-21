@@ -3,7 +3,7 @@ use super::*;
 use data::timing::{MasterTicks, TransferPort};
 use frame::{late_hud::Stage, suffix_caller::HudQueue};
 use game::production::timing::{Event, EventKind};
-use game::production::{AdvanceInput, ProductionOutputs};
+use game::production::{AdmissionFault, AdvanceInput, ProductionOutputs};
 use game::state::owned::OwnedState;
 
 #[test]
@@ -26,6 +26,25 @@ fn actual_status_in_flight_restores_one_hud_upload_through_native_return() {
                 .last()
                 .is_some_and(|work| work.profile == hud.status && work.cursor.intrinsic.0 > 0)
     });
+
+    let change_retained_energy = |state: &mut frame::State| {
+        let Stage::Charging { energy, .. } = &mut state.late_hud else {
+            panic!("in-flight status");
+        };
+        *energy ^= 1;
+    };
+    assert_rejected_at_admission(&admitted, change_retained_energy);
+    assert_rejected_at_admission(&admitted, choose_status_with_stale_energy);
+    assert_rejected_at_admission(&admitted, |state| {
+        change_retained_energy(state);
+        choose_status_with_stale_energy(state);
+    });
+    assert_rejected_at_admission(&admitted, |state| {
+        let work = state.timing.work.last_mut().unwrap();
+        let run = work.profile.runs.last_mut().unwrap();
+        run.count = run.count.checked_add(1).unwrap();
+    });
+    assert_rejected_at_admission(&admitted, |state| state.late_hud = Stage::StatusReady);
 
     let checkpoint = admitted.production.save().unwrap();
     let mut restored = Production::restore(
@@ -65,8 +84,6 @@ fn actual_status_in_flight_restores_one_hud_upload_through_native_return() {
 #[test]
 #[ignore = "requires the retained native frame and checked player ROM"]
 fn completed_hud_queue_rejects_a_changed_destination_at_checkpoint_admission() {
-    use game::production::{AdmissionFault, SavedProduction};
-
     let (_, mut admitted) = retained_return();
     let InputReader::Frame(inputs) = &admitted.inputs else {
         panic!("frame inputs");
@@ -76,23 +93,55 @@ fn completed_hud_queue_rejects_a_changed_destination_at_checkpoint_admission() {
         matches!(state.late_hud, Stage::Completed(HudQueue::Queued(_)))
     });
     let checkpoint = admitted.production.save().unwrap();
-    let restore = |saved: &SavedProduction| {
-        Production::restore(saved, admitted.content.clone(), admitted.rules.clone())
-    };
-    let restored = restore(&checkpoint).unwrap();
+    let restored = Production::restore(
+        &checkpoint,
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
     assert_observation_eq!(restored.state(), admitted.production.state());
 
-    let mut altered = frame_state(&restored).clone();
-    let Stage::Completed(HudQueue::Queued(request)) = &mut altered.late_hud else {
-        panic!("queued HUD request");
+    assert_rejected_at_admission(&admitted, |state| {
+        let Stage::Completed(HudQueue::Queued(request)) = &mut state.late_hud else {
+            panic!("queued HUD request");
+        };
+        request.template.target.0 ^= 1;
+    });
+}
+
+fn choose_status_with_stale_energy(state: &mut frame::State) {
+    let Stage::Charging { chosen, .. } = &mut state.late_hud else {
+        panic!("in-flight status");
     };
-    request.template.target.0 ^= 1;
+    let frame::hud::Hud::Countdown { ordinary, .. } = chosen else {
+        panic!("chosen ordinary HUD");
+    };
+    let interface_hud::Observation::Chosen(answer) = ordinary.0.status() else {
+        panic!("chosen status");
+    };
+    let mut inputs = answer.inputs;
+    inputs.energy.now ^= 1;
+    let mut before = state.hud.clone();
+    let frame::hud::Hud::Countdown { ordinary, .. } = &mut before else {
+        panic!("ordinary HUD before status choice");
+    };
+    assert!(
+        ordinary
+            .0
+            .choose_status(&answer.rules, &answer.pictures, inputs)
+    );
+    *chosen = before;
+}
+
+#[track_caller]
+fn assert_rejected_at_admission(admitted: &AdmittedCase, change: impl FnOnce(&mut frame::State)) {
+    let mut altered = frame_state(&admitted.production).clone();
+    change(&mut altered);
     let forged = Production::admit(
         ProductionSeed::Frame(Box::new(altered)),
         admitted.content.clone(),
         admitted.rules.clone(),
-    )
-    .and_then(|production| restore(&production.save().unwrap()));
+    );
     assert!(matches!(
         forged,
         Err(AdmissionFault::Frame(fault)) if *fault == frame::Fault::InvalidPlayerEntry

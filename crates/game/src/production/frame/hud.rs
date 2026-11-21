@@ -189,6 +189,16 @@ impl Hud {
         ordinary.0.choose_status(rules, pictures, inputs)
     }
 
+    pub(super) fn chosen_status_energy(&self) -> Option<u16> {
+        let Self::Countdown { ordinary, .. } = self else {
+            return None;
+        };
+        match ordinary.0.status() {
+            interface_hud::Observation::Chosen(answer) => Some(answer.inputs.energy.now),
+            interface_hud::Observation::Unread | interface_hud::Observation::Completed(_) => None,
+        }
+    }
+
     pub(super) fn apply_late_status(&mut self) -> bool {
         let Self::Countdown { ordinary, work } = self else {
             return false;

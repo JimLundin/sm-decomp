@@ -108,12 +108,6 @@ impl State {
         {
             return Err(missing());
         }
-        if !self.publications.original_interval()
-            && matches!(self.late_hud, Stage::StatusReady | Stage::Charging { .. })
-        {
-            // The adjacent map only establishes event facts at its own opportunity.
-            return Err(missing());
-        }
         match &self.late_hud {
             Stage::Pending => {
                 self.timing
@@ -122,9 +116,15 @@ impl State {
                 self.late_hud = Stage::EnemyBackground;
             }
             Stage::EnemyBackground => {
-                self.validate_late_hud_profile(ENEMY_BACKGROUND, &contract.enemy_background)?;
+                if !self.has_physical_bill(ENEMY_BACKGROUND, &contract.enemy_background) {
+                    return Err(missing());
+                }
             }
             Stage::StatusReady => {
+                // The adjacent map only establishes event facts at its own opportunity.
+                if !self.publications.original_interval() {
+                    return Err(missing());
+                }
                 let display = &self.hud_display_current.as_ref().ok_or_else(missing)?.0;
                 let mut status = display.status;
                 status.energy.now = energy;
@@ -149,30 +149,34 @@ impl State {
                     .map_err(ProductionFault::FrameHardware)?;
                 self.late_hud = Stage::Charging { chosen, energy };
             }
-            Stage::Charging {
-                energy: retained, ..
-            } => {
-                if *retained != energy {
-                    return Err(missing());
-                }
-                self.validate_late_hud_profile(STATUS, &contract.status)?;
-            }
+            Stage::Charging { .. } => {}
             Stage::Completed(_) | Stage::Retired => return Err(missing()),
         }
         Ok(())
     }
 
-    fn validate_late_hud_profile(
+    pub(super) fn validate_late_status_work(
         &self,
-        id: timing::WorkId,
-        profile: &Profile,
+        content: &Content,
     ) -> Result<(), ProductionFault> {
-        let mut active = self
+        let expected = if let Stage::Charging { chosen, energy } = &self.late_hud {
+            if !self.publications.original_interval()
+                || self.maintenance.energy() != Some(*energy)
+                || chosen.chosen_status_energy() != Some(*energy)
+            {
+                return Err(missing());
+            }
+            Some(&content.late_hud.as_ref().ok_or_else(missing)?.status)
+        } else {
+            None
+        };
+        let active = self
             .timing
             .work
             .iter()
-            .filter(|work| work.kind == timing::WorkKind::Semantic(id));
-        if active.next().is_some_and(|work| &work.profile == profile) && active.next().is_none() {
+            .filter(|work| work.kind == timing::WorkKind::Semantic(STATUS))
+            .map(|work| &work.profile);
+        if active.eq(expected) {
             Ok(())
         } else {
             Err(missing())
@@ -245,10 +249,7 @@ impl State {
         let contract = content.late_hud.as_ref().ok_or_else(missing)?;
         match (&self.late_hud, id) {
             (Stage::EnemyBackground, ENEMY_BACKGROUND) => self.late_hud = Stage::StatusReady,
-            (Stage::Charging { chosen, energy }, STATUS) => {
-                if self.maintenance.energy() != Some(*energy) {
-                    return Err(missing());
-                }
+            (Stage::Charging { chosen, .. }, STATUS) => {
                 let mut hud = chosen.clone();
                 if !hud.apply_late_status() || hud.events() != self.hud.events() {
                     return Err(missing());
