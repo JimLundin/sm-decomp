@@ -93,6 +93,7 @@ pub use state::{Fault, Senders, State};
 
 pub(crate) fn validate_pins() -> Result<(), canonical::model::Unpinned> {
     canonical::model::pin_holds::<haze::HazePin>()?;
+    canonical::model::pin_holds::<random::RandomPin>()?;
     canonical::model::pin_holds::<health::HealthPin>()?;
     canonical::model::pin_holds::<hud::CountdownPin>()?;
     canonical::model::pin_holds::<countdown_caller::AnswerPin>()?;

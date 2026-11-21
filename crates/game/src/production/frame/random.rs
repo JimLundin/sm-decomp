@@ -1,10 +1,60 @@
-//! Physical operand binding and retained live samples for borrowed Random completion.
+//! Physical Random requests and retained live multiplication samples.
 
-use super::borrowed_preparation::{
-    CompletedSeedProducts, FirstSeedProduct, RandomSeed, SecondSeedProductLow,
+use canonical::{
+    Canonical,
+    model::{Model, Pinned},
 };
-use canonical::Canonical;
 use data::timing::{DeviceWrite, Publication, Sample, Template, TemplateEffect};
+use game_random::{RandomNumber, RandomSequence};
+
+pub(super) struct RandomPin;
+
+impl Pinned for RandomPin {
+    type State = RandomSequence;
+    const NAME: &'static str = "game-random";
+    const SHAPE: u64 = 0xee18_3037_285b_17ec;
+}
+
+/// Current shared sequence, independently retained between physical draws.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct Sequence(Model<RandomPin>);
+
+impl Sequence {
+    /// Admit the actual current number, including zero.
+    #[must_use]
+    pub const fn new(number: RandomSeed) -> Self {
+        Self(Model(RandomSequence {
+            number: RandomNumber(number.0),
+        }))
+    }
+
+    /// Read the number without advancing.
+    #[must_use]
+    pub const fn current(&self) -> RandomSeed {
+        RandomSeed(self.0.0.number.0)
+    }
+
+    pub(super) fn draw(&mut self) {
+        game_random::advance_random(&mut self.0.0);
+    }
+}
+
+/// Shared current number supplied to the hardware requests.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RandomSeed(pub u16);
+
+/// Complete first product, retained across the second multiplication.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FirstSeedProduct(pub u16);
+
+/// Ordered live bytes sampled from both hardware requests.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CompletedSeedProducts {
+    /// Low and high bytes sampled from the first request.
+    first: FirstSeedProduct,
+    /// Low byte sampled from the second request.
+    second_low: u8,
+}
 
 /// Checked immutable multiplier imported at the content edge.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -13,8 +63,6 @@ pub struct ImportedRandomMultiplier(pub u8);
 /// Complete current-seed envelope for the two actual hardware requests.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct SeedRequests {
-    /// Original seed read by both current requests.
-    pub dependency: RandomSeed,
     /// Independently checked immutable operand.
     pub multiplier: ImportedRandomMultiplier,
 }
@@ -22,26 +70,21 @@ pub struct SeedRequests {
 /// Invalid current dependency, physical request shape or live sample sequence.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
-    /// Current original seed differs from the qualified request dependency.
-    Seed,
     /// Physical owner does not contain exactly the two named multiplication requests.
     Profile,
-    /// The live result sequence is incomplete, duplicated or reordered.
+    /// The live result sequence is incomplete, out of order or inconsistent with the operands.
     Samples,
 }
 
 impl SeedRequests {
     /// Bind both requests from the current original seed, without generating any result.
     /// # Errors
-    /// Rejects stale seed and incompatible publication/sample namespaces before execution.
+    /// Rejects incompatible publication and sample namespaces before execution.
     pub fn bind(
         self,
         current: RandomSeed,
         template: &Template,
     ) -> Result<data::timing::Profile, Fault> {
-        if current != self.dependency {
-            return Err(Fault::Seed);
-        }
         let [low, high] = current.0.to_le_bytes();
         let mut values = [low, self.multiplier.0, high, self.multiplier.0].into_iter();
         let mut writes = Vec::new();
@@ -75,6 +118,22 @@ impl SeedRequests {
         }
         template.bind(&writes).map_err(|_| Fault::Profile)
     }
+
+    /// Validate all sampled product bytes against the operands bound to the request.
+    /// # Errors
+    /// The physical samples are incomplete or inconsistent with their operands.
+    pub fn validate_samples(self, requested: RandomSeed, samples: Samples) -> Result<(), Fault> {
+        let products = samples.completed()?;
+        let [low, high] = requested.0.to_le_bytes();
+        let multiplier = u16::from(self.multiplier.0);
+        // Each operand is a byte, so its product fits in a word.
+        let first = u16::from(low).wrapping_mul(multiplier);
+        let [second_low, _] = u16::from(high).wrapping_mul(multiplier).to_le_bytes();
+        if products.first.0 != first || products.second_low != second_low {
+            return Err(Fault::Samples);
+        }
+        Ok(())
+    }
 }
 
 /// Live result bytes retained across hardware pauses and interrupt suspension.
@@ -103,7 +162,7 @@ impl Samples {
             }
             (Self::First(first), Sample::ProductLow) => Self::Complete(CompletedSeedProducts {
                 first,
-                second_low: SecondSeedProductLow(value),
+                second_low: value,
             }),
             _ => return Err(Fault::Samples),
         };
@@ -113,7 +172,7 @@ impl Samples {
     /// Complete actual hardware products, never source-required product predicates.
     /// # Errors
     /// At least one required live sample has not completed.
-    pub const fn completed(self) -> Result<CompletedSeedProducts, Fault> {
+    const fn completed(self) -> Result<CompletedSeedProducts, Fault> {
         match self {
             Self::Complete(products) => Ok(products),
             Self::Empty | Self::FirstLow(_) | Self::First(_) => Err(Fault::Samples),

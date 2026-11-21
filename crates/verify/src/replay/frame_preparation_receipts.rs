@@ -2,10 +2,10 @@
 use game::production::frame::borrowed::{ActorEligibilityOrigin, ActorSlot};
 use game::production::frame::borrowed_preparation::{
     ActorEligibilityReceipt, ActorSlotIdentity, DebugAction, DebugCompletionReceipt, DebugMode,
-    DebugOrigin, DeferredRandomReceipt, PaletteCompletionReceipt, PaletteDisposition,
-    PaletteOrigin, PaletteSlot, PhysicalPadEdges, RandomSeed, RequiredFirstSeedProduct,
-    RequiredSecondSeedProductLow,
+    DebugOrigin, PaletteCompletionReceipt, PaletteDisposition, PaletteOrigin, PaletteSlot,
+    PhysicalPadEdges,
 };
+use game::production::frame::random::RandomSeed;
 use serde::Deserialize;
 
 /// Invalid current origin, external completion or physical result dependency.
@@ -111,25 +111,6 @@ pub fn actors(
             .collect(),
     })
 }
-#[derive(Deserialize)]
-struct Product {
-    role: String,
-    required_actual_result_encoding: u16,
-    result_consumed_only_after_actual_device_completion: ContractFlag,
-}
-#[derive(Deserialize)]
-struct RandomProjection {
-    #[serde(flatten)]
-    contract: Contract,
-    required_current_seed: u16,
-    terminal_seed: u16,
-    requires_actual_first_completed_product_identity: ContractFlag,
-    requires_actual_second_completed_product_identity: ContractFlag,
-    first_product_preserved_across_second_request: ContractFlag,
-    source_hardware_result_values_used_as_device_inputs: ContractFlag,
-    actual_product_dependency: Vec<Product>,
-}
-
 /// Import the actual current random seed from complete initial WRAM.
 /// # Errors
 /// Rejects incomplete current origin memory.
@@ -194,58 +175,6 @@ pub fn palette_origin(bytes: &[u8]) -> Result<PaletteOrigin, PreparationFault> {
     })
 }
 
-/// Import an external random offer without supplying any actual hardware result.
-/// Required product quantities remain predicates in distinct types, never device inputs.
-/// Retain unread until full actual physical completion; the game consumes this offer
-/// only after revalidating current seed and actual completed samples.
-/// # Errors
-/// Rejects malformed projections, changed current seed and unsupported dependency contracts.
-pub fn random_offer(
-    current: RandomSeed,
-    projection: &str,
-) -> Result<DeferredRandomReceipt, PreparationFault> {
-    let receipt: RandomProjection =
-        toml::from_str(projection).map_err(|_| PreparationFault::Format)?;
-    receipt.contract.validate("Random")?;
-    if !receipt.requires_actual_first_completed_product_identity.0
-        || !receipt.requires_actual_second_completed_product_identity.0
-        || !receipt.first_product_preserved_across_second_request.0
-        || receipt
-            .source_hardware_result_values_used_as_device_inputs
-            .0
-        || receipt.actual_product_dependency.len() != 2
-    {
-        return Err(PreparationFault::Unsupported);
-    }
-    if receipt.required_current_seed != current.0 {
-        return Err(PreparationFault::Dependency);
-    }
-    for (dependency, role) in receipt
-        .actual_product_dependency
-        .iter()
-        .zip(["FirstCompletedProduct", "SecondCompletedProductLowByte"])
-    {
-        if dependency.role != role
-            || !dependency
-                .result_consumed_only_after_actual_device_completion
-                .0
-        {
-            return Err(PreparationFault::Unsupported);
-        }
-    }
-    let mut dependencies = receipt.actual_product_dependency.into_iter();
-    let first = dependencies.next().ok_or(PreparationFault::Unsupported)?;
-    let second = dependencies.next().ok_or(PreparationFault::Unsupported)?;
-    Ok(DeferredRandomReceipt {
-        dependency: current,
-        required_first: RequiredFirstSeedProduct(first.required_actual_result_encoding),
-        required_second_low: RequiredSecondSeedProductLow(
-            u8::try_from(second.required_actual_result_encoding)
-                .map_err(|_| PreparationFault::Unsupported)?,
-        ),
-        terminal: RandomSeed(receipt.terminal_seed),
-    })
-}
 #[derive(Deserialize)]
 struct DebugProjection {
     #[serde(flatten)]

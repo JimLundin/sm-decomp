@@ -195,6 +195,7 @@ positions, its hits, its effects (shakes, palette, the camera's lead setting).
 | --- | --- | --- | --- | --- | --- | ---: |
 | H2 | **The HUD and the mini-map** | what the HUD shows (values from H1, item selection and its cycling, auto reserve sign), the mini-map and exploration from S1's current position and action | `hud` 1,058, `mini_map` 1,146 | cached | E2 | 2 |
 | G1 | **Play time** | advances the carried hours, minutes, seconds and frames during eligible play | `game-time` reads current whole energy from H1 at the ordinary frame opportunity | retained native frame | H1 | 1 |
+| G2 | **Shared random sequence** | advances the current shared number once per completed draw | `game-random` | consecutive Ceres gameplay draws | — | 1 |
 | H3 | **Message boxes** | item texts, the save prompt's yes and no, their lag waits (C5's waits) | `message_box` 1,925 | cached (item-morph-ball, samus-square-slope-reserve) | E2 | 2 |
 | P1 | **Progress** | events, boss flags, collected items, map stations, the percentage; which room state a room loads | none | chains | none | 1 |
 | P2 | **Saving and loading; stations** | save stations, the SRAM file and checksums (its encoder, `exact::sram`, is a lane of P2's: [assets.md §3.8](assets.md#38-saves)), the load flow, energy and missile refill stations, map stations | `state/sram` | cache `save-memory`, `samus-gunship-save`, `file-copy-clear` | P1, H3 | 3 |

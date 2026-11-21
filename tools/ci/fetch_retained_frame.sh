@@ -10,3 +10,4 @@ bash "$(dirname "$0")/fetch_native_fixture.sh" "$1" "$2" retained-frame-return-v
   bb6f0aa71c795a3438377247da37fc1aa3b3e5ed603aca44df20a7424475842b 207440 73
 echo 'RETAINED FRAME RETURN FIXTURE PIN OK'
 bash "$(dirname "$0")/fetch_retained_haze.sh" "$1" "$2"
+bash "$(dirname "$0")/fetch_random_draw_observations.sh" "$1" "$2"

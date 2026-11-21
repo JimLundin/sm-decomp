@@ -123,7 +123,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
 }
 
 #[test]
-fn haze_settling_lookup_preserves_both_random_boundaries() {
+fn haze_settling_lookup_preserves_both_gameplay_boundaries() {
     let (_, index, mapping, baseline) = fixture();
     let cases = mapping
         .select(
@@ -142,7 +142,7 @@ fn haze_settling_lookup_preserves_both_random_boundaries() {
             view.reviewed_requirement.expected,
             Outcome::Unsupported {
                 cut: Some(2),
-                dependency: "Frame(RandomPreparation)".to_owned(),
+                dependency: "Frame(GameplayPreparation)".to_owned(),
             }
         );
     }

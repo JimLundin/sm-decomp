@@ -6,6 +6,7 @@ use game::production::{AdvanceInput, Production, ProductionOutputs, frame};
 use game::state::owned::OwnedState;
 
 mod callbacks;
+pub(super) mod random;
 use crate::lock::Sha256;
 pub(super) use callbacks::{Datum, ProjectionFault, decode_callbacks, decode_endpoint, project};
 use std::{
@@ -14,7 +15,10 @@ use std::{
 };
 
 /// Independent frozen output and endpoint files, inaccessible to the input reader.
-pub(super) struct Expected(pub BTreeMap<u64, Return>);
+pub(super) struct Expected {
+    pub returns: BTreeMap<u64, Return>,
+    pub(super) random: Option<random::Source>,
+}
 
 /// Outputs and terminal owners from one independently captured return.
 pub(super) struct Return {
@@ -32,10 +36,26 @@ impl Expected {
         cut: u64,
         compare_health: bool,
     ) -> Result<super::readers::ExpectedCut, Outcome> {
-        self.0
+        let mut expected = self
+            .returns
             .get(&cut)
             .ok_or_else(|| data_failure(Some(cut), "frame expected return"))?
-            .read(cut, compare_health)
+            .read(cut, compare_health)?;
+        if let Some(source) = &self.random {
+            let observed = word("frame.random", source.read(cut)?.result);
+            expected.fields.push(observed.clone());
+            expected.semantics.push(observed);
+            expected.semantic_count = expected.semantics.len();
+        }
+        Ok(expected)
+    }
+
+    #[cfg(test)]
+    pub fn observed_random(&self, cut: u64) -> Result<Option<random::Draw>, Outcome> {
+        self.random
+            .as_ref()
+            .map(|source| source.read(cut))
+            .transpose()
     }
 }
 
@@ -316,6 +336,9 @@ fn observations(
         && let Some(health) = &state.health
     {
         fields.extend(FinalHealth::from(health.state()).fields());
+    }
+    if let Some(number) = state.current_random() {
+        fields.push(word("frame.random", number));
     }
     fields
 }

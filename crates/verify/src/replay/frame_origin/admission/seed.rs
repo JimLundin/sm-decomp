@@ -383,9 +383,6 @@ pub(super) fn entry_seed(
     } = prelude_work(manifest, wram, &checked_rom)?;
     let random_current = preparation_receipts::random_origin(wram)
         .map_err(|_| data_failure(None, "frame current original Random seed"))?;
-    let random_completion =
-        preparation_receipts::random_offer(random_current, &manifest.random_completion.text()?)
-            .map_err(|_| data_failure(None, "frame deferred Random terminal predicates"))?;
     let preparation = preparation_inputs(wram, manifest)?;
     let templates = templates(manifest)?;
     let (random_requests, random) = random_inputs::decode(
@@ -412,7 +409,7 @@ pub(super) fn entry_seed(
             content: initial,
             music: Some(music),
             drawing: Some(drawing),
-            random: Some((random_current, random_completion)),
+            random: random_current,
             preparation,
         },
         content,

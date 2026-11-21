@@ -3,10 +3,7 @@
 use super::profiles::{ProfileName, Templates};
 use crate::lock::Sha256;
 use data::rom::{Rom, RomAddress};
-use game::production::frame::{
-    borrowed_preparation::RandomSeed,
-    random::{ImportedRandomMultiplier, SeedRequests},
-};
+use game::production::frame::random::{ImportedRandomMultiplier, RandomSeed, SeedRequests};
 use serde::Deserialize;
 
 /// An incomplete current request or checked importer binding.
@@ -118,10 +115,7 @@ pub fn decode(
     validate_request(&request, current)?;
     validate_binding(&binding, &request, request_text)?;
     let multiplier = import_multiplier(rom, &binding, request.imported_random_multiplier_encoding)?;
-    let requests = SeedRequests {
-        dependency: current,
-        multiplier,
-    };
+    let requests = SeedRequests { multiplier };
     let preparation = templates
         .portions
         .iter()

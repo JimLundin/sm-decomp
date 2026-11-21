@@ -144,6 +144,15 @@ targets = [
 ]
 
 [[rule]]
+id = "game-random/AdvanceRandom"
+targets = [
+  { role = "model", path = "crates/clean/game_random/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/random.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/caller.rs" },
+  { role = "navigation", path = "docs/behaviours/game-random.md" },
+]
+
+[[rule]]
 id = "game-time/PlayTimeAdvance"
 targets = [
   { role = "model", path = "crates/clean/game_time/src/lib.rs" },

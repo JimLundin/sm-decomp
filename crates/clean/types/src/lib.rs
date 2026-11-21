@@ -7,6 +7,9 @@ use enum_map::{Enum, EnumMap};
 pub mod haze;
 pub mod quake;
 
+mod random;
+pub use random::{RandomNumber, RandomSequence};
+
 /// Spec: `TransitionFiringAim`. Named cannon directions from pose content, independent of
 /// motion's `Heading`. Vertical shots retain the body's facing; no supplied choice is rounded.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

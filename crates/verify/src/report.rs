@@ -403,6 +403,14 @@ const DOMAINS: &[Domain] = &[
         apart: &[],
     },
     Domain {
+        name: "game-random",
+        bridge: None,
+        adapters: &["production/frame/random.rs"],
+        providers: &[],
+        areas: &[("sequence", &["lib.rs"])],
+        apart: &[],
+    },
+    Domain {
         name: "world-haze",
         bridge: None,
         adapters: &["production/frame/haze.rs"],

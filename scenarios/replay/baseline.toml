@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "1023acf877d0f635e82945d795341a1ba3283ad7e1c0bccd251f9f5215a95476"
+index_sha256 = "18503ec1d5491a6f49a0d6d2c42ca9a49ae10600f4a8baf4c02415f76c29e66c"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -350,11 +350,11 @@ observation_sha256 = "87211bf9f0ad6e49edd3d5181beeefaedf2175ff58cb53fcb515734b04
 id = "frame/ordinary-requested-nmi-return"
 claim = "behaviour"
 expected = { status = "pass" }
-observation_sha256 = "045ff4f57f2b22edd26782868194f02bc76d11c7bbd08f10b11be9ed4608d93d"
+observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]
 cuts = 1
-fields = 12
+fields = 13
 outputs = 2295
 publications = 2295
 replies = 0
@@ -367,12 +367,12 @@ pending_restorations = 0
 [[case]]
 id = "frame/adjacent-actual-trial"
 claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(RandomPreparation)" }
-observation_sha256 = "045ff4f57f2b22edd26782868194f02bc76d11c7bbd08f10b11be9ed4608d93d"
+expected = { status = "unsupported", cut = 2, dependency = "Frame(GameplayPreparation)" }
+observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]
 cuts = 1
-fields = 12
+fields = 13
 outputs = 2295
 publications = 2295
 replies = 0
@@ -385,12 +385,12 @@ pending_restorations = 0
 [[case]]
 id = "frame/adjacent-held-trial"
 claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(RandomPreparation)" }
-observation_sha256 = "045ff4f57f2b22edd26782868194f02bc76d11c7bbd08f10b11be9ed4608d93d"
+expected = { status = "unsupported", cut = 2, dependency = "Frame(GameplayPreparation)" }
+observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]
 cuts = 1
-fields = 12
+fields = 13
 outputs = 2295
 publications = 2295
 replies = 0

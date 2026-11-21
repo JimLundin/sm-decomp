@@ -56,6 +56,8 @@ pub enum Responsibility {
     Health,
     /// Complete play-clock state after the admitted gameplay opportunity.
     GameTime,
+    /// The carried shared random sequence.
+    GameRandom,
     /// Complete room quake timer and phase after its quiet opportunity.
     WorldQuake,
     /// The current Ceres backdrop haze and its band publication.
@@ -207,6 +209,9 @@ pub enum ObservationId {
     /// Exact completed-return wall time from the retained physical owner.
     #[serde(rename = "frame.time")]
     FrameTime,
+    /// The committed shared random number.
+    #[serde(rename = "frame.random")]
+    FrameRandom,
     /// Complete ordered physical callback stream, including equal-time multiplicity.
     #[serde(rename = "frame.outputs")]
     FrameOutputs,
@@ -468,6 +473,19 @@ pub struct Expectations {
     #[serde(default)]
     /// Outputs compare only at this cut, or every cut when absent.
     pub output_cut: Option<u64>,
+    /// Independent Random draw observations, when the case compares them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_random: Option<NativeRandomObservations>,
+}
+
+/// Expected-only source for the native Random draws.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct NativeRandomObservations {
+    /// File under the replay native fixture directory.
+    pub path: PathBuf,
+    /// Exact expected observation file digest.
+    pub sha256: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -593,6 +611,9 @@ fn rule_exists(rule: &str) -> bool {
         || world_quake::CATALOGUE
             .iter()
             .any(|entry| rule == format!("world-quake/{:?}", entry.id))
+        || game_random::CATALOGUE
+            .iter()
+            .any(|entry| rule == format!("game-random/{:?}", entry.id))
         || game_time::BEHAVIOURS
             .iter()
             .any(|entry| rule == format!("game-time/{:?}", entry.id))
@@ -614,6 +635,7 @@ fn rule_exists(rule: &str) -> bool {
 const fn observation_owner(field: ObservationId) -> Responsibility {
     match field {
         ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
+        ObservationId::FrameRandom => Responsibility::GameRandom,
         ObservationId::PlayTimeHours
         | ObservationId::PlayTimeMinutes
         | ObservationId::PlayTimeSeconds
@@ -712,6 +734,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("run-progress/", Responsibility::Progress),
         ("samus-health/", Responsibility::Health),
         ("game-time/", Responsibility::GameTime),
+        ("game-random/", Responsibility::GameRandom),
         ("world-quake/", Responsibility::WorldQuake),
         ("world-haze/", Responsibility::WorldHaze),
     ]
@@ -1025,15 +1048,21 @@ pub(super) const PLAY_TIME_RULE: &str = "game-time/PlayTimeAdvance";
 pub(super) const ROOM_QUAKE_RULE: &str = "world-quake/QuietQuakePhase";
 
 impl Case {
-    pub(super) fn compares_final_frame_health(&self) -> bool {
+    fn native_frame_fields(&self) -> &[ObservationId] {
         self.expectations
             .fields
+            .strip_suffix(&[ObservationId::FrameRandom])
+            .unwrap_or(&self.expectations.fields)
+    }
+
+    pub(super) fn compares_final_frame_health(&self) -> bool {
+        self.native_frame_fields()
             .strip_prefix(FINAL_OWNER_FIELDS.as_slice())
             == Some(FINAL_HEALTH_FIELDS.as_slice())
     }
 
     pub(super) fn compares_final_frame_owners(&self) -> bool {
-        (self.expectations.fields == FINAL_OWNER_FIELDS || self.compares_final_frame_health())
+        (self.native_frame_fields() == FINAL_OWNER_FIELDS || self.compares_final_frame_health())
             && self.responsibilities.contains(&Responsibility::GameTime)
             && self.responsibilities.contains(&Responsibility::WorldQuake)
             && [PLAY_TIME_RULE, ROOM_QUAKE_RULE]
@@ -1068,6 +1097,7 @@ fn scope_valid(case: &Case) -> bool {
         let mut frame_owners = owners.clone();
         frame_owners.remove(&Responsibility::Health);
         let haze = frame_owners.remove(&Responsibility::WorldHaze);
+        let random = frame_owners.remove(&Responsibility::GameRandom);
         let compares_final_owners = case.compares_final_frame_owners();
         if compares_final_owners {
             frame_owners.remove(&Responsibility::GameTime);
@@ -1080,6 +1110,7 @@ fn scope_valid(case: &Case) -> bool {
                     .rules
                     .iter()
                     .any(|rule| rule.starts_with("world-haze/"))
+            && random == case.expectations.native_random.is_some()
             && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
             && matches!(case.start, Start::NativeSeed { .. })
             && frame_owners
@@ -1090,7 +1121,7 @@ fn scope_valid(case: &Case) -> bool {
                     Responsibility::Appearance,
                     Responsibility::AudioSender,
                 ])
-            && (compares_final_owners || case.expectations.fields == [ObservationId::FrameTime])
+            && (compares_final_owners || case.native_frame_fields() == [ObservationId::FrameTime])
             && case.expectations.outputs == [ObservationId::FrameOutputs]
             && case.expectations.output_cut.is_none()
             && !case.borrowed.is_empty()
@@ -1189,6 +1220,20 @@ impl Case {
             || case.responsibilities.is_empty()
             || (observations.is_empty() && case.inputs != InputProvider::Unavailable)
             || unique.len() != observations.len()
+            || case.expectations.native_random.is_some()
+                != case
+                    .expectations
+                    .fields
+                    .contains(&ObservationId::FrameRandom)
+            || case
+                .expectations
+                .native_random
+                .as_ref()
+                .is_some_and(|source| {
+                    case.inputs != InputProvider::NativeFrameOwners
+                        || source.path.as_os_str().is_empty()
+                        || !valid_hash(&source.sha256)
+                })
             || !start_valid
             || case.end.native_returns.as_ref().is_some_and(|returns| {
                 case.inputs != InputProvider::NativeFrameOwners

@@ -246,10 +246,6 @@ pub struct Prelude {
     pub actors_origin: ActorEligibilityOrigin,
     /// Independently borrowed completion, unread until the actual music opportunity.
     pub music_completion: Option<MusicCompletionReceipt>,
-    /// Actual current original seed; later terminal updates happen only after live samples.
-    pub random_current: Option<super::borrowed_preparation::RandomSeed>,
-    /// External terminal with required-product predicates, never device inputs.
-    pub random_completion: Option<super::borrowed_preparation::DeferredRandomReceipt>,
     /// Independently current scene controller, separate from Haze simulation.
     pub scene_current: Option<super::borrowed_gameplay::SceneController>,
     /// Current gameplay route offer, unread until actual dispatch.
@@ -289,8 +285,6 @@ pub struct Preparation {
     pub haze: super::haze::Prepared,
     /// Completed layers.
     pub layers: super::layer_blend::LayerBlendReceipt,
-    /// Actual completed Random owner.
-    pub random: super::borrowed_preparation::RandomCompletionReceipt,
     /// Actual completed builder reset, absent until its physical work completes.
     pub builder: Option<super::borrowed_preparation::BuilderCompletionReceipt>,
     /// Actual completed scene route.
@@ -480,8 +474,8 @@ pub enum Caller {
     },
     /// The current Random owner is charging with actual device samples retained.
     RandomRunning {
-        /// Current remaining owners and deferred terminal.
-        prelude: Prelude,
+        /// Current remaining owners.
+        prelude: PreludeSource,
         /// Completed acknowledgment.
         publication: FrameContinuationAfterNmi,
         /// Completed Music.
@@ -490,6 +484,8 @@ pub enum Caller {
         haze: super::haze::Prepared,
         /// Completed prepared layers.
         layers: super::layer_blend::LayerBlendReceipt,
+        /// Seed used to bind the outstanding physical requests.
+        requested: super::random::RandomSeed,
         /// Actual live result bytes, preserved through pauses and interrupts.
         samples: super::random::Samples,
     },
@@ -561,7 +557,7 @@ pub enum Dependency {
     HazePreparation,
     /// Current completed Haze blend requires its next borrowed producer.
     LayerBlendPreparation,
-    /// Actual Random products and terminal owner are not yet admitted.
+    /// Missing shared Random sequence, invalid timing, or inconsistent physical samples.
     RandomPreparation,
     /// Complete current builder reset and its physical work are unavailable.
     BuilderPreparation,
@@ -1933,41 +1929,22 @@ impl State {
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let PreludeSource::Origin(prelude) = prelude else {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::RandomPreparation,
-            )));
-        };
-        let current =
-            prelude
-                .random_current
-                .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                    Dependency::RandomPreparation,
-                )))?;
-        if !prelude
-            .random_completion
-            .as_ref()
-            .is_some_and(|offer| offer.dependency == current)
-        {
-            return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::RandomPreparation,
-            )));
-        }
+        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
+        let current = self.random.as_ref().ok_or(fault)?.current();
         let profile = content
             .random_requests
             .bind(current, &content.random)
-            .map_err(|_| {
-                ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation))
-            })?;
+            .map_err(|_| fault)?;
         self.timing
             .begin(RANDOM, profile)
             .map_err(ProductionFault::FrameHardware)?;
         self.caller = Caller::RandomRunning {
-            prelude: prelude.as_ref().clone(),
+            prelude: prelude.clone(),
             publication: *publication,
             music: music.clone(),
             haze: haze.clone(),
             layers: layers.clone(),
+            requested: current,
             samples: super::random::Samples::default(),
         };
         Ok(())
@@ -2297,7 +2274,7 @@ impl State {
             timing::Progress::Completed(HAZE) => self.complete_haze(content)?,
             timing::Progress::Completed(HAZE_TAIL) => self.complete_haze_tail()?,
             timing::Progress::Completed(LAYERS) => self.complete_layers()?,
-            timing::Progress::Completed(RANDOM) => self.complete_random()?,
+            timing::Progress::Completed(RANDOM) => self.complete_random(content.random_requests)?,
             timing::Progress::Completed(identity)
                 if self.finish_player_work(identity, content, rules)? => {}
             timing::Progress::Completed(identity @ WorkId(1200..=1201)) => {
@@ -2652,46 +2629,38 @@ impl State {
         Ok(())
     }
 
-    fn complete_random(&mut self) -> Result<(), ProductionFault> {
+    fn complete_random(
+        &mut self,
+        requests: super::random::SeedRequests,
+    ) -> Result<(), ProductionFault> {
         let Caller::RandomRunning {
             prelude,
             publication,
             music,
             haze,
             layers,
+            requested,
             samples,
         } = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let current =
-            prelude
-                .random_current
-                .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                    Dependency::RandomPreparation,
-                )))?;
-        let products = samples.completed().map_err(|_| {
-            ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation))
-        })?;
-        let mut prelude = prelude.clone();
-        let offer = prelude
-            .random_completion
-            .take()
-            .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::RandomPreparation,
-            )))?;
-        let random = offer.complete(current, products).map_err(|_| {
-            ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation))
-        })?;
-        prelude.random_current = Some(random.terminal);
+        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
+        let sequence = self.random.as_mut().ok_or(fault)?;
+        if sequence.current() != *requested {
+            return Err(fault);
+        }
+        requests
+            .validate_samples(*requested, *samples)
+            .map_err(|_| fault)?;
+        sequence.draw();
         self.caller = Caller::Preparation {
             prepared: Preparation {
-                prelude: PreludeSource::Origin(Box::new(prelude)),
+                prelude: prelude.clone(),
                 publication: *publication,
                 music: music.clone(),
                 haze: haze.clone(),
                 layers: layers.clone(),
-                random,
                 builder: None,
                 gameplay: None,
                 actors: None,

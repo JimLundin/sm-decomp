@@ -91,6 +91,10 @@ rounds = 1
 name = "game-time"
 rounds = 1
 
+[[model]]
+name = "game-random"
+rounds = 1
+
 # Wave 0
 
 [[domain]]
@@ -372,6 +376,16 @@ wave = 3
 rounds = 1
 reads = ["H1"]
 model = "game-time"
+status = "in-progress"
+
+[[domain]]
+id = "G2"
+name = "Shared random sequence"
+area = "game"
+wave = 3
+rounds = 1
+reads = []
+model = "game-random"
 status = "in-progress"
 
 [[domain]]

@@ -149,7 +149,9 @@ struct Manifest {
     layer_blend: Member,
     random_requests: Member,
     random_import: Member,
-    random_completion: Member,
+    // Older authenticated manifests also name a terminal witness.
+    #[serde(rename = "random_completion")]
+    _random_completion: Option<Member>,
     #[serde(rename = "builder_completion")]
     _builder_completion: Option<Member>,
     #[serde(rename = "builder_terminal")]
@@ -317,7 +319,6 @@ impl Manifest {
             &mut self.layer_blend,
             &mut self.random_requests,
             &mut self.random_import,
-            &mut self.random_completion,
             &mut self.gameplay_completion,
             &mut self.actor_completion,
             &mut self.debug_completion,
@@ -738,10 +739,7 @@ pub(super) struct Origin<'a> {
     pub content: frame::TransferContent,
     pub music: Option<frame::borrowed_receipts::MusicCompletionReceipt>,
     pub drawing: Option<frame::interrupts::DrawingState>,
-    pub random: Option<(
-        frame::borrowed_preparation::RandomSeed,
-        frame::borrowed_preparation::DeferredRandomReceipt,
-    )>,
+    pub random: frame::random::RandomSeed,
     pub preparation: PreparationInputs,
 }
 
@@ -764,6 +762,7 @@ pub(super) fn decode(
                 .map_err(|_| data_failure(None, "frame current music owner"))?,
         ),
         haze: Some(live_haze(origin.wram, &prelude.haze)?),
+        random: Some(frame::random::Sequence::new(origin.random)),
         sprite_builder: Some(prelude.builder),
         sender_current: None,
         sender_queues: None,
@@ -778,8 +777,6 @@ pub(super) fn decode(
                 player_continuation_offers: None,
 
                 music_completion: origin.music,
-                random_current: origin.random.as_ref().map(|(seed, _)| *seed),
-                random_completion: origin.random.map(|(_, offer)| offer),
                 scene_current: Some(origin.preparation.scene),
                 gameplay_completion: Some(origin.preparation.gameplay),
                 actor_completion: Some(origin.preparation.actors),

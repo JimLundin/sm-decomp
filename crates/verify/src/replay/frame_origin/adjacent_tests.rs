@@ -2,7 +2,7 @@
 
 use super::super::{
     Sources, compared,
-    frame::{Datum, Inputs},
+    frame::{Datum, Inputs, random::Draw},
     index::{Case, Index},
     production_failure,
     readers::{AdmittedCase, ExpectedReader, InputReader},
@@ -14,7 +14,7 @@ use data::timing::{MasterTicks, Sample};
 use game::{
     production::{
         AdvanceInput, Production, ProductionContent, ProductionFault, ProductionOutputs,
-        Unsupported,
+        ProductionSeed, Unsupported,
         frame::{Caller, Dependency},
         timing::EventKind,
         timing::SampleValue,
@@ -159,18 +159,30 @@ fn native_controller(production: &Production) -> Option<[u16; 2]> {
 }
 
 fn advance_to_prelude_stage(production: &mut Production, reached: impl Fn(&Caller) -> bool) {
+    let _ = collect_to_prelude_stage(production, reached);
+}
+
+fn collect_to_prelude_stage(
+    production: &mut Production,
+    reached: impl Fn(&Caller) -> bool,
+) -> Vec<game::production::timing::Event> {
+    let mut events = Vec::new();
     for _ in 0..20_000 {
         let OwnedState::Frame(state) = production.state() else {
             panic!("frame production");
         };
         if reached(&state.caller) {
-            return;
+            return events;
         }
-        production
+        let ProductionOutputs::Frame(outputs) = production
             .advance(AdvanceInput::Frame {
                 budget: MasterTicks(13),
             })
-            .unwrap();
+            .unwrap()
+        else {
+            panic!("frame outputs");
+        };
+        events.extend(outputs.events);
     }
     panic!("expected prelude stage was never reached");
 }
@@ -243,7 +255,8 @@ fn compare_continuation(
     {
         let layers = super::admission::observed_layer_blend(case, sources).unwrap();
         check_settling_prefix(admitted, layers);
-        Dependency::RandomPreparation
+        check_random_checkpoint(admitted, &observed_draw(admitted, case.end.cut_inclusive));
+        Dependency::GameplayPreparation
     } else {
         Dependency::HazePreparation
     };
@@ -302,6 +315,145 @@ fn compare_continuation(
     );
 }
 
+fn observed_draw(admitted: &AdmittedCase, cut: u64) -> Draw {
+    let ExpectedReader::Frame(expected) = &admitted.expected else {
+        panic!("frame expected reader");
+    };
+    expected.observed_random(cut).unwrap().unwrap()
+}
+
+fn check_random_events(events: &[game::production::timing::Event], draw: &Draw) {
+    let writes: Vec<_> = events
+        .iter()
+        .filter_map(|event| {
+            if let EventKind::Publication(write) = &event.kind
+                && matches!(write.port.0, 0x4202 | 0x4203)
+            {
+                Some((event.at.0, write.port.0, write.value))
+            } else {
+                None
+            }
+        })
+        .collect();
+    let samples: Vec<_> = events
+        .iter()
+        .filter_map(|event| {
+            if let EventKind::Sample(
+                device @ (Sample::ProductLow | Sample::ProductHigh),
+                SampleValue::Byte(value),
+            ) = event.kind
+            {
+                Some((event.at.0, device, value))
+            } else {
+                None
+            }
+        })
+        .collect();
+    let write_ports = [0x4202, 0x4203, 0x4202, 0x4203];
+    let sample_ports = [Sample::ProductLow, Sample::ProductHigh, Sample::ProductLow];
+    assert_observation_eq!(
+        writes,
+        core::array::from_fn::<_, 4, _>(|i| (
+            draw.write_ticks[i],
+            write_ports[i],
+            draw.write_values[i]
+        ))
+    );
+    assert_observation_eq!(
+        samples,
+        core::array::from_fn::<_, 3, _>(|i| (
+            draw.sample_ticks[i],
+            sample_ports[i],
+            draw.sample_values[i]
+        ))
+    );
+}
+
+fn check_random_checkpoint(admitted: &AdmittedCase, draw: &Draw) {
+    use game::production::frame::random::Samples;
+
+    let mut direct = admitted.production.clone();
+    advance_to_prelude_stage(&mut direct, |caller| {
+        matches!(caller, Caller::Random { .. })
+    });
+    let prefix = collect_to_prelude_stage(&mut direct, |caller| {
+        matches!(
+            caller,
+            Caller::RandomRunning {
+                samples: Samples::First(_),
+                ..
+            }
+        )
+    });
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    let OwnedState::Frame(state) = restored.state() else {
+        panic!("frame production");
+    };
+    let mut altered = state.clone();
+    let Caller::RandomRunning {
+        requested,
+        samples: Samples::First(first),
+        ..
+    } = &mut altered.caller
+    else {
+        panic!("restored partial Random samples");
+    };
+    assert_observation_eq!(Some(requested.0), state.current_random());
+    first.0 ^= 1;
+    let corrupt = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let corrupt_checkpoint = corrupt.save().unwrap();
+    let mut corrupt = Production::restore(
+        &corrupt_checkpoint,
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let rejection = (0..1024).find_map(|_| {
+        let before = corrupt.state().clone();
+        match corrupt.advance(AdvanceInput::Frame {
+            budget: MasterTicks(13),
+        }) {
+            Ok(_) => {
+                assert!(matches!(
+                    corrupt.state(),
+                    OwnedState::Frame(state) if matches!(state.caller, Caller::RandomRunning { .. })
+                ));
+                None
+            }
+            Err(fault) => {
+                assert_observation_eq!(corrupt.state(), &before);
+                Some(fault)
+            }
+        }
+    });
+    assert_eq!(
+        rejection,
+        Some(ProductionFault::Unsupported(Unsupported::Frame(
+            Dependency::RandomPreparation,
+        )))
+    );
+    for production in [&mut direct, &mut restored] {
+        let mut events = prefix.clone();
+        events.extend(collect_to_prelude_stage(production, |caller| {
+            matches!(caller, Caller::Preparation { .. })
+        }));
+        check_random_events(&events, draw);
+        let OwnedState::Frame(returned) = production.state() else {
+            panic!("frame production");
+        };
+        assert_observation_eq!(returned.current_random(), Some(draw.result));
+        assert_eq!(returned.timing.hardware.now.0, draw.complete_tick);
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+}
+
 #[test]
 #[ignore = "requires the pinned adjacent and retained frame fixtures and player ROM"]
 fn contiguous_native_returns_keep_independent_observations_and_inputs() {
@@ -332,6 +484,10 @@ fn contiguous_native_returns_keep_independent_observations_and_inputs() {
         let mut admitted = super::admit(case, &sources).unwrap();
         assert_eq!(admitted.schedule, [1, 2]);
         compare_negative_controls(case, &admitted.expected);
+        check_random_checkpoint(
+            &admitted,
+            &observed_draw(&admitted, case.first_cut().unwrap()),
+        );
         observe_first_return(case, &mut admitted, controller);
         compare_continuation(case, &sources, &mut admitted, controller);
     }

@@ -6,12 +6,12 @@ engine="data game runtime app"
 allowed() {
   case $1 in
     data) echo "canonical types" ;;
-    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport game_time samus_health world_quake world_haze" ;;
+    game) echo "data canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport game_time samus_health world_quake world_haze game_random" ;;
     runtime) echo "data" ;;
     app) echo "data import game runtime" ;;
     oracle) echo "data oracle_record" ;;
     oracle_record) echo "" ;;
-    verify) echo "data import game runtime oracle_record canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport game_time samus_health world_quake world_haze" ;;
+    verify) echo "data import game runtime oracle_record canonical types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport game_time samus_health world_quake world_haze game_random" ;;
     tools) echo "verify oracle runtime import" ;;
     # The importers (docs/architecture/assets.md §5): game and runtime never list it.
     import) echo "data canonical" ;;
@@ -29,10 +29,10 @@ allowed() {
     world_doors) echo "types" ;;
     weapons_projectiles) echo "types" ;;
     enemy_interactions) echo "" ;;
-    audio_transport|game_time|samus_health|world_quake|world_haze) echo "types" ;;
+    audio_transport|game_time|samus_health|world_quake|world_haze|game_random) echo "types" ;;
   esac
 }
-new_crates="data import game runtime app oracle oracle_record verify tools canonical canonical_derive types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport game_time samus_health world_quake world_haze"
+new_crates="data import game runtime app oracle oracle_record verify tools canonical canonical_derive types samus_movement world_blocks world_camera interface_hud run_progress samus_appearance boss_ceres_ridley world_doors weapons_projectiles enemy_interactions audio_transport game_time samus_health world_quake world_haze game_random"
 
 # Name the rule a forbidden edge breaks, for the message.
 rule() {

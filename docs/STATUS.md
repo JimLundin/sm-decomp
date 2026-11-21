@@ -196,8 +196,8 @@ identity separate from the first witness. The same borrowed producers and omitte
 
 `frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.
 Its hardware clock advances 359,922 master ticks to the requested NMI return. Replay compares
-2,295 ordered callbacks by time, class, register and value. The twelve endpoint fields cover
-elapsed time, play time, room shake and five Health quantities. The five Health values stay
+2,295 ordered callbacks by time, class, register and value. The thirteen endpoint fields cover elapsed time, play time, room shake,
+the shared random sequence and five Health quantities. The five Health values stay
 equal to their admitted values in this case. The null model completes zero cuts.
 
 The indexed checkpoint reopens the completed state. Fixture tests also resume from the
@@ -214,14 +214,16 @@ fetches the pinned inputs and independent observations under the replay native d
 The power-on milestone is measured separately using movie inputs alone.
 
 The indexed adjacent Haze cases each admit once and
-repeat the first return's 2,295 callback and 12 field comparisons. The oracle runs use the
+repeat the first return's 2,295 callback and 13 field comparisons. The oracle runs use the
 recorded pad change and a held-input control. Production checks the actual first sampled word
 and its new presses, carries the returned Haze owner into settling, preserves the live band
 buffer, and compares the settling readiness, completion and LayerBlend clocks. The restored
 continuation compares all nine LayerBlend settings with the independently recorded writes.
 
-Both cases hold the exact cut-2 `Frame(RandomPreparation)` boundary in the
+Both cases hold the exact cut-2 `Frame(GameplayPreparation)` boundary in the
 [reviewed baseline](../scenarios/replay/baseline.toml). The pinned
 [adjacent fixture](../tools/ci/fetch_retained_haze.sh) has independent callback streams and
-terminal observations for each interval. Production reaches the Random boundary before the
-second return and its controller latch. The second interval's observations remain unverified.
+terminal observations for each interval. The restored continuation compares both Random draws
+against independent completion, operand-write and product-sample observations. Production
+reaches gameplay preparation before the second return and its controller latch. The second
+interval's full callback stream and terminal observations remain unverified.

@@ -1,0 +1,91 @@
+# One complete draw with full numeric state, including a carried continuation.
+
+[[vector]]
+id = "R-first"
+source = "recorded"
+entries = ["AdvanceRandom"]
+before = { number = 14321 }
+after = { number = 6342 }
+drawn = 6342
+
+[[vector]]
+id = "R-adjacent"
+source = "recorded"
+entries = ["AdvanceRandom"]
+before = { number = 6342 }
+after = { number = 31983 }
+drawn = 31983
+continues = "R-first"
+
+[[vector]]
+id = "C-zero"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 0 }
+after = { number = 273 }
+drawn = 273
+
+[[vector]]
+id = "C-carry-low-product"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 52 }
+after = { number = 533 }
+drawn = 533
+
+[[vector]]
+id = "C-before-final-wrap"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 52374 }
+after = { number = 65535 }
+drawn = 65535
+
+[[vector]]
+id = "C-final-wrap"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 39267 }
+after = { number = 0 }
+drawn = 0
+
+[[vector]]
+id = "C-before-carried-overflow"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 26163 }
+after = { number = 16 }
+drawn = 16
+
+[[vector]]
+id = "C-carried-overflow"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 13056 }
+after = { number = 18 }
+drawn = 18
+
+[[vector]]
+id = "C-high-product-overflow"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 26256 }
+after = { number = 482 }
+drawn = 482
+
+[[vector]]
+id = "C-max"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 65535 }
+after = { number = 269 }
+drawn = 269
+
+[[vector]]
+id = "C-restored"
+source = "constructed"
+entries = ["AdvanceRandom"]
+before = { number = 18 }
+after = { number = 363 }
+drawn = 363
+continues = "C-carried-overflow"

@@ -150,8 +150,23 @@ pub(super) fn prepare(
             (None, vec![next_pad], None, None)
         };
     let schedule = expected.keys().copied().collect();
+    let random = case
+        .expectations
+        .native_random
+        .as_ref()
+        .map(|source| {
+            Ok(frame::random::Source {
+                path: sources.native.join(&source.path),
+                sha256: crate::lock::Sha256::try_from(source.sha256.as_str())
+                    .map_err(|_| data_failure(None, "Random observation pin"))?,
+            })
+        })
+        .transpose()?;
     Ok(Prepared {
-        expected: frame::Expected(expected),
+        expected: frame::Expected {
+            returns: expected,
+            random,
+        },
         schedule,
         pads,
         pad_origin,

@@ -5,10 +5,8 @@ mod frame_prelude_seed;
 mod frame_preparation_receipts;
 use frame_preparation_receipts::PreparationFault;
 use game::production::frame::borrowed_preparation::{
-    ActorEligibilityReceipt, ActorSlotIdentity, BuilderCompletionReceipt, CompletedSeedProducts,
-    DebugAction, DebugCompletionReceipt, DeferredRandomReceipt, FirstSeedProduct,
-    PaletteCompletionReceipt, PaletteDisposition, RandomCompletionReceipt, RandomDependencyFault,
-    SecondSeedProductLow,
+    ActorEligibilityReceipt, ActorSlotIdentity, BuilderCompletionReceipt, DebugAction,
+    DebugCompletionReceipt, PaletteCompletionReceipt, PaletteDisposition,
 };
 fn member(name: &str) -> Option<std::path::PathBuf> {
     std::env::var_os("SM_PREPARATION_PACKET").map(|path| std::path::PathBuf::from(path).join(name))
@@ -96,71 +94,6 @@ fn live_builder_and_borrowed_actor_use_the_current_origins() {
     assert!(invalid.ne(&actor_projection));
     assert!(
         frame_preparation_receipts::actors(&current.actors, &invalid)
-            .is_err_and(|fault| fault == PreparationFault::Unsupported)
-    );
-}
-
-#[test]
-#[ignore = "requires qualified origin and external random dependency projection; codec shape only"]
-fn random_projection_checks_seed_and_completed_product_quantities() {
-    let current = frame_preparation_receipts::random_origin(&origin().unwrap()).unwrap();
-    let source = projection("RANDOM-COMPLETION.private.toml").unwrap();
-    let parsed: toml::Value = toml::from_str(&source).unwrap();
-    // These source quantities are codec fixture data, not actual runtime ALU inputs or proof of hardware completion.
-    let products = CompletedSeedProducts {
-        first: FirstSeedProduct(
-            u16::try_from(
-                parsed["actual_product_dependency"][0]["required_actual_result_encoding"]
-                    .as_integer()
-                    .unwrap(),
-            )
-            .unwrap(),
-        ),
-        second_low: SecondSeedProductLow(
-            u8::try_from(
-                parsed["actual_product_dependency"][1]["required_actual_result_encoding"]
-                    .as_integer()
-                    .unwrap(),
-            )
-            .unwrap(),
-        ),
-    };
-    let offer = frame_preparation_receipts::random_offer(current, &source).unwrap();
-    let restored: DeferredRandomReceipt =
-        canonical::from_bytes(&canonical::to_bytes(&offer)).unwrap();
-    assert!(restored.eq(&offer));
-    let receipt = offer.clone().complete(current, products).unwrap();
-    assert_eq!(restored.complete(current, products).unwrap(), receipt);
-    assert!(receipt.dependency.eq(&current));
-    let restored: RandomCompletionReceipt =
-        canonical::from_bytes(&canonical::to_bytes(&receipt)).unwrap();
-    assert!(restored.eq(&receipt));
-    let mut altered = products;
-    altered.first.0 ^= 1;
-    assert!(
-        offer
-            .clone()
-            .complete(current, altered)
-            .is_err_and(|fault| fault == RandomDependencyFault::Products)
-    );
-    let mut altered = current;
-    altered.0 ^= 1;
-    assert!(
-        offer
-            .complete(altered, products)
-            .is_err_and(|fault| fault == RandomDependencyFault::Seed)
-    );
-    assert!(
-        frame_preparation_receipts::random_offer(altered, &source)
-            .is_err_and(|fault| fault == PreparationFault::Dependency)
-    );
-    let invalid = source.replace(
-        "source_hardware_result_values_used_as_device_inputs = false",
-        "source_hardware_result_values_used_as_device_inputs = true",
-    );
-    assert!(invalid.ne(&source));
-    assert!(
-        frame_preparation_receipts::random_offer(current, &invalid)
             .is_err_and(|fault| fault == PreparationFault::Unsupported)
     );
 }

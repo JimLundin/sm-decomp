@@ -107,6 +107,7 @@ dependencies = [
  "data",
  "enemy_interactions",
  "enum-map",
+ "game_random",
  "game_time",
  "interface_hud",
  "run_progress",
@@ -121,6 +122,16 @@ dependencies = [
  "world_doors",
  "world_haze",
  "world_quake",
+]
+
+[[package]]
+name = "game_random"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
 ]
 
 [[package]]
@@ -412,6 +423,7 @@ dependencies = [
  "enemy_interactions",
  "enum-map",
  "game",
+ "game_random",
  "game_time",
  "import",
  "interface_hud",

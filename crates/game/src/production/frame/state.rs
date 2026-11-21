@@ -74,6 +74,8 @@ pub struct State {
     pub music: Option<super::borrowed_receipts::MusicServiceReceipt>,
     /// Complete current Haze model and its physical transport.
     pub haze: Option<super::haze::Haze>,
+    /// Shared sequence as of the most recent completed Random draw.
+    pub random: Option<super::random::Sequence>,
     /// Live sprite-builder backing before the next reset consumes it.
     pub sprite_builder: Option<super::borrowed::SpriteBuilderOrigin>,
     /// Current movement, including accepted requests and answers.
@@ -221,6 +223,12 @@ pub enum Fault {
 }
 
 impl State {
+    /// Read the current shared number without advancing the sequence.
+    #[must_use]
+    pub fn current_random(&self) -> Option<u16> {
+        self.random.as_ref().map(|sequence| sequence.current().0)
+    }
+
     /// Capture actual pose history and prepared action at a completed motion owner.
     /// The caller supplies only the identity returned by qualified physical work.
     /// Prospective pose input does not replace either current selected model here.

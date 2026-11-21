@@ -327,3 +327,15 @@ after = "intensity: BandIntensity(level.get() ^ 1),"
 case = "frame/ordinary-requested-nmi-return"
 cut = 1
 field = "frame.outputs[12].value"
+
+[[fault]]
+name = "retained-frame-random-extra-draw"
+responsibility = "game-random"
+file = "crates/game/src/production/frame/random.rs"
+before = "        game_random::advance_random(&mut self.0.0);"
+after = """
+        game_random::advance_random(&mut self.0.0);
+        game_random::advance_random(&mut self.0.0);"""
+case = "frame/ordinary-requested-nmi-return"
+cut = 1
+field = "frame.random"

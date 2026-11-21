@@ -78,7 +78,7 @@ figures; no vector carries them.
 | --- | --- | --- |
 | where she was | `0AF6`, `0AFA` as at the end of the last frame | the doors run in the main enemy routine before Samus's movement (`$90` new-state handling) |
 | the stage | `093F`: 0 `Calm`, 1 `Getaway`, 2 `Escape`, `8000h` (the shaft rotates, set by `$A6:F67F`) also `Escape` | the init (`$A6:F6F7`) and `$A6:F678` test non-zero; the quake (`$A6:F773`) tests `>= 2` unsigned, so `8000h` shakes |
-| the random number | `05E5` at the door's run | the main game loop steps it once a frame (`$82:894F`, `JSL $80:8111`, `x × 5 + 111h`, 16-bit) before it dispatches the game state's routine (main gameplay `$82:8B44`); over every recorded escape frame nothing else steps it before the doors run, so it is N's value stepped once; the harness reads it so |
+| the random number | `05E5` at the door's run | the main game loop steps it once a frame (`$82:894F`, `JSL $80:8111`, [carry-aware advance](game-random.decode.md#sources-and-ownership)) before it dispatches the game state's routine (main gameplay `$82:8B44`); over every recorded escape frame nothing else steps it before the doors run, so it is N's value stepped once; the harness reads it so |
 | the shake's frames left | `1840`, as the earlier door left it this frame | |
 
 ## Outputs

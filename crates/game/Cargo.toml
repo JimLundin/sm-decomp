@@ -15,6 +15,7 @@ world_camera = { path = "../clean/world_camera" }
 world_doors = { path = "../clean/world_doors" }
 interface_hud = { path = "../clean/interface_hud" }
 game_time = { path = "../clean/game_time" }
+game_random = { path = "../clean/game_random" }
 world_quake = { path = "../clean/world_quake" }
 world_haze = { path = "../clean/world_haze" }
 samus_health = { path = "../clean/samus_health" }
