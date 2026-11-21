@@ -340,6 +340,9 @@ fn check_timer(
         );
     }
     assert_observation_eq!(direct.save().unwrap(), restored.save().unwrap());
+    let completed = restore(admitted, direct);
+    let first_len = current(&admitted.production).publications.events.len();
+    reject_completed_timer_without_current_irqs(admitted, current(&completed), first_len);
     reject_current_invalidations(admitted, current(direct));
 }
 
@@ -437,6 +440,26 @@ fn reject_changed_timer_checkpoint(admitted: &AdmittedCase, active: &State) {
     }
 }
 
+fn reject_completed_timer_without_current_irqs(
+    admitted: &AdmittedCase,
+    complete: &State,
+    first_len: usize,
+) {
+    let mut rearmed_end = Box::new(complete.clone());
+    rearmed_end.drawing.as_mut().unwrap().recurring_due = Some(DrawingRequest::End);
+    let mut missing_irq = Box::new(complete.clone());
+    let event = missing_irq.publications.events[first_len..]
+        .iter_mut()
+        .rev()
+        .find(|event| event.kind == EventKind::Interrupt(Interrupt::Irq))
+        .unwrap();
+    // Preserve the delivery cursor and timestamp while removing one current IRQ receipt.
+    event.kind = EventKind::ControllerCommitted;
+    let rejected = [rearmed_end, missing_irq]
+        .map(|changed| scene_checkpoint_rejects(admitted, changed, admitted.content.clone()));
+    assert_eq!(rejected, [true; 2], "rearmed End and missing current IRQ");
+}
+
 fn reject_current_invalidations(admitted: &AdmittedCase, state: &State) {
     use data::timing::{DeviceWrite, Publication, WRAM_DATA_PORT};
 
@@ -478,16 +501,24 @@ fn assert_scene_checkpoint_rejected(
     changed: Box<State>,
     content: ProductionContent,
 ) {
+    assert!(scene_checkpoint_rejects(admitted, changed, content));
+}
+
+fn scene_checkpoint_rejects(
+    admitted: &AdmittedCase,
+    changed: Box<State>,
+    content: ProductionContent,
+) -> bool {
     use game::production::AdmissionFault;
 
     // Restore decodes the complete seed and runs this same admission path.
     assert!(changed.validate().is_ok());
-    assert!(matches!(
+    matches!(
         Production::admit(
             ProductionSeed::Frame(changed),
             content,
             admitted.rules.clone(),
         ),
         Err(AdmissionFault::Frame(fault)) if *fault == frame::Fault::InvalidPlayerEntry
-    ));
+    )
 }

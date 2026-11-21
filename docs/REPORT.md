@@ -643,7 +643,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 111 | 29,912 | 179,470 | 142,833 | 25,255 | 2,062 | 10,601 | 44,651 | 2,605 | 27,576 |
+| production and exact services | 111 | 29,916 | 179,496 | 142,905 | 25,255 | 2,062 | 10,588 | 44,632 | 2,605 | 27,589 |
 | bridges | 16 | 3,085 | 18,512 | 18,192 | 2,278 | 518 | 1,502 | 1,738 | 71 | 3,291 |
 | rebuilt models, shared types included | 123 | 8,741 | 52,446 | 58,294 | 24,088 | 18,486 | 3,624 | 3,811 | 1,013 | 17,615 |
 

@@ -287,6 +287,10 @@ impl State {
         if offer.is_some_and(|offer| owner.offer(admission) != Ok(offer)) {
             return Err(super::Fault::InvalidPlayerEntry);
         }
+        if matches!(self.countdown, CountdownStage::Complete { .. }) {
+            self.validate_adjacent_irqs(owner, gameplay)
+                .map_err(invalid)?;
+        }
         Ok(())
     }
 
@@ -297,27 +301,37 @@ impl State {
         }
         self.validate_scene_preservation(content, gameplay, native_admitted)?;
         let owner = &self.scene_countdown.as_ref().ok_or_else(missing)?.0;
-        if matches!(owner.scope, Scope::Adjacent(_)) {
-            let irq_count = gameplay
-                .iter()
-                .filter(|event| event.kind == timing::EventKind::Interrupt(Interrupt::Irq))
-                .count();
-            // The scene records actual admissions. The drawing owner retires End on return.
-            if owner.interrupts != Interrupts::Returned
-                || irq_count != 2
-                || !matches!(
-                    self.drawing,
-                    Some(DrawingState {
-                        active: None,
-                        recurring_due: None,
-                        ..
-                    })
-                )
-            {
-                return Err(missing());
-            }
-        }
+        self.validate_adjacent_irqs(owner, gameplay)?;
         Ok((owner, self.scene_admission(content, owner)?))
+    }
+
+    fn validate_adjacent_irqs(
+        &self,
+        owner: &Current,
+        gameplay: &[timing::Event],
+    ) -> Result<(), ProductionFault> {
+        if !matches!(owner.scope, Scope::Adjacent(_)) {
+            return Ok(());
+        }
+        let irq_count = gameplay
+            .iter()
+            .filter(|event| event.kind == timing::EventKind::Interrupt(Interrupt::Irq))
+            .count();
+        // The scene records actual admissions. The drawing owner retires End on return.
+        if owner.interrupts != Interrupts::Returned
+            || irq_count != 2
+            || !matches!(
+                self.drawing,
+                Some(DrawingState {
+                    active: None,
+                    recurring_due: None,
+                    ..
+                })
+            )
+        {
+            return Err(missing());
+        }
+        Ok(())
     }
 
     pub(super) fn revalidate_countdown_scene_at_ceres(
