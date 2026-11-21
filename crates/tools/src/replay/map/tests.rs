@@ -123,7 +123,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
 }
 
 #[test]
-fn haze_settling_lookup_preserves_both_gameplay_boundaries() {
+fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_case() {
     let (_, index, mapping, baseline) = fixture();
     let cases = mapping
         .select(
@@ -136,15 +136,19 @@ fn haze_settling_lookup_preserves_both_gameplay_boundaries() {
         .unwrap();
     let report = views(&mapping, &baseline, &cases).unwrap();
     assert_eq!(report.len(), 2);
-    for view in report {
-        assert_eq!(view.reviewed_requirement.claim, Claim::Boundary);
-        assert_eq!(
-            view.reviewed_requirement.expected,
-            Outcome::Unsupported {
-                cut: Some(2),
-                dependency: "Frame(GameplayPreparation)".to_owned(),
-            }
-        );
+    for id in ["frame/adjacent-actual-trial", "frame/adjacent-held-trial"] {
+        let view = report
+            .iter()
+            .find(|view| view.declaration.id.0 == id)
+            .unwrap();
+        let floor = baseline
+            .cases
+            .iter()
+            .find(|floor| floor.id.0 == id)
+            .unwrap();
+        assert_eq!(view.reviewed_requirement.id, floor.id);
+        assert_eq!(view.reviewed_requirement.claim, floor.claim);
+        assert_eq!(view.reviewed_requirement.expected, floor.expected);
     }
 }
 
