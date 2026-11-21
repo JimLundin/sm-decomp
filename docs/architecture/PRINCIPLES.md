@@ -216,12 +216,10 @@ Model the domain with types, not raw numbers:
   tolerates one, keep a named variant (`Unknown(u16)`) and list it in LEGACY. Stay byte-exact: the
   original's value goes back out wherever it is observed.
 
-`cargo clippy --locked -p data -p import -p game -p runtime -p app -p verify -p tools -p canonical -p
-canonical_derive -p oracle_record -p oracle -p types -p samus_movement -p
-world_blocks -p world_camera -p interface_hud -p run_progress -p
-samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions --all-targets --no-deps -- -D warnings` must
-pass, as `tools/lane/gate.sh` runs it, and
-the clean crates pass it again under `tools/cleanroom/clippy.toml`. Fix findings; don't add
-`allow`s.
+Quality and the local source gate use `cargo clippy --locked --workspace --all-targets --no-deps`
+to lint every workspace crate
+under its manifest policy. `tools/lane/gate.sh` also promotes all warnings to errors.
+Both gates check the clean crates again under `tools/cleanroom/clippy.toml`.
+Fix findings at the source.
 
 Shared check, documentation and data rules are in [RULES](../RULES.md#authority-and-shared-guardrails).
