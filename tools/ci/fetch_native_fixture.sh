@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Fetch an encrypted, pinned native replay fixture into the native source directory.
 set -euo pipefail
-if [ "$#" -ne 7 ]; then
-  echo "usage: $0 <rom> <destination> <folder> <asset> <sha256> <bytes> <members>" >&2
+if [ "$#" -ne 7 ] && [ "$#" -ne 9 ]; then
+  echo "usage: $0 <rom> <destination> <folder> <asset> <sha256> <bytes> <members> [--rom <rom> | --parent <parent>]" >&2
   exit 2
 fi
 rom=$1
@@ -12,9 +12,13 @@ asset=$4
 sha256=$5
 bytes=$6
 members=$7
+shift 7
 test "$(sha256sum <"$rom" | cut -d' ' -f1)" = 12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72
 test -d "$destination"
-test ! -e "$destination/$folder"
+if [ "$#" -eq 0 ]; then
+  test ! -e "$destination/$folder"
+  test ! -L "$destination/$folder"
+fi
 scratch=$(mktemp -d)
 cleanup() {
   rm -f -- "$scratch/capture.enc" "$scratch/capture.tar.gz"
@@ -31,24 +35,5 @@ SM_SEED_PASSPHRASE=$({ printf 'sm-decomp-seeds-v1'; cat "$rom"; } | sha256sum | 
 export SM_SEED_PASSPHRASE
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SM_SEED_PASSPHRASE \
   -in "$scratch/capture.enc" -out "$scratch/capture.tar.gz"
-# Validate the complete layout before publishing the extracted fixture.
-"${SM_PY:-python3}" - "$scratch/capture.tar.gz" "$destination" "$folder" "$members" <<'PY'
-from pathlib import Path, PurePosixPath
-import sys
-import tarfile
-import tempfile
-
-archive_path, destination, folder, count = sys.argv[1:]
-with tarfile.open(archive_path, "r:gz") as archive:
-    entries = archive.getmembers()
-    names = {entry.name for entry in entries}
-    if len(entries) != int(count) or len(names) != len(entries):
-        raise SystemExit("unexpected native fixture member count")
-    for entry in entries:
-        path = PurePosixPath(entry.name)
-        if not entry.isfile() or path.parts[:1] != (folder,) or ".." in path.parts:
-            raise SystemExit("unexpected native fixture member")
-    with tempfile.TemporaryDirectory(dir=destination) as staging:
-        archive.extractall(staging, filter="data")
-        (Path(staging) / folder).rename(Path(destination) / folder)
-PY
+"${SM_PY:-python3}" "$(dirname "$0")/publish_native_fixture.py" \
+  "$scratch/capture.tar.gz" "$destination" "$folder" "$members" "$@"

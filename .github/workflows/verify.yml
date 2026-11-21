@@ -137,14 +137,8 @@ jobs:
         name: Fetch retained native frame inputs and return observations
         run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &native_search
-        name: Fetch and qualify the pinned complete scoped search inputs
-        run: bash tools/ci/fetch_native_search.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &native_search_order
-        name: Fetch and qualify the pinned derived enemy-stop source
-        run: bash tools/ci/fetch_native_search_order.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &native_search_work
-        name: Fetch and qualify the independently reviewed complete movement observations
-        run: bash tools/ci/fetch_native_search_work.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+        name: Fetch and qualify the pinned native search packets
+        run: bash tools/ci/fetch_native_search_packets.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Run required fixture-backed verification witnesses
         env:
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
@@ -201,8 +195,6 @@ jobs:
       - *connected_ordinary
       - *retained_frame
       - *native_search
-      - *native_search_order
-      - *native_search_work
       - name: Verify recorded bridge fault rejection and exact restoration
         env:
           WORKER: ${{ matrix.worker }}
