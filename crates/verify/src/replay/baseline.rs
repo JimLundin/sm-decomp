@@ -258,6 +258,7 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         || counts.null_cuts > counts.cuts
         || counts.null_fields > counts.fields
         || counts.publications > counts.outputs
+        || counts.restorations > if case.checkpoints { counts.cuts } else { 0 }
         || counts.pending_restorations != counts.pending_boundaries
     {
         return false;
@@ -279,7 +280,6 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
             if cut < first
                 || cut > case.end.cut_inclusive
                 || usize::try_from(cut.saturating_sub(first)).ok() != Some(counts.cuts)
-                || counts.restorations != 0
                 || counts.pending_boundaries != 0
             {
                 return false;
@@ -328,7 +328,7 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{Baseline, BaselineFault, Claim, Floor};
+    use super::{Baseline, BaselineFault, Claim, Floor, valid_counts};
     use crate::replay::{
         index::IndexSnapshot,
         result::{CaseResult, Counts, Outcome},
@@ -472,6 +472,28 @@ limits = ["invented scope A"]
             baseline.check(&snapshot, &[forged]),
             Err(BaselineFault::Counts(_))
         ));
+    }
+
+    #[test]
+    fn a_known_boundary_allows_restorations_only_for_checkpointed_cuts() {
+        let (snapshot, baseline, _) = fixture();
+        let mut case = snapshot.index().cases.first().unwrap().clone();
+        case.end.cut_inclusive = 157;
+        let mut boundary = baseline.cases.into_iter().next().unwrap();
+        boundary.claim = Claim::Boundary;
+        boundary.expected = Outcome::Unsupported {
+            cut: Some(157),
+            dependency: "producer".to_owned(),
+        };
+
+        assert!(valid_counts(&case, &boundary));
+        boundary.counts.restorations = 2;
+        assert!(!valid_counts(&case, &boundary));
+        boundary.counts.restorations = 1;
+        case.checkpoints = false;
+        assert!(!valid_counts(&case, &boundary));
+        boundary.counts.restorations = 0;
+        assert!(valid_counts(&case, &boundary));
     }
 
     #[test]

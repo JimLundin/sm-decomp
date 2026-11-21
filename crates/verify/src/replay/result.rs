@@ -55,7 +55,7 @@ pub struct Counts {
     pub null_cuts: usize,
     /// Fields also matched by the unchanged seed.
     pub null_fields: usize,
-    /// Complete saved continuations proven through the horizon.
+    /// Completed checkpoints proven through completion or a held boundary.
     pub restorations: usize,
     /// Native effect deadlines proven by split advancement.
     pub pending_boundaries: usize,

@@ -1,10 +1,14 @@
 //! The sole carried-state comparison loop, also used for every saved continuation.
 
+use super::compare::Observation;
+use super::frame::HeldAdvance;
 use super::index::Case;
 use super::readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader};
 use super::result::{CaseResult, Outcome};
 use super::{append_digest, compared, data_failure, pending};
-use game::production::{Production, SaveFault, SavedCompletedFrame, SavedProduction};
+use game::production::{
+    Production, ProductionContent, ProductionRules, SaveFault, SavedCompletedFrame, SavedProduction,
+};
 
 enum SavedCut {
     Frame(SavedCompletedFrame),
@@ -27,6 +31,26 @@ fn save_cut(inputs: &InputReader, production: &Production, cut: u64) -> Result<S
         })
 }
 
+fn restore_cut(
+    saved: &SavedCut,
+    content: ProductionContent,
+    rules: ProductionRules,
+    failed: Outcome,
+) -> Result<Production, Outcome> {
+    match saved {
+        SavedCut::Frame(saved) => {
+            let restored = Production::restore_completed_frame(saved, content, rules)
+                .map_err(|_| failed.clone())?;
+            // Later advancement can replace return eligibility, so check it at restore.
+            if restored.save_completed_frame().as_ref() != Ok(saved) {
+                return Err(failed);
+            }
+            Ok(restored)
+        }
+        SavedCut::Scoped(saved) => Production::restore(saved, content, rules).map_err(|_| failed),
+    }
+}
+
 fn count(counter: &mut usize, amount: usize) -> Result<(), Outcome> {
     *counter = counter
         .checked_add(amount)
@@ -34,6 +58,7 @@ fn count(counter: &mut usize, amount: usize) -> Result<(), Outcome> {
     Ok(())
 }
 
+#[cfg(test)]
 pub(super) fn execute(
     case: &Case,
     inputs: &InputReader,
@@ -42,15 +67,40 @@ pub(super) fn execute(
     actual: &mut ActualReader,
     cut: u64,
 ) -> Result<ExpectedCut, Outcome> {
-    let output = inputs
-        .advance(production, cut)
-        .map_err(|outcome| at_cut(outcome, cut))?;
-    let observed = actual.accept(inputs, production, output, cut)?;
-    let expected = expected
-        .read(case, cut)
-        .map_err(|outcome| at_cut(outcome, cut))?;
-    compared(cut, &expected.fields, &observed)?;
-    Ok(expected)
+    CutReader {
+        case,
+        inputs,
+        expected,
+    }
+    .execute(production, actual, cut, &mut HeldAdvance::default())
+}
+
+struct CutReader<'a> {
+    case: &'a Case,
+    inputs: &'a InputReader,
+    expected: &'a ExpectedReader,
+}
+
+impl CutReader<'_> {
+    fn execute(
+        &self,
+        production: &mut Production,
+        actual: &mut ActualReader,
+        cut: u64,
+        held: &mut HeldAdvance,
+    ) -> Result<ExpectedCut, Outcome> {
+        let output = self
+            .inputs
+            .advance_observing_stop(production, cut, held)
+            .map_err(|outcome| at_cut(outcome, cut))?;
+        let observed = actual.accept_observing_stop(self.inputs, production, output, cut, held)?;
+        let expected = self
+            .expected
+            .read(self.case, cut)
+            .map_err(|outcome| at_cut(outcome, cut))?;
+        compared(cut, &expected.fields, &observed)?;
+        Ok(expected)
+    }
 }
 
 fn at_cut(outcome: Outcome, current: u64) -> Outcome {
@@ -69,12 +119,45 @@ fn at_cut(outcome: Outcome, current: u64) -> Outcome {
     }
 }
 
+fn record_cut(
+    result: &mut CaseResult,
+    digest: &mut Vec<u8>,
+    expected: &ExpectedCut,
+    null: &[Observation],
+    publications: usize,
+    cut: u64,
+) -> Result<(), Outcome> {
+    count(&mut result.counts.cuts, 1)?;
+    count(&mut result.counts.fields, expected.semantic_count)?;
+    count(&mut result.counts.outputs, expected.output_count)?;
+    let new_publications = publications
+        .checked_sub(result.counts.publications)
+        .ok_or_else(|| data_failure(Some(cut), "publication prefix count"))?;
+    count(&mut result.counts.outputs, new_publications)?;
+    result.counts.publications = publications;
+    count(&mut result.counts.replies, expected.replies)?;
+    count(
+        &mut result.counts.null_fields,
+        expected
+            .semantics
+            .iter()
+            .filter(|field| null.contains(field))
+            .count(),
+    )?;
+    if super::compare::compare(&expected.fields, null).is_ok() {
+        count(&mut result.counts.null_cuts, 1)?;
+    }
+    append_digest(digest, cut, &expected.fields);
+    result.observation_sha256 = crate::lock::Sha256::of(digest).to_string();
+    Ok(())
+}
+
 pub(super) fn run(
     case: &Case,
     admitted: AdmittedCase,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
-    if admitted.schedule.is_empty() || admitted.schedule.last() != Some(&case.end.cut_inclusive) {
+    if admitted.schedule.last() != Some(&case.end.cut_inclusive) {
         return Err(data_failure(None, "complete declared comparison schedule"));
     }
     let AdmittedCase {
@@ -86,82 +169,103 @@ pub(super) fn run(
         expected: expectation,
         schedule,
     } = admitted;
+    let reader = CutReader {
+        case,
+        inputs: &inputs,
+        expected: &expectation,
+    };
     let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
     let mut digest = Vec::new();
+    let mut held = HeldAdvance::default();
+    let mut stop = None;
     for cut in &schedule {
-        let expected = execute(
-            case,
-            &inputs,
-            &expectation,
-            &mut production,
-            &mut actual,
+        let expected = match reader.execute(&mut production, &mut actual, *cut, &mut held) {
+            Ok(compared) => compared,
+            Err(outcome @ Outcome::Unsupported { .. }) if !checkpoints.is_empty() => {
+                stop = Some((*cut, outcome));
+                break;
+            }
+            Err(outcome) => return Err(outcome),
+        };
+        record_cut(
+            result,
+            &mut digest,
+            &expected,
+            &null,
+            actual.publication_count(),
             *cut,
         )?;
-        count(&mut result.counts.cuts, 1)?;
-        count(&mut result.counts.fields, expected.semantic_count)?;
-        count(&mut result.counts.outputs, expected.output_count)?;
-        let publications = actual.publication_count();
-        let new_publications = publications
-            .checked_sub(result.counts.publications)
-            .ok_or_else(|| data_failure(Some(*cut), "publication prefix count"))?;
-        count(&mut result.counts.outputs, new_publications)?;
-        result.counts.publications = publications;
-        count(&mut result.counts.replies, expected.replies)?;
-        count(
-            &mut result.counts.null_fields,
-            expected
-                .semantics
-                .iter()
-                .filter(|field| null.contains(field))
-                .count(),
-        )?;
-        if super::compare::compare(&expected.fields, &null).is_ok() {
-            count(&mut result.counts.null_cuts, 1)?;
-        }
-        append_digest(&mut digest, *cut, &expected.fields);
-        result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
         if case.checkpoints {
             let saved = save_cut(&inputs, &production, *cut)?;
             checkpoints.push((*cut, saved, actual.clone()));
         }
     }
     for (start, saved, mut restored_actual) in checkpoints {
-        let mut restored = match saved {
-            SavedCut::Frame(saved) => {
-                Production::restore_completed_frame(&saved, content.clone(), rules.clone())
-            }
-            SavedCut::Scoped(saved) => Production::restore(&saved, content.clone(), rules.clone()),
-        }
-        .map_err(|_| Outcome::CheckpointFailure { cut: start })?;
-        for cut in schedule.iter().filter(|cut| **cut > start) {
-            execute(
-                case,
-                &inputs,
-                &expectation,
+        let failed = Outcome::CheckpointFailure { cut: start };
+        let mut restored = restore_cut(&saved, content.clone(), rules.clone(), failed.clone())?;
+        let compared_suffix = schedule
+            .iter()
+            .filter(|cut| **cut > start)
+            .take_while(|cut| stop.as_ref().is_none_or(|(end, _)| *cut != end));
+        for cut in compared_suffix {
+            let resumed = reader.execute(
                 &mut restored,
                 &mut restored_actual,
                 *cut,
-            )?;
+                &mut HeldAdvance::default(),
+            );
+            if stop.is_some() {
+                resumed.map_err(|_| failed.clone())?;
+            } else {
+                resumed?;
+            }
+        }
+        if let Some((cut, direct_outcome)) = &stop {
+            let mut restored_held = HeldAdvance::default();
+            let resumed = reader.execute(
+                &mut restored,
+                &mut restored_actual,
+                *cut,
+                &mut restored_held,
+            );
+            if resumed.as_ref().err() != Some(direct_outcome)
+                || restored_held != held
+                || restored != production
+                || !restored_actual.same_publication_prefix(&actual)
+            {
+                return Err(failed);
+            }
         }
         if restored.state() != production.state()
             || restored_actual.publication_count() != actual.publication_count()
         {
-            return Err(Outcome::CheckpointFailure { cut: start });
+            return Err(failed);
         }
         count(&mut result.counts.restorations, 1)?;
     }
-    if let InputReader::Audio(tape) = &inputs
-        && case.checkpoints
-    {
-        let ExpectedReader::Audio(expected) = &expectation else {
+    if let Some((_, outcome)) = stop {
+        return Err(outcome);
+    }
+    if case.checkpoints {
+        record_pending(&inputs, &expectation, result)?;
+    }
+    Ok(())
+}
+
+fn record_pending(
+    inputs: &InputReader,
+    expected: &ExpectedReader,
+    result: &mut CaseResult,
+) -> Result<(), Outcome> {
+    if let InputReader::Audio(tape) = inputs {
+        let ExpectedReader::Audio(expected) = expected else {
             return Err(data_failure(None, "audio expected scope"));
         };
         let pending = pending::run(tape, &expected.publications)?;
         result.counts.pending_boundaries = pending.0;
         result.counts.pending_restorations = pending.1;
     }
-    result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
     Ok(())
 }
 

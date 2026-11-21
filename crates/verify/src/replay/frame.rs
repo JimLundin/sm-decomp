@@ -2,7 +2,9 @@
 
 use super::{compare::Observation, data_failure, production_failure, result::Outcome};
 use data::timing::MasterTicks;
-use game::production::{AdvanceInput, Production, ProductionOutputs, frame};
+use game::production::{
+    AdvanceInput, Production, ProductionFault, ProductionOutputs, frame, timing,
+};
 use game::state::owned::OwnedState;
 
 mod callbacks;
@@ -204,11 +206,25 @@ pub(super) struct Inputs {
     pub budget: MasterTicks,
 }
 
+/// A frame stop's typed production fault and ordered events before the stop.
+#[derive(Default, PartialEq, Eq)]
+pub(super) struct HeldAdvance {
+    fault: Option<ProductionFault>,
+    events: Vec<timing::Event>,
+}
+
+impl HeldAdvance {
+    pub(super) fn retain_events(&mut self, events: Vec<timing::Event>) {
+        self.events = events;
+    }
+}
+
 impl Inputs {
     pub fn advance(
         &self,
         production: &mut Production,
         cut: u64,
+        held: &mut HeldAdvance,
     ) -> Result<ProductionOutputs, Outcome> {
         if self.budget.0 == 0 {
             return Err(data_failure(Some(cut), "positive frame host budget"));
@@ -219,7 +235,11 @@ impl Inputs {
                 .advance(AdvanceInput::Frame {
                     budget: self.budget,
                 })
-                .map_err(|fault| production_failure(cut, fault))?;
+                .map_err(|fault| {
+                    held.fault = Some(fault);
+                    held.events = std::mem::take(&mut events);
+                    production_failure(cut, fault)
+                })?;
             let ProductionOutputs::Frame(outputs) = outputs else {
                 return Err(data_failure(Some(cut), "frame output scope"));
             };
@@ -238,7 +258,7 @@ impl Inputs {
 }
 
 /// Receiver's pending interval and cumulative callback count, saved at each checkpoint.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(super) struct Actual {
     pub events: Vec<game::production::timing::Event>,
     delivered: usize,

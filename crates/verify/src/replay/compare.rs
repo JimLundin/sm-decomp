@@ -78,6 +78,21 @@ pub fn compare(expected: &[Observation], actual: &[Observation]) -> Result<(), C
 #[cfg(test)]
 mod tests {
     use super::{CompareFault, Observation, compare};
+
+    #[test]
+    fn declared_observations_match_by_name_with_additional_actual_fields() {
+        let expected = [
+            Observation::quantity("position.x", 4),
+            Observation::quantity("position.y", 8),
+        ];
+        let actual = [
+            Observation::quantity("position.y", 8),
+            Observation::quantity("velocity.x", 2),
+            Observation::quantity("position.x", 4),
+        ];
+        assert_eq!(compare(&expected, &actual), Ok(()));
+    }
+
     #[test]
     fn first_difference_and_absent_observation_fail_by_identity() {
         let expected = [

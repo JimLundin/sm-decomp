@@ -1,6 +1,7 @@
 //! Input, actual projection and expectation readers have disjoint access to their data.
 
 use super::compare::Observation;
+use super::frame::HeldAdvance;
 use super::index::{Case, ObservationId};
 use super::result::Outcome;
 use super::{
@@ -74,13 +75,23 @@ pub(super) fn record(cache: &Cache, cut: u64) -> Result<oracle_record::FrameReco
 }
 
 impl InputReader {
+    #[cfg(test)]
     pub fn advance(
         &self,
         production: &mut Production,
         cut: u64,
     ) -> Result<ProductionOutputs, Outcome> {
+        self.advance_observing_stop(production, cut, &mut HeldAdvance::default())
+    }
+
+    pub fn advance_observing_stop(
+        &self,
+        production: &mut Production,
+        cut: u64,
+        held: &mut HeldAdvance,
+    ) -> Result<ProductionOutputs, Outcome> {
         match self {
-            Self::Frame(inputs) => inputs.advance(production, cut),
+            Self::Frame(inputs) => inputs.advance(production, cut, held),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
             Self::Recorded(reader) => reader.advance(production, cut),
             Self::Audio(tape) => {
@@ -138,6 +149,7 @@ impl InputReader {
 }
 
 impl ActualReader {
+    #[cfg(test)]
     pub fn accept(
         &mut self,
         inputs: &InputReader,
@@ -145,9 +157,28 @@ impl ActualReader {
         outputs: ProductionOutputs,
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
+        self.accept_observing_stop(
+            inputs,
+            production,
+            outputs,
+            cut,
+            &mut HeldAdvance::default(),
+        )
+    }
+
+    pub fn accept_observing_stop(
+        &mut self,
+        inputs: &InputReader,
+        production: &Production,
+        outputs: ProductionOutputs,
+        cut: u64,
+        held: &mut HeldAdvance,
+    ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
             (Self::Frame(actual), InputReader::Frame(_), ProductionOutputs::Frame(outputs)) => {
-                actual.accept(production, &outputs, cut)
+                actual
+                    .accept(production, &outputs, cut)
+                    .inspect_err(|_| held.retain_events(outputs.events))
             }
             (
                 Self::NativeSearch(retained),
@@ -249,6 +280,29 @@ impl ActualReader {
                     bytes: Vec::new(),
                 });
                 Ok(null)
+            }
+        }
+    }
+
+    pub fn same_publication_prefix(&self, direct: &Self) -> bool {
+        match (self, direct) {
+            (Self::Frame(restored), Self::Frame(direct)) => restored == direct,
+            (
+                Self::Audio {
+                    publications: restored,
+                    replies: restored_replies,
+                },
+                Self::Audio {
+                    publications: direct,
+                    replies: direct_replies,
+                },
+            ) => restored == direct && restored_replies == direct_replies,
+            (
+                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement,
+                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement,
+            ) => true,
+            (Self::Frame(_) | Self::Audio { .. }, _) | (_, Self::Frame(_) | Self::Audio { .. }) => {
+                false
             }
         }
     }
