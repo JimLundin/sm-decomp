@@ -142,6 +142,8 @@ jobs:
       - &shot_drawing
         name: Fetch the reviewed scoped power shot witness
         run: bash tools/ci/fetch_shot_contact.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Fetch the reviewed completed shot Frame origin
+        run: bash tools/ci/fetch_shot_frame_origin.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &retained_frame
         name: Fetch retained native frame inputs and return observations
         run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"

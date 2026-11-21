@@ -8,7 +8,7 @@ mod devices;
 mod fixture_tests;
 mod hardware;
 #[cfg(test)]
-mod tests;
+pub(super) mod tests;
 mod transfers;
 
 use canonical::Canonical;

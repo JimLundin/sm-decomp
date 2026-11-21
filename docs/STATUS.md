@@ -255,6 +255,30 @@ Actor progression and the surrounding drawing owners are also missing for the ch
 The [fixture installer](../tools/ci/fetch_shot_contact.sh) installs the two hash-pinned
 input and comparison files under the native fixture directory.
 
+## Cut-156 Frame opening
+
+The [shot Frame fixture installer](../tools/ci/fetch_shot_frame_origin.sh) installs
+the requested-return RTI-prefetch donor and the separately acquired true-resume hardware,
+WRAM and APURAM. RTI-prefetch supplies sender provenance. Its clock stays at its original
+phase. The independent resume ABI supplies the new line and refresh phase at resume.
+The complete Frame origin importer can select the checked resume sender and early profiles.
+The older Ready, empty and absent sender origins remain supported.
+
+The opening imports Contact AwaitClear with an empty queue and the held Footstep reply
+through checked resident aliases. The independently qualified sender clock has no active
+service and rebases with hardware at the actual resume. The actual software acknowledgment
+guard and current Ready/Empty Music inputs come from resume WRAM. A separate borrowed Music
+receipt is revalidated and consumed after the complete charged operation.
+
+The bounded opening runs through ordinary production admission, Frame advance and
+content-bound checkpoints. It shares the full Frame caller's Acknowledgment and Music
+selection and completion. The 36 Acknowledgment exposures take 232 ticks. The 70 Music exposures
+take 466 intrinsic ticks plus the hardware refresh and complete at resume+738. The
+fixture-backed check compares direct and restored work from an interior Music charge.
+The next selected owner requires Haze preparation. Its physical work, later IRQ and
+standing pose remain outside the admitted opening. The compact RTI-prefetch provenance
+packet has no same-origin frame profile members and admits no Frame execution.
+
 ## Retained native frame
 
 `frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.

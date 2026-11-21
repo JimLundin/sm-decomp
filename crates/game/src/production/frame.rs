@@ -58,6 +58,7 @@ pub mod movement_stage;
 pub mod movement_support_contract;
 mod native_return;
 mod next_opportunity;
+pub mod opening_prelude;
 mod ordinary_caller;
 /// Actual play-clock opportunity and retained state.
 pub mod play_time;

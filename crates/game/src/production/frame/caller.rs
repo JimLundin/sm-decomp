@@ -5,11 +5,10 @@ use super::borrowed_player_preparation::{
     PlayerEntryCompletions, PlayerEntryCompletionsPin, PlayerEntryOffers, PlayerEntryOffersPin,
     PlayerEntryOrigins, PlayerEntryOriginsPin,
 };
+use super::opening_prelude::{ACKNOWLEDGMENT, MUSIC};
 use super::{
     State,
-    borrowed_receipts::{
-        FrameContinuationAfterNmi, MusicCompletionReceipt, MusicCountdown, MusicQueue, MusicRequest,
-    },
+    borrowed_receipts::{FrameContinuationAfterNmi, MusicCompletionReceipt},
 };
 use crate::production::timing::{self, WorkId};
 use crate::production::{ProductionFault, Unsupported};
@@ -664,8 +663,6 @@ pub struct Outputs {
     pub events: Vec<crate::production::timing::Event>,
 }
 
-const ACKNOWLEDGMENT: WorkId = WorkId(1);
-const MUSIC: WorkId = WorkId(2);
 const HAZE: WorkId = WorkId(3);
 const HAZE_TAIL: WorkId = WorkId(4);
 const DRAWING: WorkId = WorkId(100);
@@ -1873,26 +1870,12 @@ impl State {
 
     fn start_prelude(&mut self, content: &Content) -> Result<(), ProductionFault> {
         match &self.caller {
-            Caller::AwaitingAcknowledgment { receipt: None, .. } => {
-                return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                    Dependency::FramePublicationAcknowledgment,
-                )));
-            }
-            Caller::AwaitingAcknowledgment {
-                prelude,
-                receipt: Some(receipt),
-            } => {
-                let profile = content
-                    .acknowledgment
-                    .bind(&[])
-                    .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
-                self.timing
-                    .begin(ACKNOWLEDGMENT, profile)
-                    .map_err(ProductionFault::FrameHardware)?;
-                self.caller = Caller::Acknowledgment {
-                    prelude: prelude.clone(),
-                    receipt: *receipt,
-                };
+            Caller::AwaitingAcknowledgment { .. } => {
+                super::opening_prelude::begin_acknowledgment(
+                    &mut self.caller,
+                    &mut self.timing,
+                    &content.acknowledgment,
+                )?;
             }
             Caller::Acknowledgment { .. }
             | Caller::MusicRunning { .. }
@@ -1903,32 +1886,13 @@ impl State {
             | Caller::Preparation { .. }
             | Caller::Player { .. }
             | Caller::PlayerContinuation { .. } => {}
-            Caller::Music {
-                prelude,
-                publication,
-            } => {
-                self.music_result(prelude)?;
-                if content
-                    .music
-                    .runs
-                    .iter()
-                    .any(|run| run.effect != data::timing::TemplateEffect::None)
-                {
-                    return Err(ProductionFault::Unsupported(Unsupported::Frame(
-                        Dependency::MusicPreparation,
-                    )));
-                }
-                let profile = content
-                    .music
-                    .bind(&[])
-                    .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
-                self.timing
-                    .begin(MUSIC, profile)
-                    .map_err(ProductionFault::FrameHardware)?;
-                self.caller = Caller::MusicRunning {
-                    prelude: prelude.clone(),
-                    publication: *publication,
-                };
+            Caller::Music { .. } => {
+                super::opening_prelude::begin_music(
+                    &mut self.caller,
+                    &mut self.timing,
+                    self.music,
+                    &content.music,
+                )?;
             }
             Caller::Haze { .. } => self.start_haze(content)?,
             Caller::LayerBlend {
@@ -2575,57 +2539,11 @@ impl State {
         Ok(true)
     }
     fn complete_acknowledgment(&mut self) -> Result<(), ProductionFault> {
-        let Caller::Acknowledgment { prelude, receipt } = &self.caller else {
-            return Err(ProductionFault::WrongScope);
-        };
-        self.caller = Caller::Music {
-            prelude: prelude.clone(),
-            publication: *receipt,
-        };
-        Ok(())
-    }
-
-    fn music_result(
-        &self,
-        prelude: &PreludeSource,
-    ) -> Result<MusicCompletionReceipt, ProductionFault> {
-        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::MusicPreparation));
-        let current = self.music.ok_or(fault)?;
-        let result = match (current.countdown, current.queue) {
-            (MusicCountdown::Ready, MusicQueue::Empty) => MusicCompletionReceipt {
-                dependency: current,
-                terminal: current,
-                request: MusicRequest::None,
-            },
-        };
-        if let PreludeSource::Origin(source) = prelude
-            && source.music_completion.as_ref() != Some(&result)
-        {
-            return Err(fault);
-        }
-        Ok(result)
+        super::opening_prelude::complete_acknowledgment(&mut self.caller)
     }
 
     fn complete_music(&mut self) -> Result<(), ProductionFault> {
-        let Caller::MusicRunning {
-            prelude,
-            publication,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        let music = self.music_result(prelude)?;
-        let mut prelude = prelude.clone();
-        if let PreludeSource::Origin(prelude) = &mut prelude {
-            prelude.music_completion = None;
-        }
-        self.music = Some(music.terminal);
-        self.caller = Caller::Haze {
-            prelude,
-            publication: *publication,
-            music,
-        };
-        Ok(())
+        super::opening_prelude::complete_music(&mut self.caller, &mut self.music)
     }
 
     fn complete_haze(&mut self, content: &Content) -> Result<(), ProductionFault> {

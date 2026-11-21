@@ -1,5 +1,6 @@
 //! Admit current source owners before opening any expected observations.
 
+mod completed_start;
 mod native;
 mod player;
 mod quiet_profile;
@@ -23,7 +24,7 @@ use game::{
     production::{Production, ProductionContent, ProductionRules, ProductionSeed, frame},
     samus_appearance_bridge::Clips,
 };
-use seed::{EntrySeed, entry_seed, read_manifest};
+use seed::{EntrySeed, entry_seed};
 
 struct DrawingWork {
     haze_bands_address: data::dma::BusAddress,
@@ -481,20 +482,32 @@ fn assemble(
 
 #[cfg(test)]
 pub(super) fn observed_layer_blend(case: &Case, sources: &Sources) -> Result<[u8; 9], Outcome> {
-    let manifest = read_manifest(case, sources)?;
+    let manifest = seed::read_manifest(case, sources)?;
     super::layer_blend_receipt::observed(&manifest.layer_blend.text()?)
         .map_err(|_| data_failure(None, "recorded LayerBlend settings"))
 }
 
 pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    let manifest = read_manifest(case, sources)?;
+    let (root, text) = seed::read_start(case, sources)?;
+    if completed_start::recognizes(&text)? {
+        return completed_start::admit(case, sources, &root, &text);
+    }
+    let manifest = seed::parse_manifest(case, &root, &text)?;
+    admit_full(case, sources, &manifest)
+}
+
+fn admit_full(
+    case: &Case,
+    sources: &Sources,
+    manifest: &Manifest,
+) -> Result<AdmittedCase, Outcome> {
     let content = movement::Content::load(&sources.rom)?;
     let wram = manifest.wram.read()?;
-    let mut seed = entry_seed(case, sources, &manifest, &content, &wram)?;
+    let mut seed = entry_seed(case, sources, manifest, &content, &wram)?;
     let first_cut = case
         .first_cut()
         .ok_or_else(|| data_failure(None, "first native return"))?;
-    let mut returns = returns::prepare(case, sources, &manifest, first_cut, seed.next_pad)?;
+    let mut returns = returns::prepare(case, sources, manifest, first_cut, seed.next_pad)?;
     if let Some(pad) = &returns.pad_origin {
         let controller = &mut seed.state.timing.hardware.controller;
         if controller.words.first().copied() != Some(pad.previous_sample.0) {
@@ -506,7 +519,7 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
     let (state, mut content, clips) = assemble(
         case,
         sources,
-        &manifest,
+        manifest,
         &wram,
         content,
         seed,

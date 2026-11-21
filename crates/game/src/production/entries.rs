@@ -64,6 +64,16 @@ pub(super) fn admit(
 ) -> Result<OwnedState, AdmissionFault> {
     Ok(match (seed, content, rules) {
         (
+            ProductionSeed::FrameOpening(state),
+            ProductionContent::FrameOpening(profiles),
+            ProductionRules::FrameOpening,
+        ) => {
+            state
+                .validate(profiles)
+                .map_err(super::frame::Fault::Production)?;
+            OwnedState::FrameOpening(state)
+        }
+        (
             ProductionSeed::Audio(state),
             ProductionContent::Audio(content),
             ProductionRules::Audio,
@@ -128,6 +138,15 @@ pub(super) fn advance(
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
         (
+            OwnedState::FrameOpening(state),
+            ProductionContent::FrameOpening(profiles),
+            ProductionRules::FrameOpening,
+            AdvanceInput::Frame { budget },
+        ) => {
+            let (progress, events) = state.advance(profiles, budget)?;
+            ProductionOutputs::FrameOpening(progress, events)
+        }
+        (
             OwnedState::WeaponsContact(state),
             ProductionContent::WeaponsContact(content),
             ProductionRules::WeaponsContact(rules),
@@ -136,36 +155,6 @@ pub(super) fn advance(
             super::weapons::advance_with_drawing(&mut state.0, shot, content, *rules, drawing)?,
         )),
 
-        (
-            OwnedState::Audio(state),
-            ProductionContent::Audio(content),
-            ProductionRules::Audio,
-            AdvanceInput::Audio {
-                stop,
-                presentations,
-            },
-        ) => super::advance_transport(&mut state.0, content, &stop, presentations)?,
-        (
-            OwnedState::ResidentAudio(state),
-            ProductionContent::ResidentAudio(content),
-            ProductionRules::Audio,
-            AdvanceInput::Audio {
-                stop,
-                presentations,
-            },
-        ) => state.advance_transport(content, &stop, presentations)?,
-        (
-            OwnedState::ResidentAudio(state),
-            ProductionContent::ResidentAudio(_),
-            ProductionRules::Audio,
-            AdvanceInput::ResidentSender { group, input },
-        ) => state.advance_sender(group, input)?,
-        (
-            OwnedState::AudioSender(state),
-            ProductionContent::AudioSender(group),
-            ProductionRules::AudioSender,
-            AdvanceInput::AudioSender(input),
-        ) => ProductionOutputs::AudioSender(super::sender::advance(&mut state.0, *group, input)?),
         (
             OwnedState::Blocks(state),
             ProductionContent::Blocks,
@@ -225,6 +214,47 @@ pub(super) fn advance(
             state.scene = output.scene;
             ProductionOutputs::Doors(Box::new(output))
         }
+        (state, content, rules, input) => return advance_audio(state, content, rules, input),
+    })
+}
+
+fn advance_audio(
+    state: &mut OwnedState,
+    content: &ProductionContent,
+    rules: &ProductionRules,
+    input: AdvanceInput<'_>,
+) -> Result<ProductionOutputs, ProductionFault> {
+    Ok(match (state, content, rules, input) {
+        (
+            OwnedState::Audio(state),
+            ProductionContent::Audio(content),
+            ProductionRules::Audio,
+            AdvanceInput::Audio {
+                stop,
+                presentations,
+            },
+        ) => super::advance_transport(&mut state.0, content, &stop, presentations)?,
+        (
+            OwnedState::ResidentAudio(state),
+            ProductionContent::ResidentAudio(content),
+            ProductionRules::Audio,
+            AdvanceInput::Audio {
+                stop,
+                presentations,
+            },
+        ) => state.advance_transport(content, &stop, presentations)?,
+        (
+            OwnedState::ResidentAudio(state),
+            ProductionContent::ResidentAudio(_),
+            ProductionRules::Audio,
+            AdvanceInput::ResidentSender { group, input },
+        ) => state.advance_sender(group, input)?,
+        (
+            OwnedState::AudioSender(state),
+            ProductionContent::AudioSender(group),
+            ProductionRules::AudioSender,
+            AdvanceInput::AudioSender(input),
+        ) => ProductionOutputs::AudioSender(super::sender::advance(&mut state.0, *group, input)?),
         _ => return Err(ProductionFault::WrongScope),
     })
 }

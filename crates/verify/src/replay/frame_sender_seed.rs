@@ -1,7 +1,8 @@
 //! Independently qualified current CPU sender owners at a completed frame return.
 //! Outgoing SMP APURAM ports supply replies; CPU output ports have the opposite direction.
 
-use audio_transport::{CpuMasterTicks, Request, SenderProgress, SenderState};
+use audio_transport::{CpuMasterTicks, CueId, Request, SenderProgress, SenderState, SoundGroup};
+use data::assets::audio::CueAlias;
 use game::production::frame::Senders;
 
 /// Malformed context or a current origin arm outside the independently qualified seed.
@@ -28,38 +29,81 @@ pub enum SeedFault {
 /// # Errors
 /// Incomplete members, malformed queues or other current semantic arms reject admission.
 pub fn decode(wram: &[u8], apuram: &[u8]) -> Result<Senders, SeedFault> {
+    decode_origin(wram, apuram, None)
+}
+
+/// Import the checked empty Contact FIFO while the native reply still holds Footstep.
+/// The current origin must already establish that no sender service is active.
+///
+/// # Errors
+/// Rejects malformed source, any other progress, and missing or ambiguous cue aliases.
+pub fn completed_contact(
+    wram: &[u8],
+    apuram: &[u8],
+    aliases: &[CueAlias],
+) -> Result<Senders, SeedFault> {
+    decode_origin(wram, apuram, Some(aliases))
+}
+
+fn decode_origin(
+    wram: &[u8],
+    apuram: &[u8],
+    held_contact: Option<&[CueAlias]>,
+) -> Result<Senders, SeedFault> {
     if wram.len() != 131_072 || apuram.len() != 65_536 {
         return Err(SeedFault::Length);
     }
-    let [action, ambient, contact] = [0_usize, 1, 2].map(|group| sender(wram, apuram, group));
+    let [action, ambient, contact] = [0_usize, 1, 2]
+        .map(|group| sender(wram, apuram, group, held_contact.filter(|_| group == 2)));
     Senders::new(action?, ambient?, contact?).map_err(|_| SeedFault::Owner)
 }
 
-fn sender(wram: &[u8], apuram: &[u8], group: usize) -> Result<SenderState, SeedFault> {
+fn sender(
+    wram: &[u8],
+    apuram: &[u8],
+    group: usize,
+    held_contact: Option<&[CueAlias]>,
+) -> Result<SenderState, SeedFault> {
     let byte = |at| wram.get(at).copied().ok_or(SeedFault::Length);
     let read = byte(0x0643_usize.saturating_add(group))?;
     let write = byte(0x0646_usize.saturating_add(group))?;
     if read >= 16 || write >= 16 {
         return Err(SeedFault::Cursor);
     }
-    if byte(0x0649_usize.saturating_add(group))? != 0 {
+    let phase = byte(0x0649_usize.saturating_add(group))?;
+    if phase != if held_contact.is_some() { 3 } else { 0 } {
         return Err(SeedFault::Progress);
     }
     if read != write {
         return Err(SeedFault::Queue);
     }
-    if apuram
+    let reply_byte = apuram
         .get(0x00f5_usize.saturating_add(group))
         .copied()
-        .ok_or(SeedFault::Length)?
-        != 0
-    {
-        return Err(SeedFault::Reply);
-    }
+        .ok_or(SeedFault::Length)?;
+    let (progress, reply) = if let Some(aliases) = held_contact {
+        let mut matches = aliases
+            .iter()
+            .filter(|alias| alias.group == SoundGroup::Contact && alias.byte == reply_byte);
+        if reply_byte == 0
+            || matches
+                .next()
+                .is_none_or(|alias| alias.cue != CueId::Footstep)
+            || matches.next().is_some()
+        {
+            return Err(SeedFault::Reply);
+        }
+        (SenderProgress::AwaitClear, Request::Cue(CueId::Footstep))
+    } else {
+        if reply_byte != 0 {
+            return Err(SeedFault::Reply);
+        }
+        (SenderProgress::Ready, Request::Absent)
+    };
     Ok(SenderState {
         queue: std::collections::VecDeque::new(),
-        progress: SenderProgress::Ready,
-        reply: Request::Absent,
+        progress,
+        reply,
         now: CpuMasterTicks(0),
         pending: None,
     })

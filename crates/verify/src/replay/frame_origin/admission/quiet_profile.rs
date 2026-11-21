@@ -12,6 +12,7 @@ struct File {
 
 #[derive(Deserialize)]
 struct Profile {
+    #[serde(alias = "owner")]
     name: String,
     exposures: u64,
     intrinsic_ticks: u64,
@@ -44,6 +45,26 @@ pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
     Ok([
         admit(down, "OddTwoColumnDown", [815, 5340], true)?,
         admit(contact, "QuietFootContact", [29, 188], false)?,
+    ])
+}
+
+/// Admit effect-free local prelude exposures at their existing owner boundaries.
+pub(super) fn acknowledgment_and_music(text: &str) -> Result<[Template; 2], ProfileFault> {
+    #[derive(Deserialize)]
+    struct Portions {
+        format: u32,
+        portion: Vec<Profile>,
+    }
+    let source: Portions = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [acknowledgment, music] = source.portion.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if source.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    Ok([
+        admit(acknowledgment, "Acknowledgment", [36, 232], false)?,
+        admit(music, "Music", [70, 466], false)?,
     ])
 }
 

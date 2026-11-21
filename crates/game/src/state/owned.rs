@@ -59,6 +59,8 @@ pub enum OwnedState {
     Connected(Box<crate::production::connected::State>),
     /// Complete retained frame caller, selected producers and physical continuation.
     Frame(Box<crate::production::frame::State>),
+    /// Bounded Frame acknowledgment and Music continuation.
+    FrameOpening(Box<crate::production::frame::opening_prelude::Opening>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
     /// Current Movement, Figure and Contact sender at an ordinary opportunity.

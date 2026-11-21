@@ -39,7 +39,7 @@ pub use sender::{SenderInput, Senders};
 pub enum Scope {
     /// Carried movement, appearance and camera through an ordinary opportunity.
     Connected,
-    /// Complete retained CPU frame.
+    /// Retained CPU frame or its admitted bounded opening.
     Frame,
     /// Movement and semantic pose.
     Movement,
@@ -78,6 +78,8 @@ pub enum ProductionSeed {
     Connected(Box<connected::State>),
     /// Complete caller, selected owners, hardware and delivery continuation.
     Frame(Box<frame::State>),
+    /// Bounded Frame acknowledgment and Music owner.
+    FrameOpening(Box<frame::opening_prelude::Opening>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
     /// Movement, preceding Figure and the current Contact queue.
@@ -198,6 +200,8 @@ pub enum ProductionOutputs {
     Connected(Box<connected::Outputs>),
     /// Actual frame progress and ordered fresh physical outputs.
     Frame(frame::Outputs),
+    /// Real physical steps of the bounded Frame opening.
+    FrameOpening(timing::Progress, Vec<timing::Event>),
     /// Every movement receipt, including requests and placements.
     Movement(samus_movement::Outcome),
     /// Movement and completed touchdown consumer publications.
@@ -388,7 +392,7 @@ impl Production {
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
             ProductionSeed::Connected(_) => Scope::Connected,
-            ProductionSeed::Frame(_) => Scope::Frame,
+            ProductionSeed::Frame(_) | ProductionSeed::FrameOpening(_) => Scope::Frame,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
@@ -496,7 +500,7 @@ impl Production {
     pub const fn scope(&self) -> Scope {
         match self.state {
             OwnedState::Connected(_) => Scope::Connected,
-            OwnedState::Frame(_) => Scope::Frame,
+            OwnedState::Frame(_) | OwnedState::FrameOpening(_) => Scope::Frame,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
@@ -644,6 +648,7 @@ impl Production {
             OwnedState::ResidentAudio(state) => Some(state.transport()),
             OwnedState::Connected(_)
             | OwnedState::Frame(_)
+            | OwnedState::FrameOpening(_)
             | OwnedState::Movement(_)
             | OwnedState::MovementTouchdown(_)
             | OwnedState::MovementCeres(_)
@@ -668,6 +673,7 @@ impl Production {
         let state = match &self.state {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::Frame(state) => CodecState::Frame(state.clone()),
+            OwnedState::FrameOpening(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => CodecState::Audio(state.clone()),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
@@ -754,6 +760,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<movement_touchdown::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::MovementTouchdown(checkpoint.state)
+        } else if matches!(&content, ProductionContent::FrameOpening(_)) {
+            let checkpoint: Checkpoint<Box<frame::opening_prelude::Opening>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::FrameOpening(checkpoint.state)
         } else {
             let checkpoint: Checkpoint<CodecState> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;

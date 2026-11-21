@@ -15,7 +15,10 @@ use crate::replay::{
 use canonical::model::Model;
 use game::production::{frame, timing::PadChange};
 
-pub(super) fn read_manifest(case: &Case, sources: &Sources) -> Result<Manifest, Outcome> {
+pub(super) fn read_start(
+    case: &Case,
+    sources: &Sources,
+) -> Result<(std::path::PathBuf, String), Outcome> {
     let Start::NativeSeed { path, sha256 } = &case.start else {
         return Err(data_failure(None, "frame native origin"));
     };
@@ -28,15 +31,28 @@ pub(super) fn read_manifest(case: &Case, sources: &Sources) -> Result<Manifest, 
         .parent()
         .ok_or_else(|| data_failure(None, "frame manifest directory"))?
         .to_path_buf();
-    let mut manifest: Manifest = toml::from_str(
-        &Member {
-            path,
-            sha256: sha256.clone(),
-        }
-        .text()?,
-    )
-    .map_err(|_| data_failure(None, "frame origin manifest"))?;
-    manifest.resolve(&root);
+    let text = Member {
+        path,
+        sha256: sha256.clone(),
+    }
+    .text()?;
+    Ok((root, text))
+}
+
+#[cfg(test)]
+pub(super) fn read_manifest(case: &Case, sources: &Sources) -> Result<Manifest, Outcome> {
+    let (root, text) = read_start(case, sources)?;
+    parse_manifest(case, &root, &text)
+}
+
+pub(super) fn parse_manifest(
+    case: &Case,
+    root: &std::path::Path,
+    text: &str,
+) -> Result<Manifest, Outcome> {
+    let mut manifest: Manifest =
+        toml::from_str(text).map_err(|_| data_failure(None, "frame origin manifest"))?;
+    manifest.resolve(root);
     if manifest.final_owners.is_some() != case.compares_final_frame_owners() {
         return Err(data_failure(
             None,
@@ -115,8 +131,20 @@ fn machine_seed(
         at: timing.hardware.now,
         pad: preview,
     };
-    let senders = sender_seed::decode(wram, &manifest.apuram.read()?)
-        .map_err(|_| data_failure(None, "frame current sender origins"))?;
+    let senders = if let Some(sender) = &manifest.resume_sender_origin {
+        super::completed_start::resume_senders(
+            sources,
+            wram,
+            &hardware,
+            &timing,
+            &manifest.apuram,
+            sender,
+            &manifest.music_completion,
+        )?
+    } else {
+        sender_seed::decode(wram, &manifest.apuram.read()?)
+            .map_err(|_| data_failure(None, "frame current sender origins"))?
+    };
     let mut initial = manifest
         .initial
         .iter()
@@ -238,9 +266,9 @@ fn prelude_work(
     })
 }
 
-fn templates(manifest: &Manifest) -> Result<profiles::Templates, Outcome> {
-    let texts = manifest
-        .profiles
+pub(super) fn templates(members: Option<&[Member; 6]>) -> Result<profiles::Templates, Outcome> {
+    let texts = members
+        .ok_or_else(|| data_failure(None, "frame same-origin physical profile members"))?
         .iter()
         .map(Member::text)
         .collect::<Result<Vec<_>, _>>()?;
@@ -388,7 +416,7 @@ pub(super) fn entry_seed(
     let random_current = preparation_receipts::random_origin(wram)
         .map_err(|_| data_failure(None, "frame current original Random seed"))?;
     let preparation = preparation_inputs(wram, manifest)?;
-    let templates = templates(manifest)?;
+    let templates = templates(Some(&manifest.profiles))?;
     let (random_requests, random) = random_inputs::decode(
         random_current,
         &checked_rom,

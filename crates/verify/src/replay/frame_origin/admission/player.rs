@@ -30,8 +30,14 @@ impl Admission<'_> {
     ) -> Result<RequiredProfiles, Outcome> {
         let Self { templates, .. } = *self;
         validate_haze_ready(templates)?;
-        let acknowledgment = portion(templates, "FrameContinuationAfterNmi")?;
-        let music = portion(templates, "Music")?;
+        let [acknowledgment, music] = if let Some(origin) = &self.manifest.resume_sender_origin {
+            super::completed_start::resume_profiles(origin)?
+        } else {
+            [
+                portion(templates, "FrameContinuationAfterNmi")?,
+                portion(templates, "Music")?,
+            ]
+        };
         let haze = portion(templates, "Haze")?;
         let haze_tail = portion(templates, "HazeBackdropBandsReady")?;
         let layer_blend = portion(templates, "LayerBlend")?;

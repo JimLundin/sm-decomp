@@ -18,6 +18,11 @@ connected = [
     "replay::connected::tests::connected_marked_contact_and_first_wrap_have_complete_publications",
 ]
 
+shot_frame_origin = [
+    "replay::frame_origin::admission::completed_start::tests::shot_frame_completed_origin_keeps_held_contact_and_reports_first_boundary",
+    "replay::frame_origin::admission::completed_start::resume_test::shot_actual_resume_opening_restores_through_music",
+]
+
 retained_frame = [
     "replay::frame_origin::health_owner_tests::actual_native_frame_completes_and_matches_from_the_retained_checkpoint",
     "replay::frame_origin::health_owner_tests::actual_native_admission_restores_complete_return",

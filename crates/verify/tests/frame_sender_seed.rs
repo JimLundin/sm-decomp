@@ -50,3 +50,28 @@ fn qualified_actual_origin_survives_whole_restore() {
     );
     assert_eq!(restored.validate(), Ok(()));
 }
+
+#[test]
+fn held_contact_requires_the_checked_current_alias() {
+    use audio_transport::{CueId, SoundGroup};
+    use data::assets::audio::CueAlias;
+    let mut wram = vec![0; 131_072];
+    let mut apuram = vec![0; 65_536];
+    wram[0x064b] = 3;
+    apuram[0xf7] = 7;
+    let alias = CueAlias {
+        group: SoundGroup::Contact,
+        byte: 7,
+        cue: CueId::Footstep,
+    };
+    assert!(frame_sender_seed::completed_contact(&wram, &apuram, &[alias]).is_ok());
+    assert!(matches!(
+        frame_sender_seed::completed_contact(&wram, &apuram, &[]),
+        Err(SeedFault::Reply),
+    ));
+    assert!(matches!(
+        frame_sender_seed::completed_contact(&wram, &apuram, &[alias, alias]),
+        Err(SeedFault::Reply),
+    ));
+    assert!(matches!(decode(&wram, &apuram), Err(SeedFault::Progress)));
+}

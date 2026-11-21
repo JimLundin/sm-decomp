@@ -168,6 +168,8 @@ struct Manifest {
     #[serde(default)]
     sender_bus_origin: Option<Member>,
     #[serde(default)]
+    resume_sender_origin: Option<Member>,
+    #[serde(default)]
     hud_current_controls: Option<Member>,
     #[serde(default)]
     countdown_scene_current: Option<Member>,
@@ -277,6 +279,7 @@ impl Manifest {
         for member in [
             &mut self.sender_current_profile,
             &mut self.sender_bus_origin,
+            &mut self.resume_sender_origin,
             &mut self.hud_current_controls,
             &mut self.countdown_scene_current,
             &mut self.countdown_origin,

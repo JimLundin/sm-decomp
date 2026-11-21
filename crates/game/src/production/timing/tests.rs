@@ -5,7 +5,7 @@ use data::timing::{
     TransferPort,
 };
 
-fn state(line: u16, horizontal: u16) -> State {
+pub(in crate::production) fn state(line: u16, horizontal: u16) -> State {
     let position = BeamPosition { line, horizontal };
     let history = std::array::from_fn(|index| BeamPosition {
         line,
