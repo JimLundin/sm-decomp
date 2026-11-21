@@ -267,18 +267,21 @@ impl State {
             return Err(AdmissionFault::ResidentAudio(Fault::Origin));
         }
         self.senders.validate()?;
-        for state in [
-            &self.senders.action.0,
-            &self.senders.ambient.0,
-            &self.senders.contact.0,
-        ] {
-            if !admission::valid_sender_phase(state) {
+        let bank = content.bank();
+        for group in [SoundGroup::Action, SoundGroup::Ambient, SoundGroup::Contact] {
+            let cues = bank
+                .content
+                .effects
+                .keys()
+                .copied()
+                .filter(|cue| audio_transport::effects::group(*cue) == group);
+            if !admission::valid_sender_phase(self.senders.get(group), cues) {
                 return Err(AdmissionFault::ResidentAudio(Fault::Invalid(
                     "sender service phase",
                 )));
             }
         }
-        admission::validate_resident_state(&self.transport.0, &content.bank.0)
+        admission::validate_resident_state(&self.transport.0, bank)
             .map_err(AdmissionFault::ResidentAudio)
     }
 

@@ -394,44 +394,43 @@ fn validate_group(
     Ok(())
 }
 
-pub(super) fn valid_sender_phase(state: &audio_transport::SenderState) -> bool {
-    state.pending.as_ref().is_none_or(|pending| {
-        pending.origin.0 <= state.now.0
-            && match (&pending.observation, &pending.result) {
-                (Some(observation), None) => {
-                    observation.0 > state.now.0
-                        && matches!(
-                            state.progress,
-                            audio_transport::SenderProgress::AwaitCue(_)
-                                | audio_transport::SenderProgress::AwaitClear
-                        )
-                        && fast_bus_observation(state, &pending.origin).as_ref()
-                            == Some(observation)
-                }
-                (None, Some(result)) => {
-                    result.completion.0 > state.now.0
-                        && result
-                            .presentation
-                            .as_ref()
-                            .is_none_or(|(at, _)| at.0 > state.now.0 && at.0 < result.completion.0)
-                }
-                (Some(_), Some(_)) | (None, None) => false,
-            }
-    })
-}
-
-fn fast_bus_observation(
+pub(super) fn valid_sender_phase(
     state: &audio_transport::SenderState,
-    origin: &audio_transport::CpuMasterTicks,
-) -> Option<audio_transport::CpuMasterTicks> {
-    // The waiting phases schedule their observation without using the current reply.
-    // Reading the schedule from a separate value leaves the retained service untouched.
-    let mut schedule = state.clone();
-    schedule.now.clone_from(origin);
-    schedule.pending = None;
-    audio_transport::sender::begin(
-        &mut schedule,
-        audio_transport::sender::SenderProfile::FastBus,
-    );
-    schedule.pending.and_then(|service| service.observation)
+    cues: impl Iterator<Item = audio_transport::CueId>,
+) -> bool {
+    use audio_transport::{ExactCpuMasterTicks, sender};
+    use std::ops::Sub;
+
+    let Some(pending) = &state.pending else {
+        return true;
+    };
+    if pending.origin.0 > state.now.0 {
+        return false;
+    }
+
+    let elapsed = ExactCpuMasterTicks(Sub::sub(&state.now.0, &pending.origin.0));
+    let mut service = state.clone();
+    service.now.clone_from(&pending.origin);
+    service.pending = None;
+    sender::begin(&mut service, sender::SenderProfile::FastBus);
+
+    let matches = |mut service: audio_transport::SenderState, reply| {
+        service.reply = reply;
+        let _ = sender::advance(&mut service, elapsed.clone());
+        service.pending == state.pending
+    };
+    let observed_earlier = service
+        .pending
+        .as_ref()
+        .and_then(|started| started.observation.as_ref())
+        .is_some_and(|at| at.0 < state.now.0);
+    if observed_earlier {
+        // A later latch update can replace the sampled reply. Check which results the
+        // admitted replies can produce, leaving the retained sender and its outputs untouched.
+        std::iter::once(Request::Absent)
+            .chain(cues.map(Request::Cue))
+            .any(|reply| matches(service.clone(), reply))
+    } else {
+        matches(service, state.reply)
+    }
 }

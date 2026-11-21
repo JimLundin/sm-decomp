@@ -297,3 +297,187 @@ fn sender_checkpoint_checks_the_profile_observation_without_consuming_it() {
         assert_eq!(direct, restored);
     }
 }
+
+fn sender_step(
+    production: &mut Production,
+    input: crate::production::SenderInput<'_>,
+) -> Vec<audio_transport::sender::SenderOutput> {
+    use crate::production::{AdvanceInput, ProductionOutputs};
+    let ProductionOutputs::AudioSender(outputs) = production
+        .advance(AdvanceInput::ResidentSender {
+            group: audio_transport::SoundGroup::Contact,
+            input,
+        })
+        .unwrap()
+    else {
+        panic!("contact sender output");
+    };
+    outputs
+}
+
+fn sender_at(
+    production: &mut Production,
+    stop: u64,
+    replies: &[audio_transport::sender::ReplyInput],
+) -> Vec<audio_transport::sender::SenderOutput> {
+    sender_step(
+        production,
+        crate::production::SenderInput::Advance {
+            stop: CpuMasterTicks(stop),
+            replies,
+        },
+    )
+}
+
+fn start_contact(progress: SenderProgress) -> (ProductionContent, Production) {
+    use crate::production::SenderInput;
+    use audio_transport::sender::SenderProfile;
+    let (content, mut state) = opened_context();
+    state.senders.contact.0.progress = progress;
+    state.senders.contact.0.queue.push_back(CueId::Door);
+    let content = ProductionContent::ResidentAudio(Box::new(content));
+    let mut production = Production::admit(
+        ProductionSeed::ResidentAudio(Box::new(state)),
+        content.clone(),
+        ProductionRules::Audio,
+    )
+    .unwrap();
+    assert_eq!(
+        sender_step(&mut production, SenderInput::Begin(SenderProfile::FastBus)).len(),
+        0
+    );
+    (content, production)
+}
+
+fn edit_contact_checkpoint(
+    saved: &crate::production::SavedProduction,
+    edit: impl FnOnce(&mut SenderState),
+) -> crate::production::SavedProduction {
+    let mut candidate: Checkpoint<Box<State>> = canonical::from_bytes(&saved.state).unwrap();
+    edit(&mut candidate.state.senders.contact.0);
+    let mut changed = saved.clone();
+    changed.state = canonical::to_bytes(&candidate);
+    changed
+}
+
+#[test]
+fn sender_checkpoint_keeps_only_the_actual_remaining_milestones() {
+    use audio_transport::sender::SenderOutput;
+    let (content, mut direct) = start_contact(SenderProgress::Ready);
+    let cue = Request::Cue(CueId::Door);
+    let restore = |saved: &crate::production::SavedProduction| {
+        Production::restore(saved, content.clone(), ProductionRules::Audio)
+    };
+    assert_eq!(sender_at(&mut direct, 211, &[]).len(), 0);
+    let before = direct.save().unwrap();
+    let mut restored = restore(&before).unwrap();
+    assert_eq!(restored.save().unwrap(), before);
+    for (presentation, completion) in [(Some(212), 399), (Some(213), 398), (None, 398)] {
+        let changed = edit_contact_checkpoint(&before, |sender| {
+            let result = sender.pending.as_mut().unwrap().result.as_mut().unwrap();
+            result.presentation = presentation.map(|tick| (CpuMasterTicks(tick), cue));
+            result.completion = CpuMasterTicks(completion);
+        });
+        assert!(matches!(
+            restore(&changed),
+            Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+        ));
+    }
+    for production in [&mut direct, &mut restored] {
+        assert_eq!(
+            sender_at(production, 212, &[]),
+            [SenderOutput::Presentation(CpuMasterTicks(212), cue)]
+        );
+        let after = production.save().unwrap();
+        *production = restore(&after).unwrap();
+        assert_eq!(production.save().unwrap(), after);
+        assert_eq!(sender_at(production, 397, &[]).len(), 0);
+        assert_eq!(
+            sender_at(production, 398, &[]),
+            [SenderOutput::Completed(CpuMasterTicks(398))]
+        );
+    }
+    assert_eq!(direct, restored);
+}
+
+#[test]
+fn sender_checkpoint_keeps_the_coalesced_read_result_after_the_latch_changes() {
+    use audio_transport::sender::{ReplyInput, SenderOutput};
+    let cue = Request::Cue(CueId::Door);
+    let held = Request::Cue(CueId::Footstep);
+    for (progress, sampled, opposite, presentation, completion) in [
+        (
+            SenderProgress::AwaitCue(CueId::Door),
+            cue,
+            Request::Absent,
+            None,
+            210,
+        ),
+        (
+            SenderProgress::AwaitCue(CueId::Door),
+            Request::Absent,
+            cue,
+            Some((104, cue)),
+            162,
+        ),
+        (
+            SenderProgress::AwaitClear,
+            Request::Absent,
+            held,
+            Some((342, cue)),
+            528,
+        ),
+        (
+            SenderProgress::AwaitClear,
+            held,
+            Request::Absent,
+            Some((104, Request::Absent)),
+            162,
+        ),
+    ] {
+        let (content, mut direct) = start_contact(progress);
+        let restore = |saved: &crate::production::SavedProduction| {
+            Production::restore(saved, content.clone(), ProductionRules::Audio)
+        };
+        let simultaneous = [opposite, sampled].map(|reply| ReplyInput {
+            at: CpuMasterTicks(58),
+            reply,
+        });
+        assert_eq!(
+            sender_at(&mut direct, 58, &simultaneous),
+            [SenderOutput::Observation(CpuMasterTicks(58), sampled)]
+        );
+        let at_read = direct.save().unwrap();
+        assert_eq!(restore(&at_read).unwrap().save().unwrap(), at_read);
+        let changed = edit_contact_checkpoint(&at_read, |sender| sender.reply = opposite);
+        assert!(matches!(
+            restore(&changed),
+            Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+        ));
+
+        assert_eq!(
+            sender_at(
+                &mut direct,
+                59,
+                &[ReplyInput {
+                    at: CpuMasterTicks(59),
+                    reply: opposite
+                }]
+            )
+            .len(),
+            0
+        );
+        let later = direct.save().unwrap();
+        let mut restored = restore(&later).unwrap();
+        assert_eq!(restored.save().unwrap(), later);
+        let expected: Vec<_> = presentation
+            .map(|(tick, request)| SenderOutput::Presentation(CpuMasterTicks(tick), request))
+            .into_iter()
+            .chain([SenderOutput::Completed(CpuMasterTicks(completion))])
+            .collect();
+        for production in [&mut direct, &mut restored] {
+            assert_eq!(sender_at(production, completion, &[]), expected);
+        }
+        assert_eq!(direct, restored);
+    }
+}
