@@ -20,13 +20,23 @@ const PASSES: usize = 4096;
 /// How deep a type may nest: a State is plain data, so deeper means a recursive type.
 const DEPTH: usize = 64;
 
-/// The shape of `T`, a model's State.
+/// The shape of `T`, a model's State, using the default primitive samples.
+/// Use [`super::trace_shape`] for a pin whose State needs other samples.
 ///
 /// # Errors
 /// [`Unencodable`] when `T`'s serde code refuses the tracer, reads a form the codec doesn't
 /// take, nests too deeply or has too many variants to trace.
 pub fn shape<T: DeserializeOwned>() -> Result<u64, Unencodable> {
-    let mut registry = Registry::default();
+    with_u8_samples::<T>(&[])
+}
+
+pub(super) fn with_u8_samples<T: DeserializeOwned>(
+    u8_samples: &'static [(&'static str, u8)],
+) -> Result<u64, Unencodable> {
+    let mut registry = Registry {
+        u8_samples,
+        ..Registry::default()
+    };
     for _ in 0..PASSES {
         let mut root = String::new();
         registry.incomplete = false;
@@ -34,6 +44,7 @@ pub fn shape<T: DeserializeOwned>() -> Result<u64, Unencodable> {
             registry: &mut registry,
             out: &mut root,
             depth: 0,
+            newtype_name: None,
         })?;
         if !registry.incomplete {
             let hasher = registry.seen.iter().fold(
@@ -57,12 +68,15 @@ struct Registry {
     done: BTreeMap<String, Vec<bool>>,
     /// Whether the value being read reached an enum with a variant not yet read to its end.
     incomplete: bool,
+    u8_samples: &'static [(&'static str, u8)],
 }
 
 struct Tracer<'a> {
     registry: &'a mut Registry,
     out: &'a mut String,
     depth: usize,
+    /// The name available for the first Serde call within a newtype.
+    newtype_name: Option<&'static str>,
 }
 
 impl Tracer<'_> {
@@ -78,10 +92,12 @@ impl Tracer<'_> {
             registry: &mut *self.registry,
             out,
             depth,
+            newtype_name: None,
         })
     }
 
     fn word(&mut self, word: &str) {
+        self.newtype_name = None;
         self.out.push_str(word);
         self.out.push(' ');
     }
@@ -225,7 +241,7 @@ impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
         deserialize_bool: "bool" => visit_bool(false),
         deserialize_i8: "i8" => visit_i8(1), deserialize_i16: "i16" => visit_i16(1),
         deserialize_i32: "i32" => visit_i32(1), deserialize_i64: "i64" => visit_i64(1),
-        deserialize_i128: "i128" => visit_i128(1), deserialize_u8: "u8" => visit_u8(1),
+        deserialize_i128: "i128" => visit_i128(1),
         deserialize_u16: "u16" => visit_u16(1), deserialize_u32: "u32" => visit_u32(1),
         deserialize_u64: "u64" => visit_u64(1), deserialize_u128: "u128" => visit_u128(1),
         deserialize_f32: "f32" => visit_f32(0.0), deserialize_f64: "f64" => visit_f64(0.0),
@@ -233,6 +249,17 @@ impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
         deserialize_string: "str" => visit_str(""), deserialize_bytes: "bytes" => visit_bytes(&[]),
         deserialize_byte_buf: "bytes" => visit_bytes(&[]),
     );
+
+    fn deserialize_u8<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, Unencodable> {
+        let sample = self
+            .registry
+            .u8_samples
+            .iter()
+            .find_map(|&(name, sample)| (Some(name) == self.newtype_name).then_some(sample))
+            .unwrap_or(1);
+        self.word("u8");
+        visitor.visit_u8(sample)
+    }
 
     fn deserialize_unit<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, Unencodable> {
         self.word("()");
@@ -267,7 +294,9 @@ impl<'de> de::Deserializer<'de> for &mut Tracer<'_> {
     ) -> Result<V::Value, Unencodable> {
         self.word(name);
         let mut own = format!("newtype {name} ( ");
-        let value = visitor.visit_newtype_struct(&mut self.into(&mut own)?)?;
+        let mut inner = self.into(&mut own)?;
+        inner.newtype_name = Some(name);
+        let value = visitor.visit_newtype_struct(&mut inner)?;
         own.push(')');
         self.registry.seen.insert(own);
         Ok(value)

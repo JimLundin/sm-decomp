@@ -10,7 +10,7 @@
 //!
 //! [`Canonical::SCHEMA`] is a constant, and serde shows a type's shape only by running it, so
 //! the engine pins each model's shape ([`Pinned::SHAPE`]) and a test holds the pin to the shape
-//! [`shape`] traces from the type: a State that changes shape fails that test until the pin is
+//! [`trace_shape`] reads from the type: a State that changes shape fails that test until the pin is
 //! moved, and a Checkpoint written before it then no longer opens.
 
 use std::fmt;
@@ -34,8 +34,19 @@ pub trait Pinned {
     type State: Serialize + DeserializeOwned;
     /// The model's name, mixed into the schema.
     const NAME: &'static str;
-    /// The State's shape as [`shape`] traces it, written down.
+    /// The State's shape as [`trace_shape`] traces it, written down.
     const SHAPE: u64;
+    /// Representative values for checked newtypes with a direct `u8` payload, keyed by
+    /// Serde newtype name. These values are used only to visit the shape.
+    const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] = &[];
+}
+
+/// Trace a pin's State with its configured representative values.
+///
+/// # Errors
+/// [`Unencodable`] when the State's Serde implementation cannot be traced.
+pub fn trace_shape<P: Pinned>() -> Result<u64, Unencodable> {
+    shape::with_u8_samples::<P::State>(P::TRACE_U8_SAMPLES)
 }
 
 /// Whether the pinned shape is still the State's: `Err` with the shape traced now when it
@@ -44,7 +55,7 @@ pub trait Pinned {
 /// # Errors
 /// [`Unpinned`] when the pin is stale or the State's shape can't be traced.
 pub fn pin_holds<P: Pinned>() -> Result<(), Unpinned> {
-    match shape::<P::State>() {
+    match trace_shape::<P>() {
         Ok(traced) if traced == P::SHAPE => Ok(()),
         Ok(traced) => Err(Unpinned::Stale { traced }),
         Err(error) => Err(Unpinned::Untraceable(error)),
