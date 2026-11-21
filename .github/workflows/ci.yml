@@ -1,58 +1,83 @@
-name: CI
-
-# The only entry point. Events call reusable proof workflows, then trusted main producers
-# retain recent clean caches after both workflows pass.
-#   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
-#   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
-# Pull requests, nightly runs and manual runs start Quality and verification independently.
-# Main pushes run both to refresh clean build caches; verify/** runs verification only.
-# Called jobs report as "<caller job> / <job>", for example "verify / content".
+name: Qualify scoped sender offers
 on:
-  pull_request:
   push:
-    branches: [main, 'verify/**']
-  schedule:
-    - cron: '17 2 * * *'
+    branches: [lane/sender-fifo-481-proof2]
   workflow_dispatch:
-
 permissions:
   contents: read
-
-# A new commit replaces its branch's run; nightly and dispatched runs finish.
-concurrency:
-  group: ci-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
 jobs:
-  quality:
-    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/quality.yml
-
-  verify:
-    if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/verify/')
-    permissions:
-      contents: read
-    uses: ./.github/workflows/verify.yml
-    secrets:
-      SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
-      SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
-
-  retain-caches:
-    # Only trusted main producers receive cache deletion permission, after all proof passes.
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-    needs: [quality, verify]
+  sender:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      actions: write
-    concurrency:
-      group: cargo-cache-retention-main
-      cancel-in-progress: false
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-      - name: Retain recent clean main builds
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-replay-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-replay-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - uses: actions/checkout@v4
+        with:
+          repository: JimLundin/ci-data
+          ssh-key: ${{ secrets.SM_ROM_DEPLOY_KEY }}
+          path: .ci-data
+          persist-credentials: false
+      - name: Install the production fixture
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 tools/ci/retain_cargo_caches.py
+          SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}
+        run: |
+          mkdir -p rom "$RUNNER_TEMP/audio-native"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:SM_ROM_KEY -in .ci-data/payload.enc -out rom/sm.smc
+          echo "da957f0d63d14cb441d215462904c4fa8519c613  rom/sm.smc" | sha1sum --check
+          rm -rf .ci-data
+          bash tools/ci/fetch_sender_offers.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Build the indexed runner and generate the measured receipt
+        run: |
+          cargo build --locked --profile verify -p tools
+          target/verify/tools replay run scenarios/replay/index.toml --rule audio-transport/OfferAcceptance --native "$RUNNER_TEMP/audio-native" --write "$RUNNER_TEMP/sender-receipt.toml"
+      - name: Check suppression fault containment
+        run: |
+          sed -i 's/offer(state, cue, allowance, permission);/offer(state, cue, allowance, if permission == OfferPermission::Demo { OfferPermission::Enabled } else { permission });/' crates/game/src/production/sender.rs
+          cargo build --locked --profile verify -p tools
+          if target/verify/tools replay run scenarios/replay/index.toml --case sender-offer/deny-demo --write "$RUNNER_TEMP/sender-fault.toml"; then
+            exit 1
+          fi
+          python3 - <<'PY'
+          import os, pathlib, tomllib
+          path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "sender-fault.toml"
+          receipt = tomllib.loads(path.read_text())
+          case, = receipt["cases"]
+          assert case["id"] == "sender-offer/deny-demo"
+          assert case["outcome"] == {"status": "difference", "cut": 0, "field": "sender.queue"}
+          PY
+          git restore crates/game/src/production/sender.rs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sender-offer-receipts
+          path: |
+            ${{ runner.temp }}/sender-receipt.toml
+            ${{ runner.temp }}/sender-fault.toml
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-quality-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+      - run: cargo clippy --locked -p verify -p tools --all-targets --no-deps -- -D warnings
+
