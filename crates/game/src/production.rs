@@ -304,11 +304,26 @@ pub enum SaveFault {
 }
 
 /// Canonical state bytes bound to an exact in-memory context.
+/// Completed retained frames also carry the production return evidence.
 /// Durable context encoding requires clean rule serialization support.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SavedProduction {
     state: Vec<u8>,
     context: Arc<Context>,
+    frame_returned: bool,
+}
+
+/// A saved retained frame whose production caller completed the native return.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SavedCompletedFrame(SavedProduction);
+
+/// Why the current production state cannot be saved as a completed retained frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CompletedFrameSaveFault {
+    /// The selected entry is not the retained frame caller.
+    WrongScope,
+    /// Production has yet to complete the current frame's native return.
+    Incomplete,
 }
 
 /// One admitted entry with immutable context and one writable clean state owner.
@@ -316,6 +331,7 @@ pub struct SavedProduction {
 pub struct Production {
     state: OwnedState,
     context: Arc<Context>,
+    frame_returned: bool,
 }
 
 impl Production {
@@ -425,10 +441,11 @@ impl Production {
         Ok(Self {
             state,
             context: Arc::new(Context { content, rules }),
+            frame_returned: false,
         })
     }
 
-    /// The complete held state; only a successful advance can change it.
+    /// The complete held state, including any scheduled controller changes.
     #[must_use]
     pub const fn state(&self) -> &OwnedState {
         &self.state
@@ -474,7 +491,11 @@ impl Production {
         state
             .timing
             .schedule_pad_changes(changes)
-            .map_err(ProductionFault::FrameHardware)
+            .map_err(ProductionFault::FrameHardware)?;
+        if !changes.is_empty() {
+            self.frame_returned = false;
+        }
+        Ok(())
     }
 
     /// Advance a candidate value and commit its state and complete outputs together.
@@ -577,6 +598,8 @@ impl Production {
             }
             (state, content, rules, input) => entries::advance(state, content, rules, input)?,
         };
+        self.frame_returned = matches!(&outputs, ProductionOutputs::Frame(output)
+            if output.progress == frame::Progress::Completed);
         self.state = candidate;
         Ok(outputs)
     }
@@ -604,13 +627,50 @@ impl Production {
                 return Err(SaveFault::Unsupported(self.scope()));
             }
         };
-        Ok(SavedProduction {
+        Ok(self.encode_save(state))
+    }
+
+    /// Save the current completed retained frame and its selected content, rules and timing.
+    /// A failed advance preserves any prior committed return. Advancing partway into the next
+    /// frame or scheduling new controller input clears eligibility until another native return.
+    ///
+    /// # Errors
+    /// Returns [`CompletedFrameSaveFault::WrongScope`] for other entries and
+    /// [`CompletedFrameSaveFault::Incomplete`] before a completed return.
+    pub fn save_completed_frame(&self) -> Result<SavedCompletedFrame, CompletedFrameSaveFault> {
+        let OwnedState::Frame(state) = &self.state else {
+            return Err(CompletedFrameSaveFault::WrongScope);
+        };
+        if !self.frame_returned {
+            return Err(CompletedFrameSaveFault::Incomplete);
+        }
+        Ok(SavedCompletedFrame(
+            self.encode_save(CodecState::Frame(state.clone())),
+        ))
+    }
+
+    fn encode_save(&self, state: CodecState) -> SavedProduction {
+        SavedProduction {
             state: canonical::to_bytes(&Checkpoint {
                 schema: Schema::new(),
                 state,
             }),
             context: self.context.clone(),
-        })
+            frame_returned: self.frame_returned,
+        }
+    }
+
+    /// Continue from a saved native return using the same imported content and selected rules.
+    /// The saved hardware clock, pending controller input and publication cursor resume directly.
+    ///
+    /// # Errors
+    /// Returns the same schema, content, rules and state admission errors as [`Self::restore`].
+    pub fn restore_completed_frame(
+        saved: &SavedCompletedFrame,
+        content: ProductionContent,
+        rules: ProductionRules,
+    ) -> Result<Self, AdmissionFault> {
+        Self::restore(&saved.0, content, rules)
     }
 
     /// Restore directly; no initialization, model step or input replay occurs.
@@ -640,7 +700,9 @@ impl Production {
             CodecState::Appearance(state) => ProductionSeed::Appearance(state.0),
             CodecState::AudioSender(state) => ProductionSeed::AudioSender(state.0),
         };
-        Self::admit(seed, content, rules)
+        let mut restored = Self::admit(seed, content, rules)?;
+        restored.frame_returned = saved.frame_returned;
+        Ok(restored)
     }
 }
 

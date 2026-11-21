@@ -4,6 +4,28 @@ use super::index::Case;
 use super::readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader};
 use super::result::{CaseResult, Outcome};
 use super::{append_digest, compared, data_failure, pending};
+use game::production::{Production, SaveFault, SavedCompletedFrame, SavedProduction};
+
+enum SavedCut {
+    Frame(SavedCompletedFrame),
+    Scoped(SavedProduction),
+}
+
+fn save_cut(inputs: &InputReader, production: &Production, cut: u64) -> Result<SavedCut, Outcome> {
+    if matches!(inputs, InputReader::Frame(_)) {
+        return production
+            .save_completed_frame()
+            .map(SavedCut::Frame)
+            .map_err(|_| Outcome::CheckpointFailure { cut });
+    }
+    production
+        .save()
+        .map(SavedCut::Scoped)
+        .map_err(|SaveFault::Unsupported(scope)| Outcome::Unsupported {
+            cut: Some(cut),
+            dependency: format!("checkpoint codec for {scope:?}"),
+        })
+}
 
 fn count(counter: &mut usize, amount: usize) -> Result<(), Outcome> {
     *counter = counter
@@ -100,22 +122,18 @@ pub(super) fn run(
         append_digest(&mut digest, *cut, &expected.fields);
         result.observation_sha256 = crate::lock::Sha256::of(&digest).to_string();
         if case.checkpoints {
-            let saved =
-                production
-                    .save()
-                    .map_err(|game::production::SaveFault::Unsupported(scope)| {
-                        Outcome::Unsupported {
-                            cut: Some(*cut),
-                            dependency: format!("checkpoint codec for {scope:?}"),
-                        }
-                    })?;
+            let saved = save_cut(&inputs, &production, *cut)?;
             checkpoints.push((*cut, saved, actual.clone()));
         }
     }
     for (start, saved, mut restored_actual) in checkpoints {
-        let mut restored =
-            game::production::Production::restore(&saved, content.clone(), rules.clone())
-                .map_err(|_| Outcome::CheckpointFailure { cut: start })?;
+        let mut restored = match saved {
+            SavedCut::Frame(saved) => {
+                Production::restore_completed_frame(&saved, content.clone(), rules.clone())
+            }
+            SavedCut::Scoped(saved) => Production::restore(&saved, content.clone(), rules.clone()),
+        }
+        .map_err(|_| Outcome::CheckpointFailure { cut: start })?;
         for cut in schedule.iter().filter(|cut| **cut > start) {
             execute(
                 case,

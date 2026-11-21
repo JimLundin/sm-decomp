@@ -210,6 +210,18 @@ fn passage_carries_the_complete_scene_without_inventing_work_completion() {
     assert_eq!(next.scene, scene);
     assert_eq!(next.doors, first.doors);
     assert_eq!(production.save(), Err(SaveFault::Unsupported(Scope::Doors)));
+    assert_eq!(
+        production.save_completed_frame(),
+        Err(CompletedFrameSaveFault::WrongScope)
+    );
+    let before = production.state().clone();
+    assert_eq!(
+        production.advance(AdvanceInput::Missing(Scope::Doors)),
+        Err(ProductionFault::Unsupported(Unsupported::MissingInput(
+            Scope::Doors
+        )))
+    );
+    assert_eq!(production.state(), &before);
 }
 
 #[test]

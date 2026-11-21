@@ -2,7 +2,10 @@ use super::runtime_helpers::{admitted, advance_until, restore_next};
 use super::*;
 use game::production::timing::{Event, EventKind};
 use game::{
-    production::{AdvanceInput, ProductionFault, Unsupported},
+    production::{
+        AdmissionFault, AdvanceInput, CompletedFrameSaveFault, ProductionFault,
+        SavedCompletedFrame, Unsupported,
+    },
     state::owned::OwnedState,
 };
 
@@ -538,6 +541,7 @@ fn actual_native_late_publication_failure_rolls_back_production() {
         ));
         // The checkpoint covers the hardware cursor, output prefix and delivery cursor.
         assert_observation_eq!(production.save().unwrap(), before);
+        assert_incomplete_frame(production);
     }
 }
 
@@ -708,6 +712,7 @@ fn reject_animation_energy_checkpoint(admitted: &AdmittedCase, altered: Box<fram
 
 fn check_complete_frame_from(reached: impl Fn(&frame::State) -> bool) {
     let (case, mut admitted) = super::runtime_helpers::retained_return();
+    assert_incomplete_frame(&admitted.production);
     let InputReader::Frame(inputs) = &admitted.inputs else {
         panic!("frame inputs")
     };
@@ -743,6 +748,7 @@ fn check_complete_frame_from(reached: impl Fn(&frame::State) -> bool) {
     )
     .unwrap();
     assert!(restored.state().eq(admitted.production.state()));
+    assert_incomplete_frame(&restored);
     let mut restored_actual = admitted.actual.clone();
     for (production, actual) in [
         (&mut admitted.production, &mut admitted.actual),
@@ -765,16 +771,99 @@ fn check_complete_frame_from(reached: impl Fn(&frame::State) -> bool) {
         assert_observation_eq!(actual.publication_count(), 2_295);
     }
     assert_observation_eq!(restored.state(), admitted.production.state());
-    let saved = admitted.production.save().unwrap();
-    assert_observation_eq!(restored.save().unwrap(), saved);
-    let mut reopened =
-        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    let saved = admitted.production.save_completed_frame().unwrap();
+    assert_observation_eq!(restored.save_completed_frame().unwrap(), saved);
+    let mut reopened = Production::restore_completed_frame(
+        &saved,
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
     assert_observation_eq!(reopened.state(), admitted.production.state());
+    assert_observation_eq!(reopened.save_completed_frame().unwrap(), saved);
     let OwnedState::Frame(original) = admitted.production.state() else {
         panic!("frame state")
     };
     reject_inconsistent_return_history(original);
+    reject_other_completed_frame_context(&admitted, &saved, original);
+
+    assert!(matches!(
+        reopened.advance(AdvanceInput::Missing(reopened.scope())),
+        Err(ProductionFault::Unsupported(Unsupported::MissingInput(_)))
+    ));
+    assert_observation_eq!(reopened.save_completed_frame().unwrap(), saved);
+    check_completed_frame_pad_scheduling(&reopened);
     start_next_opportunity(&mut admitted, &mut reopened);
+}
+
+fn reject_other_completed_frame_context(
+    admitted: &AdmittedCase,
+    saved: &SavedCompletedFrame,
+    original: &frame::State,
+) {
+    let readmitted = Production::admit(
+        ProductionSeed::Frame(Box::new(original.clone())),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_incomplete_frame(&readmitted);
+
+    let mut other_content = admitted.content.clone();
+    let ProductionContent::Frame(content) = &mut other_content else {
+        panic!("frame content")
+    };
+    content.return_work = None;
+    assert!(
+        Production::admit(
+            ProductionSeed::Frame(Box::new(original.clone())),
+            other_content.clone(),
+            admitted.rules.clone(),
+        )
+        .is_ok()
+    );
+    assert!(matches!(
+        Production::restore_completed_frame(saved, other_content, admitted.rules.clone()),
+        Err(AdmissionFault::ContentChanged)
+    ));
+    let mut other_rules = admitted.rules.clone();
+    let ProductionRules::Frame(rules) = &mut other_rules else {
+        panic!("frame rules")
+    };
+    rules.movement.booster_lifts_jumps = !rules.movement.booster_lifts_jumps;
+    assert!(matches!(
+        Production::restore_completed_frame(saved, admitted.content.clone(), other_rules),
+        Err(AdmissionFault::RulesChanged)
+    ));
+}
+
+fn check_completed_frame_pad_scheduling(production: &Production) {
+    use game::production::timing::{PadChange, PhysicalPad};
+
+    let mut production = production.clone();
+    let OwnedState::Frame(frame) = production.state() else {
+        panic!("frame state")
+    };
+    let mut change = PadChange {
+        at: data::timing::MasterTicks(frame.timing.hardware.now.0.checked_sub(1).unwrap()),
+        pad: PhysicalPad::default(),
+    };
+    let saved = production.save_completed_frame().unwrap();
+    assert!(production.schedule_frame_pad_changes(&[change]).is_err());
+    production.schedule_frame_pad_changes(&[]).unwrap();
+    assert_observation_eq!(production.save_completed_frame().unwrap(), saved);
+
+    change.at = data::timing::MasterTicks(u64::MAX);
+    production.schedule_frame_pad_changes(&[change]).unwrap();
+    assert_incomplete_frame(&production);
+}
+
+#[track_caller]
+fn assert_incomplete_frame(production: &Production) {
+    assert!(matches!(
+        production.save_completed_frame(),
+        Err(CompletedFrameSaveFault::Incomplete)
+    ));
 }
 
 fn start_next_opportunity(admitted: &mut AdmittedCase, restored_return: &mut Production) {
@@ -806,6 +895,9 @@ fn start_next_opportunity(admitted: &mut AdmittedCase, restored_return: &mut Pro
         restored_return.advance(tick()).unwrap(),
         game::production::ProductionOutputs::Frame(first.clone())
     );
+    assert_observation_eq!(restored_return.state(), admitted.production.state());
+    assert_incomplete_frame(&admitted.production);
+    assert_incomplete_frame(restored_return);
     let mut delivered = first.events;
     for _ in 0..100 {
         let OwnedState::Frame(state) = admitted.production.state() else {
