@@ -72,7 +72,10 @@ queries; they cannot supply a second gameplay dispatcher. `Canonical` supplies c
 
 ### 4.1 Crates
 
-Production, observation and CLI have separate crate owners; the linked crate table names them.
+Production, observation and CLI have separate crate owners. Clean State uses serde for its
+representation. The engine's `Canonical` envelope embeds shape-pinned `Model<P>` values and
+owns the schema check, byte encoding and field diff. `canonical_derive` uses only `proc_macro`
+and the standard library.
 
 ### 4.2 Dependency rules (checked in CI)
 
@@ -95,6 +98,9 @@ records and rendering; motion-only State does not imply video ownership or pixel
 ### 5.1 The State schema
 
 Owned variants contain complete clean State. Admission and shape pins validate the selected value.
+A resident audio session holds the transport, the three real CPU senders and the measured
+relationship between their loaded CPU and audio frontiers. Its immutable context selects the
+ROM-imported bank and the authenticated room origin. Both identities are checked at restore.
 
 ### 5.2 The slot store and leftover state
 
@@ -233,18 +239,32 @@ Compositing independently admitted records proves the compositor, not production
 
 ### 9.4 Sound
 
-`Scope::Audio` advances transport from admitted presentation times. `Scope::AudioSender`
-advances sender service under its admitted profile. The retained Frame recipe can offer
-selected Appearance requests and publish admitted sender writes on its hardware clock.
-End-to-end gameplay sound requires the remaining request and transport wiring. D18 describes
-the target for Session ownership and runtime synthesis.
+`Scope::ResidentAudio` admits the opening Ceres ROM bank with a common room-load origin for
+transport and all three CPU senders. The fresh load checks the tracks, resources, sender queues,
+physical latch directions, complete release histories, timer and first observation. It initializes
+the polling episode once. A canonical checkpoint carries the loaded clock relation, content
+identity and each owner's pending work. Restoration checks the selected context and resumes
+at the saved phase. A caller supplies the imported `ResidentAudio`, the authenticated
+`audio::Origin` and both typed state inputs. `audio::Load` carries the three sender values,
+effect request latches and one ordered release entry for Action and Ambient and two for Contact.
+`audio::State::opening_ceres` checks these against the complete sequencer State. The caller
+then admits `ProductionSeed::ResidentAudio` with the checked `ProductionContent::ResidentAudio`
+and fixed `ProductionRules::Audio`. The replay adapter is a complete example of that sequence.
+[Opening-room loader](../../crates/verify/src/replay/audio/room_load.rs)
+
+`Scope::Audio` advances the same transport from a scoped starting state and admitted
+presentation times. `Scope::AudioSender` advances one sender under its admitted profile.
+The retained Frame caller can offer selected requests and publish admitted sender writes on
+its hardware clock. Physical service joining Frame's sender opportunities and the resident
+transport, and synthesis in `runtime`, remain separate from room-load admission.
 
 ### 9.5 Saves
 
 `Production::save` can capture a successful suspended Frame advance as well as a completed
 NMI return. `SavedProduction` holds canonical bytes containing the State schema and selected
 State, plus the immutable context and frame completion status in memory. `Production::restore`
-decodes the bytes, checks content and rules by value equality, and runs admission again.
+checks content and rules by value equality, decodes the selected schema and revalidates the
+joined State. The resident envelope also checks its stored origin and bank identities.
 Scopes lacking a codec return `SaveFault::Unsupported`.
 
 The retained Frame replay calls `Production::save_completed_frame` after a successful native

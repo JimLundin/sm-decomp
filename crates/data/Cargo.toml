@@ -9,6 +9,7 @@ description = "IDs, the ROM decoder, typed content, profiles, the portable recor
 [dependencies]
 canonical = { path = "../canonical" }
 types = { path = "../clean/types" }
+serde = { version = "=1.0.229", features = ["derive"] }
 
 [lints]
 workspace = true

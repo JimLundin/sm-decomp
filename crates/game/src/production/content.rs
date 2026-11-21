@@ -84,6 +84,8 @@ pub enum ProductionContent {
     MovementCeres(MovementContent),
     /// Imported resident effects and arrangement.
     Audio(audio_transport::Content),
+    /// ROM-selected graphs, resources and aliases for the resident session.
+    ResidentAudio(Box<super::audio::Content>),
     /// Checked imported ordinary power assets.
     WeaponsContact(Box<crate::weapons_projectiles_bridge::PowerContent>),
     /// Blocks carry their imported reactions in the complete clean State.

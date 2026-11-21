@@ -6,10 +6,7 @@ use super::{
     publication_observations_range,
 };
 use audio_transport::{AudioPhase, CompletionResult, ReplyLine, State, time};
-use game::production::{
-    Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
-};
-use game::state::owned::OwnedState;
+use game::production::{Production, ProductionContent, ProductionOutputs, ProductionRules};
 
 #[derive(Clone)]
 struct Stream {
@@ -21,10 +18,9 @@ struct Stream {
 
 impl Stream {
     fn state(&self) -> Result<&State, Outcome> {
-        let OwnedState::Audio(state) = self.production.state() else {
-            return Err(data_failure(None, "pending audio scope"));
-        };
-        Ok(&state.0)
+        self.production
+            .transport()
+            .ok_or_else(|| data_failure(None, "pending audio scope"))
     }
 
     fn advance(
@@ -100,31 +96,44 @@ impl Stream {
     }
 }
 
-fn initial(
+fn pending_line(
+    phase: &AudioPhase,
+    deadline: &audio_transport::AudioInstant,
+    cut: u64,
+) -> Result<ReplyLine, Outcome> {
+    let line = match phase {
+        AudioPhase::Work { at, result } if at == deadline => match result {
+            CompletionResult::Effect { group, .. } => ReplyLine::Group(*group),
+            CompletionResult::Music(_) => ReplyLine::Music,
+        },
+        AudioPhase::ObserveClock { .. }
+        | AudioPhase::Distribute { .. }
+        | AudioPhase::Work { .. }
+        | AudioPhase::Sample { .. }
+        | AudioPhase::MusicStart { .. }
+        | AudioPhase::Idle { .. } => {
+            return Err(Outcome::Difference {
+                cut,
+                field: "audio.native_pending_deadline".to_owned(),
+            });
+        }
+    };
+    Ok(line)
+}
+
+pub(super) fn run(
+    production: Production,
+    content: &ProductionContent,
+    rules: &ProductionRules,
     tape: &audio::InputTape,
-) -> Result<(Stream, ProductionContent, ProductionRules), Outcome> {
-    let content = ProductionContent::Audio(tape.content.clone());
-    let rules = ProductionRules::Audio;
-    let production = Production::admit(
-        ProductionSeed::Audio(Box::new(tape.seed.clone())),
-        content.clone(),
-        rules.clone(),
-    )
-    .map_err(|_| data_failure(None, "pending audio admission"))?;
-    let stream = Stream {
+    expected: &[audio::Publication],
+) -> Result<(usize, usize), Outcome> {
+    let mut stream = Stream {
         production,
         committed: tape.seed.clone(),
         publications: Vec::new(),
         replies: tape.initial_replies,
     };
-    Ok((stream, content, rules))
-}
-
-pub(super) fn run(
-    tape: &audio::InputTape,
-    expected: &[audio::Publication],
-) -> Result<(usize, usize), Outcome> {
-    let (mut stream, content, rules) = initial(tape)?;
     let inputs = AudioInputReader { tape };
     let mut boundaries: usize = 0;
     let mut restorations: usize = 0;
@@ -140,23 +149,7 @@ pub(super) fn run(
             });
         }
         let phase = stream.state()?.phase.clone();
-        let line = match &phase {
-            AudioPhase::Work { at, result } if at == deadline => match result {
-                CompletionResult::Effect { group, .. } => ReplyLine::Group(*group),
-                CompletionResult::Music(_) => ReplyLine::Music,
-            },
-            AudioPhase::ObserveClock { .. }
-            | AudioPhase::Distribute { .. }
-            | AudioPhase::Work { .. }
-            | AudioPhase::Sample { .. }
-            | AudioPhase::MusicStart { .. }
-            | AudioPhase::Idle { .. } => {
-                return Err(Outcome::Difference {
-                    cut,
-                    field: "audio.native_pending_deadline".to_owned(),
-                });
-            }
-        };
+        let line = pending_line(&phase, deadline, cut)?;
         stream.retained(cut)?;
         let saved = stream.production.save().map_err(
             |game::production::SaveFault::Unsupported(scope)| Outcome::Unsupported {

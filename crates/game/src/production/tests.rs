@@ -21,7 +21,7 @@ use types::{Block, Pair, Pose, Set, Sprite};
 mod audio_checkpoint;
 mod continuation;
 mod entries;
-mod fixtures;
+pub(super) mod fixtures;
 mod frame_movement;
 mod sender;
 mod weapons;

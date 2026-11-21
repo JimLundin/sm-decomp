@@ -62,8 +62,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
 }
 
 fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    if case.content != ContentProvider::NativeResidentContent
-        || case.inputs != InputProvider::NativePhysicalPresentations
+    if case.inputs != InputProvider::NativePhysicalPresentations
         || case.expectations.provider != ExpectedProvider::NativeDecodedCuts
     {
         return Err(data_failure(None, "audio provider contract"));
@@ -108,14 +107,25 @@ fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
                 audio::ProviderFault::Missing => data_failure(None, "native fixture file"),
             }
         })?;
-    let content = ProductionContent::Audio(input_tape.content.clone());
+    let (seed, content) = match case.content {
+        ContentProvider::OpeningCeresAudio => {
+            audio::room_load::admit(&sources.rom, &sources.native, &input_tape, sha256)?
+        }
+        ContentProvider::NativeResidentContent => (
+            ProductionSeed::Audio(Box::new(input_tape.seed.clone())),
+            ProductionContent::Audio(input_tape.content.clone()),
+        ),
+        ContentProvider::PlayerRomImport
+        | ContentProvider::SenderGroup
+        | ContentProvider::CeresReference
+        | ContentProvider::RecordedScrollRun
+        | ContentProvider::HudReference => {
+            return Err(data_failure(None, "audio content provider"));
+        }
+    };
     let rules = ProductionRules::Audio;
-    let production = Production::admit(
-        ProductionSeed::Audio(Box::new(input_tape.seed.clone())),
-        content.clone(),
-        rules.clone(),
-    )
-    .map_err(|_| data_failure(None, "production audio admission"))?;
+    let production = Production::admit(seed, content.clone(), rules.clone())
+        .map_err(|_| data_failure(None, "production audio admission"))?;
     let actual = ActualReader::Audio {
         publications: Vec::new(),
         replies: input_tape.initial_replies,

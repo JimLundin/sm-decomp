@@ -7,7 +7,7 @@ pub use types::audio::{
 };
 
 /// The admitted arrangement and cue bank, with the resources they reference.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ResidentAudio {
     /// The sequencer's two ordered tracks and effect graphs.
     pub content: Content,
@@ -24,7 +24,7 @@ pub struct ResidentAudio {
 }
 
 /// A checked sampled instrument.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Instrument {
     /// Which checked sample backs this instrument.
     pub sample: SampleId,
@@ -35,11 +35,11 @@ pub struct Instrument {
 }
 
 /// A dense sample identity.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SampleId(pub u16);
 
 /// Instrument envelope settings retained for resource identity.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Envelope {
     /// ADSR mode and attack/decay rates.
     pub attack_decay: u8,
@@ -52,7 +52,7 @@ pub struct Envelope {
 /// Bounds of a checked sample stream, in mono decoded frames.
 ///
 /// Resident timing uses this resource relation without needing waveform data.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SampleSource {
     /// Total decoded frames before the first end marker.
     pub frames: u32,
@@ -63,7 +63,7 @@ pub struct SampleSource {
 }
 
 /// A supported cue code on one effect port.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CueAlias {
     /// Effect port.
     pub group: SoundGroup,

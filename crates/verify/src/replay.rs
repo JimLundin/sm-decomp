@@ -3,7 +3,6 @@
 mod admission;
 mod appearance;
 mod audio;
-mod audio_admission;
 mod audio_projection;
 pub mod baseline;
 mod camera;
@@ -61,7 +60,6 @@ mod weapons;
 
 use compare::{CompareFault, Observation};
 use game::production::{AdvanceInput, Production, ProductionOutputs};
-use game::state::owned::OwnedState;
 use index::{Case, Start};
 use result::{CaseResult, Counts, Outcome};
 use std::path::{Path, PathBuf};
@@ -212,14 +210,14 @@ impl AudioInputReader<'_> {
         cut: u64,
         stop: &audio_transport::AudioInstant,
     ) -> Result<ProductionOutputs, Outcome> {
-        let OwnedState::Audio(state) = production.state() else {
+        let Some(state) = production.transport() else {
             return Err(data_failure(Some(cut), "audio state scope"));
         };
         let presentations: Vec<_> = self
             .tape
             .presentations
             .iter()
-            .filter(|input| input.at > state.0.now && input.at <= *stop)
+            .filter(|input| input.at > state.now && input.at <= *stop)
             .cloned()
             .collect();
         production
@@ -358,15 +356,15 @@ fn actual_audio_from(
     replies: [u8; 4],
     offset: usize,
 ) -> Result<Vec<Observation>, Outcome> {
-    let OwnedState::Audio(state) = production.state() else {
+    let Some(state) = production.transport() else {
         return Err(data_failure(None, "audio state scope"));
     };
-    let mut fields: Vec<_> = audio_projection::project(&state.0)
+    let mut fields: Vec<_> = audio_projection::project(state)
         .into_iter()
         .map(|field| Observation::quantity(field.field, field.value))
         .collect();
     let pending = matches!(
-        state.0.phase,
+        state.phase,
         audio_transport::AudioPhase::Work {
             result: audio_transport::CompletionResult::Music(_),
             ..
@@ -468,6 +466,7 @@ mod tests {
             case,
             &Sources {
                 native,
+                rom: std::env::var_os("SM_ROM").unwrap().into(),
                 ..Sources::default()
             },
         );

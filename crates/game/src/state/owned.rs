@@ -65,6 +65,8 @@ pub enum OwnedState {
     MovementCeres(Box<crate::production::MovementCeresState>),
     /// Committed and pending transport quantities.
     Audio(Model<AudioPin>),
+    /// Resident transport, all CPU senders and the measured clock relationship.
+    ResidentAudio(Box<crate::production::audio::State>),
     /// Current power shots and late contact consumption.
     WeaponsContact(Model<PowerPin>),
     /// Complete room tiles, running places and scroll screens.

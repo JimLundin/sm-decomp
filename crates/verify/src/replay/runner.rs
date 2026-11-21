@@ -177,6 +177,8 @@ pub(super) fn run(
         inputs: &inputs,
         expected: &expectation,
     };
+    let audio_start =
+        (case.checkpoints && matches!(inputs, InputReader::Audio(_))).then(|| production.clone());
     let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
     let mut digest = Vec::new();
@@ -250,22 +252,22 @@ pub(super) fn run(
     if let Some((_, outcome)) = stop {
         return Err(outcome);
     }
-    if case.checkpoints {
-        record_pending(&inputs, &expectation, result)?;
-    }
-    Ok(())
+    record_pending(audio_start, &inputs, &expectation, &content, &rules, result)
 }
 
 fn record_pending(
+    audio_start: Option<Production>,
     inputs: &InputReader,
-    expected: &ExpectedReader,
+    expectation: &ExpectedReader,
+    content: &game::production::ProductionContent,
+    rules: &game::production::ProductionRules,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
-    if let InputReader::Audio(tape) = inputs {
-        let ExpectedReader::Audio(expected) = expected else {
+    if let (InputReader::Audio(tape), Some(audio_start)) = (inputs, audio_start) {
+        let ExpectedReader::Audio(expected) = expectation else {
             return Err(data_failure(None, "audio expected scope"));
         };
-        let pending = pending::run(tape, &expected.publications)?;
+        let pending = pending::run(audio_start, content, rules, tape, &expected.publications)?;
         result.counts.pending_boundaries = pending.0;
         result.counts.pending_restorations = pending.1;
     }
@@ -293,6 +295,7 @@ mod tests {
         case.checkpoints = false;
         let sources = Sources {
             native: std::env::var_os("SM_AUDIO_NATIVE").unwrap().into(),
+            rom: std::env::var_os("SM_ROM").unwrap().into(),
             ..Sources::default()
         };
         let mut reference = admission::admit(&case, &sources).unwrap();

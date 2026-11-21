@@ -46,3 +46,6 @@ mkdir "$destination"
 tar -xJf "$scratch/pair.tar.xz" -C "$destination"
 (cd "$destination" && sha256sum --check --strict native.sha256)
 echo 'NATIVE AUDIO FIXTURE PIN OK'
+bash "$(dirname "$0")/fetch_native_fixture.sh" "$rom" "$destination" opening-ceres-audio-v1 \
+  m0-opening-ceres-audio-origin-d7a17dcad0bb037c.tar.gz.enc \
+  d7a17dcad0bb037c7de70303db59805a2c480b2012d4171360a494b05d390148 560 1

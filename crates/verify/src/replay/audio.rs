@@ -7,6 +7,8 @@ use audio_transport::{
 use serde::Deserialize;
 use std::path::Path;
 
+pub(super) mod room_load;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProviderFault {
     Admission(&'static str),
@@ -163,7 +165,7 @@ pub fn load(
         ));
     }
     validate_provenance(&fixture)?;
-    super::audio_admission::validate(&fixture.seed, &fixture.content, fixture.timbres)?;
+    validate_native_start(&fixture.seed, &fixture.content, fixture.timbres, true)?;
     if let Some((path, seed_hash, frame)) = continuation {
         continue_from(&mut fixture, text, hash, path, seed_hash, frame)?;
     }
@@ -319,7 +321,7 @@ fn continue_from(
             "independent native continuation provenance and context",
         ));
     }
-    super::audio_admission::validate_continuation(&saved.seed, &fixture.content, fixture.timbres)?;
+    validate_native_start(&saved.seed, &fixture.content, fixture.timbres, false)?;
     fixture.seed = saved.seed;
     fixture.initial_replies = saved.initial_replies;
     fixture.inputs.retain(|input| input.at > fixture.seed.now);
@@ -353,3 +355,29 @@ pub const fn reply_slot(line: ReplyLine) -> usize {
 
 #[cfg(test)]
 mod import_witness;
+
+fn validate_native_start(
+    state: &State,
+    graph: &Content,
+    timbres: usize,
+    loaded: bool,
+) -> Result<(), ProviderFault> {
+    use audio_transport::{AudioPhase, Playback};
+    if !matches!(&state.phase, AudioPhase::ObserveClock { at } if at >= &state.now)
+        || !state.reservations.is_empty()
+        || (loaded
+            && state
+                .groups
+                .iter()
+                .any(|(_, group)| group.playback != Playback::Empty))
+    {
+        return Err(ProviderFault::Admission("native scheduler or voice origin"));
+    }
+    game::production::audio::validate_scoped(state, graph, timbres).map_err(|fault| match fault {
+        game::production::audio::Fault::Invalid(field) => ProviderFault::Admission(field),
+        game::production::audio::Fault::Origin
+        | game::production::audio::Fault::ContentIdentity => {
+            ProviderFault::Admission("native transport context")
+        }
+    })
+}

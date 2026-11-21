@@ -58,6 +58,7 @@ name = "data"
 version = "0.1.0"
 dependencies = [
  "canonical",
+ "serde",
  "types",
 ]
 
@@ -110,6 +111,7 @@ dependencies = [
  "game_random",
  "game_time",
  "interface_hud",
+ "num-bigint",
  "run_progress",
  "samus_appearance",
  "samus_health",

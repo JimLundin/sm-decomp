@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 mod animation;
 pub mod appearance;
+pub mod audio;
 mod camera_semantic;
 pub mod connected;
 mod content;
@@ -29,7 +30,7 @@ use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
 pub use immutable::{BlockRules, CameraRules, HudRules};
-pub use sender::SenderInput;
+pub use sender::{SenderInput, Senders};
 
 /// A concrete clean entry supported by this engine.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -44,6 +45,8 @@ pub enum Scope {
     MovementCeres,
     /// Admitted native audio transport.
     Audio,
+    /// Joint resident transport and three CPU senders from a common origin.
+    ResidentAudio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
     WeaponsContact,
     /// Ordered block requests and running reactions.
@@ -77,6 +80,8 @@ pub enum ProductionSeed {
     MovementCeres(Box<MovementCeresState>),
     /// Full committed and pending audio state; restoration never initializes it.
     Audio(Box<audio_transport::State>),
+    /// Loaded or restored resident audio.
+    ResidentAudio(Box<audio::State>),
     /// Full ordinary power shot/trail/spacing state.
     WeaponsContact(Box<weapons_projectiles::State>),
     /// Full tiles, places and screens.
@@ -167,6 +172,13 @@ pub enum AdvanceInput<'a> {
     Doors(&'a world_doors::Inputs),
     /// An actual queue offer or an admitted CPU sender service operation.
     AudioSender(SenderInput<'a>),
+    /// Operate one resident sender at an independently scheduled CPU opportunity.
+    ResidentSender {
+        /// The physical request line selected by the caller.
+        group: audio_transport::SoundGroup,
+        /// The production sender operation.
+        input: SenderInput<'a>,
+    },
     /// A required producer has no admitted value at this boundary.
     Missing(Scope),
 }
@@ -221,6 +233,8 @@ pub enum AdmissionFault {
     ConflictingPose(types::Pose),
     /// Audio content has no complete two-track arrangement.
     AudioTracks,
+    /// The resident session violates an audio admission invariant.
+    ResidentAudio(audio::Fault),
     /// Invalid restored shot or content references.
     Weapons(crate::weapons_projectiles_bridge::Fault),
     /// A semantic figure has conflicting or missing clip content.
@@ -302,9 +316,9 @@ pub enum ProductionFault {
 }
 
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
-struct Checkpoint {
-    schema: Schema<CodecState>,
-    state: CodecState,
+struct Checkpoint<S> {
+    schema: Schema<S>,
+    state: S,
 }
 
 /// Complete selected State lacks an approved durable codec.
@@ -362,6 +376,7 @@ impl Production {
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementCeres(_) => Scope::MovementCeres,
             ProductionSeed::Audio(_) => Scope::Audio,
+            ProductionSeed::ResidentAudio(_) => Scope::ResidentAudio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
             ProductionSeed::Blocks(_) => Scope::Blocks,
             ProductionSeed::Camera(_) => Scope::Camera,
@@ -427,18 +442,6 @@ impl Production {
                 OwnedState::Movement(Model(samus))
             }
             (
-                ProductionSeed::Audio(state),
-                ProductionContent::Audio(content),
-                ProductionRules::Audio,
-            ) => {
-                if content.tracks.len() != 2
-                    || content.tracks.iter().any(|track| track.phrases.is_empty())
-                {
-                    return Err(AdmissionFault::AudioTracks);
-                }
-                OwnedState::Audio(Model(state))
-            }
-            (
                 ProductionSeed::WeaponsContact(state),
                 ProductionContent::WeaponsContact(content),
                 ProductionRules::WeaponsContact(_),
@@ -472,6 +475,7 @@ impl Production {
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementCeres(_) => Scope::MovementCeres,
             OwnedState::Audio(_) => Scope::Audio,
+            OwnedState::ResidentAudio(_) => Scope::ResidentAudio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
             OwnedState::Blocks(_) => Scope::Blocks,
             OwnedState::Camera(_) => Scope::Camera,
@@ -569,24 +573,6 @@ impl Production {
                 world,
             )?),
             (
-                OwnedState::Audio(state),
-                ProductionContent::Audio(content),
-                ProductionRules::Audio,
-                AdvanceInput::Audio {
-                    stop,
-                    presentations,
-                },
-            ) => {
-                validate_audio_interval(&state.0.now, &stop, presentations)?;
-                let elapsed = stop.difference(&state.0.now);
-                ProductionOutputs::Audio(audio_transport::transport::advance(
-                    &mut state.0,
-                    content,
-                    elapsed,
-                    presentations,
-                ))
-            }
-            (
                 OwnedState::WeaponsContact(state),
                 ProductionContent::WeaponsContact(content),
                 ProductionRules::WeaponsContact(rules),
@@ -616,6 +602,28 @@ impl Production {
         Ok(outputs)
     }
 
+    /// Read the admitted transport shared by the loaded and independently scoped entries.
+    #[must_use]
+    pub fn transport(&self) -> Option<&audio_transport::State> {
+        match &self.state {
+            OwnedState::Audio(state) => Some(&state.0),
+            OwnedState::ResidentAudio(state) => Some(state.transport()),
+            OwnedState::Connected(_)
+            | OwnedState::Frame(_)
+            | OwnedState::Movement(_)
+            | OwnedState::MovementCeres(_)
+            | OwnedState::WeaponsContact(_)
+            | OwnedState::Blocks(_)
+            | OwnedState::Camera(_)
+            | OwnedState::Appearance(_)
+            | OwnedState::Progress(_)
+            | OwnedState::Hud(_)
+            | OwnedState::Ceres(_)
+            | OwnedState::Doors(_)
+            | OwnedState::AudioSender(_) => None,
+        }
+    }
+
     /// Save the selected state and pending work with its immutable context in memory.
     /// A suspended Frame can be saved before the requested NMI return.
     ///
@@ -627,6 +635,7 @@ impl Production {
             OwnedState::Frame(state) => CodecState::Frame(state.clone()),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => CodecState::Audio(state.clone()),
+            OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
@@ -662,7 +671,7 @@ impl Production {
         ))
     }
 
-    fn encode_save(&self, state: CodecState) -> SavedProduction {
+    fn encode_save<S: Canonical>(&self, state: S) -> SavedProduction {
         SavedProduction {
             state: canonical::to_bytes(&Checkpoint {
                 schema: Schema::new(),
@@ -695,23 +704,29 @@ impl Production {
         content: ProductionContent,
         rules: ProductionRules,
     ) -> Result<Self, AdmissionFault> {
-        let checkpoint: Checkpoint =
-            canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
         if saved.context.content != content {
             return Err(AdmissionFault::ContentChanged);
         }
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = match checkpoint.state {
-            CodecState::Connected(state) => ProductionSeed::Connected(state),
-            CodecState::Frame(state) => ProductionSeed::Frame(state),
-            CodecState::Movement(state) => ProductionSeed::Movement(state.0),
-            CodecState::Audio(state) => ProductionSeed::Audio(state.0),
-            CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
-            CodecState::Camera(state) => ProductionSeed::Camera(state.0),
-            CodecState::Appearance(state) => ProductionSeed::Appearance(state.0),
-            CodecState::AudioSender(state) => ProductionSeed::AudioSender(state.0),
+        let seed = if matches!(&content, ProductionContent::ResidentAudio(_)) {
+            let checkpoint: Checkpoint<Box<audio::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::ResidentAudio(checkpoint.state)
+        } else {
+            let checkpoint: Checkpoint<CodecState> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            match checkpoint.state {
+                CodecState::Connected(state) => ProductionSeed::Connected(state),
+                CodecState::Frame(state) => ProductionSeed::Frame(state),
+                CodecState::Movement(state) => ProductionSeed::Movement(state.0),
+                CodecState::Audio(state) => ProductionSeed::Audio(state.0),
+                CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
+                CodecState::Camera(state) => ProductionSeed::Camera(state.0),
+                CodecState::Appearance(state) => ProductionSeed::Appearance(state.0),
+                CodecState::AudioSender(state) => ProductionSeed::AudioSender(state.0),
+            }
         };
         let mut restored = Self::admit(seed, content, rules)?;
         restored.frame_returned = saved.frame_returned;
@@ -737,6 +752,8 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
         }
         Scope::Audio => canonical::model::pin_holds::<crate::state::owned::AudioPin>(),
+        Scope::ResidentAudio => canonical::model::pin_holds::<crate::state::owned::AudioPin>()
+            .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>()),
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
@@ -744,6 +761,19 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::Blocks | Scope::Progress | Scope::Hud | Scope::Ceres | Scope::Doors => Ok(()),
     }
     .map_err(AdmissionFault::StatePin)
+}
+
+fn advance_transport(
+    state: &mut audio_transport::State,
+    content: &audio_transport::Content,
+    stop: &audio_transport::AudioInstant,
+    presentations: &[audio_transport::transport::Input],
+) -> Result<ProductionOutputs, ProductionFault> {
+    validate_audio_interval(&state.now, stop, presentations)?;
+    let elapsed = stop.difference(&state.now);
+    Ok(ProductionOutputs::Audio(
+        audio_transport::transport::advance(state, content, elapsed, presentations),
+    ))
 }
 
 fn validate_audio_interval(

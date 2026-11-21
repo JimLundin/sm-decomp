@@ -92,7 +92,8 @@ pub mod inputs;
 pub mod interrupts;
 pub mod movement;
 mod state;
-pub use state::{Fault, Senders, State};
+pub use super::sender::Senders;
+pub use state::{Fault, State};
 
 pub(crate) fn validate_pins() -> Result<(), canonical::model::Unpinned> {
     canonical::model::pin_holds::<haze::HazePin>()?;

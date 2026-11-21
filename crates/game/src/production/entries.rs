@@ -64,6 +64,26 @@ pub(super) fn admit(
 ) -> Result<OwnedState, AdmissionFault> {
     Ok(match (seed, content, rules) {
         (
+            ProductionSeed::Audio(state),
+            ProductionContent::Audio(content),
+            ProductionRules::Audio,
+        ) => {
+            if content.tracks.len() != 2
+                || content.tracks.iter().any(|track| track.phrases.is_empty())
+            {
+                return Err(AdmissionFault::AudioTracks);
+            }
+            OwnedState::Audio(Model(state))
+        }
+        (
+            ProductionSeed::ResidentAudio(state),
+            ProductionContent::ResidentAudio(content),
+            ProductionRules::Audio,
+        ) => {
+            state.validate(content)?;
+            OwnedState::ResidentAudio(state)
+        }
+        (
             ProductionSeed::AudioSender(state),
             ProductionContent::AudioSender(group),
             ProductionRules::AudioSender,
@@ -116,6 +136,30 @@ pub(super) fn advance(
             super::weapons::advance_with_drawing(&mut state.0, shot, content, *rules, drawing)?,
         )),
 
+        (
+            OwnedState::Audio(state),
+            ProductionContent::Audio(content),
+            ProductionRules::Audio,
+            AdvanceInput::Audio {
+                stop,
+                presentations,
+            },
+        ) => super::advance_transport(&mut state.0, content, &stop, presentations)?,
+        (
+            OwnedState::ResidentAudio(state),
+            ProductionContent::ResidentAudio(content),
+            ProductionRules::Audio,
+            AdvanceInput::Audio {
+                stop,
+                presentations,
+            },
+        ) => state.advance_transport(content, &stop, presentations)?,
+        (
+            OwnedState::ResidentAudio(state),
+            ProductionContent::ResidentAudio(_),
+            ProductionRules::Audio,
+            AdvanceInput::ResidentSender { group, input },
+        ) => state.advance_sender(group, input)?,
         (
             OwnedState::AudioSender(state),
             ProductionContent::AudioSender(group),

@@ -36,7 +36,7 @@ pub(super) fn samus() -> samus_movement::Samus {
     }
 }
 
-pub(super) fn audio_content() -> Content {
+pub(in crate::production) fn audio_content() -> Content {
     Content {
         effects: BTreeMap::new(),
         tracks: vec![
@@ -89,7 +89,7 @@ fn group(parts: usize) -> GroupState {
     }
 }
 
-pub(super) fn pending_audio() -> (State, SongState) {
+pub(in crate::production) fn pending_audio() -> (State, SongState) {
     let pending = song(1999);
     let state = State {
         now: time::cycles(10),

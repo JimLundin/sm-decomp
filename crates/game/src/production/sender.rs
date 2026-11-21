@@ -1,11 +1,73 @@
 //! One admitted CPU audio sender group and its actual clean service entry.
 
 use super::{AdmissionFault, ProductionFault, Unsupported};
+use crate::state::owned::SenderPin;
 use audio_transport::sender::{ReplyInput, SenderOutput, SenderProfile};
 use audio_transport::{
     CpuMasterTicks, CueId, OfferPermission, QueueAllowance, Request, SenderProgress, SenderState,
     SoundGroup,
 };
+use canonical::Canonical;
+use canonical::model::Model;
+
+/// The three actual request queues, each with its complete pending service.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct Senders {
+    /// Action requests.
+    pub action: Model<SenderPin>,
+    /// Ambient requests.
+    pub ambient: Model<SenderPin>,
+    /// Contact requests, including actual foot contacts.
+    pub contact: Model<SenderPin>,
+}
+
+impl Senders {
+    /// Admit each independent current queue without beginning a service.
+    ///
+    /// # Errors
+    /// A queue, held reply or pending result belongs to a different group.
+    pub fn new(
+        action: SenderState,
+        ambient: SenderState,
+        contact: SenderState,
+    ) -> Result<Self, AdmissionFault> {
+        let senders = Self {
+            action: Model(Box::new(action)),
+            ambient: Model(Box::new(ambient)),
+            contact: Model(Box::new(contact)),
+        };
+        senders.validate()?;
+        Ok(senders)
+    }
+
+    /// Validate all current and pending sender quantities after restoration.
+    ///
+    /// # Errors
+    /// A queue contains an unadmitted cue or too many requests.
+    pub fn validate(&self) -> Result<(), AdmissionFault> {
+        crate::production::sender::validate(&self.action.0, SoundGroup::Action)?;
+        crate::production::sender::validate(&self.ambient.0, SoundGroup::Ambient)?;
+        crate::production::sender::validate(&self.contact.0, SoundGroup::Contact)
+    }
+
+    /// One held sender, selected by physical request group.
+    #[must_use]
+    pub fn get(&self, group: SoundGroup) -> &SenderState {
+        match group {
+            SoundGroup::Action => &self.action.0,
+            SoundGroup::Ambient => &self.ambient.0,
+            SoundGroup::Contact => &self.contact.0,
+        }
+    }
+
+    pub(crate) fn current(&mut self, group: SoundGroup) -> &mut SenderState {
+        match group {
+            SoundGroup::Action => &mut self.action.0,
+            SoundGroup::Ambient => &mut self.ambient.0,
+            SoundGroup::Contact => &mut self.contact.0,
+        }
+    }
+}
 
 /// One causal offer or independently scheduled service operation.
 pub enum SenderInput<'a> {

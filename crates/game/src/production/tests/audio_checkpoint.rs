@@ -1,3 +1,5 @@
+mod portable;
+
 use super::{
     AdmissionFault, AdvanceInput, Production, ProductionContent, ProductionOutputs,
     ProductionRules, ProductionSeed, fixtures,
@@ -210,4 +212,71 @@ fn restore_refuses_effect_pitch_above_maximum() {
     let (state, content) = effect_history(71);
     let (alternate, _) = effect_history(70);
     check_rejected_pitch(state, alternate, content, 71, 70, 72);
+}
+
+fn restore_portable(state: State, content: ProductionContent, encoded: &str) -> Production {
+    let (pairs, remainder) = encoded.as_bytes().as_chunks::<2>();
+    assert_eq!(remainder.len(), 0);
+    let bytes = pairs
+        .iter()
+        .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
+        .collect::<Vec<_>>();
+    let mut save = admit(state, content.clone()).save().unwrap();
+    save.state = bytes;
+    let restored = Production::restore(&save, content, ProductionRules::Audio).unwrap();
+    assert_eq!(restored.save().unwrap(), save);
+    restored
+}
+
+#[test]
+fn portable_pitch_histories_resume_around_publication() {
+    let (effect, effect_content) = effect_history(71);
+    let histories = [
+        (
+            music_history(19, 51),
+            ProductionContent::Audio(fixtures::audio_content()),
+            portable::MUSIC_99,
+            portable::MUSIC_100,
+        ),
+        (
+            effect,
+            effect_content,
+            portable::EFFECT_99,
+            portable::EFFECT_100,
+        ),
+    ];
+    for (state, content, before, after) in histories {
+        let AudioPhase::Work { at, result } = state.phase.clone() else {
+            panic!("pending work fixture");
+        };
+        let (line, reply) = match &result {
+            CompletionResult::Music(_) => (
+                ReplyLine::Music,
+                Reply::Music(state.resident_music_reply.clone()),
+            ),
+            CompletionResult::Effect { group, result, .. } => {
+                (ReplyLine::Group(*group), Reply::Effect(result.reply))
+            }
+        };
+        let mut before = restore_portable(state.clone(), content.clone(), before);
+        let mut after = restore_portable(state, content, after);
+        assert_eq!(
+            advance(&mut before, 99),
+            ProductionOutputs::Audio(Vec::new())
+        );
+        assert_eq!(
+            advance(&mut before, 100),
+            ProductionOutputs::Audio(vec![Output::Publication {
+                at,
+                line,
+                reply,
+                result
+            }])
+        );
+        assert_eq!(
+            advance(&mut after, 100),
+            ProductionOutputs::Audio(Vec::new())
+        );
+        assert_eq!(before.save().unwrap(), after.save().unwrap());
+    }
 }

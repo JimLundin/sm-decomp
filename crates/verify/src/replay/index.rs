@@ -211,6 +211,8 @@ pub enum ContentProvider {
     NativeResidentContent,
     /// Fixed group selected by the sender offer case.
     SenderGroup,
+    /// ROM-selected audio for the independently admitted opening-room load.
+    OpeningCeresAudio,
     /// Static figures and geometry in the existing Ceres model.
     CeresReference,
     /// Independently observed room scroll kinds and dimensions.
@@ -1092,6 +1094,29 @@ fn weapons_provider_valid(case: &Case, recorded: bool) -> bool {
             ]
 }
 
+fn audio_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
+    use ObservationId as O;
+    case.kind == CaseKind::Scoped
+        && matches!(
+            (&case.content, &case.start),
+            (ContentProvider::OpeningCeresAudio, Start::NativeSeed { .. })
+                | (
+                    ContentProvider::NativeResidentContent,
+                    Start::NativeCheckpoint { .. }
+                )
+        )
+        && case.inputs == InputProvider::NativePhysicalPresentations
+        && case.expectations.provider == ExpectedProvider::NativeDecodedCuts
+        && *observations
+            == BTreeSet::from([
+                O::AudioSemantic,
+                O::AudioPublications,
+                O::AudioReplies,
+                O::AudioPendingMusic,
+            ])
+        && case.expectations.output_cut.is_none()
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::Unavailable {
@@ -1118,24 +1143,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
             connected_provider_valid(case, observations)
         }
         [Responsibility::Movement] => movement_provider_valid(case, observations, recorded),
-        [Responsibility::Audio] => {
-            case.kind == CaseKind::Scoped
-                && case.content == ContentProvider::NativeResidentContent
-                && case.inputs == InputProvider::NativePhysicalPresentations
-                && case.expectations.provider == ExpectedProvider::NativeDecodedCuts
-                && matches!(
-                    case.start,
-                    Start::NativeSeed { .. } | Start::NativeCheckpoint { .. }
-                )
-                && *observations
-                    == BTreeSet::from([
-                        O::AudioSemantic,
-                        O::AudioPublications,
-                        O::AudioReplies,
-                        O::AudioPendingMusic,
-                    ])
-                && case.expectations.output_cut.is_none()
-        }
+        [Responsibility::Audio] => audio_provider_valid(case, observations),
         [Responsibility::Ceres] => {
             recorded
                 && case.content == ContentProvider::CeresReference

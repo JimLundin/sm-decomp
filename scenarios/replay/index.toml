@@ -70,11 +70,11 @@ end = { cut_inclusive = 183 }
 rules = ["audio-transport/MusicalProgress", "audio-transport/WholeArrangement", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
 profile = "reference"
 responsibilities = ["audio"]
-content = "native-resident-content"
+content = "opening-ceres-audio"
 inputs = "native-physical-presentations"
 expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
 checkpoints = true
-limits = ["measured clock and physical presentations admitted", "CPU workload and sender timing unproved", "audio waveform omitted", "77 independently named source-writer exclusions"]
+limits = ["locked room-entry transport and three sender states admitted", "measured transport stops and physical presentations admitted", "CPU workload and sender timing unproved", "audio waveform omitted", "77 independently named source-writer exclusions"]
 
 [[case.borrowed]]
 dependency = "audio.clock-and-requests"
@@ -92,11 +92,11 @@ end = { cut_inclusive = 64 }
 rules = ["audio-transport/MusicalProgress", "audio-transport/VisibleCompletion", "audio-transport/ReplyCadence"]
 profile = "reference"
 responsibilities = ["audio"]
-content = "native-resident-content"
+content = "opening-ceres-audio"
 inputs = "native-physical-presentations"
 expectations = { provider = "native-decoded-cuts", fields = ["audio.semantic", "audio.pending_music"], outputs = ["audio.publications", "audio.replies"] }
 checkpoints = true
-limits = ["measured clock and physical requests admitted", "ends before external repeat-count intervention", "no through-intervention continuation claim", "CPU timing and audio waveform unproved"]
+limits = ["locked room-entry transport and three sender states admitted", "measured transport stops and physical requests admitted", "ends before external repeat-count intervention", "no through-intervention continuation claim", "CPU timing and audio waveform unproved"]
 
 [[case.borrowed]]
 dependency = "audio.clock-and-requests"

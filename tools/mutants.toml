@@ -100,7 +100,7 @@ field = "ceres.wait"
 name = "audio-elapsed-not-carried"
 responsibility = "audio"
 file = "crates/game/src/production.rs"
-before = "let elapsed = stop.difference(&state.0.now);"
+before = "let elapsed = stop.difference(&state.now);"
 after = "let elapsed = audio_transport::time::cycles(0);"
 case = "audio/native-control"
 cut = 0
