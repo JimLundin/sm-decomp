@@ -1,0 +1,109 @@
+name: Compare saved pitch bytes and shape controls d00c3fa0e
+on:
+  push:
+    branches: [lane/s508-saved-bytes-d00c3fa0e]
+    paths: [.github/workflows/s508-saved-bytes-d00c3fa0e.yml]
+permissions:
+  contents: read
+env:
+  RUSTC_BOOTSTRAP: "1"
+  CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
+
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env: &replay_fixtures
+      CACHE_ASSET: lockstep-cache-5663de2c4b548c68.tar.xz.enc
+      CACHE_SHA256: 4101a60be21f26718004c607e7b031a3ac3ac934864c1f22235465e377c41b7f
+      # Root pins the validated fixture set after uploading its ciphertext.
+      AUDIO_NATIVE_ASSET: "audio-native-4673e83ed4401dc3.tar.xz.enc"
+      AUDIO_NATIVE_SHA256: "52d1749f28918506889986434dbc03cbf039afe4d0487f10249f02c95974917a"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d00c3fa0e597825617f32c9fef799ecf8f3b174c
+          fetch-depth: 0
+          persist-credentials: false
+      - &cache
+        name: Restore the cargo registry and the build
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            cargo-${{ github.job == 'faults' && 'replay' || github.job }}-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Compare complete synthetic checkpoint histories and check public refusals
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "d00c3fa0e597825617f32c9fef799ecf8f3b174c"
+          git worktree add --detach "$RUNNER_TEMP/old" d4a00f677d681e8bf98a709797a6d3cf3a962b93
+          git -C "$RUNNER_TEMP/old" restore --source=d00c3fa0e597825617f32c9fef799ecf8f3b174c -- crates/game/src/production/tests.rs crates/game/src/production/tests/audio_checkpoint.rs
+          cat > "$RUNNER_TEMP/save.patch" <<'PATCH'
+          diff --git a/crates/game/src/production/tests/audio_checkpoint.rs b/crates/game/src/production/tests/audio_checkpoint.rs
+          index 5fcf66712..749a7b7c9 100644
+          --- a/crates/game/src/production/tests/audio_checkpoint.rs
+          +++ b/crates/game/src/production/tests/audio_checkpoint.rs
+          @@ -211,3 +211,31 @@ fn restore_refuses_effect_pitch_above_maximum() {
+               let (alternate, _) = effect_history(70);
+               check_rejected_pitch(state, alternate, content, 71, 70, 72);
+           }
+          +
+          +#[test]
+          +fn save_synthetic_pitch_history_bytes() {
+          +    let directory = std::path::PathBuf::from(std::env::var_os("SM_PITCH_PROBE_DIR").unwrap());
+          +    std::fs::create_dir_all(&directory).unwrap();
+          +
+          +    let (effect, effect_content) = effect_history(71);
+          +    let histories = [
+          +        (
+          +            "music",
+          +            music_history(19, 51),
+          +            ProductionContent::Audio(fixtures::audio_content()),
+          +        ),
+          +        ("effect", effect, effect_content),
+          +    ];
+          +    for (kind, state, content) in histories {
+          +        let mut carried = admit(state, content);
+          +        for cycle in [99, 100] {
+          +            let _ = advance(&mut carried, cycle);
+          +            let checkpoint = carried.save().unwrap();
+          +            std::fs::write(
+          +                directory.join(format!("{kind}-{cycle}.bin")),
+          +                checkpoint.state,
+          +            )
+          +            .unwrap();
+          +        }
+          +    }
+          +}
+          PATCH
+          git apply "$RUNNER_TEMP/save.patch"
+          git -C "$RUNNER_TEMP/old" apply "$RUNNER_TEMP/save.patch"
+          testpath=production::tests::audio_checkpoint
+          (
+            cd "$RUNNER_TEMP/old"
+            if cargo test --locked --profile verify -p game --lib "$testpath::restore_refuses" > "$RUNNER_TEMP/old-test.txt" 2>&1; then exit 1; fi
+            grep -F '0 passed; 3 failed' "$RUNNER_TEMP/old-test.txt"
+            SM_PITCH_PROBE_DIR="$RUNNER_TEMP/old-bytes" cargo test --locked --profile verify -p game --lib "$testpath::save_synthetic_pitch_history_bytes" -- --exact
+          )
+          SM_PITCH_PROBE_DIR="$RUNNER_TEMP/new-bytes" cargo test --locked --profile verify -p game --lib "$testpath::save_synthetic_pitch_history_bytes" -- --exact
+          for name in music-99 music-100 effect-99 effect-100; do
+            cmp "$RUNNER_TEMP/old-bytes/$name.bin" "$RUNNER_TEMP/new-bytes/$name.bin"
+            wc -c "$RUNNER_TEMP/new-bytes/$name.bin"
+            sha256sum "$RUNNER_TEMP/new-bytes/$name.bin"
+          done
+          p=crates/game/src/state/owned.rs
+          test "$(grep -c '^    const TRACE_U8_SAMPLES:' "$p")" = 1
+          sed -i '/^    const TRACE_U8_SAMPLES:/d' "$p"
+          testpin=production::tests::audio_state_shape_remains_pinned
+          if cargo test --locked --profile verify -p game --lib "$testpin" -- --exact > "$RUNNER_TEMP/fault.txt" 2>&1; then exit 1; fi
+          grep -F '0 passed; 1 failed' "$RUNNER_TEMP/fault.txt"
+          grep -F 'Untraceable' "$RUNNER_TEMP/fault.txt"
+          git restore --worktree -- "$p"
+          cargo test --locked --profile verify -p game --lib "$testpin" -- --exact | tee "$RUNNER_TEMP/good.txt"
+          grep -F '1 passed; 0 failed' "$RUNNER_TEMP/good.txt"
