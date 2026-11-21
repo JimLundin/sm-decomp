@@ -562,7 +562,11 @@ mod tests {
     #[test]
     #[ignore = "complete private pinned cache, native fixtures and player ROM"]
     fn connected_complete_index_preserves_all_reviewed_floors() {
-        let index = index();
+        let snapshot = super::super::index::IndexSnapshot::parse(include_str!(
+            "../../../../scenarios/replay/index.toml"
+        ))
+        .unwrap();
+        let index = snapshot.index();
         let sources = sources();
         let results: Vec<_> = index
             .cases
@@ -580,10 +584,7 @@ mod tests {
         let baseline =
             super::super::baseline::Baseline::read(&root.join("scenarios/replay/baseline.toml"))
                 .unwrap();
-        let hash =
-            crate::lock::Sha256::of(include_bytes!("../../../../scenarios/replay/index.toml"))
-                .to_string();
-        baseline.check(&index, &hash, &results).unwrap();
+        baseline.check(&snapshot, &results).unwrap();
         diagnostic(format_args!(
             "CONNECTED_FULL_BASELINE cases={} all_floor_atoms_held=true",
             results.len()

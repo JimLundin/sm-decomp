@@ -409,8 +409,8 @@ fn append_digest(bytes: &mut Vec<u8>, cut: u64, expected: &[Observation]) {
 ///
 /// # Errors
 /// Missing, malformed and empty indices are rejected.
-pub fn read_index(path: &Path) -> Result<index::Index, index::IndexFault> {
-    index::Index::read(path)
+pub fn read_index(path: &Path) -> Result<index::IndexSnapshot, index::IndexFault> {
+    index::IndexSnapshot::read(path)
 }
 
 #[cfg(test)]

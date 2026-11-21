@@ -269,16 +269,16 @@ pub(super) fn run(args: &[String]) -> Result<String, Fault> {
     };
     let index_path = Path::new(index_path);
     let options = options(index_path, rest)?;
-    let index = replay::read_index(index_path).map_err(Fault::Index)?;
-    let bytes = std::fs::read(index_path).map_err(|_| Fault::Missing)?;
+    let snapshot = replay::read_index(index_path).map_err(Fault::Index)?;
     let baseline = Baseline::read(&options.baseline).map_err(Fault::Baseline)?;
     baseline
-        .validate_index(&index, &verify::lock::Sha256::of(&bytes).to_string())
+        .validate_index(&snapshot)
         .map_err(Fault::Baseline)?;
+    let index = snapshot.index();
     let mapping =
         Mapping::parse(&std::fs::read_to_string(options.mapping).map_err(|_| Fault::Missing)?)?;
-    mapping.validate(&index, &options.root)?;
-    let selected = mapping.select(&index, &options.selection)?;
+    mapping.validate(index, &options.root)?;
+    let selected = mapping.select(index, &options.selection)?;
     toml::to_string(&Report { format: 1, purpose: "Declared navigation and reviewed requirements; no replay executed; no exhaustive impact or dynamic coverage claim; complete index remains required for landing", index_lock: &index.lock, case: views(&mapping, &baseline, &selected)? }).map_err(|_| Fault::Encoding)
 }
 

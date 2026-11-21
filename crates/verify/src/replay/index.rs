@@ -560,6 +560,52 @@ pub struct Index {
     pub cases: Vec<Case>,
 }
 
+/// Validated declarations and their identity from one immutable byte snapshot.
+#[derive(Debug)]
+pub struct IndexSnapshot {
+    index: Index,
+    sha256: String,
+}
+
+impl IndexSnapshot {
+    /// Read and validate an index and hash the exact bytes parsed.
+    ///
+    /// # Errors
+    /// Missing or malformed indices are rejected.
+    pub fn read(path: &Path) -> Result<Self, IndexFault> {
+        let text = std::fs::read_to_string(path).map_err(|_| IndexFault::Missing)?;
+        Self::parse(&text)
+    }
+
+    /// Validate index text and hash its exact UTF-8 bytes.
+    ///
+    /// # Errors
+    /// Unknown keys, schemas, identities and empty observations are rejected.
+    pub fn parse(text: &str) -> Result<Self, IndexFault> {
+        let index = Index::parse(text)?;
+        let sha256 = crate::lock::Sha256::of(text.as_bytes()).to_string();
+        Ok(Self { index, sha256 })
+    }
+
+    /// Validated declarations covered by this identity.
+    #[must_use]
+    pub const fn index(&self) -> &Index {
+        &self.index
+    }
+
+    /// Consume the snapshot and retain its declarations.
+    #[must_use]
+    pub fn into_index(self) -> Index {
+        self.index
+    }
+
+    /// SHA-256 of the exact index bytes.
+    #[must_use]
+    pub fn sha256(&self) -> &str {
+        &self.sha256
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// A missing or invalid index or selection.
 pub enum IndexFault {

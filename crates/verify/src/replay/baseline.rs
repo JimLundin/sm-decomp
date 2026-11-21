@@ -1,6 +1,8 @@
 //! Reviewed replay floors distinguish exact behaviour from explicitly held capability boundaries.
 
-use super::index::{Case, CaseId, ExpectedProvider, Index, Responsibility, Start, valid_hash};
+use super::index::{
+    Case, CaseId, ExpectedProvider, IndexSnapshot, Responsibility, Start, valid_hash,
+};
 use super::result::{CaseResult, Counts, Outcome};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -97,11 +99,11 @@ impl Baseline {
     ///
     /// # Errors
     /// Missing, extra, duplicate, malformed or incompatible floor rows are rejected.
-    pub fn validate_index(&self, index: &Index, hash: &str) -> Result<(), BaselineFault> {
-        index.validate().map_err(|_| BaselineFault::IndexPin)?;
-        if self.format != 1 || self.index_sha256 != hash || !valid_hash(hash) {
+    pub fn validate_index(&self, snapshot: &IndexSnapshot) -> Result<(), BaselineFault> {
+        if self.format != 1 || self.index_sha256 != snapshot.sha256() {
             return Err(BaselineFault::IndexPin);
         }
+        let index = snapshot.index();
         let mut ids = BTreeSet::new();
         for floor in &self.cases {
             if !ids.insert(&floor.id) {
@@ -112,8 +114,6 @@ impl Baseline {
                 .iter()
                 .find(|case| case.id == floor.id)
                 .ok_or_else(|| BaselineFault::MissingCase(floor.id.clone()))?;
-            case.validate()
-                .map_err(|_| BaselineFault::InvalidClaim(floor.id.clone()))?;
             let valid = match (&floor.claim, &floor.expected) {
                 (Claim::Behaviour, Outcome::Pass) => {
                     floor.counts.cuts > 0 && valid_hash(&floor.observation_sha256)
@@ -148,12 +148,16 @@ impl Baseline {
     /// Any missing receipt or changed proof atom fails the check.
     pub fn check(
         &self,
-        index: &Index,
-        hash: &str,
+        snapshot: &IndexSnapshot,
         results: &[CaseResult],
     ) -> Result<Summary, BaselineFault> {
-        let ids: Vec<_> = index.cases.iter().map(|case| case.id.clone()).collect();
-        self.check_selected(index, hash, &ids, results)
+        let ids: Vec<_> = snapshot
+            .index()
+            .cases
+            .iter()
+            .map(|case| case.id.clone())
+            .collect();
+        self.check_selected(snapshot, &ids, results)
     }
 
     /// Check a nonempty explicit shard against the same complete reviewed baseline.
@@ -162,12 +166,12 @@ impl Baseline {
     /// Empty, duplicate, missing, extra or changed receipts are rejected.
     pub fn check_selected(
         &self,
-        index: &Index,
-        hash: &str,
+        snapshot: &IndexSnapshot,
         selected: &[CaseId],
         results: &[CaseResult],
     ) -> Result<Summary, BaselineFault> {
-        self.validate_index(index, hash)?;
+        self.validate_index(snapshot)?;
+        let index = snapshot.index();
         if selected.is_empty() {
             return Err(BaselineFault::Empty);
         }
@@ -326,15 +330,15 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
 mod tests {
     use super::{Baseline, BaselineFault, Claim, Floor};
     use crate::replay::{
-        index::Index,
+        index::IndexSnapshot,
         result::{CaseResult, Counts, Outcome},
     };
 
-    fn fixture() -> (Index, Baseline, CaseResult, String) {
-        let mut index =
-            Index::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
-        index.cases.truncate(1);
-        let case = index.cases.first().unwrap();
+    fn fixture() -> (IndexSnapshot, Baseline, CaseResult) {
+        let text = include_str!("../../../../scenarios/replay/index.toml");
+        let second_case = text.match_indices("[[case]]").nth(1).unwrap().0;
+        let snapshot = IndexSnapshot::parse(text.get(..second_case).unwrap()).unwrap();
+        let case = snapshot.index().cases.first().unwrap();
         let hash = "0".repeat(64);
         let counts = Counts {
             cuts: 1,
@@ -355,24 +359,97 @@ mod tests {
         };
         let baseline = Baseline {
             format: 1,
-            index_sha256: hash.clone(),
+            index_sha256: snapshot.sha256().to_owned(),
             cases: vec![Floor {
                 id: case.id.clone(),
                 claim: Claim::Behaviour,
                 expected: Outcome::Pass,
                 counts,
-                observation_sha256: hash.clone(),
+                observation_sha256: hash,
             }],
         };
-        (index, baseline, result, hash)
+        (snapshot, baseline, result)
+    }
+
+    #[test]
+    fn loaded_declarations_keep_their_identity_after_file_replacement() {
+        let text_a = r#"
+format = 1
+engine_api = "production-v1"
+observation_schema = "semantic-v1"
+lock = "invented-lock.toml"
+
+[[case]]
+id = "movie/invented"
+kind = "movie"
+row = "invented-row"
+start = { source = "power-on" }
+end = { cut_inclusive = 1 }
+rules = ["samus-movement/TravelledDistances"]
+profile = "reference"
+responsibilities = ["movement", "audio"]
+content = "player-rom-import"
+inputs = "movie"
+expectations = { provider = "pinned-record-cache", fields = ["movement.travel.Left", "movement.travel.Right", "movement.travel.Up", "movement.travel.Down"], outputs = [] }
+checkpoints = false
+limits = ["invented scope A"]
+"#;
+        let text_b = text_a.replace("invented scope A", "invented scope B");
+        let dir =
+            std::env::temp_dir().join(format!("replay-index-snapshot-{}", std::process::id()));
+        std::fs::create_dir(&dir).unwrap();
+        let path = dir.join("index.toml");
+        std::fs::write(&path, text_a).unwrap();
+        let a = crate::replay::read_index(&path).unwrap();
+        std::fs::write(&path, &text_b).unwrap();
+        let b = crate::replay::read_index(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        std::fs::remove_dir(&dir).unwrap();
+
+        assert_eq!(
+            a.index().cases.first().unwrap().limits,
+            ["invented scope A"]
+        );
+        assert_eq!(
+            b.index().cases.first().unwrap().limits,
+            ["invented scope B"]
+        );
+        assert_eq!(
+            a.sha256(),
+            crate::lock::Sha256::of(text_a.as_bytes()).to_string()
+        );
+        assert_eq!(
+            b.sha256(),
+            crate::lock::Sha256::of(text_b.as_bytes()).to_string()
+        );
+        assert_ne!(a.sha256(), b.sha256());
+
+        let mut baseline = Baseline {
+            format: 1,
+            index_sha256: a.sha256().to_owned(),
+            cases: vec![Floor {
+                id: a.index().cases.first().unwrap().id.clone(),
+                claim: Claim::Boundary,
+                expected: Outcome::Unsupported {
+                    cut: None,
+                    dependency: "invented producer".to_owned(),
+                },
+                counts: Counts::default(),
+                observation_sha256: String::new(),
+            }],
+        };
+        assert_eq!(baseline.validate_index(&a), Ok(()));
+        baseline.index_sha256 = b.sha256().to_owned();
+        assert_eq!(baseline.validate_index(&b), Ok(()));
+        assert_eq!(baseline.validate_index(&a), Err(BaselineFault::IndexPin));
     }
 
     #[test]
     fn exact_receipt_metadata_and_observation_atoms_are_required() {
-        let (index, baseline, result, hash) = fixture();
+        let (snapshot, baseline, result) = fixture();
         assert_eq!(
             baseline
-                .check(&index, &hash, std::slice::from_ref(&result))
+                .check(&snapshot, std::slice::from_ref(&result))
                 .unwrap()
                 .passed_cases,
             1
@@ -380,26 +457,26 @@ mod tests {
         let mut forged = result.clone();
         forged.kind = crate::replay::index::CaseKind::Integrated;
         assert!(matches!(
-            baseline.check(&index, &hash, &[forged]),
+            baseline.check(&snapshot, &[forged]),
             Err(BaselineFault::Metadata(_))
         ));
         let mut forged = result.clone();
         forged.row.push_str("-other");
         assert!(matches!(
-            baseline.check(&index, &hash, &[forged]),
+            baseline.check(&snapshot, &[forged]),
             Err(BaselineFault::Metadata(_))
         ));
         let mut forged = result;
         forged.counts.outputs = 3;
         assert!(matches!(
-            baseline.check(&index, &hash, &[forged]),
+            baseline.check(&snapshot, &[forged]),
             Err(BaselineFault::Counts(_))
         ));
     }
 
     #[test]
     fn invalid_horizon_null_counts_restores_and_boundary_credit_are_rejected() {
-        let (index, baseline, _, hash) = fixture();
+        let (snapshot, baseline, _) = fixture();
         for counts in [
             Counts {
                 cuts: 2,
@@ -417,7 +494,7 @@ mod tests {
             let mut invalid = baseline.clone();
             invalid.cases[0].counts = counts;
             assert!(matches!(
-                invalid.validate_index(&index, &hash),
+                invalid.validate_index(&snapshot),
                 Err(BaselineFault::InvalidClaim(_))
             ));
         }
@@ -429,10 +506,10 @@ mod tests {
         };
         boundary.cases[0].counts = Counts::default();
         boundary.cases[0].observation_sha256.clear();
-        assert!(boundary.validate_index(&index, &hash).is_ok());
+        assert!(boundary.validate_index(&snapshot).is_ok());
         boundary.cases[0].expected = Outcome::Pass;
         assert!(matches!(
-            boundary.validate_index(&index, &hash),
+            boundary.validate_index(&snapshot),
             Err(BaselineFault::InvalidClaim(_))
         ));
     }

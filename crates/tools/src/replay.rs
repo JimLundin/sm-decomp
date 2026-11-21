@@ -133,8 +133,26 @@ pub fn run(args: &[String]) -> Result<String, String> {
     {
         return Err("select --all, --case or --rule explicitly".to_owned());
     }
-    let index = replay::read_index(Path::new(index_path))
+    let snapshot = replay::read_index(Path::new(index_path))
         .map_err(|fault| format!("case index: {fault:?}"))?;
+    let baseline = options
+        .baseline
+        .as_ref()
+        .filter(|_| command != Operation::List)
+        .map(|path| {
+            replay::baseline::Baseline::read(path)
+                .map_err(|fault| format!("replay baseline: {fault:?}"))
+        })
+        .transpose()?;
+    if command == Operation::Check && baseline.is_none() {
+        return Err("check requires --baseline".to_owned());
+    }
+    if let Some(baseline) = &baseline {
+        baseline
+            .validate_index(&snapshot)
+            .map_err(|fault| format!("replay baseline: {fault:?}"))?;
+    }
+    let index = snapshot.index();
     options.sources.lock.clone_from(&index.lock);
     let selected = index
         .select(&options.ids, options.rule.as_deref(), options.kind)
@@ -155,25 +173,6 @@ pub fn run(args: &[String]) -> Result<String, String> {
     if command == Operation::List {
         return Ok(list(&selected));
     }
-    let index_bytes =
-        std::fs::read(index_path).map_err(|_| "index bytes unavailable".to_owned())?;
-    let index_sha256 = verify::lock::Sha256::of(&index_bytes).to_string();
-    let baseline = options
-        .baseline
-        .as_ref()
-        .map(|path| {
-            replay::baseline::Baseline::read(path)
-                .map_err(|fault| format!("replay baseline: {fault:?}"))
-        })
-        .transpose()?;
-    if command == Operation::Check && baseline.is_none() {
-        return Err("check requires --baseline".to_owned());
-    }
-    if let Some(baseline) = &baseline {
-        baseline
-            .validate_index(&index, &index_sha256)
-            .map_err(|fault| format!("replay baseline: {fault:?}"))?;
-    }
     let (results, elapsed) = measure(command, &selected, &options.sources)?;
     let mut output = receipt(&results)?;
     if let Some(path) = &options.write {
@@ -185,7 +184,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
     if let Some(baseline) = &baseline {
         let ids: Vec<_> = selected.iter().map(|case| case.id.clone()).collect();
         let summary = baseline
-            .check_selected(&index, &index_sha256, &ids, &results)
+            .check_selected(&snapshot, &ids, &results)
             .map_err(|fault| format!("{output}\nreplay baseline: {fault:?}"))?;
         output.push_str("\n[baseline]\n");
         output.push_str(
@@ -282,4 +281,58 @@ fn receipt(results: &[CaseResult]) -> Result<String, String> {
         cases: results,
     })
     .map_err(|_| "receipt encoding failed".to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use verify::replay::{baseline::Baseline, result::Outcome};
+
+    #[test]
+    fn check_selected_movie_preserves_the_reviewed_boundary() {
+        #[derive(serde::Deserialize)]
+        struct Receipt {
+            cases: Vec<CaseResult>,
+            baseline: BoundarySummary,
+        }
+        #[derive(serde::Deserialize)]
+        struct BoundarySummary {
+            #[serde(rename = "passed_cases")]
+            passed: usize,
+            #[serde(rename = "held_boundary_cases")]
+            held_boundary: usize,
+            #[serde(rename = "unsupported_cases")]
+            unsupported: usize,
+        }
+
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/replay");
+        let baseline_path = root.join("baseline.toml");
+        let id = "movie/missing-power-on";
+        let args = vec![
+            "check".to_owned(),
+            root.join("index.toml").to_string_lossy().into_owned(),
+            "--baseline".to_owned(),
+            baseline_path.to_string_lossy().into_owned(),
+            "--case".to_owned(),
+            id.to_owned(),
+        ];
+        let output: Receipt = toml::from_str(&run(&args).unwrap()).unwrap();
+        let [case] = output.cases.as_slice() else {
+            panic!("expected one selected receipt");
+        };
+        let baseline = Baseline::read(&baseline_path).unwrap();
+        let floor = baseline
+            .cases
+            .iter()
+            .find(|floor| floor.id.0 == id)
+            .unwrap();
+        assert_eq!(case.id, floor.id);
+        assert!(matches!(case.outcome, Outcome::Unsupported { .. }));
+        assert_eq!(case.outcome, floor.expected);
+        assert_eq!(case.counts, floor.counts);
+        assert_eq!(case.observation_sha256, floor.observation_sha256);
+        assert_eq!(output.baseline.passed, 0);
+        assert_eq!(output.baseline.held_boundary, 1);
+        assert_eq!(output.baseline.unsupported, 1);
+    }
 }

@@ -7,19 +7,14 @@ fn fixture() -> (PathBuf, Index, Mapping, Baseline) {
         .canonicalize()
         .unwrap();
     let path = root.join("scenarios/replay/index.toml");
-    let index = replay::read_index(&path).unwrap();
+    let snapshot = replay::read_index(&path).unwrap();
     let mapping = Mapping::parse(
         &std::fs::read_to_string(root.join("scenarios/replay/code-map.toml")).unwrap(),
     )
     .unwrap();
     let baseline = Baseline::read(&root.join("scenarios/replay/baseline.toml")).unwrap();
-    baseline
-        .validate_index(
-            &index,
-            &verify::lock::Sha256::of(&std::fs::read(path).unwrap()).to_string(),
-        )
-        .unwrap();
-    (root, index, mapping, baseline)
+    baseline.validate_index(&snapshot).unwrap();
+    (root, snapshot.into_index(), mapping, baseline)
 }
 
 #[test]

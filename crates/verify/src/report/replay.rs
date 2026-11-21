@@ -4,9 +4,8 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::Path;
 
-use crate::lock::Sha256;
 use crate::replay::baseline::{Baseline, Floor};
-use crate::replay::index::{Case, CaseKind, Index};
+use crate::replay::index::{Case, CaseKind, IndexSnapshot};
 use crate::replay::result::Outcome;
 
 const INDEX: &str = "scenarios/replay/index.toml";
@@ -18,20 +17,20 @@ pub(super) struct Snapshot {
 
 impl Snapshot {
     pub(super) fn read(root: &Path) -> Result<Self, String> {
-        let bytes = std::fs::read(root.join(INDEX)).map_err(|_| format!("{INDEX}: unavailable"))?;
-        let text = std::str::from_utf8(&bytes).map_err(|_| format!("{INDEX}: invalid UTF-8"))?;
-        let index = Index::parse(text).map_err(|fault| format!("{INDEX}: {fault:?}"))?;
+        let snapshot = IndexSnapshot::read(&root.join(INDEX))
+            .map_err(|fault| format!("{INDEX}: {fault:?}"))?;
         let baseline = Baseline::read(&root.join(BASELINE))
             .map_err(|fault| format!("{BASELINE}: {fault:?}"))?;
         baseline
-            .validate_index(&index, &Sha256::of(&bytes).to_string())
+            .validate_index(&snapshot)
             .map_err(|fault| format!("{BASELINE}: {fault:?}"))?;
         let mut floors: BTreeMap<_, _> = baseline
             .cases
             .into_iter()
             .map(|floor| (floor.id.clone(), floor))
             .collect();
-        let rows = index
+        let rows = snapshot
+            .into_index()
             .cases
             .into_iter()
             .map(|case| {
