@@ -207,6 +207,8 @@ enum Coordinates {
     RowLocalCache,
     NativeFixture,
     WithinVideoNativeOpportunity,
+    NativeSenderOfferCut,
+    ConstructedSenderOfferCut,
     PowerOn,
 }
 
@@ -215,6 +217,8 @@ const fn coordinates(case: &Case) -> Coordinates {
         Start::CacheCut { .. } => Coordinates::RowLocalCache,
         Start::NativeOpportunity { .. } => Coordinates::WithinVideoNativeOpportunity,
         Start::NativeSeed { .. } | Start::NativeCheckpoint { .. } => Coordinates::NativeFixture,
+        Start::NativeSenderOffer { .. } => Coordinates::NativeSenderOfferCut,
+        Start::ConstructedSenderOffer { .. } => Coordinates::ConstructedSenderOfferCut,
         Start::PowerOn => Coordinates::PowerOn,
     }
 }
