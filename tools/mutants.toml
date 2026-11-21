@@ -317,3 +317,13 @@ after = '''let warning = after.health_opportunity(&samus_health::Rules::REFERENC
 case = "frame/ordinary-requested-nmi-return"
 cut = 1
 field = "frame.health.energy.fraction"
+
+[[fault]]
+name = "retained-frame-haze-band-intensity"
+responsibility = "world-haze"
+file = "crates/game/src/production/frame/haze.rs"
+before = "intensity: BandIntensity(level.get()),"
+after = "intensity: BandIntensity(level.get() ^ 1),"
+case = "frame/ordinary-requested-nmi-return"
+cut = 1
+field = "frame.outputs[12].value"

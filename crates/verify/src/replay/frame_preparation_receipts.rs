@@ -1,13 +1,12 @@
 //! Typed imports of separately qualified actual unselected preparation completions.
-use game::production::frame::borrowed::{ActorEligibilityOrigin, ActorSlot, SpriteBuilderOrigin};
+use game::production::frame::borrowed::{ActorEligibilityOrigin, ActorSlot};
 use game::production::frame::borrowed_preparation::{
-    ActorEligibilityReceipt, ActorSlotIdentity, BuilderCompletionReceipt, DebugAction,
-    DebugCompletionReceipt, DebugMode, DebugOrigin, DeferredRandomReceipt,
-    PaletteCompletionReceipt, PaletteDisposition, PaletteOrigin, PaletteSlot, PhysicalPadEdges,
-    RandomSeed, RequiredFirstSeedProduct, RequiredSecondSeedProductLow,
+    ActorEligibilityReceipt, ActorSlotIdentity, DebugAction, DebugCompletionReceipt, DebugMode,
+    DebugOrigin, DeferredRandomReceipt, PaletteCompletionReceipt, PaletteDisposition,
+    PaletteOrigin, PaletteSlot, PhysicalPadEdges, RandomSeed, RequiredFirstSeedProduct,
+    RequiredSecondSeedProductLow,
 };
 use serde::Deserialize;
-use std::fmt::Write;
 
 /// Invalid current origin, external completion or physical result dependency.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -20,8 +19,6 @@ pub enum PreparationFault {
     Dependency,
     /// Unsupported owner arm, terminal fact or consumption contract.
     Unsupported,
-    /// Separate terminal content does not match its admitted source member.
-    Content,
 }
 #[derive(Deserialize)]
 #[serde(transparent)]
@@ -48,74 +45,6 @@ impl Contract {
         }
         Ok(())
     }
-}
-#[derive(Deserialize)]
-struct BuilderProjection {
-    #[serde(flatten)]
-    contract: Contract,
-    dependency_builder_content: Vec<u8>,
-    terminal_builder_content_sha256: String,
-    terminal_cursor: String,
-    terminal_prepared_flags: String,
-    terminal_top_definition: String,
-    terminal_bottom_definition: String,
-    source_observed_low_backing_preserved: ContractFlag,
-    adapter_clears_builder: ContractFlag,
-}
-
-/// Import the actual external builder result; never clear or generate builder contents.
-/// Admission pins the separate terminal member and complete source opportunity.
-/// Apply only at the full actual operation completion, revalidate the complete current
-/// builder and consume once; later sprite appends use this actual terminal owner.
-/// # Errors
-/// Rejects malformed contracts, changed current backing and invalid terminal content.
-pub fn builder(
-    current: &SpriteBuilderOrigin,
-    projection: &str,
-    terminal_content: &[u8],
-) -> Result<BuilderCompletionReceipt, PreparationFault> {
-    let receipt: BuilderProjection =
-        toml::from_str(projection).map_err(|_| PreparationFault::Format)?;
-    receipt.contract.validate("BeginSpriteList")?;
-    if receipt.terminal_cursor != "Beginning"
-        || receipt.terminal_prepared_flags != "None"
-        || receipt.terminal_top_definition != "None"
-        || receipt.terminal_bottom_definition != "None"
-        || !receipt.source_observed_low_backing_preserved.0
-        || receipt.adapter_clears_builder.0
-    {
-        return Err(PreparationFault::Unsupported);
-    }
-    if receipt.dependency_builder_content.as_slice() != current.backing {
-        return Err(PreparationFault::Dependency);
-    }
-    let backing: [u8; 544] = terminal_content
-        .try_into()
-        .map_err(|_| PreparationFault::Length)?;
-    let mut digest = String::with_capacity(64);
-    for byte in data::rom::sha256(terminal_content) {
-        write!(&mut digest, "{byte:02x}").map_err(|_| PreparationFault::Content)?;
-    }
-    if digest != receipt.terminal_builder_content_sha256 {
-        return Err(PreparationFault::Content);
-    }
-    if !backing
-        .iter()
-        .take(512)
-        .eq(current.backing.iter().take(512))
-    {
-        return Err(PreparationFault::Content);
-    }
-    Ok(BuilderCompletionReceipt {
-        dependency: current.clone(),
-        terminal: SpriteBuilderOrigin {
-            backing,
-            cursor: 0,
-            prepared_flags: 0,
-            prepared_top: 0,
-            prepared_bottom: 0,
-        },
-    })
 }
 #[derive(Deserialize)]
 struct ActorProjection {

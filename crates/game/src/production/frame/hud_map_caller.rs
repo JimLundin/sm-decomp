@@ -311,18 +311,12 @@ impl State {
             let tilemap = super::hud::tilemap(context.result.state()).map_err(|_| missing())?;
             if context.produced.as_ref() != Some(&context.result)
                 || !context.result.events().is_empty()
-                || self
+                || !self
                     .content
-                    .completed
-                    .iter()
-                    .filter(|output| output.buffer == super::Buffer::HudTilemap)
-                    .count()
-                    != 1
-                || !self.content.completed.iter().any(|output| {
-                    output.buffer == super::Buffer::HudTilemap
-                        && output.region.start == admitted.address
-                        && output.region.bytes == tilemap
-                })
+                    .ready_buffer(super::Buffer::HudTilemap)
+                    .is_some_and(|output| {
+                        output.region.start == admitted.address && output.region.bytes == tilemap
+                    })
             {
                 return Err(missing());
             }

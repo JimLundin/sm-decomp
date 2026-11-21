@@ -8,8 +8,30 @@ use serde::{Deserialize, Serialize};
 pub struct BuilderCompletionReceipt {
     /// Complete actual current builder, before its operation.
     pub dependency: SpriteBuilderOrigin,
-    /// Complete actual terminal builder supplied by its external owner.
+    /// Complete builder after the current sprite-list reset.
     pub terminal: SpriteBuilderOrigin,
+}
+
+impl BuilderCompletionReceipt {
+    /// Reset the high OAM backing and leave the previous low bytes available.
+    #[must_use]
+    pub fn reset(dependency: SpriteBuilderOrigin) -> Self {
+        const LOW_BACKING_BYTES: usize = 512;
+        let mut backing = dependency.backing;
+        for byte in backing.iter_mut().skip(LOW_BACKING_BYTES) {
+            *byte = 0;
+        }
+        Self {
+            dependency,
+            terminal: SpriteBuilderOrigin {
+                backing,
+                cursor: 0,
+                prepared_flags: 0,
+                prepared_top: 0,
+                prepared_bottom: 0,
+            },
+        }
+    }
 }
 
 /// Physical raw actor slot identity, independent of list position or geometry.

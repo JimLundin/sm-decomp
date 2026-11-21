@@ -147,7 +147,7 @@ impl ActualReader {
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
             (Self::Frame(actual), InputReader::Frame(_), ProductionOutputs::Frame(outputs)) => {
-                actual.accept(production, outputs, cut)
+                actual.accept(production, &outputs, cut)
             }
             (
                 Self::NativeSearch(retained),
@@ -253,7 +253,7 @@ impl ActualReader {
         }
     }
 
-    pub fn publication_count(&self) -> usize {
+    pub const fn publication_count(&self) -> usize {
         match self {
             Self::Frame(actual) => actual.publication_count(),
             Self::Audio { publications, .. } => publications.len(),

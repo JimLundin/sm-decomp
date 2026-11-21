@@ -70,6 +70,12 @@ pub struct State {
     pub drawing: Option<super::interrupts::DrawingState>,
     /// Retained hardware, charges and suspended interrupt parents.
     pub timing: timing::State,
+    /// Current music countdown and queue disposition.
+    pub music: Option<super::borrowed_receipts::MusicServiceReceipt>,
+    /// Complete current Haze model and its physical transport.
+    pub haze: Option<super::haze::Haze>,
+    /// Live sprite-builder backing before the next reset consumes it.
+    pub sprite_builder: Option<super::borrowed::SpriteBuilderOrigin>,
     /// Current movement, including accepted requests and answers.
     pub movement: Movement,
     /// Retained physical operation metadata; current movement remains in its sole owner.
@@ -133,6 +139,8 @@ pub struct State {
     pub late_hud: super::late_hud::Stage,
     /// Carried current and prior-frame Drawing and final controller history.
     pub frame_history: Option<super::frame_history::History>,
+    /// Current physical action bindings, independently owned across returns.
+    pub pose_input_configuration: Option<super::pose_input::Configuration>,
     /// Independently admitted post-background room scope.
     pub room_tail_origin: Option<super::room_tail::Admission>,
     /// Actual block and room work before play time.
@@ -320,6 +328,7 @@ impl State {
             return Err(Fault::InvalidPlayerEntry);
         }
         self.validate_player_entry()?;
+        self.validate_prelude()?;
         if self
             .samus_palette
             .as_ref()

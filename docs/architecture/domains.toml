@@ -8,9 +8,9 @@
 #
 # [[domain]]: a clean-room domain of the plan. `area` is the part of the game it belongs to:
 # samus, weapons, world, enemy, boss, interface, run, game, screens or audio, and the first word of
-# its model's name; `rounds` is the plan's estimate of its rounds; `model` the model crate that
-# holds it, once one does; `status` is "not-started" (the default), "in-progress" or "done", and
-# a domain past "not-started" names its model.
+# each model's name; `rounds` is the plan's estimate of its rounds; `model` is the model crate or list of model crates
+# that hold it; `status` is "not-started" (the default), "in-progress" or "done", and
+# a domain past "not-started" names at least one model.
 #
 # A domain's `reads` are the ids of the domains whose exports it reads: the domain graph, which
 # the report draws in docs/REPORT.md with an arrow from each exporter to its reader. Most are
@@ -81,6 +81,10 @@ rounds = 1
 
 [[model]]
 name = "world-quake"
+rounds = 1
+
+[[model]]
+name = "world-haze"
 rounds = 1
 
 [[model]]
@@ -357,7 +361,7 @@ area = "world"
 wave = 3
 rounds = 4
 reads = ["R1"]
-model = "world-quake"
+model = ["world-quake", "world-haze"]
 status = "in-progress"
 
 [[domain]]

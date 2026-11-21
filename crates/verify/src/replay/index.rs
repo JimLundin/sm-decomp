@@ -58,6 +58,8 @@ pub enum Responsibility {
     GameTime,
     /// Complete room quake timer and phase after its quiet opportunity.
     WorldQuake,
+    /// The current Ceres backdrop haze and its band publication.
+    WorldHaze,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -112,6 +114,21 @@ pub enum Start {
 pub struct End {
     /// Last compared original cut.
     pub cut_inclusive: u64,
+    /// Pinned return schedule for a native frame case spanning multiple cuts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_returns: Option<NativeReturns>,
+}
+
+/// Source supplement for consecutive native frame returns.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct NativeReturns {
+    /// First compared return in the native fixture coordinates.
+    pub first_cut: u64,
+    /// Supplement manifest path relative to the native fixture directory.
+    pub path: PathBuf,
+    /// Exact supplement manifest SHA-256.
+    pub sha256: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -570,6 +587,9 @@ fn rule_exists(rule: &str) -> bool {
         || run_progress::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("run-progress/{id:?}"))
+        || world_haze::catalogue()
+            .iter()
+            .any(|(id, _)| rule == format!("world-haze/{id:?}"))
         || world_quake::CATALOGUE
             .iter()
             .any(|entry| rule == format!("world-quake/{:?}", entry.id))
@@ -693,6 +713,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("samus-health/", Responsibility::Health),
         ("game-time/", Responsibility::GameTime),
         ("world-quake/", Responsibility::WorldQuake),
+        ("world-haze/", Responsibility::WorldHaze),
     ]
     .iter()
     .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
@@ -1046,6 +1067,7 @@ fn scope_valid(case: &Case) -> bool {
     if case.inputs == InputProvider::NativeFrameOwners {
         let mut frame_owners = owners.clone();
         frame_owners.remove(&Responsibility::Health);
+        let haze = frame_owners.remove(&Responsibility::WorldHaze);
         let compares_final_owners = case.compares_final_frame_owners();
         if compares_final_owners {
             frame_owners.remove(&Responsibility::GameTime);
@@ -1053,6 +1075,11 @@ fn scope_valid(case: &Case) -> bool {
         }
         return case.kind == CaseKind::Integrated
             && case.content == ContentProvider::PlayerRomImport
+            && haze
+                == case
+                    .rules
+                    .iter()
+                    .any(|rule| rule.starts_with("world-haze/"))
             && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
             && matches!(case.start, Start::NativeSeed { .. })
             && frame_owners
@@ -1163,6 +1190,13 @@ impl Case {
             || (observations.is_empty() && case.inputs != InputProvider::Unavailable)
             || unique.len() != observations.len()
             || !start_valid
+            || case.end.native_returns.as_ref().is_some_and(|returns| {
+                case.inputs != InputProvider::NativeFrameOwners
+                    || returns.first_cut == 0
+                    || returns.first_cut >= case.end.cut_inclusive
+                    || returns.path.as_os_str().is_empty()
+                    || !valid_hash(&returns.sha256)
+            })
             || !scope_valid(case)
             || case.borrowed.iter().any(|borrowed| {
                 borrowed.dependency.is_empty()
@@ -1185,9 +1219,11 @@ impl Case {
                 frame.checked_add(1)
             }
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
-            // A retained frame compares its single return, after the native admission.
             Start::NativeSeed { .. } if matches!(self.inputs, InputProvider::NativeFrameOwners) => {
-                Some(self.end.cut_inclusive)
+                Some(match &self.end.native_returns {
+                    Some(returns) => returns.first_cut,
+                    None => self.end.cut_inclusive,
+                })
             }
             Start::NativeSeed { .. } | Start::PowerOn => Some(0),
         }

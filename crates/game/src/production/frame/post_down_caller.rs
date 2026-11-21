@@ -13,7 +13,7 @@ pub enum Stage {
     /// The whole Contact owner is charging; neither consumer is published early.
     Contact {
         /// Actual retained Appearance choice.
-        appearance: appearance_caller::Stage,
+        appearance: Box<appearance_caller::Stage>,
         /// Actual completed ordinary Movement at this opportunity.
         movement: super::movement::Movement,
         /// Actual completed Down producer.
@@ -26,13 +26,13 @@ pub enum Stage {
         graphics_chosen: super::rendering_stage::Contacts,
     },
     /// Actual Contact and Part2 completed; transport has not enqueued the sound.
-    ContactComplete(ContactCompleted),
+    ContactComplete(Box<ContactCompleted>),
     /// Actual transport enqueue is chosen privately while its whole envelope charges.
     SoundOffer {
         /// Actual completed Contact supplying this sole request.
-        contact: ContactCompleted,
+        contact: Box<ContactCompleted>,
         /// Current appearance output stream before this consumer.
-        appearance: crate::production::appearance::Work,
+        appearance: Box<crate::production::appearance::Work>,
         /// Actual transport owners before enqueue.
         senders_before: super::Senders,
         /// Actual output consumer before enqueue.
@@ -49,16 +49,16 @@ pub enum Stage {
         current: super::post_down_contract::OfferCurrent,
     },
     /// Actual transport enqueue returned before Poststep begins.
-    SoundComplete(SoundCompleted),
+    SoundComplete(Box<SoundCompleted>),
     /// Actual ordinary travel and Stage0 echo disposition await Poststep return.
     Poststep {
         /// Actual preceding completed producers.
-        sound: SoundCompleted,
+        sound: Box<SoundCompleted>,
         /// Actual borrowed Stage0 appearance owner at this opportunity.
-        appearance: crate::production::appearance::Work,
+        appearance: Box<crate::production::appearance::Work>,
     },
     /// Actual Poststep returned, before the `HUDMap` consumer.
-    Complete(PoststepCompleted),
+    Complete(Box<PoststepCompleted>),
 }
 
 /// Actual completed Contact and its ordinary producer provenance.
@@ -80,7 +80,7 @@ pub struct SoundCompleted {
     /// Actual matching physical identity returned by transport enqueue.
     work: WorkId,
     /// Actual Contact supplying the request.
-    contact: ContactCompleted,
+    contact: Box<ContactCompleted>,
     /// Actual completed transport queues and progress.
     senders: super::Senders,
     /// Actual completed sound consumer position.
@@ -95,9 +95,9 @@ pub struct PoststepCompleted {
     /// Actual matching physical identity returned by Poststep.
     work: WorkId,
     /// Actual completed upstream producer chain.
-    sound: SoundCompleted,
+    sound: Box<SoundCompleted>,
     /// Actual borrowed echo disposition consumed by this Stage0 return.
-    appearance: crate::production::appearance::Work,
+    appearance: Box<crate::production::appearance::Work>,
 }
 
 const fn missing() -> ProductionFault {
@@ -140,7 +140,7 @@ impl Stage {
                 ..
             } => {
                 contact.holds(state).is_ok()
-                    && state.appearance == *appearance
+                    && state.appearance == **appearance
                     && state.senders == *senders_before
                     && state.sound_offers == *offers_before
                     && state.sender_queues.as_ref() == Some(queues_before)
@@ -148,12 +148,12 @@ impl Stage {
             }
             Self::SoundComplete(sound) => sound.holds(state).is_ok(),
             Self::Poststep { sound, appearance } => {
-                sound.holds(state).is_ok() && state.appearance == *appearance
+                sound.holds(state).is_ok() && state.appearance == **appearance
             }
             Self::Complete(poststep) => {
                 poststep.work == WorkId(1106)
                     && poststep.sound.holds(state).is_ok()
-                    && poststep.appearance == state.appearance
+                    && *poststep.appearance == state.appearance
                     && poststep.appearance.model.0.state.stage == types::BoostStage::Stage0
             }
         }
@@ -275,7 +275,7 @@ impl State {
             .map_err(|_| missing())?;
         let retained = Stage::SoundOffer {
             contact: contact.clone(),
-            appearance: self.appearance.clone(),
+            appearance: Box::new(self.appearance.clone()),
             current,
             senders_before: self.senders.clone(),
             offers_before: self.sound_offers.clone(),
@@ -321,7 +321,7 @@ impl State {
             return Err(missing());
         };
         contact.holds(self)?;
-        if self.appearance != *appearance
+        if self.appearance != **appearance
             || self.senders != *senders_before
             || self.sound_offers != *offers_before
             || self.sender_queues.as_ref() != Some(queues_before)
@@ -392,13 +392,13 @@ impl State {
         candidate.senders = senders_chosen.clone();
         candidate.sound_offers = offers_chosen.clone();
         candidate.sender_queues = Some(queues_chosen.clone());
-        let retained = Stage::SoundComplete(SoundCompleted {
+        let retained = Stage::SoundComplete(Box::new(SoundCompleted {
             work,
             contact: contact.clone(),
             senders: senders_chosen.clone(),
             offers: offers_chosen.clone(),
             queues: queues_chosen.clone(),
-        });
+        }));
         let Caller::PlayerContinuation {
             post_down,
             charging,
@@ -433,7 +433,7 @@ impl State {
             .map_err(|_| missing())?;
         let retained = Stage::Poststep {
             sound: sound.clone(),
-            appearance: self.appearance.clone(),
+            appearance: Box::new(self.appearance.clone()),
         };
         self.timing
             .begin(WorkId(1106), profile)
@@ -461,7 +461,7 @@ impl State {
             return Err(missing());
         };
         sound.holds(self)?;
-        if self.appearance != *appearance {
+        if self.appearance != **appearance {
             return Err(missing());
         }
         content
@@ -489,11 +489,11 @@ impl State {
         else {
             return Err(missing());
         };
-        let retained = Stage::Complete(PoststepCompleted {
+        let retained = Stage::Complete(Box::new(PoststepCompleted {
             work,
             sound: sound.clone(),
             appearance: appearance.clone(),
-        });
+        }));
         let Caller::PlayerContinuation {
             post_down,
             charging,
@@ -562,7 +562,7 @@ impl State {
             .map_err(ProductionFault::FrameHardware)?;
         appearance.bind(work).map_err(|_| missing())?;
         let retained = Stage::Contact {
-            appearance,
+            appearance: Box::new(appearance),
             movement: self.movement.clone(),
             down,
             current: current_model,
@@ -681,12 +681,12 @@ impl State {
         let mut graphics = graphics_chosen.clone();
         super::rendering_stage::consume_contacts(&mut graphics, work).map_err(|_| missing())?;
         candidate.graphical_contacts = graphics;
-        let retained = Stage::ContactComplete(ContactCompleted {
+        let retained = Stage::ContactComplete(Box::new(ContactCompleted {
             completion,
             movement: movement.clone(),
             down: down.clone(),
             current: *current,
-        });
+        }));
         let Caller::PlayerContinuation {
             post_down,
             charging,

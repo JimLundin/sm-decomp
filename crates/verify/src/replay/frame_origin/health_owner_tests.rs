@@ -605,20 +605,163 @@ fn check_complete_frame_from(reached: impl Fn(&frame::State) -> bool) {
     let mut reopened =
         Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
     assert_observation_eq!(reopened.state(), admitted.production.state());
-    for production in [&mut admitted.production, &mut reopened] {
-        let terminal = production.state().clone();
-        assert!(matches!(
-            production.advance(AdvanceInput::Frame { budget }),
-            Err(ProductionFault::Unsupported(Unsupported::Frame(_)))
-        ));
-        assert_observation_eq!(production.state(), &terminal);
-    }
     let OwnedState::Frame(original) = admitted.production.state() else {
         panic!("frame state")
     };
     reject_inconsistent_return_history(original);
+    start_next_opportunity(&mut admitted, &mut reopened);
 }
 
+fn start_next_opportunity(admitted: &mut AdmittedCase, restored_return: &mut Production) {
+    use data::timing::MasterTicks;
+
+    let OwnedState::Frame(returned) = admitted.production.state() else {
+        panic!("frame state")
+    };
+    let controller = returned.frame_history.as_ref().unwrap().controller();
+    let health = *returned.health.as_ref().unwrap().state();
+    let play_time = returned.play_time.current();
+    let room_quake = returned.room_quake.current();
+    let movement = *returned.movement.state();
+    let hud = returned.hud.state().clone();
+    let buffers = returned.content.regions();
+    let haze = returned.haze.clone();
+    let now = returned.timing.hardware.now;
+    let prefix = returned.publications.clone();
+    let music = returned.music.unwrap();
+    let tick = || AdvanceInput::Frame {
+        budget: MasterTicks(1),
+    };
+    let game::production::ProductionOutputs::Frame(first) =
+        admitted.production.advance(tick()).unwrap()
+    else {
+        panic!("frame output");
+    };
+    assert_observation_eq!(
+        restored_return.advance(tick()).unwrap(),
+        game::production::ProductionOutputs::Frame(first.clone())
+    );
+    let mut delivered = first.events;
+    for _ in 0..100 {
+        let OwnedState::Frame(state) = admitted.production.state() else {
+            panic!("frame state")
+        };
+        if state.timing.hardware.now > now {
+            break;
+        }
+        let game::production::ProductionOutputs::Frame(output) =
+            admitted.production.advance(tick()).unwrap()
+        else {
+            panic!("frame output");
+        };
+        delivered.extend(output.events);
+    }
+    let OwnedState::Frame(started) = admitted.production.state() else {
+        panic!("frame state")
+    };
+    assert!(matches!(
+        started.caller,
+        frame::Caller::Acknowledgment {
+            prelude: frame::PreludeSource::Recurring,
+            ..
+        }
+    ));
+    assert!(started.timing.hardware.now > now);
+    let saved = admitted.production.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+
+    for (production, budget) in [
+        (&mut admitted.production, MasterTicks(10_000)),
+        (&mut restored, MasterTicks(1)),
+    ] {
+        let mut events = delivered.clone();
+        events.extend(complete_recurring_prelude(production, budget, now));
+        let OwnedState::Frame(frame) = production.state() else {
+            panic!("frame state")
+        };
+        assert_observation_eq!(frame.music, Some(music));
+        assert_observation_eq!(frame.health.as_ref().unwrap().state(), &health);
+        assert_observation_eq!(frame.play_time.current(), play_time);
+        assert_observation_eq!(frame.room_quake.current(), room_quake);
+        assert_observation_eq!(frame.movement.state(), &movement);
+        assert_observation_eq!(frame.hud.state(), &hud);
+        assert_observation_eq!(frame.content.regions(), buffers);
+        assert_observation_eq!(frame.haze, haze);
+        assert!(matches!(
+            frame.return_progress,
+            frame::frame_return::Stage::Pending
+        ));
+        assert!(matches!(frame.late_hud, frame::late_hud::Stage::Pending));
+        assert!(!frame.hud_map.is_complete());
+        assert!(!frame.play_time.is_complete());
+        assert_observation_eq!(
+            frame.frame_history.as_ref().unwrap().controller(),
+            controller
+        );
+        assert!(frame.publications.events.starts_with(&prefix.events));
+        assert_observation_eq!(frame.publications.events[prefix.events.len()..], events);
+        let before = production.save().unwrap();
+        assert_observation_eq!(
+            production.advance(tick()),
+            Err(ProductionFault::Unsupported(Unsupported::Frame(
+                frame::Dependency::HazePreparation
+            )))
+        );
+        assert_observation_eq!(production.save().unwrap(), before);
+    }
+    assert_observation_eq!(admitted.production.state(), restored.state());
+}
+
+fn complete_recurring_prelude(
+    production: &mut Production,
+    budget: data::timing::MasterTicks,
+    now: data::timing::MasterTicks,
+) -> Vec<Event> {
+    let mut events = Vec::new();
+    let mut acknowledged = false;
+    for _ in 0..10_000 {
+        match production.advance(AdvanceInput::Frame { budget }) {
+            Ok(game::production::ProductionOutputs::Frame(output)) => {
+                assert_observation_eq!(output.progress, frame::Progress::Advanced);
+                events.extend(output.events);
+                let OwnedState::Frame(frame) = production.state() else {
+                    panic!("frame state")
+                };
+                if matches!(
+                    frame.caller,
+                    frame::Caller::Music {
+                        prelude: frame::PreludeSource::Recurring,
+                        ..
+                    }
+                ) {
+                    assert_observation_eq!(
+                        frame.timing.hardware.now.0.checked_sub(now.0),
+                        Some(214)
+                    );
+                    acknowledged = true;
+                }
+            }
+            Err(ProductionFault::Unsupported(Unsupported::Frame(
+                frame::Dependency::HazePreparation,
+            ))) => break,
+            _ => panic!("unexpected next-opportunity result"),
+        }
+    }
+    let OwnedState::Frame(frame) = production.state() else {
+        panic!("frame state")
+    };
+    assert!(matches!(
+        frame.caller,
+        frame::Caller::Haze {
+            prelude: frame::PreludeSource::Recurring,
+            ..
+        }
+    ));
+    assert!(acknowledged);
+    assert_observation_eq!(frame.timing.hardware.now.0.checked_sub(now.0), Some(720));
+    events
+}
 fn reject_inconsistent_return_history(original: &frame::State) {
     let native = |event: &game::production::timing::Event| {
         event.kind == EventKind::Interrupt(data::timing::Interrupt::Nmi)

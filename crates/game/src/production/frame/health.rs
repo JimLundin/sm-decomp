@@ -83,6 +83,7 @@ pub struct Admission {
 enum Freshness {
     Preserved,
     Invalidated,
+    Retired,
 }
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 enum InterruptHistory {
@@ -106,7 +107,7 @@ pub enum Fault {
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Health {
     current: Model<HealthPin>,
-    origin: Admission,
+    origin: Option<Admission>,
     context: Context,
     actor: Option<Model<ActorCompletionPin>>,
     interrupts: InterruptHistory,
@@ -142,7 +143,7 @@ impl Health {
         Ok(Self {
             current: admission.initial,
             context: admission.context,
-            origin: admission,
+            origin: Some(admission),
             actor: None,
             interrupts: InterruptHistory::Unseen,
             freshness: Freshness::Preserved,
@@ -194,7 +195,7 @@ impl Health {
         &mut self,
         completion: &actors::ActorUpdateCompletion,
     ) -> Result<(), Fault> {
-        self.validate_origin(&self.origin)?;
+        self.validate_origin(self.origin.as_ref().ok_or(Fault::Owner)?)?;
         let dependency = &completion.dependency;
         if self.actor.is_some()
             || completion.solid_boxes().is_err()
@@ -216,9 +217,9 @@ impl Health {
             return Err(Fault::Activity);
         }
         admission.context.qualify()?;
-        if &self.origin != admission
+        if self.origin.as_ref() != Some(admission)
             || self.context != admission.context
-            || (!self.maintained && self.current != self.origin.initial)
+            || (!self.maintained && self.current != admission.initial)
         {
             return Err(Fault::Owner);
         }
@@ -229,7 +230,26 @@ impl Health {
     /// # Errors
     /// Invalidated or changed current inputs cannot regain freshness by restoration.
     pub fn validate_current(&self) -> Result<(), Fault> {
-        self.validate_origin(&self.origin)
+        if self.freshness == Freshness::Retired {
+            return if self.origin.is_none()
+                && self.actor.is_none()
+                && self.interrupts == InterruptHistory::Unseen
+                && !self.maintained
+            {
+                Ok(())
+            } else {
+                Err(Fault::Owner)
+            };
+        }
+        self.validate_origin(self.origin.as_ref().ok_or(Fault::Owner)?)
+    }
+
+    pub(super) fn retire_opportunity(&mut self) {
+        self.actor = None;
+        self.interrupts = InterruptHistory::Unseen;
+        self.maintained = false;
+        self.freshness = Freshness::Retired;
+        self.origin = None;
     }
 
     /// Read fresh current whole energy for the actual pre-Maintenance Animation opportunity.
@@ -288,6 +308,15 @@ impl super::State {
         let missing = || {
             ProductionFault::Unsupported(Unsupported::Frame(super::Dependency::HealthCurrentInputs))
         };
+        if self
+            .health
+            .as_ref()
+            .is_some_and(|health| health.freshness == Freshness::Retired)
+        {
+            // The retained quantities are readable. A fresh maintenance consumer
+            // still requires its own source qualification.
+            return Ok(());
+        }
         let (Some(owner), Some(admission)) = (&self.health, &content.health) else {
             return if self.health.is_none() && content.health.is_none() {
                 Ok(())

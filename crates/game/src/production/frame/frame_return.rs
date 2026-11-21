@@ -224,7 +224,10 @@ impl State {
         use suffix_caller::{NMI_ENTRY, NMI_VIDEO, PREPARATION, Suffix, WAIT};
         use timing::{HandlerCompletion, WorkKind};
 
-        let all = self.publications.events.as_slice();
+        let all = self
+            .publications
+            .active()
+            .map_err(ProductionFault::FramePublications)?;
         let Stage::Ready {
             suffix, admission, ..
         } = &self.return_progress
@@ -444,7 +447,8 @@ impl State {
                 .ok_or_else(missing)?;
             let publication = self
                 .publications
-                .events
+                .active()
+                .map_err(ProductionFault::FramePublications)?
                 .len()
                 .checked_add(local)
                 .and_then(|index| u32::try_from(index).ok())

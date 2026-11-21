@@ -8,10 +8,16 @@ use game::state::owned::OwnedState;
 mod callbacks;
 use crate::lock::Sha256;
 pub(super) use callbacks::{Datum, ProjectionFault, decode_callbacks, decode_endpoint, project};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
 
 /// Independent frozen output and endpoint files, inaccessible to the input reader.
-pub(super) struct Expected {
+pub(super) struct Expected(pub BTreeMap<u64, Return>);
+
+/// Outputs and terminal owners from one independently captured return.
+pub(super) struct Return {
     pub callbacks: PathBuf,
     pub callbacks_sha256: Sha256,
     pub endpoint: PathBuf,
@@ -26,6 +32,15 @@ impl Expected {
         cut: u64,
         compare_health: bool,
     ) -> Result<super::readers::ExpectedCut, Outcome> {
+        self.0
+            .get(&cut)
+            .ok_or_else(|| data_failure(Some(cut), "frame expected return"))?
+            .read(cut, compare_health)
+    }
+}
+
+impl Return {
+    fn read(&self, cut: u64, compare_health: bool) -> Result<super::readers::ExpectedCut, Outcome> {
         if compare_health && self.final_owners.is_none() {
             return Err(data_failure(Some(cut), "missing final Health observations"));
         }
@@ -202,29 +217,21 @@ impl Inputs {
     }
 }
 
-/// Receiver's exact existing prefix; cloned together with each production checkpoint.
+/// Receiver's pending interval and cumulative callback count, saved at each checkpoint.
 #[derive(Clone, Debug, Default)]
 pub(super) struct Actual {
     pub events: Vec<game::production::timing::Event>,
+    delivered: usize,
 }
 
 impl Actual {
-    pub fn publication_count(&self) -> usize {
-        self.events
-            .iter()
-            .filter(|event| {
-                !matches!(
-                    event.kind,
-                    game::production::timing::EventKind::Sample(_, _)
-                        | game::production::timing::EventKind::ControllerCommitted
-                )
-            })
-            .count()
+    pub const fn publication_count(&self) -> usize {
+        self.delivered
     }
     pub fn accept(
         &mut self,
         production: &Production,
-        outputs: frame::Outputs,
+        outputs: &frame::Outputs,
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
         let OwnedState::Frame(state) = production.state() else {
@@ -233,18 +240,36 @@ impl Actual {
         if outputs.progress != frame::Progress::Completed {
             return Err(data_failure(Some(cut), "complete frame output projection"));
         }
-        let mut events = self.events.clone();
-        events.extend(outputs.events);
-        let fields = observations(state, &events, Some(cut))?;
-        self.events = events;
-        Ok(fields)
+        let callbacks = self.finish_interval(&outputs.events, cut)?;
+        Ok(observations(
+            state,
+            canonical::to_bytes(&callbacks),
+            Some(cut),
+        ))
+    }
+
+    fn finish_interval(
+        &mut self,
+        events: &[game::production::timing::Event],
+        cut: u64,
+    ) -> Result<Vec<Datum>, Outcome> {
+        let mut callbacks =
+            project(&self.events).map_err(|fault| projection_failure(Some(cut), fault))?;
+        callbacks.extend(project(events).map_err(|fault| projection_failure(Some(cut), fault))?);
+        self.delivered = self
+            .delivered
+            .checked_add(callbacks.len())
+            .ok_or_else(|| data_failure(Some(cut), "frame delivered callback count"))?;
+        self.events.clear();
+        Ok(callbacks)
     }
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         let OwnedState::Frame(state) = production.state() else {
             return Err(data_failure(None, "frame initial owned scope"));
         };
-        observations(state, &self.events, None)
+        let callbacks = project(&self.events).map_err(|fault| projection_failure(None, fault))?;
+        Ok(observations(state, canonical::to_bytes(&callbacks), None))
     }
 }
 
@@ -262,15 +287,13 @@ fn projection_failure(cut: Option<u64>, fault: ProjectionFault) -> Outcome {
 
 fn observations(
     state: &frame::State,
-    events: &[game::production::timing::Event],
+    callbacks: Vec<u8>,
     return_cut: Option<u64>,
-) -> Result<Vec<Observation>, Outcome> {
+) -> Vec<Observation> {
     let mut fields = vec![
         Observation {
             field: "frame.outputs".to_owned(),
-            bytes: canonical::to_bytes(
-                &project(events).map_err(|fault| projection_failure(return_cut, fault))?,
-            ),
+            bytes: callbacks,
         },
         Observation {
             field: "frame.time".to_owned(),
@@ -294,5 +317,46 @@ fn observations(
     {
         fields.extend(FinalHealth::from(health.state()).fields());
     }
-    Ok(fields)
+    fields
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use game::production::timing::{Event, EventKind};
+
+    #[test]
+    fn verified_return_retires_only_its_projected_callback_interval() {
+        let start = Event {
+            at: MasterTicks(19),
+            kind: EventKind::ControllerStart,
+        };
+        let end = Event {
+            at: MasterTicks(21),
+            kind: EventKind::ControllerEnd,
+        };
+        let next = Event {
+            at: MasterTicks(31),
+            kind: EventKind::ControllerStart,
+        };
+        let mut actual = Actual::default();
+        actual.events.push(start.clone());
+        assert_eq!(
+            actual
+                .finish_interval(std::slice::from_ref(&end), 1)
+                .unwrap(),
+            project(&[start, end]).unwrap()
+        );
+        assert_eq!(actual.publication_count(), 2);
+
+        let next = std::slice::from_ref(&next);
+        let mut checkpoint = actual.clone();
+        for receiver in [&mut actual, &mut checkpoint] {
+            assert_eq!(
+                receiver.finish_interval(next, 2).unwrap(),
+                project(next).unwrap()
+            );
+            assert_eq!(receiver.publication_count(), 3);
+        }
+    }
 }

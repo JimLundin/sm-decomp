@@ -156,6 +156,19 @@ impl Math {
     }
 }
 
+/// First controller port's physical button word in serial order.
+#[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PhysicalPad(pub u16);
+
+/// Full physical button state presented at an absolute hardware time.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PadChange {
+    /// Time in the admitted hardware epoch.
+    pub at: MasterTicks,
+    /// Complete held state, including releases.
+    pub pad: PhysicalPad,
+}
+
 /// Qualified original controller poll continuation and committed physical input.
 #[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
 pub struct Controller {
@@ -171,15 +184,28 @@ pub struct Controller {
     pub serial: u8,
     /// Four accumulated result words.
     pub words: [u16; 4],
-    /// Committed first physical port's twelve meaningful bits.
-    pub committed_pad: u16,
-    /// Independently admitted next row, committed at CPU line 241.
-    pub preview_pad: Option<u16>,
+    /// Held first-port word for hardware serial polling.
+    pub committed_pad: PhysicalPad,
+    /// Ordered, unsampled host changes. These can precede the current hardware time.
+    pub pending_pad: Vec<PadChange>,
 }
 impl Controller {
+    fn commit_pad(&mut self, crossing: MasterTicks, events: &mut Vec<Event>) {
+        let eligible = self
+            .pending_pad
+            .partition_point(|change| change.at <= crossing);
+        if let Some(change) = self.pending_pad.drain(..eligible).next_back() {
+            self.committed_pad = change.pad;
+            events.push(Event {
+                at: crossing,
+                kind: EventKind::ControllerCommitted,
+            });
+        }
+    }
+
     fn shift(&mut self) {
         let bit = if self.serial < 12 {
-            (self.committed_pad >> u32::from(15_u8.wrapping_sub(self.serial))) & 0x1
+            (self.committed_pad.0 >> u32::from(15_u8.wrapping_sub(self.serial))) & 0x1
         } else {
             0
         };
@@ -396,14 +422,8 @@ impl Hardware {
             if beam.position.line <= 224 {
                 beam.thresholds.visible = false;
             }
-            if beam.position.line == 241
-                && let Some(pad) = self.controller.preview_pad.take()
-            {
-                self.controller.committed_pad = pad;
-                events.push(Event {
-                    at: crossing,
-                    kind: EventKind::ControllerCommitted,
-                });
+            if beam.position.line == 241 {
+                self.controller.commit_pad(crossing, events);
             }
         }
         beam.history.rotate_left(1);

@@ -27,7 +27,7 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
     let (root, index, mapping, baseline) = fixture();
     mapping.validate(&index, &root).unwrap();
     let selected = mapping.select(&index, &Selection::default()).unwrap();
-    assert_eq!(selected.len(), 22);
+    assert_eq!(selected.len(), 24);
     let views = views(&mapping, &baseline, &selected).unwrap();
     assert_eq!(
         views
@@ -41,7 +41,7 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
             .iter()
             .filter(|view| view.reviewed_requirement.claim == Claim::Boundary)
             .count(),
-        5
+        7
     );
     let args = vec![
         root.join("scenarios/replay/index.toml")
@@ -79,7 +79,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
         by_file.iter().map(|case| &case.id).collect::<Vec<_>>()
     );
     let report = views(&mapping, &baseline, &by_file).unwrap();
-    assert_eq!(report.len(), 4);
+    assert_eq!(report.len(), 6);
     assert_eq!(
         report
             .iter()
@@ -95,7 +95,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
                 Outcome::Unsupported { .. }
             ))
             .count(),
-        2
+        4
     );
     for case in by_file {
         let by_case = mapping
@@ -118,6 +118,32 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
                     .targets
                     .iter()
                     .any(|target| target.path == "crates/clean/samus_movement/src/travel.rs"))
+        );
+    }
+}
+
+#[test]
+fn haze_settling_lookup_preserves_both_random_boundaries() {
+    let (_, index, mapping, baseline) = fixture();
+    let cases = mapping
+        .select(
+            &index,
+            &Selection {
+                rule: Some("world-haze/HazeSettles".to_owned()),
+                ..Selection::default()
+            },
+        )
+        .unwrap();
+    let report = views(&mapping, &baseline, &cases).unwrap();
+    assert_eq!(report.len(), 2);
+    for view in report {
+        assert_eq!(view.reviewed_requirement.claim, Claim::Boundary);
+        assert_eq!(
+            view.reviewed_requirement.expected,
+            Outcome::Unsupported {
+                cut: Some(2),
+                dependency: "Frame(RandomPreparation)".to_owned(),
+            }
         );
     }
 }
@@ -377,20 +403,33 @@ fn command_queries_round_trip_typed_contracts_and_reviewed_requirements() {
             .to_string_lossy()
             .into_owned(),
     ];
-    for (flag, selector, count) in [
-        ("--case", "movement/W15", 1),
-        ("--rule", "samus-movement/TravelledDistances", 4),
-        ("--rule", "samus-movement/MotionAttempts", 2),
-        ("--rule", "samus-movement/ReachedEnemyCandidates", 2),
-        ("--rule", "samus-movement/PerformedCollisionTests", 2),
-        ("--rule", "samus-movement/PerformedSupportChecks", 2),
-        ("--rule", "samus-movement/PerformedBodyFit", 2),
-        ("--path", "crates/clean/samus_movement/src/travel.rs", 4),
+    let travel = "samus-movement/TravelledDistances";
+    for (flag, selector) in [
+        ("--case", "movement/W15"),
+        ("--rule", travel),
+        ("--rule", "samus-movement/MotionAttempts"),
+        ("--rule", "samus-movement/ReachedEnemyCandidates"),
+        ("--rule", "samus-movement/PerformedCollisionTests"),
+        ("--rule", "samus-movement/PerformedSupportChecks"),
+        ("--rule", "samus-movement/PerformedBodyFit"),
+        ("--path", "crates/clean/samus_movement/src/travel.rs"),
     ] {
         let mut args = prefix.clone();
         args.extend([flag.to_owned(), selector.to_owned()]);
         let report: QueryReport = toml::from_str(&run(&args).unwrap()).unwrap();
-        assert_eq!(report.case.len(), count);
+        let expected = index.cases.iter().filter(|case| match flag {
+            "--case" => case.id.0 == selector,
+            "--path" => case.rules.iter().any(|rule| rule == travel),
+            _ => case.rules.iter().any(|rule| rule == selector),
+        });
+        assert!(!report.case.is_empty());
+        assert!(
+            report
+                .case
+                .iter()
+                .map(|view| &view.declaration.id)
+                .eq(expected.map(|case| &case.id))
+        );
         for view in report.case {
             let original = index
                 .cases

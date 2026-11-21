@@ -30,6 +30,21 @@ fn ready_buffers_survive_restore_without_repeating_completion() {
         restored.regions(),
         vec![region(0, vec![2, 3]), region(2, vec![4, 5])]
     );
+    restored.begin_opportunity();
+    assert_eq!(restored.regions(), before.regions());
+    let next = Materialization {
+        buffer: Buffer::HudTilemap,
+        region: region(2, vec![6, 7]),
+    };
+    restored.complete(next.clone()).unwrap();
+    assert_eq!(
+        restored.complete(next),
+        Err(ContentFault::AlreadyCompleted(Buffer::HudTilemap))
+    );
+    assert_eq!(
+        restored.regions(),
+        vec![region(0, vec![2, 3]), region(2, vec![6, 7])]
+    );
 }
 
 #[test]

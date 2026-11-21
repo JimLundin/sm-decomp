@@ -1,12 +1,7 @@
-//! One-way import of actual default content and a separate external blend completion.
+//! One-way import of immutable default layer-blend operands.
 use data::rom::{Rom, RomAddress};
-use game::production::frame::borrowed_layer_blend::{
-    LayerBlendDefaults, LayerBlendReceipt, PreparedLayerSettings,
-};
-use game::production::frame::borrowed_prelude_receipts::{
-    HazeTerminalReceipt, WindowTwoDisposition,
-};
-use game::state::video::{ColourMathLayers, ColourMathSelect, Layers, WindowSettings};
+use game::production::frame::layer_blend::LayerBlendDefaults;
+use game::state::video::{ColourMathLayers, ColourMathSelect, Layers};
 use serde::Deserialize;
 use std::marker::PhantomData;
 
@@ -70,44 +65,6 @@ struct SelectedHaze {
     actual_haze_selected_blend_encoding: u16,
 }
 #[derive(Deserialize)]
-struct Settings {
-    #[serde(rename = "REG_W12SEL")]
-    window_one_two: u8,
-    #[serde(rename = "REG_W34SEL")]
-    window_three_four: u8,
-    #[serde(rename = "REG_WOBJSEL")]
-    window_objects: u8,
-    #[serde(rename = "REG_TM")]
-    main_screen: u8,
-    #[serde(rename = "REG_TS")]
-    sub_screen: u8,
-    #[serde(rename = "REG_TMW")]
-    main_window_mask: u8,
-    #[serde(rename = "REG_TSW")]
-    sub_window_mask: u8,
-    #[serde(rename = "NEXT_GAMEPLAY_CGWSEL")]
-    colour_math_select: u8,
-    #[serde(rename = "NEXT_GAMEPLAY_CGADSUB")]
-    colour_math_layers: u8,
-}
-impl Settings {
-    fn decode(self) -> Result<PreparedLayerSettings, LayerBlendFault> {
-        Ok(PreparedLayerSettings {
-            window_select: [
-                WindowSettings(self.window_one_two),
-                WindowSettings(self.window_three_four),
-                WindowSettings(self.window_objects),
-            ],
-            main_screen: layers(self.main_screen)?,
-            sub_screen: layers(self.sub_screen)?,
-            main_window_mask: layers(self.main_window_mask)?,
-            sub_window_mask: layers(self.sub_window_mask)?,
-            colour_math_select: ColourMathSelect(self.colour_math_select),
-            colour_math_layers: ColourMathLayers(self.colour_math_layers),
-        })
-    }
-}
-#[derive(Deserialize)]
 struct Projection {
     format: String,
     required_haze_disposition: String,
@@ -121,7 +78,6 @@ struct Projection {
     dependency: SelectedHaze,
     actual_default_content_dependency: DefaultContent,
     immutable_default_input: Vec<Operand>,
-    terminal: Settings,
 }
 impl Projection {
     fn validate(&self) -> Result<(), LayerBlendFault> {
@@ -181,26 +137,39 @@ pub fn defaults(
     )
 }
 
-/// Import a separately observed complete layer-blend result conditional on actual inputs.
-/// Retain unread until the full qualified physical portion completes, revalidate actual
-/// defaults and completed Haze identity, consume once, and preserve all unwritten owners.
-/// # Errors
-/// Rejects malformed projections, changed defaults and unsupported actual dependencies.
-pub fn completion(
-    current: LayerBlendDefaults,
-    haze: &HazeTerminalReceipt,
-    external_projection: &str,
-) -> Result<LayerBlendReceipt, LayerBlendFault> {
-    let projection: Projection =
-        toml::from_str(external_projection).map_err(|_| LayerBlendFault::Format)?;
-    projection.validate()?;
-    if projection.actual_default_content_dependency.decode()? != current {
-        return Err(LayerBlendFault::Content);
+/// Project the nine recorded setting writes for comparison after the actual layer work.
+#[cfg(test)]
+pub fn observed(external_projection: &str) -> Result<[u8; 9], LayerBlendFault> {
+    #[derive(Deserialize)]
+    struct Observations {
+        terminal: Terminal,
     }
-    Ok(LayerBlendReceipt {
-        dependency: current,
-        haze: haze.blend,
-        terminal: projection.terminal.decode()?,
-        window_two: WindowTwoDisposition::Unchanged,
-    })
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+    struct Terminal {
+        reg_w12sel: u8,
+        reg_w34sel: u8,
+        reg_wobjsel: u8,
+        reg_tm: u8,
+        reg_ts: u8,
+        reg_tmw: u8,
+        reg_tsw: u8,
+        next_gameplay_cgwsel: u8,
+        next_gameplay_cgadsub: u8,
+    }
+
+    let Observations { terminal } =
+        toml::from_str(external_projection).map_err(|_| LayerBlendFault::Format)?;
+    Ok([
+        terminal.reg_w12sel,
+        terminal.reg_w34sel,
+        terminal.reg_wobjsel,
+        terminal.reg_tm,
+        terminal.reg_ts,
+        terminal.reg_tmw,
+        terminal.reg_tsw,
+        terminal.next_gameplay_cgwsel,
+        terminal.next_gameplay_cgadsub,
+    ])
 }

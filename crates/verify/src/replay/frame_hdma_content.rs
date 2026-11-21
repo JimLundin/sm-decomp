@@ -246,8 +246,7 @@ fn checked_initial_rom_tables_reject_changed_owner_hash_and_missing_span() {
     let origin = super::frame_origin::hardware_seed::decode(
         &hardware,
         data::timing::IrqPolicy::Eligible,
-        0,
-        0,
+        game::production::timing::PhysicalPad::default(),
     )
     .unwrap();
     let regions = admit(&image, &origin, &text).unwrap();

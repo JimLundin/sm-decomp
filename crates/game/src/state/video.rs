@@ -347,6 +347,15 @@ pub struct ColourMath {
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ColourMathSelect(pub u8);
 
+impl ColourMathSelect {
+    /// Select the fixed colour as the operand while preserving the window policy.
+    #[must_use]
+    pub const fn fixed_operand(self) -> Self {
+        const SUB_SCREEN_OPERAND: u8 = 0b10;
+        Self(self.0 & !SUB_SCREEN_OPERAND)
+    }
+}
+
 /// CGADSUB.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ColourMathLayers(pub u8);

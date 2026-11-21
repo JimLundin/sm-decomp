@@ -5,7 +5,7 @@ use super::borrowed_player_preparation::PlayerContinuationCompletionsPin;
 use super::borrowed_preparation::BuilderCompletionReceipt;
 use super::inputs::FigurePin;
 use super::rendering_stage::{NormalDrawingReceipt, Stage as RenderingStage};
-use super::{Buffer, HazeCompletion, Materialization, Preparation, State};
+use super::{Buffer, Materialization, Preparation, State, haze};
 use crate::production::timing::{self, WorkId};
 use crate::state::owned::MovementPin;
 use canonical::{Canonical, model::Model};
@@ -39,7 +39,7 @@ pub struct ReadyOwners<'a> {
 pub struct PreparedVideo {
     builder_reset: BuilderCompletionReceipt,
     builder: SpriteBuilderOrigin,
-    haze: HazeCompletion,
+    haze: haze::Prepared,
     remaining: Model<PlayerContinuationCompletionsPin>,
     movement: Model<MovementPin>,
     figure: Model<FigurePin>,
@@ -117,19 +117,14 @@ impl PreparedVideo {
         let (hud, _) = state.hud.publication().ok_or(Fault::MissingProducer)?;
         let hud_bytes = super::hud::tilemap(hud).map_err(|_| Fault::ChangedProducer)?;
         let haze_bytes =
-            super::borrowed_prelude_receipts::encode_bands(&owners.prepared.haze.bands.bands)
+            super::borrowed_prelude_receipts::encode_bands(&owners.prepared.haze.bands)
                 .map_err(|_| Fault::ChangedProducer)?;
         let buffer = |kind| {
-            let mut found = state
+            state
                 .content
-                .completed
-                .iter()
-                .filter(|value| value.buffer == kind);
-            let value = found.next().ok_or(Fault::MissingProducer)?;
-            if found.next().is_some() {
-                return Err(Fault::ChangedProducer);
-            }
-            Ok(value.clone())
+                .ready_buffer(kind)
+                .cloned()
+                .ok_or(Fault::MissingProducer)
         };
         let buffers = [
             buffer(Buffer::HazeBackdropBands)?,
@@ -1337,7 +1332,7 @@ nmi_quantities! {
     HazeBlueWire => Byte(values.blue),
     /// Actual `HazeEnabledChannels` quantity.
     HazeEnabledChannels => Byte(haze_channels(
-                &owners.ready.prepared.haze.terminal.enabled_channels,
+                &super::haze::CHANNELS,
             )?),
     /// Actual `BackgroundOneHorizontal` quantity.
     BackgroundOneHorizontal => Word(owners.background.one_horizontal),
@@ -1461,10 +1456,10 @@ impl<'a> NmiValues<'a> {
             sub_window,
             _,
             _,
-        ] = super::borrowed_layer_blend::encode(owners.ready.prepared.layers.terminal)
+        ] = super::layer_blend::encode(owners.ready.prepared.layers.terminal)
             .map_err(|_| Fault::ChangedProducer)?;
         let [red, green, blue] = super::borrowed_prelude_receipts::encode_fixed_colour(
-            owners.ready.prepared.haze.ready.fixed_colour,
+            owners.ready.prepared.haze.fixed_colour,
         );
         let HudQueue::Queued(request) = owners.queue else {
             return Err(Fault::MissingProducer);

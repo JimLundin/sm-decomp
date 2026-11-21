@@ -131,8 +131,8 @@ fn manifest_uses(manifest: &str, crates: &BTreeSet<String>) -> Result<BTreeSet<S
 }
 
 impl Plan {
-    /// The clean crates a crate's domains may use: [`SHARED`], its own, and those of the
-    /// domains they read. `None` when no plan domain is held by the crate's model.
+    /// The clean crates a crate's domains may use: [`SHARED`] and the models of its own
+    /// domains and the domains they read. `None` when no plan domain is held by the crate's model.
     fn allowed(&self, crate_name: &str) -> Option<BTreeSet<String>> {
         let model = crate_name.replace('_', "-");
         let own: Vec<_> = self.holding(&model).collect();
@@ -148,11 +148,11 @@ impl Plan {
             .domain
             .iter()
             .filter(|domain| read.contains(domain.id.as_str()))
-            .filter_map(|domain| domain.model.as_deref())
+            .chain(own)
+            .flat_map(|domain| &domain.model)
             .map(|model| model.replace('-', "_"))
             .collect();
         allowed.insert(SHARED.to_owned());
-        allowed.insert(crate_name.to_owned());
         Some(allowed)
     }
 }
@@ -211,5 +211,62 @@ pub(in crate::report) fn undeclared(root: &Path, plan: &Plan) -> Result<(), Stri
         Ok(())
     } else {
         Err(found.join("\n"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn room_weather_models_share_one_plan_node_and_its_permissions() {
+        let source = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../docs/architecture/domains.toml"
+        ));
+        let registered = DOMAINS.iter().map(|domain| domain.name).collect();
+        let plan = Plan::parse(source, &registered).unwrap();
+        for name in ["world-quake", "world-haze"] {
+            assert!(
+                plan.holding(name)
+                    .map(|domain| domain.id.as_str())
+                    .eq(["R3"])
+            );
+            assert_eq!(plan.stage(name), Stage::InProgress);
+        }
+        assert!(
+            plan.holding("game-time")
+                .map(|domain| domain.id.as_str())
+                .eq(["G1"])
+        );
+        for name in ["world_haze", "world_quake", "samus_health"] {
+            let allowed = plan.allowed(name).unwrap();
+            assert!(allowed.contains("world_haze"));
+            assert!(allowed.contains("world_quake"));
+        }
+        assert!(!plan.allowed("world_haze").unwrap().contains("samus_health"));
+        assert!(!plan.allowed("game_time").unwrap().contains("world_haze"));
+
+        let valid = r#"model = ["world-quake", "world-haze"]"#;
+        for invalid in [
+            r#"model = ["world-quake", "world-quake"]"#,
+            r#"model = ["world-quake", "world-absent"]"#,
+            r#"model = ["world-quake", "samus-health"]"#,
+            "model = []",
+            "",
+        ] {
+            let changed = source.replace(valid, invalid);
+            assert!(Plan::parse(&changed, &registered).is_err());
+        }
+
+        let without_haze = source.replace(valid, r#"model = "world-quake""#);
+        let scalar = Plan::parse(&without_haze, &registered).unwrap();
+        assert!(scalar.allowed("world_haze").is_none());
+        assert!(
+            scalar
+                .allowed("samus_health")
+                .unwrap()
+                .contains("world_quake")
+        );
     }
 }

@@ -119,6 +119,7 @@ dependencies = [
  "world_blocks",
  "world_camera",
  "world_doors",
+ "world_haze",
  "world_quake",
 ]
 
@@ -427,6 +428,7 @@ dependencies = [
  "world_blocks",
  "world_camera",
  "world_doors",
+ "world_haze",
  "world_quake",
 ]
 
@@ -467,6 +469,16 @@ dependencies = [
 
 [[package]]
 name = "world_doors"
+version = "0.1.0"
+dependencies = [
+ "enum-map",
+ "serde",
+ "toml",
+ "types",
+]
+
+[[package]]
+name = "world_haze"
 version = "0.1.0"
 dependencies = [
  "enum-map",

@@ -168,16 +168,21 @@ struct RawProfile {
     exposures: u64,
     run: Vec<RawRun>,
 }
+/// One physical source run, shared by named frame profiles and supplemental apertures.
 #[derive(Deserialize)]
-struct RawRun {
+pub struct RawRun {
     cycle_ticks: u8,
     chunks: Vec<u8>,
     alu_side: String,
-    poll_before: bool,
+    /// Sample eligible interrupt transitions before this run.
+    pub poll_before: bool,
     pending_sensitive: bool,
-    device: String,
-    event_phase: String,
-    count: u32,
+    /// Optional device effect name.
+    pub device: String,
+    /// Optional device effect placement.
+    pub event_phase: String,
+    /// Repeated equivalent cycles.
+    pub count: u32,
 }
 #[derive(Deserialize)]
 struct PortionFile {
@@ -258,7 +263,10 @@ fn sample(device: &str) -> Result<Sample, ProfileFault> {
         _ => Err(ProfileFault::Unsupported),
     }
 }
-fn cycle(raw: &RawRun) -> Result<(Cycle, ExposureKind), ProfileFault> {
+/// Resolve a source run's physical cycle and access form.
+/// # Errors
+/// Rejects unsupported phase splits and zero-duration runs.
+pub fn cycle(raw: &RawRun) -> Result<(Cycle, ExposureKind), ProfileFault> {
     let cycle = match raw.cycle_ticks {
         6 => Cycle::Six,
         8 => Cycle::Eight,

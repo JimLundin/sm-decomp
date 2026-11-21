@@ -3,16 +3,16 @@
 use super::borrowed_gameplay::{GameplayDispatchReceipt, GameplayRoute, SceneController};
 use super::borrowed_preparation::{ActorEligibilityReceipt, ActorSlotIdentity};
 use crate::production::MovementContent;
-use canonical::model::Pinned;
+use canonical::{Canonical, model::Pinned};
 use serde::{Deserialize, Serialize};
-use types::{Action, Buttons, Fixed, Item, Pose, Radius, Set, button};
+use types::{Action, Buttons, Fixed, Item, Pose, Radius, Set};
 
 /// Actual physical pad bits, before configured action translation.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PhysicalButtons(pub u16);
 
 /// Actual configured physical bindings read by ordinary pose input.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InputBindings {
     /// Shoot binding.
     pub shoot: PhysicalButtons,
@@ -57,7 +57,7 @@ pub enum BombJumpDirection {
     None,
 }
 
-/// External ordinary pose-input completion, separate from the playing pose.
+/// Actual ordinary pose-input completion, separate from the playing pose.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PoseInputTerminal {
     /// Actual translated newly pressed actions, not physical pad bits.
@@ -78,21 +78,12 @@ pub struct PoseInputTerminal {
     pub bomb_jump: BombJumpDirection,
 }
 
-/// External pose-input result retained until its full physical operation completes.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DeferredPoseInputReceipt {
-    /// Complete independently admitted current dependency.
-    pub dependency: PoseInputOrigin,
-    /// Separately borrowed terminal effects, with imported content checked at admission.
-    pub terminal: PoseInputTerminal,
-}
-
 /// Completed actual pose-input result, leaving prospective placement deferred.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PoseInputCompletion {
     /// Fresh actual current dependency consumed by this operation.
     pub dependency: PoseInputOrigin,
-    /// Actual borrowed completion.
+    /// Actual produced completion.
     pub terminal: PoseInputTerminal,
 }
 
@@ -186,11 +177,9 @@ pub struct PlayerEntryOrigins {
     pub environment: EnvironmentOrigin,
 }
 
-/// First three independently admitted offers; later stages use separate owner schemas.
+/// Independently admitted suit-palette and environment offers.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerEntryOffers {
-    /// Deferred ordinary pose input.
-    pub pose_input: DeferredPoseInputReceipt,
     /// Deferred suit-palette disposition.
     pub suit_palette: DeferredSuitPaletteReceipt,
     /// Deferred environment preparation.
@@ -210,7 +199,7 @@ pub struct PlayerEntryOffersPin;
 impl Pinned for PlayerEntryOffersPin {
     type State = Box<PlayerEntryOffers>;
     const NAME: &'static str = "production-frame-player-entry-offers";
-    const SHAPE: u64 = 0x882F_D4B1_92C1_14C7;
+    const SHAPE: u64 = 0x6150_0C16_05B5_E193;
 }
 
 /// Actual completed entry owners retained across pauses and fresh restoration.
@@ -1092,45 +1081,6 @@ fn ordinary_equipment(equipment: &Set<Item>) -> Result<(), PlayerPreparationFaul
         return Err(PlayerPreparationFault::Unsupported);
     }
     Ok(())
-}
-
-impl DeferredPoseInputReceipt {
-    /// Consume once after the complete actual physical operation.
-    /// Imported transition content and external effects must have been admitted independently.
-    /// This validates the current owner and radius without choosing a transition.
-    /// # Errors
-    /// Rejects changed current input, unsupported action/route or changed imported radius.
-    pub fn complete(
-        self,
-        current: &PoseInputOrigin,
-        content: &MovementContent,
-        route: &GameplayDispatchReceipt,
-    ) -> Result<PoseInputCompletion, PlayerPreparationFault> {
-        gameplay(route)?;
-        if current != &self.dependency {
-            return Err(PlayerPreparationFault::Dependency);
-        }
-        if current.action != Action::Running
-            || current.pose.action != Action::Running
-            || self.terminal.special.is_some()
-            || self.terminal.super_special.is_some()
-            || self.terminal.pressed_actions
-                != Buttons(button::RIGHT.0 | button::RUN.0 | button::AIM_DOWN.0)
-            || self.terminal.held_actions
-                != Buttons(button::RIGHT.0 | button::RUN.0 | button::AIM_DOWN.0)
-        {
-            return Err(PlayerPreparationFault::Unsupported);
-        }
-        if content.radius(current.pose) != Some(self.terminal.radius)
-            || content.pose(self.terminal.prospective).is_none()
-        {
-            return Err(PlayerPreparationFault::Content);
-        }
-        Ok(PoseInputCompletion {
-            dependency: self.dependency,
-            terminal: self.terminal,
-        })
-    }
 }
 
 impl DeferredSuitPaletteReceipt {

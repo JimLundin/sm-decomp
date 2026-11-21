@@ -191,14 +191,9 @@ impl State {
                 }
                 let (status, _) = hud.publication().ok_or_else(missing)?;
                 let tilemap = hud::tilemap(status).map_err(|_| missing())?;
-                let mut ready = self
+                let ready = self
                     .content
-                    .completed
-                    .iter()
-                    .filter(|value| value.buffer == Buffer::HudTilemap);
-                let ready = ready
-                    .next()
-                    .filter(|_| ready.next().is_none())
+                    .ready_buffer(Buffer::HudTilemap)
                     .ok_or_else(missing)?;
                 if ready.region.bytes != tilemap {
                     return Err(missing());

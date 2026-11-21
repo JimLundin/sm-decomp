@@ -241,8 +241,13 @@ fn multiplication_only_uses_exposure_edges_and_survives_restore() {
 fn original_controller_charge_end_debt_and_commitment_survive_restore() {
     let mut value = state(225, 100);
     value.hardware.interrupts.enable.controller = true;
-    value.hardware.controller.committed_pad = 32768;
-    value.hardware.controller.preview_pad = Some(0);
+    value.hardware.controller.committed_pad = PhysicalPad(32768);
+    value
+        .schedule_pad_changes(&[PadChange {
+            at: MasterTicks(0),
+            pad: PhysicalPad(0),
+        }])
+        .unwrap();
     value.hardware.controller.accumulator = 250;
     let mut events = Vec::new();
     value.hardware.charge(3, false, &mut events).unwrap();
@@ -257,7 +262,7 @@ fn original_controller_charge_end_debt_and_commitment_survive_restore() {
     assert_eq!(events.len(), 1);
     assert_eq!(value.hardware.controller.serial, 1);
     assert_eq!(value.hardware.controller.words, [1, 0, 0, 0]);
-    assert_eq!(value.hardware.controller.preview_pad, Some(0));
+    assert_eq!(value.hardware.controller.pending_pad.len(), 1);
     assert_eq!(canonical::to_bytes(&resumed), canonical::to_bytes(&value));
     value.hardware.charge(512, true, &mut Vec::new()).unwrap();
     assert_eq!(value.hardware.controller.serial, 2);
@@ -434,8 +439,13 @@ fn variable_short_line_changes_next_line_residue_and_input_commitment_once() {
     let mut value = state(240, 1358);
     value.hardware.beam.odd = true;
     value.hardware.beam.line_ticks = 1360;
-    value.hardware.controller.committed_pad = 1;
-    value.hardware.controller.preview_pad = Some(2);
+    value.hardware.controller.committed_pad = PhysicalPad(1);
+    value
+        .schedule_pad_changes(&[PadChange {
+            at: MasterTicks(0),
+            pad: PhysicalPad(2),
+        }])
+        .unwrap();
     let mut events = Vec::new();
     value.hardware.charge(2, true, &mut events).unwrap();
     assert_eq!(
@@ -446,7 +456,7 @@ fn variable_short_line_changes_next_line_residue_and_input_commitment_once() {
         }
     );
     assert_eq!(value.hardware.beam.residue, 0);
-    assert_eq!(value.hardware.controller.committed_pad, 2);
+    assert_eq!(value.hardware.controller.committed_pad, PhysicalPad(2));
     assert_eq!(events.len(), 1);
     let mut resumed = restore(&value);
     resumed.hardware.charge(2, true, &mut events).unwrap();
@@ -682,7 +692,11 @@ fn unqualified_device_or_byte_mutation_mismatch_rejects_before_any_work() {
 #[test]
 fn controller_commit_inside_a_charge_has_the_same_crossing_instant_when_split() {
     let mut full = state(240, 1362);
-    full.hardware.controller.preview_pad = Some(2);
+    full.schedule_pad_changes(&[PadChange {
+        at: MasterTicks(0),
+        pad: PhysicalPad(2),
+    }])
+    .unwrap();
     full.begin(WorkId(14), internal(1)).unwrap();
     let mut split = full.clone();
     let full_events = finish(&mut full, 100, &[]);
@@ -696,6 +710,60 @@ fn controller_commit_inside_a_charge_has_the_same_crossing_instant_when_split() 
         }]
     );
     assert_eq!(canonical::to_bytes(&full), canonical::to_bytes(&split));
+}
+
+#[test]
+fn controller_changes_straddling_the_latch_survive_until_the_next_sample() {
+    let mut value = state(240, 1362);
+    let held = PhysicalPad(0x8000);
+    let changes = [
+        PadChange {
+            at: MasterTicks(1),
+            pad: PhysicalPad(0x4000),
+        },
+        PadChange {
+            at: MasterTicks(2),
+            pad: held,
+        },
+        PadChange {
+            at: MasterTicks(3),
+            pad: PhysicalPad::default(),
+        },
+    ];
+    value.schedule_pad_changes(&changes).unwrap();
+    let mut events = Vec::new();
+    value.hardware.charge(2, true, &mut events).unwrap();
+    assert_eq!(value.hardware.controller.committed_pad, held);
+    assert_eq!(value.hardware.controller.pending_pad, changes[2..]);
+    let mut value = restore(&value);
+
+    // Advance to the next serial poll, which reads the latched state despite the release.
+    value.hardware.interrupts.enable.controller = true;
+    while value.hardware.beam.position.line != 225 {
+        value.hardware.charge(128, true, &mut events).unwrap();
+    }
+    while value.hardware.controller.serial < 16 {
+        value.hardware.charge(128, true, &mut events).unwrap();
+    }
+    assert_eq!(value.hardware.controller.words, [held.0, 0, 0, 0]);
+
+    // Two more latches exercise release followed by holding the released state.
+    for _ in 0..5700 {
+        value.hardware.charge(128, true, &mut events).unwrap();
+    }
+    assert_eq!(
+        value.hardware.controller.committed_pad,
+        PhysicalPad::default()
+    );
+    assert_eq!(value.hardware.controller.pending_pad, []);
+    assert_eq!(value.hardware.controller.words, [0; 4]);
+    assert_eq!(
+        events
+            .iter()
+            .filter(|event| event.kind == EventKind::ControllerCommitted)
+            .count(),
+        2
+    );
 }
 
 #[test]

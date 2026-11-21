@@ -41,10 +41,21 @@ impl State {
         }
         let current = super::hud_controls_inputs::CurrentControls {
             gameplay: prepared.gameplay.as_ref().ok_or(fault)?,
-            scene: prepared.prelude.scene_current.ok_or(fault)?,
+            scene: prepared
+                .prelude
+                .origin()
+                .ok_or(fault)?
+                .scene_current
+                .ok_or(fault)?,
             pose_input: completed.0.pose_input.as_ref().ok_or(fault)?,
             pose: self.movement.state().pose,
-            inventory: prepared.prelude.hud_inventory.as_ref().ok_or(fault)?,
+            inventory: prepared
+                .prelude
+                .origin()
+                .ok_or(fault)?
+                .hud_inventory
+                .as_ref()
+                .ok_or(fault)?,
         };
         let mut hud = self.hud.clone();
         if content.late_hud.is_some() {
@@ -110,10 +121,21 @@ impl State {
             .ok_or(fault)?
             .inputs(super::hud_controls_inputs::CurrentControls {
                 gameplay: prepared.gameplay.as_ref().ok_or(fault)?,
-                scene: prepared.prelude.scene_current.ok_or(fault)?,
+                scene: prepared
+                    .prelude
+                    .origin()
+                    .ok_or(fault)?
+                    .scene_current
+                    .ok_or(fault)?,
                 pose_input: completed.0.pose_input.as_ref().ok_or(fault)?,
                 pose: self.movement.state().pose,
-                inventory: prepared.prelude.hud_inventory.as_ref().ok_or(fault)?,
+                inventory: prepared
+                    .prelude
+                    .origin()
+                    .ok_or(fault)?
+                    .hud_inventory
+                    .as_ref()
+                    .ok_or(fault)?,
             })
             .map_err(|_| fault)?;
         let Some(interface_hud::Observation::Chosen(answer)) = self.hud.controls() else {

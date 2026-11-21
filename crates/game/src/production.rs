@@ -441,6 +441,28 @@ impl Production {
         }
     }
 
+    /// Schedule physical first-port changes for the retained frame.
+    ///
+    /// Use absolute hardware times at or after the current time, in strictly increasing
+    /// order across pending changes. Entering line 241 samples the latest change through
+    /// that crossing and holds it for serial polling. A crossing already processed by
+    /// an earlier advance is final. Unsampled changes survive pauses and checkpoints.
+    ///
+    /// # Errors
+    /// A wrong scope, past time or unordered batch leaves the queue unchanged.
+    pub fn schedule_frame_pad_changes(
+        &mut self,
+        changes: &[timing::PadChange],
+    ) -> Result<(), ProductionFault> {
+        let OwnedState::Frame(state) = &mut self.state else {
+            return Err(ProductionFault::WrongScope);
+        };
+        state
+            .timing
+            .schedule_pad_changes(changes)
+            .map_err(ProductionFault::FrameHardware)
+    }
+
     /// Advance a candidate value and commit its state and complete outputs together.
     ///
     /// # Errors

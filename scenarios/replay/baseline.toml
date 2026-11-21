@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "c47a515156800115573299a5d8b039ed1d5a0cc27aae4be120c4cf3510281096"
+index_sha256 = "1023acf877d0f635e82945d795341a1ba3283ad7e1c0bccd251f9f5215a95476"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -361,5 +361,41 @@ replies = 0
 null_cuts = 0
 null_fields = 9
 restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/adjacent-actual-trial"
+claim = "boundary"
+expected = { status = "unsupported", cut = 2, dependency = "Frame(RandomPreparation)" }
+observation_sha256 = "045ff4f57f2b22edd26782868194f02bc76d11c7bbd08f10b11be9ed4608d93d"
+
+[case.counts]
+cuts = 1
+fields = 12
+outputs = 2295
+publications = 2295
+replies = 0
+null_cuts = 0
+null_fields = 9
+restorations = 0
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/adjacent-held-trial"
+claim = "boundary"
+expected = { status = "unsupported", cut = 2, dependency = "Frame(RandomPreparation)" }
+observation_sha256 = "045ff4f57f2b22edd26782868194f02bc76d11c7bbd08f10b11be9ed4608d93d"
+
+[case.counts]
+cuts = 1
+fields = 12
+outputs = 2295
+publications = 2295
+replies = 0
+null_cuts = 0
+null_fields = 9
+restorations = 0
 pending_boundaries = 0
 pending_restorations = 0

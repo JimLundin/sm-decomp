@@ -2,8 +2,8 @@
 
 use super::super::{
     Manifest, Member, Origin, borrowed_receipts, decode, hardware_seed, interrupt_inputs,
-    layer_blend_receipt, prelude_receipts, prelude_seed, preparation_inputs, preparation_receipts,
-    profiles, random_inputs, sender_seed, validate_countdown_scene_scope,
+    layer_blend_receipt, preparation_inputs, preparation_receipts, profiles, random_inputs,
+    sender_seed, validate_countdown_scene_scope,
 };
 use crate::lock::Sha256;
 use crate::replay::{
@@ -13,7 +13,7 @@ use crate::replay::{
     result::Outcome,
 };
 use canonical::model::Model;
-use game::production::frame;
+use game::production::{frame, timing::PadChange};
 
 pub(super) fn read_manifest(case: &Case, sources: &Sources) -> Result<Manifest, Outcome> {
     let Start::NativeSeed { path, sha256 } = &case.start else {
@@ -87,6 +87,7 @@ fn countdown_scene(
 struct MachineSeed {
     hardware: Vec<u8>,
     timing: game::production::timing::State,
+    next_pad: PadChange,
     senders: frame::Senders,
     initial: Vec<data::timing::ContentRegion>,
 }
@@ -108,13 +109,12 @@ fn machine_seed(
     let (current, preview) = hardware_seed::pads(current, preview)
         .map_err(|_| data_failure(None, "frame physical pads"))?;
     let hardware = manifest.hardware.read()?;
-    let timing = hardware_seed::decode(
-        &hardware,
-        data::timing::IrqPolicy::Eligible,
-        current,
-        preview,
-    )
-    .map_err(|_| data_failure(None, "frame completed-return hardware origin"))?;
+    let timing = hardware_seed::decode(&hardware, data::timing::IrqPolicy::Eligible, current)
+        .map_err(|_| data_failure(None, "frame completed-return hardware origin"))?;
+    let next_pad = PadChange {
+        at: timing.hardware.now,
+        pad: preview,
+    };
     let senders = sender_seed::decode(wram, &manifest.apuram.read()?)
         .map_err(|_| data_failure(None, "frame current sender origins"))?;
     let mut initial = manifest
@@ -141,41 +141,10 @@ fn machine_seed(
     Ok(MachineSeed {
         hardware,
         timing,
+        next_pad,
         senders,
         initial,
     })
-}
-
-fn prelude_owners(
-    manifest: &Manifest,
-    wram: &[u8],
-) -> Result<
-    (
-        frame::borrowed_receipts::MusicCompletionReceipt,
-        frame::HazeCompletion,
-    ),
-    Outcome,
-> {
-    let music =
-        borrowed_receipts::qualified_music_completion(wram, &manifest.music_completion.text()?)
-            .map_err(|_| data_failure(None, "frame borrowed current music completion"))?;
-    let current_haze = prelude_seed::decode(wram)
-        .map_err(|_| data_failure(None, "frame current Haze origin"))?
-        .haze;
-    let bands = prelude_receipts::haze_bands(&current_haze, &manifest.haze_bands.text()?)
-        .map_err(|_| data_failure(None, "frame borrowed Haze bands"))?;
-    let ready = prelude_receipts::haze_ready_owner(&bands, &manifest.haze_ready.text()?)
-        .map_err(|_| data_failure(None, "frame borrowed narrow Haze owner"))?;
-    let terminal = prelude_receipts::haze_terminal(&current_haze, &manifest.haze_terminal.text()?)
-        .map_err(|_| data_failure(None, "frame borrowed Haze terminal"))?;
-    Ok((
-        music,
-        frame::HazeCompletion {
-            bands,
-            ready,
-            terminal,
-        },
-    ))
 }
 
 struct PlayerEntry {
@@ -189,7 +158,6 @@ fn player_entry(
     manifest: &Manifest,
     wram: &[u8],
     checked_rom: &data::rom::Rom,
-    content: &movement::Content,
 ) -> Result<PlayerEntry, Outcome> {
     let entry_text = manifest.player_entry_current.text()?;
     let entry_labels = manifest.player_entry_labels.text()?;
@@ -207,14 +175,6 @@ fn player_entry(
         .map_err(|_| data_failure(None, "frame actual current environment dependency"))?,
     };
     let entry_offers = frame::borrowed_player_preparation::PlayerEntryOffers {
-        pose_input: player_preparation_receipts::pose_offer(
-            wram,
-            &entry_text,
-            &entry_labels,
-            checked_rom,
-            &content.movement,
-        )
-        .map_err(|_| data_failure(None, "frame qualified deferred pose-input effects"))?,
         suit_palette: player_preparation_receipts::suit_offer(
             wram,
             &entry_text,
@@ -243,8 +203,7 @@ fn player_entry(
 }
 
 struct PreludeWork {
-    layer_defaults: frame::borrowed_layer_blend::LayerBlendDefaults,
-    layers: frame::borrowed_layer_blend::LayerBlendReceipt,
+    layer_defaults: frame::layer_blend::LayerBlendDefaults,
     drawing: frame::interrupts::DrawingState,
 }
 
@@ -252,13 +211,11 @@ fn prelude_work(
     manifest: &Manifest,
     wram: &[u8],
     checked_rom: &data::rom::Rom,
-    terminal: &frame::borrowed_prelude_receipts::HazeTerminalReceipt,
 ) -> Result<PreludeWork, Outcome> {
     let layer_text = manifest.layer_blend.text()?;
     let layer_defaults = layer_blend_receipt::defaults(checked_rom, &layer_text)
         .map_err(|_| data_failure(None, "frame immutable layer defaults"))?;
-    let layers = layer_blend_receipt::completion(layer_defaults, terminal, &layer_text)
-        .map_err(|_| data_failure(None, "frame borrowed layer completion"))?;
+
     let drawing_current = interrupt_inputs::current(wram)
         .map_err(|_| data_failure(None, "frame current drawing owner"))?;
     let [begin, end] = interrupt_inputs::receipts(drawing_current, &manifest.irq_current.text()?)
@@ -276,7 +233,6 @@ fn prelude_work(
     };
     Ok(PreludeWork {
         layer_defaults,
-        layers,
         drawing: drawing_state,
     })
 }
@@ -336,9 +292,16 @@ fn bind_player_entry(
     entry_current: frame::borrowed_player_preparation::PlayerEntryOrigins,
     entry_offers: frame::borrowed_player_preparation::PlayerEntryOffers,
 ) -> Result<Option<frame::hud_controls_inputs::Bindings>, Outcome> {
-    let frame::Caller::AwaitingAcknowledgment { prelude, .. } = &mut state.caller else {
+    let frame::Caller::AwaitingAcknowledgment {
+        prelude: frame::PreludeSource::Origin(prelude),
+        ..
+    } = &mut state.caller
+    else {
         return Err(data_failure(None, "frame first entry owner boundary"));
     };
+    state.pose_input_configuration = Some(frame::pose_input::Configuration::new(
+        entry_current.pose_input.bindings,
+    ));
     prelude.player_entry_current = Some(Model(Box::new(entry_current)));
     prelude.player_entry_offers = Some(Model(Box::new(entry_offers)));
     if let Some(member) = &manifest.player_continuation_current {
@@ -373,12 +336,13 @@ fn bind_player_entry(
 
 pub(super) struct EntrySeed {
     pub(super) state: frame::State,
+    pub(super) next_pad: PadChange,
     pub(super) hardware: Vec<u8>,
     pub(super) image: Vec<u8>,
     pub(super) checked_rom: data::rom::Rom,
     pub(super) entry_labels: String,
     pub(super) reference_acceleration: types::Fixed,
-    pub(super) layer_defaults: frame::borrowed_layer_blend::LayerBlendDefaults,
+    pub(super) layer_defaults: frame::layer_blend::LayerBlendDefaults,
     pub(super) templates: profiles::Templates,
     pub(super) random_requests: frame::random::SeedRequests,
     pub(super) random: data::timing::Template,
@@ -402,19 +366,21 @@ pub(super) fn entry_seed(
     let MachineSeed {
         hardware,
         timing,
+        next_pad,
         senders,
         mut initial,
     } = machine_seed(manifest, sources, wram)?;
-    let (music, haze) = prelude_owners(manifest, wram)?;
+    let music =
+        borrowed_receipts::qualified_music_completion(wram, &manifest.music_completion.text()?)
+            .map_err(|_| data_failure(None, "frame borrowed current music completion"))?;
     let image = std::fs::read(&sources.rom).map_err(|_| data_failure(None, "frame checked ROM"))?;
     let checked_rom = data::rom::Rom::new(image.clone())
         .map_err(|_| data_failure(None, "frame checked ROM identity"))?;
-    let entry = player_entry(manifest, wram, &checked_rom, content)?;
+    let entry = player_entry(manifest, wram, &checked_rom)?;
     let PreludeWork {
         layer_defaults,
-        layers,
         drawing,
-    } = prelude_work(manifest, wram, &checked_rom, &haze.terminal)?;
+    } = prelude_work(manifest, wram, &checked_rom)?;
     let random_current = preparation_receipts::random_origin(wram)
         .map_err(|_| data_failure(None, "frame current original Random seed"))?;
     let random_completion =
@@ -445,9 +411,7 @@ pub(super) fn entry_seed(
             senders,
             content: initial,
             music: Some(music),
-            haze: Some(haze),
             drawing: Some(drawing),
-            layers: Some(layers),
             random: Some((random_current, random_completion)),
             preparation,
         },
@@ -463,6 +427,7 @@ pub(super) fn entry_seed(
     )?;
     Ok(EntrySeed {
         state,
+        next_pad,
         hardware,
         image,
         checked_rom,

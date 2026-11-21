@@ -18,7 +18,7 @@ use data::timing::{
 };
 pub use hardware::{
     Beam, BeamPosition, Channel, Controller, Hardware, InterruptLine, Interrupts, LineStatus,
-    LineTransfer, Math, Payload, PhysicalLine, Thresholds, Transfers,
+    LineTransfer, Math, PadChange, Payload, PhysicalLine, PhysicalPad, Thresholds, Transfers,
 };
 
 /// Unsupported or invalid hardware service mechanism.
@@ -32,6 +32,10 @@ pub enum Fault {
     InvalidCharge,
     /// Master time cannot be represented.
     TimeOverflow,
+    /// New pad changes must be at or after live hardware time.
+    PadChangeInPast,
+    /// Pad presentation times must increase across the pending stream.
+    PadChangesUnordered,
     /// Transfer source region was not admitted.
     MissingContent,
     /// Multiple imported regions own one transfer source.
@@ -387,13 +391,36 @@ fn wait_turn() -> Profile {
     }
 }
 
+fn pad_changes_ordered(changes: &[PadChange]) -> bool {
+    changes.is_sorted_by(|earlier, later| earlier.at < later.at)
+}
+
 impl State {
+    pub(super) fn schedule_pad_changes(&mut self, changes: &[PadChange]) -> Result<(), Fault> {
+        let pending = &mut self.hardware.controller.pending_pad;
+        if let Some(first) = changes.first() {
+            if first.at < self.hardware.now {
+                return Err(Fault::PadChangeInPast);
+            }
+            if pending.last().is_some_and(|last| first.at <= last.at)
+                || !pad_changes_ordered(changes)
+            {
+                return Err(Fault::PadChangesUnordered);
+            }
+            pending.extend_from_slice(changes);
+        }
+        Ok(())
+    }
+
     /// Validate an independently decoded complete continuation before admitting it.
     ///
     /// # Errors
     /// Invalid hardware phase, pending progress, profiles or charge debt.
     pub fn validate(&self) -> Result<(), Fault> {
         self.hardware.validate_phase()?;
+        if !pad_changes_ordered(&self.hardware.controller.pending_pad) {
+            return Err(Fault::InvalidState);
+        }
         self.handler_waiting()?;
         if self.work.len() > 2 {
             return Err(Fault::InvalidState);

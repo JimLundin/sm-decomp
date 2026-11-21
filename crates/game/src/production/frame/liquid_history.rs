@@ -34,7 +34,7 @@ enum Interrupts {
 /// Same original authority carried through actual owner completions.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct History {
-    origin: Admission,
+    origin: Option<Admission>,
     current: Meaning,
     preserved: bool,
     interruption: Option<super::interruption_caller::Admission>,
@@ -57,7 +57,7 @@ impl History {
         }
         Ok(Self {
             current: origin.meaning,
-            origin,
+            origin: Some(origin),
             preserved: true,
             interruption: None,
             environment: None,
@@ -84,7 +84,7 @@ impl History {
         &mut self,
         completed: &Model<PlayerEntryCompletionsPin>,
     ) -> Result<(), Fault> {
-        self.validate(&self.origin)?;
+        self.validate(self.origin.as_ref().ok_or(Fault)?)?;
         if self.environment.is_some() || completed.0.environment.is_none() {
             return Err(Fault);
         }
@@ -96,7 +96,7 @@ impl History {
     /// # Errors
     /// Early or repeated Run is unsupported.
     pub fn run(&mut self, completed: &RunCompletion) -> Result<(), Fault> {
-        self.validate(&self.origin)?;
+        self.validate(self.origin.as_ref().ok_or(Fault)?)?;
         if self.environment.is_none() || self.run.is_some() {
             return Err(Fault);
         }
@@ -139,7 +139,18 @@ impl History {
     /// # Errors
     /// Invalidated history cannot regain freshness by restoration.
     pub fn validate_current(&self) -> Result<(), Fault> {
-        self.validate(&self.origin)
+        self.origin.as_ref().map_or_else(
+            || if self.preserved { Ok(()) } else { Err(Fault) },
+            |origin| self.validate(origin),
+        )
+    }
+
+    pub(super) fn retire_opportunity(&mut self) {
+        self.origin = None;
+        self.interruption = None;
+        self.environment = None;
+        self.run = None;
+        self.interrupts = Interrupts::Unseen;
     }
 
     /// Attach independently decoded interruption authority at origin admission.
@@ -151,7 +162,10 @@ impl History {
     ) -> Result<(), Fault> {
         self.validate_current()?;
         if self.interruption.is_some()
-            || self.origin.origin != admission.origin()
+            || self
+                .origin
+                .as_ref()
+                .is_none_or(|origin| origin.origin != admission.origin())
             || self.environment.is_some()
             || self.run.is_some()
             || self.interrupts != Interrupts::Unseen
@@ -175,7 +189,10 @@ impl History {
     ) -> bool {
         self.validate_current().is_ok()
             && self.interruption.as_ref() == Some(admission)
-            && admission.origin() == self.origin.origin
+            && self
+                .origin
+                .as_ref()
+                .is_some_and(|origin| admission.origin() == origin.origin)
             && self.environment.as_ref() == Some(entry)
             && entry.0.pose_input.as_ref().is_some_and(|pose| {
                 pose.terminal.bomb_jump
@@ -189,7 +206,7 @@ impl History {
     /// # Errors
     /// A changed origin or invalidated authority is unsupported.
     pub fn validate(&self, origin: &Admission) -> Result<(), Fault> {
-        if !self.preserved || &self.origin != origin || self.current != Meaning::Air {
+        if !self.preserved || self.origin.as_ref() != Some(origin) || self.current != Meaning::Air {
             return Err(Fault);
         }
         Ok(())

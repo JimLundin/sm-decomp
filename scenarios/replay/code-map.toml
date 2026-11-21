@@ -431,6 +431,24 @@ targets = [
 ]
 
 [[rule]]
+id = "world-haze/HazeBrightens"
+targets = [
+  { role = "model", path = "crates/clean/world_haze/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/haze.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/caller.rs" },
+  { role = "navigation", path = "docs/behaviours/world-haze.md" },
+]
+
+[[rule]]
+id = "world-haze/HazeSettles"
+targets = [
+  { role = "model", path = "crates/clean/world_haze/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/haze.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/caller.rs" },
+  { role = "navigation", path = "docs/behaviours/world-haze.md" },
+]
+
+[[rule]]
 id = "world-quake/QuietQuakePhase"
 targets = [
   { role = "model", path = "crates/clean/world_quake/src/lib.rs" },

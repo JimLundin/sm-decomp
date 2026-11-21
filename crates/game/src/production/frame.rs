@@ -14,7 +14,6 @@ pub mod appearance_stage;
 pub mod background_caller;
 pub mod borrowed;
 pub mod borrowed_gameplay;
-pub mod borrowed_layer_blend;
 pub mod borrowed_player_preparation;
 pub mod borrowed_prelude_receipts;
 pub mod borrowed_preparation;
@@ -31,6 +30,7 @@ pub mod frame_history;
 pub mod frame_return;
 pub mod frame_tail;
 mod ground_caller;
+pub mod haze;
 pub mod health;
 pub mod hud;
 pub mod hud_camera_caller;
@@ -44,6 +44,7 @@ pub mod inside_world;
 pub mod interruption_caller;
 pub mod late_hud;
 pub mod late_movement;
+pub mod layer_blend;
 pub mod liquid_history;
 pub mod maintenance;
 pub mod motion_reset_contract;
@@ -54,12 +55,14 @@ pub mod movement_pair_contract;
 pub mod movement_stage;
 pub mod movement_support_contract;
 mod native_return;
+mod next_opportunity;
 mod ordinary_caller;
 /// Actual play-clock opportunity and retained state.
 pub mod play_time;
 pub mod player_continuation;
 mod player_continuation_caller;
 pub mod pose_fit_caller;
+pub mod pose_input;
 pub mod post_down_caller;
 pub mod post_down_contract;
 pub mod random;
@@ -78,8 +81,8 @@ pub mod sender_contract;
 pub mod sender_stage;
 pub mod suffix_caller;
 pub use caller::{
-    Caller, Content, Dependency, HazeCompletion, MotionResetCompletion, MotionResetContent,
-    Outputs, PlayerEntryContent, PlayerEntryStage, Prelude, Preparation, PreparationContent,
+    Caller, Content, Dependency, MotionResetCompletion, MotionResetContent, Outputs,
+    PlayerEntryContent, PlayerEntryStage, Prelude, PreludeSource, Preparation, PreparationContent,
     PreparationStage, Progress, Rules,
 };
 pub mod inputs;
@@ -89,6 +92,7 @@ mod state;
 pub use state::{Fault, Senders, State};
 
 pub(crate) fn validate_pins() -> Result<(), canonical::model::Unpinned> {
+    canonical::model::pin_holds::<haze::HazePin>()?;
     canonical::model::pin_holds::<health::HealthPin>()?;
     canonical::model::pin_holds::<hud::CountdownPin>()?;
     canonical::model::pin_holds::<countdown_caller::AnswerPin>()?;
@@ -152,7 +156,13 @@ pub struct Materialization {
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct TransferContent {
     initial: Vec<ContentRegion>,
-    completed: Vec<Materialization>,
+    buffers: Vec<RetainedBuffer>,
+}
+
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+struct RetainedBuffer {
+    materialization: Materialization,
+    ready: bool,
 }
 
 /// Unsupported materialization admission leaves content and progress unchanged.
@@ -160,6 +170,8 @@ pub struct TransferContent {
 pub enum ContentFault {
     /// One completed producer was submitted again.
     AlreadyCompleted(Buffer),
+    /// The physical backing no longer agrees with the retained producer result.
+    RetainedBacking(Buffer),
     /// Empty or wrapping region cannot represent complete producer content.
     InvalidRegion,
     /// Distinct content owners overlap in the hardware address space.
@@ -175,7 +187,7 @@ impl TransferContent {
         validate_regions(initial.iter())?;
         Ok(Self {
             initial,
-            completed: Vec::new(),
+            buffers: Vec::new(),
         })
     }
 
@@ -185,21 +197,66 @@ impl TransferContent {
     /// # Errors
     /// Repeated completion or invalid/overlapping regions reject atomically.
     pub fn complete(&mut self, materialization: Materialization) -> Result<(), ContentFault> {
+        let buffer = materialization.buffer;
+        let owns_buffer = |held: &RetainedBuffer| held.materialization.buffer == buffer;
         if self
-            .completed
+            .buffers
             .iter()
-            .any(|held| held.buffer == materialization.buffer)
+            .any(|held| owns_buffer(held) && held.ready)
         {
-            return Err(ContentFault::AlreadyCompleted(materialization.buffer));
+            return Err(ContentFault::AlreadyCompleted(buffer));
         }
         validate_regions(
             self.initial
                 .iter()
-                .chain(self.completed.iter().map(|held| &held.region))
+                .chain(
+                    self.buffers
+                        .iter()
+                        .filter(|held| !owns_buffer(held))
+                        .map(|held| &held.materialization.region),
+                )
                 .chain(std::iter::once(&materialization.region)),
         )?;
-        self.completed.push(materialization);
+        let next = RetainedBuffer {
+            materialization,
+            ready: true,
+        };
+        if let Some(held) = self.buffers.iter_mut().find(|held| owns_buffer(held)) {
+            *held = next;
+        } else {
+            self.buffers.push(next);
+        }
         Ok(())
+    }
+
+    fn retain(&mut self, materialization: &Materialization) -> Result<(), ContentFault> {
+        let buffer = materialization.buffer;
+        let held = self
+            .buffers
+            .iter_mut()
+            .find(|held| held.materialization.buffer == buffer)
+            .ok_or(ContentFault::RetainedBacking(buffer))?;
+        if held.ready {
+            return Err(ContentFault::AlreadyCompleted(buffer));
+        }
+        if held.materialization != *materialization {
+            return Err(ContentFault::RetainedBacking(buffer));
+        }
+        held.ready = true;
+        Ok(())
+    }
+
+    fn ready_buffer(&self, buffer: Buffer) -> Option<&Materialization> {
+        self.buffers
+            .iter()
+            .find(|held| held.ready && held.materialization.buffer == buffer)
+            .map(|held| &held.materialization)
+    }
+
+    fn begin_opportunity(&mut self) {
+        for held in &mut self.buffers {
+            held.ready = false;
+        }
     }
 
     /// Complete current content supplied to hardware; absent future buffers stay absent.
@@ -207,7 +264,7 @@ impl TransferContent {
     pub fn regions(&self) -> Vec<ContentRegion> {
         self.initial
             .iter()
-            .chain(self.completed.iter().map(|held| &held.region))
+            .chain(self.buffers.iter().map(|held| &held.materialization.region))
             .cloned()
             .collect()
     }
@@ -217,20 +274,21 @@ impl TransferContent {
     /// # Errors
     /// Duplicate completions or invalid content ownership.
     pub fn validate(&self) -> Result<(), ContentFault> {
-        for (ordinal, held) in self.completed.iter().enumerate() {
+        for (ordinal, held) in self.buffers.iter().enumerate() {
+            let buffer = held.materialization.buffer;
             if self
-                .completed
+                .buffers
                 .iter()
                 .take(ordinal)
-                .any(|earlier| earlier.buffer == held.buffer)
+                .any(|earlier| earlier.materialization.buffer == buffer)
             {
-                return Err(ContentFault::AlreadyCompleted(held.buffer));
+                return Err(ContentFault::AlreadyCompleted(buffer));
             }
         }
         validate_regions(
             self.initial
                 .iter()
-                .chain(self.completed.iter().map(|held| &held.region)),
+                .chain(self.buffers.iter().map(|held| &held.materialization.region)),
         )
     }
 }
