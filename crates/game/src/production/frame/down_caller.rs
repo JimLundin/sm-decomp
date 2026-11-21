@@ -19,11 +19,26 @@ impl State {
     ) -> Result<(), super::Fault> {
         use super::post_down_caller::Stage as Post;
         let Caller::PlayerContinuation {
-            down, post_down, ..
+            stage,
+            charging,
+            run,
+            down,
+            post_down,
+            ..
         } = &self.caller
         else {
             return Ok(());
         };
+        if *charging {
+            use super::player_continuation::Stage as Entry;
+            if matches!(stage, Entry::Sprites | Entry::Contact) {
+                self.validate_remaining_player(content)?;
+            }
+            if matches!(run, super::movement_caller::Run::Charging { .. }) {
+                self.validate_run(content, rules)
+                    .map_err(|_| super::Fault::InvalidPlayerEntry)?;
+            }
+        }
         let result = if matches!(down, Stage::Charging { .. }) {
             self.validate_down(content, rules)
         } else if matches!(down, Stage::Complete(_)) {

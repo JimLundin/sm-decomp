@@ -62,6 +62,18 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<(), ProductionFault> {
+        let profile = self.run_profile(content, rules)?;
+        if !self.has_physical_bill(WorkId(23), &profile) {
+            return Err(missing());
+        }
+        Ok(())
+    }
+
+    fn run_profile(
+        &self,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<data::timing::Profile, ProductionFault> {
         if self.remaining_history()? != super::player_continuation::Stage::Run {
             return Err(missing());
         }
@@ -92,8 +104,9 @@ impl State {
             .as_ref()
             .ok_or_else(missing)?
             .physical(run, &self.movement, &self.run_dependencies()?)
-            .map_err(|_| missing())?;
-        Ok(())
+            .map_err(|_| missing())?
+            .bind(&[])
+            .map_err(|_| missing())
     }
 
     pub(super) fn begin_run(
@@ -160,7 +173,7 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<(), ProductionFault> {
-        self.validate_run(content, rules)?;
+        self.run_profile(content, rules)?;
         let inputs = self.run_inputs()?;
         let Caller::PlayerContinuation {
             remaining,

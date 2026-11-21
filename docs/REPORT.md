@@ -643,7 +643,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 111 | 29,705 | 178,231 | 141,756 | 25,233 | 2,062 | 10,554 | 44,372 | 2,594 | 27,404 |
+| production and exact services | 111 | 29,738 | 178,427 | 141,903 | 25,233 | 2,062 | 10,578 | 44,420 | 2,600 | 27,431 |
 | bridges | 16 | 3,053 | 18,317 | 17,885 | 2,278 | 518 | 1,529 | 1,741 | 66 | 3,245 |
 | rebuilt models, shared types included | 123 | 8,741 | 52,446 | 58,294 | 24,088 | 18,486 | 3,624 | 3,811 | 1,013 | 17,615 |
 
@@ -2505,10 +2505,10 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/frame/movement_pair_contract.rs` | names it | `Rules`, `suspended` | 5,065 | 565 |
 | samus-movement | `crates/game/src/production/frame/movement_stage.rs` | names it | `Frame`, `Rules`, `suspended` | 1,615 | 223 |
 | samus-movement | `crates/game/src/production/frame/movement_support_contract.rs` | names it | `Rules`, `suspended` | 5,366 | 571 |
-| samus-movement | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `suspended` | 5,607 | 662 |
+| samus-movement | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `suspended` | 5,623 | 662 |
 | samus-movement | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `suspended` | 2,130 | 249 |
 | samus-movement | `crates/game/src/production/frame/pose_input.rs` | names it | `Moment` | 715 | 167 |
-| samus-movement | `crates/game/src/production/frame/run_caller.rs` | names it | `suspended` | 1,906 | 200 |
+| samus-movement | `crates/game/src/production/frame/run_caller.rs` | names it | `suspended` | 1,980 | 212 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 305 | 52 |
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 167 | 43 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 938 | 172 |
@@ -2543,7 +2543,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/hud_stage.rs` | names it | `ControlAnswer`, `DisplayInputs`, `Dropped`, `FrameCount`, `HerMap`, `HudEvent`, `HudOpportunity`, `HudPictures`, `ItemControlInputs`, `MiniMapPower`, `Mute`, `Observation`, `Room`, `Rules`, `SelectableItem`, `Selection`, `Status` | 906 | 239 |
 | interface-hud | `crates/game/src/production/frame/late_hud.rs` | bridge | - | 1,372 | 193 |
 | interface-hud | `crates/game/src/production/frame/motion_reset_contract.rs` | names it | `CancelButton`, `Observation`, `SelectButton`, `Selection` | 570 | 107 |
-| interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation` | 5,607 | 662 |
+| interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation` | 5,623 | 662 |
 | interface-hud | `crates/game/src/production/frame/recurring_hud_map.rs` | names it | `Dropped`, `Energy`, `FrameCount`, `HerMap`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `Status` | 808 | 141 |
 | interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 2,319 | 276 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |

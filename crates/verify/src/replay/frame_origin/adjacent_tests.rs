@@ -1084,7 +1084,15 @@ fn check_recurring_doors(
 fn check_post_actor_prefix(admitted: &AdmittedCase, mut direct: Production, origin: u64) {
     use player_continuation::Stage;
 
-    for (stage, edge) in [(Stage::Contact, 55934), (Stage::Run, 56348)] {
+    let [sprites_rejected, contact_rejected] = [
+        (Stage::Sprites, Stage::Contact, 55934),
+        (Stage::Contact, Stage::Run, 56348),
+    ]
+    .map(|(active, stage, edge)| {
+        advance_to_prelude_stage(&mut direct, origin.checked_add(edge).unwrap(), |caller| {
+            remaining_at(caller, active, true)
+        });
+        let rejected = rejects_changed_physical_bill(admitted, &direct, active.identity());
         advance_to_prelude_stage(
             &mut direct,
             origin.checked_add(edge).unwrap().checked_add(128).unwrap(),
@@ -1094,9 +1102,14 @@ fn check_post_actor_prefix(admitted: &AdmittedCase, mut direct: Production, orig
             panic!("frame production");
         };
         assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(edge));
-    }
+        rejected
+    });
     check_committed_actor_checkpoint(admitted, &direct);
     reject_stale_contact_counter(admitted, &direct);
+    advance_to_prelude_stage(&mut direct, origin.checked_add(56600).unwrap(), |caller| {
+        remaining_at(caller, Stage::Run, true)
+    });
+    let run_rejected = rejects_changed_physical_bill(admitted, &direct, Stage::Run.identity());
     let checkpoint = direct.save().unwrap();
     let mut restored = Production::restore(
         &checkpoint,
@@ -1118,6 +1131,11 @@ fn check_post_actor_prefix(admitted: &AdmittedCase, mut direct: Production, orig
         );
     }
     assert_observation_eq!(direct.state(), restored.state());
+    assert_eq!(
+        [sprites_rejected, contact_rejected, run_rejected],
+        [true; 3],
+        "forged SpriteObjects, ContactReset and Run bills must all reject"
+    );
     if admitted_odd_ground(admitted) {
         check_grounded_down_checkpoint(admitted, direct, origin);
     }
