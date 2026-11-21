@@ -73,6 +73,7 @@ impl Admission<'_> {
                 projectiles: portion(templates, "S2.Projectiles")?,
                 interaction: portion(templates, "S2.SamusInteraction")?,
                 actors: portion(templates, "S2.ActorUpdate")?,
+                recurring_actors: None,
                 sprites: portion(templates, "S2.SpriteObjects")?,
                 contact: portion(templates, "S2.ContactReset")?,
             })
@@ -225,9 +226,9 @@ impl Admission<'_> {
             let ahead = state
                 .current_animation(&appearance.appearance)
                 .map_err(|_| data_failure(None, "frame actual pure current Playing bookkeeping"))?;
-            state.inside_inputs = Some(Model(
-                external.movement(state.playing_figure.0.sprite, ahead),
-            ));
+            let premises = external.movement(state.playing_figure.0.sprite, ahead);
+            state.inside_premises = Some(frame::inputs::InsidePremises::new(&premises));
+            state.inside_inputs = Some(Model(premises));
             state.inside_world = Some(Model(room));
             Some(contract)
         } else {
@@ -525,4 +526,28 @@ impl Admission<'_> {
             },
         )
     }
+}
+
+/// Decode and retain the actual two actor slots that enter the native interval.
+pub(super) fn admit_actor_doors(
+    wram: &[u8],
+    actors: &[frame::borrowed_player_preparation::ActorSeed; 2],
+) -> Result<frame::actor_doors::Doors, Outcome> {
+    use frame::borrowed_preparation::ActorSlotIdentity;
+    let decode = |slot: u8| -> Result<_, Outcome> {
+        let raw_slot = replay::ceres::Slot::try_from(u16::from(slot))?;
+        Ok((
+            ActorSlotIdentity(slot),
+            replay::ceres::seed(wram, raw_slot)?,
+            replay::ceres::invisible(wram, raw_slot)?,
+        ))
+    };
+    let (first, first_door, first_invisible) = decode(0)?;
+    let (second, second_door, second_invisible) = decode(1)?;
+    frame::actor_doors::Doors::new(
+        [(first, first_door), (second, second_door)],
+        actors,
+        [first_invisible, second_invisible],
+    )
+    .ok_or_else(|| data_failure(None, "native Ceres actor door origins"))
 }

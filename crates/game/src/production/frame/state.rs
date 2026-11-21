@@ -76,6 +76,16 @@ pub struct State {
     pub haze: Option<super::haze::Haze>,
     /// Shared sequence as of the most recent completed Random draw.
     pub random: Option<super::random::Sequence>,
+    /// Current scene controller carried between returns and read at gameplay dispatch.
+    pub scene: Option<super::borrowed_gameplay::SceneController>,
+    /// Live actor scheduling policy and physical slot properties.
+    pub actor_eligibility: Option<super::borrowed::ActorEligibilityOrigin>,
+    /// Current debug mode, qualified shortcut latch and controller two edges.
+    pub debug: Option<super::borrowed_preparation::DebugOrigin>,
+    /// Current palette object enable and slot occupancy.
+    pub palette_objects: Option<super::borrowed_preparation::PaletteOrigin>,
+    /// Current equipment and room surfaces for ordinary player entry.
+    pub entry_environment: Option<super::entry_environment::EntryEnvironment>,
     /// Live sprite-builder backing before the next reset consumes it.
     pub sprite_builder: Option<super::borrowed::SpriteBuilderOrigin>,
     /// Current movement, including accepted requests and answers.
@@ -87,6 +97,8 @@ pub struct State {
     /// Actual current generic premises captured only as early Inside bookkeeping.
     /// These are not proof that the later frame-start animation query completed.
     pub inside_inputs: Option<Model<MovementInputsPin>>,
+    /// Current live stable player modes and parity across requested NMIs.
+    pub inside_premises: Option<super::inputs::InsidePremises>,
     /// Live products belonging only to the actual full Inside physical owner.
     pub inside_pending: Option<super::inside_contract::Pending>,
     /// Actual completed Inside receipt, retained for subsequent player owners.
@@ -117,6 +129,10 @@ pub struct State {
     pub hud: Hud,
     /// Independently admitted current Display owners, revalidated at actual refresh.
     pub hud_display_current: Option<Model<super::hud_stage::DisplayReceiptPin>>,
+    /// Current inventory read by item controls, independent of HUD drawing.
+    pub hud_inventory: Option<super::hud_controls_inputs::CurrentInventory>,
+    /// Current HUD frame byte advanced at actual requested NMI completion.
+    pub hud_frame_count: Option<u8>,
     /// Actual complete tilemap readiness, publication and separate return progress.
     pub hud_map: super::hud_map_caller::Stage,
     /// Sole complete live health and actual actor/interrupt preservation history.
@@ -141,6 +157,8 @@ pub struct State {
     pub late_hud: super::late_hud::Stage,
     /// Carried current and prior-frame Drawing and final controller history.
     pub frame_history: Option<super::frame_history::History>,
+    /// Current player collection and interaction owners carried across native returns.
+    pub recurring_player: Option<super::player_continuation::RecurringPlayer>,
     /// Current physical action bindings, independently owned across returns.
     pub pose_input_configuration: Option<super::pose_input::Configuration>,
     /// Independently admitted post-background room scope.

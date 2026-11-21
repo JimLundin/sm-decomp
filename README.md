@@ -73,8 +73,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | connected-ordinary/carried-running-camera | Pass | 9 | 0 | 9 | 153 | 36 | 9 |
 | connected-ordinary/run-release-floor-aim | Pass | 16 | 0 | 16 | 272 | 64 | 16 |
 | frame/ordinary-requested-nmi-return | Pass | 1 | 0 | 1 | 13 | 2295 | 1 |
-| frame/adjacent-actual-trial | Unsupported at Some(2): Frame(GameplayPreparation) | 1 | 0 | unaccepted prefix | 13 | 2295 | 0 |
-| frame/adjacent-held-trial | Unsupported at Some(2): Frame(GameplayPreparation) | 1 | 0 | unaccepted prefix | 13 | 2295 | 0 |
+| frame/adjacent-actual-trial | Unsupported at Some(2): Frame(SpriteObjectsPreparation) | 1 | 0 | unaccepted prefix | 13 | 2295 | 0 |
+| frame/adjacent-held-trial | Unsupported at Some(2): Frame(SpriteObjectsPreparation) | 1 | 0 | unaccepted prefix | 13 | 2295 | 0 |
 
 - **integrated/missing-dependency-closure** witnesses samus-movement/TravelledDistances. Limits: complete production dependency closure unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-ceres/carried-position-proximity** witnesses samus-movement/MovesAsShePosed, boss-ceres-ridley/Waiting, boss-ceres-ridley/SheIsNear, boss-ceres-ridley/Polling, boss-ceres-ridley/Closing, boss-ceres-ridley/Shown, boss-ceres-ridley/Solid. Limits: only carried prior whole-pixel movement to door proximity integrated; complete outputs retained but only declared position and door fields compared; unselected producers remain external; prior roster empty; current actor selection and timing unproved; appearance ahead remains external feedback; no durable Ceres codec, pixels, app, power-on or played-alone claim.

@@ -331,7 +331,7 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "boss-ceres-ridley",
         bridge: Some("boss_ceres_ridley_bridge"),
-        adapters: &[],
+        adapters: &["production/frame/actor_doors.rs"],
         providers: &["ceres"],
         areas: &[
             ("doors", &["door.rs", "phase.rs", "figure.rs"]),

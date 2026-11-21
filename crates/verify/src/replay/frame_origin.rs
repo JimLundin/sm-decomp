@@ -751,7 +751,6 @@ pub(super) fn decode(
     let movement = movement::seed(origin.wram)?;
     let appearance = appearance_seed::decode(origin.wram, &content.clips)
         .map_err(|_| data_failure(None, "frame current appearance origin"))?;
-    let hud = super::hud::decode_state(origin.wram)?;
     let prelude = prelude_seed::decode(origin.wram)
         .map_err(|_| data_failure(None, "frame current prelude origin"))?;
     let receipt = borrowed_receipts::publication(origin.wram)
@@ -763,26 +762,26 @@ pub(super) fn decode(
         ),
         haze: Some(live_haze(origin.wram, &prelude.haze)?),
         random: Some(frame::random::Sequence::new(origin.random)),
+        scene: Some(origin.preparation.scene),
+        actor_eligibility: Some(prelude.actors),
+        debug: Some(origin.preparation.debug_current),
+        palette_objects: Some(origin.preparation.palette_current),
+        entry_environment: None,
         sprite_builder: Some(prelude.builder),
         sender_current: None,
         sender_queues: None,
         drawing: origin.drawing,
         caller: frame::Caller::AwaitingAcknowledgment {
             prelude: frame::PreludeSource::Origin(Box::new(frame::Prelude {
-                actors_origin: prelude.actors,
                 player_entry_current: None,
                 player_entry_offers: None,
-                hud_inventory: None,
                 player_continuation_current: None,
                 player_continuation_offers: None,
 
                 music_completion: origin.music,
-                scene_current: Some(origin.preparation.scene),
                 gameplay_completion: Some(origin.preparation.gameplay),
                 actor_completion: Some(origin.preparation.actors),
-                debug_current: Some(origin.preparation.debug_current),
                 debug_completion: Some(origin.preparation.debug),
-                palette_current: Some(origin.preparation.palette_current),
                 palette_completion: Some(origin.preparation.palette),
             })),
             receipt: Some(receipt),
@@ -792,6 +791,7 @@ pub(super) fn decode(
         movement_stage: frame::movement_stage::Stage::default(),
         inside_world: None,
         inside_inputs: None,
+        inside_premises: None,
         inside_pending: None,
         inside_completed: None,
         camera: Model(super::camera::seed(origin.wram, &super::camera::Content)?),
@@ -808,8 +808,10 @@ pub(super) fn decode(
             appearance.cannon,
         ),
         playing_figure: Model(appearance.playing),
-        hud: frame::hud::Hud::new(hud),
+        hud: frame::hud::Hud::new(super::hud::decode_state(origin.wram)?),
         hud_display_current: None,
+        hud_inventory: None,
+        hud_frame_count: None,
         hud_map: frame::hud_map_caller::Stage::Pending,
         health: None,
         liquid_history: None,
@@ -824,6 +826,7 @@ pub(super) fn decode(
         sender_history: None,
         late_hud: frame::late_hud::Stage::Pending,
         frame_history: None,
+        recurring_player: None,
         pose_input_configuration: None,
         room_tail_origin: None,
         room_tail: frame::room_tail::Stage::Pending,

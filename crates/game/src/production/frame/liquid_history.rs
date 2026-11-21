@@ -146,7 +146,8 @@ impl History {
     }
 
     pub(super) fn retire_opportunity(&mut self) {
-        self.origin = None;
+        // These observations belong to the completed opportunity. Only a writer
+        // or unqualified activity invalidates the live retained physics history.
         self.interruption = None;
         self.environment = None;
         self.run = None;
@@ -240,5 +241,24 @@ impl History {
             return Err(Fault);
         }
         Ok(samus_appearance::Liquid::NONE)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn retiring_consumers_preserves_air_authority_and_its_invalidation() {
+        let origin = Admission {
+            origin: [23; 32],
+            meaning: Meaning::Air,
+        };
+        let mut history = History::from_origin(origin.clone()).unwrap();
+        history.retire_opportunity();
+        assert_eq!(history.validate(&origin), Ok(()));
+        history.write(Meaning::Air);
+        history.retire_opportunity();
+        assert_eq!(history.validate(&origin), Err(Fault));
     }
 }

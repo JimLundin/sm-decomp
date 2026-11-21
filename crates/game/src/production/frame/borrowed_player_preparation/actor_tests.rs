@@ -400,3 +400,70 @@ fn actor_admission_rejects_late_selected_centre_body_view_and_membership_changes
     fixture.membership.interactive = vec![ActorSlotIdentity(3)];
     reject(fixture);
 }
+
+#[test]
+fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
+    use super::super::actor_doors::Doors;
+    use boss_ceres_ridley::{CeresDoor, DoorKind, Phase, Wait};
+    use types::{Parts, Side};
+
+    let fixture = Fixture::new();
+    let mut current = fixture.offer.dependency.clone();
+    let [first, second] = &mut current.actors;
+    first.instruction_timer = 2;
+    second.instruction_timer = 2;
+    second.geometry.position.x = Wrapping(600 * 65536);
+    let wait = Wait::new(2).unwrap();
+    let door = |phase, actor: &ActorSeed| CeresDoor {
+        kind: DoorKind::Door,
+        facing: Side::Left,
+        position: Pair {
+            x: actor.geometry.position.x.pixel(),
+            y: actor.geometry.position.y.pixel(),
+        },
+        phase,
+    };
+    let [a, b] = &current.actors;
+    let doors = Doors::new(
+        [
+            (ActorSlotIdentity(3), door(Phase::Open { wait }, a)),
+            (ActorSlotIdentity(9), door(Phase::Closed { wait }, b)),
+        ],
+        &current.actors,
+        [true, false],
+    )
+    .unwrap();
+    let views = fixture.offer.required.views;
+    let membership = &fixture.membership;
+    let near = Pair {
+        x: Wrapping(210),
+        y: Wrapping(100),
+    };
+    let far = Pair {
+        x: Wrapping(400),
+        y: Wrapping(100),
+    };
+    let (waited, first_window) = doors.run(&current, views, membership, far, 123).unwrap();
+    assert!(waited.matches(&first_window));
+    assert!(first_window.actors.iter().all(|actor| {
+        actor.instruction_timer == 1 && actor.graphics_updated == GraphicsUpdated::Clear
+    }));
+    let restored: Doors = canonical::from_bytes(&canonical::to_bytes(&waited)).unwrap();
+    assert_eq!(restored, waited);
+    assert!(
+        restored
+            .run(&current, views, membership, far, 456)
+            .is_none()
+    );
+    let (polled, second_window) = restored
+        .run(&current, views, membership, near, 456)
+        .unwrap();
+    assert!(polled.matches(&second_window));
+    assert!(second_window.actors.iter().all(|actor| {
+        actor.instruction_timer == 2
+            && actor.graphics_updated == GraphicsUpdated::Set
+            && actor.frame_counter == AdministrativeCounter(1)
+    }));
+    assert!(!doors.matches(&first_window));
+    assert!(!restored.matches(&second_window));
+}

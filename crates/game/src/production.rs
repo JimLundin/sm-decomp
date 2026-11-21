@@ -363,6 +363,9 @@ impl Production {
                 state
                     .current_clip(&content.appearance)
                     .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
+                state
+                    .validate_committed_actors(content)
+                    .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
                 OwnedState::Frame(state)
             }
             (

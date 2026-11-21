@@ -87,6 +87,50 @@ pub struct DrawingState {
     pub after_begin: Option<DrawingRequest>,
     /// Independently borrowed final End schedule writer; unavailable until admitted.
     pub after_end: Option<DrawingRequest>,
+    /// Next qualified recurring handler, empty after both have returned.
+    pub recurring_due: Option<DrawingRequest>,
+}
+
+impl DrawingState {
+    pub(super) fn begin_opportunity(&mut self) {
+        self.begin = None;
+        self.end = None;
+        self.after_begin = None;
+        self.after_end = None;
+        self.recurring_due = (self.active.is_none()
+            && self.current.request == DrawingRequest::Begin)
+            .then_some(DrawingRequest::Begin);
+    }
+
+    pub(super) fn bind_recurring(
+        &self,
+        profiles: &DrawingProfiles,
+    ) -> Result<Profile, DrawingFault> {
+        if self.recurring_due != Some(self.current.request) {
+            return Err(DrawingFault::Stale);
+        }
+        profiles.bind_current(self.current)
+    }
+
+    pub(super) fn complete_recurring(
+        &mut self,
+        request: DrawingRequest,
+    ) -> Result<(), DrawingFault> {
+        if self.recurring_due != Some(request) || self.current.request != request {
+            return Err(DrawingFault::Stale);
+        }
+        match request {
+            DrawingRequest::Begin => {
+                self.current.request = DrawingRequest::End;
+                self.recurring_due = Some(DrawingRequest::End);
+            }
+            DrawingRequest::End => {
+                self.current.request = DrawingRequest::Begin;
+                self.recurring_due = None;
+            }
+        }
+        Ok(())
+    }
 }
 
 /// Qualified byte-free drawing profiles with their current immutable content.
@@ -129,6 +173,10 @@ impl DrawingProfiles {
         if receipt.dependency != current {
             return Err(DrawingFault::Stale);
         }
+        self.bind_current(current)
+    }
+
+    fn bind_current(&self, current: DrawingInputs) -> Result<Profile, DrawingFault> {
         if current.next_request != NextRequest::None {
             return Err(DrawingFault::NextRequest);
         }

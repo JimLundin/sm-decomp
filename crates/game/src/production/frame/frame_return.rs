@@ -390,29 +390,26 @@ impl State {
                 | suffix_caller::Fault::UnsupportedBackgroundControl => missing(),
             })?;
         let admission = self.record_native_admission(current, &suffix, *admission, &events)?;
-        if progress == super::Progress::Completed {
+        let native_completion = if progress == super::Progress::Completed {
             let suffix_caller::Suffix::Acknowledged { controller } = &suffix else {
                 return Err(missing());
             };
-            let held = controller.word().ok_or_else(missing)?;
-            if !matches!(
-                self.late_hud,
-                super::late_hud::Stage::Completed(suffix_caller::HudQueue::Queued(_))
-            ) || !self
-                .frame_history
-                .as_mut()
-                .is_some_and(|history| history.capture_nmi(held))
-            {
-                return Err(missing());
-            }
-            self.late_hud = super::late_hud::Stage::Retired;
-        }
+            Some((
+                controller.word().ok_or_else(missing)?,
+                prepared.layers.terminal,
+            ))
+        } else {
+            None
+        };
         self.timing = timing;
         self.return_progress = Stage::Ready {
             builder: builder.clone(),
             suffix,
             admission,
         };
+        if let Some((held, layers)) = native_completion {
+            self.complete_requested_return(held, layers)?;
+        }
         self.publications
             .record(events)
             .map_err(ProductionFault::FramePublications)?;
@@ -423,6 +420,36 @@ impl State {
                 .deliver()
                 .map_err(ProductionFault::FramePublications)?,
         })
+    }
+
+    fn complete_requested_return(
+        &mut self,
+        held: u16,
+        layers: super::layer_blend::PreparedLayerSettings,
+    ) -> Result<(), ProductionFault> {
+        if !matches!(
+            self.late_hud,
+            super::late_hud::Stage::Completed(suffix_caller::HudQueue::Queued(_))
+        ) || !self
+            .frame_history
+            .as_mut()
+            .is_some_and(|history| history.capture_nmi(held))
+        {
+            return Err(missing());
+        }
+        self.late_hud = super::late_hud::Stage::Retired;
+        self.hud_frame_count = self.hud_frame_count.map(|frame| frame.wrapping_add(1));
+        if let Some(premises) = &mut self.inside_premises {
+            premises.complete_requested_nmi();
+        }
+        if let Some(drawing) = &mut self.drawing {
+            let [_, _, _, main, _, _, _, window, math] =
+                super::layer_blend::encode(layers).map_err(|_| missing())?;
+            drawing.current.video.main_layers = main;
+            drawing.current.video.colour_window = window;
+            drawing.current.video.colour_math = math;
+        }
+        Ok(())
     }
 
     fn record_native_admission(

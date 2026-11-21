@@ -16,7 +16,7 @@ use types::Parts;
 enum Completion {
     Projectiles(ProjectilesCompletion),
     Interaction(SamusInteractionCompletion),
-    Actors(ActorUpdateCompletion),
+    Actors(ActorUpdateCompletion, Option<super::actor_doors::Doors>),
     Sprites(SpriteObjectsCompletion),
     Contact(ContactResetCompletion),
 }
@@ -42,23 +42,6 @@ fn remaining_sources(
         &prelude.player_continuation_current.as_ref().ok_or(fault)?.0,
         &prelude.player_continuation_offers.as_ref().ok_or(fault)?.0,
     ))
-}
-
-fn remaining_projectiles(
-    offer: &super::borrowed_player_preparation::DeferredProjectilesReceipt,
-    current: &super::borrowed_player_preparation::ProjectilesOrigin,
-    inside_hud: &CompletedInsideAndHudWeapons<'_>,
-    actual: Option<&ProjectilesCompletion>,
-) -> Result<ProjectilesCompletion, ProductionFault> {
-    let fault = missing();
-    let expected_projectiles = offer
-        .clone()
-        .complete(current, inside_hud)
-        .map_err(|_| fault)?;
-    if actual.is_some_and(|actual| !actual.eq(&expected_projectiles)) {
-        return Err(fault);
-    }
-    Ok(expected_projectiles)
 }
 
 impl State {
@@ -122,22 +105,46 @@ impl State {
                 .is_some_and(|motion| motion.work != WorkId(18))
             || prepared.gameplay.is_none()
             || prepared.actors.is_none()
-            || prepared
-                .prelude
-                .origin()
-                .ok_or(fault)?
-                .player_continuation_current
-                .is_none()
-            || prepared
-                .prelude
-                .origin()
-                .ok_or(fault)?
-                .player_continuation_offers
-                .is_none()
+            || !self.has_remaining_player_source(prepared)
         {
             return Err(fault);
         }
         Ok(*stage)
+    }
+
+    pub(super) fn has_remaining_player_source(&self, prepared: &super::Preparation) -> bool {
+        if prepared.prelude.origin().is_some() {
+            remaining_sources(prepared).is_ok()
+        } else {
+            self.recurring_player.is_some()
+        }
+    }
+
+    pub(super) fn current_projectiles(
+        &self,
+        prepared: &super::Preparation,
+        selected: &CompletedInsideAndHudWeapons<'_>,
+        actual: Option<&ProjectilesCompletion>,
+    ) -> Result<ProjectilesCompletion, ProductionFault> {
+        let fault = missing();
+        let expected = if prepared.prelude.origin().is_some() {
+            let (current, offers) = remaining_sources(prepared)?;
+            offers
+                .projectiles
+                .clone()
+                .complete(&current.projectiles, selected)
+        } else {
+            self.recurring_player
+                .as_ref()
+                .ok_or(fault)?
+                .projectiles
+                .complete_quiet(selected)
+        }
+        .map_err(|_| fault)?;
+        if actual.is_some_and(|actual| actual != &expected) {
+            return Err(fault);
+        }
+        Ok(expected)
     }
 
     /// Validate fresh actual owners and compute an unpublished candidate result.
@@ -154,17 +161,12 @@ impl State {
         else {
             return Err(ProductionFault::WrongScope);
         };
-        let (current, offers) = remaining_sources(prepared)?;
         let inside_hud = CompletedInsideAndHudWeapons {
             inside: self.inside_completed.as_ref().ok_or(fault)?,
             controls,
         };
-        let expected_projectiles = remaining_projectiles(
-            &offers.projectiles,
-            &current.projectiles,
-            &inside_hud,
-            remaining.0.projectiles.as_ref(),
-        )?;
+        let expected_projectiles =
+            self.current_projectiles(prepared, &inside_hud, remaining.0.projectiles.as_ref())?;
         if stage == Stage::Projectiles {
             return Ok(Completion::Projectiles(expected_projectiles));
         }
@@ -178,15 +180,21 @@ impl State {
         if !self.movement.state().eq(&selected.motion_reset.previous.0) {
             return Err(fault);
         }
-        let expected_interaction = offers
-            .interaction
-            .clone()
-            .complete(
-                &current.interaction,
-                &selected,
-                remaining.0.projectiles.as_ref().ok_or(fault)?,
-            )
-            .map_err(|_| fault)?;
+        let projectiles = remaining.0.projectiles.as_ref().ok_or(fault)?;
+        let expected_interaction = if prepared.prelude.origin().is_some() {
+            let (current, offers) = remaining_sources(prepared)?;
+            offers
+                .interaction
+                .clone()
+                .complete(&current.interaction, &selected, projectiles)
+        } else {
+            self.recurring_player
+                .as_ref()
+                .ok_or(fault)?
+                .interaction
+                .complete_quiet(&selected, projectiles)
+        }
+        .map_err(|_| fault)?;
         if remaining
             .0
             .interaction
@@ -195,18 +203,156 @@ impl State {
         {
             return Err(fault);
         }
+        if stage == Stage::Interaction {
+            return Ok(Completion::Interaction(expected_interaction));
+        }
+        if prepared.prelude.origin().is_none() {
+            return self.remaining_recurring_actors(
+                content,
+                stage,
+                prepared,
+                &selected,
+                &expected_interaction,
+                remaining.0.actors.as_ref(),
+            );
+        }
+        self.remaining_origin_candidate(content, stage, prepared, &selected, &remaining.0)
+    }
+
+    fn remaining_recurring_actors(
+        &self,
+        content: &Content,
+        stage: Stage,
+        prepared: &super::Preparation,
+        selected: &CompletedPlayerSelection<'_>,
+        interaction: &SamusInteractionCompletion,
+        actual: Option<&ActorUpdateCompletion>,
+    ) -> Result<Completion, ProductionFault> {
+        let fault = missing();
+        let owners = self.recurring_player.as_ref().ok_or(fault)?;
+        let input = match (stage, actual, owners.completed_poll_input) {
+            (Stage::Actors, None, None) => owners.doors,
+            (Stage::Sprites, Some(_), Some(input)) => input,
+            _ => return Err(fault),
+        };
+        let (next, result) =
+            self.recurring_poll(content, prepared, selected, interaction, input)?;
+        if let Some(actual) = actual {
+            let health_holds = match (&self.health, &content.health) {
+                (Some(owner), Some(admission)) => owner.holds_recurring_actor(admission, actual),
+                (None, None) => true,
+                _ => false,
+            };
+            if &result != actual || next != owners.doors || !health_holds {
+                return Err(fault);
+            }
+            return Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::SpriteObjectsPreparation,
+            )));
+        }
+        Ok(Completion::Actors(result, Some(next)))
+    }
+
+    fn recurring_poll(
+        &self,
+        content: &Content,
+        prepared: &super::Preparation,
+        selected: &CompletedPlayerSelection<'_>,
+        interaction: &SamusInteractionCompletion,
+        doors: super::actor_doors::Doors,
+    ) -> Result<(super::actor_doors::Doors, ActorUpdateCompletion), ProductionFault> {
+        use super::borrowed_player_preparation::ActorUnselectedOrigin;
+        use samus_movement::suspended::MovementDecision;
+        let fault = missing();
+        let owners = self.recurring_player.as_ref().ok_or(fault)?;
+        let membership = prepared.actors.as_ref().ok_or(fault)?;
+        if self
+            .actor_eligibility
+            .as_ref()
+            .and_then(super::borrowed_preparation::ActorEligibilityReceipt::marked_offscreen)
+            .as_ref()
+            != Some(membership)
+        {
+            return Err(fault);
+        }
+        let scene = prepared.gameplay.as_ref().ok_or(fault)?.scene;
+        if self.scene != Some(scene)
+            || scene != super::borrowed_gameplay::SceneController::MainGameplay
+            || doors.path() != Some(super::actor_doors::Path::Polling)
+            || self
+                .room_quake
+                .current()
+                .is_none_or(|quake| quake.is_active())
+            || owners.contact.activity != interaction.terminal.activity
+            || owners.contact.sprite_interaction != interaction.terminal.sprite_interaction
+        {
+            return Err(fault);
+        }
+        let samus = self.movement.state();
+        let radius = content.movement.radius(samus.pose).ok_or(fault)?;
+        let inside = selected.inside_hud.inside;
+        let Some(MovementDecision::InsideRequest(bounds)) = inside.receipt.decisions.0.first()
+        else {
+            return Err(fault);
+        };
+        let her = types::Pair {
+            x: samus.position.x.pixel(),
+            y: samus.position.y.pixel(),
+        };
+        if bounds.at != samus.position
+            || bounds.r != radius
+            || inside.retained.state().pose != samus.pose
+            || !doors.contact_misses(her.x, radius.x)
+        {
+            return Err(fault);
+        }
+        let camera = self.camera.0.position();
+        let views = doors
+            .views(types::Pair {
+                x: camera.x.pixel().0,
+                y: camera.y.pixel().0,
+            })
+            .ok_or(fault)?;
+        let current = ActorUnselectedOrigin {
+            actors: doors.current_actors(),
+            clocks: owners.projectiles.clocks,
+            scene: owners.actor_scene,
+            shake_requested: false,
+            contact: owners.contact,
+        };
+        doors
+            .run(
+                &current,
+                views,
+                membership,
+                her,
+                self.current_random().ok_or(fault)?,
+            )
+            .ok_or(fault)
+    }
+
+    fn remaining_origin_candidate(
+        &self,
+        content: &Content,
+        stage: Stage,
+        prepared: &super::Preparation,
+        selected: &CompletedPlayerSelection<'_>,
+        remaining: &super::borrowed_player_preparation::PlayerContinuationCompletions,
+    ) -> Result<Completion, ProductionFault> {
+        let fault = missing();
+        let (current, offers) = remaining_sources(prepared)?;
         let complete_actors = || {
             self.remaining_actors(
                 content,
                 prepared,
-                &selected,
+                selected,
                 &current.actors,
                 &offers.actors,
-                remaining.0.interaction.as_ref().ok_or(fault)?,
+                remaining.interaction.as_ref().ok_or(fault)?,
             )
         };
-        if let Some(actual) = &remaining.0.actors
-            && !actual.eq(&complete_actors()?)
+        if let Some(actual) = &remaining.actors
+            && !self.actor_history_matches(actual, complete_actors)?
         {
             return Err(fault);
         }
@@ -214,32 +360,47 @@ impl State {
             offers
                 .sprites
                 .clone()
-                .complete(&current.sprites, remaining.0.actors.as_ref().ok_or(fault)?)
+                .complete(&current.sprites, remaining.actors.as_ref().ok_or(fault)?)
                 .map_err(|_| fault)
         };
-        if let Some(actual) = &remaining.0.sprites
+        if let Some(actual) = &remaining.sprites
             && !actual.eq(&complete_sprites()?)
         {
             return Err(fault);
         }
         match stage {
-            Stage::Interaction => Ok(Completion::Interaction(expected_interaction)),
-            Stage::Actors => complete_actors().map(Completion::Actors),
+            Stage::Actors => {
+                complete_actors().map(|(result, doors)| Completion::Actors(result, doors))
+            }
             Stage::Sprites => complete_sprites().map(Completion::Sprites),
             Stage::Contact => offers
                 .contact
                 .clone()
                 .complete(
                     current.contact,
-                    remaining.0.actors.as_ref().ok_or(fault)?,
-                    remaining.0.sprites.as_ref().ok_or(fault)?,
+                    remaining.actors.as_ref().ok_or(fault)?,
+                    remaining.sprites.as_ref().ok_or(fault)?,
                 )
                 .map(Completion::Contact)
                 .map_err(|_| fault),
-            Stage::Projectiles | Stage::MotionReset | Stage::Run => {
+            Stage::Projectiles | Stage::MotionReset | Stage::Interaction | Stage::Run => {
                 Err(ProductionFault::WrongScope)
             }
         }
+    }
+
+    fn actor_history_matches(
+        &self,
+        actual: &ActorUpdateCompletion,
+        original: impl FnOnce() -> Result<
+            (ActorUpdateCompletion, Option<super::actor_doors::Doors>),
+            ProductionFault,
+        >,
+    ) -> Result<bool, ProductionFault> {
+        if let Some(owners) = &self.recurring_player {
+            return Ok(owners.doors.matches(actual));
+        }
+        Ok(actual.eq(&original()?.0))
     }
 
     fn remaining_actors(
@@ -250,7 +411,7 @@ impl State {
         current: &super::borrowed_player_preparation::ActorUnselectedOrigin,
         offer: &super::borrowed_player_preparation::DeferredActorUpdateReceipt,
         interaction: &SamusInteractionCompletion,
-    ) -> Result<ActorUpdateCompletion, ProductionFault> {
+    ) -> Result<(ActorUpdateCompletion, Option<super::actor_doors::Doors>), ProductionFault> {
         let fault = missing();
         let position = self.camera.0.position();
         let view = ActorView {
@@ -261,26 +422,54 @@ impl State {
                 y: position.y.pixel().0,
             },
         };
+        let membership = prepared.actors.as_ref().ok_or(fault)?;
+        if let Some(owners) = &self.recurring_player {
+            offer
+                .validate_dependencies(current, selected, view, membership, interaction)
+                .map_err(|_| fault)?;
+            let [x, y] = [
+                self.movement.state().position.x.pixel(),
+                self.movement.state().position.y.pixel(),
+            ];
+            let (next, completion) = owners
+                .doors
+                .run(
+                    current,
+                    offer.required.views,
+                    membership,
+                    types::Pair { x, y },
+                    self.current_random().ok_or(fault)?,
+                )
+                .ok_or(fault)?;
+            return Ok((completion, Some(next)));
+        }
         offer
             .clone()
-            .complete(
-                current,
-                selected,
-                view,
-                prepared.actors.as_ref().ok_or(fault)?,
-                interaction,
-            )
+            .complete(current, selected, view, membership, interaction)
+            .map(|result| (result, None))
             .map_err(|_| fault)
     }
 
     /// Bind only the full no-device-effect envelope after semantic admission succeeds.
-    fn remaining_profile(content: &Content, stage: Stage) -> Result<Profile, ProductionFault> {
-        let template = content
-            .player_continuation
-            .as_ref()
-            .ok_or_else(missing)?
-            .template(stage)
-            .ok_or(ProductionFault::WrongScope)?;
+    fn remaining_profile(
+        &self,
+        content: &Content,
+        stage: Stage,
+    ) -> Result<Profile, ProductionFault> {
+        let profiles = content.player_continuation.as_ref().ok_or_else(missing)?;
+        let template = if stage == Stage::Actors
+            && self
+                .recurring_player
+                .as_ref()
+                .and_then(|owners| owners.doors.path())
+                == Some(super::actor_doors::Path::Polling)
+        {
+            profiles.recurring_actors.as_ref().ok_or_else(missing)?
+        } else {
+            profiles
+                .template(stage)
+                .ok_or(ProductionFault::WrongScope)?
+        };
         if template
             .runs
             .iter()
@@ -308,7 +497,7 @@ impl State {
         };
         let stage = self.remaining_history()?;
         let _ = self.remaining_candidate(content)?;
-        let profile = Self::remaining_profile(content, stage)?;
+        let profile = self.remaining_profile(content, stage)?;
         self.timing
             .begin(stage.identity(), profile)
             .map_err(ProductionFault::FrameHardware)?;
@@ -316,6 +505,27 @@ impl State {
             return Err(ProductionFault::WrongScope);
         };
         *charging = true;
+        Ok(())
+    }
+
+    pub(crate) fn validate_committed_actors(&self, content: &Content) -> Result<(), super::Fault> {
+        if let Caller::PlayerContinuation {
+            prepared,
+            stage: Stage::Sprites,
+            charging,
+            ..
+        } = &self.caller
+            && prepared.prelude.origin().is_none()
+            && (*charging
+                || !matches!(
+                    self.remaining_candidate(content),
+                    Err(ProductionFault::Unsupported(Unsupported::Frame(
+                        Dependency::SpriteObjectsPreparation,
+                    )))
+                ))
+        {
+            return Err(super::Fault::InvalidPlayerEntry);
+        }
         Ok(())
     }
 
@@ -333,9 +543,15 @@ impl State {
         let Caller::PlayerContinuation { charging, .. } = &self.caller else {
             return Err(super::Fault::InvalidPlayerEntry);
         };
-        self.remaining_candidate(content)
-            .map_err(|_| super::Fault::InvalidPlayerEntry)?;
-        let profile = Self::remaining_profile(content, stage)
+        match self.remaining_candidate(content) {
+            Ok(_) => {}
+            Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::SpriteObjectsPreparation,
+            ))) if !charging => return Ok(()),
+            Err(_) => return Err(super::Fault::InvalidPlayerEntry),
+        }
+        let profile = self
+            .remaining_profile(content, stage)
             .map_err(|_| super::Fault::InvalidPlayerEntry)?;
         let retained: Vec<_> = self
             .timing
@@ -369,10 +585,11 @@ impl State {
             return Err(missing());
         }
         let candidate = self.remaining_candidate(content)?;
-        let _ = Self::remaining_profile(content, *stage)?;
+        let _ = self.remaining_profile(content, *stage)?;
         let Caller::PlayerContinuation {
             remaining,
             remaining_work,
+            prepared,
             charging,
             stage,
             ..
@@ -383,7 +600,14 @@ impl State {
         match candidate {
             Completion::Projectiles(result) => remaining.0.projectiles = Some(result),
             Completion::Interaction(result) => remaining.0.interaction = Some(result),
-            Completion::Actors(result) => {
+            Completion::Actors(result, next) => {
+                if let Some(next) = next {
+                    let owners = self.recurring_player.as_mut().ok_or_else(missing)?;
+                    if prepared.prelude.origin().is_none() {
+                        owners.completed_poll_input = Some(owners.doors);
+                    }
+                    owners.doors = next;
+                }
                 if let Some(owner) = &mut self.health {
                     owner.actor_completed(&result).map_err(|_| {
                         ProductionFault::Unsupported(crate::production::Unsupported::Frame(

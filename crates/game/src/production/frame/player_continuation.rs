@@ -1,8 +1,28 @@
 //! Ordered remaining player owners and their complete physical envelopes.
 
+use super::borrowed_player_preparation::{
+    ActorScene, OrdinaryActorContact, ProjectilesOrigin, SamusInteractionOrigin,
+};
 use crate::production::timing::WorkId;
 use canonical::Canonical;
 use data::timing::Template;
+
+/// Carried projectile slots, clocks and Samus interaction modes.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct RecurringPlayer {
+    /// Current physical projectile collection.
+    pub projectiles: ProjectilesOrigin,
+    /// Current interaction activity and enables.
+    pub interaction: SamusInteractionOrigin,
+    /// Current ordinary Ceres door actors.
+    pub doors: super::actor_doors::Doors,
+    /// Actual door state consumed by this interval's completed recurring poll.
+    pub completed_poll_input: Option<super::actor_doors::Doors>,
+    /// Current pre-escape actor scene.
+    pub actor_scene: ActorScene,
+    /// Current ordinary contact guards, independent of door waits and outputs.
+    pub contact: OrdinaryActorContact,
+}
 
 /// Actual owner following completed Inside and early HUD controls.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -62,6 +82,8 @@ pub struct Content {
     pub interaction: Template,
     /// Whole actor update, including all actual ordered members.
     pub actors: Template,
+    /// Whole `ActorUpdate` when both carried doors poll without changing figure.
+    pub recurring_actors: Option<Template>,
     /// Whole sprite instruction scan.
     pub sprites: Template,
     /// Whole contact preparation.

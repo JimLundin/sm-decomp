@@ -166,6 +166,7 @@ impl Admission<'_> {
                 templates,
                 &manifest.buffer_regions.text()?,
             )?;
+            state.hud_frame_count = Some(current.0.premises.frame.0);
             state.hud_display_current = Some(current);
             Some(display)
         } else {
@@ -506,6 +507,13 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
         returns.settling_haze,
     )?;
     content.player_entry.recurring_pose_input = returns.adjacent_pose_input;
+    if let Some(actors) = returns.adjacent_actor_update {
+        let continuation = content
+            .player_continuation
+            .as_mut()
+            .ok_or_else(|| data_failure(None, "native ActorUpdate continuation"))?;
+        continuation.recurring_actors = Some(actors);
+    }
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {
         movement: samus_movement::Rules::default(),

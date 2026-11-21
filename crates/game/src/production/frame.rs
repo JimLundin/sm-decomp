@@ -8,6 +8,7 @@ mod tests;
 
 mod publications;
 pub use publications::{PublicationFault, Publications};
+pub mod actor_doors;
 pub mod animation_caller;
 pub mod appearance_caller;
 pub mod appearance_stage;
@@ -26,6 +27,7 @@ pub mod countdown_scene;
 mod down_caller;
 pub mod drawing_owners;
 mod early_hud_caller;
+pub mod entry_environment;
 pub mod frame_history;
 pub mod frame_return;
 pub mod frame_tail;
@@ -94,6 +96,7 @@ pub use state::{Fault, Senders, State};
 pub(crate) fn validate_pins() -> Result<(), canonical::model::Unpinned> {
     canonical::model::pin_holds::<haze::HazePin>()?;
     canonical::model::pin_holds::<random::RandomPin>()?;
+    canonical::model::pin_holds::<entry_environment::EquipmentPin>()?;
     canonical::model::pin_holds::<health::HealthPin>()?;
     canonical::model::pin_holds::<hud::CountdownPin>()?;
     canonical::model::pin_holds::<countdown_caller::AnswerPin>()?;

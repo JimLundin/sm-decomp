@@ -220,10 +220,16 @@ and its new presses, carries the returned Haze owner into settling, preserves th
 buffer, and compares the settling readiness, completion and LayerBlend clocks. The restored
 continuation compares all nine LayerBlend settings with the independently recorded writes.
 
-Both cases hold the exact cut-2 `Frame(GameplayPreparation)` boundary in the
-[reviewed baseline](../scenarios/replay/baseline.toml). The pinned
-[adjacent fixture](../tools/ci/fetch_retained_haze.sh) has independent callback streams and
-terminal observations for each interval. The restored continuation compares both Random draws
-against independent completion, operand-write and product-sample observations. Production
-reaches gameplay preparation before the second return and its controller latch. The second
-interval's full callback stream and terminal observations remain unverified.
+The restored continuation compares both Random draws against independent completion,
+operand-write and product-sample observations. It also resumes a shifted Drawing interrupt
+inside the current room queries and completes HUD weapons, quiet Projectile traversal,
+MotionReset and Samus interaction. Both carried Ceres doors enter ActorUpdate with wait one.
+Each completes its poll with wait two, the same geometry and a graphics update. The restored
+actor charge rejects the stale pose and the earlier door waits. The returned actor result
+supplies the no-hurt Health join.
+
+Both adjacent cases hold the exact cut-2 `Frame(SpriteObjectsPreparation)` boundary in the
+[reviewed baseline](../scenarios/replay/baseline.toml). The
+[adjacent fixture](../tools/ci/fetch_retained_haze.sh) includes independent callback streams
+and terminal observations for both intervals. The second full callback stream, second
+controller latch, later Health maintenance and second requested NMI return remain unverified.

@@ -44,6 +44,7 @@ impl State {
                 &content.movement,
                 &self.inside_world.as_ref().ok_or_else(missing)?.0,
                 completed.0.pose_input.as_ref().ok_or_else(missing)?,
+                self.inside_geometry(),
             )
             .map_err(|_| missing())?;
         Ok(inside)

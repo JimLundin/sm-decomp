@@ -177,6 +177,9 @@ impl Health {
 
     /// Observe only the actual successfully admitted HUD interrupt pair.
     pub const fn hud_irq(&mut self, request: DrawingRequest) {
+        if matches!(self.freshness, Freshness::Retired) {
+            return;
+        }
         match (self.interrupts, request) {
             (InterruptHistory::Unseen, DrawingRequest::Begin) => {
                 self.interrupts = InterruptHistory::Begun;
@@ -195,7 +198,7 @@ impl Health {
         &mut self,
         completion: &actors::ActorUpdateCompletion,
     ) -> Result<(), Fault> {
-        self.validate_origin(self.origin.as_ref().ok_or(Fault::Owner)?)?;
+        self.validate_current()?;
         let dependency = &completion.dependency;
         if self.actor.is_some()
             || completion.solid_boxes().is_err()
@@ -231,8 +234,8 @@ impl Health {
     /// Invalidated or changed current inputs cannot regain freshness by restoration.
     pub fn validate_current(&self) -> Result<(), Fault> {
         if self.freshness == Freshness::Retired {
+            self.context.qualify()?;
             return if self.origin.is_none()
-                && self.actor.is_none()
                 && self.interrupts == InterruptHistory::Unseen
                 && !self.maintained
             {
@@ -276,7 +279,8 @@ impl Health {
         result: samus_health::State,
     ) -> Result<(), Fault> {
         self.validate_current()?;
-        if self.maintained
+        if self.freshness == Freshness::Retired
+            || self.maintained
             || self.state() != before
             || self.interrupts != InterruptHistory::Returned
         {
@@ -289,6 +293,17 @@ impl Health {
 
     pub(super) const fn maintained(&self) -> bool {
         self.maintained
+    }
+
+    pub(super) fn holds_recurring_actor(
+        &self,
+        admission: &Admission,
+        actor: &actors::ActorUpdateCompletion,
+    ) -> bool {
+        self.freshness == Freshness::Retired
+            && self.context == admission.context
+            && self.validate_current().is_ok()
+            && self.actor() == Some(actor)
     }
 
     /// Actual actor completion retained independently from the original source declaration.
@@ -308,15 +323,6 @@ impl super::State {
         let missing = || {
             ProductionFault::Unsupported(Unsupported::Frame(super::Dependency::HealthCurrentInputs))
         };
-        if self
-            .health
-            .as_ref()
-            .is_some_and(|health| health.freshness == Freshness::Retired)
-        {
-            // The retained quantities are readable. A fresh maintenance consumer
-            // still requires its own source qualification.
-            return Ok(());
-        }
         let (Some(owner), Some(admission)) = (&self.health, &content.health) else {
             return if self.health.is_none() && content.health.is_none() {
                 Ok(())
@@ -324,9 +330,16 @@ impl super::State {
                 Err(missing())
             };
         };
-        owner.validate_origin(admission).map_err(|_| missing())?;
-        if self.scene_countdown.is_none() || content.scene_countdown.is_none() {
-            return Err(missing());
+        if owner.freshness == Freshness::Retired {
+            owner.validate_current().map_err(|_| missing())?;
+            if owner.context != admission.context {
+                return Err(missing());
+            }
+        } else {
+            owner.validate_origin(admission).map_err(|_| missing())?;
+            if self.scene_countdown.is_none() || content.scene_countdown.is_none() {
+                return Err(missing());
+            }
         }
         if self
             .drawing_origins

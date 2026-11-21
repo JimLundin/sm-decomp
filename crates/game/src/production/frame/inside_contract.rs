@@ -34,6 +34,13 @@ pub struct PhysicalContract {
     template: Template,
 }
 
+/// Geometry premises established by the admitted physical profile.
+#[derive(Clone, Copy)]
+pub(super) enum GeometryMatch {
+    Origin,
+    Recurring,
+}
+
 /// An unsupported dependency never authorizes any portion of the whole owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fault {
@@ -62,13 +69,14 @@ impl PhysicalContract {
     /// Qualify complete actual current operands before binding one whole Inside operation.
     /// # Errors
     /// Stale or incomplete producers, a different query shape or incompatible physical content.
-    pub fn physical(
+    pub(super) fn physical(
         &self,
         receipt: &Receipt,
         movement: &Movement,
         content: &MovementContent,
         room: &InsideWorld,
         pose_input: &super::borrowed_player_preparation::PoseInputCompletion,
+        geometry: GeometryMatch,
     ) -> Result<data::timing::Profile, Fault> {
         let Movement::Work(work) = movement else {
             return Err(Fault::Dependencies);
@@ -94,16 +102,31 @@ impl PhysicalContract {
             || bounds.r != body
             || pose_input.dependency.pose != current.pose
             || pose_input.terminal.radius != body
-            || [current.position.x.pixel().0, current.position.y.pixel().0]
-                != self.dependencies.pixels
-            || current.pose != self.dependencies.pose
-            || [body.x.0, body.y.0] != self.dependencies.radius
             || room != self.dependencies.room.as_ref()
         {
             return Err(Fault::Dependencies);
         }
         let requests = Requests::from_receipt(receipt, room.width())?;
-        let column = bounds.at.x.pixel().0 >> 4;
+        let pixels = [current.position.x.pixel().0, current.position.y.pixel().0];
+        let column = pixels[0] >> 4;
+        let qualified = match geometry {
+            GeometryMatch::Origin => {
+                pixels == self.dependencies.pixels
+                    && current.pose == self.dependencies.pose
+                    && [body.x.0, body.y.0] == self.dependencies.radius
+            }
+            GeometryMatch::Recurring => {
+                self.dependencies.pixels[0] >> 4 == column
+                    && Requests::from_pixels(
+                        self.dependencies.pixels,
+                        self.dependencies.radius[1],
+                        room.width(),
+                    )? == requests
+            }
+        };
+        if !qualified {
+            return Err(Fault::Dependencies);
+        }
         if requests.rows.iter().any(|row| {
             room.block_type(types::Cell {
                 x: column,
@@ -137,18 +160,20 @@ impl Requests {
         else {
             return Err(Fault::Geometry);
         };
-        let y = bounds.at.y.pixel().0;
-        let radius = bounds.r.y.0;
+        Self::from_pixels(
+            [bounds.at.x.pixel().0, bounds.at.y.pixel().0],
+            bounds.r.y.0,
+            width,
+        )
+    }
+
+    fn from_pixels([x, y]: [u16; 2], radius: u16, width: u16) -> Result<Self, Fault> {
         let bottom_pixel = y
             .checked_add(radius)
             .and_then(|edge| edge.checked_sub(1))
             .ok_or(Fault::Geometry)?;
         let top_pixel = y.checked_sub(radius).ok_or(Fault::Geometry)?;
-        if bounds.at.x.pixel().0 >= 4096
-            || bottom_pixel >= 4096
-            || top_pixel > y
-            || y > bottom_pixel
-        {
+        if x >= 4096 || bottom_pixel >= 4096 || top_pixel > y || y > bottom_pixel {
             return Err(Fault::Geometry);
         }
         let bottom = bottom_pixel >> 4;

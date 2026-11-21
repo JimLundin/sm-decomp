@@ -15,6 +15,7 @@ struct Supplement {
     pad_schedule: Member,
     settling_haze: Option<Member>,
     adjacent_pose_input: Option<Member>,
+    adjacent_actor_update: Option<Member>,
     returns: Vec<Return>,
 }
 
@@ -80,6 +81,7 @@ pub(super) struct Prepared {
     pub(super) pad_origin: Option<PadOrigin>,
     pub(super) settling_haze: Option<data::timing::Template>,
     pub(super) adjacent_pose_input: Option<data::timing::Template>,
+    pub(super) adjacent_actor_update: Option<data::timing::Template>,
 }
 
 pub(super) fn prepare(
@@ -96,7 +98,7 @@ pub(super) fn prepare(
         final_owners: manifest.final_owners.clone(),
     };
     let mut expected = BTreeMap::from([(first_cut, first_return.expected()?)]);
-    let (pad_origin, pads, settling_haze, adjacent_pose_input) =
+    let (pad_origin, pads, settling_haze, adjacent_pose_input, adjacent_actor_update) =
         if let Some(reference) = &case.end.native_returns {
             let path = sources.native.join(&reference.path);
             let root = path
@@ -145,9 +147,15 @@ pub(super) fn prepare(
                 "AdjacentPoseInput",
                 [731, 4672],
             )?;
-            (Some(pad_origin), pads, settling, pose)
+            let actors = read_quiet_profile(
+                supplement.adjacent_actor_update,
+                &root,
+                "AdjacentActorUpdate",
+                [1810, 11822],
+            )?;
+            (Some(pad_origin), pads, settling, pose, actors)
         } else {
-            (None, vec![next_pad], None, None)
+            (None, vec![next_pad], None, None, None)
         };
     let schedule = expected.keys().copied().collect();
     let random = case
@@ -172,6 +180,7 @@ pub(super) fn prepare(
         pad_origin,
         settling_haze,
         adjacent_pose_input,
+        adjacent_actor_update,
     })
 }
 

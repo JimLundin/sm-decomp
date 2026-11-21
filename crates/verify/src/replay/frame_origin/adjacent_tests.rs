@@ -15,7 +15,10 @@ use game::{
     production::{
         AdvanceInput, Production, ProductionContent, ProductionFault, ProductionOutputs,
         ProductionSeed, Unsupported,
-        frame::{self, Caller, Dependency},
+        frame::{
+            self, Caller, Dependency, PlayerEntryStage, PreparationStage, State,
+            player_continuation,
+        },
         timing::EventKind,
         timing::SampleValue,
     },
@@ -158,22 +161,59 @@ fn native_controller(production: &Production) -> Option<[u16; 2]> {
     state.frame_history.as_ref()?.native_controller()
 }
 
-fn advance_to_prelude_stage(production: &mut Production, reached: impl Fn(&Caller) -> bool) {
-    let _ = collect_to_prelude_stage(production, reached);
+fn advance_to_prelude_stage(
+    production: &mut Production,
+    deadline: u64,
+    reached: impl Fn(&Caller) -> bool,
+) {
+    advance_frame_until(production, deadline, |state| reached(&state.caller));
 }
 
 fn collect_to_prelude_stage(
     production: &mut Production,
+    deadline: u64,
     reached: impl Fn(&Caller) -> bool,
 ) -> Vec<game::production::timing::Event> {
     let mut events = Vec::new();
-    for _ in 0..20_000 {
+    advance_frame(
+        production,
+        deadline,
+        |state| reached(&state.caller),
+        |outputs| events.extend(outputs.events),
+    );
+    events
+}
+
+fn advance_frame_until(
+    production: &mut Production,
+    deadline: u64,
+    reached: impl Fn(&State) -> bool,
+) {
+    advance_frame(production, deadline, reached, |_| {});
+}
+
+fn advance_frame(
+    production: &mut Production,
+    deadline: u64,
+    reached: impl Fn(&State) -> bool,
+    mut collect: impl FnMut(game::production::frame::Outputs),
+) {
+    loop {
         let OwnedState::Frame(state) = production.state() else {
             panic!("frame production");
         };
-        if reached(&state.caller) {
-            return events;
+        if reached(state) {
+            return;
         }
+        let tick = state.timing.hardware.now.0;
+        let cursor = state.timing.work.last().map(|work| work.cursor.clone());
+        let depth = state.timing.work.len();
+        let interrupted = state.timing.interrupt_boundary;
+        let handler = state.timing.pending_handler.clone();
+        assert!(
+            tick <= deadline,
+            "expected stage absent at wall {tick}, deadline {deadline}, cursor {cursor:?}"
+        );
         let ProductionOutputs::Frame(outputs) = production
             .advance(AdvanceInput::Frame {
                 budget: MasterTicks(13),
@@ -182,9 +222,22 @@ fn collect_to_prelude_stage(
         else {
             panic!("frame outputs");
         };
-        events.extend(outputs.events);
+        collect(outputs);
+        let OwnedState::Frame(current) = production.state() else {
+            panic!("frame production");
+        };
+        let now = current.timing.hardware.now.0;
+        assert!(now >= tick, "master clock moved from {tick} to {now}");
+        assert!(
+            now != tick
+                || reached(current)
+                || depth != current.timing.work.len()
+                || cursor.as_ref() != current.timing.work.last().map(|work| &work.cursor)
+                || interrupted != current.timing.interrupt_boundary
+                || handler != current.timing.pending_handler,
+            "no progress at wall {now}, cursor {cursor:?}"
+        );
     }
-    panic!("expected prelude stage was never reached");
 }
 
 fn check_settling_prefix(admitted: &AdmittedCase, observed_layers: [u8; 9]) {
@@ -201,9 +254,11 @@ fn check_settling_prefix(admitted: &AdmittedCase, observed_layers: [u8; 9]) {
     );
     let regions = start.content.regions();
     let from = start.timing.hardware.now;
-    advance_to_prelude_stage(&mut production, |caller| {
-        matches!(caller, Caller::HazeTail { .. })
-    });
+    advance_to_prelude_stage(
+        &mut production,
+        from.0.checked_add(1892).unwrap(),
+        |caller| matches!(caller, Caller::HazeTail { .. }),
+    );
     let OwnedState::Frame(ready) = production.state() else {
         panic!("frame production");
     };
@@ -216,7 +271,7 @@ fn check_settling_prefix(admitted: &AdmittedCase, observed_layers: [u8; 9]) {
     let mut restored =
         Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
     for production in [&mut production, &mut restored] {
-        advance_to_prelude_stage(production, |caller| {
+        advance_to_prelude_stage(production, from.0.checked_add(3460).unwrap(), |caller| {
             matches!(caller, Caller::LayerBlend { .. })
         });
         let OwnedState::Frame(terminal) = production.state() else {
@@ -226,7 +281,9 @@ fn check_settling_prefix(admitted: &AdmittedCase, observed_layers: [u8; 9]) {
             terminal.timing.hardware.now.0.checked_sub(from.0),
             Some(3332)
         );
-        advance_to_prelude_stage(production, |caller| matches!(caller, Caller::Random { .. }));
+        advance_to_prelude_stage(production, from.0.checked_add(4368).unwrap(), |caller| {
+            matches!(caller, Caller::Random { .. })
+        });
         let OwnedState::Frame(layered) = production.state() else {
             panic!("frame production");
         };
@@ -250,13 +307,17 @@ fn compare_continuation(
     sources: &Sources,
     admitted: &mut AdmittedCase,
     controller: &Controller,
+    original_doors: game::production::frame::actor_doors::Doors,
 ) {
     let dependency = if matches!(&admitted.content, ProductionContent::Frame(content) if content.settling_haze.is_some())
     {
         let layers = super::admission::observed_layer_blend(case, sources).unwrap();
         check_settling_prefix(admitted, layers);
         check_random_checkpoint(admitted, &observed_draw(admitted, case.end.cut_inclusive));
-        Dependency::GameplayPreparation
+        check_preparation_checkpoints(admitted);
+        let (entry, origin) = check_player_entry_checkpoints(admitted);
+        check_remaining_player(admitted, entry, origin, original_doors);
+        Dependency::SpriteObjectsPreparation
     } else {
         Dependency::HazePreparation
     };
@@ -415,10 +476,11 @@ fn check_random_checkpoint(admitted: &AdmittedCase, draw: &Draw) {
     use game::production::frame::random::Samples;
 
     let mut direct = admitted.production.clone();
-    advance_to_prelude_stage(&mut direct, |caller| {
+    let random_deadline = draw.complete_tick.checked_add(128).unwrap();
+    advance_to_prelude_stage(&mut direct, random_deadline, |caller| {
         matches!(caller, Caller::Random { .. })
     });
-    let prefix = collect_to_prelude_stage(&mut direct, |caller| {
+    let prefix = collect_to_prelude_stage(&mut direct, random_deadline, |caller| {
         matches!(
             caller,
             Caller::RandomRunning {
@@ -458,35 +520,19 @@ fn check_random_checkpoint(admitted: &AdmittedCase, draw: &Draw) {
         admitted.rules.clone(),
     )
     .unwrap();
-    let rejection = (0..1024).find_map(|_| {
-        let before = corrupt.state().clone();
-        match corrupt.advance(AdvanceInput::Frame {
-            budget: MasterTicks(13),
-        }) {
-            Ok(_) => {
-                assert!(matches!(
-                    corrupt.state(),
-                    OwnedState::Frame(state) if matches!(state.caller, Caller::RandomRunning { .. })
-                ));
-                None
-            }
-            Err(fault) => {
-                assert_observation_eq!(corrupt.state(), &before);
-                Some(fault)
-            }
-        }
-    });
-    assert_eq!(
-        rejection,
-        Some(ProductionFault::Unsupported(Unsupported::Frame(
-            Dependency::RandomPreparation,
-        )))
+    assert_atomic_rejection(
+        &mut corrupt,
+        Dependency::RandomPreparation,
+        random_deadline,
+        |caller| matches!(caller, Caller::RandomRunning { .. }),
     );
     for production in [&mut direct, &mut restored] {
         let mut events = prefix.clone();
-        events.extend(collect_to_prelude_stage(production, |caller| {
-            matches!(caller, Caller::Preparation { .. })
-        }));
+        events.extend(collect_to_prelude_stage(
+            production,
+            random_deadline,
+            |caller| matches!(caller, Caller::Preparation { .. }),
+        ));
         check_random_events(&events, draw);
         let OwnedState::Frame(returned) = production.state() else {
             panic!("frame production");
@@ -495,6 +541,667 @@ fn check_random_checkpoint(admitted: &AdmittedCase, draw: &Draw) {
         assert_eq!(returned.timing.hardware.now.0, draw.complete_tick);
     }
     assert_observation_eq!(direct.state(), restored.state());
+}
+
+fn assert_atomic_rejection(
+    production: &mut Production,
+    dependency: Dependency,
+    deadline: u64,
+    pending: impl Fn(&Caller) -> bool,
+) {
+    const BUDGET: MasterTicks = MasterTicks(64);
+    loop {
+        let before = production.state().clone();
+        let OwnedState::Frame(previous) = &before else {
+            panic!("frame production");
+        };
+        let tick = previous.timing.hardware.now.0;
+        assert!(
+            tick <= deadline,
+            "stale {dependency:?} passed its physical deadline"
+        );
+        match production.advance(AdvanceInput::Frame { budget: BUDGET }) {
+            Ok(_) => {
+                let OwnedState::Frame(current) = production.state() else {
+                    panic!("frame production");
+                };
+                let now = current.timing.hardware.now.0;
+                let still_pending = pending(&current.caller);
+                let earlier = previous.timing.work.last();
+                let later = current.timing.work.last();
+                let (before_cursor, after_cursor) = (
+                    earlier.map(|work| &work.cursor),
+                    later.map(|work| &work.cursor),
+                );
+                assert!(
+                    still_pending,
+                    "stale {dependency:?} left its owner at {now}"
+                );
+                let elapsed = now.checked_sub(tick).expect("monotonic master clock");
+                assert!(
+                    elapsed != 0
+                        || before_cursor != after_cursor
+                        || previous.timing.work.len() != current.timing.work.len()
+                        || previous.timing.interrupt_boundary != current.timing.interrupt_boundary
+                        || previous.timing.pending_handler != current.timing.pending_handler,
+                    "{dependency:?} made no scheduler progress at {now} with cursor {before_cursor:?}"
+                );
+                if let (Some(earlier), Some(later)) = (earlier, later)
+                    && earlier.kind == later.kind
+                    && previous.timing.work.len() == current.timing.work.len()
+                {
+                    let charged = later
+                        .cursor
+                        .intrinsic
+                        .0
+                        .checked_sub(earlier.cursor.intrinsic.0);
+                    assert!(
+                        charged.is_some_and(|amount| amount <= BUDGET.0),
+                        "{dependency:?} exceeded intrinsic pause budget at wall {tick} -> {now}, cursor {before_cursor:?} -> {after_cursor:?}"
+                    );
+                }
+            }
+            Err(fault) => {
+                assert_observation_eq!(production.state(), &before);
+                assert_eq!(
+                    fault,
+                    ProductionFault::Unsupported(Unsupported::Frame(dependency))
+                );
+                return;
+            }
+        }
+    }
+}
+
+fn check_preparation_checkpoints(admitted: &AdmittedCase) {
+    use game::production::frame::{
+        borrowed::ActorSlot,
+        borrowed_gameplay::{GameplayRoute, SceneController},
+        borrowed_preparation::{ActorSlotIdentity, DebugAction, PaletteDisposition, PaletteSlot},
+    };
+    type Change = fn(&mut State);
+
+    let mut direct = admitted.production.clone();
+    let OwnedState::Frame(start) = direct.state() else {
+        panic!("frame production");
+    };
+    let origin = start.timing.hardware.now;
+    let checks: [(PreparationStage, Dependency, u64, &[Change]); 4] = [
+        (
+            PreparationStage::Gameplay,
+            Dependency::GameplayPreparation,
+            5900,
+            &[|state| state.scene = Some(SceneController::Other)],
+        ),
+        (
+            PreparationStage::Actors,
+            Dependency::ActorPreparation,
+            15292,
+            &[|state| {
+                state.actor_eligibility.as_mut().unwrap().slots[1] = ActorSlot::Occupied {
+                    deleted: false,
+                    process_offscreen: true,
+                    intangible: true,
+                };
+            }],
+        ),
+        (
+            PreparationStage::Debug,
+            Dependency::DebugPreparation,
+            16248,
+            &[
+                |state| state.debug.as_mut().unwrap().shortcut.0 |= 0x0080,
+                |state| state.debug.as_mut().unwrap().controller_two.0 |= 0x1000,
+            ],
+        ),
+        (
+            PreparationStage::Palette,
+            Dependency::PalettePreparation,
+            17670,
+            &[
+                |state| state.palette_objects.as_mut().unwrap().enabled = false,
+                |state| state.palette_objects.as_mut().unwrap().slots[0] = PaletteSlot::Occupied,
+            ],
+        ),
+    ];
+    for (stage, dependency, completion, changes) in checks {
+        let deadline = origin
+            .0
+            .checked_add(completion)
+            .unwrap()
+            .checked_add(128)
+            .unwrap();
+        check_preparation_checkpoint(admitted, &mut direct, stage, dependency, deadline, changes);
+        let OwnedState::Frame(state) = direct.state() else {
+            panic!("frame production");
+        };
+        assert_eq!(
+            state.timing.hardware.now.0.checked_sub(origin.0),
+            Some(completion)
+        );
+    }
+    let OwnedState::Frame(state) = direct.state() else {
+        panic!("frame production");
+    };
+    let Caller::Player { prepared, .. } = &state.caller else {
+        panic!("completed recurring preparation");
+    };
+    let gameplay = prepared.gameplay.as_ref().unwrap();
+    assert_observation_eq!(gameplay.scene, SceneController::MainGameplay);
+    assert_observation_eq!(gameplay.route, GameplayRoute::MainGameplay);
+    let actors = prepared.actors.as_ref().unwrap();
+    assert_observation_eq!(
+        actors.active.as_slice(),
+        &[ActorSlotIdentity(0), ActorSlotIdentity(1)]
+    );
+    assert_observation_eq!(actors.interactive.as_slice(), &[ActorSlotIdentity(1)]);
+    let debug = prepared.debug.as_ref().unwrap();
+    assert_observation_eq!(debug.action, DebugAction::None);
+    assert!(!debug.skip_processing);
+    assert_observation_eq!(
+        prepared.palette.as_ref().unwrap().terminal,
+        PaletteDisposition::RetainCurrent
+    );
+}
+
+fn check_preparation_checkpoint(
+    admitted: &AdmittedCase,
+    direct: &mut Production,
+    stage: PreparationStage,
+    dependency: Dependency,
+    deadline: u64,
+    changes: &[fn(&mut State)],
+) {
+    let charging = |caller: &Caller| {
+        matches!(
+            caller,
+            Caller::Preparation { stage: actual, charging: true, .. } if *actual == stage
+        )
+    };
+    advance_to_prelude_stage(direct, deadline, charging);
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    let OwnedState::Frame(restored_frame) = restored.state() else {
+        panic!("frame production");
+    };
+    for change in changes {
+        let mut altered = restored_frame.clone();
+        change(&mut altered);
+        let mut invalid = Production::admit(
+            ProductionSeed::Frame(altered),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+        .unwrap();
+        assert_atomic_rejection(&mut invalid, dependency, deadline, charging);
+    }
+    advance_to_prelude_stage(direct, deadline, |caller| !charging(caller));
+    advance_to_prelude_stage(&mut restored, deadline, |caller| !charging(caller));
+    assert_observation_eq!(direct.state(), restored.state());
+}
+
+fn check_player_entry_checkpoints(admitted: &AdmittedCase) -> (Production, u64) {
+    use game::production::frame::borrowed_player_preparation::SuitPaletteDisposition;
+
+    let mut direct = admitted.production.clone();
+    let OwnedState::Frame(start) = direct.state() else {
+        panic!("frame production");
+    };
+    let origin = start.timing.hardware.now.0;
+    let starting_pose = start.movement.state().pose;
+    let charging_pose = |caller: &Caller| {
+        matches!(
+            caller,
+            Caller::Player {
+                stage: PlayerEntryStage::PoseInput,
+                charging: true,
+                ..
+            }
+        )
+    };
+    advance_to_prelude_stage(
+        &mut direct,
+        origin.checked_add(17798).unwrap(),
+        charging_pose,
+    );
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    for (next, completion) in [
+        (PlayerEntryStage::SuitPalette, 22502),
+        (PlayerEntryStage::Environment, 22710),
+        (PlayerEntryStage::Inside, 23486),
+    ] {
+        if next == PlayerEntryStage::Inside {
+            reject_changed_surface(admitted, direct.clone(), origin);
+        }
+        for production in [&mut direct, &mut restored] {
+            advance_to_prelude_stage(
+                production,
+                origin
+                    .checked_add(completion)
+                    .unwrap()
+                    .checked_add(128)
+                    .unwrap(),
+                |caller| matches!(caller, Caller::Player { stage, charging: false, .. } if *stage == next),
+            );
+            let OwnedState::Frame(current) = production.state() else {
+                panic!("frame production");
+            };
+            assert_eq!(
+                current.timing.hardware.now.0.checked_sub(origin),
+                Some(completion)
+            );
+        }
+        assert_observation_eq!(direct.state(), restored.state());
+    }
+    let OwnedState::Frame(current) = direct.state() else {
+        panic!("frame production");
+    };
+    let Caller::Player { completed, .. } = &current.caller else {
+        panic!("completed ordinary player entry");
+    };
+    let pose = completed.0.pose_input.as_ref().unwrap();
+    assert_observation_eq!(pose.dependency.pose, starting_pose);
+    assert_observation_eq!(pose.terminal.prospective.aim, types::Aim::Forward);
+    assert_observation_eq!(current.movement.state().pose, starting_pose);
+    assert_observation_eq!(
+        completed.0.suit_palette.as_ref().unwrap().terminal,
+        SuitPaletteDisposition::PowerSuit
+    );
+    assert_observation_eq!(
+        completed.0.environment.as_ref().unwrap().dependency.pose,
+        starting_pose
+    );
+    (check_inside_checkpoint(admitted, direct, origin), origin)
+}
+
+fn check_inside_checkpoint(
+    admitted: &AdmittedCase,
+    mut direct: Production,
+    origin: u64,
+) -> Production {
+    use game::production::{frame::interrupts::DrawingRequest, timing::WorkId};
+
+    let inside = |caller: &Caller| {
+        matches!(
+            caller,
+            Caller::Player {
+                stage: PlayerEntryStage::Inside,
+                charging: true,
+                ..
+            }
+        )
+    };
+    let drawing_deadline = origin.checked_add(25388).unwrap();
+    advance_to_prelude_stage(&mut direct, drawing_deadline, inside);
+    let OwnedState::Frame(current) = direct.state() else {
+        panic!("frame production");
+    };
+    assert_observation_eq!(
+        current.inside_inputs.as_ref().unwrap().0.parity,
+        types::Parity::Odd
+    );
+    let mut altered = current.clone();
+    altered.drawing.as_mut().unwrap().recurring_due = None;
+    let mut invalid = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_atomic_rejection(
+        &mut invalid,
+        Dependency::InterruptOwner,
+        drawing_deadline,
+        inside,
+    );
+    advance_frame_until(&mut direct, drawing_deadline, |state| {
+        inside(&state.caller)
+            && state.timing.work.len() == 2
+            && state
+                .drawing
+                .as_ref()
+                .is_some_and(|drawing| drawing.active == Some(DrawingRequest::Begin))
+    });
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    for production in [&mut direct, &mut restored] {
+        advance_to_prelude_stage(production, origin.checked_add(30056).unwrap(), |caller| {
+            matches!(
+                caller,
+                Caller::Player {
+                    stage: PlayerEntryStage::HudWeapons,
+                    charging: false,
+                    ..
+                }
+            )
+        });
+        let OwnedState::Frame(state) = production.state() else {
+            panic!("frame production");
+        };
+        assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(29928));
+        assert_observation_eq!(state.inside_completed.as_ref().unwrap().work, WorkId(15));
+        let drawing = state.drawing.as_ref().unwrap();
+        assert_observation_eq!(drawing.current.request, DrawingRequest::End);
+        assert_observation_eq!(drawing.recurring_due, Some(DrawingRequest::End));
+        assert!(drawing.active.is_none());
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+    check_early_hud_checkpoint(admitted, direct, origin)
+}
+
+fn check_early_hud_checkpoint(
+    admitted: &AdmittedCase,
+    mut direct: Production,
+    origin: u64,
+) -> Production {
+    use interface_hud::Selection;
+
+    let charging = |caller: &Caller| {
+        matches!(
+            caller,
+            Caller::Player {
+                stage: PlayerEntryStage::HudWeapons,
+                charging: true,
+                ..
+            }
+        )
+    };
+    let deadline = origin.checked_add(32112).unwrap();
+    advance_to_prelude_stage(&mut direct, deadline, charging);
+    let checkpoint = direct.save().unwrap();
+    let mut restored = Production::restore(
+        &checkpoint,
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let OwnedState::Frame(current) = restored.state() else {
+        panic!("frame production");
+    };
+    let mut altered = current.clone();
+    altered.hud_frame_count = altered.hud_frame_count.map(|count| count.wrapping_add(1));
+    let mut invalid = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_atomic_rejection(
+        &mut invalid,
+        Dependency::HudWeaponsPreparation,
+        deadline,
+        charging,
+    );
+    for production in [&mut direct, &mut restored] {
+        advance_to_prelude_stage(production, deadline, |caller| {
+            matches!(
+                caller,
+                Caller::PlayerContinuation {
+                    stage: player_continuation::Stage::Projectiles,
+                    charging: false,
+                    ..
+                }
+            )
+        });
+        let OwnedState::Frame(state) = production.state() else {
+            panic!("frame production");
+        };
+        assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(31984));
+        assert_observation_eq!(state.hud.state().selection, Selection::None);
+        assert!(state.appearance.cannon.as_ref().unwrap().0.may_follow());
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+    direct
+}
+
+fn remaining_at(caller: &Caller, expected: player_continuation::Stage, busy: bool) -> bool {
+    matches!(
+        caller,
+        Caller::PlayerContinuation { stage, charging, .. }
+            if *stage == expected && *charging == busy
+    )
+}
+
+fn check_remaining_player(
+    admitted: &AdmittedCase,
+    mut direct: Production,
+    origin: u64,
+    original_doors: game::production::frame::actor_doors::Doors,
+) {
+    use player_continuation::Stage;
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    for (next, edge) in [
+        (Stage::MotionReset, 33756),
+        (Stage::Interaction, 34590),
+        (Stage::Actors, 35170),
+    ] {
+        for production in [&mut direct, &mut restored] {
+            advance_to_prelude_stage(
+                production,
+                origin.checked_add(edge).unwrap().checked_add(128).unwrap(),
+                |caller| remaining_at(caller, next, false),
+            );
+            let OwnedState::Frame(state) = production.state() else {
+                panic!("frame production");
+            };
+            assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(edge));
+        }
+        assert_observation_eq!(direct.state(), restored.state());
+    }
+    check_recurring_doors(admitted, direct, origin, original_doors);
+}
+
+fn check_recurring_doors(
+    admitted: &AdmittedCase,
+    mut direct: Production,
+    origin: u64,
+    original_doors: game::production::frame::actor_doors::Doors,
+) {
+    use game::production::frame::borrowed_player_preparation::GraphicsUpdated;
+    use game::production::timing::WorkId;
+    use player_continuation::Stage;
+
+    let charging = |caller: &Caller| remaining_at(caller, Stage::Actors, true);
+    advance_to_prelude_stage(&mut direct, origin.checked_add(35298).unwrap(), charging);
+    let saved = direct.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    reject_stale_door_inputs(admitted, &restored, origin, original_doors);
+    let deadline = origin.checked_add(48308).unwrap();
+    for production in [&mut direct, &mut restored] {
+        advance_to_prelude_stage(production, deadline, |caller| {
+            remaining_at(caller, Stage::Sprites, false)
+        });
+        let OwnedState::Frame(state) = production.state() else {
+            panic!("frame production");
+        };
+        assert_eq!(state.timing.hardware.now.0.checked_sub(origin), Some(48180));
+        let Caller::PlayerContinuation {
+            remaining,
+            remaining_work,
+            ..
+        } = &state.caller
+        else {
+            panic!("recurring player");
+        };
+        let actual = remaining.0.actors.as_ref().unwrap();
+        assert_eq!(
+            remaining_work,
+            &[WorkId(17), WorkId(18), WorkId(19), WorkId(20)]
+        );
+        assert!(
+            actual
+                .dependency
+                .actors
+                .iter()
+                .all(|actor| actor.instruction_timer == 1)
+        );
+        assert!(
+            actual
+                .actors
+                .iter()
+                .zip(&actual.dependency.actors)
+                .all(|(actor, prior)| {
+                    actor.instruction_timer == 2
+                        && actor.graphics_updated == GraphicsUpdated::Set
+                        && actor.geometry == prior.geometry
+                        && actor.frame_counter.0 == prior.frame_counter.0.wrapping_add(1)
+                })
+        );
+        assert_observation_eq!(state.health.as_ref().unwrap().actor(), Some(actual));
+    }
+    assert_observation_eq!(direct.state(), restored.state());
+    check_committed_actor_checkpoint(admitted, &direct);
+}
+
+fn check_committed_actor_checkpoint(admitted: &AdmittedCase, complete: &Production) {
+    use game::production::{AdmissionFault, frame::Fault};
+
+    let restore = |production: &Production| {
+        Production::restore(
+            &production.save().unwrap(),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+    };
+    let authentic = restore(complete).unwrap();
+    assert_observation_eq!(authentic.state(), complete.state());
+    let OwnedState::Frame(state) = authentic.state() else {
+        panic!("frame production");
+    };
+    let rejected = [false, true].map(|change_view| {
+        let mut invalid = state.clone();
+        let Caller::PlayerContinuation { remaining, .. } = &mut invalid.caller else {
+            panic!("completed ActorUpdate");
+        };
+        let completion = remaining.0.actors.as_mut().unwrap();
+        let actual = completion.clone();
+        if change_view {
+            use game::production::frame::borrowed_player_preparation::ActorViewDisposition;
+            completion.actors[0].view = ActorViewDisposition::BelowPaddedView;
+        } else {
+            completion.dependency.actors[0].instruction_timer = 2;
+        }
+        let health = invalid.health.as_mut().unwrap();
+        replace_health_actor(health, &actual, completion);
+        let result = Production::admit(
+            ProductionSeed::Frame(invalid),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+        .and_then(|admitted| restore(&admitted));
+        result.is_err_and(|fault| {
+            matches!(
+                fault, AdmissionFault::Frame(frame) if *frame == Fault::InvalidPlayerEntry
+            )
+        })
+    });
+    assert_eq!(
+        rejected,
+        [true, true],
+        "stale actor wait and view checkpoint controls"
+    );
+}
+
+fn replace_health_actor(
+    health: &mut game::production::frame::health::Health,
+    current: &game::production::frame::borrowed_player_preparation::ActorUpdateCompletion,
+    altered: &game::production::frame::borrowed_player_preparation::ActorUpdateCompletion,
+) {
+    use canonical::{from_bytes, model::Model, to_bytes};
+    use game::production::frame::movement_support_contract::ActorCompletionPin;
+
+    let before = to_bytes(&Model::<ActorCompletionPin>(current.clone()));
+    let after = to_bytes(&Model::<ActorCompletionPin>(altered.clone()));
+    let mut bytes = to_bytes(health);
+    let mut matches = bytes
+        .windows(before.len())
+        .enumerate()
+        .filter(|(_, field)| *field == before);
+    let (offset, _) = matches.next().unwrap();
+    assert!(matches.next().is_none());
+    let end = offset.checked_add(before.len()).unwrap();
+    drop(bytes.splice(offset..end, after));
+    *health = from_bytes(&bytes).unwrap();
+    assert_observation_eq!(health.actor(), Some(altered));
+}
+
+fn reject_stale_door_inputs(
+    admitted: &AdmittedCase,
+    restored: &Production,
+    origin: u64,
+    original_doors: game::production::frame::actor_doors::Doors,
+) {
+    use player_continuation::Stage;
+    let OwnedState::Frame(state) = restored.state() else {
+        panic!("frame production");
+    };
+    let mut stale_pose = state.clone();
+    let Caller::PlayerContinuation {
+        motion_reset: Some(motion),
+        ..
+    } = &mut stale_pose.caller
+    else {
+        panic!("completed motion reset");
+    };
+    motion.previous.0.pose.aim = types::Aim::Up;
+    let mut stale_wait = state.clone();
+    let owners = stale_wait.recurring_player.as_mut().unwrap();
+    assert_observation_eq!(owners.doors == original_doors, false);
+    owners.doors = original_doors;
+    for altered in [stale_pose, stale_wait] {
+        let mut invalid = Production::admit(
+            ProductionSeed::Frame(altered),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+        .unwrap();
+        assert_atomic_rejection(
+            &mut invalid,
+            Dependency::PlayerContinuationPreparation,
+            origin.checked_add(48308).unwrap(),
+            |caller| remaining_at(caller, Stage::Actors, true),
+        );
+    }
+}
+
+fn environment_charging(caller: &Caller) -> bool {
+    matches!(
+        caller,
+        Caller::Player {
+            stage: PlayerEntryStage::Environment,
+            charging: true,
+            ..
+        }
+    )
+}
+
+fn reject_changed_surface(admitted: &AdmittedCase, mut production: Production, origin: u64) {
+    let deadline = origin.checked_add(23614).unwrap();
+    advance_to_prelude_stage(&mut production, deadline, environment_charging);
+    let OwnedState::Frame(current) = production.state() else {
+        panic!("frame production");
+    };
+    let mut altered = current.clone();
+    altered.entry_environment.as_mut().unwrap().water_inactive = false;
+    let mut invalid = Production::admit(
+        ProductionSeed::Frame(altered),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_atomic_rejection(
+        &mut invalid,
+        Dependency::PlayerPreparation,
+        deadline,
+        environment_charging,
+    );
 }
 
 #[test]
@@ -531,7 +1238,11 @@ fn contiguous_native_returns_keep_independent_observations_and_inputs() {
             &admitted,
             &observed_draw(&admitted, case.first_cut().unwrap()),
         );
+        let OwnedState::Frame(initial) = admitted.production.state() else {
+            panic!("frame production");
+        };
+        let original_doors = initial.recurring_player.as_ref().unwrap().doors;
         observe_first_return(case, &mut admitted, controller);
-        compare_continuation(case, &sources, &mut admitted, controller);
+        compare_continuation(case, &sources, &mut admitted, controller, original_doors);
     }
 }

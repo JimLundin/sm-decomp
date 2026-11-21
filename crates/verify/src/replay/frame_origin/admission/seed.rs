@@ -230,6 +230,7 @@ fn prelude_work(
         active: None,
         after_begin: Some(after_begin),
         after_end: Some(after_end),
+        recurring_due: None,
     };
     Ok(PreludeWork {
         layer_defaults,
@@ -302,6 +303,9 @@ fn bind_player_entry(
     state.pose_input_configuration = Some(frame::pose_input::Configuration::new(
         entry_current.pose_input.bindings,
     ));
+    state.entry_environment = Some(frame::entry_environment::EntryEnvironment::new(
+        &entry_current.environment,
+    ));
     prelude.player_entry_current = Some(Model(Box::new(entry_current)));
     prelude.player_entry_offers = Some(Model(Box::new(entry_offers)));
     if let Some(member) = &manifest.player_continuation_current {
@@ -323,7 +327,7 @@ fn bind_player_entry(
         let proof = member.text()?;
         let bindings = replay::frame_hud_controls_inputs::qualified_bindings(wram, &proof)
             .map_err(|_| data_failure(None, "frame current early HUD physical bindings"))?;
-        prelude.hud_inventory = Some(
+        state.hud_inventory = Some(
             replay::frame_hud_controls_inputs::qualified_inventory(wram, &proof)
                 .map_err(|_| data_failure(None, "frame independently current HUD inventory"))?,
         );
@@ -422,6 +426,21 @@ pub(super) fn entry_seed(
         entry.current,
         entry.offers,
     )?;
+    if case.end.native_returns.is_some()
+        && let frame::Caller::AwaitingAcknowledgment { prelude, .. } = &state.caller
+        && let Some(current) = prelude
+            .origin()
+            .and_then(|source| source.player_continuation_current.as_ref())
+    {
+        state.recurring_player = Some(frame::player_continuation::RecurringPlayer {
+            projectiles: current.0.projectiles.clone(),
+            interaction: current.0.interaction,
+            doors: super::player::admit_actor_doors(wram, &current.0.actors.actors)?,
+            completed_poll_input: None,
+            actor_scene: current.0.actors.scene,
+            contact: current.0.actors.contact,
+        });
+    }
     Ok(EntrySeed {
         state,
         next_pad,

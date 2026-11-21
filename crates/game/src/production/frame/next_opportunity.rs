@@ -75,10 +75,10 @@ impl State {
             palette.retire_opportunity();
         }
         if let Some(drawing) = &mut self.drawing {
-            drawing.begin = None;
-            drawing.end = None;
-            drawing.after_begin = None;
-            drawing.after_end = None;
+            drawing.begin_opportunity();
+        }
+        if let Some(owners) = &mut self.recurring_player {
+            owners.completed_poll_input = None;
         }
         self.movement_stage = super::movement_stage::Stage::default();
         self.inside_inputs = None;

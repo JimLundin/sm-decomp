@@ -141,14 +141,14 @@ pub fn debug_origin(bytes: &[u8]) -> Result<DebugOrigin, PreparationFault> {
     if bytes.len() != 131_072 {
         return Err(PreparationFault::Length);
     }
-    let controller_one = PhysicalPadEdges(word(bytes, 1477)?);
+    let shortcut = PhysicalPadEdges(word(bytes, 1477)?);
     let controller_two = PhysicalPadEdges(word(bytes, 145)?);
-    if word(bytes, 6236)? != 0 || controller_two.0 != 0 || controller_one.0 & 0x00c0 != 0 {
+    if word(bytes, 6236)? != 0 || controller_two.0 != 0 || shortcut.0 & 0x00c0 != 0 {
         return Err(PreparationFault::Dependency);
     }
     Ok(DebugOrigin {
         mode: DebugMode::Normal,
-        controller_one,
+        shortcut,
         controller_two,
     })
 }
@@ -205,7 +205,7 @@ pub fn debug(
     {
         return Err(PreparationFault::Unsupported);
     }
-    if current.controller_two.0 != 0 || current.controller_one.0 & 0x00c0 != 0 {
+    if current.controller_two.0 != 0 || current.shortcut.0 & 0x00c0 != 0 {
         return Err(PreparationFault::Dependency);
     }
     Ok(DebugCompletionReceipt {

@@ -848,16 +848,10 @@ fn qualify_motion_reset(
             bindings: content.early_hud_controls.as_ref().unwrap(),
             control_inputs: frame::hud_controls_inputs::CurrentControls {
                 gameplay: prepared.gameplay.as_ref().unwrap(),
-                scene: prepared.prelude.origin().unwrap().scene_current.unwrap(),
+                scene: state.scene.unwrap(),
                 pose_input: completed.0.pose_input.as_ref().unwrap(),
                 pose: state.movement.state().pose,
-                inventory: prepared
-                    .prelude
-                    .origin()
-                    .unwrap()
-                    .hud_inventory
-                    .as_ref()
-                    .unwrap(),
+                inventory: state.hud_inventory.as_ref().unwrap(),
             },
         },
         source.facing,

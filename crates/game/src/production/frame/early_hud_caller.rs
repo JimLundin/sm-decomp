@@ -6,6 +6,23 @@ use canonical::model::Model;
 use timing::WorkId;
 
 impl State {
+    fn early_hud_frame(&self) -> Option<interface_hud::FrameCount> {
+        if self.publications.original_interval() {
+            Some(self.hud_display_current.as_ref()?.0.premises.frame)
+        } else {
+            self.hud_frame_count.map(interface_hud::FrameCount)
+        }
+    }
+
+    fn early_hud_cannon_ready(&self) -> bool {
+        self.publications.original_interval()
+            || self
+                .appearance
+                .cannon
+                .as_ref()
+                .is_some_and(|cannon| cannon.0.may_follow())
+    }
+
     /// Qualify retained readiness before any later consumer can advance hardware.
     pub(super) fn validate_cannon_history(&self) -> Result<(), ProductionFault> {
         let fault =
@@ -36,36 +53,20 @@ impl State {
             .inside_completed
             .as_ref()
             .is_none_or(|receipt| receipt.work != PlayerEntryStage::Inside.identity())
+            || !self.early_hud_cannon_ready()
         {
             return Err(fault);
         }
         let current = super::hud_controls_inputs::CurrentControls {
             gameplay: prepared.gameplay.as_ref().ok_or(fault)?,
-            scene: prepared
-                .prelude
-                .origin()
-                .ok_or(fault)?
-                .scene_current
-                .ok_or(fault)?,
+            scene: self.scene.ok_or(fault)?,
             pose_input: completed.0.pose_input.as_ref().ok_or(fault)?,
             pose: self.movement.state().pose,
-            inventory: prepared
-                .prelude
-                .origin()
-                .ok_or(fault)?
-                .hud_inventory
-                .as_ref()
-                .ok_or(fault)?,
+            inventory: self.hud_inventory.as_ref().ok_or(fault)?,
         };
         let mut hud = self.hud.clone();
         if content.late_hud.is_some() {
-            let frame = self
-                .hud_display_current
-                .as_ref()
-                .ok_or(fault)?
-                .0
-                .premises
-                .frame;
+            let frame = self.early_hud_frame().ok_or(fault)?;
             if !hud.begin_staged(frame) {
                 return Err(fault);
             }
@@ -115,27 +116,26 @@ impl State {
         };
         let fault =
             ProductionFault::Unsupported(Unsupported::Frame(Dependency::HudWeaponsPreparation));
+        if !self.early_hud_cannon_ready() {
+            return Err(fault);
+        }
+        if content.late_hud.is_some() {
+            let frame = self.early_hud_frame().ok_or(fault)?;
+            if !matches!(&self.hud, super::hud::Hud::Work(work) if work.0.frame_count() == Some(frame))
+            {
+                return Err(fault);
+            }
+        }
         let inputs = content
             .early_hud_controls
             .as_ref()
             .ok_or(fault)?
             .inputs(super::hud_controls_inputs::CurrentControls {
                 gameplay: prepared.gameplay.as_ref().ok_or(fault)?,
-                scene: prepared
-                    .prelude
-                    .origin()
-                    .ok_or(fault)?
-                    .scene_current
-                    .ok_or(fault)?,
+                scene: self.scene.ok_or(fault)?,
                 pose_input: completed.0.pose_input.as_ref().ok_or(fault)?,
                 pose: self.movement.state().pose,
-                inventory: prepared
-                    .prelude
-                    .origin()
-                    .ok_or(fault)?
-                    .hud_inventory
-                    .as_ref()
-                    .ok_or(fault)?,
+                inventory: self.hud_inventory.as_ref().ok_or(fault)?,
             })
             .map_err(|_| fault)?;
         let Some(interface_hud::Observation::Chosen(answer)) = self.hud.controls() else {

@@ -222,7 +222,7 @@ impl Pinned for PlayerEntryCompletionsPin {
 }
 
 /// Current simulation-clock disposition, independent of instruction ownership.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ClockDisposition {
     /// Simulation is running.
     Running,
@@ -231,7 +231,7 @@ pub enum ClockDisposition {
 }
 
 /// Both current clocks consulted by the bounded instruction collections.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CollectionClocks {
     /// Current simulation clock.
     pub simulation: ClockDisposition,
@@ -240,11 +240,11 @@ pub struct CollectionClocks {
 }
 
 /// Actual physical instruction-slot identity, not a source cursor or selected count.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InstructionSlotIdentity(pub u8);
 
 /// Actual current instruction-owner disposition.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InstructionDisposition {
     /// No instruction body is active.
     Empty,
@@ -253,7 +253,7 @@ pub enum InstructionDisposition {
 }
 
 /// One actual ordered projectile instruction owner.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProjectileInstruction {
     /// Actual physical owner identity.
     pub identity: InstructionSlotIdentity,
@@ -262,7 +262,7 @@ pub struct ProjectileInstruction {
 }
 
 /// Complete current projectile collection owner.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProjectilesOrigin {
     /// All actual physical slot owners in traversal order.
     pub slots: [ProjectileInstruction; 10],
@@ -339,7 +339,7 @@ pub struct ContactResetOrigin {
 }
 
 /// Actual sprite-interaction owner disposition.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InteractionDisposition {
     /// Interaction is enabled.
     Enabled,
@@ -348,7 +348,7 @@ pub enum InteractionDisposition {
 }
 
 /// Actual Samus projectile and bomb activity owners.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SamusActivity {
     /// Actual projectile count.
     pub projectiles: u16,
@@ -357,7 +357,7 @@ pub struct SamusActivity {
 }
 
 /// Complete current interaction admission, independent of selected Movement output.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SamusInteractionOrigin {
     /// Actual sprite-interaction owner.
     pub sprite_interaction: InteractionDisposition,
@@ -388,14 +388,14 @@ pub struct DeferredSamusInteractionReceipt {
 }
 
 /// Actor solidity admitted by the checked current properties.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActorSolidity {
     /// Solid-marked actor.
     Solid,
 }
 
 /// Current actor touch disposition, separate from its solidity.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActorTouch {
     /// No Samus touch body is admitted for this actor.
     Intangible,
@@ -413,14 +413,14 @@ pub enum ActorViewDisposition {
 }
 
 /// Checked ordinary Ceres-door AI/content meaning; native pointers remain importer-only.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActorContentDisposition {
     /// Current Ceres-door content and ordinary AI with basic enabled instructions.
     OrdinaryCeresDoor,
 }
 
 /// Current scene admitted by the Ceres-door update.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActorScene {
     /// Escape has not started.
     PreEscape,
@@ -491,7 +491,7 @@ pub struct CurrentActor {
 }
 
 /// Actual Samus contact-damage mode.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ContactDamageDisposition {
     /// Ordinary actor contact.
     Ordinary,
@@ -500,14 +500,14 @@ pub enum ContactDamageDisposition {
 }
 
 /// Actual additional ordinary-contact gate.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AdditionalContactGate {
     /// No additional contact gate.
     None,
 }
 
 /// Current ordinary tangible-actor contact premises.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OrdinaryActorContact {
     /// Actual actor invincibility timer.
     pub actor_invincibility: u16,
@@ -742,12 +742,21 @@ impl DeferredProjectilesReceipt {
         current: &ProjectilesOrigin,
         selected: &CompletedInsideAndHudWeapons<'_>,
     ) -> Result<ProjectilesCompletion, PlayerPreparationFault> {
-        selected.validate()?;
         if current != &self.dependency || self.terminal.slots != current.slots {
             return Err(PlayerPreparationFault::Dependency);
         }
-        running(current.clocks)?;
-        for (index, slot) in current.slots.iter().enumerate() {
+        current.complete_quiet(selected)
+    }
+}
+
+impl ProjectilesOrigin {
+    pub(super) fn complete_quiet(
+        &self,
+        selected: &CompletedInsideAndHudWeapons<'_>,
+    ) -> Result<ProjectilesCompletion, PlayerPreparationFault> {
+        selected.validate()?;
+        running(self.clocks)?;
+        for (index, slot) in self.slots.iter().enumerate() {
             if usize::from(slot.identity.0) != index
                 || slot.instruction != InstructionDisposition::Empty
             {
@@ -755,8 +764,8 @@ impl DeferredProjectilesReceipt {
             }
         }
         Ok(ProjectilesCompletion {
-            dependency: self.dependency,
-            terminal: self.terminal,
+            dependency: self.clone(),
+            terminal: ProjectilesTerminal { slots: self.slots },
         })
     }
 }
@@ -771,13 +780,25 @@ impl DeferredSamusInteractionReceipt {
         selected: &CompletedPlayerSelection<'_>,
         projectiles: &ProjectilesCompletion,
     ) -> Result<SamusInteractionCompletion, PlayerPreparationFault> {
-        selected.inside_hud.validate()?;
         if current != &self.dependency
-            || projectiles.terminal.slots != projectiles.dependency.slots
             || self.terminal.sprite_interaction != current.sprite_interaction
             || self.terminal.projectile_interaction != current.projectile_interaction
             || self.terminal.activity != current.activity
         {
+            return Err(PlayerPreparationFault::Dependency);
+        }
+        current.complete_quiet(selected, projectiles)
+    }
+}
+
+impl SamusInteractionOrigin {
+    pub(super) fn complete_quiet(
+        self,
+        selected: &CompletedPlayerSelection<'_>,
+        projectiles: &ProjectilesCompletion,
+    ) -> Result<SamusInteractionCompletion, PlayerPreparationFault> {
+        selected.inside_hud.validate()?;
+        if projectiles.terminal.slots != projectiles.dependency.slots {
             return Err(PlayerPreparationFault::Dependency);
         }
         running(projectiles.dependency.clocks)?;
@@ -786,15 +807,19 @@ impl DeferredSamusInteractionReceipt {
             .slots
             .iter()
             .any(|slot| slot.instruction != InstructionDisposition::Empty)
-            || current.sprite_interaction != InteractionDisposition::Enabled
-            || current.projectile_interaction != InteractionDisposition::Enabled
+            || self.sprite_interaction != InteractionDisposition::Enabled
+            || self.projectile_interaction != InteractionDisposition::Enabled
         {
             return Err(PlayerPreparationFault::Unsupported);
         }
-        no_activity(current.activity)?;
+        no_activity(self.activity)?;
         Ok(SamusInteractionCompletion {
-            dependency: self.dependency,
-            terminal: self.terminal,
+            dependency: self,
+            terminal: SamusInteractionTerminal {
+                sprite_interaction: self.sprite_interaction,
+                projectile_interaction: self.projectile_interaction,
+                activity: self.activity,
+            },
         })
     }
 }
@@ -808,6 +833,22 @@ pub struct ActorView<'a> {
     pub content: &'a MovementContent,
     /// Current camera position in pixels.
     pub camera: types::Pair<u16>,
+}
+
+impl ActorUnselectedOrigin {
+    pub(super) fn validate_quiet_update(&self) -> Result<(), PlayerPreparationFault> {
+        running(self.clocks)?;
+        no_activity(self.contact.activity)?;
+        if self.shake_requested
+            || self.contact.actor_invincibility != 0
+            || self.contact.samus_invincibility != 0
+            || self.contact.damage_mode != ContactDamageDisposition::Ordinary
+            || self.contact.sprite_interaction != InteractionDisposition::Enabled
+        {
+            return Err(PlayerPreparationFault::Unsupported);
+        }
+        Ok(())
+    }
 }
 
 impl DeferredActorUpdateReceipt {
@@ -887,16 +928,7 @@ impl DeferredActorUpdateReceipt {
         interaction: &SamusInteractionCompletion,
     ) -> Result<ActorUpdateCompletion, PlayerPreparationFault> {
         self.validate_dependencies(current, selected, view, membership, interaction)?;
-        running(current.clocks)?;
-        no_activity(current.contact.activity)?;
-        if current.shake_requested
-            || current.contact.actor_invincibility != 0
-            || current.contact.samus_invincibility != 0
-            || current.contact.damage_mode != ContactDamageDisposition::Ordinary
-            || current.contact.sprite_interaction != InteractionDisposition::Enabled
-        {
-            return Err(PlayerPreparationFault::Unsupported);
-        }
+        current.validate_quiet_update()?;
         let mut actors = Vec::with_capacity(2);
         for (index, (actor, effect)) in current.actors.iter().zip(&self.terminal.actors).enumerate()
         {
@@ -1067,7 +1099,7 @@ impl DeferredContactResetReceipt {
     }
 }
 
-fn gameplay(receipt: &GameplayDispatchReceipt) -> Result<(), PlayerPreparationFault> {
+pub(super) fn gameplay(receipt: &GameplayDispatchReceipt) -> Result<(), PlayerPreparationFault> {
     if receipt.scene != SceneController::MainGameplay
         || receipt.route != GameplayRoute::MainGameplay
     {
@@ -1076,7 +1108,7 @@ fn gameplay(receipt: &GameplayDispatchReceipt) -> Result<(), PlayerPreparationFa
     Ok(())
 }
 
-fn ordinary_equipment(equipment: &Set<Item>) -> Result<(), PlayerPreparationFault> {
+pub(super) fn ordinary_equipment(equipment: &Set<Item>) -> Result<(), PlayerPreparationFault> {
     if equipment[Item::GravitySuit] || equipment[Item::VariaSuit] {
         return Err(PlayerPreparationFault::Unsupported);
     }

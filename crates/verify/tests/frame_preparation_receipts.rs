@@ -111,7 +111,7 @@ fn debug_and_palette_receipts_preserve_actual_dependencies() {
         canonical::from_bytes(&canonical::to_bytes(&receipt)).unwrap();
     assert!(restored.eq(&receipt));
     let mut changed = current_debug;
-    changed.controller_one.0 |= 0x80;
+    changed.shortcut.0 |= 0x80;
     assert!(
         frame_preparation_receipts::debug(changed, &source)
             .is_err_and(|fault| fault == PreparationFault::Dependency)

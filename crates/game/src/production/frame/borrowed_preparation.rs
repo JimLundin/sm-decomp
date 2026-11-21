@@ -1,5 +1,5 @@
 //! Actual unselected preparation owner facts and separately borrowed completions.
-use super::borrowed::{ActorEligibilityOrigin, SpriteBuilderOrigin};
+use super::borrowed::{ActorEligibilityOrigin, ActorSlot, SpriteBuilderOrigin};
 use canonical::Canonical;
 use serde::{Deserialize, Serialize};
 
@@ -38,7 +38,7 @@ impl BuilderCompletionReceipt {
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ActorSlotIdentity(pub u8);
 
-/// Actual completed actor membership, without executing eligibility traversal.
+/// Actual completed actor membership in physical slot order.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct ActorEligibilityReceipt {
     /// Complete actual raw eligibility dependency.
@@ -49,11 +49,59 @@ pub struct ActorEligibilityReceipt {
     pub interactive: Vec<ActorSlotIdentity>,
 }
 
+impl ActorEligibilityOrigin {
+    pub(super) fn supports_marked_offscreen(&self) -> bool {
+        self.permit_marked_offscreen
+            && matches!(
+                &self.slots[..],
+                [
+                    ActorSlot::Occupied {
+                        deleted: false,
+                        process_offscreen: true,
+                        intangible: true,
+                    },
+                    ActorSlot::Occupied {
+                        deleted: false,
+                        process_offscreen: true,
+                        intangible: false,
+                    },
+                    rest @ ..
+                ] if rest.iter().all(|slot| *slot == ActorSlot::Empty)
+            )
+    }
+}
+
+impl ActorEligibilityReceipt {
+    pub(super) fn marked_offscreen(current: &ActorEligibilityOrigin) -> Option<Self> {
+        if !current.supports_marked_offscreen() {
+            return None;
+        }
+        let mut active = Vec::new();
+        let mut interactive = Vec::new();
+        for (index, slot) in current.slots.iter().enumerate() {
+            if let ActorSlot::Occupied { intangible, .. } = slot {
+                let identity = ActorSlotIdentity(u8::try_from(index).ok()?);
+                active.push(identity);
+                if !intangible {
+                    interactive.push(identity);
+                }
+            }
+        }
+        Some(Self {
+            dependency: current.clone(),
+            active,
+            interactive,
+        })
+    }
+}
+
 /// Actual admitted debug mode.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DebugMode {
     /// Ordinary debug processing.
     Normal,
+    /// A mode whose operation requires other current owners.
+    Other,
 }
 /// Physical controller newly-pressed buttons, independent of mapped movement controls.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -63,8 +111,8 @@ pub struct PhysicalPadEdges(pub u16);
 pub struct DebugOrigin {
     /// Actual current debug mode.
     pub mode: DebugMode,
-    /// Actual first controller physical edges.
-    pub controller_one: PhysicalPadEdges,
+    /// First controller edges qualified by the physical debug shortcut latch.
+    pub shortcut: PhysicalPadEdges,
     /// Actual second controller physical edges.
     pub controller_two: PhysicalPadEdges,
 }
@@ -87,11 +135,32 @@ pub struct DebugCompletionReceipt {
     pub skip_processing: bool,
 }
 
+impl DebugOrigin {
+    pub(super) fn supports_quiet(self) -> bool {
+        const SHORTCUT_ACTIONS: u16 = 0x00c0; // A and X
+        const CONTROLLER_TWO_ACTIONS: u16 = 0x30b0; // Start, Select, L, R and A
+        self.mode == DebugMode::Normal
+            && self.shortcut.0 & SHORTCUT_ACTIONS == 0
+            && self.controller_two.0 & CONTROLLER_TWO_ACTIONS == 0
+    }
+
+    pub(super) fn complete_quiet(self) -> Option<DebugCompletionReceipt> {
+        self.supports_quiet().then_some(DebugCompletionReceipt {
+            dependency: self,
+            terminal: DebugMode::Normal,
+            action: DebugAction::None,
+            skip_processing: false,
+        })
+    }
+}
+
 /// Current palette object occupancy.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PaletteSlot {
     /// No active palette object occupies this slot.
     Empty,
+    /// An active object that needs its own service.
+    Occupied,
 }
 /// Actual palette owner eligibility, retaining physical slots in descending owner order.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -114,4 +183,18 @@ pub struct PaletteCompletionReceipt {
     pub dependency: PaletteOrigin,
     /// Actual terminal palette ownership disposition.
     pub terminal: PaletteDisposition,
+}
+
+impl PaletteOrigin {
+    pub(super) fn supports_empty_scan(self) -> bool {
+        self.enabled && self.slots.iter().all(|slot| *slot == PaletteSlot::Empty)
+    }
+
+    pub(super) fn complete_empty_scan(self) -> Option<PaletteCompletionReceipt> {
+        self.supports_empty_scan()
+            .then_some(PaletteCompletionReceipt {
+                dependency: self,
+                terminal: PaletteDisposition::RetainCurrent,
+            })
+    }
 }

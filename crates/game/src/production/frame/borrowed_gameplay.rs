@@ -51,7 +51,22 @@ impl GameplayDispatchOffer {
         current: SceneController,
         builder: &BuilderCompletionReceipt,
     ) -> Result<GameplayDispatchReceipt, GameplayDependencyFault> {
-        if current != self.dependency || current != SceneController::MainGameplay {
+        if current != self.dependency {
+            return Err(GameplayDependencyFault::Scene);
+        }
+        GameplayDispatchReceipt::dispatch(current, builder)
+    }
+}
+
+impl GameplayDispatchReceipt {
+    /// Select the current scene's route after the live builder reset completes.
+    /// # Errors
+    /// Rejects other scenes and invalid builder reset results.
+    pub fn dispatch(
+        current: SceneController,
+        builder: &BuilderCompletionReceipt,
+    ) -> Result<Self, GameplayDependencyFault> {
+        if current != SceneController::MainGameplay {
             return Err(GameplayDependencyFault::Scene);
         }
         let terminal = &builder.terminal;
@@ -68,9 +83,9 @@ impl GameplayDispatchOffer {
         {
             return Err(GameplayDependencyFault::Builder);
         }
-        Ok(GameplayDispatchReceipt {
+        Ok(Self {
             scene: current,
-            route: self.route,
+            route: GameplayRoute::MainGameplay,
         })
     }
 }

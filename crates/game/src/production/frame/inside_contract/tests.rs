@@ -177,7 +177,14 @@ fn actual_bounds_and_complete_current_dependencies_admit_one_whole_owner() {
     let contract = PhysicalContract::new(required.clone(), template());
     assert!(
         contract
-            .physical(&receipt, &movement, &content, &room, &pose_input)
+            .physical(
+                &receipt,
+                &movement,
+                &content,
+                &room,
+                &pose_input,
+                GeometryMatch::Origin
+            )
             .is_ok()
     );
     assert_eq!(
@@ -195,7 +202,8 @@ fn actual_bounds_and_complete_current_dependencies_admit_one_whole_owner() {
             &movement,
             &content,
             &room,
-            &pose_input
+            &pose_input,
+            GeometryMatch::Origin,
         ),
         Err(Fault::Dependencies)
     );
@@ -207,19 +215,34 @@ fn actual_bounds_and_complete_current_dependencies_admit_one_whole_owner() {
             &movement,
             &content,
             &room,
-            &pose_input
+            &pose_input,
+            GeometryMatch::Origin,
         ),
         Err(Fault::Dependencies)
     );
     let other = InsideWorld::new(16, vec![types::Block::Solid; 256], Boundary::Solid).unwrap();
     assert_eq!(
-        contract.physical(&receipt, &movement, &content, &other, &pose_input),
+        contract.physical(
+            &receipt,
+            &movement,
+            &content,
+            &other,
+            &pose_input,
+            GeometryMatch::Origin
+        ),
         Err(Fault::Dependencies)
     );
     let mut stale_body = pose_input;
     stale_body.terminal.radius.y = Wrapping(20);
     assert_eq!(
-        contract.physical(&receipt, &movement, &content, &room, &stale_body),
+        contract.physical(
+            &receipt,
+            &movement,
+            &content,
+            &room,
+            &stale_body,
+            GeometryMatch::Origin
+        ),
         Err(Fault::Dependencies)
     );
     let mut incomplete = template();
@@ -232,6 +255,38 @@ fn actual_bounds_and_complete_current_dependencies_admit_one_whole_owner() {
         .bind(&incomplete),
         Err(Fault::Profile)
     );
+}
+
+#[test]
+fn recurring_inside_qualifies_the_live_pose_at_the_same_room_cells() {
+    let (movement, stage, content, room) = selected();
+    let movement_stage::Stage::Offered(receipt) = stage else {
+        panic!();
+    };
+    let pose_input = completed_pose_input(movement.state().pose);
+    let mut prior_pose = movement.state().pose;
+    prior_pose.aim = types::Aim::DownForward;
+    let profile = |x| {
+        PhysicalContract::new(
+            RequiredDependencies {
+                pixels: [x, 100],
+                pose: prior_pose,
+                radius: [5, 21],
+                room: Box::new(room.clone()),
+            },
+            template(),
+        )
+        .physical(
+            &receipt,
+            &movement,
+            &content,
+            &room,
+            &pose_input,
+            GeometryMatch::Recurring,
+        )
+    };
+    assert!(profile(101).is_ok());
+    assert_eq!(profile(116), Err(Fault::Dependencies));
 }
 
 #[test]

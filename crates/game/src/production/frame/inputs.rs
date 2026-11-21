@@ -1,6 +1,6 @@
 //! Saved current external movement premises, separate from the actual model state.
 
-use canonical::model::Pinned;
+use canonical::{Canonical, model::Pinned};
 use serde::{Deserialize, Serialize};
 use types::{Buttons, ClipEnd, FiringDirection, Item, Parity, Pose, Radius, Set, Sprite};
 
@@ -26,6 +26,50 @@ pub struct MovementInputs {
     pub parity: Parity,
     /// Actual completed frame-start animation query.
     pub animation_ends: Option<ClipEnd>,
+}
+
+/// Current stable player modes and requested-NMI frame parity.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct InsidePremises {
+    cinematic_active: bool,
+    elevator_moving: bool,
+    odd: bool,
+}
+
+impl InsidePremises {
+    /// Retain the three independently current origin quantities.
+    #[must_use]
+    pub const fn new(inputs: &MovementInputs) -> Self {
+        Self {
+            cinematic_active: inputs.cinematic_active,
+            elevator_moving: inputs.elevator_moving,
+            odd: matches!(inputs.parity, Parity::Odd),
+        }
+    }
+
+    pub(super) const fn complete_requested_nmi(&mut self) {
+        self.odd = !self.odd;
+    }
+
+    pub(super) const fn at_inside(
+        self,
+        pose: &super::borrowed_player_preparation::PoseInputCompletion,
+        environment: &super::borrowed_player_preparation::EnvironmentCompletion,
+        playing_sprite: Sprite,
+        ahead: samus_appearance::Ahead,
+    ) -> MovementInputs {
+        MovementInputs {
+            sprite_before_movement: playing_sprite,
+            cinematic_active: self.cinematic_active,
+            pad: pose.terminal.held_actions,
+            pressed: pose.terminal.pressed_actions,
+            items: environment.dependency.equipment,
+            spin_turned_far: ahead.turned_far,
+            elevator_moving: self.elevator_moving,
+            parity: if self.odd { Parity::Odd } else { Parity::Even },
+            animation_ends: ahead.end,
+        }
+    }
 }
 
 /// Owned current movement input schema, including independently captured appearance facts.

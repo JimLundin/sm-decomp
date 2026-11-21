@@ -7,7 +7,6 @@ use super::borrowed_player_preparation::{
 };
 use super::{
     State,
-    borrowed::ActorEligibilityOrigin,
     borrowed_receipts::{
         FrameContinuationAfterNmi, MusicCompletionReceipt, MusicCountdown, MusicQueue, MusicRequest,
     },
@@ -242,30 +241,20 @@ pub struct Rules {
 /// Current explicitly borrowed preparation owners and unread external completion.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct Prelude {
-    /// Current independently decoded actor eligibility.
-    pub actors_origin: ActorEligibilityOrigin,
     /// Independently borrowed completion, unread until the actual music opportunity.
     pub music_completion: Option<MusicCompletionReceipt>,
-    /// Independently current scene controller, separate from Haze simulation.
-    pub scene_current: Option<super::borrowed_gameplay::SceneController>,
     /// Current gameplay route offer, unread until actual dispatch.
     pub gameplay_completion: Option<super::borrowed_gameplay::GameplayDispatchOffer>,
     /// Actual full actor membership offer.
     pub actor_completion: Option<super::borrowed_preparation::ActorEligibilityReceipt>,
-    /// Current physical debug controls and enabled disposition.
-    pub debug_current: Option<super::borrowed_preparation::DebugOrigin>,
     /// Actual current debug no-action completion.
     pub debug_completion: Option<super::borrowed_preparation::DebugCompletionReceipt>,
-    /// Current palette owner and all eight actual slots.
-    pub palette_current: Option<super::borrowed_preparation::PaletteOrigin>,
     /// Actual current palette disposition.
     pub palette_completion: Option<super::borrowed_preparation::PaletteCompletionReceipt>,
     /// Independent current entry owners, refreshed against selected owners at consumption.
     pub player_entry_current: Option<Model<PlayerEntryOriginsPin>>,
     /// Separately borrowed entry effects.
     pub player_entry_offers: Option<Model<PlayerEntryOffersPin>>,
-    /// Current progress inventory, separate from the previous HUD drawing.
-    pub hud_inventory: Option<super::hud_controls_inputs::CurrentInventory>,
     /// Independently current unselected remaining player owners.
     pub player_continuation_current: Option<Model<PlayerContinuationOriginsPin>>,
     /// Separately qualified remaining player effects, unread before their actual opportunities.
@@ -643,6 +632,8 @@ pub enum Dependency {
     FinalFrameHistory,
     /// Remaining player preparation requires its actual current dependencies.
     PlayerContinuationPreparation,
+    /// Recurring sprite-object owners require independent qualification.
+    SpriteObjectsPreparation,
     /// An interrupt requires a current admitted handler owner.
     InterruptOwner,
 }
@@ -702,27 +693,8 @@ impl State {
         let inside = self.inside_completed.as_ref().ok_or(fault)?;
         let selected =
             super::borrowed_player_preparation::CompletedInsideAndHudWeapons { inside, controls };
-        let current = prepared
-            .prelude
-            .origin()
-            .ok_or(fault)?
-            .player_continuation_current
-            .as_ref()
-            .ok_or(fault)?;
-        let offers = prepared
-            .prelude
-            .origin()
-            .ok_or(fault)?
-            .player_continuation_offers
-            .as_ref()
-            .ok_or(fault)?;
-        let expected = offers
-            .0
-            .projectiles
-            .clone()
-            .complete(&current.0.projectiles, &selected)
-            .map_err(|_| fault)?;
-        if remaining.0.projectiles.as_ref() != Some(&expected) || self.prepared_action.is_some() {
+        self.current_projectiles(prepared, &selected, remaining.0.projectiles.as_ref())?;
+        if remaining.0.projectiles.is_none() || self.prepared_action.is_some() {
             return Err(fault);
         }
         let source = content.motion_reset.as_ref().ok_or(fault)?;
@@ -735,21 +707,10 @@ impl State {
                 bindings: content.early_hud_controls.as_ref().ok_or(fault)?,
                 control_inputs: super::hud_controls_inputs::CurrentControls {
                     gameplay: prepared.gameplay.as_ref().ok_or(fault)?,
-                    scene: prepared
-                        .prelude
-                        .origin()
-                        .ok_or(fault)?
-                        .scene_current
-                        .ok_or(fault)?,
+                    scene: self.scene.ok_or(fault)?,
                     pose_input: completed.0.pose_input.as_ref().ok_or(fault)?,
                     pose: self.movement.state().pose,
-                    inventory: prepared
-                        .prelude
-                        .origin()
-                        .ok_or(fault)?
-                        .hud_inventory
-                        .as_ref()
-                        .ok_or(fault)?,
+                    inventory: self.hud_inventory.as_ref().ok_or(fault)?,
                 },
             },
             source.facing,
@@ -860,6 +821,18 @@ impl State {
             return Err(fault);
         }
         let room = self.inside_world.as_ref().ok_or(fault)?.0.clone();
+        if !self.publications.original_interval() {
+            let ahead = self
+                .current_animation(&content.appearance)
+                .map_err(|_| fault)?;
+            let premises = self.inside_premises.ok_or(fault)?;
+            self.inside_inputs = Some(Model(premises.at_inside(
+                pose,
+                environment,
+                self.playing_figure.0.sprite,
+                ahead,
+            )));
+        }
         let inputs = self.inside_inputs.as_ref().ok_or(fault)?.0;
         let contract = content.inside_physical.as_ref().ok_or(fault)?;
         let radius = pose.terminal.radius;
@@ -883,7 +856,14 @@ impl State {
         let requests = super::inside_contract::Requests::from_receipt(&receipt, room.width())
             .map_err(|_| fault)?;
         let profile = contract
-            .physical(&receipt, &self.movement, &content.movement, &room, pose)
+            .physical(
+                &receipt,
+                &self.movement,
+                &content.movement,
+                &room,
+                pose,
+                self.inside_geometry(),
+            )
             .map_err(|_| fault)?;
         let identity = PlayerEntryStage::Inside.identity();
         self.timing
@@ -947,6 +927,7 @@ impl State {
                 &content.movement,
                 &room,
                 pose,
+                self.inside_geometry(),
             )
             .map_err(|_| fault)?;
         let body = |_| radius;
@@ -974,6 +955,15 @@ impl State {
             completion_work,
         };
         Ok(())
+    }
+
+    pub(super) const fn inside_geometry(&self) -> super::inside_contract::GeometryMatch {
+        use super::inside_contract::GeometryMatch;
+        if self.publications.original_interval() {
+            GeometryMatch::Origin
+        } else {
+            GeometryMatch::Recurring
+        }
     }
 
     pub(super) fn validate_player_entry(&self) -> Result<(), super::Fault> {
@@ -1166,11 +1156,7 @@ impl State {
                     .prelude
                     .origin()
                     .is_some_and(|origin| origin.player_continuation_offers.is_some())
-            || ((count != 0 || *charging)
-                && prepared
-                    .prelude
-                    .origin()
-                    .is_none_or(|origin| origin.player_continuation_current.is_none()))
+            || ((count != 0 || *charging) && !self.has_remaining_player_source(prepared))
             || completed.0.pose_input.is_none()
             || completed.0.suit_palette.is_none()
             || completed.0.environment.is_none()
@@ -1344,7 +1330,16 @@ impl State {
     fn entry_current_matches(&self, prepared: &Preparation, stage: PlayerEntryStage) -> bool {
         use types::Parts;
         let Some(current) = prepared.entry_origins() else {
-            return false;
+            let Some(environment) = self.entry_environment.as_ref() else {
+                return false;
+            };
+            return match stage {
+                PlayerEntryStage::SuitPalette => environment.supports_power_suit(),
+                PlayerEntryStage::Environment => environment.supports_dry_environment(),
+                PlayerEntryStage::PoseInput
+                | PlayerEntryStage::Inside
+                | PlayerEntryStage::HudWeapons => false,
+            };
         };
         let samus = self.movement.state();
         match stage {
@@ -1415,7 +1410,9 @@ impl State {
                 }
             }
         } else {
-            if !self.entry_current_matches(prepared, *stage) || prepared.entry_offers().is_none() {
+            if !self.entry_current_matches(prepared, *stage)
+                || (prepared.prelude.origin().is_some() && prepared.entry_offers().is_none())
+            {
                 return Err(fault);
             }
             entry.profile(*stage).ok_or(fault)?
@@ -1465,9 +1462,8 @@ impl State {
         {
             return Err(fault);
         }
-        let current = || prepared.entry_origins().ok_or(fault);
-        let offers = || prepared.entry_offers().ok_or(fault);
         let route = prepared.gameplay.as_ref().ok_or(fault)?;
+        let live = || self.entry_environment.as_ref().ok_or(fault);
         let mut completed = completed.clone();
         let mut completion_work = completion_work.clone();
         let next = match stage {
@@ -1489,30 +1485,37 @@ impl State {
                 if completed.0.pose_input.is_none() || completed.0.suit_palette.is_some() {
                     return Err(fault);
                 }
-                completed.0.suit_palette = Some(
-                    offers()?
+                let suit = if let Some(current) = prepared.entry_origins() {
+                    prepared
+                        .entry_offers()
+                        .ok_or(fault)?
                         .suit_palette
                         .clone()
-                        .complete(&current()?.suit_palette, route)
-                        .map_err(|_| fault)?,
-                );
+                        .complete(&current.suit_palette, route)
+                } else {
+                    live()?.suit(route)
+                };
+                completed.0.suit_palette = Some(suit.map_err(|_| fault)?);
                 PlayerEntryStage::Environment
             }
             PlayerEntryStage::Environment => {
                 if completed.0.suit_palette.is_none() || completed.0.environment.is_some() {
                     return Err(fault);
                 }
-                completed.0.environment = Some(
-                    offers()?
+                let acceleration = content.player_entry.reference_acceleration;
+                let environment = if let Some(current) = prepared.entry_origins() {
+                    prepared
+                        .entry_offers()
+                        .ok_or(fault)?
                         .environment
                         .clone()
-                        .complete(
-                            &current()?.environment,
-                            content.player_entry.reference_acceleration,
-                            route,
-                        )
-                        .map_err(|_| fault)?,
-                );
+                        .complete(&current.environment, acceleration, route)
+                } else {
+                    use types::Parts;
+                    let samus = self.movement.state();
+                    live()?.environment(samus.pose, samus.position.y.pixel().0, acceleration, route)
+                };
+                completed.0.environment = Some(environment.map_err(|_| fault)?);
                 PlayerEntryStage::Inside
             }
             PlayerEntryStage::Inside | PlayerEntryStage::HudWeapons => return Err(fault),
@@ -1546,29 +1549,46 @@ impl State {
         };
         let ready = match (stage, prepared.prelude.origin()) {
             (PreparationStage::Builder, _) => self.sprite_builder.is_some(),
-            (_, None) => false,
-            (PreparationStage::Gameplay, Some(prelude)) => {
-                prepared.builder.is_some()
-                    && prelude
-                        .gameplay_completion
-                        .as_ref()
-                        .is_some_and(|offer| Some(offer.dependency) == prelude.scene_current)
+            (PreparationStage::Gameplay, origin) => {
+                self.scene == Some(super::borrowed_gameplay::SceneController::MainGameplay)
+                    && prepared.builder.is_some()
+                    && origin.is_none_or(|prelude| {
+                        prelude
+                            .gameplay_completion
+                            .as_ref()
+                            .is_some_and(|offer| Some(offer.dependency) == self.scene)
+                    })
             }
-            (PreparationStage::Actors, Some(prelude)) => {
+            (PreparationStage::Actors, origin) => {
                 prepared.gameplay.is_some()
-                    && prelude
-                        .actor_completion
-                        .as_ref()
-                        .is_some_and(|offer| offer.dependency == prelude.actors_origin)
+                    && self.actor_eligibility.as_ref().is_some_and(|current| {
+                        current.supports_marked_offscreen()
+                            && origin.is_none_or(|prelude| {
+                                prelude
+                                    .actor_completion
+                                    .as_ref()
+                                    .is_some_and(|offer| &offer.dependency == current)
+                            })
+                    })
             }
-            (PreparationStage::Debug, Some(prelude)) => prelude
-                .debug_completion
-                .as_ref()
-                .is_some_and(|offer| Some(&offer.dependency) == prelude.debug_current.as_ref()),
-            (PreparationStage::Palette, Some(prelude)) => prelude
-                .palette_completion
-                .as_ref()
-                .is_some_and(|offer| Some(&offer.dependency) == prelude.palette_current.as_ref()),
+            (PreparationStage::Debug, origin) => self.debug.is_some_and(|current| {
+                current.supports_quiet()
+                    && origin.is_none_or(|prelude| {
+                        prelude
+                            .debug_completion
+                            .as_ref()
+                            .is_some_and(|offer| offer.dependency == current)
+                    })
+            }),
+            (PreparationStage::Palette, origin) => self.palette_objects.is_some_and(|current| {
+                current.supports_empty_scan()
+                    && origin.is_none_or(|prelude| {
+                        prelude
+                            .palette_completion
+                            .as_ref()
+                            .is_some_and(|offer| offer.dependency == current)
+                    })
+            }),
         };
         if !ready {
             return Err(ProductionFault::Unsupported(Unsupported::Frame(
@@ -1612,36 +1632,50 @@ impl State {
                 Some(PreparationStage::Gameplay)
             }
             PreparationStage::Gameplay => {
-                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
-                let current = prelude.scene_current.ok_or(fault)?;
-                let offer = prelude.gameplay_completion.take().ok_or(fault)?;
+                let current = self.scene.ok_or(fault)?;
                 let builder = prepared.builder.as_ref().ok_or(fault)?;
-
-                prepared.gameplay = Some(offer.complete(current, builder).map_err(|_| fault)?);
+                let route = match prepared.prelude.origin_mut() {
+                    Some(prelude) => prelude
+                        .gameplay_completion
+                        .take()
+                        .ok_or(fault)?
+                        .complete(current, builder),
+                    None => super::borrowed_gameplay::GameplayDispatchReceipt::dispatch(
+                        current, builder,
+                    ),
+                };
+                prepared.gameplay = Some(route.map_err(|_| fault)?);
                 Some(PreparationStage::Actors)
             }
             PreparationStage::Actors => {
-                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
-                let actors = prelude.actor_completion.take().ok_or(fault)?;
-                if actors.dependency != prelude.actors_origin {
+                use super::borrowed_preparation::ActorEligibilityReceipt;
+                let current = self.actor_eligibility.as_ref().ok_or(fault)?;
+                let actors = ActorEligibilityReceipt::marked_offscreen(current).ok_or(fault)?;
+                if let Some(prelude) = prepared.prelude.origin_mut()
+                    && prelude.actor_completion.take().as_ref() != Some(&actors)
+                {
                     return Err(fault);
                 }
                 prepared.actors = Some(actors);
                 Some(PreparationStage::Debug)
             }
             PreparationStage::Debug => {
-                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
-                let debug = prelude.debug_completion.take().ok_or(fault)?;
-                if Some(&debug.dependency) != prelude.debug_current.as_ref() {
+                let current = self.debug.ok_or(fault)?;
+                let debug = current.complete_quiet().ok_or(fault)?;
+                if let Some(prelude) = prepared.prelude.origin_mut()
+                    && prelude.debug_completion.take().as_ref() != Some(&debug)
+                {
                     return Err(fault);
                 }
                 prepared.debug = Some(debug);
                 Some(PreparationStage::Palette)
             }
             PreparationStage::Palette => {
-                let prelude = prepared.prelude.origin_mut().ok_or(fault)?;
-                let palette = prelude.palette_completion.take().ok_or(fault)?;
-                if Some(&palette.dependency) != prelude.palette_current.as_ref() {
+                let current = self.palette_objects.ok_or(fault)?;
+                let palette = current.complete_empty_scan().ok_or(fault)?;
+                if let Some(prelude) = prepared.prelude.origin_mut()
+                    && prelude.palette_completion.take().as_ref() != Some(&palette)
+                {
                     return Err(fault);
                 }
                 prepared.palette = Some(palette);
@@ -2710,30 +2744,26 @@ impl State {
     }
 
     fn enter_drawing_interrupt(&mut self, content: &Content) -> Result<(), ProductionFault> {
-        let drawing =
-            self.drawing
-                .as_mut()
-                .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                    Dependency::InterruptOwner,
-                )))?;
-        let profiles = content
-            .drawing
-            .as_ref()
-            .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
-                Dependency::InterruptOwner,
-            )))?;
+        let original = self.publications.original_interval();
+        let missing = ProductionFault::Unsupported(Unsupported::Frame(Dependency::InterruptOwner));
+        let drawing = self.drawing.as_mut().ok_or(missing)?;
+        let profiles = content.drawing.as_ref().ok_or(missing)?;
         if drawing.active.is_some() {
             return Err(ProductionFault::FrameHardware(timing::Fault::InvalidState));
         }
-        let receipt = match drawing.current.request {
-            super::interrupts::DrawingRequest::Begin => &mut drawing.begin,
-            super::interrupts::DrawingRequest::End => &mut drawing.end,
+        let profile = if original {
+            let receipt = match drawing.current.request {
+                super::interrupts::DrawingRequest::Begin => &mut drawing.begin,
+                super::interrupts::DrawingRequest::End => &mut drawing.end,
+            };
+            let profile = profiles
+                .bind(drawing.current, receipt.as_ref())
+                .map_err(|_| missing)?;
+            receipt.take();
+            profile
+        } else {
+            drawing.bind_recurring(profiles).map_err(|_| missing)?
         };
-        let profile = profiles
-            .bind(drawing.current, receipt.as_ref())
-            .map_err(|_| {
-                ProductionFault::Unsupported(Unsupported::Frame(Dependency::InterruptOwner))
-            })?;
         if let Some(owner) = &mut self.scene_countdown {
             owner.0.hud_irq(drawing.current.request);
         }
@@ -2743,7 +2773,6 @@ impl State {
         if let Some(owner) = &mut self.health {
             owner.hud_irq(drawing.current.request);
         }
-        receipt.take();
         drawing.active = Some(drawing.current.request);
         let events = self
             .timing
@@ -2756,6 +2785,7 @@ impl State {
     }
 
     fn complete_drawing_interrupt(&mut self, identity: WorkId) -> Result<(), ProductionFault> {
+        let original = self.publications.original_interval();
         let drawing = self
             .drawing
             .as_mut()
@@ -2768,6 +2798,11 @@ impl State {
             history.hud_irq_returned(request, identity).map_err(|_| {
                 ProductionFault::Unsupported(Unsupported::Frame(Dependency::AnimationLiquidHistory))
             })?;
+        }
+        if !original {
+            return drawing.complete_recurring(request).map_err(|_| {
+                ProductionFault::Unsupported(Unsupported::Frame(Dependency::InterruptOwner))
+            });
         }
         if request == super::interrupts::DrawingRequest::Begin {
             drawing.current.request =
