@@ -37,7 +37,8 @@ pub trait Pinned {
     /// The State's shape as [`trace_shape`] traces it, written down.
     const SHAPE: u64;
     /// Representative values for checked newtypes with a direct `u8` payload, keyed by
-    /// Serde newtype name. These values are used only to visit the shape.
+    /// Serde newtype name. Each sample applies to all matching newtypes under this pin and
+    /// must exercise a representation whose shape is independent of the value.
     const TRACE_U8_SAMPLES: &'static [(&'static str, u8)] = &[];
 }
 
