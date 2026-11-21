@@ -357,7 +357,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 
 | Crate | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,604 | 2,706 | 5,717 | 130 | 33 | 0 | 0 | 1,525 |
+| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,643 | 2,776 | 5,779 | 130 | 33 | 0 | 0 | 1,545 |
 
 ## Lines
 
@@ -379,8 +379,8 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 | world-quake | 95 | 43 | 52 | 24 |
 | game-random | 58 | 35 | 23 | 22 |
 | world-haze | 109 | 49 | 60 | 33 |
-| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,525 | 1,355 | 170 | 267 |
-| total | 17,615 | 8,258 | 9,357 | 8,741 |
+| shared types (`crates/clean/types`, used by audio-transport, weapons-projectiles, samus-movement, world-camera, run-progress, interface-hud, world-blocks, samus-appearance, boss-ceres-ridley, world-doors, samus-health, game-time, world-quake, game-random, world-haze) | 1,545 | 1,355 | 190 | 274 |
+| total | 17,635 | 8,258 | 9,377 | 8,748 |
 
 ## Spec, budget and fit by area
 
@@ -643,9 +643,9 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 111 | 30,233 | 181,400 | 144,641 | 25,398 | 2,062 | 10,671 | 44,961 | 2,668 | 27,876 |
+| production and exact services | 111 | 30,233 | 181,400 | 144,641 | 25,412 | 2,068 | 10,671 | 44,961 | 2,668 | 27,877 |
 | bridges | 16 | 3,192 | 19,153 | 18,878 | 2,278 | 518 | 1,536 | 1,760 | 88 | 3,390 |
-| rebuilt models, shared types included | 123 | 8,741 | 52,446 | 58,294 | 24,088 | 18,486 | 3,624 | 3,811 | 1,013 | 17,615 |
+| rebuilt models, shared types included | 123 | 8,748 | 52,485 | 58,364 | 24,150 | 18,486 | 3,624 | 3,811 | 1,013 | 17,635 |
 
 ## Domain graph
 
@@ -2476,12 +2476,12 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | audio-transport | `crates/game/src/production/frame/state.rs` | names it | `SenderState`, `SoundGroup`, `sender` | 1,707 | 333 |
 | audio-transport | `crates/game/src/production/sender.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `QueueAllowance`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 780 | 115 |
 | audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `SenderState`, `State`, `sender`, `transport` | 2,580 | 562 |
-| audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 66 |
+| audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 67 |
 | enemy-interactions | `crates/game/src/enemy_interactions_bridge.rs` | bridge | - | 234 | 39 |
 | enemy-interactions | `crates/game/src/production/weapons.rs` | names it | `ContactConditions`, `DoorContact` | 1,714 | 257 |
 | weapons-projectiles | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 2,580 | 562 |
-| weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 66 |
+| weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 67 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
 | samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Samus` | 309 | 75 |
 | samus-movement | `crates/game/src/production/connected/appearance.rs` | names it | `Dashing`, `Samus`, `WallTest`, `suspended` | 1,037 | 179 |
@@ -2513,16 +2513,16 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 167 | 43 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 938 | 172 |
 | samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 2,580 | 562 |
-| samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 66 |
+| samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 67 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 309 | 75 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 2,346 | 395 |
 | world-camera | `crates/game/src/production/frame/camera_stage.rs` | names it | `Frame`, `Heights`, `LeadSetting`, `Leads`, `Room`, `RoomError`, `Rules`, `Samus` | 1,433 | 308 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 2,580 | 562 |
-| world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 66 |
+| world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 67 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 2,580 | 562 |
-| run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 66 |
+| run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 67 |
 | interface-hud | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `Ammo`, `Ammunition`, `CancelButton`, `ControlAnswer`, `Equipped`, `HudEvent`, `ItemControlInputs`, `SelectButton`, `SelectableItem`, `Selection` | 832 | 85 |
 | interface-hud | `crates/game/src/production/appearance.rs` | names it | `ControlAnswer`, `Selection` | 1,611 | 298 |
 | interface-hud | `crates/game/src/production/content.rs` | names it | `HudPictures` | 285 | 94 |
@@ -2548,11 +2548,11 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 2,318 | 276 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 2,580 | 562 |
-| interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 66 |
+| interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 67 |
 | world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 970 | 201 |
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
 | world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 2,580 | 562 |
-| world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 66 |
+| world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 67 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AnimationInputs`, `Clip`, `Content`, `Figure`, `Inputs`, `Paces`, `Rules`, `State`, `update` | 446 | 105 |
 | samus-appearance | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `CannonDelay` | 832 | 85 |
 | samus-appearance | `crates/game/src/production/appearance.rs` | names it | `Ahead`, `CannonDelay`, `CannonObservation`, `Clip`, `ControlEligibility`, `GraphicalContact`, `ItemControlAnswer`, `OfferedDecision`, `PublishedSound`, `SelectedItem`, `SoundRequest`, `State`, `SuspendedAppearance`, `WorkStep` | 1,611 | 298 |
@@ -2579,13 +2579,13 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 2,580 | 562 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,683 | 270 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
-| samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 66 |
+| samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 67 |
 | boss-ceres-ridley | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | boss-ceres-ridley | `crates/game/src/production/entries.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run` | 970 | 201 |
 | boss-ceres-ridley | `crates/game/src/production/frame/actor_doors.rs` | bridge | `CeresDoor`, `DoorKind`, `Inputs`, `Phase`, `Rules`, `Stage`, `Wait` | 1,638 | 301 |
 | boss-ceres-ridley | `crates/game/src/production/movement_ceres.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 167 | 43 |
 | boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 2,580 | 562 |
-| boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 66 |
+| boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 67 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 94 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 970 | 201 |
 | world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 2,580 | 562 |
