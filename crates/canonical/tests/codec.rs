@@ -190,10 +190,7 @@ fn diff_names_a_field_inside_a_variant() {
         (difference.left(), difference.right()),
         (&[0x23, 0x01][..], &[0x24, 0x01][..])
     );
-    assert_eq!(
-        difference.to_string(),
-        "samus.vertical.Falling.speed: 2301 != 2401"
-    );
+    assert_eq!(difference.to_string(), "samus.vertical.Falling.speed");
 }
 
 #[test]
@@ -201,7 +198,7 @@ fn diff_stops_at_a_different_variant() {
     let mut changed = sample();
     changed.samus.vertical = Vertical::Grounded;
     let difference = sample().diff(&changed).unwrap();
-    assert_eq!(difference.to_string(), "samus.vertical: 02230104 != 00");
+    assert_eq!(difference.to_string(), "samus.vertical");
 }
 
 #[test]
@@ -211,7 +208,7 @@ fn diff_indexes_arrays_and_reports_the_first_field() {
     changed.enemies[1].frozen = Some(8);
     assert_eq!(
         sample().diff(&changed).unwrap().to_string(),
-        "enemies[1].frozen.Some: 07 != 08"
+        "enemies[1].frozen.Some"
     );
 }
 
@@ -219,10 +216,7 @@ fn diff_indexes_arrays_and_reports_the_first_field() {
 fn diff_reports_a_vec_length_then_elements() {
     let mut changed = sample();
     changed.frames.push(Vertical::Grounded);
-    assert_eq!(
-        sample().diff(&changed).unwrap().to_string(),
-        "frames.len: 03000000 != 04000000"
-    );
+    assert_eq!(sample().diff(&changed).unwrap().to_string(), "frames.len");
     let mut changed = sample();
     changed.frames[2] = Vertical::Knocked(Speed(9), false);
     assert_eq!(
@@ -385,4 +379,22 @@ fn a_schema_decodes_only_its_own_value() {
             found: original::Point::SCHEMA,
         })
     );
+}
+
+#[test]
+fn video_memory_difference_reports_only_its_location() {
+    let left = 0xa1b2_c3d4_u32;
+    let right = 0xe5f6_789a_u32;
+    let difference = canonical::Difference::here(&left, &right)
+        .within(Segment::Index(23))
+        .within(Segment::Field("vram"));
+    assert_eq!(difference.to_string(), "vram[23]");
+    let debug = format!("{difference:?}");
+    assert!(debug.contains("vram"));
+    for payload in [&left.to_le_bytes(), &right.to_le_bytes()] {
+        assert!(!debug.contains(&format!("{payload:?}")));
+        assert!(!debug.contains(&format!("{payload:02x?}")));
+    }
+    assert_eq!(difference.left(), left.to_le_bytes());
+    assert_eq!(difference.right(), right.to_le_bytes());
 }

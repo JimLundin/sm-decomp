@@ -152,49 +152,43 @@ fn the_diff_names_the_first_differing_field_as_the_derive_does() {
                 Segment::Variant("Doors"),
                 Segment::Field("wait")
             ],
-            String::from("phase.Doors.wait: 3412 != 0500")
+            String::from("phase.Doors.wait")
         ))
     );
     assert_eq!(
         diff(|lift| lift.phase = Phase::Parked),
-        Some((
-            vec![Segment::Field("phase")],
-            String::from("phase: 02 != 00")
-        ))
+        Some((vec![Segment::Field("phase")], String::from("phase")))
     );
     assert_eq!(
         diff(|lift| lift.riders.push(1)),
         Some((
             vec![Segment::Field("riders"), Segment::Len],
-            String::from("riders.len: 02000000 != 03000000")
+            String::from("riders.len")
         ))
     );
     assert_eq!(
         diff(|lift| lift.riders[1] = 2),
         Some((
             vec![Segment::Field("riders"), Segment::Index(1)],
-            String::from("riders[1]: efbe != 0200")
+            String::from("riders[1]")
         ))
     );
     assert_eq!(
         diff(|lift| lift.waiting = None),
-        Some((
-            vec![Segment::Field("waiting")],
-            String::from("waiting: 01 != 00")
-        ))
+        Some((vec![Segment::Field("waiting")], String::from("waiting")))
     );
     assert_eq!(
         diff(|lift| lift.floor = Floor(4)),
         Some((
             vec![Segment::Field("floor"), Segment::Field("0")],
-            String::from("floor.0: 03 != 04")
+            String::from("floor.0")
         ))
     );
     assert_eq!(
         diff(|lift| lift.load.1 = 0),
         Some((
             vec![Segment::Field("load"), Segment::Index(1)],
-            String::from("load[1]: 04030201 != 00000000")
+            String::from("load[1]")
         ))
     );
 }

@@ -284,7 +284,7 @@ pub enum Segment {
 }
 
 /// The first place two values differ: its path and both sides' canonical bytes there.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Difference {
     path: Vec<Segment>,
     left: Vec<u8>,
@@ -327,7 +327,15 @@ impl Difference {
     }
 }
 
-/// The path as `samus.vertical.Rising[2].len`, for logs and lockstep reports.
+impl fmt::Debug for Difference {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Difference")
+            .field("path", &self.path)
+            .finish_non_exhaustive()
+    }
+}
+
+/// The path as `samus.vertical.Rising[2].len`, without observation bytes.
 impl fmt::Display for Difference {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (position, segment) in self.path.iter().enumerate() {
@@ -342,15 +350,8 @@ impl fmt::Display for Difference {
         if self.path.is_empty() {
             write!(f, "(value)")?;
         }
-        write!(f, ": ")?;
-        write_hex(f, &self.left)?;
-        write!(f, " != ")?;
-        write_hex(f, &self.right)
+        Ok(())
     }
-}
-
-fn write_hex(f: &mut fmt::Formatter<'_>, bytes: &[u8]) -> fmt::Result {
-    bytes.iter().try_for_each(|byte| write!(f, "{byte:02x}"))
 }
 
 macro_rules! canonical_integer {

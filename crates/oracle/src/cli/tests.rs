@@ -535,3 +535,259 @@ fn native_save_uses_absolute_movie_step_when_resumed() {
     assert!(!save_due(&lists, None, (0, 100)));
     assert!(!save_due(&lists, None, (41, 100)));
 }
+
+#[test]
+fn cross_reports_registers_and_range_locations_without_observed_payloads() {
+    use crate::cross::{Report, tests::record};
+
+    let mut left = record(0);
+    let mut right = left.clone();
+    left.cpu.a = 0xa1b2;
+    right.cpu.a = 0xc3d4;
+    left.vram = vec![0; 32].into_boxed_slice();
+    right.vram.clone_from(&left.vram);
+    for index in [1, 20] {
+        left.vram[index] = 0xe5f6;
+        right.vram[index] = 0x789a;
+    }
+
+    let payloads = ["a1b2", "c3d4", "e5f6", "789a", "f6, e5", "9a, 78"];
+    for (options, ranges_at) in [
+        (&[][..], None),
+        (&["--ranges"][..], Some(7)),
+        (&["--ranges-at", "8..8"][..], Some(8)),
+    ] {
+        let mut command = args(&["rom", "inputs"]);
+        command.extend(args(options));
+        let request = CrossRequest::parse(&command).unwrap();
+        let mut report = Report::new(request.streams, request.first_ranges, request.ranges_at);
+        for step in [7, 8] {
+            let text = report.step(step, true, &left, &right).unwrap();
+            assert_eq!(
+                text.split_whitespace().next(),
+                Some(step.to_string().as_str())
+            );
+            assert!(text.contains("cpu 1 [a]"));
+            assert!(text.contains("vram 4"));
+            assert_eq!(
+                text.contains(&format!("vram at {step}: 2 ranges")),
+                ranges_at == Some(step)
+            );
+            assert_eq!(
+                text.contains("00002-00003 2 bytes"),
+                ranges_at == Some(step)
+            );
+            assert_eq!(
+                text.contains("00028-00029 2 bytes"),
+                ranges_at == Some(step)
+            );
+            assert_omits(&text, &payloads);
+        }
+        let summary = report.summary(2, std::time::Duration::ZERO);
+        for (part, fields) in [("cpu", "cpu 1 [a]"), ("vram", "vram 4")] {
+            assert_first_cross_difference(&summary, part, "7", "2", fields);
+        }
+        assert_omits(&summary, &payloads);
+    }
+}
+
+#[test]
+fn cross_streams_report_cut_picture_and_apu_differences_without_values() {
+    use crate::cross::{Report, describe_streams, tests::record};
+    use crate::{ApuAccess, ApuAccessKind, Cut, Nmi, NmiKind, Picture};
+
+    let request = CrossRequest::parse(&args(&["rom", "inputs", "--streams", "--ranges"])).unwrap();
+    assert!(request.streams);
+    let mut report = Report::new(request.streams, request.first_ranges, request.ranges_at);
+
+    let mut left = record(0);
+    let mut right = left.clone();
+    left.cut = Cut::NmiReturn(Nmi {
+        kind: NmiKind::Requested,
+        interrupted_pc: 0xabcdef,
+        polled: true,
+    });
+    right.cut = Cut::NmiReturn(Nmi {
+        kind: NmiKind::Overrun,
+        interrupted_pc: 0xfedcba,
+        polled: false,
+    });
+    let mut lake = Picture {
+        lines: 1,
+        ..Picture::default()
+    };
+    lake.dots[0] = 0x7bde;
+    lake.brightness[0] = 13;
+    let mut lsnes = lake.clone();
+    lsnes.dots[0] = 0x4fad;
+    lsnes.brightness[0] = 9;
+    left.picture = Some(lake);
+    right.picture = Some(lsnes);
+    let access = ApuAccess {
+        kind: ApuAccessKind::CpuWrite,
+        port: 1,
+        value: 0xea,
+        apu_cycle: 10,
+    };
+    left.apu_log.push(access);
+    right.apu_log.push(ApuAccess {
+        value: 0xdb,
+        ..access
+    });
+
+    let payloads = [
+        "abcdef", "fedcba", "7bde", "4fad", "13/9", "[ea]", "[db]", "[234]", "[219]",
+    ];
+    let stream_line = describe_streams(42, &left, &right, left.picture.as_ref()).unwrap();
+    assert!(stream_line.starts_with("42 "));
+    assert!(stream_line.contains("picture 255 of 256"));
+    assert!(stream_line.contains("apu log 1/1"));
+    assert_omits(&stream_line, &payloads);
+
+    let text = report.step(42, true, &left, &right).unwrap();
+    for field in [
+        "cut 1",
+        "kind",
+        "interrupted_pc",
+        "polled",
+        "picture 3",
+        "apu-log 1",
+    ] {
+        assert!(text.contains(field));
+    }
+    assert_omits(&text, &payloads);
+    let summary = report.summary(1, std::time::Duration::ZERO);
+    assert_first_cross_difference(&summary, "cut", "42", "1", "interrupted_pc");
+    assert_first_cross_difference(&summary, "picture", "42", "1", "picture 3");
+    assert_first_cross_difference(&summary, "apu-log", "42", "1", "apu-log 1");
+    assert_omits(&summary, &payloads);
+}
+
+fn assert_first_cross_difference(summary: &str, part: &str, step: &str, count: &str, field: &str) {
+    let line = summary
+        .lines()
+        .find(|line| line.split_whitespace().next() == Some(part))
+        .unwrap();
+    let (coordinates, detail) = line.split_once(':').unwrap();
+    let numbers: Vec<_> = coordinates
+        .split(|character: char| !character.is_ascii_digit())
+        .filter(|number| !number.is_empty())
+        .collect();
+    assert_eq!(numbers, [step, count]);
+    assert!(detail.contains(field));
+}
+
+#[test]
+fn movie_lag_log_and_positions_only_report_the_compared_fields() {
+    use super::movie_report::lag_difference;
+    use crate::{Beam, cross::tests::record};
+
+    let mut record = record(0);
+    record.wram = vec![0; 0x1000].into_boxed_slice();
+    record.wram[0x05b6..0x05b8].copy_from_slice(&41267_u16.to_le_bytes());
+    record.wram[0x0af6..0x0af8].copy_from_slice(&54128_u16.to_le_bytes());
+    record.wait_entry = Some(Beam { v: 283, h: 1179 });
+    let row = csv::lag_log("header\n0,0,0,49712,0,0,1,0,0,31805,0\n").unwrap()[0];
+    let payloads = ["41267", "54128", "49712", "31805", "283", "1179"];
+
+    for positions_only in [false, true] {
+        let mut command = args(&["rom", "inputs", "--lag-log", "lag.csv"]);
+        if positions_only {
+            command.push("--positions-only".to_owned());
+        }
+        let request = MovieRequest::parse(&command).unwrap();
+        assert!(request.lag_log.is_some());
+        let report = lag_difference(47, &record, &row, request.positions_only).unwrap();
+        assert!(report.contains("frame 47"));
+        assert!(report.contains("Samus X"));
+        assert_eq!(report.contains("frame counter"), !positions_only);
+        assert_omits(&report, &payloads);
+        let mut same_position = row;
+        same_position[5] = 54128;
+        assert_eq!(
+            lag_difference(47, &record, &same_position, request.positions_only).is_none(),
+            positions_only
+        );
+    }
+}
+
+#[test]
+fn movie_seed_comparisons_report_room_status_and_optional_range_locations() {
+    use super::movie_report::seed_comparison;
+    use std::collections::VecDeque;
+
+    let seed = RoomSeed {
+        index: 17,
+        room: 0xadbe,
+        movie_frame: 10,
+    };
+    let mut capture = vec![0; 0x1000];
+    capture[0x40..0x42].copy_from_slice(&[0xb2, 0xa1]);
+    capture[0x079b..0x079d].copy_from_slice(&seed.room.to_le_bytes());
+    let mut earlier = capture.clone().into_boxed_slice();
+    earlier[0x40..0x42].copy_from_slice(&[0xd4, 0xc3]);
+    earlier[0x079b..0x079d].copy_from_slice(&[0xfa, 0xce]);
+    let mut later = earlier.clone();
+    later[0x12] = 1;
+    let history = VecDeque::from([earlier, later]);
+
+    for ranges in [false, true] {
+        let mut command = args(&["rom", "inputs", "--seeds", "rooms.csv", "captures"]);
+        if ranges {
+            command.push("--ranges".to_owned());
+        }
+        let request = MovieRequest::parse(&command).unwrap();
+        assert!(request.seeds.is_some());
+        let (matched, report) = seed_comparison(&seed, 14, &history, &capture, request.ranges);
+        assert!(!matched);
+        let seed_line = report
+            .lines()
+            .find(|line| line.starts_with("seed"))
+            .unwrap();
+        let mut words = seed_line.split_whitespace();
+        assert_eq!(words.next(), Some("seed"));
+        assert_eq!(words.next(), Some("17"));
+        assert!(seed_line.contains("10:"));
+        assert!(seed_line.contains("room DIFFERS"));
+        assert!(seed_line.contains("differing 4"));
+        assert!(seed_line.contains("+2"));
+        assert_eq!(report.contains("[4, 5]"), ranges);
+        assert_eq!(report.contains("2 ranges"), ranges);
+        assert_eq!(report.contains("00040-00041 2 bytes"), ranges);
+        assert_eq!(report.contains("0079B-0079C 2 bytes"), ranges);
+        assert_omits(
+            &report,
+            &["adbe", "cefa", "b2, a1", "d4, c3", "be, ad", "fa, ce"],
+        );
+    }
+}
+
+fn assert_omits(text: &str, payloads: &[&str]) {
+    let text = text.to_ascii_lowercase();
+    for payload in payloads {
+        assert!(!text.contains(payload));
+    }
+}
+
+#[test]
+fn derived_seed_write_comparison_reports_offset_and_status_without_words() {
+    use super::seed_write_report;
+    use crate::lsnes::WramWord;
+
+    let word = WramWord {
+        offset: 2,
+        value: 0xface,
+    };
+    let plain = [0, 0, 0x1d, 0xb0];
+    for (derived, expected) in [
+        ([0, 0, 0xce, 0xfa], true),
+        ([0, 0, 0x6a, 0xd2], true),
+        (plain, false),
+    ] {
+        let (kept, report) = seed_write_report(word, &plain, &derived);
+        assert_eq!(kept, expected);
+        assert!(report.contains("$00002"));
+        assert_eq!(report.contains("LOST"), !expected);
+        assert_omits(&report, &["face", "b01d", "d26a"]);
+    }
+}

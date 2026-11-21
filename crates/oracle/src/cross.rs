@@ -7,7 +7,9 @@
 //! record one frame earlier and one frame later, which tells a timing
 //! difference (one oracle a frame behind) from a content difference.
 
-use crate::record::{ApuAccessKind, CpuRegisters, Cut, FrameRecord, PpuRegisters};
+use std::{collections::BTreeMap, fmt::Write, ops::RangeInclusive, time::Duration};
+
+use crate::record::{ApuAccessKind, CpuRegisters, Cut, FrameRecord, Picture, PpuRegisters};
 
 /// A part of the record both backends produce.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -120,8 +122,8 @@ pub struct Difference {
     pub part: Part,
     /// Differing bytes for a memory; differing fields for the others.
     pub count: usize,
-    /// What differs, for the parts that are not memories: both values.
-    pub detail: String,
+    /// Names of the differing fields within a part.
+    pub fields: Vec<&'static str>,
     /// For a memory: differing bytes against each neighbour, and the verdict.
     pub shifted: Option<(usize, usize, Shift)>,
 }
@@ -130,21 +132,26 @@ fn differing_bytes(left: &[u8], right: &[u8]) -> usize {
     left.iter().zip(right).filter(|(a, b)| a != b).count() + left.len().abs_diff(right.len())
 }
 
-fn cut_text(cut: &Cut) -> String {
-    match cut {
-        Cut::NmiReturn(nmi) => format!(
-            "rti({:?} {:06x}{})",
-            nmi.kind,
-            nmi.interrupted_pc,
-            if nmi.polled { " polled" } else { "" }
-        ),
-        Cut::VblankWithoutNmi => "no-nmi".to_owned(),
-        Cut::NmiStillRunning { interrupted_pc } => format!("nmi-running({interrupted_pc:06x})"),
+fn cut_fields(left: Cut, right: Cut) -> Vec<&'static str> {
+    match (left, right) {
+        (Cut::NmiReturn(left), Cut::NmiReturn(right)) => [
+            ("kind", left.kind != right.kind),
+            (
+                "interrupted_pc",
+                left.interrupted_pc != right.interrupted_pc,
+            ),
+            ("polled", left.polled != right.polled),
+        ]
+        .into_iter()
+        .filter_map(|(name, differs)| differs.then_some(name))
+        .collect(),
+        (Cut::NmiStillRunning { .. }, Cut::NmiStillRunning { .. }) => vec!["interrupted_pc"],
+        _ => vec!["kind"],
     }
 }
 
-/// The CPU fields that differ, as `name=left/right`.
-fn cpu_fields(left: &CpuRegisters, right: &CpuRegisters) -> Vec<String> {
+/// The names of the CPU registers that differ.
+fn cpu_fields(left: &CpuRegisters, right: &CpuRegisters) -> Vec<&'static str> {
     let fields: [(&str, u32, u32); 10] = [
         ("a", left.a.into(), right.a.into()),
         ("x", left.x.into(), right.x.into()),
@@ -160,7 +167,7 @@ fn cpu_fields(left: &CpuRegisters, right: &CpuRegisters) -> Vec<String> {
     fields
         .iter()
         .filter(|(_, a, b)| a != b)
-        .map(|(name, a, b)| format!("{name}={a:x}/{b:x}"))
+        .map(|&(name, _, _)| name)
         .collect()
 }
 
@@ -183,44 +190,36 @@ impl Compare {
     /// The parts in which `left` and `right` differ, in `Part::ALL` order.
     pub fn frame(&mut self, left: &FrameRecord, right: &FrameRecord) -> Vec<Difference> {
         let mut differences = Vec::new();
-        let small = |part, count: usize, detail: String| Difference {
+        let scalar = |part| Difference {
             part,
-            count,
-            detail,
+            count: 1,
+            fields: Vec::new(),
             shifted: None,
         };
         if left.cut != right.cut {
-            differences.push(small(
-                Part::Cut,
-                1,
-                format!("{}/{}", cut_text(&left.cut), cut_text(&right.cut)),
-            ));
+            differences.push(Difference {
+                fields: cut_fields(left.cut, right.cut),
+                ..scalar(Part::Cut)
+            });
         }
         let offset = i64::from(right.video_frame) - i64::from(left.video_frame);
         if *self.frame_offset.get_or_insert(offset) != offset {
-            differences.push(small(
-                Part::Frame,
-                1,
-                format!("{}/{}", left.video_frame, right.video_frame),
-            ));
+            differences.push(scalar(Part::Frame));
         }
         if left.pad != right.pad {
-            differences.push(small(
-                Part::Pad,
-                1,
-                format!("{:04x}/{:04x}", left.pad.0, right.pad.0),
-            ));
+            differences.push(scalar(Part::Pad));
         }
         if left.joypad_reads != right.joypad_reads {
-            differences.push(small(
-                Part::JoypadReads,
-                1,
-                format!("{}/{}", left.joypad_reads, right.joypad_reads),
-            ));
+            differences.push(scalar(Part::JoypadReads));
         }
-        let cpu = cpu_fields(&left.cpu, &right.cpu);
-        if !cpu.is_empty() {
-            differences.push(small(Part::Cpu, cpu.len(), cpu.join(" ")));
+        let registers = cpu_fields(&left.cpu, &right.cpu);
+        if !registers.is_empty() {
+            differences.push(Difference {
+                part: Part::Cpu,
+                count: registers.len(),
+                fields: registers,
+                shifted: None,
+            });
         }
         for part in Part::ALL {
             if !self.streams && matches!(part, Part::Ppu | Part::ApuLog | Part::Picture) {
@@ -256,7 +255,7 @@ impl Compare {
             differences.push(Difference {
                 part,
                 count,
-                detail: String::new(),
+                fields: Vec::new(),
                 shifted,
             });
         }
@@ -289,8 +288,8 @@ pub fn ranges(left: &[u8], right: &[u8]) -> Vec<(usize, usize, usize)> {
 /// The text of one difference: `wram 12 (vs right-1 0, vs left-1 30: left behind)`.
 pub fn describe(difference: &Difference) -> String {
     let mut text = format!("{} {}", difference.part.name(), difference.count);
-    if !difference.detail.is_empty() {
-        text.push_str(&format!(" [{}]", difference.detail));
+    if !difference.fields.is_empty() {
+        text.push_str(&format!(" [{}]", difference.fields.join(" ")));
     }
     if let Some((left_behind, right_behind, verdict)) = difference.shifted {
         let verdict = match verdict {
@@ -303,6 +302,143 @@ pub fn describe(difference: &Difference) -> String {
         ));
     }
     text
+}
+
+pub(crate) fn describe_streams(
+    step: u64,
+    left: &FrameRecord,
+    right: &FrameRecord,
+    left_before: Option<&Picture>,
+) -> Option<String> {
+    let (lake, lsnes) = (left.picture.as_ref()?, right.picture.as_ref()?);
+    // The displayed dots and their BGR555 source can differ below full brightness.
+    let shown = lsnes.shown();
+    let equal_dots = |picture: &Picture| {
+        picture
+            .shown()
+            .iter()
+            .zip(&shown)
+            .filter(|(x, y)| x == y)
+            .count()
+    };
+    let equal_words = lake
+        .rows()
+        .flatten()
+        .zip(lsnes.rows().flatten())
+        .filter(|(x, y)| x == y)
+        .count();
+    let cpu_accesses = left
+        .apu_log
+        .iter()
+        .filter(|access| {
+            matches!(
+                access.kind,
+                ApuAccessKind::CpuWrite | ApuAccessKind::CpuRead
+            )
+        })
+        .count();
+    Some(format!(
+        "{step} picture {} of {} dots equal as shown ({equal_words} as BGR555), {} against left's previous; apu log {cpu_accesses}/{}",
+        equal_dots(lake),
+        lake.rows().flatten().count(),
+        left_before.map_or(0, equal_dots),
+        right.apu_log.len()
+    ))
+}
+
+/// The text and accumulated counts for the public cross command.
+pub(crate) struct Report {
+    compare: Compare,
+    first_ranges: bool,
+    ranges_at: Option<RangeInclusive<u64>>,
+    first: BTreeMap<Part, (u64, Difference)>,
+    frames_differing: BTreeMap<Part, u64>,
+    equal: u64,
+}
+
+impl Report {
+    pub(crate) fn new(
+        streams: bool,
+        first_ranges: bool,
+        ranges_at: Option<RangeInclusive<u64>>,
+    ) -> Self {
+        Self {
+            compare: Compare {
+                streams,
+                ..Compare::default()
+            },
+            first_ranges,
+            ranges_at,
+            first: BTreeMap::new(),
+            frames_differing: BTreeMap::new(),
+            equal: 0,
+        }
+    }
+
+    pub(crate) fn step(
+        &mut self,
+        step: u64,
+        in_window: bool,
+        left: &FrameRecord,
+        right: &FrameRecord,
+    ) -> Option<String> {
+        let differences = self.compare.frame(left, right);
+        if !in_window {
+            return None;
+        }
+        if differences.is_empty() {
+            self.equal += 1;
+            return Some(format!("{step} equal\n"));
+        }
+        let parts: Vec<String> = differences.iter().map(describe).collect();
+        let mut text = format!("{step} {}\n", parts.join("; "));
+        for difference in differences {
+            let part = difference.part;
+            *self.frames_differing.entry(part).or_default() += 1;
+            let is_first = !self.first.contains_key(&part);
+            if ((self.first_ranges && is_first)
+                || self
+                    .ranges_at
+                    .as_ref()
+                    .is_some_and(|window| window.contains(&step)))
+                && let (Some(left_bytes), Some(right_bytes)) = (part.bytes(left), part.bytes(right))
+            {
+                let ranges = ranges(&left_bytes, &right_bytes);
+                writeln!(text, "  {} at {step}: {} ranges", part.name(), ranges.len()).unwrap();
+                for (start, end, count) in ranges.into_iter().take(40) {
+                    writeln!(text, "    {start:05x}-{end:05x} {count} bytes").unwrap();
+                }
+            }
+            self.first.entry(part).or_insert((step, difference));
+        }
+        Some(text)
+    }
+
+    pub(crate) fn summary(&self, compared: u64, elapsed: Duration) -> String {
+        let mut text = format!(
+            "summary: {} of {compared} steps equal, in {:.1} s; video frame offset (right less left) {}\n",
+            self.equal,
+            elapsed.as_secs_f64(),
+            self.compare.frame_offset().unwrap_or_default()
+        );
+        for part in Part::ALL {
+            let name = part.name();
+            match self.first.get(&part) {
+                Some((step, difference)) => writeln!(
+                    text,
+                    "  {name:<12} first differs at {step}, on {} steps: {}",
+                    self.frames_differing
+                        .get(&part)
+                        .copied()
+                        .unwrap_or_default(),
+                    describe(difference)
+                )
+                .unwrap(),
+                None => writeln!(text, "  {name:<12} equal throughout").unwrap(),
+            }
+        }
+        text
+    }
 }
 
 /// The PPU registers both backends record: all but the CPU I/O words
@@ -330,10 +466,10 @@ fn ppu_bytes(ppu: &PpuRegisters) -> Vec<u8> {
     bytes
 }
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
-    fn record(fill: u8) -> FrameRecord {
+    pub(crate) fn record(fill: u8) -> FrameRecord {
         FrameRecord {
             index: 0,
             video_frame: 0,
@@ -416,6 +552,6 @@ mod tests {
         right.cpu.pc = 0x8344;
         let differences = Compare::default().frame(&record(1), &right);
         assert_eq!(differences[0].part, Part::Cpu);
-        assert_eq!(differences[0].detail, "pc=0/8344");
+        assert_eq!(differences[0].fields, ["pc"]);
     }
 }

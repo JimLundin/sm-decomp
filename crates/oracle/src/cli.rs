@@ -10,6 +10,7 @@
 //!   same pads from power-on and reports where their records differ.
 
 mod csv;
+mod movie_report;
 mod requests;
 #[cfg(test)]
 mod tests;
@@ -274,27 +275,11 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
         }
         if let Some(log) = &lag_log
             && let Some(row) = log.get(frame)
+            && let Some(line) = movie_report::lag_difference(frame, record, row, positions_only)
         {
-            let w = |address| i64::from(word(&record.wram, address));
-            let lagged = i64::from(record.nmi().is_none_or(|nmi| !nmi.polled));
-            let mine = [
-                w(0x05b6),
-                w(0x05b8),
-                lagged,
-                w(0x0998),
-                w(0x079b),
-                w(0x0af6),
-                w(0x0afa),
-            ];
-            let compared = if positions_only { 3 } else { 0 };
-            if mine[compared..] != row[compared..] {
-                lag_mismatches += 1;
-                if lag_mismatches <= 40 {
-                    println!(
-                        "frame {frame}: lsnes {row:?} emulator {mine:?} wait entry {:?}",
-                        record.wait_entry
-                    );
-                }
+            lag_mismatches += 1;
+            if lag_mismatches <= 40 {
+                println!("{line}");
             }
         }
         if let Some((from, to)) = profile
@@ -396,34 +381,10 @@ fn movie(arguments: &[String]) -> Result<(), requests::RequestError> {
                 continue;
             };
             checked += 1;
-            let counts: Vec<usize> = history
-                .iter()
-                .map(|wram| differing(wram, &capture.wram))
-                .collect();
-            if ranges {
-                println!("  differing per frame, oldest first: {counts:?}");
-            }
-            let (best, offset) = history
-                .iter()
-                .enumerate()
-                .map(|(age, wram)| (differing(wram, &capture.wram), age))
-                .min()
-                .unwrap_or((usize::MAX, 0));
-            let newest = history.len() - 1;
-            let at = (frame - 1) as i64 - (newest - offset) as i64 - seed.movie_frame as i64;
-            let room = word(&history[offset], 0x079b);
-            let matched = room == seed.room;
+            let (matched, report) =
+                movie_report::seed_comparison(seed, frame, &history, &capture.wram, ranges);
             synced += usize::from(matched);
-            if ranges {
-                print_ranges(&history[offset], &capture.wram);
-            }
-            println!(
-                "seed {:4} room {:04X} frame {:6}: emulator room {room:04X} {} ; WRAM bytes differing {best} at frame offset {at:+}",
-                seed.index,
-                seed.room,
-                seed.movie_frame,
-                if matched { "match" } else { "DIFFERS" }
-            );
+            print!("{report}");
         }
     }
     let seconds = started.elapsed().as_secs_f64();
@@ -487,14 +448,8 @@ fn derive_seed(arguments: &[String]) {
     let plain = step(&base);
     let derived = step(&NativeSeed::read(out).unwrap_or_else(|error| fail(error)));
     for word in &seed.words {
-        let (before, after) = (word.read(&plain), word.read(&derived));
-        let kept = after == word.value || after != before;
-        println!(
-            "${:05X}: written {:#06x}; after one step {after:#06x}, plain base {before:#06x}: {}",
-            word.offset,
-            word.value,
-            if kept { "kept at load" } else { "LOST" }
-        );
+        let (kept, report) = seed_write_report(*word, &plain, &derived);
+        println!("{report}");
         if !kept {
             fail(format!("${:05X} did not keep its write", word.offset));
         }
@@ -504,6 +459,13 @@ fn derive_seed(arguments: &[String]) {
         out.display(),
         differing(&derived, &plain)
     );
+}
+
+fn seed_write_report(word: crate::lsnes::WramWord, plain: &[u8], derived: &[u8]) -> (bool, String) {
+    let (before, after) = (word.read(plain), word.read(derived));
+    let kept = after == word.value || after != before;
+    let status = if kept { "kept at load" } else { "LOST" };
+    (kept, format!("${:05X}: {status}", word.offset))
 }
 
 /// Run the command line `arguments` (without the program name).
@@ -657,34 +619,6 @@ fn ladder_rung(arguments: &[String]) {
         Some(rung) => println!("{rung} {}", ladder.state_path(rung).display()),
         None => fail(format!("no rung at or before frame {frame}")),
     }
-}
-
-/// Print the differing address ranges of two WRAM images, coalescing gaps under 16 bytes.
-fn print_ranges(left: &[u8], right: &[u8]) {
-    let mut ranges: Vec<(usize, usize, usize)> = Vec::new();
-    for (address, (a, b)) in left.iter().zip(right).enumerate() {
-        if a == b {
-            continue;
-        }
-        match ranges.last_mut() {
-            Some((_, end, count)) if address - *end < 16 => {
-                *end = address;
-                *count += 1;
-            }
-            _ => ranges.push((address, address, 1)),
-        }
-    }
-    for (start, end, count) in ranges.iter().take(60) {
-        let shown = (*end - *start + 1).min(20);
-        println!(
-            "  {:05X}-{:05X} {count} bytes: emulator {:02x?} capture {:02x?}",
-            start,
-            end,
-            &left[*start..*start + shown],
-            &right[*start..*start + shown]
-        );
-    }
-    println!("  {} ranges", ranges.len());
 }
 
 /// An lsnes lag log (`tools/lsnes_lag_log.lua`): per movie frame, the frame
@@ -1241,7 +1175,6 @@ fn measure_movie(arguments: &[String]) {
 /// its saved state (a ladder rung) at STEP, while LakeSnes runs from power-on
 /// through the steps before it uncompared.
 fn cross(arguments: &[String]) -> Result<(), requests::RequestError> {
-    use crate::cross::{Compare, Difference, Part, describe};
     let requests::CrossRequest {
         rom,
         inputs,
@@ -1293,13 +1226,7 @@ fn cross(arguments: &[String]) -> Result<(), requests::RequestError> {
         range.start(),
         range.end()
     );
-    let mut compare = Compare::default();
-    compare.streams = streams;
-    let mut first: std::collections::BTreeMap<Part, (u64, Difference)> =
-        std::collections::BTreeMap::new();
-    let mut frames_differing: std::collections::BTreeMap<Part, u64> =
-        std::collections::BTreeMap::new();
-    let mut equal = 0u64;
+    let mut report = crate::cross::Report::new(streams, first_ranges, ranges_at);
     let started = Instant::now();
     let mut lake_before: Option<crate::record::Picture> = None;
     for (step, &pad) in (0..=*range.end()).zip(&pads) {
@@ -1316,103 +1243,18 @@ fn cross(arguments: &[String]) -> Result<(), requests::RequestError> {
         }
         let a = left.step(pad).unwrap_or_else(|error| fail(error)).clone();
         let b = right.step(pad).unwrap_or_else(|error| fail(error));
-        let differences = compare.frame(&a, b);
         if streams
             && range.contains(&step)
-            && let (Some(lake), Some(lsnes)) = (&a.picture, &b.picture)
+            && let Some(line) = crate::cross::describe_streams(step, &a, b, lake_before.as_ref())
         {
-            // Dots compared as they show (`Picture::shown`), and as the
-            // BGR555 the two hold, which differ only below brightness 15.
-            let shown = lsnes.shown();
-            let equal_dots = |left: &crate::record::Picture| {
-                left.shown()
-                    .iter()
-                    .zip(&shown)
-                    .filter(|(x, y)| x == y)
-                    .count()
-            };
-            let equal_words = lake
-                .rows()
-                .flatten()
-                .zip(lsnes.rows().flatten())
-                .filter(|(x, y)| x == y)
-                .count();
-            let cpu_accesses = a
-                .apu_log
-                .iter()
-                .filter(|access| {
-                    matches!(
-                        access.kind,
-                        crate::record::ApuAccessKind::CpuWrite
-                            | crate::record::ApuAccessKind::CpuRead
-                    )
-                })
-                .count();
-            println!(
-                "{step} picture {} of {} dots equal as shown ({equal_words} as BGR555), {} against left's previous; brightness {}/{}; apu log {cpu_accesses}/{}",
-                equal_dots(lake),
-                lake.rows().flatten().count(),
-                lake_before.as_ref().map_or(0, equal_dots),
-                lake.brightness[0],
-                lsnes.brightness[0],
-                b.apu_log.len()
-            );
+            println!("{line}");
         }
         lake_before.clone_from(&a.picture);
-        if !range.contains(&step) {
-            continue;
-        }
-        if differences.is_empty() {
-            equal += 1;
-            println!("{step} equal");
-            continue;
-        }
-        let parts: Vec<String> = differences.iter().map(describe).collect();
-        println!("{step} {}", parts.join("; "));
-        for difference in differences {
-            *frames_differing.entry(difference.part).or_default() += 1;
-            let is_first = !first.contains_key(&difference.part);
-            if ((first_ranges && is_first)
-                || ranges_at
-                    .as_ref()
-                    .is_some_and(|window| window.contains(&step)))
-                && let (Some(left_bytes), Some(right_bytes)) =
-                    (difference.part.bytes(&a), difference.part.bytes(b))
-            {
-                let ranges = crate::cross::ranges(&left_bytes, &right_bytes);
-                println!(
-                    "  {} at {step}: {} ranges",
-                    difference.part.name(),
-                    ranges.len()
-                );
-                for &(start, end, count) in ranges.iter().take(40) {
-                    let shown = start..(end + 1).min(start + 16);
-                    println!(
-                        "    {start:05x}-{end:05x} {count} bytes: left {:02x?} right {:02x?}",
-                        left_bytes.get(shown.clone()).unwrap_or_default(),
-                        right_bytes.get(shown).unwrap_or_default()
-                    );
-                }
-            }
-            first.entry(difference.part).or_insert((step, difference));
+        if let Some(line) = report.step(step, range.contains(&step), &a, b) {
+            print!("{line}");
         }
     }
     let compared = range.end().saturating_sub(*range.start()) + 1;
-    println!(
-        "summary: {equal} of {compared} steps equal, in {:.1} s; video frame offset (right less left) {}",
-        started.elapsed().as_secs_f64(),
-        compare.frame_offset().unwrap_or_default()
-    );
-    for part in Part::ALL {
-        match first.get(&part) {
-            Some((step, difference)) => println!(
-                "  {:<12} first differs at {step}, on {} steps: {}",
-                part.name(),
-                frames_differing.get(&part).copied().unwrap_or_default(),
-                describe(difference)
-            ),
-            None => println!("  {:<12} equal throughout", part.name()),
-        }
-    }
+    print!("{}", report.summary(compared, started.elapsed()));
     Ok(())
 }
