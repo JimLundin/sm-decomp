@@ -240,7 +240,7 @@ pub(super) fn validate_resident_state(
     seed: &State,
     bank: &data::assets::audio::ResidentAudio,
 ) -> Result<(), Fault> {
-    use audio_transport::{CompletionResult, Continuation, ReplyLine, SoundGroup, time};
+    use audio_transport::{Continuation, ReplyLine, SoundGroup, time};
 
     if seed.resident_music_reply != bank.music_reply {
         return Err(Fault::ContentIdentity);
@@ -277,13 +277,9 @@ pub(super) fn validate_resident_state(
             at.clone()
         }
         AudioPhase::Work { at, result } => {
-            match result {
-                CompletionResult::Music(song) => {
-                    validate_song(song, &bank.content, bank.instruments.len(), bank.echo_delay)?;
-                }
-                CompletionResult::Effect { group, result, .. } => {
-                    validate_groups(seed, &bank.content, Some((*group, result)))?;
-                }
+            let work = validate_work(seed, &bank.content, result)?;
+            if at > &seed.now.sum(&audio_transport::transport::elapsed(work)) {
+                return Err(Fault::Invalid("remaining transport work"));
             }
             at.clone()
         }
@@ -317,10 +313,63 @@ pub(super) fn validate_resident_state(
         }
         AudioPhase::MusicStart { at } | AudioPhase::Idle { at } => at.clone(),
     };
+    // The fresh poll fixes the scheduler grid. Caller stops accrue time without retiming it.
+    let half_cycle_denominator = num_bigint::BigInt::from(2);
+    if deadline.rational().denom() > &half_cycle_denominator
+        || seed.clock.lattice.rational().denom() > &half_cycle_denominator
+    {
+        return Err(Fault::Invalid("resident scheduler grid"));
+    }
     if deadline < seed.now || (deadline == seed.now && seed.now != time::cycles(0)) {
         return Err(Fault::Invalid("past transport deadline"));
     }
     Ok(())
+}
+
+// Requests and timer accrual can change during work. The committed turn inputs stay held until publication.
+fn validate_work(
+    seed: &State,
+    content: &Content,
+    result: &audio_transport::CompletionResult,
+) -> Result<audio_transport::AudioCycles, Fault> {
+    use audio_transport::CompletionResult;
+    match result {
+        CompletionResult::Music(song) => {
+            if seed.music_due {
+                return Err(Fault::Invalid("music still due during music work"));
+            }
+            let expected = audio_transport::music::turn(&seed.song, &content.tracks);
+            if expected.song != *song {
+                return Err(Fault::Invalid("pending song result"));
+            }
+            Ok(expected.work)
+        }
+        CompletionResult::Effect {
+            group,
+            result,
+            echo_voices,
+        } => {
+            validate_groups(seed, content, Some((*group, result)))?;
+            let occupied = seed
+                .groups
+                .iter()
+                .filter(|(other, _)| other != group)
+                .flat_map(|(_, saved)| audio_transport::effects::owned(&saved.playback))
+                .chain(seed.reservations.iter().copied())
+                .collect();
+            let expected = audio_transport::effects::turn(
+                *group,
+                &seed.groups[*group],
+                content,
+                &occupied,
+                &seed.song.mix.echo_voices,
+            );
+            if expected.group != *result || expected.echo_voices != *echo_voices {
+                return Err(Fault::Invalid("pending effect result"));
+            }
+            Ok(expected.work)
+        }
+    }
 }
 
 pub(super) fn validate_song(

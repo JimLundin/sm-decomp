@@ -16,7 +16,10 @@ use data::assets::audio::{
 use std::num::NonZeroU8;
 
 fn opened_context() -> (Content, State) {
-    let (transport, _) = pending_audio();
+    let (mut transport, _) = pending_audio();
+    transport.phase = AudioPhase::Idle {
+        at: time::cycles(100),
+    };
     let mut graph = audio_content();
     for track in &mut graph.tracks {
         track.phrases[0].insert(0, MusicEvent::Sustain);
@@ -162,8 +165,9 @@ fn contact_playback(
 #[test]
 fn checkpoint_checks_contact_voice_order_in_committed_and_pending_slots() {
     use audio_transport::{CompletionResult, EffectVoiceId, LivePart, PartState, SoundGroup};
-    let (content, origin) = opened_context();
-    let content = ProductionContent::ResidentAudio(Box::new(content));
+    let (bank, origin) = opened_context();
+    let graph = &bank.bank().content;
+    let content = ProductionContent::ResidentAudio(Box::new(bank.clone()));
     let good = Production::admit(
         ProductionSeed::ResidentAudio(Box::new(origin.clone())),
         content.clone(),
@@ -182,26 +186,47 @@ fn checkpoint_checks_contact_voice_order_in_committed_and_pending_slots() {
         })
     };
     for pending in [false, true] {
-        for (parts, ordered) in [
+        for (mut parts, ordered) in [
             ([live(EffectVoiceId::V7), live(EffectVoiceId::V5)], true),
             ([live(EffectVoiceId::V5), live(EffectVoiceId::V7)], false),
             ([PartState::Finished, live(EffectVoiceId::V5)], true),
             ([live(EffectVoiceId::V7), PartState::Finished], true),
         ] {
             let mut state = origin.clone();
-            let result = contact_playback(parts, &state);
+            if pending && !ordered {
+                parts.swap(0, 1);
+            }
+            let committed = contact_playback(parts, &state);
             if pending {
+                let turn = effects::turn(
+                    SoundGroup::Contact,
+                    &committed,
+                    graph,
+                    &std::collections::BTreeSet::new(),
+                    &state.transport.0.song.mix.echo_voices,
+                );
+                let mut result = turn.group;
+                if !ordered {
+                    let audio_transport::Playback::Active { parts, .. } = &mut result.playback
+                    else {
+                        panic!("pending active Contact");
+                    };
+                    parts.swap(0, 1);
+                }
                 state.transport.0.phase = AudioPhase::Work {
-                    at: time::cycles(100),
+                    at: state
+                        .transport
+                        .0
+                        .now
+                        .sum(&audio_transport::transport::elapsed(turn.work)),
                     result: CompletionResult::Effect {
                         group: SoundGroup::Contact,
                         result,
-                        echo_voices: std::collections::BTreeSet::new(),
+                        echo_voices: turn.echo_voices,
                     },
                 };
-            } else {
-                state.transport.0.groups[SoundGroup::Contact] = result;
             }
+            state.transport.0.groups[SoundGroup::Contact] = committed;
             let mut specimen = saved.clone();
             specimen.state = canonical::to_bytes(&Checkpoint {
                 schema: Schema::new(),
@@ -479,5 +504,239 @@ fn sender_checkpoint_keeps_the_coalesced_read_result_after_the_latch_changes() {
             assert_eq!(sender_at(production, completion, &[]), expected);
         }
         assert_eq!(direct, restored);
+    }
+}
+
+fn overlong_work_deadline(
+    held: &crate::production::SavedProduction,
+    deadline: &audio_transport::AudioInstant,
+) -> crate::production::SavedProduction {
+    let mut bad_deadline: Checkpoint<Box<State>> = canonical::from_bytes(&held.state).unwrap();
+    let AudioPhase::Work { at, .. } = &mut bad_deadline.state.transport.0.phase else {
+        panic!("pending transport deadline");
+    };
+    // At the fixture's fresh start, both clean turns schedule their full work from cycle 11.
+    let work = deadline.difference(&time::cycles(11));
+    *at = bad_deadline
+        .state
+        .transport
+        .0
+        .now
+        .sum(&work)
+        .sum(&time::cycles(1));
+    let mut altered_deadline = held.clone();
+    altered_deadline.state = canonical::to_bytes(&bad_deadline);
+    altered_deadline
+}
+
+fn transport_test_step(
+    production: &mut Production,
+    stop: audio_transport::AudioInstant,
+    presentations: &[audio_transport::transport::Input],
+) -> crate::production::ProductionOutputs {
+    production
+        .advance(crate::production::AdvanceInput::Audio {
+            stop,
+            presentations,
+        })
+        .unwrap()
+}
+
+fn alter_transport_save(
+    saved: &crate::production::SavedProduction,
+    edit: impl FnOnce(&mut audio_transport::State),
+) -> crate::production::SavedProduction {
+    let mut candidate: Checkpoint<Box<State>> = canonical::from_bytes(&saved.state).unwrap();
+    edit(&mut candidate.state.transport.0);
+    let mut changed = saved.clone();
+    changed.state = canonical::to_bytes(&candidate);
+    changed
+}
+
+fn start_transport_work(effect: bool) -> (ProductionContent, Production) {
+    use audio_transport::SoundGroup;
+    let (content, mut state) = opened_context();
+    state.transport.0.phase = if effect {
+        state.transport.0.cadence.effect = 7;
+        state.transport.0.cadence.music = 224;
+        state.transport.0.groups[SoundGroup::Action].staged = Request::Cue(CueId::Spin);
+        AudioPhase::Distribute {
+            at: time::cycles(11),
+            batch: 1,
+        }
+    } else {
+        state.transport.0.music_due = true;
+        AudioPhase::MusicStart {
+            at: time::cycles(11),
+        }
+    };
+    let content = ProductionContent::ResidentAudio(Box::new(content));
+    let mut direct = Production::admit(
+        ProductionSeed::ResidentAudio(Box::new(state)),
+        content.clone(),
+        ProductionRules::Audio,
+    )
+    .unwrap();
+    assert_eq!(
+        transport_test_step(&mut direct, time::cycles(11), &[]),
+        crate::production::ProductionOutputs::Audio(Vec::new())
+    );
+    (content, direct)
+}
+
+fn check_pending_transport_turn(effect: bool) {
+    use crate::production::ProductionOutputs;
+    use audio_transport::{CompletionResult, MusicalPitch, SoundGroup, VoiceId, transport};
+    let (content, mut direct) = start_transport_work(effect);
+    let restore = |saved: &crate::production::SavedProduction| {
+        Production::restore(saved, content.clone(), ProductionRules::Audio)
+    };
+    let before = direct.save().unwrap();
+    let original_clock = direct.transport().unwrap().clock.clone();
+    let mut restored = restore(&before).unwrap();
+    let input = transport::Input::cue(time::cycles(12), CueId::Beam);
+    for production in [&mut direct, &mut restored] {
+        assert_eq!(
+            transport_test_step(production, time::cycles(12), std::slice::from_ref(&input)),
+            ProductionOutputs::Audio(Vec::new())
+        );
+        assert_ne!(production.transport().unwrap().clock, original_clock);
+        assert_eq!(
+            production.transport().unwrap().requests[SoundGroup::Action],
+            Request::Cue(CueId::Beam)
+        );
+    }
+    let held = direct.save().unwrap();
+    assert_eq!(restored.save().unwrap(), held);
+    restored = restore(&held).unwrap();
+    let mut fork: Checkpoint<Box<State>> = canonical::from_bytes(&held.state).unwrap();
+    let AudioPhase::Work { at, result } = &mut fork.state.transport.0.phase else {
+        panic!("pending transport result");
+    };
+    let deadline = at.clone();
+    let expected = result.clone();
+    match result {
+        CompletionResult::Effect { echo_voices, .. } => {
+            assert!(effect && echo_voices.insert(VoiceId::FirstMusic));
+        }
+        CompletionResult::Music(song) => {
+            assert!(!effect);
+            let pitch = &mut song.tracks[0].pitch;
+            *pitch = MusicalPitch::new(if pitch.get() == 19 { 20 } else { 19 }).unwrap();
+        }
+    }
+    let altered_deadline = overlong_work_deadline(&held, &deadline);
+    assert!(matches!(
+        restore(&altered_deadline),
+        Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+    ));
+
+    let mut forged = held;
+    forged.state = canonical::to_bytes(&fork);
+    assert!(matches!(
+        restore(&forged),
+        Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+    ));
+
+    let near_end = deadline.difference(&time::halves(1));
+    for production in [&mut direct, &mut restored] {
+        assert_eq!(
+            transport_test_step(production, near_end.clone(), &[]),
+            ProductionOutputs::Audio(Vec::new())
+        );
+        let saved = production.save().unwrap();
+        *production = restore(&saved).unwrap();
+        assert_eq!(production.save().unwrap(), saved);
+    }
+    let output = transport_test_step(&mut direct, deadline.clone(), &[]);
+    assert!(matches!(
+        &output,
+        ProductionOutputs::Audio(outputs)
+            if matches!(outputs.as_slice(), [transport::Output::Publication { result, .. }]
+                if result == &expected)
+    ));
+    assert_eq!(transport_test_step(&mut restored, deadline, &[]), output);
+    assert_eq!(restored.save().unwrap(), direct.save().unwrap());
+}
+
+#[test]
+fn pending_music_turn_rejects_substituted_pitch() {
+    check_pending_transport_turn(false);
+}
+
+#[test]
+fn pending_effect_turn_rejects_substituted_echo_membership() {
+    check_pending_transport_turn(true);
+}
+
+#[test]
+fn resident_work_keeps_rational_inputs_and_checks_its_scheduler_fields() {
+    use crate::production::ProductionOutputs;
+    use audio_transport::{AudioInstant, transport};
+    let third = AudioInstant::new(1u64.into(), 3u64.into()).unwrap();
+    let stop = time::cycles(12).sum(&third);
+    for effect in [false, true] {
+        let (content, mut production) = start_transport_work(effect);
+        let restore = |saved: &crate::production::SavedProduction| {
+            Production::restore(saved, content.clone(), ProductionRules::Audio)
+        };
+        let input = transport::Input::cue(stop.clone(), CueId::Beam);
+        assert_eq!(
+            transport_test_step(&mut production, stop.clone(), &[input]),
+            ProductionOutputs::Audio(Vec::new())
+        );
+        let held = production.transport().unwrap();
+        assert_eq!(held.now, stop);
+        assert_eq!(held.clock.phase.instant(), &stop);
+        assert_eq!(held.music_due, effect);
+        let saved = production.save().unwrap();
+        let mut restored = restore(&saved).unwrap();
+        assert_eq!(restored.save().unwrap(), saved);
+
+        let AudioPhase::Work { at, .. } = &held.phase else {
+            panic!("pending work");
+        };
+        let deadline = at.clone();
+        let with_fractional_deadline = alter_transport_save(&saved, |transport| {
+            let AudioPhase::Work { at, .. } = &mut transport.phase else {
+                panic!("pending work");
+            };
+            *at = at.sum(&third);
+        });
+        assert!(matches!(
+            restore(&with_fractional_deadline),
+            Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+        ));
+        let with_fractional_lattice = alter_transport_save(&saved, |transport| {
+            transport.clock.lattice = transport.clock.lattice.sum(&third);
+        });
+        assert!(matches!(
+            restore(&with_fractional_lattice),
+            Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+        ));
+        if !effect {
+            let with_music_due = alter_transport_save(&saved, |transport| {
+                transport.music_due = true;
+            });
+            assert!(matches!(
+                restore(&with_music_due),
+                Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+            ));
+        }
+
+        let output = transport_test_step(&mut production, deadline.clone(), &[]);
+        assert_eq!(transport_test_step(&mut restored, deadline, &[]), output);
+        let published = production.save().unwrap();
+        assert_eq!(restore(&published).unwrap().save().unwrap(), published);
+        let with_fractional_anchor = alter_transport_save(&published, |transport| {
+            let AudioPhase::Sample { sample, .. } = &mut transport.phase else {
+                panic!("stable sampling after publication");
+            };
+            sample.anchor = sample.anchor.sum(&third);
+        });
+        assert!(matches!(
+            restore(&with_fractional_anchor),
+            Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
+        ));
     }
 }
