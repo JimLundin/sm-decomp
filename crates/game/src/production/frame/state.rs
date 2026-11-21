@@ -216,6 +216,8 @@ pub enum Fault {
     UnfinishedMovement,
     /// Entry completion history or retained physical identity is inconsistent.
     InvalidPlayerEntry,
+    /// A restored Random request disagrees with its owner, seed or physical order.
+    InvalidRandomWork,
     /// Current room-block capability failed restored geometry validation.
     InsideWorld(crate::production::world::WorldFault),
     /// The actual figure requires unavailable checked clip content.
@@ -337,6 +339,7 @@ impl State {
         }
         self.validate_player_entry()?;
         self.validate_prelude()?;
+        self.validate_random_work()?;
         if self
             .samus_palette
             .as_ref()

@@ -4,7 +4,10 @@ use canonical::{
     Canonical,
     model::{Model, Pinned},
 };
-use data::timing::{DeviceWrite, Publication, Sample, Template, TemplateEffect};
+use data::timing::{
+    DeviceEffect, DeviceWrite, MULTIPLICAND_PORT, MULTIPLIER_PORT, PublicationPort, Sample,
+    Template, TemplateEffect,
+};
 use game_random::{RandomNumber, RandomSequence};
 
 pub(super) struct RandomPin;
@@ -58,7 +61,7 @@ pub struct CompletedSeedProducts {
 
 /// Checked immutable multiplier imported at the content edge.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ImportedRandomMultiplier(pub u8);
+pub struct ImportedRandomMultiplier(u8);
 
 /// Complete current-seed envelope for the two actual hardware requests.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -72,48 +75,110 @@ pub struct SeedRequests {
 pub enum Fault {
     /// Physical owner does not contain exactly the two named multiplication requests.
     Profile,
+    /// Imported operand would disagree with the fixed sequence rule.
+    Multiplier,
     /// The live result sequence is incomplete, out of order or inconsistent with the operands.
     Samples,
+}
+
+const FIXED_RANDOM_MULTIPLIER: u8 = 5;
+
+impl ImportedRandomMultiplier {
+    /// Check that an imported operand matches the fixed random draw.
+    /// # Errors
+    /// Rejects a coefficient incompatible with the shared random sequence.
+    pub const fn new(value: u8) -> Result<Self, Fault> {
+        if value == FIXED_RANDOM_MULTIPLIER {
+            Ok(Self(value))
+        } else {
+            Err(Fault::Multiplier)
+        }
+    }
+
+    pub(in crate::production) const fn checked(self) -> Result<u8, Fault> {
+        match Self::new(self.0) {
+            Ok(_) => Ok(self.0),
+            Err(fault) => Err(fault),
+        }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+enum Request {
+    Write(PublicationPort, u8),
+    Read(Sample),
+}
+
+const fn requests(current: RandomSeed) -> [Request; 7] {
+    let [low, high] = current.0.to_le_bytes();
+    [
+        Request::Write(MULTIPLICAND_PORT, low),
+        Request::Write(MULTIPLIER_PORT, FIXED_RANDOM_MULTIPLIER),
+        Request::Read(Sample::ProductLow),
+        Request::Read(Sample::ProductHigh),
+        Request::Write(MULTIPLICAND_PORT, high),
+        Request::Write(MULTIPLIER_PORT, FIXED_RANDOM_MULTIPLIER),
+        Request::Read(Sample::ProductLow),
+    ]
+}
+
+pub(super) fn validate_profile(
+    current: RandomSeed,
+    profile: &data::timing::Profile,
+) -> Result<(), Fault> {
+    let mut expected = requests(current).into_iter();
+    for run in &profile.runs {
+        let actual = match &run.exposure.effect {
+            DeviceEffect::None => continue,
+            DeviceEffect::Publish(write) => {
+                write.validate().map_err(|_| Fault::Profile)?;
+                Request::Write(write.port, write.value)
+            }
+            DeviceEffect::Sample(sample) => Request::Read(*sample),
+        };
+        if run.count != 1 || expected.next() != Some(actual) {
+            return Err(Fault::Profile);
+        }
+    }
+    if expected.next().is_some() {
+        return Err(Fault::Profile);
+    }
+    Ok(())
 }
 
 impl SeedRequests {
     /// Bind both requests from the current original seed, without generating any result.
     /// # Errors
-    /// Rejects incompatible publication and sample namespaces before execution.
+    /// Rejects an incompatible coefficient or physical request sequence before execution.
     pub fn bind(
         self,
         current: RandomSeed,
         template: &Template,
     ) -> Result<data::timing::Profile, Fault> {
-        let [low, high] = current.0.to_le_bytes();
-        let mut values = [low, self.multiplier.0, high, self.multiplier.0].into_iter();
+        self.multiplier.checked()?;
+        let mut expected = requests(current).into_iter();
         let mut writes = Vec::new();
-        let mut samples = Vec::new();
         for run in &template.runs {
-            for _ in 0..run.count {
-                match run.effect {
-                    TemplateEffect::None => {}
-                    TemplateEffect::Sample(sample) => samples.push(sample),
-                    TemplateEffect::Publish(port) => {
-                        let value = values.next().ok_or(Fault::Profile)?;
-                        let write = DeviceWrite::from_cpu_port(port.0, value)
-                            .map_err(|_| Fault::Profile)?;
-                        let valid = match writes.len() {
-                            0 | 2 => matches!(write.effect, Publication::Multiplicand(_)),
-                            1 | 3 => matches!(write.effect, Publication::Multiplier(_)),
-                            _ => false,
-                        };
-                        if !valid {
-                            return Err(Fault::Profile);
-                        }
-                        writes.push(write);
-                    }
+            if run.effect == TemplateEffect::None {
+                continue;
+            }
+            if run.count != 1 {
+                return Err(Fault::Profile);
+            }
+            match (run.effect, expected.next()) {
+                (TemplateEffect::Sample(actual), Some(Request::Read(sample)))
+                    if actual == sample => {}
+                (TemplateEffect::Publish(actual), Some(Request::Write(port, value)))
+                    if actual == port =>
+                {
+                    writes.push(
+                        DeviceWrite::from_cpu_port(port.0, value).map_err(|_| Fault::Profile)?,
+                    );
                 }
+                _ => return Err(Fault::Profile),
             }
         }
-        if values.next().is_some()
-            || samples != [Sample::ProductLow, Sample::ProductHigh, Sample::ProductLow]
-        {
+        if expected.next().is_some() {
             return Err(Fault::Profile);
         }
         template.bind(&writes).map_err(|_| Fault::Profile)
@@ -121,11 +186,11 @@ impl SeedRequests {
 
     /// Validate all sampled product bytes against the operands bound to the request.
     /// # Errors
-    /// The physical samples are incomplete or inconsistent with their operands.
+    /// The coefficient is incompatible or the samples disagree with the operands.
     pub fn validate_samples(self, requested: RandomSeed, samples: Samples) -> Result<(), Fault> {
         let products = samples.completed()?;
         let [low, high] = requested.0.to_le_bytes();
-        let multiplier = u16::from(self.multiplier.0);
+        let multiplier = u16::from(self.multiplier.checked()?);
         // Each operand is a byte, so its product fits in a word.
         let first = u16::from(low).wrapping_mul(multiplier);
         let [second_low, _] = u16::from(high).wrapping_mul(multiplier).to_le_bytes();
@@ -177,5 +242,67 @@ impl Samples {
             Self::Complete(products) => Ok(products),
             Self::Empty | Self::FirstLow(_) | Self::First(_) => Err(Fault::Samples),
         }
+    }
+}
+
+// These controls intentionally use equal seed bytes so a byte-value check cannot detect reordering.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use data::timing::{Cycle, ExposureKind, TemplateRun};
+
+    const SEED: RandomSeed = RandomSeed(0x0303);
+
+    fn template() -> Template {
+        use TemplateEffect::{Publish, Sample as Read};
+        let multiplicand = Publish(MULTIPLICAND_PORT);
+        let multiplier = Publish(MULTIPLIER_PORT);
+        Template {
+            runs: [
+                multiplicand,
+                multiplier,
+                Read(Sample::ProductLow),
+                Read(Sample::ProductHigh),
+                multiplicand,
+                multiplier,
+                Read(Sample::ProductLow),
+            ]
+            .into_iter()
+            .map(|effect| TemplateRun {
+                count: 1,
+                cycle: Cycle::Six,
+                kind: if matches!(effect, Publish(_)) {
+                    ExposureKind::Write
+                } else {
+                    ExposureKind::Read
+                },
+                poll_before: false,
+                effect,
+            })
+            .collect(),
+        }
+    }
+
+    #[test]
+    fn rejects_interleaved_requests_with_equal_seed_bytes() {
+        let mut template = template();
+        let requests = SeedRequests {
+            multiplier: ImportedRandomMultiplier::new(FIXED_RANDOM_MULTIPLIER).unwrap(),
+        };
+        assert!(requests.bind(SEED, &template).is_ok());
+        template.runs.swap(2, 4);
+        template.runs.swap(3, 5);
+        assert!(requests.bind(SEED, &template).is_err());
+    }
+
+    #[test]
+    fn rejects_wrong_multiplier_even_with_consistent_products() {
+        let requests: SeedRequests = canonical::from_bytes(&[7]).unwrap();
+        let mut samples = Samples::default();
+        samples.accept(Sample::ProductLow, 21).unwrap();
+        samples.accept(Sample::ProductHigh, 0).unwrap();
+        samples.accept(Sample::ProductLow, 21).unwrap();
+        assert!(requests.validate_samples(SEED, samples).is_err());
+        assert!(requests.bind(SEED, &template()).is_err());
     }
 }

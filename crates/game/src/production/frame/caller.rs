@@ -1083,6 +1083,33 @@ impl State {
         }
         Ok(())
     }
+
+    pub(super) fn validate_random_work(&self) -> Result<(), super::Fault> {
+        let mut random_work = self
+            .timing
+            .work
+            .iter()
+            .filter(|work| work.kind == timing::WorkKind::Semantic(RANDOM));
+        let work = random_work.next();
+        let Caller::RandomRunning { requested, .. } = &self.caller else {
+            return if work.is_none() {
+                Ok(())
+            } else {
+                Err(super::Fault::InvalidRandomWork)
+            };
+        };
+        let work = work.ok_or(super::Fault::InvalidRandomWork)?;
+        if random_work.next().is_some()
+            || !self
+                .random
+                .as_ref()
+                .is_some_and(|sequence| sequence.current() == *requested)
+        {
+            return Err(super::Fault::InvalidRandomWork);
+        }
+        super::random::validate_profile(*requested, &work.profile)
+            .map_err(|_| super::Fault::InvalidRandomWork)
+    }
     fn validate_continuation_entry(&self) -> Result<(), super::Fault> {
         let Caller::PlayerContinuation {
             prepared,
@@ -1648,6 +1675,15 @@ impl State {
         rules: &Rules,
         budget: MasterTicks,
     ) -> Result<Outputs, ProductionFault> {
+        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
+        self.validate_random_work().map_err(|_| fault)?;
+        if matches!(self.caller, Caller::RandomRunning { .. }) {
+            content
+                .random_requests
+                .multiplier
+                .checked()
+                .map_err(|_| fault)?;
+        }
         let mut candidate = self.clone();
         let outputs = candidate.advance_caller(content, rules, budget)?;
         *self = candidate;

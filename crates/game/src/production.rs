@@ -357,6 +357,9 @@ impl Production {
                     .validate()
                     .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;
                 content.movement.validate()?;
+                content.random_requests.multiplier.checked().map_err(|_| {
+                    AdmissionFault::Frame(Box::new(frame::Fault::InvalidRandomWork))
+                })?;
                 state
                     .current_clip(&content.appearance)
                     .map_err(|fault| AdmissionFault::Frame(Box::new(fault)))?;

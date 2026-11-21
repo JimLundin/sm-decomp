@@ -15,7 +15,7 @@ use game::{
     production::{
         AdvanceInput, Production, ProductionContent, ProductionFault, ProductionOutputs,
         ProductionSeed, Unsupported,
-        frame::{Caller, Dependency},
+        frame::{self, Caller, Dependency},
         timing::EventKind,
         timing::SampleValue,
     },
@@ -369,6 +369,48 @@ fn check_random_events(events: &[game::production::timing::Event], draw: &Draw) 
     );
 }
 
+fn reject_forged_random_multiplier(admitted: &AdmittedCase, state: &frame::State) {
+    use data::timing::{DeviceEffect, DeviceWrite, Publication};
+
+    let mut forged = state.clone();
+    let run = forged
+        .timing
+        .work
+        .first_mut()
+        .unwrap()
+        .profile
+        .runs
+        .iter_mut()
+        .rev()
+        .find(|run| {
+            matches!(
+                &run.exposure.effect,
+                DeviceEffect::Publish(write) if matches!(write.effect, Publication::Multiplier(_))
+            )
+        })
+        .unwrap();
+    let DeviceEffect::Publish(write) = &mut run.exposure.effect else {
+        panic!("random multiplier publication");
+    };
+    *write = DeviceWrite::from_cpu_port(write.port.0, write.value.wrapping_add(1)).unwrap();
+    let decoded: Box<frame::State> = canonical::from_bytes(&canonical::to_bytes(&forged)).unwrap();
+    let mut physical = decoded.as_ref().clone();
+    assert!(matches!(
+        physical.step_hardware(MasterTicks(13)),
+        Err(frame::Fault::InvalidRandomWork)
+    ));
+    assert_observation_eq!(&physical, decoded.as_ref());
+    assert!(matches!(
+        Production::admit(
+            ProductionSeed::Frame(decoded),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        ),
+        Err(game::production::AdmissionFault::Frame(fault))
+            if *fault == frame::Fault::InvalidRandomWork
+    ));
+}
+
 fn check_random_checkpoint(admitted: &AdmittedCase, draw: &Draw) {
     use game::production::frame::random::Samples;
 
@@ -391,6 +433,7 @@ fn check_random_checkpoint(admitted: &AdmittedCase, draw: &Draw) {
     let OwnedState::Frame(state) = restored.state() else {
         panic!("frame production");
     };
+    reject_forged_random_multiplier(admitted, state);
     let mut altered = state.clone();
     let Caller::RandomRunning {
         requested,

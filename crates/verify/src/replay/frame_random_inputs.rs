@@ -298,5 +298,5 @@ fn import_multiplier(
         }
         paired = Some(value);
     }
-    paired.map(ImportedRandomMultiplier).ok_or(Fault::Content)
+    ImportedRandomMultiplier::new(paired.ok_or(Fault::Content)?).map_err(|_| Fault::Content)
 }
