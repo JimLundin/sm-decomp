@@ -31,6 +31,8 @@ impl State {
         };
         if *charging {
             use super::player_continuation::Stage as Entry;
+            self.validate_charging_travel(content, rules)
+                .map_err(|_| super::Fault::InvalidPlayerEntry)?;
             if matches!(stage, Entry::Sprites | Entry::Contact) {
                 self.validate_remaining_player(content)?;
             }

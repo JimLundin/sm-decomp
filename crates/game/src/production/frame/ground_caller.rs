@@ -53,10 +53,11 @@ impl State {
         let profile = contract
             .physical(&stage, &self.movement, &inputs)
             .map_err(|_| missing())?;
+        let work = super::TravelWork::Ground.identity();
         self.timing
-            .begin(WorkId(1003), profile)
+            .begin(work, profile)
             .map_err(ProductionFault::FrameHardware)?;
-        stage.bind(WorkId(1003)).map_err(|_| missing())?;
+        stage.bind(work).map_err(|_| missing())?;
         let Caller::PlayerContinuation {
             ground, charging, ..
         } = &mut self.caller
@@ -68,11 +69,11 @@ impl State {
         Ok(())
     }
 
-    pub(super) fn validate_ground(
+    pub(super) fn ground_profile(
         &self,
         content: &Content,
         rules: &Rules,
-    ) -> Result<(), ProductionFault> {
+    ) -> Result<data::timing::Profile, ProductionFault> {
         let inside = self.validate_inside_provenance(content)?.clone();
         let inputs = self.ordinary_inputs()?;
         let Caller::PlayerContinuation {
@@ -109,8 +110,7 @@ impl State {
                     support,
                 },
             )
-            .map_err(|_| missing())?;
-        Ok(())
+            .map_err(|_| missing())
     }
 
     pub(super) fn complete_ground(
@@ -119,7 +119,7 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<(), ProductionFault> {
-        self.validate_ground(content, rules)?;
+        self.ground_profile(content, rules)?;
         let inside = self.validate_inside_provenance(content)?.clone();
         let inputs = self.ordinary_inputs()?;
         let Caller::PlayerContinuation {

@@ -78,7 +78,7 @@ pub mod s6_camera;
 pub mod s6_drawing;
 pub mod samus_palette;
 mod support_caller;
-pub use ordinary_caller::OrdinaryWork;
+pub use ordinary_caller::{OrdinaryWork, TravelWork};
 pub mod sender_caller;
 pub mod sender_contract;
 pub mod sender_stage;

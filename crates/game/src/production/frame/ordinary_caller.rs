@@ -50,7 +50,77 @@ const fn missing() -> ProductionFault {
     ))
 }
 
+/// Physical work selected after the ordinary Run returns and before downward travel.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TravelWork {
+    /// Ordinary rightward movement.
+    OrdinaryRight,
+    /// Both support checks in one physical request.
+    Support,
+    /// The ground-following pull.
+    Ground,
+}
+
+impl TravelWork {
+    /// The timing owner retains this identity until the whole request returns.
+    #[must_use]
+    pub const fn identity(self) -> WorkId {
+        match self {
+            Self::OrdinaryRight => PairOwner::OrdinaryRight.identity(),
+            Self::Support => WorkId(1001),
+            Self::Ground => WorkId(1003),
+        }
+    }
+}
+
+impl Caller {
+    pub(super) fn charging_travel(&self) -> Option<TravelWork> {
+        let Self::PlayerContinuation {
+            ordinary,
+            support,
+            ground,
+            charging: true,
+            ..
+        } = self
+        else {
+            return None;
+        };
+        if matches!(ground, super::movement_ground_contract::Stage::Charging(_)) {
+            Some(TravelWork::Ground)
+        } else if matches!(
+            support,
+            super::movement_support_contract::Stage::Charging { .. }
+        ) {
+            Some(TravelWork::Support)
+        } else {
+            ordinary
+                .as_ref()
+                .is_some_and(OrdinaryWork::is_charging)
+                .then_some(TravelWork::OrdinaryRight)
+        }
+    }
+}
+
 impl State {
+    pub(super) fn validate_charging_travel(
+        &self,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<bool, ProductionFault> {
+        let Some(work) = self.caller.charging_travel() else {
+            return Ok(false);
+        };
+        let profile = match work {
+            TravelWork::OrdinaryRight => self.ordinary_profile(content, rules)?,
+            TravelWork::Support => self.support_profile(content, rules)?,
+            TravelWork::Ground => self.ground_profile(content, rules)?,
+        };
+        if !self.has_physical_bill(work.identity(), &profile) {
+            return Err(missing());
+        }
+        Ok(true)
+    }
+
     pub(super) fn ordinary_inputs(&self) -> Result<super::inputs::MovementInputs, ProductionFault> {
         if self.remaining_history()? != super::player_continuation::Stage::Run {
             return Err(missing());
@@ -120,10 +190,11 @@ impl State {
             .map_err(|_| missing())?;
         let actors = Model(current.actors.clone());
         let mut stage = Stage::offered(pair, &rules.movement).map_err(|_| missing())?;
+        let work = TravelWork::OrdinaryRight.identity();
         self.timing
-            .begin(WorkId(1000), profile)
+            .begin(work, profile)
             .map_err(ProductionFault::FrameHardware)?;
-        stage.bind(WorkId(1000), requests).map_err(|_| missing())?;
+        stage.bind(work, requests).map_err(|_| missing())?;
         let Caller::PlayerContinuation {
             ordinary, charging, ..
         } = &mut self.caller
@@ -138,11 +209,11 @@ impl State {
         Ok(())
     }
 
-    pub(super) fn validate_ordinary(
+    fn ordinary_profile(
         &self,
         content: &Content,
         rules: &Rules,
-    ) -> Result<(), ProductionFault> {
+    ) -> Result<data::timing::Profile, ProductionFault> {
         self.validate_room_owner(content)?;
         let inputs = self.ordinary_inputs()?;
         let Caller::PlayerContinuation {
@@ -168,7 +239,7 @@ impl State {
             .stage
             .validate_rules(&rules.movement)
             .map_err(|_| missing())?;
-        content
+        let (profile, _) = content
             .ordinary_right
             .as_ref()
             .ok_or_else(missing)?
@@ -180,7 +251,7 @@ impl State {
                 &content.movement,
             )
             .map_err(|_| missing())?;
-        Ok(())
+        Ok(profile)
     }
 
     pub(super) fn complete_ordinary(
@@ -189,7 +260,7 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<(), ProductionFault> {
-        self.validate_ordinary(content, rules)?;
+        self.ordinary_profile(content, rules)?;
         let inputs = self.ordinary_inputs()?;
         let Caller::PlayerContinuation {
             remaining,

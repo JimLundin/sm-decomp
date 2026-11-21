@@ -64,10 +64,11 @@ impl State {
                 },
             )
             .map_err(|_| missing())?;
+        let work = super::TravelWork::Support.identity();
         self.timing
-            .begin(WorkId(1001), profile)
+            .begin(work, profile)
             .map_err(ProductionFault::FrameHardware)?;
-        stage.bind(WorkId(1001), requests).map_err(|_| missing())?;
+        stage.bind(work, requests).map_err(|_| missing())?;
         let Caller::PlayerContinuation {
             support, charging, ..
         } = &mut self.caller
@@ -79,11 +80,11 @@ impl State {
         Ok(())
     }
 
-    pub(super) fn validate_support(
+    pub(super) fn support_profile(
         &self,
         content: &Content,
         rules: &Rules,
-    ) -> Result<(), ProductionFault> {
+    ) -> Result<data::timing::Profile, ProductionFault> {
         self.validate_room_owner(content)?;
         let inputs = self.ordinary_inputs()?;
         let Caller::PlayerContinuation {
@@ -107,7 +108,7 @@ impl State {
             actors: remaining.0.actors.as_ref().ok_or_else(missing)?,
             inputs: &inputs,
         };
-        content
+        let (profile, _) = content
             .compound_support
             .as_ref()
             .ok_or_else(missing)?
@@ -122,7 +123,7 @@ impl State {
                 },
             )
             .map_err(|_| missing())?;
-        Ok(())
+        Ok(profile)
     }
 
     pub(super) fn complete_support(
@@ -131,7 +132,7 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<(), ProductionFault> {
-        self.validate_support(content, rules)?;
+        self.support_profile(content, rules)?;
         let inputs = self.ordinary_inputs()?;
         let Caller::PlayerContinuation {
             remaining, support, ..

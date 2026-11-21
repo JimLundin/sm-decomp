@@ -1140,6 +1140,62 @@ fn check_post_actor_prefix(admitted: &AdmittedCase, mut direct: Production, orig
     }
 }
 
+fn check_ordinary_movement_checkpoints(
+    admitted: &AdmittedCase,
+    direct: &mut Production,
+    deadline: u64,
+) {
+    use game::production::{frame::TravelWork, timing::WorkKind};
+
+    let rejected = [
+        TravelWork::OrdinaryRight,
+        TravelWork::Support,
+        TravelWork::Ground,
+    ]
+    .map(|stage| {
+        let id = stage.identity();
+        let active = |state: &State| {
+            state
+                .timing
+                .work
+                .iter()
+                .any(|work| work.kind == WorkKind::Semantic(id))
+        };
+        advance_frame_until(direct, deadline, |state| {
+            state.timing.work.last().is_some_and(|work| {
+                work.kind == WorkKind::Semantic(id) && work.cursor.intrinsic.0 > 0
+            })
+        });
+        let refused = rejects_changed_physical_bill(admitted, direct, id);
+        let mut resumed = Production::restore(
+            &direct.save().unwrap(),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+        .unwrap();
+        let finish = |production: &mut Production, budget| {
+            let mut events = Vec::new();
+            advance_frame_with_budget(
+                production,
+                deadline,
+                budget,
+                |state| !active(state),
+                |outputs| events.extend(outputs.events),
+            );
+            events
+        };
+        let uninterrupted = finish(direct, MasterTicks(u64::MAX));
+        let split = finish(&mut resumed, MasterTicks(3));
+        assert_observation_eq!(split, uninterrupted);
+        assert_observation_eq!(resumed.state(), direct.state());
+        refused
+    });
+    assert_eq!(
+        rejected, [true; 3],
+        "altered OrdinaryRight, Support and Ground timing"
+    );
+}
+
 fn admitted_odd_ground(admitted: &AdmittedCase) -> bool {
     matches!(&admitted.content, ProductionContent::Frame(content)
     if content.ground_following_down.as_ref().is_some_and(
@@ -1187,6 +1243,7 @@ fn check_grounded_down_checkpoint(admitted: &AdmittedCase, mut direct: Productio
     let low = Cell::new(None);
     let deadline = origin.checked_add(79742).unwrap();
     let down_operands = origin.checked_add(77000).unwrap();
+    check_ordinary_movement_checkpoints(admitted, &mut direct, down_operands);
     advance_frame(
         &mut direct,
         origin.checked_add(77368).unwrap(),
@@ -1474,7 +1531,7 @@ fn rejects_changed_frame(
             ProductionSeed::Frame(altered),
             admitted.content.clone(),
             admitted.rules.clone(),
-        ).and_then(|admitted| restore(&admitted)),
+        ),
         Err(AdmissionFault::Frame(fault)) if *fault == Fault::InvalidPlayerEntry
     )
 }

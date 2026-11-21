@@ -1221,12 +1221,8 @@ impl State {
         let down_charging = matches!(down, Down::Charging { .. });
         let post_identity = post_down.charging_identity();
         let post_charging = post_identity.is_some();
-        let ordinary_charging = ordinary.as_ref().is_some_and(OrdinaryWork::is_charging);
-        let awaiting_result = ordinary_charging
-            || support_charging
-            || ground_charging
-            || down_charging
-            || post_charging;
+        let travel = self.caller.charging_travel();
+        let awaiting_result = travel.is_some() || down_charging || post_charging;
         let run_holds =
             Self::continuation_run_holds(*stage, charging, run, ordinary.as_ref(), awaiting_result);
         let support_holds = match support {
@@ -1234,7 +1230,7 @@ impl State {
             Support::Charging { .. } => charging,
             Support::Complete(completion) => {
                 (!charging || down_charging || post_charging || ground_charging)
-                    && completion.work == WorkId(1001)
+                    && completion.work == super::TravelWork::Support.identity()
             }
             Support::Offered(_) => false,
         };
@@ -1242,7 +1238,8 @@ impl State {
             Ground::Idle => true,
             Ground::Charging(_) => charging,
             Ground::Complete(completion) => {
-                (!charging || down_charging || post_charging) && completion.work == WorkId(1003)
+                (!charging || down_charging || post_charging)
+                    && completion.work == super::TravelWork::Ground.identity()
             }
             Ground::Offered(_) => false,
         };
@@ -1266,14 +1263,8 @@ impl State {
         let identity = post_identity.unwrap_or_else(|| {
             if down_charging {
                 WorkId(1004)
-            } else if ground_charging {
-                WorkId(1003)
-            } else if support_charging {
-                WorkId(1001)
-            } else if ordinary_charging {
-                WorkId(1000)
             } else {
-                stage.identity()
+                travel.map_or_else(|| stage.identity(), super::TravelWork::identity)
             }
         });
         run.validate().is_ok()
@@ -2029,6 +2020,9 @@ impl State {
         content: &Content,
         rules: &Rules,
     ) -> Result<bool, ProductionFault> {
+        if self.validate_charging_travel(content, rules)? {
+            return Ok(true);
+        }
         match &self.caller {
             Caller::PlayerContinuation {
                 stage: super::player_continuation::Stage::MotionReset,
@@ -2060,12 +2054,6 @@ impl State {
                 ..
             } => self.begin_ordinary(content, rules)?,
             Caller::PlayerContinuation {
-                stage: super::player_continuation::Stage::Run,
-                ordinary: Some(ordinary),
-                charging: true,
-                ..
-            } if ordinary.is_charging() => self.validate_ordinary(content, rules)?,
-            Caller::PlayerContinuation {
                 ordinary: Some(ordinary),
                 support: super::movement_support_contract::Stage::Idle,
                 ground: super::movement_ground_contract::Stage::Idle,
@@ -2074,22 +2062,12 @@ impl State {
                 ..
             } if ordinary.is_complete() => self.begin_support(content, rules)?,
             Caller::PlayerContinuation {
-                support: super::movement_support_contract::Stage::Charging { .. },
-                charging: true,
-                ..
-            } => self.validate_support(content, rules)?,
-            Caller::PlayerContinuation {
                 support: super::movement_support_contract::Stage::Complete(_),
                 ground: super::movement_ground_contract::Stage::Idle,
                 down: super::movement_down_contract::Stage::Idle,
                 charging: false,
                 ..
             } => self.begin_ground(content, rules)?,
-            Caller::PlayerContinuation {
-                ground: super::movement_ground_contract::Stage::Charging(_),
-                charging: true,
-                ..
-            } => self.validate_ground(content, rules)?,
             Caller::PlayerContinuation {
                 ground: super::movement_ground_contract::Stage::Complete(_),
                 down: super::movement_down_contract::Stage::Idle,
@@ -2284,7 +2262,9 @@ impl State {
         active: Option<WorkId>,
         events: &[timing::Event],
     ) -> Result<(), ProductionFault> {
-        if let Some(identity @ WorkId(1000)) = active {
+        if let Some(identity) =
+            active.filter(|id| *id == super::TravelWork::OrdinaryRight.identity())
+        {
             let Caller::PlayerContinuation {
                 ordinary: Some(ordinary),
                 ..
@@ -2302,7 +2282,7 @@ impl State {
                 }
             }
         }
-        if active == Some(WorkId(1001)) {
+        if let Some(identity) = active.filter(|id| *id == super::TravelWork::Support.identity()) {
             let Caller::PlayerContinuation { support, .. } = &mut self.caller else {
                 return Err(ProductionFault::WrongScope);
             };
@@ -2312,7 +2292,7 @@ impl State {
                     timing::SampleValue::Byte(value),
                 ) = event.kind
                 {
-                    support.sample(WorkId(1001), device, value).map_err(|_| {
+                    support.sample(identity, device, value).map_err(|_| {
                         ProductionFault::Unsupported(Unsupported::Frame(
                             Dependency::PlayerContinuationPreparation,
                         ))
@@ -2516,7 +2496,7 @@ impl State {
             {
                 self.complete_down(identity, content, rules)?;
             }
-            work if work == WorkId(1003)
+            work if work == super::TravelWork::Ground.identity()
                 && matches!(
                     &self.caller,
                     Caller::PlayerContinuation {
@@ -2528,7 +2508,7 @@ impl State {
             {
                 self.complete_ground(identity, content, rules)?;
             }
-            work if work == WorkId(1001)
+            work if work == super::TravelWork::Support.identity()
                 && matches!(
                     &self.caller,
                     Caller::PlayerContinuation {
@@ -2572,7 +2552,8 @@ impl State {
             {
                 self.finish_motion_reset(identity, content)?;
             }
-            WorkId(1000) if matches!(&self.caller, Caller::PlayerContinuation { ordinary: Some(ordinary), charging: true, .. } if ordinary.is_charging()) =>
+            work if work == super::TravelWork::OrdinaryRight.identity()
+                && matches!(&self.caller, Caller::PlayerContinuation { ordinary: Some(ordinary), charging: true, .. } if ordinary.is_charging()) =>
             {
                 self.complete_ordinary(identity, content, rules)?;
             }

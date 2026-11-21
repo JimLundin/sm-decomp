@@ -475,7 +475,7 @@ impl PhysicalContract {
             || &receipt.actors.0 != actors
             || receipt.world.0 != world(inputs)?
             || &receipt.ground != inputs.ground
-            || inputs.ground.work != WorkId(1003)
+            || inputs.ground.work != super::TravelWork::Ground.identity()
             || actors.interactive.as_slice() != [self.admission.raw_actor]
             || actors.dependency.clocks.simulation
                 != super::borrowed_player_preparation::ClockDisposition::Running

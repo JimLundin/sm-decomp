@@ -1,6 +1,7 @@
 //! Whole ground-following choice with retained identity premises.
 
 use super::{
+    TravelWork,
     movement::Movement,
     movement_caller::{Current, Room, RunCompletion},
     movement_support_contract::{self as support, ActorCompletionPin, MovementRulesPin},
@@ -238,7 +239,7 @@ impl Stage {
         let Self::Offered(receipt) = self else {
             return Err(Fault::Order);
         };
-        if work != WorkId(1003) {
+        if work != TravelWork::Ground.identity() {
             return Err(Fault::Dependency);
         }
         *self = Self::Charging(receipt.clone());
@@ -259,7 +260,7 @@ impl Stage {
         let Self::Charging(receipt) = self else {
             return Err(Fault::Order);
         };
-        if work != WorkId(1003) {
+        if work != TravelWork::Ground.identity() {
             return Err(Fault::Dependency);
         }
         let radius = inputs
@@ -324,7 +325,7 @@ impl PhysicalContract {
             || &receipt.run != inputs.run
             || &receipt.support != inputs.support
             || inputs.run.movement.work != WorkId(23)
-            || inputs.support.work != WorkId(1001)
+            || inputs.support.work != TravelWork::Support.identity()
             || inputs.support.receipt.inputs != receipt.inputs
             || inputs.support.receipt.rules != receipt.rules
             || inputs.support.receipt.actors != receipt.actors

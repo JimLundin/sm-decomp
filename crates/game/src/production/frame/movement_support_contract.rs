@@ -1,6 +1,7 @@
 //! Complete support owner and read-only current rule provenance.
 
 use super::{
+    TravelWork,
     movement::Movement,
     movement_caller::{Current, Room},
     movement_pair_contract::SourceAdmission,
@@ -377,7 +378,7 @@ impl Pending {
         } else {
             Sample::ProductHigh
         };
-        if work != WorkId(1001) || device != expected {
+        if work != TravelWork::Support.identity() || device != expected {
             return Err(Fault::Samples);
         }
         let byte = self
@@ -391,7 +392,7 @@ impl Pending {
 
     fn complete(&self, work: WorkId) -> Result<(), Fault> {
         let [floor_low, floor_high, ceiling_low, ceiling_high] = self.bytes;
-        if work != WorkId(1001)
+        if work != TravelWork::Support.identity()
             || self.count != 4
             || [
                 u16::from_le_bytes([floor_low, floor_high]),
@@ -576,7 +577,7 @@ impl Stage {
         let Self::Offered(receipt) = self else {
             return Err(Fault::Dependency);
         };
-        if work != WorkId(1001) {
+        if work != TravelWork::Support.identity() {
             return Err(Fault::Dependency);
         }
         *self = Self::Charging {

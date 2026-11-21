@@ -643,7 +643,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 111 | 29,971 | 179,826 | 143,405 | 25,267 | 2,062 | 10,581 | 44,586 | 2,616 | 27,671 |
+| production and exact services | 111 | 30,028 | 180,166 | 143,707 | 25,292 | 2,062 | 10,605 | 44,646 | 2,628 | 27,719 |
 | bridges | 16 | 3,181 | 19,087 | 18,775 | 2,278 | 518 | 1,538 | 1,785 | 88 | 3,381 |
 | rebuilt models, shared types included | 123 | 8,741 | 52,446 | 58,294 | 24,088 | 18,486 | 3,624 | 3,811 | 1,013 | 17,615 |
 
@@ -2491,7 +2491,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/frame/animation_caller.rs` | names it | `Dashing`, `Outcome`, `StandingAnimation`, `WallTest` | 2,442 | 345 |
 | samus-movement | `crates/game/src/production/frame/borrowed_player_preparation/actor_tests.rs` | names it | `Bounces`, `Carry`, `Dashing`, `Frame`, `JumpHeld`, `Phase`, `Rules`, `Run`, `Samus`, `Seat`, `Spin`, `Vertical` | 3,026 | 475 |
 | samus-movement | `crates/game/src/production/frame/borrowed_player_preparation.rs` | names it | `Samus`, `suspended` | 2,381 | 854 |
-| samus-movement | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 18,545 | 2,515 |
+| samus-movement | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 18,453 | 2,496 |
 | samus-movement | `crates/game/src/production/frame/camera_stage/contract.rs` | names it | `Carry` | 620 | 104 |
 | samus-movement | `crates/game/src/production/frame/inputs.rs` | names it | `Frame` | 215 | 99 |
 | samus-movement | `crates/game/src/production/frame/inside_contract.rs` | names it | `suspended` | 2,024 | 288 |
@@ -2500,15 +2500,15 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/frame/late_movement.rs` | names it | `Rules`, `suspended` | 4,079 | 442 |
 | samus-movement | `crates/game/src/production/frame/motion_reset_contract.rs` | names it | `suspended` | 570 | 107 |
 | samus-movement | `crates/game/src/production/frame/movement_caller.rs` | names it | `Carry`, `Dashing`, `Rules`, `Samus`, `SpeedCap`, `suspended` | 4,586 | 661 |
-| samus-movement | `crates/game/src/production/frame/movement_down_contract.rs` | names it | `Rules`, `Samus`, `Seat`, `suspended` | 5,908 | 720 |
-| samus-movement | `crates/game/src/production/frame/movement_ground_contract.rs` | names it | `Rules`, `Samus`, `Seat`, `Spin`, `suspended` | 3,404 | 343 |
-| samus-movement | `crates/game/src/production/frame/movement_pair_contract.rs` | names it | `Rules`, `suspended` | 5,065 | 565 |
+| samus-movement | `crates/game/src/production/frame/movement_down_contract.rs` | names it | `Rules`, `Samus`, `Seat`, `suspended` | 5,913 | 720 |
+| samus-movement | `crates/game/src/production/frame/movement_ground_contract.rs` | names it | `Rules`, `Samus`, `Seat`, `Spin`, `suspended` | 3,419 | 344 |
+| samus-movement | `crates/game/src/production/frame/movement_pair_contract.rs` | names it | `Rules`, `suspended` | 5,066 | 565 |
 | samus-movement | `crates/game/src/production/frame/movement_stage.rs` | names it | `Frame`, `Rules`, `suspended` | 1,615 | 223 |
-| samus-movement | `crates/game/src/production/frame/movement_support_contract.rs` | names it | `Rules`, `suspended` | 5,366 | 571 |
-| samus-movement | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `suspended` | 5,621 | 662 |
+| samus-movement | `crates/game/src/production/frame/movement_support_contract.rs` | names it | `Rules`, `suspended` | 5,378 | 572 |
+| samus-movement | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `suspended` | 5,628 | 662 |
 | samus-movement | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `suspended` | 2,130 | 249 |
 | samus-movement | `crates/game/src/production/frame/pose_input.rs` | names it | `Moment` | 715 | 167 |
-| samus-movement | `crates/game/src/production/frame/run_caller.rs` | names it | `suspended` | 1,980 | 212 |
+| samus-movement | `crates/game/src/production/frame/run_caller.rs` | names it | `suspended` | 1,992 | 212 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 305 | 52 |
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 167 | 43 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 938 | 172 |
@@ -2529,13 +2529,13 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/entries.rs` | names it | `Boss`, `FrameInputs`, `HudEvent`, `HudPictures`, `HudState`, `OutOfPlayInputs`, `Place`, `Rules` | 970 | 201 |
 | interface-hud | `crates/game/src/production/frame/borrowed_player_preparation/actor_tests.rs` | names it | `Countdown`, `HudPictures`, `ItemControlInputs` | 3,026 | 475 |
 | interface-hud | `crates/game/src/production/frame/borrowed_player_preparation.rs` | names it | `Selection` | 2,381 | 854 |
-| interface-hud | `crates/game/src/production/frame/caller.rs` | names it | `CancelButton`, `HudPictures`, `Observation`, `SelectButton`, `Selection` | 18,545 | 2,515 |
+| interface-hud | `crates/game/src/production/frame/caller.rs` | names it | `CancelButton`, `HudPictures`, `Observation`, `SelectButton`, `Selection` | 18,453 | 2,496 |
 | interface-hud | `crates/game/src/production/frame/countdown_caller.rs` | bridge | `CountdownAnswer`, `CountdownOpportunity`, `Observation` | 961 | 189 |
 | interface-hud | `crates/game/src/production/frame/drawing_owners.rs` | names it | `Observation` | 1,150 | 256 |
 | interface-hud | `crates/game/src/production/frame/drawing_scalar_owners.rs` | names it | `Observation` | 224 | 55 |
 | interface-hud | `crates/game/src/production/frame/early_hud_caller.rs` | names it | `CancelButton`, `FrameCount`, `Observation`, `SelectButton`, `Selection` | 1,958 | 202 |
 | interface-hud | `crates/game/src/production/frame/hud.rs` | bridge | `ControlAnswer`, `CountdownAnswer`, `CountdownOpportunity`, `CountdownWork`, `DisplayAnswer`, `DisplayInputs`, `Flip`, `FrameCount`, `HudEvent`, `HudOpportunity`, `HudPictures`, `HudState`, `HudWork`, `ItemControlInputs`, `MovementInputs`, `Observation`, `Place`, `Rules`, `StatusInputs` | 1,793 | 278 |
-| interface-hud | `crates/game/src/production/frame/hud_camera_caller.rs` | names it | `HudOpportunity`, `HudPictures`, `MiniMapPower`, `MovementInputs`, `Observation`, `Rules`, `Selection` | 1,097 | 191 |
+| interface-hud | `crates/game/src/production/frame/hud_camera_caller.rs` | names it | `HudOpportunity`, `HudPictures`, `MiniMapPower`, `MovementInputs`, `Observation`, `Rules`, `Selection` | 1,109 | 191 |
 | interface-hud | `crates/game/src/production/frame/hud_controls_inputs.rs` | names it | `Ammo`, `Ammunition`, `CancelButton`, `Equipped`, `ItemControlInputs`, `SelectButton`, `Stock` | 429 | 116 |
 | interface-hud | `crates/game/src/production/frame/hud_controls_owner.rs` | names it | `CancelButton`, `Observation`, `SelectButton`, `Selection` | 286 | 45 |
 | interface-hud | `crates/game/src/production/frame/hud_map_caller.rs` | bridge | - | 2,671 | 378 |
@@ -2543,7 +2543,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/hud_stage.rs` | names it | `ControlAnswer`, `DisplayInputs`, `Dropped`, `FrameCount`, `HerMap`, `HudEvent`, `HudOpportunity`, `HudPictures`, `ItemControlInputs`, `MiniMapPower`, `Mute`, `Observation`, `Room`, `Rules`, `SelectableItem`, `Selection`, `Status` | 906 | 239 |
 | interface-hud | `crates/game/src/production/frame/late_hud.rs` | bridge | - | 1,560 | 234 |
 | interface-hud | `crates/game/src/production/frame/motion_reset_contract.rs` | names it | `CancelButton`, `Observation`, `SelectButton`, `Selection` | 570 | 107 |
-| interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation` | 5,621 | 662 |
+| interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation` | 5,628 | 662 |
 | interface-hud | `crates/game/src/production/frame/recurring_hud_map.rs` | names it | `Dropped`, `Energy`, `FrameCount`, `HerMap`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `Status` | 808 | 141 |
 | interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 2,318 | 276 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
@@ -2563,14 +2563,14 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/frame/animation_caller.rs` | names it | `Dash`, `Figure`, `Inputs`, `Liquid`, `MoveEvent`, `SoundsWaiting` | 2,442 | 345 |
 | samus-appearance | `crates/game/src/production/frame/appearance_caller.rs` | names it | `Ahead`, `AnimationDecision`, `Answer`, `AppearanceRead`, `CinematicActivity`, `ContactSuppressor`, `Dash`, `Figure`, `Frames`, `Inputs`, `Instruction`, `Liquid`, `PublishedSound`, `Receipt`, `Rules`, `Step`, `WorkStep` | 5,042 | 721 |
 | samus-appearance | `crates/game/src/production/frame/appearance_stage.rs` | names it | `AnimationDecision`, `AnimationInputs`, `AppearanceRead`, `CinematicActivity`, `ContactSuppressor`, `Figure`, `OfferedDecision`, `WorkStep` | 902 | 115 |
-| samus-appearance | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 18,545 | 2,515 |
+| samus-appearance | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 18,453 | 2,496 |
 | samus-appearance | `crates/game/src/production/frame/contact_contract.rs` | names it | `AppearanceRead`, `ContactSuppressor`, `Frames`, `GraphicalContact`, `PublishedSound`, `Receipt`, `SoundRequest`, `WorkStep` | 1,155 | 221 |
 | samus-appearance | `crates/game/src/production/frame/drawing_owners.rs` | names it | `CannonDelay` | 1,150 | 256 |
 | samus-appearance | `crates/game/src/production/frame/inputs.rs` | names it | `Ahead`, `Figure` | 215 | 99 |
 | samus-appearance | `crates/game/src/production/frame/liquid_history.rs` | names it | `Liquid` | 958 | 186 |
 | samus-appearance | `crates/game/src/production/frame/movement_caller.rs` | names it | `Figure` | 4,586 | 661 |
 | samus-appearance | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `CinematicActivity` | 2,130 | 249 |
-| samus-appearance | `crates/game/src/production/frame/post_down_caller.rs` | names it | `Frames`, `PublishedSound`, `Receipt`, `SoundQueue`, `SoundRequest` | 5,286 | 739 |
+| samus-appearance | `crates/game/src/production/frame/post_down_caller.rs` | names it | `Frames`, `PublishedSound`, `Receipt`, `SoundQueue`, `SoundRequest` | 5,289 | 739 |
 | samus-appearance | `crates/game/src/production/frame/rendering_stage.rs` | names it | `AppearanceRead`, `Figure`, `Receipt`, `Step`, `WorkStep` | 3,159 | 484 |
 | samus-appearance | `crates/game/src/production/frame/samus_palette.rs` | bridge | `ColourEffect`, `ColourSequences`, `GrappleActivity`, `LapsLeft`, `Liquid`, `RoomColours`, `RunColourFacts`, `RunColourWork`, `Suit` | 1,379 | 258 |
 | samus-appearance | `crates/game/src/production/frame/state.rs` | names it | `Ahead`, `AppearanceRead`, `Clip`, `Figure` | 1,707 | 333 |
