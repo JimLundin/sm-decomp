@@ -1,8 +1,13 @@
 //! Explicitly borrowed scene scheduling, independent of countdown and coarse gameplay.
 
-use super::{Caller, Content, Dependency, State};
+use super::{
+    Caller, Content, Dependency, State,
+    countdown_caller::Stage as CountdownStage,
+    interrupts::{DrawingRequest, DrawingState},
+};
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::{Canonical, model::Pinned};
+use data::timing::{Interrupt, WRAM_DATA_PORT};
 use serde::{Deserialize, Serialize};
 
 /// Semantic service selected by the separately qualified current scene owner.
@@ -14,10 +19,11 @@ pub enum Choice {
     PresentCountdownOnly,
 }
 
-/// The only admitted preservation interval; it does not cover another frame.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// The independently qualified lifetime of the current scene slot.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 enum Scope {
     InitialThroughCeres,
+    Adjacent(u64),
 }
 
 /// Runtime invalidation, including writes which leave the semantic value unchanged.
@@ -56,6 +62,7 @@ pub struct Admission {
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Offer {
     choice: Admission,
+    scope: Scope,
 }
 
 /// Complete current scheduling owner, including its actual invalidation/IRQ progress.
@@ -63,7 +70,7 @@ pub struct CurrentPin;
 impl Pinned for CurrentPin {
     type State = Current;
     const NAME: &'static str = "production-current-countdown-scene";
-    const SHAPE: u64 = 0x77AC_B60A_8675_E2CE;
+    const SHAPE: u64 = 0x5436_68C9_C31C_9BBB;
 }
 
 /// Missing, stale, unsupported or unqualified scheduling input.
@@ -101,16 +108,22 @@ impl Current {
     }
 
     /// Observe an actual successfully qualified HUD IRQ admission, never a source flag.
-    pub const fn hud_irq(&mut self, request: super::interrupts::DrawingRequest) {
+    pub const fn hud_irq(&mut self, request: DrawingRequest) {
         match (self.interrupts, request) {
-            (Interrupts::Unseen, super::interrupts::DrawingRequest::Begin) => {
+            (Interrupts::Unseen, DrawingRequest::Begin) => {
                 self.interrupts = Interrupts::Begun;
             }
-            (Interrupts::Begun, super::interrupts::DrawingRequest::End) => {
+            (Interrupts::Begun, DrawingRequest::End) => {
                 self.interrupts = Interrupts::Returned;
             }
             _ => self.invalidate(),
         }
+    }
+
+    pub(super) const fn begin_adjacent(mut self, start: u64) -> Self {
+        self.scope = Scope::Adjacent(start);
+        self.interrupts = Interrupts::Unseen;
+        self
     }
 
     /// Validate the complete current no-writer owner against its independently admitted origin.
@@ -142,7 +155,10 @@ impl Current {
         if self.choice != Choice::MaintainCountdown {
             return Err(Fault::Choice);
         }
-        Ok(Offer { choice: admission })
+        Ok(Offer {
+            choice: admission,
+            scope: self.scope,
+        })
     }
 
     /// Read-only same-owner qualification for the later actual Ceres consumer.
@@ -173,7 +189,148 @@ const fn missing() -> ProductionFault {
     ProductionFault::Unsupported(Unsupported::Frame(Dependency::CountdownSceneScheduling))
 }
 
+fn scene_writer(event: &timing::Event) -> bool {
+    match &event.kind {
+        timing::EventKind::Publication(write) => write.port == WRAM_DATA_PORT,
+        timing::EventKind::Payload(payload) => payload.target.publication_port() == WRAM_DATA_PORT,
+        timing::EventKind::Sample(..)
+        | timing::EventKind::BulkService(_)
+        | timing::EventKind::LineService(_)
+        | timing::EventKind::Interrupt(_)
+        | timing::EventKind::ControllerStart
+        | timing::EventKind::ControllerEnd
+        | timing::EventKind::ControllerCommitted => false,
+    }
+}
+
+fn contains_one_nmi(events: &[timing::Event]) -> bool {
+    let mut nmis = events
+        .iter()
+        .filter(|event| event.kind == timing::EventKind::Interrupt(Interrupt::Nmi));
+    nmis.next().is_some() && nmis.next().is_none()
+}
+
 impl State {
+    pub(super) fn scene_after_native_return(
+        &self,
+        content: &Content,
+        native_admitted: bool,
+    ) -> Result<Option<Current>, ProductionFault> {
+        let Some(adjacent) = content.adjacent_scene_countdown else {
+            return Ok(None);
+        };
+        if !self.publications.original_interval() {
+            return Ok(None);
+        }
+        let owner = self.scene_countdown.as_ref().ok_or_else(missing)?.0;
+        let initial = self.scene_admission(content, &owner)?;
+        if !native_admitted
+            || owner.interrupts != Interrupts::Returned
+            || owner.validate(initial).is_err()
+            || initial != adjacent
+            || self.publications.events.iter().any(scene_writer)
+        {
+            return Err(missing());
+        }
+        Ok(Some(owner))
+    }
+
+    fn scene_admission(
+        &self,
+        content: &Content,
+        owner: &Current,
+    ) -> Result<Admission, ProductionFault> {
+        let start = self.publications.interval_start();
+        match owner.scope {
+            Scope::InitialThroughCeres if start == 0 => content.scene_countdown,
+            Scope::Adjacent(opened) if opened == start && start != 0 => {
+                content.adjacent_scene_countdown
+            }
+            Scope::InitialThroughCeres | Scope::Adjacent(_) => None,
+        }
+        .ok_or_else(missing)
+    }
+
+    pub(crate) fn validate_scene_checkpoint(&self, content: &Content) -> Result<(), super::Fault> {
+        let offer = match &self.countdown {
+            CountdownStage::Pending => None,
+            CountdownStage::Charging { offer, .. } | CountdownStage::Complete { offer, .. } => {
+                Some(*offer)
+            }
+        };
+        let prior = self
+            .publications
+            .preceding()
+            .map_err(super::Fault::Publications)?;
+        let adjacent = content
+            .adjacent_scene_countdown
+            .filter(|_| contains_one_nmi(prior));
+        let Some(owner) = self.scene_countdown.as_ref().map(|owner| &owner.0) else {
+            return if offer.is_none() && adjacent.is_none() {
+                Ok(())
+            } else {
+                Err(super::Fault::InvalidPlayerEntry)
+            };
+        };
+        if matches!(owner.scope, Scope::Adjacent(_))
+            && (adjacent.is_none()
+                || content.scene_countdown != adjacent
+                || prior.iter().any(scene_writer))
+        {
+            return Err(super::Fault::InvalidPlayerEntry);
+        }
+        let invalid = |_| super::Fault::InvalidPlayerEntry;
+        let (gameplay, native_admitted) = self.gameplay_publications().map_err(invalid)?;
+        self.validate_scene_preservation(content, gameplay, native_admitted)
+            .map_err(invalid)?;
+        let admission = self.scene_admission(content, owner).map_err(invalid)?;
+        if offer.is_some_and(|offer| owner.offer(admission) != Ok(offer)) {
+            return Err(super::Fault::InvalidPlayerEntry);
+        }
+        Ok(())
+    }
+
+    fn current_scene(&self, content: &Content) -> Result<(&Current, Admission), ProductionFault> {
+        let (gameplay, native_admitted) = self.gameplay_publications()?;
+        if native_admitted {
+            return Err(missing());
+        }
+        self.validate_scene_preservation(content, gameplay, native_admitted)?;
+        let owner = &self.scene_countdown.as_ref().ok_or_else(missing)?.0;
+        if matches!(owner.scope, Scope::Adjacent(_)) {
+            let irq_count = gameplay
+                .iter()
+                .filter(|event| event.kind == timing::EventKind::Interrupt(Interrupt::Irq))
+                .count();
+            // The scene records actual admissions. The drawing owner retires End on return.
+            if owner.interrupts != Interrupts::Returned
+                || irq_count != 2
+                || !matches!(
+                    self.drawing,
+                    Some(DrawingState {
+                        active: None,
+                        recurring_due: None,
+                        ..
+                    })
+                )
+            {
+                return Err(missing());
+            }
+        }
+        Ok((owner, self.scene_admission(content, owner)?))
+    }
+
+    pub(super) fn revalidate_countdown_scene_at_ceres(
+        &self,
+        content: &Content,
+        offer: Offer,
+    ) -> Result<(), ProductionFault> {
+        let (owner, admission) = self.current_scene(content)?;
+        owner
+            .revalidate_ceres_input(admission, offer)
+            .map_err(|_| missing())
+    }
+
     /// Revalidate actual runtime preservation before any dependent effect.
     pub(super) fn validate_scene_preservation(
         &self,
@@ -186,31 +343,12 @@ impl State {
         };
         owner
             .0
-            .validate(content.scene_countdown.ok_or_else(missing)?)
+            .validate(self.scene_admission(content, &owner.0)?)
             .map_err(|_| missing())?;
-        for event in gameplay_publications {
-            match &event.kind {
-                timing::EventKind::Publication(write)
-                    if write.port == data::timing::WRAM_DATA_PORT =>
-                {
-                    return Err(missing());
-                }
-                timing::EventKind::Payload(payload)
-                    if payload.target.publication_port() == data::timing::WRAM_DATA_PORT =>
-                {
-                    return Err(missing());
-                }
-                timing::EventKind::Interrupt(data::timing::Interrupt::Nmi) => return Err(missing()),
-                timing::EventKind::Publication(_)
-                | timing::EventKind::Sample(..)
-                | timing::EventKind::Payload(_)
-                | timing::EventKind::BulkService(_)
-                | timing::EventKind::LineService(_)
-                | timing::EventKind::Interrupt(_)
-                | timing::EventKind::ControllerStart
-                | timing::EventKind::ControllerEnd
-                | timing::EventKind::ControllerCommitted => {}
-            }
+        if gameplay_publications.iter().any(|event| {
+            scene_writer(event) || event.kind == timing::EventKind::Interrupt(Interrupt::Nmi)
+        }) {
+            return Err(missing());
         }
         if native_admitted {
             return Ok(());
@@ -247,7 +385,7 @@ impl State {
         content: &Content,
         rules: &super::Rules,
     ) -> Result<Offer, ProductionFault> {
-        self.validate_scene_preservation(content, &self.publications.events, false)?;
+        let (owner, admission) = self.current_scene(content)?;
         if !self.hud_map.is_complete()
             || !matches!(
                 self.caller,
@@ -261,12 +399,7 @@ impl State {
             return Err(missing());
         }
         self.validate_hud_map(content, rules)?;
-        self.scene_countdown
-            .as_ref()
-            .ok_or_else(missing)?
-            .0
-            .offer(content.scene_countdown.ok_or_else(missing)?)
-            .map_err(|_| missing())
+        owner.offer(admission).map_err(|_| missing())
     }
 }
 

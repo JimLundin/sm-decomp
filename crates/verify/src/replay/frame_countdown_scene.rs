@@ -1,5 +1,6 @@
 //! Strict edge decoding of the independently qualified countdown scene scheduling slot.
 
+use crate::lock::Sha256;
 use game::production::frame::countdown_scene::{Admission, Choice, Current};
 use serde::Deserialize;
 
@@ -31,6 +32,37 @@ struct Projection {
     countdown_result_is_authority: Flag,
     later_maintenance_dto_is_authority: Flag,
     scope: String,
+}
+
+/// Adjacent source packet. The pin covers the reviewed writer and dispatch evidence.
+#[derive(Deserialize)]
+pub(super) struct AdjacentProjection {
+    first_origin_sha256: String,
+    #[cfg(test)]
+    timer_start_ticks: u64,
+    #[cfg(test)]
+    timer_handoff_ticks: u64,
+}
+
+impl AdjacentProjection {
+    pub(super) fn read(text: &str) -> Result<Self, Fault> {
+        let expected =
+            Sha256::try_from("ade16a2bc8e2f8678c698c186edceaac884b41d543f754d6128cc7298b31ac80")
+                .map_err(|_| Fault::Projection)?;
+        if Sha256::of(text.as_bytes()) != expected {
+            return Err(Fault::Projection);
+        }
+        toml::from_str(text).map_err(|_| Fault::Projection)
+    }
+
+    pub(super) fn holds_origin(&self, bytes: &[u8]) -> bool {
+        Sha256::try_from(self.first_origin_sha256.as_str()) == Ok(Sha256::of(bytes))
+    }
+
+    #[cfg(test)]
+    pub(super) const fn timer_boundaries(&self) -> [u64; 2] {
+        [self.timer_start_ticks, self.timer_handoff_ticks]
+    }
 }
 
 /// Invalid projection, incomplete origin or unsupported native scheduling class.
@@ -78,6 +110,11 @@ pub fn current(bytes: &[u8], text: &str) -> Result<(Admission, Current), Fault> 
     {
         return Err(Fault::Projection);
     }
+    let choice = scene_choice(bytes)?;
+    Ok((Admission { choice }, Current::from_origin(choice)))
+}
+
+fn scene_choice(bytes: &[u8]) -> Result<Choice, Fault> {
     if bytes.len() != 131_072 {
         return Err(Fault::Length);
     }
@@ -85,12 +122,11 @@ pub fn current(bytes: &[u8], text: &str) -> Result<(Admission, Current), Fault> 
         .get(OFFSET..OFFSET.saturating_add(2))
         .ok_or(Fault::Length)?;
     let raw = u16::from_le_bytes(raw.try_into().map_err(|_| Fault::Length)?);
-    let choice = match raw {
-        MAINTAIN => Choice::MaintainCountdown,
-        PRESENT => Choice::PresentCountdownOnly,
-        _ => return Err(Fault::Choice),
-    };
-    Ok((Admission { choice }, Current::from_origin(choice)))
+    match raw {
+        MAINTAIN => Ok(Choice::MaintainCountdown),
+        PRESENT => Ok(Choice::PresentCountdownOnly),
+        _ => Err(Fault::Choice),
+    }
 }
 
 #[cfg(test)]

@@ -1,12 +1,13 @@
 //! Open the next software opportunity after the actual native return.
 
 use super::{
-    Caller, Dependency, PreludeSource, State,
+    Caller, Content, Dependency, PreludeSource, State,
     borrowed_receipts::{FrameContinuationAfterNmi, PublicationOrigin, SoftwareRequest},
     frame_return::Stage,
     suffix_caller::Suffix,
 };
 use crate::production::{ProductionFault, Unsupported};
+use canonical::model::Model;
 
 const fn missing() -> ProductionFault {
     ProductionFault::Unsupported(Unsupported::Frame(
@@ -15,7 +16,10 @@ const fn missing() -> ProductionFault {
 }
 
 impl State {
-    pub(super) fn begin_next_opportunity(&mut self) -> Result<(), ProductionFault> {
+    pub(super) fn begin_next_opportunity(
+        &mut self,
+        content: &Content,
+    ) -> Result<(), ProductionFault> {
         let Stage::Ready {
             builder,
             suffix: Suffix::Acknowledged { controller },
@@ -24,10 +28,10 @@ impl State {
         else {
             return Ok(());
         };
-        self.gameplay_publications()?;
+        let (_, native_admitted) = self.gameplay_publications()?;
         self.validate_cannon_history()?;
         let controller = controller.word().ok_or_else(missing)?;
-        let history = self.frame_history.as_mut().ok_or_else(missing)?;
+        let history = self.frame_history.as_ref().ok_or_else(missing)?;
         let play_time = self.play_time.current().ok_or_else(missing)?;
         let room_quake = self.room_quake.current().ok_or_else(missing)?;
         if self.movement.finished().is_none()
@@ -42,12 +46,18 @@ impl State {
         {
             return Err(missing());
         }
+        let scene = self.scene_after_native_return(content, native_admitted)?;
         self.publications
             .begin_interval()
             .map_err(ProductionFault::FramePublications)?;
-        history.begin_opportunity();
+        self.frame_history
+            .as_mut()
+            .ok_or_else(missing)?
+            .begin_opportunity();
         self.sprite_builder = Some(builder.clone());
         self.retire_work()?;
+        self.scene_countdown =
+            scene.map(|owner| Model(owner.begin_adjacent(self.publications.interval_start())));
         self.play_time = super::play_time::Stage::from_origin(play_time);
         self.room_quake = super::room_quake::Stage::from_origin(room_quake);
         self.caller = Caller::AwaitingAcknowledgment {
@@ -109,7 +119,6 @@ impl State {
         self.late_movement = super::late_movement::Stage::default();
         self.countdown = super::countdown_caller::Stage::default();
         self.countdown_delivered.clear();
-        self.scene_countdown = None;
         self.sender_stage = super::sender_stage::Stage::default();
         self.sound_offers = super::sender_stage::Offers::default();
         self.content.begin_opportunity();

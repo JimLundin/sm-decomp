@@ -468,6 +468,7 @@ fn assemble(
             health,
             countdown,
             scene_countdown: seed.scene_countdown.map(|(admission, _)| admission),
+            adjacent_scene_countdown: None,
             ground_pull,
         },
     ))
@@ -532,6 +533,17 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
             .as_mut()
             .ok_or_else(|| data_failure(None, "native ActorUpdate continuation"))?;
         continuation.recurring_actors = Some(actors);
+    }
+    if let Some(scene) = returns.adjacent_countdown_scene {
+        let fault = || data_failure(None, "adjacent scene continuity and whole Timer work");
+        let admission = content.scene_countdown.ok_or_else(fault)?;
+        if !scene.holds_origin(&wram)
+            || admission.choice != frame::countdown_scene::Choice::MaintainCountdown
+            || content.countdown.is_none()
+        {
+            return Err(fault());
+        }
+        content.adjacent_scene_countdown = Some(admission);
     }
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {

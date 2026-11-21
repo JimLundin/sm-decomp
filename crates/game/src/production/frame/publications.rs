@@ -66,6 +66,17 @@ impl Publications {
         self.interval == 0
     }
 
+    pub(super) const fn interval_start(&self) -> u64 {
+        self.interval
+    }
+
+    pub(super) fn preceding(&self) -> Result<&[Event], PublicationFault> {
+        usize::try_from(self.interval)
+            .ok()
+            .and_then(|index| self.events.get(..index))
+            .ok_or(PublicationFault::Cursor)
+    }
+
     pub(super) fn active(&self) -> Result<&[Event], PublicationFault> {
         usize::try_from(self.interval)
             .ok()

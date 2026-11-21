@@ -331,8 +331,7 @@ fn compare_continuation(
         if matches!(&admitted.content, ProductionContent::Frame(content)
             if content.hud_refresh.as_ref().is_some_and(|hud| hud.recurring.is_some()))
         {
-            adjacent_hud_tests::check_hud_map(case, sources, admitted);
-            Dependency::CountdownSceneScheduling
+            adjacent_hud_tests::check_hud_map(case, sources, admitted)
         } else if admitted_odd_ground(admitted) {
             Dependency::HudDisplayPreparation
         } else {

@@ -2,7 +2,12 @@
 
 use super::super::{Manifest, Member, hardware_seed};
 use super::quiet_profile;
-use crate::replay::{Sources, data_failure, frame, index::Case, result::Outcome};
+use crate::replay::{
+    Sources, data_failure, frame,
+    frame_countdown_scene::AdjacentProjection,
+    index::{Case, Start},
+    result::Outcome,
+};
 use data::timing::MasterTicks;
 use game::production::timing::{PadChange, PhysicalPad};
 use serde::Deserialize;
@@ -18,6 +23,7 @@ struct Supplement {
     adjacent_actor_update: Option<Member>,
     adjacent_down_contact: Option<Member>,
     adjacent_hud_map: Option<Member>,
+    adjacent_countdown_scene: Option<Member>,
     #[serde(rename = "adjacent_hud_observations")]
     _adjacent_hud_observations: Option<Member>,
     returns: Vec<Return>,
@@ -48,6 +54,15 @@ struct Presentation {
 }
 
 impl Return {
+    fn first(manifest: &Manifest, cut: u64) -> Self {
+        Self {
+            cut,
+            callbacks: manifest.callbacks.clone(),
+            endpoint: manifest.endpoint.clone(),
+            final_owners: manifest.final_owners.clone(),
+        }
+    }
+
     fn resolve(&mut self, root: &Path) {
         self.callbacks.resolve(root);
         self.endpoint.resolve(root);
@@ -88,6 +103,7 @@ pub(super) struct Prepared {
     pub(super) adjacent_actor_update: Option<data::timing::Template>,
     pub(super) adjacent_down_contact: Option<[data::timing::Template; 2]>,
     pub(super) adjacent_hud_map: Option<super::super::hud_display::AdjacentShape>,
+    pub(super) adjacent_countdown_scene: Option<AdjacentProjection>,
 }
 
 pub(super) fn prepare(
@@ -97,12 +113,7 @@ pub(super) fn prepare(
     first_cut: u64,
     next_pad: PadChange,
 ) -> Result<Prepared, Outcome> {
-    let first_return = Return {
-        cut: first_cut,
-        callbacks: manifest.callbacks.clone(),
-        endpoint: manifest.endpoint.clone(),
-        final_owners: manifest.final_owners.clone(),
-    };
+    let first_return = Return::first(manifest, first_cut);
     let mut expected = BTreeMap::from([(first_cut, first_return.expected()?)]);
     let (
         pad_origin,
@@ -112,6 +123,7 @@ pub(super) fn prepare(
         adjacent_actor_update,
         adjacent_down_contact,
         adjacent_hud_map,
+        adjacent_countdown_scene,
     ) = if let Some(reference) = &case.end.native_returns {
         let path = sources.native.join(&reference.path);
         let root = path
@@ -154,6 +166,8 @@ pub(super) fn prepare(
         )?;
         let down_contact = read_down_contact(supplement.adjacent_down_contact, &root)?;
         let hud_map = read_hud_map(supplement.adjacent_hud_map, &root)?;
+        let countdown_scene =
+            read_adjacent_countdown_scene(supplement.adjacent_countdown_scene, &root)?;
         (
             Some(pad_origin),
             pads,
@@ -162,10 +176,12 @@ pub(super) fn prepare(
             actors,
             down_contact,
             hud_map,
+            countdown_scene,
         )
     } else {
-        (None, vec![next_pad], None, None, None, None, None)
+        (None, vec![next_pad], None, None, None, None, None, None)
     };
+    validate_adjacent_countdown_scope(case, adjacent_countdown_scene.is_some())?;
     let schedule = expected.keys().copied().collect();
     let random = case
         .expectations
@@ -192,7 +208,63 @@ pub(super) fn prepare(
         adjacent_actor_update,
         adjacent_down_contact,
         adjacent_hud_map,
+        adjacent_countdown_scene,
     })
+}
+
+fn validate_adjacent_countdown_scope(case: &Case, present: bool) -> Result<(), Outcome> {
+    let mut declarations = case
+        .borrowed
+        .iter()
+        .filter(|value| value.dependency == "frame.adjacent-countdown-scene");
+    let Some(value) = declarations.next() else {
+        return if present {
+            Err(data_failure(
+                None,
+                "explicit adjacent countdown scene borrowed scope",
+            ))
+        } else {
+            Ok(())
+        };
+    };
+    // The reviewed manifest authenticates the exact ordered first Timer profile
+    // reused by the adjacent producer.
+    let Start::NativeSeed { sha256, .. } = &case.start else {
+        return Err(data_failure(None, "adjacent countdown source origin"));
+    };
+    if sha256 != "1e040c393ed88ec8a0b46184879e0681bc110355e928b8160c50170c533abc15"
+        || !present
+        || declarations.next().is_some()
+        || case.first_cut().and_then(|first| first.checked_add(1)) != Some(case.end.cut_inclusive)
+        || value.provider != "independently-qualified-adjacent-scene-scheduling"
+        || value.fields
+            != [
+                "independent-origin-scene-choice",
+                "first-native-return-and-current-hud-interrupt-preservation",
+                "current-timer-and-ceres-dispatch",
+            ]
+        || value.phase != "first-native-return-through-next-ceres-revalidation"
+        || value.claim != "adjacent scene continuity and selection only"
+    {
+        return Err(data_failure(
+            None,
+            "explicit adjacent countdown scene borrowed scope",
+        ));
+    }
+    Ok(())
+}
+
+fn read_adjacent_countdown_scene(
+    member: Option<Member>,
+    root: &Path,
+) -> Result<Option<AdjacentProjection>, Outcome> {
+    member
+        .map(|mut member| {
+            member.resolve(root);
+            AdjacentProjection::read(&member.text()?)
+                .map_err(|_| data_failure(None, "adjacent countdown scene projection"))
+        })
+        .transpose()
 }
 
 fn extend_expected_returns(

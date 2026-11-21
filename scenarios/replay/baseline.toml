@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "54a8bfb5625020d0734e6379a57125d267adc16e0dd07ffbd03b893112f37aed"
+index_sha256 = "dfd91672557ffbfcfe65c881afa0d4c9bee3686bd76509c8b1442b3591ba8678"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -367,7 +367,7 @@ pending_restorations = 0
 [[case]]
 id = "frame/adjacent-actual-trial"
 claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(CountdownSceneScheduling)" }
+expected = { status = "unsupported", cut = 2, dependency = "Frame(HealthCurrentInputs)" }
 observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]
@@ -385,7 +385,7 @@ pending_restorations = 0
 [[case]]
 id = "frame/adjacent-held-trial"
 claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(CountdownSceneScheduling)" }
+expected = { status = "unsupported", cut = 2, dependency = "Frame(HealthCurrentInputs)" }
 observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
 
 [case.counts]

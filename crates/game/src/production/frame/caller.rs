@@ -118,6 +118,8 @@ pub struct Content {
     pub frame_tail: Option<super::frame_tail::Contract>,
     /// Independently admitted initial scene scheduling for this expressly borrowed scope.
     pub scene_countdown: Option<super::countdown_scene::Admission>,
+    /// Separately qualified scene preservation and Timer work for the next opportunity.
+    pub adjacent_scene_countdown: Option<super::countdown_scene::Admission>,
     /// Checked body and cannon content.
     pub movement: crate::production::MovementContent,
     /// Checked semantic figures and clips.
@@ -1731,7 +1733,7 @@ impl State {
         rules: &Rules,
         budget: MasterTicks,
     ) -> Result<Outputs, ProductionFault> {
-        self.begin_next_opportunity()?;
+        self.begin_next_opportunity(content)?;
         self.validate_cannon_history()?;
         let (gameplay, native_admitted) = self.gameplay_publications()?;
         self.validate_scene_preservation(content, gameplay, native_admitted)?;

@@ -135,14 +135,7 @@ impl State {
             Stage::Charging {
                 offer: selected, ..
             } => {
-                if *selected != offer
-                    || self
-                        .timing
-                        .work
-                        .iter()
-                        .find(|work| work.kind == timing::WorkKind::Semantic(COUNTDOWN))
-                        .is_none_or(|work| physical.profile().ok().as_ref() != Some(&work.profile))
-                {
+                if *selected != offer || !self.countdown_profile_holds(physical) {
                     return Err(missing());
                 }
             }
@@ -156,6 +149,29 @@ impl State {
                     Dependency::AnimationPreparation,
                 )));
             }
+        }
+        Ok(())
+    }
+
+    fn countdown_profile_holds(&self, physical: &Physical) -> bool {
+        physical
+            .profile()
+            .is_ok_and(|profile| self.has_physical_bill(COUNTDOWN, &profile))
+    }
+
+    pub(crate) fn validate_countdown_checkpoint(
+        &self,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<(), super::Fault> {
+        if matches!(self.countdown, Stage::Charging { .. })
+            && (self.countdown_scene_offer(content, rules).is_err()
+                || content
+                    .countdown
+                    .as_ref()
+                    .is_none_or(|physical| !self.countdown_profile_holds(physical)))
+        {
+            return Err(super::Fault::InvalidPlayerEntry);
         }
         Ok(())
     }

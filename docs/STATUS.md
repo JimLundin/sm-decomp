@@ -234,9 +234,16 @@ displacement. The non-last animation hold suppresses the footstep, so FootContac
 and Poststep runs without queuing sound. The mini-map uses the carried HUD clock, current
 position, inventory and Health. At Ready and return the two controller trials compare the
 published tilemap and exploration bitmap with independent observations. A resumed refresh
-reaches the same cuts and outputs. Both cases hold the cut-2
-`Frame(CountdownSceneScheduling)` boundary in the
-[reviewed baseline](../scenarios/replay/baseline.toml). The
+reaches the same cuts and outputs.
+
+Both controller trials carry the borrowed scene choice across the first native return. The
+adjacent Timer reads it after the two drawing interrupts and runs the HUD's dormant countdown.
+The mini-map returns at 91,486 ticks into the second interval. Timer hands off at 92,242 ticks
+with one countdown answer and no additional device outputs. Both trials match all 203 ordered
+callbacks through that handoff. The next Animation opportunity
+requires current Health inputs. Both cases stop at `Frame(HealthCurrentInputs)` on cut 2,
+before production reaches the later Ceres scene read. The captured Ceres read independently
+qualifies the scene through that use. See the [reviewed baseline](../scenarios/replay/baseline.toml). The
 [adjacent fixture](../tools/ci/fetch_retained_haze.sh) includes independent callback streams
 and terminal observations for both intervals. The second full callback stream, second
 controller latch, later Health maintenance and second requested NMI return remain unverified.

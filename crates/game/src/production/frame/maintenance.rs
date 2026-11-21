@@ -106,11 +106,7 @@ impl State {
         if !self.countdown.holds(self) {
             return Err(missing());
         }
-        self.scene_countdown
-            .as_ref()
-            .ok_or_else(missing)?
-            .0
-            .revalidate_ceres_input(content.scene_countdown.ok_or_else(missing)?, *offer)
+        self.revalidate_countdown_scene_at_ceres(content, *offer)
             .map_err(|_| missing())?;
         let Caller::PlayerContinuation {
             completed,
@@ -183,15 +179,8 @@ impl State {
         }) && self.countdown.holds(self)
             && matches!(self.countdown, countdown_caller::Stage::Complete { offer, .. } if offer == receipt.scene)
             && self
-                .scene_countdown
-                .as_ref()
-                .zip(content.scene_countdown)
-                .is_some_and(|(scene, admission)| {
-                    scene
-                        .0
-                        .revalidate_ceres_input(admission, receipt.scene)
-                        .is_ok()
-                })
+                .revalidate_countdown_scene_at_ceres(content, receipt.scene)
+                .is_ok()
     }
 
     pub(super) fn complete_maintenance(
