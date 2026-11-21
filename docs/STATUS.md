@@ -210,6 +210,30 @@ uses the same production entry. The stale-Run fault is caught at cut141's comple
 The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its admission and source
 identity separate from the first witness. The same borrowed producers and omitted consumers apply.
 
+## Scoped ordinary power shot and drawing
+
+`weapons-contact/M0-power-shot-drawing` admits the vacant shot pool at cut 156 of
+`chain-any-0003-DFD7`. The same weapon owner advances through the spawn, trail request and
+actor 1 consuming shot slot 0 at cut 160. W1 carries the marked body until the next update
+removes it. The exact sprite encoder receives the actual flying pictures on cuts 157 and
+159. The witness compares the attributed low entry and high pair at each insertion, and
+the absence of pictures at the other cuts. The pre-draw cursor, camera and phase come
+from the independent watched fixture. The earlier drawing producers, full OAM contents
+and hardware service are outside the scope.
+
+The separate actor opening at cut 157 survives suppressed native fire. The contact
+receiver runs later, at cut 160, with no observable side effects in the native trace.
+The scoped replay exercises contact geometry and the consumed marker. It borrows the
+actor roster and has no selected opening, shot-response or trail allocation producer.
+Frame's live PoseInput configurations cover qualified quiet running paths. A complete
+cut-156 Frame admission and the fire-capable PoseInput route are still missing. The later
+projectile preparation guards mapped shoot with the qualified selection and Cannon readiness
+as `Frame(WeaponPrePreparation)`. This cut has no integrated evidence reaching that guard.
+Actor progression and the surrounding drawing owners are also missing for the chain.
+
+The [fixture installer](../tools/ci/fetch_shot_contact.sh) installs the two hash-pinned
+input and comparison files under the native fixture directory.
+
 ## Retained native frame
 
 `frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.

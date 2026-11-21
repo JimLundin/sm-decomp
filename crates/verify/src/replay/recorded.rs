@@ -1,7 +1,7 @@
 //! Finite recorded recipes supply independent facts to the shared production runner.
 
 use super::compare::Observation;
-use super::index::{Case, Responsibility, Start};
+use super::index::{Case, InputProvider, Responsibility, Start};
 use super::readers::{
     ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader, record,
 };
@@ -26,6 +26,14 @@ enum Context {
         evidence: super::opportunity::Evidence,
     },
     Weapons(Arc<weapons::Content>),
+    ShotInputs(
+        Arc<weapons::Content>,
+        Arc<Vec<super::shot_drawing::InputCut>>,
+    ),
+    ShotExpected(
+        Arc<weapons::Content>,
+        Arc<Vec<super::shot_drawing::ExpectedCut>>,
+    ),
     Camera,
     Hud(Arc<hud::Content>),
     Appearance(Arc<appearance::Content>),
@@ -55,6 +63,7 @@ pub(super) enum Actual {
         last: Option<Box<game::production::MovementCeresOutputs>>,
     },
     Weapons,
+    ShotDrawing,
     Camera,
     Hud(Arc<hud::Content>),
     Appearance(Arc<appearance::Content>),
@@ -162,6 +171,34 @@ fn ordinary_recipe(
     })
 }
 
+fn weapons_recipe(
+    wram: &[u8],
+    sources: &Sources,
+    inputs: InputProvider,
+) -> Result<Recipe, Outcome> {
+    let content = Arc::new(weapons::Content::load(&sources.rom)?);
+    let seed = ProductionSeed::WeaponsContact(Box::new(weapons::seed(wram, &content)?));
+    let production_content = ProductionContent::WeaponsContact(Box::new(content.weapons.clone()));
+    let (source, actual) = if inputs == InputProvider::ScopedShotDrawingInputs {
+        (
+            Context::ShotInputs(
+                content,
+                Arc::new(super::shot_drawing::InputCut::load(&sources.native)?),
+            ),
+            Actual::ShotDrawing,
+        )
+    } else {
+        (Context::Weapons(content), Actual::Weapons)
+    };
+    Ok(Recipe {
+        source,
+        actual,
+        seed,
+        content: production_content,
+        rules: ProductionRules::WeaponsContact(weapons_projectiles::Rules::REFERENCE),
+    })
+}
+
 fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<Recipe, Outcome> {
     if case.responsibilities
         == [
@@ -191,17 +228,7 @@ fn recipe(case: &Case, wram: &[u8], sources: &Sources, cache: &Cache) -> Result<
             )
         }
         [Responsibility::Weapons, Responsibility::Contact] => {
-            let content = Arc::new(weapons::Content::load(&sources.rom)?);
-            let seed = ProductionSeed::WeaponsContact(Box::new(weapons::seed(wram, &content)?));
-            let production_content =
-                ProductionContent::WeaponsContact(Box::new(content.weapons.clone()));
-            (
-                Context::Weapons(content),
-                Actual::Weapons,
-                seed,
-                production_content,
-                ProductionRules::WeaponsContact(weapons_projectiles::Rules::REFERENCE),
-            )
+            return weapons_recipe(wram, sources, case.inputs);
         }
         [Responsibility::Camera] => (
             Context::Camera,
@@ -310,7 +337,12 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             cache: expected,
             recipe: match recipe {
                 Context::Connected { content, .. } => Context::ConnectedObservations(content),
-                recipe @ (Context::Ceres(_)
+                Context::ShotInputs(content, _) => Context::ShotExpected(
+                    content,
+                    Arc::new(super::shot_drawing::ExpectedCut::load(&sources.native)?),
+                ),
+                recipe @ (Context::ShotExpected(..)
+                | Context::Ceres(_)
                 | Context::MovementCeres { .. }
                 | Context::Weapons(_)
                 | Context::Camera
@@ -338,6 +370,28 @@ fn preceding(cache: &Cache, cut: u64) -> Result<oracle_record::FrameRecord, Outc
 }
 
 impl Inputs {
+    fn advance_weapons(
+        &self,
+        production: &mut Production,
+        wram: &[u8],
+        cut: u64,
+    ) -> Result<ProductionOutputs, Outcome> {
+        if let Context::ShotInputs(content, tape) = &self.recipe {
+            return super::shot_drawing::InputCut::advance(tape, wram, content, cut, production);
+        }
+        let Context::Weapons(content) = &self.recipe else {
+            return Err(data_failure(Some(cut), "wrong weapons input scope"));
+        };
+        let input = weapons::input(wram, content, &self.row, cut)?;
+        production
+            .advance(AdvanceInput::WeaponsContact {
+                input: &input.update,
+                world: &input.world,
+                contacts: &input.opportunities,
+            })
+            .map_err(|fault| production_failure(cut, fault))
+    }
+
     pub fn advance(
         &self,
         production: &mut Production,
@@ -345,7 +399,7 @@ impl Inputs {
     ) -> Result<ProductionOutputs, Outcome> {
         let prior = preceding(&self.cache, cut)?;
         let outputs = match &self.recipe {
-            Context::ConnectedObservations(_) => {
+            Context::ConnectedObservations(_) | Context::ShotExpected(..) => {
                 return Err(data_failure(
                     Some(cut),
                     "expected reader cannot advance production",
@@ -410,13 +464,8 @@ impl Inputs {
                 let input = ceres::input(&prior.wram, *slot)?;
                 production.advance(AdvanceInput::Ceres(&input))
             }
-            Context::Weapons(content) => {
-                let input = weapons::input(&prior.wram, content, &self.row, cut)?;
-                production.advance(AdvanceInput::WeaponsContact {
-                    input: &input.update,
-                    world: &input.world,
-                    contacts: &input.opportunities,
-                })
+            Context::Weapons(_) | Context::ShotInputs(..) => {
+                return self.advance_weapons(production, &prior.wram, cut);
             }
             Context::Camera => {
                 camera::validate_step(&prior.wram, &record(&self.cache, cut)?.wram)?;
@@ -451,7 +500,7 @@ impl Expected {
             Context::ConnectedObservations(content) => {
                 super::connected::expected(&current.wram, &content.appearance, case, cut)?
             }
-            Context::Connected { .. } => {
+            Context::Connected { .. } | Context::ShotInputs(..) => {
                 return Err(data_failure(
                     Some(cut),
                     "input reader cannot read expectations",
@@ -471,6 +520,9 @@ impl Expected {
                 fields
             }
             Context::Ceres(slot) => ceres::expected(&current.wram, *slot)?,
+            Context::ShotExpected(content, tape) => {
+                super::shot_drawing::ExpectedCut::read(tape, &current.wram, content, cut)?
+            }
             Context::Weapons(content) => weapons::expected(&current.wram, content)?,
             Context::Camera => camera::expected(&current.wram)?,
             Context::Hud(content) => hud::expected(&current.wram, content)?,
@@ -523,6 +575,11 @@ impl Actual {
                 OwnedState::WeaponsContact(state),
                 ProductionOutputs::WeaponsContact(outputs),
             ) => Ok(weapons::actual(&state.0, outputs)),
+            (
+                Self::ShotDrawing,
+                OwnedState::WeaponsContact(state),
+                ProductionOutputs::WeaponsContactDrawing(outputs),
+            ) => super::shot_drawing::actual(&state.0, outputs, cut),
             (Self::Camera, OwnedState::Camera(state), ProductionOutputs::Camera(outputs)) => {
                 Ok(camera::actual(&state.0, outputs))
             }
@@ -552,7 +609,9 @@ impl Actual {
                 Ok(fields)
             }
             (Self::Ceres, OwnedState::Ceres(state)) => Ok(ceres::initial(state)),
-            (Self::Weapons, OwnedState::WeaponsContact(state)) => Ok(weapons::initial(&state.0)),
+            (Self::Weapons | Self::ShotDrawing, OwnedState::WeaponsContact(state)) => {
+                Ok(weapons::initial(&state.0))
+            }
             (Self::Camera, OwnedState::Camera(state)) => Ok(camera::initial(&state.0)),
             (Self::Hud(content), OwnedState::Hud(state)) => hud::initial(state, content),
             (Self::Appearance(content), OwnedState::Appearance(state)) => {

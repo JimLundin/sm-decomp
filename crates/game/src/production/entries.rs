@@ -108,6 +108,15 @@ pub(super) fn advance(
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
         (
+            OwnedState::WeaponsContact(state),
+            ProductionContent::WeaponsContact(content),
+            ProductionRules::WeaponsContact(rules),
+            AdvanceInput::WeaponsContactDrawing { shot, drawing },
+        ) => ProductionOutputs::WeaponsContactDrawing(Box::new(
+            super::weapons::advance_with_drawing(&mut state.0, shot, content, *rules, drawing)?,
+        )),
+
+        (
             OwnedState::AudioSender(state),
             ProductionContent::AudioSender(group),
             ProductionRules::AudioSender,

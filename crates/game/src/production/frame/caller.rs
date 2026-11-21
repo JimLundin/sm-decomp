@@ -638,6 +638,8 @@ pub enum Dependency {
     FinalFrameHistory,
     /// Remaining player preparation requires its actual current dependencies.
     PlayerContinuationPreparation,
+    /// A live mapped shoot input requires the ordinary power PRE and shot owner.
+    WeaponPrePreparation,
     /// Recurring sprite-object owners require independent qualification.
     SpriteObjectsPreparation,
     /// An interrupt requires a current admitted handler owner.

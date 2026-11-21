@@ -127,6 +127,22 @@ impl State {
         actual: Option<&ProjectilesCompletion>,
     ) -> Result<ProjectilesCompletion, ProductionFault> {
         let fault = missing();
+        let Caller::PlayerContinuation { completed, .. } = &self.caller else {
+            return Err(ProductionFault::WrongScope);
+        };
+        let pose = &completed.0.pose_input.as_ref().ok_or(fault)?.dependency;
+        if pose.held.0 & pose.bindings.shoot.0 != 0
+            && self.hud.state().selection == interface_hud::Selection::None
+            && self
+                .appearance
+                .cannon
+                .as_ref()
+                .is_some_and(|cannon| cannon.0.may_follow())
+        {
+            return Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::WeaponPrePreparation,
+            )));
+        }
         let expected = if prepared.prelude.origin().is_some() {
             let (current, offers) = remaining_sources(prepared)?;
             offers

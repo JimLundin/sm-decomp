@@ -4,6 +4,7 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use data::assets::projectile as asset;
 use enum_map::EnumMap;
+use game::production::frame::borrowed_preparation::ActorSlotIdentity;
 use game::production::weapons::{ActorOccurrence, DoorOpportunity, QuietBeamWorld, WeaponsOutputs};
 use game::weapons_projectiles_bridge::{self as bridge, PowerContent};
 use weapons_projectiles as beam;
@@ -52,6 +53,16 @@ pub struct Content {
 }
 
 impl Content {
+    pub(super) fn picture(&self, pointer: u16) -> Result<beam::PictureId, Outcome> {
+        self.places
+            .pictures
+            .iter()
+            .position(|at| *at == pointer)
+            .and_then(|at| u16::try_from(at).ok())
+            .map(bridge::picture)
+            .ok_or_else(|| data_failure(None, "weapons picture observation"))
+    }
+
     pub fn load(path: &std::path::Path) -> Result<Self, Outcome> {
         let image = std::fs::read(path).map_err(|_| data_failure(None, "player ROM file"))?;
         let rom = data::rom::Rom::new(image).map_err(|_| data_failure(None, "player ROM pin"))?;
@@ -92,6 +103,11 @@ pub fn input(wram: &[u8], content: &Content, row: &str, cut: u64) -> Result<Inpu
     if row != "chain-any-0003-DFD7" || !(157..=160).contains(&cut) {
         return Err(unsupported("independent weapons/contact opportunity tape"));
     }
+    ordinary_input(wram, content)
+}
+
+// The independently watched extended insertion supplies its own cut qualification.
+pub(super) fn ordinary_input(wram: &[u8], content: &Content) -> Result<Input, Outcome> {
     // These checks admit the observed ordinary producer; they do not choose a producer.
     if word(wram, 0x0998)? != 8
         || word(wram, 0x09a6)? != 0
@@ -229,6 +245,7 @@ fn opportunity(wram: &[u8], occurrence: usize, slot: usize) -> Result<DoorOpport
     };
     Ok(DoorOpportunity {
         occurrence: ActorOccurrence(occurrence),
+        actor: ActorSlotIdentity(u8::try_from(slot).map_err(|_| data_failure(None, "actor slot"))?),
         door,
         conditions: enemy_interactions::ContactConditions {
             actor_updates_enabled: word(wram, 0x0e4c)? != 0,
@@ -303,13 +320,6 @@ fn observed_slot(
         .position(|at| *at == pointer)
         .or_else(|| (pointer == places.end).then_some(places.frames.len()))
         .ok_or_else(|| data_failure(None, "weapons cursor observation"))?;
-    let picture_pointer = w(0x0cb8)?;
-    let picture = content
-        .places
-        .pictures
-        .iter()
-        .position(|at| *at == picture_pointer)
-        .ok_or_else(|| data_failure(None, "weapons picture observation"))?;
     let body = beam::ShotBody {
         position: beam::Axes {
             x: beam::FixedPosition::from_parts(w(0x0b64)?, fraction.x),
@@ -335,9 +345,7 @@ fn observed_slot(
         next_frame: beam::ClipFrame::new(cursor, places.frames.len())
             .ok_or_else(|| data_failure(None, "weapons cursor relation"))?,
         remaining_hold: beam::FrameWord(w(0x0c54)?),
-        picture: Some(bridge::picture(
-            u16::try_from(picture).map_err(|_| data_failure(None, "weapons picture identity"))?,
-        )),
+        picture: Some(content.picture(w(0x0cb8)?)?),
         trail_appearance: None,
     };
     Ok(match id {

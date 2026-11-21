@@ -1,4 +1,5 @@
 use super::super::*;
+use crate::production::frame::borrowed_preparation::ActorSlotIdentity;
 use crate::production::weapons::{ActorOccurrence, DoorOpportunity, QuietBeamWorld};
 use crate::state::owned::{OwnedState, PowerPin};
 use crate::weapons_projectiles_bridge::PowerContent;
@@ -30,7 +31,9 @@ fn content() -> PowerContent {
     PowerContent::new(asset::Content {
         power: asset::PowerBeam {
             sheet: samus::SpriteSheet {
-                sprites: vec![data::spritemap::Spritemap::default()],
+                sprites: vec![data::spritemap::Spritemap {
+                    entries: vec![data::spritemap::SpritemapEntry::default()],
+                }],
                 ..Default::default()
             },
             flight,
@@ -207,6 +210,7 @@ fn admit(state: beam::State) -> (Production, ProductionContent, ProductionRules)
 fn opportunity(occurrence: usize, x: Option<u16>) -> DoorOpportunity {
     DoorOpportunity {
         occurrence: ActorOccurrence(occurrence),
+        actor: ActorSlotIdentity(u8::try_from(occurrence).unwrap()),
         conditions: enemy_interactions::ContactConditions {
             actor_updates_enabled: true,
             interactions_enabled: true,
@@ -400,4 +404,34 @@ fn room_mismatch_and_outside_muzzle_cannot_create_shots_or_requests() {
         Err(ProductionFault::Unsupported(Unsupported::BeamContinuation))
     );
     assert_eq!(production.save().unwrap(), saved);
+}
+
+#[test]
+fn wrapping_flying_picture_refuses_the_entire_opportunity() {
+    use crate::production::weapons::{FlyingDraw, Opportunity};
+    use crate::state::video::{NmiBatch, SpriteCount};
+
+    let (mut production, _, _) = admit(state(128, 2));
+    let previous = production.save().unwrap();
+    let batch = NmiBatch {
+        sprites: SpriteCount(127),
+        ..NmiBatch::default()
+    };
+    let result = production.advance(AdvanceInput::WeaponsContactDrawing {
+        shot: Opportunity {
+            input: &input(),
+            world: &world(),
+            contacts: &[opportunity(0, Some(132))],
+        },
+        drawing: FlyingDraw {
+            phase: beam::FlickerPhase::Odd,
+            view: &beam::DrawView::Normal(beam::ScreenOrigin(beam::Axes { x: 0, y: 0 })),
+            batch: &batch,
+        },
+    });
+    assert_eq!(
+        result,
+        Err(ProductionFault::Unsupported(Unsupported::BeamDrawing))
+    );
+    assert_eq!(production.save().unwrap(), previous);
 }

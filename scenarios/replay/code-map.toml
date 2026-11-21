@@ -316,7 +316,33 @@ targets = [
 ]
 
 [[rule]]
+id = "weapons-projectiles/BeamTrail"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/BeamVisibility"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "adapter", path = "crates/game/src/weapons_projectiles_bridge.rs" },
+  { role = "adapter", path = "crates/game/src/exact/oam.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
 id = "weapons-projectiles/CannonOrigin"
+targets = [
+  { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
+  { role = "adapter", path = "crates/game/src/production/weapons.rs" },
+  { role = "navigation", path = "crates/clean/weapons_projectiles/src/catalogue.rs" },
+]
+
+[[rule]]
+id = "weapons-projectiles/EndingShot"
 targets = [
   { role = "model", path = "crates/clean/weapons_projectiles/src/lib.rs" },
   { role = "adapter", path = "crates/game/src/production/weapons.rs" },

@@ -24,6 +24,17 @@ cut = 157
 field = "weapons.state"
 
 [[fault]]
+name = "weapons-flying-picture-next-slot"
+responsibility = "weapons"
+file = "crates/game/src/production/weapons.rs"
+before = '''let first_sprite = batch.sprites.0;'''
+after = '''if !flying.is_empty() { batch.sprites.0 = batch.sprites.0.wrapping_add(1); }
+    let first_sprite = batch.sprites.0;'''
+case = "weapons-contact/M0-power-shot-drawing"
+cut = 157
+field = "weapons.oam-insertion"
+
+[[fault]]
 name = "contact-disabled"
 responsibility = "contact"
 file = "crates/game/src/production/weapons.rs"

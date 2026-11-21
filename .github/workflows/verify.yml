@@ -136,6 +136,9 @@ jobs:
         run: |
           bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
           bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &shot_drawing
+        name: Fetch the reviewed scoped power shot witness
+        run: bash tools/ci/fetch_shot_contact.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &retained_frame
         name: Fetch retained native frame inputs and return observations
         run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
@@ -197,6 +200,7 @@ jobs:
       - *sender_offers
       - *movement_opportunities
       - *connected_ordinary
+      - *shot_drawing
       - *retained_frame
       - *native_search
       - name: Verify recorded bridge fault rejection and exact restoration

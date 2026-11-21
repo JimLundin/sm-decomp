@@ -1,7 +1,10 @@
 //! The bounded quiet-world weapons update and its ordered late door contacts.
 
 use super::{ProductionFault, Unsupported};
-use crate::weapons_projectiles_bridge::PowerContent;
+use crate::{
+    state::video::{NmiBatch, OAM_SPRITES},
+    weapons_projectiles_bridge::PowerContent,
+};
 use weapons_projectiles as beam;
 
 const BLOCK_PIXELS: u16 = 16;
@@ -17,6 +20,8 @@ const MAX_SPEED_MAGNITUDE: u32 = 32768;
 pub struct DoorOpportunity {
     /// Occurrence in the supplied processing receipt, including repeated actors.
     pub occurrence: ActorOccurrence,
+    /// Physical identity of the current receiver.
+    pub actor: super::frame::borrowed_preparation::ActorSlotIdentity,
     /// Current independently admitted actor and interaction permissions.
     pub conditions: enemy_interactions::ContactConditions,
     /// Current single door figure; no door response is executed by this scope.
@@ -43,6 +48,41 @@ pub struct WeaponsOutputs {
     pub events: Vec<beam::Event>,
     /// Every supplied actor opportunity, including misses and refused contacts.
     pub contacts: Vec<DoorReceipt>,
+}
+
+/// Actual inputs at one bounded weapon update and contact opportunity.
+#[derive(Clone, Copy)]
+pub struct Opportunity<'a> {
+    /// Current cannon, motion, camera and room inputs.
+    pub input: &'a beam::UpdateInput,
+    /// Complete checked terrain.
+    pub world: &'a QuietBeamWorld,
+    /// Current contact opportunities in processing order.
+    pub contacts: &'a [DoorOpportunity],
+}
+
+/// Inputs at the flying-picture insertion point.
+#[derive(Clone, Copy)]
+pub struct FlyingDraw<'a> {
+    /// Current presentation phase from the drawing caller.
+    pub phase: beam::FlickerPhase,
+    /// Current drawing coordinates.
+    pub view: &'a beam::DrawView,
+    /// The batch already populated by earlier drawing producers.
+    pub batch: &'a NmiBatch,
+}
+
+/// Publications from the selected weapon, contact and drawing owners.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ShotDrawingOutputs {
+    /// All update and contact publications.
+    pub weapons: WeaponsOutputs,
+    /// Reached flying intents in production order.
+    pub pictures: Vec<beam::PictureIntent>,
+    /// Incoming index of the exact insertion.
+    pub first_sprite: u16,
+    /// Batch after exact flight-picture insertion.
+    pub batch: NmiBatch,
 }
 
 /// A checked complete immutable rectangle of independently admitted terrain.
@@ -294,4 +334,35 @@ pub(super) fn advance(
         })
         .collect();
     Ok(WeaponsOutputs { events, contacts })
+}
+
+pub(super) fn advance_with_drawing(
+    state: &mut beam::State,
+    shot: Opportunity<'_>,
+    content: &PowerContent,
+    rules: beam::Rules,
+    drawing: FlyingDraw<'_>,
+) -> Result<ShotDrawingOutputs, ProductionFault> {
+    let weapons = advance(state, shot.input, content, rules, shot.world, shot.contacts)?;
+    let beam::PictureIntents { flying, impact } =
+        beam::pictures(state, drawing.phase, drawing.view);
+    if !impact.is_empty() {
+        return Err(unsupported(Unsupported::BeamDrawing));
+    }
+    let draw = content.draw(&flying).map_err(ProductionFault::Weapons)?;
+    let mut batch = drawing.batch.clone();
+    let first_sprite = batch.sprites.0;
+    if usize::from(first_sprite)
+        .checked_add(draw.pieces.len())
+        .is_none_or(|end| end >= OAM_SPRITES)
+    {
+        return Err(unsupported(Unsupported::BeamDrawing));
+    }
+    batch.draw_sprites(&draw);
+    Ok(ShotDrawingOutputs {
+        weapons,
+        pictures: flying,
+        first_sprite,
+        batch,
+    })
 }

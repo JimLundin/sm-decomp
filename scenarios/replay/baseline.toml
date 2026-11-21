@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "061353f4ec39f63b7d60eec8751b2956f80a9a3902254f1db0f34d3e57c6ce77"
+index_sha256 = "08fb0a0ec365de9e3da8bf7a31516936a8f3607c3155bec313bcb5d0af5212fa"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -124,6 +124,24 @@ replies = 0
 null_cuts = 0
 null_fields = 0
 restorations = 4
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "weapons-contact/M0-power-shot-drawing"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "ea1515c7c5e9b7ab54f2953f5bcbef247575a984d6e76de93aa7ec972642ffcb"
+
+[case.counts]
+cuts = 5
+fields = 5
+outputs = 25
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 5
 pending_boundaries = 0
 pending_restorations = 0
 

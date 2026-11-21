@@ -144,6 +144,13 @@ pub enum AdvanceInput<'a> {
         /// Every current door opportunity in the actual processing order.
         contacts: &'a [weapons::DoorOpportunity],
     },
+    /// Scoped ordinary power update, ordered contact and reached flying-picture insertion.
+    WeaponsContactDrawing {
+        /// The bounded update and contact opportunity.
+        shot: weapons::Opportunity<'a>,
+        /// Independently admitted inputs at the flying-picture insertion point.
+        drawing: weapons::FlyingDraw<'a>,
+    },
     /// Independent ordered block requests or room placements.
     Blocks(BlocksInput<'a>),
     /// Actual movement placement, lead, room screens and time permission.
@@ -179,6 +186,8 @@ pub enum ProductionOutputs {
     Audio(Vec<audio_transport::transport::Output>),
     /// Every weapons request and supplied contact receipt.
     WeaponsContact(weapons::WeaponsOutputs),
+    /// Scoped weapons requests, ordered contact and exact flying-picture insertion.
+    WeaponsContactDrawing(Box<weapons::ShotDrawingOutputs>),
     /// Every block request answer, written cell and sound.
     Blocks(BlocksOutputs),
     /// Complete resulting camera and retained receipt.
@@ -255,6 +264,8 @@ pub enum Unsupported {
     BeamContinuation,
     /// A possible clip radius can create an unsupported contact span.
     BeamSpan,
+    /// The flying-picture insertion cannot consume the supplied drawing state.
+    BeamDrawing,
     /// Queue offers must occur between CPU sender services.
     SenderService,
     /// A cue or physical reply belongs to another sender's request line.

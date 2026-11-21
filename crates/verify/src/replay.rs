@@ -56,6 +56,7 @@ mod recorded;
 pub mod result;
 mod runner;
 mod sender_offer;
+mod shot_drawing;
 mod weapons;
 
 use compare::{CompareFault, Observation};

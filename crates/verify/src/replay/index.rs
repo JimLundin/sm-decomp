@@ -183,6 +183,8 @@ pub enum InputProvider {
     PrecedingCutCameraInputs,
     /// Independent cannon/terrain facts and bounded watched actor opportunities.
     PrecedingCutWeaponsContactInputs,
+    /// Independently watched ordinary weapon inputs and the flying-picture insertion context.
+    ScopedShotDrawingInputs,
     /// Independent stable status/map facts and inert-input representatives.
     PrecedingCutHudInputs,
     /// Independent stable standing-figure neighbours.
@@ -229,6 +231,8 @@ pub enum ExpectedProvider {
     PinnedRecordCache,
     /// Independent queue and committed progress.
     SenderOfferQueue,
+    /// Pinned slot state and independently watched exact shot insertions.
+    PinnedShotDrawingObservations,
     /// Independent decoded native cuts.
     NativeDecodedCuts,
 }
@@ -401,6 +405,18 @@ pub enum ObservationId {
     /// Exact independently decoded contact.consumed-markers.
     #[serde(rename = "contact.consumed-markers")]
     ContactConsumedMarkers,
+    /// Reached power spawn and trail request sequence.
+    #[serde(rename = "weapons.update-events")]
+    WeaponsUpdateEvents,
+    /// Ordered physical receiver and shot slots.
+    #[serde(rename = "contact.receivers")]
+    ContactReceivers,
+    /// Selected flying picture intents.
+    #[serde(rename = "weapons.flying-pictures")]
+    WeaponsFlyingPictures,
+    /// Exact low entry and high pair at the reached insertion.
+    #[serde(rename = "weapons.oam-insertion")]
+    WeaponsOamInsertion,
     /// Exact independently decoded hud.grid.
     #[serde(rename = "hud.grid")]
     HudGrid,
@@ -781,8 +797,13 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | ObservationId::HudSelected
         | ObservationId::HudOneShot
         | ObservationId::HudMapOff => Responsibility::Hud,
-        ObservationId::WeaponsState => Responsibility::Weapons,
-        ObservationId::ContactConsumedMarkers => Responsibility::Contact,
+        ObservationId::WeaponsState
+        | ObservationId::WeaponsUpdateEvents
+        | ObservationId::WeaponsFlyingPictures
+        | ObservationId::WeaponsOamInsertion => Responsibility::Weapons,
+        ObservationId::ContactConsumedMarkers | ObservationId::ContactReceivers => {
+            Responsibility::Contact
+        }
         ObservationId::AppearancePlaying
         | ObservationId::AppearanceStep
         | ObservationId::AppearanceTimeLeft
@@ -886,6 +907,9 @@ fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
         | "weapons-projectiles/CannonOrigin"
         | "weapons-projectiles/InheritedMotion"
         | "weapons-projectiles/FlyingBeam" => &[O::WeaponsState],
+        "weapons-projectiles/EndingShot" => &[O::WeaponsState, O::ContactConsumedMarkers],
+        "weapons-projectiles/BeamTrail" => &[O::WeaponsState, O::WeaponsUpdateEvents],
+        "weapons-projectiles/BeamVisibility" => &[O::WeaponsFlyingPictures, O::WeaponsOamInsertion],
         "enemy-interactions/ContactAllowed"
         | "enemy-interactions/BoxOverlap"
         | "enemy-interactions/FirstPowerShot" => &[O::ContactConsumedMarkers],
@@ -1036,6 +1060,38 @@ fn sender_offer_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
+fn weapons_provider_valid(case: &Case, recorded: bool) -> bool {
+    use ObservationId as O;
+    if case.content != ContentProvider::PlayerRomImport
+        || case.expectations.fields != [O::WeaponsState]
+        || case.expectations.output_cut.is_some()
+    {
+        return false;
+    }
+    if case.inputs == InputProvider::PrecedingCutWeaponsContactInputs {
+        return recorded && case.expectations.outputs == [O::ContactConsumedMarkers];
+    }
+    case.inputs == InputProvider::ScopedShotDrawingInputs
+        && case.kind == CaseKind::Scoped
+        && case.expectations.provider == ExpectedProvider::PinnedShotDrawingObservations
+        && case.row == super::shot_drawing::ROW
+        && matches!(
+            case.start,
+            Start::CacheCut {
+                frame: super::shot_drawing::START
+            }
+        )
+        && case.end.cut_inclusive == super::shot_drawing::END
+        && case.expectations.outputs
+            == [
+                O::ContactConsumedMarkers,
+                O::WeaponsUpdateEvents,
+                O::ContactReceivers,
+                O::WeaponsFlyingPictures,
+                O::WeaponsOamInsertion,
+            ]
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
     if case.inputs == InputProvider::Unavailable {
@@ -1106,12 +1162,7 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
                 && observations.len() == 9
         }
         [Responsibility::Weapons, Responsibility::Contact] => {
-            recorded
-                && case.content == ContentProvider::PlayerRomImport
-                && case.inputs == InputProvider::PrecedingCutWeaponsContactInputs
-                && case.expectations.fields == [O::WeaponsState]
-                && case.expectations.outputs == [O::ContactConsumedMarkers]
-                && case.expectations.output_cut.is_none()
+            weapons_provider_valid(case, recorded)
         }
         [Responsibility::Hud] => {
             recorded

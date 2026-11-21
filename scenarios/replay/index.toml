@@ -187,6 +187,42 @@ phase = "before-each-door-contact"
 claim = "bounded original watch validates ordered slots0 then1 and immutable preceding actor contact fields for this caller; actor selection and AI execution outside case"
 
 [[case]]
+id = "weapons-contact/M0-power-shot-drawing"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 156 }
+end = { cut_inclusive = 161 }
+rules = ["weapons-projectiles/ShotSpacing", "weapons-projectiles/HoldingShoot", "weapons-projectiles/CannonOrigin", "weapons-projectiles/InheritedMotion", "weapons-projectiles/FlyingBeam", "weapons-projectiles/BeamTrail", "weapons-projectiles/BeamVisibility", "weapons-projectiles/EndingShot", "enemy-interactions/ContactAllowed", "enemy-interactions/BoxOverlap", "enemy-interactions/FirstPowerShot"]
+profile = "reference"
+responsibilities = ["weapons", "contact"]
+content = "player-rom-import"
+inputs = "scoped-shot-drawing-inputs"
+expectations = { provider = "pinned-shot-drawing-observations", fields = ["weapons.state"], outputs = ["contact.consumed-markers", "weapons.update-events", "contact.receivers", "weapons.flying-pictures", "weapons.oam-insertion"] }
+checkpoints = true
+limits = ["actual ordinary shot owner advances once from the vacant pool through removal", "Frame lacks live fire PRE, complete controller and cannon handoff, active actor progression and surrounding drawing production", "trail request and contact marker covered; trail allocation, door opening and receiver execution are excluded", "flying picture inserts through the exact sprite encoder at an observed incoming cursor; full OAM image, hardware transfer and pixels are excluded"]
+
+[[case.borrowed]]
+dependency = "weapons.cannon-and-world"
+provider = "preceding-cut-records-and-independent-shot-contact-watch"
+fields = ["mapped.controller", "pose.current", "pose.previous", "pose.pending-aim", "muzzle.centre", "movement.directional-travel", "camera.update-origin", "camera.vertical-fraction", "world.terrain", "mode.time-stopped"]
+phase = "before-ordinary-power-update"
+claim = "observed PRE context supplied independently of the selected shot state"
+
+[[case.borrowed]]
+dependency = "contact.actor-opportunities"
+provider = "independent-shot-contact-watch"
+fields = ["actor.identity", "actor.processing-order", "actor.geometry", "actor.permissions"]
+phase = "before-each-door-contact"
+claim = "actual ordered native opportunities constrain the scoped production call"
+
+[[case.borrowed]]
+dependency = "weapons.drawing-insertion"
+provider = "independent-shot-contact-watch"
+fields = ["camera.drawing-origin", "drawing.counter-parity", "drawing.incoming-cursor"]
+phase = "before-flying-picture-insertion"
+claim = "independent enclosing draw context supplies insertion authority; only attributed sprite entries are compared"
+
+[[case]]
 id = "camera/unchanged-centre-follow"
 kind = "scoped"
 row = "item-morph-ball"
