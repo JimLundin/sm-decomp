@@ -35,3 +35,7 @@ content = [
     "tests::content::all_room_versions_decode",
     "tests::content::all_placed_items_count_a_hundred_percent",
 ]
+
+audio_assets = [
+    "replay::audio::import_witness::opening_ceres_rom_content_matches_resident_observations",
+]

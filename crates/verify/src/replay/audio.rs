@@ -350,3 +350,6 @@ pub const fn reply_slot(line: ReplyLine) -> usize {
         ReplyLine::Group(SoundGroup::Contact) => 3,
     }
 }
+
+#[cfg(test)]
+mod import_witness;

@@ -604,7 +604,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | audio-transport | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| audio-transport | replay provider | 3 | 4,755 | 3,845 | 505 | 110 | 659 | 566 | 31 | 693 |
+| audio-transport | replay provider | 4 | 5,337 | 4,456 | 513 | 110 | 701 | 579 | 31 | 772 |
 | enemy-interactions | bridge | 1 | 234 | 241 | 3 | 60 | 32 | 0 | 0 | 39 |
 | enemy-interactions | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | weapons-projectiles | bridge | 1 | 1,409 | 1,347 | 68 | 240 | 208 | 37 | 0 | 226 |
@@ -635,7 +635,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-haze | bridge | 1 | 653 | 822 | 168 | 62 | 21 | 14 | 0 | 176 |
 | world-haze | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| total | | | 43,218 | 41,147 | 3,968 | 1,705 | 3,530 | 4,282 | 347 | 7,153 |
+| total | | | 43,799 | 41,758 | 3,976 | 1,705 | 3,572 | 4,295 | 347 | 7,232 |
 
 ## Engine services
 
