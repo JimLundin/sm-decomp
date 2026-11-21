@@ -70,6 +70,24 @@ carry production State from the admitted start with no feedback from expected re
 automatic reseed after failure. Scope declares selected owners, borrowed stimuli, compared
 fields/outputs and excluded consumers. A movement case without rendering proves no pixels.
 
+## Scoped sender offers
+
+Install the encrypted [sender offer fixture](../tools/ci/fetch_sender_offers.sh)
+with `bash tools/ci/fetch_sender_offers.sh "$ROM" "$NATIVE"`, then select
+`--rule audio-transport/OfferAcceptance --native "$NATIVE"` in the shared replay command.
+
+Each recorded case admits one group's independent starting bracket and the borrowed offer
+from `inputs.toml`. The case calls the production AudioSender Offer entry. It compares
+the full oldest-first FIFO and committed progress against `expected.toml` at the first
+following selected-group service entry. The index uses the source video cut and the
+ingress identity distinguishes the two offers at cuts 157 and 183. Source chronology
+qualifies the borrowed cross-group order. Live producer order, physical timing, replies
+after the initial bracket and sender service are outside this scope.
+
+The constructed cases exercise same-group order, duplicates, capacity, reduced allowance
+and three suppressors. The saved final cut checks restoration of the complete scoped
+sender, including the seed reply. Each native case has one independent seed.
+
 ## Finding the code for a replay segment
 
 The read-only `map` command joins the typed index and validated reviewed baseline with

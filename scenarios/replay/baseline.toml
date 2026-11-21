@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "fb9a27961b3394df8aa41e384af398e6f2a7609fd530ceb078e39616a8f1f495"
+index_sha256 = "061353f4ec39f63b7d60eec8751b2956f80a9a3902254f1db0f34d3e57c6ce77"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -396,6 +396,474 @@ publications = 2295
 replies = 0
 null_cuts = 0
 null_fields = 9
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-00"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "a4ff985db70dd0f40b16a9aa0f0bfe8aee529023e1dbc4674cd8b70c12a18355"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-01"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "e4ed7bb731a9956d3ae6d415914f4dc750742384caa7149f2af3a3df44597459"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-02"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "cbd0575c3976cbc8dc17a39b4c45628a48cd1209bc472509de4b4c792b7e03a3"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-03"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "17eb4530e4f64c41f9e01081e5773e74816b1acc5c4ca4bbf6f395ee16ec845c"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-04"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "48bad14a7e422206726998515873b29b0b3436886d53a05a2f080eda6a3cbd7e"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-05"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "85040907ff712b7e67ba5e74a6a267e75e687645f7211055376ff571b3e34944"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-06"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "2610a42547240270e416d9eaff83705e2b41c585a65e3454e40369fdd1afdcce"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-07"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "c0b5451a135ec4e9e604d6c5fa3c7057aa7ac64f9eb4bf16fc9c7885a6615414"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-08"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "ea6e2d170377838d32d9608ca1425197aca6768d0cb5fe48fcc363a20782fdfd"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-09"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "6fba6e57b62a05ebcb8d92a8a804468e051047a077e3d1c48b268ce494412885"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-10"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "594327763450b078b8a40260f6425084c734da8b1eb3d9cf5c3f5abcf01bc287"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-11"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "7992747d325741c60774b8fb7a214bb95bc27bf8226c54eaca1afc5be96249be"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-12"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "7d54d8289d00106b972434f7e6759cceaadad95578d3e56b33e53265db3c4d8b"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-13"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "9d53a814d867ca43d8a9d81cdfb4ab55869a2f5cb96a9d4dc2c936204646361a"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-14"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d7373b65712607d43eeb3e0a17a2a4035335c6528aafe02c32ef9f8ea1655c61"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-15"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "bc61076bf7e858191da7407ff9a9744f434e23cb77eed6033f25baa0679a1c3b"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-16"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "83ce15a8fb3299d4b07f3b3fc3bb9a6094fdb36f31cbe843624e3531c9f7435a"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-17"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "7fb9e73dcd0dd063b0762a573a5bdea510cc0280e010054a53e35bd9213c9d4c"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/native-18"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "20054a6a2baafe261d03909d6508ab7f47f3c75ed1f80514d7bfb8a618d42fee"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/ordered-pair"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "63c11631d9deaa454ecf0e8e50bb2f312422cb8562034b3b096fd5f8535ded7f"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/repeat-at-five"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "3e60c70c2adf854ca5044b33231d489632234f83626ea6c3518385d081c85f04"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 1
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/deny-at-six"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "63c11631d9deaa454ecf0e8e50bb2f312422cb8562034b3b096fd5f8535ded7f"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 2
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/deny-smaller-limit"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "0c3710bf1d413c171fbbf20387172ae813ec86f600e090ead537bc0e61c01107"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 2
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/deny-disabled"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d55ea5eb30a5e9c3fa6a2959f65f0a948783b988ca2cfd8da6d82d75966f21ea"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 2
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/deny-demo"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d55ea5eb30a5e9c3fa6a2959f65f0a948783b988ca2cfd8da6d82d75966f21ea"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 2
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "sender-offer/deny-explosion"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "d55ea5eb30a5e9c3fa6a2959f65f0a948783b988ca2cfd8da6d82d75966f21ea"
+
+[case.counts]
+cuts = 1
+fields = 2
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 1
+null_fields = 2
 restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
