@@ -29,6 +29,7 @@ pub use animation::{AppearanceContent, ClipFault, FigureClip};
 use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
+pub use frame::inputs::MovementInputs;
 pub use immutable::{BlockRules, CameraRules, HudRules};
 pub use sender::{SenderInput, Senders};
 
@@ -127,8 +128,8 @@ pub enum AdvanceInput<'a> {
     },
     /// Every changing movement dependency must be supplied by its producer or admitted source.
     Movement {
-        /// The actual preceding frame context.
-        frame: samus_movement::Frame<'a>,
+        /// Current admitted movement stimuli.
+        inputs: MovementInputs,
         /// Read-only admitted collision geometry and reaction permissions.
         /// Queries must not mutate an external gameplay owner or publish outputs.
         world: &'a dyn types::World,
@@ -564,12 +565,12 @@ impl Production {
                 OwnedState::Movement(samus),
                 ProductionContent::Movement(content),
                 ProductionRules::Movement(rules),
-                AdvanceInput::Movement { frame, world },
-            ) => ProductionOutputs::Movement(movement::advance(
+                AdvanceInput::Movement { inputs, world },
+            ) => ProductionOutputs::Movement(movement::advance_scoped(
                 &mut samus.0,
                 content,
                 rules,
-                &frame,
+                &inputs,
                 world,
             )?),
             (

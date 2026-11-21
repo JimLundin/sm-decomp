@@ -144,27 +144,8 @@ impl Inputs {
         let OwnedState::Movement(state) = production.state() else {
             return Err(data_failure(Some(cut), "native search owned scope"));
         };
+        let initial_pose = state.0.pose;
         let inputs = &self.input;
-        let radius = self
-            .content
-            .movement
-            .radius(state.0.pose)
-            .ok_or_else(|| data_failure(Some(cut), "native search body content"))?;
-        let body = |_| radius;
-        let heading = |pose| self.content.movement.cannon_heading(pose);
-        let frame = samus_movement::Frame {
-            sprite_before_movement: inputs.sprite,
-            cinematic_active: inputs.cinematic,
-            pad: inputs.pad,
-            pressed: inputs.pressed,
-            items: inputs.items,
-            spin_turned_far: inputs.ahead.turned_far,
-            elevator_moving: inputs.elevator,
-            parity: inputs.parity,
-            animation_ends: inputs.ahead.end,
-            body: &body,
-            cannon_heading: &heading,
-        };
         let guard = Guard {
             world: &inputs.world,
             width: self.width,
@@ -176,10 +157,12 @@ impl Inputs {
         let mut candidate = production.clone();
         let outputs = candidate
             .advance(AdvanceInput::Movement {
-                frame,
+                inputs: inputs.stimuli(),
                 world: &guard,
             })
-            .map_err(|fault| super::production_failure(cut, fault))?;
+            .map_err(|fault| {
+                movement::advance_failure(cut, initial_pose, "native search body content", fault)
+            })?;
         if guard.outside.borrow().is_some() {
             return Err(Outcome::Unsupported {
                 cut: Some(cut),

@@ -1,7 +1,8 @@
 //! Movement adaptation uses imported content and preserves every clean output.
 
-use super::{MovementContent, ProductionFault, Unsupported};
+use super::{MovementContent, MovementInputs, ProductionFault, Unsupported};
 use core::cell::Cell;
+use types::{FiringDirection, Pose, Radius};
 
 pub(super) fn with_frame<R>(
     current_pose: types::Pose,
@@ -9,9 +10,31 @@ pub(super) fn with_frame<R>(
     frame: &samus_movement::Frame<'_>,
     operation: impl FnOnce(&samus_movement::Frame<'_>) -> Result<R, ProductionFault>,
 ) -> Result<R, ProductionFault> {
-    if frame.elevator_moving && current_pose.facing == types::Facing::Screen {
+    check_elevator(current_pose, frame.elevator_moving)?;
+    with_pose_content(current_pose, content, |body, cannon_heading| {
+        operation(&samus_movement::Frame {
+            body,
+            cannon_heading,
+            ..*frame
+        })
+    })
+}
+
+fn check_elevator(pose: Pose, elevator_moving: bool) -> Result<(), ProductionFault> {
+    if elevator_moving && pose.facing == types::Facing::Screen {
         return Err(ProductionFault::Unsupported(Unsupported::ElevatorBody));
     }
+    Ok(())
+}
+
+fn with_pose_content<R>(
+    current_pose: Pose,
+    content: &MovementContent,
+    operation: impl FnOnce(
+        &dyn Fn(Pose) -> Radius,
+        &dyn Fn(Pose) -> Option<FiringDirection>,
+    ) -> Result<R, ProductionFault>,
+) -> Result<R, ProductionFault> {
     let initial = content
         .pose(current_pose)
         .ok_or(ProductionFault::Unsupported(Unsupported::PoseContent(
@@ -29,12 +52,7 @@ pub(super) fn with_frame<R>(
         )
     };
     let heading = |pose| content.pose(pose).and_then(|entry| entry.cannon_heading);
-    let admitted = samus_movement::Frame {
-        body: &body,
-        cannon_heading: &heading,
-        ..*frame
-    };
-    let value = operation(&admitted)?;
+    let value = operation(&body, &heading)?;
     if let Some(pose) = missing.get() {
         return Err(ProductionFault::Unsupported(Unsupported::PoseContent(pose)));
     }
@@ -53,5 +71,21 @@ pub(super) fn advance(
             .step(admitted, world, rules)
             .map_err(ProductionFault::Movement)?;
         Ok(outcome)
+    })
+}
+
+pub(super) fn advance_scoped(
+    samus: &mut samus_movement::Samus,
+    content: &MovementContent,
+    rules: &samus_movement::Rules,
+    inputs: &MovementInputs,
+    world: &dyn types::World,
+) -> Result<samus_movement::Outcome, ProductionFault> {
+    let pose = samus.pose;
+    with_pose_content(pose, content, |body, heading| {
+        check_elevator(pose, inputs.elevator_moving)?;
+        samus
+            .step(&inputs.frame(body, heading), world, rules)
+            .map_err(ProductionFault::Movement)
     })
 }

@@ -34,7 +34,7 @@ fn sender_state_shape_remains_pinned() {
     );
 }
 
-fn movement() -> (Production, ProductionContent, ProductionRules) {
+pub(super) fn movement() -> (Production, ProductionContent, ProductionRules) {
     let content = ProductionContent::Movement(
         MovementContent::new(
             data::assets::samus::map::MAP
@@ -71,7 +71,11 @@ fn frame() -> samus_movement::Frame<'static> {
     const fn heading(_: Pose) -> Option<types::FiringDirection> {
         None
     }
-    samus_movement::Frame {
+    stimuli().frame(&body, &heading)
+}
+
+pub(super) fn stimuli() -> MovementInputs {
+    MovementInputs {
         sprite_before_movement: Sprite::Plain,
         cinematic_active: false,
         pad: types::Buttons::default(),
@@ -81,12 +85,10 @@ fn frame() -> samus_movement::Frame<'static> {
         elevator_moving: false,
         parity: types::Parity::Even,
         animation_ends: None,
-        body: &body,
-        cannon_heading: &heading,
     }
 }
 
-fn empty_world() -> world::MovementWorld {
+pub(super) fn empty_world() -> world::MovementWorld {
     world::MovementWorld::new(
         32,
         vec![Block::Air; 32 * 32],
@@ -103,7 +105,7 @@ fn carried_movement_and_restored_continuation_preserve_accumulated_fall() {
     let world = empty_world();
     let first = carried
         .advance(AdvanceInput::Movement {
-            frame: frame(),
+            inputs: stimuli(),
             world: &world,
         })
         .unwrap();
@@ -117,13 +119,13 @@ fn carried_movement_and_restored_continuation_preserve_accumulated_fall() {
     assert_eq!(restored.state(), carried.state());
     let second = carried
         .advance(AdvanceInput::Movement {
-            frame: frame(),
+            inputs: stimuli(),
             world: &world,
         })
         .unwrap();
     let continued = restored
         .advance(AdvanceInput::Movement {
-            frame: frame(),
+            inputs: stimuli(),
             world: &world,
         })
         .unwrap();
@@ -134,6 +136,64 @@ fn carried_movement_and_restored_continuation_preserve_accumulated_fall() {
     };
     assert!(after_second.0.position.y.0 > first_y.0);
     assert_ne!(first, second);
+}
+
+#[test]
+fn unknown_movement_pose_refuses_without_committing() {
+    let (mut production, content, _) = movement();
+    let OwnedState::Movement(samus) = &mut production.state else {
+        panic!("movement scope");
+    };
+    // Model a running owner reaching a pose with no corresponding imported body.
+    samus.0.pose.facing = types::Facing::Screen;
+    let missing = samus.0.pose;
+    let ProductionContent::Movement(content) = content else {
+        panic!("movement content");
+    };
+    assert!(content.radius(missing).is_none());
+    let before = production.clone();
+    let saved = production.save().unwrap();
+    for elevator_moving in [false, true] {
+        assert_eq!(
+            production.advance(AdvanceInput::Movement {
+                inputs: MovementInputs {
+                    elevator_moving,
+                    ..stimuli()
+                },
+                world: &empty_world(),
+            }),
+            Err(ProductionFault::Unsupported(Unsupported::PoseContent(
+                missing
+            ))),
+        );
+        assert_eq!(production.state(), before.state());
+        assert_eq!(production.save().unwrap(), saved);
+    }
+}
+
+#[test]
+fn admitted_screen_pose_still_refuses_a_moving_elevator() {
+    let (_, content, rules) = movement();
+    let mut samus = fixtures::samus();
+    samus.pose = data::assets::samus::map::MAP
+        .iter()
+        .find(|entry| entry.key.facing == types::Facing::Screen)
+        .unwrap()
+        .key;
+    let mut production =
+        Production::admit(ProductionSeed::Movement(samus), content, rules).unwrap();
+    let before = production.clone();
+    assert_eq!(
+        production.advance(AdvanceInput::Movement {
+            inputs: MovementInputs {
+                elevator_moving: true,
+                ..stimuli()
+            },
+            world: &empty_world(),
+        }),
+        Err(ProductionFault::Unsupported(Unsupported::ElevatorBody)),
+    );
+    assert_eq!(production, before);
 }
 
 #[test]
