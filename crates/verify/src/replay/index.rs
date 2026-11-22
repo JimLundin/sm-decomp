@@ -167,6 +167,8 @@ pub struct NativeReturns {
 #[serde(rename_all = "kebab-case")]
 /// Independent source of changing causal stimuli.
 pub enum InputProvider {
+    /// Locked current Movement stimuli and early mini-map premises.
+    EarlyMapInputs,
     /// Authenticated actual-use snapshots for the connected ordinary family.
     ConnectedOrdinaryInputs,
     /// Qualified current owner inputs and explicitly borrowed unselected completions.
@@ -229,6 +231,8 @@ pub enum ContentProvider {
 #[serde(rename_all = "kebab-case")]
 /// Oracle source used only for comparison.
 pub enum ExpectedProvider {
+    /// Independent native early Map snapshots and carried cut record.
+    NativeEarlyMap,
     /// Independent frozen ordered physical callbacks and completed-return wall time.
     NativeFrameCallbacks,
     /// Independently observed Steady Haze and `LayerBlend` boundaries and mirrors.
@@ -250,6 +254,18 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Exact 15 mini-map cells in display order.
+    #[serde(rename = "hud.map-window")]
+    EarlyMapWindow,
+    /// Complete finished ordinary Movement state.
+    #[serde(rename = "movement.ordinary-completion")]
+    MapCarryMovement,
+    /// Complete finished ordinary Appearance state and Figure.
+    #[serde(rename = "appearance.ordinary-completion")]
+    MapCarryAppearance,
+    /// Complete finished ordinary Camera state.
+    #[serde(rename = "camera.ordinary-completion")]
+    MapCarryCamera,
     /// Complete pending sound queue, oldest first.
     #[serde(rename = "sender.queue")]
     SenderQueue,
@@ -765,104 +781,101 @@ fn rule_exists(rule: &str) -> bool {
 }
 
 const fn observation_owner(field: ObservationId) -> Responsibility {
+    use ObservationId as O;
     match field {
-        ObservationId::SenderQueue
-        | ObservationId::SenderProgress
-        | ObservationId::TouchdownOffer => Responsibility::AudioSender,
-        ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
-        ObservationId::FrameSteady => Responsibility::WorldHaze,
-        ObservationId::FrameRandom => Responsibility::GameRandom,
-        ObservationId::PlayTimeHours
-        | ObservationId::PlayTimeMinutes
-        | ObservationId::PlayTimeSeconds
-        | ObservationId::PlayTimeFrames => Responsibility::GameTime,
-        ObservationId::RoomShakeTimer | ObservationId::RoomShakePhase => Responsibility::WorldQuake,
-        ObservationId::HealthEnergyWhole
-        | ObservationId::HealthEnergyFraction
-        | ObservationId::HealthPendingWhole
-        | ObservationId::HealthPendingFraction
-        | ObservationId::HealthWarning => Responsibility::Health,
-        ObservationId::TouchdownClip
-        | ObservationId::TouchdownFit
-        | ObservationId::TouchdownResponse
-        | ObservationId::MovementWork
-        | ObservationId::MovementTests
-        | ObservationId::CompleteReached
-        | ObservationId::Inside
-        | ObservationId::MovementSkip
-        | ObservationId::FirstMotionSearch
-        | ObservationId::FirstMotionCandidates
-        | ObservationId::FirstMotionTerrain
-        | ObservationId::MovementStateComplete
-        | ObservationId::PositionX
-        | ObservationId::PositionY
-        | ObservationId::VerticalSpeed
-        | ObservationId::TravelLeft
-        | ObservationId::TravelRight
-        | ObservationId::TravelUp
-        | ObservationId::TravelDown
-        | ObservationId::WallTest
-        | ObservationId::Reached => Responsibility::Movement,
-        ObservationId::AudioSemantic
-        | ObservationId::AudioPublications
-        | ObservationId::AudioReplies
-        | ObservationId::AudioPendingMusic => Responsibility::Audio,
-        ObservationId::CeresPhase
-        | ObservationId::CeresWait
-        | ObservationId::CeresFigure
-        | ObservationId::CeresShown
-        | ObservationId::CeresSolid => Responsibility::Ceres,
-        ObservationId::CameraViewXPixel
-        | ObservationId::CameraViewXFraction
-        | ObservationId::CameraViewYPixel
-        | ObservationId::CameraViewYFraction
-        | ObservationId::CameraRememberedXPixel
-        | ObservationId::CameraRememberedXFraction
-        | ObservationId::CameraRememberedYPixel
-        | ObservationId::CameraRememberedYFraction
-        | ObservationId::CameraVerticalFraction => Responsibility::Camera,
-        ObservationId::HudGrid
-        | ObservationId::HudExplored
-        | ObservationId::HudEnergy
-        | ObservationId::HudMissiles
-        | ObservationId::HudSupers
-        | ObservationId::HudBombs
-        | ObservationId::HudHighlighted
-        | ObservationId::HudSelected
-        | ObservationId::HudOneShot
-        | ObservationId::HudMapOff => Responsibility::Hud,
-        ObservationId::WeaponsState
-        | ObservationId::WeaponsUpdateEvents
-        | ObservationId::WeaponsFlyingPictures
-        | ObservationId::WeaponsOamInsertion => Responsibility::Weapons,
-        ObservationId::ContactConsumedMarkers | ObservationId::ContactReceivers => {
-            Responsibility::Contact
+        O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
+        O::FrameTime | O::FrameOutputs => Responsibility::Frame,
+        O::FrameSteady => Responsibility::WorldHaze,
+        O::FrameRandom => Responsibility::GameRandom,
+        O::PlayTimeHours | O::PlayTimeMinutes | O::PlayTimeSeconds | O::PlayTimeFrames => {
+            Responsibility::GameTime
         }
-        ObservationId::TouchdownGraphics
-        | ObservationId::AppearancePlaying
-        | ObservationId::AppearanceStep
-        | ObservationId::AppearanceTimeLeft
-        | ObservationId::AppearanceBoostStage
-        | ObservationId::AppearanceLapsLeft => Responsibility::Appearance,
-        ObservationId::ProgressPlanetAwake
-        | ObservationId::ProgressMotherBrainTankBroken
-        | ObservationId::ProgressPhantoonStatueGrey
-        | ObservationId::ProgressRidleyStatueGrey
-        | ObservationId::ProgressDraygonStatueGrey
-        | ObservationId::ProgressKraidStatueGrey
-        | ObservationId::ProgressTourianOpen
-        | ObservationId::ProgressGlassTunnelBroken
-        | ObservationId::ProgressAcidReceded
-        | ObservationId::ProgressShaktoolPath
-        | ObservationId::ProgressTimeBombSet
-        | ObservationId::ProgressAnimalsFreed
-        | ObservationId::ProgressMetroidRoom1Empty
-        | ObservationId::ProgressMetroidRoom2Empty
-        | ObservationId::ProgressMetroidRoom3Empty
-        | ObservationId::ProgressMetroidRoom4Empty
-        | ObservationId::ProgressTourianRoomsUnset
-        | ObservationId::ProgressLavaQuakeOutrun
-        | ObservationId::ProgressZebetites => Responsibility::Progress,
+        O::RoomShakeTimer | O::RoomShakePhase => Responsibility::WorldQuake,
+        O::HealthEnergyWhole
+        | O::HealthEnergyFraction
+        | O::HealthPendingWhole
+        | O::HealthPendingFraction
+        | O::HealthWarning => Responsibility::Health,
+        O::TouchdownClip
+        | O::TouchdownFit
+        | O::TouchdownResponse
+        | O::MovementWork
+        | O::MovementTests
+        | O::CompleteReached
+        | O::Inside
+        | O::MovementSkip
+        | O::FirstMotionSearch
+        | O::FirstMotionCandidates
+        | O::FirstMotionTerrain
+        | O::MovementStateComplete
+        | O::PositionX
+        | O::PositionY
+        | O::VerticalSpeed
+        | O::TravelLeft
+        | O::TravelRight
+        | O::TravelUp
+        | O::TravelDown
+        | O::WallTest
+        | O::Reached
+        | O::MapCarryMovement => Responsibility::Movement,
+        O::AudioSemantic | O::AudioPublications | O::AudioReplies | O::AudioPendingMusic => {
+            Responsibility::Audio
+        }
+        O::CeresPhase | O::CeresWait | O::CeresFigure | O::CeresShown | O::CeresSolid => {
+            Responsibility::Ceres
+        }
+        O::CameraViewXPixel
+        | O::CameraViewXFraction
+        | O::CameraViewYPixel
+        | O::CameraViewYFraction
+        | O::CameraRememberedXPixel
+        | O::CameraRememberedXFraction
+        | O::CameraRememberedYPixel
+        | O::CameraRememberedYFraction
+        | O::CameraVerticalFraction
+        | O::MapCarryCamera => Responsibility::Camera,
+        O::EarlyMapWindow
+        | O::HudGrid
+        | O::HudExplored
+        | O::HudEnergy
+        | O::HudMissiles
+        | O::HudSupers
+        | O::HudBombs
+        | O::HudHighlighted
+        | O::HudSelected
+        | O::HudOneShot
+        | O::HudMapOff => Responsibility::Hud,
+        O::WeaponsState
+        | O::WeaponsUpdateEvents
+        | O::WeaponsFlyingPictures
+        | O::WeaponsOamInsertion => Responsibility::Weapons,
+        O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
+        O::TouchdownGraphics
+        | O::AppearancePlaying
+        | O::AppearanceStep
+        | O::AppearanceTimeLeft
+        | O::AppearanceBoostStage
+        | O::AppearanceLapsLeft
+        | O::MapCarryAppearance => Responsibility::Appearance,
+        O::ProgressPlanetAwake
+        | O::ProgressMotherBrainTankBroken
+        | O::ProgressPhantoonStatueGrey
+        | O::ProgressRidleyStatueGrey
+        | O::ProgressDraygonStatueGrey
+        | O::ProgressKraidStatueGrey
+        | O::ProgressTourianOpen
+        | O::ProgressGlassTunnelBroken
+        | O::ProgressAcidReceded
+        | O::ProgressShaktoolPath
+        | O::ProgressTimeBombSet
+        | O::ProgressAnimalsFreed
+        | O::ProgressMetroidRoom1Empty
+        | O::ProgressMetroidRoom2Empty
+        | O::ProgressMetroidRoom3Empty
+        | O::ProgressMetroidRoom4Empty
+        | O::ProgressTourianRoomsUnset
+        | O::ProgressLavaQuakeOutrun
+        | O::ProgressZebetites => Responsibility::Progress,
     }
 }
 
@@ -890,7 +903,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
     .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
 }
 
-fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
+fn witnessed_fields(rule: &str, early_map: bool) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
     Some(match rule {
         "samus-movement/MotionAttempts" => &[O::FirstMotionSearch],
@@ -953,6 +966,9 @@ fn witnessed_fields(rule: &str) -> Option<&'static [ObservationId]> {
         "enemy-interactions/ContactAllowed"
         | "enemy-interactions/BoxOverlap"
         | "enemy-interactions/FirstPowerShot" => &[O::ContactConsumedMarkers],
+        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" if early_map => {
+            &[O::EarlyMapWindow]
+        }
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
         "interface-hud/Exploring" => &[O::HudExplored],
         "samus-appearance/ClipPlays" => &[O::AppearanceStep, O::AppearanceTimeLeft],
@@ -1185,8 +1201,43 @@ fn audio_provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> 
         && case.expectations.output_cut.is_none()
 }
 
+fn early_map_provider_valid(case: &Case) -> bool {
+    use ObservationId as O;
+    case.kind == CaseKind::Scoped
+        && case.id.0 == "connected-ordinary/early-mini-map"
+        && case.row == "chain-any-0003-DFD7"
+        && matches!(case.start, Start::CacheCut { frame: 78 })
+        && case.end.cut_inclusive == 80
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::NativeEarlyMap
+        && case.responsibilities
+            == [
+                Responsibility::Movement,
+                Responsibility::Appearance,
+                Responsibility::Camera,
+                Responsibility::Hud,
+            ]
+        && case.checkpoints
+        && case.expectations.fields
+            == [
+                O::HudExplored,
+                O::EarlyMapWindow,
+                O::PositionX,
+                O::PositionY,
+                O::MapCarryMovement,
+                O::MapCarryAppearance,
+                O::MapCarryCamera,
+            ]
+        && case.expectations.outputs.is_empty()
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
+    if case.inputs == InputProvider::EarlyMapInputs {
+        return early_map_provider_valid(case);
+    }
     if case.inputs == InputProvider::Unavailable {
         return case.kind == CaseKind::Scoped
             && matches!(
@@ -1396,7 +1447,7 @@ fn scope_valid(case: &Case) -> bool {
         if rule_owner(rule).is_none_or(|owner| !owners.contains(&owner)) {
             return false;
         }
-        if witnessed_fields(rule)
+        if witnessed_fields(rule, case.inputs == InputProvider::EarlyMapInputs)
             .is_none_or(|fields| fields.iter().any(|field| !observations.contains(field)))
         {
             return false;

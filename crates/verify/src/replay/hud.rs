@@ -71,10 +71,13 @@ impl Content {
         })
     }
     pub(super) fn map(&self, wram: &[u8]) -> Result<&HerMap, Outcome> {
-        let area = data::room::Area::try_from(
-            u8::try_from(word(wram, 0x079f)?).map_err(|_| data_failure(None, "HUD area width"))?,
-        )
-        .map_err(|_| data_failure(None, "HUD area"))?;
+        let area =
+            u8::try_from(word(wram, 0x079f)?).map_err(|_| data_failure(None, "HUD area width"))?;
+        self.map_area(area)
+    }
+
+    pub(super) fn map_area(&self, area: u8) -> Result<&HerMap, Outcome> {
+        let area = data::room::Area::try_from(area).map_err(|_| data_failure(None, "HUD area"))?;
         self.maps
             .iter()
             .find(|(each, _)| *each == area)
@@ -372,22 +375,30 @@ pub fn input<'a>(prior: &[u8], content: &'a Content) -> Result<OwnedInput<'a>, O
                     x: word(prior, 0x0af6)?,
                     y: word(prior, 0x0afa)?,
                 },
-                room: Room {
-                    cell: Pair {
-                        x: i32::from(word(prior, 0x07a1)?),
-                        y: i32::from(word(prior, 0x07a3)?).saturating_add(1),
-                    },
-                    blocks: Pair {
-                        x: word(prior, 0x07a5)?,
-                        y: word(prior, 0x07a7)?,
-                    },
-                },
+                room: room_from_words(
+                    [word(prior, 0x07a1)?, word(prior, 0x07a3)?],
+                    [word(prior, 0x07a5)?, word(prior, 0x07a7)?],
+                ),
                 map: content.map(prior)?,
                 map_collected: word(prior, 0x0789)? != 0,
             },
         },
     })
 }
+pub(super) fn room_from_words([x, y]: [u16; 2], [width, height]: [u16; 2]) -> Room {
+    Room {
+        // Stored room Y counts from the row above the first map cell.
+        cell: Pair {
+            x: i32::from(x),
+            y: i32::from(y).saturating_add(1),
+        },
+        blocks: Pair {
+            x: width,
+            y: height,
+        },
+    }
+}
+
 pub fn expected(wram: &[u8], _content: &Content) -> Result<Vec<Observation>, Outcome> {
     let mut fields = vec![
         Observation {

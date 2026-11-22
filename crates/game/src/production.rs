@@ -119,6 +119,15 @@ pub enum AdvanceInput<'a> {
         /// A semantic yield or genuine opportunity completion.
         advance: connected::Advance,
     },
+    /// A scoped ordinary opportunity with the current early map inputs.
+    ConnectedMap {
+        /// Complete current ordinary Movement and Appearance inputs.
+        inputs: &'a connected::inputs::Inputs,
+        /// Current early map premises.
+        map: connected::early_map::Inputs<'a>,
+        /// Stop at the map or continue the ordinary opportunity.
+        advance: connected::Advance,
+    },
     /// Pause budget for the actual retained frame caller.
     Frame {
         /// Intrinsic host pause budget.
@@ -570,6 +579,20 @@ impl Production {
                     .map_err(ProductionFault::Connected)?,
             )),
             (
+                OwnedState::Connected(state),
+                ProductionContent::Connected(content),
+                ProductionRules::Connected(rules),
+                AdvanceInput::ConnectedMap {
+                    inputs,
+                    map,
+                    advance,
+                },
+            ) => ProductionOutputs::Connected(Box::new(
+                state
+                    .advance_with_map(inputs, content, rules, advance, Some(map))
+                    .map_err(ProductionFault::Connected)?,
+            )),
+            (
                 OwnedState::Frame(state),
                 ProductionContent::Frame(content),
                 ProductionRules::Frame(rules),
@@ -791,6 +814,8 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
             pin_holds::<connected::inputs::InputsPin>()
                 .and_then(|()| pin_holds::<connected::AheadPin>())
                 .and_then(|()| pin_holds::<connected::PlayingPin>())
+                .and_then(|()| pin_holds::<frame::hud::HudPin>())
+                .and_then(|()| pin_holds::<frame::hud::WorkPin>())
                 .and_then(|()| pin_holds::<movement_work::WorkPin>())
                 .and_then(|()| pin_holds::<movement_work::ReceiptsPin>())
                 .and_then(|()| pin_holds::<appearance::WorkPin>())

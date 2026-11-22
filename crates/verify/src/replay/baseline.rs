@@ -308,6 +308,13 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
             && counts.replies == 0
             && counts.pending_boundaries == 0;
     }
+    if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
+        return super::early_map::field_count(case, counts.cuts) == Some(counts.fields)
+            && counts.outputs == 0
+            && counts.publications == 0
+            && counts.replies == 0
+            && counts.pending_boundaries == 0;
+    }
     if case.responsibilities != [Responsibility::Audio] {
         let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);
         let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {

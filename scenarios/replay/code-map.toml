@@ -192,9 +192,18 @@ targets = [
 ]
 
 [[rule]]
+id = "interface-hud/Exploring"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/early_map.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/early_map.rs" },
+]
+
+[[rule]]
 id = "interface-hud/HerBlink"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/early_map.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
 ]
@@ -203,6 +212,7 @@ targets = [
 id = "interface-hud/MiniMapWindow"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
+  { role = "adapter", path = "crates/game/src/production/connected/early_map.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
 ]
