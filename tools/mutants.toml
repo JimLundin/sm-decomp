@@ -440,3 +440,150 @@ after = '''let energy = self.previous_draw_energy;'''
 case = "health/ceres-tail-drawing-gauge"
 cut = 993
 field = "appearance.drawing.second_energy"
+
+[[fault]]
+name = "shot-fire-suppressed"
+responsibility = "audio-sender"
+file = "crates/game/src/production/gameplay_sounds.rs"
+before = '''let permission = self.current.transport_permission();'''
+after = '''let permission = if cue == CueId::Beam {
+            OfferPermission::Disabled
+        } else {
+            self.current.transport_permission()
+        };'''
+case = "gameplay-sound/shot-opening"
+cut = 157
+field = "live-sound.permission"
+
+[[fault]]
+name = "passage-silences-swapped"
+responsibility = "doors"
+file = "crates/game/src/production/passage_audio.rs"
+before = '''                    .offer(CueId::BackgroundSilence, QueueAllowance::Fifteen)?;
+                self.stage = Stage::Hold(goal);
+                Ok(Output::Ambient(Box::new(offer)))
+            }
+            Stage::Hold(goal) => {
+                self.audio.hold();
+                self.stage = Stage::Quieting(goal);
+                Ok(Output::Held)
+            }
+            Stage::Quieting(_) => Err(ProductionFault::Unsupported(Unsupported::SenderService)),
+        }
+    }
+
+    fn first_entry(
+        &mut self,
+        content: &Content,
+        rules: &Rules,
+        shoot: ShootHeld,
+    ) -> Result<Output, ProductionFault> {
+        let output = Doors::Passing(Passage::START).step(content.scene, &content.inputs, rules);
+        let asked = Passage {
+            phase: Phase::Quieting { asked: true },
+            ..Passage::START
+        };
+        if output.doors != Doors::Passing(asked)
+            || output.scene.her != content.scene.her
+            || output.scene.seen != content.scene.seen
+            || output.scene.camera != content.scene.camera
+            || output.scene.palette.screen != content.scene.palette.screen
+            || output.report.her_sound != Some(HerSound::AtTheDoor)
+            || output.report.room_sounds != types::set_of([RoomSound::Silence, RoomSound::Held])
+        {
+            return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
+        }
+        let opportunity = Opportunity::PassageEntry {
+            current: content.movement,
+            shoot_held: shoot.0,
+            charge: content.charge,
+        }
+        .read();
+        let offer = if let Some(sound) = opportunity.sound {
+            if sound != SoundRequest::SamusSilence
+                || sound.queue() != SoundQueue::Samus
+                || sound.max_waiting() != 15
+            {
+                return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
+            }
+            Some(Box::new(
+                self.audio
+                    .offer(CueId::SamusSilence, QueueAllowance::Fifteen)?,'''
+after = '''                    .offer(CueId::SamusSilence, QueueAllowance::Fifteen)?;
+                self.stage = Stage::Hold(goal);
+                Ok(Output::Ambient(Box::new(offer)))
+            }
+            Stage::Hold(goal) => {
+                self.audio.hold();
+                self.stage = Stage::Quieting(goal);
+                Ok(Output::Held)
+            }
+            Stage::Quieting(_) => Err(ProductionFault::Unsupported(Unsupported::SenderService)),
+        }
+    }
+
+    fn first_entry(
+        &mut self,
+        content: &Content,
+        rules: &Rules,
+        shoot: ShootHeld,
+    ) -> Result<Output, ProductionFault> {
+        let output = Doors::Passing(Passage::START).step(content.scene, &content.inputs, rules);
+        let asked = Passage {
+            phase: Phase::Quieting { asked: true },
+            ..Passage::START
+        };
+        if output.doors != Doors::Passing(asked)
+            || output.scene.her != content.scene.her
+            || output.scene.seen != content.scene.seen
+            || output.scene.camera != content.scene.camera
+            || output.scene.palette.screen != content.scene.palette.screen
+            || output.report.her_sound != Some(HerSound::AtTheDoor)
+            || output.report.room_sounds != types::set_of([RoomSound::Silence, RoomSound::Held])
+        {
+            return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
+        }
+        let opportunity = Opportunity::PassageEntry {
+            current: content.movement,
+            shoot_held: shoot.0,
+            charge: content.charge,
+        }
+        .read();
+        let offer = if let Some(sound) = opportunity.sound {
+            if sound != SoundRequest::SamusSilence
+                || sound.queue() != SoundQueue::Samus
+                || sound.max_waiting() != 15
+            {
+                return Err(ProductionFault::Unsupported(Unsupported::PassageAudio));
+            }
+            Some(Box::new(
+                self.audio
+                    .offer(CueId::BackgroundSilence, QueueAllowance::Fifteen)?,'''
+case = "gameplay-sound/passage-hold"
+cut = 183
+field = "live-sound.order"
+
+[[fault]]
+name = "passage-hold-before-offers"
+responsibility = "audio-sender"
+file = "crates/game/src/production/passage_audio.rs"
+before = '''Stage::Touched => self.first_entry(content, rules, shoot),'''
+after = '''Stage::Touched => {
+                self.audio.hold();
+                self.first_entry(content, rules, shoot)
+            }'''
+case = "gameplay-sound/passage-hold"
+cut = 183
+field = "live-sound.permission"
+
+[[fault]]
+name = "slot-one-opening-offer-omitted"
+responsibility = "audio-sender"
+file = "crates/game/src/production/frame/shot_opportunity.rs"
+before = '''if let (Some(audio), Some(OpeningSound)) = (audio, second_run.sound) {
+        offers.push(audio.offer(CueId::Door, QueueAllowance::Six)?);
+    }'''
+after = "let _ = audio;"
+case = "gameplay-sound/shot-opening-no-fire"
+cut = 157
+field = "live-sound.order"

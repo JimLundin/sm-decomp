@@ -378,6 +378,43 @@ pub(super) fn contact_fifo(
     })
 }
 
+pub(super) struct ShotWindow {
+    pub seed: SenderState,
+    pub cue: CueId,
+    pub allowance: QueueAllowance,
+    pub permission: OfferPermission,
+    pub prefix: VecDeque<CueId>,
+    pub queue: VecDeque<CueId>,
+    pub progress: SenderProgress,
+}
+
+pub(super) fn shot_windows(path: &Path) -> Result<[ShotWindow; 2], Outcome> {
+    let (beam, beam_fifo) = native_records(path, 13, 157, false)?;
+    let (door, door_fifo) = native_records(path, 14, 157, true)?;
+    if beam.group != SoundGroup::Action
+        || door.group != SoundGroup::Contact
+        || beam.exec_master_ticks >= door.exec_master_ticks
+        || door.exec_master_ticks >= beam_fifo.master_ticks.min(door_fifo.master_ticks)
+    {
+        return Err(data_failure(
+            Some(157),
+            "shot and door chronological bracket",
+        ));
+    }
+    let window = |offer: NativeOffer, after: Fifo| {
+        Ok(ShotWindow {
+            cue: offer.cue,
+            allowance: offer.allowance,
+            permission: offer.permission()?,
+            prefix: offer.seed.queue.clone(),
+            seed: offer.seed.decode(157)?,
+            queue: after.queue,
+            progress: after.progress.decode()?,
+        })
+    };
+    Ok([window(beam, beam_fifo)?, window(door, door_fifo)?])
+}
+
 fn cross_group_order(offers: &[NativeOffer]) -> bool {
     use CueId::{BackgroundSilence, Beam, Door, SamusSilence};
     use SoundGroup::{Action, Ambient, Contact};
@@ -517,14 +554,17 @@ pub(super) const fn cue_tag(cue: CueId) -> u8 {
     }
 }
 
-pub(super) fn observations(queue: &VecDeque<CueId>, progress: &SenderProgress) -> Vec<Observation> {
-    let progress = match *progress {
+pub(super) fn progress_bytes(progress: &SenderProgress) -> Vec<u8> {
+    match *progress {
         SenderProgress::Ready => vec![0],
         SenderProgress::AwaitCue(cue) => vec![1, cue_tag(cue)],
         SenderProgress::ClearDelay(turns) => vec![2, turns.get()],
         SenderProgress::AwaitClear => vec![3],
         SenderProgress::ResetDelay(turns) => vec![4, turns.get()],
-    };
+    }
+}
+
+pub(super) fn observations(queue: &VecDeque<CueId>, progress: &SenderProgress) -> Vec<Observation> {
     vec![
         Observation {
             field: "sender.queue".to_owned(),
@@ -532,7 +572,7 @@ pub(super) fn observations(queue: &VecDeque<CueId>, progress: &SenderProgress) -
         },
         Observation {
             field: "sender.progress".to_owned(),
-            bytes: progress,
+            bytes: progress_bytes(progress),
         },
     ]
 }

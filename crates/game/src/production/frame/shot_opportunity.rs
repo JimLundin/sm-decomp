@@ -13,10 +13,13 @@ use super::{
 };
 use crate::production::{
     MovementContent, MovementInputs, ProductionFault, Unsupported, camera_semantic,
-    entries::ceres_advance, movement, weapons,
+    entries::ceres_advance,
+    gameplay_sounds::{GameplaySounds, Offer},
+    movement, weapons,
 };
 use crate::{state::video::NmiBatch, weapons_projectiles_bridge::PowerContent};
-use boss_ceres_ridley::{CeresDoor, Inputs as CeresInputs, Run, Stage};
+use audio_transport::{CueId, QueueAllowance};
+use boss_ceres_ridley::{CeresDoor, Inputs as CeresInputs, OpeningSound, Run, Stage};
 use data::assets::samus::{key::Dress, map};
 use types::{Action, Direction, FiringDirection, Pair, Parts, Pose, button};
 use weapons_projectiles as beam;
@@ -195,7 +198,8 @@ fn advance(
     sampled: u16,
     movement: &MovementContent,
     power: &PowerContent,
-) -> Result<AfterActors, ProductionFault> {
+    mut audio: Option<&mut GameplaySounds>,
+) -> Result<(AfterActors, Vec<Offer>), ProductionFault> {
     let roster = ActorEligibilityReceipt::marked_offscreen(&origin.roster).ok_or_else(missing)?;
     if !accepts(origin, &roster) {
         return Err(missing());
@@ -223,6 +227,22 @@ fn advance(
         beam::Rules::REFERENCE,
         &origin.room,
     )?;
+    let mut offers = Vec::new();
+    if let Some(audio) = audio.as_deref_mut() {
+        for event in &events {
+            match event {
+                beam::Event::FireSound(_) => {
+                    offers.push(audio.offer(CueId::Beam, QueueAllowance::Fifteen)?);
+                }
+                beam::Event::ImpactSound(_) => {
+                    return Err(ProductionFault::Unsupported(Unsupported::WeaponImpactSound));
+                }
+                beam::Event::Protection(_)
+                | beam::Event::PendingAimConsumed
+                | beam::Event::Trail { .. } => {}
+            }
+        }
+    }
     let mut sequence = Sequence::new(origin.random);
     sequence.draw();
     let mut door_inputs = origin.door_inputs;
@@ -233,26 +253,35 @@ fn advance(
     let rules = boss_ceres_ridley::Rules::default();
     let first_contact = weapons::contact(&mut shots, current_contact(first, *first_door, &roster));
     let first_run = ceres_advance(first_door, &door_inputs, &rules);
+    if let (Some(audio), Some(OpeningSound)) = (audio.as_deref_mut(), first_run.sound) {
+        offers.push(audio.offer(CueId::Door, QueueAllowance::Six)?);
+    }
     let second_contact =
         weapons::contact(&mut shots, current_contact(second, *second_door, &roster));
     let second_run = ceres_advance(second_door, &door_inputs, &rules);
+    if let (Some(audio), Some(OpeningSound)) = (audio, second_run.sound) {
+        offers.push(audio.offer(CueId::Door, QueueAllowance::Six)?);
+    }
     let pose_requested = pose.terminal.prospective != origin.pose
         || (origin.pose.action == Action::Running
             && pose.terminal.held_actions == button::RUN
             && origin.horizontal_speed != types::ZERO);
-    Ok(AfterActors {
-        pose,
-        pose_requested,
-        previous_pressed,
-        shots,
-        doors,
-        weapons: weapons::WeaponsOutputs {
-            events,
-            contacts: vec![first_contact, second_contact],
+    Ok((
+        AfterActors {
+            pose,
+            pose_requested,
+            previous_pressed,
+            shots,
+            doors,
+            weapons: weapons::WeaponsOutputs {
+                events,
+                contacts: vec![first_contact, second_contact],
+            },
+            runs: [first_run, second_run],
+            random: sequence.current(),
         },
-        runs: [first_run, second_run],
-        random: sequence.current(),
-    })
+        offers,
+    ))
 }
 
 /// Apply POST with the same mapped actions used for the earlier deferred choice.

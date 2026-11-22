@@ -1,5 +1,9 @@
 //! Hook the independent five-cut packet into the shared carried-state replay.
 
+mod audio;
+#[cfg(test)]
+mod sound_tests;
+
 use super::{
     Completion, Continuation, DrawStore, EXPECTED_PIN, Environment, INPUT_PIN, Input, Opportunity,
     PACKET, START_PIN, Sources, batch_from_bytes, camera, data_failure, movement, oam_bytes, wait,
@@ -9,7 +13,7 @@ use crate::{
     lock::Sha256,
     replay::{
         compare::Observation,
-        index::{Case, Start},
+        index::{Case, InputProvider, Start},
         production_failure,
         readers::{ActualReader, AdmittedCase, ExpectedCut, ExpectedReader, InputReader},
         result::Outcome,
@@ -97,7 +101,7 @@ pub(in crate::replay) fn admit(case: &Case, sources: &Sources) -> Result<Admitte
     let start = member(&root, "start.record", START_PIN)?;
     let mut record = oracle_record::lsnes::blank();
     oracle_record::lsnes::decode(&start, &mut record).map_err(|_| bad(None))?;
-    admit_record(input, &record.wram, sources, &root)
+    admit_record(input, &record.wram, sources, &root, case.inputs)
 }
 
 fn admit_record(
@@ -105,6 +109,7 @@ fn admit_record(
     wram: &[u8],
     sources: &Sources,
     root: &Path,
+    provider: InputProvider,
 ) -> Result<AdmittedCase, Outcome> {
     let movement_content = movement::Content::load(&sources.rom)?;
     let power = weapons::Content::load(&sources.rom)?;
@@ -121,14 +126,23 @@ fn admit_record(
     {
         return Err(bad(None));
     }
-    let continuation = Continuation::new(
+    let shoot_mask = origin.bindings.shoot.0;
+    let mut continuation = Continuation::new(
         origin.clone(),
         player,
         camera,
         motion.stimuli(),
         batch_from_bytes(initial_batch)?,
     );
-    let expected = Expectations::load(root, &power)?;
+    let sound_only = provider != InputProvider::ScopedShotOpportunityInputs;
+    let no_fire = provider == InputProvider::ShotSoundNoFire;
+    let expected = if sound_only {
+        let (audio, expected) = audio::admit(sources, wram, no_fire)?;
+        continuation = continuation.with_audio(audio);
+        Expectations(vec![expected])
+    } else {
+        Expectations::load(root, &power)?
+    };
     let content = ProductionContent::ShotOpportunity(Box::new(shot_opportunity::Content {
         admitted: origin,
         movement: movement_content.movement,
@@ -142,11 +156,19 @@ fn admit_record(
         rules.clone(),
     )
     .map_err(|_| bad(None))?;
+    let last = if sound_only { FIRST } else { LAST };
     let steps = input
         .opportunity
         .into_iter()
-        .map(Step::try_from)
-        .collect::<Result<_, _>>()?;
+        .take_while(|step| step.cut <= last)
+        .map(|row| {
+            let mut step = Step::try_from(row)?;
+            if no_fire {
+                step.physical_pad &= !shoot_mask;
+            }
+            Ok(step)
+        })
+        .collect::<Result<_, Outcome>>()?;
     Ok(AdmittedCase {
         production,
         content,
@@ -159,7 +181,7 @@ fn admit_record(
         })),
         expected: ExpectedReader::ShotOpportunity(Box::new(expected)),
         actual: ActualReader::ShotOpportunity(dress),
-        schedule: (FIRST..=LAST).collect(),
+        schedule: (FIRST..=last).collect(),
     })
 }
 
@@ -225,6 +247,14 @@ impl Inputs {
     }
 }
 
+pub(in crate::replay) fn actual_audio(
+    production: &Production,
+    completion: &Completion,
+    offers: &[game::production::gameplay_sounds::Offer],
+) -> Result<Vec<Observation>, Outcome> {
+    audio::actual(production, completion, offers)
+}
+
 pub(in crate::replay) fn initial(
     production: &Production,
     dress: Dress,
@@ -232,6 +262,9 @@ pub(in crate::replay) fn initial(
     let OwnedState::ShotOpportunity(state) = production.state() else {
         return Err(bad(None));
     };
+    if state.audio().is_some() {
+        return audio::initial(production);
+    }
     let origin = state.before();
     // The complete controller tuple needs the next sampling boundary. The pre-power image
     // needs the current surrounding stores. The cut already holds the terminal OAM image.

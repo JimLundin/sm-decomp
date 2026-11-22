@@ -40,7 +40,9 @@ both answers are U1's. The music's is decoded from the music's queue as the fram
 it: the queue takes one step at the frame of work's start (an entry whose delay runs out is
 played and leaves the queue), then the music is ready when no entry is left (41 of 41 cached
 waiting frames of work, `chain-any-0005-E06B` among them, 25 frames of work into Ridley's room).
-U1's spec must state the queue's step.
+U1 owns the queue's step. The indexed first-entry witness ends after the two silence offers and
+Hold. On the next native cut all three effect FIFOs are empty while Action and Ambient remain
+AwaitCue. The integrated physical sender and occupancy-readiness handoff remains outstanding.
 
 ### G5. The cost of each frame of work (T1)
 

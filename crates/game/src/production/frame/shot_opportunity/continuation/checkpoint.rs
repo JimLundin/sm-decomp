@@ -1,6 +1,6 @@
 //! Save only the carried owners. Restore uses the same independently admitted room and content.
 
-use super::{Continuation, Origin, missing};
+use super::{Audio, Continuation, Origin, missing};
 use crate::weapons_projectiles_bridge::PowerContent;
 use crate::{
     production::{
@@ -13,7 +13,7 @@ use crate::{
     },
 };
 use boss_ceres_ridley::{Phase, Quarter, Wait};
-use canonical::{Canonical, Schema, model::Model};
+use canonical::{Canonical, DecodeError, Schema, model::Model};
 use data::{
     assets::samus::{key::Dress, map},
     pose::PoseId,
@@ -33,6 +33,12 @@ struct Carried {
     pending_aim: Option<Heading>,
     stimuli: Model<MovementInputsPin>,
     batch: Box<NmiBatch>,
+}
+
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+struct WithAudio {
+    shot: Carried,
+    audio: Audio,
 }
 
 impl Continuation {
@@ -64,10 +70,19 @@ impl Continuation {
             stimuli: Model(self.stimuli),
             batch: Box::new(self.batch.clone()),
         };
-        Ok(canonical::to_bytes(&Checkpoint {
-            schema: Schema::new(),
-            state,
-        }))
+        Ok(match &self.audio {
+            Some(audio) => canonical::to_bytes(&Checkpoint {
+                schema: Schema::new(),
+                state: WithAudio {
+                    shot: state,
+                    audio: audio.clone(),
+                },
+            }),
+            None => canonical::to_bytes(&Checkpoint {
+                schema: Schema::new(),
+                state,
+            }),
+        })
     }
 
     /// Restore directly using the immutable neighbours from the original admission.
@@ -80,9 +95,17 @@ impl Continuation {
         dress: Dress,
         power: &PowerContent,
     ) -> Result<Self, ProductionFault> {
-        let checkpoint: Checkpoint<Carried> =
-            canonical::from_bytes(bytes).map_err(|_| missing())?;
-        let state = checkpoint.state;
+        let (state, audio) = match canonical::from_bytes::<Checkpoint<Carried>>(bytes) {
+            Ok(checkpoint) => (checkpoint.state, None),
+            Err(DecodeError::SchemaMismatch { .. }) => {
+                let checkpoint: Checkpoint<WithAudio> =
+                    canonical::from_bytes(bytes).map_err(|_| missing())?;
+                let WithAudio { shot, audio } = checkpoint.state;
+                audio.sounds().validate().map_err(|_| missing())?;
+                (shot, Some(audio))
+            }
+            Err(_) => return Err(missing()),
+        };
         let player = state.player.0;
         let camera = state.camera.0;
         let batch = *state.batch;
@@ -113,7 +136,9 @@ impl Continuation {
             camera_vertical_fraction: beam::PixelFraction(camera.vertical_fraction().0),
         };
         admitted.weapon.cannon.pending_aim = state.pending_aim.map(beam::Heading::from);
-        Ok(Self::new(admitted, player, camera, state.stimuli.0, batch))
+        let mut complete = Self::new(admitted, player, camera, state.stimuli.0, batch);
+        complete.audio = audio;
+        Ok(complete)
     }
 }
 

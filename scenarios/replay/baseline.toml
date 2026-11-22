@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "b311397740c5437dd6ab7c1d73ab1193c2ba84f92f6bf91e90df7cbe47460838"
+index_sha256 = "05f212e5b34664e8aeb80c10058be1a583f46903a80bc44ee7130559dcb1396a"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1065,3 +1065,75 @@ null_fields = 22
 restorations = 2
 pending_boundaries = 0
 pending_restorations = 0
+
+[[case]]
+id = "gameplay-sound/shot-opening"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "ecff6e9df41b37883a61f67c36db05781bcd7167f126a4bb85afcca545d1e5fa"
+
+[case.counts]
+cuts = 1
+fields = 1
+outputs = 5
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "gameplay-sound/shot-opening-no-fire"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "47e29b1486c02e931bb4c1074c8ac3ca7e47506cc5bae53b0f21a3908ff1fd82"
+
+[case.counts]
+cuts = 1
+fields = 1
+outputs = 5
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "gameplay-sound/passage-hold"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "f993d96110deaf81e2a55fa2f586afab562c1382f65156b437c180cff806a3a4"
+
+[case.counts]
+cuts = 1
+fields = 1
+outputs = 5
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
+pending_boundaries = 2
+pending_restorations = 2
+
+[[case]]
+id = "gameplay-sound/passage-hold-shoot-held"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "18145d5955935bbb993c330ab6b946b32b167591af3987a6e5b67342f0850fb0"
+
+[case.counts]
+cuts = 1
+fields = 1
+outputs = 5
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 0
+restorations = 1
+pending_boundaries = 2
+pending_restorations = 2

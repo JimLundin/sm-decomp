@@ -19,6 +19,7 @@ pub(super) enum InputReader {
     EarlyMap(Box<super::early_map::InputTape>),
     ShotOpportunity(Box<super::shot_opportunity::Inputs>),
     HealthTail(super::health_tail::Inputs),
+    PassageAudio(super::passage_audio::Input),
     SenderOffer(Vec<super::sender_offer::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     Frame(super::frame::Inputs),
@@ -36,6 +37,7 @@ pub(super) enum ExpectedReader {
     EarlyMap(Box<super::early_map::Expectations>),
     ShotOpportunity(Box<super::shot_opportunity::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
+    PassageAudio(ExpectedCut),
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     Frame(Box<super::frame::Expected>),
@@ -51,6 +53,7 @@ pub(super) enum ActualReader {
     EarlyMap,
     ShotOpportunity(data::assets::samus::key::Dress),
     HealthTail,
+    PassageAudio,
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
@@ -66,6 +69,7 @@ pub(super) enum ActualReader {
     Movement,
 }
 
+#[derive(Clone)]
 pub(super) struct ExpectedCut {
     pub fields: Vec<Observation>,
     pub semantics: Vec<Observation>,
@@ -96,6 +100,11 @@ pub(super) fn record(cache: &Cache, cut: u64) -> Result<oracle_record::FrameReco
 }
 
 impl InputReader {
+    pub fn pending_origin(&self, case: &Case, production: &Production) -> Option<Production> {
+        (case.checkpoints && matches!(self, Self::Audio(_) | Self::PassageAudio(_)))
+            .then(|| production.clone())
+    }
+
     #[cfg(test)]
     pub fn advance(
         &self,
@@ -117,6 +126,7 @@ impl InputReader {
             Self::HealthTail(inputs) => inputs
                 .advance(production, cut)
                 .map(ProductionOutputs::HealthTail),
+            Self::PassageAudio(input) => input.advance(production, cut),
             Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
@@ -301,6 +311,28 @@ impl ActualReader {
                 actual.push(movement::reached(&outputs));
                 Ok(actual)
             }
+            (actual, inputs, output) => actual.accept_live_sound(inputs, production, output, cut),
+        }
+    }
+
+    fn accept_live_sound(
+        &self,
+        inputs: &InputReader,
+        production: &Production,
+        output: ProductionOutputs,
+        cut: u64,
+    ) -> Result<Vec<Observation>, Outcome> {
+        match (self, inputs, output) {
+            (
+                Self::ShotOpportunity(_),
+                InputReader::ShotOpportunity(_),
+                ProductionOutputs::ShotOpportunityWithAudio { shot, offers },
+            ) => super::shot_opportunity::actual_audio(production, &shot, &offers),
+            (
+                Self::PassageAudio,
+                InputReader::PassageAudio(_),
+                ProductionOutputs::PassageAudio(output),
+            ) => super::passage_audio::actual(production, &output),
             _ => Err(data_failure(Some(cut), "actual projection scope")),
         }
     }
@@ -308,6 +340,7 @@ impl ActualReader {
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
             Self::EarlyMap => super::early_map::actual(production, None),
+            Self::PassageAudio => super::passage_audio::initial(production),
             Self::ShotOpportunity(dress) => super::shot_opportunity::initial(production, *dress),
             Self::HealthTail => super::health_tail::initial(production),
             Self::SenderOffer => super::sender_offer::actual(production),
@@ -365,6 +398,7 @@ impl ActualReader {
             (
                 Self::EarlyMap
                 | Self::ShotOpportunity(_)
+                | Self::PassageAudio
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
@@ -372,6 +406,7 @@ impl ActualReader {
                 | Self::HealthTail,
                 Self::EarlyMap
                 | Self::ShotOpportunity(_)
+                | Self::PassageAudio
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
@@ -409,6 +444,7 @@ impl ActualReader {
             Self::Audio { publications, .. } => publications.len(),
             Self::EarlyMap
             | Self::ShotOpportunity(_)
+            | Self::PassageAudio
             | Self::NativeSearch(_)
             | Self::Movement
             | Self::Recorded(_)
@@ -426,6 +462,7 @@ impl ExpectedReader {
             Self::EarlyMap(expected) => expected.read(cut),
             Self::ShotOpportunity(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
+            Self::PassageAudio(expected) => Ok(expected.clone()),
             Self::MovementTouchdown(expected) => expected.read(cut),
             Self::SenderOffer(fields) => Ok(ExpectedCut {
                 fields: fields.clone(),

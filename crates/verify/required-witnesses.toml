@@ -20,6 +20,7 @@ connected = [
 
 shot_opportunities = [
     "replay::shot_opportunity::indexed::tests::carried_opening_selects_current_fire_and_runs_slot_one",
+    "replay::shot_opportunity::indexed::sound_tests::scoped_sound_origins_and_checkpoint_formats",
 ]
 
 shot_frame_origin = [

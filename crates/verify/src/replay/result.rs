@@ -57,9 +57,9 @@ pub struct Counts {
     pub null_fields: usize,
     /// Completed checkpoints proven through completion or a held boundary.
     pub restorations: usize,
-    /// Native effect deadlines proven by split advancement.
+    /// Effect or live-offer boundaries proven by split advancement.
     pub pending_boundaries: usize,
-    /// Pending effect saves proven without early publication.
+    /// Pending effect or live-offer saves proven without early publication.
     pub pending_restorations: usize,
 }
 

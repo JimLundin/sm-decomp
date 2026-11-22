@@ -110,6 +110,8 @@ pub enum ProductionContent {
     Ceres,
     /// Passage scene and doorway facts are carried State and explicit inputs.
     Doors,
+    /// Retained scene and independently imported touched doorway.
+    PassageAudio(Box<super::passage_audio::Content>),
     /// The one request group whose queue and physical reply line this sender owns.
     AudioSender(audio_transport::SoundGroup),
 }
@@ -156,6 +158,8 @@ pub enum ProductionRules {
     Ceres(boss_ceres_ridley::Rules),
     /// Complete passage parameters.
     Doors(world_doors::Rules),
+    /// Existing passage parameters, with fixed sender rules.
+    PassageAudio(world_doors::Rules),
     /// The sender uses its fixed clean parameters and an admitted service profile.
     AudioSender,
 }

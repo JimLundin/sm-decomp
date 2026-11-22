@@ -9,8 +9,19 @@ use crate::lock::{Lock, RowId};
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    if case.inputs == InputProvider::ScopedShotOpportunityInputs {
+    if matches!(
+        case.inputs,
+        InputProvider::ScopedShotOpportunityInputs
+            | InputProvider::NativeShotSoundInputs
+            | InputProvider::ShotSoundNoFire
+    ) {
         return super::shot_opportunity::admit_indexed(case, sources);
+    }
+    if matches!(
+        case.inputs,
+        InputProvider::NativePassageSoundInputs | InputProvider::PassageSoundShootHeld
+    ) {
+        return super::passage_audio::admit(case, sources);
     }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);

@@ -91,6 +91,8 @@ pub enum OwnedState {
     Ceres(boss_ceres_ridley::CeresDoor),
     /// Complete retained passage and scene.
     Doors(Box<crate::production::PassageState>),
+    /// First passage entry with its audio caller.
+    PassageAudio(Box<crate::production::passage_audio::State>),
     /// One sender group's committed and pending CPU service.
     AudioSender(Model<SenderPin>),
 }

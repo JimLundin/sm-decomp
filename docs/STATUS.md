@@ -126,6 +126,33 @@ restore each disjoint window from its own starting owners. The physical ring and
 service have separate boundaries. The retained Frame still requires the timed body-growth
 and fit work profile and the actual touchdown dispatch and graphics opportunities.
 
+## Live gameplay sound producers
+
+Select the four `gameplay-sound/` cases with the shared replay command. Install the [carried shot
+fixture](../tools/ci/fetch_shot_five.sh), [sender brackets](../tools/ci/fetch_sender_offers.sh)
+and [passage fixture](../tools/ci/fetch_passage_offers.sh) under the same native directory.
+
+At cut 157 the carried shot opportunity produces Beam from mapped W1 fire and Door from the
+actual slot-one Ceres run. The call order is compared independently of the Action and Contact
+FIFO brackets, alongside the at-use permission, allowance and acceptance. The control releases
+the mapped shoot action from the same origin and keeps the slot-one opening. The compared native
+brackets select Action and Contact. Ambient does not offer a cue in this window.
+
+At cut 183 the scoped passage starts at the retained touched doorway and evaluates the ordinary
+Doors first-entry and Appearance `PassageEntry` decisions. The current Action silence and the
+room's Ambient silence enter through the same sender Offer path before Hold. The comparison
+checks global order, the two complete at-use FIFO windows, committed terminal queues and the
+Hold transition. Public saves after each offer restore the remaining publications and refuse
+advancement at the sender-service boundary. The held-shoot control keeps the Ambient offer
+and Hold while the Appearance read emits no Action cue.
+
+Native cut 184 independently shows both active senders AwaitCue while all three FIFOs are
+empty. The following production owner is physical sender and readiness service (#483).
+Resumable passage timing and inanimate drawing belong to #484 and #485. The retained Frame
+still requires its live slot-one opening and passage dispatch, along with its existing timed
+movement and sampling boundaries. The scoped live audio callers still leave spin start/end, impact, wall-jump, hard landing and unrelated actors unsupported.
+
+
 ## Finding the code for a replay segment
 
 The read-only `map` command joins the typed index and validated reviewed baseline with

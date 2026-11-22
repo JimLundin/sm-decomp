@@ -3,11 +3,13 @@
 mod checkpoint;
 
 use super::{AfterActors, Origin, advance, carry, draw, follow, missing, place};
+use crate::production::{ProductionOutputs, Unsupported, gameplay_sounds::GameplaySounds};
 use crate::{
     production::{MovementContent, MovementInputs, ProductionFault, weapons::ShotDrawingOutputs},
     state::video::{NmiBatch, OAM_HIGH_BYTES, OAM_SPRITES, Oam, SpriteCount},
     weapons_projectiles_bridge::PowerContent,
 };
+use canonical::Canonical;
 use data::assets::samus::key::Dress;
 use types::{Parity, Pose};
 use weapons_projectiles::{FlickerPhase, Inheritance, ScreenOrigin};
@@ -91,6 +93,20 @@ pub struct Inputs<'a> {
     pub before: &'a [DrawStore],
 }
 
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+enum Audio {
+    BeforeOffers(GameplaySounds),
+    BeforeService(GameplaySounds),
+}
+
+impl Audio {
+    const fn sounds(&self) -> &GameplaySounds {
+        match self {
+            Self::BeforeOffers(sounds) | Self::BeforeService(sounds) => sounds,
+        }
+    }
+}
+
 /// Complete current selected owners, held between ordinary opportunities.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Continuation {
@@ -99,6 +115,7 @@ pub struct Continuation {
     camera: world_camera::Camera,
     stimuli: MovementInputs,
     batch: NmiBatch,
+    audio: Option<Audio>,
 }
 
 /// Carried facts read by W1 before POST consumes the current motion interval.
@@ -157,6 +174,23 @@ impl Continuation {
             camera,
             stimuli,
             batch,
+            audio: None,
+        }
+    }
+
+    /// Attach the three admitted sound senders to this producer path.
+    #[must_use]
+    pub fn with_audio(mut self, audio: GameplaySounds) -> Self {
+        self.audio = Some(Audio::BeforeOffers(audio));
+        self
+    }
+
+    /// The live sound owners carried with the producer, when admitted.
+    #[must_use]
+    pub const fn audio(&self) -> Option<&GameplaySounds> {
+        match &self.audio {
+            Some(audio) => Some(audio.sounds()),
+            None => None,
         }
     }
 
@@ -178,6 +212,9 @@ impl Continuation {
     ) -> Result<(), crate::production::AdmissionFault> {
         use crate::production::AdmissionFault;
         content.movement.validate()?;
+        if let Some(audio) = self.audio() {
+            audio.validate()?;
+        }
         content
             .power
             .validate_state(&self.origin.shots)
@@ -212,9 +249,22 @@ impl Continuation {
         &mut self,
         input: Inputs<'_>,
         context: &Context<'_>,
-    ) -> Result<Completion, ProductionFault> {
+    ) -> Result<ProductionOutputs, ProductionFault> {
         let ingress = Ingress::read(&self.origin);
-        let actors = advance(&self.origin, input.sampled, context.movement, context.power)?;
+        let mut audio = match &self.audio {
+            Some(Audio::BeforeOffers(audio)) => Some(audio.clone()),
+            Some(Audio::BeforeService(_)) => {
+                return Err(ProductionFault::Unsupported(Unsupported::SenderService));
+            }
+            None => None,
+        };
+        let (actors, offers) = advance(
+            &self.origin,
+            input.sampled,
+            context.movement,
+            context.power,
+            audio.as_mut(),
+        )?;
         let mut player = self.player;
         let movement = place(
             &actors,
@@ -247,6 +297,7 @@ impl Continuation {
             context.power,
         )?;
         self.player = player;
+        self.audio = audio.map(Audio::BeforeService);
         self.camera = camera;
         self.batch = drawing.batch.clone();
         self.stimuli.sprite_before_movement = movement.sprite;
@@ -254,7 +305,7 @@ impl Continuation {
             Parity::Odd => Parity::Even,
             Parity::Even => Parity::Odd,
         };
-        Ok(Completion {
+        let shot = Box::new(Completion {
             ingress,
             actors,
             movement,
@@ -262,6 +313,11 @@ impl Continuation {
             pre_power,
             drawing,
             after_power,
+        });
+        Ok(if self.audio.is_some() {
+            ProductionOutputs::ShotOpportunityWithAudio { shot, offers }
+        } else {
+            ProductionOutputs::ShotOpportunity(shot)
         })
     }
 }

@@ -1,7 +1,7 @@
 //! Independently recorded scoped shot inputs, observations and production admission.
 
 mod indexed;
-pub(super) use indexed::{Expectations, Inputs, admit as admit_indexed, initial};
+pub(super) use indexed::{Expectations, Inputs, actual_audio, admit as admit_indexed, initial};
 
 use super::{
     Sources, camera, ceres, data_failure, frame_origin::prelude_seed, movement, result::Outcome,

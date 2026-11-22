@@ -69,8 +69,9 @@ outside the domain (1,688), and the masked boost frame (terrain-quicksand 156, t
 
 The spec's §9 supplies FootContact, generic SpinStarts, normal-drawing SpinEnds and
 first-passage AtTheDoor. Imported contact-step content and actual ordinary Ceres movement, selection and drawing
-opportunities now produce ordered typed requests through `TickOutput`. First-entry passage
-remains a callable producer boundary until R1 runtime supplies its actual dispatch.
+opportunities produce ordered typed requests through `TickOutput`. The scoped normal passage
+calls the actual first-entry Appearance opportunity before its Ambient offer and Hold. The
+retained Frame's passage dispatch and the spinning passage arms still need their callers.
 Existing WallJumpBranch and BoostingLap remain animation outputs and must coexist without
 another animation update. Normal drawing during Quieting must run SpinEnds with remembered
 movement and frozen animation. The first-entry passage request precedes holding sounds.
@@ -103,8 +104,8 @@ equipped items, drawing and boost quantities along with the ordinary producer/ac
 Other gameplay has no appearance opportunity admission. Audio queues and replies are not
 reseeded, made ready or compared by this producer proof; U1 remains required.
 
-The native requests at cuts 57 and 124 are SamusLandedOrWallJumped, outside this appearance
-opportunity inventory. The movement model currently gives no typed sound request; its
-remembered LandedOrEnded quantity also covers animation ends and cannot invent that request.
-Observer ownership evidence and a producer contract are required before those sounds feed U1.
-CeresDoorOpening at cut 157 is separately B8-owned.
+Movement publishes typed `touchdown_requests`. The scoped native soft landings at cuts 57
+and 124 use those requests to offer Land to Contact, independently of Appearance's contact
+graphics. The timed Frame still needs the native floor and body-fit handoff at that opportunity.
+CeresDoorOpening at cut 157 comes separately from the slot-one B8 run. The shared carried shot
+path offers it after the actual W1 fire opportunity.

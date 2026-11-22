@@ -177,11 +177,10 @@ pub(super) fn run(
         inputs: &inputs,
         expected: &expectation,
     };
-    let audio_start =
-        (case.checkpoints && matches!(inputs, InputReader::Audio(_))).then(|| production.clone());
+    let pending_start = inputs.pending_origin(case, &production);
     let null = actual.initial(&production)?;
     let mut checkpoints = Vec::new();
-    let mut origin = touchdown_checkpoint(case, &inputs, &production, &actual)?;
+    let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
     let mut digest = Vec::new();
     let mut held = HeldAdvance::default();
     let mut stop = None;
@@ -203,7 +202,7 @@ pub(super) fn run(
             *cut,
         )?;
         if case.checkpoints {
-            // A single-opportunity touchdown resumes across the actual advance.
+            // A one-opportunity shot or touchdown resumes across the actual advance.
             checkpoints.push(origin.take().map_or_else(
                 || capture_checkpoint(&inputs, &production, &actual, *cut),
                 Ok,
@@ -257,7 +256,7 @@ pub(super) fn run(
     if let Some((_, outcome)) = stop {
         return Err(outcome);
     }
-    record_pending(audio_start, &inputs, &expectation, &content, &rules, result)
+    record_pending(pending_start, &reader, &content, &rules, result)
 }
 
 type CutCheckpoint = (u64, SavedCut, ActualReader);
@@ -271,19 +270,26 @@ fn capture_checkpoint(
     Ok((cut, save_cut(inputs, production, cut)?, actual.clone()))
 }
 
-fn touchdown_checkpoint(
+fn origin_checkpoint(
     case: &Case,
     inputs: &InputReader,
     production: &Production,
     actual: &ActualReader,
 ) -> Result<Option<CutCheckpoint>, Outcome> {
-    if !case.checkpoints || !matches!(inputs, InputReader::MovementTouchdown(_)) {
+    use super::index::{InputProvider, Start};
+    if !case.checkpoints {
         return Ok(None);
     }
-    let super::index::Start::CacheCut { frame } = case.start else {
-        return Err(data_failure(None, "touchdown checkpoint origin"));
+    let origin = match (inputs, &case.start, case.inputs) {
+        (InputReader::MovementTouchdown(_), Start::CacheCut { frame }, _)
+        | (
+            InputReader::ShotOpportunity(_),
+            Start::NativeCheckpoint { frame, .. },
+            InputProvider::NativeShotSoundInputs | InputProvider::ShotSoundNoFire,
+        ) => *frame,
+        _ => return Ok(None),
     };
-    capture_checkpoint(inputs, production, actual, frame).map(Some)
+    capture_checkpoint(inputs, production, actual, origin).map(Some)
 }
 
 fn touchdown_outputs_hold(
@@ -295,15 +301,19 @@ fn touchdown_outputs_hold(
 }
 
 fn record_pending(
-    audio_start: Option<Production>,
-    inputs: &InputReader,
-    expectation: &ExpectedReader,
+    start: Option<Production>,
+    reader: &CutReader<'_>,
     content: &game::production::ProductionContent,
     rules: &game::production::ProductionRules,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
-    if let (InputReader::Audio(tape), Some(audio_start)) = (inputs, audio_start) {
-        let ExpectedReader::Audio(expected) = expectation else {
+    if let (InputReader::PassageAudio(input), Some(start)) = (reader.inputs, &start) {
+        let restored = input.restorations(start, content, rules)?;
+        result.counts.pending_boundaries = restored;
+        result.counts.pending_restorations = restored;
+    }
+    if let (InputReader::Audio(tape), Some(audio_start)) = (reader.inputs, start) {
+        let ExpectedReader::Audio(expected) = reader.expected else {
             return Err(data_failure(None, "audio expected scope"));
         };
         let pending = pending::run(audio_start, content, rules, tape, &expected.publications)?;

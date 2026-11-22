@@ -143,6 +143,9 @@ jobs:
       - &shot_drawing
         name: Fetch the reviewed scoped power shot witness
         run: bash tools/ci/fetch_shot_contact.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &passage_offers
+        name: Fetch the touched doorway sound offers
+        run: bash tools/ci/fetch_passage_offers.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &shot_five
         name: Fetch the reviewed carried shot opportunities
         run: bash tools/ci/fetch_shot_five.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
@@ -219,6 +222,7 @@ jobs:
       - *connected_ordinary
       - *shot_drawing
       - *shot_five
+      - *passage_offers
       - *retained_frame
       - *native_search
       - *health_tail

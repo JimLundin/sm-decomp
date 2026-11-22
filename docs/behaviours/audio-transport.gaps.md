@@ -5,7 +5,7 @@ waits for the inputs below; captured timestamps are verification stimuli.
 
 | Model input | Engine owner or missing prerequisite |
 | --- | --- |
-| Cue offers, allowance and suppression | Appearance and gameplay producers emit requests; a common producer boundary must supply ordered offers, their allowance and suppression to U1. There is no engine audio FIFO or acknowledgement consumer. |
+| Cue offers, allowance and suppression | The indexed sender owns FIFO admission. Bounded live callers deliver soft touchdown, the ordinary power beam and Ceres opening, and the first normal passage's silence pair. The retained Frame delivers the scoped Footstep. Spin start/end, weapon impact, other actor cues and remaining timed caller joins still need producers. |
 | Sender service start and elapsed CPU master ticks | T1 must own actual caller, dispatch, group iteration, outer return and refresh/DMA/HDMA/interrupt stalls. Intrinsic FastBus sender work alone does not supply elapsed workload time. |
 | FastBus admission | The execution owner must validate native M8/X8, selected access/layout classes, no indexed crossing and zero sender downtime before selecting this profile. |
 | Physical request presentation and reply observation | U1 and the execution owner must preserve actual port write and read callback phases, with replies queried only at the declared instant. |

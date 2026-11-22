@@ -204,6 +204,14 @@ pub enum InputProvider {
     ScopedShotDrawingInputs,
     /// One initial shot owner admission and ongoing sampled controls with surrounding drawing.
     ScopedShotOpportunityInputs,
+    /// The locked shot opportunity with live audio sender admission.
+    NativeShotSoundInputs,
+    /// The same locked shot opportunity with shoot released in the sampled pad.
+    ShotSoundNoFire,
+    /// One touched doorway, retained Appearance, and three actual sender roots.
+    NativePassageSoundInputs,
+    /// Constructed held-shoot control from the same touched doorway.
+    PassageSoundShootHeld,
     /// Independent stable status/map facts and inert-input representatives.
     PrecedingCutHudInputs,
     /// Independent stable standing-figure neighbours.
@@ -264,6 +272,10 @@ pub enum ExpectedProvider {
     PinnedShotDrawingObservations,
     /// Independent native observations at the five carried shot opportunities.
     PinnedShotOpportunityObservations,
+    /// Ordered independent native offer identities and selected queue brackets.
+    NativeShotSoundOffers,
+    /// First passage entry's independent offer and hold markers.
+    NativePassageSoundOffers,
     /// Independent decoded native cuts.
     NativeDecodedCuts,
 }
@@ -271,6 +283,24 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Global cue ingress sequence across separate physical groups.
+    #[serde(rename = "live-sound.order")]
+    LiveSoundOrder,
+    /// Producer allowance and effective permission at each offer.
+    #[serde(rename = "live-sound.permission")]
+    LiveSoundPermission,
+    /// Oldest-first active queues seen by each actual ingress.
+    #[serde(rename = "live-sound.prefix")]
+    LiveSoundPrefix,
+    /// Accepted or rejected at each actual ingress.
+    #[serde(rename = "live-sound.accepted")]
+    LiveSoundAccepted,
+    /// Compared complete active FIFOs and committed sender phases.
+    #[serde(rename = "live-sound.fifo")]
+    LiveSoundFifo,
+    /// The passage hold after both offers.
+    #[serde(rename = "live-sound.hold")]
+    LiveSoundHold,
     /// Exposed physical held, current-new and previous-new controls at W1.
     #[serde(rename = "shot.controller")]
     ShotController,
@@ -809,6 +839,9 @@ fn rule_exists(rule: &str) -> bool {
         || boss_ceres_ridley::catalogue()
             .iter()
             .any(|(id, _)| rule == format!("boss-ceres-ridley/{id:?}"))
+        || world_doors::CATALOGUE
+            .iter()
+            .any(|entry| rule == format!("world-doors/{:?}", entry.id))
         || world_camera::CATALOGUE
             .iter()
             .any(|entry| rule == format!("world-camera/{:?}", entry.id))
@@ -855,7 +888,15 @@ fn rule_exists(rule: &str) -> bool {
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
-        O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
+        O::SenderQueue
+        | O::SenderProgress
+        | O::TouchdownOffer
+        | O::LiveSoundOrder
+        | O::LiveSoundPermission
+        | O::LiveSoundPrefix
+        | O::LiveSoundAccepted
+        | O::LiveSoundFifo => Responsibility::AudioSender,
+        O::LiveSoundHold => Responsibility::Doors,
         O::FrameTime | O::FrameOutputs => Responsibility::Frame,
         O::FrameSteady => Responsibility::WorldHaze,
         O::FrameRandom | O::FrameRandomSeed | O::FrameRandomDevice => Responsibility::GameRandom,
@@ -977,6 +1018,7 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
         ("audio-transport/", Responsibility::Audio),
         ("boss-ceres-ridley/", Responsibility::Ceres),
         ("world-camera/", Responsibility::Camera),
+        ("world-doors/", Responsibility::Doors),
         ("weapons-projectiles/", Responsibility::Weapons),
         ("enemy-interactions/", Responsibility::Contact),
         ("interface-hud/", Responsibility::Hud),
@@ -992,8 +1034,23 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
     .find_map(|(prefix, owner)| rule.starts_with(prefix).then_some(*owner))
 }
 
-fn witnessed_fields(rule: &str, early_map: bool) -> Option<&'static [ObservationId]> {
+fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
+    if provider.live_sound() {
+        return Some(match rule {
+            "audio-transport/OfferAcceptance" => &[
+                O::LiveSoundPermission,
+                O::LiveSoundAccepted,
+                O::LiveSoundFifo,
+            ],
+            "weapons-projectiles/HoldingShoot" | "samus-appearance/AtTheDoor" => {
+                &[O::LiveSoundOrder]
+            }
+            "boss-ceres-ridley/Polling" => &[O::ShotDoorOpening],
+            "world-doors/Quieting" => &[O::LiveSoundOrder, O::LiveSoundHold],
+            _ => return None,
+        });
+    }
     Some(match rule {
         "samus-movement/MotionAttempts" => &[O::FirstMotionSearch],
         "samus-movement/ReachedEnemyCandidates" => &[O::FirstMotionCandidates],
@@ -1060,7 +1117,9 @@ fn witnessed_fields(rule: &str, early_map: bool) -> Option<&'static [Observation
         "samus-health/LowEnergyWarning" => &[O::HealthTailState, O::HealthTailWarning],
         "samus-health/ProtectionTime" => &[O::HealthTailState, O::HealthTailClose],
         "interface-hud/EnergyGauge" => &[O::GaugeRefresh, O::GaugeWords],
-        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" if early_map => {
+        "interface-hud/HerBlink" | "interface-hud/MiniMapWindow"
+            if provider == InputProvider::EarlyMapInputs =>
+        {
             &[O::EarlyMapWindow]
         }
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" => &[O::HudGrid],
@@ -1368,8 +1427,81 @@ fn shot_opportunity_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
+impl InputProvider {
+    const fn live_sound(self) -> bool {
+        matches!(
+            self,
+            Self::NativeShotSoundInputs
+                | Self::ShotSoundNoFire
+                | Self::NativePassageSoundInputs
+                | Self::PassageSoundShootHeld
+        )
+    }
+}
+
+fn live_sound_provider_valid(case: &Case) -> bool {
+    use super::shot_opportunity::{EXPECTED_PIN as SHOT_EXPECTED_PIN, START_PIN as SHOT_START_PIN};
+    use ObservationId as O;
+    use Responsibility as R;
+    if case.kind != CaseKind::Scoped
+        || case.content != ContentProvider::PlayerRomImport
+        || case.row != super::sender_offer::SOURCE_ROW
+        || !case.checkpoints
+        || case.borrowed.is_empty()
+        || case.limits.is_empty()
+        || case.expectations.output_cut.is_some()
+    {
+        return false;
+    }
+    let offers = [
+        O::LiveSoundOrder,
+        O::LiveSoundPermission,
+        O::LiveSoundPrefix,
+        O::LiveSoundAccepted,
+    ];
+    if matches!(
+        case.inputs,
+        InputProvider::NativePassageSoundInputs | InputProvider::PassageSoundShootHeld
+    ) {
+        use super::passage_audio::{EVENT_PIN, START_PIN};
+        return case.end.cut_inclusive == 183
+            && matches!(&case.start, Start::NativeCheckpoint {
+                path, sha256, seed_path, seed_sha256, frame: 182
+            } if path == std::path::Path::new("passage-offers-v1/expected/events.toml")
+                && seed_path == std::path::Path::new("passage-offers-v1/inputs/cut-182.record")
+                && sha256 == EVENT_PIN && seed_sha256 == START_PIN)
+            && case.expectations.provider == ExpectedProvider::NativePassageSoundOffers
+            && case.expectations.fields == [O::LiveSoundFifo]
+            && case
+                .expectations
+                .outputs
+                .iter()
+                .copied()
+                .eq(offers.into_iter().chain([O::LiveSoundHold]))
+            && case.responsibilities == [R::Doors, R::Appearance, R::AudioSender];
+    }
+    case.end.cut_inclusive == 157
+        && matches!(&case.start, Start::NativeCheckpoint {
+            path, sha256, seed_path, seed_sha256, frame: 156
+        } if path == std::path::Path::new("shot-contact-five-v1/expected.toml")
+            && seed_path == std::path::Path::new("shot-contact-five-v1/start.record")
+            && sha256 == SHOT_EXPECTED_PIN && seed_sha256 == SHOT_START_PIN)
+        && case.expectations.provider == ExpectedProvider::NativeShotSoundOffers
+        && case.expectations.fields == [O::LiveSoundFifo]
+        && case
+            .expectations
+            .outputs
+            .iter()
+            .copied()
+            .eq(offers.into_iter().chain([O::ShotDoorOpening]))
+        && case.responsibilities == [R::Weapons, R::Ceres, R::AudioSender]
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
+    if case.inputs.live_sound() {
+        return live_sound_provider_valid(case);
+    }
     if case.inputs == InputProvider::ScopedShotOpportunityInputs {
         return shot_opportunity_provider_valid(case);
     }
@@ -1646,7 +1778,7 @@ fn scope_valid(case: &Case) -> bool {
         if rule_owner(rule).is_none_or(|owner| !owners.contains(&owner)) {
             return false;
         }
-        if witnessed_fields(rule, case.inputs == InputProvider::EarlyMapInputs)
+        if witnessed_fields(rule, case.inputs)
             .is_none_or(|fields| fields.iter().any(|field| !observations.contains(field)))
         {
             return false;

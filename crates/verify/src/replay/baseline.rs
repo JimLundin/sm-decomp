@@ -341,33 +341,38 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
     if let Some(valid) = expanded_counts(case, counts) {
         return valid;
     }
-    if case.responsibilities != [Responsibility::Audio] {
-        let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);
-        let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {
-            usize::from(
-                at.checked_sub(first)
-                    .and_then(|offset| usize::try_from(offset).ok())
-                    .is_some_and(|offset| offset < counts.cuts),
-            )
-        });
-        if semantic_count != Some(counts.fields)
-            || case.expectations.outputs.len().checked_mul(output_cuts) != Some(counts.outputs)
-            || counts.publications != 0
-            || counts.replies != 0
-            || counts.pending_boundaries != 0
-        {
-            return false;
-        }
+    if case.responsibilities == [Responsibility::Audio] {
+        return counts.cuts.checked_mul(4) == Some(counts.replies)
+            && counts.outputs == counts.publications
+            && counts.pending_boundaries <= counts.publications
+            && (case.checkpoints || counts.pending_boundaries == 0);
     }
-    if case.responsibilities == [Responsibility::Audio]
-        && (counts.cuts.checked_mul(4) != Some(counts.replies)
-            || counts.outputs != counts.publications
-            || counts.pending_boundaries > counts.publications
-            || (!case.checkpoints && counts.pending_boundaries != 0))
+    scoped_counts(case, counts, first)
+}
+
+fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
+    let pending_boundaries = if case.expectations.provider
+        == ExpectedProvider::NativePassageSoundOffers
+        && case.checkpoints
+        && counts.cuts != 0
     {
-        return false;
-    }
-    true
+        2
+    } else {
+        0
+    };
+    let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);
+    let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {
+        usize::from(
+            at.checked_sub(first)
+                .and_then(|offset| usize::try_from(offset).ok())
+                .is_some_and(|offset| offset < counts.cuts),
+        )
+    });
+    semantic_count == Some(counts.fields)
+        && case.expectations.outputs.len().checked_mul(output_cuts) == Some(counts.outputs)
+        && counts.publications == 0
+        && counts.replies == 0
+        && counts.pending_boundaries == pending_boundaries
 }
 
 #[cfg(test)]

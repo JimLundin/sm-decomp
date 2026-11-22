@@ -1393,3 +1393,91 @@ provider = "independent-native-hud-tail-opportunities"
 fields = ["hud-clock", "quiet-item-controls", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers"]
 phase = "controls-through-late-status"
 claim = "unselected neighbour inputs only; late status reads whole energy from carried Health"
+
+[[case]]
+id = "gameplay-sound/shot-opening"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-checkpoint", frame = 156, path = "shot-contact-five-v1/expected.toml", sha256 = "3d02455e827f3ac8c5a6e41f3197a668f7e7f639254e521788c012da28c8e17c", seed_path = "shot-contact-five-v1/start.record", seed_sha256 = "90d416d38b097c80bfb3cf7b0f0e95ae6514abc65788f708a603ec01c964140b" }
+end = { cut_inclusive = 157 }
+rules = ["weapons-projectiles/HoldingShoot", "boss-ceres-ridley/Polling", "audio-transport/OfferAcceptance"]
+profile = "reference"
+responsibilities = ["weapons", "ceres", "audio-sender"]
+content = "player-rom-import"
+inputs = "native-shot-sound-inputs"
+expectations = { provider = "native-shot-sound-offers", fields = ["live-sound.fifo"], outputs = ["live-sound.order", "live-sound.permission", "live-sound.prefix", "live-sound.accepted", "shot.door-opening"] }
+checkpoints = true
+limits = ["the shared shot opportunity executes mapped W1 before both actor runs and uses the slot-one B8 opening", "only Action and Contact have independent ingress and FIFO brackets", "ambient replies, elapsed Frame, sender service and physical publications are outside the scope", "the no-fire control releases only the configured shoot action and retains the actual door opening"]
+
+[[case.borrowed]]
+dependency = "shot.surrounding-producers"
+provider = "five-cut shot fixture and selected native sender windows"
+fields = ["controller.physical-sample", "drawing.phase", "drawing.ordered-stores", "room.terrain", "room.scroll", "sender.prior-brackets"]
+phase = "prior-cut-and-current-first-shot"
+claim = "one native origin supplies the player, door and retained FIFO owners, with a mapped-pad override only in the constructed control"
+
+[[case]]
+id = "gameplay-sound/shot-opening-no-fire"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-checkpoint", frame = 156, path = "shot-contact-five-v1/expected.toml", sha256 = "3d02455e827f3ac8c5a6e41f3197a668f7e7f639254e521788c012da28c8e17c", seed_path = "shot-contact-five-v1/start.record", seed_sha256 = "90d416d38b097c80bfb3cf7b0f0e95ae6514abc65788f708a603ec01c964140b" }
+end = { cut_inclusive = 157 }
+rules = ["weapons-projectiles/HoldingShoot", "boss-ceres-ridley/Polling", "audio-transport/OfferAcceptance"]
+profile = "reference"
+responsibilities = ["weapons", "ceres", "audio-sender"]
+content = "player-rom-import"
+inputs = "shot-sound-no-fire"
+expectations = { provider = "native-shot-sound-offers", fields = ["live-sound.fifo"], outputs = ["live-sound.order", "live-sound.permission", "live-sound.prefix", "live-sound.accepted", "shot.door-opening"] }
+checkpoints = true
+limits = ["the shared shot opportunity executes mapped W1 before both actor runs and uses the slot-one B8 opening", "only Action and Contact have independent ingress and FIFO brackets", "ambient replies, elapsed Frame, sender service and physical publications are outside the scope", "the no-fire control releases only the configured shoot action and retains the actual door opening"]
+
+[[case.borrowed]]
+dependency = "shot.surrounding-producers"
+provider = "five-cut shot fixture and selected native sender windows"
+fields = ["controller.physical-sample", "drawing.phase", "drawing.ordered-stores", "room.terrain", "room.scroll", "sender.prior-brackets"]
+phase = "prior-cut-and-current-first-shot"
+claim = "one native origin supplies the player, door and retained FIFO owners, with a mapped-pad override only in the constructed control"
+
+[[case]]
+id = "gameplay-sound/passage-hold"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-checkpoint", frame = 182, path = "passage-offers-v1/expected/events.toml", sha256 = "4a734ec6ec507ce15f2319de787c2b1e405c118e1e022535bed4a0685b8ae369", seed_path = "passage-offers-v1/inputs/cut-182.record", seed_sha256 = "5d420eca8c3be05f7cb6ba7ac1411e1f8fb04336084a1a040a7232f537368426" }
+end = { cut_inclusive = 183 }
+rules = ["world-doors/Quieting", "samus-appearance/AtTheDoor", "audio-transport/OfferAcceptance"]
+profile = "reference"
+responsibilities = ["doors", "appearance", "audio-sender"]
+content = "player-rom-import"
+inputs = "native-passage-sound-inputs"
+expectations = { provider = "native-passage-sound-offers", fields = ["live-sound.fifo"], outputs = ["live-sound.order", "live-sound.permission", "live-sound.prefix", "live-sound.accepted", "live-sound.hold"] }
+checkpoints = true
+limits = ["scoped at the touched doorway and through Hold before sender service", "the held-shoot control changes the Appearance operand and leaves the actual Ambient offer and Hold", "native cut 184 corroborates FIFO-empty while AwaitCue", "actor and drawing work, clock, physical sender service and music readiness remain outside the production claim"]
+
+[[case.borrowed]]
+dependency = "passage.normal-entry-work"
+provider = "locked touched-door origin and reviewed first-entry setup"
+fields = ["doorway.imported-arrival", "scene.retained", "controller.physical-sample", "passage.first-work-done", "sender.prior-snapshot"]
+phase = "touched-door-to-first-silence"
+claim = "one touched-door origin admits the retained scene, Appearance operands, sound permission and actual queues with the independently qualified first work opportunity"
+
+[[case]]
+id = "gameplay-sound/passage-hold-shoot-held"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-checkpoint", frame = 182, path = "passage-offers-v1/expected/events.toml", sha256 = "4a734ec6ec507ce15f2319de787c2b1e405c118e1e022535bed4a0685b8ae369", seed_path = "passage-offers-v1/inputs/cut-182.record", seed_sha256 = "5d420eca8c3be05f7cb6ba7ac1411e1f8fb04336084a1a040a7232f537368426" }
+end = { cut_inclusive = 183 }
+rules = ["world-doors/Quieting", "samus-appearance/AtTheDoor", "audio-transport/OfferAcceptance"]
+profile = "reference"
+responsibilities = ["doors", "appearance", "audio-sender"]
+content = "player-rom-import"
+inputs = "passage-sound-shoot-held"
+expectations = { provider = "native-passage-sound-offers", fields = ["live-sound.fifo"], outputs = ["live-sound.order", "live-sound.permission", "live-sound.prefix", "live-sound.accepted", "live-sound.hold"] }
+checkpoints = true
+limits = ["scoped at the touched doorway and through Hold before sender service", "the held-shoot control changes the Appearance operand and leaves the actual Ambient offer and Hold", "native cut 184 corroborates FIFO-empty while AwaitCue", "actor and drawing work, clock, physical sender service and music readiness remain outside the production claim"]
+
+[[case.borrowed]]
+dependency = "passage.normal-entry-work"
+provider = "locked touched-door origin and reviewed first-entry setup"
+fields = ["doorway.imported-arrival", "scene.retained", "controller.physical-sample", "passage.first-work-done", "sender.prior-snapshot"]
+phase = "touched-door-to-first-silence"
+claim = "one touched-door origin admits the retained scene, Appearance operands, sound permission and actual queues with the independently qualified first work opportunity"
