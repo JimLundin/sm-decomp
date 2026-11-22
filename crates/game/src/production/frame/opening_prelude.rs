@@ -28,9 +28,7 @@ pub(super) fn begin_acknowledgment(
     let receipt = receipt.ok_or(ProductionFault::Unsupported(Unsupported::Frame(
         Dependency::FramePublicationAcknowledgment,
     )))?;
-    let profile = template
-        .bind(&[])
-        .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
+    let profile = acknowledgment_profile(prelude, timing, template)?;
     timing
         .begin(ACKNOWLEDGMENT, profile)
         .map_err(ProductionFault::FrameHardware)?;
@@ -41,7 +39,29 @@ pub(super) fn begin_acknowledgment(
     Ok(())
 }
 
-pub(super) fn complete_acknowledgment(caller: &mut Caller) -> Result<(), ProductionFault> {
+pub(super) fn acknowledgment_profile(
+    prelude: &PreludeSource,
+    timing: &timing::State,
+    template: &Template,
+) -> Result<data::timing::Profile, ProductionFault> {
+    let mut profile = template
+        .bind(&[])
+        .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
+    if matches!(prelude, PreludeSource::Recurring) {
+        timing
+            .wait_resume()
+            .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::FramePublicationAcknowledgment,
+            )))?
+            .prepend(&mut profile);
+    }
+    Ok(profile)
+}
+
+pub(super) fn complete_acknowledgment(
+    caller: &mut Caller,
+    timing: &mut timing::State,
+) -> Result<(), ProductionFault> {
     let Caller::Acknowledgment { prelude, receipt } = caller else {
         return Err(ProductionFault::WrongScope);
     };
@@ -49,6 +69,7 @@ pub(super) fn complete_acknowledgment(caller: &mut Caller) -> Result<(), Product
         prelude: prelude.clone(),
         publication: *receipt,
     };
+    timing.interrupted_wait = None;
     Ok(())
 }
 
@@ -526,7 +547,7 @@ impl Opening {
             .step(budget, &[])
             .map_err(ProductionFault::FrameHardware)?;
         if progress == timing::Progress::Completed(ACKNOWLEDGMENT) {
-            complete_acknowledgment(&mut self.caller)?;
+            complete_acknowledgment(&mut self.caller, &mut self.timing)?;
             self.acknowledgment_ended_at = Some(self.timing.hardware.now);
         } else if progress == timing::Progress::Completed(MUSIC) {
             complete_music(&mut self.caller, &mut self.music)?;

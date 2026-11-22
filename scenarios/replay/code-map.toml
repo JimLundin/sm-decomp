@@ -49,6 +49,8 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/frame/sender_stage.rs" },
   { role = "adapter", path = "crates/game/src/production/frame/sender_contract.rs" },
   { role = "navigation", path = "crates/verify/src/replay/frame_origin/admission/adjacent_tail.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame_origin/admission/opening_clock.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame/opening_audio.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]
 

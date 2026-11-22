@@ -144,8 +144,19 @@ The concrete selected recipe orders actual clean calls and routes actual outputs
 ### 6.4 NMI timing and lag
 
 The retained Frame owner progresses from its admitted beam phase through the software
-request, hardware wait, NMI entry and handler return. Other recipes that borrow parity or
-clock intervals establish only their declared comparisons.
+request, hardware wait, NMI entry and handler return. Native entry preserves the reached
+Wait cursor and the admission that suspended it. The next acknowledgment takes the
+remaining busy-branch work when the request read completed before NMI. The same clock
+then advances the carried gameplay and subsequent requested returns.
+
+The three-return opening witness starts from one native admission and compares the
+absolute return clocks, ordered hardware callbacks and the Contact input read through
+the third return. At the third opportunity, live Haze, door timers, pose selection,
+subpixel movement and imported sprite geometry select their own physical work. The
+matching Contact publication is independently admitted after the actual preceding retry.
+The CPU samples it at its own read edge, and those read samples are compared separately
+from hardware callbacks.
+The resident SMP producer and power-on history remain outside the witness.
 
 ### 6.5 Named CPU costs
 

@@ -52,7 +52,8 @@ pub struct RequiredDependencies {
 /// Checked immutable physical content, interpreted entirely by production.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PhysicalContract {
-    pub(super) dependencies: RequiredDependencies,
+    dependencies: RequiredDependencies,
+    further: Vec<RequiredDependencies>,
     pub(super) template: data::timing::Template,
 }
 
@@ -62,6 +63,7 @@ impl PhysicalContract {
     pub const fn new(dependencies: RequiredDependencies, template: data::timing::Template) -> Self {
         Self {
             dependencies,
+            further: Vec::new(),
             template,
         }
     }
@@ -71,6 +73,23 @@ impl PhysicalContract {
         dependencies: RequiredDependencies,
     ) -> Self {
         Self::new(dependencies, self.template.clone())
+    }
+
+    pub(in crate::production::frame) fn admit(&mut self, dependencies: RequiredDependencies) {
+        self.further.push(dependencies);
+    }
+
+    pub(super) fn check(&self, receipt: &Receipt, result: &Model<CameraPin>) -> Result<(), Fault> {
+        let first = self.dependencies.check(receipt, result);
+        if first.is_err()
+            && self
+                .further
+                .iter()
+                .any(|current| current.check(receipt, result).is_ok())
+        {
+            return Ok(());
+        }
+        first
     }
 }
 

@@ -66,9 +66,16 @@ pub enum Stage {
         receipt: Model<ReceiptPin>,
         /// Actual wall instant of the latest consumed milestone.
         wall: MasterTicks,
-        /// Already consumed observation offset for a reply-dependent service.
-        observed: Option<u64>,
+        /// Already consumed intrinsic offset and wall clock for the physical read.
+        observed: Option<ReplyRead>,
     },
+}
+
+/// Actual retained intrinsic and wall position of a consumed sender reply.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ReplyRead {
+    pub(super) intrinsic: u64,
+    pub(super) at: MasterTicks,
 }
 
 /// Progress through actual producer requests, independent of service retries.
@@ -218,13 +225,16 @@ impl Stage {
         } else {
             &chosen.origin
         };
-        let expected = if result.presentation.is_some()
+        let expected = if (result.presentation.is_some() || selected.presentation.is_none())
             && let Self::Charging {
                 observed: Some(read),
                 ..
             } = self
         {
-            audio_transport::ExactCpuMasterTicks(std::ops::Add::add(&chosen.origin.0, *read))
+            audio_transport::ExactCpuMasterTicks(std::ops::Add::add(
+                &chosen.origin.0,
+                read.intrinsic,
+            ))
         } else {
             expected.clone()
         };
@@ -381,9 +391,16 @@ impl Stage {
             work: body,
             receipt: observed,
             wall: at,
-            observed: Some(intrinsic),
+            observed: Some(ReplyRead { intrinsic, at }),
         };
         self.receipt().ok_or(Fault::Order)
+    }
+
+    pub(super) const fn contact_reply(&self) -> Option<ReplyRead> {
+        match self {
+            Self::Charging { observed, .. } => *observed,
+            Self::Idle | Self::Chosen(_) | Self::AwaitingReply { .. } => None,
+        }
     }
 
     /// Complete receipt used by the external full source-envelope qualifier.

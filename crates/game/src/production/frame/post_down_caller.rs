@@ -270,7 +270,7 @@ impl Stage {
 impl ContactCompleted {
     pub(super) fn quiet(&self) -> bool {
         let receipt = &self.completion.receipt;
-        receipt.before.model.0.state.playhead.time_left > samus_appearance::Frames::LAST
+        receipt.before.model.0.state.playhead.time_left >= samus_appearance::Frames::LAST
             && matches!(receipt.result.model.0.completed.last(),
                 Some(samus_appearance::Receipt::Appearance { output, .. })
                     if output.contact.is_none() && output.sound.is_none())

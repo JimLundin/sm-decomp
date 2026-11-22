@@ -26,6 +26,7 @@ impl AdjacentShape {
             return Err(data_failure(None, "adjacent HUD quiet physical arm"));
         }
         Ok(frame::recurring_hud_map::RecurringDisplay {
+            retain_first_half: false,
             frame: interface_hud::FrameCount(source.premises.frame.0.wrapping_add(1)),
             room: source.premises.room,
             centre: interface_hud::Place { x, y },

@@ -143,6 +143,10 @@ pub struct State {
     pub senders: Senders,
     /// Current qualified service metadata, retaining no second writable sender state.
     pub sender_stage: super::sender_stage::Stage,
+    /// Actual last retry publication, kept for the external Contact response join.
+    pub contact_retried_at: Option<MasterTicks>,
+    /// Reply receipt retained after the already sampled Contact service returns.
+    pub completed_contact_read: Option<super::sender_stage::ReplyRead>,
     /// Exactly-once progress through actual retained appearance sound requests.
     pub sound_offers: super::sender_stage::Offers,
     /// Independently borrowed current service downtime and guarded fetch regime.
@@ -203,6 +207,21 @@ impl State {
         self.validate_grounded_checkpoint(content, rules)?;
         self.validate_hud_checkpoint(content, rules)?;
         self.validate_scene_checkpoint(content)?;
+        self.validate_haze_checkpoint(content)?;
+        self.validate_contact_checkpoint(content)?;
+        self.validate_finalization_checkpoint(content)
+            .map_err(|_| Fault::InvalidPlayerEntry)?;
+        if let super::Caller::Acknowledgment { prelude, .. } = &self.caller {
+            let profile = super::opening_prelude::acknowledgment_profile(
+                prelude,
+                &self.timing,
+                &content.acknowledgment,
+            )
+            .map_err(|_| Fault::InvalidPlayerEntry)?;
+            if !self.has_physical_bill(super::opening_prelude::ACKNOWLEDGMENT, &profile) {
+                return Err(Fault::InvalidPlayerEntry);
+            }
+        }
         self.validate_countdown_checkpoint(content, rules)?;
         self.validate_animation_checkpoint(content, rules)?;
         self.validate_interruption_checkpoint(content)?;
@@ -231,6 +250,52 @@ impl State {
             .iter()
             .filter(|work| work.kind == timing::WorkKind::Semantic(identity));
         active.next().is_some_and(|work| &work.profile == profile) && active.next().is_none()
+    }
+
+    fn validate_wait_admission(&self) -> Result<(), Fault> {
+        use super::{Caller, PreludeSource, frame_return::Stage, suffix_caller::Suffix};
+        let in_native = matches!(
+            self.return_progress,
+            Stage::Ready {
+                suffix: Suffix::Entering { .. }
+                    | Suffix::Video { .. }
+                    | Suffix::ControllerTail { .. }
+                    | Suffix::Acknowledged { .. },
+                ..
+            }
+        );
+        let acknowledging = matches!(
+            self.caller,
+            Caller::AwaitingAcknowledgment {
+                prelude: PreludeSource::Recurring,
+                ..
+            } | Caller::Acknowledgment {
+                prelude: PreludeSource::Recurring,
+                ..
+            }
+        );
+        match self.timing.wait_admission() {
+            None if in_native || acknowledging => Err(Fault::InvalidPlayerEntry),
+            None => Ok(()),
+            Some((at, data::timing::Interrupt::Nmi, super::suffix_caller::WAIT))
+                if (in_native || acknowledging)
+                    && self
+                        .publications
+                        .events
+                        .iter()
+                        .rev()
+                        .find(|event| {
+                            matches!(
+                                event.kind,
+                                timing::EventKind::Interrupt(data::timing::Interrupt::Nmi)
+                            )
+                        })
+                        .is_some_and(|event| event.at == at) =>
+            {
+                Ok(())
+            }
+            Some(_) => Err(Fault::InvalidPlayerEntry),
+        }
     }
 
     /// Read the current shared number without advancing the sequence.
@@ -390,6 +455,7 @@ impl State {
         self.gameplay_publications()
             .map_err(|_| Fault::InvalidPlayerEntry)?;
         self.timing.validate().map_err(Fault::Timing)?;
+        self.validate_wait_admission()?;
         self.content.validate().map_err(Fault::Content)?;
         if self.samus_palette.is_some() {
             super::validate_regions(self.transfer_regions().iter()).map_err(Fault::Content)?;

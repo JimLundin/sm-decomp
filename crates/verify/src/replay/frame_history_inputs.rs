@@ -111,6 +111,7 @@ pub(super) fn origin(
             need("layer2_ownership_x")? & 1 != 0,
             need("layer2_ownership_y")? & 1 != 0,
         ],
+        departure_inactive: None,
     };
     Ok((
         history,

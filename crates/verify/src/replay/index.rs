@@ -401,6 +401,9 @@ pub enum ObservationId {
     /// Exact completed-return wall time from the retained physical owner.
     #[serde(rename = "frame.time")]
     FrameTime,
+    /// Ordered CPU reads and writes at the audio ports.
+    #[serde(rename = "frame.audio.ports")]
+    FrameAudioPorts,
     /// Selected Haze and `LayerBlend` state at each committed prelude boundary.
     #[serde(rename = "frame.steady")]
     FrameSteady,
@@ -926,7 +929,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::LiveSoundPermission
         | O::LiveSoundPrefix
         | O::LiveSoundAccepted
-        | O::LiveSoundFifo => Responsibility::AudioSender,
+        | O::LiveSoundFifo
+        | O::FrameAudioPorts => Responsibility::AudioSender,
         O::LiveSoundHold => Responsibility::Doors,
         O::FrameTime | O::FrameOutputs | O::FrameHealthHud => Responsibility::Frame,
         O::FrameSteady => Responsibility::WorldHaze,
@@ -1681,6 +1685,20 @@ pub(super) const PLAY_TIME_RULE: &str = "game-time/PlayTimeAdvance";
 pub(super) const ROOM_QUAKE_RULE: &str = "world-quake/QuietQuakePhase";
 
 impl Case {
+    pub(super) fn opening_clock(&self) -> bool {
+        self.borrowed
+            .iter()
+            .any(|value| value.dependency == "frame.opening-clock")
+    }
+
+    pub(super) fn adjacent_native_end(&self) -> u64 {
+        if self.opening_clock() {
+            2
+        } else {
+            self.end.cut_inclusive
+        }
+    }
+
     fn native_frame_fields(&self) -> &[ObservationId] {
         let fields = self.expectations.fields.as_slice();
         let fields = fields
@@ -1766,56 +1784,11 @@ fn scope_valid(case: &Case) -> bool {
         return steady_scope_valid(case, &owners);
     }
     if case.inputs == InputProvider::NativeFrameOwners {
-        let mut frame_owners = owners.clone();
-        frame_owners.remove(&Responsibility::Health);
-        let haze = frame_owners.remove(&Responsibility::WorldHaze);
-        let random = frame_owners.remove(&Responsibility::GameRandom);
-        let compares_final_owners = case.compares_final_frame_owners();
-        let health_hud = observations.contains(&ObservationId::FrameHealthHud);
-        if compares_final_owners {
-            frame_owners.remove(&Responsibility::GameTime);
-            frame_owners.remove(&Responsibility::WorldQuake);
-        }
-        return case.kind == CaseKind::Integrated
-            && case.content == ContentProvider::PlayerRomImport
-            && haze
-                == case
-                    .rules
-                    .iter()
-                    .any(|rule| rule.starts_with("world-haze/"))
-            && random == case.expectations.native_random.is_some()
-            && health_hud == case.expectations.native_health_hud.is_some()
-            && health_hud == super::frame::health_hud::Arm::from_case(case).is_some()
-            && (!health_hud
-                || (case.compares_final_frame_health()
-                    && case.end.cut_inclusive == 1
-                    && case.end.native_returns.is_none()
-                    && case.expectations.fields.last() == Some(&ObservationId::FrameHealthHud)
-                    && case.checkpoints))
-            && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
-            && matches!(case.start, Start::NativeSeed { .. })
-            && frame_owners
-                == BTreeSet::from([
-                    Responsibility::Frame,
-                    Responsibility::Movement,
-                    Responsibility::Hud,
-                    Responsibility::Appearance,
-                    Responsibility::AudioSender,
-                ])
-            && (compares_final_owners || case.native_frame_fields() == [ObservationId::FrameTime])
-            && case.expectations.outputs == [ObservationId::FrameOutputs]
-            && case.expectations.output_cut.is_none()
-            && !case.borrowed.is_empty()
-            && case.rules.iter().all(|rule| {
-                let owner = match rule.as_str() {
-                    "audio-transport/OfferAcceptance"
-                    | "audio-transport/RequestDelivery"
-                    | "audio-transport/RequestRelease"
-                    | "audio-transport/SenderTiming" => Some(Responsibility::AudioSender),
-                    _ => rule_owner(rule),
-                };
-                owner.is_some_and(|owner| owners.contains(&owner))
-            });
+        return native_frame_scope_valid(
+            case,
+            &owners,
+            observations.contains(&ObservationId::FrameHealthHud),
+        );
     }
     for rule in &case.rules {
         if rule_owner(rule).is_none_or(|owner| !owners.contains(&owner)) {
@@ -1841,6 +1814,69 @@ fn scope_valid(case: &Case) -> bool {
         return false;
     }
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
+}
+
+fn native_frame_scope_valid(
+    case: &Case,
+    owners: &BTreeSet<Responsibility>,
+    health_hud: bool,
+) -> bool {
+    let mut frame_owners = owners.clone();
+    frame_owners.remove(&Responsibility::Health);
+    let haze = frame_owners.remove(&Responsibility::WorldHaze);
+    let random = frame_owners.remove(&Responsibility::GameRandom);
+    let compares_final_owners = case.compares_final_frame_owners();
+    if compares_final_owners {
+        frame_owners.remove(&Responsibility::GameTime);
+        frame_owners.remove(&Responsibility::WorldQuake);
+    }
+    case.kind == CaseKind::Integrated
+        && case.content == ContentProvider::PlayerRomImport
+        && haze
+            == case
+                .rules
+                .iter()
+                .any(|rule| rule.starts_with("world-haze/"))
+        && random == case.expectations.native_random.is_some()
+        && health_hud == case.expectations.native_health_hud.is_some()
+        && health_hud == super::frame::health_hud::Arm::from_case(case).is_some()
+        && (!health_hud
+            || (case.compares_final_frame_health()
+                && case.end.cut_inclusive == 1
+                && case.end.native_returns.is_none()
+                && case.expectations.fields.last() == Some(&ObservationId::FrameHealthHud)
+                && case.checkpoints))
+        && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
+        && matches!(case.start, Start::NativeSeed { .. })
+        && frame_owners
+            == BTreeSet::from([
+                Responsibility::Frame,
+                Responsibility::Movement,
+                Responsibility::Hud,
+                Responsibility::Appearance,
+                Responsibility::AudioSender,
+            ])
+        && (compares_final_owners || case.native_frame_fields() == [ObservationId::FrameTime])
+        && if case.opening_clock() {
+            case.first_cut() == Some(1)
+                && case.end.cut_inclusive == 3
+                && case.expectations.outputs
+                    == [ObservationId::FrameOutputs, ObservationId::FrameAudioPorts]
+        } else {
+            case.expectations.outputs == [ObservationId::FrameOutputs]
+        }
+        && case.expectations.output_cut.is_none()
+        && !case.borrowed.is_empty()
+        && case.rules.iter().all(|rule| {
+            let owner = match rule.as_str() {
+                "audio-transport/OfferAcceptance"
+                | "audio-transport/RequestDelivery"
+                | "audio-transport/RequestRelease"
+                | "audio-transport/SenderTiming" => Some(Responsibility::AudioSender),
+                _ => rule_owner(rule),
+            };
+            owner.is_some_and(|owner| owners.contains(&owner))
+        })
 }
 
 fn start_valid(case: &Case) -> bool {

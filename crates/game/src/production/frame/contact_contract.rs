@@ -94,6 +94,7 @@ pub enum Fault {
 pub struct PhysicalContract {
     template: data::timing::Template,
     quiet: Option<data::timing::Template>,
+    last_unmarked: Option<data::timing::Template>,
 }
 
 /// Whole-owner qualification, retaining actual inputs and outputs through charging.
@@ -115,12 +116,18 @@ impl PhysicalContract {
         Self {
             template,
             quiet: None,
+            last_unmarked: None,
         }
     }
 
     /// Admit the source-qualified nonlast-frame physical owner.
     pub fn set_quiet(&mut self, template: data::timing::Template) {
         self.quiet = Some(template);
+    }
+
+    /// Admit a last frame whose actual clip step has no contact marker.
+    pub fn set_last_unmarked(&mut self, template: data::timing::Template) {
+        self.last_unmarked = Some(template);
     }
 
     /// Qualify the actual pre-animation Contact read and its complete clean result.
@@ -139,11 +146,14 @@ impl PhysicalContract {
         if frame.movement.state().pose != receipt.playing.0.pose {
             return Err(Fault::Current);
         }
-        let (template, expected_ticks) = if graphic.is_some() {
-            (&self.template, 840)
-        } else {
-            (self.quiet.as_ref().ok_or(Fault::Profile)?, 188)
-        };
+        let (template, expected_ticks) =
+            match (graphic, receipt.before.model.0.state.playhead.time_left) {
+                (Some(_), _) => (&self.template, 840),
+                (None, samus_appearance::Frames::LAST) => {
+                    (self.last_unmarked.as_ref().ok_or(Fault::Profile)?, 254)
+                }
+                (None, _) => (self.quiet.as_ref().ok_or(Fault::Profile)?, 188),
+            };
         let mut ticks = 0_u64;
         for run in &template.runs {
             if !matches!(run.effect, data::timing::TemplateEffect::None) {
@@ -211,7 +221,7 @@ fn contact(
     else {
         return Err(Fault::Output);
     };
-    if (graphic.is_none() && playhead.time_left <= samus_appearance::Frames::LAST)
+    if playhead.time_left < samus_appearance::Frames::LAST
         || output.contact != graphic
         || output.sound != graphic.map(|_| SoundRequest::Footstep)
     {

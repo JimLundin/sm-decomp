@@ -41,6 +41,7 @@ pub(in crate::production) fn state(line: u16, horizontal: u16) -> State {
         work: Vec::new(),
         interrupt_boundary: None,
         pending_handler: None,
+        interrupted_wait: None,
     }
 }
 fn profile(runs: Vec<Run>) -> Profile {
@@ -93,6 +94,27 @@ fn finish(state: &mut State, budget: u64, content: &[ContentRegion]) -> Vec<Even
 }
 fn restore(state: &State) -> State {
     canonical::from_bytes(&canonical::to_bytes(state)).unwrap()
+}
+
+#[test]
+fn interrupted_wait_refuses_a_resume_cursor_without_its_spent_work() {
+    let mut value = state(225, 304);
+    value.hardware.interrupts.nmi.transition = true;
+    value.begin_wait(WorkId(70)).unwrap();
+    loop {
+        let (progress, _) = value.step(MasterTicks(8), &[]).unwrap();
+        if progress == Progress::Interrupt(Interrupt::Nmi) {
+            break;
+        }
+        assert_eq!(progress, Progress::Advanced);
+    }
+    value.enter_native(WorkId(71)).unwrap();
+    assert_eq!(
+        restore(&value).wait_resume(),
+        Some(WaitResume::PendingBusyBranch)
+    );
+    value.interrupted_wait.as_mut().unwrap().wait.cursor.run = 4;
+    assert_eq!(value.validate(), Err(Fault::InvalidState));
 }
 
 #[test]

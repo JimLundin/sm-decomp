@@ -269,6 +269,7 @@ pub fn decode(bytes: &[u8], policy: IrqPolicy, current: PhysicalPad) -> Result<S
         work: Vec::new(),
         interrupt_boundary: None,
         pending_handler: None,
+        interrupted_wait: None,
     };
     state.validate().map_err(|_| SeedFault::InvalidState)?;
     Ok(state)

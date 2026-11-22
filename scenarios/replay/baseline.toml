@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "e94e4ade573a7e54231f4065fcee54a84962c13b705723b7cf0afd18cd36861a"
+index_sha256 = "177a83fe10cc8baeffecefcfaa73313fa4922758412f3c0312e1a8e2a3d9a1d6"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1207,5 +1207,23 @@ replies = 0
 null_cuts = 0
 null_fields = 15
 restorations = 9
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/opening-three-native-returns"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "406ea1124b1464b591444d9787ed557d1e69137e61b17e62c440de94cd74b486"
+
+[case.counts]
+cuts = 3
+fields = 39
+outputs = 6916
+publications = 6916
+replies = 2
+null_cuts = 0
+null_fields = 27
+restorations = 3
 pending_boundaries = 0
 pending_restorations = 0

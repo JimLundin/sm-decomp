@@ -357,7 +357,7 @@ impl super::State {
     fn adjacent_health_history_holds(&self) -> bool {
         use crate::production::timing::EventKind;
         use data::timing::Interrupt::{Irq, Nmi};
-        self.publications.preceding().is_ok_and(|prior| {
+        self.publications.previous().is_ok_and(|prior| {
             !prior.iter().any(super::publications::writes_wram)
                 && prior
                     .iter()
@@ -426,15 +426,29 @@ impl super::State {
         if owner.freshness != Freshness::Retired || !self.adjacent_health_history_holds() {
             return Err(InvalidPlayerEntry);
         }
-        // Check the retained quiet service without advancing the live Health owner.
+        // Native admissions witness complete prior Maintenance opportunities.
         let mut maintained = admission.initial.0;
-        if maintained.health_opportunity(&samus_health::Rules::REFERENCE)
-            != samus_health::WarningSound::None
-            || (owner.maintained
-                && maintained.health_opportunity(&samus_health::Rules::REFERENCE)
-                    != samus_health::WarningSound::None)
-            || owner.state() != &maintained
-        {
+        let completed = self
+            .publications
+            .preceding()
+            .map_err(super::Fault::Publications)?
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event.kind,
+                    crate::production::timing::EventKind::Interrupt(data::timing::Interrupt::Nmi)
+                )
+            })
+            .count()
+            .saturating_add(usize::from(owner.maintained));
+        for _ in 0..completed {
+            if maintained.health_opportunity(&samus_health::Rules::REFERENCE)
+                != samus_health::WarningSound::None
+            {
+                return Err(InvalidPlayerEntry);
+            }
+        }
+        if owner.state() != &maintained {
             return Err(InvalidPlayerEntry);
         }
         Ok(())

@@ -93,7 +93,7 @@ fn install(graph: &mut Graph) {
     };
     let identity = match current.kind {
         WorkKind::Semantic(identity) | WorkKind::Handler { identity, .. } => identity,
-        WorkKind::Wait(_) | WorkKind::Native { .. } => return,
+        WorkKind::Wait(..) | WorkKind::Native { .. } => return,
     };
     let completed = current.cursor.completed;
     let mut due = Vec::new();
@@ -132,6 +132,7 @@ fn execute(inputs: &Inputs, budget: u64, checkpoint: bool) -> (Graph, Vec<Event>
             work: Vec::new(),
             interrupt_boundary: None,
             pending_handler: None,
+            interrupted_wait: None,
         },
         regions: inputs.regions.clone(),
         installations: inputs.installations.clone(),
@@ -211,7 +212,9 @@ fn callbacks(events: &[Event]) -> Vec<Callback> {
                 EventKind::ControllerEnd => (10, 0, 0),
                 EventKind::LineService(_) => (11, 0, 0),
                 EventKind::BulkService(_) => (12, 0, 0),
-                EventKind::Sample(_, _) | EventKind::ControllerCommitted => return None,
+                EventKind::Sample(_, _)
+                | EventKind::ControllerCommitted
+                | EventKind::AudioPortRead { .. } => return None,
             };
             Some(Callback {
                 at: event.at,

@@ -19,7 +19,7 @@ struct Profile {
     run: Vec<RawRun>,
 }
 
-pub(super) fn decode(
+pub(in crate::replay) fn decode(
     text: &str,
     name: &str,
     expected: [u64; 2],
@@ -99,6 +99,22 @@ pub(in crate::replay) fn current_random(text: &str) -> Result<Template, ProfileF
         return Err(ProfileFault::Format);
     }
     admit(profile, "Random", [97, 614], Effects::Multiply)
+}
+
+pub(in crate::replay) fn recurring_ordinary_right(text: &str) -> Result<Template, ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [profile] = file.profile.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    admit(
+        profile,
+        "RecurringOrdinaryRight",
+        [942, 6174],
+        Effects::Multiply,
+    )
 }
 
 /// Admit effect-free local prelude exposures at their existing owner boundaries.
@@ -190,6 +206,36 @@ pub(super) fn contact_retry(
         .runs
         .split_off(sample.checked_add(1).ok_or(ProfileFault::Profile)?);
     Ok([whole, Template { runs: remainder }])
+}
+
+pub(super) fn contact_match(text: &str) -> Result<[Template; 2], ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [mut profile] = <[_; 1]>::try_from(file.profile).map_err(|_| ProfileFault::Format)?;
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    let mut sample = None;
+    for (index, run) in profile.run.iter_mut().enumerate() {
+        match (run.device.as_str(), run.event_phase.as_str()) {
+            ("", "") => {}
+            ("LibraryThreeCue", "sample") if sample.replace(index).is_none() => {
+                if run.count != 1
+                    || cycle(run)? != (data::timing::Cycle::Six, data::timing::ExposureKind::Read)
+                {
+                    return Err(ProfileFault::Binding);
+                }
+            }
+            _ => return Err(ProfileFault::Binding),
+        }
+        run.device.clear();
+        run.event_phase.clear();
+    }
+    let split = sample
+        .and_then(|index| index.checked_add(1))
+        .ok_or(ProfileFault::Binding)?;
+    let mut prefix = admit(&profile, "ContactAwaitCueMatched", [33, 210], Effects::None)?;
+    let remainder = prefix.runs.split_off(split);
+    Ok([prefix, Template { runs: remainder }])
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

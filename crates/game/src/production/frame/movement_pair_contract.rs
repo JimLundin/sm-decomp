@@ -34,6 +34,7 @@ pub struct PhysicalContract {
     owner: PairOwner,
     admission: SourceAdmission,
     template: data::timing::Template,
+    fractional_carry: Option<data::timing::Template>,
 }
 
 impl PhysicalContract {
@@ -48,7 +49,17 @@ impl PhysicalContract {
             owner,
             admission,
             template,
+            fractional_carry: None,
         }
+    }
+
+    /// Admit the qualified ordinary-right physical envelope when the X fraction carries.
+    pub fn set_fractional_carry(&mut self, template: data::timing::Template) {
+        self.fractional_carry = Some(template);
+    }
+
+    pub(super) fn plain_air_room(&self) -> (&super::movement_caller::Room, &[bool]) {
+        (&self.admission.room, &self.admission.plain_air)
     }
 
     /// Qualify the actual request/answer and bind its complete live arithmetic work.
@@ -89,7 +100,7 @@ impl PhysicalContract {
         let body = content
             .radius(receipt.before.state().pose)
             .ok_or(Fault::Dependency)?;
-        let row = match receipt.decisions.0.as_slice() {
+        let (row, template) = match receipt.decisions.0.as_slice() {
             [
                 MovementDecision::MotionRequest(request),
                 returned_answer @ MovementDecision::MotionAnswer {
@@ -108,7 +119,10 @@ impl PhysicalContract {
                 PairOwner::FloorSupport | PairOwner::CeilingSupport
             ) =>
             {
-                self.support(receipt, request, answer, body)?
+                (
+                    self.support(receipt, request, answer, body)?,
+                    &self.template,
+                )
             }
             _ => return Err(Fault::Dependency),
         };
@@ -117,7 +131,7 @@ impl PhysicalContract {
             row: u8::try_from(row).map_err(|_| Fault::Dependency)?,
             width: u8::try_from(room.width).map_err(|_| Fault::Dependency)?,
         };
-        Ok((requests.bind(&self.template)?, requests))
+        Ok((requests.bind(template)?, requests))
     }
 
     fn index(&self, cell: types::Cell) -> Result<usize, Fault> {
@@ -198,7 +212,7 @@ impl PhysicalContract {
         decision: &samus_movement::suspended::MovementDecision,
         boxes: &[types::Hitbox],
         body: types::Radius,
-    ) -> Result<u16, Fault> {
+    ) -> Result<(u16, &data::timing::Template), Fault> {
         use types::Parts;
         let samus_movement::suspended::MovementDecision::MotionAnswer {
             answer, outputs, ..
@@ -228,17 +242,30 @@ impl PhysicalContract {
             | PairOwner::GroundFollowingDown
             | PairOwner::AimRight => return Err(Fault::Dependency),
         };
-        let fraction_sum = u32::from(request.bounds.at.x.sub())
-            .checked_add(u32::from(request.distance.sub()))
-            .ok_or(Fault::Dependency)?;
-        let tested_x = request
+        let (remainder, carry) = request
+            .bounds
+            .at
+            .x
+            .sub()
+            .overflowing_add(request.distance.sub());
+        let template = if carry && self.owner == PairOwner::OrdinaryRight {
+            self.fractional_carry.as_ref().ok_or(Fault::Dependency)?
+        } else if carry {
+            return Err(Fault::Dependency);
+        } else {
+            &self.template
+        };
+        let integer_target = request
             .bounds
             .at
             .x
             .pixel()
             .0
             .checked_add(request.distance.pixel().0)
-            .and_then(|pixel| pixel.checked_add(1))
+            .and_then(|pixel| pixel.checked_add(u16::from(carry)))
+            .ok_or(Fault::Dependency)?;
+        let tested_x = integer_target
+            .checked_add(u16::from(remainder != 0))
             .ok_or(Fault::Dependency)?;
         let dx = candidate
             .centre
@@ -256,8 +283,7 @@ impl PhysicalContract {
             || request.distance.negative()
             || request.distance.0 == 0
             || request.distance.pixel().0 >= 16
-            || fraction_sum == 0
-            || fraction_sum >= 65536
+            || remainder == 0
             || dx >= 32768
             || separation < body.x.0
             || search.supplied_count.0 != 1
@@ -283,7 +309,10 @@ impl PhysicalContract {
         {
             return Err(Fault::Dependency);
         }
-        self.right_terrain(receipt, request, outputs, body)
+        Ok((
+            self.right_terrain(receipt, request, outputs, body, integer_target)?,
+            template,
+        ))
     }
 
     fn right_terrain(
@@ -292,6 +321,7 @@ impl PhysicalContract {
         request: &samus_movement::suspended::MotionRequest,
         outputs: &samus_movement::suspended::DecisionOutputs,
         body: types::Radius,
+        integer_target: u16,
     ) -> Result<u16, Fault> {
         use types::Parts;
         let top = request
@@ -311,14 +341,8 @@ impl PhysicalContract {
             .checked_add(body.y.0)
             .and_then(|pixel| pixel.checked_sub(1))
             .ok_or(Fault::Dependency)?;
-        let leading = request
-            .bounds
-            .at
-            .x
-            .pixel()
-            .0
-            .checked_add(request.distance.pixel().0)
-            .and_then(|pixel| pixel.checked_add(body.x.0))
+        let leading = integer_target
+            .checked_add(body.x.0)
             .and_then(|pixel| pixel.checked_sub(1))
             .ok_or(Fault::Dependency)?;
         if top > bottom

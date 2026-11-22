@@ -8,12 +8,69 @@ use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
 use data::{
     dma::BusAddress,
-    timing::{ContentRegion, MasterTicks, Profile, Template},
+    timing::{ContentRegion, MasterTicks, Profile, Template, TemplateEffect},
 };
+use std::borrow::Cow;
 
 pub use super::native_return::ControllerTail;
 
 pub(super) const FINALIZE: timing::WorkId = timing::WorkId(1421);
+
+/// Physical finalization stages around one repeated inactive-slot write.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Finalization {
+    setup: Profile,
+    hide_slot: Profile,
+    finish: Profile,
+}
+
+impl Finalization {
+    /// Admit setup, one unused slot and finish as effect-free physical work.
+    ///
+    /// # Errors
+    /// Any part contains an unqualified effect or cannot bind its physical work.
+    pub fn new(
+        setup: &Template,
+        hide_slot: &Template,
+        finish: &Template,
+    ) -> Result<Self, ProductionFault> {
+        let bind = |template: &Template| {
+            if template
+                .runs
+                .iter()
+                .any(|run| run.effect != TemplateEffect::None)
+            {
+                return Err(missing());
+            }
+            template.bind(&[]).map_err(|_| missing())
+        };
+        Ok(Self {
+            setup: bind(setup)?,
+            hide_slot: bind(hide_slot)?,
+            finish: bind(finish)?,
+        })
+    }
+
+    /// Physical work after the builder drew the supplied slot count.
+    ///
+    /// # Errors
+    /// The bounded finalizer requires at least one unused slot.
+    pub fn from_drawn(&self, drawn: u16) -> Result<Profile, ProductionFault> {
+        let unused = crate::state::video::OAM_SPRITES
+            .checked_sub(usize::from(drawn))
+            .filter(|&unused| unused != 0)
+            .ok_or_else(missing)?;
+        let runs = self
+            .setup
+            .runs
+            .iter()
+            .chain((0..unused).flat_map(|_| &self.hide_slot.runs))
+            .chain(&self.finish.runs)
+            .cloned()
+            .collect();
+        Ok(Profile { runs })
+    }
+}
 
 /// Complete immutable finalization and NMI work with admitted picture bindings.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -28,6 +85,8 @@ pub struct Contract {
     pub finalization: Profile,
     /// Whole adjacent finalization with the current drawn sprite count.
     pub adjacent_finalization: Option<Profile>,
+    /// Recurring finalization from the actual drawn slot count.
+    pub recurring_finalization: Option<Finalization>,
     /// Exact transfer location for the actual finalized list.
     pub builder_address: BusAddress,
     /// Complete software request writer.
@@ -60,15 +119,22 @@ impl Contract {
         })
     }
 
-    fn finalization(&self, state: &State) -> Result<&Profile, ProductionFault> {
+    fn finalization(&self, state: &State) -> Result<Cow<'_, Profile>, ProductionFault> {
         if state.publications.original_interval() {
-            Ok(&self.finalization)
+            Ok(Cow::Borrowed(&self.finalization))
         } else {
             let drawing = state.rendering.receipt().ok_or_else(missing)?;
-            if drawing.first_byte != 0 || drawing.pieces != 9 {
+            if drawing.first_byte != 0 {
                 return Err(missing());
             }
-            self.adjacent_finalization.as_ref().ok_or_else(missing)
+            if let Some(physical) = &self.recurring_finalization {
+                return physical.from_drawn(drawing.pieces).map(Cow::Owned);
+            }
+            self.adjacent_finalization
+                .as_ref()
+                .filter(|_| drawing.pieces == 9)
+                .map(Cow::Borrowed)
+                .ok_or_else(missing)
         }
     }
 
@@ -117,6 +183,20 @@ const fn missing() -> ProductionFault {
 }
 
 impl State {
+    pub(super) fn validate_finalization_checkpoint(
+        &self,
+        content: &Content,
+    ) -> Result<(), ProductionFault> {
+        if matches!(self.return_progress, Stage::Finalizing(_)) {
+            let contract = content.return_work.as_ref().ok_or_else(missing)?;
+            let profile = contract.finalization(self)?;
+            if !self.has_physical_bill(FINALIZE, profile.as_ref()) {
+                return Err(missing());
+            }
+        }
+        Ok(())
+    }
+
     pub(super) fn advance_finalization(
         &mut self,
         content: &Content,
@@ -129,14 +209,15 @@ impl State {
                     .finalise(&mut builder, FINALIZE)
                     .map_err(|_| missing())?;
                 self.timing
-                    .begin(FINALIZE, contract.finalization(self)?.clone())
+                    .begin(FINALIZE, contract.finalization(self)?.into_owned())
                     .map_err(ProductionFault::FrameHardware)?;
                 self.return_progress = Stage::Finalizing(builder);
             }
             Stage::Finalizing(_) => {
                 let profile = contract.finalization(self)?;
                 if !self.timing.work.iter().any(|work| {
-                    work.kind == timing::WorkKind::Semantic(FINALIZE) && &work.profile == profile
+                    work.kind == timing::WorkKind::Semantic(FINALIZE)
+                        && &work.profile == profile.as_ref()
                 }) {
                     return Err(missing());
                 }
@@ -222,7 +303,7 @@ impl State {
         content: &Content,
         active: timing::WorkId,
         progress: timing::Progress,
-        events: &[timing::Event],
+        events: &mut Vec<timing::Event>,
     ) -> Result<(), ProductionFault> {
         let fail =
             || ProductionFault::Unsupported(Unsupported::Frame(Dependency::FrameSenderPreparation));
@@ -235,16 +316,17 @@ impl State {
             .find(|work| work.kind == timing::WorkKind::Semantic(active))
             .map(|work| work.cursor.intrinsic);
         let physical = content.sender_physical.as_ref().ok_or_else(fail)?;
-        sender
-            .sample_contact_if_due(self, physical, active, intrinsic)
+        let sample = sender
+            .sample_contact_if_due(self, physical, active, intrinsic, binding)
             .map_err(|_| fail())?;
-        for event in events {
+        for event in &*events {
             if matches!(event.kind, timing::EventKind::Publication(_)) {
                 sender
                     .observe(self, active, intrinsic.ok_or_else(fail)?, event, binding)
                     .map_err(|_| fail())?;
             }
         }
+        events.extend(sample);
         if progress == timing::Progress::Completed(active)
             && !sender
                 .complete_contact_prefix(self, physical, binding, active)
@@ -311,7 +393,7 @@ impl State {
                 Ok((all, false))
             }
             (Suffix::Preparing { .. }, Some(WorkKind::Semantic(PREPARATION)), None)
-            | (Suffix::Waiting { .. }, Some(WorkKind::Wait(WAIT)), None) => Ok((all, false)),
+            | (Suffix::Waiting { .. }, Some(WorkKind::Wait(WAIT, _)), None) => Ok((all, false)),
             (
                 Suffix::Entering { .. },
                 Some(WorkKind::Native {
@@ -664,7 +746,8 @@ fn retained_gameplay_prefix(
         | EventKind::LineService(_)
         | EventKind::ControllerStart
         | EventKind::ControllerEnd
-        | EventKind::ControllerCommitted => false,
+        | EventKind::ControllerCommitted
+        | EventKind::AudioPortRead { .. } => false,
     }) || suffix.iter().skip(1).any(is_nmi)
     {
         return Err(missing());

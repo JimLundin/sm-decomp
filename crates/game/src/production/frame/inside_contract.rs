@@ -32,6 +32,7 @@ pub struct RequiredDependencies {
 pub struct PhysicalContract {
     dependencies: RequiredDependencies,
     template: Template,
+    recurring_air: Option<Vec<bool>>,
 }
 
 /// Geometry premises established by the admitted physical profile.
@@ -63,7 +64,42 @@ impl PhysicalContract {
         Self {
             dependencies,
             template,
+            recurring_air: None,
         }
+    }
+
+    /// Admit changing columns in the same room with the same three row queries.
+    ///
+    /// # Errors
+    /// The pair contract must describe the same complete checked room and raw Air classes.
+    pub fn admit_recurring_air_columns(
+        &mut self,
+        room_contract: &super::movement_pair_contract::PhysicalContract,
+    ) -> Result<(), Fault> {
+        let (room, plain_air) = room_contract.plain_air_room();
+        if !self.dependencies.room.matches_room(room) || plain_air.len() != room.cells.len() {
+            return Err(Fault::Dependencies);
+        }
+        self.recurring_air = Some(plain_air.to_vec());
+        Ok(())
+    }
+
+    fn recurring_column(&self, column: u16, requests: Requests) -> bool {
+        let Some(plain_air) = &self.recurring_air else {
+            return column == self.dependencies.pixels[0] >> 4;
+        };
+        column < u16::from(requests.width)
+            && requests.rows.into_iter().all(|row| {
+                let index = usize::from(row)
+                    .checked_mul(usize::from(requests.width))
+                    .and_then(|line| line.checked_add(usize::from(column)));
+                index.is_some_and(|index| {
+                    plain_air.get(index) == Some(&true)
+                        && index
+                            .checked_add(1)
+                            .is_some_and(|next| next < plain_air.len())
+                })
+            })
     }
 
     /// Qualify complete actual current operands before binding one whole Inside operation.
@@ -83,7 +119,7 @@ impl PhysicalContract {
         };
         let [
             MovementDecision::InsideRequest(bounds),
-            MovementDecision::InsideAnswer(_),
+            MovementDecision::InsideAnswer(cells),
         ] = receipt.decisions.0.as_slice()
         else {
             return Err(Fault::Dependencies);
@@ -109,6 +145,13 @@ impl PhysicalContract {
         let requests = Requests::from_receipt(receipt, room.width())?;
         let pixels = [current.position.x.pixel().0, current.position.y.pixel().0];
         let column = pixels[0] >> 4;
+        let reached = requests.rows.map(|row| types::Cell {
+            x: column,
+            y: u16::from(row),
+        });
+        if cells.as_slice() != reached.as_slice() {
+            return Err(Fault::Geometry);
+        }
         let qualified = match geometry {
             GeometryMatch::Origin => {
                 pixels == self.dependencies.pixels
@@ -116,7 +159,7 @@ impl PhysicalContract {
                     && [body.x.0, body.y.0] == self.dependencies.radius
             }
             GeometryMatch::Recurring => {
-                self.dependencies.pixels[0] >> 4 == column
+                self.recurring_column(column, requests)
                     && Requests::from_pixels(
                         self.dependencies.pixels,
                         self.dependencies.radius[1],

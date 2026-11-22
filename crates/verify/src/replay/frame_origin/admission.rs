@@ -3,6 +3,7 @@
 mod adjacent_tail;
 pub(in crate::replay) mod completed_start;
 mod native;
+mod opening_clock;
 mod player;
 pub(in crate::replay) mod quiet_profile;
 mod returns;
@@ -426,9 +427,6 @@ fn assemble(
     admit.bind_drawing_origins(&mut state)?;
     let sender_physical = admit.bind_sender(&mut state, &seed.hardware)?;
     let required = admit.required_profiles(seed.reference_acceleration)?;
-    let player_continuation = admit.player_continuation()?;
-    let motion_reset = admit.motion_reset(&seed.entry_labels)?;
-    let run = admit.run()?;
     let geometry = admit.movement_geometry()?;
     let drawing = admit.drawing()?;
     let appearance = replay::appearance::Content::load(&sources.rom)?;
@@ -441,14 +439,11 @@ fn assemble(
     let hud_refresh = admit.bind_hud_refresh(&mut state, &hud)?;
     state.samus_palette = seed.palette_state;
     state.scene_countdown = seed.scene_countdown.map(|(_, current)| Model(current));
-    let aim_right = admit.aim_right()?;
     let drawing_stage = admit.post_palette(&appearance, state.drawing_origins.as_ref())?;
     let native = admit.native_return(&appearance)?;
     let tail = admit.bind_tail(&mut state)?;
     let liquid_history = admit.bind_liquid_history(&mut state)?;
     let interruption = admit.bind_interruption(&mut state)?;
-    let late_movement = admit.late_movement()?;
-    let pose_fit = admit.pose_fit()?;
     let health = admit.bind_health(&mut state)?;
     Ok((
         state,
@@ -458,6 +453,7 @@ fn assemble(
             music: required.music,
             haze: required.haze,
             settling_haze,
+            steady_haze: None,
             haze_tail: required.haze_tail,
             haze_bands_address: drawing.haze_bands_address,
             drawing: drawing.drawing,
@@ -469,16 +465,15 @@ fn assemble(
             player_entry: required.player_entry,
             animation: admit.animation()?,
             countdown: admit.countdown()?,
-            movement: content.movement,
             appearance: appearance.appearance,
             hud: Box::new(hud.pictures),
             sender_physical,
             early_hud_controls: seed.early_hud_controls,
             early_hud_owner,
             inside_physical,
-            player_continuation,
-            motion_reset,
-            run,
+            player_continuation: admit.player_continuation()?,
+            motion_reset: admit.motion_reset(&seed.entry_labels)?,
+            run: admit.run()?,
             movement_room: geometry.movement_room,
             ordinary_right: geometry.ordinary_right,
             compound_support: geometry.compound_support,
@@ -488,8 +483,8 @@ fn assemble(
             hud_refresh,
             liquid_history,
             interruption,
-            late_movement,
-            aim_right,
+            late_movement: admit.late_movement()?,
+            aim_right: admit.aim_right()?,
             maintenance: drawing_stage.maintenance,
             samus_palette: seed.samus_palette,
             s6_camera: drawing_stage.s6_camera,
@@ -502,12 +497,15 @@ fn assemble(
             play_time: tail.play_time,
             room_quake: tail.room_quake,
             frame_tail: tail.frame_tail,
-            pose_fit,
+            pose_fit: admit.pose_fit()?,
             adjacent_animation: None,
+            recurring_animation_advance: None,
             health,
             adjacent_health_context: None,
             scene_countdown: seed.scene_countdown.map(|(admission, _)| admission),
             adjacent_scene_countdown: None,
+            recurring_scene_countdown: false,
+            movement: content.movement,
         },
         appearance.clips,
     ))
@@ -586,23 +584,16 @@ fn admit_full(
             .ok_or_else(|| data_failure(None, "native ActorUpdate continuation"))?;
         continuation.recurring_actors = Some(actors);
     }
-    if let Some(scene) = returns.adjacent_countdown_scene {
-        let fault = || data_failure(None, "adjacent scene continuity and whole Timer work");
-        let admission = content.scene_countdown.ok_or_else(fault)?;
-        if !scene.holds_origin(&wram)
-            || admission.choice != frame::countdown_scene::Choice::MaintainCountdown
-            || content.countdown.is_none()
-        {
-            return Err(fault());
-        }
-        content.adjacent_scene_countdown = Some(admission);
-    }
+    bind_adjacent_countdown(returns.adjacent_countdown_scene, &wram, &mut content)?;
     content.adjacent_health_context = replay::frame_health_inputs::adjacent_context(
         case,
         returns.pad_origin.as_ref().map(|pad| &pad.schedule_sha256),
         content.health.as_ref(),
     )?;
     adjacent_tail::bind(case, sources, &wram, &clips, &mut state, &mut content)?;
+    if case.opening_clock() {
+        opening_clock::bind(sources, &mut state, &mut content)?;
+    }
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {
         movement: samus_movement::Rules::default(),
@@ -630,9 +621,32 @@ fn admit_full(
         inputs: InputReader::Frame(replay::frame::Inputs {
             budget: data::timing::MasterTicks(manifest.host_budget),
             observe_health_hud: replay::frame::health_hud::Arm::from_case(case).is_some(),
+            opening_preview: case
+                .opening_clock()
+                .then(|| opening_clock::preview(&sources.native))
+                .transpose()?,
         }),
         expected: ExpectedReader::Frame(Box::new(returns.expected)),
         actual: ActualReader::Frame(replay::frame::Actual::default()),
         schedule: returns.schedule,
     })
+}
+
+fn bind_adjacent_countdown(
+    scene: Option<crate::replay::frame_countdown_scene::AdjacentProjection>,
+    wram: &[u8],
+    content: &mut frame::Content,
+) -> Result<(), Outcome> {
+    if let Some(scene) = scene {
+        let fault = || data_failure(None, "adjacent scene continuity and whole Timer work");
+        let admission = content.scene_countdown.ok_or_else(fault)?;
+        if !scene.holds_origin(wram)
+            || admission.choice != frame::countdown_scene::Choice::MaintainCountdown
+            || content.countdown.is_none()
+        {
+            return Err(fault());
+        }
+        content.adjacent_scene_countdown = Some(admission);
+    }
+    Ok(())
 }

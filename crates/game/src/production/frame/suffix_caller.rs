@@ -622,7 +622,8 @@ pub fn preview_idle_poll(
                 | timing::EventKind::Interrupt(_)
                 | timing::EventKind::ControllerStart
                 | timing::EventKind::ControllerEnd
-                | timing::EventKind::ControllerCommitted => {}
+                | timing::EventKind::ControllerCommitted
+                | timing::EventKind::AudioPortRead { .. } => {}
             }
         }
         if progress != timing::Progress::Advanced {
@@ -677,6 +678,7 @@ mod admission_tests {
             work: Vec::new(),
             interrupt_boundary: None,
             pending_handler: None,
+            interrupted_wait: None,
         };
         state.begin_wait(WAIT).unwrap();
         state.hardware.interrupts.nmi.pending = true;

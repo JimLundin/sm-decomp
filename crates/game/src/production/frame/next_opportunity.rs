@@ -113,6 +113,10 @@ impl State {
         if !carry_tail {
             self.drawing_origins = None;
             self.room_tail_origin = None;
+        } else if !matches!(self.room_tail, super::room_tail::Stage::Completed(_))
+            && let Some(room) = self.room_tail_origin.as_mut()
+        {
+            room.departure_inactive = None;
         }
         self.sound_offer_current = None;
         self.movement_inputs = None;
@@ -136,6 +140,7 @@ impl State {
         self.countdown = super::countdown_caller::Stage::default();
         self.countdown_delivered.clear();
         self.sender_stage = super::sender_stage::Stage::default();
+        self.completed_contact_read = None;
         self.sound_offers = super::sender_stage::Offers::default();
         self.content.begin_opportunity();
         Ok(())

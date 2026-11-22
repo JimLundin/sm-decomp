@@ -28,6 +28,8 @@ use std::path::Path;
 
 #[path = "adjacent_hud_tests.rs"]
 mod adjacent_hud_tests;
+#[path = "opening_clock_tests.rs"]
+mod opening_clock_tests;
 
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -369,6 +371,7 @@ fn compare_continuation(
     let split = InputReader::Frame(Inputs {
         budget: MasterTicks(13),
         observe_health_hud: false,
+        opening_preview: None,
     });
     let resumed = runner::execute(
         case,
@@ -1521,7 +1524,7 @@ fn rejects_changed_frame(
     };
     let pending = before.timing.work.iter().find_map(|work| match work.kind {
         game::production::timing::WorkKind::Semantic(identity) => Some(identity),
-        game::production::timing::WorkKind::Wait(_)
+        game::production::timing::WorkKind::Wait(..)
         | game::production::timing::WorkKind::Native { .. }
         | game::production::timing::WorkKind::Handler { .. } => None,
     });

@@ -29,6 +29,8 @@ pub struct MapEvents {
 pub struct RecurringDisplay {
     /// First adjacent opportunity in the independently qualified no-writer interval.
     pub frame: FrameCount,
+    /// The carried quiet-panel source qualifies later first-half blink opportunities.
+    pub retain_first_half: bool,
     /// Admitted stable room on the checked area map.
     pub room: Room,
     /// Checked centre of the bounded ordinary one-page arm.
@@ -70,7 +72,7 @@ impl RecurringDisplay {
         let interaction = &remaining.0.interaction.as_ref()?.terminal;
         let projectiles = &remaining.0.projectiles.as_ref()?.terminal;
         let frame = FrameCount(state.hud_frame_count?);
-        if frame != self.frame
+        if (frame != self.frame && !self.retain_first_half)
             || before.frame_count() != Some(frame)
             || !rules.her_blink.first_half(frame)
             || gameplay.scene != SceneController::MainGameplay

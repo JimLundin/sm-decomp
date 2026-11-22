@@ -89,6 +89,8 @@ pub struct Content {
     pub actors: Template,
     /// Whole `ActorUpdate` when both carried doors poll without changing figure.
     pub recurring_actors: Option<Template>,
+    /// Whole `ActorUpdate` when both carried doors decrement without polling.
+    pub recurring_waiting_actors: Option<Template>,
     /// Whole sprite instruction scan.
     pub sprites: Template,
     /// Whole contact preparation.

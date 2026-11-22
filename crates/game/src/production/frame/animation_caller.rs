@@ -203,6 +203,7 @@ impl State {
     fn animation_contract<'a>(
         &self,
         content: &'a Content,
+        time_left: samus_appearance::Frames,
     ) -> Result<&'a appearance_caller::PhysicalContract, ProductionFault> {
         let unavailable = || missing(Dependency::AnimationPreparation);
         if self.publications.original_interval() {
@@ -235,6 +236,11 @@ impl State {
         {
             return Err(unavailable());
         }
+        if time_left == samus_appearance::Frames::LAST
+            && let Some(advance) = &content.recurring_animation_advance
+        {
+            return Ok(advance);
+        }
         Ok(&adjacent.physical)
     }
 
@@ -246,7 +252,10 @@ impl State {
         if !self.animation_energy_matches(selection) {
             return Err(missing(Dependency::HealthCurrentInputs));
         }
-        self.animation_contract(content)?
+        let before = selection
+            .receipt()
+            .ok_or_else(|| missing(Dependency::AnimationPreparation))?;
+        self.animation_contract(content, before.before.model.0.state.playhead.time_left)?
             .qualify(selection, self, &content.movement, &content.appearance)
             .map_err(|_| missing(Dependency::AnimationPreparation))
     }
@@ -290,7 +299,10 @@ impl State {
                     return Err(missing(Dependency::AnimationPreparation));
                 }
                 if !self.publications.original_interval() && content.adjacent_animation.is_some() {
-                    self.animation_contract(content)?;
+                    self.animation_contract(
+                        content,
+                        self.appearance.model.0.state.playhead.time_left,
+                    )?;
                 }
                 self.countdown_scene_offer(content, rules)?;
                 let inputs = self.fresh_animation_inputs(content)?;
@@ -436,15 +448,13 @@ impl State {
                 }
                 // Appearance has consumed the answer. Its retained receipt still identifies
                 // the physical family that could have completed at this opportunity.
-                self.animation_contract(content)
-                    .map_err(|_| InvalidPlayerEntry)?
-                    .profile_for_receipt(
-                        &done.receipt,
-                        self,
-                        &content.movement,
-                        &content.appearance,
-                    )
-                    .map_err(|_| InvalidPlayerEntry)?;
+                self.animation_contract(
+                    content,
+                    done.receipt.before.model.0.state.playhead.time_left,
+                )
+                .map_err(|_| InvalidPlayerEntry)?
+                .profile_for_receipt(&done.receipt, self, &content.movement, &content.appearance)
+                .map_err(|_| InvalidPlayerEntry)?;
             }
         }
         Ok(())

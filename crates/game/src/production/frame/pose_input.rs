@@ -29,6 +29,7 @@ struct Pending {
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum Path {
     AimDown,
+    RecurringAimDown,
     ReleaseAim,
 }
 
@@ -143,6 +144,9 @@ impl Configuration {
         let (path, requested_aim) = match (pose.aim, held_actions.0, pressed_actions.0) {
             (Aim::Forward, held, pressed) if held == aiming && pressed == aiming => {
                 (Path::AimDown, Aim::DownForward)
+            }
+            (Aim::Forward, held, pressed) if held == aiming && pressed == button::AIM_DOWN.0 => {
+                (Path::RecurringAimDown, Aim::DownForward)
             }
             (Aim::DownForward, held, 0) if held == running => (Path::ReleaseAim, Aim::Forward),
             _ => return None,
@@ -296,6 +300,13 @@ mod tests {
         let first = owner.finish(first).unwrap();
         assert_eq!(first.dependency.pose, forward);
         assert_eq!(first.terminal.prospective, down);
+
+        let recurring = owner
+            .decide(forward, [aiming, Control::AimDown.bit()], &route, &content)
+            .unwrap();
+        assert_eq!(recurring.path, Path::RecurringAimDown);
+        assert_eq!(recurring.completion.terminal.prospective, down);
+        assert!(!owner.charging());
 
         assert!(owner.decide(down, [held, held], &route, &content).is_none());
         assert!(owner.decide(forward, [held, 0], &route, &content).is_none());

@@ -205,7 +205,7 @@ impl State {
         let Some(adjacent) = content.adjacent_scene_countdown else {
             return Ok(None);
         };
-        if !self.publications.original_interval() {
+        if !self.publications.original_interval() && !content.recurring_scene_countdown {
             return Ok(None);
         }
         let owner = self.scene_countdown.as_ref().ok_or_else(missing)?.0;
@@ -246,11 +246,12 @@ impl State {
         };
         let prior = self
             .publications
-            .preceding()
+            .previous()
             .map_err(super::Fault::Publications)?;
-        let adjacent = content
-            .adjacent_scene_countdown
-            .filter(|_| contains_one_nmi(prior));
+        let adjacent = content.adjacent_scene_countdown.filter(|_| {
+            contains_one_nmi(prior)
+                && (content.recurring_scene_countdown || self.publications.previous_was_original())
+        });
         let Some(owner) = self.scene_countdown.as_ref().map(|owner| &owner.0) else {
             return if offer.is_none() && adjacent.is_none() {
                 Ok(())
@@ -353,7 +354,7 @@ impl State {
                     return Err(missing());
                 }
                 timing::WorkKind::Semantic(_)
-                | timing::WorkKind::Wait(_)
+                | timing::WorkKind::Wait(..)
                 | timing::WorkKind::Native { .. }
                 | timing::WorkKind::Handler { .. } => {}
             }

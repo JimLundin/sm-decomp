@@ -30,7 +30,7 @@ pub(super) fn adjacent_context(
         || !qualified_pads
         || declarations.next().is_some()
         || case.first_cut() != Some(1)
-        || case.end.cut_inclusive != 2
+        || case.adjacent_native_end() != 2
         || borrow.provider != "qualified-adjacent-health-writer-history"
         || borrow.phase != "first-maintenance-return-through-adjacent-animation"
         || borrow.fields

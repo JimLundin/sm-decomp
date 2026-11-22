@@ -756,8 +756,6 @@ pub(super) fn decode(
         .map_err(|_| data_failure(None, "frame current appearance origin"))?;
     let prelude = prelude_seed::decode(origin.wram)
         .map_err(|_| data_failure(None, "frame current prelude origin"))?;
-    let receipt = borrowed_receipts::publication(origin.wram)
-        .map_err(|_| data_failure(None, "frame current publication owner"))?;
     let state = frame::State {
         music: Some(
             borrowed_receipts::music(origin.wram)
@@ -774,21 +772,7 @@ pub(super) fn decode(
         sender_current: None,
         sender_queues: None,
         drawing: origin.drawing,
-        caller: frame::Caller::AwaitingAcknowledgment {
-            prelude: frame::PreludeSource::Origin(Box::new(frame::Prelude {
-                player_entry_current: None,
-                player_entry_offers: None,
-                player_continuation_current: None,
-                player_continuation_offers: None,
-
-                music_completion: origin.music,
-                gameplay_completion: Some(origin.preparation.gameplay),
-                actor_completion: Some(origin.preparation.actors),
-                debug_completion: Some(origin.preparation.debug),
-                palette_completion: Some(origin.preparation.palette),
-            })),
-            receipt: Some(receipt),
-        },
+        caller: opening_caller(origin.wram, origin.music, origin.preparation)?,
         timing: origin.timing,
         movement: frame::movement::Movement::new(movement),
         movement_stage: frame::movement_stage::Stage::default(),
@@ -844,6 +828,8 @@ pub(super) fn decode(
         scene_countdown: None,
         senders: origin.senders,
         sender_stage: frame::sender_stage::Stage::default(),
+        contact_retried_at: None,
+        completed_contact_read: None,
         sound_offers: frame::sender_stage::Offers::default(),
         content: origin.content,
         publications: frame::Publications::default(),
@@ -852,4 +838,28 @@ pub(super) fn decode(
         .validate()
         .map_err(|_| data_failure(None, "frame complete origin owners"))?;
     Ok(state)
+}
+
+fn opening_caller(
+    wram: &[u8],
+    music: Option<frame::borrowed_receipts::MusicCompletionReceipt>,
+    preparation: PreparationInputs,
+) -> Result<frame::Caller, Outcome> {
+    let receipt = borrowed_receipts::publication(wram)
+        .map_err(|_| data_failure(None, "frame current publication owner"))?;
+    Ok(frame::Caller::AwaitingAcknowledgment {
+        prelude: frame::PreludeSource::Origin(Box::new(frame::Prelude {
+            player_entry_current: None,
+            player_entry_offers: None,
+            player_continuation_current: None,
+            player_continuation_offers: None,
+
+            music_completion: music,
+            gameplay_completion: Some(preparation.gameplay),
+            actor_completion: Some(preparation.actors),
+            debug_completion: Some(preparation.debug),
+            palette_completion: Some(preparation.palette),
+        })),
+        receipt: Some(receipt),
+    })
 }

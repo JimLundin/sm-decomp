@@ -352,7 +352,7 @@ impl Stage {
         let (Self::Offered { receipt, next } | Self::Charging { receipt, next, .. }) = self else {
             return Err(Fault::Order);
         };
-        contract.dependencies.check(receipt, next)?;
+        contract.check(receipt, next)?;
         Requests::from_receipt(receipt)?.bind(&contract.template)
     }
 

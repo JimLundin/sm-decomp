@@ -49,14 +49,40 @@ impl Contract {
         view: camera_stage::RequiredView,
         screens: Vec<camera_stage::RequiredScreens>,
     ) {
-        let dependencies = camera_stage::RequiredDependencies {
+        let dependencies = self.dependencies(current, previous, view, screens);
+        self.adjacent = Some(self.camera.with_dependencies(dependencies));
+    }
+
+    /// Qualify another current following opportunity against the same physical rule.
+    pub fn admit_recurring(
+        &mut self,
+        current: camera_stage::RequiredCentre,
+        previous: camera_stage::RequiredCentre,
+        view: camera_stage::RequiredView,
+        screens: Vec<camera_stage::RequiredScreens>,
+    ) {
+        let dependencies = self.dependencies(current, previous, view, screens);
+        if let Some(adjacent) = &mut self.adjacent {
+            adjacent.admit(dependencies);
+        } else {
+            self.adjacent = Some(self.camera.with_dependencies(dependencies));
+        }
+    }
+
+    fn dependencies(
+        &self,
+        current: camera_stage::RequiredCentre,
+        previous: camera_stage::RequiredCentre,
+        view: camera_stage::RequiredView,
+        screens: Vec<camera_stage::RequiredScreens>,
+    ) -> camera_stage::RequiredDependencies {
+        camera_stage::RequiredDependencies {
             current,
             previous,
             view,
             inputs: Box::new(self.inputs.clone()),
             screens,
-        };
-        self.adjacent = Some(self.camera.with_dependencies(dependencies));
+        }
     }
 
     fn physical(&self, state: &State) -> Result<&camera_stage::PhysicalContract, ProductionFault> {

@@ -95,7 +95,14 @@ pub struct PhysicalContent {
 pub struct ContactRetry {
     pub(super) prefix: Profile,
     remainder: Template,
-    pub(super) reply: Request,
+    reply: Request,
+    matching: Option<ContactMatch>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ContactMatch {
+    after_retry: data::timing::MasterTicks,
+    remainder: Profile,
 }
 
 impl ContactRetry {
@@ -116,7 +123,53 @@ impl ContactRetry {
             prefix: prefix.bind(&[]).map_err(|_| Fault::Profile)?,
             remainder,
             reply,
+            matching: None,
         })
+    }
+
+    /// Admit one scoped matching external publication after an actual retry.
+    ///
+    /// # Errors
+    /// Unqualified response delay or physical continuation.
+    pub fn admit_match(
+        &mut self,
+        prefix: &Template,
+        remainder: &Template,
+        after_retry: data::timing::MasterTicks,
+    ) -> Result<(), Fault> {
+        if after_retry.0 == 0
+            || prefix.bind(&[]).map_err(|_| Fault::Profile)? != self.prefix
+            || milestones(remainder)? != (148, None)
+        {
+            return Err(Fault::Profile);
+        }
+        self.matching = Some(ContactMatch {
+            after_retry,
+            remainder: remainder.bind(&[]).map_err(|_| Fault::Profile)?,
+        });
+        Ok(())
+    }
+
+    pub(super) fn reply_at(
+        &self,
+        retry: Option<data::timing::MasterTicks>,
+        now: data::timing::MasterTicks,
+    ) -> Request {
+        let reached = self
+            .matching
+            .as_ref()
+            .zip(retry)
+            .is_some_and(|(matching, retry)| {
+                retry
+                    .0
+                    .checked_add(matching.after_retry.0)
+                    .is_some_and(|at| at <= now.0)
+            });
+        if reached {
+            Request::Cue(CueId::Footstep)
+        } else {
+            self.reply
+        }
     }
 
     pub(super) fn qualify(
@@ -130,19 +183,37 @@ impl ContactRetry {
         let cue = CueId::Footstep;
         if receipt.group != SoundGroup::Contact
             || receipt.before != SenderProgress::AwaitCue(cue)
-            || receipt.reply != self.reply
             || receipt.chosen.observation.is_some()
             || !receipt.queue.is_empty()
             || queues.contact.positions() != [1, 1]
             || !chosen.queue.is_empty()
+            || binding.cue != cue
+            || binding.port.output_class() != Ok(2)
+        {
+            return Err(Fault::Receipt);
+        }
+        if receipt.reply == Request::Cue(cue) {
+            let matching = self.matching.as_ref().ok_or(Fault::Receipt)?;
+            if !matches!(chosen.progress, SenderProgress::ClearDelay(delay) if delay.get() == 2)
+                || chosen.completion.0 != std::ops::Add::add(&receipt.chosen.origin.0, 210_u64)
+                || chosen.presentation.is_some()
+            {
+                return Err(Fault::Receipt);
+            }
+            return Ok(Qualified {
+                body: matching.remainder.clone(),
+                tail: caller_tail.bind(&[]).map_err(|_| Fault::Profile)?,
+                publication: None,
+                completion: 210,
+            });
+        }
+        if receipt.reply != self.reply
             || chosen.progress != SenderProgress::AwaitCue(cue)
             || chosen.completion.0 != std::ops::Add::add(&receipt.chosen.origin.0, 162_u64)
             || chosen.presentation.as_ref().is_none_or(|(at, request)| {
                 at.0 != std::ops::Add::add(&receipt.chosen.origin.0, 104_u64)
                     || *request != Request::Cue(cue)
             })
-            || binding.cue != cue
-            || binding.port.output_class() != Ok(2)
         {
             return Err(Fault::Receipt);
         }
