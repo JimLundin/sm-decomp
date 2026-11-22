@@ -39,6 +39,7 @@ jobs:
     if: github.event_name != 'push' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/verify/')
     permissions:
       contents: read
+      actions: read
     uses: ./.github/workflows/verify.yml
     with:
       target: ${{ inputs.target || '' }}

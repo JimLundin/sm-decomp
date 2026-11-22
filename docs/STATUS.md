@@ -32,7 +32,9 @@ are not current production acceptance and must be labelled as historical evidenc
 responsibility to its exact recorded Difference cut and field. With `SM_CACHE`, `SM_ROM` and
 `SM_AUDIO_NATIVE` set, `python3 tools/check_mutants.py` first requires a Pass, temporarily
 applies each fault, restores the source byte for byte, then requires the original complete
-receipt again, including its digest and counts. CI runs this check; the supported responsibility
+receipt again, including its digest and counts. Full pull-request, scheduled and manual CI
+run every fault. A fast-forward to main reuses a successful pull-request verdict for the
+same head and tested tree. Missing evidence runs every fault. The supported responsibility
 inventory comes from the index and reviewed baseline, so omitting an owner fails the check.
 Weapons and contact have separate faults in their shared case. The movement/Ceres connection
 has a separate fault substituting the door centre for held movement proximity.
