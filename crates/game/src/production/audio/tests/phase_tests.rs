@@ -224,3 +224,69 @@ fn step_next(production: &mut Production) -> Vec<Output> {
     let at = deadline(production);
     step(production, at, &[])
 }
+
+fn shorten_distribution(
+    save: &crate::production::SavedProduction,
+) -> crate::production::SavedProduction {
+    alter_transport_save(save, |state| {
+        let AudioPhase::Distribute { at, .. } = &mut state.phase else {
+            panic!("Distribute phase");
+        };
+        *at = at.difference(&time::halves(1));
+    })
+}
+
+#[test]
+fn restore_requires_distribution_to_follow_a_clock_poll() {
+    let (content, mut direct) = fresh(7, 0);
+    until_distribute(&mut direct);
+    let first = direct.transport().unwrap();
+    let first_lattice = first.clock.lattice.clone();
+    let poll = first.now.clone();
+    let genuine_deadline = deadline(&direct);
+    assert_eq!(genuine_deadline, poll.sum(&time::halves(53)));
+    let saved = direct.save().unwrap();
+    let restore = |saved: &crate::production::SavedProduction| {
+        Production::restore(saved, content.clone(), ProductionRules::Audio)
+    };
+    let mut unedited = restore(&saved).unwrap();
+    assert_eq!(unedited, direct);
+    assert_eq!(unedited.save().unwrap(), saved);
+    assert!(restore(&shorten_distribution(&saved)).is_err());
+    let cutoff = poll.sum(&AudioInstant::new(1u64.into(), 3u64.into()).unwrap());
+    assert_eq!(step(&mut direct, cutoff, &[]).len(), 0);
+    let cutoff_save = direct.save().unwrap();
+    let mut control = restore(&cutoff_save).unwrap();
+    assert_eq!(control, direct);
+    assert_eq!(control.save().unwrap(), cutoff_save);
+    assert_eq!(step(&mut unedited, genuine_deadline.clone(), &[]).len(), 0);
+    assert_eq!(step(&mut control, genuine_deadline, &[]).len(), 0);
+    let control_publication = deadline(&control);
+    let forged_publication = control_publication.difference(&time::halves(1));
+    assert_eq!(step(&mut control, forged_publication, &[]).len(), 0);
+    let control_output = step(&mut control, control_publication.clone(), &[]);
+    assert_eq!(
+        control_output,
+        step(&mut unedited, control_publication.clone(), &[])
+    );
+    assert!(
+        matches!(control_output.as_slice(), [Output::Publication { at, .. }] if *at == control_publication)
+    );
+
+    for _ in 0..320 {
+        if matches!(
+            control.transport().unwrap().phase,
+            AudioPhase::Distribute { .. }
+        ) {
+            break;
+        }
+        let _ = step_next(&mut control);
+    }
+    let later = control.transport().unwrap();
+    assert!(matches!(later.phase, AudioPhase::Distribute { .. }));
+    assert_ne!(later.clock.lattice, first_lattice);
+    assert_eq!(deadline(&control), later.now.sum(&time::halves(53)));
+    let saved = control.save().unwrap();
+    assert_eq!(restore(&saved).unwrap(), control);
+    assert!(restore(&shorten_distribution(&saved)).is_err());
+}

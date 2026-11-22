@@ -257,12 +257,7 @@ pub(super) fn validate_resident_state(
     validate_groups(seed, &bank.content, None)?;
     let deadline = match &seed.phase {
         AudioPhase::ObserveClock { at } => {
-            if at < &seed.clock.lattice
-                || !std::ops::Div::div(
-                    at.difference(&seed.clock.lattice).rational(),
-                    num_bigint::BigInt::from(8),
-                )
-                .is_integer()
+            if !on_polling_lattice(at, &seed.clock.lattice)
                 || (seed.clock.lattice > seed.now && at != &seed.clock.lattice)
                 || (seed.clock.lattice <= seed.now && at.difference(&seed.now) > time::cycles(8))
             {
@@ -326,6 +321,18 @@ pub(super) fn validate_resident_state(
     validate_phase_window(seed, &deadline)
 }
 
+fn on_polling_lattice(
+    at: &audio_transport::AudioInstant,
+    lattice: &audio_transport::AudioInstant,
+) -> bool {
+    at >= lattice
+        && std::ops::Div::div(
+            at.difference(lattice).rational(),
+            num_bigint::BigInt::from(8),
+        )
+        .is_integer()
+}
+
 fn validate_phase_window(
     seed: &State,
     deadline: &audio_transport::AudioInstant,
@@ -334,7 +341,11 @@ fn validate_phase_window(
 
     let valid = match &seed.phase {
         // A nonempty clock read schedules distribution 53 half cycles later.
-        AudioPhase::Distribute { .. } => deadline.difference(&seed.now) <= time::halves(53),
+        AudioPhase::Distribute { .. } => {
+            let delay = time::halves(53);
+            deadline.difference(&seed.now) <= delay
+                && on_polling_lattice(deadline, &seed.clock.lattice.sum(&delay))
+        }
         // Contact's second read is at anchor + 19/2, with Music scheduled at anchor + 57.
         // Distribution without Effects schedules Music only 29 cycles ahead.
         AudioPhase::MusicStart { .. } => deadline.difference(&seed.now) <= time::halves(95),

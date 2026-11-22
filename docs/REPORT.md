@@ -705,7 +705,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 114 | 31,597 | 189,582 | 151,653 | 25,964 | 2,205 | 11,518 | 46,369 | 2,846 | 29,026 |
+| production and exact services | 114 | 31,602 | 189,614 | 151,694 | 25,964 | 2,205 | 11,519 | 46,369 | 2,846 | 29,036 |
 | bridges | 19 | 3,889 | 23,337 | 22,936 | 2,786 | 525 | 1,758 | 2,321 | 177 | 4,129 |
 | rebuilt models, shared types included | 123 | 8,748 | 52,485 | 58,364 | 24,150 | 18,486 | 3,624 | 3,811 | 1,013 | 17,635 |
 
@@ -2530,7 +2530,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | Model | Engine file | Part | Names | Score | Lines |
 | --- | --- | --- | --- | ---: | ---: |
 | audio-transport | `crates/game/src/production/appearance.rs` | names it | `CueId`, `OfferPermission`, `QueueAllowance`, `SenderState`, `SoundGroup` | 1,631 | 316 |
-| audio-transport | `crates/game/src/production/audio/admission.rs` | names it | `AudioCycles`, `AudioInstant`, `AudioPhase`, `CompletionResult`, `Content`, `CueId`, `EffectVoiceId`, `GroupState`, `MusicEvent`, `PartState`, `Playback`, `Request`, `SenderState`, `SongState`, `SoundGroup`, `State`, `TrackContent`, `TrackPosition`, `effects`, `music`, `transport` | 4,082 | 480 |
+| audio-transport | `crates/game/src/production/audio/admission.rs` | names it | `AudioCycles`, `AudioInstant`, `AudioPhase`, `CompletionResult`, `Content`, `CueId`, `EffectVoiceId`, `GroupState`, `MusicEvent`, `PartState`, `Playback`, `Request`, `SenderState`, `SongState`, `SoundGroup`, `State`, `TrackContent`, `TrackPosition`, `effects`, `music`, `transport` | 4,114 | 490 |
 | audio-transport | `crates/game/src/production/audio.rs` | names it | `AudioCyclePhase`, `AudioInstant`, `AudioPhase`, `Content`, `CpuMasterTicks`, `InstantFraction`, `Playback`, `ReleaseHistory`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `State`, `effects`, `time`, `transport` | 1,017 | 248 |
 | audio-transport | `crates/game/src/production/content.rs` | names it | `Content`, `SoundGroup` | 285 | 99 |
 | audio-transport | `crates/game/src/production/frame/post_down_contract.rs` | names it | `OfferPermission` | 446 | 80 |

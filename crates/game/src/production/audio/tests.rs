@@ -510,13 +510,14 @@ fn sender_checkpoint_keeps_the_coalesced_read_result_after_the_latch_changes() {
 fn overlong_work_deadline(
     held: &crate::production::SavedProduction,
     deadline: &audio_transport::AudioInstant,
+    work_start: &audio_transport::AudioInstant,
 ) -> crate::production::SavedProduction {
     let mut bad_deadline: Checkpoint<Box<State>> = canonical::from_bytes(&held.state).unwrap();
     let AudioPhase::Work { at, .. } = &mut bad_deadline.state.transport.0.phase else {
         panic!("pending transport deadline");
     };
-    // At the fixture's fresh start, both clean turns schedule their full work from cycle 11.
-    let work = deadline.difference(&time::cycles(11));
+    // The fresh turn schedules its full work from the actual start.
+    let work = deadline.difference(work_start);
     *at = bad_deadline
         .state
         .transport
@@ -556,19 +557,22 @@ fn alter_transport_save(
 fn start_transport_work(effect: bool) -> (ProductionContent, Production) {
     use audio_transport::SoundGroup;
     let (content, mut state) = opened_context();
+    let start = if effect {
+        time::halves(53)
+    } else {
+        time::cycles(11)
+    };
     state.transport.0.phase = if effect {
         state.transport.0.cadence.effect = 7;
         state.transport.0.cadence.music = 224;
         state.transport.0.groups[SoundGroup::Action].staged = Request::Cue(CueId::Spin);
         AudioPhase::Distribute {
-            at: time::cycles(11),
+            at: start.clone(),
             batch: 1,
         }
     } else {
         state.transport.0.music_due = true;
-        AudioPhase::MusicStart {
-            at: time::cycles(11),
-        }
+        AudioPhase::MusicStart { at: start.clone() }
     };
     let content = ProductionContent::ResidentAudio(Box::new(content));
     let mut direct = Production::admit(
@@ -578,7 +582,7 @@ fn start_transport_work(effect: bool) -> (ProductionContent, Production) {
     )
     .unwrap();
     assert_eq!(
-        transport_test_step(&mut direct, time::cycles(11), &[]),
+        transport_test_step(&mut direct, start, &[]),
         crate::production::ProductionOutputs::Audio(Vec::new())
     );
     (content, direct)
@@ -594,10 +598,12 @@ fn check_pending_transport_turn(effect: bool) {
     let before = direct.save().unwrap();
     let original_clock = direct.transport().unwrap().clock.clone();
     let mut restored = restore(&before).unwrap();
-    let input = transport::Input::cue(time::cycles(12), CueId::Beam);
+    let work_start = direct.transport().unwrap().now.clone();
+    let stop = work_start.sum(&time::cycles(1));
+    let input = transport::Input::cue(stop.clone(), CueId::Beam);
     for production in [&mut direct, &mut restored] {
         assert_eq!(
-            transport_test_step(production, time::cycles(12), std::slice::from_ref(&input)),
+            transport_test_step(production, stop.clone(), std::slice::from_ref(&input)),
             ProductionOutputs::Audio(Vec::new())
         );
         assert_ne!(production.transport().unwrap().clock, original_clock);
@@ -625,7 +631,7 @@ fn check_pending_transport_turn(effect: bool) {
             *pitch = MusicalPitch::new(if pitch.get() == 19 { 20 } else { 19 }).unwrap();
         }
     }
-    let altered_deadline = overlong_work_deadline(&held, &deadline);
+    let altered_deadline = overlong_work_deadline(&held, &deadline, &work_start);
     assert!(matches!(
         restore(&altered_deadline),
         Err(AdmissionFault::ResidentAudio(Fault::Invalid(_)))
@@ -674,9 +680,13 @@ fn resident_work_keeps_rational_inputs_and_checks_its_scheduler_fields() {
     use crate::production::ProductionOutputs;
     use audio_transport::{AudioInstant, transport};
     let third = AudioInstant::new(1u64.into(), 3u64.into()).unwrap();
-    let stop = time::cycles(12).sum(&third);
     for effect in [false, true] {
         let (content, mut production) = start_transport_work(effect);
+        let stop = production
+            .transport()
+            .unwrap()
+            .now
+            .sum(&time::cycles(1).sum(&third));
         let restore = |saved: &crate::production::SavedProduction| {
             Production::restore(saved, content.clone(), ProductionRules::Audio)
         };
