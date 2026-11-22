@@ -53,7 +53,11 @@ if [ -d crates/clean ]; then
   out=$(bash tools/cleanroom/code_check.sh crates/clean/* 2>&1) || fail "$out"
 fi
 out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
-out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"
+# The import self-test builds a throwaway worktree cold (about seven minutes). CI always runs it;
+# the local gate skips it, via SM_SKIP_IMPORT_SELF_TEST, when a branch leaves its subject unchanged.
+if [ -z "${SM_SKIP_IMPORT_SELF_TEST:-}" ]; then
+  out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"
+fi
 out=$(bash tools/cleanroom/score_scan_test.sh 2>&1) || fail "$out"
 out=$(bash tools/lane/squash_test.sh 2>&1) || fail "$out"
 out=$(bash tools/cleanroom/adjusted_vectors_test.sh 2>&1) || fail "$out"

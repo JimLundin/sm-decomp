@@ -49,7 +49,11 @@ if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/carg
   fail "CLEAN CLIPPY FAIL"
   grep -E '^(error|warning)|-->' "$O/check.log" | head -10
 fi
-if ! CARGO="$R/cargo" bash tools/check_crate_rules.sh >"$O/check.log" 2>&1; then
+# The import self-test covers import.sh, its clippy setup and the toolchain; skip it locally when
+# this branch changes none of them since main (CI still runs it).
+skip_import=
+if git diff --quiet origin/main...HEAD -- tools/cleanroom rust-toolchain.toml Cargo.toml Cargo.lock crates/clean/types 2>/dev/null; then skip_import=1; fi
+if ! SM_SKIP_IMPORT_SELF_TEST=$skip_import CARGO="$R/cargo" bash tools/check_crate_rules.sh >"$O/check.log" 2>&1; then
   fail "CRATE RULES FAIL"
   cat "$O/check.log"
 fi
