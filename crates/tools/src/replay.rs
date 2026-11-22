@@ -11,7 +11,7 @@ use verify::replay::{
 
 mod map;
 
-pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
+pub const USAGE: &str = "tools replay map INDEX [--mapping FILE] [--baseline FILE] [--repo ROOT] [--case ID ...] [--rule RULE] [--path FILE]\n       tools replay list INDEX [--rule RULE] [--scope scoped|integrated|movie]\n       tools replay run INDEX [--all | --case ID ... | --rule RULE] [SOURCES] [--write RECEIPT]\n       tools replay check INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] [SOURCES] [--shard I/N] [--write RECEIPT]\n       tools replay merge INDEX --baseline BASELINE [--all | --case ID ... | --rule RULE] --receipt SHARD ... [--write RECEIPT]\n       tools replay benchmark INDEX [--all | --case ID ... | --rule RULE] [SOURCES]\n       SOURCES: --cache CACHE --rom ROM --native NATIVE [--bundle BUNDLE]";
 
 struct Options {
     ids: Vec<CaseId>,
@@ -22,6 +22,7 @@ struct Options {
     write: Option<PathBuf>,
     baseline: Option<PathBuf>,
     shard: Option<(usize, usize)>,
+    receipts: Vec<PathBuf>,
 }
 
 fn options(args: &[String]) -> Result<Options, String> {
@@ -34,6 +35,7 @@ fn options(args: &[String]) -> Result<Options, String> {
         write: None,
         baseline: None,
         shard: None,
+        receipts: Vec::new(),
     };
     let mut remaining = args;
     while let Some((flag, tail)) = remaining.split_first() {
@@ -71,6 +73,7 @@ fn options(args: &[String]) -> Result<Options, String> {
             "--native" if options.sources.native.as_os_str().is_empty() => {
                 options.sources.native = PathBuf::from(value);
             }
+            "--receipt" => options.receipts.push(PathBuf::from(value)),
             "--write" if options.write.is_none() => options.write = Some(PathBuf::from(value)),
             "--baseline" if options.baseline.is_none() => {
                 options.baseline = Some(PathBuf::from(value));
@@ -106,6 +109,7 @@ enum Operation {
     List,
     Run,
     Check,
+    Merge,
     Benchmark,
 }
 
@@ -122,6 +126,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
         "list" => Operation::List,
         "run" => Operation::Run,
         "check" => Operation::Check,
+        "merge" => Operation::Merge,
         "benchmark" => Operation::Benchmark,
         _ => return Err(USAGE.to_owned()),
     };
@@ -144,8 +149,14 @@ pub fn run(args: &[String]) -> Result<String, String> {
                 .map_err(|fault| format!("replay baseline: {fault:?}"))
         })
         .transpose()?;
-    if command == Operation::Check && baseline.is_none() {
+    if matches!(command, Operation::Check | Operation::Merge) && baseline.is_none() {
         return Err("check requires --baseline".to_owned());
+    }
+    // Only a merge reads receipts, and it rejoins every shard of its selection.
+    if (command == Operation::Merge) == options.receipts.is_empty()
+        || (command == Operation::Merge && options.shard.is_some())
+    {
+        return Err(USAGE.to_owned());
     }
     if let Some(baseline) = &baseline {
         baseline
@@ -160,11 +171,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
     let selected: Vec<_> = selected
         .into_iter()
         .enumerate()
-        .filter(|(ordinal, _)| {
-            options
-                .shard
-                .is_none_or(|(shard, count)| ordinal.checked_rem(count) == Some(shard))
-        })
+        .filter(|(ordinal, _)| in_shard(*ordinal, options.shard))
         .map(|(_, case)| case)
         .collect();
     if selected.is_empty() {
@@ -173,12 +180,18 @@ pub fn run(args: &[String]) -> Result<String, String> {
     if command == Operation::List {
         return Ok(list(&selected));
     }
-    let (results, elapsed) = measure(command, &selected, &options.sources)?;
+    let (results, elapsed) = if command == Operation::Merge {
+        (merge(&selected, &options.receipts)?, Vec::new())
+    } else {
+        measure(command, &selected, &options.sources)?
+    };
     let mut output = receipt(&results)?;
     if let Some(path) = &options.write {
         std::fs::write(path, &output).map_err(|_| "receipt write failed".to_owned())?;
     }
-    if command != Operation::Check && results.iter().any(|result| !result.passed()) {
+    if !matches!(command, Operation::Check | Operation::Merge)
+        && results.iter().any(|result| !result.passed())
+    {
         return Err(output);
     }
     if let Some(baseline) = &baseline {
@@ -198,6 +211,38 @@ pub fn run(args: &[String]) -> Result<String, String> {
         std::fs::write(path, &output).map_err(|_| "receipt write failed".to_owned())?;
     }
     Ok(output)
+}
+
+/// Shards deal the selection round-robin, so every shard holds cases from the whole index.
+fn in_shard(ordinal: usize, shard: Option<(usize, usize)>) -> bool {
+    shard.is_none_or(|(shard, count)| ordinal.checked_rem(count) == Some(shard))
+}
+
+/// Rejoin shard receipts in selection order, so the merged receipt reads as one unsharded check.
+/// Missing, duplicate or foreign cases are left for the baseline check to reject.
+fn merge(selected: &[&Case], paths: &[PathBuf]) -> Result<Vec<CaseResult>, String> {
+    #[derive(serde::Deserialize)]
+    struct ShardReceipt {
+        format: u16,
+        cases: Vec<CaseResult>,
+    }
+    let mut results = Vec::new();
+    for path in paths {
+        let text = std::fs::read_to_string(path).map_err(|_| "shard receipt read failed")?;
+        let shard: ShardReceipt =
+            toml::from_str(&text).map_err(|_| "shard receipt decoding failed".to_owned())?;
+        if shard.format != 1 {
+            return Err("shard receipt format".to_owned());
+        }
+        results.extend(shard.cases);
+    }
+    results.sort_by_key(|result| {
+        selected
+            .iter()
+            .position(|case| case.id == result.id)
+            .unwrap_or(usize::MAX)
+    });
+    Ok(results)
 }
 
 fn list(cases: &[&Case]) -> String {
@@ -286,7 +331,81 @@ fn receipt(results: &[CaseResult]) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use verify::replay::{baseline::Baseline, result::Outcome};
+    use verify::replay::{baseline::Baseline, index::Start, result::Outcome};
+
+    /// The receipt a check would write for a case that holds its reviewed floor exactly.
+    fn reviewed(case: &Case, baseline: &Baseline) -> CaseResult {
+        let floor = baseline
+            .cases
+            .iter()
+            .find(|floor| floor.id == case.id)
+            .unwrap();
+        CaseResult {
+            id: case.id.clone(),
+            kind: case.kind,
+            row: case.row.clone(),
+            start_cut: match case.start {
+                Start::CacheCut { frame }
+                | Start::NativeRecord { frame, .. }
+                | Start::NativeCheckpoint { frame, .. } => Some(frame),
+                Start::NativeOpportunity { .. }
+                | Start::NativeSeed { .. }
+                | Start::NativeSenderOffer { .. }
+                | Start::ConstructedSenderOffer { .. }
+                | Start::PowerOn => None,
+            },
+            end_cut: case.end.cut_inclusive,
+            counts: floor.counts.clone(),
+            outcome: floor.expected.clone(),
+            observation_sha256: floor.observation_sha256.clone(),
+            limits: case.limits.clone(),
+        }
+    }
+
+    #[test]
+    fn merged_shard_receipts_equal_the_unsharded_check() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios/replay");
+        let index_path = root.join("index.toml");
+        let baseline_path = root.join("baseline.toml");
+        let snapshot = replay::read_index(&index_path).unwrap();
+        let baseline = Baseline::read(&baseline_path).unwrap();
+        let cases = snapshot.index().select(&[], None, None).unwrap();
+        let results: Vec<_> = cases.iter().map(|case| reviewed(case, &baseline)).collect();
+        let summary = baseline.check(&snapshot, &results).unwrap();
+        let unsharded = format!(
+            "{}\n[baseline]\n{}",
+            receipt(&results).unwrap(),
+            toml::to_string(&summary).unwrap()
+        );
+
+        let scratch = std::env::temp_dir().join(format!("replay-merge-{}", std::process::id()));
+        std::fs::create_dir_all(&scratch).unwrap();
+        let mut args = vec![
+            "merge".to_owned(),
+            index_path.to_string_lossy().into_owned(),
+            "--all".to_owned(),
+            "--baseline".to_owned(),
+            baseline_path.to_string_lossy().into_owned(),
+        ];
+        // Shards are passed out of order: the merge restores index order itself.
+        for shard in [2, 0, 1] {
+            let part: Vec<_> = results
+                .iter()
+                .enumerate()
+                .filter(|(ordinal, _)| in_shard(*ordinal, Some((shard, 3))))
+                .map(|(_, result)| result.clone())
+                .collect();
+            let path = scratch.join(format!("shard-{shard}.toml"));
+            std::fs::write(&path, receipt(&part).unwrap()).unwrap();
+            args.extend(["--receipt".to_owned(), path.to_string_lossy().into_owned()]);
+        }
+        let merged = run(&args);
+        let without_last_shard = run(&args[..args.len() - 2]);
+        let _ = std::fs::remove_dir_all(&scratch);
+
+        assert_eq!(merged.unwrap(), unsharded);
+        assert!(without_last_shard.is_err());
+    }
 
     #[test]
     fn check_selected_movie_preserves_the_reviewed_boundary() {
