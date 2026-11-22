@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
-    exec bash tools/lane/run_tests.sh verify -- report::tests::committed_report_is_current
+    exec bash tools/lane/run_tests.sh --suite lib verify -- report::tests::committed_report_is_current --exact
     ;;
   *) exec "${CARGO:-cargo}" run --locked -q -p tools --bin tools -- report --check ;;
 esac
