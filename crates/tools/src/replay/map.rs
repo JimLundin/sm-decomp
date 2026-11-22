@@ -216,7 +216,9 @@ const fn coordinates(case: &Case) -> Coordinates {
     match case.start {
         Start::CacheCut { .. } => Coordinates::RowLocalCache,
         Start::NativeOpportunity { .. } => Coordinates::WithinVideoNativeOpportunity,
-        Start::NativeSeed { .. } | Start::NativeCheckpoint { .. } => Coordinates::NativeFixture,
+        Start::NativeSeed { .. } | Start::NativeRecord { .. } | Start::NativeCheckpoint { .. } => {
+            Coordinates::NativeFixture
+        }
         Start::NativeSenderOffer { .. } => Coordinates::NativeSenderOfferCut,
         Start::ConstructedSenderOffer { .. } => Coordinates::ConstructedSenderOfferCut,
         Start::PowerOn => Coordinates::PowerOn,

@@ -1,6 +1,6 @@
-//! Current energy and warning requests for already qualified health opportunities.
-//! Gameplay qualification, loss production, pickups, drawing history and playback
-//! belong to neighboring owners, not to this model.
+//! Current energy, tail-hit protection and warning requests for qualified gameplay.
+//! Gameplay and contact eligibility, loss production, pickups, drawing history and
+//! playback belong to neighboring owners, not to this model.
 
 use serde::{Deserialize, Serialize};
 
@@ -126,18 +126,74 @@ pub enum WarningSound {
     Stop,
 }
 
-/// Spec: `PeriodicLoss`, `LowEnergyWarning`. Complete independently writable owner State.
+/// Spec: `TailHit`. Contact input from Ridley's owner, which decides overlap and eligibility.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TailImpact {
+    /// Ridley supplies no eligible hit, including when he skips checking overlap.
+    Absent,
+    /// Ridley supplies the eligible Ceres tail hit, worth 15 whole energy.
+    EligibleCeresTail,
+}
+
+const CERES_TAIL_DAMAGE: WholeEnergy = WholeEnergy(15);
+
+/// Spec: `TailHit`, `ProtectionTime`. Remaining protection in active gameplay frames.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "u8", into = "u8")]
+pub struct ProtectionFrames(u8);
+
+impl ProtectionFrames {
+    /// No protection remains.
+    pub const ZERO: Self = Self(0);
+    /// Spec: `TailHit`. A successful hit grants 96 frames.
+    pub const TAIL_GRANT: Self = Self(96);
+
+    /// Constructs a remaining count in the admitted range 0..=96.
+    #[must_use]
+    pub const fn new(frames: u8) -> Option<Self> {
+        if frames <= Self::TAIL_GRANT.0 {
+            Some(Self(frames))
+        } else {
+            None
+        }
+    }
+
+    /// Reads the current remaining count without spending a frame.
+    #[must_use]
+    pub const fn get(self) -> u8 {
+        self.0
+    }
+}
+
+impl TryFrom<u8> for ProtectionFrames {
+    type Error = &'static str;
+
+    fn try_from(frames: u8) -> Result<Self, Self::Error> {
+        Self::new(frames).ok_or("protection exceeds 96 frames")
+    }
+}
+
+impl From<ProtectionFrames> for u8 {
+    fn from(frames: ProtectionFrames) -> Self {
+        frames.get()
+    }
+}
+
+/// Spec: `PeriodicLoss`, `TailHit`, `ProtectionTime`, `LowEnergyWarning`.
 ///
-/// Serializing this value preserves both fractions, pending loss and warning state.
-/// Reading `energy` never requires a health opportunity or a drawing-history value.
+/// Complete independently writable owner State. Serializing it preserves both
+/// fractions, pending loss, warning state and remaining protection.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
-    /// The sole current-energy authority.
+    /// The sole current-energy authority. Animation and Drawing read it live;
+    /// the gauge reads `energy.whole`. Reads do not select an opportunity.
     pub energy: EnergyAmount,
     /// Loss supplied explicitly by its external owner.
     pub pending_loss: EnergyLoss,
     /// The last requested warning state.
     pub warning: Warning,
+    /// Live protection for Ridley's contact check and Drawing. Reads do not age it.
+    pub protection: ProtectionFrames,
 }
 
 /// Spec: `LowEnergyWarning`. Adjustable whole-energy threshold; fractions do not affect it.
@@ -155,7 +211,30 @@ impl Rules {
 }
 
 impl State {
-    /// Spec: `PeriodicLoss`, `LowEnergyWarning`. Completes an already qualified opportunity.
+    /// Spec: `TailHit`. Presents Ridley's contact before Maintenance in an admitted opportunity.
+    ///
+    /// An eligible impact still cannot land while protection is positive. A hit
+    /// reduces only whole energy (to a floor of zero) and grants protection now,
+    /// so another contact check sees it immediately. Fraction, pending loss and
+    /// warning are untouched.
+    pub const fn tail_contact(&mut self, impact: TailImpact) {
+        if matches!(impact, TailImpact::EligibleCeresTail) && self.protection.0 == 0 {
+            self.energy.whole =
+                WholeEnergy(self.energy.whole.0.saturating_sub(CERES_TAIL_DAMAGE.0));
+            self.protection = ProtectionFrames::TAIL_GRANT;
+        }
+    }
+
+    /// Spec: `ProtectionTime`. Closes one admitted active gameplay opportunity.
+    ///
+    /// Call once, after contact, Maintenance, Drawing and the gauge. This alone
+    /// spends a protection frame; a contact at one remaining frame is still blocked.
+    pub const fn close_active_opportunity(&mut self) {
+        self.protection = ProtectionFrames(self.protection.0.saturating_sub(1));
+    }
+
+    /// Spec: `PeriodicLoss`, `LowEnergyWarning`. Runs Maintenance for an already
+    /// qualified opportunity. It does not age protection.
     ///
     /// Loss is applied and consumed before comparing whole energy to the threshold.
     /// State is mutated immediately, even if the returned sound request is ignored.

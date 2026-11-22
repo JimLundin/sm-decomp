@@ -15,6 +15,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);
     }
+    if case.inputs == InputProvider::NativeHealthTailInputs {
+        return super::health_tail::admit(case, sources);
+    }
     if case.inputs == InputProvider::NativeTouchdownInputs {
         return super::movement_touchdown::admit(case, sources);
     }
@@ -96,6 +99,7 @@ fn audio(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
             (path, sha256, Some((seed_path, seed_sha256, *frame)))
         }
         Start::NativeOpportunity { .. }
+        | Start::NativeRecord { .. }
         | Start::CacheCut { .. }
         | Start::NativeSenderOffer { .. }
         | Start::ConstructedSenderOffer { .. }

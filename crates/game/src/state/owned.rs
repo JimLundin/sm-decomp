@@ -61,6 +61,8 @@ pub enum OwnedState {
     Frame(Box<crate::production::frame::State>),
     /// Bounded Frame acknowledgment and Music continuation.
     FrameOpening(Box<crate::production::frame::opening_prelude::Opening>),
+    /// Complete Health and qualified late consumer continuation.
+    HealthTail(Box<crate::production::health_tail::State>),
     /// Motion, semantic pose and movement memory.
     Movement(Model<MovementPin>),
     /// Current Movement, Figure and Contact sender at an ordinary opportunity.

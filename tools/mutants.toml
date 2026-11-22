@@ -396,3 +396,47 @@ after = "if input.suppression.transport_permission() == audio_transport::OfferPe
 case = "movement/soft-touchdown-124"
 cut = 124
 field = "sender.queue"
+
+[[fault]]
+name = "health-tail-stale-drawing-energy"
+responsibility = "health"
+file = "crates/game/src/production/health_tail.rs"
+before = '''let read = EnergyRead::compare(&self.health.0, self.previous_draw_energy);'''
+after = '''let mut stale = self.health.0;
+                stale.energy.whole = samus_health::WholeEnergy::new(self.previous_draw_energy).ok_or_else(missing)?;
+                let read = EnergyRead::compare(&stale, self.previous_draw_energy);'''
+case = "health/ceres-tail-drawing-gauge"
+cut = 993
+field = "appearance.drawing.first_energy"
+
+[[fault]]
+name = "health-tail-age-before-drawing"
+responsibility = "health"
+file = "crates/game/src/production/health_tail.rs"
+before = '''let warning = self.health.0.health_opportunity(&rules);'''
+after = '''let warning = self.health.0.health_opportunity(&rules);
+                self.health.0.close_active_opportunity();'''
+case = "health/ceres-tail-drawing-gauge"
+cut = 993
+field = "health.maintenance.protection"
+
+[[fault]]
+name = "health-tail-impact-not-delivered"
+responsibility = "health"
+file = "crates/game/src/production/health_tail.rs"
+before = '''self.health.0.tail_contact(TailImpact::EligibleCeresTail);'''
+after = '''self.health.0.tail_contact(TailImpact::Absent);'''
+case = "health/ceres-tail-drawing-gauge"
+cut = 993
+field = "health.impact.protection"
+
+[[fault]]
+name = "health-tail-stale-history-commit"
+responsibility = "health"
+file = "crates/game/src/production/health_tail.rs"
+before = '''let energy =
+                    EnergyRead::read_and_commit(&self.health.0, &mut self.previous_draw_energy);'''
+after = '''let energy = self.previous_draw_energy;'''
+case = "health/ceres-tail-drawing-gauge"
+cut = 993
+field = "appearance.drawing.second_energy"

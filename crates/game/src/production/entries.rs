@@ -64,6 +64,14 @@ pub(super) fn admit(
 ) -> Result<OwnedState, AdmissionFault> {
     Ok(match (seed, content, rules) {
         (
+            ProductionSeed::HealthTail(state),
+            ProductionContent::HealthTail(content),
+            ProductionRules::HealthTail(_),
+        ) => {
+            state.validate(content)?;
+            OwnedState::HealthTail(state)
+        }
+        (
             ProductionSeed::FrameOpening(state),
             ProductionContent::FrameOpening(profiles),
             ProductionRules::FrameOpening,
@@ -145,6 +153,12 @@ pub(super) fn advance(
     input: AdvanceInput<'_>,
 ) -> Result<ProductionOutputs, ProductionFault> {
     Ok(match (state, content, rules, input) {
+        (
+            OwnedState::HealthTail(state),
+            ProductionContent::HealthTail(content),
+            ProductionRules::HealthTail(rules),
+            AdvanceInput::HealthTail(input),
+        ) => ProductionOutputs::HealthTail(state.advance(content, *rules, input)?),
         (
             OwnedState::FrameOpening(state),
             ProductionContent::FrameOpening(profiles),

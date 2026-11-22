@@ -1357,3 +1357,39 @@ provider = "sender-offers-v1/inputs.toml and the locked Magnet Stairs area"
 fields = ["Contact queue, progress and reply", "Contact ingress time and suppression owners", "dry touchdown graphics arm"]
 phase = "before the Contact offer and at the later graphics opportunity"
 claim = "Movement selects the response and publishes the cue, allowance and distinct graphics permission"
+
+[[case]]
+id = "health/ceres-tail-drawing-gauge"
+kind = "scoped"
+row = "chain-any-0006-E0B5"
+start = { source = "native-record", path = "ceres-tail-origin-v1/cut-992.record", sha256 = "cf504051ba137e996f1f9f52f5eb97357d302aae987a2163b00d7af7c6337d7b", frame = 992 }
+end = { cut_inclusive = 994 }
+rules = ["samus-health/TailHit", "samus-health/PeriodicLoss", "samus-health/LowEnergyWarning", "samus-health/ProtectionTime", "interface-hud/EnergyGauge"]
+profile = "reference"
+responsibilities = ["health", "appearance", "hud"]
+content = "hud-reference"
+inputs = "native-health-tail-inputs"
+expectations = { provider = "native-health-tail-observations", fields = ["health.tail.state", "health.tail.impact", "health.tail.active_close", "appearance.drawing.energy", "hud.gauge.refresh"], outputs = ["health.tail.warning_request", "hud.gauge.words"] }
+checkpoints = true
+limits = ["Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the external delivery", "Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver", "Drawing compares current energy, protection and committed energy history; hurt flash and visible rendering require their own producers", "HUD compares all sixteen CPU-side gauge words; IRQ, VRAM and full Frame timing require separate proof", "auxiliary native cut window outside the played-alone milestone"]
+
+[[case.borrowed]]
+dependency = "health.tail-actor"
+provider = "independent-scoped-ceres-tail-actor-offer"
+fields = ["current-protection-read", "single-pre-debit-whole-energy-delivery"]
+phase = "actor-query-before-maintenance"
+claim = "external actor receives carried Health protection; native protected return has no second delivery"
+
+[[case.borrowed]]
+dependency = "health.tail-maintenance-and-close"
+provider = "independent-native-health-opportunity"
+fields = ["running-time", "equipped-varia", "equipped-gravity", "one-active-close-after-status"]
+phase = "maintenance-through-late-close"
+claim = "externally qualified scheduling and equipment; Health decides all carried values"
+
+[[case.borrowed]]
+dependency = "hud.tail-neighbours"
+provider = "independent-native-hud-tail-opportunities"
+fields = ["hud-clock", "quiet-item-controls", "powered-off-map-dispatch", "energy-capacity", "reserve", "ammunition", "no-hud-event-writers"]
+phase = "controls-through-late-status"
+claim = "unselected neighbour inputs only; late status reads whole energy from carried Health"

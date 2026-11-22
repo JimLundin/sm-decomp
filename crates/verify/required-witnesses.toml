@@ -71,3 +71,10 @@ touchdown = [
 ]
 
 early_map = ["replay::early_map::tests::early_map_resume_keeps_the_live_choice_and_late_carry"]
+
+health_tail = [
+    "replay::health_tail::tests::every_health_tail_semantic_stop_restores_exactly",
+    "replay::health_tail::tests::constructed_protected_duplicate_preserves_complete_carried_health",
+    "replay::health_tail::tests::dormant_off_map_inputs_preserve_the_native_gauge_and_map",
+    "replay::health_tail::tests::equal_energy_preserves_the_stale_gauge",
+]

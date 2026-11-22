@@ -44,6 +44,23 @@ cases and the narrowly integrated movement/Ceres connection. They do not prove a
 borrowed producers, omitted outputs or pixels. Unsupported
 cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
 
+## Scoped Ceres tail contact
+
+The indexed `health/ceres-tail-drawing-gauge` case starts from the authenticated native cut
+992. Its input-only scoped actor requests current protection twice and delivers one impact
+before Maintenance on the first opportunity. Current Health carries energy, pending loss,
+warning and protection between those reads. Drawing commits its own energy history, ordinary
+HUD status publishes the CPU gauge, and the qualified late close ages protection before the
+next actor query. The scoped and retained Drawing callers share the live energy comparison
+and fresh energy-history commit. The retained caller also qualifies controls and rendering.
+Both opportunities compare independent observations, including all sixteen
+gauge words. The protected duplicate and a stale gauge with current shown energy are separate
+constructed controls. Physical gauge writes require separate timing and publication evidence.
+
+The actor's geometry and hit selection, the Warning receiver, and Drawing's hurt-flash and
+rendering producers require separate admission. The scope includes two auxiliary cuts and
+adds no played-alone frames.
+
 ## The ratchets and floors
 
 The replay baseline binds the exact index bytes to each measured result, comparison counters

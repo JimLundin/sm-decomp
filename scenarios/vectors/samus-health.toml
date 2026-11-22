@@ -1,20 +1,25 @@
 # Vectors for samus-health.md. Each vector is one health opportunity.
-# All before/after fields are mandatory complete State; no implicit defaults.
+# Before and after carry complete State, including remaining protection.
+# Tail vectors also name the candidate impacts in order,
+# current whole energy immediately before maintenance, and the live pair offered to Drawing.
+# Each tail vector closes one active opportunity. An empty list supplies no eligible hit.
+# The protected recorded actor check supplies no candidate because it skips overlap.
+# The duplicate construction supplies two candidates within one opportunity.
 # Energy and pending fractions are integer multiples of 1/65536 energy.
 # inputs qualify a supported opportunity; wider values are IntegrationAdmission
 # evidence only, never clean model inputs or catalogue credit.
 # sound: None/Start/Stop, a request, not proof of audible playback.
 # Optional rules overrides warning_threshold (reference 30).
 # continues names a previous vector whose after equals this before; restoration
-# must preserve all five quantities. Unsupported has no after or sound and
+# must preserve all State quantities. Unsupported has no after or sound and
 # requires no state mutation. Recorded source identity is resolved in decode.
 
 [[vector]]
 id = "R-maintenance-current"
 source = "recorded"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { pending_fraction = 0, energy_fraction = 0, pending_whole = 0, energy_whole = 99, warning = "Off" }
-after = { pending_fraction = 0, energy_fraction = 0, pending_whole = 0, energy_whole = 99, warning = "Off" }
+before = { pending_fraction = 0, energy_fraction = 0, pending_whole = 0, energy_whole = 99, warning = "Off", protection = 0 }
+after = { pending_fraction = 0, energy_fraction = 0, pending_whole = 0, energy_whole = 99, warning = "Off", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -22,8 +27,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-zero"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
-after = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -31,8 +36,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-whole-loss"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 99, energy_fraction = 0, pending_whole = 3, pending_fraction = 0, warning = "Off" }
-after = { energy_whole = 96, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 3, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 96, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -40,8 +45,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-fraction-loss"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 99, energy_fraction = 500, pending_whole = 0, pending_fraction = 100, warning = "Off" }
-after = { energy_whole = 99, energy_fraction = 400, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 500, pending_whole = 0, pending_fraction = 100, warning = "Off", protection = 0 }
+after = { energy_whole = 99, energy_fraction = 400, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -49,8 +54,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-borrow"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off" }
-after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -58,8 +63,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-borrow-once"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
-after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 continues = "C-borrow"
@@ -68,8 +73,8 @@ continues = "C-borrow"
 id = "C-fraction-equal"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 99, energy_fraction = 100, pending_whole = 0, pending_fraction = 100, warning = "Off" }
-after = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 100, pending_whole = 0, pending_fraction = 100, warning = "Off", protection = 0 }
+after = { energy_whole = 99, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -77,8 +82,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-empty-clamp"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 1, energy_fraction = 0, pending_whole = 2, pending_fraction = 1, warning = "Off" }
-after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 1, energy_fraction = 0, pending_whole = 2, pending_fraction = 1, warning = "Off", protection = 0 }
+after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -86,8 +91,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-zero-fraction-clamp"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off" }
-after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off", protection = 0 }
+after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -95,8 +100,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-threshold-low"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "Off" }
-after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -104,8 +109,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-threshold-high"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
-after = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
+after = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
 sound = "Stop"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -113,8 +118,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-warning-repeat"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
-after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 continues = "C-threshold-low"
@@ -123,8 +128,8 @@ continues = "C-threshold-low"
 id = "C-restored-before-borrow"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off" }
-after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 1, warning = "Off", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -132,8 +137,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-restored-after-borrow"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
-after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "None"
 inputs = { time = "Running", suit = "NeitherSuit" }
 continues = "C-restored-before-borrow"
@@ -142,8 +147,8 @@ continues = "C-restored-before-borrow"
 id = "C-maximum-loss"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 0, energy_fraction = 0, pending_whole = 32767, pending_fraction = 65535, warning = "Off" }
-after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 0, energy_fraction = 0, pending_whole = 32767, pending_fraction = 65535, warning = "Off", protection = 0 }
+after = { energy_whole = 0, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 
@@ -151,8 +156,8 @@ inputs = { time = "Running", suit = "NeitherSuit" }
 id = "C-adjusted-threshold"
 source = "constructed"
 entries = ["PeriodicLoss", "LowEnergyWarning"]
-before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off" }
-after = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On" }
+before = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 31, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
 sound = "Start"
 inputs = { time = "Running", suit = "NeitherSuit" }
 rules = { warning_threshold = 40 }
@@ -161,7 +166,7 @@ rules = { warning_threshold = 40 }
 id = "C-stopped-missing"
 source = "constructed"
 entries = []
-before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off", protection = 0 }
 inputs = { time = "Stopped", suit = "NeitherSuit" }
 evidence_kind = "IntegrationAdmission"
 unsupported = true
@@ -170,7 +175,7 @@ unsupported = true
 id = "C-varia-missing"
 source = "constructed"
 entries = []
-before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off", protection = 0 }
 inputs = { time = "Running", suit = "VariaSuit" }
 evidence_kind = "IntegrationAdmission"
 unsupported = true
@@ -179,7 +184,97 @@ unsupported = true
 id = "C-gravity-missing"
 source = "constructed"
 entries = []
-before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off" }
+before = { energy_whole = 99, energy_fraction = 0, pending_whole = 2, pending_fraction = 0, warning = "Off", protection = 0 }
 inputs = { time = "Running", suit = "GravitySuit" }
 evidence_kind = "IntegrationAdmission"
 unsupported = true
+
+[[vector]]
+id = "R-tail-hit"
+source = "recorded"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 39, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
+before_maintenance_whole = 24
+drawing = { energy_whole = 24, protection = 96 }
+
+[[vector]]
+id = "R-tail-protected"
+source = "recorded"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+after = { energy_whole = 24, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 94 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [] }
+before_maintenance_whole = 24
+drawing = { energy_whole = 24, protection = 95 }
+continues = "R-tail-hit"
+
+[[vector]]
+id = "C-tail-duplicate"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 47, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 32, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15, 15] }
+before_maintenance_whole = 32
+drawing = { energy_whole = 32, protection = 96 }
+
+[[vector]]
+id = "C-tail-fraction-and-loss"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 48, energy_fraction = 7, pending_whole = 2, pending_fraction = 8, warning = "Off", protection = 0 }
+after = { energy_whole = 30, energy_fraction = 65535, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "Start"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
+before_maintenance_whole = 33
+drawing = { energy_whole = 30, protection = 96 }
+
+[[vector]]
+id = "C-tail-clamp"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 14, energy_fraction = 21, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 0 }
+after = { energy_whole = 0, energy_fraction = 21, pending_whole = 0, pending_fraction = 0, warning = "On", protection = 95 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
+before_maintenance_whole = 0
+drawing = { energy_whole = 0, protection = 96 }
+
+[[vector]]
+id = "C-tail-last-frame"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 1 }
+after = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
+before_maintenance_whole = 52
+drawing = { energy_whole = 52, protection = 1 }
+
+[[vector]]
+id = "C-tail-after-expiry"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 52, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 37, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 95 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [15] }
+before_maintenance_whole = 37
+drawing = { energy_whole = 37, protection = 96 }
+continues = "C-tail-last-frame"
+
+[[vector]]
+id = "C-tail-no-impact"
+source = "constructed"
+entries = ["TailHit", "ProtectionTime", "PeriodicLoss", "LowEnergyWarning"]
+before = { energy_whole = 70, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+after = { energy_whole = 70, energy_fraction = 0, pending_whole = 0, pending_fraction = 0, warning = "Off", protection = 0 }
+sound = "None"
+inputs = { time = "Running", suit = "NeitherSuit", tail_impacts = [] }
+before_maintenance_whole = 70
+drawing = { energy_whole = 70, protection = 0 }

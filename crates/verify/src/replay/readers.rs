@@ -18,6 +18,7 @@ use game::state::owned::OwnedState;
 pub(super) enum InputReader {
     EarlyMap(Box<super::early_map::InputTape>),
     ShotOpportunity(Box<super::shot_opportunity::Inputs>),
+    HealthTail(super::health_tail::Inputs),
     SenderOffer(Vec<super::sender_offer::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     Frame(super::frame::Inputs),
@@ -34,6 +35,7 @@ pub(super) enum InputReader {
 pub(super) enum ExpectedReader {
     EarlyMap(Box<super::early_map::Expectations>),
     ShotOpportunity(Box<super::shot_opportunity::Expectations>),
+    HealthTail(Box<[super::health_tail::Expected; 2]>),
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     Frame(Box<super::frame::Expected>),
@@ -48,6 +50,7 @@ pub(super) enum ExpectedReader {
 pub(super) enum ActualReader {
     EarlyMap,
     ShotOpportunity(data::assets::samus::key::Dress),
+    HealthTail,
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
@@ -111,6 +114,9 @@ impl InputReader {
         match self {
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::ShotOpportunity(inputs) => inputs.advance(production, cut),
+            Self::HealthTail(inputs) => inputs
+                .advance(production, cut)
+                .map(ProductionOutputs::HealthTail),
             Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
@@ -199,6 +205,11 @@ impl ActualReader {
         held: &mut HeldAdvance,
     ) -> Result<Vec<Observation>, Outcome> {
         match (self, inputs, outputs) {
+            (
+                Self::HealthTail,
+                InputReader::HealthTail(_),
+                ProductionOutputs::HealthTail(outputs),
+            ) => super::health_tail::actual(production, &outputs, cut),
             (
                 Self::MovementTouchdown(retained),
                 InputReader::MovementTouchdown(_),
@@ -298,6 +309,7 @@ impl ActualReader {
         match self {
             Self::EarlyMap => super::early_map::actual(production, None),
             Self::ShotOpportunity(dress) => super::shot_opportunity::initial(production, *dress),
+            Self::HealthTail => super::health_tail::initial(production),
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::Frame(actual) => actual.initial(production),
@@ -356,13 +368,15 @@ impl ActualReader {
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
-                | Self::SenderOffer,
+                | Self::SenderOffer
+                | Self::HealthTail,
                 Self::EarlyMap
                 | Self::ShotOpportunity(_)
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
-                | Self::SenderOffer,
+                | Self::SenderOffer
+                | Self::HealthTail,
             ) => true,
             (
                 Self::FrameSteady {
@@ -399,6 +413,7 @@ impl ActualReader {
             | Self::Movement
             | Self::Recorded(_)
             | Self::SenderOffer
+            | Self::HealthTail
             | Self::MovementTouchdown(_) => 0,
             Self::FrameSteady { publications } => *publications,
         }
@@ -410,6 +425,7 @@ impl ExpectedReader {
         match self {
             Self::EarlyMap(expected) => expected.read(cut),
             Self::ShotOpportunity(expected) => expected.read(cut),
+            Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
             Self::MovementTouchdown(expected) => expected.read(cut),
             Self::SenderOffer(fields) => Ok(ExpectedCut {
                 fields: fields.clone(),

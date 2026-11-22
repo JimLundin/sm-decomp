@@ -178,6 +178,18 @@ impl Hud {
         }
     }
 
+    pub(in crate::production) fn choose_ordinary_status(
+        &mut self,
+        rules: &Rules,
+        pictures: &HudPictures,
+        inputs: interface_hud::StatusInputs,
+    ) -> bool {
+        let Self::Work(work) = self else {
+            return false;
+        };
+        work.0.choose_status(rules, pictures, inputs)
+    }
+
     pub(super) fn choose_late_status(
         &mut self,
         rules: &Rules,

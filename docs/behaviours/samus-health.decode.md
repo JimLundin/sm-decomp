@@ -20,6 +20,70 @@ owner writes and pending consumption. `$90:8346..8355` is a whole-energy animati
 consumer; `$90:EA7F..EAAA` consumes the later energy for warning. These consumers
 establish the observable fractional boundary and warning contrast, not extra model calls.
 
+### TailHit
+
+Bank logs [A6](https://patrickjohnston.org/bank/A6),
+[A0](https://patrickjohnston.org/bank/A0) and [91](https://patrickjohnston.org/bank/91).
+The trace is checked against the pinned unheadered ROM in
+[ORACLE section 7](../ORACLE.md#7-data-the-rom-bundles-and-the-cipher).
+
+Ridley's tail check at `$A6:CB0E..CB20` consults tangibility, Samus's protection and
+whether Ridley holds Samus. Its unprotected branch checks tail-tip overlap at
+`$A6:DFD9..DFEF` with `$A6:DF29..DF57`. A hit takes the actor's configured amount from
+`$7E:7838` through `$A0:A45E..A46F`. The recorded suit read at `$A0:A460` clears both
+reduction bits. The pinned `$91:DF51..DF7F` path checks time before subtracting from
+current whole energy and does not touch the fraction. The pre-subtraction live X and
+the subtraction amount share the entry value. The observed return stack and
+`$A6:E000` store tie that debit to the tail caller and its separate grant of 96.
+`$A6:E006` sets a separate knockback timer of five. Knockback direction, hurt flash
+and their producers remain outside Health.
+
+At 993 the native actor reads zero protection; at 994 it reads 95 at the same
+`$A6:CB14` operand and bypasses the overlap and debit path. There is no native
+second overlap result in this window. A derivative passive capture on the same
+locked pads observes the actual eligibility operands, tail-tip and Samus centres,
+Samus's radii, both ordered overlap tests and their successful return at 993.
+It then observes the configured pre-suit damage feeding the same adjusted debit
+independently proved in the original capture. Cut 992 has an ineligible actor
+check. Cut 994 has a tangible, non-holding Ridley and carried protection, and its
+check returns without geometry. The three cut records, all 91 phase images and
+the earlier Health trace are byte-identical across the acquisitions.
+
+The derivative manifest SHA-256 is
+`efceaaf979a3bd55c38024b59af279c42355c77d778f45972f5e75c7c5bbd1bf`.
+Its raw actor trace SHA-256 is
+`14a932cc8a340455837540dab885107fe06626dee4bb73dcb876044a4b938003`.
+The private qualification runs in `$TEMP/collab/tail-geometry-671/`. It verifies
+the operands at their live reads, alongside observed results and call/return
+evidence. Tail-tip publication, actor pose updates and configured damage writers
+remain actor-side dependencies for integrated replay. The independently observed
+post-adjustment amount is available as a declared borrowed Health stimulus for
+scoped production replay.
+
+### ProtectionTime
+
+`$A0:9169..9171` reads active protection and decrements it once when positive.
+It executes after status in this acquired active Ceres window. Both Drawing
+markers retain the count that the later timer close reads. At 993 the sequence is
+begin 0, grant 96, Drawing 96, close 95. At 994 it is begin 95, Drawing 95, close 94.
+The native bus witness includes the physical word load and read-modify-write
+against the same word. The adjacent decrement for knockback is separate.
+This source speaks for the active frame tail; it does not admit stopped time,
+other grants or resets.
+
+### Drawing and status
+
+`$90:EAD7` compares current energy to Appearance's previous drawing energy.
+`$90:EAFA` reads current energy again and `$90:EAFD` saves it as drawing history.
+At 993 both energy operands read 24. The snapshots at both entry markers still carry
+39 in history, 96 in protection and inactive diagnostic invincibility. At 994 both
+energy operands and prior history read 24, and protection is 95. No health write
+by Drawing occurs in either opportunity. The wider debug restore and hurt or flash
+branches are outside this admission. `$80:9B8B` reads current energy for the gauge
+at both opportunities. At 993 the gauge redraw re-reads 24, updates previous shown
+energy and its digits, then carries at 994 without a duplicate redraw. Both the
+Appearance history and the HUD cache have their own owner.
+
 ### LowEnergyWarning
 
 Source: `$90:EA7F..EAAA`, external wrapper `$90:EAAB..EAB2`, plus the energy result
@@ -42,6 +106,7 @@ decode. Keep the model's typed complete State distinct from these encodings.
 | `pending_whole` | `$0A50` |
 | `energy_whole` | `$09C2` |
 | `warning` | `$0A6A` |
+| `protection` | `$18A8` |
 
 Equipped suit bits in `$09A2` are Varia bit 0 and Gravity bit 5. `$0A78` is the
 time-frozen context. These are production admission inputs, not a new owner for
@@ -88,6 +153,32 @@ and 183 eligible adjacent pairs. Reference health compatibility and null equalit
 both match all 183 pairs. This provides no gain and no health opportunity selection
 proof; the reference must not manufacture gameplay opportunities from these records.
 
+### Auxiliary Ceres contact and protected carry
+
+R-tail-hit and R-tail-protected use row `chain-any-0006-E0B5` at cuts 992–994,
+with the hit in the first interval. The immutable encrypted observer capsule is
+`ceres-health-hud-observer-7fabae8cb45825a4.tar.gz.enc`, SHA-256
+`7fabae8cb45825a4ed4cfc8ffd4584e3cce06782bafcbfd6bdd368befc2a3b13`.
+Its acquisition manifest SHA-256 is
+`2959332acb217e387f0d7b5d32cddef31e01b5e16d6028983a55403a300cde5f`.
+The native access trace SHA-256 is
+`cd926656dabb61c12f32ab5af50773756066cc102f912febc9dc0b88b770f6de`.
+The capsule's independent controls realign all three full WRAM, CPU, latch and pad
+cuts to the pinned cache and reconstruct 37 scoped writes. The later Health
+reference reads those same operands and compares the carried before/after result,
+pre-Maintenance energy and Drawing values. The reference agrees with both native
+opportunities direct and restored. The do-nothing comparison agrees with neither.
+
+The expanded set has 24 model vectors (3 recorded and 21 constructed) and 3
+admission contrasts. The reference matches all 24; the do-nothing comparison
+matches 6. The duplicate, fraction-clearing, early-age, omitted-age, stale-energy,
+borrow, repeated pending-loss and warning-threshold controls fail. Trace controls
+also reject stale protection at contact, wrong equipment at the actual impact,
+a changed grant, a changed late count, stale Drawing energy and early timer
+publication. The earlier Maintenance witness and the independent incoming-register
+and caller-stack controls still apply. Restoration here is a reference check;
+the clean model and actual production checkpoints must separately prove it.
+
 ### Adjacent Animation
 
 On the recorded and held controller schedules, the four stores of the first
@@ -121,11 +212,24 @@ proved; only requests and warning State are health outputs. Whole-frame comparis
 must name any intervening health writers and qualify their real owner exchanges.
 Animation reads earlier current energy, Drawing later current energy; Appearance's
 previous-draw energy stays separate. Missing pending-loss accumulation, pickups,
-protection freshness, reserves, refill or death remains Unsupported. A scope ending
+alternate protection sources, reserves, refill or death remains Unsupported. A scope ending
 before such a required neighbor does not claim that neighbor implemented.
-All five scalar quantities need complete set/read/save/restore checks and a
+All six scalar quantities need complete set/read/save/restore checks and a
 checkpoint continuation over repeated opportunities. Never infer the zero-loss
 operation was omitted because its final scalar values match its initial values.
+
+For the Ceres tail segment, source the eligible impact before applying any mutation
+and carry Health through Maintenance, both later Drawing reads, status and the
+actual active-frame close. The active close schedules one model ageing operation;
+it cannot seed the value, use the zero-timer frame-tail profile, or substitute the
+escape clock. Feed the same carried protection to actor contact. Seed once at
+992, continue directly and from a checkpoint after 993, and compare complete
+Health State, the warning request, energy and history at both Drawing opportunities,
+and late gauge change and hold. Add scoped wrong controls for duplicate impact,
+stale current energy and early ageing. If the post-adjustment amount is borrowed,
+declare that scope and give no actor producer credit. Wider actor behavior, physical
+Drawing output and VRAM publication require their own qualification. Keep the
+indexed previous Maintenance and retained-time requirements.
 
 ## Budget
 
@@ -139,12 +243,13 @@ implementations of this bounded health area.
 k = 37.5 weighted tokens per spec unit, the frozen coefficient.
 
 - Area current-energy: PeriodicLoss, LowEnergyWarning
+- Area protection: TailHit, ProtectionTime
 
-The unchanged `verify::spec_units` counter reports two entries, five arms, no cell
-terms or counted operators: 5.0 units and a reported budget of 187 weighted tokens.
-The coefficient product before the counter's integer conversion is 187.5. Its current
-CLI dependency graph cannot build at the fixed base because the unrelated HUD event
-shape fails compilation. A private std-only CLI wrapper calls byte-identical copies
-of that counter and `verify::size`; wrapper, copied-source and DLL hashes are retained
-with the private evidence. This is the existing counter implementation, not a new
-counter. Budget material stays out of independent review copies.
+Budget counter: four entries, eight arms, no cell terms or counted operators.
+The counter reports 8.0 units and 299 weighted tokens after conversion by area
+(current-energy 187, protection 112). A private std-only CLI wrapper calls the
+byte-identical `verify::spec_units` implementation. The previous periodic Health
+owner is retained and extended. At fixed base
+`0ede0e619848bc630c24bf45c853136c276d49fe` the production Health and frame-tail
+admission are limited to inactive protection. There is no implemented tail-hit
+or active protection gameplay owner to count as replaced.

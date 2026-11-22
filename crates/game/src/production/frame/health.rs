@@ -14,7 +14,7 @@ pub struct HealthPin;
 impl Pinned for HealthPin {
     type State = samus_health::State;
     const NAME: &'static str = "production-current-samus-health";
-    const SHAPE: u64 = 0x952D_4037_4B4E_F0FA;
+    const SHAPE: u64 = 0x2FD6_C95A_B0A2_9544;
 }
 
 /// Gameplay clock supplied by the independently qualified neighbouring owner.
@@ -140,6 +140,9 @@ impl Health {
     /// Unsupported neighbouring context cannot manufacture a qualified origin.
     pub fn from_origin(admission: Admission) -> Result<Self, Fault> {
         admission.context.qualify()?;
+        if admission.initial.0.protection != samus_health::ProtectionFrames::ZERO {
+            return Err(Fault::Context);
+        }
         Ok(Self {
             current: admission.initial,
             context: admission.context,
@@ -220,7 +223,8 @@ impl Health {
             return Err(Fault::Activity);
         }
         admission.context.qualify()?;
-        if self.origin.as_ref() != Some(admission)
+        if self.current.0.protection != samus_health::ProtectionFrames::ZERO
+            || self.origin.as_ref() != Some(admission)
             || self.context != admission.context
             || (!self.maintained && self.current != admission.initial)
         {

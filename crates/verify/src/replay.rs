@@ -46,6 +46,7 @@ pub(crate) mod frame_suffix_owner;
 pub mod frame_tiles;
 mod frame_timing;
 mod full_movement;
+mod health_tail;
 mod hud;
 pub mod index;
 mod movement;
@@ -92,7 +93,9 @@ pub fn run(case: &Case, sources: &Sources) -> CaseResult {
         kind: case.kind,
         row: case.row.clone(),
         start_cut: match case.start {
-            Start::CacheCut { frame } | Start::NativeCheckpoint { frame, .. } => Some(frame),
+            Start::CacheCut { frame }
+            | Start::NativeRecord { frame, .. }
+            | Start::NativeCheckpoint { frame, .. } => Some(frame),
             Start::NativeOpportunity { .. }
             | Start::NativeSeed { .. }
             | Start::NativeSenderOffer { .. }

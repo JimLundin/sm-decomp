@@ -447,6 +447,7 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
         Start::NativeSenderOffer { source_id } => native(&sources.native, source_id, cut)?,
         Start::ConstructedSenderOffer { control } => constructed(control),
         Start::NativeOpportunity { .. }
+        | Start::NativeRecord { .. }
         | Start::CacheCut { .. }
         | Start::NativeSeed { .. }
         | Start::NativeCheckpoint { .. }

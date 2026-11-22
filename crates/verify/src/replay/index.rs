@@ -91,6 +91,15 @@ pub enum Start {
         /// Starting queue and ordered offers.
         control: SenderOfferControl,
     },
+    /// One independently pinned native record supplies the sole scoped origin.
+    NativeRecord {
+        /// File under the native fixture directory.
+        path: PathBuf,
+        /// SHA-256 of the entire record.
+        sha256: String,
+        /// Original cut coordinate.
+        frame: u64,
+    },
     /// Initial selected state from one pinned record cut.
     CacheCut {
         /// The original record cut used only for initial selected state.
@@ -169,6 +178,8 @@ pub struct NativeReturns {
 pub enum InputProvider {
     /// Locked current Movement stimuli and early mini-map premises.
     EarlyMapInputs,
+    /// Independent scoped actor query/delivery, current equipment and active close.
+    NativeHealthTailInputs,
     /// Authenticated actual-use snapshots for the connected ordinary family.
     ConnectedOrdinaryInputs,
     /// Qualified current owner inputs and explicitly borrowed unselected completions.
@@ -235,6 +246,8 @@ pub enum ContentProvider {
 pub enum ExpectedProvider {
     /// Independent native early Map snapshots and carried cut record.
     NativeEarlyMap,
+    /// Independently observed Health, Drawing reads and HUD gauge around a tail hit.
+    NativeHealthTailObservations,
     /// Independent frozen ordered physical callbacks and completed-return wall time.
     NativeFrameCallbacks,
     /// Independently observed Steady Haze and `LayerBlend` boundaries and mirrors.
@@ -294,6 +307,27 @@ pub enum ObservationId {
     /// Complete finished ordinary Camera state.
     #[serde(rename = "camera.ordinary-completion")]
     MapCarryCamera,
+    /// Complete Health snapshots at the actor query and Maintenance.
+    #[serde(rename = "health.tail.state")]
+    HealthTailState,
+    /// Complete Health after the one actual delivered impact.
+    #[serde(rename = "health.tail.impact")]
+    HealthTailImpact,
+    /// Live protection at the actual late close.
+    #[serde(rename = "health.tail.active_close")]
+    HealthTailClose,
+    /// The Warning request, before any receiver.
+    #[serde(rename = "health.tail.warning_request")]
+    HealthTailWarning,
+    /// Both live Health reads and the carried Drawing history.
+    #[serde(rename = "appearance.drawing.energy")]
+    DrawingEnergy,
+    /// Energy read and cached redraw disposition at status.
+    #[serde(rename = "hud.gauge.refresh")]
+    GaugeRefresh,
+    /// All sixteen CPU-side gauge words.
+    #[serde(rename = "hud.gauge.words")]
+    GaugeWords,
     /// Complete pending sound queue, oldest first.
     #[serde(rename = "sender.queue")]
     SenderQueue,
@@ -829,7 +863,11 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
             Responsibility::GameTime
         }
         O::RoomShakeTimer | O::RoomShakePhase => Responsibility::WorldQuake,
-        O::HealthEnergyWhole
+        O::HealthTailState
+        | O::HealthTailImpact
+        | O::HealthTailClose
+        | O::HealthTailWarning
+        | O::HealthEnergyWhole
         | O::HealthEnergyFraction
         | O::HealthPendingWhole
         | O::HealthPendingFraction
@@ -879,7 +917,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CameraVerticalFraction
         | O::MapCarryCamera
         | O::ShotCamera => Responsibility::Camera,
-        O::EarlyMapWindow
+        O::GaugeRefresh
+        | O::GaugeWords
+        | O::EarlyMapWindow
         | O::HudGrid
         | O::HudExplored
         | O::HudEnergy
@@ -898,7 +938,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::ShotOamPrePower
         | O::ShotOamFinal => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
-        O::TouchdownGraphics
+        O::DrawingEnergy
+        | O::TouchdownGraphics
         | O::AppearancePlaying
         | O::AppearanceStep
         | O::AppearanceTimeLeft
@@ -1014,6 +1055,11 @@ fn witnessed_fields(rule: &str, early_map: bool) -> Option<&'static [Observation
         "enemy-interactions/ContactAllowed"
         | "enemy-interactions/BoxOverlap"
         | "enemy-interactions/FirstPowerShot" => &[O::ContactConsumedMarkers],
+        "samus-health/PeriodicLoss" => &[O::HealthTailState],
+        "samus-health/TailHit" => &[O::HealthTailState, O::HealthTailImpact],
+        "samus-health/LowEnergyWarning" => &[O::HealthTailState, O::HealthTailWarning],
+        "samus-health/ProtectionTime" => &[O::HealthTailState, O::HealthTailClose],
+        "interface-hud/EnergyGauge" => &[O::GaugeRefresh, O::GaugeWords],
         "interface-hud/HerBlink" | "interface-hud/MiniMapWindow" if early_map => {
             &[O::EarlyMapWindow]
         }
@@ -1095,6 +1141,7 @@ fn native_search_provider_valid(case: &Case, observations: &BTreeSet<Observation
         Start::NativeOpportunity { .. }
         | Start::NativeSeed { .. }
         | Start::NativeCheckpoint { .. }
+        | Start::NativeRecord { .. }
         | Start::CacheCut { .. }
         | Start::NativeSenderOffer { .. }
         | Start::ConstructedSenderOffer { .. }
@@ -1345,6 +1392,11 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         && matches!(case.start, Start::CacheCut { .. });
     match case.responsibilities.as_slice() {
         [
+            Responsibility::Health,
+            Responsibility::Appearance,
+            Responsibility::Hud,
+        ] => health_tail_provider_valid(case),
+        [
             Responsibility::Movement,
             Responsibility::Appearance,
             Responsibility::Camera,
@@ -1411,6 +1463,37 @@ fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
         }
         _ => case.kind != CaseKind::Scoped && case.borrowed.is_empty(),
     }
+}
+
+fn health_tail_provider_valid(case: &Case) -> bool {
+    use ObservationId as O;
+
+    case.kind == CaseKind::Scoped
+        && case.row == super::health_tail::ROW
+        && matches!(
+            case.start,
+            Start::NativeRecord {
+                frame: super::health_tail::ORIGIN,
+                ..
+            }
+        )
+        && case.end.cut_inclusive == super::health_tail::CUTS[1]
+        && case.inputs == InputProvider::NativeHealthTailInputs
+        && case.expectations.provider == ExpectedProvider::NativeHealthTailObservations
+        && case.content == ContentProvider::HudReference
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+        && case.checkpoints
+        && case.expectations.output_cut.is_none()
+        && case.expectations.fields
+            == [
+                O::HealthTailState,
+                O::HealthTailImpact,
+                O::HealthTailClose,
+                O::DrawingEnergy,
+                O::GaugeRefresh,
+            ]
+        && case.expectations.outputs == [O::HealthTailWarning, O::GaugeWords]
 }
 
 const FINAL_OWNER_FIELDS: [ObservationId; 7] = [
@@ -1585,6 +1668,56 @@ fn scope_valid(case: &Case) -> bool {
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
 }
 
+fn start_valid(case: &Case) -> bool {
+    match &case.start {
+        Start::NativeOpportunity {
+            path,
+            sha256,
+            video_frame,
+            source_start_index,
+            source_completion_index,
+        } => {
+            !path.as_os_str().is_empty()
+                && valid_hash(sha256)
+                && *video_frame == case.end.cut_inclusive
+                && source_start_index < source_completion_index
+        }
+        Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
+        Start::NativeRecord {
+            path,
+            sha256,
+            frame,
+        } => {
+            case.inputs == InputProvider::NativeHealthTailInputs
+                && !path.as_os_str().is_empty()
+                && valid_hash(sha256)
+                && *frame < case.end.cut_inclusive
+        }
+        Start::NativeSeed { path, sha256 } => !path.as_os_str().is_empty() && valid_hash(sha256),
+        Start::NativeCheckpoint {
+            path,
+            sha256,
+            seed_path,
+            seed_sha256,
+            frame,
+        } => {
+            !path.as_os_str().is_empty()
+                && !seed_path.as_os_str().is_empty()
+                && valid_hash(sha256)
+                && valid_hash(seed_sha256)
+                && *frame < case.end.cut_inclusive
+        }
+        Start::NativeSenderOffer { source_id } => {
+            *source_id < super::sender_offer::NATIVE_WINDOWS
+                && case.row == super::sender_offer::SOURCE_ROW
+        }
+        Start::ConstructedSenderOffer { .. } => {
+            case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
+        }
+        Start::PowerOn => case.kind == CaseKind::Movie && case.borrowed.is_empty(),
+    }
+}
+
 impl Case {
     /// Validate the complete public execution recipe before source admission.
     ///
@@ -1604,45 +1737,6 @@ impl Case {
             .chain(&case.expectations.outputs)
             .collect();
         let unique: BTreeSet<_> = observations.iter().copied().collect();
-        let start_valid = match &case.start {
-            Start::NativeOpportunity {
-                path,
-                sha256,
-                video_frame,
-                source_start_index,
-                source_completion_index,
-            } => {
-                !path.as_os_str().is_empty()
-                    && valid_hash(sha256)
-                    && *video_frame == case.end.cut_inclusive
-                    && source_start_index < source_completion_index
-            }
-            Start::CacheCut { frame } => *frame < case.end.cut_inclusive,
-            Start::NativeSeed { path, sha256 } => {
-                !path.as_os_str().is_empty() && valid_hash(sha256)
-            }
-            Start::NativeCheckpoint {
-                path,
-                sha256,
-                seed_path,
-                seed_sha256,
-                frame,
-            } => {
-                !path.as_os_str().is_empty()
-                    && !seed_path.as_os_str().is_empty()
-                    && valid_hash(sha256)
-                    && valid_hash(seed_sha256)
-                    && *frame < case.end.cut_inclusive
-            }
-            Start::NativeSenderOffer { source_id } => {
-                *source_id < super::sender_offer::NATIVE_WINDOWS
-                    && case.row == super::sender_offer::SOURCE_ROW
-            }
-            Start::ConstructedSenderOffer { .. } => {
-                case.row == "constructed-sender-queue" && case.end.cut_inclusive == 0
-            }
-            Start::PowerOn => case.kind == CaseKind::Movie && case.borrowed.is_empty(),
-        };
         if case.id.0.is_empty()
             || case.row.is_empty()
             || (case.rules.is_empty() && case.inputs != InputProvider::Unavailable)
@@ -1664,7 +1758,7 @@ impl Case {
                         || source.path.as_os_str().is_empty()
                         || !valid_hash(&source.sha256)
                 })
-            || !start_valid
+            || !start_valid(case)
             || case.end.native_returns.as_ref().is_some_and(|returns| {
                 case.inputs != InputProvider::NativeFrameOwners
                     || returns.first_cut == 0
@@ -1690,9 +1784,9 @@ impl Case {
     #[must_use]
     pub const fn first_cut(&self) -> Option<u64> {
         match self.start {
-            Start::CacheCut { frame } | Start::NativeCheckpoint { frame, .. } => {
-                frame.checked_add(1)
-            }
+            Start::CacheCut { frame }
+            | Start::NativeRecord { frame, .. }
+            | Start::NativeCheckpoint { frame, .. } => frame.checked_add(1),
             Start::NativeOpportunity { video_frame, .. } => Some(video_frame),
             Start::NativeSenderOffer { .. } | Start::ConstructedSenderOffer { .. } => {
                 Some(self.end.cut_inclusive)

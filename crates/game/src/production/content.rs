@@ -80,6 +80,8 @@ pub enum ProductionContent {
     Frame(Box<super::frame::Content>),
     /// Fixed acknowledgment and Music physical profiles.
     FrameOpening(Box<super::frame::opening_prelude::Profiles>),
+    /// Checked current gauge content.
+    HealthTail(Box<super::health_tail::Content>),
     /// Checked semantic pose/body/cannon content; changing geometry is an input.
     Movement(MovementContent),
     /// Checked body and cannon content shared by the live touchdown caller.
@@ -121,6 +123,8 @@ pub enum ProductionRules {
     Frame(Box<super::frame::Rules>),
     /// The Frame opening uses its fixed caller rules.
     FrameOpening,
+    /// Scoped current Health rules.
+    HealthTail(samus_health::Rules),
     /// The existing movement model's complete rules.
     Movement(samus_movement::Rules),
     /// Existing Movement rules; the Contact owner uses fixed transport rules.

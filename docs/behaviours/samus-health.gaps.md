@@ -12,9 +12,14 @@ This bounded [spec](samus-health.md) does not complete H1.
 3. Damage reduction for Varia or Gravity and behavior when time is stopped require
    separately qualified rules and witnesses. Unsupported contrasts are C-varia-missing,
    C-gravity-missing and C-stopped-missing.
-4. Direct hits, invincibility and hurt protection need their own producer and freshness
-   join. Escape countdown does not decrement Samus's invincibility. No protection
-   algorithm is included in periodic loss.
+4. The reached Ceres tail impact and active protection have rules. Integrated replay
+   needs the actual Ridley eligibility and impact producer, live active-gameplay
+   tail completion, and reached Drawing and status consumers. Native carry proves
+   a protected actor check. Second overlap during protection is constructed because
+   the actor skips contact geometry on that check. Other attacks, alternate
+   protection sources, stop-time protection behavior, knockback and broader hurt
+   or flash behavior remain outside the admitted scope. Escape countdown has its
+   own clock.
 5. Reserves, refill, capacity changes, death and game-over effects remain missing.
    Reaching zero here is only energy arithmetic, not proof of a death sequence.
 6. Warning sound acceptance and resulting audible playback belong to audio. This

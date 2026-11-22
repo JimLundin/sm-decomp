@@ -82,6 +82,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | sender-offer/deny-explosion | Pass | 1 | 1 | 0 | 2 | 0 | 1 |
 | movement/soft-touchdown-57 | Pass | 1 | 0 | 1 | 8 | 2 | 1 |
 | movement/soft-touchdown-124 | Pass | 1 | 0 | 1 | 8 | 2 | 1 |
+| health/ceres-tail-drawing-gauge | Pass | 2 | 0 | 2 | 52 | 34 | 2 |
 
 - **movement/D-inherited-cut** witnesses samus-movement/TravelledDistances. Limits: one-step travel witness; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; movement receipts and downstream consumers outside declared comparisons; pixel composition omitted.
 - **movement/W15** witnesses samus-movement/WallJump, samus-movement/TouchedCells. Limits: appearance feedback externally admitted; upstream producers externally admitted; prior-cut observed actor roster; current actor-selection update and request timing unproved; camera and pixel composition omitted.
@@ -135,6 +136,7 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **sender-offer/deny-explosion** witnesses audio-transport/OfferAcceptance. Limits: constructed queue control; no physical service or live producer selected.
 - **movement/soft-touchdown-57** witnesses samus-movement/PoseFitAfterMoves, samus-movement/AcceptedFloorResponse, samus-movement/TouchdownRequests, audio-transport/OfferAcceptance. Limits: one ordinary Movement opportunity through the Contact offer and separate Appearance publication; Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots; the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service; the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope; no native actor candidate visitation or individual terrain cell identities compared.
 - **movement/soft-touchdown-124** witnesses samus-movement/PoseFitAfterMoves, samus-movement/AcceptedFloorResponse, samus-movement/TouchdownRequests, audio-transport/OfferAcceptance. Limits: one ordinary Movement opportunity through the Contact offer and separate Appearance publication; Appearance publishes the clear command for the qualified dry arm with empty atmospheric slots; the next native Contact service-entry snapshot corroborates the post-offer FIFO; the bracket has no intervening Contact offer or service; the intervening clock, physical ring positions, port service, and later Frame scheduling are outside this scope; no native actor candidate visitation or individual terrain cell identities compared.
+- **health/ceres-tail-drawing-gauge** witnesses samus-health/TailHit, samus-health/PeriodicLoss, samus-health/LowEnergyWarning, samus-health/ProtectionTime, interface-hud/EnergyGauge. Limits: Ridley tangibility, grip, overlap, tail geometry, damage configuration and suit arithmetic are upstream of the external delivery; Warning comparison ends at the Health request, before the unadmitted Library 3 cue and receiver; Drawing compares current energy, protection and committed energy history; hurt flash and visible rendering require their own producers; HUD compares all sixteen CPU-side gauge words; IRQ, VRAM and full Frame timing require separate proof; auxiliary native cut window outside the played-alone milestone.
 
 ### Integrated cases
 
@@ -177,7 +179,7 @@ A held Unsupported boundary remains Unsupported and proves no completed case. Ea
 M0: **can start:** A1, AF1, AF2, AF3, AF4a, V3. **waiting:** R2 on AF1, AF2. **in progress ahead of work it needs:** W1 on AF3; S5 on AF2; H2 on AF4a; C1 on AF3; B8 on AF3; R1 on AF1, R2.
 
 
-Of the 39 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **16 are in progress** and **0 done**; 23 have not started. **72 rounds** have landed on 16 models; the plan estimates 159 rounds for the whole game.
+Of the 39 clean-room domains in the [whole-game plan](docs/architecture/domains.md), **16 are in progress** and **0 done**; 23 have not started. **73 rounds** have landed on 16 models; the plan estimates 159 rounds for the whole game.
 
 ### The models
 
@@ -196,7 +198,7 @@ Model implementation and vectors are separate from the replay evidence above.
 | samus-appearance | S5 (in progress) | in progress | 9 | 184 | 4,506 | 2,562 | 1.76 |
 | boss-ceres-ridley | B8 (in progress) | in progress | 1 | 56 | 1,299 | 1,150 | 1.13 |
 | world-doors | R1 (in progress) | in progress | 1 | 70 | 3,374 | 2,912 | 1.16 |
-| samus-health | H1 (in progress) | in progress | 1 | 19 | 278 | 187 | 1.49 |
+| samus-health | H1 (in progress) | in progress | 2 | 27 | 418 | 299 | 1.40 |
 | game-time | G1 (in progress) | in progress | 1 | 11 | 298 | 187 | 1.59 |
 | world-quake | R3 (in progress) | in progress | 1 | 7 | 145 | 62 | 2.33 |
 | game-random | G2 (in progress) | in progress | 1 | 11 | 130 | 162 | 0.80 |

@@ -201,7 +201,9 @@ impl Baseline {
                 .find(|case| case.id == result.id)
                 .ok_or_else(|| BaselineFault::MissingCase(result.id.clone()))?;
             let start_cut = match case.start {
-                Start::CacheCut { frame } | Start::NativeCheckpoint { frame, .. } => Some(frame),
+                Start::CacheCut { frame }
+                | Start::NativeRecord { frame, .. }
+                | Start::NativeCheckpoint { frame, .. } => Some(frame),
                 Start::NativeOpportunity { .. }
                 | Start::NativeSeed { .. }
                 | Start::NativeSenderOffer { .. }
@@ -242,6 +244,49 @@ impl Baseline {
         }
         Ok(summary)
     }
+}
+
+fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
+    if case.expectations.provider == ExpectedProvider::NativeFrameCallbacks {
+        // One declared stream contains every observed publication at this return.
+        return Some(
+            case.expectations.fields.len().checked_mul(counts.cuts) == Some(counts.fields)
+                && counts.outputs == counts.publications
+                && (counts.outputs == 0) == (counts.cuts == 0)
+                && counts.replies == 0
+                && counts.pending_boundaries == 0,
+        );
+    }
+    if case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries {
+        let random = super::frame_random_prelude::Arm::for_case(case).is_some() && counts.cuts == 5;
+        return Some(
+            super::frame_steady::field_count(case, counts.cuts) == Some(counts.fields)
+                && counts.outputs == if random { 7 } else { 0 }
+                && counts.publications == if random { 4 } else { 0 }
+                && counts.replies == 0
+                && counts.pending_boundaries == 0,
+        );
+    }
+    if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
+        return Some(
+            super::early_map::field_count(case, counts.cuts) == Some(counts.fields)
+                && counts.outputs == 0
+                && counts.publications == 0
+                && counts.replies == 0
+                && counts.pending_boundaries == 0,
+        );
+    }
+    if case.expectations.provider == ExpectedProvider::NativeHealthTailObservations {
+        use super::health_tail::{OUTPUTS_PER_CUT, field_count};
+        return Some(
+            field_count(counts.cuts) == Some(counts.fields)
+                && counts.cuts.checked_mul(OUTPUTS_PER_CUT) == Some(counts.outputs)
+                && counts.publications == 0
+                && counts.replies == 0
+                && counts.pending_boundaries == 0,
+        );
+    }
+    None
 }
 
 fn valid_counts(case: &Case, floor: &Floor) -> bool {
@@ -293,28 +338,8 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         | Outcome::DataFailure { .. }
         | Outcome::CheckpointFailure { .. } => return false,
     }
-    if case.expectations.provider == ExpectedProvider::NativeFrameCallbacks {
-        // One declared stream contains every observed publication at this return.
-        return case.expectations.fields.len().checked_mul(counts.cuts) == Some(counts.fields)
-            && counts.outputs == counts.publications
-            && (counts.outputs == 0) == (counts.cuts == 0)
-            && counts.replies == 0
-            && counts.pending_boundaries == 0;
-    }
-    if case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries {
-        let random = super::frame_random_prelude::Arm::for_case(case).is_some() && counts.cuts == 5;
-        return super::frame_steady::field_count(case, counts.cuts) == Some(counts.fields)
-            && counts.outputs == if random { 7 } else { 0 }
-            && counts.publications == if random { 4 } else { 0 }
-            && counts.replies == 0
-            && counts.pending_boundaries == 0;
-    }
-    if case.expectations.provider == ExpectedProvider::NativeEarlyMap {
-        return super::early_map::field_count(case, counts.cuts) == Some(counts.fields)
-            && counts.outputs == 0
-            && counts.publications == 0
-            && counts.replies == 0
-            && counts.pending_boundaries == 0;
+    if let Some(valid) = expanded_counts(case, counts) {
+        return valid;
     }
     if case.responsibilities != [Responsibility::Audio] {
         let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);

@@ -1,29 +1,30 @@
 # Samus's current energy: behaviour spec
 
-Her energy remaining after a periodic loss, including losses smaller than one energy,
-and the warning requested while that energy is low. Vectors:
+Her energy and brief protection after Ridley's tail hits her in Ceres, her energy
+after periodic loss, and the warning requested while that energy is low. Vectors:
 [samus-health.toml](../../scenarios/vectors/samus-health.toml).
 
 ## Header
 
 **Scope.** This is a bounded part of H1, Energy, reserves and death. It covers periodic
 loss while time runs and neither damage-reducing suit is equipped, consumption of that
-pending loss, and the low-energy warning. It defines one current energy authority.
-There is no existing H1 model to replace. The existing pickup inventory's whole
-energy is a neighboring pickup value; the integration must reconcile that projection
-with this current authority before claiming integrated pickup behavior.
+pending loss, the low-energy warning, and Ridley's tail hit in Ceres and its
+protection. Health owns one current energy and one remaining protection count. The
+existing pickup inventory's whole energy is a neighboring pickup value. Production
+must reconcile that projection with this current authority before claiming integrated pickup behavior.
 
 **Reads.** Equipped suits come from [run-progress](run-progress.md); whether gameplay
 time runs comes from its gameplay controller. Periodic losses come from their owning
 hazard or action domains. This scope accepts already accumulated pending loss as
-settable State; it does not establish any hazard's accumulation rules or freshness.
+settable State. Ridley supplies contact eligibility and the whole energy his tail
+would take. Health supplies the current protection to the contact check.
 
 **Leaves to others.** Capacities, pickups and equipment belong to Run Progress. HUD
 [EnergyGauge](interface-hud.md#energygauge) shows whole current energy and owns its
 last shown value. [Appearance](samus-appearance.md) reads current energy for animation
 and retains its own previous drawing history. Audio decides whether a warning request
-is heard. Protection and its duration, direct hits, reserves, refill, death, stopped
-time and damage-reducing suits are missing capabilities, not successful no-ops.
+is heard. Appearance owns the flash after damage and Movement owns knockback. Ridley owns tail
+position, overlap and whether he is tangible or holding Samus.
 
 **Notation.** An energy amount is a whole count plus an integer fraction measured in
 `1/65536` energy. NeitherSuit means neither Varia nor Gravity is switched on.
@@ -34,14 +35,16 @@ kept because loss smaller than one energy can eventually change the displayed co
 
 | Quantity | Units and domain type | Read by |
 | --- | --- | --- |
-| current energy | `EnergyAmount`: whole `0..32767`, fraction `0..65535`, in energy | `PeriodicLoss`, `LowEnergyWarning`; Appearance's `Breathing`; HUD's `EnergyGauge`; output |
+| current energy | `EnergyAmount`: whole `0..32767`, fraction `0..65535`, in energy | `PeriodicLoss`, `LowEnergyWarning`; Appearance's `Breathing`; HUD's `EnergyGauge`; `TailHit`; output |
 | pending periodic loss | `EnergyLoss`: whole `0..32767`, fraction `0..65535`, in energy | `PeriodicLoss` |
 | warning requested | `Warning`: `Off` or `On` | `LowEnergyWarning`; output |
+| remaining protection | `ProtectionFrames` in active gameplay frames, `0..96` | `TailHit`, `ProtectionTime`, Ridley's tail contact; output |
+| eligible tail impact | `TailImpact` with values absent or 15 whole energy for the admitted Ceres contact | `TailHit` |
 
-These five scalar quantities comprise complete State. A caller can set any allowed
-combination, read it back, carry it, save it and restore it without losing either
-fraction, pending loss or warning state. Complete restoration resumes with the same
-next result. External pending-loss production and current-energy replacement must be
+Current energy, pending loss, warning and protection comprise complete State. A caller can
+set any allowed combination, read it back, carry it, save it and restore it without
+losing either fraction, pending loss, warning state or remaining protection. A
+complete restoration resumes with the same next result. External pending-loss production and current-energy replacement must be
 explicit owner updates; neither oracle next-state feedback nor a HUD history value may
 silently supply them. No receipt, opportunity count or sound queue is additional State.
 
@@ -50,14 +53,17 @@ suits. The vector context names Running/Stopped and NeitherSuit/VariaSuit/Gravit
 Only Running with NeitherSuit admits this model opportunity. A caller requiring another
 context must report Unsupported before mutation or warning effects. Wider contexts are
 integration admission boundaries, not model input variants. The clean model receives
-complete State and its rules for an already qualified opportunity; it is total over
+complete State and its rules for an already qualified opportunity. It is total over
 every allowed State combination.
 
 The result is complete updated State plus `WarningSound` (`None`, `Start`, `Stop`).
 This is a sound request read by audio; audible playback is a separate responsibility. The model may
 always be queried for current energy, including when no health opportunity is selected.
-Every selected supported opportunity executes the health rules, including zero loss;
-a caller must not infer omitted owner work from unchanged scalar values.
+Every selected supported opportunity executes the health rules, including zero loss.
+Unchanged scalar values alone cannot attest completed owner work. The optional tail
+impact and the completion of an active gameplay opportunity are distinct from
+Maintenance. A Maintenance call, a Drawing read, a repeated contact check or a
+display interrupt never spends a protection frame.
 
 **Neighbor exchange.** Run Progress owns the capacities and pickup outcomes. A future
 integrated pickup uses a fresh whole-energy projection of this owner as the pickup
@@ -91,6 +97,31 @@ therefore cannot spend the same loss again. Restoring a snapshot taken before lo
 repeats the loss; restoring one taken after it does not [C-restored-before-borrow,
 C-restored-after-borrow].
 
+### TailHit
+
+- kind: mechanic
+- summary: Ridley's eligible tail hit in Ceres takes energy and briefly protects Samus.
+- params: none
+- switch: fixed
+- Eligible tail impact with protection zero → subtract its whole energy from current
+  whole energy with a floor of zero, keep the energy fraction and pending loss, and
+  grant 96 frames of protection [R-tail-hit, C-tail-fraction-and-loss, C-tail-clamp].
+- No eligible tail impact, or protection still positive → keep current energy, pending
+  loss and protection [R-tail-protected, C-tail-duplicate, C-tail-no-impact].
+- checked: oracle (R-tail-hit, R-tail-protected); constructed duplicate overlap
+  (C-tail-duplicate).
+
+### ProtectionTime
+
+- kind: timing
+- summary: protection spends one frame at the end of each admitted active gameplay opportunity.
+- params: none
+- switch: fixed
+- An active gameplay opportunity closes → spend one remaining protection frame with
+  a floor of zero [R-tail-hit, R-tail-protected, C-tail-last-frame, C-tail-no-impact].
+- checked: oracle (R-tail-hit, R-tail-protected); constructed expiry
+  (C-tail-last-frame, C-tail-after-expiry).
+
 ### LowEnergyWarning
 
 - kind: output
@@ -98,11 +129,11 @@ C-restored-after-borrow].
 - params: `warning_threshold`, whole energy count, reference `30`, allowed `0..32767`.
 - switch: parameter
 - After periodic loss, whole energy at most the threshold with warning Off → warning
-  becomes On and requests Start [C-borrow, C-threshold-low, C-adjusted-threshold].
+  becomes On and requests Start [C-borrow, C-threshold-low, C-adjusted-threshold, R-tail-hit].
 - After periodic loss, whole energy greater than the threshold with warning On → warning
   becomes Off and requests Stop [C-threshold-high].
 - After periodic loss, warning already matches the threshold comparison → warning
-  stays as it is and requests None [R-maintenance-current, C-zero, C-warning-repeat,
+  stays as it is and requests None [R-maintenance-current, R-tail-protected, C-zero, C-warning-repeat,
   C-borrow-once].
 - checked: oracle (R-maintenance-current); constructed threshold contrasts
   (C-threshold-low, C-threshold-high, C-warning-repeat, C-adjusted-threshold).
@@ -112,11 +143,22 @@ not move its threshold. Warning state records the request even if audio rejects 
 
 ## Order that matters
 
-Animation can read current energy before a periodic loss; a later HUD drawing reads
-the energy after the completed health opportunity. The warning reflects energy after
-loss [C-borrow]. Previous drawing energy remains history belonging to Appearance; a
-later current-energy update never rewrites that history. Production must prove actual
-producer selection, consumer opportunities and freshness, separately from these rules.
+On the reached tail-hit opportunity, Ridley sees the protection carried into contact.
+The hit has already taken energy and granted protection when Maintenance consumes
+pending loss and judges the warning. Both subsequent Drawing reads and the late
+energy gauge see the maintained energy. Protection granted by contact stays live
+through Drawing. It ages after Drawing and the gauge, so the next contact check
+sees 95 frames remaining after a hit. Contact at one remaining frame is still
+blocked. A newly eligible hit can land on the next opportunity after that frame
+expires [R-tail-hit, R-tail-protected, C-tail-last-frame, C-tail-after-expiry].
+
+Animation can read current energy before periodic loss. Appearance owns its
+previous drawing energy separately and updates that history at its actual Drawing
+opportunity. The reached Drawing comparison sees the current lower energy and the
+old drawing history before retaining the new value. Health supplies its carried
+energy and protection without taking ownership of Drawing's history or flash.
+Production must establish contact, active opportunity completion and consumer
+freshness independently.
 
 ## Missing capabilities
 

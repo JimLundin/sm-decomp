@@ -1,8 +1,8 @@
 //! Model vectors and complete owner-state restoration tests.
 
 use samus_health::{
-    BehaviourId, EnergyAmount, EnergyLoss, Rules, State, Warning, WarningSound, WholeEnergy,
-    behaviour,
+    BehaviourId, EnergyAmount, EnergyLoss, ProtectionFrames, Rules, State, TailImpact, Warning,
+    WarningSound, WholeEnergy, behaviour,
 };
 use serde::Deserialize;
 use types::{Checked, Kind, Switch};
@@ -25,10 +25,25 @@ struct Vector {
     after: Option<Snapshot>,
     sound: Option<WarningSound>,
     inputs: Context,
-    rules: Option<Rules>,
+    before_maintenance_whole: Option<WholeEnergy>,
+    drawing: Option<Drawing>,
+    rules: Option<RuleOverrides>,
     continues: Option<String>,
     evidence_kind: Option<EvidenceKind>,
     unsupported: Option<bool>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RuleOverrides {
+    warning_threshold: WholeEnergy,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+struct Drawing {
+    energy_whole: WholeEnergy,
+    protection: ProtectionFrames,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -52,6 +67,7 @@ struct Snapshot {
     pending_whole: WholeEnergy,
     pending_fraction: u16,
     warning: Warning,
+    protection: ProtectionFrames,
 }
 
 impl From<Snapshot> for State {
@@ -66,6 +82,7 @@ impl From<Snapshot> for State {
                 fraction: value.pending_fraction,
             },
             warning: value.warning,
+            protection: value.protection,
         }
     }
 }
@@ -75,6 +92,7 @@ impl From<Snapshot> for State {
 struct Context {
     time: Time,
     suit: Suit,
+    tail_impacts: Option<Vec<u16>>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -105,15 +123,114 @@ fn restored(state: State) -> Result<State, Box<dyn std::error::Error>> {
     Ok(toml::from_str(&serialized)?)
 }
 
-fn verify_opportunity(vector: &Vector) -> TestResult {
-    let before = State::from(vector.before);
+impl Vector {
+    fn rules(&self) -> Rules {
+        self.rules.as_ref().map_or(Rules::REFERENCE, |rules| Rules {
+            warning_threshold: rules.warning_threshold,
+        })
+    }
+}
+
+fn checkpoint(state: State, continued: &mut State, label: &str) -> TestResult {
+    assert_eq!(*continued, state, "{label}: restored path differs");
+    *continued = restored(state)?;
+    assert_eq!(*continued, state, "{label}: snapshot differs");
+    Ok(())
+}
+
+fn verify_contact(vector: &Vector, actual: &mut State, fresh: &mut State) -> TestResult {
+    let Some(impacts) = &vector.inputs.tail_impacts else {
+        assert!(vector.before_maintenance_whole.is_none());
+        assert!(vector.drawing.is_none());
+        return Ok(());
+    };
+    let before = *actual;
+    if impacts.is_empty() {
+        actual.tail_contact(TailImpact::Absent);
+        fresh.tail_contact(TailImpact::Absent);
+        assert_eq!(*actual, before, "{} absent impact", vector.id);
+        checkpoint(*actual, fresh, "absent contact")?;
+    }
+    for impact in impacts {
+        assert_eq!(*impact, 15, "{} unknown tail impact", vector.id);
+        let before_contact = *actual;
+        actual.tail_contact(TailImpact::EligibleCeresTail);
+        fresh.tail_contact(TailImpact::EligibleCeresTail);
+        if before_contact.protection != ProtectionFrames::ZERO {
+            assert_eq!(*actual, before_contact, "{} blocked contact", vector.id);
+        }
+        checkpoint(*actual, fresh, "eligible candidate")?;
+    }
+    assert_eq!(
+        Some(actual.energy.whole),
+        vector.before_maintenance_whole,
+        "{} before Maintenance",
+        vector.id
+    );
+    assert_eq!(
+        actual.energy.fraction, before.energy.fraction,
+        "{} contact fraction",
+        vector.id
+    );
+    assert_eq!(
+        actual.pending_loss, before.pending_loss,
+        "{} contact pending loss",
+        vector.id
+    );
+    assert_eq!(
+        actual.warning, before.warning,
+        "{} contact warning",
+        vector.id
+    );
+    Ok(())
+}
+
+fn verify_drawing(vector: &Vector, actual: State, fresh: &mut State) -> TestResult {
+    let Some(expected) = vector.drawing else {
+        assert!(vector.inputs.tail_impacts.is_none());
+        return Ok(());
+    };
+    assert!(vector.inputs.tail_impacts.is_some());
+    // Drawing reads the pair live and owns its history. The later gauge reads
+    // the same authority, not that history. Neither read mutates health.
+    let drawing = Drawing {
+        energy_whole: actual.energy.whole,
+        protection: actual.protection,
+    };
+    assert_eq!(drawing, expected, "{} Drawing", vector.id);
+    assert_eq!(
+        (fresh.energy, fresh.protection),
+        (actual.energy, actual.protection)
+    );
+    checkpoint(actual, fresh, "after Drawing")?;
+    assert_eq!(
+        (actual.energy.whole, actual.protection),
+        (expected.energy_whole, expected.protection),
+        "{} late gauge",
+        vector.id
+    );
+    assert_eq!(fresh.energy.whole, expected.energy_whole);
+    checkpoint(actual, fresh, "after gauge")
+}
+
+fn verify_opportunity(
+    vector: &Vector,
+    mut actual: State,
+) -> Result<State, Box<dyn std::error::Error>> {
     let expected = State::from(vector.after.ok_or("admitted vector lacks after")?);
-    let rules = vector.rules.unwrap_or(Rules::REFERENCE);
-    let mut actual = before;
-    let mut fresh = restored(before)?;
-    assert_eq!(fresh, before, "{} fresh before", vector.id);
+    let rules = vector.rules();
+    assert_eq!(
+        actual,
+        State::from(vector.before),
+        "{} carried input",
+        vector.id
+    );
+    let mut fresh = restored(actual)?;
+    assert_eq!(fresh, actual, "{} restored input", vector.id);
+    verify_contact(vector, &mut actual, &mut fresh)?;
+
+    let protection = actual.protection;
     let sound = actual.health_opportunity(&rules);
-    assert_eq!(actual, expected, "{} completed State", vector.id);
     assert_eq!(Some(sound), vector.sound, "{} request", vector.id);
     assert_eq!(
         fresh.health_opportunity(&rules),
@@ -121,51 +238,68 @@ fn verify_opportunity(vector: &Vector) -> TestResult {
         "{} restored request",
         vector.id
     );
-    assert_eq!(fresh, actual, "{} restored next State", vector.id);
+    assert_eq!(
+        actual.protection, protection,
+        "{} Maintenance does not age protection",
+        vector.id
+    );
+    checkpoint(actual, &mut fresh, "after Maintenance")?;
 
-    let mut fresh_after = restored(actual)?;
-    assert_eq!(fresh_after, actual, "{} fresh after", vector.id);
-    let repeat = actual.health_opportunity(&rules);
-    assert_eq!(repeat, WarningSound::None, "{} repeated request", vector.id);
-    assert_eq!(fresh_after.health_opportunity(&rules), repeat);
-    assert_eq!(fresh_after, actual);
-    assert_eq!(actual, expected, "{} consumed once", vector.id);
-    Ok(())
+    verify_drawing(vector, actual, &mut fresh)?;
+    if vector.inputs.tail_impacts.is_some() {
+        actual.close_active_opportunity();
+        fresh.close_active_opportunity();
+    }
+    assert_eq!(actual, expected, "{} completed State", vector.id);
+    checkpoint(actual, &mut fresh, "completed opportunity")?;
+    assert_eq!(
+        fresh.health_opportunity(&rules),
+        WarningSound::None,
+        "{} later Maintenance request",
+        vector.id
+    );
+    assert_eq!(fresh, actual, "{} loss consumed once", vector.id);
+    Ok(actual)
 }
 
 #[test]
 fn samus_health_admitted_vectors() -> TestResult {
     let data = vectors()?;
     let admitted: Vec<_> = data.iter().filter(|v| v.evidence_kind.is_none()).collect();
-    assert_eq!(admitted.len(), 16);
+    assert_eq!(admitted.len(), 24);
+    let recorded: Vec<_> = admitted
+        .iter()
+        .filter(|v| v.source == Source::Recorded)
+        .map(|v| v.id.as_str())
+        .collect();
+    assert_eq!(
+        recorded,
+        ["R-maintenance-current", "R-tail-hit", "R-tail-protected"]
+    );
     assert_eq!(
         admitted
             .iter()
-            .filter(|v| v.source == Source::Recorded)
+            .filter(|v| v.source == Source::Constructed)
             .count(),
-        1
+        21
     );
     for vector in &admitted {
         assert_eq!(vector.inputs.time, Time::Running);
         assert_eq!(vector.inputs.suit, Suit::Neither);
         assert_eq!(vector.unsupported, None);
-        verify_opportunity(vector)?;
+        verify_opportunity(vector, State::from(vector.before))?;
         if let Some(previous_id) = &vector.continues {
             let previous = admitted
                 .iter()
                 .find(|v| &v.id == previous_id)
                 .ok_or("unknown continuation")?;
-            let mut carried = State::from(previous.before);
+            assert_eq!(previous.source, vector.source);
+            let carried = verify_opportunity(previous, State::from(previous.before))?;
+            let fresh = restored(carried)?;
+            assert_eq!(fresh, carried);
             assert_eq!(
-                Some(carried.health_opportunity(&previous.rules.unwrap_or(Rules::REFERENCE))),
-                previous.sound
-            );
-            assert_eq!(carried, State::from(vector.before));
-            let sound = carried.health_opportunity(&vector.rules.unwrap_or(Rules::REFERENCE));
-            assert_eq!(Some(sound), vector.sound);
-            assert_eq!(
-                carried,
-                State::from(vector.after.ok_or("missing continuation after")?)
+                verify_opportunity(vector, carried)?,
+                verify_opportunity(vector, fresh)?
             );
         }
     }
@@ -201,6 +335,9 @@ fn integration_admission_metadata_is_not_model_coverage() -> TestResult {
         assert!(vector.sound.is_none());
         assert!(vector.rules.is_none());
         assert!(vector.continues.is_none());
+        assert!(vector.inputs.tail_impacts.is_none());
+        assert!(vector.before_maintenance_whole.is_none());
+        assert!(vector.drawing.is_none());
         assert_eq!(vector.source, Source::Constructed);
         // Only validate evidence shape. No qualification implementation, operation
         // call, successful no-op claim or behavior credit is made here.
@@ -216,6 +353,7 @@ fn independent_state(whole: u16, fraction: u16, warning: Warning) -> Result<Stat
         },
         pending_loss: EnergyLoss::ZERO,
         warning,
+        protection: ProtectionFrames::ZERO,
     })
 }
 
@@ -276,6 +414,7 @@ fn excess_fractional_loss_clears_nonzero_starting_fraction() {
             fraction: 2,
         },
         warning: Warning::Off,
+        protection: ProtectionFrames::TAIL_GRANT,
     };
 
     // This public operation receives an already qualified Running/NeitherSuit
@@ -293,6 +432,7 @@ fn excess_fractional_loss_clears_nonzero_starting_fraction() {
                 fraction: 0,
             },
             warning: Warning::On,
+            protection: ProtectionFrames::TAIL_GRANT,
         }
     );
     assert_eq!(sound, WarningSound::Start);
@@ -310,6 +450,16 @@ fn catalogue_metadata_and_checked_ranges() -> TestResult {
         (warning.kind, warning.switch, warning.checked),
         (Kind::Output, Switch::Parameter, Checked::ByVectors)
     );
+    let tail = behaviour(BehaviourId::TailHit);
+    assert_eq!(
+        (tail.kind, tail.switch, tail.checked),
+        (Kind::Mechanic, Switch::Fixed, Checked::ByVectors)
+    );
+    let timing = behaviour(BehaviourId::ProtectionTime);
+    assert_eq!(
+        (timing.kind, timing.switch, timing.checked),
+        (Kind::Timing, Switch::Fixed, Checked::ByVectors)
+    );
     assert_eq!(Rules::REFERENCE.warning_threshold.get(), 30);
     assert!(WholeEnergy::new(32768).is_none());
     assert!(toml::from_str::<Rules>("warning_threshold = 32768").is_err());
@@ -317,5 +467,10 @@ fn catalogue_metadata_and_checked_ranges() -> TestResult {
     let state = independent_state(32767, 65535, Warning::On)?;
     let text = toml::to_string(&state)?;
     assert!(toml::from_str::<State>(&text.replace("32767", "32768")).is_err());
+    assert!(ProtectionFrames::new(96).is_some());
+    assert!(ProtectionFrames::new(97).is_none());
+    assert!(toml::from_str::<State>(&text.replace("protection = 0", "protection = 97")).is_err());
+    assert!(toml::from_str::<State>(&text.replace("protection = 0", "protection = -1")).is_err());
+    assert!(toml::from_str::<State>(&text.replace("protection = 0", "")).is_err());
     Ok(())
 }

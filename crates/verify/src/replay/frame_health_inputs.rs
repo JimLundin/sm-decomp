@@ -142,6 +142,7 @@ pub fn origin(bytes: &[u8], text: &str) -> Result<Admission, Fault> {
             energy,
             pending_loss,
             warning,
+            protection: samus_health::ProtectionFrames::ZERO,
         }),
         context: Context {
             time: Time::Running,

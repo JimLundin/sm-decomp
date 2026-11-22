@@ -16,6 +16,7 @@ pub mod connected;
 mod content;
 mod entries;
 pub mod frame;
+pub mod health_tail;
 mod immutable;
 mod movement;
 mod movement_ceres;
@@ -44,6 +45,8 @@ pub enum Scope {
     Connected,
     /// Retained CPU frame or its admitted bounded opening.
     Frame,
+    /// Scoped Health and its late Drawing and HUD consumers.
+    HealthTail,
     /// Movement and semantic pose.
     Movement,
     /// Ordinary Movement carried through Contact and touchdown graphics.
@@ -85,6 +88,8 @@ pub enum ProductionSeed {
     Frame(Box<frame::State>),
     /// Bounded Frame acknowledgment and Music owner.
     FrameOpening(Box<frame::opening_prelude::Opening>),
+    /// Complete current Health, Drawing history and gauge from a single origin.
+    HealthTail(Box<health_tail::State>),
     /// Full movement memory.
     Movement(samus_movement::Samus),
     /// Movement, preceding Figure and the current Contact queue.
@@ -119,6 +124,8 @@ pub enum ProductionSeed {
 
 /// Independent stimuli for one selected entry.
 pub enum AdvanceInput<'a> {
+    /// One admitted scoped Health opportunity or current owner read.
+    HealthTail(&'a [health_tail::Input]),
     /// Independently admitted unselected stimuli for one connected ordinary opportunity.
     Connected {
         /// Complete current inputs; selected feedback is derived internally.
@@ -219,6 +226,8 @@ pub enum AdvanceInput<'a> {
 /// Fresh complete outputs from the selected entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProductionOutputs {
+    /// A live scoped Health or consumer publication.
+    HealthTail(Vec<health_tail::Output>),
     /// Complete new selected outputs and actual semantic progress.
     Connected(Box<connected::Outputs>),
     /// Actual frame progress and ordered fresh physical outputs.
@@ -272,6 +281,10 @@ pub enum AdmissionFault {
     ConflictingPose(types::Pose),
     /// Carried touchdown Figure belongs to another movement pose.
     MovementTouchdownFigure,
+    /// Carried scoped Health belongs to a different authenticated origin.
+    HealthTailOrigin,
+    /// The scoped Health phase disagrees with the retained HUD work.
+    HealthTailPhase,
     /// Audio content has no complete two-track arrangement.
     AudioTracks,
     /// The resident session violates an audio admission invariant.
@@ -305,6 +318,8 @@ impl From<frame::Fault> for AdmissionFault {
 pub enum Unsupported {
     /// A required relation in the scoped ordinary shot continuation is unavailable.
     ShotOpportunity,
+    /// The scoped actor, Maintenance or late consumer opportunity is unavailable.
+    HealthTailOpportunity,
     /// A produced Appearance request has no selected receiver mapping.
     AppearanceSound(samus_appearance::PublishedSound),
     /// A current causal frame prerequisite has no admitted owner.
@@ -422,6 +437,7 @@ impl Production {
     ) -> Result<Self, AdmissionFault> {
         validate_pins(match &seed {
             ProductionSeed::Connected(_) => Scope::Connected,
+            ProductionSeed::HealthTail(_) => Scope::HealthTail,
             ProductionSeed::Frame(_) | ProductionSeed::FrameOpening(_) => Scope::Frame,
             ProductionSeed::Movement(_) => Scope::Movement,
             ProductionSeed::MovementTouchdown(_) => Scope::MovementTouchdown,
@@ -531,6 +547,7 @@ impl Production {
     pub const fn scope(&self) -> Scope {
         match self.state {
             OwnedState::Connected(_) => Scope::Connected,
+            OwnedState::HealthTail(_) => Scope::HealthTail,
             OwnedState::Frame(_) | OwnedState::FrameOpening(_) => Scope::Frame,
             OwnedState::Movement(_) => Scope::Movement,
             OwnedState::MovementTouchdown(_) => Scope::MovementTouchdown,
@@ -694,6 +711,7 @@ impl Production {
             OwnedState::ResidentAudio(state) => Some(state.transport()),
             OwnedState::Connected(_)
             | OwnedState::Frame(_)
+            | OwnedState::HealthTail(_)
             | OwnedState::FrameOpening(_)
             | OwnedState::Movement(_)
             | OwnedState::MovementTouchdown(_)
@@ -721,6 +739,7 @@ impl Production {
             OwnedState::Connected(state) => CodecState::Connected(state.clone()),
             OwnedState::Frame(state) => CodecState::Frame(state.clone()),
             OwnedState::FrameOpening(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::HealthTail(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
@@ -833,6 +852,10 @@ impl Production {
             let checkpoint: Checkpoint<Box<movement_touchdown::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::MovementTouchdown(checkpoint.state)
+        } else if matches!(&content, ProductionContent::HealthTail(_)) {
+            let checkpoint: Checkpoint<Box<health_tail::State>> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            ProductionSeed::HealthTail(checkpoint.state)
         } else if matches!(&content, ProductionContent::FrameOpening(_)) {
             let checkpoint: Checkpoint<Box<frame::opening_prelude::Opening>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -873,6 +896,9 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
                 .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
         }
         Scope::Frame => frame::validate_pins(),
+        Scope::HealthTail => canonical::model::pin_holds::<frame::health::HealthPin>()
+            .and_then(|()| canonical::model::pin_holds::<frame::hud::HudPin>())
+            .and_then(|()| canonical::model::pin_holds::<frame::hud::WorkPin>()),
         Scope::Movement | Scope::MovementCeres => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
         }

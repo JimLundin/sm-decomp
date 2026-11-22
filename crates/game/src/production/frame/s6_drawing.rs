@@ -122,13 +122,13 @@ impl State {
         };
         let origins = self.drawing_origins.as_ref().ok_or_else(missing)?;
         let energy = self.maintenance.energy().ok_or_else(missing)?;
-        let health = self.health.as_ref().ok_or_else(missing)?;
+        let health = self.health.as_ref().ok_or_else(missing)?.state();
         let builder = &prepared.builder.as_ref().ok_or_else(missing)?.terminal;
         let pose = completed.0.pose_input.as_ref().ok_or_else(missing)?;
         let actors = remaining.0.actors.as_ref().ok_or_else(missing)?;
         let camera = self.s6_camera.following().ok_or_else(missing)?;
         let appeared = &self.appearance;
-        if energy != health.state().energy.whole.get()
+        if energy != health.energy.whole.get()
             || energy == 0
             || origins.scene.debug
             || origins.invincibility.0 != actors.dependency.contact.samus_invincibility
@@ -151,6 +151,7 @@ impl State {
             origins,
             builder,
             energy,
+            health,
             completed: drawing_owners::Completed {
                 membership: prepared.actors.as_ref().ok_or_else(missing)?,
                 projectiles: remaining.0.projectiles.as_ref().ok_or_else(missing)?,
@@ -272,7 +273,7 @@ impl State {
                     return Err(missing());
                 }
                 if let Some(mut history) = self.frame_history.clone() {
-                    if !history.complete_drawing(self, inputs.energy) {
+                    if !history.complete_drawing(self, inputs.health) {
                         return Err(missing());
                     }
                     self.frame_history = Some(history);
@@ -294,5 +295,6 @@ struct DrawingInputs<'a> {
     origins: &'a drawing_owners::Origins,
     builder: &'a super::borrowed::SpriteBuilderOrigin,
     energy: u16,
+    health: &'a samus_health::State,
     completed: drawing_owners::Completed<'a>,
 }
