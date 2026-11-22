@@ -91,6 +91,17 @@ impl Stage {
         )
     }
 
+    pub(super) fn applied_ordinary(&self) -> Option<&Hud> {
+        let Self::Active {
+            phase: hud_camera_caller::Refresh::Complete,
+            context,
+        } = self
+        else {
+            return None;
+        };
+        context.produced.as_ref()
+    }
+
     pub(super) fn holds(&self, state: &State) -> bool {
         let active: Vec<_> = state
             .timing
@@ -316,9 +327,10 @@ impl State {
             self.validate_hud_map(content, rules)
                 .map_err(|_| super::Fault::InvalidPlayerEntry)?;
         }
-        self.validate_late_status_work(content)
+        self.validate_drawing_health_checkpoint(content)?;
+        self.validate_late_status_checkpoint(content, rules)
             .map_err(|_| super::Fault::InvalidPlayerEntry)?;
-        self.validate_completed_late_hud_queue(content)
+        self.validate_late_hud_publication(content, rules)
             .map_err(|_| super::Fault::InvalidPlayerEntry)?;
         Ok(())
     }

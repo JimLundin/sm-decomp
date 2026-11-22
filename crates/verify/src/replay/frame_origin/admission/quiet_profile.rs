@@ -31,7 +31,36 @@ pub(super) fn decode(
     if file.format != 1 {
         return Err(ProfileFault::Format);
     }
-    admit(profile, name, expected, false)
+    admit(profile, name, expected, Effects::None)
+}
+
+pub(super) struct HealthHud {
+    pub(super) drawing: Template,
+    pub(super) status: Template,
+}
+
+pub(super) fn health_hud(text: &str) -> Result<HealthHud, ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [_, _, _, _, _, drawing, _, status] = file.profile.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    Ok(HealthHud {
+        drawing: admit(
+            drawing,
+            "SinglePendingLossDrawing",
+            [5382, 34398],
+            Effects::None,
+        )?,
+        status: admit(
+            status,
+            "SinglePendingLossLateStatus",
+            [430, 2786],
+            Effects::Divide,
+        )?,
+    })
 }
 
 pub(super) fn named(text: &str, name: &str, expected: [u64; 2]) -> Result<Template, ProfileFault> {
@@ -44,7 +73,7 @@ pub(super) fn named(text: &str, name: &str, expected: [u64; 2]) -> Result<Templa
     if profiles.next().is_some() {
         return Err(ProfileFault::Format);
     }
-    admit(profile, name, expected, false)
+    admit(profile, name, expected, Effects::None)
 }
 
 pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
@@ -56,8 +85,8 @@ pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
         return Err(ProfileFault::Format);
     }
     Ok([
-        admit(down, "OddTwoColumnDown", [815, 5340], true)?,
-        admit(contact, "QuietFootContact", [29, 188], false)?,
+        admit(down, "OddTwoColumnDown", [815, 5340], Effects::Multiply)?,
+        admit(contact, "QuietFootContact", [29, 188], Effects::None)?,
     ])
 }
 
@@ -69,7 +98,7 @@ pub(in crate::replay) fn current_random(text: &str) -> Result<Template, ProfileF
     if file.format != 1 {
         return Err(ProfileFault::Format);
     }
-    admit(profile, "Random", [97, 614], true)
+    admit(profile, "Random", [97, 614], Effects::Multiply)
 }
 
 /// Admit effect-free local prelude exposures at their existing owner boundaries.
@@ -87,8 +116,8 @@ pub(super) fn acknowledgment_and_music(text: &str) -> Result<[Template; 2], Prof
         return Err(ProfileFault::Format);
     }
     Ok([
-        admit(acknowledgment, "Acknowledgment", [36, 232], false)?,
-        admit(music, "Music", [70, 466], false)?,
+        admit(acknowledgment, "Acknowledgment", [36, 232], Effects::None)?,
+        admit(music, "Music", [70, 466], Effects::None)?,
     ])
 }
 
@@ -106,9 +135,9 @@ pub(in crate::replay) fn steady(text: &str) -> Result<[Template; 3], ProfileFaul
         return Err(ProfileFault::Format);
     }
     Ok([
-        admit(retain, "HazeRetain", [150, 988], false)?,
-        admit(finish, "HazeFinish", [231, 1480], false)?,
-        admit(layers, "LayerBlend", [140, 908], false)?,
+        admit(retain, "HazeRetain", [150, 988], Effects::None)?,
+        admit(finish, "HazeFinish", [231, 1480], Effects::None)?,
+        admit(layers, "LayerBlend", [140, 908], Effects::None)?,
     ])
 }
 
@@ -151,7 +180,7 @@ pub(super) fn contact_retry(
     if sample >= publication {
         return Err(ProfileFault::Binding);
     }
-    let mut whole = admit(&profile, "AdjacentContactRetry", [26, 162], false)?;
+    let mut whole = admit(&profile, "AdjacentContactRetry", [26, 162], Effects::None)?;
     whole
         .runs
         .get_mut(publication)
@@ -163,11 +192,18 @@ pub(super) fn contact_retry(
     Ok([whole, Template { runs: remainder }])
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Effects {
+    None,
+    Multiply,
+    Divide,
+}
+
 fn admit(
     profile: &Profile,
     name: &str,
     expected: [u64; 2],
-    math: bool,
+    effects: Effects,
 ) -> Result<Template, ProfileFault> {
     if profile.name != name || [profile.exposures, profile.intrinsic_ticks] != expected {
         return Err(ProfileFault::Profile);
@@ -178,14 +214,33 @@ fn admit(
     for run in &profile.run {
         let effect = match (run.device.as_str(), run.event_phase.as_str()) {
             ("", "") => TemplateEffect::None,
-            ("Multiplicand", "publication") if math => {
+            ("Multiplicand", "publication") if effects == Effects::Multiply => {
                 TemplateEffect::Publish(data::timing::MULTIPLICAND_PORT)
             }
-            ("Multiplier", "publication") if math => {
+            ("Multiplier", "publication") if effects == Effects::Multiply => {
                 TemplateEffect::Publish(data::timing::MULTIPLIER_PORT)
             }
-            ("ProductLow", "sample") if math => TemplateEffect::Sample(Sample::ProductLow),
-            ("ProductHigh", "sample") if math => TemplateEffect::Sample(Sample::ProductHigh),
+            ("DividendLow", "publication") if effects == Effects::Divide => {
+                TemplateEffect::Publish(data::timing::DIVIDEND_LOW_PORT)
+            }
+            ("DividendHigh", "publication") if effects == Effects::Divide => {
+                TemplateEffect::Publish(data::timing::DIVIDEND_HIGH_PORT)
+            }
+            ("Divisor", "publication") if effects == Effects::Divide => {
+                TemplateEffect::Publish(data::timing::DIVISOR_PORT)
+            }
+            ("QuotientLow", "sample") if effects == Effects::Divide => {
+                TemplateEffect::Sample(Sample::QuotientLow)
+            }
+            ("QuotientHigh", "sample") if effects == Effects::Divide => {
+                TemplateEffect::Sample(Sample::QuotientHigh)
+            }
+            ("ProductLow", "sample") if effects != Effects::None => {
+                TemplateEffect::Sample(Sample::ProductLow)
+            }
+            ("ProductHigh", "sample") if effects != Effects::None => {
+                TemplateEffect::Sample(Sample::ProductHigh)
+            }
             _ => return Err(ProfileFault::Binding),
         };
         let (cycle, kind) = cycle(run)?;

@@ -92,6 +92,15 @@ Some clean States lack complete serialization; their live entry remains usable w
 restore reports unavailable codec support. No partial observed-field checkpoint is a complete
 continuation claim.
 
+## The engine: retained Drawing after a decrease in Health
+
+The retained ordinary frame compares current whole Health with the prior Drawing
+history and replaces that history with a second live read. The decreased-energy
+physical envelope reaches a hurt-flash store in the native capture. No subsequent
+reader or OAM or colour change consumes that store before the requested NMI
+return. The flash state and its later readers remain outside the production
+scope, so continuing from this changed Drawing return reports Unsupported.
+
 ## The engine: checked ordinary power beam
 
 The selected weapons/contact recipe holds full clean shot, trail and spacing State, advances

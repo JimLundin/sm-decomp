@@ -337,8 +337,8 @@ field = "frame.outputs[224].value"
 name = "frame-health-whole-as-fraction"
 responsibility = "health"
 file = "crates/game/src/production/frame/maintenance.rs"
-before = '''let warning = after.health_opportunity(&samus_health::Rules::REFERENCE);'''
-after = '''let warning = after.health_opportunity(&samus_health::Rules::REFERENCE);
+before = '''let after = maintained_health(before).ok_or_else(missing)?;'''
+after = '''let mut after = maintained_health(before).ok_or_else(missing)?;
         after.energy.fraction = after.energy.whole.get();'''
 case = "frame/ordinary-requested-nmi-return"
 cut = 1
@@ -605,3 +605,44 @@ after = '''        Ok(if repeats {
 case = "frame/adjacent-held-return"
 cut = 2
 field = "frame.time"
+
+[[fault]]
+name = "frame-hud-stale-map-position"
+responsibility = "hud"
+file = "crates/game/src/production/frame/hud_camera_caller.rs"
+before = """let inputs = current
+                .premises
+                .inputs(current.status, current.position, current.action);"""
+after = """let stale = movement.decisions().iter().find_map(|decision| {
+                if let samus_movement::suspended::MovementDecision::Local { before, .. } = decision {
+                    Some(types::Pair { x: before.position.x.pixel().0, y: before.position.y.pixel().0 })
+                } else {
+                    None
+                }
+            }).ok_or(Fault::Producers)?;
+            let inputs = current
+                .premises
+                .inputs(current.status, stale, current.action);"""
+case = "frame/health-hud-stock"
+cut = 1
+field = "frame.health_hud.map.position"
+
+[[fault]]
+name = "frame-hud-stale-status-energy"
+responsibility = "hud"
+file = "crates/game/src/production/frame/late_hud.rs"
+before = "status.energy.now = self.maintenance.energy().ok_or_else(missing)?;"
+after = "status.energy.now = self.hud.state().shown.energy;"
+case = "frame/health-hud-pending-loss"
+cut = 1
+field = "frame.health_hud.status.read"
+
+[[fault]]
+name = "frame-hud-omitted-tilemap-publication"
+responsibility = "hud"
+file = "crates/game/src/production/frame/late_hud.rs"
+before = "self.content.refresh_hud(output).map_err(|_| missing())?;"
+after = "drop(output);"
+case = "frame/health-hud-pending-loss"
+cut = 1
+field = "frame.health_hud.queue.tilemap"

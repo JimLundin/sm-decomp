@@ -235,9 +235,7 @@ impl ActualReader {
                 ProductionOutputs::AudioSender(outputs),
             ) if outputs.is_empty() => super::sender_offer::actual(production),
             (Self::Frame(actual), InputReader::Frame(_), ProductionOutputs::Frame(outputs)) => {
-                actual
-                    .accept(production, &outputs, cut)
-                    .inspect_err(|_| held.retain_events(outputs.events))
+                actual.accept_with_phases(production, outputs, cut, held)
             }
             (
                 Self::FrameSteady { publications },

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "eaf9c690a21279788da3507c945d9679ca05f08f1033b4b60c466bdaa558731f"
+index_sha256 = "e94e4ade573a7e54231f4065fcee54a84962c13b705723b7cf0afd18cd36861a"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1171,5 +1171,41 @@ replies = 0
 null_cuts = 0
 null_fields = 18
 restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/health-hud-stock"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "43f07702a727ba33c5cd697c8b16d6c634b21d31e82e5fa933bac43c2dfd8549"
+
+[case.counts]
+cuts = 1
+fields = 33
+outputs = 2295
+publications = 2295
+replies = 0
+null_cuts = 0
+null_fields = 22
+restorations = 9
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/health-hud-pending-loss"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "55b2361ff23bc69e321ff15f897f0136a7d0ea5e311de357eef94166f4d81b10"
+
+[case.counts]
+cuts = 1
+fields = 33
+outputs = 2304
+publications = 2304
+replies = 0
+null_cuts = 0
+null_fields = 15
+restorations = 9
 pending_boundaries = 0
 pending_restorations = 0

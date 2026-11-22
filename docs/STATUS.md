@@ -473,3 +473,25 @@ controller tail, then checks the completed controller words and canonical State.
 [retained fixture installer](../tools/ci/fetch_retained_frame.sh) fetches the input contracts.
 The complete callback streams and endpoint observations come from the independent adjacent
 native fixture.
+
+## Health and HUD through the retained ordinary return
+
+Install the [Health and HUD fixture](../tools/ci/fetch_connected_health.sh) alongside the
+retained frame. The stock and pending-loss cases start with one common admitted state at
+native cut 9232. The second arm changes only the initial pending whole loss. The expected
+phase snapshots and return streams are opened by the comparison reader after production
+advances.
+
+The early Map uses the current Movement position and publishes exploration and map cells
+while preserving every gauge word. Animation reads live Health before Maintenance. The
+first Drawing comparison uses returned whole Health and the existing history. Its return
+commits a fresh Health read. Late Status updates the carried HUD and publishes one current
+CPU transfer buffer. The queue descriptor, all 192 CPU tilemap bytes and all 192 native
+VRAM payload bytes are compared. The stock and changed paths also compare the complete
+timed publication stream through the native return and restore on both sides of the
+changing producer phases.
+
+The decreased-energy arm qualifies its reached Drawing exposure without a later
+hurt-flash consumer in the same interval. The engine requires a later flash owner before
+continuing from that returned state. The [Ceres tail witness](#scoped-ceres-tail-contact)
+continues to cover its separate damage, fractional loss, warning and protection evidence.

@@ -230,6 +230,7 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/frame/hud.rs" },
   { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
 ]
 
 [[rule]]
@@ -269,6 +270,7 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/frame/maintenance.rs" },
   { role = "adapter", path = "crates/game/src/production/health_tail.rs" },
   { role = "navigation", path = "crates/clean/samus_health/src/catalogue.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
 ]
 
 [[rule]]
@@ -588,6 +590,8 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
   { role = "adapter", path = "crates/game/src/production/health_tail.rs" },
   { role = "navigation", path = "crates/verify/src/replay/health_tail/observations.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/late_hud/gauge.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
 ]
 
 [[rule]]
@@ -604,4 +608,20 @@ targets = [
   { role = "model", path = "crates/clean/world_doors/src/step.rs" },
   { role = "adapter", path = "crates/game/src/production/passage_audio.rs" },
   { role = "navigation", path = "docs/behaviours/world-doors.md" },
+]
+
+[[rule]]
+id = "interface-hud/MiniMapUpdate"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/hud_map_caller.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
+]
+
+[[rule]]
+id = "interface-hud/StatusRefresh"
+targets = [
+  { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
 ]

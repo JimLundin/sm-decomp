@@ -390,6 +390,26 @@ impl super::State {
         content: &super::Content,
     ) -> Result<(), super::Fault> {
         use super::Fault::InvalidPlayerEntry;
+        if self.publications.original_interval() {
+            let (Some(owner), Some(admission)) = (&self.health, &content.health) else {
+                return if self.health.is_none() && content.health.is_none() {
+                    Ok(())
+                } else {
+                    Err(InvalidPlayerEntry)
+                };
+            };
+            owner
+                .validate_origin(admission)
+                .map_err(|_| InvalidPlayerEntry)?;
+            if !self.maintenance.holds(self)
+                || !self.maintenance.first_origin_holds(&admission.initial)
+                || (!owner.maintained
+                    && !matches!(self.return_progress, super::frame_return::Stage::Pending))
+            {
+                return Err(InvalidPlayerEntry);
+            }
+            return Ok(());
+        }
         let Some(neighbours) = content.adjacent_health_context else {
             return Ok(());
         };
@@ -398,34 +418,19 @@ impl super::State {
         if neighbours != admission.context || owner.context != neighbours {
             return Err(InvalidPlayerEntry);
         }
-        if self.publications.original_interval() {
-            owner
-                .validate_origin(admission)
-                .map_err(|_| InvalidPlayerEntry)?;
-            if !owner.maintained {
-                return match self.return_progress {
-                    super::frame_return::Stage::Pending => Ok(()),
-                    super::frame_return::Stage::Finalizing(_)
-                    | super::frame_return::Stage::Ready { .. } => Err(InvalidPlayerEntry),
-                };
-            }
-        } else {
-            let (gameplay, _) = self
-                .gameplay_publications()
-                .map_err(|_| InvalidPlayerEntry)?;
-            self.validate_health_preservation(content, gameplay)
-                .map_err(|_| InvalidPlayerEntry)?;
-            if owner.freshness != Freshness::Retired || !self.adjacent_health_history_holds() {
-                return Err(InvalidPlayerEntry);
-            }
+        let (gameplay, _) = self
+            .gameplay_publications()
+            .map_err(|_| InvalidPlayerEntry)?;
+        self.validate_health_preservation(content, gameplay)
+            .map_err(|_| InvalidPlayerEntry)?;
+        if owner.freshness != Freshness::Retired || !self.adjacent_health_history_holds() {
+            return Err(InvalidPlayerEntry);
         }
-        // Validate the saved result of the first Maintenance on a private copy.
-        // The live owner is advanced only by the scheduled Maintenance return.
+        // Check the retained quiet service without advancing the live Health owner.
         let mut maintained = admission.initial.0;
         if maintained.health_opportunity(&samus_health::Rules::REFERENCE)
             != samus_health::WarningSound::None
-            || (!self.publications.original_interval()
-                && owner.maintained
+            || (owner.maintained
                 && maintained.health_opportunity(&samus_health::Rules::REFERENCE)
                     != samus_health::WarningSound::None)
             || owner.state() != &maintained

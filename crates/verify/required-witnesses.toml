@@ -44,6 +44,8 @@ retained_frame = [
     "replay::frame_origin::health_owner_tests::actual_native_completed_animation_binds_historical_health",
     "replay::frame_origin::late_hud_tests::actual_status_in_flight_restores_one_hud_upload_through_native_return",
     "replay::frame_origin::late_hud_tests::completed_hud_queue_rejects_a_changed_destination_at_checkpoint_admission",
+    "replay::frame_origin::late_hud_tests::changed_status_restores_its_live_samples_and_rejects_contradictory_history",
+    "replay::frame_origin::late_hud_tests::authentic_stock_health_and_drawing_cannot_replace_the_changed_arm",
     "replay::frame_origin::cannon_tests::unready_cannon_rejects_the_ready_drawing_profile",
     "replay::frame_origin::pad_ingress_tests::actual_frame_samples_host_changes_through_the_physical_latch_after_restore",
     "replay::frame_origin::adjacent_tests::contiguous_native_returns_keep_independent_observations_and_inputs",

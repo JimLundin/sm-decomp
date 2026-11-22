@@ -268,6 +268,22 @@ impl TransferContent {
         Ok(())
     }
 
+    fn refresh_hud(&mut self, output: Materialization) -> Result<(), ContentFault> {
+        let held = self
+            .buffers
+            .iter_mut()
+            .find(|held| held.ready && held.materialization.buffer == Buffer::HudTilemap)
+            .ok_or(ContentFault::RetainedBacking(Buffer::HudTilemap))?;
+        if output.buffer != Buffer::HudTilemap
+            || output.region.start != held.materialization.region.start
+            || output.region.bytes.len() != held.materialization.region.bytes.len()
+        {
+            return Err(ContentFault::RetainedBacking(Buffer::HudTilemap));
+        }
+        held.materialization = output;
+        Ok(())
+    }
+
     fn ready_buffer(&self, buffer: Buffer) -> Option<&Materialization> {
         self.buffers
             .iter()

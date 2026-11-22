@@ -114,8 +114,8 @@ pub(super) fn prepare(
     first_cut: u64,
     next_pad: PadChange,
 ) -> Result<Prepared, Outcome> {
-    let first_return = Return::first(manifest, first_cut);
-    let mut expected = BTreeMap::from([(first_cut, first_return.expected()?)]);
+    let (first_return, health_hud) = first_return(case, sources, manifest, first_cut)?;
+    let mut expected = BTreeMap::from([(first_cut, first_return)]);
     let (
         pad_origin,
         pads,
@@ -201,6 +201,7 @@ pub(super) fn prepare(
             returns: expected,
             random,
             adjacent_animation: None,
+            health_hud,
         },
         schedule,
         pads,
@@ -212,6 +213,37 @@ pub(super) fn prepare(
         adjacent_hud_map,
         adjacent_countdown_scene,
     })
+}
+
+fn first_return(
+    case: &Case,
+    sources: &Sources,
+    manifest: &Manifest,
+    first_cut: u64,
+) -> Result<(frame::Return, Option<frame::health_hud::Source>), Outcome> {
+    let mut first_return = Return::first(manifest, first_cut).expected()?;
+    let health_hud = case
+        .expectations
+        .native_health_hud
+        .as_ref()
+        .map(|source| {
+            let pin = |value: &str| {
+                crate::lock::Sha256::try_from(value)
+                    .map_err(|_| data_failure(None, "native Health and HUD observation pin"))
+            };
+            first_return.callbacks = sources.native.join(&source.callbacks.path);
+            first_return.callbacks_sha256 = pin(&source.callbacks.sha256)?;
+            first_return.final_owners = Some((
+                sources.native.join(&source.final_owners.path),
+                pin(&source.final_owners.sha256)?,
+            ));
+            Ok(frame::health_hud::Source {
+                path: sources.native.join(&source.phases.path),
+                sha256: pin(&source.phases.sha256)?,
+            })
+        })
+        .transpose()?;
+    Ok((first_return, health_hud))
 }
 
 fn validate_adjacent_countdown_scope(case: &Case, present: bool) -> Result<(), Outcome> {

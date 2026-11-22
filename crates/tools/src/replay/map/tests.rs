@@ -102,14 +102,24 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
             "frame/adjacent-held-trial",
             "frame/adjacent-actual-return",
             "frame/adjacent-held-return",
+            "frame/health-hud-stock",
+            "frame/health-hud-pending-loss",
         ]
     );
     assert_eq!(
         report
             .iter()
             .filter(|view| view.reviewed_requirement.expected == Outcome::Pass)
-            .count(),
-        4
+            .map(|view| view.declaration.id.0.as_str())
+            .collect::<Vec<_>>(),
+        [
+            "movement/D-inherited-cut",
+            "frame/ordinary-requested-nmi-return",
+            "frame/adjacent-actual-return",
+            "frame/adjacent-held-return",
+            "frame/health-hud-stock",
+            "frame/health-hud-pending-loss",
+        ]
     );
     assert_eq!(
         report
@@ -118,8 +128,14 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
                 view.reviewed_requirement.expected,
                 Outcome::Unsupported { .. }
             ))
-            .count(),
-        4
+            .map(|view| view.declaration.id.0.as_str())
+            .collect::<Vec<_>>(),
+        [
+            "integrated/missing-dependency-closure",
+            "movie/missing-power-on",
+            "frame/adjacent-actual-trial",
+            "frame/adjacent-held-trial",
+        ]
     );
     for case in by_file {
         let by_case = mapping

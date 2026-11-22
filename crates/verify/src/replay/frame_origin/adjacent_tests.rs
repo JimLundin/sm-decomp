@@ -368,6 +368,7 @@ fn compare_continuation(
     );
     let split = InputReader::Frame(Inputs {
         budget: MasterTicks(13),
+        observe_health_hud: false,
     });
     let resumed = runner::execute(
         case,

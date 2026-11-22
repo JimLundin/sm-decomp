@@ -12,7 +12,7 @@ pub(super) fn admitted() -> AdmittedCase {
     admit(&case, &sources).unwrap()
 }
 
-fn complete_frame_case() -> Case {
+fn complete_frame_case(id: &str) -> Case {
     if let Some(path) = std::env::var_os("SM_FRAME_DIAGNOSTIC_CASE") {
         return toml::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     }
@@ -20,12 +20,16 @@ fn complete_frame_case() -> Case {
         .unwrap()
         .cases
         .into_iter()
-        .find(|case| case.id.0 == "frame/ordinary-requested-nmi-return")
+        .find(|case| case.id.0 == id)
         .unwrap()
 }
 
 pub(super) fn retained_return() -> (Case, AdmittedCase) {
-    let case = complete_frame_case();
+    retained_frame_case("frame/ordinary-requested-nmi-return")
+}
+
+pub(super) fn retained_frame_case(id: &str) -> (Case, AdmittedCase) {
+    let case = complete_frame_case(id);
     case.validate().unwrap();
     let sources = Sources {
         rom: std::env::var_os("SM_ROM").unwrap().into(),

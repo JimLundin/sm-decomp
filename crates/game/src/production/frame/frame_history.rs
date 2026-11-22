@@ -16,7 +16,7 @@ pub(super) const fn newly_pressed(held: u16, previous: u16) -> u16 {
 }
 
 /// Drawing's signed comparison of current and previously drawn energy.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EnergyChange {
     /// Current whole energy is lower at the Drawing read.
     Decreased,
@@ -27,7 +27,7 @@ pub enum EnergyChange {
 }
 
 /// Current whole Health energy and the Drawing history compared with it.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EnergyRead {
     /// Current whole energy read from Health.
     pub current: u16,
@@ -138,13 +138,11 @@ impl History {
         let Some(pose) = completed.0.pose_input.as_ref() else {
             return false;
         };
-        let energy = EnergyRead::compare(health, self.previous_health);
         if self.progress != Progress::Initial
             || self.held != pose.dependency.held.0
             || self.pressed != pose.dependency.pressed.0
             || self.jump != pose.dependency.bindings.jump.0
             || self.held & self.jump != 0
-            || energy.change == EnergyChange::Decreased
         {
             return false;
         }
@@ -220,6 +218,12 @@ impl History {
             Progress::Native => Some(self.controller()),
             Progress::Initial | Progress::Drawn | Progress::Finalized => None,
         }
+    }
+
+    /// Whole energy retained by the last completed Drawing.
+    #[must_use]
+    pub const fn previous_health(&self) -> u16 {
+        self.previous_health
     }
 
     /// The actual Drawing history is complete before any final history.

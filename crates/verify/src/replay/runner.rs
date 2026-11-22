@@ -178,7 +178,11 @@ pub(super) fn run(
         expected: &expectation,
     };
     let pending_start = inputs.pending_origin(case, &production);
-    let null = actual.initial(&production)?;
+    let mut null = actual.initial(&production)?;
+    if matches!(&inputs, InputReader::Frame(inputs) if inputs.observe_health_hud) {
+        null.extend(super::frame::health_hud::null(&production)?);
+    }
+    let phase_receiver = actual.clone();
     let mut checkpoints = Vec::new();
     let mut origin = origin_checkpoint(case, &inputs, &production, &actual)?;
     let mut digest = Vec::new();
@@ -209,13 +213,77 @@ pub(super) fn run(
             )?);
         }
     }
+    verify_checkpoints(
+        CheckpointProof {
+            reader: &reader,
+            content: &content,
+            rules: &rules,
+            production: &production,
+            actual: &actual,
+            schedule: &schedule,
+        },
+        held,
+        &phase_receiver,
+        checkpoints,
+        stop.as_ref(),
+        result,
+    )?;
+    if let Some((_, outcome)) = stop {
+        return Err(outcome);
+    }
+    record_pending(pending_start, &reader, &content, &rules, result)
+}
+
+#[derive(Clone, Copy)]
+struct CheckpointProof<'a> {
+    reader: &'a CutReader<'a>,
+    content: &'a ProductionContent,
+    rules: &'a ProductionRules,
+    production: &'a Production,
+    actual: &'a ActualReader,
+    schedule: &'a [u64],
+}
+
+fn verify_checkpoints(
+    proof: CheckpointProof<'_>,
+    mut held: HeldAdvance,
+    phase_receiver: &ActualReader,
+    checkpoints: Vec<CutCheckpoint>,
+    stop: Option<&(u64, Outcome)>,
+    result: &mut CaseResult,
+) -> Result<(), Outcome> {
+    let CheckpointProof {
+        reader,
+        content,
+        rules,
+        production,
+        actual,
+        schedule,
+    } = proof;
+    for phase in std::mem::take(&mut held.phase_checkpoints) {
+        let cut = phase.cut;
+        let failed = Outcome::CheckpointFailure { cut };
+        let mut receiver = Production::restore(&phase.save, content.clone(), rules.clone())
+            .map_err(|_| failed.clone())?;
+        let mut resumed_actual = phase_receiver.clone();
+        reader.execute(
+            &mut receiver,
+            &mut resumed_actual,
+            cut,
+            &mut phase.receiver(),
+        )?;
+        if &receiver != production || !resumed_actual.same_publication_prefix(actual) {
+            return Err(failed);
+        }
+        count(&mut result.counts.restorations, 1)?;
+    }
     for (start, saved, mut restored_actual) in checkpoints {
         let failed = Outcome::CheckpointFailure { cut: start };
         let mut restored = restore_cut(&saved, content.clone(), rules.clone(), failed.clone())?;
         let compared_suffix = schedule
             .iter()
             .filter(|cut| **cut > start)
-            .take_while(|cut| stop.as_ref().is_none_or(|(end, _)| *cut != end));
+            .take_while(|cut| stop.is_none_or(|(end, _)| *cut != end));
         for cut in compared_suffix {
             let resumed = reader.execute(
                 &mut restored,
@@ -229,7 +297,7 @@ pub(super) fn run(
                 resumed?;
             }
         }
-        if let Some((cut, direct_outcome)) = &stop {
+        if let Some((cut, direct_outcome)) = stop {
             let mut restored_held = HeldAdvance::default();
             let resumed = reader.execute(
                 &mut restored,
@@ -239,24 +307,21 @@ pub(super) fn run(
             );
             if resumed.as_ref().err() != Some(direct_outcome)
                 || restored_held != held
-                || restored != production
-                || !restored_actual.same_publication_prefix(&actual)
+                || &restored != production
+                || !restored_actual.same_publication_prefix(actual)
             {
                 return Err(failed);
             }
         }
         if restored.state() != production.state()
             || restored_actual.publication_count() != actual.publication_count()
-            || !touchdown_outputs_hold(&inputs, &restored_actual, &actual)
+            || !touchdown_outputs_hold(reader.inputs, &restored_actual, actual)
         {
             return Err(failed);
         }
         count(&mut result.counts.restorations, 1)?;
     }
-    if let Some((_, outcome)) = stop {
-        return Err(outcome);
-    }
-    record_pending(pending_start, &reader, &content, &rules, result)
+    Ok(())
 }
 
 type CutCheckpoint = (u64, SavedCut, ActualReader);

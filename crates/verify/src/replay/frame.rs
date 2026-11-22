@@ -9,6 +9,7 @@ use game::state::owned::OwnedState;
 
 pub(super) mod adjacent_animation;
 mod callbacks;
+pub(super) mod health_hud;
 pub(super) mod random;
 use crate::lock::Sha256;
 pub(super) use callbacks::{Datum, ProjectionFault, decode_callbacks, decode_endpoint, project};
@@ -22,6 +23,7 @@ pub(super) struct Expected {
     pub returns: BTreeMap<u64, Return>,
     pub(super) random: Option<random::Source>,
     pub(super) adjacent_animation: Option<adjacent_animation::Source>,
+    pub(super) health_hud: Option<health_hud::Source>,
 }
 
 /// Outputs and terminal owners from one independently captured return.
@@ -49,6 +51,13 @@ impl Expected {
             let observed = word("frame.random", source.read(cut)?.result);
             expected.fields.push(observed.clone());
             expected.semantics.push(observed);
+            expected.semantic_count = expected.semantics.len();
+        }
+        if let Some(source) = &self.health_hud {
+            let phases = source.read(cut)?;
+            // Keep the named producer field as the first divergence before the full stream.
+            expected.fields.splice(..0, phases.iter().cloned());
+            expected.semantics.extend(phases);
             expected.semantic_count = expected.semantics.len();
         }
         Ok(expected)
@@ -206,6 +215,7 @@ fn read_expected(path: &Path, pin: Sha256, cut: u64) -> Result<Vec<u8>, Outcome>
 /// Host pause granularity, independent of expected completion time or event counts.
 pub(super) struct Inputs {
     pub budget: MasterTicks,
+    pub(super) observe_health_hud: bool,
 }
 
 /// A frame stop's typed production fault and ordered events before the stop.
@@ -213,6 +223,27 @@ pub(super) struct Inputs {
 pub(super) struct HeldAdvance {
     fault: Option<ProductionFault>,
     events: Vec<timing::Event>,
+    health_hud: Option<health_hud::Trace>,
+    pub(super) phase_checkpoints: Vec<PhaseCheckpoint>,
+    resume_prefix: Option<Vec<timing::Event>>,
+}
+
+#[derive(PartialEq, Eq)]
+pub(super) struct PhaseCheckpoint {
+    pub(super) cut: u64,
+    pub(super) save: game::production::SavedProduction,
+    prefix: Vec<timing::Event>,
+    trace: health_hud::Trace,
+}
+
+impl PhaseCheckpoint {
+    pub(super) fn receiver(self) -> HeldAdvance {
+        HeldAdvance {
+            health_hud: Some(self.trace),
+            resume_prefix: Some(self.prefix),
+            ..HeldAdvance::default()
+        }
+    }
 }
 
 impl HeldAdvance {
@@ -222,6 +253,11 @@ impl HeldAdvance {
         production: &Production,
         cut: u64,
     ) -> Result<(), Outcome> {
+        if let super::readers::ExpectedReader::Frame(expected) = expected
+            && let (Some(trace), Some(source)) = (&self.health_hud, &expected.health_hud)
+        {
+            trace.compare_prefix(source, cut)?;
+        }
         if let (
             super::readers::ExpectedReader::Frame(expected),
             Some(ProductionFault::Unsupported(game::production::Unsupported::Frame(
@@ -250,7 +286,12 @@ impl Inputs {
         if self.budget.0 == 0 {
             return Err(data_failure(Some(cut), "positive frame host budget"));
         }
-        let mut events = Vec::new();
+        let resume = held.resume_prefix.take();
+        let save_phases = resume.is_none();
+        let mut events = resume.unwrap_or_default();
+        if self.observe_health_hud && held.health_hud.is_none() {
+            held.health_hud = Some(health_hud::Trace::default());
+        }
         loop {
             let outputs = production
                 .advance(AdvanceInput::Frame {
@@ -265,6 +306,20 @@ impl Inputs {
                 return Err(data_failure(Some(cut), "frame output scope"));
             };
             events.extend(outputs.events);
+            if let Some(trace) = &mut held.health_hud
+                && trace.observe(production, &events, cut)?
+                && save_phases
+            {
+                let save = production
+                    .save()
+                    .map_err(|_| Outcome::CheckpointFailure { cut })?;
+                held.phase_checkpoints.push(PhaseCheckpoint {
+                    cut,
+                    save,
+                    prefix: events.clone(),
+                    trace: trace.clone(),
+                });
+            }
             match outputs.progress {
                 frame::Progress::Advanced => {}
                 frame::Progress::Completed => {
@@ -307,6 +362,26 @@ impl Actual {
             canonical::to_bytes(&callbacks),
             Some(cut),
         ))
+    }
+
+    pub(super) fn accept_with_phases(
+        &mut self,
+        production: &Production,
+        outputs: frame::Outputs,
+        cut: u64,
+        held: &mut HeldAdvance,
+    ) -> Result<Vec<Observation>, Outcome> {
+        let mut fields = match self.accept(production, &outputs, cut) {
+            Ok(fields) => fields,
+            Err(fault) => {
+                held.retain_events(outputs.events);
+                return Err(fault);
+            }
+        };
+        if let Some(mut trace) = held.health_hud.take() {
+            fields.extend(trace.finish(production, &outputs.events, cut)?);
+        }
+        Ok(fields)
     }
 
     fn finish_interval(

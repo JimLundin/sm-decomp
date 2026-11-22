@@ -416,6 +416,9 @@ pub enum ObservationId {
     /// Complete ordered physical callback stream, including equal-time multiplicity.
     #[serde(rename = "frame.outputs")]
     FrameOutputs,
+    /// Independently observed early map, Animation, Maintenance, Drawing, late Status and DMA.
+    #[serde(rename = "frame.health_hud")]
+    FrameHealthHud,
     /// Whole hours carried by the play clock.
     #[serde(rename = "frame.play_time.hours")]
     PlayTimeHours,
@@ -688,13 +691,28 @@ pub struct Expectations {
     pub output_cut: Option<u64>,
     /// Independent Random draw observations, when the case compares them.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub native_random: Option<NativeRandomObservations>,
+    pub native_random: Option<NativeObservations>,
+    /// Independent native Health, Drawing and HUD phases and changed return observations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_health_hud: Option<NativeHealthHudObservations>,
 }
 
-/// Expected-only source for the native Random draws.
+/// Expected-only source for each selected retained Health and HUD interval.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct NativeRandomObservations {
+pub struct NativeHealthHudObservations {
+    /// Named native snapshots at the producer phases.
+    pub phases: NativeObservations,
+    /// Ordered physical callbacks for the selected restart from the shared origin.
+    pub callbacks: NativeObservations,
+    /// Final selected Health and play-time owners.
+    pub final_owners: NativeObservations,
+}
+
+/// Pinned expected-only file in the native fixture directory.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct NativeObservations {
     /// File under the replay native fixture directory.
     pub path: PathBuf,
     /// Exact expected observation file digest.
@@ -910,7 +928,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::LiveSoundAccepted
         | O::LiveSoundFifo => Responsibility::AudioSender,
         O::LiveSoundHold => Responsibility::Doors,
-        O::FrameTime | O::FrameOutputs => Responsibility::Frame,
+        O::FrameTime | O::FrameOutputs | O::FrameHealthHud => Responsibility::Frame,
         O::FrameSteady => Responsibility::WorldHaze,
         O::FrameRandom | O::FrameRandomSeed | O::FrameRandomDevice => Responsibility::GameRandom,
         O::PlayTimeHours | O::PlayTimeMinutes | O::PlayTimeSeconds | O::PlayTimeFrames => {
@@ -1664,10 +1682,13 @@ pub(super) const ROOM_QUAKE_RULE: &str = "world-quake/QuietQuakePhase";
 
 impl Case {
     fn native_frame_fields(&self) -> &[ObservationId] {
-        self.expectations
-            .fields
+        let fields = self.expectations.fields.as_slice();
+        let fields = fields
+            .strip_suffix(&[ObservationId::FrameHealthHud])
+            .unwrap_or(fields);
+        fields
             .strip_suffix(&[ObservationId::FrameRandom])
-            .unwrap_or(&self.expectations.fields)
+            .unwrap_or(fields)
     }
 
     pub(super) fn compares_final_frame_health(&self) -> bool {
@@ -1750,6 +1771,7 @@ fn scope_valid(case: &Case) -> bool {
         let haze = frame_owners.remove(&Responsibility::WorldHaze);
         let random = frame_owners.remove(&Responsibility::GameRandom);
         let compares_final_owners = case.compares_final_frame_owners();
+        let health_hud = observations.contains(&ObservationId::FrameHealthHud);
         if compares_final_owners {
             frame_owners.remove(&Responsibility::GameTime);
             frame_owners.remove(&Responsibility::WorldQuake);
@@ -1762,6 +1784,14 @@ fn scope_valid(case: &Case) -> bool {
                     .iter()
                     .any(|rule| rule.starts_with("world-haze/"))
             && random == case.expectations.native_random.is_some()
+            && health_hud == case.expectations.native_health_hud.is_some()
+            && health_hud == super::frame::health_hud::Arm::from_case(case).is_some()
+            && (!health_hud
+                || (case.compares_final_frame_health()
+                    && case.end.cut_inclusive == 1
+                    && case.end.native_returns.is_none()
+                    && case.expectations.fields.last() == Some(&ObservationId::FrameHealthHud)
+                    && case.checkpoints))
             && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
             && matches!(case.start, Start::NativeSeed { .. })
             && frame_owners
@@ -1902,6 +1932,18 @@ impl Case {
                     case.inputs != InputProvider::NativeFrameOwners
                         || source.path.as_os_str().is_empty()
                         || !valid_hash(&source.sha256)
+                })
+            || case
+                .expectations
+                .native_health_hud
+                .as_ref()
+                .is_some_and(|source| {
+                    case.inputs != InputProvider::NativeFrameOwners
+                        || [&source.phases, &source.callbacks, &source.final_owners]
+                            .into_iter()
+                            .any(|file| {
+                                file.path.as_os_str().is_empty() || !valid_hash(&file.sha256)
+                            })
                 })
             || !start_valid(case)
             || case.end.native_returns.as_ref().is_some_and(|returns| {

@@ -55,6 +55,11 @@ const fn missing() -> ProductionFault {
     ProductionFault::Unsupported(Unsupported::Frame(Dependency::HealthMaintenance))
 }
 
+fn maintained_health(mut before: samus_health::State) -> Option<samus_health::State> {
+    (before.health_opportunity(&samus_health::Rules::REFERENCE) == samus_health::WarningSound::None)
+        .then_some(before)
+}
+
 impl Stage {
     pub(super) fn holds(&self, state: &State) -> bool {
         let mut active = state
@@ -86,6 +91,22 @@ impl Stage {
                         .is_some_and(|health| health.state() == &receipt.health_after.0)
             }
         }
+    }
+
+    pub(super) fn first_origin_holds(&self, initial: &Model<health::HealthPin>) -> bool {
+        match &self.0 {
+            Progress::Pending => true,
+            Progress::Charging(receipt) | Progress::Complete(receipt) => {
+                &receipt.health_before == initial
+                    && maintained_health(initial.0).as_ref() == Some(&receipt.health_after.0)
+            }
+        }
+    }
+
+    /// A complete current Health choice is waiting for its physical Maintenance return.
+    #[must_use]
+    pub const fn in_flight(&self) -> bool {
+        matches!(self.0, Progress::Charging(_))
     }
 
     /// Whole energy produced after actual Maintenance, for Drawing.
@@ -134,11 +155,7 @@ impl State {
             return Err(missing());
         }
         let before = *health.state();
-        let mut after = before;
-        let warning = after.health_opportunity(&samus_health::Rules::REFERENCE);
-        if warning != samus_health::WarningSound::None {
-            return Err(missing());
-        }
+        let after = maintained_health(before).ok_or_else(missing)?;
         Ok(Receipt {
             health_before: Model(before),
             health_after: Model(after),

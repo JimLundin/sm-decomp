@@ -4,6 +4,7 @@
 //! Missing content, unsupported nesting and invalid work reject state and outputs together.
 
 mod devices;
+mod division;
 #[cfg(test)]
 mod fixture_tests;
 mod hardware;
@@ -16,6 +17,7 @@ use data::timing::{
     ChannelSlot, ContentRegion, Cycle, DeviceEffect, DeviceWrite, ExposureKind, Interrupt,
     IrqPolicy, MasterTicks, Profile, Run, Sample,
 };
+pub(in crate::production) use division::division_prefix_holds;
 pub use hardware::{
     Beam, BeamPosition, Channel, Controller, Hardware, InterruptLine, Interrupts, LineStatus,
     LineTransfer, Math, PadChange, Payload, PhysicalLine, PhysicalPad, Thresholds, Transfers,

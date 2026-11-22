@@ -46,6 +46,8 @@ struct Admission<'a> {
     checked_rom: &'a data::rom::Rom,
     data: &'a movement::Content,
     templates: &'a profiles::Templates,
+    health_hud_profile: Option<quiet_profile::HealthHud>,
+    native_root: &'a std::path::Path,
 }
 
 impl Admission<'_> {
@@ -183,6 +185,7 @@ impl Admission<'_> {
     fn post_palette(
         &self,
         appearance: &replay::appearance::Content,
+        origins: Option<&frame::drawing_owners::Origins>,
     ) -> Result<PostPaletteWork, Outcome> {
         let Self {
             manifest,
@@ -191,48 +194,61 @@ impl Admission<'_> {
             templates,
             ..
         } = *self;
-        let (maintenance, s6_camera, s6_drawing) =
-            if let Some(post_palette) = &manifest.post_palette {
-                let maintenance =
-                    replay::frame_appearance_owner::pre_wait_template(templates, "S5.Maintenance")
-                        .map_err(|_| data_failure(None, "Health maintenance envelope"))?;
-                let maintenance = frame::maintenance::Contract::new(&maintenance)
+        let (maintenance, s6_camera, s6_drawing) = if let Some(post_palette) =
+            &manifest.post_palette
+        {
+            let maintenance =
+                replay::frame_appearance_owner::pre_wait_template(templates, "S5.Maintenance")
                     .map_err(|_| data_failure(None, "Health maintenance envelope"))?;
-                let camera = replay::frame_camera_inputs::Content::import(
-                    wram,
-                    content.rom(),
-                    &post_palette.current.text()?,
-                    &post_palette.room.text()?,
-                )
-                .map_err(|_| data_failure(None, "actual current Camera context"))?;
-                let envelope = camera
-                    .contract(templates, &post_palette.envelope.text()?)
-                    .map_err(|_| data_failure(None, "actual Camera physical envelope"))?;
-                let before = consecutive_pre_wait(
+            let maintenance = frame::maintenance::Contract::new(&maintenance)
+                .map_err(|_| data_failure(None, "Health maintenance envelope"))?;
+            let camera = replay::frame_camera_inputs::Content::import(
+                wram,
+                content.rom(),
+                &post_palette.current.text()?,
+                &post_palette.room.text()?,
+            )
+            .map_err(|_| data_failure(None, "actual current Camera context"))?;
+            let envelope = camera
+                .contract(templates, &post_palette.envelope.text()?)
+                .map_err(|_| data_failure(None, "actual Camera physical envelope"))?;
+            let before = consecutive_pre_wait(
+                templates,
+                &[
+                    "Enemy projectile slots",
+                    "PLM slots",
+                    "Animated tile slots",
+                    "Interactivity admission and projectile interactions",
+                    "Power-bomb interaction",
+                ],
+            )?;
+            let camera = frame::s6_camera::Contract::new(&before, camera.inputs(), envelope)
+                .map_err(|_| data_failure(None, "actual empty pre-Camera neighbours"))?;
+            let drawing = frame::s6_drawing::Contract::new(
+                &portion(templates, "Union.DebugDrawingBridge")?,
+                &portion(
                     templates,
-                    &[
-                        "Enemy projectile slots",
-                        "PLM slots",
-                        "Animated tile slots",
-                        "Interactivity admission and projectile interactions",
-                        "Power-bomb interaction",
-                    ],
-                )?;
-                let camera = frame::s6_camera::Contract::new(&before, camera.inputs(), envelope)
-                    .map_err(|_| data_failure(None, "actual empty pre-Camera neighbours"))?;
-                let drawing = frame::s6_drawing::Contract::new(
-                    &portion(templates, "Union.DebugDrawingBridge")?,
-                    &portion(
-                        templates,
-                        "Drawing, objects, cannon, sprites, tiles, trails, history/events",
-                    )?,
-                    appearance.rendering(content.rom())?,
-                )
-                .map_err(|_| data_failure(None, "actual live Drawing envelope"))?;
-                (Some(maintenance), Some(camera), Some(drawing))
+                    "Drawing, objects, cannon, sprites, tiles, trails, history/events",
+                )?,
+                appearance.rendering(content.rom())?,
+            )
+            .map_err(|_| data_failure(None, "actual live Drawing envelope"))?;
+            let drawing = if let Some(profile) = &self.health_hud_profile {
+                drawing
+                    .with_decreased_energy(
+                        &profile.drawing,
+                        origins
+                            .ok_or_else(|| data_failure(None, "current Drawing history origin"))?
+                            .previous_health,
+                    )
+                    .map_err(|_| data_failure(None, "reached decreased-energy Drawing envelope"))?
             } else {
-                (None, None, None)
+                drawing
             };
+            (Some(maintenance), Some(camera), Some(drawing))
+        } else {
+            (None, None, None)
+        };
         Ok(PostPaletteWork {
             maintenance,
             s6_camera,
@@ -321,10 +337,13 @@ impl Admission<'_> {
         Ok(
             if let (Some(member), Some(scope)) = (&manifest.health_origin, &manifest.health_scope) {
                 validate_health_scope(case, &scope.text()?)?;
-                let admission = replay::frame_health_inputs::origin(wram, &member.text()?)
+                let mut admission = replay::frame_health_inputs::origin(wram, &member.text()?)
                     .map_err(|_| {
                         data_failure(None, "complete health origin and current context")
                     })?;
+                if let Some(arm) = replay::frame::health_hud::Arm::from_case(case) {
+                    arm.configure(self.native_root, wram, &case.row, &mut admission)?;
+                }
                 state.health = Some(
                     frame::health::Health::from_origin(admission.clone()).map_err(|_| {
                         data_failure(None, "live health origin without maintenance")
@@ -370,6 +389,19 @@ impl Admission<'_> {
     }
 }
 
+fn health_hud_profiles(
+    case: &Case,
+    sources: &Sources,
+) -> Result<Option<quiet_profile::HealthHud>, Outcome> {
+    replay::frame::health_hud::Arm::from_case(case)
+        .map(|_| {
+            let text = replay::frame::health_hud::Arm::profiles(&sources.native)?;
+            quiet_profile::health_hud(&text)
+                .map_err(|_| data_failure(None, "retained Health and HUD physical profiles"))
+        })
+        .transpose()
+}
+
 fn assemble(
     case: &Case,
     sources: &Sources,
@@ -388,6 +420,8 @@ fn assemble(
         checked_rom: &seed.checked_rom,
         data: &content,
         templates: &seed.templates,
+        health_hud_profile: health_hud_profiles(case, sources)?,
+        native_root: &sources.native,
     };
     admit.bind_drawing_origins(&mut state)?;
     let sender_physical = admit.bind_sender(&mut state, &seed.hardware)?;
@@ -408,16 +442,14 @@ fn assemble(
     state.samus_palette = seed.palette_state;
     state.scene_countdown = seed.scene_countdown.map(|(_, current)| Model(current));
     let aim_right = admit.aim_right()?;
-    let drawing_stage = admit.post_palette(&appearance)?;
+    let drawing_stage = admit.post_palette(&appearance, state.drawing_origins.as_ref())?;
     let native = admit.native_return(&appearance)?;
     let tail = admit.bind_tail(&mut state)?;
     let liquid_history = admit.bind_liquid_history(&mut state)?;
     let interruption = admit.bind_interruption(&mut state)?;
     let late_movement = admit.late_movement()?;
     let pose_fit = admit.pose_fit()?;
-    let animation = admit.animation()?;
     let health = admit.bind_health(&mut state)?;
-    let countdown = admit.countdown()?;
     Ok((
         state,
         frame::Content {
@@ -435,6 +467,8 @@ fn assemble(
             random_requests: seed.random_requests,
             preparation: required.preparation_content,
             player_entry: required.player_entry,
+            animation: admit.animation()?,
+            countdown: admit.countdown()?,
             movement: content.movement,
             appearance: appearance.appearance,
             hud: Box::new(hud.pictures),
@@ -469,11 +503,9 @@ fn assemble(
             room_quake: tail.room_quake,
             frame_tail: tail.frame_tail,
             pose_fit,
-            animation,
             adjacent_animation: None,
             health,
             adjacent_health_context: None,
-            countdown,
             scene_countdown: seed.scene_countdown.map(|(admission, _)| admission),
             adjacent_scene_countdown: None,
         },
@@ -597,6 +629,7 @@ fn admit_full(
         rules,
         inputs: InputReader::Frame(replay::frame::Inputs {
             budget: data::timing::MasterTicks(manifest.host_budget),
+            observe_health_hud: replay::frame::health_hud::Arm::from_case(case).is_some(),
         }),
         expected: ExpectedReader::Frame(Box::new(returns.expected)),
         actual: ActualReader::Frame(replay::frame::Actual::default()),

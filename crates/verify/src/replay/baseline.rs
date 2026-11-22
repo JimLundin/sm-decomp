@@ -248,9 +248,21 @@ impl Baseline {
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
     if case.expectations.provider == ExpectedProvider::NativeFrameCallbacks {
+        use super::frame::health_hud::FIELDS_PER_CUT;
+
+        // The phase marker expands to the observations from the individual Health and HUD owners.
+        let fields = if case.expectations.native_health_hud.is_some() {
+            case.expectations
+                .fields
+                .len()
+                .checked_sub(1)?
+                .checked_add(FIELDS_PER_CUT)?
+        } else {
+            case.expectations.fields.len()
+        };
         // One declared stream contains every observed publication at this return.
         return Some(
-            case.expectations.fields.len().checked_mul(counts.cuts) == Some(counts.fields)
+            fields.checked_mul(counts.cuts) == Some(counts.fields)
                 && counts.outputs == counts.publications
                 && (counts.outputs == 0) == (counts.cuts == 0)
                 && counts.replies == 0
@@ -303,11 +315,20 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
         return false;
     };
     let counts = &floor.counts;
+    let restores_per_cut = if case.checkpoints {
+        if case.expectations.native_health_hud.is_some() {
+            super::frame::health_hud::PHASE_RESTORES_PER_CUT.saturating_add(1)
+        } else {
+            1
+        }
+    } else {
+        0
+    };
     if counts.cuts > horizon
         || counts.null_cuts > counts.cuts
         || counts.null_fields > counts.fields
         || counts.publications > counts.outputs
-        || counts.restorations > if case.checkpoints { counts.cuts } else { 0 }
+        || counts.restorations > counts.cuts.saturating_mul(restores_per_cut)
         || counts.pending_restorations != counts.pending_boundaries
     {
         return false;
@@ -315,7 +336,7 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
     match floor.expected {
         Outcome::Pass => {
             if counts.cuts != horizon
-                || counts.restorations != if case.checkpoints { horizon } else { 0 }
+                || counts.restorations != horizon.saturating_mul(restores_per_cut)
             {
                 return false;
             }
@@ -543,6 +564,35 @@ limits = ["invented scope A"]
         assert!(!valid_counts(&case, &boundary));
         boundary.counts.restorations = 0;
         assert!(valid_counts(&case, &boundary));
+    }
+
+    #[test]
+    fn joined_health_and_hud_requires_its_phase_fields_and_restores() {
+        let snapshot =
+            IndexSnapshot::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let baseline: Baseline =
+            toml::from_str(include_str!("../../../../scenarios/replay/baseline.toml")).unwrap();
+        assert!(baseline.validate_index(&snapshot).is_ok());
+
+        for id in ["frame/health-hud-stock", "frame/health-hud-pending-loss"] {
+            let case = snapshot
+                .index()
+                .cases
+                .iter()
+                .find(|case| case.id.0 == id)
+                .unwrap();
+            let floor = baseline
+                .cases
+                .iter()
+                .find(|floor| floor.id == case.id)
+                .unwrap();
+            let mut wrong = floor.clone();
+            wrong.counts.fields = wrong.counts.fields.saturating_sub(1);
+            assert!(!valid_counts(case, &wrong));
+            let mut wrong = floor.clone();
+            wrong.counts.restorations = wrong.counts.restorations.saturating_sub(1);
+            assert!(!valid_counts(case, &wrong));
+        }
     }
 
     #[test]

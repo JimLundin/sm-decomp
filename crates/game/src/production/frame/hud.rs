@@ -167,7 +167,9 @@ impl Hud {
         self.applied_map().is_some()
     }
 
-    pub(in crate::production) fn applied_map(&self) -> Option<&interface_hud::MapAnswer> {
+    /// Completed current Map answer with the Movement position used at its choice.
+    #[must_use]
+    pub fn applied_map(&self) -> Option<&interface_hud::MapAnswer> {
         let (Self::Work(work) | Self::Countdown { ordinary: work, .. }) = self else {
             return None;
         };
@@ -190,6 +192,21 @@ impl Hud {
         work.0.choose_status(rules, pictures, inputs)
     }
 
+    pub(super) fn before_late_status(&self, map: &Self) -> Option<Self> {
+        let (Self::Countdown { work, .. }, Self::Work(ordinary)) = (self, map) else {
+            return None;
+        };
+        if !self.retains_ordinary(map)
+            || !matches!(ordinary.0.status(), interface_hud::Observation::Unread)
+        {
+            return None;
+        }
+        Some(Self::Countdown {
+            ordinary: ordinary.clone(),
+            work: work.clone(),
+        })
+    }
+
     pub(super) fn choose_late_status(
         &mut self,
         rules: &Rules,
@@ -208,11 +225,15 @@ impl Hud {
     }
 
     pub(super) fn chosen_status_energy(&self) -> Option<u16> {
+        self.chosen_status_input().map(|energy| energy.now)
+    }
+
+    pub(super) fn chosen_status_input(&self) -> Option<interface_hud::Energy> {
         let Self::Countdown { ordinary, .. } = self else {
             return None;
         };
         match ordinary.0.status() {
-            interface_hud::Observation::Chosen(answer) => Some(answer.inputs.energy.now),
+            interface_hud::Observation::Chosen(answer) => Some(answer.inputs.energy),
             interface_hud::Observation::Unread | interface_hud::Observation::Completed(_) => None,
         }
     }

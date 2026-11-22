@@ -1,8 +1,8 @@
-use super::runtime_helpers::{advance_until, retained_return};
+use super::runtime_helpers::{advance_until, restore_next, retained_frame_case, retained_return};
 use super::*;
-use data::timing::{MasterTicks, TransferPort};
+use data::timing::{MasterTicks, Sample, TransferPort};
 use frame::{late_hud::Stage, suffix_caller::HudQueue};
-use game::production::timing::{Event, EventKind};
+use game::production::timing::{Event, EventKind, SampleValue};
 use game::production::{AdmissionFault, AdvanceInput, ProductionOutputs};
 use game::state::owned::OwnedState;
 
@@ -107,6 +107,251 @@ fn completed_hud_queue_rejects_a_changed_destination_at_checkpoint_admission() {
         };
         request.template.target.0 ^= 1;
     });
+}
+
+#[test]
+#[ignore = "requires the ordinary pending-loss native frame fixture"]
+fn changed_status_restores_its_live_samples_and_rejects_contradictory_history() {
+    let (_, mut admitted) = retained_frame_case("frame/health-hud-pending-loss");
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("frame inputs");
+    };
+    let budget = inputs.budget;
+    advance_until(&mut admitted, budget, |state| {
+        matches!(state.late_hud, Stage::Gauging(_))
+            && state.timing.hardware.math.division_edges_remaining() != 0
+    });
+    reject_gauge_write_and_register_changes(&admitted);
+    let alternate = alternate_status_choice(frame_state(&admitted.production));
+    assert_rejected_at_admission(&admitted, |state| {
+        let Stage::Gauging(gauge) = &mut state.late_hud else {
+            panic!("in-flight gauge");
+        };
+        gauge.chosen.clone_from(&alternate);
+    });
+    restore_next(&mut admitted, budget).unwrap();
+
+    advance_until(&mut admitted, budget, |state| {
+        matches!(state.late_hud, Stage::Gauging(_))
+            && !state.timing.work.is_empty()
+            && state.publications.events.iter().any(is_gauge_quotient)
+    });
+    reject_gauge_sample_changes(&admitted);
+    restore_next(&mut admitted, budget).unwrap();
+
+    advance_until(&mut admitted, budget, |state| {
+        matches!(state.late_hud, Stage::Gauging(_)) && state.timing.work.is_empty()
+    });
+    reject_gauge_sample_changes(&admitted);
+    restore_next(&mut admitted, budget).unwrap();
+    advance_until(&mut admitted, budget, |state| {
+        matches!(state.late_hud, Stage::Completed(HudQueue::Queued(_)))
+    });
+    reject_coherent_alternate_publication(&admitted, alternate);
+}
+
+fn alternate_status_choice(state: &frame::State) -> frame::hud::Hud {
+    let Stage::Gauging(gauge) = &state.late_hud else {
+        panic!("in-flight gauge");
+    };
+    let frame::hud::Hud::Countdown { ordinary, .. } = &gauge.chosen else {
+        panic!("chosen ordinary HUD");
+    };
+    let interface_hud::Observation::Chosen(answer) = ordinary.0.status() else {
+        panic!("chosen Status");
+    };
+    let mut pictures = answer.pictures;
+    pictures.digits.rotate_left(1);
+    let mut altered = state.hud.clone();
+    let frame::hud::Hud::Countdown { ordinary, .. } = &mut altered else {
+        panic!("HUD before Status");
+    };
+    assert!(
+        ordinary
+            .0
+            .choose_status(&answer.rules, &pictures, answer.inputs)
+    );
+    altered
+}
+
+fn reject_coherent_alternate_publication(admitted: &AdmittedCase, mut alternate: frame::hud::Hud) {
+    let frame::hud::Hud::Countdown { ordinary, .. } = &mut alternate else {
+        panic!("alternate Status choice");
+    };
+    assert!(ordinary.0.apply());
+    let ProductionContent::Frame(content) = &admitted.content else {
+        panic!("frame content");
+    };
+    let descriptor = &content.late_hud.as_ref().unwrap().queue;
+    assert_rejected_at_admission(admitted, |state| {
+        let regions = state.content.regions();
+        let haze = regions
+            .iter()
+            .find(|region| region.start == content.haze_bands_address)
+            .unwrap()
+            .clone();
+        let replaced = [haze.start, descriptor.source];
+        let initial = regions
+            .into_iter()
+            .filter(|region| !replaced.contains(&region.start))
+            .collect();
+        let mut forged = frame::TransferContent::new(initial).unwrap();
+        forged
+            .complete(frame::Materialization {
+                buffer: frame::Buffer::HazeBackdropBands,
+                region: haze,
+            })
+            .unwrap();
+        forged
+            .complete(frame::Materialization {
+                buffer: frame::Buffer::HudTilemap,
+                region: data::timing::ContentRegion {
+                    start: descriptor.source,
+                    bytes: frame::hud::tilemap(alternate.state()).unwrap(),
+                },
+            })
+            .unwrap();
+        state.hud = alternate;
+        state.content = forged;
+    });
+}
+
+fn reject_gauge_write_and_register_changes(admitted: &AdmittedCase) {
+    use data::timing::{DeviceWrite, Publication};
+    assert_rejected_at_admission(admitted, |state| state.timing.hardware.math.remaining = 0);
+    assert_rejected_at_admission(admitted, |state| state.timing.hardware.math.shift ^= 1);
+    assert_rejected_at_admission(admitted, |state| state.timing.hardware.math.product ^= 1);
+    for change in 0..3 {
+        assert_rejected_at_admission(admitted, |state| {
+            let trigger = state
+                .publications
+                .events
+                .iter()
+                .rev()
+                .find_map(|event| {
+                    let EventKind::Publication(write) = &event.kind else {
+                        return None;
+                    };
+                    matches!(write.effect, Publication::Divisor(_)).then_some(write.clone())
+                })
+                .unwrap();
+            let dividend = state
+                .publications
+                .events
+                .iter_mut()
+                .rev()
+                .find(|event| {
+                    matches!(
+                        &event.kind,
+                        EventKind::Publication(DeviceWrite {
+                            effect: Publication::DividendLow(_),
+                            ..
+                        })
+                    )
+                })
+                .unwrap();
+            let EventKind::Publication(write) = &dividend.kind else {
+                panic!("first dividend write")
+            };
+            dividend.kind = match change {
+                0 => EventKind::ControllerCommitted,
+                1 => EventKind::Publication(trigger),
+                _ => EventKind::Publication(
+                    DeviceWrite::from_cpu_port(write.port.0, write.value ^ 1).unwrap(),
+                ),
+            };
+        });
+    }
+}
+
+#[test]
+#[ignore = "requires both common-origin Health and HUD Frame arms"]
+fn authentic_stock_health_and_drawing_cannot_replace_the_changed_arm() {
+    let (_, mut stock) = retained_frame_case("frame/health-hud-stock");
+    let (_, mut changed) = retained_frame_case("frame/health-hud-pending-loss");
+    let InputReader::Frame(inputs) = &changed.inputs else {
+        panic!("frame inputs");
+    };
+    let budget = inputs.budget;
+    let stock_origin = frame_state(&stock.production);
+    let changed_origin = frame_state(&changed.production);
+    assert_rejected_at_admission(&changed, |state| {
+        state.health.clone_from(&stock_origin.health);
+    });
+    assert_rejected_at_admission(&stock, |state| {
+        state.health.clone_from(&changed_origin.health);
+    });
+
+    advance_until(&mut stock, budget, |state| state.maintenance.in_flight());
+    advance_until(&mut changed, budget, |state| state.maintenance.in_flight());
+    let stock_work = frame_state(&stock.production);
+    assert_rejected_at_admission(&changed, |state| {
+        state.maintenance.clone_from(&stock_work.maintenance);
+    });
+    restore_next(&mut changed, budget).unwrap();
+
+    let queued =
+        |state: &frame::State| matches!(state.late_hud, Stage::Completed(HudQueue::Queued(_)));
+    advance_until(&mut stock, budget, queued);
+    advance_until(&mut changed, budget, queued);
+    let authentic_queue = frame_state(&changed.production).late_hud.clone();
+    let stock_queue = frame_state(&stock.production);
+    reject_stock_drawing(&changed, stock_queue);
+    assert_rejected_at_admission(&changed, |state| state.late_hud = Stage::Retired);
+
+    let returned = |state: &frame::State| matches!(state.late_hud, Stage::Retired);
+    advance_until(&mut stock, budget, returned);
+    advance_until(&mut changed, budget, returned);
+    let stock_return = frame_state(&stock.production);
+    reject_stock_drawing(&changed, stock_return);
+    assert_rejected_at_admission(&changed, |state| state.hud.clone_from(&stock_return.hud));
+    assert_rejected_at_admission(&changed, |state| state.late_hud = authentic_queue);
+    let saved = stock.production.save_completed_frame().unwrap();
+    let restored =
+        Production::restore_completed_frame(&saved, stock.content.clone(), stock.rules.clone())
+            .unwrap();
+    assert_observation_eq!(restored.state(), stock.production.state());
+}
+
+fn reject_stock_drawing(admitted: &AdmittedCase, stock: &frame::State) {
+    assert_rejected_at_admission(admitted, |state| {
+        state.s6_drawing.clone_from(&stock.s6_drawing);
+    });
+    assert_rejected_at_admission(admitted, |state| {
+        state.frame_history.clone_from(&stock.frame_history);
+    });
+}
+
+fn is_gauge_quotient(event: &Event) -> bool {
+    matches!(
+        event.kind,
+        EventKind::Sample(Sample::QuotientLow, SampleValue::Byte(_))
+    )
+}
+
+fn reject_gauge_sample_changes(admitted: &AdmittedCase) {
+    for change in [None, Some(Sample::QuotientHigh), Some(Sample::QuotientLow)] {
+        assert_rejected_at_admission(admitted, |state| {
+            let event = state
+                .publications
+                .events
+                .iter_mut()
+                .find(|event| is_gauge_quotient(event))
+                .unwrap();
+            let EventKind::Sample(Sample::QuotientLow, SampleValue::Byte(value)) = event.kind
+            else {
+                panic!("live quotient sample");
+            };
+            event.kind = change.map_or(EventKind::ControllerCommitted, |sample| {
+                let value = if sample == Sample::QuotientLow {
+                    value ^ 1
+                } else {
+                    value
+                };
+                EventKind::Sample(sample, SampleValue::Byte(value))
+            });
+        });
+    }
 }
 
 fn choose_status_with_stale_energy(state: &mut frame::State) {

@@ -2,6 +2,7 @@
 
 use super::{
     Caller, Content, Dependency, State, appearance_caller, drawing_owners,
+    frame_history::{EnergyChange, EnergyRead},
     rendering_stage::{NormalDrawingReceipt, ShownStep},
 };
 use crate::production::{ProductionFault, Unsupported, timing};
@@ -16,8 +17,15 @@ pub(super) const DRAWING: timing::WorkId = appearance_caller::Kind::Drawing.iden
 pub struct Contract {
     bridge: Profile,
     drawing: Profile,
+    decreased_energy: Option<DecreasedEnergy>,
     rendering: super::rendering_stage::Content,
     adjacent: Option<Adjacent>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct DecreasedEnergy {
+    profile: Profile,
+    previous: u16,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -48,9 +56,25 @@ impl Contract {
         Ok(Self {
             bridge: Self::bind(bridge)?,
             drawing: Self::bind(drawing)?,
+            decreased_energy: None,
             rendering,
             adjacent: None,
         })
+    }
+
+    /// Admit the distinct physical Drawing arm reached with decreased live energy.
+    /// # Errors
+    /// The exposure template includes unowned device effects or is invalid.
+    pub fn with_decreased_energy(
+        mut self,
+        drawing: &Template,
+        previous: u16,
+    ) -> Result<Self, ProductionFault> {
+        self.decreased_energy = Some(DecreasedEnergy {
+            profile: Self::bind(drawing)?,
+            previous,
+        });
+        Ok(self)
     }
 
     fn bind(template: &Template) -> Result<Profile, ProductionFault> {
@@ -85,9 +109,21 @@ impl Contract {
         &self,
         state: &State,
         receipt: Option<&NormalDrawingReceipt>,
+        read: EnergyRead,
     ) -> Result<&Profile, ProductionFault> {
         if state.publications.original_interval() {
-            return Ok(&self.drawing);
+            let alternate = self.decreased_energy.as_ref();
+            if alternate.is_some_and(|arm| read.previous != arm.previous) {
+                return Err(missing());
+            }
+            return match read.change {
+                EnergyChange::Held => Ok(&self.drawing),
+                EnergyChange::Decreased => alternate.map(|arm| &arm.profile).ok_or_else(missing),
+                EnergyChange::Increased => Err(missing()),
+            };
+        }
+        if read.change != EnergyChange::Held {
+            return Err(missing());
         }
         let alternate = self.adjacent.as_ref().ok_or_else(missing)?;
         let (samus, outcome) = state.movement.finished().ok_or_else(missing)?;
@@ -153,7 +189,7 @@ struct Pending {
     selected: appearance_caller::Stage,
     aggregate: appearance_caller::DrawingAggregate,
     builder: super::borrowed::SpriteBuilderOrigin,
-    energy: u16,
+    energy: EnergyRead,
 }
 
 #[derive(Canonical, Clone, Debug, Default, PartialEq, Eq)]
@@ -164,6 +200,10 @@ enum Progress {
     DrawingReady,
     Charging(Box<Pending>),
     Complete {
+        builder: Box<super::borrowed::SpriteBuilderOrigin>,
+        appearance: Box<appearance_caller::Completion>,
+    },
+    CompleteAfterEnergyDecrease {
         builder: Box<super::borrowed::SpriteBuilderOrigin>,
         appearance: Box<appearance_caller::Completion>,
     },
@@ -180,7 +220,8 @@ impl Stage {
         state: &State,
     ) -> bool {
         match &self.0 {
-            Progress::Complete { appearance, .. } => {
+            Progress::Complete { appearance, .. }
+            | Progress::CompleteAfterEnergyDecrease { appearance, .. } => {
                 appearance.work == DRAWING
                     && appearance.receipt.validate().is_ok()
                     && appearance.receipt.before == selected.receipt.result
@@ -201,10 +242,18 @@ impl Stage {
     /// The actual complete rendered builder, awaiting later finalization.
     #[must_use]
     pub const fn builder(&self) -> Option<&super::borrowed::SpriteBuilderOrigin> {
-        let Progress::Complete { builder, .. } = &self.0 else {
-            return None;
-        };
-        Some(builder)
+        match &self.0 {
+            Progress::Complete { builder, .. }
+            | Progress::CompleteAfterEnergyDecrease { builder, .. } => Some(builder),
+            Progress::Pending
+            | Progress::Bridge
+            | Progress::DrawingReady
+            | Progress::Charging(_) => None,
+        }
+    }
+
+    pub(super) const fn deferred_hurt_flash(&self) -> bool {
+        matches!(self.0, Progress::CompleteAfterEnergyDecrease { .. })
     }
 }
 
@@ -213,6 +262,72 @@ const fn missing() -> ProductionFault {
 }
 
 impl State {
+    fn current_drawing_energy(&self) -> Option<EnergyRead> {
+        let health = self.health.as_ref()?.state();
+        let history = self.frame_history.as_ref()?;
+        Some(EnergyRead::compare(health, history.previous_health()))
+    }
+
+    /// The Drawing comparison while the selected physical arm is in flight.
+    #[must_use]
+    pub fn drawing_energy_read(&self) -> Option<EnergyRead> {
+        let Progress::Charging(pending) = &self.s6_drawing.0 else {
+            return None;
+        };
+        Some(pending.energy)
+    }
+
+    pub(crate) fn validate_drawing_health_checkpoint(
+        &self,
+        content: &Content,
+    ) -> Result<(), super::Fault> {
+        use super::Fault::InvalidPlayerEntry;
+        if let Progress::Charging(pending) = &self.s6_drawing.0 {
+            if self.current_drawing_energy() != Some(pending.energy) {
+                return Err(InvalidPlayerEntry);
+            }
+            let profile = content
+                .s6_drawing
+                .as_ref()
+                .ok_or(InvalidPlayerEntry)?
+                .drawing_profile(self, pending.aggregate.receipt(), pending.energy)
+                .map_err(|_| InvalidPlayerEntry)?;
+            self.validate_drawing_profile(DRAWING, profile)
+                .map_err(|_| InvalidPlayerEntry)?;
+        }
+        let alternate = content
+            .s6_drawing
+            .as_ref()
+            .and_then(|contract| contract.decreased_energy.as_ref());
+        let deferred = self.s6_drawing.deferred_hurt_flash();
+        let Some(alternate) = alternate.filter(|_| self.publications.original_interval()) else {
+            return if deferred {
+                Err(InvalidPlayerEntry)
+            } else {
+                Ok(())
+            };
+        };
+        let history = self.frame_history.as_ref().ok_or(InvalidPlayerEntry)?;
+        let complete = self.s6_drawing.builder().is_some();
+        let (expected, decreased) = if complete {
+            let health = self.health.as_ref().ok_or(InvalidPlayerEntry)?.state();
+            let read = EnergyRead::compare(health, alternate.previous);
+            if self.maintenance.energy() != Some(read.current) {
+                return Err(InvalidPlayerEntry);
+            }
+            (read.current, read.change == EnergyChange::Decreased)
+        } else {
+            (alternate.previous, false)
+        };
+        if history.drawn() != complete
+            || history.previous_health() != expected
+            || deferred != decreased
+        {
+            return Err(InvalidPlayerEntry);
+        }
+        Ok(())
+    }
+
     fn drawing_inputs(&self) -> Result<DrawingInputs<'_>, ProductionFault> {
         let Caller::PlayerContinuation {
             prepared,
@@ -306,32 +421,38 @@ impl State {
                     ProductionFault::Unsupported(Unsupported::Frame(dependency))
                 })?;
                 selected.bind(DRAWING).map_err(|_| missing())?;
+                let energy = self.current_drawing_energy().ok_or_else(missing)?;
                 let pending = Pending {
                     selected,
                     aggregate,
                     builder: inputs.builder.clone(),
-                    energy: inputs.energy,
+                    energy,
                 };
                 self.timing
                     .begin(
                         DRAWING,
                         contract
-                            .drawing_profile(self, pending.aggregate.receipt())?
+                            .drawing_profile(self, pending.aggregate.receipt(), pending.energy)?
                             .clone(),
                     )
                     .map_err(ProductionFault::FrameHardware)?;
                 self.s6_drawing.0 = Progress::Charging(Box::new(pending));
             }
             Progress::Charging(pending) => {
-                if pending.energy != inputs.energy || pending.builder != *inputs.builder {
+                if pending.energy.current != inputs.energy
+                    || self.current_drawing_energy() != Some(pending.energy)
+                    || pending.builder != *inputs.builder
+                {
                     return Err(missing());
                 }
                 self.validate_drawing_profile(
                     DRAWING,
-                    contract.drawing_profile(self, pending.aggregate.receipt())?,
+                    contract.drawing_profile(self, pending.aggregate.receipt(), pending.energy)?,
                 )?;
             }
-            Progress::Complete { .. } => return Err(missing()),
+            Progress::Complete { .. } | Progress::CompleteAfterEnergyDecrease { .. } => {
+                return Err(missing());
+            }
         }
         Ok(())
     }
@@ -360,7 +481,10 @@ impl State {
         match (&self.s6_drawing.0, work) {
             (Progress::Bridge, BRIDGE) => self.s6_drawing.0 = Progress::DrawingReady,
             (Progress::Charging(pending), DRAWING) => {
-                if pending.energy != inputs.energy || pending.builder != *inputs.builder {
+                if pending.energy.current != inputs.energy
+                    || self.current_drawing_energy() != Some(pending.energy)
+                    || pending.builder != *inputs.builder
+                {
                     return Err(missing());
                 }
                 let mut candidate = self.clone();
@@ -385,17 +509,26 @@ impl State {
                 if !delta.sounds.is_empty() || !delta.graphics.is_empty() {
                     return Err(missing());
                 }
-                if let Some(mut history) = self.frame_history.clone() {
-                    if !history.complete_drawing(self, inputs.health) {
-                        return Err(missing());
-                    }
-                    self.frame_history = Some(history);
+                let energy_decreased = pending.energy.change == EnergyChange::Decreased;
+                let mut history = self.frame_history.clone().ok_or_else(missing)?;
+                if !history.complete_drawing(self, inputs.health) {
+                    return Err(missing());
                 }
+                self.frame_history = Some(history);
                 self.appearance = candidate.appearance;
                 self.rendering = candidate.rendering;
-                self.s6_drawing.0 = Progress::Complete {
-                    builder: Box::new(builder),
-                    appearance: Box::new(appearance),
+                let builder = Box::new(builder);
+                let appearance = Box::new(appearance);
+                self.s6_drawing.0 = if energy_decreased {
+                    Progress::CompleteAfterEnergyDecrease {
+                        builder,
+                        appearance,
+                    }
+                } else {
+                    Progress::Complete {
+                        builder,
+                        appearance,
+                    }
                 };
             }
             _ => return Err(missing()),

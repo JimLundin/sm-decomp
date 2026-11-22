@@ -43,15 +43,22 @@ impl Admission<'_> {
             if queue != frame::suffix_caller::HudQueue::Empty {
                 return Err(data_failure(None, "initial empty HUD queue"));
             }
-            let late_hud = frame::late_hud::Contract {
-                enemy_background: portion(templates, "Enemy background request")?
+            let late_hud = frame::late_hud::Contract::new(
+                portion(templates, "Enemy background request")?
                     .bind(&[])
                     .map_err(|_| data_failure(None, "quiet enemy-background profile"))?,
-                status: portion(templates, "Later HUD handling/request")?
+                portion(templates, "Later HUD handling/request")?
                     .bind(&[])
                     .map_err(|_| data_failure(None, "quiet late HUD profile"))?,
-                queue: source::hud_transfer_template(content.rom().lorom())
+                source::hud_transfer_template(content.rom().lorom())
                     .map_err(|_| data_failure(None, "immutable HUD descriptor"))?,
+            );
+            let late_hud = if let Some(profile) = &self.health_hud_profile {
+                late_hud
+                    .with_gauge(&profile.status)
+                    .map_err(|_| data_failure(None, "actual changed status arithmetic envelope"))?
+            } else {
+                late_hud
             };
             let pictures = source::nmi_pictures(&rendering, &appearance.clips, content.rom())
                 .map_err(|_| data_failure(None, "admitted NMI Running picture bindings"))?;

@@ -28,6 +28,13 @@ impl State {
         else {
             return Ok(());
         };
+        // The first interval qualifies the hurt-flash store only through native return.
+        // Its later reader and visual effects need their own Drawing owner.
+        if self.s6_drawing.deferred_hurt_flash() {
+            return Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::DrawingPreparation,
+            )));
+        }
         let (_, native_admitted) = self.gameplay_publications()?;
         self.validate_cannon_history()?;
         let controller = controller.word().ok_or_else(missing)?;
