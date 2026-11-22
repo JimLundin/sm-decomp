@@ -3,6 +3,10 @@
 
 on:
   workflow_call:
+    inputs:
+      target:
+        type: string
+        default: ''
     secrets:
       SM_ROM_DEPLOY_KEY:
         required: false
@@ -24,6 +28,7 @@ jobs:
   # The rebuild's content tests read the real ROM (data::room's Morph Ball Room test returns
   # early without it), so they run here, where the ROM is decrypted.
   content:
+    if: inputs.target == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -34,7 +39,7 @@ jobs:
       # Cached paths exclude the ROM and records, which are read only at runtime.
       - &cache
         name: Restore the cargo registry and the build
-        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+        if: inputs.target != '' || (github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -71,7 +76,7 @@ jobs:
         run: cargo test --locked -p data -p import --no-fail-fast
       - &cache_save
         name: Save the cargo registry and the build
-        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        if: inputs.target == '' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/cache/save@v4
         with:
           path: |
@@ -171,8 +176,10 @@ jobs:
       - &opening_clock
         name: Fetch the opening clock inputs and independent comparisons
         run: bash tools/ci/fetch_opening_clock.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Run required fixture-backed verification witnesses
+      - name: Run verification library tests
+        if: inputs.target == '' || contains(inputs.target, '::')
         env:
+          VERIFY_TEST: ${{ inputs.target }}
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
           SM_SEARCH_PACKET: ${{ runner.temp }}/audio-native/native-search-inputs-v1
           SM_SEARCH_RECEIPT: ${{ runner.temp }}/search-receipt.toml
@@ -183,17 +190,27 @@ jobs:
           SM_CONNECTED_SOURCE: ${{ runner.temp }}/audio-native
           SM_LOCK: ${{ github.workspace }}/scenarios/locks/lsnes.toml
           SM_AUDIO_NATIVE: ${{ runner.temp }}/audio-native
-        run: python3 tools/ci/required_witnesses.py
+        run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
       - name: Build the shared replay command
+        if: inputs.target == ''
         run: cargo build --locked --profile verify -p tools
-      - name: Check every indexed case against the reviewed baseline
+      - name: Check indexed replay against the reviewed baseline
+        if: ${{ !contains(inputs.target, '::') }}
+        env:
+          REPLAY_CASE: ${{ inputs.target }}
         run: |
+          selection=()
+          if [[ -n "$REPLAY_CASE" ]]; then selection=(--case "$REPLAY_CASE"); fi
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
-            bash tools/ci/replay.sh --write "$RUNNER_TEMP/replay-receipt.toml"
+            bash tools/ci/replay.sh "${selection[@]}" --write "$RUNNER_TEMP/replay-receipt.toml"
+      - name: Reproduce a verification failure on this revision
+        if: failure()
+        run: echo "Reproduce $GITHUB_SHA with gh run rerun $GITHUB_RUN_ID --failed"
       - *cache_save
 
   fault-plan:
+    if: inputs.target == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:

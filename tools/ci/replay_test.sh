@@ -6,11 +6,18 @@ fake_python() {
   return "$REPLAY_METADATA_STATUS"
 }
 fake_tools() {
-  [ "$#" = 14 ] || return 80
   [ "$1" = replay ] && [ "$2" = check ] && [ "$3" = scenarios/replay/index.toml ] || return 81
-  [ "$4" = --all ] && [ "$5" = --baseline ] && [ "$6" = scenarios/replay/baseline.toml ] || return 82
-  [ "$7" = --cache ] && [ "$8" = recorded-cache ] && [ "$9" = --rom ] && [ "${10}" = player-rom ] || return 83
-  [ "${11}" = --native ] && [ "${12}" = recorded-native ] && [ "${13}" = --bundle ] && [ -z "${14}" ] || return 84
+  shift 3
+  if [[ -n ${REPLAY_TEST_CASE:-} ]]; then
+    [[ $1 == --case && $2 == "$REPLAY_TEST_CASE" ]] || return 80
+    shift 2
+  else
+    [[ $1 == --all ]] || return 80
+    shift
+  fi
+  [ "$#" = 10 ] && [ "$1" = --baseline ] && [ "$2" = scenarios/replay/baseline.toml ] || return 82
+  [ "$3" = --cache ] && [ "$4" = recorded-cache ] && [ "$5" = --rom ] && [ "$6" = player-rom ] || return 83
+  [ "$7" = --native ] && [ "$8" = recorded-native ] && [ "$9" = --bundle ] && [ -z "${10}" ] || return 84
   return "$REPLAY_TEST_STATUS"
 }
 export -f fake_tools fake_python
@@ -24,4 +31,9 @@ if bash tools/ci/replay.sh; then exit 1; else status=$?; fi
 export REPLAY_METADATA_STATUS=23 REPLAY_TEST_STATUS=0
 if bash tools/ci/replay.sh; then exit 1; else status=$?; fi
 [ "$status" = 23 ]
+export REPLAY_METADATA_STATUS=0 REPLAY_TEST_CASE=movie/missing-power-on
+bash tools/ci/replay.sh --case "$REPLAY_TEST_CASE"
+export REPLAY_TEST_STATUS=19
+if bash tools/ci/replay.sh --case "$REPLAY_TEST_CASE"; then exit 1; else status=$?; fi
+[ "$status" = 19 ]
 echo 'REPLAY ENTRYPOINT TEST OK'

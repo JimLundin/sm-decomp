@@ -4,7 +4,7 @@ name: CI
 # retain recent clean caches after both workflows pass.
 #   quality.yml  formatting, lints, tests, the crate rules and the doc links (no ROM).
 #   verify.yml   the ROM-reading checks: content decoders and indexed production replay.
-# Pull requests, nightly runs and manual runs start Quality and verification independently.
+# Full runs start Quality and verification independently. Manual runs can select one check.
 # Main pushes run both to refresh clean build caches; verify/** runs verification only.
 # Called jobs report as "<caller job> / <job>", for example "verify / content".
 on:
@@ -14,18 +14,23 @@ on:
   schedule:
     - cron: '17 2 * * *'
   workflow_dispatch:
+    inputs:
+      target:
+        description: Indexed case ID or exact verify library test name (empty runs full CI)
+        type: string
+        required: false
 
 permissions:
   contents: read
 
 # A new commit replaces its branch's run; nightly and dispatched runs finish.
 concurrency:
-  group: ci-${{ github.ref }}-${{ github.event_name }}
+  group: ci-${{ github.ref }}-${{ github.event_name }}-${{ inputs.target && github.run_id || 'full' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 jobs:
   quality:
-    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/')
+    if: inputs.target == '' && (github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/verify/'))
     permissions:
       contents: read
     uses: ./.github/workflows/quality.yml
@@ -35,6 +40,8 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/verify.yml
+    with:
+      target: ${{ inputs.target || '' }}
     secrets:
       SM_ROM_DEPLOY_KEY: ${{ secrets.SM_ROM_DEPLOY_KEY }}
       SM_ROM_KEY: ${{ secrets.SM_ROM_KEY }}

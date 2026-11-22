@@ -29,6 +29,27 @@ fresh test executables, run tests with `tools/lane/run_tests.sh <crate>...`.
 CI (`.github/workflows/ci.yml`) runs Quality (format, lints, tests, the crate rules, doc links and
 the report) and verification jobs for the ROM content tests and the complete indexed replay baseline. [STATUS](STATUS.md) shows how to run them locally.
 
+## Run one verification check
+
+Choose a pushed branch or tag in **Actions → CI → Run workflow** and enter an indexed case ID
+or a fully qualified `verify` library test name. The same selection works from the command line:
+
+```sh
+gh workflow run ci.yml --ref BRANCH -f target=frame/opening-eight-native-returns
+gh workflow run ci.yml --ref BRANCH -f target=replay::native_search::tests::native_search_contract
+```
+
+CI installs the pinned fixtures and checks the selected case against its reviewed baseline,
+or runs exactly one matching library test, including ignored tests. A failing job prints the
+command to rerun it on the same commit. An empty target runs full CI.
+
+Locally, `bash tools/ci/replay.sh --case ID` builds the verifier from the checkout.
+Set `SM_CACHE`, `SM_ROM` and `SM_AUDIO_NATIVE` to the sources the case uses.
+For a library test, set its [fixture variables](../.github/workflows/verify.yml) to absolute
+paths and run `python3 tools/ci/required_witnesses.py TEST`. For example, the native search
+contract reads `SM_ROM` and `SM_SEARCH_PACKET` and writes its receipt to `SM_SEARCH_RECEIPT`.
+On a Windows host that blocks new executables, the hosted command above runs the same test.
+
 ## The status and the report
 
 The README's status and [the rebuild report](REPORT.md) are generated together from the tree:
