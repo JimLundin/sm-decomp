@@ -36,6 +36,13 @@ A brief is the whole of what a fresh session knows. Write it like this:
 - **Pointers** to the files worth reading, rather than retyping them.
 - **The done-condition** of the step, and what to report.
 - **What is already ruled**, so the session builds on it.
+- **One step, a time limit and the push as the end** (outside the confined roles). A lane does one step
+  of about 30 minutes: make the change, prove the narrowest test locally, push, start focused
+  CI and hand back the run ids. The root watches CI in the background and briefs a fresh lane
+  on a failure. Each brief states a 45-minute check-in, after which the lane hands back what it
+  has. On 2026-11-22, three lanes briefed with whole outcomes ran 50–72 minutes each. 50–75%
+  of that was waiting on local replay tests (4–10 minutes per run) and, in one lane, a single
+  10-minute git comparison, done in the foreground at the shell's 10-minute cap.
 
 For the two confined roles, the brief is also part of the barrier:
 - **Spec words only.** Name spec entries and player-visible behaviour, and phrase findings as
