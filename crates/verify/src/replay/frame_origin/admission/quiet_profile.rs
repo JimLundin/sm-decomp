@@ -34,6 +34,19 @@ pub(super) fn decode(
     admit(profile, name, expected, false)
 }
 
+pub(super) fn named(text: &str, name: &str, expected: [u64; 2]) -> Result<Template, ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    let mut profiles = file.profile.iter().filter(|profile| profile.name == name);
+    let profile = profiles.next().ok_or(ProfileFault::Format)?;
+    if profiles.next().is_some() {
+        return Err(ProfileFault::Format);
+    }
+    admit(profile, name, expected, false)
+}
+
 pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
     let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
     let [down, contact] = file.profile.as_slice() else {
@@ -97,6 +110,57 @@ pub(in crate::replay) fn steady(text: &str) -> Result<[Template; 3], ProfileFaul
         admit(finish, "HazeFinish", [231, 1480], false)?,
         admit(layers, "LayerBlend", [140, 908], false)?,
     ])
+}
+
+pub(super) fn contact_retry(
+    text: &str,
+    port: data::timing::PublicationPort,
+) -> Result<[Template; 2], ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let mut profiles = file
+        .profile
+        .into_iter()
+        .filter(|profile| profile.name == "AdjacentContactRetry");
+    let mut profile = profiles.next().ok_or(ProfileFault::Format)?;
+    if file.format != 1
+        || profiles.next().is_some()
+        || [profile.exposures, profile.intrinsic_ticks] != [26, 162]
+    {
+        return Err(ProfileFault::Profile);
+    }
+    let mut sample = None;
+    let mut publication = None;
+    for (index, run) in profile.run.iter_mut().enumerate() {
+        match (run.device.as_str(), run.event_phase.as_str()) {
+            ("", "") => {}
+            ("LibraryThreeCue", "sample") if sample.replace(index).is_none() => {
+                if run.count != 1
+                    || cycle(run)? != (data::timing::Cycle::Six, data::timing::ExposureKind::Read)
+                {
+                    return Err(ProfileFault::Profile);
+                }
+            }
+            ("LibraryThreeCue", "publication") if publication.replace(index).is_none() => {}
+            _ => return Err(ProfileFault::Binding),
+        }
+        run.device.clear();
+        run.event_phase.clear();
+    }
+    let sample = sample.ok_or(ProfileFault::Binding)?;
+    let publication = publication.ok_or(ProfileFault::Binding)?;
+    if sample >= publication {
+        return Err(ProfileFault::Binding);
+    }
+    let mut whole = admit(&profile, "AdjacentContactRetry", [26, 162], false)?;
+    whole
+        .runs
+        .get_mut(publication)
+        .ok_or(ProfileFault::Binding)?
+        .effect = TemplateEffect::Publish(port);
+    let remainder = whole
+        .runs
+        .split_off(sample.checked_add(1).ok_or(ProfileFault::Profile)?);
+    Ok([whole, Template { runs: remainder }])
 }
 
 fn admit(

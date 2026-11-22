@@ -54,7 +54,12 @@ fn read_control(native: &Path) -> Controllers {
     toml::from_str(std::str::from_utf8(&bytes).unwrap()).unwrap()
 }
 
-fn observe_first_return(case: &Case, admitted: &mut AdmittedCase, controller: &Controller) {
+fn observe_first_return(
+    case: &Case,
+    admitted: &mut AdmittedCase,
+    controller: &Controller,
+    check_checkpoints: bool,
+) {
     let OwnedState::Frame(origin) = admitted.production.state() else {
         panic!("frame production");
     };
@@ -67,12 +72,17 @@ fn observe_first_return(case: &Case, admitted: &mut AdmittedCase, controller: &C
         controller.origin
     );
     let cut = case.first_cut().unwrap();
-    let ProductionOutputs::Frame(outputs) = admitted
-        .inputs
-        .advance(&mut admitted.production, cut)
-        .unwrap()
-    else {
-        panic!("frame outputs");
+    let outputs = if check_checkpoints {
+        advance_first_return_with_checkpoint_controls(admitted, controller.origin[0])
+    } else {
+        let ProductionOutputs::Frame(outputs) = admitted
+            .inputs
+            .advance(&mut admitted.production, cut)
+            .unwrap()
+        else {
+            panic!("frame outputs");
+        };
+        outputs
     };
     let samples: Vec<_> = outputs
         .events
@@ -1781,7 +1791,7 @@ fn contiguous_native_returns_keep_independent_observations_and_inputs() {
         };
         let original_doors = initial.recurring_player.as_ref().unwrap().doors;
         origin_controls.push(origin_actor_controls(&admitted));
-        observe_first_return(case, &mut admitted, controller);
+        observe_first_return(case, &mut admitted, controller, false);
         compare_continuation(case, &sources, &mut admitted, controller, original_doors);
     }
     assert_eq!(
@@ -1789,4 +1799,302 @@ fn contiguous_native_returns_keep_independent_observations_and_inputs() {
         [([true, true], true); 2],
         "origin actor checkpoint wait/view and live carried wait controls"
     );
+}
+
+#[test]
+#[ignore = "requires pinned native fixtures and player ROM"]
+fn adjacent_native_suffix_restores_interruption_and_controller_tail() {
+    let index = Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
+    let sources = Sources {
+        native: std::env::var_os("SM_AUDIO_NATIVE").unwrap().into(),
+        rom: std::env::var_os("SM_ROM").unwrap().into(),
+        ..Sources::default()
+    };
+    let control = read_control(&sources.native);
+    for (id, controller) in [
+        ("frame/adjacent-actual-return", &control.actual),
+        ("frame/adjacent-held-return", &control.held),
+    ] {
+        let case = index.cases.iter().find(|case| case.id.0 == id).unwrap();
+        let mut admitted = super::admit(case, &sources).unwrap();
+        let changed = id == "frame/adjacent-actual-return";
+        if changed {
+            reject_unqualified_first_controller_tail(&admitted, controller.origin[0]);
+        }
+        observe_first_return(case, &mut admitted, controller, changed);
+        let mut events = Vec::new();
+        let endpoint = admitted.expected.read(case, 2).unwrap();
+        let projected: Vec<Datum> =
+            canonical::from_bytes(&endpoint.fields.first().unwrap().bytes).unwrap();
+        let mut callback_index = 0_usize;
+        let mut interruptions = false;
+        let mut controller_tail = false;
+        loop {
+            let advanced = admitted.production.advance(AdvanceInput::Frame {
+                budget: MasterTicks(256),
+            });
+            let ProductionOutputs::Frame(output) = advanced.unwrap_or_else(|fault| {
+                let OwnedState::Frame(state) = admitted.production.state() else {
+                    panic!("frame state");
+                };
+                panic!(
+                    "{id} stopped at {} with {fault:?}",
+                    state.timing.hardware.now.0
+                );
+            }) else {
+                panic!("frame output");
+            };
+            compare_callback_times(id, &output.events, &projected, &mut callback_index);
+            events.extend(output.events);
+            if output.progress == frame::Progress::Completed {
+                break;
+            }
+            let OwnedState::Frame(state) = admitted.production.state() else {
+                panic!("frame state");
+            };
+            let in_interruption = matches!(
+                state.interruption,
+                frame::interruption_caller::Stage::Charging(_)
+            );
+            let in_controller_tail = matches!(
+                state.return_progress,
+                frame::frame_return::Stage::Ready {
+                    suffix: frame::suffix_caller::Suffix::ControllerTail { .. },
+                    ..
+                },
+            );
+            if (in_interruption && !interruptions) || (in_controller_tail && !controller_tail) {
+                if in_controller_tail && id == "frame/adjacent-actual-return" {
+                    reject_changed_controller_word(&admitted, state.clone(), controller.first[0]);
+                    let mut stale_builder = state.clone();
+                    let frame::frame_return::Stage::Ready { builder, .. } =
+                        &mut stale_builder.return_progress
+                    else {
+                        panic!("finalized builder");
+                    };
+                    *builder.backing.last_mut().unwrap() ^= 1;
+                    reject_native_checkpoint(&admitted, stale_builder);
+                }
+                let changed_work = state.clone();
+                restore_held_work(&mut admitted, changed_work);
+                interruptions |= in_interruption;
+                controller_tail |= in_controller_tail;
+            }
+        }
+        assert!(interruptions && controller_tail);
+        assert_observation_eq!(
+            native_controller(&admitted.production),
+            Some(controller.second)
+        );
+        let output = ProductionOutputs::Frame(frame::Outputs {
+            progress: frame::Progress::Completed,
+            events,
+        });
+        let expected = admitted.expected.read(case, 2).unwrap();
+        let actual = admitted
+            .actual
+            .accept(&admitted.inputs, &admitted.production, output, 2)
+            .unwrap();
+        compared(2, &expected.fields, &actual).unwrap();
+        assert_eq!(admitted.actual.publication_count(), 4_590);
+        let complete = admitted.production.save().unwrap();
+        let restored = Production::restore(&complete, admitted.content, admitted.rules).unwrap();
+        assert_observation_eq!(restored.save().unwrap(), complete);
+    }
+}
+
+fn advance_first_return_with_checkpoint_controls(
+    admitted: &mut AdmittedCase,
+    prior: u16,
+) -> frame::Outputs {
+    use frame::{frame_return::Stage, suffix_caller::Suffix};
+    let mut events = Vec::new();
+    let mut checked_builder = false;
+    let mut checked_controller = false;
+    loop {
+        let ProductionOutputs::Frame(output) = admitted
+            .production
+            .advance(AdvanceInput::Frame {
+                budget: MasterTicks(128),
+            })
+            .unwrap()
+        else {
+            panic!("frame outputs");
+        };
+        events.extend(output.events);
+        if output.progress == frame::Progress::Completed {
+            assert!(checked_builder && checked_controller);
+            return frame::Outputs { events, ..output };
+        }
+        let OwnedState::Frame(state) = admitted.production.state() else {
+            panic!("frame state");
+        };
+        if !checked_builder && matches!(state.return_progress, Stage::Finalizing(_)) {
+            let mut altered = state.clone();
+            let Stage::Finalizing(builder) = &mut altered.return_progress else {
+                panic!("finalizing builder");
+            };
+            *builder.backing.last_mut().unwrap() ^= 1;
+            reject_native_checkpoint(admitted, altered);
+            checked_builder = true;
+        }
+        if !checked_controller
+            && let Stage::Ready {
+                suffix: Suffix::Video { controller, .. },
+                ..
+            } = &state.return_progress
+            && controller.word().is_some()
+        {
+            reject_changed_controller_word(admitted, state.clone(), prior);
+            let mut altered = state.clone();
+            let Stage::Ready {
+                suffix: Suffix::Video { sampled, .. },
+                ..
+            } = &mut altered.return_progress
+            else {
+                panic!("video body");
+            };
+            *sampled = sampled.checked_sub(1).unwrap();
+            reject_native_checkpoint(admitted, altered);
+            let saved = admitted.production.save().unwrap();
+            admitted.production =
+                Production::restore(&saved, admitted.content.clone(), admitted.rules.clone())
+                    .unwrap();
+            assert_observation_eq!(admitted.production.save().unwrap(), saved);
+            checked_controller = true;
+        }
+    }
+}
+
+fn reject_unqualified_first_controller_tail(admitted: &AdmittedCase, held: u16) {
+    use game::production::timing::{PadChange, PhysicalPad};
+
+    assert_ne!(held, 0);
+    let OwnedState::Frame(state) = admitted.production.state() else {
+        panic!("frame production");
+    };
+    let mut state = state.clone();
+    state.timing.hardware.controller.pending_pad.clear();
+    let at = state.timing.hardware.now;
+    let mut trial = Production::admit(
+        ProductionSeed::Frame(state),
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    trial
+        .schedule_frame_pad_changes(&[PadChange {
+            at,
+            pad: PhysicalPad(held),
+        }])
+        .unwrap();
+    loop {
+        let OwnedState::Frame(state) = trial.state() else {
+            panic!("frame production");
+        };
+        let in_nmi = matches!(
+            state.return_progress,
+            frame::frame_return::Stage::Ready {
+                suffix: frame::suffix_caller::Suffix::Video { .. },
+                ..
+            }
+        );
+        let before = in_nmi.then(|| trial.save().unwrap());
+        match trial.advance(AdvanceInput::Frame {
+            budget: MasterTicks(256),
+        }) {
+            Ok(ProductionOutputs::Frame(output)) => {
+                assert_ne!(output.progress, frame::Progress::Completed);
+            }
+            Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::NativeReturnPreparation,
+            ))) => {
+                assert_observation_eq!(trial.save().unwrap(), before.unwrap());
+                let OwnedState::Frame(state) = trial.state() else {
+                    panic!("frame production");
+                };
+                assert_observation_eq!(state.timing.hardware.controller.words[0], held);
+                break;
+            }
+            _ => panic!("first controller control did not reach the native input fence"),
+        }
+    }
+}
+
+fn reject_changed_controller_word(admitted: &AdmittedCase, mut state: Box<State>, prior: u16) {
+    #[derive(canonical::Canonical)]
+    struct Read {
+        low: Option<u8>,
+        high: Option<u8>,
+    }
+
+    use frame::suffix_caller::Suffix;
+    let frame::frame_return::Stage::Ready {
+        suffix: Suffix::Video { controller, .. } | Suffix::ControllerTail { controller, .. },
+        ..
+    } = &mut state.return_progress
+    else {
+        panic!("controller tail");
+    };
+    let actual = controller.word().unwrap();
+    assert_ne!(actual, prior);
+    let changed = [0x0080_u16, 0x0100, 0x0200]
+        .into_iter()
+        .find(|word| *word != prior && *word != actual)
+        .unwrap();
+    let [low, high] = changed.to_le_bytes();
+    *controller = canonical::from_bytes(&canonical::to_bytes(&Read {
+        low: Some(low),
+        high: Some(high),
+    }))
+    .unwrap();
+    assert_eq!(controller.word(), Some(changed));
+    reject_native_checkpoint(admitted, state);
+}
+
+fn reject_native_checkpoint(admitted: &AdmittedCase, state: Box<State>) {
+    assert!(matches!(
+        Production::admit(
+            ProductionSeed::Frame(state),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        ),
+        Err(game::production::AdmissionFault::Frame(fault))
+            if *fault == frame::Fault::InvalidPlayerEntry
+    ));
+}
+
+fn restore_held_work(admitted: &mut AdmittedCase, mut changed_work: Box<State>) {
+    let run = changed_work
+        .timing
+        .work
+        .last_mut()
+        .unwrap()
+        .profile
+        .runs
+        .first_mut()
+        .unwrap();
+    run.exposure.poll_before = !run.exposure.poll_before;
+    reject_native_checkpoint(admitted, changed_work);
+    let saved = admitted.production.save().unwrap();
+    admitted.production =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    assert_observation_eq!(admitted.production.save().unwrap(), saved);
+}
+
+fn compare_callback_times(
+    case: &str,
+    events: &[game::production::timing::Event],
+    projected: &[Datum],
+    callback_index: &mut usize,
+) {
+    for event in super::super::frame::project(events).unwrap() {
+        let expected = projected.get(*callback_index).unwrap();
+        assert_eq!(
+            (event.at, event.class),
+            (expected.at, expected.class),
+            "{case} callback {callback_index}"
+        );
+        *callback_index = callback_index.checked_add(1).unwrap();
+    }
 }

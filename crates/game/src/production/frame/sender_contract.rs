@@ -3,6 +3,7 @@
 use super::{Senders, sender_stage::Receipt};
 use audio_transport::{CueId, Request, SenderProgress, SenderState, SoundGroup};
 use canonical::Canonical;
+use data::timing::{Profile, Template};
 use std::collections::VecDeque;
 
 #[cfg(test)]
@@ -58,7 +59,7 @@ impl Current {
 pub struct Contract {
     group: SoundGroup,
     body: data::timing::Template,
-    tail: data::timing::Template,
+    pub(super) tail: data::timing::Template,
 }
 
 /// Actual current publications bound to the whole qualified physical service.
@@ -85,6 +86,78 @@ pub struct PhysicalContent {
     pub ambient: Contract,
     /// Contact service and its caller continuation.
     pub contact: Contract,
+    /// Companion scope for an actual reply to an already delivered Contact cue.
+    pub contact_retry: Option<ContactRetry>,
+}
+
+/// Bounded native Contact retry with an independently admitted incoming sample.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ContactRetry {
+    pub(super) prefix: Profile,
+    remainder: Template,
+    pub(super) reply: Request,
+}
+
+impl ContactRetry {
+    pub(super) const SAMPLE: u64 = 58;
+    const PREFIX: u64 = 62;
+
+    /// Bind both physical portions and the actual at-use external input.
+    /// # Errors
+    /// Invalid exposure/split, output port or reply arm.
+    pub fn new(prefix: &Template, remainder: Template, reply: Request) -> Result<Self, Fault> {
+        if milestones(prefix)? != (Self::PREFIX, None)
+            || milestones(&remainder)? != (100, Some(42))
+            || reply != Request::Absent
+        {
+            return Err(Fault::Profile);
+        }
+        Ok(Self {
+            prefix: prefix.bind(&[]).map_err(|_| Fault::Profile)?,
+            remainder,
+            reply,
+        })
+    }
+
+    pub(super) fn qualify(
+        &self,
+        receipt: &Receipt,
+        queues: &Queues,
+        binding: super::sender_stage::CueBinding,
+        caller_tail: &Template,
+    ) -> Result<Qualified, Fault> {
+        let chosen = receipt.chosen.result.as_ref().ok_or(Fault::Receipt)?;
+        let cue = CueId::Footstep;
+        if receipt.group != SoundGroup::Contact
+            || receipt.before != SenderProgress::AwaitCue(cue)
+            || receipt.reply != self.reply
+            || receipt.chosen.observation.is_some()
+            || !receipt.queue.is_empty()
+            || queues.contact.positions() != [1, 1]
+            || !chosen.queue.is_empty()
+            || chosen.progress != SenderProgress::AwaitCue(cue)
+            || chosen.completion.0 != std::ops::Add::add(&receipt.chosen.origin.0, 162_u64)
+            || chosen.presentation.as_ref().is_none_or(|(at, request)| {
+                at.0 != std::ops::Add::add(&receipt.chosen.origin.0, 104_u64)
+                    || *request != Request::Cue(cue)
+            })
+            || binding.cue != cue
+            || binding.port.output_class() != Ok(2)
+        {
+            return Err(Fault::Receipt);
+        }
+        let write = data::timing::DeviceWrite {
+            port: binding.port,
+            value: binding.value,
+            effect: data::timing::Publication::Downstream,
+        };
+        Ok(Qualified {
+            body: self.remainder.bind(&[write]).map_err(|_| Fault::Profile)?,
+            tail: caller_tail.bind(&[]).map_err(|_| Fault::Profile)?,
+            publication: Some(104),
+            completion: 162,
+        })
+    }
 }
 
 fn milestones(template: &data::timing::Template) -> Result<(u64, Option<u64>), Fault> {
@@ -225,9 +298,33 @@ impl Admission {
         current.validate()?;
         senders.validate().map_err(|_| Fault::Receipt)?;
         queues.validate(senders)?;
+        self.qualify_groups(senders, false)
+    }
+
+    pub(super) fn qualify_retry(
+        &self,
+        senders: &Senders,
+        queues: &Queues,
+        current: Current,
+    ) -> Result<Profile, Fault> {
+        current.validate()?;
+        senders.validate().map_err(|_| Fault::Receipt)?;
+        queues.validate(senders)?;
+        if !senders.contact.0.queue.is_empty() || queues.contact.positions() != [1, 1] {
+            return Err(Fault::Receipt);
+        }
+        self.qualify_groups(senders, true)
+    }
+
+    fn qualify_groups(&self, senders: &Senders, retry: bool) -> Result<Profile, Fault> {
         for group in [SoundGroup::Action, SoundGroup::Ambient, SoundGroup::Contact] {
             let sender = sender(senders, group);
-            if sender.progress != SenderProgress::Ready || sender.pending.is_some() {
+            let required = if retry && group == SoundGroup::Contact {
+                SenderProgress::AwaitCue(CueId::Footstep)
+            } else {
+                SenderProgress::Ready
+            };
+            if sender.progress != required || sender.pending.is_some() {
                 return Err(Fault::Receipt);
             }
         }

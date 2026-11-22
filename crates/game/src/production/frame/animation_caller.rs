@@ -411,9 +411,23 @@ impl State {
                     return Err(InvalidPlayerEntry);
                 }
                 if !self.publications.original_interval() {
-                    self.countdown_scene_offer(content, rules)
+                    let (_, in_nmi) = self
+                        .gameplay_publications()
                         .map_err(|_| InvalidPlayerEntry)?;
-                    let inputs = self
+                    if !in_nmi {
+                        self.countdown_scene_offer(content, rules)
+                            .map_err(|_| InvalidPlayerEntry)?;
+                    }
+                    let mut at_animation = self.clone();
+                    if let super::interruption_caller::Stage::Complete(before) = &self.interruption
+                    {
+                        at_animation.movement = before.as_ref().clone();
+                        at_animation.playing_figure = done.receipt.playing;
+                        if let Some(sender) = &self.sender_history {
+                            sender.use_in_history(&mut at_animation);
+                        }
+                    }
+                    let inputs = at_animation
                         .fresh_animation_inputs(content)
                         .map_err(|_| InvalidPlayerEntry)?;
                     if !Self::retained_inputs_match(&done.receipt, inputs, rules) {

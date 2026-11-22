@@ -125,9 +125,11 @@ impl State {
             .equipment;
         let actor = remaining.0.actors.as_ref().ok_or_else(missing)?;
         let health = self.health.as_ref().ok_or_else(missing)?;
-        health
-            .at_animation(content.health.as_ref().ok_or_else(missing)?, actor)
+        self.energy_for_animation(content, actor)
             .map_err(|_| missing())?;
+        if health.maintained() {
+            return Err(missing());
+        }
         if equipment[types::Item::VariaSuit] || equipment[types::Item::GravitySuit] {
             return Err(missing());
         }
@@ -170,17 +172,7 @@ impl State {
     }
 
     fn maintenance_current_holds(&self, receipt: &Receipt, content: &Content) -> bool {
-        self.health.as_ref().is_some_and(|health| {
-            health.state() == &receipt.health_before.0
-                && content
-                    .health
-                    .as_ref()
-                    .is_some_and(|admission| health.validate_origin(admission).is_ok())
-        }) && self.countdown.holds(self)
-            && matches!(self.countdown, countdown_caller::Stage::Complete { offer, .. } if offer == receipt.scene)
-            && self
-                .revalidate_countdown_scene_at_ceres(content, receipt.scene)
-                .is_ok()
+        self.maintenance_receipt(content).as_ref() == Ok(receipt)
     }
 
     pub(super) fn complete_maintenance(

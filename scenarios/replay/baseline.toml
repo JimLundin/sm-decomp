@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "05f212e5b34664e8aeb80c10058be1a583f46903a80bc44ee7130559dcb1396a"
+index_sha256 = "eaf9c690a21279788da3507c945d9679ca05f08f1033b4b60c466bdaa558731f"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -1137,3 +1137,39 @@ null_fields = 0
 restorations = 1
 pending_boundaries = 2
 pending_restorations = 2
+
+[[case]]
+id = "frame/adjacent-actual-return"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "2af7257e6ee52bb603d14bd1906480a680bb6f3a47a3995f97e6fffcdf89435c"
+
+[case.counts]
+cuts = 2
+fields = 26
+outputs = 4590
+publications = 4590
+replies = 0
+null_cuts = 0
+null_fields = 18
+restorations = 2
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/adjacent-held-return"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "fa4c169457f4da3dac1510c69b6e8dc1441b2103711113aab386fa2844ae29f4"
+
+[case.counts]
+cuts = 2
+fields = 26
+outputs = 4590
+publications = 4590
+replies = 0
+null_cuts = 0
+null_fields = 18
+restorations = 2
+pending_boundaries = 0
+pending_restorations = 0

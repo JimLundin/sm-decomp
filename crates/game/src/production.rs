@@ -504,11 +504,7 @@ impl Production {
                 state.current_clip(&content.appearance)?;
                 state.validate_committed_actors(content)?;
                 state.validate_carried_health(content)?;
-                state.validate_grounded_checkpoint(content, rules)?;
-                state.validate_hud_checkpoint(content, rules)?;
-                state.validate_scene_checkpoint(content)?;
-                state.validate_countdown_checkpoint(content, rules)?;
-                state.validate_animation_checkpoint(content, rules)?;
+                state.validate_opportunity(content, rules)?;
                 OwnedState::Frame(state)
             }
             (

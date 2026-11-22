@@ -452,5 +452,24 @@ The captured Ceres read independently qualifies the scene through that use. See 
 [reviewed baseline](../scenarios/replay/baseline.toml). The
 [adjacent native fixture](../tools/ci/fetch_retained_haze.sh) provides ordered callbacks.
 The [retained fixture installer](../tools/ci/fetch_retained_frame.sh) also provides the
-independently qualified CPU profile and playhead comparison. The second full callback stream, second
-controller latch, later Health maintenance and second requested NMI return remain unverified.
+independently qualified CPU profile and playhead comparison.
+
+The complete adjacent cases use the same pad schedules and carry the original admission through
+two requested NMI returns. The current PoseInput clears bomb direction. Actual Environment,
+Run, stopped Down, Animation and both returned IRQs qualify the carried inactive interruption
+state. Movement then fits the current pose and Appearance reads that figure for Drawing. The
+camera inputs validate actual centres from Movement and Camera history. Health runs its later
+maintenance from carried State, which Drawing and the late HUD consume. The live Sprite Builder
+publishes the finalized nine-sprite list and current art selections at NMI.
+
+The Contact Sender consumes the independently supplied incoming reply at its physical read
+edge and republishes the pending cue using the clean Sender. Scope excludes the resident SMP
+producer and its clock join. After actual JOY samples, the controller history selects the
+remaining handler work. Changed input resets the repeat timer. Held nonneutral input takes the
+nonexpired decremented timer path and returns six ticks later. Each arm compares 2,295 callbacks
+and 13 terminal fields at each of its two cuts. The indexed checkpoint resumes from the first
+actual return. The native fixture test also restores during Interruption charge and the
+controller tail, then checks the completed controller words and canonical State. The
+[retained fixture installer](../tools/ci/fetch_retained_frame.sh) fetches the input contracts.
+The complete callback streams and endpoint observations come from the independent adjacent
+native fixture.

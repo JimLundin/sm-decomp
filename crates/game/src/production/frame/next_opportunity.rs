@@ -58,7 +58,11 @@ impl State {
             .ok_or_else(missing)?
             .begin_opportunity();
         self.sprite_builder = Some(builder.clone());
-        self.retire_work()?;
+        let carry_tail = content
+            .interruption
+            .as_ref()
+            .is_some_and(super::interruption_caller::Contract::admits_adjacent);
+        self.retire_work(carry_tail)?;
         self.scene_countdown =
             scene.map(|owner| Model(owner.begin_adjacent(self.publications.interval_start())));
         self.play_time = super::play_time::Stage::from_origin(play_time);
@@ -74,7 +78,7 @@ impl State {
         Ok(())
     }
 
-    fn retire_work(&mut self) -> Result<(), ProductionFault> {
+    fn retire_work(&mut self, carry_tail: bool) -> Result<(), ProductionFault> {
         self.appearance.retire_frame().map_err(|_| missing())?;
         self.movement = super::movement::Movement::new(*self.movement.state());
         self.hud = super::hud::Hud::new(self.hud.state().clone());
@@ -99,7 +103,10 @@ impl State {
         self.inside_completed = None;
         self.graphical_contacts = super::rendering_stage::Contacts::default();
         self.rendering = super::rendering_stage::Stage::default();
-        self.drawing_origins = None;
+        if !carry_tail {
+            self.drawing_origins = None;
+            self.room_tail_origin = None;
+        }
         self.sound_offer_current = None;
         self.movement_inputs = None;
         self.world = None;
@@ -114,7 +121,6 @@ impl State {
         self.sender_progress = super::sender_caller::Cursor::default();
         self.sender_history = None;
         self.late_hud = super::late_hud::Stage::default();
-        self.room_tail_origin = None;
         self.room_tail = super::room_tail::Stage::default();
         self.frame_tail = super::frame_tail::Stage::default();
         self.animation = super::animation_caller::Stage::default();

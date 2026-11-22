@@ -67,6 +67,28 @@ impl EnergyRead {
     }
 }
 
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+struct ControllerRepeat {
+    initial_delay: u16,
+    timer: u16,
+}
+
+impl ControllerRepeat {
+    fn after_sample(self, held: u16, previous: u16) -> Option<(Self, bool)> {
+        if held == 0 || held != previous {
+            return Some((
+                Self {
+                    timer: self.initial_delay,
+                    ..self
+                },
+                false,
+            ));
+        }
+        let timer = self.timer.wrapping_sub(1);
+        (timer != 0).then_some((Self { timer, ..self }, true))
+    }
+}
+
 /// Current and prior controller and drawing quantities retained at their actual uses.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct History {
@@ -78,6 +100,7 @@ pub struct History {
     auto_jump_timer: u16,
     jump: u16,
     native_latch: u16,
+    controller_repeat: Option<ControllerRepeat>,
     progress: Progress,
 }
 
@@ -103,6 +126,7 @@ impl History {
             auto_jump_timer,
             jump,
             native_latch,
+            controller_repeat: None,
             progress: Progress::Initial,
         }
     }
@@ -141,9 +165,29 @@ impl History {
         true
     }
 
-    pub(super) const fn capture_nmi(&mut self, held: u16) -> bool {
+    /// Admit the bounded repeat timer and initial delay from the same original input image.
+    pub const fn admit_controller_repeat(&mut self, initial_delay: u16, timer: u16) {
+        self.controller_repeat = Some(ControllerRepeat {
+            initial_delay,
+            timer,
+        });
+    }
+
+    pub(super) fn controller_tail_repeats(&self, held: u16) -> Option<bool> {
+        self.controller_repeat?
+            .after_sample(held, self.native_latch)
+            .map(|(_, repeats)| repeats)
+    }
+
+    pub(super) fn capture_nmi(&mut self, held: u16) -> bool {
         if !matches!(self.progress, Progress::Finalized) {
             return false;
+        }
+        if let Some(repeat) = self.controller_repeat {
+            let Some((next, _)) = repeat.after_sample(held, self.native_latch) else {
+                return false;
+            };
+            self.controller_repeat = Some(next);
         }
         self.pressed = newly_pressed(held, self.native_latch);
         self.held = held;

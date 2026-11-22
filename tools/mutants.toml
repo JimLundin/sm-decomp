@@ -587,3 +587,21 @@ after = "let _ = audio;"
 case = "gameplay-sound/shot-opening-no-fire"
 cut = 157
 field = "live-sound.order"
+
+[[fault]]
+name = "adjacent-held-controller-uses-reset-tail"
+responsibility = "frame"
+file = "crates/game/src/production/frame/native_return.rs"
+before = '''        Ok(if repeats {
+            &self.held_repeat
+        } else {
+            &self.reset
+        })'''
+after = '''        Ok(if repeats {
+            &self.reset
+        } else {
+            &self.reset
+        })'''
+case = "frame/adjacent-held-return"
+cut = 2
+field = "frame.time"

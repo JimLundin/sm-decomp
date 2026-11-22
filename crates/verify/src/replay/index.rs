@@ -170,6 +170,19 @@ pub struct NativeReturns {
     pub path: PathBuf,
     /// Exact supplement manifest SHA-256.
     pub sha256: String,
+    /// Independent causal input qualification for the adjacent frame tail.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub continuation: Option<NativeContinuation>,
+}
+
+/// Pinned causal input content for the next ordinary tail.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct NativeContinuation {
+    /// Manifest below the replay native fixture directory.
+    pub path: PathBuf,
+    /// Exact input manifest digest.
+    pub sha256: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -1897,6 +1910,10 @@ impl Case {
                     || returns.first_cut >= case.end.cut_inclusive
                     || returns.path.as_os_str().is_empty()
                     || !valid_hash(&returns.sha256)
+                    || returns.continuation.as_ref().is_some_and(|continuation| {
+                        continuation.path.as_os_str().is_empty()
+                            || !valid_hash(&continuation.sha256)
+                    })
             })
             || !scope_valid(case)
             || case.borrowed.iter().any(|borrowed| {

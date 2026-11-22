@@ -1,6 +1,9 @@
 //! Normal Drawing after returned Health and Camera, with one live sprite builder.
 
-use super::{Caller, Content, Dependency, State, appearance_caller, drawing_owners};
+use super::{
+    Caller, Content, Dependency, State, appearance_caller, drawing_owners,
+    rendering_stage::{NormalDrawingReceipt, ShownStep},
+};
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
 use data::timing::{Profile, Template, TemplateEffect};
@@ -14,6 +17,23 @@ pub struct Contract {
     bridge: Profile,
     drawing: Profile,
     rendering: super::rendering_stage::Content,
+    adjacent: Option<Adjacent>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Adjacent {
+    drawing: Profile,
+    figure: samus_appearance::Figure,
+    step: ShownStep,
+}
+
+impl Adjacent {
+    fn accepts_picture(&self, receipt: &NormalDrawingReceipt) -> bool {
+        receipt.figure.0 == self.figure
+            && receipt.shown_step == self.step
+            && receipt.first_byte == 0
+            && receipt.pieces == 9
+    }
 }
 
 impl Contract {
@@ -25,21 +45,106 @@ impl Contract {
         drawing: &Template,
         rendering: super::rendering_stage::Content,
     ) -> Result<Self, ProductionFault> {
-        let bind = |template: &Template| {
-            if template
-                .runs
-                .iter()
-                .any(|run| run.effect != TemplateEffect::None)
-            {
-                return Err(missing());
-            }
-            template.bind(&[]).map_err(|_| missing())
-        };
         Ok(Self {
-            bridge: bind(bridge)?,
-            drawing: bind(drawing)?,
+            bridge: Self::bind(bridge)?,
+            drawing: Self::bind(drawing)?,
             rendering,
+            adjacent: None,
         })
+    }
+
+    fn bind(template: &Template) -> Result<Profile, ProductionFault> {
+        if template
+            .runs
+            .iter()
+            .any(|run| run.effect != TemplateEffect::None)
+        {
+            return Err(missing());
+        }
+        template.bind(&[]).map_err(|_| missing())
+    }
+
+    /// Bind the whole checked Drawing envelope for an exact cannon-free picture.
+    /// # Errors
+    /// Rejects device effects, invalid work and missing imported pose bindings.
+    pub fn admit_adjacent(
+        &mut self,
+        drawing: &Template,
+        figure: samus_appearance::Figure,
+        step: ShownStep,
+    ) -> Result<(), ProductionFault> {
+        self.adjacent = Some(Adjacent {
+            drawing: Self::bind(drawing)?,
+            figure,
+            step,
+        });
+        Ok(())
+    }
+
+    fn drawing_profile(
+        &self,
+        state: &State,
+        receipt: Option<&NormalDrawingReceipt>,
+    ) -> Result<&Profile, ProductionFault> {
+        if state.publications.original_interval() {
+            return Ok(&self.drawing);
+        }
+        let alternate = self.adjacent.as_ref().ok_or_else(missing)?;
+        let (samus, outcome) = state.movement.finished().ok_or_else(missing)?;
+        let figure = state.playing_figure.0;
+        let receipt = receipt.ok_or_else(missing)?;
+        if samus.pose != figure.pose
+            || outcome.sprite != figure.sprite
+            || alternate.figure != figure
+            || !alternate.accepts_picture(receipt)
+        {
+            return Err(missing());
+        }
+        Ok(&alternate.drawing)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use canonical::model::Model;
+    use types::{Action, Aim, Body, Facing, Gun, Legs, Pose, Sprite};
+
+    #[test]
+    fn adjacent_drawing_requires_the_qualified_step_of_the_same_figure() {
+        let figure = samus_appearance::Figure {
+            pose: Pose {
+                body: Body::Upright,
+                action: Action::Running,
+                facing: Facing::Right,
+                aim: Aim::Forward,
+                gun: Gun::Stowed,
+                legs: Legs::Striding,
+            },
+            sprite: Sprite::Plain,
+        };
+        let qualified = Adjacent {
+            drawing: Profile { runs: Vec::new() },
+            figure,
+            step: ShownStep(1),
+        };
+        let mut receipt = NormalDrawingReceipt {
+            figure: Model(figure),
+            shown_step: qualified.step,
+            centre: [0, 0],
+            premises: super::super::rendering_stage::Premises {
+                camera: [0, 0],
+                shake: [0, 0],
+                normal_visible: true,
+                no_additional_selected_pieces: true,
+                unselected_draws_empty: true,
+            },
+            first_byte: 0,
+            pieces: 9,
+        };
+        assert!(qualified.accepts_picture(&receipt));
+        receipt.shown_step = ShownStep(2);
+        assert!(!qualified.accepts_picture(&receipt));
     }
 }
 
@@ -208,7 +313,12 @@ impl State {
                     energy: inputs.energy,
                 };
                 self.timing
-                    .begin(DRAWING, contract.drawing.clone())
+                    .begin(
+                        DRAWING,
+                        contract
+                            .drawing_profile(self, pending.aggregate.receipt())?
+                            .clone(),
+                    )
                     .map_err(ProductionFault::FrameHardware)?;
                 self.s6_drawing.0 = Progress::Charging(Box::new(pending));
             }
@@ -216,7 +326,10 @@ impl State {
                 if pending.energy != inputs.energy || pending.builder != *inputs.builder {
                     return Err(missing());
                 }
-                self.validate_drawing_profile(DRAWING, &contract.drawing)?;
+                self.validate_drawing_profile(
+                    DRAWING,
+                    contract.drawing_profile(self, pending.aggregate.receipt())?,
+                )?;
             }
             Progress::Complete { .. } => return Err(missing()),
         }
