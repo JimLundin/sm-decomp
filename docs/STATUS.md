@@ -61,6 +61,22 @@ The actor's geometry and hit selection, the Warning receiver, and Drawing's hurt
 rendering producers require separate admission. The scope includes two auxiliary cuts and
 adds no played-alone frames.
 
+## Three consecutive requested returns
+
+The [opening clock installer](../tools/ci/fetch_opening_clock.sh) adds the scoped source and
+comparison packets to the retained Frame, Health and Steady Haze fixtures.
+`frame/opening-three-native-returns` starts from one authenticated native admission and
+uses the admitted movie pad presentations. It compares the absolute clocks, 39 endpoint
+fields and 6,916 ordered callbacks over three native returns. The comparison includes
+two distinct Contact CPU-port samples. Each completed cut is reopened through production.
+The frozen control completes no cuts.
+
+The physical Wait owner retains the suspended poll cursor. The next acknowledgment charges
+the pending busy branch only when that cursor reached the relevant read. Contact consumes
+its independently admitted matching publication only at the actual later read after the live
+retry. The receiver's resident execution, power-on history and the full opening movie remain
+outside this witness.
+
 ## The ratchets and floors
 
 The replay baseline binds the exact index bytes to each measured result, comparison counters

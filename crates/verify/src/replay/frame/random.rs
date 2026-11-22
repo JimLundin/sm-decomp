@@ -15,7 +15,7 @@ pub(in crate::replay) struct Source {
 #[serde(deny_unknown_fields)]
 struct Capture {
     format: u16,
-    draw: [Draw; 2],
+    draw: Vec<Draw>,
 }
 
 #[derive(Deserialize)]
@@ -44,10 +44,16 @@ impl Source {
         let bytes = super::read_expected(&self.path, self.sha256, cut)?;
         let text = std::str::from_utf8(&bytes).map_err(|_| fault())?;
         let capture: Capture = toml::from_str(text).map_err(|_| fault())?;
-        let [first, second] = &capture.draw;
         if capture.format != 1
-            || [first.cut, second.cut] != [1, 2]
-            || first.complete_tick >= second.complete_tick
+            || !matches!(capture.draw.len(), 2 | 3)
+            || !capture
+                .draw
+                .iter()
+                .map(|draw| draw.cut)
+                .eq(1..=u64::try_from(capture.draw.len()).map_err(|_| fault())?)
+            || !capture
+                .draw
+                .is_sorted_by(|first, second| first.complete_tick < second.complete_tick)
             || capture.draw.iter().any(|draw| {
                 !draw.write_ticks.is_sorted()
                     || !draw.sample_ticks.is_sorted()

@@ -260,12 +260,19 @@ fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
         } else {
             case.expectations.fields.len()
         };
+        // The bounded opening compares one CPU-port read on each recurring interval.
+        // Count those reads separately from the ordinary hardware callbacks.
+        let replies = if case.opening_clock() {
+            [0, 0, 1, 2].get(counts.cuts).copied()?
+        } else {
+            0
+        };
         // One declared stream contains every observed publication at this return.
         return Some(
             fields.checked_mul(counts.cuts) == Some(counts.fields)
                 && counts.outputs == counts.publications
                 && (counts.outputs == 0) == (counts.cuts == 0)
-                && counts.replies == 0
+                && counts.replies == replies
                 && counts.pending_boundaries == 0,
         );
     }
@@ -398,11 +405,38 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{Baseline, BaselineFault, Claim, Floor, valid_counts};
+    use super::{Baseline, BaselineFault, Claim, Floor, expanded_counts, valid_counts};
     use crate::replay::{
         index::IndexSnapshot,
         result::{CaseResult, Counts, Outcome},
     };
+
+    #[test]
+    fn native_opening_baseline_counts_cpu_replies_separately() {
+        let index =
+            IndexSnapshot::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let baseline: Baseline =
+            toml::from_str(include_str!("../../../../scenarios/replay/baseline.toml")).unwrap();
+        baseline.validate_index(&index).unwrap();
+        let case = index
+            .index()
+            .cases
+            .iter()
+            .find(|case| case.id.0 == "frame/opening-three-native-returns")
+            .unwrap();
+        let mut floor = baseline
+            .cases
+            .into_iter()
+            .find(|floor| floor.id == case.id)
+            .unwrap();
+        floor.counts.replies = 0;
+        assert!(!valid_counts(case, &floor));
+        floor.counts.cuts = 2;
+        floor.counts.fields = 26;
+        assert_eq!(expanded_counts(case, &floor.counts), Some(false));
+        floor.counts.replies = 1;
+        assert_eq!(expanded_counts(case, &floor.counts), Some(true));
+    }
 
     fn fixture() -> (IndexSnapshot, Baseline, CaseResult) {
         let text = include_str!("../../../../scenarios/replay/index.toml");

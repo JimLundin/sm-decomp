@@ -400,6 +400,8 @@ pub enum Requirement {
     },
     /// The current shown running step has a non-last hold.
     RunningHold,
+    /// Advance from the current last running frame to the next checked shown step.
+    RunningAdvance,
     /// Actual selected Running figure keeps the already completed playing result.
     RunningInitialization,
 }
@@ -458,6 +460,13 @@ impl PhysicalContract {
         }
     }
 
+    /// Reuse a qualified advance bill for successive checked shown running steps.
+    #[must_use]
+    pub fn for_running_advance(&self) -> Option<Self> {
+        matches!(self.requirement, Requirement::OrdinaryAnimation { .. })
+            .then(|| Self::new(Requirement::RunningAdvance, self.template.clone()))
+    }
+
     /// Qualify full actual current inputs, retained rule/result and immutable content.
     /// `PoseFit` callers conjoin this with their actual movement/body qualifier before one bill.
     /// # Errors
@@ -501,7 +510,8 @@ impl PhysicalContract {
             return Err(Fault::Owner);
         }
         match self.requirement {
-            Requirement::OrdinaryAnimation { step } => {
+            Requirement::OrdinaryAnimation { .. } | Requirement::RunningAdvance => {
+                let step = before.playhead.step;
                 let next = step.next().ok_or(Fault::Sequence)?;
                 let expected_hold = answer
                     .paces
@@ -513,7 +523,7 @@ impl PhysicalContract {
                     || answer.rule != AnimationDecision::ClipPlaying
                     || answer.inputs.figure != receipt.playing.0
                     || answer.inputs.figure.pose.action != types::Action::Running
-                    || before.playhead.step != step
+                    || matches!(self.requirement, Requirement::OrdinaryAnimation { step: required } if required != step)
                     || before.playhead.time_left != samus_appearance::Frames::LAST
                     || before.stage != types::BoostStage::Stage0
                     || answer.inputs.dash != samus_appearance::Dash::On

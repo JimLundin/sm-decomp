@@ -11,6 +11,7 @@ pub struct Publications {
     pub events: Vec<Event>,
     delivered: u64,
     interval: u64,
+    previous_interval: u64,
 }
 
 /// Invalid imported publication progress or out-of-order physical effects.
@@ -32,7 +33,8 @@ pub(super) fn writes_wram(event: &timing::Event) -> bool {
         | timing::EventKind::Interrupt(_)
         | timing::EventKind::ControllerStart
         | timing::EventKind::ControllerEnd
-        | timing::EventKind::ControllerCommitted => false,
+        | timing::EventKind::ControllerCommitted
+        | timing::EventKind::AudioPortRead { .. } => false,
     }
 }
 
@@ -73,6 +75,7 @@ impl Publications {
         if usize::try_from(self.delivered) != Ok(self.events.len()) {
             return Err(PublicationFault::Cursor);
         }
+        self.previous_interval = self.interval;
         self.interval = self.delivered;
         Ok(())
     }
@@ -85,6 +88,10 @@ impl Publications {
         self.interval
     }
 
+    pub(super) const fn previous_was_original(&self) -> bool {
+        self.previous_interval == 0
+    }
+
     pub(super) fn preceding(&self) -> Result<&[Event], PublicationFault> {
         usize::try_from(self.interval)
             .ok()
@@ -92,7 +99,18 @@ impl Publications {
             .ok_or(PublicationFault::Cursor)
     }
 
-    pub(super) fn active(&self) -> Result<&[Event], PublicationFault> {
+    pub(super) fn previous(&self) -> Result<&[Event], PublicationFault> {
+        let start =
+            usize::try_from(self.previous_interval).map_err(|_| PublicationFault::Cursor)?;
+        let end = usize::try_from(self.interval).map_err(|_| PublicationFault::Cursor)?;
+        self.events.get(start..end).ok_or(PublicationFault::Cursor)
+    }
+
+    /// Current opportunity's physical events, in reached hardware order.
+    ///
+    /// # Errors
+    /// The retained interval cursor is outside the event stream.
+    pub fn active(&self) -> Result<&[Event], PublicationFault> {
         usize::try_from(self.interval)
             .ok()
             .and_then(|index| self.events.get(index..))
@@ -105,7 +123,10 @@ impl Publications {
     /// Cursor outside the stream or nonmonotone retained physical time.
     pub fn validate(&self) -> Result<(), PublicationFault> {
         let position = usize::try_from(self.delivered).map_err(|_| PublicationFault::Cursor)?;
-        if self.interval > self.delivered || position > self.events.len() {
+        if self.previous_interval > self.interval
+            || self.interval > self.delivered
+            || position > self.events.len()
+        {
             return Err(PublicationFault::Cursor);
         }
         let mut previous = None;

@@ -51,6 +51,7 @@ impl Admission<'_> {
         let player_entry = frame::PlayerEntryContent {
             pose_input: portion(templates, "S2.PoseInput")?,
             recurring_pose_input: None,
+            recurring_aim_down: None,
             suit_palette: portion(templates, "S2.SuitPalette")?,
             environment: portion(templates, "S2.Environment")?,
             reference_acceleration,
@@ -80,6 +81,7 @@ impl Admission<'_> {
                 interaction: portion(templates, "S2.SamusInteraction")?,
                 actors: portion(templates, "S2.ActorUpdate")?,
                 recurring_actors: None,
+                recurring_waiting_actors: None,
                 sprites: portion(templates, "S2.SpriteObjects")?,
                 contact: portion(templates, "S2.ContactReset")?,
             })

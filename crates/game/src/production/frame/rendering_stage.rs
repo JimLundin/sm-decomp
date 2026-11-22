@@ -50,6 +50,14 @@ pub struct Premises {
     pub unselected_draws_empty: bool,
 }
 
+impl Premises {
+    pub(super) fn horizontal_origin(self, centre: u16) -> i32 {
+        let [camera, _] = self.camera;
+        let [shake, _] = self.shake;
+        crate::intent::on_screen(centre, camera).wrapping_add(i32::from(shake))
+    }
+}
+
 /// Actual selected model owners borrowed at the drawing opportunity.
 pub struct Inputs<'a> {
     /// Current movement authority, including its actual centre and pose.
@@ -352,6 +360,18 @@ impl Content {
             .ok_or(Fault::Content)
     }
 
+    pub(super) fn running_maps(
+        &self,
+        receipt: &NormalDrawingReceipt,
+    ) -> Result<[&data::spritemap::Spritemap; 2], Fault> {
+        let picture = &self
+            .picture(receipt.figure.0, Step(receipt.shown_step.0))?
+            .frame;
+        let top = self.sheet.sprite(picture.top.ok_or(Fault::Content)?);
+        let bottom = self.sheet.sprite(picture.bottom.ok_or(Fault::Content)?);
+        Ok([top.ok_or(Fault::Content)?, bottom.ok_or(Fault::Content)?])
+    }
+
     /// Actual selected immutable tile identities and bytes for the checked upload consumer.
     /// This does not invent native transfer flags, definitions or destination descriptors.
     /// # Errors
@@ -481,8 +501,7 @@ impl Stage {
             movement.state().position.y.pixel().0,
         ];
         let origin = Pair {
-            x: crate::intent::on_screen(centre[0], premises.camera[0])
-                .wrapping_add(i32::from(premises.shake[0])),
+            x: premises.horizontal_origin(centre[0]),
             y: crate::intent::on_screen(centre[1], premises.camera[1])
                 .wrapping_add(i32::from(picture.frame.origin_y))
                 .wrapping_add(i32::from(premises.shake[1])),

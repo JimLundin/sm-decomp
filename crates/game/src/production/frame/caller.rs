@@ -27,6 +27,8 @@ pub struct Content {
     pub haze: data::timing::Template,
     /// Qualified physical head for the live fade settling opportunity.
     pub settling_haze: Option<data::timing::Template>,
+    /// Qualified physical work for the live Steady opportunity with departure inactive.
+    pub steady_haze: Option<super::haze::SteadyProfiles>,
     /// Remaining Haze work after narrow Ready.
     pub haze_tail: data::timing::Template,
     /// Native transfer address of the actual completed bands.
@@ -87,6 +89,8 @@ pub struct Content {
     pub animation: Option<super::appearance_caller::PhysicalContract>,
     /// Independently qualified quiet FX, divisor and CPU envelope in the retained room.
     pub adjacent_animation: Option<super::animation_caller::Adjacent>,
+    /// Independently qualified last-frame advance for the current running clip.
+    pub recurring_animation_advance: Option<super::appearance_caller::PhysicalContract>,
     /// Independently qualified inactive interruption continuation.
     pub interruption: Option<super::interruption_caller::Contract>,
     /// Complete late movement envelopes for the qualified actual pose choice.
@@ -123,6 +127,8 @@ pub struct Content {
     pub scene_countdown: Option<super::countdown_scene::Admission>,
     /// Separately qualified scene preservation and Timer work for the next opportunity.
     pub adjacent_scene_countdown: Option<super::countdown_scene::Admission>,
+    /// The same quiet scene owner preserves through further complete native returns.
+    pub recurring_scene_countdown: bool,
     /// Checked body and cannon content.
     pub movement: crate::production::MovementContent,
     /// Checked semantic figures and clips.
@@ -153,6 +159,8 @@ pub struct PlayerEntryContent {
     pub pose_input: data::timing::Template,
     /// Distinct finite pose work after releasing aim while continuing to run.
     pub recurring_pose_input: Option<data::timing::Template>,
+    /// Live re-aim with Forward and Run already held.
+    pub recurring_aim_down: Option<data::timing::Template>,
     /// Full suit palette preparation.
     pub suit_palette: data::timing::Template,
     /// Full environment preparation.
@@ -670,6 +678,55 @@ pub(super) const LAYERS: WorkId = WorkId(5);
 pub(super) const RANDOM: WorkId = WorkId(6);
 
 impl State {
+    pub(super) fn validate_haze_checkpoint(&self, content: &Content) -> Result<(), super::Fault> {
+        let invalid = || super::Fault::InvalidPlayerEntry;
+        let steady = self.steady_haze(content);
+        let (identity, profile) = match &self.caller {
+            Caller::HazeRunning { work, .. } => {
+                let (selected, profile) = self
+                    .haze
+                    .as_ref()
+                    .ok_or_else(invalid)?
+                    .choose(
+                        Some(&content.haze),
+                        content.settling_haze.as_ref(),
+                        steady.map(|work| &work.head),
+                    )
+                    .map_err(|_| invalid())?;
+                if *work != selected {
+                    return Err(invalid());
+                }
+                (HAZE, profile)
+            }
+            Caller::HazeTail { prepared, .. } => {
+                let template = match prepared.transport {
+                    super::haze::Transport::Warming => &content.haze_tail,
+                    super::haze::Transport::Steady => &steady.ok_or_else(invalid)?.finish,
+                };
+                (
+                    HAZE_TAIL,
+                    super::haze::quiet_profile(template).map_err(|_| invalid())?,
+                )
+            }
+            Caller::AwaitingAcknowledgment { .. }
+            | Caller::Acknowledgment { .. }
+            | Caller::Music { .. }
+            | Caller::MusicRunning { .. }
+            | Caller::Haze { .. }
+            | Caller::LayerBlend { .. }
+            | Caller::LayerBlendRunning { .. }
+            | Caller::Random { .. }
+            | Caller::RandomRunning { .. }
+            | Caller::Preparation { .. }
+            | Caller::Player { .. }
+            | Caller::PlayerContinuation { .. } => return Ok(()),
+        };
+        if !self.has_physical_bill(identity, &profile) {
+            return Err(invalid());
+        }
+        Ok(())
+    }
+
     fn motion_reset_profile(
         &self,
         content: &Content,
@@ -1289,7 +1346,7 @@ impl State {
                 identity @ WorkId(17..=23 | 1000..=1001 | 1003..=1004 | 1100 | 1105..=1106),
             ) => Some(identity),
             timing::WorkKind::Semantic(_)
-            | timing::WorkKind::Wait(_)
+            | timing::WorkKind::Wait(..)
             | timing::WorkKind::Native { .. }
             | timing::WorkKind::Handler { .. } => None,
         });
@@ -1401,6 +1458,9 @@ impl State {
         let template = if let Some(decision) = &pose_input {
             match decision.path {
                 super::pose_input::Path::AimDown => &entry.pose_input,
+                super::pose_input::Path::RecurringAimDown => {
+                    entry.recurring_aim_down.as_ref().ok_or(fault)?
+                }
                 super::pose_input::Path::ReleaseAim => {
                     entry.recurring_pose_input.as_ref().ok_or(fault)?
                 }
@@ -1755,12 +1815,12 @@ impl State {
             .sender_progress
             .active()
             .filter(|identity| active == Some(*identity));
-        let (progress, events) = self
+        let (progress, mut events) = self
             .timing
             .step(budget, &self.transfer_regions())
             .map_err(ProductionFault::FrameHardware)?;
         if let Some(identity) = sender_active {
-            self.process_frame_sender(content, identity, progress, &events)?;
+            self.process_frame_sender(content, identity, progress, &mut events)?;
         }
         self.deliver_hardware_samples(active, &events)?;
         self.publications
@@ -1894,14 +1954,17 @@ impl State {
                     &content.music,
                 )?;
             }
-            Caller::Haze { .. } => super::haze_caller::begin_head(
-                &mut self.caller,
-                &mut self.timing,
-                self.haze.as_ref().ok_or_else(super::haze::missing)?,
-                Some(&content.haze),
-                content.settling_haze.as_ref(),
-                None,
-            )?,
+            Caller::Haze { .. } => {
+                let steady = self.steady_haze(content);
+                super::haze_caller::begin_head(
+                    &mut self.caller,
+                    &mut self.timing,
+                    self.haze.as_ref().ok_or_else(super::haze::missing)?,
+                    Some(&content.haze),
+                    content.settling_haze.as_ref(),
+                    steady.map(|profiles| &profiles.head),
+                )?;
+            }
             Caller::LayerBlend { .. } => super::haze_caller::begin_layers(
                 &mut self.caller,
                 &mut self.timing,
@@ -2209,6 +2272,26 @@ impl State {
         Ok(())
     }
 
+    fn complete_haze_head(&mut self, content: &Content) -> Result<(), ProductionFault> {
+        let haze = self.haze.as_ref().ok_or_else(super::haze::missing)?;
+        let finish = if haze.current().fade == types::haze::HazeFade::Steady {
+            &self
+                .steady_haze(content)
+                .ok_or_else(super::haze::missing)?
+                .finish
+        } else {
+            &content.haze_tail
+        };
+        super::haze_caller::complete_head(
+            &mut self.caller,
+            &mut self.timing,
+            self.haze.as_mut().ok_or_else(super::haze::missing)?,
+            &mut self.content,
+            content.haze_bands_address,
+            finish,
+        )
+    }
+
     fn finish_current_work(
         &mut self,
         progress: timing::Progress,
@@ -2224,14 +2307,7 @@ impl State {
         match progress {
             timing::Progress::Completed(ACKNOWLEDGMENT) => self.complete_acknowledgment()?,
             timing::Progress::Completed(MUSIC) => self.complete_music()?,
-            timing::Progress::Completed(HAZE) => super::haze_caller::complete_head(
-                &mut self.caller,
-                &mut self.timing,
-                self.haze.as_mut().ok_or_else(super::haze::missing)?,
-                &mut self.content,
-                content.haze_bands_address,
-                &content.haze_tail,
-            )?,
+            timing::Progress::Completed(HAZE) => self.complete_haze_head(content)?,
             timing::Progress::Completed(HAZE_TAIL) => {
                 super::haze_caller::complete_finish(
                     &mut self.caller,
@@ -2477,7 +2553,7 @@ impl State {
         Ok(true)
     }
     fn complete_acknowledgment(&mut self) -> Result<(), ProductionFault> {
-        super::opening_prelude::complete_acknowledgment(&mut self.caller)
+        super::opening_prelude::complete_acknowledgment(&mut self.caller, &mut self.timing)
     }
 
     fn complete_music(&mut self) -> Result<(), ProductionFault> {

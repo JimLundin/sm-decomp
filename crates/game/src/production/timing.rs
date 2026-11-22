@@ -97,6 +97,13 @@ pub enum EventKind {
     ControllerEnd,
     /// Next independently supplied pad becomes committed.
     ControllerCommitted,
+    /// An actual audio port input sampled at its physical read edge.
+    AudioPortRead {
+        /// Port sampled by the CPU.
+        port: data::timing::PublicationPort,
+        /// Actual input byte.
+        value: u8,
+    },
 }
 
 /// Ordered physical event with actual retained wall time.
@@ -203,7 +210,7 @@ pub enum WorkKind {
     /// Ordinary actual semantic request.
     Semantic(WorkId),
     /// Hardware busy-poll cadence, completed by actual interrupt admission.
-    Wait(WorkId),
+    Wait(WorkId, WaitCharge),
     /// Native entry preceding an actual admitted handler.
     Native {
         /// Actual interrupt source.
@@ -226,6 +233,53 @@ pub enum WorkKind {
         /// Whether this portion includes the completed native return.
         completion: HandlerCompletion,
     },
+}
+
+/// Actual wall charge contributing to one busy-poll turn.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WaitCharge {
+    started: MasterTicks,
+    stalls: MasterTicks,
+}
+
+impl WaitCharge {
+    const fn new(started: MasterTicks) -> Self {
+        Self {
+            started,
+            stalls: MasterTicks(0),
+        }
+    }
+
+    fn validate(self, at: MasterTicks, cursor: &Cursor) -> Result<(), Fault> {
+        let elapsed =
+            at.0.checked_sub(self.started.0)
+                .ok_or(Fault::InvalidState)?;
+        if Some(elapsed) != cursor.intrinsic.0.checked_add(self.stalls.0) {
+            return Err(Fault::InvalidState);
+        }
+        Ok(())
+    }
+
+    fn register(
+        self,
+        clocks: [MasterTicks; 2],
+        intrinsic: [MasterTicks; 2],
+    ) -> Result<Self, Fault> {
+        let [before, after] = clocks;
+        let [spent, now] = intrinsic;
+        let wall = after.0.checked_sub(before.0).ok_or(Fault::InvalidState)?;
+        let work = now.0.checked_sub(spent.0).ok_or(Fault::InvalidState)?;
+        let stalls = wall.checked_sub(work).ok_or(Fault::InvalidState)?;
+        Ok(Self {
+            started: self.started,
+            stalls: MasterTicks(
+                self.stalls
+                    .0
+                    .checked_add(stalls)
+                    .ok_or(Fault::TimeOverflow)?,
+            ),
+        })
+    }
 }
 
 /// Actual boundary reached by a handler work portion.
@@ -268,6 +322,50 @@ pub struct Work {
     pub cursor: Cursor,
 }
 
+/// Next busy Wait work at a native interrupt.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WaitResume {
+    /// The next work reloads the current publication request.
+    Reload,
+    /// The outstanding request was sampled and the branch still owes its busy leg.
+    PendingBusyBranch,
+}
+
+/// Physical Wait parent retained from the reached native admission.
+#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+pub struct InterruptedWait {
+    wait: Work,
+    at: MasterTicks,
+    interrupt: Interrupt,
+}
+
+impl InterruptedWait {
+    fn resume(&self) -> Result<WaitResume, Fault> {
+        let WorkKind::Wait(_, charge) = self.wait.kind else {
+            return Err(Fault::InvalidState);
+        };
+        let cursor = &self.wait.cursor;
+        if self.wait.profile != wait_turn() || cursor.stage != Stage::Poll {
+            return Err(Fault::InvalidState);
+        }
+        self.wait.validate_progress()?;
+        charge.validate(self.at, cursor)?;
+        match (cursor.run, cursor.occurrence) {
+            (2, 0) => Ok(WaitResume::PendingBusyBranch),
+            (4, 0) => Ok(WaitResume::Reload),
+            _ => Err(Fault::InterruptBoundary),
+        }
+    }
+}
+
+impl WaitResume {
+    pub(super) fn prepend(self, profile: &mut Profile) {
+        if self == Self::PendingBusyBranch {
+            drop(profile.runs.splice(0..0, wait_busy_leg()));
+        }
+    }
+}
+
 /// Complete saved platform service, including suspended semantic parents.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct State {
@@ -279,6 +377,8 @@ pub struct State {
     pub interrupt_boundary: Option<Interrupt>,
     /// Native entry or an ordinary handler portion completed; the parent stays suspended.
     pub pending_handler: Option<PendingHandler>,
+    /// Interrupted Wait progress held across native work until acknowledgment takes it.
+    pub interrupted_wait: Option<InterruptedWait>,
 }
 
 /// Actual supported stopping condition returned to the semantic coordinator.
@@ -373,8 +473,8 @@ fn native_entry() -> Profile {
     }
 }
 
-fn wait_turn() -> Profile {
-    let make = |count, cycle, kind, poll_before| Run {
+const fn wait_run(count: u32, cycle: Cycle, kind: ExposureKind, poll_before: bool) -> Run {
+    Run {
         count,
         exposure: data::timing::Exposure {
             cycle,
@@ -382,13 +482,24 @@ fn wait_turn() -> Profile {
             poll_before,
             effect: DeviceEffect::None,
         },
-    };
+    }
+}
+
+const fn wait_busy_leg() -> [Run; 2] {
+    [
+        wait_run(2, Cycle::Six, ExposureKind::Read, false),
+        wait_run(1, Cycle::Six, ExposureKind::Internal, true),
+    ]
+}
+
+fn wait_turn() -> Profile {
+    let [busy_fetch, busy_commit] = wait_busy_leg();
     Profile {
         runs: vec![
-            make(3, Cycle::Six, ExposureKind::Read, false),
-            make(1, Cycle::Eight, ExposureKind::Read, true),
-            make(2, Cycle::Six, ExposureKind::Read, false),
-            make(1, Cycle::Six, ExposureKind::Internal, true),
+            wait_run(3, Cycle::Six, ExposureKind::Read, false),
+            wait_run(1, Cycle::Eight, ExposureKind::Read, true),
+            busy_fetch,
+            busy_commit,
         ],
     }
 }
@@ -398,6 +509,20 @@ fn pad_changes_ordered(changes: &[PadChange]) -> bool {
 }
 
 impl State {
+    /// Recover the next busy Wait work from authenticated cursor progress.
+    #[must_use]
+    pub fn wait_resume(&self) -> Option<WaitResume> {
+        self.interrupted_wait.as_ref()?.resume().ok()
+    }
+
+    pub(super) fn wait_admission(&self) -> Option<(MasterTicks, Interrupt, WorkId)> {
+        let wait = self.interrupted_wait.as_ref()?;
+        let WorkKind::Wait(identity, _) = wait.wait.kind else {
+            return None;
+        };
+        Some((wait.at, wait.interrupt, identity))
+    }
+
     pub(super) fn schedule_pad_changes(&mut self, changes: &[PadChange]) -> Result<(), Fault> {
         let pending = &mut self.hardware.controller.pending_pad;
         if let Some(first) = changes.first() {
@@ -441,6 +566,18 @@ impl State {
         }
         for pending in &self.work {
             pending.validate_progress()?;
+            if let WorkKind::Wait(_, charge) = pending.kind {
+                if self.interrupted_wait.is_some() {
+                    return Err(Fault::InvalidState);
+                }
+                charge.validate(self.hardware.now, &pending.cursor)?;
+            }
+        }
+        if let Some(wait) = &self.interrupted_wait {
+            wait.resume()?;
+            if wait.at > self.hardware.now {
+                return Err(Fault::InvalidState);
+            }
         }
         if self.work.last().is_some_and(|pending| {
             matches!(
@@ -473,7 +610,7 @@ impl State {
                 || self.work.len() != 1
                 || !self.work.last().is_some_and(|pending| {
                     pending.cursor.stage == Stage::Poll
-                        && matches!(pending.kind, WorkKind::Semantic(_) | WorkKind::Wait(_))
+                        && matches!(pending.kind, WorkKind::Semantic(_) | WorkKind::Wait(..))
                 })
                 || self.hardware.interrupts.pending() != self.interrupt_boundary)
         {
@@ -512,8 +649,16 @@ impl State {
         {
             return Err(Fault::WorkBusy);
         }
-        self.work.push(work(WorkKind::Wait(identity), wait_turn()));
+        self.interrupted_wait = None;
+        self.begin_wait_turn(identity);
         Ok(())
+    }
+
+    fn begin_wait_turn(&mut self, identity: WorkId) {
+        self.work.push(work(
+            WorkKind::Wait(identity, WaitCharge::new(self.hardware.now)),
+            wait_turn(),
+        ));
     }
 
     /// Supply the actual semantic handler at a reached hardware interrupt boundary.
@@ -582,16 +727,22 @@ impl State {
         let interrupt = self.interrupt_boundary.ok_or(Fault::InterruptBoundary)?;
         if self.work.len() != 1
             || !self.work.first().is_some_and(|pending| {
-                matches!(pending.kind, WorkKind::Semantic(_) | WorkKind::Wait(_))
+                matches!(pending.kind, WorkKind::Semantic(_) | WorkKind::Wait(..))
             })
         {
             return Err(Fault::InterruptBoundary);
         }
-        if self
-            .work
-            .first()
-            .is_some_and(|pending| matches!(pending.kind, WorkKind::Wait(_)))
+        if let Some(pending) = self.work.first()
+            && matches!(pending.kind, WorkKind::Wait(..))
         {
+            // The busy Wait loads the still-outstanding request before reaching its branch.
+            let interrupted = InterruptedWait {
+                wait: pending.clone(),
+                at: self.hardware.now,
+                interrupt,
+            };
+            interrupted.resume()?;
+            self.interrupted_wait = Some(interrupted);
             self.work.pop();
         }
         let restore = self.hardware.interrupts.policy;
@@ -672,11 +823,26 @@ impl State {
             hardware.advance_exposure(&mut cursor, run, budget, regions, &mut events)?;
         if interrupt.is_some()
             && (self.work.len() != 1
-                || !matches!(pending.kind, WorkKind::Semantic(_) | WorkKind::Wait(_)))
+                || !matches!(pending.kind, WorkKind::Semantic(_) | WorkKind::Wait(..)))
         {
             return Err(Fault::InterruptBoundary);
         }
-        self.work.last_mut().ok_or(Fault::InvalidState)?.cursor = cursor;
+        let wait = if let WorkKind::Wait(identity, charge) = pending.kind {
+            Some(WorkKind::Wait(
+                identity,
+                charge.register(
+                    [self.hardware.now, hardware.now],
+                    [pending.cursor.intrinsic, cursor.intrinsic],
+                )?,
+            ))
+        } else {
+            None
+        };
+        let active = self.work.last_mut().ok_or(Fault::InvalidState)?;
+        active.cursor = cursor;
+        if let Some(wait) = wait {
+            active.kind = wait;
+        }
         self.hardware = hardware;
         self.interrupt_boundary = interrupt;
         Ok((
@@ -691,8 +857,8 @@ impl State {
         };
         match finished.kind {
             WorkKind::Semantic(identity) => Progress::Completed(identity),
-            WorkKind::Wait(identity) => {
-                self.work.push(work(WorkKind::Wait(identity), wait_turn()));
+            WorkKind::Wait(identity, _) => {
+                self.begin_wait_turn(identity);
                 Progress::Advanced
             }
             WorkKind::Native {

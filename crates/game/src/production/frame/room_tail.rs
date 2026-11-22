@@ -27,7 +27,13 @@ pub struct Admission {
     pub previous_layer_one: [u16; 2],
     /// Separate reached external layer-two ownership dispositions.
     pub external_layer_two: [bool; 2],
+    /// Inactive departure qualified from the current Room owner.
+    pub departure_inactive: Option<InactiveDeparture>,
 }
+
+/// Source-qualified inactive Room departure for the ordinary no-action route.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct InactiveDeparture;
 
 /// Eight actual prepared/current block coordinates, in caller order.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,6 +60,18 @@ const fn missing() -> ProductionFault {
 }
 
 impl State {
+    pub(super) fn steady_haze<'a>(
+        &self,
+        content: &'a Content,
+    ) -> Option<&'a super::haze::SteadyProfiles> {
+        let profile = content.steady_haze.as_ref()?;
+        let room = self.room_tail_origin.as_ref()?;
+        (room.departure_inactive.is_some()
+            && self.scene == Some(super::borrowed_gameplay::SceneController::MainGameplay)
+            && self.validate_room_owner(content).ok() == Some(room.room))
+        .then_some(profile)
+    }
+
     fn current_blocks(&self, content: &Content) -> Result<Blocks, ProductionFault> {
         let history = self.room_tail_origin.as_ref().ok_or_else(missing)?;
         let suffix_caller::BackgroundScroll::Complete(scroll) = &self.background else {

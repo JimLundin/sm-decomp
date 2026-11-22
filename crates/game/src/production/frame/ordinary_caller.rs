@@ -34,6 +34,15 @@ impl OrdinaryWork {
         matches!(*self.stage, Stage::Complete(_))
     }
 
+    /// Actual request and accepted answer after arithmetic and travel complete.
+    #[must_use]
+    pub const fn completion(&self) -> Option<&super::movement_caller::PairReceipt> {
+        match &*self.stage {
+            Stage::Complete(receipt) => Some(receipt),
+            Stage::Offered { .. } | Stage::Charging { .. } => None,
+        }
+    }
+
     pub(super) fn sample(
         &mut self,
         work: WorkId,

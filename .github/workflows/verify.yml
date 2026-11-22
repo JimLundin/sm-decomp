@@ -151,7 +151,8 @@ jobs:
         run: bash tools/ci/fetch_shot_five.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch the reviewed completed shot Frame origin
         run: bash tools/ci/fetch_shot_frame_origin.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Install the independently qualified Steady Haze continuation
+      - &steady_haze
+        name: Install the independently qualified Steady Haze continuation
         run: bash tools/ci/fetch_shot_steady_haze.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Install the independently qualified Random arms
         run: bash tools/ci/fetch_shot_random.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
@@ -167,6 +168,9 @@ jobs:
       - &connected_health
         name: Fetch retained Health and HUD profiles and independent witnesses
         run: bash tools/ci/fetch_connected_health.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &opening_clock
+        name: Fetch the opening clock inputs and independent comparisons
+        run: bash tools/ci/fetch_opening_clock.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Run required fixture-backed verification witnesses
         env:
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
@@ -226,10 +230,12 @@ jobs:
       - *shot_drawing
       - *shot_five
       - *passage_offers
+      - *steady_haze
       - *retained_frame
       - *native_search
       - *health_tail
       - *connected_health
+      - *opening_clock
       - name: Verify recorded bridge fault rejection and exact restoration
         env:
           WORKER: ${{ matrix.worker }}

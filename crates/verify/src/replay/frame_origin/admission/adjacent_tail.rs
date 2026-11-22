@@ -158,7 +158,7 @@ pub(super) fn bind(
         || content.adjacent_animation.is_none()
         || content.adjacent_scene_countdown.is_none()
         || case.first_cut() != Some(1)
-        || case.end.cut_inclusive != 2
+        || case.adjacent_native_end() != 2
     {
         return Err(fault());
     }
@@ -178,7 +178,11 @@ pub(super) fn bind(
         wram,
         state,
     )?;
-    bind_camera(&source.text(&directory, "camera-current.toml")?, content)?;
+    bind_camera(
+        &source.text(&directory, "camera-current.toml")?,
+        content,
+        false,
+    )?;
     let profiles = source.text(&directory, "profiles.toml")?;
     let cartridge = data::rom::Rom::new(std::fs::read(&sources.rom).map_err(|_| fault())?)
         .map_err(|_| fault())?;
@@ -225,33 +229,41 @@ fn bind_controller(text: &str, wram: &[u8], state: &mut frame::State) -> Result<
     Ok(())
 }
 
-fn bind_camera(text: &str, content: &mut frame::Content) -> Result<(), Outcome> {
+pub(super) fn bind_camera(
+    text: &str,
+    content: &mut frame::Content,
+    recurring: bool,
+) -> Result<(), Outcome> {
+    use game::production::frame::s6_camera::Contract;
+
     let fault = || data_failure(None, "adjacent Camera at-use predicates");
     let camera: Camera = toml::from_str(text).map_err(|_| fault())?;
     if camera.format != 1 {
         return Err(fault());
     }
-    content
-        .s6_camera
-        .as_mut()
-        .ok_or_else(fault)?
-        .admit_adjacent(
-            camera.current.into(),
-            camera.previous.into(),
-            frame::camera_stage::RequiredView {
-                x: camera.view.x,
-                fraction: camera.view.fraction,
-                y: camera.view.y,
-            },
-            camera
-                .screen
-                .into_iter()
-                .map(|screen| frame::camera_stage::RequiredScreens {
-                    cell: screen.cell,
-                    screens: screen.screens.map(Into::into),
-                })
-                .collect(),
-        );
+    let admit = if recurring {
+        Contract::admit_recurring
+    } else {
+        Contract::admit_adjacent
+    };
+    admit(
+        content.s6_camera.as_mut().ok_or_else(fault)?,
+        camera.current.into(),
+        camera.previous.into(),
+        frame::camera_stage::RequiredView {
+            x: camera.view.x,
+            fraction: camera.view.fraction,
+            y: camera.view.y,
+        },
+        camera
+            .screen
+            .into_iter()
+            .map(|screen| frame::camera_stage::RequiredScreens {
+                cell: screen.cell,
+                screens: screen.screens.map(Into::into),
+            })
+            .collect(),
+    );
     Ok(())
 }
 
@@ -289,17 +301,7 @@ fn bind_video(
             frame::rendering_stage::ShownStep(step.0),
         )
         .map_err(|_| fault())?;
-    let mut finalization = quiet("AdjacentOam", [550, 3578])?;
-    let ready = finalization.runs.pop().ok_or_else(fault)?;
-    let read = data::timing::Template { runs: vec![ready] }
-        .bind(&[])
-        .map_err(|_| fault())?;
-    let tail = content.frame_tail.as_ref().ok_or_else(fault)?;
-    // The whole native OAM observation ends after the common read of the ready list.
-    // Finalization publishes the list before that read, which the history owner charges.
-    if read.runs.first() != tail.history.runs.first() {
-        return Err(fault());
-    }
+    let finalization = finalization_before_history(quiet("AdjacentOam", [550, 3578])?, content)?;
     let returns = content.return_work.as_mut().ok_or_else(fault)?;
     returns.adjacent_finalization = Some(finalization.bind(&[]).map_err(|_| fault())?);
     returns.adjacent_nmi = Some(
@@ -311,6 +313,23 @@ fn bind_video(
         .map_err(|_| data_failure(None, "adjacent NMI controller exposure split"))?,
     );
     Ok(())
+}
+
+pub(super) fn finalization_before_history(
+    mut physical: data::timing::Template,
+    content: &frame::Content,
+) -> Result<data::timing::Template, Outcome> {
+    let fault = || data_failure(None, "OAM readiness handoff to final history");
+    // The native observation includes the read of the list already owned by History.
+    let ready = physical.runs.pop().ok_or_else(fault)?;
+    let read = data::timing::Template { runs: vec![ready] }
+        .bind(&[])
+        .map_err(|_| fault())?;
+    let tail = content.frame_tail.as_ref().ok_or_else(fault)?;
+    if read.runs.first() != tail.history.runs.first() {
+        return Err(fault());
+    }
+    Ok(physical)
 }
 
 fn bind_contact(text: &str, profiles: &str, content: &mut frame::Content) -> Result<(), Outcome> {

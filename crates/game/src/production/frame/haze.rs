@@ -55,6 +55,22 @@ pub struct Prepared {
     pub(super) bands: [BackdropBand; 16],
     pub(super) fixed_colour: PreparedFixedColour,
     pub(super) blend: LayerBlendDisposition,
+    pub(super) transport: Transport,
+}
+
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum Transport {
+    Warming,
+    Steady,
+}
+
+/// Complete qualified physical head and finish for the Steady Haze arm.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SteadyProfiles {
+    /// Effect-free head retaining the active ramp backing.
+    pub head: Template,
+    /// Effect-free finish decrementing both active countdowns.
+    pub finish: Template,
 }
 
 impl Prepared {
@@ -109,7 +125,9 @@ impl Haze {
         })
     }
 
-    pub(super) const fn countdowns(&self) -> [u16; 2] {
+    /// Current instruction countdowns for the ramp and retained transfer.
+    #[must_use]
+    pub const fn countdowns(&self) -> [u16; 2] {
         self.countdowns
     }
 
@@ -208,6 +226,11 @@ impl Haze {
             bands,
             fixed_colour: work.fixed_colour,
             blend: work.blend,
+            transport: if work.before.0.fade == types::haze::HazeFade::Steady {
+                Transport::Steady
+            } else {
+                Transport::Warming
+            },
         })
     }
 

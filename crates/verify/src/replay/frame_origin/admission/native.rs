@@ -84,6 +84,7 @@ impl Admission<'_> {
                     pictures,
                     finalization,
                     adjacent_finalization: None,
+                    recurring_finalization: None,
                     builder_address,
                     preparation: source::preparation_template(templates)
                         .map_err(|_| data_failure(None, "software frame-request profile"))?,

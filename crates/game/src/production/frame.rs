@@ -76,6 +76,7 @@ pub mod rendering_stage;
 pub mod room_quake;
 pub mod room_tail;
 mod run_caller;
+mod running_draw_timing;
 pub mod s6_camera;
 pub mod s6_drawing;
 pub mod samus_palette;

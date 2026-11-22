@@ -203,6 +203,7 @@ impl State {
     fn animation_contract<'a>(
         &self,
         content: &'a Content,
+        time_left: samus_appearance::Frames,
     ) -> Result<&'a appearance_caller::PhysicalContract, ProductionFault> {
         let unavailable = || missing(Dependency::AnimationPreparation);
         if self.publications.original_interval() {
@@ -235,6 +236,11 @@ impl State {
         {
             return Err(unavailable());
         }
+        if time_left == samus_appearance::Frames::LAST
+            && let Some(advance) = &content.recurring_animation_advance
+        {
+            return Ok(advance);
+        }
         Ok(&adjacent.physical)
     }
 
@@ -246,7 +252,10 @@ impl State {
         if !self.animation_energy_matches(selection) {
             return Err(missing(Dependency::HealthCurrentInputs));
         }
-        self.animation_contract(content)?
+        let before = selection
+            .receipt()
+            .ok_or_else(|| missing(Dependency::AnimationPreparation))?;
+        self.animation_contract(content, before.before.model.0.state.playhead.time_left)?
             .qualify(selection, self, &content.movement, &content.appearance)
             .map_err(|_| missing(Dependency::AnimationPreparation))
     }
@@ -290,7 +299,10 @@ impl State {
                     return Err(missing(Dependency::AnimationPreparation));
                 }
                 if !self.publications.original_interval() && content.adjacent_animation.is_some() {
-                    self.animation_contract(content)?;
+                    self.animation_contract(
+                        content,
+                        self.appearance.model.0.state.playhead.time_left,
+                    )?;
                 }
                 self.countdown_scene_offer(content, rules)?;
                 let inputs = self.fresh_animation_inputs(content)?;
@@ -414,10 +426,8 @@ impl State {
                     let (_, in_nmi) = self
                         .gameplay_publications()
                         .map_err(|_| InvalidPlayerEntry)?;
-                    if !in_nmi {
-                        self.countdown_scene_offer(content, rules)
-                            .map_err(|_| InvalidPlayerEntry)?;
-                    }
+                    self.validate_animation_countdown(content, rules, in_nmi)
+                        .map_err(|_| InvalidPlayerEntry)?;
                     let mut at_animation = self.clone();
                     if let super::interruption_caller::Stage::Complete(before) = &self.interruption
                     {
@@ -436,18 +446,37 @@ impl State {
                 }
                 // Appearance has consumed the answer. Its retained receipt still identifies
                 // the physical family that could have completed at this opportunity.
-                self.animation_contract(content)
-                    .map_err(|_| InvalidPlayerEntry)?
-                    .profile_for_receipt(
-                        &done.receipt,
-                        self,
-                        &content.movement,
-                        &content.appearance,
-                    )
-                    .map_err(|_| InvalidPlayerEntry)?;
+                self.animation_contract(
+                    content,
+                    done.receipt.before.model.0.state.playhead.time_left,
+                )
+                .map_err(|_| InvalidPlayerEntry)?
+                .profile_for_receipt(&done.receipt, self, &content.movement, &content.appearance)
+                .map_err(|_| InvalidPlayerEntry)?;
             }
         }
         Ok(())
+    }
+
+    fn validate_animation_countdown(
+        &self,
+        content: &Content,
+        rules: &Rules,
+        in_nmi: bool,
+    ) -> Result<(), ProductionFault> {
+        if in_nmi {
+            return Ok(());
+        }
+        if matches!(self.late_hud, super::late_hud::Stage::Completed(_)) {
+            // Late status now owns the tilemap. Revalidate the actual Countdown offer
+            // from its retained scene and IRQ history.
+            let super::countdown_caller::Stage::Complete { offer, .. } = self.countdown else {
+                return Err(missing(Dependency::CountdownPreparation));
+            };
+            self.revalidate_countdown_scene_at_ceres(content, offer)
+        } else {
+            self.countdown_scene_offer(content, rules).map(|_| ())
+        }
     }
 
     pub(super) fn complete_animation(

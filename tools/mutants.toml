@@ -300,7 +300,7 @@ before = '''content.sender_cue.ok_or_else(fail)?,
         content: &Content,
         active: timing::WorkId,
         progress: timing::Progress,
-        events: &[timing::Event],
+        events: &mut Vec<timing::Event>,
     ) -> Result<(), ProductionFault> {
         let fail =
             || ProductionFault::Unsupported(Unsupported::Frame(Dependency::FrameSenderPreparation));
@@ -323,7 +323,7 @@ after = '''content.sender_cue.map(|binding| super::sender_stage::CueBinding { va
         content: &Content,
         active: timing::WorkId,
         progress: timing::Progress,
-        events: &[timing::Event],
+        events: &mut Vec<timing::Event>,
     ) -> Result<(), ProductionFault> {
         let fail =
             || ProductionFault::Unsupported(Unsupported::Frame(Dependency::FrameSenderPreparation));
@@ -646,3 +646,13 @@ after = "drop(output);"
 case = "frame/health-hud-pending-loss"
 cut = 1
 field = "frame.health_hud.queue.tilemap"
+
+[[fault]]
+name = "opening-resumes-wait-without-busy-fetch"
+responsibility = "frame"
+file = "crates/game/src/production/timing.rs"
+before = 'drop(profile.runs.splice(0..0, wait_busy_leg()));'
+after = 'drop(profile.runs.splice(0..0, wait_busy_leg().into_iter().skip(1)));'
+case = "frame/opening-three-native-returns"
+cut = 3
+field = "frame.audio.ports"

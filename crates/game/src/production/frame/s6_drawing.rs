@@ -8,9 +8,12 @@ use super::{
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
 use data::timing::{Profile, Template, TemplateEffect};
+use std::borrow::Cow;
 
 pub(super) const BRIDGE: timing::WorkId = timing::WorkId(1322);
 pub(super) const DRAWING: timing::WorkId = appearance_caller::Kind::Drawing.identity();
+
+pub use super::running_draw_timing::{DrawingPortions, PieceProfiles, RecurringProfiles};
 
 /// Complete physical bridge and selected Draw aggregate with checked sprite content.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -20,6 +23,7 @@ pub struct Contract {
     decreased_energy: Option<DecreasedEnergy>,
     rendering: super::rendering_stage::Content,
     adjacent: Option<Adjacent>,
+    recurring: Option<RecurringProfiles>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -59,6 +63,7 @@ impl Contract {
             decreased_energy: None,
             rendering,
             adjacent: None,
+            recurring: None,
         })
     }
 
@@ -105,38 +110,50 @@ impl Contract {
         Ok(())
     }
 
+    /// Admit recurring physical appends selected by the actual running maps and piece sizes.
+    pub fn admit_recurring(&mut self, profiles: RecurringProfiles) {
+        self.recurring = Some(profiles);
+    }
+
     fn drawing_profile(
         &self,
         state: &State,
         receipt: Option<&NormalDrawingReceipt>,
         read: EnergyRead,
-    ) -> Result<&Profile, ProductionFault> {
+    ) -> Result<Cow<'_, Profile>, ProductionFault> {
         if state.publications.original_interval() {
             let alternate = self.decreased_energy.as_ref();
             if alternate.is_some_and(|arm| read.previous != arm.previous) {
                 return Err(missing());
             }
             return match read.change {
-                EnergyChange::Held => Ok(&self.drawing),
-                EnergyChange::Decreased => alternate.map(|arm| &arm.profile).ok_or_else(missing),
+                EnergyChange::Held => Ok(Cow::Borrowed(&self.drawing)),
+                EnergyChange::Decreased => alternate
+                    .map(|arm| Cow::Borrowed(&arm.profile))
+                    .ok_or_else(missing),
                 EnergyChange::Increased => Err(missing()),
             };
         }
         if read.change != EnergyChange::Held {
             return Err(missing());
         }
-        let alternate = self.adjacent.as_ref().ok_or_else(missing)?;
         let (samus, outcome) = state.movement.finished().ok_or_else(missing)?;
         let figure = state.playing_figure.0;
         let receipt = receipt.ok_or_else(missing)?;
         if samus.pose != figure.pose
             || outcome.sprite != figure.sprite
-            || alternate.figure != figure
-            || !alternate.accepts_picture(receipt)
+            || receipt.figure.0 != figure
         {
             return Err(missing());
         }
-        Ok(&alternate.drawing)
+        if let Some(recurring) = &self.recurring {
+            return recurring.profile(&self.rendering, receipt).map(Cow::Owned);
+        }
+        self.adjacent
+            .as_ref()
+            .filter(|alternate| alternate.accepts_picture(receipt))
+            .map(|alternate| Cow::Borrowed(&alternate.drawing))
+            .ok_or_else(missing)
     }
 }
 
@@ -292,7 +309,7 @@ impl State {
                 .ok_or(InvalidPlayerEntry)?
                 .drawing_profile(self, pending.aggregate.receipt(), pending.energy)
                 .map_err(|_| InvalidPlayerEntry)?;
-            self.validate_drawing_profile(DRAWING, profile)
+            self.validate_drawing_profile(DRAWING, profile.as_ref())
                 .map_err(|_| InvalidPlayerEntry)?;
         }
         let alternate = content
@@ -433,7 +450,7 @@ impl State {
                         DRAWING,
                         contract
                             .drawing_profile(self, pending.aggregate.receipt(), pending.energy)?
-                            .clone(),
+                            .into_owned(),
                     )
                     .map_err(ProductionFault::FrameHardware)?;
                 self.s6_drawing.0 = Progress::Charging(Box::new(pending));
@@ -447,7 +464,9 @@ impl State {
                 }
                 self.validate_drawing_profile(
                     DRAWING,
-                    contract.drawing_profile(self, pending.aggregate.receipt(), pending.energy)?,
+                    contract
+                        .drawing_profile(self, pending.aggregate.receipt(), pending.energy)?
+                        .as_ref(),
                 )?;
             }
             Progress::Complete { .. } | Progress::CompleteAfterEnergyDecrease { .. } => {

@@ -110,7 +110,7 @@ impl Stage {
             .filter_map(|work| match work.kind {
                 timing::WorkKind::Semantic(id @ timing::WorkId(1200..=1201)) => Some(id),
                 timing::WorkKind::Semantic(_)
-                | timing::WorkKind::Wait(_)
+                | timing::WorkKind::Wait(..)
                 | timing::WorkKind::Native { .. }
                 | timing::WorkKind::Handler { .. } => None,
             })

@@ -110,7 +110,9 @@ pub fn project(events: &[game::production::timing::Event]) -> Result<Vec<Datum>,
             EventKind::BulkService(_) => (12, 0, 0),
             EventKind::Interrupt(data::timing::Interrupt::Nmi) => (7, 0, 0),
             EventKind::Interrupt(data::timing::Interrupt::Irq) => (8, 0, 0),
-            EventKind::Sample(_, _) | EventKind::ControllerCommitted => {
+            EventKind::Sample(_, _)
+            | EventKind::ControllerCommitted
+            | EventKind::AudioPortRead { .. } => {
                 continue;
             }
         };

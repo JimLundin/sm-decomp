@@ -178,7 +178,8 @@ pub(super) fn actual(events: &[Event]) -> Result<Vec<Observation>, Outcome> {
                 | EventKind::Interrupt(_)
                 | EventKind::ControllerStart
                 | EventKind::ControllerEnd
-                | EventKind::ControllerCommitted => {
+                | EventKind::ControllerCommitted
+                | EventKind::AudioPortRead { .. } => {
                     return Err(data_failure(Some(4), "Random physical transfer"));
                 }
             };

@@ -9,6 +9,113 @@ use data::timing::{MasterTicks, Profile};
 const CONTACT_REPLY: WorkId = WorkId(1307);
 const CONTACT_READ_PREFIX: u64 = 62;
 
+fn latest_contact_retry(
+    events: &[Event],
+    binding: sender_stage::CueBinding,
+    before: MasterTicks,
+) -> Option<MasterTicks> {
+    let mut awaiting_retry = false;
+    let mut latest = None;
+    for event in events.iter().take_while(|event| event.at < before) {
+        if let EventKind::AudioPortRead { port, value } = event.kind
+            && port == binding.port
+        {
+            awaiting_retry = value == 0;
+        }
+        if awaiting_retry
+            && matches!(&event.kind, EventKind::Publication(write)
+                if write.port == binding.port && write.value == binding.value)
+        {
+            awaiting_retry = false;
+            latest = Some(event.at);
+        }
+    }
+    latest
+}
+
+impl State {
+    pub(super) fn validate_contact_checkpoint(
+        &self,
+        content: &super::Content,
+    ) -> Result<(), super::Fault> {
+        use audio_transport::Request;
+        let invalid = || super::Fault::InvalidPlayerEntry;
+        let active = self.sender_stage.contact_reply();
+        let completed = self.completed_contact_read;
+        let expects_active = matches!(
+            self.sender_progress,
+            Cursor::ContactRead
+                | Cursor::Body {
+                    service: Service::Contact,
+                    prefix: CONTACT_READ_PREFIX,
+                    ..
+                }
+        );
+        if expects_active != active.is_some() {
+            return Err(invalid());
+        }
+        if completed.is_some()
+            && (active.is_some()
+                || !matches!(
+                    self.sender_progress,
+                    Cursor::Tail(Service::Contact) | Cursor::Done
+                ))
+        {
+            return Err(invalid());
+        }
+        let events = self
+            .publications
+            .active()
+            .map_err(super::Fault::Publications)?;
+        let mut reads = events.iter().filter_map(|event| {
+            if let EventKind::AudioPortRead { port, value } = event.kind {
+                Some((event.at, port, value))
+            } else {
+                None
+            }
+        });
+        let sample = reads.next();
+        let read = active.or(completed);
+        if reads.next().is_some()
+            || read.map(|read| read.at) != sample.map(|sample| sample.0)
+            || read.is_some_and(|read| read.intrinsic != sender_contract::ContactRetry::SAMPLE)
+        {
+            return Err(invalid());
+        }
+        if sample.is_none() && self.contact_retried_at.is_none() {
+            return Ok(());
+        }
+        let binding = content.sender_cue.ok_or_else(invalid)?;
+        let all = &self.publications.events;
+        if self.contact_retried_at
+            != latest_contact_retry(
+                all,
+                binding,
+                MasterTicks(self.timing.hardware.now.0.saturating_add(1)),
+            )
+        {
+            return Err(invalid());
+        }
+        if let Some((at, port, value)) = sample {
+            let contract = content
+                .sender_physical
+                .as_ref()
+                .and_then(|profile| profile.contact_retry.as_ref())
+                .ok_or_else(invalid)?;
+            let reply = contract.reply_at(latest_contact_retry(all, binding, at), at);
+            let observed = if reply == Request::Cue(binding.cue) {
+                binding.value
+            } else {
+                0
+            };
+            if at > self.timing.hardware.now || port != binding.port || value != observed {
+                return Err(invalid());
+            }
+        }
+        Ok(())
+    }
+}
+
 /// Caller service order, independent of actual producer offer progress.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Service {
@@ -88,6 +195,9 @@ pub struct History {
 
 impl History {
     pub(super) fn capture(state: &State) -> Option<Self> {
+        if state.sender_stage != sender_stage::Stage::Idle {
+            return None;
+        }
         Some(Self {
             senders: state.senders.clone(),
             queues: state.sender_queues.clone()?,
@@ -97,6 +207,8 @@ impl History {
     pub(super) fn use_in_history(&self, earlier: &mut State) {
         earlier.senders.clone_from(&self.senders);
         earlier.sender_queues = Some(self.queues.clone());
+        // The captured Sender inputs precede service admission and any unresolved reply.
+        earlier.sender_stage = sender_stage::Stage::Idle;
     }
 }
 
@@ -225,29 +337,45 @@ impl Cursor {
         content: &sender_contract::PhysicalContent,
         active: WorkId,
         spent: Option<MasterTicks>,
-    ) -> Result<(), Fault> {
+        binding: sender_stage::CueBinding,
+    ) -> Result<Option<Event>, Fault> {
         if active != CONTACT_REPLY || !matches!(self, Self::ContactReading) {
-            return Ok(());
+            return Ok(None);
         }
         let at = sender_contract::ContactRetry::SAMPLE;
         if spent.is_some_and(|spent| spent.0 > at) {
             return Err(Fault::Order);
         }
         if spent == Some(MasterTicks(at)) {
-            let reply = content.contact_retry.as_ref().ok_or(Fault::Order)?.reply;
+            use audio_transport::Request;
+            let retry = content.contact_retry.as_ref().ok_or(Fault::Order)?;
+            let now = state.timing.hardware.now;
+            let reply = retry.reply_at(state.contact_retried_at, now);
+            let value = match reply {
+                Request::Absent => 0,
+                Request::Cue(cue) if cue == binding.cue => binding.value,
+                Request::Cue(_) => return Err(Fault::Order),
+            };
             state
                 .sender_stage
                 .consume_contact_reply(
                     &mut state.senders,
                     [CONTACT_REPLY, Service::Contact.body()],
-                    state.timing.hardware.now,
+                    now,
                     at,
                     reply,
                 )
                 .map_err(Fault::Sender)?;
             *self = Self::ContactRead;
+            return Ok(Some(Event {
+                at: now,
+                kind: EventKind::AudioPortRead {
+                    port: binding.port,
+                    value,
+                },
+            }));
         }
-        Ok(())
+        Ok(None)
     }
 
     pub(super) fn complete_contact_prefix(
@@ -303,7 +431,7 @@ impl Cursor {
             | EventKind::ControllerStart
             | EventKind::ControllerEnd
             | EventKind::ControllerCommitted => return Ok(()),
-            EventKind::Sample(_, _) => return Err(Fault::Order),
+            EventKind::Sample(_, _) | EventKind::AudioPortRead { .. } => return Err(Fault::Order),
             EventKind::Publication(_) => {}
         }
         let Self::Body {
@@ -330,6 +458,9 @@ impl Cursor {
             .sender_stage
             .present(&mut candidate.senders, active, *at, event.at)
             .map_err(Fault::Sender)?;
+        if *service == Service::Contact && *prefix == CONTACT_READ_PREFIX {
+            candidate.contact_retried_at = Some(event.at);
+        }
         *state = candidate;
         if let Self::Body { publication, .. } = self {
             *publication = None;
@@ -354,8 +485,12 @@ impl Cursor {
                 tail,
                 publication: None,
                 completion,
-                ..
+                prefix,
             } if work == service.body() => {
+                if *service == Service::Contact && *prefix == CONTACT_READ_PREFIX {
+                    candidate.completed_contact_read =
+                        Some(candidate.sender_stage.contact_reply().ok_or(Fault::Order)?);
+                }
                 let receipt = candidate
                     .sender_stage
                     .complete(&mut candidate.senders, work, *completion, wall)

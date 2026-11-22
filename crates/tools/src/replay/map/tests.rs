@@ -101,6 +101,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
             "frame/adjacent-actual-trial",
             "frame/adjacent-held-trial",
             "frame/adjacent-actual-return",
+            "frame/opening-three-native-returns",
             "frame/adjacent-held-return",
             "frame/health-hud-stock",
             "frame/health-hud-pending-loss",
@@ -116,6 +117,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
             "movement/D-inherited-cut",
             "frame/ordinary-requested-nmi-return",
             "frame/adjacent-actual-return",
+            "frame/opening-three-native-returns",
             "frame/adjacent-held-return",
             "frame/health-hud-stock",
             "frame/health-hud-pending-loss",
@@ -175,12 +177,13 @@ fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_cas
         )
         .unwrap();
     let report = views(&mapping, &baseline, &cases).unwrap();
-    assert_eq!(report.len(), 4);
+    assert_eq!(report.len(), 5);
     for (id, claim) in [
         ("frame/adjacent-actual-trial", Claim::Boundary),
         ("frame/adjacent-held-trial", Claim::Boundary),
         ("frame/adjacent-actual-return", Claim::Behaviour),
         ("frame/adjacent-held-return", Claim::Behaviour),
+        ("frame/opening-three-native-returns", Claim::Behaviour),
     ] {
         let view = report
             .iter()

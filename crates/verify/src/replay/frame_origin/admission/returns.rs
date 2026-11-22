@@ -183,25 +183,23 @@ pub(super) fn prepare(
         (None, vec![next_pad], None, None, None, None, None, None)
     };
     validate_adjacent_countdown_scope(case, adjacent_countdown_scene.is_some())?;
+    if case.opening_clock() {
+        expected.insert(
+            case.end.cut_inclusive,
+            super::opening_clock::expected(&sources.native)?,
+        );
+    }
     let schedule = expected.keys().copied().collect();
-    let random = case
-        .expectations
-        .native_random
-        .as_ref()
-        .map(|source| {
-            Ok(frame::random::Source {
-                path: sources.native.join(&source.path),
-                sha256: crate::lock::Sha256::try_from(source.sha256.as_str())
-                    .map_err(|_| data_failure(None, "Random observation pin"))?,
-            })
-        })
-        .transpose()?;
+    let opening_audio = case
+        .opening_clock()
+        .then(|| frame::opening_audio::Source::new(&sources.native));
     Ok(Prepared {
         expected: frame::Expected {
             returns: expected,
-            random,
+            random: random_source(case, sources)?,
             adjacent_animation: None,
             health_hud,
+            opening_audio,
         },
         schedule,
         pads,
@@ -213,6 +211,20 @@ pub(super) fn prepare(
         adjacent_hud_map,
         adjacent_countdown_scene,
     })
+}
+
+fn random_source(case: &Case, sources: &Sources) -> Result<Option<frame::random::Source>, Outcome> {
+    case.expectations
+        .native_random
+        .as_ref()
+        .map(|source| {
+            Ok(frame::random::Source {
+                path: sources.native.join(&source.path),
+                sha256: crate::lock::Sha256::try_from(source.sha256.as_str())
+                    .map_err(|_| data_failure(None, "Random observation pin"))?,
+            })
+        })
+        .transpose()
 }
 
 fn first_return(
@@ -269,7 +281,8 @@ fn validate_adjacent_countdown_scope(case: &Case, present: bool) -> Result<(), O
     if sha256 != "1e040c393ed88ec8a0b46184879e0681bc110355e928b8160c50170c533abc15"
         || !present
         || declarations.next().is_some()
-        || case.first_cut().and_then(|first| first.checked_add(1)) != Some(case.end.cut_inclusive)
+        || case.first_cut().and_then(|first| first.checked_add(1))
+            != Some(case.adjacent_native_end())
         || value.provider != "independently-qualified-adjacent-scene-scheduling"
         || value.fields
             != [
@@ -320,7 +333,7 @@ fn extend_expected_returns(
         next.resolve(root);
         expected.insert(next.cut, next.expected()?);
     }
-    if prior_cut != case.end.cut_inclusive {
+    if prior_cut != case.adjacent_native_end() {
         return Err(schedule_fault());
     }
     Ok(())
@@ -427,7 +440,7 @@ fn adjacent_animation(
             .into_iter()
             .any(|pin| Sha256::try_from(pin).is_ok_and(|expected| Some(&expected) == pad))
         || case.first_cut() != Some(1)
-        || case.end.cut_inclusive != 2
+        || case.adjacent_native_end() != 2
         || declared.next().is_some()
         || source.provider != "independently-qualified-retained-room-animation"
         || source.fields

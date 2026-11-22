@@ -253,7 +253,7 @@ impl State {
             _ => return Err(fault),
         };
         let (next, result) =
-            self.recurring_poll(content, prepared, selected, interaction, input)?;
+            self.complete_recurring_actor(content, prepared, selected, interaction, input)?;
         if let Some(actual) = actual {
             let health_holds = match (&self.health, &content.health) {
                 (Some(owner), Some(admission)) => owner.holds_recurring_actor(admission, actual),
@@ -283,7 +283,7 @@ impl State {
         Ok(Completion::Actors(result, Some(next)))
     }
 
-    fn recurring_poll(
+    fn complete_recurring_actor(
         &self,
         content: &Content,
         prepared: &super::Preparation,
@@ -306,9 +306,9 @@ impl State {
             return Err(fault);
         }
         let scene = prepared.gameplay.as_ref().ok_or(fault)?.scene;
+        Self::recurring_actor_profile(content, doors)?;
         if self.scene != Some(scene)
             || scene != super::borrowed_gameplay::SceneController::MainGameplay
-            || doors.path() != Some(super::actor_doors::Path::Polling)
             || self
                 .room_quake
                 .current()
@@ -478,6 +478,18 @@ impl State {
     }
 
     /// Bind only the full no-device-effect envelope after semantic admission succeeds.
+    fn recurring_actor_profile(
+        content: &Content,
+        doors: super::actor_doors::Doors,
+    ) -> Result<&data::timing::Template, ProductionFault> {
+        let profiles = content.player_continuation.as_ref().ok_or_else(missing)?;
+        match doors.path().ok_or_else(missing)? {
+            super::actor_doors::Path::Waiting => profiles.recurring_waiting_actors.as_ref(),
+            super::actor_doors::Path::Polling => profiles.recurring_actors.as_ref(),
+        }
+        .ok_or_else(missing)
+    }
+
     fn remaining_profile(
         &self,
         content: &Content,
@@ -488,7 +500,8 @@ impl State {
             && matches!(&self.caller, Caller::PlayerContinuation { prepared, .. }
                 if prepared.prelude.origin().is_none())
         {
-            profiles.recurring_actors.as_ref().ok_or_else(missing)?
+            let doors = self.recurring_player.as_ref().ok_or_else(missing)?.doors;
+            Self::recurring_actor_profile(content, doors)?
         } else {
             profiles
                 .template(stage)
@@ -567,7 +580,7 @@ impl State {
                 .map_err(|_| fault())?;
             (next.ok_or_else(fault)?, result)
         } else {
-            self.recurring_poll(content, prepared, &selected, interaction, input)
+            self.complete_recurring_actor(content, prepared, &selected, interaction, input)
                 .map_err(|_| fault())?
         };
         let health_holds = match (&self.health, &content.health) {

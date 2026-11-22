@@ -10,6 +10,7 @@ use game::state::owned::OwnedState;
 pub(super) mod adjacent_animation;
 mod callbacks;
 pub(super) mod health_hud;
+pub(super) mod opening_audio;
 pub(super) mod random;
 use crate::lock::Sha256;
 pub(super) use callbacks::{Datum, ProjectionFault, decode_callbacks, decode_endpoint, project};
@@ -24,6 +25,7 @@ pub(super) struct Expected {
     pub(super) random: Option<random::Source>,
     pub(super) adjacent_animation: Option<adjacent_animation::Source>,
     pub(super) health_hud: Option<health_hud::Source>,
+    pub(super) opening_audio: Option<opening_audio::Source>,
 }
 
 /// Outputs and terminal owners from one independently captured return.
@@ -59,6 +61,11 @@ impl Expected {
             expected.fields.splice(..0, phases.iter().cloned());
             expected.semantics.extend(phases);
             expected.semantic_count = expected.semantics.len();
+        }
+        if let Some(audio) = &self.opening_audio {
+            let (ports, replies) = audio.read(cut)?;
+            expected.fields.insert(0, ports);
+            expected.replies = replies;
         }
         Ok(expected)
     }
@@ -216,6 +223,13 @@ fn read_expected(path: &Path, pin: Sha256, cut: u64) -> Result<Vec<u8>, Outcome>
 pub(super) struct Inputs {
     pub budget: MasterTicks,
     pub(super) observe_health_hud: bool,
+    pub(super) opening_preview: Option<MoviePreview>,
+}
+
+/// Locked movie inputs for the reached automatic sample and its following presentation.
+pub(super) struct MoviePreview {
+    pub(super) sampled: timing::PhysicalPad,
+    pub(super) next: timing::PhysicalPad,
 }
 
 /// A frame stop's typed production fault and ordered events before the stop.
@@ -277,6 +291,63 @@ impl HeldAdvance {
 }
 
 impl Inputs {
+    pub(super) fn present_opening_preview(
+        &self,
+        production: &mut Production,
+        cut: u64,
+    ) -> Result<(), Outcome> {
+        let Some(preview) = self.opening_preview.as_ref().filter(|_| cut == 3) else {
+            return Ok(());
+        };
+        let fault = || data_failure(Some(cut), "opening preview after the actual prior return");
+        let OwnedState::Frame(state) = production.state() else {
+            return Err(fault());
+        };
+        let controller = &state.timing.hardware.controller;
+        if !matches!(
+            state.return_progress,
+            frame::frame_return::Stage::Ready {
+                suffix: frame::suffix_caller::Suffix::Acknowledged { .. },
+                ..
+            }
+        ) || controller.committed_pad != preview.sampled
+            || !controller.pending_pad.is_empty()
+        {
+            return Err(fault());
+        }
+        let change = timing::PadChange {
+            at: state.timing.hardware.now,
+            pad: preview.next,
+        };
+        production
+            .schedule_frame_pad_changes(&[change])
+            .map_err(|fault| production_failure(cut, fault))
+    }
+
+    pub(super) fn compare_opening_preview(
+        &self,
+        production: &Production,
+        cut: u64,
+    ) -> Result<(), Outcome> {
+        let Some(preview) = self.opening_preview.as_ref().filter(|_| cut == 3) else {
+            return Ok(());
+        };
+        let OwnedState::Frame(state) = production.state() else {
+            return Err(data_failure(Some(cut), "opening controller hardware"));
+        };
+        let controller = &state.timing.hardware.controller;
+        if controller.words.first().copied() != Some(preview.sampled.0)
+            || controller.committed_pad != preview.next
+            || !controller.pending_pad.is_empty()
+        {
+            return Err(Outcome::Difference {
+                cut,
+                field: "frame.controller.preview".to_owned(),
+            });
+        }
+        Ok(())
+    }
+
     pub fn advance(
         &self,
         production: &mut Production,
@@ -288,6 +359,9 @@ impl Inputs {
         }
         let resume = held.resume_prefix.take();
         let save_phases = resume.is_none();
+        if save_phases {
+            self.present_opening_preview(production, cut)?;
+        }
         let mut events = resume.unwrap_or_default();
         if self.observe_health_hud && held.health_hud.is_none() {
             held.health_hud = Some(health_hud::Trace::default());
@@ -323,6 +397,7 @@ impl Inputs {
             match outputs.progress {
                 frame::Progress::Advanced => {}
                 frame::Progress::Completed => {
+                    self.compare_opening_preview(production, cut)?;
                     return Ok(ProductionOutputs::Frame(frame::Outputs {
                         progress: frame::Progress::Completed,
                         events,
@@ -455,6 +530,9 @@ fn observations(
     }
     if let Some(number) = state.current_random() {
         fields.push(word("frame.random", number));
+    }
+    if let Ok(events) = state.publications.active() {
+        fields.push(opening_audio::actual(events));
     }
     fields
 }
