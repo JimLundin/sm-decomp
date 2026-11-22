@@ -11,6 +11,8 @@ use data::{
     timing::{ContentRegion, MasterTicks, Profile, Template},
 };
 
+pub use super::native_return::ControllerTail;
+
 pub(super) const FINALIZE: timing::WorkId = timing::WorkId(1421);
 
 /// Complete immutable finalization and NMI work with admitted picture bindings.
@@ -24,12 +26,16 @@ pub struct Contract {
     pub pictures: Vec<suffix_caller::PictureNmi>,
     /// Whole sprite-list finalization with no device effects.
     pub finalization: Profile,
+    /// Whole adjacent finalization with the current drawn sprite count.
+    pub adjacent_finalization: Option<Profile>,
     /// Exact transfer location for the actual finalized list.
     pub builder_address: BusAddress,
     /// Complete software request writer.
     pub preparation: Template,
     /// Complete physical handler body.
     pub nmi: Template,
+    /// Common controller prefix and live-selected physical tails for the adjacent NMI.
+    pub adjacent_nmi: Option<ControllerTail>,
     /// Prefix ending in the actual controller-busy sample.
     pub prefix_and_poll: Template,
     /// Exact ordered typed NMI publication projections.
@@ -37,6 +43,35 @@ pub struct Contract {
 }
 
 impl Contract {
+    fn native_work(&self, state: &State) -> Result<native_return::Work<'_>, ProductionFault> {
+        let controller_tail = if state.publications.original_interval() {
+            None
+        } else {
+            Some(self.adjacent_nmi.as_ref().ok_or_else(missing)?)
+        };
+        Ok(native_return::Work {
+            preparation: &self.preparation,
+            nmi: &self.nmi,
+            controller_tail,
+            requires_reset_sample: state.publications.original_interval()
+                && self.adjacent_nmi.is_some(),
+            prefix_and_poll: &self.prefix_and_poll,
+            recipes: &self.recipes,
+        })
+    }
+
+    fn finalization(&self, state: &State) -> Result<&Profile, ProductionFault> {
+        if state.publications.original_interval() {
+            Ok(&self.finalization)
+        } else {
+            let drawing = state.rendering.receipt().ok_or_else(missing)?;
+            if drawing.first_byte != 0 || drawing.pieces != 9 {
+                return Err(missing());
+            }
+            self.adjacent_finalization.as_ref().ok_or_else(missing)
+        }
+    }
+
     fn picture(
         &self,
         drawing: &super::rendering_stage::NormalDrawingReceipt,
@@ -94,14 +129,14 @@ impl State {
                     .finalise(&mut builder, FINALIZE)
                     .map_err(|_| missing())?;
                 self.timing
-                    .begin(FINALIZE, contract.finalization.clone())
+                    .begin(FINALIZE, contract.finalization(self)?.clone())
                     .map_err(ProductionFault::FrameHardware)?;
                 self.return_progress = Stage::Finalizing(builder);
             }
             Stage::Finalizing(_) => {
+                let profile = contract.finalization(self)?;
                 if !self.timing.work.iter().any(|work| {
-                    work.kind == timing::WorkKind::Semantic(FINALIZE)
-                        && work.profile == contract.finalization
+                    work.kind == timing::WorkKind::Semantic(FINALIZE) && &work.profile == profile
                 }) {
                     return Err(missing());
                 }
@@ -199,6 +234,10 @@ impl State {
             .iter()
             .find(|work| work.kind == timing::WorkKind::Semantic(active))
             .map(|work| work.cursor.intrinsic);
+        let physical = content.sender_physical.as_ref().ok_or_else(fail)?;
+        sender
+            .sample_contact_if_due(self, physical, active, intrinsic)
+            .map_err(|_| fail())?;
         for event in events {
             if matches!(event.kind, timing::EventKind::Publication(_)) {
                 sender
@@ -206,7 +245,11 @@ impl State {
                     .map_err(|_| fail())?;
             }
         }
-        if progress == timing::Progress::Completed(active) {
+        if progress == timing::Progress::Completed(active)
+            && !sender
+                .complete_contact_prefix(self, physical, binding, active)
+                .map_err(|_| fail())?
+        {
             sender
                 .completed(self, active, self.timing.hardware.now)
                 .map_err(|_| fail())?;
@@ -221,7 +264,7 @@ impl State {
         &self,
     ) -> Result<(&[timing::Event], bool), ProductionFault> {
         use data::timing::Interrupt;
-        use suffix_caller::{NMI_ENTRY, NMI_VIDEO, PREPARATION, Suffix, WAIT};
+        use suffix_caller::{NMI_CONTROLLER_TAIL, NMI_ENTRY, NMI_VIDEO, PREPARATION, Suffix, WAIT};
         use timing::{HandlerCompletion, WorkKind};
 
         let all = self
@@ -283,6 +326,15 @@ impl State {
                 Some(WorkKind::Handler {
                     identity: NMI_ENTRY,
                     portion: NMI_VIDEO,
+                    ..
+                }),
+                Some(admission),
+            )
+            | (
+                Suffix::ControllerTail { .. },
+                Some(WorkKind::Handler {
+                    identity: NMI_ENTRY,
+                    portion: NMI_CONTROLLER_TAIL,
                     completion: HandlerCompletion::NativeReturn,
                     ..
                 }),
@@ -293,6 +345,104 @@ impl State {
             }
             _ => Err(missing()),
         }
+    }
+
+    pub(super) fn validate_controller_tail(
+        &self,
+        content: &Content,
+    ) -> Result<(), ProductionFault> {
+        let Stage::Ready {
+            suffix: suffix_caller::Suffix::ControllerTail { controller, .. },
+            ..
+        } = &self.return_progress
+        else {
+            return Ok(());
+        };
+        let tail = content
+            .return_work
+            .as_ref()
+            .ok_or_else(missing)?
+            .native_work(self)?
+            .controller_tail
+            .ok_or_else(missing)?;
+        let held = controller.word().ok_or_else(missing)?;
+        let profile = tail.at_sample(self, held).map_err(|_| missing())?;
+        if !matches!(self.timing.work.as_slice(), [work] if
+            matches!(work.kind, timing::WorkKind::Handler {
+                identity: suffix_caller::NMI_ENTRY,
+                portion: suffix_caller::NMI_CONTROLLER_TAIL,
+                completion: timing::HandlerCompletion::NativeReturn,
+                ..
+            })
+            && &work.profile == profile)
+        {
+            return Err(missing());
+        }
+        Ok(())
+    }
+
+    pub(super) fn validate_native_controller(&self) -> Result<(), ProductionFault> {
+        use suffix_caller::Suffix;
+        let Stage::Ready {
+            suffix, admission, ..
+        } = &self.return_progress
+        else {
+            return Ok(());
+        };
+        let (Suffix::Video { controller, .. }
+        | Suffix::ControllerTail { controller, .. }
+        | Suffix::Acknowledged { controller }) = suffix
+        else {
+            return Ok(());
+        };
+        let publications = self
+            .publications
+            .active()
+            .map_err(ProductionFault::FramePublications)?;
+        let admission = admission.ok_or_else(missing)?;
+        let (prefix, _) =
+            retained_gameplay_prefix(publications, admission, self.timing.hardware.now)?;
+        let events = publications.get(prefix.len()..).ok_or_else(missing)?;
+        if !controller.matches_samples(events) {
+            return Err(missing());
+        }
+        if let Suffix::Video { body, sampled, .. } = suffix {
+            let count = usize::try_from(*sampled).map_err(|_| missing())?;
+            let expected = body.samples.get(..count).ok_or_else(missing)?;
+            let recorded = events.iter().filter_map(|event| {
+                if let timing::EventKind::Sample(sample, _) = event.kind {
+                    Some(sample)
+                } else {
+                    None
+                }
+            });
+            if !recorded.eq(expected.iter().copied()) {
+                return Err(missing());
+            }
+        }
+        Ok(())
+    }
+
+    pub(super) fn validate_finalized_builder(&self) -> Result<(), ProductionFault> {
+        use super::rendering_stage::Stage as Rendering;
+        let (builder, receipt) = match (&self.return_progress, &self.rendering) {
+            (Stage::Pending, _) => return Ok(()),
+            (Stage::Finalizing(builder), Rendering::Finalizing { work, receipt })
+                if *work == FINALIZE =>
+            {
+                (builder, receipt)
+            }
+            (Stage::Ready { builder, .. }, Rendering::Ready(receipt)) => (builder, receipt),
+            _ => return Err(missing()),
+        };
+        let mut expected = self.s6_drawing.builder().ok_or_else(missing)?.clone();
+        Rendering::Drawn(receipt.clone())
+            .finalise(&mut expected, FINALIZE)
+            .map_err(|_| missing())?;
+        if *builder != expected {
+            return Err(missing());
+        }
+        Ok(())
     }
 
     pub(super) fn advance_after_shake(
@@ -324,6 +474,7 @@ impl State {
         queue: &suffix_caller::HudQueue,
         budget: MasterTicks,
     ) -> Result<Outputs, ProductionFault> {
+        self.validate_controller_tail(content)?;
         let contract = content.return_work.as_ref().ok_or_else(missing)?;
         let Stage::Ready {
             builder,
@@ -362,12 +513,7 @@ impl State {
             background_inputs: &content.background.as_ref().ok_or_else(missing)?.inputs,
             queue,
         };
-        let work = native_return::Work {
-            preparation: &contract.preparation,
-            nmi: &contract.nmi,
-            prefix_and_poll: &contract.prefix_and_poll,
-            recipes: &contract.recipes,
-        };
+        let work = contract.native_work(self)?;
         let mut timing = self.timing.clone();
         let mut suffix = current.clone();
         let mut regions = self.transfer_regions();

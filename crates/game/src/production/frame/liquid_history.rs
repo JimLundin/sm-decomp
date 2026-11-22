@@ -148,7 +148,6 @@ impl History {
     pub(super) fn retire_opportunity(&mut self) {
         // These observations belong to the completed opportunity. Only a writer
         // or unqualified activity invalidates the live retained physics history.
-        self.interruption = None;
         self.environment = None;
         self.run = None;
         self.interrupts = Interrupts::Unseen;

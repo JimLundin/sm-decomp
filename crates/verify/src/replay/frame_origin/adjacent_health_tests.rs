@@ -75,8 +75,8 @@ pub(super) fn first_animation_bill(
 fn check_carried_amount(admitted: &AdmittedCase, production: &Production) {
     let state = current(production);
     let carried = *state.health.as_ref().unwrap().state();
-    // Construct a distinguishable origin: the first loss produces the exact carried
-    // state. Only the independent recorded arms above qualify the native source.
+    // A different origin can produce the same carried state after the first loss.
+    // The checkpoint must still name the origin that actually produced it.
     let mut changed_origin = admitted.content.clone();
     let ProductionContent::Frame(content) = &mut changed_origin else {
         panic!("frame content");
@@ -86,28 +86,21 @@ fn check_carried_amount(admitted: &AdmittedCase, production: &Production) {
     origin.energy.whole =
         samus_health::WholeEnergy::new(carried.energy.whole.get().checked_add(1).unwrap()).unwrap();
     origin.pending_loss.whole = one;
-    let result = Production::admit(
-        ProductionSeed::Frame(Box::new(state.clone())),
-        changed_origin.clone(),
-        admitted.rules.clone(),
-    )
-    .unwrap();
-    let resumed = Production::restore(
-        &result.save().unwrap(),
-        changed_origin.clone(),
-        admitted.rules.clone(),
-    )
-    .unwrap();
-    let ProductionContent::Frame(content) = &changed_origin else {
-        panic!("frame content");
-    };
-    assert_observation_eq!(
-        current(&resumed)
-            .fresh_animation_inputs(content)
-            .unwrap()
-            .energy,
-        carried.energy.whole.get()
+    let mut maintained = *origin;
+    assert_eq!(
+        maintained.health_opportunity(&samus_health::Rules::REFERENCE),
+        samus_health::WarningSound::None
     );
+    assert_observation_eq!(maintained, carried);
+    assert!(matches!(
+        Production::admit(
+            ProductionSeed::Frame(Box::new(state.clone())),
+            changed_origin,
+            admitted.rules.clone(),
+        ),
+        Err(game::production::AdmissionFault::Frame(fault))
+            if *fault == frame::Fault::InvalidPlayerEntry
+    ));
 
     // Change the saved quantity without calling a writer that would itself mark
     // the owner stale. Admission must check the entire first Maintenance result.

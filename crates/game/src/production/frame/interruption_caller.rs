@@ -1,8 +1,8 @@
 //! Current inactive interruption and its physical return.
 
 use super::{
-    Caller, Content, Dependency, State, animation_caller, movement::Movement, movement_caller::Run,
-    movement_down_contract,
+    Caller, Content, Dependency, Rules, State, animation_caller, movement::Movement,
+    movement_caller::Run, movement_down_contract,
 };
 use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
@@ -35,6 +35,7 @@ impl Admission {
 pub struct Contract {
     admission: Admission,
     profile: Profile,
+    adjacent: Option<Admission>,
 }
 
 impl Contract {
@@ -52,7 +53,23 @@ impl Contract {
         Ok(Self {
             admission,
             profile: template.bind(&[]).map_err(|_| missing())?,
+            adjacent: None,
         })
+    }
+
+    /// Authorize the independently qualified adjacent reuse of this whole envelope.
+    /// # Errors
+    /// The qualification must identify the same original image.
+    pub fn admit_adjacent(&mut self, admission: Admission) -> Result<(), ProductionFault> {
+        if admission != self.admission {
+            return Err(missing());
+        }
+        self.adjacent = Some(admission);
+        Ok(())
+    }
+
+    pub(super) fn admits_adjacent(&self) -> bool {
+        self.adjacent.as_ref() == Some(&self.admission)
     }
 }
 
@@ -73,7 +90,11 @@ const fn missing() -> ProductionFault {
 }
 
 impl State {
-    fn validate_interruption_inputs(&self, contract: &Contract) -> Result<(), ProductionFault> {
+    fn validate_interruption_inputs(
+        &self,
+        contract: &Contract,
+        movement: &Movement,
+    ) -> Result<(), ProductionFault> {
         let Caller::PlayerContinuation {
             completed,
             remaining,
@@ -85,13 +106,14 @@ impl State {
         else {
             return Err(missing());
         };
-        if !matches!(self.animation, animation_caller::Stage::Complete(_))
+        if (!self.publications.original_interval() && !contract.admits_adjacent())
+            || !matches!(self.animation, animation_caller::Stage::Complete(_))
             || !self.animation_prefix_holds(post_down)
             || self.liquid_history.as_ref().is_none_or(|history| {
                 !history.interruption_holds(&contract.admission, completed, run)
             })
             || remaining.0.actors.as_ref() != Some(&down.receipt.actors.0)
-            || !down.published_no_change(&self.movement)
+            || !down.published_no_change(movement)
         {
             return Err(missing());
         }
@@ -101,9 +123,12 @@ impl State {
     pub(super) fn advance_interruption(
         &mut self,
         content: &Content,
+        rules: &Rules,
     ) -> Result<(), ProductionFault> {
         let contract = content.interruption.as_ref().ok_or_else(missing)?;
-        self.validate_interruption_inputs(contract)?;
+        self.validate_interruption_inputs(contract, &self.movement)?;
+        self.validate_completed_down(content, rules)
+            .map_err(|_| missing())?;
         match &self.interruption {
             Stage::Pending => {
                 self.timing
@@ -135,12 +160,47 @@ impl State {
         Ok(())
     }
 
+    pub(crate) fn validate_interruption_checkpoint(
+        &self,
+        content: &Content,
+    ) -> Result<(), super::Fault> {
+        use super::Fault::InvalidPlayerEntry;
+        let mut work = self
+            .timing
+            .work
+            .iter()
+            .filter(|work| work.kind == timing::WorkKind::Semantic(WORK));
+        let contract = || content.interruption.as_ref().ok_or(InvalidPlayerEntry);
+        match &self.interruption {
+            Stage::Pending => {}
+            Stage::Charging(before) => {
+                let contract = contract()?;
+                self.validate_interruption_inputs(contract, before)
+                    .map_err(|_| InvalidPlayerEntry)?;
+                if before.as_ref() != &self.movement
+                    || work
+                        .next()
+                        .is_none_or(|work| work.profile != contract.profile)
+                {
+                    return Err(InvalidPlayerEntry);
+                }
+            }
+            Stage::Complete(before) => self
+                .validate_interruption_inputs(contract()?, before)
+                .map_err(|_| InvalidPlayerEntry)?,
+        }
+        if work.next().is_some() {
+            return Err(InvalidPlayerEntry);
+        }
+        Ok(())
+    }
+
     pub(super) fn complete_interruption(
         &mut self,
         content: &Content,
     ) -> Result<(), ProductionFault> {
         let contract = content.interruption.as_ref().ok_or_else(missing)?;
-        self.validate_interruption_inputs(contract)?;
+        self.validate_interruption_inputs(contract, &self.movement)?;
         let Stage::Charging(before) = &self.interruption else {
             return Err(missing());
         };

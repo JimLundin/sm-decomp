@@ -46,6 +46,9 @@ id = "audio-transport/SenderTiming"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/frame/sender_caller.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/sender_stage.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/sender_contract.rs" },
+  { role = "navigation", path = "crates/verify/src/replay/frame_origin/admission/adjacent_tail.rs" },
   { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
 ]
 
@@ -225,6 +228,7 @@ id = "interface-hud/RetainedHudWork"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
   { role = "adapter", path = "crates/game/src/production/frame/hud.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
 ]
 
@@ -241,6 +245,7 @@ id = "samus-appearance/ClipPlays"
 targets = [
   { role = "model", path = "crates/clean/samus_appearance/src/play.rs" },
   { role = "adapter", path = "crates/game/src/production/animation.rs" },
+  { role = "adapter", path = "crates/game/src/production/frame/animation_caller.rs" },
   { role = "navigation", path = "crates/clean/samus_appearance/src/catalogue.rs" },
   { role = "adapter", path = "crates/game/src/production/connected.rs" },
   { role = "adapter", path = "crates/game/src/production/connected/transition.rs" },

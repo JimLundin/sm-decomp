@@ -88,13 +88,28 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
         by_file.iter().map(|case| &case.id).collect::<Vec<_>>()
     );
     let report = views(&mapping, &baseline, &by_file).unwrap();
-    assert_eq!(report.len(), 6);
+    assert_eq!(
+        report
+            .iter()
+            .map(|view| view.declaration.id.0.as_str())
+            .collect::<Vec<_>>(),
+        [
+            "movement/D-inherited-cut",
+            "integrated/missing-dependency-closure",
+            "movie/missing-power-on",
+            "frame/ordinary-requested-nmi-return",
+            "frame/adjacent-actual-trial",
+            "frame/adjacent-held-trial",
+            "frame/adjacent-actual-return",
+            "frame/adjacent-held-return",
+        ]
+    );
     assert_eq!(
         report
             .iter()
             .filter(|view| view.reviewed_requirement.expected == Outcome::Pass)
             .count(),
-        2
+        4
     );
     assert_eq!(
         report
@@ -144,8 +159,13 @@ fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_cas
         )
         .unwrap();
     let report = views(&mapping, &baseline, &cases).unwrap();
-    assert_eq!(report.len(), 2);
-    for id in ["frame/adjacent-actual-trial", "frame/adjacent-held-trial"] {
+    assert_eq!(report.len(), 4);
+    for (id, claim) in [
+        ("frame/adjacent-actual-trial", Claim::Boundary),
+        ("frame/adjacent-held-trial", Claim::Boundary),
+        ("frame/adjacent-actual-return", Claim::Behaviour),
+        ("frame/adjacent-held-return", Claim::Behaviour),
+    ] {
         let view = report
             .iter()
             .find(|view| view.declaration.id.0 == id)
@@ -157,6 +177,7 @@ fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_cas
             .unwrap();
         assert_eq!(view.reviewed_requirement.id, floor.id);
         assert_eq!(view.reviewed_requirement.claim, floor.claim);
+        assert_eq!(view.reviewed_requirement.claim, claim);
         assert_eq!(view.reviewed_requirement.expected, floor.expected);
     }
 }

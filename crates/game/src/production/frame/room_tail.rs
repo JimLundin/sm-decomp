@@ -130,6 +130,11 @@ impl State {
             (ROOM, Stage::RoomCharging(held)) if *held == actual => Stage::Completed(actual),
             _ => return Err(missing()),
         };
+        if matches!(self.room_tail, Stage::Completed(_)) {
+            let history = self.room_tail_origin.as_mut().ok_or_else(missing)?;
+            let view = self.camera.0.position();
+            history.previous_layer_one = [view.x.pixel().0 >> 4, view.y.pixel().0 >> 4];
+        }
         Ok(())
     }
 }

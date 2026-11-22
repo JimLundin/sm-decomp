@@ -180,9 +180,6 @@ impl Health {
 
     /// Observe only the actual successfully admitted HUD interrupt pair.
     pub const fn hud_irq(&mut self, request: DrawingRequest) {
-        if matches!(self.freshness, Freshness::Retired) {
-            return;
-        }
         match (self.interrupts, request) {
             (InterruptHistory::Unseen, DrawingRequest::Begin) => {
                 self.interrupts = InterruptHistory::Begun;
@@ -239,9 +236,12 @@ impl Health {
     pub fn validate_current(&self) -> Result<(), Fault> {
         if self.freshness == Freshness::Retired {
             self.context.qualify()?;
-            return if self.origin.is_none()
-                && self.interrupts == InterruptHistory::Unseen
-                && !self.maintained
+            return if self
+                .origin
+                .as_ref()
+                .is_some_and(|origin| origin.context == self.context)
+                && self.state().protection == samus_health::ProtectionFrames::ZERO
+                && (!self.maintained || self.interrupts == InterruptHistory::Returned)
             {
                 Ok(())
             } else {
@@ -256,7 +256,6 @@ impl Health {
         self.interrupts = InterruptHistory::Unseen;
         self.maintained = false;
         self.freshness = Freshness::Retired;
-        self.origin = None;
     }
 
     /// Read fresh current whole energy for the actual pre-Maintenance Animation opportunity.
@@ -292,8 +291,7 @@ impl Health {
         result: samus_health::State,
     ) -> Result<(), Fault> {
         self.validate_current()?;
-        if self.freshness == Freshness::Retired
-            || self.maintained
+        if self.maintained
             || self.state() != before
             || self.interrupts != InterruptHistory::Returned
         {
@@ -314,6 +312,7 @@ impl Health {
         actor: &actors::ActorUpdateCompletion,
     ) -> bool {
         self.freshness == Freshness::Retired
+            && self.origin.as_ref() == Some(admission)
             && self.context == admission.context
             && self.validate_current().is_ok()
             && self.actor() == Some(actor)
@@ -343,16 +342,11 @@ impl super::State {
         if self.publications.original_interval() {
             return owner.at_animation(origin, actors).map_err(|_| missing());
         }
-        let (gameplay, in_nmi) = self.gameplay_publications()?;
-        if in_nmi
-            || content.adjacent_health_context != Some(origin.context)
+        let (gameplay, _) = self.gameplay_publications()?;
+        if content.adjacent_health_context != Some(origin.context)
             || !self.adjacent_health_history_holds()
             || !self.drawing_irqs_returned(gameplay)
             || !owner.holds_recurring_actor(origin, actors)
-            // The completed answer still needs its current Health join when restored
-            // at Animation's return. A later service has its own lifetime.
-            || (matches!(self.animation, super::animation_caller::Stage::Complete(_))
-                && !matches!(self.interruption, super::interruption_caller::Stage::Pending))
         {
             return Err(missing());
         }
@@ -430,6 +424,10 @@ impl super::State {
         let mut maintained = admission.initial.0;
         if maintained.health_opportunity(&samus_health::Rules::REFERENCE)
             != samus_health::WarningSound::None
+            || (!self.publications.original_interval()
+                && owner.maintained
+                && maintained.health_opportunity(&samus_health::Rules::REFERENCE)
+                    != samus_health::WarningSound::None)
             || owner.state() != &maintained
         {
             return Err(InvalidPlayerEntry);
@@ -452,7 +450,7 @@ impl super::State {
         };
         if owner.freshness == Freshness::Retired {
             owner.validate_current().map_err(|_| missing())?;
-            if owner.context != admission.context {
+            if owner.origin.as_ref() != Some(admission) || owner.context != admission.context {
                 return Err(missing());
             }
         } else {

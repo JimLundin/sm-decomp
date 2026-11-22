@@ -121,10 +121,6 @@ impl State {
                 }
             }
             Stage::StatusReady => {
-                // The adjacent map only establishes event facts at its own opportunity.
-                if !self.publications.original_interval() {
-                    return Err(missing());
-                }
                 let display = &self.hud_display_current.as_ref().ok_or_else(missing)?.0;
                 let mut status = display.status;
                 status.energy.now = energy;
@@ -160,8 +156,7 @@ impl State {
         content: &Content,
     ) -> Result<(), ProductionFault> {
         let expected = if let Stage::Charging { chosen, energy } = &self.late_hud {
-            if !self.publications.original_interval()
-                || self.maintenance.energy() != Some(*energy)
+            if self.maintenance.energy() != Some(*energy)
                 || chosen.chosen_status_energy() != Some(*energy)
             {
                 return Err(missing());

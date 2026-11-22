@@ -195,6 +195,31 @@ pub enum Fault {
 }
 
 impl State {
+    pub(crate) fn validate_opportunity(
+        &self,
+        content: &super::Content,
+        rules: &super::Rules,
+    ) -> Result<(), super::Fault> {
+        self.validate_grounded_checkpoint(content, rules)?;
+        self.validate_hud_checkpoint(content, rules)?;
+        self.validate_scene_checkpoint(content)?;
+        self.validate_countdown_checkpoint(content, rules)?;
+        self.validate_animation_checkpoint(content, rules)?;
+        self.validate_interruption_checkpoint(content)?;
+        if content
+            .return_work
+            .as_ref()
+            .is_some_and(|work| work.adjacent_nmi.is_some())
+        {
+            self.validate_finalized_builder()
+                .map_err(|_| super::Fault::InvalidPlayerEntry)?;
+            self.validate_native_controller()
+                .map_err(|_| super::Fault::InvalidPlayerEntry)?;
+        }
+        self.validate_controller_tail(content)
+            .map_err(|_| super::Fault::InvalidPlayerEntry)
+    }
+
     pub(super) fn has_physical_bill(
         &self,
         identity: timing::WorkId,

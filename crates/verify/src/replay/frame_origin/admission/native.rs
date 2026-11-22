@@ -76,10 +76,12 @@ impl Admission<'_> {
                     rendering,
                     pictures,
                     finalization,
+                    adjacent_finalization: None,
                     builder_address,
                     preparation: source::preparation_template(templates)
                         .map_err(|_| data_failure(None, "software frame-request profile"))?,
                     nmi: recipes.whole,
+                    adjacent_nmi: None,
                     prefix_and_poll,
                     recipes: recipes.publications,
                 }),

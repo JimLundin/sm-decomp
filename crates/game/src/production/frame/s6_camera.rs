@@ -14,6 +14,7 @@ pub struct Contract {
     prefix: Profile,
     inputs: camera_stage::Inputs,
     camera: camera_stage::PhysicalContract,
+    adjacent: Option<camera_stage::PhysicalContract>,
 }
 
 impl Contract {
@@ -36,7 +37,34 @@ impl Contract {
             prefix: prefix.bind(&[]).map_err(|_| missing())?,
             inputs,
             camera,
+            adjacent: None,
         })
+    }
+
+    /// Qualify the same physical follow against independently checked at-use operands.
+    pub fn admit_adjacent(
+        &mut self,
+        current: camera_stage::RequiredCentre,
+        previous: camera_stage::RequiredCentre,
+        view: camera_stage::RequiredView,
+        screens: Vec<camera_stage::RequiredScreens>,
+    ) {
+        let dependencies = camera_stage::RequiredDependencies {
+            current,
+            previous,
+            view,
+            inputs: Box::new(self.inputs.clone()),
+            screens,
+        };
+        self.adjacent = Some(self.camera.with_dependencies(dependencies));
+    }
+
+    fn physical(&self, state: &State) -> Result<&camera_stage::PhysicalContract, ProductionFault> {
+        if state.publications.original_interval() {
+            Ok(&self.camera)
+        } else {
+            self.adjacent.as_ref().ok_or_else(missing)
+        }
     }
 }
 
@@ -161,26 +189,28 @@ impl State {
                         };
                         ProductionFault::Unsupported(Unsupported::Frame(dependency))
                     })?;
-                let profile = progress.physical(&contract.camera).map_err(|fault| {
-                    let dependency = match fault {
-                        camera_stage::Fault::CurrentCentre => {
-                            super::Dependency::CameraCurrentCentre
-                        }
-                        camera_stage::Fault::PreviousCentre => {
-                            super::Dependency::CameraPreviousCentre
-                        }
-                        camera_stage::Fault::Order
-                        | camera_stage::Fault::Movement
-                        | camera_stage::Fault::Previous
-                        | camera_stage::Fault::Room(_)
-                        | camera_stage::Fault::Completion
-                        | camera_stage::Fault::Profile
-                        | camera_stage::Fault::Dependencies
-                        | camera_stage::Fault::Samples
-                        | camera_stage::Fault::Unsupported => super::Dependency::CameraPhysical,
-                    };
-                    ProductionFault::Unsupported(Unsupported::Frame(dependency))
-                })?;
+                let profile = progress
+                    .physical(contract.physical(self)?)
+                    .map_err(|fault| {
+                        let dependency = match fault {
+                            camera_stage::Fault::CurrentCentre => {
+                                super::Dependency::CameraCurrentCentre
+                            }
+                            camera_stage::Fault::PreviousCentre => {
+                                super::Dependency::CameraPreviousCentre
+                            }
+                            camera_stage::Fault::Order
+                            | camera_stage::Fault::Movement
+                            | camera_stage::Fault::Previous
+                            | camera_stage::Fault::Room(_)
+                            | camera_stage::Fault::Completion
+                            | camera_stage::Fault::Profile
+                            | camera_stage::Fault::Dependencies
+                            | camera_stage::Fault::Samples
+                            | camera_stage::Fault::Unsupported => super::Dependency::CameraPhysical,
+                        };
+                        ProductionFault::Unsupported(Unsupported::Frame(dependency))
+                    })?;
                 progress.bind(CAMERA).map_err(|_| {
                     ProductionFault::Unsupported(Unsupported::Frame(
                         super::Dependency::CameraPhysical,
@@ -204,7 +234,7 @@ impl State {
                         super::Dependency::CameraHeldInput,
                     )));
                 }
-                let profile = camera.physical(&contract.camera).map_err(|_| {
+                let profile = camera.physical(contract.physical(self)?).map_err(|_| {
                     ProductionFault::Unsupported(Unsupported::Frame(
                         super::Dependency::CameraPhysical,
                     ))

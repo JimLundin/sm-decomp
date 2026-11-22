@@ -1,5 +1,6 @@
 //! Admit current source owners before opening any expected observations.
 
+mod adjacent_tail;
 pub(in crate::replay) mod completed_start;
 mod native;
 mod player;
@@ -516,7 +517,7 @@ fn admit_full(
         // A completed poll remains readable after the host has presented the next pad.
         controller.committed_pad = pad.presented;
     }
-    let (state, mut content, clips) = assemble(
+    let (mut state, mut content, clips) = assemble(
         case,
         sources,
         manifest,
@@ -525,7 +526,7 @@ fn admit_full(
         seed,
         returns.settling_haze.take(),
     )?;
-    returns.bind_animation(case, sources, &wram, &mut content, clips)?;
+    returns.bind_animation(case, sources, &wram, &mut content, clips.clone())?;
     content.player_entry.recurring_pose_input = returns.adjacent_pose_input;
     if let Some([down, contact]) = returns.adjacent_down_contact {
         content
@@ -569,6 +570,7 @@ fn admit_full(
         returns.pad_origin.as_ref().map(|pad| &pad.schedule_sha256),
         content.health.as_ref(),
     )?;
+    adjacent_tail::bind(case, sources, &wram, &clips, &mut state, &mut content)?;
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {
         movement: samus_movement::Rules::default(),

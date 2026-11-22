@@ -20,6 +20,7 @@ pub const WAIT: WorkId = WorkId(1401);
 pub const NMI_ENTRY: WorkId = WorkId(1410);
 /// Complete source NMI body, including controller reads and native return.
 pub const NMI_VIDEO: WorkId = WorkId(1411);
+pub(super) const NMI_CONTROLLER_TAIL: WorkId = WorkId(1412);
 
 /// Actual producer owners; no captured terminal buffer is an input.
 #[derive(Clone, Copy)]
@@ -177,7 +178,8 @@ impl PreparedVideo {
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct QualifiedNmiBody {
     profile: Profile,
-    samples: Vec<Sample>,
+    pub(super) samples: Vec<Sample>,
+    pub(super) completion: timing::HandlerCompletion,
 }
 
 /// Current samples consumed from actual hardware events, never seeded from a captured reply.
@@ -192,6 +194,30 @@ impl ControllerRead {
     #[must_use]
     pub fn word(&self) -> Option<u16> {
         Some(u16::from_le_bytes([self.low?, self.high?]))
+    }
+
+    pub(super) fn matches_samples(&self, events: &[timing::Event]) -> bool {
+        if self.low.is_none() && self.high.is_some() {
+            return false;
+        }
+        let actual = events.iter().filter_map(|event| {
+            if let timing::EventKind::Sample(
+                sample @ (Sample::ControllerLow | Sample::ControllerHigh),
+                value,
+            ) = event.kind
+            {
+                Some((sample, value))
+            } else {
+                None
+            }
+        });
+        let retained = [
+            (Sample::ControllerLow, self.low),
+            (Sample::ControllerHigh, self.high),
+        ]
+        .into_iter()
+        .filter_map(|(sample, byte)| byte.map(|byte| (sample, timing::SampleValue::Byte(byte))));
+        actual.eq(retained)
     }
 }
 
@@ -229,6 +255,13 @@ pub enum Suffix {
         /// Number of actual source samples already consumed from hardware events.
         sampled: u32,
         /// Actual controller bytes sampled by this NMI, with no preview seed.
+        controller: ControllerRead,
+    },
+    /// Actual sampled controller input selected an effect-free physical tail.
+    ControllerTail {
+        /// Actual prepared owners retained through completion.
+        ready: Box<PreparedVideo>,
+        /// Bytes already read from the actual controller.
         controller: ControllerRead,
     },
     /// The complete NMI returned; its request is acknowledged once.
@@ -351,11 +384,7 @@ impl Suffix {
         }
         ready.validate(owners)?;
         timing
-            .begin_handler_portion(
-                NMI_VIDEO,
-                body.profile.clone(),
-                timing::HandlerCompletion::NativeReturn,
-            )
+            .begin_handler_portion(NMI_VIDEO, body.profile.clone(), body.completion)
             .map_err(Fault::Hardware)?;
         *self = Self::Video {
             ready: ready.clone(),
@@ -432,19 +461,27 @@ impl Suffix {
     /// # Errors
     /// The body is inactive, the return is incomplete, or controller bytes are missing.
     pub fn complete_nmi(&mut self, progress: timing::Progress) -> Result<(), Fault> {
-        let Self::Video {
-            body,
-            sampled,
-            controller,
-            ..
-        } = self
-        else {
-            return Err(Fault::Order);
+        let controller = match self {
+            Self::Video {
+                body,
+                sampled,
+                controller,
+                ..
+            } if body.completion == timing::HandlerCompletion::NativeReturn
+                && usize::try_from(*sampled) == Ok(body.samples.len()) =>
+            {
+                controller
+            }
+            Self::ControllerTail { controller, .. } => controller,
+            Self::Unread
+            | Self::Preparing { .. }
+            | Self::Requested { .. }
+            | Self::Waiting { .. }
+            | Self::Entering { .. }
+            | Self::Video { .. }
+            | Self::Acknowledged { .. } => return Err(Fault::Order),
         };
-        if progress != timing::Progress::HandlerReturned(NMI_ENTRY)
-            || usize::try_from(*sampled) != Ok(body.samples.len())
-            || controller.word().is_none()
-        {
+        if progress != timing::Progress::HandlerReturned(NMI_ENTRY) || controller.word().is_none() {
             return Err(Fault::Completion);
         }
         *self = Self::Acknowledged {
@@ -1632,7 +1669,11 @@ impl QualifiedNmiBody {
         {
             return Err(Fault::Profile);
         }
-        Ok(Self { profile, samples })
+        Ok(Self {
+            profile,
+            samples,
+            completion: timing::HandlerCompletion::NativeReturn,
+        })
     }
 }
 

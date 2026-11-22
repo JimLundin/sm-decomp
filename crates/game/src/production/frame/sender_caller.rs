@@ -6,6 +6,9 @@ use audio_transport::{OfferPermission, SoundGroup, sender::SenderProfile};
 use canonical::Canonical;
 use data::timing::{MasterTicks, Profile};
 
+const CONTACT_REPLY: WorkId = WorkId(1307);
+const CONTACT_READ_PREFIX: u64 = 62;
+
 /// Caller service order, independent of actual producer offer progress.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Service {
@@ -53,6 +56,10 @@ pub enum Cursor {
     Admission,
     /// Current owners can be qualified for this service.
     Ready(Service),
+    /// Contact's actual physical reply edge has not yet occurred.
+    ContactReading,
+    /// The actual reply has been consumed and the read exposure is finishing.
+    ContactRead,
     /// A qualified body is charging with its intrinsic milestones retained.
     Body {
         /// Actual selected library.
@@ -63,6 +70,8 @@ pub enum Cursor {
         publication: Option<u64>,
         /// Intrinsic completion boundary, excluding hardware stalls.
         completion: u64,
+        /// Intrinsic charge furnished by a preceding reply-read prefix.
+        prefix: u64,
     },
     /// The actual caller continuation is charging.
     Tail(Service),
@@ -108,6 +117,7 @@ impl Cursor {
     pub(super) const fn active(&self) -> Option<WorkId> {
         match self {
             Self::Admission => Some(WorkId(1300)),
+            Self::ContactReading | Self::ContactRead => Some(CONTACT_REPLY),
             Self::Body { service, .. } => Some(service.body()),
             Self::Tail(service) => Some(service.tail()),
             Self::New | Self::Ready(_) | Self::Done => None,
@@ -127,17 +137,36 @@ impl Cursor {
         let mut candidate = state.clone();
         let current = candidate.sender_current.ok_or(Fault::Order)?;
         let queues = candidate.sender_queues.as_ref().ok_or(Fault::Order)?;
+        let retry = content.contact_retry.as_ref().filter(|_| {
+            candidate.senders.contact.0.progress
+                == audio_transport::SenderProgress::AwaitCue(audio_transport::CueId::Footstep)
+        });
         let next = match *self {
             Self::New => {
-                let profile = content
-                    .admission
-                    .qualify(&candidate.senders, queues, current)
-                    .map_err(Fault::Contract)?;
+                let admission = &content.admission;
+                let profile = if retry.is_some() {
+                    admission.qualify_retry(&candidate.senders, queues, current)
+                } else {
+                    admission.qualify(&candidate.senders, queues, current)
+                }
+                .map_err(Fault::Contract)?;
                 candidate
                     .timing
                     .begin(WorkId(1300), profile)
                     .map_err(Fault::Timing)?;
                 Self::Admission
+            }
+            Self::Ready(Service::Contact) if retry.is_some() => {
+                let retry = retry.ok_or(Fault::Order)?;
+                candidate
+                    .sender_stage
+                    .begin_contact_reply(&mut candidate.senders, CONTACT_REPLY, wall)
+                    .map_err(Fault::Sender)?;
+                candidate
+                    .timing
+                    .begin(CONTACT_REPLY, retry.prefix.clone())
+                    .map_err(Fault::Timing)?;
+                Self::ContactReading
             }
             Self::Ready(service) => {
                 queues
@@ -173,15 +202,86 @@ impl Cursor {
                     tail: qualified.tail,
                     publication: qualified.publication,
                     completion: qualified.completion,
+                    prefix: 0,
                 }
             }
-            Self::Admission | Self::Body { .. } | Self::Tail(_) | Self::Done => {
+            Self::Admission
+            | Self::ContactReading
+            | Self::ContactRead
+            | Self::Body { .. }
+            | Self::Tail(_)
+            | Self::Done => {
                 return Err(Fault::Order);
             }
         };
         *state = candidate;
         *self = next;
         Ok(())
+    }
+
+    pub(super) fn sample_contact_if_due(
+        &mut self,
+        state: &mut State,
+        content: &sender_contract::PhysicalContent,
+        active: WorkId,
+        spent: Option<MasterTicks>,
+    ) -> Result<(), Fault> {
+        if active != CONTACT_REPLY || !matches!(self, Self::ContactReading) {
+            return Ok(());
+        }
+        let at = sender_contract::ContactRetry::SAMPLE;
+        if spent.is_some_and(|spent| spent.0 > at) {
+            return Err(Fault::Order);
+        }
+        if spent == Some(MasterTicks(at)) {
+            let reply = content.contact_retry.as_ref().ok_or(Fault::Order)?.reply;
+            state
+                .sender_stage
+                .consume_contact_reply(
+                    &mut state.senders,
+                    [CONTACT_REPLY, Service::Contact.body()],
+                    state.timing.hardware.now,
+                    at,
+                    reply,
+                )
+                .map_err(Fault::Sender)?;
+            *self = Self::ContactRead;
+        }
+        Ok(())
+    }
+
+    pub(super) fn complete_contact_prefix(
+        &mut self,
+        state: &mut State,
+        content: &sender_contract::PhysicalContent,
+        binding: sender_stage::CueBinding,
+        active: WorkId,
+    ) -> Result<bool, Fault> {
+        if active != CONTACT_REPLY {
+            return Ok(false);
+        }
+        if !matches!(self, Self::ContactRead) {
+            return Err(Fault::Order);
+        }
+        let retry = content.contact_retry.as_ref().ok_or(Fault::Order)?;
+        let receipt = state.sender_stage.receipt().ok_or(Fault::Order)?;
+        let queues = state.sender_queues.as_ref().ok_or(Fault::Order)?;
+        let qualified = retry
+            .qualify(receipt, queues, binding, &content.contact.tail)
+            .map_err(Fault::Contract)?;
+        let service = Service::Contact;
+        state
+            .timing
+            .begin(service.body(), qualified.body)
+            .map_err(Fault::Timing)?;
+        *self = Self::Body {
+            service,
+            publication: qualified.publication,
+            completion: qualified.completion,
+            tail: qualified.tail,
+            prefix: CONTACT_READ_PREFIX,
+        };
+        Ok(true)
     }
 
     /// Consume an event routed using the work active before the hardware step.
@@ -209,12 +309,13 @@ impl Cursor {
         let Self::Body {
             service,
             publication: Some(at),
+            prefix,
             ..
         } = self
         else {
             return Err(Fault::Order);
         };
-        if active != service.body() || intrinsic.0 != *at {
+        if active != service.body() || intrinsic.0.checked_add(*prefix) != Some(*at) {
             return Err(Fault::Order);
         }
         let expected = state
@@ -253,6 +354,7 @@ impl Cursor {
                 tail,
                 publication: None,
                 completion,
+                ..
             } if work == service.body() => {
                 let receipt = candidate
                     .sender_stage
@@ -283,6 +385,8 @@ impl Cursor {
             Self::New
             | Self::Admission
             | Self::Ready(_)
+            | Self::ContactReading
+            | Self::ContactRead
             | Self::Body { .. }
             | Self::Tail(_)
             | Self::Done => return Err(Fault::Order),

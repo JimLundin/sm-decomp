@@ -49,6 +49,15 @@ pub enum Stage {
     Idle,
     /// Complete current result awaits full source-envelope qualification.
     Chosen(Model<ReceiptPin>),
+    /// The actual reply read is charging before any clean result is available.
+    AwaitingReply {
+        /// Actual read prefix identity.
+        work: WorkId,
+        /// The unresolved observation of the actual clean sender.
+        receipt: Model<ReceiptPin>,
+        /// Actual wall instant when the prefix began.
+        wall: MasterTicks,
+    },
     /// One qualified physical service is charging.
     Charging {
         /// Actual hardware work identity.
@@ -57,6 +66,8 @@ pub enum Stage {
         receipt: Model<ReceiptPin>,
         /// Actual wall instant of the latest consumed milestone.
         wall: MasterTicks,
+        /// Already consumed observation offset for a reply-dependent service.
+        observed: Option<u64>,
     },
 }
 
@@ -168,6 +179,19 @@ impl Stage {
         };
         let pending = sender.pending.as_ref().ok_or(Fault::Owner)?;
         let chosen = &receipt.chosen;
+        if matches!(self, Self::AwaitingReply { .. }) {
+            return if pending == chosen
+                && chosen.observation.is_some()
+                && chosen.result.is_none()
+                && sender.now == chosen.origin
+                && sender.progress == receipt.before
+                && sender.queue == receipt.queue
+            {
+                Ok(())
+            } else {
+                Err(Fault::Owner)
+            };
+        }
         let result = pending.result.as_ref().ok_or(Fault::Owner)?;
         let selected = chosen.result.as_ref().ok_or(Fault::Owner)?;
         let before = &receipt.before;
@@ -194,7 +218,17 @@ impl Stage {
         } else {
             &chosen.origin
         };
-        if sender.now != *expected {
+        let expected = if result.presentation.is_some()
+            && let Self::Charging {
+                observed: Some(read),
+                ..
+            } = self
+        {
+            audio_transport::ExactCpuMasterTicks(std::ops::Add::add(&chosen.origin.0, *read))
+        } else {
+            expected.clone()
+        };
+        if sender.now != expected {
             return Err(Fault::Owner);
         }
         Ok(())
@@ -215,6 +249,21 @@ impl Stage {
             return Err(Fault::Order);
         }
         self.validate(senders)?;
+        let (candidate, receipt) = Self::select(senders, group, wall, profile)?;
+        if receipt.chosen.observation.is_some() || receipt.chosen.result.is_none() {
+            return Err(Fault::ReplyObservation);
+        }
+        *senders = candidate;
+        *self = Self::Chosen(Model(receipt));
+        self.receipt().ok_or(Fault::Order)
+    }
+
+    fn select(
+        senders: &Senders,
+        group: SoundGroup,
+        wall: MasterTicks,
+        profile: SenderProfile,
+    ) -> Result<(Senders, Receipt), Fault> {
         let mut candidate = senders.clone();
         candidate.validate().map_err(|_| Fault::Owner)?;
         let sender = current(&mut candidate, group);
@@ -239,17 +288,101 @@ impl Stage {
         crate::production::sender::advance(sender, group, SenderInput::Begin(profile))
             .map_err(Fault::Production)?;
         let chosen = sender.pending.as_ref().ok_or(Fault::Owner)?.clone();
-        if chosen.observation.is_some() || chosen.result.is_none() {
+        Ok((
+            candidate,
+            Receipt {
+                group,
+                before,
+                queue,
+                reply,
+                chosen,
+            },
+        ))
+    }
+
+    pub(super) fn begin_contact_reply(
+        &mut self,
+        senders: &mut Senders,
+        work: WorkId,
+        wall: MasterTicks,
+    ) -> Result<(), Fault> {
+        if !matches!(self, Self::Idle) {
+            return Err(Fault::Order);
+        }
+        self.validate(senders)?;
+        let (candidate, receipt) =
+            Self::select(senders, SoundGroup::Contact, wall, SenderProfile::FastBus)?;
+        if receipt.before != SenderProgress::AwaitCue(audio_transport::CueId::Footstep)
+            || !receipt.queue.is_empty()
+            || receipt.chosen.observation.is_none()
+            || receipt.chosen.result.is_some()
+        {
             return Err(Fault::ReplyObservation);
         }
         *senders = candidate;
-        *self = Self::Chosen(Model(Receipt {
-            group,
-            before,
-            queue,
-            reply,
-            chosen,
-        }));
+        *self = Self::AwaitingReply {
+            work,
+            receipt: Model(receipt),
+            wall,
+        };
+        Ok(())
+    }
+
+    pub(super) fn consume_contact_reply(
+        &mut self,
+        senders: &mut Senders,
+        work: [WorkId; 2],
+        at: MasterTicks,
+        intrinsic: u64,
+        reply: Request,
+    ) -> Result<&Receipt, Fault> {
+        self.validate(senders)?;
+        let Self::AwaitingReply {
+            work: active,
+            receipt,
+            wall,
+        } = self
+        else {
+            return Err(Fault::Order);
+        };
+        let [prefix, body] = work;
+        let chosen = &receipt.0.chosen;
+        let stop =
+            audio_transport::ExactCpuMasterTicks(std::ops::Add::add(&chosen.origin.0, intrinsic));
+        if *active != prefix
+            || at < *wall
+            || chosen.observation.as_ref() != Some(&stop)
+            || CpuMasterTicks(at.0).0 < stop.0
+        {
+            return Err(Fault::Milestone);
+        }
+        let mut candidate = senders.clone();
+        let sender = current(&mut candidate, receipt.0.group);
+        let outputs = crate::production::sender::advance(
+            sender,
+            receipt.0.group,
+            SenderInput::Advance {
+                stop: stop.clone(),
+                replies: &[audio_transport::sender::ReplyInput {
+                    at: stop.clone(),
+                    reply,
+                }],
+            },
+        )
+        .map_err(Fault::Production)?;
+        if outputs != [SenderOutput::Observation(stop, reply)] {
+            return Err(Fault::Milestone);
+        }
+        let mut observed = receipt.clone();
+        observed.0.reply = reply;
+        observed.0.chosen = sender.pending.clone().ok_or(Fault::Owner)?;
+        *senders = candidate;
+        *self = Self::Charging {
+            work: body,
+            receipt: observed,
+            wall: at,
+            observed: Some(intrinsic),
+        };
         self.receipt().ok_or(Fault::Order)
     }
 
@@ -258,7 +391,9 @@ impl Stage {
     pub const fn receipt(&self) -> Option<&Receipt> {
         match self {
             Self::Idle => None,
-            Self::Chosen(receipt) | Self::Charging { receipt, .. } => Some(&receipt.0),
+            Self::Chosen(receipt)
+            | Self::AwaitingReply { receipt, .. }
+            | Self::Charging { receipt, .. } => Some(&receipt.0),
         }
     }
 
@@ -276,6 +411,7 @@ impl Stage {
             work,
             receipt: receipt.clone(),
             wall,
+            observed: None,
         };
         Ok(())
     }
@@ -357,6 +493,7 @@ impl Stage {
             work,
             receipt,
             wall,
+            ..
         } = self
         else {
             return Err(Fault::Order);

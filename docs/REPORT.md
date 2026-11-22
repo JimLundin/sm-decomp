@@ -167,6 +167,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 | frame/ordinary-requested-nmi-return | Pass | 1 | 0 | 1 | 13 | 2295 | 1 |
 | frame/adjacent-actual-trial | Unsupported at Some(2): Frame(InterruptionPreparation) | 1 | 0 | unaccepted prefix | 13 | 2295 | 1 |
 | frame/adjacent-held-trial | Unsupported at Some(2): Frame(InterruptionPreparation) | 1 | 0 | unaccepted prefix | 13 | 2295 | 1 |
+| frame/adjacent-actual-return | Pass | 2 | 0 | 2 | 26 | 4590 | 2 |
+| frame/adjacent-held-return | Pass | 2 | 0 | 2 | 26 | 4590 | 2 |
 
 - **integrated/missing-dependency-closure** witnesses samus-movement/TravelledDistances. Limits: complete production dependency closure unavailable; boundary holds unsupported; no behaviour Pass.
 - **movement-ceres/carried-position-proximity** witnesses samus-movement/MovesAsShePosed, boss-ceres-ridley/Waiting, boss-ceres-ridley/SheIsNear, boss-ceres-ridley/Polling, boss-ceres-ridley/Closing, boss-ceres-ridley/Shown, boss-ceres-ridley/Solid. Limits: only carried prior whole-pixel movement to door proximity integrated; complete outputs retained but only declared position and door fields compared; unselected producers remain external; prior roster empty; current actor selection and timing unproved; appearance ahead remains external feedback; no durable Ceres codec, pixels, app, power-on or played-alone claim.
@@ -175,6 +177,8 @@ These are committed acceptance requirements, not a fresh replay run. One runner 
 - **frame/ordinary-requested-nmi-return** witnesses game-random/AdvanceRandom, world-haze/HazeBrightens, world-quake/QuietQuakePhase, game-time/PlayTimeAdvance, samus-movement/TravelledDistances, samus-appearance/ClipPlays, interface-hud/RetainedHudWork, interface-hud/EscapeCountdown, interface-hud/CountdownContinuation, audio-transport/SenderTiming, samus-health/PeriodicLoss, samus-health/LowEnergyWarning. Limits: one native admission through the requested NMI return on this retained frame; unselected preparation, actor and native-video semantics externally borrowed; selected movement, HUD, appearance, sender and physical progression require actual production owners; selected HUD countdown executes actual clean model; coarse MainGameplay route does not authorize countdown selection; countdown result and later Maintenance DTO never supply scene choice; missing/stale/unsupported scene input rejects before dependent effects; source qualification alone does not admit runtime or complete frame; current surfaces as history; later snapshot initializer; Environment-generated history; general liquid physics; non-Air transition; selected Appearance outputs; static source flags as runtime receipts.
 - **frame/adjacent-actual-trial** witnesses game-random/AdvanceRandom, world-haze/HazeBrightens, world-haze/HazeSettles, world-quake/QuietQuakePhase, game-time/PlayTimeAdvance, samus-movement/TravelledDistances, samus-appearance/ClipPlays, interface-hud/RetainedHudWork, interface-hud/EscapeCountdown, interface-hud/CountdownContinuation, audio-transport/SenderTiming, samus-health/PeriodicLoss, samus-health/LowEnergyWarning. Limits: current Environment and Run and two returned drawing interrupts requalify carried Air history for the adjacent Animation return; one native admission over two consecutive requested NMI returns; a missing recurring owner remains a typed boundary; unselected preparation, actor and native-video semantics externally borrowed; selected movement, HUD, appearance, sender and physical progression require actual production owners; selected countdown executes the clean HUD model in both qualified opportunities; adjacent scene preservation crosses the first actual requested NMI and covers Timer and subsequent Animation selection; no later Ceres selection is compared; coarse MainGameplay route does not authorize countdown selection; countdown result and later Maintenance DTO never supply scene choice; missing/stale/unsupported scene input rejects before dependent effects; source qualification alone does not admit runtime or complete frame; current surfaces as history; later snapshot initializer; Environment-generated history; general liquid physics; non-Air transition; selected Appearance outputs; static source flags as runtime receipts; later Appearance and Interruption work; the partial second interval compares Animation return time, step, hold, stage, laps, complete Health and the ordered callback prefix without counting a second native return.
 - **frame/adjacent-held-trial** witnesses game-random/AdvanceRandom, world-haze/HazeBrightens, world-haze/HazeSettles, world-quake/QuietQuakePhase, game-time/PlayTimeAdvance, samus-movement/TravelledDistances, samus-appearance/ClipPlays, interface-hud/RetainedHudWork, interface-hud/EscapeCountdown, interface-hud/CountdownContinuation, audio-transport/SenderTiming, samus-health/PeriodicLoss, samus-health/LowEnergyWarning. Limits: current Environment and Run and two returned drawing interrupts requalify carried Air history for the adjacent Animation return; one native admission over two consecutive requested NMI returns; a missing recurring owner remains a typed boundary; unselected preparation, actor and native-video semantics externally borrowed; selected movement, HUD, appearance, sender and physical progression require actual production owners; selected countdown executes the clean HUD model in both qualified opportunities; adjacent scene preservation crosses the first actual requested NMI and covers Timer and subsequent Animation selection; no later Ceres selection is compared; coarse MainGameplay route does not authorize countdown selection; countdown result and later Maintenance DTO never supply scene choice; missing/stale/unsupported scene input rejects before dependent effects; source qualification alone does not admit runtime or complete frame; current surfaces as history; later snapshot initializer; Environment-generated history; general liquid physics; non-Air transition; selected Appearance outputs; static source flags as runtime receipts; later Appearance and Interruption work; the partial second interval compares Animation return time, step, hold, stage, laps, complete Health and the ordered callback prefix without counting a second native return.
+- **frame/adjacent-actual-return** witnesses game-random/AdvanceRandom, world-haze/HazeBrightens, world-haze/HazeSettles, world-quake/QuietQuakePhase, game-time/PlayTimeAdvance, samus-movement/TravelledDistances, samus-appearance/ClipPlays, interface-hud/RetainedHudWork, interface-hud/EscapeCountdown, interface-hud/CountdownContinuation, audio-transport/SenderTiming, samus-health/PeriodicLoss, samus-health/LowEnergyWarning. Limits: two complete native returns from one original admission; actual owner receipts qualify both gameplay intervals and all selected physical work; external Contact reply admitted at the actual read; physical SMP receiver and clock outside scope; independent camera operand requirements validate current production Movement and Camera history; unselected preparation, actor, scene and native-video semantics externally borrowed; callbacks, current clock, carried Health, play time, quake and random compared at both native returns; final controller branches derive from actual JOY samples and carried repeat timer; power-on and played-alone coverage outside scope; current surfaces as history; later snapshot initializer; Environment-generated history; general liquid physics; non-Air transition; selected Appearance outputs; static source flags as runtime receipts.
+- **frame/adjacent-held-return** witnesses game-random/AdvanceRandom, world-haze/HazeBrightens, world-haze/HazeSettles, world-quake/QuietQuakePhase, game-time/PlayTimeAdvance, samus-movement/TravelledDistances, samus-appearance/ClipPlays, interface-hud/RetainedHudWork, interface-hud/EscapeCountdown, interface-hud/CountdownContinuation, audio-transport/SenderTiming, samus-health/PeriodicLoss, samus-health/LowEnergyWarning. Limits: two complete native returns from one original admission; actual owner receipts qualify both gameplay intervals and all selected physical work; external Contact reply admitted at the actual read; physical SMP receiver and clock outside scope; independent camera operand requirements validate current production Movement and Camera history; unselected preparation, actor, scene and native-video semantics externally borrowed; callbacks, current clock, carried Health, play time, quake and random compared at both native returns; final controller branches derive from actual JOY samples and carried repeat timer; power-on and played-alone coverage outside scope; current surfaces as history; later snapshot initializer; Environment-generated history; general liquid physics; non-Air transition; selected Appearance outputs; static source flags as runtime receipts.
 
 ### Whole-movie cases
 
@@ -698,17 +702,17 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-camera | replay provider | 1 | 1,089 | 1,171 | 22 | 18 | 40 | 60 | 0 | 173 |
 | run-progress | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | run-progress | replay provider | 1 | 987 | 1,003 | 65 | 335 | 90 | 64 | 16 | 187 |
-| interface-hud | bridge | 4 | 7,106 | 6,296 | 559 | 55 | 543 | 1,171 | 82 | 1,107 |
+| interface-hud | bridge | 4 | 7,077 | 6,273 | 559 | 55 | 537 | 1,171 | 82 | 1,103 |
 | interface-hud | replay provider | 3 | 4,755 | 4,446 | 758 | 344 | 320 | 574 | 16 | 909 |
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-appearance | bridge | 3 | 3,062 | 3,139 | 329 | 45 | 264 | 171 | 0 | 530 |
+| samus-appearance | bridge | 3 | 3,056 | 3,133 | 329 | 45 | 264 | 171 | 0 | 529 |
 | samus-appearance | replay provider | 2 | 2,558 | 2,507 | 130 | 30 | 136 | 248 | 26 | 371 |
 | boss-ceres-ridley | bridge | 1 | 1,638 | 1,720 | 184 | 32 | 64 | 112 | 0 | 301 |
 | boss-ceres-ridley | replay provider | 1 | 1,331 | 1,506 | 17 | 113 | 33 | 72 | 60 | 251 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-doors | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| samus-health | bridge | 2 | 2,987 | 3,027 | 448 | 7 | 227 | 192 | 17 | 573 |
+| samus-health | bridge | 2 | 2,946 | 2,967 | 448 | 7 | 229 | 209 | 17 | 565 |
 | samus-health | replay provider | 1 | 905 | 959 | 18 | 0 | 35 | 13 | 9 | 146 |
 | game-time | bridge | 1 | 698 | 800 | 136 | 7 | 47 | 18 | 0 | 142 |
 | game-time | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -718,7 +722,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 1 | 987 | 1,070 | 175 | 33 | 75 | 32 | 0 | 205 |
 | world-haze | bridge | 3 | 3,089 | 3,233 | 342 | 62 | 95 | 401 | 49 | 621 |
 | world-haze | replay provider | 1 | 2,773 | 2,894 | 279 | 19 | 182 | 102 | 0 | 476 |
-| total | | | 63,187 | 61,890 | 6,158 | 2,143 | 4,465 | 5,918 | 596 | 10,818 |
+| total | | | 63,112 | 61,801 | 6,158 | 2,143 | 4,462 | 5,934 | 596 | 10,805 |
 
 ## Engine services
 
@@ -726,8 +730,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 122 | 33,489 | 200,932 | 162,561 | 27,788 | 2,386 | 12,133 | 48,053 | 3,118 | 31,061 |
-| bridges | 19 | 4,269 | 25,614 | 25,114 | 2,836 | 525 | 1,915 | 2,581 | 264 | 4,509 |
+| production and exact services | 122 | 34,544 | 207,265 | 167,415 | 28,061 | 2,395 | 12,515 | 49,693 | 3,255 | 31,907 |
+| bridges | 19 | 4,256 | 25,539 | 25,025 | 2,836 | 525 | 1,912 | 2,598 | 264 | 4,496 |
 | rebuilt models, shared types included | 123 | 8,771 | 52,625 | 58,554 | 24,243 | 18,574 | 3,633 | 3,811 | 1,016 | 17,703 |
 
 ## Domain graph
@@ -2559,23 +2563,23 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | audio-transport | `crates/game/src/production/audio.rs` | names it | `AudioCyclePhase`, `AudioInstant`, `AudioPhase`, `Content`, `CpuMasterTicks`, `InstantFraction`, `Playback`, `ReleaseHistory`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `State`, `effects`, `time`, `transport` | 1,017 | 248 |
 | audio-transport | `crates/game/src/production/content.rs` | names it | `Content`, `SoundGroup` | 285 | 105 |
 | audio-transport | `crates/game/src/production/frame/post_down_contract.rs` | names it | `OfferPermission` | 446 | 80 |
-| audio-transport | `crates/game/src/production/frame/sender_caller.rs` | names it | `CueId`, `OfferPermission`, `SoundGroup`, `sender` | 1,609 | 276 |
-| audio-transport | `crates/game/src/production/frame/sender_contract.rs` | names it | `CueId`, `OfferPermission`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup` | 2,122 | 328 |
-| audio-transport | `crates/game/src/production/frame/sender_stage.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `Request`, `SenderCompletion`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 2,714 | 339 |
+| audio-transport | `crates/game/src/production/frame/sender_caller.rs` | names it | `CueId`, `OfferPermission`, `SenderProgress`, `SoundGroup`, `sender` | 2,325 | 374 |
+| audio-transport | `crates/game/src/production/frame/sender_contract.rs` | names it | `CueId`, `OfferPermission`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup` | 2,978 | 414 |
+| audio-transport | `crates/game/src/production/frame/sender_stage.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `Request`, `SenderCompletion`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 3,582 | 468 |
 | audio-transport | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `CueId`, `QueueAllowance` | 2,584 | 399 |
-| audio-transport | `crates/game/src/production/frame/state.rs` | names it | `SoundGroup`, `sender` | 1,516 | 301 |
-| audio-transport | `crates/game/src/production/gameplay_sounds.rs` | names it | `CueId`, `OfferPermission`, `QueueAllowance`, `SoundGroup`, `effects` | 400 | 99 |
+| audio-transport | `crates/game/src/production/frame/state.rs` | names it | `SoundGroup`, `sender` | 1,717 | 325 |
+| audio-transport | `crates/game/src/production/gameplay_sounds.rs` | names it | `CueId`, `OfferPermission`, `QueueAllowance`, `SoundGroup`, `effects` | 399 | 99 |
 | audio-transport | `crates/game/src/production/movement_touchdown.rs` | names it | `CpuMasterTicks`, `CueId`, `QueueAllowance`, `SoundGroup` | 431 | 102 |
 | audio-transport | `crates/game/src/production/passage_audio.rs` | names it | `CueId`, `QueueAllowance` | 770 | 165 |
 | audio-transport | `crates/game/src/production/sender.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `QueueAllowance`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 1,220 | 185 |
-| audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `Content`, `SenderState`, `SoundGroup`, `State`, `sender`, `transport` | 4,462 | 748 |
+| audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `Content`, `SenderState`, `SoundGroup`, `State`, `sender`, `transport` | 4,420 | 744 |
 | audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 73 |
 | enemy-interactions | `crates/game/src/enemy_interactions_bridge.rs` | bridge | - | 234 | 39 |
 | enemy-interactions | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `Centre`, `ContactBox`, `DoorContact`, `Radii` | 2,584 | 399 |
 | enemy-interactions | `crates/game/src/production/weapons.rs` | bridge | `ContactConditions`, `DoorContact` | 1,955 | 331 |
 | weapons-projectiles | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
-| weapons-projectiles | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `FlickerPhase`, `Inheritance`, `ScreenOrigin` | 1,155 | 298 |
-| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 4,462 | 748 |
+| weapons-projectiles | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `FlickerPhase`, `Inheritance`, `ScreenOrigin` | 1,156 | 298 |
+| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 4,420 | 744 |
 | weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 73 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
 | samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Outcome`, `Samus` | 325 | 81 |
@@ -2584,15 +2588,15 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/connected/transition.rs` | names it | `StandingAnimation`, `WallTest` | 1,926 | 235 |
 | samus-movement | `crates/game/src/production/connected.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 2,962 | 467 |
 | samus-movement | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
-| samus-movement | `crates/game/src/production/frame/animation_caller.rs` | names it | `Dashing`, `Outcome`, `StandingAnimation`, `WallTest` | 2,937 | 422 |
+| samus-movement | `crates/game/src/production/frame/animation_caller.rs` | names it | `Dashing`, `Outcome`, `StandingAnimation`, `WallTest` | 3,164 | 436 |
 | samus-movement | `crates/game/src/production/frame/borrowed_player_preparation/actor_tests.rs` | names it | `Bounces`, `Carry`, `Dashing`, `Frame`, `JumpHeld`, `Phase`, `Rules`, `Run`, `Samus`, `Seat`, `Spin`, `Vertical` | 3,032 | 475 |
 | samus-movement | `crates/game/src/production/frame/borrowed_player_preparation.rs` | names it | `Samus`, `suspended` | 2,381 | 854 |
-| samus-movement | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 16,300 | 2,246 |
-| samus-movement | `crates/game/src/production/frame/camera_stage/contract.rs` | names it | `Carry` | 636 | 104 |
+| samus-movement | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 16,318 | 2,246 |
+| samus-movement | `crates/game/src/production/frame/camera_stage/contract.rs` | names it | `Carry` | 655 | 110 |
 | samus-movement | `crates/game/src/production/frame/inputs.rs` | names it | `Frame` | 215 | 99 |
 | samus-movement | `crates/game/src/production/frame/inside_contract.rs` | names it | `suspended` | 2,044 | 288 |
 | samus-movement | `crates/game/src/production/frame/inside_world.rs` | names it | `Frame`, `Rules`, `suspended` | 1,462 | 266 |
-| samus-movement | `crates/game/src/production/frame/interruption_caller.rs` | names it | `suspended` | 1,033 | 176 |
+| samus-movement | `crates/game/src/production/frame/interruption_caller.rs` | names it | `suspended` | 1,469 | 230 |
 | samus-movement | `crates/game/src/production/frame/late_movement.rs` | names it | `Rules`, `suspended` | 4,079 | 442 |
 | samus-movement | `crates/game/src/production/frame/motion_reset_contract.rs` | names it | `suspended` | 570 | 107 |
 | samus-movement | `crates/game/src/production/frame/movement_caller.rs` | names it | `Carry`, `Dashing`, `Rules`, `Samus`, `SpeedCap`, `suspended` | 4,586 | 661 |
@@ -2601,28 +2605,28 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/frame/movement_pair_contract.rs` | names it | `Rules`, `suspended` | 5,066 | 565 |
 | samus-movement | `crates/game/src/production/frame/movement_stage.rs` | names it | `Frame`, `Rules`, `suspended` | 1,615 | 223 |
 | samus-movement | `crates/game/src/production/frame/movement_support_contract.rs` | names it | `Rules`, `suspended` | 5,378 | 572 |
-| samus-movement | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `suspended` | 5,858 | 678 |
-| samus-movement | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `suspended` | 2,130 | 249 |
-| samus-movement | `crates/game/src/production/frame/pose_input.rs` | names it | `Moment` | 1,095 | 218 |
+| samus-movement | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `suspended` | 5,872 | 678 |
+| samus-movement | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `suspended` | 2,152 | 249 |
+| samus-movement | `crates/game/src/production/frame/pose_input.rs` | names it | `Moment` | 1,099 | 218 |
 | samus-movement | `crates/game/src/production/frame/run_caller.rs` | names it | `suspended` | 1,992 | 212 |
-| samus-movement | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,155 | 298 |
+| samus-movement | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `Outcome`, `Rules`, `Samus` | 1,156 | 298 |
 | samus-movement | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `Outcome`, `Rules`, `Samus` | 2,584 | 399 |
 | samus-movement | `crates/game/src/production/movement.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus` | 477 | 89 |
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 167 | 43 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 431 | 102 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 923 | 172 |
-| samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 4,462 | 748 |
+| samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 4,420 | 744 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 73 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 325 | 81 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 2,962 | 467 |
 | world-camera | `crates/game/src/production/frame/camera_stage.rs` | names it | `Frame`, `Heights`, `LeadSetting`, `Leads`, `Room`, `RoomError`, `Rules`, `Samus` | 1,413 | 308 |
-| world-camera | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `Camera`, `LeadSetting`, `Room`, `Rules` | 1,155 | 298 |
+| world-camera | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `Camera`, `LeadSetting`, `Room`, `Rules` | 1,156 | 298 |
 | world-camera | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `Camera`, `Frame`, `LeadSetting`, `Room`, `Rules` | 2,584 | 399 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 4,462 | 748 |
+| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 4,420 | 744 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 73 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
-| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 4,462 | 748 |
+| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 4,420 | 744 |
 | run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 73 |
 | interface-hud | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `Ammo`, `Ammunition`, `CancelButton`, `ControlAnswer`, `Equipped`, `HudEvent`, `ItemControlInputs`, `SelectButton`, `SelectableItem`, `Selection` | 832 | 85 |
 | interface-hud | `crates/game/src/production/appearance.rs` | names it | `ControlAnswer`, `Selection` | 1,631 | 316 |
@@ -2632,7 +2636,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/entries.rs` | names it | `Boss`, `FrameInputs`, `HudEvent`, `HudPictures`, `HudState`, `OutOfPlayInputs`, `Place`, `Rules` | 1,760 | 327 |
 | interface-hud | `crates/game/src/production/frame/borrowed_player_preparation/actor_tests.rs` | names it | `Countdown`, `HudPictures`, `ItemControlInputs` | 3,032 | 475 |
 | interface-hud | `crates/game/src/production/frame/borrowed_player_preparation.rs` | names it | `Selection` | 2,381 | 854 |
-| interface-hud | `crates/game/src/production/frame/caller.rs` | names it | `CancelButton`, `HudPictures`, `Observation`, `SelectButton`, `Selection` | 16,300 | 2,246 |
+| interface-hud | `crates/game/src/production/frame/caller.rs` | names it | `CancelButton`, `HudPictures`, `Observation`, `SelectButton`, `Selection` | 16,318 | 2,246 |
 | interface-hud | `crates/game/src/production/frame/countdown_caller.rs` | bridge | `CountdownAnswer`, `CountdownOpportunity`, `Observation` | 961 | 189 |
 | interface-hud | `crates/game/src/production/frame/drawing_owners.rs` | names it | `Observation` | 1,148 | 256 |
 | interface-hud | `crates/game/src/production/frame/drawing_scalar_owners.rs` | names it | `Observation` | 224 | 55 |
@@ -2644,18 +2648,18 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/hud_map_caller.rs` | bridge | - | 2,695 | 380 |
 | interface-hud | `crates/game/src/production/frame/hud_stage/controls_tests.rs` | names it | `Ammunition`, `CancelButton`, `Countdown`, `Equipped`, `HudGrid`, `HudState`, `MapCellSet`, `SelectButton`, `SelectableItem`, `Shown`, `Stock` | 878 | 96 |
 | interface-hud | `crates/game/src/production/frame/hud_stage.rs` | names it | `ControlAnswer`, `DisplayInputs`, `Dropped`, `FrameCount`, `HerMap`, `HudEvent`, `HudOpportunity`, `HudPictures`, `ItemControlInputs`, `MiniMapPower`, `Mute`, `Observation`, `Room`, `Rules`, `SelectableItem`, `Selection`, `Status` | 906 | 239 |
-| interface-hud | `crates/game/src/production/frame/late_hud.rs` | bridge | - | 1,531 | 235 |
+| interface-hud | `crates/game/src/production/frame/late_hud.rs` | bridge | - | 1,502 | 231 |
 | interface-hud | `crates/game/src/production/frame/motion_reset_contract.rs` | names it | `CancelButton`, `Observation`, `SelectButton`, `Selection` | 570 | 107 |
-| interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation`, `Selection` | 5,858 | 678 |
+| interface-hud | `crates/game/src/production/frame/player_continuation_caller.rs` | names it | `Observation`, `Selection` | 5,872 | 678 |
 | interface-hud | `crates/game/src/production/frame/recurring_hud_map.rs` | names it | `Dropped`, `Energy`, `FrameCount`, `HerMap`, `Place`, `Reserve`, `ReserveMode`, `Room`, `Rules`, `Status` | 808 | 141 |
-| interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 2,307 | 278 |
-| interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Dropped`, `Energy`, `FrameCount`, `HerMap`, `HudOpportunity`, `HudPictures`, `HudState`, `ItemControlInputs`, `MiniMapPower`, `MovementInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `StatusInputs` | 1,356 | 309 |
+| interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 2,573 | 339 |
+| interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Dropped`, `Energy`, `FrameCount`, `HerMap`, `HudOpportunity`, `HudPictures`, `HudState`, `ItemControlInputs`, `MiniMapPower`, `MovementInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `StatusInputs` | 1,358 | 309 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 4,462 | 748 |
+| interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 4,420 | 744 |
 | interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 73 |
 | world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 1,760 | 327 |
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 4,462 | 748 |
+| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 4,420 | 744 |
 | world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 73 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AnimationInputs`, `Clip`, `Content`, `Figure`, `Inputs`, `Paces`, `Rules`, `State`, `update` | 446 | 105 |
 | samus-appearance | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `CannonDelay` | 832 | 85 |
@@ -2664,25 +2668,26 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/connected/inputs.rs` | names it | `CinematicActivity`, `ContactSuppressor`, `Liquid`, `SoundsWaiting` | 0 | 49 |
 | samus-appearance | `crates/game/src/production/connected.rs` | names it | `Ahead`, `AnimationDecision`, `AnimationInputs`, `CinematicActivity`, `Figure`, `GraphicalContact`, `Liquid`, `PublishedSound`, `Receipt`, `Rules`, `State`, `SuspendedAppearance`, `WorkStep` | 2,962 | 467 |
 | samus-appearance | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
-| samus-appearance | `crates/game/src/production/frame/animation_caller.rs` | names it | `Dash`, `Figure`, `Inputs`, `Liquid`, `MoveEvent`, `SoundsWaiting` | 2,937 | 422 |
+| samus-appearance | `crates/game/src/production/frame/animation_caller.rs` | names it | `Dash`, `Figure`, `Inputs`, `Liquid`, `MoveEvent`, `SoundsWaiting` | 3,164 | 436 |
 | samus-appearance | `crates/game/src/production/frame/appearance_caller.rs` | names it | `Ahead`, `AnimationDecision`, `AnimationInputs`, `Answer`, `AppearanceRead`, `CinematicActivity`, `ContactSuppressor`, `Dash`, `Figure`, `Frames`, `Inputs`, `Instruction`, `Liquid`, `OfferedDecision`, `PublishedSound`, `Receipt`, `Rules`, `Step`, `WorkStep` | 5,574 | 759 |
 | samus-appearance | `crates/game/src/production/frame/appearance_stage.rs` | names it | `AnimationDecision`, `AnimationInputs`, `AppearanceRead`, `CinematicActivity`, `ContactSuppressor`, `Figure`, `OfferedDecision`, `WorkStep` | 902 | 115 |
-| samus-appearance | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 16,300 | 2,246 |
+| samus-appearance | `crates/game/src/production/frame/caller.rs` | names it | `Rules` | 16,318 | 2,246 |
 | samus-appearance | `crates/game/src/production/frame/contact_contract.rs` | names it | `AppearanceRead`, `ContactSuppressor`, `Frames`, `GraphicalContact`, `PublishedSound`, `Receipt`, `SoundRequest`, `WorkStep` | 1,163 | 221 |
 | samus-appearance | `crates/game/src/production/frame/drawing_owners.rs` | names it | `CannonDelay` | 1,148 | 256 |
 | samus-appearance | `crates/game/src/production/frame/inputs.rs` | names it | `Ahead`, `Figure` | 215 | 99 |
-| samus-appearance | `crates/game/src/production/frame/liquid_history.rs` | names it | `Liquid` | 958 | 186 |
+| samus-appearance | `crates/game/src/production/frame/liquid_history.rs` | names it | `Liquid` | 952 | 185 |
 | samus-appearance | `crates/game/src/production/frame/movement_caller.rs` | names it | `Figure` | 4,586 | 661 |
-| samus-appearance | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `CinematicActivity` | 2,130 | 249 |
+| samus-appearance | `crates/game/src/production/frame/pose_fit_caller.rs` | names it | `CinematicActivity` | 2,152 | 249 |
 | samus-appearance | `crates/game/src/production/frame/post_down_caller.rs` | names it | `Frames`, `PublishedSound`, `Receipt`, `SoundQueue`, `SoundRequest` | 5,297 | 739 |
-| samus-appearance | `crates/game/src/production/frame/rendering_stage.rs` | names it | `AppearanceRead`, `Figure`, `Receipt`, `Step`, `WorkStep` | 3,159 | 484 |
-| samus-appearance | `crates/game/src/production/frame/samus_palette.rs` | bridge | `ColourEffect`, `ColourSequences`, `GrappleActivity`, `LapsLeft`, `Liquid`, `RoomColours`, `RunColourFacts`, `RunColourWork`, `Suit` | 1,379 | 258 |
-| samus-appearance | `crates/game/src/production/frame/state.rs` | names it | `Ahead`, `AppearanceRead`, `Clip`, `Figure` | 1,516 | 301 |
-| samus-appearance | `crates/game/src/production/frame/suffix_caller.rs` | names it | `Figure`, `Step` | 7,830 | 1,194 |
+| samus-appearance | `crates/game/src/production/frame/rendering_stage.rs` | names it | `AppearanceRead`, `Figure`, `Receipt`, `Step`, `WorkStep` | 3,174 | 484 |
+| samus-appearance | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Figure` | 2,573 | 339 |
+| samus-appearance | `crates/game/src/production/frame/samus_palette.rs` | bridge | `ColourEffect`, `ColourSequences`, `GrappleActivity`, `LapsLeft`, `Liquid`, `RoomColours`, `RunColourFacts`, `RunColourWork`, `Suit` | 1,373 | 257 |
+| samus-appearance | `crates/game/src/production/frame/state.rs` | names it | `Ahead`, `AppearanceRead`, `Clip`, `Figure` | 1,717 | 325 |
+| samus-appearance | `crates/game/src/production/frame/suffix_caller.rs` | names it | `Figure`, `Step` | 8,094 | 1,231 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 431 | 102 |
 | samus-appearance | `crates/game/src/production/movement_work.rs` | names it | `Figure` | 923 | 172 |
 | samus-appearance | `crates/game/src/production/passage_audio.rs` | names it | `Charge`, `Opportunity`, `SoundQueue`, `SoundRequest` | 770 | 165 |
-| samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 4,462 | 748 |
+| samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 4,420 | 744 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,683 | 270 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
 | samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 73 |
@@ -2692,18 +2697,18 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | boss-ceres-ridley | `crates/game/src/production/frame/shot_opportunity/continuation/checkpoint.rs` | names it | `Phase`, `Quarter`, `Wait` | 1,208 | 211 |
 | boss-ceres-ridley | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `CeresDoor`, `Inputs`, `OpeningSound`, `Rules`, `Run`, `Stage` | 2,584 | 399 |
 | boss-ceres-ridley | `crates/game/src/production/movement_ceres.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 167 | 43 |
-| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 4,462 | 748 |
+| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 4,420 | 744 |
 | boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 73 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,760 | 327 |
 | world-doors | `crates/game/src/production/passage_audio.rs` | names it | `Arrival`, `COLOURS`, `Doors`, `HerSound`, `Inputs`, `Passage`, `Phase`, `RoomSound`, `Rules`, `Scene` | 770 | 165 |
-| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 4,462 | 748 |
+| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 4,420 | 744 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
-| samus-health | `crates/game/src/production/frame/frame_history.rs` | names it | `State` | 589 | 158 |
-| samus-health | `crates/game/src/production/frame/health.rs` | bridge | `ProtectionFrames`, `Rules`, `State`, `WarningSound` | 1,886 | 391 |
-| samus-health | `crates/game/src/production/frame/maintenance.rs` | bridge | `Rules`, `WarningSound` | 1,101 | 182 |
-| samus-health | `crates/game/src/production/frame/s6_drawing.rs` | names it | `State` | 2,307 | 278 |
-| samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 1,356 | 309 |
+| samus-health | `crates/game/src/production/frame/frame_history.rs` | names it | `State` | 765 | 197 |
+| samus-health | `crates/game/src/production/frame/health.rs` | bridge | `ProtectionFrames`, `Rules`, `State`, `WarningSound` | 1,929 | 391 |
+| samus-health | `crates/game/src/production/frame/maintenance.rs` | bridge | `Rules`, `WarningSound` | 1,017 | 174 |
+| samus-health | `crates/game/src/production/frame/s6_drawing.rs` | names it | `State` | 2,573 | 339 |
+| samus-health | `crates/game/src/production/health_tail.rs` | names it | `ProtectionFrames`, `Rules`, `State`, `TailImpact`, `WarningSound` | 1,358 | 309 |
 | game-time | `crates/game/src/production/frame/play_time.rs` | bridge | `Clock`, `PlayFrames`, `PlayTime`, `QualifiedOpportunity` | 698 | 142 |
 | world-quake | `crates/game/src/production/frame/drawing_owners.rs` | names it | `displacement` | 1,148 | 256 |
 | world-quake | `crates/game/src/production/frame/room_quake.rs` | bridge | `Opportunity`, `Outcome`, `State`, `step` | 586 | 131 |

@@ -2078,7 +2078,7 @@ impl State {
             self.interruption,
             super::interruption_caller::Stage::Complete(_)
         ) {
-            self.advance_interruption(content)?;
+            self.advance_interruption(content, rules)?;
         } else if !matches!(self.late_movement, super::late_movement::Stage::Complete(_)) {
             self.advance_late_movement(content, rules)?;
         } else if self

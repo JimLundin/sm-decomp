@@ -65,6 +65,13 @@ impl PhysicalContract {
             template,
         }
     }
+
+    pub(in crate::production::frame) fn with_dependencies(
+        &self,
+        dependencies: RequiredDependencies,
+    ) -> Self {
+        Self::new(dependencies, self.template.clone())
+    }
 }
 
 impl RequiredDependencies {

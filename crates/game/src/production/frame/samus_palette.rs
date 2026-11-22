@@ -151,7 +151,6 @@ impl Palette {
     }
 
     pub(super) const fn retire_opportunity(&mut self) {
-        self.origin = None;
         self.work.0 = RunColourWork::UNOBSERVED;
         self.completed = false;
     }
