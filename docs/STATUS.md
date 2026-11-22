@@ -231,6 +231,19 @@ uses the same production entry. The stale-Run fault is caught at cut141's comple
 The [pinned second fixture](../tools/ci/fetch_connected_run_slope.sh) keeps its admission and source
 identity separate from the first witness. The same borrowed producers and omitted consumers apply.
 
+The scoped early mini-map witness starts once at cut 78 of the room-seeded Ceres row.
+At 79 and 80 the staged HUD reads the actual Movement position after Contact and before
+Animation and pose placement. It compares both exact early axes, the complete explored bitmap
+and the fifteen mini-map cells. Cut 79 also compares complete Movement, Appearance with Figure,
+and Camera against the independent carried record. The second opportunity stops at the early
+mini-map before the later spinning pose. The ordinary and restored executions compare both
+opportunities. A separate checkpoint immediately after the first map resumes through its
+late carry, with altered map premises rejected before any change.
+
+The [early mini-map fixture](../tools/ci/fetch_movement_early_map.sh) supplies the independently
+qualified current collision roster, control, room, clock and other borrowed inputs. Late HUD
+status, physical Frame scheduling, VRAM and audio delivery are outside this scope.
+
 ## Scoped ordinary power shot and drawing
 
 `weapons-contact/M0-power-shot-drawing` admits the vacant shot pool at cut 156 of

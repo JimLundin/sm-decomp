@@ -264,7 +264,8 @@ transport, and synthesis in `runtime`, remain separate from room-load admission.
 NMI return. `SavedProduction` holds canonical bytes containing the State schema and selected
 State, plus the immutable context and frame completion status in memory. `Production::restore`
 checks content and rules by value equality, decodes the selected schema and revalidates the
-joined State. The resident envelope also checks its stored origin and bank identities.
+joined State. Standalone Audio's portable envelope depends on its own payload schema.
+The resident envelope also checks its stored origin and bank identities.
 Scopes lacking a codec return `SaveFault::Unsupported`.
 
 The retained Frame replay calls `Production::save_completed_frame` after a successful native

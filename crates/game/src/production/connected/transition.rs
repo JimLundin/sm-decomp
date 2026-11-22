@@ -61,6 +61,7 @@ impl State {
                 Phase::RemainingMotion(ctx)
             }
             Phase::Ready
+            | Phase::EarlyMap(_)
             | Phase::Contact(_)
             | Phase::Animation(_)
             | Phase::AnimationComplete(_)
@@ -90,10 +91,13 @@ impl State {
                     &ctx.inputs.0,
                     &content.appearance,
                 )?;
-                let data = self.animation_data(&ctx, figure, figure, content, rules)?;
-                appearance::begin_animation(&mut self.appearance, data)?;
-                Phase::Animation(ctx)
+                if self.early_map.is_some() {
+                    Phase::EarlyMap(ctx)
+                } else {
+                    self.begin_animation(ctx, content, rules)?
+                }
             }
+            Phase::EarlyMap(ctx) => self.begin_animation(ctx, content, rules)?,
             Phase::Animation(ctx) => {
                 if matches!(
                     self.appearance
@@ -157,6 +161,21 @@ impl State {
             | Phase::Camera(_) => return Err(Fault::Order),
         })
     }
+    fn begin_animation(
+        &mut self,
+        ctx: Box<super::Context>,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<Phase, Fault> {
+        let figure = Figure {
+            pose: self.movement.state().pose,
+            sprite: ctx.playing.0.sprite,
+        };
+        let data = self.animation_data(&ctx, figure, figure, content, rules)?;
+        appearance::begin_animation(&mut self.appearance, data)?;
+        Ok(Phase::Animation(ctx))
+    }
+
     pub(super) fn dash_phase(&mut self, phase: Phase) -> Result<Phase, Fault> {
         Ok(match phase {
             Phase::DashLoss(ctx) => {
@@ -188,6 +207,7 @@ impl State {
             Phase::Ready
             | Phase::Motion(_)
             | Phase::MotionComplete(_)
+            | Phase::EarlyMap(_)
             | Phase::Contact(_)
             | Phase::Animation(_)
             | Phase::AnimationComplete(_)

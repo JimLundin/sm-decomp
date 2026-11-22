@@ -1,6 +1,7 @@
 //! One carried ordinary lifecycle through movement, appearance and camera.
 
 mod appearance;
+pub mod early_map;
 pub mod inputs;
 mod transition;
 mod world;
@@ -77,6 +78,7 @@ enum Phase {
     DashLoss(Box<Context>),
     DashLossComplete(Box<Context>),
     Camera(Box<Context>),
+    EarlyMap(Box<Context>),
 }
 
 /// Complete selected owners and actual unfinished ordinary opportunity.
@@ -93,6 +95,7 @@ pub struct State {
     phase: Phase,
     completed: u64,
     receipts_delivered: u64,
+    early_map: Option<Box<early_map::State>>,
 }
 
 /// The caller may yield after actual semantic work, without inventing hardware time.
@@ -102,6 +105,8 @@ pub enum Advance {
     Yield,
     /// Complete this actual ordinary opportunity.
     Opportunity,
+    /// Stop after actual Motion and Contact, before Animation and pose placement.
+    EarlyMap,
 }
 
 /// Actual ordinary progress is independent of record indices and comparison horizons.
@@ -149,6 +154,8 @@ pub enum Fault {
     Publication,
     /// Final/prior movement or camera room/history is invalid.
     Camera,
+    /// Missing or incompatible early map owner.
+    HudMap,
 }
 
 impl State {
@@ -177,7 +184,30 @@ impl State {
             phase: Phase::Ready,
             completed: 0,
             receipts_delivered: 0,
+            early_map: None,
         })
+    }
+
+    /// Select early map ownership at admission before any ordinary work begins.
+    /// # Errors
+    /// An active or previously configured owner rejects replacement.
+    pub fn with_early_map(mut self, hud: interface_hud::HudState) -> Result<Self, Fault> {
+        if self.pending() || self.completed() != 0 || self.early_map.is_some() {
+            return Err(Fault::HudMap);
+        }
+        self.early_map = Some(Box::new(early_map::State {
+            hud: crate::production::frame::hud::Hud::new(hud),
+            position: None,
+        }));
+        Ok(self)
+    }
+
+    /// Current scoped HUD and the latest early Movement coordinates when produced.
+    #[must_use]
+    pub fn early_map(&self) -> Option<(&interface_hud::HudState, Option<[u32; 2]>)> {
+        self.early_map
+            .as_ref()
+            .map(|map| (map.hud.state(), map.position))
     }
 
     /// Number of genuinely completed ordinary opportunities.
@@ -203,6 +233,19 @@ impl State {
             return Err(Fault::Appearance);
         }
         appearance::running(self.playing.0, &content.appearance)?;
+        let at_map = matches!(self.phase, Phase::EarlyMap(_));
+        if let Some(map) = &self.early_map {
+            let position = self.movement.state().position;
+            if map.position.is_some() != (at_map || self.completed > 0)
+                || map.position.is_some() != map.hud.map_ready()
+                || (at_map && map.position != Some([position.x.0, position.y.0]))
+                || (self.pending() && !at_map)
+            {
+                return Err(Fault::HudMap);
+            }
+        } else if at_map {
+            return Err(Fault::HudMap);
+        }
         match &self.phase {
             Phase::Ready => {
                 if self.appearance.model.0.pending.is_some()
@@ -214,6 +257,7 @@ impl State {
             Phase::Motion(ctx)
             | Phase::MotionComplete(ctx)
             | Phase::Contact(ctx)
+            | Phase::EarlyMap(ctx)
             | Phase::Animation(ctx)
             | Phase::AnimationComplete(ctx)
             | Phase::Pose(ctx)
@@ -362,6 +406,7 @@ impl State {
             | Phase::RemainingMotion(_)
             | Phase::RemainingMotionComplete(_)) => self.movement_phase(phase, content, rules)?,
             phase @ (Phase::Contact(_)
+            | Phase::EarlyMap(_)
             | Phase::Animation(_)
             | Phase::AnimationComplete(_)
             | Phase::Selection(_)
@@ -384,18 +429,50 @@ impl State {
         rules: &Rules,
         until: Advance,
     ) -> Result<Outputs, Fault> {
+        self.advance_with_map(input, content, rules, until, None)
+    }
+
+    pub(super) fn advance_with_map(
+        &mut self,
+        input: &inputs::Inputs,
+        content: &Content,
+        rules: &Rules,
+        until: Advance,
+        map: Option<early_map::Inputs<'_>>,
+    ) -> Result<Outputs, Fault> {
         let mut candidate = self.clone();
         candidate.validate(content)?;
+        if candidate.early_map.is_some() != map.is_some()
+            || until == Advance::EarlyMap && (map.is_none() || candidate.pending())
+            || until == Advance::Yield && map.is_some()
+        {
+            return Err(Fault::HudMap);
+        }
         if matches!(candidate.phase, Phase::Ready) {
+            if let (Some(owner), Some(premises)) = (&mut candidate.early_map, map) {
+                owner.begin(premises)?;
+            }
             candidate.begin(input, content)?;
-        } else if candidate.context_inputs() != Some(input) {
-            return Err(Fault::Inputs);
+        } else {
+            if candidate.context_inputs() != Some(input) {
+                return Err(Fault::Inputs);
+            }
+            if let (Some(owner), Some(premises)) = (&candidate.early_map, map)
+                && !owner.holds_applied(premises)
+            {
+                return Err(Fault::HudMap);
+            }
         }
         let mut sounds = Vec::new();
         let mut graphics = Vec::new();
         let mut appearance_receipts = Vec::new();
         loop {
             candidate.transition(content, rules)?;
+            if let (Phase::EarlyMap(_), Some(owner), Some(premises)) =
+                (&candidate.phase, &mut candidate.early_map, map)
+            {
+                owner.publish(candidate.movement.state(), premises)?;
+            }
             let delivered = candidate
                 .appearance
                 .deliver()
@@ -417,7 +494,10 @@ impl State {
             candidate.receipts_delivered =
                 u64::try_from(candidate.appearance.model.0.completed.len())
                     .map_err(|_| Fault::Appearance)?;
-            if !candidate.pending() || until == Advance::Yield {
+            if !candidate.pending()
+                || until == Advance::Yield
+                || until == Advance::EarlyMap && matches!(candidate.phase, Phase::EarlyMap(_))
+            {
                 break;
             }
         }
@@ -449,6 +529,7 @@ impl State {
             Phase::Motion(ctx)
             | Phase::MotionComplete(ctx)
             | Phase::Contact(ctx)
+            | Phase::EarlyMap(ctx)
             | Phase::Animation(ctx)
             | Phase::AnimationComplete(ctx)
             | Phase::Pose(ctx)

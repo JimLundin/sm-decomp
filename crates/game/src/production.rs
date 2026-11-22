@@ -1,6 +1,7 @@
 //! Finite production recipes shared by the application and indexed replay.
 //! Each advance carries complete clean state and publishes the complete model output.
 
+use self::audio_checkpoint::PortableAudio;
 use crate::state::owned::{CodecState, OwnedState};
 use canonical::model::Model;
 use canonical::{Canonical, Schema};
@@ -9,6 +10,7 @@ use std::sync::Arc;
 mod animation;
 pub mod appearance;
 pub mod audio;
+mod audio_checkpoint;
 mod camera_semantic;
 pub mod connected;
 mod content;
@@ -117,6 +119,15 @@ pub enum AdvanceInput<'a> {
         /// Complete current inputs; selected feedback is derived internally.
         inputs: &'a connected::inputs::Inputs,
         /// A semantic yield or genuine opportunity completion.
+        advance: connected::Advance,
+    },
+    /// A scoped ordinary opportunity with the current early map inputs.
+    ConnectedMap {
+        /// Complete current ordinary Movement and Appearance inputs.
+        inputs: &'a connected::inputs::Inputs,
+        /// Current early map premises.
+        map: connected::early_map::Inputs<'a>,
+        /// Stop at the map or continue the ordinary opportunity.
         advance: connected::Advance,
     },
     /// Pause budget for the actual retained frame caller.
@@ -570,6 +581,20 @@ impl Production {
                     .map_err(ProductionFault::Connected)?,
             )),
             (
+                OwnedState::Connected(state),
+                ProductionContent::Connected(content),
+                ProductionRules::Connected(rules),
+                AdvanceInput::ConnectedMap {
+                    inputs,
+                    map,
+                    advance,
+                },
+            ) => ProductionOutputs::Connected(Box::new(
+                state
+                    .advance_with_map(inputs, content, rules, advance, Some(map))
+                    .map_err(ProductionFault::Connected)?,
+            )),
+            (
                 OwnedState::Frame(state),
                 ProductionContent::Frame(content),
                 ProductionRules::Frame(rules),
@@ -675,7 +700,7 @@ impl Production {
             OwnedState::Frame(state) => CodecState::Frame(state.clone()),
             OwnedState::FrameOpening(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::Movement(state) => CodecState::Movement(*state),
-            OwnedState::Audio(state) => CodecState::Audio(state.clone()),
+            OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
@@ -752,7 +777,12 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if matches!(&content, ProductionContent::ResidentAudio(_)) {
+        let seed = if matches!(&content, ProductionContent::Audio(_)) {
+            let checkpoint: Checkpoint<PortableAudio> =
+                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
+            let PortableAudio(state) = checkpoint.state;
+            ProductionSeed::Audio(state.0)
+        } else if matches!(&content, ProductionContent::ResidentAudio(_)) {
             let checkpoint: Checkpoint<Box<audio::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::ResidentAudio(checkpoint.state)
@@ -771,7 +801,7 @@ impl Production {
                 CodecState::Connected(state) => ProductionSeed::Connected(state),
                 CodecState::Frame(state) => ProductionSeed::Frame(state),
                 CodecState::Movement(state) => ProductionSeed::Movement(state.0),
-                CodecState::Audio(state) => ProductionSeed::Audio(state.0),
+                CodecState::Audio(_) => return Err(AdmissionFault::WrongScope),
                 CodecState::WeaponsContact(state) => ProductionSeed::WeaponsContact(state.0),
                 CodecState::Camera(state) => ProductionSeed::Camera(state.0),
                 CodecState::Appearance(state) => ProductionSeed::Appearance(state.0),
@@ -791,6 +821,8 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
             pin_holds::<connected::inputs::InputsPin>()
                 .and_then(|()| pin_holds::<connected::AheadPin>())
                 .and_then(|()| pin_holds::<connected::PlayingPin>())
+                .and_then(|()| pin_holds::<frame::hud::HudPin>())
+                .and_then(|()| pin_holds::<frame::hud::WorkPin>())
                 .and_then(|()| pin_holds::<movement_work::WorkPin>())
                 .and_then(|()| pin_holds::<movement_work::ReceiptsPin>())
                 .and_then(|()| pin_holds::<appearance::WorkPin>())

@@ -9,6 +9,7 @@ mod camera;
 mod ceres;
 mod compare;
 mod connected;
+mod early_map;
 mod frame;
 pub(crate) mod frame_appearance_inputs;
 pub(crate) mod frame_appearance_owner;

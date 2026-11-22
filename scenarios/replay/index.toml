@@ -587,6 +587,28 @@ borrowed = [{ dependency = "pre-Haze inputs", provider = "native steady control"
 checkpoints = true
 
 [[case]]
+id = "connected-ordinary/early-mini-map"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "cache-cut", frame = 78 }
+end = { cut_inclusive = 80 }
+rules = ["samus-movement/MovesAsShePosed", "interface-hud/Exploring", "interface-hud/MiniMapWindow", "interface-hud/HerBlink"]
+profile = "reference"
+responsibilities = ["movement", "appearance", "camera", "hud"]
+content = "player-rom-import"
+inputs = "early-map-inputs"
+checkpoints = true
+expectations = { provider = "native-early-map", fields = ["hud.explored", "hud.map-window", "movement.position.x", "movement.position.y", "movement.ordinary-completion", "appearance.ordinary-completion", "camera.ordinary-completion"], outputs = [] }
+limits = ["full early coordinates, exploration and 15 Map cells at both opportunities", "cut 79 compares completed Movement, Appearance and Camera and carries their live state into the second Map opportunity", "cut 80 ends before Animation and later Spinning pose", "selected HUD work ends at early Map, before status", "physical Frame scheduling, audio queue delivery, VRAM publication and played-alone progress remain unproved"]
+
+[[case.borrowed]]
+dependency = "unselected current ordinary and Map producers"
+provider = "authenticated-movement-early-map-v1"
+fields = ["locked controls and bindings", "current equipment, liquid, Contact guards, energy and queue occupancy", "origin terrain and current eligible actor boxes in search order", "Camera room settings", "Map area, room, clock, power and event predicates"]
+phase = "each actual input use from controller through the first Camera carry and second early Map"
+claim = "Movement, Appearance, Camera carry and early Map run the selected production owners with independently qualified external stimuli."
+
+[[case]]
 id = "frame/random-through-completion"
 kind = "scoped"
 row = "chain-any-0003-DFD7"

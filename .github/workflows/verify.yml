@@ -139,6 +139,7 @@ jobs:
         run: |
           bash tools/ci/fetch_connected_ordinary.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
           bash tools/ci/fetch_connected_run_slope.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+          bash tools/ci/fetch_movement_early_map.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &shot_drawing
         name: Fetch the reviewed scoped power shot witness
         run: bash tools/ci/fetch_shot_contact.sh rom/sm.smc "$RUNNER_TEMP/audio-native"

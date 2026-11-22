@@ -151,7 +151,7 @@ impl Hud {
         true
     }
 
-    pub(super) fn choose_map(
+    pub(in crate::production) fn choose_map(
         &mut self,
         rules: &Rules,
         pictures: &HudPictures,
@@ -163,12 +163,18 @@ impl Hud {
         work.0.choose_mini_map(rules, pictures, inputs)
     }
 
-    pub(super) fn map_ready(&self) -> bool {
-        match self {
-            Self::Initial(_) => false,
-            Self::Work(work) | Self::Countdown { ordinary: work, .. } => {
-                matches!(work.0.mini_map(), interface_hud::Observation::Completed(_))
-            }
+    pub(in crate::production) fn map_ready(&self) -> bool {
+        self.applied_map().is_some()
+    }
+
+    pub(in crate::production) fn applied_map(&self) -> Option<&interface_hud::MapAnswer> {
+        let (Self::Work(work) | Self::Countdown { ordinary: work, .. }) = self else {
+            return None;
+        };
+        if let interface_hud::Observation::Completed(answer) = work.0.mini_map() {
+            Some(answer)
+        } else {
+            None
         }
     }
 
@@ -206,7 +212,7 @@ impl Hud {
         matches!(work.0.answer(), interface_hud::Observation::Completed(_)) && ordinary.0.apply()
     }
 
-    pub(super) const fn frame_count(&self) -> Option<interface_hud::FrameCount> {
+    pub(in crate::production) const fn frame_count(&self) -> Option<interface_hud::FrameCount> {
         match self {
             Self::Initial(_) => None,
             Self::Work(work) | Self::Countdown { ordinary: work, .. } => work.0.frame_count(),

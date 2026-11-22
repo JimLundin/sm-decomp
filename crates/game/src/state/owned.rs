@@ -96,6 +96,7 @@ pub enum OwnedState {
 pub(crate) enum CodecState {
     Connected(Box<crate::production::connected::State>),
     Movement(Model<MovementPin>),
+    // Keep the shared codec shape and its other scope tags stable. Standalone Audio has its own codec.
     Audio(Model<AudioPin>),
     WeaponsContact(Model<PowerPin>),
     Camera(Model<CameraPin>),

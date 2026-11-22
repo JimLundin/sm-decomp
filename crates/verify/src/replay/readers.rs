@@ -9,12 +9,14 @@ use super::{
     audio, data_failure, movement,
 };
 use crate::cache::Cache;
+use game::production::timing::EventKind;
 use game::production::{
     AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
 };
 use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
+    EarlyMap(Box<super::early_map::InputTape>),
     SenderOffer(Vec<super::sender_offer::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     Frame(super::frame::Inputs),
@@ -29,6 +31,7 @@ pub(super) enum InputReader {
 }
 
 pub(super) enum ExpectedReader {
+    EarlyMap(Box<super::early_map::Expectations>),
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     Frame(Box<super::frame::Expected>),
@@ -41,6 +44,7 @@ pub(super) enum ExpectedReader {
 
 #[derive(Clone)]
 pub(super) enum ActualReader {
+    EarlyMap,
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
@@ -102,6 +106,7 @@ impl InputReader {
         held: &mut HeldAdvance,
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
+            Self::EarlyMap(inputs) => inputs.advance(production, cut),
             Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
@@ -206,12 +211,7 @@ impl ActualReader {
                 *publications = publications.saturating_add(
                     events
                         .iter()
-                        .filter(|event| {
-                            matches!(
-                                event.kind,
-                                game::production::timing::EventKind::Publication(_)
-                            )
-                        })
+                        .filter(|event| matches!(event.kind, EventKind::Publication(_)))
                         .count(),
                 );
                 Ok(fields)
@@ -240,6 +240,9 @@ impl ActualReader {
                 let before = publications.len();
                 add_publications(tape, outputs, publications, replies, cut)?;
                 actual_audio_from(production, publications, *replies, before)
+            }
+            (Self::EarlyMap, InputReader::EarlyMap(_), ProductionOutputs::Connected(_)) => {
+                super::early_map::actual(production, Some(cut))
             }
             (
                 Self::Movement,
@@ -279,6 +282,7 @@ impl ActualReader {
 
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
+            Self::EarlyMap => super::early_map::actual(production, None),
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::Frame(actual) => actual.initial(production),
@@ -340,8 +344,16 @@ impl ActualReader {
                 },
             ) => restored == direct && restored_replies == direct_replies,
             (
-                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
-                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
+                Self::EarlyMap
+                | Self::NativeSearch(_)
+                | Self::Recorded(_)
+                | Self::Movement
+                | Self::SenderOffer,
+                Self::EarlyMap
+                | Self::NativeSearch(_)
+                | Self::Recorded(_)
+                | Self::Movement
+                | Self::SenderOffer,
             ) => true,
             (
                 Self::FrameSteady {
@@ -372,7 +384,8 @@ impl ActualReader {
         match self {
             Self::Frame(actual) => actual.publication_count(),
             Self::Audio { publications, .. } => publications.len(),
-            Self::NativeSearch(_)
+            Self::EarlyMap
+            | Self::NativeSearch(_)
             | Self::Movement
             | Self::Recorded(_)
             | Self::SenderOffer
@@ -385,6 +398,7 @@ impl ActualReader {
 impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
+            Self::EarlyMap(expected) => expected.read(cut),
             Self::MovementTouchdown(expected) => expected.read(cut),
             Self::SenderOffer(fields) => Ok(ExpectedCut {
                 fields: fields.clone(),

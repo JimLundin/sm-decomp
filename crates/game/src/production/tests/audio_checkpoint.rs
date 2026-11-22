@@ -280,3 +280,36 @@ fn portable_pitch_histories_resume_around_publication() {
         assert_eq!(before.save().unwrap(), after.save().unwrap());
     }
 }
+
+#[test]
+fn portable_audio_refuses_another_schema_or_scope_tag() {
+    use crate::production::PortableAudio;
+    use crate::state::owned::AudioPin;
+    use canonical::model::Model;
+    use canonical::{Canonical, DecodeError, Schema};
+
+    let state = music_history(19, 51);
+    let content = ProductionContent::Audio(fixtures::audio_content());
+    let mut saved = admit(state.clone(), content.clone()).save().unwrap();
+    let (movement, _, _) = super::movement();
+    saved.state = movement.save().unwrap().state;
+    assert!(matches!(
+        Production::restore(&saved, content.clone(), ProductionRules::Audio),
+        Err(AdmissionFault::Checkpoint(
+            DecodeError::SchemaMismatch { .. }
+        )),
+    ));
+
+    let mut wrong_scope = canonical::to_bytes(&Schema::<PortableAudio>::new());
+    // A valid Audio payload under the Movement tag must still be refused.
+    1_u8.encode(&mut wrong_scope);
+    Model::<AudioPin>(Box::new(state)).encode(&mut wrong_scope);
+    saved.state = wrong_scope;
+    assert!(matches!(
+        Production::restore(&saved, content, ProductionRules::Audio),
+        Err(AdmissionFault::Checkpoint(DecodeError::UnknownVariant {
+            tag: 1,
+            ..
+        })),
+    ));
+}
