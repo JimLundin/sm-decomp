@@ -41,7 +41,10 @@ gh workflow run ci.yml --ref BRANCH -f target=replay::native_search::tests::nati
 
 CI installs the pinned fixtures and checks the selected case against its reviewed baseline,
 or runs exactly one matching library test, including ignored tests. A failing job prints the
-command to rerun it on the same commit. An empty target runs full CI.
+command to rerun it on the same commit. An empty target runs full CI, where
+[`tools/ci/replay_parallel.sh`](../tools/ci/replay_parallel.sh) runs the required witnesses beside
+three shards of the indexed check and `tools replay merge` joins the shard receipts into the one
+receipt an unsharded check writes.
 
 Locally, `bash tools/ci/replay.sh --case ID` builds the verifier from the checkout.
 Set `SM_CACHE`, `SM_ROM` and `SM_AUDIO_NATIVE` to the sources the case uses.

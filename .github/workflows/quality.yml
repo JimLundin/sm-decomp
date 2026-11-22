@@ -77,8 +77,8 @@ jobs:
         run: sh tools/check_doc_links.sh
       - name: Keep docs/REPORT.md what tools report generates
         run: bash tools/check_report.sh
-      - name: Test the shared replay entrypoint
-        run: bash tools/ci/replay_test.sh
+      - name: Test the shared and parallel replay entrypoints
+        run: bash tools/ci/replay_test.sh && bash tools/ci/replay_parallel_test.sh
       - name: Test exact historical replay claim accounting
         run: python3 tools/check_replay_transition_test.py
       - name: Test independent audio continuation seed decoding

@@ -179,9 +179,9 @@ jobs:
       - &opening_ground_corridor
         name: Fetch independent opening ground-corridor work and observations
         run: bash tools/ci/fetch_opening_ground_corridor.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Run verification library tests
-        if: inputs.target == '' || contains(inputs.target, '::')
-        env:
+      - name: Run one verification library test
+        if: contains(inputs.target, '::')
+        env: &witness_env
           VERIFY_TEST: ${{ inputs.target }}
           SM_ROM: ${{ github.workspace }}/rom/sm.smc
           SM_SEARCH_PACKET: ${{ runner.temp }}/audio-native/native-search-inputs-v1
@@ -198,17 +198,19 @@ jobs:
         if: inputs.target == ''
         # Fault workers can reuse compiler state from a clean main replay build.
         run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
-      - name: Check indexed replay against the reviewed baseline
-        if: ${{ !contains(inputs.target, '::') }}
+      - name: Check the required witnesses and indexed replay against the reviewed baseline
+        if: inputs.target == ''
+        env: *witness_env
+        run: bash tools/ci/replay_parallel.sh "$RUNNER_TEMP/replay-receipt.toml"
+      - name: Check one indexed replay case against the reviewed baseline
+        if: inputs.target != '' && !contains(inputs.target, '::')
         env:
           CARGO_INCREMENTAL: "1"
           REPLAY_CASE: ${{ inputs.target }}
         run: |
-          selection=()
-          if [[ -n "$REPLAY_CASE" ]]; then selection=(--case "$REPLAY_CASE"); fi
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
             SM_AUDIO_NATIVE="$RUNNER_TEMP/audio-native" \
-            bash tools/ci/replay.sh "${selection[@]}" --write "$RUNNER_TEMP/replay-receipt.toml"
+            bash tools/ci/replay.sh --case "$REPLAY_CASE" --write "$RUNNER_TEMP/replay-receipt.toml"
       - name: Reproduce a verification failure on this revision
         if: failure()
         run: echo "Reproduce $GITHUB_SHA with gh run rerun $GITHUB_RUN_ID --failed"
