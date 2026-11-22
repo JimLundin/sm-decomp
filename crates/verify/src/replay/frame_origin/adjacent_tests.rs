@@ -30,6 +30,8 @@ use std::path::Path;
 mod adjacent_hud_tests;
 #[path = "opening_clock_tests.rs"]
 mod opening_clock_tests;
+#[path = "return_transaction_tests.rs"]
+mod return_transaction_tests;
 
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]

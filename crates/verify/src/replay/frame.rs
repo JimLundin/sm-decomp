@@ -384,6 +384,18 @@ impl Inputs {
         if save_phases {
             self.present_opening_preview(production, cut)?;
         }
+        // A stopped transaction rolls back. Replay it step by step to retain the
+        // exact state and output prefix at the first missing owner.
+        if save_phases
+            && !self.observe_health_hud
+            && let Ok(outputs @ ProductionOutputs::Frame(_)) =
+                production.advance(AdvanceInput::FrameReturn {
+                    budget: self.budget,
+                })
+        {
+            self.compare_opening_preview(production, cut)?;
+            return Ok(outputs);
+        }
         let mut events = resume.unwrap_or_default();
         if self.observe_health_hud && held.health_hud.is_none() {
             held.health_hud = Some(health_hud::Trace::default());

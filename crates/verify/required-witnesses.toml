@@ -50,6 +50,7 @@ retained_frame = [
     "replay::frame_origin::pad_ingress_tests::actual_frame_samples_host_changes_through_the_physical_latch_after_restore",
     "replay::frame_origin::adjacent_tests::contiguous_native_returns_keep_independent_observations_and_inputs",
     "replay::frame_origin::adjacent_tests::adjacent_native_suffix_restores_interruption_and_controller_tail",
+    "replay::frame_origin::adjacent_tests::return_transaction_tests::complete_return_commits_all_steps_and_a_held_return_rolls_back",
     "replay::frame_origin::adjacent_tests::opening_clock_tests::third_opportunity_resumes_actual_wait_and_current_steady_haze",
     "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_carries_random_and_live_reaim_from_the_original_admission",
     "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_detects_stale_haze_at_the_first_haze_boundary",

@@ -153,6 +153,11 @@ pub enum AdvanceInput<'a> {
         /// Intrinsic host pause budget.
         budget: data::timing::MasterTicks,
     },
+    /// Advance every owner to the next native return as one atomic operation.
+    FrameReturn {
+        /// Intrinsic pause budget for each hardware step inside the return.
+        budget: data::timing::MasterTicks,
+    },
     /// One independently admitted ordinary opportunity for connected owners.
     MovementCeres {
         /// External movement dependencies.
@@ -633,13 +638,20 @@ impl Production {
         &mut self,
         input: AdvanceInput<'_>,
     ) -> Result<ProductionOutputs, ProductionFault> {
-        let mut candidate = self.state.clone();
-        let outputs = match (
-            &mut candidate,
-            &self.context.content,
-            &self.context.rules,
-            input,
-        ) {
+        let (candidate, outputs) = self.advance_candidate(self.state.clone(), input)?;
+        self.frame_returned = matches!(&outputs, ProductionOutputs::Frame(output)
+            if output.progress == frame::Progress::Completed);
+        self.state = candidate;
+        Ok(outputs)
+    }
+
+    fn advance_candidate(
+        &self,
+        mut state: OwnedState,
+        input: AdvanceInput<'_>,
+    ) -> Result<(OwnedState, ProductionOutputs), ProductionFault> {
+        let Context { content, rules } = self.context.as_ref();
+        let outputs = match (&mut state, content, rules, input) {
             (
                 OwnedState::Connected(state),
                 ProductionContent::Connected(content),
@@ -673,6 +685,12 @@ impl Production {
                 // The outer candidate already makes this caller's changes atomic.
                 ProductionOutputs::Frame(state.advance_caller(content, rules, budget)?)
             }
+            (
+                OwnedState::Frame(state),
+                ProductionContent::Frame(content),
+                ProductionRules::Frame(rules),
+                AdvanceInput::FrameReturn { budget },
+            ) => ProductionOutputs::Frame(state.advance_to_return(content, rules, budget)?),
             (
                 OwnedState::MovementCeres(state),
                 ProductionContent::MovementCeres(content),
@@ -729,10 +747,7 @@ impl Production {
             }
             (state, content, rules, input) => entries::advance(state, content, rules, input)?,
         };
-        self.frame_returned = matches!(&outputs, ProductionOutputs::Frame(output)
-            if output.progress == frame::Progress::Completed);
-        self.state = candidate;
-        Ok(outputs)
+        Ok((state, outputs))
     }
 
     /// Read the admitted transport shared by the loaded and independently scoped entries.

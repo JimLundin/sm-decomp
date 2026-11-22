@@ -1780,6 +1780,23 @@ impl State {
         Ok(outputs)
     }
 
+    /// Run a private candidate to the actual native return, collecting outputs in order.
+    /// The caller commits the whole interval on success and discards it on failure.
+    pub(in crate::production) fn advance_to_return(
+        &mut self,
+        content: &Content,
+        rules: &Rules,
+        budget: MasterTicks,
+    ) -> Result<Outputs, ProductionFault> {
+        let mut output = self.advance_caller(content, rules, budget)?;
+        while output.progress == Progress::Advanced {
+            let next = self.advance_caller(content, rules, budget)?;
+            output.events.extend(next.events);
+            output.progress = next.progress;
+        }
+        Ok(output)
+    }
+
     /// Advance a private candidate. The caller must discard it on error.
     pub(in crate::production) fn advance_caller(
         &mut self,
