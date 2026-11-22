@@ -193,10 +193,12 @@ jobs:
         run: python3 tools/ci/required_witnesses.py "$VERIFY_TEST"
       - name: Build the shared replay command
         if: inputs.target == ''
-        run: cargo build --locked --profile verify -p tools
+        # Fault workers can reuse compiler state from a clean main replay build.
+        run: CARGO_INCREMENTAL=1 cargo build --locked --profile verify -p tools
       - name: Check indexed replay against the reviewed baseline
         if: ${{ !contains(inputs.target, '::') }}
         env:
+          CARGO_INCREMENTAL: "1"
           REPLAY_CASE: ${{ inputs.target }}
         run: |
           selection=()
@@ -280,6 +282,7 @@ jobs:
       - *opening_clock
       - name: Verify recorded bridge fault rejection and exact restoration
         env:
+          CARGO_INCREMENTAL: "1"
           WORKER: ${{ matrix.worker }}
         run: |
           SM_CACHE="$RUNNER_TEMP/cache" SM_ROM=rom/sm.smc \
