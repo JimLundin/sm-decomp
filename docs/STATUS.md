@@ -302,6 +302,29 @@ hold `Frame(RandomPreparation)` at local index 4, with the arithmetic operand an
 sampled result bindings still unqualified. Indexed replay restores at the four compared
 stage cuts. Fixture tests also split charge inside the Haze head, Finish and LayerBlend.
 
+## Random through completion
+
+Install the [Random fixture](../tools/ci/fetch_shot_random.sh) with the true-resume and
+Steady fixtures. The carried Frame reaches Random at resume+4194. Its current seed supplies
+the two multiplicands and the player ROM supplies both matching fixed multiplier operands.
+The seven compared transfers contain four requests and three real hardware samples. Random
+charges 614 intrinsic ticks and one 40-tick refresh before committing the shared seed at
+resume+4848. The source records the two earlier byte stores. The runtime comparison observes
+the committed seed and the ordered device transfers.
+
+The carry and low-byte-only controls use independent current seed inputs and native
+comparison tuples. The low-byte-only arm changes the first request and first product while
+the second request and second sample retain their values and times. Each arm restores after
+all four actual operand writes and after the first live sample. Restore checks the retained
+arithmetic against spent work, and the unfinished request resumes the same event sequence.
+Local index 4 compares Random and local index 5 holds `Frame(BuilderPreparation)`.
+
+The next elapsed continuation needs the current Sprite Builder inputs and a qualified
+Builder/dispatch profile. Actor selection also needs to admit the observed pair of
+marked, tangible actors. Debug, enabled-empty Palette and standing Pose have native
+semantic observations. Elapsed Pose playback requires the silent field-start HDMA
+initialization, followed by the IRQ during Suit before gameplay can reach the fire caller.
+
 ## Retained native frame
 
 `frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.

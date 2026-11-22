@@ -125,7 +125,9 @@ impl Qualification {
     }
 
     pub(super) fn finished<'a>(&'a self, caller: &Caller) -> impl Iterator<Item = &'a Template> {
-        let count = if matches!(caller, Caller::Random { .. }) {
+        let count = if matches!(caller, Caller::Random { .. } | Caller::RandomRunning { .. })
+            || super::random::at_builder(caller)
+        {
             3
         } else if matches!(
             caller,
@@ -171,7 +173,12 @@ impl State {
         if let Caller::HazeTail { prepared, .. }
         | Caller::LayerBlend { haze: prepared, .. }
         | Caller::LayerBlendRunning { haze: prepared, .. }
-        | Caller::Random { haze: prepared, .. } = caller
+        | Caller::Random { haze: prepared, .. }
+        | Caller::RandomRunning { haze: prepared, .. }
+        | Caller::Preparation {
+            prepared: super::caller::Preparation { haze: prepared, .. },
+            ..
+        } = caller
         {
             let result = initial.haze.complete_head(
                 &work,
@@ -184,12 +191,21 @@ impl State {
         }
         if matches!(
             caller,
-            Caller::LayerBlend { .. } | Caller::LayerBlendRunning { .. } | Caller::Random { .. }
+            Caller::LayerBlend { .. }
+                | Caller::LayerBlendRunning { .. }
+                | Caller::Random { .. }
+                | Caller::RandomRunning { .. }
+                | Caller::Preparation { .. }
         ) {
             initial.software_mask = initial.haze.complete_tail()?;
         }
         if let Caller::LayerBlendRunning { haze, layers, .. }
-        | Caller::Random { haze, layers, .. } = caller
+        | Caller::Random { haze, layers, .. }
+        | Caller::RandomRunning { haze, layers, .. }
+        | Caller::Preparation {
+            prepared: super::caller::Preparation { haze, layers, .. },
+            ..
+        } = caller
         {
             if *layers != qualification.layer_defaults.prepare(haze.blend) {
                 return Err(haze::missing());

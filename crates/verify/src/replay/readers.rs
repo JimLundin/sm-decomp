@@ -44,7 +44,9 @@ pub(super) enum ActualReader {
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
-    FrameSteady,
+    FrameSteady {
+        publications: usize,
+    },
     NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
     Audio {
@@ -194,8 +196,25 @@ impl ActualReader {
                     .accept(production, &outputs, cut)
                     .inspect_err(|_| held.retain_events(outputs.events))
             }
-            (Self::FrameSteady, InputReader::FrameSteady, ProductionOutputs::FrameOpening(..)) => {
-                super::frame_steady::actual(production)
+            (
+                Self::FrameSteady { publications },
+                InputReader::FrameSteady,
+                ProductionOutputs::FrameOpening(_, events),
+            ) => {
+                let mut fields = super::frame_steady::actual(production)?;
+                fields.extend(super::frame_random_prelude::actual(&events)?);
+                *publications = publications.saturating_add(
+                    events
+                        .iter()
+                        .filter(|event| {
+                            matches!(
+                                event.kind,
+                                game::production::timing::EventKind::Publication(_)
+                            )
+                        })
+                        .count(),
+                );
+                Ok(fields)
             }
             (
                 Self::NativeSearch(retained),
@@ -263,7 +282,7 @@ impl ActualReader {
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::Frame(actual) => actual.initial(production),
-            Self::FrameSteady => super::frame_steady::actual(production),
+            Self::FrameSteady { .. } => super::frame_steady::actual(production),
             Self::NativeSearch(_) => {
                 let mut fields = super::native_search::initial();
                 fields.extend(super::full_movement::initial()?);
@@ -321,19 +340,31 @@ impl ActualReader {
                 },
             ) => restored == direct && restored_replies == direct_replies,
             (
-                Self::NativeSearch(_)
-                | Self::Recorded(_)
-                | Self::Movement
-                | Self::SenderOffer
-                | Self::FrameSteady,
-                Self::NativeSearch(_)
-                | Self::Recorded(_)
-                | Self::Movement
-                | Self::SenderOffer
-                | Self::FrameSteady,
+                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
+                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
             ) => true,
-            (Self::Frame(_) | Self::Audio { .. } | Self::MovementTouchdown(_), _)
-            | (_, Self::Frame(_) | Self::Audio { .. } | Self::MovementTouchdown(_)) => false,
+            (
+                Self::FrameSteady {
+                    publications: restored,
+                },
+                Self::FrameSteady {
+                    publications: direct,
+                },
+            ) => restored == direct,
+            (
+                Self::Frame(_)
+                | Self::Audio { .. }
+                | Self::MovementTouchdown(_)
+                | Self::FrameSteady { .. },
+                _,
+            )
+            | (
+                _,
+                Self::Frame(_)
+                | Self::Audio { .. }
+                | Self::MovementTouchdown(_)
+                | Self::FrameSteady { .. },
+            ) => false,
         }
     }
 
@@ -345,8 +376,8 @@ impl ActualReader {
             | Self::Movement
             | Self::Recorded(_)
             | Self::SenderOffer
-            | Self::MovementTouchdown(_)
-            | Self::FrameSteady => 0,
+            | Self::MovementTouchdown(_) => 0,
+            Self::FrameSteady { publications } => *publications,
         }
     }
 }

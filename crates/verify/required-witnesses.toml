@@ -28,6 +28,10 @@ shot_steady_haze = [
     "replay::frame_steady::tests::actual_layer_operand_fault_has_the_same_wall_time",
 ]
 
+shot_random = [
+    "replay::frame_steady::tests::random_live_requests_resume_after_first_sample",
+]
+
 retained_frame = [
     "replay::frame_origin::health_owner_tests::actual_native_frame_completes_and_matches_from_the_retained_checkpoint",
     "replay::frame_origin::health_owner_tests::actual_native_admission_restores_complete_return",

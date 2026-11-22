@@ -70,7 +70,7 @@ mod pad_ingress_tests;
 #[path = "frame_prelude_seed.rs"]
 mod prelude_seed;
 #[path = "frame_preparation_receipts.rs"]
-mod preparation_receipts;
+pub(super) mod preparation_receipts;
 #[path = "frame_profiles.rs"]
 pub(super) mod profiles;
 #[path = "frame_random_inputs.rs"]

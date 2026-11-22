@@ -146,6 +146,8 @@ jobs:
         run: bash tools/ci/fetch_shot_frame_origin.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Install the independently qualified Steady Haze continuation
         run: bash tools/ci/fetch_shot_steady_haze.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - name: Install the independently qualified Random arms
+        run: bash tools/ci/fetch_shot_random.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &retained_frame
         name: Fetch retained native frame inputs and return observations
         run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"

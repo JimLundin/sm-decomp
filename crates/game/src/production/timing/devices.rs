@@ -14,12 +14,7 @@ impl Hardware {
                 if self.math.remaining != 0 {
                     return Err(Fault::MathBusy);
                 }
-                self.math.multiplier = *value;
-                self.math.product = 0;
-                self.math.remaining = 8;
-                self.math.operand =
-                    u16::from(*value).wrapping_shl(8) | u16::from(self.math.multiplicand);
-                self.math.shift = u32::from(*value);
+                self.math.start_multiply(*value);
             }
             Publication::DividendLow(value) => {
                 let [_, high] = self.math.dividend.to_le_bytes();

@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "bee14fa8051d90594b1282deb92d0bcb56b4f69411d493e7ab0d5261bce7fb34"
+index_sha256 = "17d5db56a584537c4d5b5bfec3bb2d1e4acd2209a92dc9177d7ecf98e881a175"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -955,5 +955,59 @@ replies = 0
 null_cuts = 0
 null_fields = 10
 restorations = 4
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/random-through-completion"
+claim = "boundary"
+expected = { status = "unsupported", cut = 5, dependency = "Frame(BuilderPreparation)" }
+observation_sha256 = "56952c7c8ce0b3c514b0eab0a9de2b02bf7d52337c43755f95199e879462d343"
+
+[case.counts]
+cuts = 5
+fields = 25
+outputs = 7
+publications = 4
+replies = 0
+null_cuts = 0
+null_fields = 10
+restorations = 5
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/random-seed-carry"
+claim = "boundary"
+expected = { status = "unsupported", cut = 5, dependency = "Frame(BuilderPreparation)" }
+observation_sha256 = "42dbdb3d099bff1f910c9b7250eecab6365895f43f90b5a8877edd214eac7e43"
+
+[case.counts]
+cuts = 5
+fields = 25
+outputs = 7
+publications = 4
+replies = 0
+null_cuts = 0
+null_fields = 10
+restorations = 5
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/random-low-seed"
+claim = "boundary"
+expected = { status = "unsupported", cut = 5, dependency = "Frame(BuilderPreparation)" }
+observation_sha256 = "3174884ae1a16e92735586a50bec697111734d446e92c7874b577457bd7ce4a2"
+
+[case.counts]
+cuts = 5
+fields = 25
+outputs = 7
+publications = 4
+replies = 0
+null_cuts = 0
+null_fields = 10
+restorations = 5
 pending_boundaries = 0
 pending_restorations = 0

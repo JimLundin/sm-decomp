@@ -87,6 +87,8 @@ pub(super) struct Expected {
     uses_physical_device: bool,
     #[serde(skip)]
     control: Option<ControlExpected>,
+    #[serde(skip)]
+    random: Option<super::frame_random_prelude::Expected>,
 }
 
 #[derive(Deserialize)]
@@ -97,7 +99,7 @@ struct ControlExpected {
     window_two: [u8; 4],
 }
 
-fn member(root: &Path, name: &str, pin: &str) -> Result<String, Outcome> {
+pub(super) fn member(root: &Path, name: &str, pin: &str) -> Result<String, Outcome> {
     let source = std::fs::read_to_string(root.join(name))
         .map_err(|_| data_failure(None, "Steady fixture member"))?;
     if Some(Sha256::of(source.as_bytes())) != Sha256::try_from(pin).ok() {
@@ -106,7 +108,11 @@ fn member(root: &Path, name: &str, pin: &str) -> Result<String, Outcome> {
     Ok(source)
 }
 
-fn decode<T: DeserializeOwned>(root: &Path, name: &str, pin: &str) -> Result<T, Outcome> {
+pub(super) fn decode<T: DeserializeOwned>(
+    root: &Path,
+    name: &str,
+    pin: &str,
+) -> Result<T, Outcome> {
     toml::from_str(&member(root, name, pin)?)
         .map_err(|_| data_failure(None, "Steady fixture format"))
 }
@@ -116,10 +122,12 @@ pub(super) fn field_count(case: &Case, cuts: usize) -> Option<usize> {
         return None;
     };
     let is_control = path.ends_with(CONTROL_INPUT);
-    let counts = if is_control {
-        [2, 5, 7, 9]
+    let counts: &[usize] = if super::frame_random_prelude::Arm::for_case(case).is_some() {
+        &[3, 5, 7, 8, 2]
+    } else if is_control {
+        &[2, 5, 7, 9]
     } else {
-        [3, 5, 7, 8]
+        &[3, 5, 7, 8]
     };
     Some(counts.get(..cuts)?.iter().sum())
 }
@@ -237,7 +245,8 @@ fn input_side(
     };
     let relative = Path::new(PACKET);
     let is_control = path == &relative.join(CONTROL_INPUT) && sha256 == CONTROL_INPUT_PIN;
-    if !is_control && (path != &relative.join(INPUT) || sha256 != INPUT_PIN) {
+    let random = super::frame_random_prelude::Arm::for_case(case);
+    if random.is_none() && !is_control && (path != &relative.join(INPUT) || sha256 != INPUT_PIN) {
         return Err(data_failure(None, "Steady start identity"));
     }
     let root = sources.native.join(relative);
@@ -253,10 +262,17 @@ fn input_side(
     )?)
     .map_err(|_| data_failure(None, "reached Steady profiles"))?;
     let qualification = input.qualification(&opening, &wram, physical, control)?;
-    let opening = opening
+    let mut opening = opening
         .with_steady(&qualification)
         .map_err(|_| data_failure(None, "Steady production admission"))?;
     profiles.steady = Some(Box::new(qualification));
+    if let Some(arm) = random {
+        let qualification = arm.input(sources, &wram)?;
+        opening = opening
+            .with_random(&qualification)
+            .map_err(|_| data_failure(None, "current Random admission"))?;
+        profiles.random = Some(Box::new(qualification));
+    }
     Ok((opening, profiles, is_control))
 }
 
@@ -286,13 +302,16 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
             CONTROL_EXPECTED_PIN,
         )?);
     }
+    expected.random = super::frame_random_prelude::Arm::for_case(case)
+        .map(|arm| arm.expected(sources))
+        .transpose()?;
     Ok(AdmittedCase {
         production,
         content,
         rules,
         inputs: InputReader::FrameSteady,
         expected: ExpectedReader::FrameSteady(Box::new(expected)),
-        actual: ActualReader::FrameSteady,
+        actual: ActualReader::FrameSteady { publications: 0 },
         schedule: (0..=case.end.cut_inclusive).collect(),
     })
 }
@@ -311,7 +330,15 @@ const fn stage(caller: &Caller, cut: u64) -> bool {
             | (1, Caller::HazeTail { .. })
             | (2, Caller::LayerBlend { .. })
             | (3, Caller::Random { .. })
-    )
+    ) || cut == 4
+        && matches!(
+            caller,
+            Caller::Preparation {
+                stage: frame::PreparationStage::Builder,
+                charging: false,
+                ..
+            }
+        )
 }
 
 pub(super) fn advance(production: &mut Production, cut: u64) -> Result<ProductionOutputs, Outcome> {
@@ -324,22 +351,33 @@ fn advance_to(
 ) -> Result<(ProductionOutputs, usize), Outcome> {
     let mut previous = owner(production)?.timing().hardware.beam.refreshed;
     let mut refreshes = 0_usize;
+    let mut transfers = Vec::new();
     for _ in 0..2048 {
         let result = production
             .advance(AdvanceInput::Frame {
                 budget: MasterTicks(64),
             })
             .map_err(|fault| production_failure(cut, fault))?;
-        if !matches!(&result, ProductionOutputs::FrameOpening(Progress::Advanced | Progress::Completed(_), events) if events.is_empty())
-        {
+        let ProductionOutputs::FrameOpening(
+            progress @ (Progress::Advanced | Progress::Completed(_)),
+            events,
+        ) = result
+        else {
+            return Err(data_failure(Some(cut), "quiet actual Steady progress"));
+        };
+        if cut != 4 && !events.is_empty() {
             return Err(data_failure(Some(cut), "quiet actual Steady progress"));
         }
+        transfers.extend(events);
         let owner = owner(production)?;
         let current = owner.timing().hardware.beam.refreshed;
         refreshes = refreshes.saturating_add(usize::from(current && !previous));
         previous = current;
         if stage(owner.caller(), cut) {
-            return Ok((result, refreshes));
+            return Ok((
+                ProductionOutputs::FrameOpening(progress, transfers),
+                refreshes,
+            ));
         }
     }
     Err(data_failure(Some(cut), "Steady progress bound"))
@@ -372,6 +410,12 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
         bytes("frame.steady.timers", countdowns(observed.countdowns)),
         bytes("frame.steady.window_two", observed.window_two),
     ];
+    if let Some(seed) = owner.random_seed() {
+        fields.push(Observation::quantity(
+            "frame.random.seed",
+            i64::from(seed.0),
+        ));
+    }
     if let Caller::HazeTail { prepared, .. }
     | Caller::LayerBlend { haze: prepared, .. }
     | Caller::Random { haze: prepared, .. } = owner.caller()
@@ -397,6 +441,11 @@ pub(super) fn actual(production: &Production) -> Result<Vec<Observation>, Outcom
 
 impl Expected {
     pub(super) fn read(&self, cut: u64) -> Result<ExpectedCut, Outcome> {
+        if cut == 4
+            && let Some(random) = &self.random
+        {
+            return Ok(random.read());
+        }
         let index =
             usize::try_from(cut).map_err(|_| data_failure(Some(cut), "Steady cut range"))?;
         let now = *self
@@ -470,7 +519,10 @@ mod tests {
             .unwrap()
             .cases
             .into_iter()
-            .filter(|case| case.inputs == super::super::index::InputProvider::NativeSteadyPrelude)
+            .filter(|case| {
+                case.inputs == super::super::index::InputProvider::NativeSteadyPrelude
+                    && super::super::frame_random_prelude::Arm::for_case(case).is_none()
+            })
             .collect()
     }
 
@@ -582,5 +634,106 @@ mod tests {
         assert!(
             matches!(outcome, Err(Outcome::Difference { cut: 3, field }) if field == "frame.steady.layer_mirrors")
         );
+    }
+
+    #[test]
+    #[ignore = "requires the independently qualified Random arms"]
+    fn random_live_requests_resume_after_first_sample() {
+        let index = Index::read(Path::new("../../scenarios/replay/index.toml")).unwrap();
+        let sources = sources();
+        let cases = index
+            .cases
+            .into_iter()
+            .filter(|case| super::super::frame_random_prelude::Arm::for_case(case).is_some());
+        let mut witnessed = 0_usize;
+        for case in cases {
+            let admitted = admit(&case, &sources).unwrap();
+            let mut direct = admitted.production;
+            for cut in 0..=3 {
+                advance(&mut direct, cut).unwrap();
+            }
+            let mut measurement = direct.clone();
+            assert_eq!(advance_to(&mut measurement, 4).unwrap().1, 1);
+            restore_random_intervals(&mut direct, &admitted.content, &admitted.rules);
+            let completed = direct.save().unwrap();
+            assert!(matches!(
+                direct.advance(AdvanceInput::Frame {
+                    budget: MasterTicks(64)
+                }),
+                Err(ProductionFault::Unsupported(Unsupported::Frame(
+                    frame::Dependency::BuilderPreparation
+                )))
+            ));
+            assert!(completed.eq(&direct.save().unwrap()));
+            let result = super::super::run(&case, &sources);
+            assert!(
+                matches!(result.outcome, Outcome::Unsupported { cut: Some(5), .. }),
+                "{:?}",
+                result.outcome
+            );
+            assert_eq!(result.counts.cuts, 5);
+            assert_eq!(result.counts.restorations, 5);
+            assert_eq!(result.counts.outputs, 7);
+            assert_eq!(result.counts.publications, 4);
+            witnessed = witnessed.saturating_add(1);
+        }
+        assert_eq!(witnessed, 3);
+    }
+
+    fn restore_random_intervals(
+        direct: &mut Production,
+        content: &ProductionContent,
+        rules: &ProductionRules,
+    ) {
+        use data::timing::Sample;
+        use game::production::timing::{EventKind, SampleValue};
+        let mut restored: Option<Production> = None;
+        let mut checkpoints = 0_usize;
+        for _ in 0..4096 {
+            let input = AdvanceInput::Frame {
+                budget: MasterTicks(1),
+            };
+            let output = direct.advance(input).unwrap();
+            if let Some(prior) = &mut restored {
+                assert!(
+                    output.eq(&prior
+                        .advance(AdvanceInput::Frame {
+                            budget: MasterTicks(1)
+                        })
+                        .unwrap())
+                );
+                assert!(Production::eq(direct, prior));
+            }
+            let ProductionOutputs::FrameOpening(_, events) = output else {
+                panic!("expected the real Frame output");
+            };
+            let caller = owner(direct).unwrap().caller();
+            let first_sample = matches!(
+                caller,
+                Caller::RandomRunning {
+                    samples: frame::random::Samples::FirstLow(_),
+                    ..
+                }
+            );
+            if events.iter().any(|event| {
+                matches!(event.kind, EventKind::Publication(_))
+                    || first_sample
+                        && matches!(
+                            event.kind,
+                            EventKind::Sample(Sample::ProductLow, SampleValue::Byte(_))
+                        )
+            }) {
+                let saved = direct.save().unwrap();
+                let resumed = Production::restore(&saved, content.clone(), rules.clone()).unwrap();
+                assert!(Production::eq(direct, &resumed));
+                restored = Some(resumed);
+                checkpoints = checkpoints.saturating_add(1);
+            }
+            if stage(caller, 4) {
+                assert_eq!(checkpoints, 5);
+                return;
+            }
+        }
+        panic!("Random failed to return to Builder");
     }
 }

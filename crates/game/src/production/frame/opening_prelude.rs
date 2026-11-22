@@ -140,6 +140,7 @@ pub struct Opening {
     music: Option<MusicServiceReceipt>,
     senders: Senders,
     steady: Option<Box<super::steady_prelude::State>>,
+    random: Option<super::random::Sequence>,
 }
 
 /// Checked exposures and independently admitted neighbouring owners.
@@ -151,6 +152,8 @@ pub struct Profiles {
     pub music: Template,
     /// Qualified quiet continuation after Music.
     pub steady: Option<Box<super::steady_prelude::Qualification>>,
+    /// Qualified current Random and its physical requests.
+    pub random: Option<Box<super::random::Qualification>>,
 }
 
 fn validate_senders(senders: &Senders) -> Result<(), ProductionFault> {
@@ -233,6 +236,7 @@ impl Opening {
             music: Some(current),
             senders,
             steady: None,
+            random: None,
         })
     }
 
@@ -255,6 +259,32 @@ impl Opening {
     #[must_use]
     pub fn steady_observation(&self) -> Option<super::steady_prelude::Observation> {
         self.steady.as_ref()?.observation(&self.timing)
+    }
+
+    /// Admit the current sequence in a qualified carried Frame.
+    ///
+    /// # Errors
+    /// The current opening lacks Steady Haze, has started, or already owns Random.
+    pub fn with_random(
+        mut self,
+        qualification: &super::random::Qualification,
+    ) -> Result<Self, ProductionFault> {
+        if self.steady.is_none()
+            || self.random.is_some()
+            || self.timing.hardware.now != MasterTicks(0)
+        {
+            return Err(ProductionFault::WrongScope);
+        }
+        let sequence = super::random::Sequence::new(qualification.seed);
+        qualification.validate(&sequence, &self.caller, &self.timing)?;
+        self.random = Some(sequence);
+        Ok(self)
+    }
+
+    /// Current live seed, retained across physical samples and replaced at Random completion.
+    #[must_use]
+    pub fn random_seed(&self) -> Option<super::random::RandomSeed> {
+        self.random.as_ref().map(super::random::Sequence::current)
     }
 
     /// Current canonical hardware, including charged run and refresh progress.
@@ -316,6 +346,15 @@ impl Opening {
                         .ok_or(ProductionFault::FrameHardware(timing::Fault::TimeOverflow))?;
                 }
             }
+            if super::random::at_builder(&self.caller) {
+                let random = profiles
+                    .random
+                    .as_ref()
+                    .ok_or_else(super::random::missing)?;
+                minimum = minimum
+                    .checked_add(intrinsic(&random.template)?)
+                    .ok_or(ProductionFault::FrameHardware(timing::Fault::TimeOverflow))?;
+            }
             if let Some(work) = self.timing.work.first() {
                 minimum = minimum
                     .checked_add(work.cursor.intrinsic.0)
@@ -342,7 +381,8 @@ impl Opening {
                 | Caller::LayerBlend { .. }
                 | Caller::LayerBlendRunning { .. }
                 | Caller::Random { .. }
-        )
+                | Caller::RandomRunning { .. }
+        ) || super::random::at_builder(&self.caller)
     }
 
     pub(in crate::production) fn validate(
@@ -370,7 +410,12 @@ impl Opening {
         | Caller::HazeTail { prelude, .. }
         | Caller::LayerBlend { prelude, .. }
         | Caller::LayerBlendRunning { prelude, .. }
-        | Caller::Random { prelude, .. }) = &self.caller
+        | Caller::Random { prelude, .. }
+        | Caller::RandomRunning { prelude, .. }
+        | Caller::Preparation {
+            prepared: super::caller::Preparation { prelude, .. },
+            ..
+        }) = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
         };
@@ -391,7 +436,12 @@ impl Opening {
         | Caller::HazeTail { music, .. }
         | Caller::LayerBlend { music, .. }
         | Caller::LayerBlendRunning { music, .. }
-        | Caller::Random { music, .. } = &self.caller
+        | Caller::Random { music, .. }
+        | Caller::RandomRunning { music, .. }
+        | Caller::Preparation {
+            prepared: super::caller::Preparation { music, .. },
+            ..
+        } = &self.caller
         {
             if origin.music_completion.is_some() || self.music != Some(music.terminal) {
                 return Err(music_missing());
@@ -404,6 +454,7 @@ impl Opening {
             (None, None) if !self.after_music() || matches!(self.caller, Caller::Haze { .. }) => (),
             _ => return Err(ProductionFault::WrongScope),
         }
+        self.validate_random(profiles)?;
         if matches!(self.caller, Caller::Acknowledgment { .. }) {
             self.validate_charge(&profiles.acknowledgment, ACKNOWLEDGMENT)?;
         } else if matches!(self.caller, Caller::MusicRunning { .. }) {
@@ -414,13 +465,36 @@ impl Opening {
             .and_then(|steady| steady.validation_phase(&self.caller))
         {
             self.validate_charge(template, id)?;
-        } else if !self.timing.work.is_empty()
-            || (matches!(self.caller, Caller::AwaitingAcknowledgment { .. })
-                && self.timing.hardware.now != MasterTicks(0))
+        } else if !matches!(self.caller, Caller::RandomRunning { .. })
+            && (!self.timing.work.is_empty()
+                || (matches!(self.caller, Caller::AwaitingAcknowledgment { .. })
+                    && self.timing.hardware.now != MasterTicks(0)))
         {
             return Err(ProductionFault::WrongScope);
         }
         self.validate_elapsed(profiles)
+    }
+
+    fn validate_random(&self, profiles: &Profiles) -> Result<(), ProductionFault> {
+        match (&self.random, &profiles.random) {
+            (Some(sequence), Some(context)) if self.steady.is_some() => {
+                if matches!(self.caller, Caller::Preparation { .. })
+                    && !super::random::at_builder(&self.caller)
+                {
+                    return Err(super::random::missing());
+                }
+                context.validate(sequence, &self.caller, &self.timing)
+            }
+            (None, None)
+                if !matches!(
+                    self.caller,
+                    Caller::RandomRunning { .. } | Caller::Preparation { .. }
+                ) =>
+            {
+                Ok(())
+            }
+            _ => Err(super::random::missing()),
+        }
     }
 
     pub(in crate::production) fn advance(
@@ -428,6 +502,14 @@ impl Opening {
         profiles: &Profiles,
         budget: MasterTicks,
     ) -> Result<(timing::Progress, Vec<timing::Event>), ProductionFault> {
+        if (matches!(
+            self.caller,
+            Caller::Random { .. } | Caller::RandomRunning { .. }
+        ) || super::random::at_builder(&self.caller))
+            && let (Some(sequence), Some(context)) = (&mut self.random, &profiles.random)
+        {
+            return context.advance(sequence, &mut self.caller, &mut self.timing, budget);
+        }
         if self.after_music()
             && let (Some(state), Some(context)) = (&mut self.steady, &profiles.steady)
         {
@@ -506,9 +588,7 @@ mod tests {
     use audio_transport::{CpuMasterTicks, Request, SenderProgress, SenderState};
     use data::timing::{Cycle, ExposureKind, TemplateRun};
 
-    #[test]
-    fn opening_checkpoint_refuses_a_changed_inactive_sender_clock() {
-        let hardware = timing::tests::state(20, 20);
+    fn origin(hardware: timing::State) -> Opening {
         let sender = SenderState {
             queue: std::collections::VecDeque::new(),
             progress: SenderProgress::Ready,
@@ -531,8 +611,11 @@ mod tests {
             terminal: current,
             request: MusicRequest::None,
         };
-        let start = Opening::new(hardware, senders, publication, current, music).unwrap();
-        let profile = Template {
+        Opening::new(hardware, senders, publication, current, music).unwrap()
+    }
+
+    fn quiet() -> Template {
+        Template {
             runs: vec![TemplateRun {
                 count: 1,
                 cycle: Cycle::Six,
@@ -540,11 +623,18 @@ mod tests {
                 poll_before: false,
                 effect: TemplateEffect::None,
             }],
-        };
+        }
+    }
+
+    #[test]
+    fn opening_checkpoint_refuses_a_changed_inactive_sender_clock() {
+        let start = origin(timing::tests::state(20, 20));
+        let profile = quiet();
         let content = ProductionContent::FrameOpening(Box::new(Profiles {
             acknowledgment: profile.clone(),
             music: profile,
             steady: None,
+            random: None,
         }));
         let rules = ProductionRules::FrameOpening;
         let mut production = Production::admit(
@@ -581,5 +671,178 @@ mod tests {
             Err(AdmissionFault::Frame(fault))
                 if matches!(*fault, super::super::Fault::Production(ProductionFault::WrongScope))
         ));
+    }
+
+    fn random_opening() -> (Production, ProductionContent, ProductionRules) {
+        use super::super::{
+            layer_blend::LayerBlendDefaults, random, steady_prelude::Qualification,
+        };
+        use crate::state::video::{ColourMathLayers, ColourMathSelect, Layers};
+        use data::{
+            dma::BusAddress,
+            timing::{ChannelSlot, MULTIPLICAND_PORT, MULTIPLIER_PORT, Sample},
+        };
+        use world_haze::{HazeBands, HazeColour, HazeFade, HazeLevel, HazeState};
+
+        let mut hardware = timing::tests::state(240, 20);
+        let channels = [ChannelSlot::Three, ChannelSlot::Eight].map(|slot| {
+            let current = &mut hardware.hardware.transfers.channels[slot.ordinal()];
+            current.line.enabled = true;
+            current.clone()
+        });
+        let steady = Qualification {
+            model: HazeState {
+                colour: HazeColour::Blue,
+                fade: HazeFade::Steady,
+                bands: HazeBands([HazeLevel::new(0).unwrap(); 16]),
+            },
+            countdowns: [8, 9],
+            backing: [0x80; 16],
+            bands_address: BusAddress { bank: 1, offset: 1 },
+            physical_channels: channels,
+            software_mask: 0,
+            window_two: [0; 4],
+            layer_defaults: LayerBlendDefaults {
+                main_screen: Layers::default(),
+                sub_screen: Layers::default(),
+                colour_math_select: ColourMathSelect::default(),
+                colour_math_layers: ColourMathLayers::default(),
+            },
+            retain: quiet(),
+            finish: quiet(),
+            layers: quiet(),
+        };
+        let effects = [
+            TemplateEffect::Publish(MULTIPLICAND_PORT),
+            TemplateEffect::Publish(MULTIPLIER_PORT),
+            TemplateEffect::None,
+            TemplateEffect::Sample(Sample::ProductLow),
+            TemplateEffect::Sample(Sample::ProductHigh),
+            TemplateEffect::Publish(MULTIPLICAND_PORT),
+            TemplateEffect::Publish(MULTIPLIER_PORT),
+            TemplateEffect::None,
+            TemplateEffect::Sample(Sample::ProductLow),
+        ];
+        let random = random::Qualification {
+            seed: random::RandomSeed(0x3381),
+            requests: random::SeedRequests {
+                multiplier: random::ImportedRandomMultiplier::new(5).unwrap(),
+            },
+            template: Template {
+                runs: effects
+                    .into_iter()
+                    .map(|effect| {
+                        let (count, kind) = match effect {
+                            TemplateEffect::Publish(_) => (1, ExposureKind::Write),
+                            TemplateEffect::Sample(_) => (1, ExposureKind::Read),
+                            TemplateEffect::None => (12, ExposureKind::Internal),
+                        };
+                        TemplateRun {
+                            count,
+                            kind,
+                            cycle: Cycle::Six,
+                            poll_before: false,
+                            effect,
+                        }
+                    })
+                    .collect(),
+            },
+        };
+        let opening = origin(hardware)
+            .with_steady(&steady)
+            .unwrap()
+            .with_random(&random)
+            .unwrap();
+        let content = ProductionContent::FrameOpening(Box::new(Profiles {
+            acknowledgment: quiet(),
+            music: quiet(),
+            steady: Some(Box::new(steady)),
+            random: Some(Box::new(random)),
+        }));
+        let rules = ProductionRules::FrameOpening;
+        let production = Production::admit(
+            ProductionSeed::FrameOpening(Box::new(opening)),
+            content.clone(),
+            rules.clone(),
+        )
+        .unwrap();
+        (production, content, rules)
+    }
+
+    fn opening_state(production: &Production) -> &Opening {
+        let OwnedState::FrameOpening(opening) = production.state() else {
+            panic!("expected opening");
+        };
+        opening
+    }
+
+    fn next_product_high(production: &mut Production) -> (MasterTicks, u8) {
+        use crate::production::ProductionOutputs;
+        use data::timing::Sample;
+        for _ in 0..1024 {
+            let ProductionOutputs::FrameOpening(_, events) = production
+                .advance(AdvanceInput::Frame {
+                    budget: MasterTicks(1),
+                })
+                .unwrap()
+            else {
+                panic!("expected real Frame advance");
+            };
+            for event in events {
+                if let timing::EventKind::Sample(
+                    Sample::ProductHigh,
+                    timing::SampleValue::Byte(value),
+                ) = event.kind
+                {
+                    return (event.at, value);
+                }
+            }
+        }
+        panic!("missing live ProductHigh sample");
+    }
+
+    #[test]
+    fn opening_random_refuses_forged_retained_product() {
+        use super::super::random::Samples;
+        let (mut direct, content, rules) = random_opening();
+        for _ in 0..1024 {
+            direct
+                .advance(AdvanceInput::Frame {
+                    budget: MasterTicks(1),
+                })
+                .unwrap();
+            if matches!(
+                opening_state(&direct).caller(),
+                Caller::RandomRunning {
+                    samples: Samples::FirstLow(_),
+                    ..
+                }
+            ) {
+                break;
+            }
+        }
+        assert!(matches!(
+            opening_state(&direct).caller(),
+            Caller::RandomRunning {
+                samples: Samples::FirstLow(_),
+                ..
+            }
+        ));
+        let saved = direct.save().unwrap();
+        let mut intact = Production::restore(&saved, content.clone(), rules.clone()).unwrap();
+        let mut altered = opening_state(&direct).clone();
+        altered.timing.hardware.math.product ^= 1 << 8;
+        let forged = direct.encode_save(altered);
+        assert!(matches!(
+            Production::restore(&forged, content, rules),
+            Err(AdmissionFault::Frame(fault)) if matches!(
+                *fault,
+                super::super::Fault::Production(ProductionFault::Unsupported(
+                    Unsupported::Frame(super::super::caller::Dependency::RandomPreparation)
+                ))
+            )
+        ));
+        let (at, actual) = next_product_high(&mut direct);
+        assert_eq!(next_product_high(&mut intact), (at, actual));
     }
 }

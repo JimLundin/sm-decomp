@@ -302,9 +302,10 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
             && counts.pending_boundaries == 0;
     }
     if case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries {
+        let random = super::frame_random_prelude::Arm::for_case(case).is_some() && counts.cuts == 5;
         return super::frame_steady::field_count(case, counts.cuts) == Some(counts.fields)
-            && counts.outputs == 0
-            && counts.publications == 0
+            && counts.outputs == if random { 7 } else { 0 }
+            && counts.publications == if random { 4 } else { 0 }
             && counts.replies == 0
             && counts.pending_boundaries == 0;
     }

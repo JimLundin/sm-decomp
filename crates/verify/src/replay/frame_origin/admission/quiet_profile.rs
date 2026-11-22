@@ -48,6 +48,17 @@ pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
     ])
 }
 
+pub(in crate::replay) fn current_random(text: &str) -> Result<Template, ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [profile] = file.profile.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    admit(profile, "Random", [97, 614], true)
+}
+
 /// Admit effect-free local prelude exposures at their existing owner boundaries.
 pub(super) fn acknowledgment_and_music(text: &str) -> Result<[Template; 2], ProfileFault> {
     #[derive(Deserialize)]

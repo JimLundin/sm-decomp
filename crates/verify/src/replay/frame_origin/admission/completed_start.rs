@@ -467,6 +467,7 @@ fn open(sources: &Sources, prefetch: Origins) -> Result<(Opening, Profiles, Vec<
             acknowledgment,
             music,
             steady: None,
+            random: None,
         },
         wram,
     ))

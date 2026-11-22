@@ -283,6 +283,12 @@ pub enum ObservationId {
     /// Selected Haze and `LayerBlend` state at each committed prelude boundary.
     #[serde(rename = "frame.steady")]
     FrameSteady,
+    /// Actual committed seed from the bounded Random owner.
+    #[serde(rename = "frame.random.seed")]
+    FrameRandomSeed,
+    /// Ordered requests and samples from the bounded Random owner.
+    #[serde(rename = "frame.random.device")]
+    FrameRandomDevice,
     /// The committed shared random number.
     #[serde(rename = "frame.random")]
     FrameRandom,
@@ -765,13 +771,14 @@ fn rule_exists(rule: &str) -> bool {
 }
 
 const fn observation_owner(field: ObservationId) -> Responsibility {
+    use ObservationId::{FrameRandom, FrameRandomDevice, FrameRandomSeed};
     match field {
         ObservationId::SenderQueue
         | ObservationId::SenderProgress
         | ObservationId::TouchdownOffer => Responsibility::AudioSender,
         ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
         ObservationId::FrameSteady => Responsibility::WorldHaze,
-        ObservationId::FrameRandom => Responsibility::GameRandom,
+        FrameRandom | FrameRandomSeed | FrameRandomDevice => Responsibility::GameRandom,
         ObservationId::PlayTimeHours
         | ObservationId::PlayTimeMinutes
         | ObservationId::PlayTimeSeconds
@@ -1316,6 +1323,39 @@ impl Case {
     }
 }
 
+fn steady_scope_valid(case: &Case, owners: &BTreeSet<Responsibility>) -> bool {
+    if super::frame_random_prelude::Arm::for_case(case).is_some() {
+        return case.kind == CaseKind::Scoped
+            && case.content == ContentProvider::PlayerRomImport
+            && *owners
+                == BTreeSet::from([
+                    Responsibility::Frame,
+                    Responsibility::WorldHaze,
+                    Responsibility::GameRandom,
+                ])
+            && case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries
+            && case.expectations.fields
+                == [
+                    ObservationId::FrameTime,
+                    ObservationId::FrameSteady,
+                    ObservationId::FrameRandomSeed,
+                ]
+            && case.expectations.outputs == [ObservationId::FrameRandomDevice]
+            && case.expectations.output_cut == Some(4)
+            && case.end.cut_inclusive == 5
+            && case.checkpoints;
+    }
+    case.kind == CaseKind::Scoped
+        && case.content == ContentProvider::PlayerRomImport
+        && *owners == BTreeSet::from([Responsibility::Frame, Responsibility::WorldHaze])
+        && case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries
+        && case.expectations.fields == [ObservationId::FrameTime, ObservationId::FrameSteady]
+        && case.expectations.outputs.is_empty()
+        && matches!(case.start, Start::NativeSeed { .. })
+        && case.end.cut_inclusive == 4
+        && case.checkpoints
+}
+
 fn scope_valid(case: &Case) -> bool {
     let owners: BTreeSet<_> = case.responsibilities.iter().copied().collect();
     if owners.len() != case.responsibilities.len()
@@ -1339,15 +1379,7 @@ fn scope_valid(case: &Case) -> bool {
         return false;
     }
     if case.inputs == InputProvider::NativeSteadyPrelude {
-        return case.kind == CaseKind::Scoped
-            && case.content == ContentProvider::PlayerRomImport
-            && owners == BTreeSet::from([Responsibility::Frame, Responsibility::WorldHaze])
-            && case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries
-            && case.expectations.fields == [ObservationId::FrameTime, ObservationId::FrameSteady]
-            && case.expectations.outputs.is_empty()
-            && matches!(case.start, Start::NativeSeed { .. })
-            && case.end.cut_inclusive == 4
-            && case.checkpoints;
+        return steady_scope_valid(case, &owners);
     }
     if case.inputs == InputProvider::NativeFrameOwners {
         let mut frame_owners = owners.clone();

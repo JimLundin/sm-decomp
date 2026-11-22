@@ -667,7 +667,7 @@ pub(super) const HAZE: WorkId = WorkId(3);
 pub(super) const HAZE_TAIL: WorkId = WorkId(4);
 const DRAWING: WorkId = WorkId(100);
 pub(super) const LAYERS: WorkId = WorkId(5);
-const RANDOM: WorkId = WorkId(6);
+pub(super) const RANDOM: WorkId = WorkId(6);
 
 impl State {
     fn motion_reset_profile(
@@ -1908,42 +1908,16 @@ impl State {
                 content.layer_defaults,
                 &content.layer_blend,
             )?,
-            Caller::Random { .. } => self.start_random(content)?,
+            Caller::Random { .. } => super::random::begin(
+                &mut self.caller,
+                &mut self.timing,
+                self.random.as_ref().ok_or_else(super::random::missing)?,
+                &content.random,
+                content.random_requests,
+            )?,
         }
         Ok(())
     }
-    fn start_random(&mut self, content: &Content) -> Result<(), ProductionFault> {
-        let Caller::Random {
-            prelude,
-            publication,
-            music,
-            haze,
-            layers,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
-        let current = self.random.as_ref().ok_or(fault)?.current();
-        let profile = content
-            .random_requests
-            .bind(current, &content.random)
-            .map_err(|_| fault)?;
-        self.timing
-            .begin(RANDOM, profile)
-            .map_err(ProductionFault::FrameHardware)?;
-        self.caller = Caller::RandomRunning {
-            prelude: prelude.clone(),
-            publication: *publication,
-            music: music.clone(),
-            haze: haze.clone(),
-            layers: layers.clone(),
-            requested: current,
-            samples: super::random::Samples::default(),
-        };
-        Ok(())
-    }
-
     fn start_player_motion(
         &mut self,
         content: &Content,
@@ -2143,22 +2117,8 @@ impl State {
         if active == Some(super::late_movement::AIM_RIGHT) {
             self.sample_late_aim(events)?;
         }
-        if active == Some(RANDOM)
-            && let Caller::RandomRunning { samples, .. } = &mut self.caller
-        {
-            for event in events {
-                if let timing::EventKind::Sample(
-                    device @ (data::timing::Sample::ProductLow | data::timing::Sample::ProductHigh),
-                    timing::SampleValue::Byte(value),
-                ) = &event.kind
-                {
-                    samples.accept(*device, *value).map_err(|_| {
-                        ProductionFault::Unsupported(Unsupported::Frame(
-                            Dependency::RandomPreparation,
-                        ))
-                    })?;
-                }
-            }
+        if active == Some(RANDOM) {
+            super::random::accept_events(&mut self.caller, events)?;
         }
         if active == Some(PlayerEntryStage::Inside.identity()) {
             let pending = self
@@ -2281,7 +2241,11 @@ impl State {
             timing::Progress::Completed(LAYERS) => {
                 super::haze_caller::complete_layers(&mut self.caller)?;
             }
-            timing::Progress::Completed(RANDOM) => self.complete_random(content.random_requests)?,
+            timing::Progress::Completed(RANDOM) => super::random::finish(
+                &mut self.caller,
+                self.random.as_mut().ok_or_else(super::random::missing)?,
+                content.random_requests,
+            )?,
             timing::Progress::Completed(identity)
                 if self.finish_player_work(identity, content, rules)? => {}
             timing::Progress::Completed(identity @ WorkId(1200..=1201)) => {
@@ -2518,50 +2482,6 @@ impl State {
 
     fn complete_music(&mut self) -> Result<(), ProductionFault> {
         super::opening_prelude::complete_music(&mut self.caller, &mut self.music)
-    }
-
-    fn complete_random(
-        &mut self,
-        requests: super::random::SeedRequests,
-    ) -> Result<(), ProductionFault> {
-        let Caller::RandomRunning {
-            prelude,
-            publication,
-            music,
-            haze,
-            layers,
-            requested,
-            samples,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
-        let sequence = self.random.as_mut().ok_or(fault)?;
-        if sequence.current() != *requested {
-            return Err(fault);
-        }
-        requests
-            .validate_samples(*requested, *samples)
-            .map_err(|_| fault)?;
-        sequence.draw();
-        self.caller = Caller::Preparation {
-            prepared: Preparation {
-                prelude: prelude.clone(),
-                publication: *publication,
-                music: music.clone(),
-                haze: haze.clone(),
-                layers: layers.clone(),
-                builder: None,
-                gameplay: None,
-                actors: None,
-                debug: None,
-                palette: None,
-            },
-            stage: PreparationStage::Builder,
-            charging: false,
-        };
-        Ok(())
     }
 
     fn enter_drawing_interrupt(&mut self, content: &Content) -> Result<(), ProductionFault> {

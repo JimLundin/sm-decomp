@@ -37,6 +37,7 @@ mod frame_palette;
 pub(crate) mod frame_player_inputs;
 pub(crate) mod frame_player_preparation_receipts;
 pub(crate) mod frame_post_down_owner;
+mod frame_random_prelude;
 pub(crate) mod frame_sender_contract;
 pub(crate) mod frame_sender_inputs;
 mod frame_steady;

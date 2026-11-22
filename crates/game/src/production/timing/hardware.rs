@@ -142,7 +142,15 @@ pub struct Math {
     pub remaining: u8,
 }
 impl Math {
-    pub(super) const fn edge(&mut self) {
+    pub(in crate::production) fn start_multiply(&mut self, multiplier: u8) {
+        self.multiplier = multiplier;
+        self.product = 0;
+        self.remaining = 8;
+        self.operand = (u16::from(multiplier).wrapping_shl(8)) | u16::from(self.multiplicand);
+        self.shift = u32::from(multiplier);
+    }
+
+    pub(in crate::production) const fn edge(&mut self) {
         if self.remaining == 0 {
             return;
         }

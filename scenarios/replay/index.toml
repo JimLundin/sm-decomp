@@ -587,6 +587,54 @@ borrowed = [{ dependency = "pre-Haze inputs", provider = "native steady control"
 checkpoints = true
 
 [[case]]
+id = "frame/random-through-completion"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-seed", path = "shot-random-v1/random-input.toml", sha256 = "f7af85853a634a71af3a9c4cb0bc5919f9a61ed64e95fc3b709809ecc34da120" }
+end = { cut_inclusive = 5 }
+rules = ["world-haze/HazeHolds", "game-random/AdvanceRandom"]
+profile = "reference"
+responsibilities = ["frame", "world-haze", "game-random"]
+content = "player-rom-import"
+inputs = "native-steady-prelude"
+expectations = { provider = "native-steady-boundaries", fields = ["frame.time", "frame.steady", "frame.random.seed"], outputs = ["frame.random.device"], output_cut = 4 }
+limits = ["passive carried Random seed", "stage-local index 4 compares seven actual Random transfers and the committed seed at resume+4848", "stage-local index 5 holds current Sprite Builder preparation"]
+borrowed = [{ dependency = "publication and quiet Music", provider = "true-resume", fields = ["current committed publication", "current quiet Music service"], phase = "original carried Frame origin", claim = "Steady and Random use actual selected owners" }]
+checkpoints = true
+
+[[case]]
+id = "frame/random-seed-carry"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-seed", path = "shot-random-v1/random-input.toml", sha256 = "f7af85853a634a71af3a9c4cb0bc5919f9a61ed64e95fc3b709809ecc34da120" }
+end = { cut_inclusive = 5 }
+rules = ["world-haze/HazeHolds", "game-random/AdvanceRandom"]
+profile = "reference"
+responsibilities = ["frame", "world-haze", "game-random"]
+content = "player-rom-import"
+inputs = "native-steady-prelude"
+expectations = { provider = "native-steady-boundaries", fields = ["frame.time", "frame.steady", "frame.random.seed"], outputs = ["frame.random.device"], output_cut = 4 }
+limits = ["independently intervened carry seed at Random selection", "stage-local index 4 compares seven actual Random transfers and the committed seed at resume+4848", "stage-local index 5 holds current Sprite Builder preparation"]
+borrowed = [{ dependency = "publication and quiet Music", provider = "true-resume", fields = ["current committed publication", "current quiet Music service"], phase = "original carried Frame origin", claim = "Steady and Random use actual selected owners" }]
+checkpoints = true
+
+[[case]]
+id = "frame/random-low-seed"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-seed", path = "shot-random-v1/random-input.toml", sha256 = "f7af85853a634a71af3a9c4cb0bc5919f9a61ed64e95fc3b709809ecc34da120" }
+end = { cut_inclusive = 5 }
+rules = ["world-haze/HazeHolds", "game-random/AdvanceRandom"]
+profile = "reference"
+responsibilities = ["frame", "world-haze", "game-random"]
+content = "player-rom-import"
+inputs = "native-steady-prelude"
+expectations = { provider = "native-steady-boundaries", fields = ["frame.time", "frame.steady", "frame.random.seed"], outputs = ["frame.random.device"], output_cut = 4 }
+limits = ["independently intervened low byte at Random selection", "stage-local index 4 compares seven actual Random transfers and the committed seed at resume+4848", "stage-local index 5 holds current Sprite Builder preparation"]
+borrowed = [{ dependency = "publication and quiet Music", provider = "true-resume", fields = ["current committed publication", "current quiet Music service"], phase = "original carried Frame origin", claim = "Steady and Random use actual selected owners" }]
+checkpoints = true
+
+[[case]]
 id = "frame/ordinary-requested-nmi-return"
 kind = "integrated"
 row = "chain-any-0003-DFD7"

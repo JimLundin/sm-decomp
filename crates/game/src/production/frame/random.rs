@@ -1,14 +1,277 @@
 //! Physical Random requests and retained live multiplication samples.
 
+use super::caller::{Caller, Dependency, Preparation, PreparationStage, RANDOM};
+use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::{
     Canonical,
     model::{Model, Pinned},
 };
 use data::timing::{
-    DeviceEffect, DeviceWrite, MULTIPLICAND_PORT, MULTIPLIER_PORT, PublicationPort, Sample,
-    Template, TemplateEffect,
+    DeviceEffect, DeviceWrite, ExposureKind, MULTIPLICAND_PORT, MULTIPLIER_PORT, Publication,
+    PublicationPort, Run, Sample, Template, TemplateEffect,
 };
 use game_random::{RandomNumber, RandomSequence};
+
+pub(super) const fn missing() -> ProductionFault {
+    ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation))
+}
+
+/// Current Random seed and checked physical work from its admitted producer.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Qualification {
+    /// Independently admitted current seed.
+    pub seed: RandomSeed,
+    /// Imported immutable request operand.
+    pub requests: SeedRequests,
+    /// Checked physical request, sample and return work.
+    pub template: Template,
+}
+
+impl Qualification {
+    pub(super) fn validate(
+        &self,
+        sequence: &Sequence,
+        caller: &Caller,
+        timing: &timing::State,
+    ) -> Result<(), ProductionFault> {
+        let profile = self
+            .requests
+            .bind(self.seed, &self.template)
+            .map_err(|_| missing())?;
+        let mut current = Sequence::new(self.seed);
+        if at_builder(caller) {
+            current.draw();
+        }
+        if *sequence != current {
+            return Err(missing());
+        }
+        if let Caller::RandomRunning {
+            requested, samples, ..
+        } = caller
+        {
+            let [work] = timing.work.as_slice() else {
+                return Err(missing());
+            };
+            if *requested != self.seed
+                || work.kind != timing::WorkKind::Semantic(RANDOM)
+                || work.profile != profile
+            {
+                return Err(missing());
+            }
+            let retained = RetainedArithmetic::at_cursor(work, timing.hardware.math.dividend)?;
+            retained.validate(&timing.hardware.math, *samples)?;
+        } else if at_builder(caller) {
+            let mut retained = RetainedArithmetic::new(timing.hardware.math.dividend);
+            for run in &profile.runs {
+                retained.complete_run(run, run.count)?;
+            }
+            retained.validate(&timing.hardware.math, retained.samples)?;
+        }
+        Ok(())
+    }
+
+    pub(super) fn advance(
+        &self,
+        sequence: &mut Sequence,
+        caller: &mut Caller,
+        timing: &mut timing::State,
+        budget: data::timing::MasterTicks,
+    ) -> Result<(timing::Progress, Vec<timing::Event>), ProductionFault> {
+        if at_builder(caller) {
+            return Err(ProductionFault::Unsupported(Unsupported::Frame(
+                Dependency::BuilderPreparation,
+            )));
+        }
+        if matches!(caller, Caller::Random { .. }) {
+            begin(caller, timing, sequence, &self.template, self.requests)?;
+        }
+        let (progress, events) = timing
+            .step(budget, &[])
+            .map_err(ProductionFault::FrameHardware)?;
+        if events.iter().any(|event| {
+            !matches!(
+                event.kind,
+                timing::EventKind::Publication(_) | timing::EventKind::Sample(_, _)
+            )
+        }) {
+            return Err(missing());
+        }
+        accept_events(caller, &events)?;
+        if progress == timing::Progress::Completed(RANDOM) {
+            finish(caller, sequence, self.requests)?;
+        } else if progress != timing::Progress::Advanced {
+            return Err(missing());
+        }
+        Ok((progress, events))
+    }
+}
+
+pub(super) const fn at_builder(caller: &Caller) -> bool {
+    matches!(
+        caller,
+        Caller::Preparation {
+            prepared: Preparation {
+                builder: None,
+                gameplay: None,
+                actors: None,
+                debug: None,
+                palette: None,
+                ..
+            },
+            stage: PreparationStage::Builder,
+            charging: false,
+        }
+    )
+}
+
+// Derive only the arithmetic this owner has already caused. The origin's unrelated
+// dividend and pre-request multiplication are outside the selected Random work.
+struct RetainedArithmetic {
+    math: timing::Math,
+    latched: bool,
+    requested: bool,
+    samples: Samples,
+}
+
+impl RetainedArithmetic {
+    fn new(dividend: u16) -> Self {
+        Self {
+            math: timing::Math {
+                dividend,
+                ..timing::Math::default()
+            },
+            latched: false,
+            requested: false,
+            samples: Samples::Empty,
+        }
+    }
+
+    fn at_cursor(work: &timing::Work, dividend: u16) -> Result<Self, ProductionFault> {
+        use timing::{Charge, Stage};
+        let index = usize::try_from(work.cursor.run).map_err(|_| missing())?;
+        let mut retained = Self::new(dividend);
+        for run in work.profile.runs.get(..index).ok_or_else(missing)? {
+            retained.complete_run(run, run.count)?;
+        }
+        if let Some(run) = work.profile.runs.get(index) {
+            retained.complete_run(run, work.cursor.occurrence)?;
+            let stage = &work.cursor.stage;
+            let write = run.exposure.kind == ExposureKind::Write;
+            if write && !matches!(stage, Stage::Poll | Stage::Before) {
+                retained.edges(1);
+            }
+            let spent = if matches!(run.exposure.effect, DeviceEffect::Sample(_)) {
+                matches!(
+                    stage,
+                    Stage::Charge(Charge::AfterSample { .. })
+                        | Stage::Publish
+                        | Stage::After
+                        | Stage::Finish
+                )
+            } else {
+                matches!(stage, Stage::After | Stage::Finish)
+            };
+            if spent {
+                retained.apply(&run.exposure.effect)?;
+            }
+            if !write && matches!(stage, Stage::Finish) {
+                retained.edges(1);
+            }
+        }
+        Ok(retained)
+    }
+
+    fn complete_run(&mut self, run: &Run, count: u32) -> Result<(), ProductionFault> {
+        if count == 0 {
+            return Ok(());
+        }
+        let write = run.exposure.kind == ExposureKind::Write;
+        if write {
+            self.edges(count);
+        }
+        self.apply(&run.exposure.effect)?;
+        if !write {
+            self.edges(count);
+        }
+        Ok(())
+    }
+
+    fn edges(&mut self, count: u32) {
+        for _ in 0..count.min(u32::from(self.math.remaining)) {
+            self.math.edge();
+        }
+    }
+
+    fn apply(&mut self, effect: &DeviceEffect) -> Result<(), ProductionFault> {
+        match effect {
+            DeviceEffect::None => {}
+            DeviceEffect::Publish(write) => match write.effect {
+                Publication::Multiplicand(value) => {
+                    self.math.multiplicand = value;
+                    self.latched = true;
+                }
+                Publication::Multiplier(value) if self.latched && self.math.remaining == 0 => {
+                    self.math.start_multiply(value);
+                    self.requested = true;
+                }
+                Publication::Multiplier(_)
+                | Publication::DividendLow(_)
+                | Publication::InterruptEnable(_)
+                | Publication::HorizontalLow(_)
+                | Publication::HorizontalHigh(_)
+                | Publication::VerticalLow(_)
+                | Publication::VerticalHigh(_)
+                | Publication::ChannelUpdate(_, _)
+                | Publication::BulkEnable(_)
+                | Publication::LineEnable(_)
+                | Publication::Downstream => {
+                    return Err(missing());
+                }
+            },
+            DeviceEffect::Sample(sample) => {
+                if !self.requested || self.math.remaining != 0 {
+                    return Err(missing());
+                }
+                let [low, high] = self.math.product.to_le_bytes();
+                let value = if *sample == Sample::ProductLow {
+                    low
+                } else {
+                    high
+                };
+                self.samples.accept(*sample, value).map_err(|_| missing())?;
+            }
+        }
+        Ok(())
+    }
+
+    fn validate(&self, actual: &timing::Math, samples: Samples) -> Result<(), ProductionFault> {
+        if self.samples != samples
+            || self.latched && self.math.multiplicand != actual.multiplicand
+            || self.requested && self.math != *actual
+        {
+            return Err(missing());
+        }
+        Ok(())
+    }
+}
+
+pub(super) fn accept_events(
+    caller: &mut Caller,
+    events: &[timing::Event],
+) -> Result<(), ProductionFault> {
+    if let Caller::RandomRunning { samples, .. } = caller {
+        for event in events {
+            if let timing::EventKind::Sample(
+                device @ (Sample::ProductLow | Sample::ProductHigh),
+                timing::SampleValue::Byte(value),
+            ) = &event.kind
+            {
+                samples.accept(*device, *value).map_err(|_| missing())?;
+            }
+        }
+    }
+    Ok(())
+}
 
 pub(super) struct RandomPin;
 
@@ -243,6 +506,85 @@ impl Samples {
             Self::Empty | Self::FirstLow(_) | Self::First(_) => Err(Fault::Samples),
         }
     }
+}
+
+pub(super) fn begin(
+    caller: &mut Caller,
+    timing: &mut timing::State,
+    sequence: &Sequence,
+    template: &Template,
+    requests: SeedRequests,
+) -> Result<(), ProductionFault> {
+    let Caller::Random {
+        prelude,
+        publication,
+        music,
+        haze,
+        layers,
+    } = &*caller
+    else {
+        return Err(ProductionFault::WrongScope);
+    };
+    let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
+    let current = sequence.current();
+    let profile = requests.bind(current, template).map_err(|_| fault)?;
+    timing
+        .begin(RANDOM, profile)
+        .map_err(ProductionFault::FrameHardware)?;
+    *caller = Caller::RandomRunning {
+        prelude: prelude.clone(),
+        publication: *publication,
+        music: music.clone(),
+        haze: haze.clone(),
+        layers: layers.clone(),
+        requested: current,
+        samples: Samples::default(),
+    };
+    Ok(())
+}
+
+pub(super) fn finish(
+    caller: &mut Caller,
+    sequence: &mut Sequence,
+    requests: SeedRequests,
+) -> Result<(), ProductionFault> {
+    let Caller::RandomRunning {
+        prelude,
+        publication,
+        music,
+        haze,
+        layers,
+        requested,
+        samples,
+    } = &*caller
+    else {
+        return Err(ProductionFault::WrongScope);
+    };
+    let fault = ProductionFault::Unsupported(Unsupported::Frame(Dependency::RandomPreparation));
+    if sequence.current() != *requested {
+        return Err(fault);
+    }
+    requests
+        .validate_samples(*requested, *samples)
+        .map_err(|_| fault)?;
+    sequence.draw();
+    *caller = Caller::Preparation {
+        prepared: Preparation {
+            prelude: prelude.clone(),
+            publication: *publication,
+            music: music.clone(),
+            haze: haze.clone(),
+            layers: layers.clone(),
+            builder: None,
+            gameplay: None,
+            actors: None,
+            debug: None,
+            palette: None,
+        },
+        stage: PreparationStage::Builder,
+        charging: false,
+    };
+    Ok(())
 }
 
 // These controls intentionally use equal seed bytes so a byte-value check cannot detect reordering.

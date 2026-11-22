@@ -406,7 +406,7 @@ const DOMAINS: &[Domain] = &[
         name: "game-random",
         bridge: None,
         adapters: &["production/frame/random.rs"],
-        providers: &[],
+        providers: &["frame_random_prelude"],
         areas: &[("sequence", &["lib.rs"])],
         apart: &[],
     },
