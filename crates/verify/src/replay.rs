@@ -56,6 +56,7 @@ mod native_search;
 mod opportunity;
 mod passage_audio;
 mod pending;
+pub mod played;
 mod progress;
 mod readers;
 mod recorded;

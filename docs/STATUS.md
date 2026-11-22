@@ -20,6 +20,26 @@ byte matching. Scoped and integrated witnesses are useful progress but do not su
 whole-movie execution. Required missing boot, clock, controller, actor or passage owners remain
 explicit unsupported boundaries. Borrowed facts never count as modeled producers.
 
+## Frames played alone
+
+The rung measure is the number of cuts a room plays alone from its seed.
+[`verify::replay::played`](../crates/verify/src/replay/played.rs) admits the carried Movement,
+Appearance and Camera owner once from the seed record. Each later cut's only new input is the
+movie's pad from the preceding vblank. The run compares those owners with the record at every
+requested NMI return and stops at the first difference, the first unsupported family or the
+first lag cut. Room facts with no selected producer yet are read once from the seed and held;
+`SEED_HELD` names them, and each is a missing owner. The comparison is at frame cuts; it does
+not compare intra-frame bus timing.
+
+```sh
+SM_CACHE=... SM_ROM=... SM_LOCK=scenarios/locks/lsnes.toml \
+  cargo test --profile verify -p verify --lib \
+  replay::played::tests::m0_room_three_played_alone -- --ignored --nocapture
+```
+
+It prints one `PLAYED_ALONE` line per start: the M0 row `chain-any-0003-DFD7` from its seed
+(cut 0) and from cut 6. It is a diagnostic, not yet an indexed obligation.
+
 ## The models' gain over the null model
 
 A witness must exercise a rule, not merely compare unchanged fields. Catalogue entries name

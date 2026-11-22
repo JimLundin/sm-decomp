@@ -208,6 +208,45 @@ fn step(
     })
 }
 
+/// Room facts read once from one image and held: the played run's seed-held inputs.
+/// Controls and parity are the caller's per cut; they start released and even.
+pub(super) fn seed_inputs(
+    seed: &[u8],
+    items: types::Set<types::Item>,
+    geometry: game::production::world::MovementWorld,
+) -> Result<connected::inputs::Inputs, Outcome> {
+    dry_and_bound(seed, seed, seed)?;
+    let mut guards = types::Set::default();
+    guards[samus_appearance::ContactSuppressor::Cinematic] = word(seed, 0x1f51)? != 0;
+    guards[samus_appearance::ContactSuppressor::Boss] = word(seed, 0x179c)? != 0;
+    guards[samus_appearance::ContactSuppressor::SpecialColours] = word(seed, 0x0a68)? != 0;
+    let queue = |at: usize| {
+        seed.get(at)
+            .copied()
+            .ok_or_else(|| data_failure(None, "seed queue source"))
+    };
+    let waiting = queue(0x0648)?.wrapping_sub(queue(0x0645)?) & 0x0f;
+    Ok(connected::inputs::Inputs {
+        held: types::Buttons::default(),
+        pressed: types::Buttons::default(),
+        items,
+        parity: types::Parity::Even,
+        energy: word(seed, 0x09c2)?,
+        liquid: samus_appearance::Liquid::NONE,
+        sounds_waiting: samus_appearance::SoundsWaiting::new(waiting)
+            .ok_or_else(|| data_failure(None, "seed queue occupancy"))?,
+        contact: guards,
+        cinematic: if word(seed, 0x1f51)? == 0 {
+            samus_appearance::CinematicActivity::Inactive
+        } else {
+            samus_appearance::CinematicActivity::Active
+        },
+        geometry,
+        camera: camera_input(seed)?,
+        activity: Activity::Inactive,
+    })
+}
+
 impl Inputs {
     pub fn load(root: &Path, content: &Content) -> Result<Self, Outcome> {
         let raw = std::fs::read(root.join("manifest.toml"))
