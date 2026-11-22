@@ -85,11 +85,37 @@ def targets(cargo: str, crates: list[str], suite: str | None = None) -> list[tup
 
 
 def build_command(cargo: str, crate: str, kind: str, name: str, dll: Path) -> list[str]:
-    build = [cargo, "rustc", "-q", "-p", crate, "--profile", "test", kind]
+    build = [cargo, "rustc", "-q", "--message-format=json-render-diagnostics"]
+    build += ["-p", crate, "--profile", "test", kind]
     build += [name] if name else []
     build += ["--"]
     return build + ["-C", "link-arg=-shared", "-C", "link-arg=-o", "-C", f"link-arg={dll.as_posix()}",
                     "-C", f"link-arg={dll.with_suffix('.def').as_posix()}"]
+
+
+def link(build: list[str], dll: Path, retry: bool = True) -> int:
+    """Builds the DLL; an unchanged target is not relinked on the next run.
+
+    The `-o` link argument sends the linker's output to the DLL, so cargo's own output path
+    stays empty and cargo would rebuild the target every run. An empty file there, newer than the
+    sources, lets cargo find the target fresh. A missing DLL removes that file and relinks."""
+    result = subprocess.run(build, stdout=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        return result.returncode
+    outputs = [
+        Path(message["executable"])
+        for line in (result.stdout or "").splitlines()
+        if line.startswith("{")
+        and (message := json.loads(line)).get("reason") == "compiler-artifact"
+        and message.get("executable")
+    ]
+    if len(outputs) != 1:
+        return 0  # No single output path reported: nothing to mark, so the next run relinks.
+    if not dll.exists():
+        outputs[0].unlink(missing_ok=True)
+        return link(build, dll, retry=False) if retry else 2
+    outputs[0].touch()
+    return 0
 
 
 def main() -> int:
@@ -130,8 +156,8 @@ def main() -> int:
             infrastructure.append(f"{label} (export preparation)")
             continue
         try:
-            build_status = subprocess.run(build).returncode
-        except OSError:
+            build_status = link(build, dll)
+        except (OSError, ValueError):
             infrastructure.append(f"{label} (build launch)")
             continue
         if build_status != 0:

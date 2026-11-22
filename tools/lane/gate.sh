@@ -43,7 +43,9 @@ if ! "$R/cargo" clippy --locked --workspace --all-targets --no-deps -- -D warnin
   grep -E '^(error|warning)|-->' "$O/check.log" | head -10
 fi
 # The clean crates under the clean room's ceilings (G5): tools/cleanroom/clippy.toml, the export's.
-if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/cargo" clippy --locked -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze --all-targets --no-deps -- -D warnings >"$O/check.log" 2>&1; then
+# Clippy fingerprints CLIPPY_CONF_DIR, so this pass keeps its own target directory; sharing one
+# would re-check `types` and everything that depends on it in both passes on every run.
+if ! CLIPPY_CONF_DIR="$(git rev-parse --show-toplevel)/tools/cleanroom" "$R/cargo" clippy --locked   --target-dir "${CARGO_TARGET_DIR:-target}/clean-clippy" -p types -p samus_movement -p world_blocks -p world_camera -p interface_hud -p run_progress -p samus_appearance -p boss_ceres_ridley -p world_doors -p weapons_projectiles -p enemy_interactions -p audio_transport -p game_time -p game_random -p samus_health -p world_quake -p world_haze --all-targets --no-deps -- -D warnings >"$O/check.log" 2>&1; then
   fail "CLEAN CLIPPY FAIL"
   grep -E '^(error|warning)|-->' "$O/check.log" | head -10
 fi

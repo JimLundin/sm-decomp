@@ -31,7 +31,9 @@ esac
 CHANNEL=$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)
 R="${SM_RUST_BIN:-$USERPROFILE/.rustup/toolchains/$CHANNEL-x86_64-pc-windows-gnu/bin}"
 PY="${SM_PY:-$LOCALAPPDATA/sm-decomp-tools/python-3.13.7/python.exe}"
-OUT="${SM_TEST_DLL_DIR:-$TEMP/sm-test-dll/$(basename "$PWD")}"
+# Keyed by the whole worktree path: lanes whose folders share a name must not share DLLs, since
+# an unchanged target is not relinked (test_dll.py).
+OUT="${SM_TEST_DLL_DIR:-$TEMP/sm-test-dll/$(basename "$PWD")-$(printf %s "$PWD" | cksum | cut -d' ' -f1)}"
 selected=()
 if [ "${#suite[@]}" -gt 0 ]; then selected=(--suite "$selector"); fi
 exec "$PY" -I tools/lane/test_dll.py "$R/cargo.exe" "$OUT" "${selected[@]}" "$@"
