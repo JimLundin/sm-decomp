@@ -65,7 +65,13 @@ under the commit rules above.
 - The root alone uploads to ci-data and posts to issues.
 - Python on Windows writes CRLF unless you pass `newline="\n"`; some tools write Latin-1. Check
   new text files with `file`.
-- `gh` can hang: wrap it in `timeout 600`.
+- `gh` can hang: wrap a short `gh` query in `timeout 120`.
+- Don't block on long work. Run builds, `gate.sh`, replays and `gh run watch` in the background
+  (the shell tool's background mode): the harness notifies you when the command exits. For "wait
+  until X", run one background `until <check>; do sleep 30; done` covering success and failure
+  (and a log line, a finished run or an exited PID). Never `sleep` in the foreground or poll in a
+  foreground loop. A foreground command at the 10-minute cap is a sign the wait belongs in the
+  background.
 - Other lanes fetch in the shared clone, so branches move while you work. Compare explicit hashes.
 - ORACLE §8 lists the oracle's pitfalls (lsnes, Mesen, DLL runners).
 
