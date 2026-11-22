@@ -44,7 +44,7 @@ pub enum Fault {
     UnsupportedDevice,
     /// Line service interrupts bulk transfer outside the admitted premise.
     NestedTransfer,
-    /// Multiplication already active or its result is unfinished.
+    /// Overlapping arithmetic starts or an unfinished multiplication sample.
     MathBusy,
     /// No appropriate completed interrupt boundary.
     InterruptBoundary,
@@ -806,7 +806,7 @@ impl Hardware {
             || beam.subtick > 1
             || beam.residue > 7
             || !(12..=19).contains(&beam.thresholds.initialize_at)
-            || self.math.remaining > 8
+            || !self.math.valid_progress()
             || self.interrupts.horizontal_target > 511
             || self.interrupts.vertical_target > 511
             || self.controller.serial > 16

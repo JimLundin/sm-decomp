@@ -64,13 +64,16 @@ fn run(
     }
 }
 fn internal(count: u32) -> Profile {
-    profile(vec![run(
+    profile(vec![internal_run(count)])
+}
+fn internal_run(count: u32) -> Run {
+    run(
         count,
         Cycle::Six,
         ExposureKind::Internal,
         false,
         DeviceEffect::None,
-    )])
+    )
 }
 fn finish(state: &mut State, budget: u64, content: &[ContentRegion]) -> Vec<Event> {
     let mut events = Vec::new();
@@ -936,4 +939,117 @@ fn review_suspended_parent_must_be_at_a_completed_exposure_boundary() {
     parent.cursor.intrinsic = MasterTicks(7);
     value = restore(&value);
     assert_eq!(value.validate(), Err(Fault::InvalidState));
+}
+
+fn division_write(port: PublicationPort, byte: u8) -> Run {
+    run(
+        1,
+        Cycle::Six,
+        ExposureKind::Write,
+        false,
+        DeviceEffect::Publish(DeviceWrite::from_cpu_port(port.0, byte).unwrap()),
+    )
+}
+
+fn division_read(sample: Sample) -> Run {
+    run(
+        1,
+        Cycle::Six,
+        ExposureKind::Read,
+        false,
+        DeviceEffect::Sample(sample),
+    )
+}
+
+#[test]
+fn division_samples_at_the_read_before_its_edge_and_resumes_once() {
+    use data::timing::{DIVIDEND_HIGH_PORT, DIVIDEND_LOW_PORT, DIVISOR_PORT};
+
+    let mut initial = state(20, 20);
+    initial.hardware.math.operand = 0xa5c0;
+    initial
+        .begin(
+            WorkId(1),
+            profile(vec![
+                division_write(DIVIDEND_LOW_PORT, 0xbc),
+                division_write(DIVIDEND_HIGH_PORT, 0x34),
+                division_write(DIVISOR_PORT, 0),
+                internal_run(15),
+                division_read(Sample::QuotientHigh),
+                division_read(Sample::QuotientHigh),
+                division_read(Sample::ProductLow),
+                division_read(Sample::ProductHigh),
+            ]),
+        )
+        .unwrap();
+    let mut direct = initial.clone();
+    let expected = finish(&mut direct, 100, &[]);
+    let samples: Vec<_> = expected
+        .iter()
+        .filter_map(|event| {
+            if let EventKind::Sample(sample, SampleValue::Byte(byte)) = event.kind {
+                Some((event.at, sample, byte))
+            } else {
+                None
+            }
+        })
+        .collect();
+    assert_eq!(
+        samples,
+        [
+            (MasterTicks(110), Sample::QuotientHigh, 0x7f),
+            (MasterTicks(116), Sample::QuotientHigh, 0xff),
+            (MasterTicks(122), Sample::ProductLow, 0xbc),
+            (MasterTicks(128), Sample::ProductHigh, 0x34),
+        ]
+    );
+    let mut split = initial;
+    let mut events = Vec::new();
+    while split.hardware.now < MasterTicks(61) {
+        events.extend(split.step(MasterTicks(1), &[]).unwrap().1);
+    }
+    assert_ne!(split.hardware.charge_debt, 0);
+    assert_eq!(split.hardware.math.division_edges_remaining(), 9);
+    assert_eq!(split.hardware.math.operand, 0xe07f);
+    assert_eq!(split.hardware.math.product, 0x34bc);
+    let mut restored = restore(&split);
+    restored.validate().unwrap();
+    events.extend(finish(&mut restored, 1, &[]));
+    assert_eq!(events, expected);
+    assert_eq!(restored, direct);
+    assert_eq!(restored.hardware.math.division_edges_remaining(), 0);
+}
+
+#[test]
+fn division_uses_live_operands_and_shared_result_registers() {
+    use data::timing::{DIVIDEND_HIGH_PORT, DIVIDEND_LOW_PORT, DIVISOR_PORT};
+
+    let mut timing = state(20, 20);
+    for (low, quotient, remainder) in [(0xfe, 339_u16, 107), (0x00, 338_u16, 46)] {
+        let mut writes = vec![division_write(DIVIDEND_LOW_PORT, low)];
+        if low == 0xfe {
+            writes.push(division_write(DIVIDEND_HIGH_PORT, 0xff));
+        }
+        writes.extend([
+            division_write(DIVISOR_PORT, 193),
+            internal_run(16),
+            division_read(Sample::QuotientLow),
+            division_read(Sample::QuotientHigh),
+            division_read(Sample::ProductLow),
+            division_read(Sample::ProductHigh),
+        ]);
+        timing.begin(WorkId(1), profile(writes)).unwrap();
+        let samples: Vec<_> = finish(&mut timing, 100, &[])
+            .into_iter()
+            .filter_map(|event| {
+                if let EventKind::Sample(_, SampleValue::Byte(byte)) = event.kind {
+                    Some(byte)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let [quotient_low, quotient_high] = quotient.to_le_bytes();
+        assert_eq!(samples, [quotient_low, quotient_high, remainder, 0]);
+    }
 }

@@ -207,6 +207,10 @@ pub const MULTIPLICAND_PORT: PublicationPort = PublicationPort(0x4202);
 pub const MULTIPLIER_PORT: PublicationPort = PublicationPort(0x4203);
 /// Low dividend operand's device identity.
 pub const DIVIDEND_LOW_PORT: PublicationPort = PublicationPort(0x4204);
+/// High dividend operand's device identity.
+pub const DIVIDEND_HIGH_PORT: PublicationPort = PublicationPort(0x4205);
+/// Division initiation's device identity.
+pub const DIVISOR_PORT: PublicationPort = PublicationPort(0x4206);
 /// Work RAM data port shared by CPU writes and transfer destinations.
 pub const WRAM_DATA_PORT: PublicationPort = PublicationPort(0x2180);
 /// First transfer channel's destination configuration identity.
@@ -258,7 +262,7 @@ pub enum Publication {
     Multiplicand(u8),
     /// Begin multiplication when the unit is inactive.
     Multiplier(u8),
-    /// Store the inactive division unit's dividend low byte.
+    /// Store the dividend's low byte.
     DividendLow(u8),
     /// Enable controller and interrupt sources.
     InterruptEnable(InterruptEnable),
@@ -278,14 +282,18 @@ pub enum Publication {
     LineEnable([bool; 8]),
     /// Downstream publication with no timing feedback.
     Downstream,
+    /// Store the dividend's high byte.
+    DividendHigh(u8),
+    /// Begin division when the unit is inactive.
+    Divisor(u8),
 }
 
 /// Owned physical sample class.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Sample {
-    /// Completed product low byte.
+    /// Shared product or remainder low byte.
     ProductLow,
-    /// Completed product high byte.
+    /// Shared product or remainder high byte.
     ProductHigh,
     /// First controller result low byte.
     ControllerLow,
@@ -297,6 +305,10 @@ pub enum Sample {
     AcknowledgeNmi,
     /// Vertical/horizontal blanking and controller active status.
     Blanking,
+    /// Quotient register low byte.
+    QuotientLow,
+    /// Quotient register high byte.
+    QuotientHigh,
 }
 
 /// Optional effect at one physical exposure.
@@ -413,6 +425,8 @@ impl DeviceWrite {
             0x4202 => Publication::Multiplicand(value),
             0x4203 => Publication::Multiplier(value),
             0x4204 => Publication::DividendLow(value),
+            0x4205 => Publication::DividendHigh(value),
+            0x4206 => Publication::Divisor(value),
             0x4207 => Publication::HorizontalLow(value),
             0x4208 => Publication::HorizontalHigh(value & 0x1 != 0),
             0x4209 => Publication::VerticalLow(value),
@@ -490,6 +504,8 @@ impl Sample {
             0x4210 => Ok(Self::AcknowledgeNmi),
             0x4211 => Ok(Self::AcknowledgeIrq),
             0x4212 => Ok(Self::Blanking),
+            0x4214 => Ok(Self::QuotientLow),
+            0x4215 => Ok(Self::QuotientHigh),
             0x4216 => Ok(Self::ProductLow),
             0x4217 => Ok(Self::ProductHigh),
             0x4218 => Ok(Self::ControllerLow),

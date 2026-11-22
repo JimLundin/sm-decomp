@@ -20,6 +20,16 @@ impl Hardware {
                 let [_, high] = self.math.dividend.to_le_bytes();
                 self.math.dividend = u16::from_le_bytes([*value, high]);
             }
+            Publication::DividendHigh(value) => {
+                let [low, _] = self.math.dividend.to_le_bytes();
+                self.math.dividend = u16::from_le_bytes([low, *value]);
+            }
+            Publication::Divisor(value) => {
+                if self.math.remaining != 0 {
+                    return Err(Fault::MathBusy);
+                }
+                self.math.start_divide(*value);
+            }
             Publication::InterruptEnable(enable) => {
                 let previous = self.interrupts.enable.nmi;
                 self.interrupts.enable = *enable;
@@ -88,16 +98,26 @@ impl Hardware {
         events: &mut Vec<Event>,
     ) -> Result<(), Fault> {
         let value = match sample {
-            Sample::ProductLow | Sample::ProductHigh => {
-                if self.math.remaining != 0 {
+            Sample::ProductLow
+            | Sample::ProductHigh
+            | Sample::QuotientLow
+            | Sample::QuotientHigh => {
+                if self.math.multiplying() {
                     return Err(Fault::MathBusy);
                 }
-                let [low, high] = self.math.product.to_le_bytes();
-                SampleValue::Byte(if sample == Sample::ProductLow {
-                    low
+                let word = if matches!(sample, Sample::QuotientLow | Sample::QuotientHigh) {
+                    self.math.operand
                 } else {
-                    high
-                })
+                    self.math.product
+                };
+                let [low, high] = word.to_le_bytes();
+                SampleValue::Byte(
+                    if matches!(sample, Sample::ProductLow | Sample::QuotientLow) {
+                        low
+                    } else {
+                        high
+                    },
+                )
             }
             Sample::ControllerLow | Sample::ControllerHigh => {
                 let [word, _, _, _] = self.controller.words;

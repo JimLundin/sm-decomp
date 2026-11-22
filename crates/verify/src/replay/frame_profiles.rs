@@ -253,6 +253,8 @@ fn arithmetic(
 }
 fn sample(device: &str) -> Result<Sample, ProfileFault> {
     match device {
+        "QuotientLow" => Ok(Sample::QuotientLow),
+        "QuotientHigh" => Ok(Sample::QuotientHigh),
         "ProductLow" => Ok(Sample::ProductLow),
         "ProductHigh" => Ok(Sample::ProductHigh),
         "Joypad0Low" => Ok(Sample::ControllerLow),
@@ -487,6 +489,8 @@ fn publication_port(device: &str) -> Result<PublicationPort, ProfileFault> {
         "Multiplicand" => 0x4202,
         "Multiplier" => 0x4203,
         "DividendLow" => 0x4204,
+        "DividendHigh" => 0x4205,
+        "Divisor" => 0x4206,
         "IrqHorizontalLow" => 0x4207,
         "IrqHorizontalHigh" => 0x4208,
         "IrqVerticalLow" => 0x4209,

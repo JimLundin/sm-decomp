@@ -123,35 +123,71 @@ impl Interrupts {
     }
 }
 
-/// Retained multiplication unit, advanced only by arithmetic exposure edges.
+/// Shared arithmetic registers, advanced only by arithmetic exposure edges.
 #[derive(Canonical, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Math {
-    /// Stored dividend register; division initiation remains unsupported.
+    /// Stored dividend input register.
     pub dividend: u16,
     /// Stored first operand.
     pub multiplicand: u8,
     /// Stored second operand.
     pub multiplier: u8,
-    /// Visible product result.
+    /// Visible product or remainder register.
     pub product: u16,
-    /// Combined shifting operand register.
+    /// Visible quotient register, also used as a shifting operand during multiplication.
     pub operand: u16,
-    /// Addend for the next edge.
+    /// Shifted addend or divisor for the next edge.
     pub shift: u32,
-    /// Edges still required for this multiplication.
+    /// Arithmetic progress, preserving the canonical byte used by multiplication.
+    /// Use [`Self::division_edges_remaining`] for an in-flight division count.
     pub remaining: u8,
 }
 impl Math {
+    // Independent hardware seeds also store this byte. Multiplication uses counts
+    // 1 through 8, leaving the high bit free to tag a division without widening the layout.
+    const DIVISION_TAG: u8 = 0x80;
+    const MULTIPLICATION_EDGES: u8 = 8;
+    const DIVISION_EDGES: u8 = 16;
+
+    /// Edges remaining in a division, or zero when no division is active.
+    #[must_use]
+    pub const fn division_edges_remaining(self) -> u8 {
+        if self.remaining & Self::DIVISION_TAG != 0 {
+            self.remaining & !Self::DIVISION_TAG
+        } else {
+            0
+        }
+    }
+
+    pub(super) const fn valid_progress(self) -> bool {
+        self.remaining <= Self::MULTIPLICATION_EDGES
+            || matches!(self.division_edges_remaining(), 1..=Self::DIVISION_EDGES)
+    }
+
+    pub(super) const fn multiplying(self) -> bool {
+        matches!(self.remaining, 1..=Self::MULTIPLICATION_EDGES)
+    }
+
+    pub(super) fn start_divide(&mut self, divisor: u8) {
+        self.product = self.dividend;
+        self.shift = u32::from(divisor).wrapping_shl(u32::from(Self::DIVISION_EDGES));
+        self.remaining = Self::DIVISION_TAG | Self::DIVISION_EDGES;
+    }
+
     pub(in crate::production) fn start_multiply(&mut self, multiplier: u8) {
         self.multiplier = multiplier;
         self.product = 0;
-        self.remaining = 8;
+        self.remaining = Self::MULTIPLICATION_EDGES;
         self.operand = (u16::from(multiplier).wrapping_shl(8)) | u16::from(self.multiplicand);
         self.shift = u32::from(multiplier);
     }
 
-    pub(in crate::production) const fn edge(&mut self) {
+    pub(in crate::production) fn edge(&mut self) {
         if self.remaining == 0 {
+            return;
+        }
+        if self.division_edges_remaining() != 0 {
+            self.division_edge();
             return;
         }
         self.remaining = self.remaining.wrapping_sub(1);
@@ -161,6 +197,22 @@ impl Math {
         }
         self.operand >>= 1;
         self.shift = self.shift.wrapping_shl(1);
+    }
+
+    fn division_edge(&mut self) {
+        let remaining = self.division_edges_remaining().wrapping_sub(1);
+        self.remaining = if remaining == 0 {
+            0
+        } else {
+            Self::DIVISION_TAG | remaining
+        };
+        self.operand = self.operand.wrapping_shl(1);
+        self.shift >>= 1;
+        if u32::from(self.product) >= self.shift {
+            let [low, high, _, _] = self.shift.to_le_bytes();
+            self.product = self.product.wrapping_sub(u16::from_le_bytes([low, high]));
+            self.operand |= 1;
+        }
     }
 }
 

@@ -511,6 +511,8 @@ pub fn preview_idle_poll(
                 Sample::AcknowledgeNmi => {}
                 Sample::ProductLow
                 | Sample::ProductHigh
+                | Sample::QuotientLow
+                | Sample::QuotientHigh
                 | Sample::ControllerLow
                 | Sample::ControllerHigh
                 | Sample::AcknowledgeIrq => return Err(Fault::Profile),

@@ -216,6 +216,8 @@ impl RetainedArithmetic {
                 }
                 Publication::Multiplier(_)
                 | Publication::DividendLow(_)
+                | Publication::DividendHigh(_)
+                | Publication::Divisor(_)
                 | Publication::InterruptEnable(_)
                 | Publication::HorizontalLow(_)
                 | Publication::HorizontalHigh(_)

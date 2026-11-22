@@ -714,11 +714,11 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-time | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-quake | bridge | 1 | 586 | 686 | 138 | 7 | 53 | 0 | 0 | 131 |
 | world-quake | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| game-random | bridge | 1 | 2,838 | 2,740 | 295 | 3 | 240 | 263 | 40 | 506 |
+| game-random | bridge | 1 | 2,850 | 2,752 | 295 | 3 | 240 | 263 | 40 | 508 |
 | game-random | replay provider | 1 | 987 | 1,070 | 175 | 33 | 75 | 32 | 0 | 205 |
 | world-haze | bridge | 3 | 3,089 | 3,233 | 342 | 62 | 95 | 401 | 49 | 621 |
 | world-haze | replay provider | 1 | 2,773 | 2,894 | 279 | 19 | 182 | 102 | 0 | 476 |
-| total | | | 63,175 | 61,878 | 6,158 | 2,143 | 4,465 | 5,918 | 596 | 10,816 |
+| total | | | 63,187 | 61,890 | 6,158 | 2,143 | 4,465 | 5,918 | 596 | 10,818 |
 
 ## Engine services
 
@@ -726,8 +726,8 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 122 | 33,402 | 200,412 | 162,176 | 27,767 | 2,383 | 12,087 | 47,935 | 3,118 | 30,997 |
-| bridges | 19 | 4,267 | 25,602 | 25,102 | 2,836 | 525 | 1,915 | 2,581 | 264 | 4,507 |
+| production and exact services | 122 | 33,489 | 200,932 | 162,561 | 27,788 | 2,386 | 12,133 | 48,053 | 3,118 | 31,061 |
+| bridges | 19 | 4,269 | 25,614 | 25,114 | 2,836 | 525 | 1,915 | 2,581 | 264 | 4,509 |
 | rebuilt models, shared types included | 123 | 8,771 | 52,625 | 58,554 | 24,243 | 18,574 | 3,633 | 3,811 | 1,016 | 17,703 |
 
 ## Domain graph
@@ -2678,7 +2678,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/frame/rendering_stage.rs` | names it | `AppearanceRead`, `Figure`, `Receipt`, `Step`, `WorkStep` | 3,159 | 484 |
 | samus-appearance | `crates/game/src/production/frame/samus_palette.rs` | bridge | `ColourEffect`, `ColourSequences`, `GrappleActivity`, `LapsLeft`, `Liquid`, `RoomColours`, `RunColourFacts`, `RunColourWork`, `Suit` | 1,379 | 258 |
 | samus-appearance | `crates/game/src/production/frame/state.rs` | names it | `Ahead`, `AppearanceRead`, `Clip`, `Figure` | 1,516 | 301 |
-| samus-appearance | `crates/game/src/production/frame/suffix_caller.rs` | names it | `Figure`, `Step` | 7,818 | 1,192 |
+| samus-appearance | `crates/game/src/production/frame/suffix_caller.rs` | names it | `Figure`, `Step` | 7,830 | 1,194 |
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 431 | 102 |
 | samus-appearance | `crates/game/src/production/movement_work.rs` | names it | `Figure` | 923 | 172 |
 | samus-appearance | `crates/game/src/production/passage_audio.rs` | names it | `Charge`, `Opportunity`, `SoundQueue`, `SoundRequest` | 770 | 165 |
@@ -2707,7 +2707,7 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | game-time | `crates/game/src/production/frame/play_time.rs` | bridge | `Clock`, `PlayFrames`, `PlayTime`, `QualifiedOpportunity` | 698 | 142 |
 | world-quake | `crates/game/src/production/frame/drawing_owners.rs` | names it | `displacement` | 1,148 | 256 |
 | world-quake | `crates/game/src/production/frame/room_quake.rs` | bridge | `Opportunity`, `Outcome`, `State`, `step` | 586 | 131 |
-| game-random | `crates/game/src/production/frame/random.rs` | bridge | `RandomNumber`, `RandomSequence`, `advance_random` | 2,838 | 506 |
+| game-random | `crates/game/src/production/frame/random.rs` | bridge | `RandomNumber`, `RandomSequence`, `advance_random` | 2,850 | 508 |
 | world-haze | `crates/game/src/production/frame/haze.rs` | bridge | `BandIntent`, `BehaviourId`, `HazeColour`, `HazeState`, `ThirdBackground`, `ordinary_opportunity` | 815 | 215 |
 | world-haze | `crates/game/src/production/frame/haze_caller.rs` | bridge | - | 845 | 138 |
 | world-haze | `crates/game/src/production/frame/steady_prelude.rs` | bridge | `HazeState` | 1,429 | 268 |
