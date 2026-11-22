@@ -445,6 +445,7 @@ pub fn content(proof: &str, templates: &Templates) -> Result<PhysicalContent, Fa
     }
     Ok(PhysicalContent {
         contact_retry: None,
+        contact_continuation: None,
         admission: Admission::new(proof.template(templates, "Admission", 276)?)
             .map_err(|_| Fault::Profile)?,
         action: Contract::new(

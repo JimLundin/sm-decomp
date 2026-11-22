@@ -1,13 +1,20 @@
 //! Causal work and upstream inputs for the recurring opening Frame.
 
-use super::{adjacent_tail, quiet_profile};
+use super::{
+    adjacent_tail::{self, CameraAdmission},
+    quiet_profile,
+};
 use crate::lock::Sha256;
 use crate::replay::frame as replay;
+use crate::replay::index::Case;
 use crate::replay::{Sources, data_failure, frame_origin::Member, result::Outcome};
 use data::timing::{MasterTicks, Template};
 use game::production::frame;
 use serde::Deserialize;
 use std::path::Path;
+
+const CAMERA_GUARD_SHA256: &str =
+    "780fadb6997b7afaad0610e2f619fcbc0b59bfc056cce2c677b22bcc0947166a";
 
 #[derive(Deserialize)]
 struct Room {
@@ -81,20 +88,19 @@ pub(super) fn preview(native: &Path) -> Result<replay::MoviePreview, Outcome> {
     {
         return Err(fault());
     }
-    let [sampled, preview] = words.get(2..4).ok_or_else(fault)? else {
-        return Err(fault());
-    };
-    Ok(replay::MoviePreview {
-        sampled: game::production::timing::PhysicalPad(*sampled),
-        next: game::production::timing::PhysicalPad(*preview),
-    })
+    Ok(replay::MoviePreview(words))
 }
 
 pub(super) fn bind(
+    case: &Case,
     sources: &Sources,
     state: &mut frame::State,
     content: &mut frame::Content,
 ) -> Result<(), Outcome> {
+    if !case.opening_clock() {
+        return Ok(());
+    }
+    let contact_cycle = case.opening_contact_cycle();
     let fault = || data_failure(None, "qualified recurring opening work and neighbours");
     let native = &sources.native;
     bind_room(native, state, content)?;
@@ -166,13 +172,21 @@ pub(super) fn bind(
             native,
             "opening-clock-camera-guard-v1",
             "cut-2-camera-current.private.toml",
-            "780fadb6997b7afaad0610e2f619fcbc0b59bfc056cce2c677b22bcc0947166a",
+            CAMERA_GUARD_SHA256,
         )?,
         content,
-        true,
+        if contact_cycle {
+            camera_admission(native)?
+        } else {
+            CameraAdmission::Recurring
+        },
     )?;
     bind_drawing(native, content)?;
-    bind_contact(native, content)
+    bind_contact(native, content)?;
+    if contact_cycle {
+        bind_contact_clear(native, content)?;
+    }
+    Ok(())
 }
 
 fn bind_room(
@@ -210,6 +224,59 @@ fn bind_room(
     .map_err(|_| fault())?;
     content.steady_haze = Some(frame::haze::SteadyProfiles { head, finish });
     Ok(())
+}
+
+fn camera_admission(native: &Path) -> Result<CameraAdmission, Outcome> {
+    #[derive(Deserialize)]
+    struct CameraPolicy {
+        format: u16,
+        scope: String,
+        current_camera_guard_sha256: String,
+        source_overlay_sha256: String,
+        live_horizontal: [String; 5],
+        retained_guards: [String; 11],
+    }
+
+    let directory = "opening-clock-camera-live-horizontal-v1";
+    let fault = || data_failure(None, "live horizontal Camera admission");
+    let policy: CameraPolicy = toml::from_str(&member(
+        native,
+        directory,
+        "opening-camera-live-horizontal.toml",
+        "105417ed3df90a09414a140dd4f5018c0d19d94c11debba941cbb7fe66882269",
+    )?)
+    .map_err(|_| fault())?;
+    if policy.format != 1
+        || policy.scope != "OriginalOpeningThroughCut7"
+        || policy.current_camera_guard_sha256 != CAMERA_GUARD_SHA256
+        || policy.source_overlay_sha256
+            != "77d075e480527705205b0c1316b61e1c914d869b6e302d03c6606eca67c917d5"
+        || policy.live_horizontal.each_ref().map(String::as_str)
+            != [
+                "CurrentCentreX",
+                "CurrentCentreSubX",
+                "PreviousCentreX",
+                "PreviousCentreSubX",
+                "PreviousCameraSubX",
+            ]
+        || policy.retained_guards.each_ref().map(String::as_str)
+            != [
+                "Running",
+                "PreviousCameraX",
+                "CurrentCameraY",
+                "CurrentCameraYScreen",
+                "CurrentCentreY",
+                "CurrentCentreSubY",
+                "PreviousCentreY",
+                "PreviousCentreSubY",
+                "CurrentRoom",
+                "ScreenQueries",
+                "BodyAndScrollPremises",
+            ]
+    {
+        return Err(fault());
+    }
+    Ok(CameraAdmission::LiveHorizontal)
 }
 
 fn bind_drawing(native: &Path, content: &mut frame::Content) -> Result<(), Outcome> {
@@ -274,6 +341,107 @@ fn bind_drawing(native: &Path, content: &mut frame::Content) -> Result<(), Outco
         return Err(fault());
     }
     returns.recurring_finalization = Some(finalize);
+    Ok(())
+}
+
+fn bind_contact_clear(native: &Path, content: &mut frame::Content) -> Result<(), Outcome> {
+    #[derive(Deserialize)]
+    struct External {
+        format: u16,
+        group: String,
+        reply: String,
+        trigger: String,
+        lifetime: String,
+        scope: String,
+        after_trigger_master_ticks: u64,
+    }
+
+    let fault = || data_failure(None, "independent Contact clear and reached sender work");
+    let external: External = toml::from_str(&member(
+        native,
+        "opening-clock-contact-clear-v1",
+        "opening-contact-external-clear.toml",
+        "6ded52023d73800ca94f84f7e2a516d0fba0fbda55442b2344581e521ad2cf73",
+    )?)
+    .map_err(|_| fault())?;
+    if external.format != 1
+        || external.group != "Contact"
+        || external.reply != "Absent"
+        || external.trigger != "ActualAwaitClearRetryPublication"
+        || external.lifetime != "UntilAnotherExternalReplyPublication"
+        || external.scope != "OriginalOpeningThroughCut7"
+    {
+        return Err(fault());
+    }
+
+    let port = content.sender_cue.ok_or_else(fault)?.port;
+    let source = |file, pin| member(native, "opening-clock-contact-cohort-v1", file, pin);
+    let hold = quiet_profile::decode(
+        &source(
+            "contact-cleardelayhold.toml",
+            "239d15ea4bfec5afe864ca3cc06a4a74215e274ef806de684b6a7a2019b08676",
+        )?,
+        "ContactClearDelayHold",
+        [18, 116],
+    )
+    .map_err(|_| fault())?;
+    let (clear, _) = quiet_profile::contact_clear(
+        &source(
+            "contact-cleardelayclear.toml",
+            "54d42792ce7953c075b71ea01663d37cf0946448d900f4db2ca06d7b16aacce8",
+        )?,
+        "ContactClearDelayClear",
+        [34, 218],
+        false,
+        Some(port),
+    )
+    .map_err(|_| fault())?;
+    let (prefix, retry) = quiet_profile::contact_clear(
+        &source(
+            "contact-awaitclearretry.toml",
+            "e9d2bafd0483ca881880317ad7e1e3966c50c65e9fee570f34d07d46df63f55c",
+        )?,
+        "ContactAwaitClearRetry",
+        [26, 162],
+        true,
+        Some(port),
+    )
+    .map_err(|_| fault())?;
+    let (match_prefix, matched) = quiet_profile::contact_clear(
+        &source(
+            "contact-awaitclearmatchready.toml",
+            "2539ccec858eb75baadfa5d9be621eb5ec7872ed723ee70be8bd81459300087a",
+        )?,
+        "ContactAwaitClearMatchReady",
+        [40, 252],
+        true,
+        None,
+    )
+    .map_err(|_| fault())?;
+    if prefix != match_prefix {
+        return Err(fault());
+    }
+    let empty = quiet_profile::decode(
+        &source(
+            "contact-readyempty.toml",
+            "6f0c18579f179375449b935ea4be04fef15e1c09bc26a85ec1a66f19cf9932bd",
+        )?,
+        "ContactReadyEmpty",
+        [19, 122],
+    )
+    .map_err(|_| fault())?;
+    let continuation = frame::sender_contract::ContactContinuation::new(
+        [hold, clear],
+        [prefix, retry.ok_or_else(fault)?, matched.ok_or_else(fault)?],
+        &empty,
+        MasterTicks(external.after_trigger_master_ticks),
+    )
+    .map_err(|_| fault())?;
+    content
+        .sender_physical
+        .as_mut()
+        .ok_or_else(fault)?
+        .contact_continuation = Some(continuation);
     Ok(())
 }
 

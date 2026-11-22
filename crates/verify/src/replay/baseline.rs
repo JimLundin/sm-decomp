@@ -247,6 +247,21 @@ impl Baseline {
 }
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
+    if case.opening_contact_cycle() {
+        let observed_endpoints = counts.cuts.saturating_sub(2);
+        let fields = observed_endpoints
+            .checked_mul(3)
+            .and_then(|contact| contact.checked_add(counts.cuts));
+        let reads = [0, 0, 1, 2, 2, 2, 3, 4, 4];
+        let writes = [0, 1, 2, 2, 2, 3, 4, 4, 4];
+        return Some(
+            fields == Some(counts.fields)
+                && reads.get(counts.cuts) == Some(&counts.replies)
+                && writes.get(counts.cuts) == Some(&counts.publications)
+                && counts.outputs == counts.publications
+                && counts.pending_boundaries == 0,
+        );
+    }
     if case.expectations.provider == ExpectedProvider::NativeFrameCallbacks {
         use super::frame::health_hud::FIELDS_PER_CUT;
 

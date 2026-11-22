@@ -22,6 +22,7 @@ pub mod borrowed_receipts;
 mod caller;
 pub mod camera_stage;
 pub mod contact_contract;
+mod contact_sender;
 pub mod countdown_caller;
 pub mod countdown_scene;
 mod down_caller;

@@ -77,6 +77,19 @@ its independently admitted matching publication only at the actual later read af
 retry. The receiver's resident execution, power-on history and the full opening movie remain
 outside this witness.
 
+## Eight consecutive requested returns
+
+`frame/opening-eight-native-returns` carries the same admission through eight true
+post-RTI clocks. It compares all CPU audio reads and writes across the four ports in
+order, plus the Contact sender phase and both latches at the six observed endpoints.
+Each completed return restores through its remaining suffix. The frozen origin
+matches no complete return.
+
+The actual outgoing zero retry anchors the independently observed incoming clear.
+Delaying the clear until the later repeated zero first differs at return 6 on
+`frame.contact.incoming`. The CPU write and external input remain separate. Resident
+SMP execution and the remaining opening movie are outside this comparison.
+
 ## The ratchets and floors
 
 The replay baseline binds the exact index bytes to each measured result, comparison counters

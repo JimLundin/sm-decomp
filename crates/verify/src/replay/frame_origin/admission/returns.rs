@@ -183,24 +183,9 @@ pub(super) fn prepare(
         (None, vec![next_pad], None, None, None, None, None, None)
     };
     validate_adjacent_countdown_scope(case, adjacent_countdown_scene.is_some())?;
-    if case.opening_clock() {
-        expected.insert(
-            case.end.cut_inclusive,
-            super::opening_clock::expected(&sources.native)?,
-        );
-    }
-    let schedule = expected.keys().copied().collect();
-    let opening_audio = case
-        .opening_clock()
-        .then(|| frame::opening_audio::Source::new(&sources.native));
+    let (expected, schedule) = comparisons(case, sources, expected, first_cut, health_hud)?;
     Ok(Prepared {
-        expected: frame::Expected {
-            returns: expected,
-            random: random_source(case, sources)?,
-            adjacent_animation: None,
-            health_hud,
-            opening_audio,
-        },
+        expected,
         schedule,
         pads,
         pad_origin,
@@ -211,6 +196,41 @@ pub(super) fn prepare(
         adjacent_hud_map,
         adjacent_countdown_scene,
     })
+}
+
+fn comparisons(
+    case: &Case,
+    sources: &Sources,
+    mut returns: BTreeMap<u64, frame::Return>,
+    first_cut: u64,
+    health_hud: Option<frame::health_hud::Source>,
+) -> Result<(frame::Expected, Vec<u64>), Outcome> {
+    let contact_cycle = case.opening_contact_cycle();
+    let three_returns = case.opening_clock() && !contact_cycle;
+    if three_returns {
+        returns.insert(
+            case.end.cut_inclusive,
+            super::opening_clock::expected(&sources.native)?,
+        );
+    }
+    let schedule = if contact_cycle {
+        (first_cut..=case.end.cut_inclusive).collect()
+    } else {
+        returns.keys().copied().collect()
+    };
+    Ok((
+        frame::Expected {
+            returns,
+            random: random_source(case, sources)?,
+            adjacent_animation: None,
+            health_hud,
+            opening_audio: three_returns
+                .then(|| frame::opening_audio::Source::new(&sources.native)),
+            opening_contact: contact_cycle
+                .then(|| frame::opening_contact::Source::new(&sources.native)),
+        },
+        schedule,
+    ))
 }
 
 fn random_source(case: &Case, sources: &Sources) -> Result<Option<frame::random::Source>, Outcome> {
@@ -325,7 +345,8 @@ fn extend_expected_returns(
     let mut prior_cut = first_cut;
     for mut next in returns {
         if prior_cut.checked_add(1) != Some(next.cut)
-            || next.final_owners.is_some() != case.compares_final_frame_owners()
+            || next.final_owners.is_some()
+                != (case.compares_final_frame_owners() || case.opening_contact_cycle())
         {
             return Err(schedule_fault());
         }

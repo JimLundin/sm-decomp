@@ -19,7 +19,7 @@ struct Capture {
 }
 
 #[derive(Deserialize)]
-struct Recorded {
+pub(super) struct Recorded {
     cut: u64,
     order: usize,
     master_ticks: u64,
@@ -60,38 +60,46 @@ impl Source {
         if capture.format != 1
             || capture.cpu_port_reads.checked_add(capture.cpu_port_writes)
                 != Some(capture.cpu_port.len())
-            || capture
-                .cpu_port
-                .iter()
-                .enumerate()
-                .any(|(order, row)| row.order != order || row.library > 3)
-            || !capture
-                .cpu_port
-                .is_sorted_by(|left, right| left.master_ticks < right.master_ticks)
+            || !ordered(&capture.cpu_port)
         {
             return Err(fault());
         }
-        let native_cut = cut.checked_sub(1).ok_or_else(fault)?;
-        let ports: Vec<_> = capture
-            .cpu_port
-            .into_iter()
-            .filter(|row| row.cut == native_cut)
-            .map(|row| Callback {
-                at: MasterTicks(row.master_ticks),
-                access: row.kind,
-                library: row.library,
-                value: row.value,
-            })
-            .collect();
-        let replies = ports
-            .iter()
-            .filter(|event| event.access == Access::Read)
-            .count();
-        Ok((encode(canonical::to_bytes(&ports)), replies))
+        recorded(capture.cpu_port, cut).ok_or_else(fault)
     }
 }
 
+pub(super) fn ordered(records: &[Recorded]) -> bool {
+    records
+        .iter()
+        .enumerate()
+        .all(|(number, row)| row.order == number && row.library <= 3)
+        && records.is_sorted_by(|left, right| left.master_ticks < right.master_ticks)
+}
+
+pub(super) fn recorded(records: Vec<Recorded>, cut: u64) -> Option<(Observation, usize)> {
+    let native_cut = cut.checked_sub(1)?;
+    let ports: Vec<_> = records
+        .into_iter()
+        .filter(|row| row.cut == native_cut)
+        .map(|row| Callback {
+            at: MasterTicks(row.master_ticks),
+            access: row.kind,
+            library: row.library,
+            value: row.value,
+        })
+        .collect();
+    let replies = ports
+        .iter()
+        .filter(|event| event.access == Access::Read)
+        .count();
+    Some((encode(canonical::to_bytes(&ports)), replies))
+}
+
 pub(in crate::replay) fn actual(events: &[Event]) -> Observation {
+    actual_with_writes(events).0
+}
+
+pub(super) fn actual_with_writes(events: &[Event]) -> (Observation, usize) {
     let observed: Vec<_> = events
         .iter()
         .filter_map(|event| {
@@ -119,7 +127,11 @@ pub(in crate::replay) fn actual(events: &[Event]) -> Observation {
             })
         })
         .collect();
-    encode(canonical::to_bytes(&observed))
+    let writes = observed
+        .iter()
+        .filter(|event| event.access == Access::Write)
+        .count();
+    (encode(canonical::to_bytes(&observed)), writes)
 }
 
 fn encode(bytes: Vec<u8>) -> Observation {

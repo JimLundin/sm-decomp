@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Independently pinned inputs and comparisons for the three-return opening and its controls.
+# Independently pinned inputs and comparisons for the opening returns and their controls.
 set -euo pipefail
 if [ "$#" -ne 2 ]; then
   echo "usage: $0 <rom> <existing-native-fixture-dir>" >&2
@@ -48,3 +48,15 @@ bash "$fetch" "$1" "$2" opening-clock-reaim-comparison-v2 \
 bash "$fetch" "$1" "$2" opening-clock-movie-timing-expected-v1 \
   opening-clock-movie-timing-expected-v1-e7e717d1fd3fc291.tar.gz.enc \
   e7e717d1fd3fc291e4052f5c4cb3fd8ff53a4f98c7cddde3bcc84af2409d1e31 13152 2
+bash "$fetch" "$1" "$2" opening-clock-contact-clear-v1 \
+  opening-clock-contact-clear-v1-37d84b278f561611.tar.gz.enc \
+  37d84b278f561611a233feaf756353eaa1261e7ee4fb755c868903103f30f433 416 2
+bash "$fetch" "$1" "$2" opening-clock-contact-cohort-v1 \
+  opening-clock-contact-cohort-v1-c2cea3461233bbb9.tar.gz.enc \
+  c2cea3461233bbb9a99a849645b62615b95c1cc4dad52f94b27b95ea97bc2970 1072 6
+bash "$fetch" "$1" "$2" opening-clock-camera-live-horizontal-v1 \
+  opening-clock-camera-live-horizontal-v1-39a6dd51a6a7c499.tar.gz.enc \
+  39a6dd51a6a7c4997e479fbc2717bb0ce320efb9f8af6f892e0050c8cca17e53 560 2
+bash "$fetch" "$1" "$2" opening-clock-through-cut7-expected-v1 \
+  opening-clock-through-cut7-expected-v1-bb01f8262e0e3880.tar.gz.enc \
+  bb01f8262e0e38806e2a35370487ed8cc674248819c9af3ca33babf089e45e26 1408 2

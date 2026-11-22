@@ -11,6 +11,7 @@ pub(super) mod adjacent_animation;
 mod callbacks;
 pub(super) mod health_hud;
 pub(super) mod opening_audio;
+pub(super) mod opening_contact;
 pub(super) mod random;
 use crate::lock::Sha256;
 pub(super) use callbacks::{Datum, ProjectionFault, decode_callbacks, decode_endpoint, project};
@@ -26,6 +27,7 @@ pub(super) struct Expected {
     pub(super) adjacent_animation: Option<adjacent_animation::Source>,
     pub(super) health_hud: Option<health_hud::Source>,
     pub(super) opening_audio: Option<opening_audio::Source>,
+    pub(super) opening_contact: Option<opening_contact::Source>,
 }
 
 /// Outputs and terminal owners from one independently captured return.
@@ -44,6 +46,9 @@ impl Expected {
         cut: u64,
         compare_health: bool,
     ) -> Result<super::readers::ExpectedCut, Outcome> {
+        if let Some(source) = &self.opening_contact {
+            return source.read(cut);
+        }
         let mut expected = self
             .returns
             .get(&cut)
@@ -227,9 +232,16 @@ pub(super) struct Inputs {
 }
 
 /// Locked movie inputs for the reached automatic sample and its following presentation.
-pub(super) struct MoviePreview {
-    pub(super) sampled: timing::PhysicalPad,
-    pub(super) next: timing::PhysicalPad,
+pub(super) struct MoviePreview(pub(super) Vec<u16>);
+
+impl MoviePreview {
+    fn at(&self, cut: u64) -> Option<[timing::PhysicalPad; 2]> {
+        let previous = usize::try_from(cut.checked_sub(1)?).ok()?;
+        let &[sampled, next] = self.0.get(previous..previous.checked_add(2)?)? else {
+            return None;
+        };
+        Some([timing::PhysicalPad(sampled), timing::PhysicalPad(next)])
+    }
 }
 
 /// A frame stop's typed production fault and ordered events before the stop.
@@ -296,7 +308,12 @@ impl Inputs {
         production: &mut Production,
         cut: u64,
     ) -> Result<(), Outcome> {
-        let Some(preview) = self.opening_preview.as_ref().filter(|_| cut == 3) else {
+        let Some([sampled, next]) = self
+            .opening_preview
+            .as_ref()
+            .filter(|_| cut >= 3)
+            .and_then(|movie| movie.at(cut))
+        else {
             return Ok(());
         };
         let fault = || data_failure(Some(cut), "opening preview after the actual prior return");
@@ -310,14 +327,14 @@ impl Inputs {
                 suffix: frame::suffix_caller::Suffix::Acknowledged { .. },
                 ..
             }
-        ) || controller.committed_pad != preview.sampled
+        ) || controller.committed_pad != sampled
             || !controller.pending_pad.is_empty()
         {
             return Err(fault());
         }
         let change = timing::PadChange {
             at: state.timing.hardware.now,
-            pad: preview.next,
+            pad: next,
         };
         production
             .schedule_frame_pad_changes(&[change])
@@ -329,15 +346,20 @@ impl Inputs {
         production: &Production,
         cut: u64,
     ) -> Result<(), Outcome> {
-        let Some(preview) = self.opening_preview.as_ref().filter(|_| cut == 3) else {
+        let Some([sampled, next]) = self
+            .opening_preview
+            .as_ref()
+            .filter(|_| cut >= 3)
+            .and_then(|movie| movie.at(cut))
+        else {
             return Ok(());
         };
         let OwnedState::Frame(state) = production.state() else {
             return Err(data_failure(Some(cut), "opening controller hardware"));
         };
         let controller = &state.timing.hardware.controller;
-        if controller.words.first().copied() != Some(preview.sampled.0)
-            || controller.committed_pad != preview.next
+        if controller.words.first().copied() != Some(sampled.0)
+            || controller.committed_pad != next
             || !controller.pending_pad.is_empty()
         {
             return Err(Outcome::Difference {
@@ -413,9 +435,16 @@ impl Inputs {
 pub(super) struct Actual {
     pub events: Vec<game::production::timing::Event>,
     delivered: usize,
+    opening_contact: bool,
 }
 
 impl Actual {
+    pub(super) fn new(opening_contact: bool) -> Self {
+        Self {
+            opening_contact,
+            ..Self::default()
+        }
+    }
     pub const fn publication_count(&self) -> usize {
         self.delivered
     }
@@ -430,6 +459,16 @@ impl Actual {
         };
         if outputs.progress != frame::Progress::Completed {
             return Err(data_failure(Some(cut), "complete frame output projection"));
+        }
+        if self.opening_contact {
+            let (ports, writes) = opening_audio::actual_with_writes(&outputs.events);
+            self.delivered = self
+                .delivered
+                .checked_add(writes)
+                .ok_or_else(|| data_failure(Some(cut), "frame delivered audio write count"))?;
+            let mut fields = opening_contact::actual(production, state);
+            fields.push(ports);
+            return Ok(fields);
         }
         let callbacks = self.finish_interval(&outputs.events, cut)?;
         Ok(observations(
@@ -479,6 +518,11 @@ impl Actual {
         let OwnedState::Frame(state) = production.state() else {
             return Err(data_failure(None, "frame initial owned scope"));
         };
+        if self.opening_contact {
+            let mut fields = opening_contact::actual(production, state);
+            fields.push(opening_audio::actual(&self.events));
+            return Ok(fields);
+        }
         let callbacks = project(&self.events).map_err(|fault| projection_failure(None, fault))?;
         Ok(observations(state, canonical::to_bytes(&callbacks), None))
     }

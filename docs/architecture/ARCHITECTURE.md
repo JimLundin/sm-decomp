@@ -158,6 +158,12 @@ The CPU samples it at its own read edge, and those read samples are compared sep
 from hardware callbacks.
 The resident SMP producer and power-on history remain outside the witness.
 
+The eight-return witness follows the same admission through Contact's delay, outgoing
+clear, retry and return to Ready. The sender retains the actual outgoing zero retry
+milestone independently of the physical publication log. Restore checks both
+sources before using the milestone to time the scoped external arrival at the
+incoming latch. The CPU publication does not write the incoming latch.
+
 ### 6.5 Named CPU costs
 
 The integrated `frame/ordinary-requested-nmi-return` case exercises the hardware time

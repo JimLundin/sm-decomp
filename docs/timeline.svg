@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="2330" viewBox="0 0 1100 2330" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="2362" viewBox="0 0 1100 2362" role="img" aria-labelledby="title description">
 <title id="title">Indexed replay requirements</title>
 <desc id="description">Each line is an independent case scope. Counts do not represent whole-movie coverage.</desc>
-<rect width="1100" height="2330" fill="#fcfcfb"/>
+<rect width="1100" height="2362" fill="#fcfcfb"/>
 <g font-family="sans-serif" font-size="14" fill="#202020">
 <text x="20" y="28" font-size="19">Indexed replay requirements</text>
 <text x="20" y="52">Separate scopes; compared cuts are not whole-movie progress.</text>
@@ -72,8 +72,9 @@
 <text x="20" y="2130">gameplay-sound/passage-hold-shoot-held | Scoped cases | Pass | 1 compared cuts</text>
 <text x="20" y="2162">frame/adjacent-actual-return | Integrated cases | Pass | 2 compared cuts</text>
 <text x="20" y="2194">frame/opening-three-native-returns | Integrated cases | Pass | 3 compared cuts</text>
-<text x="20" y="2226">frame/adjacent-held-return | Integrated cases | Pass | 2 compared cuts</text>
-<text x="20" y="2258">frame/health-hud-stock | Integrated cases | Pass | 1 compared cuts</text>
-<text x="20" y="2290">frame/health-hud-pending-loss | Integrated cases | Pass | 1 compared cuts</text>
+<text x="20" y="2226">frame/opening-eight-native-returns | Integrated cases | Pass | 8 compared cuts</text>
+<text x="20" y="2258">frame/adjacent-held-return | Integrated cases | Pass | 2 compared cuts</text>
+<text x="20" y="2290">frame/health-hud-stock | Integrated cases | Pass | 1 compared cuts</text>
+<text x="20" y="2322">frame/health-hud-pending-loss | Integrated cases | Pass | 1 compared cuts</text>
 </g>
 </svg>

@@ -863,6 +863,248 @@ fn opening_clock_carries_live_door_decrement_and_fractional_travel() {
 }
 
 #[test]
+#[ignore = "requires the authenticated Contact cohort, third-return assets and player ROM"]
+fn opening_clock_carries_contact_clear_delay_and_reply_through_later_returns() {
+    let sources = sources();
+    let index = Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
+    let case = index
+        .cases
+        .iter()
+        .find(|case| case.id.0 == "frame/opening-eight-native-returns")
+        .unwrap();
+    let mut admitted = super::super::admit(case, &sources).unwrap();
+    assert_eq!(admitted.schedule.len(), 8);
+    for cut in admitted.schedule.clone() {
+        if cut == 6 {
+            restore_contact_clear_read(case, &mut admitted, cut);
+        } else {
+            runner::execute(
+                case,
+                &admitted.inputs,
+                &admitted.expected,
+                &mut admitted.production,
+                &mut admitted.actual,
+                cut,
+            )
+            .unwrap_or_else(|outcome| panic!("return request {cut} failed: {outcome:?}"));
+        }
+        if cut == 1 {
+            // The later work is installed, and the original queued Ready cue still writes.
+            assert_eq!(admitted.actual.publication_count(), 1);
+        }
+        let checkpoint = admitted.production.save().unwrap();
+        let restored = Production::restore(
+            &checkpoint,
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        )
+        .unwrap();
+        assert_observation_eq!(restored, admitted.production);
+        admitted.production = restored;
+    }
+    assert_eq!(admitted.actual.publication_count(), 4);
+}
+
+fn restore_contact_clear_read(case: &Case, admitted: &mut AdmittedCase, cut: u64) {
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("opening frame inputs");
+    };
+    inputs
+        .present_opening_preview(&mut admitted.production, cut)
+        .unwrap();
+
+    // The independent CPU read precedes the outgoing retry and later incoming zero.
+    let read = 1_957_726_u64;
+    let mut emitted = Vec::new();
+    advance_opening_to(&mut admitted.production, read, &mut emitted);
+    let current = state(&admitted.production);
+    assert_eq!(current.timing.hardware.now, MasterTicks(read));
+    assert_eq!(
+        current.sender_progress,
+        frame::sender_caller::Cursor::ContactRead
+    );
+    assert_eq!(
+        current.senders.contact.0.progress,
+        audio_transport::SenderProgress::AwaitClear
+    );
+    let [incoming, outgoing] = admitted.production.frame_contact_latches().unwrap();
+    assert!(incoming != 0 && outgoing == 0);
+    reject_contact_history_splices(admitted, current);
+
+    restore_opening_contact(admitted);
+    let retry = 1_957_772_u64;
+    let arrival = 1_967_634_u64;
+    let ProductionContent::Frame(content) = &admitted.content else {
+        panic!("opening frame content");
+    };
+    let port = content.sender_cue.unwrap().port;
+    reach_clear_retry_publication(&mut admitted.production, retry, port, &mut emitted);
+    restore_opening_contact(admitted);
+    advance_opening_to(
+        &mut admitted.production,
+        arrival.checked_sub(1).unwrap(),
+        &mut emitted,
+    );
+    assert_observation_eq!(
+        admitted.production.frame_contact_latches().unwrap(),
+        [incoming, outgoing]
+    );
+    advance_opening_to(&mut admitted.production, arrival, &mut emitted);
+    assert_observation_eq!(admitted.production.frame_contact_latches().unwrap(), [0, 0]);
+
+    loop {
+        let outputs = admitted
+            .production
+            .advance(AdvanceInput::Frame {
+                budget: MasterTicks(4096),
+            })
+            .unwrap();
+        let ProductionOutputs::Frame(outputs) = outputs else {
+            panic!("opening frame outputs");
+        };
+        emitted.extend(outputs.events);
+        if outputs.progress == frame::Progress::Completed {
+            break;
+        }
+    }
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("opening frame inputs");
+    };
+    inputs
+        .compare_opening_preview(&admitted.production, cut)
+        .unwrap();
+    let endpoint = state(&admitted.production);
+    assert_observation_eq!(endpoint.publications.active().unwrap(), emitted.as_slice());
+    let outputs = ProductionOutputs::Frame(frame::Outputs {
+        progress: frame::Progress::Completed,
+        events: emitted,
+    });
+    let actual = admitted
+        .actual
+        .accept(&admitted.inputs, &admitted.production, outputs, cut)
+        .unwrap();
+    let expected = admitted.expected.read(case, cut).unwrap();
+    assert_eq!(compared(cut, &expected.fields, &actual), Ok(()));
+    reject_shifted_zero_retry(admitted);
+}
+
+fn advance_opening_to(production: &mut Production, stop: u64, emitted: &mut Vec<timing::Event>) {
+    while clock_at(production) < stop {
+        let prior = production.clone();
+        let before = clock_at(&prior);
+        let budget = MasterTicks(stop.checked_sub(before).unwrap());
+        let ProductionOutputs::Frame(outputs) =
+            production.advance(AdvanceInput::Frame { budget }).unwrap()
+        else {
+            panic!("opening frame outputs");
+        };
+        assert_eq!(outputs.progress, frame::Progress::Advanced);
+        emitted.extend(outputs.events);
+        let after = clock_at(production);
+        assert!(after >= before && (after > before || *production != prior));
+    }
+    assert_eq!(clock_at(production), stop);
+}
+
+fn reach_clear_retry_publication(
+    production: &mut Production,
+    expected: u64,
+    port: data::timing::PublicationPort,
+    emitted: &mut Vec<timing::Event>,
+) {
+    use frame::sender_caller::{Cursor, Service};
+
+    let reached = |events: &[timing::Event]| {
+        events.iter().rev().find_map(|event| {
+            if let EventKind::Publication(write) = &event.kind
+                && write.port == port
+                && write.value == 0
+            {
+                Some(event.at)
+            } else {
+                None
+            }
+        })
+    };
+    advance_opening_to(production, expected, emitted);
+    if reached(emitted).is_none() {
+        let current = state(production);
+        assert!(current.contact_clear_retried_at.is_none());
+        assert!(matches!(
+            current.sender_progress,
+            Cursor::Body {
+                service: Service::Contact,
+                publication: Some(_),
+                ..
+            }
+        ));
+        let ProductionOutputs::Frame(outputs) = production
+            .advance(AdvanceInput::Frame {
+                budget: MasterTicks(1),
+            })
+            .unwrap()
+        else {
+            panic!("opening frame outputs");
+        };
+        assert_eq!(outputs.progress, frame::Progress::Advanced);
+        emitted.extend(outputs.events);
+    }
+    let at = reached(emitted);
+    assert_eq!(
+        at,
+        Some(MasterTicks(expected)),
+        "return request 6 missing outgoing clear retry"
+    );
+    let current = state(production);
+    assert!(matches!(
+        current.sender_progress,
+        Cursor::Body {
+            service: Service::Contact,
+            publication: None,
+            ..
+        }
+    ));
+    assert_eq!(
+        current.contact_clear_retried_at, at,
+        "return request 6 retained clear retry"
+    );
+}
+
+fn restore_opening_contact(admitted: &mut AdmittedCase) {
+    let checkpoint = admitted.production.save().unwrap();
+    let restored = Production::restore(
+        &checkpoint,
+        admitted.content.clone(),
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    assert_observation_eq!(restored, admitted.production);
+    admitted.production = restored;
+}
+
+fn reject_shifted_zero_retry(admitted: &AdmittedCase) {
+    let ProductionContent::Frame(content) = &admitted.content else {
+        panic!("opening frame content");
+    };
+    let port = content.sender_cue.unwrap().port;
+    for earlier in [true, false] {
+        let mut altered = state(&admitted.production).clone();
+        let retry = altered.publications.events.iter_mut().rev().find(|event| {
+            matches!(&event.kind, EventKind::Publication(write) if write.port == port && write.value == 0)
+        }).unwrap();
+        let actual = retry.at.0;
+        retry.at.0 = if earlier {
+            actual.checked_sub(1)
+        } else {
+            actual.checked_add(1)
+        }
+        .unwrap();
+        assert!(altered.publications.validate().is_ok());
+        reject_native_checkpoint(admitted, Box::new(altered));
+    }
+}
+
+#[test]
 #[ignore = "requires the three-return indexed native fixtures and player ROM"]
 fn opening_clock_three_indexed_returns_with_live_restore_and_contact_fault() {
     let sources = sources();

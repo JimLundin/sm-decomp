@@ -181,7 +181,7 @@ pub(super) fn bind(
     bind_camera(
         &source.text(&directory, "camera-current.toml")?,
         content,
-        false,
+        CameraAdmission::Adjacent,
     )?;
     let profiles = source.text(&directory, "profiles.toml")?;
     let cartridge = data::rom::Rom::new(std::fs::read(&sources.rom).map_err(|_| fault())?)
@@ -229,10 +229,17 @@ fn bind_controller(text: &str, wram: &[u8], state: &mut frame::State) -> Result<
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+pub(super) enum CameraAdmission {
+    Adjacent,
+    Recurring,
+    LiveHorizontal,
+}
+
 pub(super) fn bind_camera(
     text: &str,
     content: &mut frame::Content,
-    recurring: bool,
+    admission: CameraAdmission,
 ) -> Result<(), Outcome> {
     use game::production::frame::s6_camera::Contract;
 
@@ -241,10 +248,10 @@ pub(super) fn bind_camera(
     if camera.format != 1 {
         return Err(fault());
     }
-    let admit = if recurring {
-        Contract::admit_recurring
-    } else {
-        Contract::admit_adjacent
+    let admit = match admission {
+        CameraAdmission::Adjacent => Contract::admit_adjacent,
+        CameraAdmission::Recurring => Contract::admit_recurring,
+        CameraAdmission::LiveHorizontal => Contract::admit_live_horizontal,
     };
     admit(
         content.s6_camera.as_mut().ok_or_else(fault)?,

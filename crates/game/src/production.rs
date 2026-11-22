@@ -588,6 +588,17 @@ impl Production {
         }
     }
 
+    /// Read the scoped incoming Contact latch and the actual CPU presentation.
+    #[must_use]
+    pub fn frame_contact_latches(&self) -> Option<[u8; 2]> {
+        let (OwnedState::Frame(state), ProductionContent::Frame(content)) =
+            (&self.state, &self.context.content)
+        else {
+            return None;
+        };
+        state.contact_latches(content)
+    }
+
     /// Schedule physical first-port changes for the retained frame.
     ///
     /// Use absolute hardware times at or after the current time, in strictly increasing

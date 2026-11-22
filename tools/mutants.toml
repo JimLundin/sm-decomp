@@ -656,3 +656,13 @@ after = 'drop(profile.runs.splice(0..0, wait_busy_leg().into_iter().skip(1)));'
 case = "frame/opening-three-native-returns"
 cut = 3
 field = "frame.audio.ports"
+
+[[fault]]
+name = "opening-contact-zero-arrives-at-reinforcement"
+responsibility = "audio-sender"
+file = "crates/game/src/production/frame/contact_sender.rs"
+before = '.and_then(|retry| retry.0.checked_add(self.clear_reply_delay.0))'
+after = '.and_then(|retry| retry.0.checked_add(self.clear_reply_delay.0.saturating_add(344_406)))'
+case = "frame/opening-eight-native-returns"
+cut = 6
+field = "frame.contact.incoming"
