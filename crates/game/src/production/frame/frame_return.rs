@@ -124,11 +124,21 @@ impl Contract {
             Ok(Cow::Borrowed(&self.finalization))
         } else {
             let drawing = state.rendering.receipt().ok_or_else(missing)?;
+            if let Some(physical) = &self.recurring_finalization {
+                let builder = state.s6_drawing.builder().ok_or_else(missing)?;
+                let used = drawing
+                    .first_byte
+                    .checked_div(4)
+                    .and_then(|prior| prior.checked_add(drawing.pieces))
+                    .filter(|used| {
+                        drawing.first_byte.is_multiple_of(4)
+                            && used.saturating_mul(4) == builder.cursor
+                    })
+                    .ok_or_else(missing)?;
+                return physical.from_drawn(used).map(Cow::Owned);
+            }
             if drawing.first_byte != 0 {
                 return Err(missing());
-            }
-            if let Some(physical) = &self.recurring_finalization {
-                return physical.from_drawn(drawing.pieces).map(Cow::Owned);
             }
             self.adjacent_finalization
                 .as_ref()

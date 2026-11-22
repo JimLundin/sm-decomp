@@ -91,6 +91,8 @@ pub struct Content {
     pub adjacent_animation: Option<super::animation_caller::Adjacent>,
     /// Independently qualified last-frame advance for the current running clip.
     pub recurring_animation_advance: Option<super::appearance_caller::PhysicalContract>,
+    /// Independently qualified native Again control for the running clip.
+    pub recurring_animation_loop: Option<super::appearance_caller::PhysicalContract>,
     /// Independently qualified inactive interruption continuation.
     pub interruption: Option<super::interruption_caller::Contract>,
     /// Complete late movement envelopes for the qualified actual pose choice.
@@ -146,6 +148,8 @@ pub struct PreparationContent {
     pub gameplay: data::timing::Template,
     /// Actual full ordered actor eligibility work.
     pub actors: data::timing::Template,
+    /// Ordered eligibility work with both carried actor slots tangible.
+    pub two_interactive_actors: Option<data::timing::Template>,
     /// Actual current debug work.
     pub debug: data::timing::Template,
     /// Actual current palette work.
@@ -1651,8 +1655,23 @@ impl State {
                 stage.dependency(),
             )));
         }
-        let profile = content
-            .profile(*stage)
+        let template = if *stage == PreparationStage::Actors
+            && self
+                .actor_eligibility
+                .as_ref()
+                .and_then(super::borrowed_preparation::ActorEligibilityReceipt::marked_offscreen)
+                .is_some_and(|receipt| receipt.interactive.len() == 2)
+        {
+            content
+                .two_interactive_actors
+                .as_ref()
+                .ok_or(ProductionFault::Unsupported(Unsupported::Frame(
+                    Dependency::ActorPreparation,
+                )))?
+        } else {
+            content.profile(*stage)
+        };
+        let profile = template
             .bind(&[])
             .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
         self.timing

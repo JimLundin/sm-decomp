@@ -1326,3 +1326,351 @@ fn reject_contact_history_splices(admitted: &AdmittedCase, actual: &State) {
     wrong_trigger.contact_retried_at = Some(first.at);
     reject_native_checkpoint(admitted, Box::new(wrong_trigger));
 }
+
+fn ground_corridor_case() -> Case {
+    let index = Index::parse(include_str!("../../../../../scenarios/replay/index.toml")).unwrap();
+    index
+        .cases
+        .into_iter()
+        .find(|case| case.id.0 == "frame/opening-sixteen-native-returns")
+        .unwrap()
+}
+
+#[test]
+#[ignore = "requires the authenticated opening corridor fixtures and checked player ROM"]
+fn opening_ground_corridor_from_one_native_admission() {
+    let case = ground_corridor_case();
+    let sources = sources();
+    if std::env::var_os("SM_OPENING_CORRIDOR_SINGLE_PASS").is_some() {
+        let mut admitted = super::super::admit(&case, &sources).unwrap();
+        if let InputReader::Frame(inputs) = &mut admitted.inputs {
+            // The probe changes only host chunking; real owner work and returns
+            // still delimit the independently compared observations.
+            inputs.budget = MasterTicks(65_536);
+        }
+        for cut in admitted.schedule.clone() {
+            runner::execute(
+                &case,
+                &admitted.inputs,
+                &admitted.expected,
+                &mut admitted.production,
+                &mut admitted.actual,
+                cut,
+            )
+            .unwrap_or_else(|outcome| {
+                panic!(
+                    "return request {cut} failed at master tick {}: {outcome:?}",
+                    clock_at(&admitted.production)
+                )
+            });
+            let saved = admitted.production.save().unwrap();
+            let restored =
+                Production::restore(&saved, admitted.content.clone(), admitted.rules.clone())
+                    .unwrap_or_else(|fault| {
+                        panic!("restore at native return request {cut}: {fault:?}")
+                    });
+            assert_observation_eq!(restored, admitted.production);
+            if matches!(cut, 9 | 14) {
+                checks_mixed_drawing_builder(&admitted, cut + 1);
+            }
+            if cut >= 11 {
+                rejects_changed_camera_fraction(&admitted);
+            }
+        }
+    } else {
+        let result = crate::replay::run(&case, &sources);
+        if let Some(path) = std::env::var_os("SM_OPENING_CORRIDOR_RECEIPT") {
+            std::fs::write(path, toml::to_string_pretty(&result).unwrap()).unwrap();
+        }
+        assert!(result.passed(), "{:?}", result.outcome);
+    }
+}
+
+#[test]
+#[ignore = "requires the authenticated opening corridor fixtures and checked player ROM"]
+fn opening_mixed_drawing_rejects_a_changed_door_tile_before_finalization() {
+    let case = ground_corridor_case();
+    let mut admitted = super::super::admit(&case, &sources()).unwrap();
+    if let InputReader::Frame(inputs) = &mut admitted.inputs {
+        inputs.budget = MasterTicks(65_536);
+    }
+    // Return ten is the first to draw the visible door beside Samus.
+    for cut in admitted.schedule.iter().copied().take(9) {
+        runner::execute(
+            &case,
+            &admitted.inputs,
+            &admitted.expected,
+            &mut admitted.production,
+            &mut admitted.actual,
+            cut,
+        )
+        .unwrap_or_else(|outcome| panic!("return request {cut}: {outcome:?}"));
+    }
+    checks_mixed_drawing_builder(&admitted, 10);
+}
+
+fn checks_mixed_drawing_builder(admitted: &AdmittedCase, cut: u64) {
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("opening frame inputs");
+    };
+    let mut production = admitted.production.clone();
+    inputs
+        .present_opening_preview(&mut production, cut)
+        .unwrap();
+    advance_to_ground_drawing(&mut production, |state| {
+        state.drawing_energy_read().is_some()
+    });
+    let charging = canonical::to_bytes(state(&production));
+    let saved = production.save().unwrap();
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+
+    for receiver in [&mut production, &mut restored] {
+        advance_to_ground_drawing(receiver, |state| state.s6_drawing.builder().is_some());
+    }
+    assert_observation_eq!(production, restored);
+    let completed = state(&production);
+    assert_eq!(completed.rendering.receipt().unwrap().first_byte, 24);
+    assert!(matches!(
+        completed.rendering,
+        frame::rendering_stage::Stage::Drawn(_)
+    ));
+    assert_eq!(
+        completed.return_progress,
+        frame::frame_return::Stage::Pending
+    );
+    let builder = completed.s6_drawing.builder().unwrap();
+    // The actor append writes the first door piece at the start of the backing,
+    // so byte two is that piece's tile.
+    let mut altered = builder.clone();
+    altered.backing[2] ^= 1;
+    rejects_frame_state(admitted, replace_builder(&charging, builder, &altered));
+    let drawn = canonical::to_bytes(completed);
+    rejects_frame_state(admitted, replace_builder(&drawn, builder, &altered));
+
+    let saved = production.save().unwrap();
+    let reopened =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    assert_observation_eq!(production, reopened);
+}
+
+/// Replace the sole copy of a builder in a canonical frame image.
+fn replace_builder(
+    image: &[u8],
+    builder: &frame::borrowed::SpriteBuilderOrigin,
+    altered: &frame::borrowed::SpriteBuilderOrigin,
+) -> State {
+    let builder_image = canonical::to_bytes(builder);
+    let mut locations = image
+        .windows(builder_image.len())
+        .enumerate()
+        .filter_map(|(index, bytes)| (bytes == builder_image).then_some(index));
+    let location = locations.next().unwrap();
+    assert!(locations.next().is_none());
+    let mut spliced = image.to_vec();
+    let end = location.checked_add(builder_image.len()).unwrap();
+    spliced[location..end].copy_from_slice(&canonical::to_bytes(altered));
+    canonical::from_bytes(&spliced).unwrap()
+}
+
+fn advance_to_ground_drawing(production: &mut Production, reached: impl Fn(&State) -> bool) {
+    while !reached(state(production)) {
+        let ProductionOutputs::Frame(outputs) = production
+            .advance(AdvanceInput::Frame {
+                budget: MasterTicks(65_536),
+            })
+            .unwrap()
+        else {
+            panic!("opening frame outputs");
+        };
+        assert_eq!(outputs.progress, frame::Progress::Advanced);
+    }
+}
+
+fn rejects_changed_camera_fraction(admitted: &AdmittedCase) {
+    use types::Parts;
+    let mut forged = state(&admitted.production).clone();
+    let mut view = forged.camera.0.position();
+    view.x = view.x.with_sub(view.x.sub() ^ 1);
+    forged.camera.0 = forged.camera.0.with_view(world_camera::ViewPosition(view));
+    rejects_frame_state(admitted, forged);
+}
+
+#[track_caller]
+fn rejects_frame_state(admitted: &AdmittedCase, forged: State) {
+    assert!(matches!(
+        Production::admit(
+            ProductionSeed::Frame(Box::new(forged)),
+            admitted.content.clone(),
+            admitted.rules.clone(),
+        ),
+        Err(game::production::AdmissionFault::Frame(fault)) if *fault == frame::Fault::InvalidPlayerEntry
+    ));
+}
+
+#[test]
+#[ignore = "requires the authenticated opening corridor fixtures and checked player ROM"]
+fn opening_later_contact_ingress_is_causal_across_a_checkpoint() {
+    let case = ground_corridor_case();
+    let mut admitted = super::super::admit(&case, &sources()).unwrap();
+    if std::env::var_os("SM_OPENING_CORRIDOR_SINGLE_PASS").is_some()
+        && let InputReader::Frame(inputs) = &mut admitted.inputs
+    {
+        inputs.budget = MasterTicks(65_536);
+    }
+    for cut in admitted.schedule.iter().copied().take(12) {
+        if cut == 11 {
+            rejects_missing_recurring_footstep_gates(&case, &admitted, cut);
+        }
+        if cut == 12 {
+            detects_premature_later_footstep(&case, &admitted, cut);
+        }
+        runner::execute(
+            &case,
+            &admitted.inputs,
+            &admitted.expected,
+            &mut admitted.production,
+            &mut admitted.actual,
+            cut,
+        )
+        .unwrap_or_else(|outcome| panic!("return request {cut}: {outcome:?}"));
+    }
+    let saved = admitted.production.save().unwrap();
+    let current = state(&admitted.production);
+    let retry = current.contact_later_retried_at.unwrap();
+    let due = retry.0.checked_add(255_764).unwrap();
+    assert_eq!(
+        admitted.production.frame_contact_latches().unwrap().first(),
+        Some(&0)
+    );
+
+    let mut forged = current.clone();
+    forged.contact_later_retried_at = Some(MasterTicks(retry.0.wrapping_add(1)));
+    rejects_frame_state(&admitted, forged);
+
+    let mut restored =
+        Production::restore(&saved, admitted.content.clone(), admitted.rules.clone()).unwrap();
+    let InputReader::Frame(inputs) = &admitted.inputs else {
+        panic!("opening frame inputs");
+    };
+    let mut before_arrival = Vec::new();
+    let mut opening_suffix = Vec::new();
+    for (production, prefix) in [
+        (&mut admitted.production, &mut before_arrival),
+        (&mut restored, &mut opening_suffix),
+    ] {
+        inputs.present_opening_preview(production, 13).unwrap();
+        let before = due.checked_sub(1).unwrap();
+        advance_until_master_tick(production, before, prefix);
+        assert_eq!(
+            production.frame_contact_latches().unwrap().first(),
+            Some(&0)
+        );
+        advance_until_master_tick(production, due, prefix);
+        assert!(
+            production
+                .frame_contact_latches()
+                .unwrap()
+                .first()
+                .is_some_and(|incoming| *incoming != 0)
+        );
+    }
+    assert_observation_eq!(before_arrival, opening_suffix);
+    assert_observation_eq!(restored, admitted.production);
+}
+
+fn rejects_missing_recurring_footstep_gates(case: &Case, admitted: &AdmittedCase, cut: u64) {
+    let mut content = admitted.content.clone();
+    let ProductionContent::Frame(frame) = &mut content else {
+        panic!("opening frame content");
+    };
+    frame.post_down.as_mut().unwrap().recurring_footstep = None;
+    let mut production = Production::admit(
+        ProductionSeed::Frame(Box::new(state(&admitted.production).clone())),
+        content,
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let before = clock_at(&production);
+    let mut actual = admitted.actual.clone();
+    let fault = runner::execute(
+        case,
+        &admitted.inputs,
+        &admitted.expected,
+        &mut production,
+        &mut actual,
+        cut,
+    )
+    .err()
+    .expect("the distinct native control rejects");
+    assert_eq!(
+        fault,
+        Outcome::Unsupported {
+            cut: Some(cut),
+            dependency: "Frame(PlayerContinuationPreparation)".to_owned(),
+        }
+    );
+    assert_eq!(clock_at(&production).checked_sub(before), Some(82_200));
+}
+
+fn detects_premature_later_footstep(case: &Case, admitted: &AdmittedCase, cut: u64) {
+    let mut content = admitted.content.clone();
+    let ProductionContent::Frame(frame) = &mut content else {
+        panic!("opening frame content");
+    };
+    frame
+        .sender_physical
+        .as_mut()
+        .unwrap()
+        .contact_continuation
+        .as_mut()
+        .unwrap()
+        .admit_later_reply(MasterTicks(1))
+        .unwrap();
+    let mut production = Production::admit(
+        ProductionSeed::Frame(Box::new(state(&admitted.production).clone())),
+        content,
+        admitted.rules.clone(),
+    )
+    .unwrap();
+    let mut actual = admitted.actual.clone();
+    let fault = runner::execute(
+        case,
+        &admitted.inputs,
+        &admitted.expected,
+        &mut production,
+        &mut actual,
+        cut,
+    )
+    .err()
+    .expect("the distinct native control rejects");
+    assert_eq!(
+        fault,
+        Outcome::Difference {
+            cut,
+            field: "frame.contact.incoming".to_owned(),
+        }
+    );
+}
+
+fn advance_until_master_tick(
+    production: &mut Production,
+    target: u64,
+    events: &mut Vec<timing::Event>,
+) {
+    while clock_at(production) < target {
+        let previous = production.clone();
+        let remaining = target.checked_sub(clock_at(production)).unwrap();
+        let ProductionOutputs::Frame(outputs) = production
+            .advance(AdvanceInput::Frame {
+                budget: MasterTicks(remaining),
+            })
+            .unwrap()
+        else {
+            panic!("opening frame outputs");
+        };
+        assert!(outputs.progress == frame::Progress::Advanced && *production != previous);
+        events.extend(outputs.events);
+    }
+    assert_eq!(clock_at(production), target);
+}

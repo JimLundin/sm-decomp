@@ -31,6 +31,8 @@ pub struct RecurringDisplay {
     pub frame: FrameCount,
     /// The carried quiet-panel source qualifies later first-half blink opportunities.
     pub retain_first_half: bool,
+    /// Qualified producer work when the actual counter skips the player-cell colour write.
+    pub second_half: Option<data::timing::Template>,
     /// Admitted stable room on the checked area map.
     pub room: Room,
     /// Checked centre of the bounded ordinary one-page arm.
@@ -72,9 +74,13 @@ impl RecurringDisplay {
         let interaction = &remaining.0.interaction.as_ref()?.terminal;
         let projectiles = &remaining.0.projectiles.as_ref()?.terminal;
         let frame = FrameCount(state.hud_frame_count?);
-        if (frame != self.frame && !self.retain_first_half)
+        let recurring_half = if rules.her_blink.first_half(frame) {
+            frame == self.frame || self.retain_first_half
+        } else {
+            self.second_half.is_some()
+        };
+        if !recurring_half
             || before.frame_count() != Some(frame)
-            || !rules.her_blink.first_half(frame)
             || gameplay.scene != SceneController::MainGameplay
             || gameplay.route != GameplayRoute::MainGameplay
             || actors.dependency.scene != ActorScene::PreEscape

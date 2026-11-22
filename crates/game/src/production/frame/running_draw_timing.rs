@@ -102,12 +102,12 @@ impl RecurringProfiles {
         &self,
         content: &Content,
         receipt: &NormalDrawingReceipt,
+        mixed: Option<&Profile>,
     ) -> Result<Profile, ProductionFault> {
         use types::{Action, Aim, Body, Facing, Gun, Sprite};
         let figure = receipt.figure.0;
         let pose = figure.pose;
-        if receipt.first_byte != 0
-            || !receipt.premises.normal_visible
+        if !receipt.premises.normal_visible
             || !receipt.premises.no_additional_selected_pieces
             || !receipt.premises.unselected_draws_empty
             || pose.action != Action::Running
@@ -132,7 +132,11 @@ impl RecurringProfiles {
         }
         let [x, _] = receipt.centre;
         let origin_x = receipt.premises.horizontal_origin(x);
-        let mut profile = portions.setup.clone();
+        let mut profile = match receipt.first_byte {
+            0 => portions.setup.clone(),
+            24 => splice_actor_layer(&portions.setup, mixed.ok_or_else(missing)?)?,
+            _ => return Err(missing()),
+        };
         self.pieces.append(&mut profile, top, origin_x)?;
         profile.runs.extend(portions.between.runs.iter().cloned());
         self.pieces.append(&mut profile, bottom, origin_x)?;
@@ -155,4 +159,38 @@ fn bind(template: &Template) -> Result<Profile, ProductionFault> {
 const fn missing() -> ProductionFault {
     use super::Dependency;
     ProductionFault::Unsupported(Unsupported::Frame(Dependency::DrawingPreparation))
+}
+
+fn splice_actor_layer(setup: &Profile, actor: &Profile) -> Result<Profile, ProductionFault> {
+    use data::timing::Run;
+    const START: u32 = 1340;
+    const END: u32 = 1354;
+
+    let mut prefix = Vec::new();
+    let mut suffix = Vec::new();
+    let mut start: u32 = 0;
+    for run in &setup.runs {
+        let end = start.checked_add(run.count).ok_or_else(missing)?;
+        let before = end.min(START).saturating_sub(start);
+        let after = end.saturating_sub(start.max(END));
+        if before != 0 {
+            prefix.push(Run {
+                count: before,
+                exposure: run.exposure.clone(),
+            });
+        }
+        if after != 0 {
+            suffix.push(Run {
+                count: after,
+                exposure: run.exposure.clone(),
+            });
+        }
+        start = end;
+    }
+    if prefix.is_empty() || suffix.is_empty() {
+        return Err(missing());
+    }
+    prefix.extend(actor.runs.iter().cloned());
+    prefix.extend(suffix);
+    Ok(Profile { runs: prefix })
 }

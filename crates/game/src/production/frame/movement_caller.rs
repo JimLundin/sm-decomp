@@ -620,13 +620,23 @@ pub struct RunDependencies<'a> {
 pub struct RunContract {
     required: RunRequired,
     whole: data::timing::Template,
+    saturated: Option<data::timing::Template>,
 }
 
 impl RunContract {
     /// Retain independently gated immutable predicates and the complete physical envelope.
     #[must_use]
     pub const fn new(required: RunRequired, whole: data::timing::Template) -> Self {
-        Self { required, whole }
+        Self {
+            required,
+            whole,
+            saturated: None,
+        }
+    }
+
+    /// Admit physical work when both incoming running speed components are at their caps.
+    pub fn set_saturated(&mut self, profile: data::timing::Template) {
+        self.saturated = Some(profile);
     }
 
     /// Qualify exact actual Run decisions and completed producer dependencies.
@@ -683,23 +693,7 @@ impl RunContract {
         }
         self.validate_run_admission(initial, query, dependencies)?;
         self.validate_run_decision_inputs(&receipt.decisions.0, query)?;
-        let MovementDecision::Local {
-            rule: LocalRule::DashBuilding { before, gain, cap },
-            ..
-        } = dash
-        else {
-            return Err(Fault::Dependency);
-        };
-        if *before != initial.run.dash
-            || *gain != self.required.dash_gain
-            || cap.pixel().0 != self.required.dash_cap_whole
-            || !types::part_below(before.pixel().0, cap.pixel().0)
-        {
-            return Err(Fault::Dependency);
-        }
-        let mut expected_dash = dash_before;
-        expected_dash.run.dash = core::num::Wrapping(before.0.wrapping_add(gain.0));
-        expected_dash.run.dashing = samus_movement::Dashing::On;
+        let dash_at_cap = self.dash_path(dash, dash_before, dash_answer)?;
         let MovementDecision::Local {
             rule:
                 LocalRule::SpeedBuilding {
@@ -713,8 +707,7 @@ impl RunContract {
         else {
             return Err(Fault::Dependency);
         };
-        if dash_answer != expected_dash
-            || *before != speed_before.run.speed
+        if *before != speed_before.run.speed
             || *step != self.required.speed_step
             || *top != self.required.speed_top
             || sum.0 != before.0.wrapping_add(step.0)
@@ -738,7 +731,52 @@ impl RunContract {
         {
             return Err(Fault::Dependency);
         }
-        Ok(&self.whole)
+        if dash_at_cap {
+            if before != top {
+                return Err(Fault::Dependency);
+            }
+            self.saturated.as_ref().ok_or(Fault::Dependency)
+        } else {
+            Ok(&self.whole)
+        }
+    }
+
+    fn dash_path(
+        &self,
+        dash: &samus_movement::suspended::MovementDecision,
+        dash_before: samus_movement::Samus,
+        dash_answer: samus_movement::Samus,
+    ) -> Result<bool, Fault> {
+        use samus_movement::suspended::{LocalRule, MovementDecision};
+        use types::Parts;
+        let MovementDecision::Local {
+            rule: LocalRule::DashBuilding { before, gain, cap },
+            ..
+        } = dash
+        else {
+            return Err(Fault::Dependency);
+        };
+        if *before != dash_before.run.dash
+            || *gain != self.required.dash_gain
+            || cap.pixel().0 != self.required.dash_cap_whole
+        {
+            return Err(Fault::Dependency);
+        }
+        let dash_at_cap = before == cap;
+        if !dash_at_cap && !types::part_below(before.pixel().0, cap.pixel().0) {
+            return Err(Fault::Dependency);
+        }
+        let mut expected_dash = dash_before;
+        expected_dash.run.dash = if dash_at_cap {
+            *cap
+        } else {
+            core::num::Wrapping(before.0.wrapping_add(gain.0))
+        };
+        expected_dash.run.dashing = samus_movement::Dashing::On;
+        if dash_answer != expected_dash {
+            return Err(Fault::Dependency);
+        }
+        Ok(dash_at_cap)
     }
 
     fn validate_run_admission(

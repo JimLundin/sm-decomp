@@ -76,6 +76,21 @@ pub(super) fn named(text: &str, name: &str, expected: [u64; 2]) -> Result<Templa
     admit(profile, name, expected, Effects::None)
 }
 
+pub(super) fn multiplying(
+    text: &str,
+    name: &str,
+    expected: [u64; 2],
+) -> Result<Template, ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [profile] = file.profile.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    admit(profile, name, expected, Effects::Multiply)
+}
+
 pub(super) fn down_contact(text: &str) -> Result<[Template; 2], ProfileFault> {
     let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
     let [down, contact] = file.profile.as_slice() else {

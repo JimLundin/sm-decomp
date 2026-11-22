@@ -188,7 +188,7 @@ impl ContactRetry {
             || receipt.before != SenderProgress::AwaitCue(cue)
             || receipt.chosen.observation.is_some()
             || !receipt.queue.is_empty()
-            || queues.contact.positions() != [1, 1]
+            || queues.contact.validate(&receipt.queue).is_err()
             || !chosen.queue.is_empty()
             || binding.cue != cue
             || binding.port.output_class() != Ok(2)
@@ -318,8 +318,7 @@ impl Contract {
                     &receipt.chosen.origin.0,
                     publication.ok_or(Fault::Profile)?,
                 );
-                if window.positions() != [0, 1]
-                    || receipt.queue.iter().copied().ne([CueId::Footstep])
+                if receipt.queue.iter().copied().ne([CueId::Footstep])
                     || result.progress != SenderProgress::AwaitCue(CueId::Footstep)
                     || result.presentation.as_ref().is_none_or(|(time, request)| {
                         time.0 != at || *request != Request::Cue(CueId::Footstep)
@@ -384,7 +383,7 @@ impl Admission {
         current.validate()?;
         senders.validate().map_err(|_| Fault::Receipt)?;
         queues.validate(senders)?;
-        if !senders.contact.0.queue.is_empty() || queues.contact.positions() != [1, 1] {
+        if !senders.contact.0.queue.is_empty() {
             return Err(Fault::Receipt);
         }
         self.qualify_groups(senders, &SenderProgress::AwaitCue(CueId::Footstep))
@@ -575,7 +574,6 @@ impl Queues {
         permission: audio_transport::OfferPermission,
     ) -> Result<(), Fault> {
         if permission != audio_transport::OfferPermission::Enabled
-            || self.contact.positions() != [0, 0]
             || !before.queue.is_empty()
             || before.progress != SenderProgress::Ready
             || after.queue.iter().copied().ne([CueId::Footstep])

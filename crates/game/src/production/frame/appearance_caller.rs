@@ -143,6 +143,9 @@ impl DrawingAggregate {
         receipt.validate()?;
         let mut rendering_after = frame.rendering.clone();
         let mut builder_after = builder.clone();
+        content
+            .append_actor(frame, completed.actors, premises, &mut builder_after)
+            .map_err(Fault::Rendering)?;
         rendering_after
             .choose(
                 &mut builder_after,
@@ -402,6 +405,8 @@ pub enum Requirement {
     RunningHold,
     /// Advance from the current last running frame to the next checked shown step.
     RunningAdvance,
+    /// Last hold reaches a live Again control that returns to the first running picture.
+    RunningLoop,
     /// Actual selected Running figure keeps the already completed playing result.
     RunningInitialization,
 }
@@ -510,9 +515,24 @@ impl PhysicalContract {
             return Err(Fault::Owner);
         }
         match self.requirement {
-            Requirement::OrdinaryAnimation { .. } | Requirement::RunningAdvance => {
+            Requirement::OrdinaryAnimation { .. }
+            | Requirement::RunningAdvance
+            | Requirement::RunningLoop => {
                 let step = before.playhead.step;
-                let next = step.next().ok_or(Fault::Sequence)?;
+                let instruction = step.next().ok_or(Fault::Sequence)?;
+                let next = match (self.requirement, answer.clip.at(instruction)) {
+                    (
+                        Requirement::RunningLoop,
+                        Some(samus_appearance::Instruction::Control(
+                            samus_appearance::Control::Again(restart),
+                        )),
+                    ) if restart == samus_appearance::Step(0) => restart,
+                    (
+                        Requirement::OrdinaryAnimation { .. } | Requirement::RunningAdvance,
+                        Some(samus_appearance::Instruction::Show(_)),
+                    ) => instruction,
+                    _ => return Err(Fault::Sequence),
+                };
                 let expected_hold = answer
                     .paces
                     .plain

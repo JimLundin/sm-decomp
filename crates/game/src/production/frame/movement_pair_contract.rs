@@ -35,6 +35,44 @@ pub struct PhysicalContract {
     admission: SourceAdmission,
     template: data::timing::Template,
     fractional_carry: Option<data::timing::Template>,
+    two_candidate: Option<data::timing::Template>,
+    two_candidate_carry: Option<data::timing::Template>,
+}
+
+pub(super) fn ordered_misses(search: &types::EnemySearch, boxes: &[types::Hitbox]) -> bool {
+    matches!(boxes.len(), 1 | 2)
+        && search.supplied_count.0 == boxes.len()
+        && search.candidates.len() == boxes.len()
+        && search
+            .candidates
+            .iter()
+            .zip(boxes)
+            .enumerate()
+            .all(|(ordinal, (candidate, actor))| {
+                candidate.candidate.0 == ordinal
+                    && candidate.result == types::CandidateResult::Miss
+                    && candidate.centre == actor.centre
+                    && candidate.radius == actor.radius
+            })
+}
+
+pub(super) fn horizontal_misses(
+    search: &types::EnemySearch,
+    boxes: &[types::Hitbox],
+    tested_x: u16,
+    radius_x: u16,
+) -> bool {
+    ordered_misses(search, boxes)
+        && boxes.iter().all(|actor| {
+            let distance = if boxes.len() == 1 {
+                actor.centre.x.0.checked_sub(tested_x)
+            } else {
+                Some(actor.centre.x.0.abs_diff(tested_x))
+            };
+            distance.is_some_and(|distance| {
+                distance < 32768 && distance.saturating_sub(actor.radius.x.0) >= radius_x
+            })
+        })
 }
 
 impl PhysicalContract {
@@ -50,12 +88,24 @@ impl PhysicalContract {
             admission,
             template,
             fractional_carry: None,
+            two_candidate: None,
+            two_candidate_carry: None,
         }
     }
 
     /// Admit the qualified ordinary-right physical envelope when the X fraction carries.
     pub fn set_fractional_carry(&mut self, template: data::timing::Template) {
         self.fractional_carry = Some(template);
+    }
+
+    /// Admit separately qualified traversal of both tangible slots.
+    pub fn set_two_candidate_profiles(
+        &mut self,
+        no_carry: data::timing::Template,
+        carry: Option<data::timing::Template>,
+    ) {
+        self.two_candidate = Some(no_carry);
+        self.two_candidate_carry = carry;
     }
 
     pub(super) fn plain_air_room(&self) -> (&super::movement_caller::Room, &[bool]) {
@@ -89,7 +139,8 @@ impl PhysicalContract {
             || movement != &receipt.retained
             || world != receipt.world.0
             || receipt.before.state() != movement.state()
-            || actors.interactive.as_slice() != [self.admission.raw_actor]
+            || !actors
+                .matches_collision_roster(self.admission.raw_actor, self.two_candidate.is_some())
             || actors.dependency.clocks.simulation
                 != super::borrowed_player_preparation::ClockDisposition::Running
             || actors.dependency.clocks.enemy
@@ -224,12 +275,7 @@ impl PhysicalContract {
             return Err(Fault::Dependency);
         };
         let search = attempt.enemy_search.as_ref().ok_or(Fault::Dependency)?;
-        let [candidate] = search.candidates.as_slice() else {
-            return Err(Fault::Dependency);
-        };
-        let [actor] = boxes else {
-            return Err(Fault::Dependency);
-        };
+
         let purpose = match self.owner {
             PairOwner::OrdinaryRight => types::CollisionPurpose::OrdinaryMove,
             PairOwner::AimRight
@@ -248,12 +294,14 @@ impl PhysicalContract {
             .x
             .sub()
             .overflowing_add(request.distance.sub());
-        let template = if carry && self.owner == PairOwner::OrdinaryRight {
-            self.fractional_carry.as_ref().ok_or(Fault::Dependency)?
-        } else if carry {
-            return Err(Fault::Dependency);
-        } else {
-            &self.template
+        let template = match (boxes, carry) {
+            ([_], false) => &self.template,
+            ([_], true) if self.owner == PairOwner::OrdinaryRight => {
+                self.fractional_carry.as_ref().ok_or(Fault::Dependency)?
+            }
+            ([_, _], false) => self.two_candidate.as_ref().ok_or(Fault::Dependency)?,
+            ([_, _], true) => self.two_candidate_carry.as_ref().ok_or(Fault::Dependency)?,
+            _ => return Err(Fault::Dependency),
         };
         let integer_target = request
             .bounds
@@ -267,15 +315,6 @@ impl PhysicalContract {
         let tested_x = integer_target
             .checked_add(u16::from(remainder != 0))
             .ok_or(Fault::Dependency)?;
-        let dx = candidate
-            .centre
-            .x
-            .0
-            .checked_sub(tested_x)
-            .ok_or(Fault::Dependency)?;
-        let separation = dx
-            .checked_sub(candidate.radius.x.0)
-            .ok_or(Fault::Dependency)?;
         if request.bounds.at != receipt.before.state().position
             || request.bounds.r != body
             || request.direction != types::Direction::Right
@@ -284,13 +323,7 @@ impl PhysicalContract {
             || request.distance.0 == 0
             || request.distance.pixel().0 >= 16
             || remainder == 0
-            || dx >= 32768
-            || separation < body.x.0
-            || search.supplied_count.0 != 1
-            || candidate.candidate.0 != 0
-            || candidate.result != types::CandidateResult::Miss
-            || candidate.centre != actor.centre
-            || candidate.radius != actor.radius
+            || !horizontal_misses(search, boxes, tested_x, body.x.0)
             || attempt.start != request.bounds.at
             || attempt.radius != body
             || attempt.direction != request.direction

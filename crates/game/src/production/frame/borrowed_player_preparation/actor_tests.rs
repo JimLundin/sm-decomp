@@ -402,10 +402,9 @@ fn actor_admission_rejects_late_selected_centre_body_view_and_membership_changes
 }
 
 #[test]
-fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
+fn restored_doors_choose_close_or_poll_and_reject_stale_geometry_or_timer() {
     use super::super::actor_doors::Doors;
-    use boss_ceres_ridley::{CeresDoor, DoorKind, Phase, Wait};
-    use types::{Parts, Side};
+    use boss_ceres_ridley::{Phase, Wait};
 
     let fixture = Fixture::new();
     let mut current = fixture.offer.dependency.clone();
@@ -414,15 +413,6 @@ fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
     second.instruction_timer = 2;
     second.geometry.position.x = Wrapping(600 * 65536);
     let wait = Wait::new(2).unwrap();
-    let door = |phase, actor: &ActorSeed| CeresDoor {
-        kind: DoorKind::Door,
-        facing: Side::Left,
-        position: Pair {
-            x: actor.geometry.position.x.pixel(),
-            y: actor.geometry.position.y.pixel(),
-        },
-        phase,
-    };
     let [a, b] = &current.actors;
     let doors = Doors::new(
         [
@@ -450,10 +440,34 @@ fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
     }));
     let restored: Doors = canonical::from_bytes(&canonical::to_bytes(&waited)).unwrap();
     assert_eq!(restored, waited);
+    assert_first_door_closes(restored, &current, views, membership, far);
+
+    let mut stale_geometry = current.clone();
+    let [first, _] = &mut stale_geometry.actors;
+    first.geometry.position.x.0 = first.geometry.position.x.0.wrapping_add(65536);
     assert!(
         restored
-            .run(&current, views, membership, far, 456)
+            .run(&stale_geometry, views, membership, far, 456)
             .is_none()
+    );
+    let [a, b] = &current.actors;
+    let stale_wait = Wait::new(1).unwrap();
+    assert!(
+        Doors::new(
+            [
+                (
+                    ActorSlotIdentity(3),
+                    door(Phase::Open { wait: stale_wait }, a)
+                ),
+                (
+                    ActorSlotIdentity(9),
+                    door(Phase::Closed { wait: stale_wait }, b)
+                ),
+            ],
+            &current.actors,
+            [true, false],
+        )
+        .is_none()
     );
     let (polled, second_window) = restored
         .run(&current, views, membership, near, 456)
@@ -464,6 +478,75 @@ fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
             && actor.graphics_updated == GraphicsUpdated::Set
             && actor.frame_counter == AdministrativeCounter(1)
     }));
+    rejects_contradictory_touch(&first_window, views, membership, near);
+    assert!(!doors.matches(&first_window));
+    assert!(!restored.matches(&second_window));
+}
+
+/// Far from Samus, the waited open door starts closing; the closed one stays interactive.
+fn assert_first_door_closes(
+    restored: super::super::actor_doors::Doors,
+    current: &ActorUnselectedOrigin,
+    views: [ActorViewDisposition; 2],
+    membership: &ActorEligibilityReceipt,
+    far: Pair<types::Px>,
+) {
+    use boss_ceres_ridley::{Phase, Quarter, Rules};
+
+    let (closed_in, closing_receipt) = restored.run(current, views, membership, far, 456).unwrap();
+    let [first, second] = closed_in.current_models().unwrap();
+    assert_eq!(
+        first.phase,
+        Phase::Closing {
+            quarter: Quarter::First,
+            wait: Rules::default().hold
+        }
+    );
+    assert!(matches!(second.phase, Phase::Closed { .. }));
+    assert_eq!(
+        closing_receipt.visible_layer_two,
+        Some(ActorSlotIdentity(3))
+    );
+    assert_eq!(closing_receipt.interactive, [ActorSlotIdentity(9)]);
+    let mut following_eligibility = membership.dependency.clone();
+    closed_in
+        .current_eligibility(&mut following_eligibility)
+        .unwrap();
+    for slot in [3, 9] {
+        assert!(matches!(
+            following_eligibility.slots.get(slot),
+            Some(super::super::borrowed::ActorSlot::Occupied {
+                intangible: false,
+                ..
+            })
+        ));
+    }
+}
+
+fn door(phase: boss_ceres_ridley::Phase, actor: &ActorSeed) -> boss_ceres_ridley::CeresDoor {
+    use types::Parts;
+
+    boss_ceres_ridley::CeresDoor {
+        kind: boss_ceres_ridley::DoorKind::Door,
+        facing: types::Side::Left,
+        position: Pair {
+            x: actor.geometry.position.x.pixel(),
+            y: actor.geometry.position.y.pixel(),
+        },
+        phase,
+    }
+}
+
+/// A carried intangible touch contradicts the second door's interactive slot.
+fn rejects_contradictory_touch(
+    first_window: &ActorUpdateCompletion,
+    views: [ActorViewDisposition; 2],
+    membership: &ActorEligibilityReceipt,
+    near: Pair<types::Px>,
+) {
+    use super::super::actor_doors::Doors;
+    use boss_ceres_ridley::{Phase, Wait};
+
     let mut mismatched = first_window.dependency.clone();
     for (source, elapsed) in mismatched.actors.iter_mut().zip(&first_window.actors) {
         source.instruction_timer = elapsed.instruction_timer;
@@ -488,6 +571,4 @@ fn carried_doors_poll_after_restore_and_reject_stale_position_or_timer() {
             .is_none(),
         "carried actor touch contradicts the selected interactive slot"
     );
-    assert!(!doors.matches(&first_window));
-    assert!(!restored.matches(&second_window));
 }

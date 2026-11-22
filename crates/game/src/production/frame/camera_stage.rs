@@ -257,34 +257,14 @@ pub enum Fault {
     Unsupported,
 }
 
-impl Stage {
-    /// Run the actual clean follow from completed movement into a retained candidate.
-    /// No candidate viewport is exposed to drawing before actual physical completion.
-    /// # Errors
-    /// Repeated choice, unfinished movement, wrong previous centre or invalid room.
-    pub fn choose(
-        &mut self,
-        camera: &Model<CameraPin>,
-        previous: &Previous,
-        movement: &Movement,
-        inputs: &Inputs,
-    ) -> Result<&Receipt, Fault> {
-        if camera.0.seen() != previous.0.0.position {
-            return Err(Fault::Previous);
-        }
-        self.choose_from_current_history(camera, previous, movement, inputs)
-    }
-
-    pub(super) fn choose_from_current_history(
-        &mut self,
-        camera: &Model<CameraPin>,
-        previous: &Previous,
-        movement: &Movement,
-        inputs: &Inputs,
-    ) -> Result<&Receipt, Fault> {
-        if !matches!(self, Self::Idle) {
-            return Err(Fault::Order);
-        }
+impl Receipt {
+    pub(super) fn follow(&self) -> Result<Model<CameraPin>, Fault> {
+        let Self {
+            previous,
+            movement,
+            inputs,
+            ..
+        } = self;
         if inputs.grapple == Activity::Active
             || inputs.knockback == Activity::Active
             || inputs.hook == Activity::Active
@@ -313,14 +293,47 @@ impl Stage {
             lead: inputs.lead.model(),
             time_stopped: inputs.time_stopped,
         };
-        let next = Model(camera.0.step(&inputs.tuning.model(), &frame));
+        Ok(Model(self.initial.0.step(&inputs.tuning.model(), &frame)))
+    }
+}
+
+impl Stage {
+    /// Run the actual clean follow from completed movement into a retained candidate.
+    /// No candidate viewport is exposed to drawing before actual physical completion.
+    /// # Errors
+    /// Repeated choice, unfinished movement, wrong previous centre or invalid room.
+    pub fn choose(
+        &mut self,
+        camera: &Model<CameraPin>,
+        previous: &Previous,
+        movement: &Movement,
+        inputs: &Inputs,
+    ) -> Result<&Receipt, Fault> {
+        if camera.0.seen() != previous.0.0.position {
+            return Err(Fault::Previous);
+        }
+        self.choose_from_current_history(camera, previous, movement, inputs)
+    }
+
+    pub(super) fn choose_from_current_history(
+        &mut self,
+        camera: &Model<CameraPin>,
+        previous: &Previous,
+        movement: &Movement,
+        inputs: &Inputs,
+    ) -> Result<&Receipt, Fault> {
+        if !matches!(self, Self::Idle) {
+            return Err(Fault::Order);
+        }
+        let receipt = Receipt {
+            initial: *camera,
+            previous: previous.clone(),
+            movement: movement.clone(),
+            inputs: inputs.clone(),
+        };
+        let next = receipt.follow()?;
         *self = Self::Offered {
-            receipt: Box::new(Receipt {
-                initial: *camera,
-                previous: previous.clone(),
-                movement: movement.clone(),
-                inputs: inputs.clone(),
-            }),
+            receipt: Box::new(receipt),
             next,
         };
         match self {
@@ -353,8 +366,8 @@ impl Stage {
         let (Self::Offered { receipt, next } | Self::Charging { receipt, next, .. }) = self else {
             return Err(Fault::Order);
         };
-        contract.check(receipt, next)?;
-        Requests::from_receipt(receipt)?.bind(&contract.template)
+        let template = contract.select(receipt, next)?;
+        Requests::from_receipt(receipt)?.bind(template)
     }
 
     /// Retain one actual hardware result from this pending Camera operation.

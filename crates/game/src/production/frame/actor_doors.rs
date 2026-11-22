@@ -6,15 +6,17 @@ use super::borrowed_player_preparation::{
     CurrentActor, GraphicsUpdated,
 };
 use super::borrowed_preparation::{ActorEligibilityReceipt, ActorSlotIdentity};
-use boss_ceres_ridley::{CeresDoor, DoorKind, Inputs, Phase, Rules, Stage, Wait};
+use boss_ceres_ridley::{CeresDoor, DoorKind, Inputs, Phase, Quarter, Rules, Stage, Wait};
 use canonical::Canonical;
 use core::num::Wrapping;
 use types::{Pair, Parts, Px, Side};
 
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-enum Figure {
+enum DoorPhase {
     Open,
     Closed,
+    ClosingFirst,
+    ClosingSecond,
 }
 
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
@@ -80,8 +82,11 @@ impl Body {
         if y > 248 {
             Some(ActorViewDisposition::BelowPaddedView)
         } else {
-            self.invisible
-                .then_some(ActorViewDisposition::WithinPaddedViewButInvisible)
+            Some(if self.invisible {
+                ActorViewDisposition::WithinPaddedViewButInvisible
+            } else {
+                ActorViewDisposition::WithinPaddedView
+            })
         }
     }
 }
@@ -96,7 +101,7 @@ fn relative(position: u16, reference: u16) -> i32 {
 struct Door {
     identity: ActorSlotIdentity,
     facing: Facing,
-    figure: Figure,
+    phase: DoorPhase,
     wait: u16,
     frames: u16,
     graphics_updated: bool,
@@ -105,9 +110,17 @@ struct Door {
 
 impl Door {
     fn admit(identity: ActorSlotIdentity, door: CeresDoor, body: Body) -> Option<Self> {
-        let (figure, wait) = match door.phase {
-            Phase::Open { wait } => (Figure::Open, wait),
-            Phase::Closed { wait } => (Figure::Closed, wait),
+        let (phase, wait) = match door.phase {
+            Phase::Open { wait } => (DoorPhase::Open, wait),
+            Phase::Closed { wait } => (DoorPhase::Closed, wait),
+            Phase::Closing {
+                quarter: Quarter::First,
+                wait,
+            } => (DoorPhase::ClosingFirst, wait),
+            Phase::Closing {
+                quarter: Quarter::Second,
+                wait,
+            } => (DoorPhase::ClosingSecond, wait),
             Phase::Placed
             | Phase::Starting { .. }
             | Phase::Opening { .. }
@@ -123,7 +136,7 @@ impl Door {
                 Side::Left => Facing::Left,
                 Side::Right => Facing::Right,
             },
-            figure,
+            phase,
             wait: wait.frames(),
             frames: 0,
             graphics_updated: false,
@@ -131,23 +144,41 @@ impl Door {
         })
     }
 
-    fn run(self, inputs: &Inputs, rules: &Rules) -> Option<Self> {
+    fn model(self) -> Option<CeresDoor> {
         let wait = Wait::new(self.wait)?;
-        let door = CeresDoor {
+        Some(CeresDoor {
             kind: DoorKind::Door,
             facing: match self.facing {
                 Facing::Left => Side::Left,
                 Facing::Right => Side::Right,
             },
             position: self.body.centre(),
-            phase: match self.figure {
-                Figure::Open => Phase::Open { wait },
-                Figure::Closed => Phase::Closed { wait },
+            phase: match self.phase {
+                DoorPhase::Open => Phase::Open { wait },
+                DoorPhase::Closed => Phase::Closed { wait },
+                DoorPhase::ClosingFirst => Phase::Closing {
+                    quarter: Quarter::First,
+                    wait,
+                },
+                DoorPhase::ClosingSecond => Phase::Closing {
+                    quarter: Quarter::Second,
+                    wait,
+                },
             },
+        })
+    }
+
+    fn run(self, inputs: &Inputs, rules: &Rules) -> Option<Self> {
+        let result = self.model()?.run(inputs, rules);
+        let mut body = self.body;
+        body.invisible = !result.door.phase.shown();
+        body.touch = if result.door.phase.solid() {
+            ActorTouch::Tangible
+        } else {
+            ActorTouch::Intangible
         };
-        let result = door.run(inputs, rules);
-        let mut next = Self::admit(self.identity, result.door, self.body)?;
-        if result.sound.is_some() || result.shake.is_some() || next.figure != self.figure {
+        let mut next = Self::admit(self.identity, result.door, body)?;
+        if result.sound.is_some() || result.shake.is_some() {
             return None;
         }
         next.frames = self.frames.wrapping_add(1);
@@ -194,6 +225,10 @@ pub struct Doors([Door; 2]);
 pub(super) enum Path {
     Waiting,
     Polling,
+    ClosingStarts,
+    ClosingWait,
+    ClosingOtherPoll,
+    ClosingAdvance,
 }
 
 impl Doors {
@@ -213,12 +248,19 @@ impl Doors {
         )?
         .bind(second_actor)?;
         if first.identity == second.identity
-            || first.figure != Figure::Open
-            || second.figure != Figure::Closed
+            || first.phase != DoorPhase::Open
+            || second.phase != DoorPhase::Closed
         {
             return None;
         }
         Some(Self([first, second]))
+    }
+
+    /// Snapshot both actual carried door model operands for the native endpoint projection.
+    #[must_use]
+    pub fn current_models(self) -> Option<[CeresDoor; 2]> {
+        let [first, second] = self.0;
+        Some([first.model()?, second.model()?])
     }
 
     pub(super) fn current_actors(self) -> [ActorSeed; 2] {
@@ -237,27 +279,68 @@ impl Doors {
     pub(super) fn views(self, camera: Pair<u16>) -> Option<[ActorViewDisposition; 2]> {
         let [first, second] = self.0;
         let views = [first.body.view(camera)?, second.body.view(camera)?];
-        (views
-            == [
-                ActorViewDisposition::WithinPaddedViewButInvisible,
+        matches!(
+            views,
+            [
+                ActorViewDisposition::WithinPaddedViewButInvisible
+                    | ActorViewDisposition::WithinPaddedView,
                 ActorViewDisposition::BelowPaddedView,
-            ])
+            ]
+        )
         .then_some(views)
     }
 
     pub(super) fn contact_misses(self, centre: Px, radius: Px) -> bool {
-        let [_, second] = self.0;
-        let distance = relative(second.body.centre().x.0, centre.0).abs();
-        distance >= i32::from(radius.0).wrapping_add(i32::from(second.body.geometry().radius.x.0))
+        self.0.into_iter().all(|door| {
+            door.body.touch == ActorTouch::Intangible
+                || relative(door.body.centre().x.0, centre.0).abs()
+                    >= i32::from(radius.0).wrapping_add(i32::from(door.body.geometry().radius.x.0))
+        })
     }
 
     pub(super) const fn path(self) -> Option<Path> {
         let [first, second] = self.0;
-        match (first.wait, second.wait) {
-            (2, 2) => Some(Path::Waiting),
-            (1, 1) => Some(Path::Polling),
+        match (first.phase, first.wait, second.wait) {
+            (DoorPhase::Open, 2, 2) => Some(Path::Waiting),
+            (DoorPhase::Open, 1, 1) => Some(Path::Polling),
+            (DoorPhase::ClosingFirst | DoorPhase::ClosingSecond, 2.., 2..) => {
+                Some(Path::ClosingWait)
+            }
+            (DoorPhase::ClosingFirst | DoorPhase::ClosingSecond, 2.., 1) => {
+                Some(Path::ClosingOtherPoll)
+            }
+            (DoorPhase::ClosingFirst, 1, 2..) => Some(Path::ClosingAdvance),
             _ => None,
         }
+    }
+
+    pub(super) fn physical_path(self, her: Pair<Px>, random: u16) -> Option<Path> {
+        let path = self.path()?;
+        let [first, _] = self.0;
+        let updated = first.run(&door_inputs(her, random), &Rules::default())?;
+        Some(
+            if path == Path::Polling && updated.phase == DoorPhase::ClosingFirst {
+                Path::ClosingStarts
+            } else {
+                path
+            },
+        )
+    }
+
+    pub(super) fn current_eligibility(
+        self,
+        origin: &mut super::borrowed::ActorEligibilityOrigin,
+    ) -> Option<()> {
+        use super::borrowed::ActorSlot;
+        for door in self.0 {
+            let ActorSlot::Occupied { intangible, .. } =
+                origin.slots.get_mut(usize::from(door.identity.0))?
+            else {
+                return None;
+            };
+            *intangible = door.body.touch == ActorTouch::Intangible;
+        }
+        Some(())
     }
 
     pub(super) fn run(
@@ -276,7 +359,6 @@ impl Doors {
                 .iter()
                 .copied()
                 .eq(self.0.iter().map(|door| door.identity))
-            || membership.active.get(1..) != Some(membership.interactive.as_slice())
             || self.0.iter().any(|door| {
                 let touch = if membership.interactive.contains(&door.identity) {
                     ActorTouch::Tangible
@@ -288,12 +370,7 @@ impl Doors {
         {
             return None;
         }
-        let inputs = Inputs {
-            her,
-            stage: Stage::Calm,
-            random,
-            shake_frames_left: 0,
-        };
+        let inputs = door_inputs(her, random);
         let rules = Rules::default();
         let [a, b] = self.0;
         let next = Self([a.run(&inputs, &rules)?, b.run(&inputs, &rules)?]);
@@ -310,14 +387,24 @@ impl Doors {
                 Some(CurrentActor {
                     identity: door.identity,
                     content: actor.content,
-                    touch: actor.touch,
+                    touch: returned.body.touch,
                     solidity: actor.solidity,
                     geometry: actor.geometry,
                     frame_counter: AdministrativeCounter(returned.frames),
                     instruction_timer: returned.wait,
                     graphics_updated: returned.graphics(),
                     flash_timer: actor.flash_timer,
-                    view,
+                    view: match view {
+                        ActorViewDisposition::BelowPaddedView => view,
+                        ActorViewDisposition::WithinPaddedView
+                        | ActorViewDisposition::WithinPaddedViewButInvisible => {
+                            if returned.body.invisible {
+                                ActorViewDisposition::WithinPaddedViewButInvisible
+                            } else {
+                                ActorViewDisposition::WithinPaddedView
+                            }
+                        }
+                    },
                 })
             })
             .collect::<Option<Vec<_>>>()?
@@ -329,12 +416,32 @@ impl Doors {
             actor.frame_counter = AdministrativeCounter(door.frames);
             actor.graphics_updated = door.graphics();
         }
+        let [first, second]: [CurrentActor; 2] = actors;
+        if second.view == ActorViewDisposition::WithinPaddedView {
+            return None;
+        }
+        let visible_layer_two =
+            (first.view == ActorViewDisposition::WithinPaddedView).then_some(first.identity);
         let output = ActorUpdateCompletion {
             dependency,
-            actors,
+            actors: [first, second],
             interactive: membership.interactive.clone(),
+            visible_layer_two,
         };
         Some((next, output))
+    }
+
+    pub(super) fn drawing_figure(
+        self,
+        identity: ActorSlotIdentity,
+        geometry: ActorGeometry,
+    ) -> Option<boss_ceres_ridley::Figure> {
+        let [first, _] = self.0;
+        let model = first.model()?;
+        if first.identity != identity || first.body.geometry() != geometry || !model.phase.shown() {
+            return None;
+        }
+        model.figure()
     }
 
     #[cfg(test)]
@@ -343,5 +450,14 @@ impl Doors {
             .into_iter()
             .zip(&output.actors)
             .all(|(door, actor)| door.matches(actor))
+    }
+}
+
+const fn door_inputs(her: Pair<Px>, random: u16) -> Inputs {
+    Inputs {
+        her,
+        stage: Stage::Calm,
+        random,
+        shake_frames_left: 0,
     }
 }

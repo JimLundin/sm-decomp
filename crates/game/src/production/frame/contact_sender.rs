@@ -17,6 +17,7 @@ pub struct ContactContinuation {
     matched: Profile,
     empty: Profile,
     clear_reply_delay: MasterTicks,
+    later_reply_delay: Option<MasterTicks>,
 }
 
 impl ContactContinuation {
@@ -50,6 +51,27 @@ impl ContactContinuation {
             matched: quiet(&matched, 190)?,
             empty: quiet(empty, 122)?,
             clear_reply_delay,
+            later_reply_delay: None,
+        })
+    }
+
+    /// Admit the independent one-shot Footstep reply after the next actual retry.
+    /// # Errors
+    /// A response delivered at its CPU trigger would bypass the independently observed delay.
+    pub const fn admit_later_reply(&mut self, delay: MasterTicks) -> Result<(), Fault> {
+        if delay.0 == 0 {
+            return Err(Fault::Profile);
+        }
+        self.later_reply_delay = Some(delay);
+        Ok(())
+    }
+
+    pub(super) fn later_reply_at(&self, retry: MasterTicks, now: MasterTicks) -> Option<Request> {
+        let arrival = retry.0.checked_add(self.later_reply_delay?.0)?;
+        Some(if arrival <= now.0 {
+            Request::Cue(CueId::Footstep)
+        } else {
+            Request::Absent
         })
     }
 

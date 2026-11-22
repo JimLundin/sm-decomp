@@ -306,7 +306,6 @@ impl State {
             return Err(fault);
         }
         let scene = prepared.gameplay.as_ref().ok_or(fault)?.scene;
-        Self::recurring_actor_profile(content, doors)?;
         if self.scene != Some(scene)
             || scene != super::borrowed_gameplay::SceneController::MainGameplay
             || self
@@ -350,14 +349,10 @@ impl State {
             shake_requested: false,
             contact: owners.contact,
         };
+        let random = self.current_random().ok_or(fault)?;
+        Self::recurring_actor_profile(content, doors.physical_path(her, random).ok_or(fault)?)?;
         doors
-            .run(
-                &current,
-                views,
-                membership,
-                her,
-                self.current_random().ok_or(fault)?,
-            )
+            .run(&current, views, membership, her, random)
             .ok_or(fault)
     }
 
@@ -480,12 +475,17 @@ impl State {
     /// Bind only the full no-device-effect envelope after semantic admission succeeds.
     fn recurring_actor_profile(
         content: &Content,
-        doors: super::actor_doors::Doors,
+        path: super::actor_doors::Path,
     ) -> Result<&data::timing::Template, ProductionFault> {
+        use super::actor_doors::Path;
         let profiles = content.player_continuation.as_ref().ok_or_else(missing)?;
-        match doors.path().ok_or_else(missing)? {
-            super::actor_doors::Path::Waiting => profiles.recurring_waiting_actors.as_ref(),
-            super::actor_doors::Path::Polling => profiles.recurring_actors.as_ref(),
+        match path {
+            Path::Waiting => profiles.recurring_waiting_actors.as_ref(),
+            Path::Polling => profiles.recurring_actors.as_ref(),
+            Path::ClosingStarts => profiles.closing_starts.as_ref(),
+            Path::ClosingWait => profiles.closing_wait.as_ref(),
+            Path::ClosingOtherPoll => profiles.closing_other_poll.as_ref(),
+            Path::ClosingAdvance => profiles.closing_advance.as_ref(),
         }
         .ok_or_else(missing)
     }
@@ -500,8 +500,24 @@ impl State {
             && matches!(&self.caller, Caller::PlayerContinuation { prepared, .. }
                 if prepared.prelude.origin().is_none())
         {
-            let doors = self.recurring_player.as_ref().ok_or_else(missing)?.doors;
-            Self::recurring_actor_profile(content, doors)?
+            let owners = self.recurring_player.as_ref().ok_or_else(missing)?;
+            let doors = owners.completed_door_input.unwrap_or(owners.doors);
+            let Caller::PlayerContinuation {
+                motion_reset: Some(reset),
+                ..
+            } = &self.caller
+            else {
+                return Err(missing());
+            };
+            let samus = reset.previous.0.position;
+            let her = types::Pair {
+                x: samus.x.pixel(),
+                y: samus.y.pixel(),
+            };
+            let path = doors
+                .physical_path(her, self.current_random().ok_or_else(missing)?)
+                .ok_or_else(missing)?;
+            Self::recurring_actor_profile(content, path)?
         } else {
             profiles
                 .template(stage)

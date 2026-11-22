@@ -103,6 +103,10 @@ impl State {
         }
         if let Some(owners) = &mut self.recurring_player {
             owners.completed_door_input = None;
+            owners
+                .doors
+                .current_eligibility(self.actor_eligibility.as_mut().ok_or_else(missing)?)
+                .ok_or_else(missing)?;
         }
         self.movement_stage = super::movement_stage::Stage::default();
         self.inside_inputs = None;

@@ -33,6 +33,18 @@ pub struct Picture {
 pub struct Content {
     sheet: SpriteSheet,
     pictures: Vec<Picture>,
+    door: Option<DoorArt>,
+}
+
+/// Checked first-door figures and immutable graphics state from the loaded actor.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DoorArt {
+    /// Import-selected open and ajar figures for the qualified facing.
+    pub figures: [data::spritemap::Spritemap; 2],
+    /// Initial actor tile-base addition.
+    pub tile_base: u16,
+    /// Initial carried actor palette and attributes.
+    pub attributes: u16,
 }
 
 /// Current independently admitted normal-drawing dependencies.
@@ -321,7 +333,11 @@ impl Content {
                 }
             }
         }
-        Ok(Self { sheet, pictures })
+        Ok(Self {
+            sheet,
+            pictures,
+            door: None,
+        })
     }
 
     /// Bind clean steps through the existing checked native-frame content map.
@@ -353,11 +369,153 @@ impl Content {
         Self::new(assets.sheet.clone(), pictures)
     }
 
+    pub(super) fn admit_door(&mut self, door: DoorArt) {
+        self.door = Some(door);
+    }
+
+    pub(super) fn append_actor(
+        &self,
+        frame: &super::State,
+        actors: &super::borrowed_player_preparation::ActorUpdateCompletion,
+        premises: Premises,
+        builder: &mut SpriteBuilderOrigin,
+    ) -> Result<(), Fault> {
+        use boss_ceres_ridley::FigureLook;
+        use data::spritemap::{SpriteAttributes, SpriteSize};
+        let Some(slot) = actors.visible_layer_two else {
+            return Ok(());
+        };
+        let actor = actors
+            .actors
+            .iter()
+            .find(|actor| actor.identity == slot)
+            .ok_or(Fault::Content)?;
+        if builder.cursor != 0
+            || actor.view
+                != super::borrowed_player_preparation::ActorViewDisposition::WithinPaddedView
+            || premises.shake != [0, 0]
+        {
+            return Err(Fault::Unsupported);
+        }
+        let figure = frame
+            .recurring_player
+            .as_ref()
+            .ok_or(Fault::Content)?
+            .doors
+            .drawing_figure(slot, actor.geometry)
+            .ok_or(Fault::Content)?;
+        if figure.facing != types::Side::Right {
+            return Err(Fault::Unsupported);
+        }
+        let content = self.door.as_ref().ok_or(Fault::Content)?;
+        let [open, ajar] = &content.figures;
+        let source = match figure.look {
+            FigureLook::Open => open,
+            FigureLook::Ajar3 => ajar,
+            FigureLook::Closed | FigureLook::Ajar1 | FigureLook::Ajar2 => {
+                return Err(Fault::Unsupported);
+            }
+        };
+        let [vx, vy] = premises.camera;
+        let position = actor.geometry.position;
+        let origin = Pair {
+            x: crate::intent::on_screen(position.x.pixel().0, vx),
+            y: crate::intent::on_screen(position.y.pixel().0, vy),
+        };
+        if source.entries.len() != 6
+            || source.entries.iter().any(|entry| {
+                entry.size != SpriteSize::Small
+                    || u8::try_from(origin.x.wrapping_add(i32::from(entry.x))).is_err()
+            })
+        {
+            return Err(Fault::Unsupported);
+        }
+        let mut draw = SpriteDraw::default();
+        draw.place(source, origin);
+        for piece in &mut draw.pieces {
+            piece.look = SpriteAttributes::from_word(
+                piece.look.word().wrapping_add(content.tile_base) | content.attributes,
+            );
+        }
+        let mut output = batch(builder)?;
+        output.draw_sprites(&draw);
+        retain(builder, &output);
+        Ok(())
+    }
+
     fn picture(&self, figure: Figure, step: Step) -> Result<&Picture, Fault> {
         self.pictures
             .iter()
             .find(|picture| picture.figure == figure && picture.step == step)
             .ok_or(Fault::Content)
+    }
+
+    /// Append Samus's picture for one figure and step at its drawn centre.
+    /// Returns the number of pieces written.
+    fn draw_picture(
+        &self,
+        figure: Figure,
+        step: Step,
+        centre: [u16; 2],
+        premises: Premises,
+        builder: &mut SpriteBuilderOrigin,
+    ) -> Result<u16, Fault> {
+        let picture = self.picture(figure, step)?;
+        if picture.frame.chest {
+            return Err(Fault::Unsupported);
+        }
+        let origin = Pair {
+            x: premises.horizontal_origin(centre[0]),
+            y: crate::intent::on_screen(centre[1], premises.camera[1])
+                .wrapping_add(i32::from(picture.frame.origin_y))
+                .wrapping_add(i32::from(premises.shake[1])),
+        };
+        let mut draw = SpriteDraw::default();
+        for id in [picture.frame.top, picture.frame.bottom]
+            .into_iter()
+            .flatten()
+        {
+            draw.place(self.sheet.sprite(id).ok_or(Fault::Content)?, origin);
+        }
+        let pieces = u16::try_from(draw.pieces.len()).map_err(|_| Fault::Capacity)?;
+        let end = usize::from(builder.cursor / 4)
+            .checked_add(draw.pieces.len())
+            .ok_or(Fault::Capacity)?;
+        if end >= OAM_SPRITES {
+            return Err(Fault::Capacity);
+        }
+        let mut output = batch(builder)?;
+        output.draw_sprites(&draw);
+        retain(builder, &output);
+        Ok(pieces)
+    }
+
+    /// Repeat a completed draw's sprite appends onto the builder it started from.
+    /// A restored checkpoint must carry exactly these bytes until finalization.
+    /// # Errors
+    /// The receipt's actor or picture content is unavailable, or its appends differ.
+    pub(super) fn redraw(
+        &self,
+        frame: &super::State,
+        actors: &super::borrowed_player_preparation::ActorUpdateCompletion,
+        receipt: &NormalDrawingReceipt,
+        builder: &mut SpriteBuilderOrigin,
+    ) -> Result<(), Fault> {
+        self.append_actor(frame, actors, receipt.premises, builder)?;
+        if builder.cursor != receipt.first_byte {
+            return Err(Fault::Completion);
+        }
+        let pieces = self.draw_picture(
+            receipt.figure.0,
+            Step(receipt.shown_step.0),
+            receipt.centre,
+            receipt.premises,
+            builder,
+        )?;
+        if pieces != receipt.pieces {
+            return Err(Fault::Completion);
+        }
+        Ok(())
     }
 
     pub(super) fn running_maps(
@@ -492,45 +650,20 @@ impl Stage {
             return Err(Fault::Unsupported);
         }
         let step = appearance.model.0.state.playhead.step;
-        let picture = content.picture(figure, step)?;
-        if picture.frame.chest {
-            return Err(Fault::Unsupported);
-        }
         let centre = [
             movement.state().position.x.pixel().0,
             movement.state().position.y.pixel().0,
         ];
-        let origin = Pair {
-            x: premises.horizontal_origin(centre[0]),
-            y: crate::intent::on_screen(centre[1], premises.camera[1])
-                .wrapping_add(i32::from(picture.frame.origin_y))
-                .wrapping_add(i32::from(premises.shake[1])),
-        };
-        let mut draw = SpriteDraw::default();
-        for id in [picture.frame.top, picture.frame.bottom]
-            .into_iter()
-            .flatten()
-        {
-            draw.place(content.sheet.sprite(id).ok_or(Fault::Content)?, origin);
-        }
-        let pieces = u16::try_from(draw.pieces.len()).map_err(|_| Fault::Capacity)?;
-        let end = usize::from(builder.cursor / 4)
-            .checked_add(draw.pieces.len())
-            .ok_or(Fault::Capacity)?;
-        if end >= OAM_SPRITES {
-            return Err(Fault::Capacity);
-        }
-        let mut output = batch(builder)?;
-        output.draw_sprites(&draw);
+        let first_byte = builder.cursor;
+        let pieces = content.draw_picture(figure, step, centre, premises, builder)?;
         let receipt = NormalDrawingReceipt {
             figure: Model(figure),
             shown_step: ShownStep(step.0),
             centre,
             premises,
-            first_byte: builder.cursor,
+            first_byte,
             pieces,
         };
-        retain(builder, &output);
         *self = Self::Chosen(receipt);
         let Self::Chosen(receipt) = self else {
             return Err(Fault::Order);

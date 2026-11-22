@@ -248,12 +248,12 @@ impl Baseline {
 
 fn expanded_counts(case: &Case, counts: &Counts) -> Option<bool> {
     if case.opening_contact_cycle() {
-        let observed_endpoints = counts.cuts.saturating_sub(2);
-        let fields = observed_endpoints
-            .checked_mul(3)
-            .and_then(|contact| contact.checked_add(counts.cuts));
-        let reads = [0, 0, 1, 2, 2, 2, 3, 4, 4];
-        let writes = [0, 1, 2, 2, 2, 3, 4, 4, 4];
+        use super::frame::opening_contact::field_count;
+        let fields = field_count(counts.cuts, case.opening_ground_corridor());
+        // Cumulative CPU audio port reads and writes the locked opening capture records through
+        // each return. The eight-return cycle compares a prefix of the ground corridor's sixteen.
+        let reads = [0, 0, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 5, 6, 6, 6, 7];
+        let writes = [0, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 5, 6, 6, 6, 7, 8];
         return Some(
             fields == Some(counts.fields)
                 && reads.get(counts.cuts) == Some(&counts.replies)
@@ -451,6 +451,32 @@ mod tests {
         assert_eq!(expanded_counts(case, &floor.counts), Some(false));
         floor.counts.replies = 1;
         assert_eq!(expanded_counts(case, &floor.counts), Some(true));
+    }
+
+    #[test]
+    fn ground_corridor_baseline_counts_follow_its_compared_owners() {
+        let index =
+            IndexSnapshot::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
+        let baseline: Baseline =
+            toml::from_str(include_str!("../../../../scenarios/replay/baseline.toml")).unwrap();
+        let case = index
+            .index()
+            .cases
+            .iter()
+            .find(|case| case.id.0 == "frame/opening-sixteen-native-returns")
+            .unwrap();
+        let floor = baseline
+            .cases
+            .into_iter()
+            .find(|floor| floor.id == case.id)
+            .unwrap();
+        assert!(valid_counts(case, &floor));
+        let mut fewer_replies = floor.counts.clone();
+        fewer_replies.replies = 6;
+        assert_eq!(expanded_counts(case, &fewer_replies), Some(false));
+        let mut fewer_fields = floor.counts;
+        fewer_fields.fields = 88;
+        assert_eq!(expanded_counts(case, &fewer_fields), Some(false));
     }
 
     fn fixture() -> (IndexSnapshot, Baseline, CaseResult) {

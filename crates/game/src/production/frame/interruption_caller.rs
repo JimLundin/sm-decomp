@@ -8,7 +8,7 @@ use crate::production::{ProductionFault, Unsupported, timing};
 use canonical::Canonical;
 use data::timing::{Profile, Template, TemplateEffect};
 use samus_movement::suspended::MovementDecision;
-use types::{CandidateResult, CollisionPurpose, Direction, MotionResult, MovementWork};
+use types::{CollisionPurpose, Direction, MotionResult, MovementWork};
 
 pub(super) const WORK: timing::WorkId = timing::WorkId(1107);
 
@@ -233,11 +233,10 @@ impl movement_down_contract::Completion {
         let [MovementWork::Motion(attempt)] = outputs.movement_work.as_slice() else {
             return false;
         };
-        let [candidate] = attempt
-            .enemy_search
-            .as_ref()
-            .map_or(&[][..], |search| search.candidates.as_slice())
-        else {
+        let Some(search) = &attempt.enemy_search else {
+            return false;
+        };
+        let Ok(boxes) = self.receipt.actors.0.solid_boxes() else {
             return false;
         };
         self.work == timing::WorkId(1004)
@@ -245,7 +244,7 @@ impl movement_down_contract::Completion {
             && request.direction == Direction::Down
             && request.purpose == CollisionPurpose::GroundFollowing
             && attempt.result == MotionResult::TerrainStopped
-            && candidate.result == CandidateResult::Miss
+            && super::movement_pair_contract::ordered_misses(search, &boxes)
             && outputs.floor_response.is_none()
             && chosen.model.0.offered.as_ref() == Some(tail)
             && current.model.0.offered.is_none()

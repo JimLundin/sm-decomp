@@ -830,6 +830,7 @@ pub(super) fn decode(
         sender_stage: frame::sender_stage::Stage::default(),
         contact_retried_at: None,
         contact_clear_retried_at: None,
+        contact_later_retried_at: None,
         completed_contact_read: None,
         sound_offers: frame::sender_stage::Offers::default(),
         content: origin.content,

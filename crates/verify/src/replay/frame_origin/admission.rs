@@ -500,6 +500,7 @@ fn assemble(
             pose_fit: admit.pose_fit()?,
             adjacent_animation: None,
             recurring_animation_advance: None,
+            recurring_animation_loop: None,
             health,
             adjacent_health_context: None,
             scene_countdown: seed.scene_countdown.map(|(admission, _)| admission),
@@ -591,7 +592,7 @@ fn admit_full(
         content.health.as_ref(),
     )?;
     adjacent_tail::bind(case, sources, &wram, &clips, &mut state, &mut content)?;
-    opening_clock::bind(case, sources, &mut state, &mut content)?;
+    opening_clock::bind(case, sources, &wram, &mut state, &mut content)?;
     let frame_assets = ProductionContent::Frame(Box::new(content));
     let rules = ProductionRules::Frame(Box::new(frame::Rules {
         movement: samus_movement::Rules::default(),
@@ -625,7 +626,10 @@ fn admit_full(
                 .transpose()?,
         }),
         expected: ExpectedReader::Frame(Box::new(returns.expected)),
-        actual: ActualReader::Frame(replay::frame::Actual::new(case.opening_contact_cycle())),
+        actual: ActualReader::Frame(replay::frame::Actual::new(
+            case.opening_contact_cycle(),
+            case.opening_ground_corridor(),
+        )),
         schedule: returns.schedule,
     })
 }

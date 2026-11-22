@@ -82,6 +82,12 @@ impl Contract {
         adjacent.admit(dependencies, camera_stage::Horizontal::NearRoomEdge);
     }
 
+    /// Admit the crossed backward aim and both rightward edge envelopes.
+    #[must_use]
+    pub fn admit_edge_profiles(&mut self, profiles: [Template; 3]) -> Option<()> {
+        self.adjacent.as_mut()?.admit_edge_profiles(profiles)
+    }
+
     fn dependencies(
         &self,
         current: camera_stage::RequiredCentre,
@@ -183,6 +189,28 @@ impl State {
             )));
         }
         Ok(camera_stage::Previous(reset.previous))
+    }
+
+    pub(super) fn validate_completed_camera(&self, content: &Content) -> Result<(), super::Fault> {
+        let Some(camera) = self.s6_camera.following() else {
+            return Ok(());
+        };
+        let invalid = || super::Fault::InvalidPlayerEntry;
+        let camera_stage::Stage::Completed(receipt) = camera else {
+            return Err(invalid());
+        };
+        let contract = content.s6_camera.as_ref().ok_or_else(invalid)?;
+        let previous = self
+            .qualified_camera_owners(contract)
+            .map_err(|_| invalid())?;
+        if receipt.previous != previous
+            || receipt.movement != self.movement
+            || receipt.inputs != contract.inputs
+            || receipt.follow().map_err(|_| invalid())? != self.camera
+        {
+            return Err(invalid());
+        }
+        Ok(())
     }
 
     pub(super) fn advance_before_drawing(

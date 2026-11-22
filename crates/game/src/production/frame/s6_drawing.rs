@@ -24,6 +24,7 @@ pub struct Contract {
     rendering: super::rendering_stage::Content,
     adjacent: Option<Adjacent>,
     recurring: Option<RecurringProfiles>,
+    mixed_actor: Option<Profile>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -64,6 +65,7 @@ impl Contract {
             rendering,
             adjacent: None,
             recurring: None,
+            mixed_actor: None,
         })
     }
 
@@ -115,6 +117,19 @@ impl Contract {
         self.recurring = Some(profiles);
     }
 
+    /// Admit the single visible actor layer splice and both imported current door figures.
+    /// # Errors
+    /// The splice contains an incompatible hardware effect or invalid physical profile.
+    pub fn admit_mixed_actor(
+        &mut self,
+        profile: &Template,
+        art: super::rendering_stage::DoorArt,
+    ) -> Result<(), ProductionFault> {
+        self.mixed_actor = Some(Self::bind(profile)?);
+        self.rendering.admit_door(art);
+        Ok(())
+    }
+
     fn drawing_profile(
         &self,
         state: &State,
@@ -147,7 +162,9 @@ impl Contract {
             return Err(missing());
         }
         if let Some(recurring) = &self.recurring {
-            return recurring.profile(&self.rendering, receipt).map(Cow::Owned);
+            return recurring
+                .profile(&self.rendering, receipt, self.mixed_actor.as_ref())
+                .map(Cow::Owned);
         }
         self.adjacent
             .as_ref()
@@ -303,11 +320,19 @@ impl State {
             if self.current_drawing_energy() != Some(pending.energy) {
                 return Err(InvalidPlayerEntry);
             }
-            let profile = content
-                .s6_drawing
-                .as_ref()
-                .ok_or(InvalidPlayerEntry)?
-                .drawing_profile(self, pending.aggregate.receipt(), pending.energy)
+            let contract = content.s6_drawing.as_ref().ok_or(InvalidPlayerEntry)?;
+            let inputs = self.drawing_inputs().map_err(|_| InvalidPlayerEntry)?;
+            let (selected, aggregate) = self
+                .select_drawing(contract, &inputs)
+                .map_err(|_| InvalidPlayerEntry)?;
+            if aggregate != pending.aggregate
+                || selected != pending.selected
+                || *inputs.builder != pending.builder
+            {
+                return Err(InvalidPlayerEntry);
+            }
+            let profile = contract
+                .drawing_profile(self, aggregate.receipt(), pending.energy)
                 .map_err(|_| InvalidPlayerEntry)?;
             self.validate_drawing_profile(DRAWING, profile.as_ref())
                 .map_err(|_| InvalidPlayerEntry)?;
@@ -340,6 +365,41 @@ impl State {
             || history.previous_health() != expected
             || deferred != decreased
         {
+            return Err(InvalidPlayerEntry);
+        }
+        Ok(())
+    }
+
+    /// A completed builder must be its retained draw repeated on the prepared builder.
+    /// Finalization and the native return read this builder, so a restore cannot
+    /// supply other sprite bytes.
+    pub(super) fn validate_drawn_builder(&self, content: &Content) -> Result<(), super::Fault> {
+        use super::Fault::InvalidPlayerEntry;
+        let Some(drawn) = self.s6_drawing.builder() else {
+            return Ok(());
+        };
+        let Caller::PlayerContinuation {
+            prepared,
+            remaining,
+            ..
+        } = &self.caller
+        else {
+            return Err(InvalidPlayerEntry);
+        };
+        let contract = content.s6_drawing.as_ref().ok_or(InvalidPlayerEntry)?;
+        let receipt = self.rendering.receipt().ok_or(InvalidPlayerEntry)?;
+        let actors = remaining.0.actors.as_ref().ok_or(InvalidPlayerEntry)?;
+        let mut expected = prepared
+            .builder
+            .as_ref()
+            .ok_or(InvalidPlayerEntry)?
+            .terminal
+            .clone();
+        contract
+            .rendering
+            .redraw(self, actors, receipt, &mut expected)
+            .map_err(|_| InvalidPlayerEntry)?;
+        if expected != *drawn {
             return Err(InvalidPlayerEntry);
         }
         Ok(())
@@ -401,6 +461,31 @@ impl State {
         })
     }
 
+    fn select_drawing(
+        &self,
+        contract: &Contract,
+        inputs: &DrawingInputs<'_>,
+    ) -> Result<
+        (
+            appearance_caller::Stage,
+            appearance_caller::DrawingAggregate,
+        ),
+        appearance_caller::Fault,
+    > {
+        let mut candidate = self.clone();
+        let mut selected = appearance_caller::Stage::Idle;
+        let aggregate = appearance_caller::DrawingAggregate::choose(
+            &mut selected,
+            &mut candidate,
+            inputs.builder,
+            &contract.rendering,
+            inputs.origins,
+            &inputs.completed,
+        )?;
+        selected.bind(DRAWING)?;
+        Ok((selected, aggregate))
+    }
+
     pub(super) fn advance_live_drawing(
         &mut self,
         content: &Content,
@@ -416,28 +501,20 @@ impl State {
             }
             Progress::Bridge => self.validate_drawing_profile(BRIDGE, &contract.bridge)?,
             Progress::DrawingReady => {
-                let mut candidate = self.clone();
-                let mut selected = appearance_caller::Stage::Idle;
-                let aggregate = appearance_caller::DrawingAggregate::choose(
-                    &mut selected,
-                    &mut candidate,
-                    inputs.builder,
-                    &contract.rendering,
-                    inputs.origins,
-                    &inputs.completed,
-                )
-                .map_err(|fault| {
-                    let dependency = match fault {
-                        appearance_caller::Fault::Owner => Dependency::DrawingCurrentOwners,
-                        appearance_caller::Fault::Rendering(_) => Dependency::DrawingRendering,
-                        appearance_caller::Fault::Order
-                        | appearance_caller::Fault::Sequence
-                        | appearance_caller::Fault::Identity
-                        | appearance_caller::Fault::Appearance(_) => Dependency::DrawingAppearance,
-                    };
-                    ProductionFault::Unsupported(Unsupported::Frame(dependency))
-                })?;
-                selected.bind(DRAWING).map_err(|_| missing())?;
+                let (selected, aggregate) =
+                    self.select_drawing(contract, &inputs).map_err(|fault| {
+                        let dependency = match fault {
+                            appearance_caller::Fault::Owner => Dependency::DrawingCurrentOwners,
+                            appearance_caller::Fault::Rendering(_) => Dependency::DrawingRendering,
+                            appearance_caller::Fault::Order
+                            | appearance_caller::Fault::Sequence
+                            | appearance_caller::Fault::Identity
+                            | appearance_caller::Fault::Appearance(_) => {
+                                Dependency::DrawingAppearance
+                            }
+                        };
+                        ProductionFault::Unsupported(Unsupported::Frame(dependency))
+                    })?;
                 let energy = self.current_drawing_energy().ok_or_else(missing)?;
                 let pending = Pending {
                     selected,

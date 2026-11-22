@@ -17,7 +17,7 @@ pub struct ActorCompletionPin;
 impl Pinned for ActorCompletionPin {
     type State = super::borrowed_player_preparation::ActorUpdateCompletion;
     const NAME: &'static str = "production-current-actor-completion";
-    const SHAPE: u64 = 0x1DEB_5F0B_D081_2315;
+    const SHAPE: u64 = 0xB58C_0415_5F3B_57D7;
 }
 
 /// Read-only exact actual rule profile held by a physical movement operation.
@@ -413,6 +413,7 @@ impl Pending {
 pub struct PhysicalContract {
     admission: SourceAdmission,
     template: data::timing::Template,
+    two_interactive: bool,
 }
 
 /// Fresh actual providers for source revalidation and full outer completion.
@@ -434,7 +435,13 @@ impl PhysicalContract {
         Self {
             admission,
             template,
+            two_interactive: false,
         }
+    }
+
+    /// Allow the carried two-slot roster without changing the terrain-only support work.
+    pub const fn admit_two_interactive(&mut self) {
+        self.two_interactive = true;
     }
 
     /// Qualify both actual requests/answers and derive both math operands.
@@ -451,7 +458,10 @@ impl PhysicalContract {
         if &receipt.before != movement
             || receipt.chosen.state() != movement.state()
             || &receipt.actors.0 != inputs.current.actors
-            || inputs.current.actors.interactive.as_slice() != [self.admission.raw_actor]
+            || !inputs
+                .current
+                .actors
+                .matches_collision_roster(self.admission.raw_actor, self.two_interactive)
             || inputs.current.actors.dependency.clocks.simulation
                 != super::borrowed_player_preparation::ClockDisposition::Running
             || inputs.current.actors.dependency.clocks.enemy

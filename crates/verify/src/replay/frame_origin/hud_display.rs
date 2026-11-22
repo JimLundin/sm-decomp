@@ -27,6 +27,7 @@ impl AdjacentShape {
         }
         Ok(frame::recurring_hud_map::RecurringDisplay {
             retain_first_half: false,
+            second_half: None,
             frame: interface_hud::FrameCount(source.premises.frame.0.wrapping_add(1)),
             room: source.premises.room,
             centre: interface_hud::Place { x, y },

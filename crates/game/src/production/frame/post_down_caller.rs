@@ -1,6 +1,9 @@
 //! Distinct actual Contact, transport and poststep completion boundaries.
 
-use super::{Caller, Content, Dependency, Rules, State, appearance_caller, contact_contract};
+use super::{
+    Caller, Content, Dependency, Rules, State, appearance_caller, contact_contract,
+    post_down_contract::OfferCurrent,
+};
 use crate::production::{ProductionFault, Unsupported, timing::WorkId};
 use canonical::{Canonical, model::Model};
 
@@ -220,7 +223,8 @@ impl Stage {
                     && state.senders == *senders_before
                     && state.sound_offers == *offers_before
                     && state.sender_queues.as_ref() == Some(queues_before)
-                    && state.sound_offer_current == Some(*current)
+                    && state.sound_offer_current
+                        == state.publications.original_interval().then_some(*current)
             }
             Self::SoundComplete(sound) => sound.holds(state).is_ok(),
             Self::Poststep { source, appearance } => {
@@ -315,6 +319,38 @@ impl SoundCompleted {
 }
 
 impl State {
+    fn current_footstep_offer(&self, content: &Content) -> Result<OfferCurrent, ProductionFault> {
+        if self.publications.original_interval() {
+            return self.sound_offer_current.ok_or_else(missing);
+        }
+        let Caller::PlayerContinuation {
+            prepared,
+            remaining,
+            ..
+        } = &self.caller
+        else {
+            return Err(missing());
+        };
+        let gameplay = prepared.gameplay.as_ref().ok_or_else(missing)?;
+        let scene = super::borrowed_gameplay::SceneController::MainGameplay;
+        let interaction = remaining.0.interaction.as_ref().ok_or_else(missing)?;
+        let drawing = self.drawing_origins.as_ref().ok_or_else(missing)?;
+        let current = content
+            .post_down
+            .as_ref()
+            .and_then(|work| work.recurring_footstep)
+            .ok_or_else(missing)?;
+        if self.sound_offer_current.is_some()
+            || self.scene != Some(scene)
+            || gameplay.scene != scene
+            || interaction.terminal.activity.bombs != 0
+            || drawing.power_bomb_radius != 0
+        {
+            return Err(missing());
+        }
+        Ok(current)
+    }
+
     pub(super) fn begin_footstep_offer(
         &mut self,
         content: &Content,
@@ -328,7 +364,7 @@ impl State {
             return Err(missing());
         };
         contact.holds(self)?;
-        let current = self.sound_offer_current.ok_or_else(missing)?;
+        let current = self.current_footstep_offer(content)?;
         let permission = current.permission().ok_or_else(missing)?;
         let result = contact
             .completion
@@ -358,6 +394,18 @@ impl State {
         let mut candidate = self.clone();
         super::sender_caller::deliver_appearance(&mut candidate, permission)
             .map_err(|_| missing())?;
+        let queues = self.sender_queues.as_ref().ok_or_else(missing)?;
+        let mut offered = queues.clone();
+        offered
+            .footstep(
+                &self.senders.contact.0,
+                &candidate.senders.contact.0,
+                permission,
+            )
+            .map_err(|_| missing())?;
+        if candidate.sender_queues.as_ref() != Some(&offered) {
+            return Err(missing());
+        }
         let retained = Stage::SoundOffer {
             contact: contact.clone(),
             appearance: Box::new(self.appearance.clone()),
@@ -410,7 +458,7 @@ impl State {
             || self.senders != *senders_before
             || self.sound_offers != *offers_before
             || self.sender_queues.as_ref() != Some(queues_before)
-            || self.sound_offer_current != Some(*current)
+            || self.current_footstep_offer(content)? != *current
         {
             return Err(missing());
         }

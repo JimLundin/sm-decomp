@@ -13,6 +13,8 @@ use game::production::frame;
 use serde::Deserialize;
 use std::path::Path;
 
+mod ground_corridor;
+
 const CAMERA_GUARD_SHA256: &str =
     "780fadb6997b7afaad0610e2f619fcbc0b59bfc056cce2c677b22bcc0947166a";
 
@@ -94,6 +96,7 @@ pub(super) fn preview(native: &Path) -> Result<replay::MoviePreview, Outcome> {
 pub(super) fn bind(
     case: &Case,
     sources: &Sources,
+    wram: &[u8],
     state: &mut frame::State,
     content: &mut frame::Content,
 ) -> Result<(), Outcome> {
@@ -182,9 +185,15 @@ pub(super) fn bind(
         },
     )?;
     bind_drawing(native, content)?;
+    if case.opening_ground_corridor() {
+        ground_corridor::bind(sources, wram, content)?;
+    }
     bind_contact(native, content)?;
     if contact_cycle {
         bind_contact_clear(native, content)?;
+        if case.opening_ground_corridor() {
+            ground_corridor::bind_contact_reply(native, content)?;
+        }
     }
     Ok(())
 }

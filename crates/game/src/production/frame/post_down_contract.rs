@@ -70,6 +70,8 @@ impl OfferCurrent {
 pub struct Physical {
     /// Complete `SoundOffer` owner, including its enqueue completion.
     pub sound_offer: data::timing::Template,
+    /// Independently accepted current `SoundOffer` gates on the recurring grounded arm.
+    pub recurring_footstep: Option<OfferCurrent>,
     /// Complete Poststep owner, ending before `HUDMap` is called.
     pub poststep: data::timing::Template,
 }

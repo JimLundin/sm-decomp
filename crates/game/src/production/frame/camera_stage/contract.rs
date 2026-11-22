@@ -61,13 +61,20 @@ pub struct RequiredDependencies {
 pub(in crate::production::frame) enum Horizontal {
     Exact,
     NearRoomEdge,
+    BackwardPastAim,
+    RightwardPastAim,
+    RightwardBeforeAim,
 }
 
 /// Checked immutable physical content, interpreted entirely by production.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PhysicalContract {
     dependencies: RequiredDependencies,
-    further: Vec<(RequiredDependencies, Horizontal)>,
+    further: Vec<(
+        RequiredDependencies,
+        Horizontal,
+        Option<data::timing::Template>,
+    )>,
     pub(super) template: data::timing::Template,
 }
 
@@ -94,20 +101,48 @@ impl PhysicalContract {
         dependencies: RequiredDependencies,
         horizontal: Horizontal,
     ) {
-        self.further.push((dependencies, horizontal));
+        self.further.push((dependencies, horizontal, None));
     }
 
-    pub(super) fn check(&self, receipt: &Receipt, result: &Model<CameraPin>) -> Result<(), Fault> {
+    pub(in crate::production::frame) fn admit_edge_profiles(
+        &mut self,
+        profiles: [data::timing::Template; 3],
+    ) -> Option<()> {
+        let current = self
+            .further
+            .iter()
+            .find(|(_, horizontal, _)| *horizontal == Horizontal::NearRoomEdge)?
+            .0
+            .clone();
+        let edges = [
+            Horizontal::BackwardPastAim,
+            Horizontal::RightwardPastAim,
+            Horizontal::RightwardBeforeAim,
+        ];
+        self.further.extend(
+            edges
+                .into_iter()
+                .zip(profiles)
+                .map(|(edge, profile)| (current.clone(), edge, Some(profile))),
+        );
+        Some(())
+    }
+
+    pub(super) fn select(
+        &self,
+        receipt: &Receipt,
+        result: &Model<CameraPin>,
+    ) -> Result<&data::timing::Template, Fault> {
         let first = self.dependencies.check(receipt, result, Horizontal::Exact);
-        if first.is_err()
-            && self
-                .further
-                .iter()
-                .any(|(current, horizontal)| current.check(receipt, result, *horizontal).is_ok())
-        {
-            return Ok(());
+        if first.is_ok() {
+            return Ok(&self.template);
         }
-        first
+        for (current, horizontal, profile) in &self.further {
+            if current.check(receipt, result, *horizontal).is_ok() {
+                return Ok(profile.as_ref().unwrap_or(&self.template));
+            }
+        }
+        first.map(|()| &self.template)
     }
 }
 
@@ -158,8 +193,14 @@ impl RequiredDependencies {
         {
             return Err(Fault::Dependencies);
         }
-        if horizontal == Horizontal::NearRoomEdge
-            && !near_room_edge(receipt, samus.position.x, previous.x, result.0.position().x)
+        if horizontal != Horizontal::Exact
+            && !edge_holds(
+                horizontal,
+                receipt,
+                samus.position.x,
+                previous.x,
+                result.0.position().x,
+            )
         {
             return Err(Fault::Dependencies);
         }
@@ -186,8 +227,9 @@ impl RequiredDependencies {
     }
 }
 
-/// Qualify the backward chase and near-edge clamp before reusing the whole physical bill.
-fn near_room_edge(
+/// Distinguish the live physical branches when the horizontal chase ends at a room edge.
+fn edge_holds(
+    path: Horizontal,
     receipt: &Receipt,
     current: types::Fixed,
     previous: types::Fixed,
@@ -209,11 +251,46 @@ fn near_room_edge(
     else {
         return false;
     };
-    let reached = core::num::Wrapping(view.0.wrapping_sub(speed));
-    current.pixel().0 > previous.pixel().0
-        && types::below(aim, view.pixel().0)
-        && types::below(aim, reached.pixel().0)
-        && types::below(reached.pixel().0, 0)
-        && result.pixel().0 == 0
-        && result.sub() == reached.sub()
+    if !types::below(previous.pixel().0, current.pixel().0) {
+        return false;
+    }
+    let backward = types::below(aim, view.pixel().0);
+    let reached = core::num::Wrapping(if backward {
+        view.0.wrapping_sub(speed)
+    } else {
+        view.0.wrapping_add(speed)
+    });
+    let [width, _] = receipt.inputs.room.size;
+    let far = width.saturating_sub(1).wrapping_mul(256);
+    match path {
+        Horizontal::Exact => false,
+        Horizontal::NearRoomEdge => {
+            backward
+                && types::below(aim, reached.pixel().0)
+                && types::below(reached.pixel().0, 0)
+                && result.pixel().0 == 0
+                && result.sub() == reached.sub()
+        }
+        Horizontal::BackwardPastAim => {
+            backward
+                && types::below(reached.pixel().0, aim)
+                && types::below(aim, 0)
+                && result.pixel().0 == 0
+                && result.sub() == 0
+        }
+        Horizontal::RightwardPastAim => {
+            types::below(view.pixel().0, aim)
+                && types::below(aim, reached.pixel().0)
+                && types::below(far, aim)
+                && result.pixel().0 == far
+                && result.sub() == 0
+        }
+        Horizontal::RightwardBeforeAim => {
+            types::below(view.pixel().0, aim)
+                && !types::below(aim, reached.pixel().0)
+                && types::below(far, reached.pixel().0)
+                && result.pixel().0 == far
+                && result.sub() == reached.sub()
+        }
+    }
 }

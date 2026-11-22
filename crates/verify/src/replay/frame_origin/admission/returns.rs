@@ -226,8 +226,9 @@ fn comparisons(
             health_hud,
             opening_audio: three_returns
                 .then(|| frame::opening_audio::Source::new(&sources.native)),
-            opening_contact: contact_cycle
-                .then(|| frame::opening_contact::Source::new(&sources.native)),
+            opening_contact: contact_cycle.then(|| {
+                frame::opening_contact::Source::new(&sources.native, case.opening_ground_corridor())
+            }),
         },
         schedule,
     ))
@@ -416,7 +417,7 @@ impl Prepared {
             wram,
             self.pad_origin.as_ref().map(|pad| &pad.schedule_sha256),
         )?;
-        if content.adjacent_animation.is_some() {
+        if content.adjacent_animation.is_some() && !case.opening_clock() {
             self.expected.adjacent_animation = Some(frame::adjacent_animation::Source::new(
                 &sources.native,
                 clips,

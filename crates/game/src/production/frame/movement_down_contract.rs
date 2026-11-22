@@ -339,6 +339,7 @@ pub struct PhysicalContract {
     admission: SourceAdmission,
     template: data::timing::Template,
     odd_two_column: Option<data::timing::Template>,
+    two_candidate: Option<[data::timing::Template; 2]>,
 }
 impl PhysicalContract {
     /// Retain independently gated current predicates and the complete physical envelope.
@@ -348,12 +349,18 @@ impl PhysicalContract {
             admission,
             template,
             odd_two_column: None,
+            two_candidate: None,
         }
     }
 
     /// Admit the independently qualified right-first stopped owner.
     pub fn set_odd_two_column(&mut self, template: data::timing::Template) {
         self.odd_two_column = Some(template);
+    }
+
+    /// Admit the qualified even and odd profiles with both current tangible actors.
+    pub fn set_two_candidate_profiles(&mut self, profiles: [data::timing::Template; 2]) {
+        self.two_candidate = Some(profiles);
     }
 
     /// Whether admission includes the distinct right-first stopped owner.
@@ -410,8 +417,7 @@ impl PhysicalContract {
             answered,
             &attempt.effect,
             movement.state().vertical.speed,
-            inputs.room,
-            inputs.current.inputs.parity,
+            inputs,
         )?;
         let mut expected_state = *movement.state();
         expected_state.position = answer.to;
@@ -476,7 +482,8 @@ impl PhysicalContract {
             || receipt.world.0 != world(inputs)?
             || &receipt.ground != inputs.ground
             || inputs.ground.work != super::TravelWork::Ground.identity()
-            || actors.interactive.as_slice() != [self.admission.raw_actor]
+            || !actors
+                .matches_collision_roster(self.admission.raw_actor, self.two_candidate.is_some())
             || actors.dependency.clocks.simulation
                 != super::borrowed_player_preparation::ClockDisposition::Running
             || actors.dependency.clocks.enemy
@@ -532,24 +539,11 @@ impl PhysicalContract {
     ) -> Result<(), Fault> {
         use types::Parts;
         let search = attempt.enemy_search.as_ref().ok_or(Fault::Query)?;
-        let [candidate] = search.candidates.as_slice() else {
-            return Err(Fault::Query);
-        };
         let boxes = inputs
             .current
             .actors
             .solid_boxes()
             .map_err(|_| Fault::Dependency)?;
-        let [actor] = boxes.as_slice() else {
-            return Err(Fault::Query);
-        };
-        let dx = candidate
-            .centre
-            .x
-            .0
-            .checked_sub(request.bounds.at.x.pixel().0)
-            .ok_or(Fault::Query)?;
-        let separation = dx.checked_sub(candidate.radius.x.0).ok_or(Fault::Query)?;
         let fraction = u32::from(request.bounds.at.y.sub())
             .checked_add(u32::from(request.distance.sub()))
             .ok_or(Fault::Query)?;
@@ -562,15 +556,14 @@ impl PhysicalContract {
             .checked_add(request.distance.pixel().0)
             .and_then(|whole| whole.checked_add(2))
             .ok_or(Fault::Query)?;
-        if dx >= 32768
-            || separation < body.x.0
-            || fraction <= 65536
+        if fraction <= 65536
             || fraction >= 131_072
-            || search.supplied_count.0 != 1
-            || candidate.candidate.0 != 0
-            || candidate.result != types::CandidateResult::Miss
-            || candidate.centre != actor.centre
-            || candidate.radius != actor.radius
+            || !super::movement_pair_contract::horizontal_misses(
+                search,
+                &boxes,
+                request.bounds.at.x.pixel().0,
+                body.x.0,
+            )
             || attempt.start != request.bounds.at
             || attempt.radius != body
             || attempt.direction != request.direction
@@ -590,10 +583,12 @@ impl PhysicalContract {
         decision: &MovementDecision,
         effect: &types::RequestEffect,
         speed: types::Fixed,
-        room: &Room,
-        parity: types::Parity,
+        inputs: &Inputs<'_>,
     ) -> Result<(u8, &data::timing::Template), Fault> {
         use types::Parts;
+        let room = inputs.room;
+        let parity = inputs.current.inputs.parity;
+        let two_candidate = inputs.current.actors.interactive.len() == 2;
         let MovementDecision::MotionAnswer {
             answer, outputs, ..
         } = decision
@@ -634,12 +629,10 @@ impl PhysicalContract {
         }
         // The first tested column stops the request. The physical scan order still
         // selects the envelope when both edges fall in that same column.
-        let (x, template) = match parity {
-            types::Parity::Even => (left_column, &self.template),
-            types::Parity::Odd => (
-                right_column,
-                self.odd_two_column.as_ref().ok_or(Fault::Dependency)?,
-            ),
+        let template = self.stopped_profile(parity, two_candidate)?;
+        let x = match parity {
+            types::Parity::Even => left_column,
+            types::Parity::Odd => right_column,
         };
         let cell = types::Cell { x, y: leading >> 4 };
         let index = usize::from(cell.y)
@@ -691,6 +684,20 @@ impl PhysicalContract {
             return Err(Fault::Query);
         }
         Ok((u8::try_from(cell.y).map_err(|_| Fault::Query)?, template))
+    }
+
+    fn stopped_profile(
+        &self,
+        parity: types::Parity,
+        two_candidate: bool,
+    ) -> Result<&data::timing::Template, Fault> {
+        match (self.two_candidate.as_ref(), two_candidate, parity) {
+            (Some([even, _]), true, types::Parity::Even) => Ok(even),
+            (Some([_, odd]), true, types::Parity::Odd) => Ok(odd),
+            (_, false, types::Parity::Even) => Ok(&self.template),
+            (_, false, types::Parity::Odd) => self.odd_two_column.as_ref().ok_or(Fault::Dependency),
+            (None, true, _) => Err(Fault::Dependency),
+        }
     }
 }
 

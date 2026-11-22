@@ -276,8 +276,8 @@ impl Origins {
         };
         let cannon = state.appearance.cannon.as_ref().ok_or(Fault::Producers)?;
         self.normal_visibility(cannon.0)?;
-        // The closed admitted Actor view type adds no drawing pieces. The result must
-        // still identify exactly the current owners consumed by the actual update.
+        // The optional layer entry belongs to the completed ActorUpdate, before Camera.
+        // Its coordinates are projected only against the later returned Camera.
         let actors = &completed.actors.actors;
         if completed.membership.active.len() != actors.len()
             || completed.membership.interactive != completed.actors.interactive
@@ -293,6 +293,14 @@ impl Origins {
             if &actor.identity != identity {
                 return Err(Fault::Producers);
             }
+        }
+        let mut shown = actors
+            .iter()
+            .filter(|actor| actor.view == preparation::ActorViewDisposition::WithinPaddedView);
+        if shown.next().map(|actor| actor.identity) != completed.actors.visible_layer_two
+            || shown.next().is_some()
+        {
+            return Err(Fault::Producers);
         }
         Ok(rendering_stage::Premises {
             camera,

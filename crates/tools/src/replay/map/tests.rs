@@ -62,6 +62,36 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
     }
 }
 
+/// Every indexed case that reaches the travelled-distance rule, in index order.
+const TRAVEL_CASES: [&str; 13] = [
+    "movement/D-inherited-cut",
+    "integrated/missing-dependency-closure",
+    "movie/missing-power-on",
+    "frame/ordinary-requested-nmi-return",
+    "frame/adjacent-actual-trial",
+    "frame/adjacent-held-trial",
+    "frame/adjacent-actual-return",
+    "frame/opening-three-native-returns",
+    "frame/opening-eight-native-returns",
+    "frame/opening-sixteen-native-returns",
+    "frame/adjacent-held-return",
+    "frame/health-hud-stock",
+    "frame/health-hud-pending-loss",
+];
+
+/// The travel cases whose reviewed requirement is a pass; the others are held boundaries.
+const PASSING_TRAVEL_CASES: [&str; 9] = [
+    "movement/D-inherited-cut",
+    "frame/ordinary-requested-nmi-return",
+    "frame/adjacent-actual-return",
+    "frame/opening-three-native-returns",
+    "frame/opening-eight-native-returns",
+    "frame/opening-sixteen-native-returns",
+    "frame/adjacent-held-return",
+    "frame/health-hud-stock",
+    "frame/health-hud-pending-loss",
+];
+
 #[test]
 fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
     let (_, index, mapping, baseline) = fixture();
@@ -93,20 +123,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
             .iter()
             .map(|view| view.declaration.id.0.as_str())
             .collect::<Vec<_>>(),
-        [
-            "movement/D-inherited-cut",
-            "integrated/missing-dependency-closure",
-            "movie/missing-power-on",
-            "frame/ordinary-requested-nmi-return",
-            "frame/adjacent-actual-trial",
-            "frame/adjacent-held-trial",
-            "frame/adjacent-actual-return",
-            "frame/opening-three-native-returns",
-            "frame/opening-eight-native-returns",
-            "frame/adjacent-held-return",
-            "frame/health-hud-stock",
-            "frame/health-hud-pending-loss",
-        ]
+        TRAVEL_CASES
     );
     assert_eq!(
         report
@@ -114,16 +131,7 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
             .filter(|view| view.reviewed_requirement.expected == Outcome::Pass)
             .map(|view| view.declaration.id.0.as_str())
             .collect::<Vec<_>>(),
-        [
-            "movement/D-inherited-cut",
-            "frame/ordinary-requested-nmi-return",
-            "frame/adjacent-actual-return",
-            "frame/opening-three-native-returns",
-            "frame/opening-eight-native-returns",
-            "frame/adjacent-held-return",
-            "frame/health-hud-stock",
-            "frame/health-hud-pending-loss",
-        ]
+        PASSING_TRAVEL_CASES
     );
     assert_eq!(
         report
@@ -179,7 +187,7 @@ fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_cas
         )
         .unwrap();
     let report = views(&mapping, &baseline, &cases).unwrap();
-    assert_eq!(report.len(), 6);
+    assert_eq!(report.len(), 7);
     for (id, claim) in [
         ("frame/adjacent-actual-trial", Claim::Boundary),
         ("frame/adjacent-held-trial", Claim::Boundary),
@@ -187,6 +195,7 @@ fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_cas
         ("frame/adjacent-held-return", Claim::Behaviour),
         ("frame/opening-three-native-returns", Claim::Behaviour),
         ("frame/opening-eight-native-returns", Claim::Behaviour),
+        ("frame/opening-sixteen-native-returns", Claim::Behaviour),
     ] {
         let view = report
             .iter()

@@ -91,6 +91,14 @@ pub struct Content {
     pub recurring_actors: Option<Template>,
     /// Whole `ActorUpdate` when both carried doors decrement without polling.
     pub recurring_waiting_actors: Option<Template>,
+    /// Full work when the actual first door begins closing.
+    pub closing_starts: Option<Template>,
+    /// Full work while both current doors decrement.
+    pub closing_wait: Option<Template>,
+    /// Full work while the first closes and the second polls.
+    pub closing_other_poll: Option<Template>,
+    /// Full work when the first reaches the next closing figure.
+    pub closing_advance: Option<Template>,
     /// Whole sprite instruction scan.
     pub sprites: Template,
     /// Whole contact preparation.

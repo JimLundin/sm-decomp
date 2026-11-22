@@ -147,6 +147,8 @@ pub struct State {
     pub contact_retried_at: Option<MasterTicks>,
     /// Last completed outgoing clear retry milestone, retained separately from the physical log.
     pub contact_clear_retried_at: Option<MasterTicks>,
+    /// First actual later Footstep retry after the completed opening clear exchange.
+    pub contact_later_retried_at: Option<MasterTicks>,
     /// Reply receipt retained after the already sampled Contact service returns.
     pub completed_contact_read: Option<super::sender_stage::ReplyRead>,
     /// Exactly-once progress through actual retained appearance sound requests.
@@ -207,6 +209,8 @@ impl State {
         rules: &super::Rules,
     ) -> Result<(), super::Fault> {
         self.validate_grounded_checkpoint(content, rules)?;
+        self.validate_completed_camera(content)?;
+        self.validate_drawn_builder(content)?;
         self.validate_hud_checkpoint(content, rules)?;
         self.validate_scene_checkpoint(content)?;
         self.validate_haze_checkpoint(content)?;

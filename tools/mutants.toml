@@ -4,6 +4,17 @@
 # CI assigns each case to one worker. Put the expensive cases first so they start on separate workers.
 
 [[fault]]
+name = "frame-completed-door-tile-changed"
+responsibility = "frame"
+file = "crates/game/src/production/frame/s6_drawing.rs"
+before = "let builder = Box::new(builder);"
+after = """if self.rendering.receipt().is_some_and(|drawn| drawn.first_byte != 0) { builder.backing[2] ^= 1; }
+                let builder = Box::new(builder);"""
+case = "frame/opening-sixteen-native-returns"
+cut = 10
+field = "frame.opening.oam"
+
+[[fault]]
 name = "frame-hud-stale-map-position"
 responsibility = "hud"
 file = "crates/game/src/production/frame/hud_camera_caller.rs"

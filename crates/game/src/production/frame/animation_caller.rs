@@ -252,12 +252,45 @@ impl State {
         if !self.animation_energy_matches(selection) {
             return Err(missing(Dependency::HealthCurrentInputs));
         }
-        let before = selection
+        let receipt = selection
             .receipt()
             .ok_or_else(|| missing(Dependency::AnimationPreparation))?;
-        self.animation_contract(content, before.before.model.0.state.playhead.time_left)?
+        self.animation_receipt_contract(content, receipt)?
             .qualify(selection, self, &content.movement, &content.appearance)
             .map_err(|_| missing(Dependency::AnimationPreparation))
+    }
+
+    fn animation_receipt_contract<'a>(
+        &self,
+        content: &'a Content,
+        receipt: &appearance_caller::Receipt,
+    ) -> Result<&'a appearance_caller::PhysicalContract, ProductionFault> {
+        let playhead = receipt.before.model.0.state.playhead;
+        let next = playhead.step.next();
+        if !self.publications.original_interval()
+            && playhead.time_left == samus_appearance::Frames::LAST
+            && receipt
+                .chosen
+                .model
+                .0
+                .pending
+                .as_ref()
+                .is_some_and(|answer| {
+                    matches!(
+                        next.and_then(|step| answer.clip.at(step)),
+                        Some(samus_appearance::Instruction::Control(
+                            samus_appearance::Control::Again(_)
+                        ))
+                    )
+                })
+        {
+            content
+                .recurring_animation_loop
+                .as_ref()
+                .ok_or_else(|| missing(Dependency::AnimationPreparation))
+        } else {
+            self.animation_contract(content, playhead.time_left)
+        }
     }
 
     fn animation_energy_matches(&self, selection: &appearance_caller::Stage) -> bool {
@@ -446,13 +479,15 @@ impl State {
                 }
                 // Appearance has consumed the answer. Its retained receipt still identifies
                 // the physical family that could have completed at this opportunity.
-                self.animation_contract(
-                    content,
-                    done.receipt.before.model.0.state.playhead.time_left,
-                )
-                .map_err(|_| InvalidPlayerEntry)?
-                .profile_for_receipt(&done.receipt, self, &content.movement, &content.appearance)
-                .map_err(|_| InvalidPlayerEntry)?;
+                self.animation_receipt_contract(content, &done.receipt)
+                    .map_err(|_| InvalidPlayerEntry)?
+                    .profile_for_receipt(
+                        &done.receipt,
+                        self,
+                        &content.movement,
+                        &content.appearance,
+                    )
+                    .map_err(|_| InvalidPlayerEntry)?;
             }
         }
         Ok(())
@@ -467,9 +502,13 @@ impl State {
         if in_nmi {
             return Ok(());
         }
-        if matches!(self.late_hud, super::late_hud::Stage::Completed(_)) {
-            // Late status now owns the tilemap. Revalidate the actual Countdown offer
-            // from its retained scene and IRQ history.
+        if matches!(
+            self.interruption,
+            super::interruption_caller::Stage::Complete(_)
+        ) || matches!(self.late_hud, super::late_hud::Stage::Completed(_))
+        {
+            // The ordinary map read preceded Interruption and its Movement consumers.
+            // Revalidate the completed Countdown from the retained scene and IRQ history.
             let super::countdown_caller::Stage::Complete { offer, .. } = self.countdown else {
                 return Err(missing(Dependency::CountdownPreparation));
             };

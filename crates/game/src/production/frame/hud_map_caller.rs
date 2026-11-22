@@ -216,6 +216,16 @@ impl State {
         let samus = self.movement.state();
         let mut hud = before.clone();
         let mut refresh = hud_camera_caller::Refresh::Pending;
+        let mut physical = admitted.physical.clone();
+        if !self.publications.original_interval()
+            && !rules.hud.get().her_blink.first_half(current.premises.frame)
+        {
+            physical.producer = admitted
+                .recurring
+                .as_ref()
+                .and_then(|scope| scope.second_half.clone())
+                .ok_or_else(missing)?;
+        }
         let profile = refresh
             .choose(
                 &mut hud,
@@ -232,7 +242,7 @@ impl State {
                     event_owner: Some(&current.premises.events),
                 },
                 (rules.hud.get(), &content.hud),
-                (current, &admitted.physical),
+                (current, &physical),
             )
             .map_err(|_| missing())?;
         let mut result = hud.clone();

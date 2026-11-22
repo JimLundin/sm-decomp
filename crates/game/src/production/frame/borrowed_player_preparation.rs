@@ -410,6 +410,8 @@ pub enum ActorViewDisposition {
     WithinPaddedViewButInvisible,
     /// Below the padded view.
     BelowPaddedView,
+    /// Within the padded view and shown by the returned actor.
+    WithinPaddedView,
 }
 
 /// Checked ordinary Ceres-door AI/content meaning; native pointers remain importer-only.
@@ -663,6 +665,9 @@ pub struct ActorUpdateCompletion {
     pub actors: [CurrentActor; 2],
     /// Actual completed S1 interactive identities; this is the World roster authority.
     pub interactive: Vec<ActorSlotIdentity>,
+    /// Current occupied second drawing layer slot appended by the actor update.
+    #[serde(default)]
+    pub visible_layer_two: Option<ActorSlotIdentity>,
 }
 
 /// Completed actual sprite-object collection.
@@ -987,11 +992,32 @@ impl DeferredActorUpdateReceipt {
                 .try_into()
                 .map_err(|_| PlayerPreparationFault::Dependency)?,
             interactive: membership.interactive.clone(),
+            visible_layer_two: None,
         })
     }
 }
 
 impl ActorUpdateCompletion {
+    pub(super) fn matches_collision_roster(
+        &self,
+        retained: ActorSlotIdentity,
+        allow_two: bool,
+    ) -> bool {
+        match self.interactive.as_slice() {
+            [only] => *only == retained,
+            [added, last] if allow_two => {
+                *last == retained
+                    && *added != retained
+                    && self
+                        .actors
+                        .iter()
+                        .map(|actor| actor.identity)
+                        .eq([*added, *last])
+            }
+            _ => false,
+        }
+    }
+
     /// Join completed interactive identities to actual completed marked-solid actor geometry.
     /// Both bounded owners are marked solid; no unqualified frozen state is invented.
     /// # Errors
@@ -1217,7 +1243,7 @@ pub struct PlayerContinuationOffersPin;
 impl Pinned for PlayerContinuationOffersPin {
     type State = Box<PlayerContinuationOffers>;
     const NAME: &'static str = "production-frame-player-continuation-offers";
-    const SHAPE: u64 = 0xCB4B_2F27_1F8A_B2F6;
+    const SHAPE: u64 = 0x9428_5F97_420F_96B0;
 }
 
 /// Remaining five player preparation completions, separate from entry owners.
@@ -1240,7 +1266,7 @@ pub struct PlayerContinuationCompletionsPin;
 impl Pinned for PlayerContinuationCompletionsPin {
     type State = Box<PlayerContinuationCompletions>;
     const NAME: &'static str = "production-frame-player-continuation-completions";
-    const SHAPE: u64 = 0xB010_9A1E_C067_AD26;
+    const SHAPE: u64 = 0x0BDA_4629_8592_CCFC;
 }
 
 #[cfg(test)]

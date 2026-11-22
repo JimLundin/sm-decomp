@@ -404,6 +404,27 @@ pub enum ObservationId {
     /// Ordered CPU reads and writes at the audio ports.
     #[serde(rename = "frame.audio.ports")]
     FrameAudioPorts,
+    /// Physical OAM hash.
+    #[serde(rename = "frame.opening.oam")]
+    FrameOpeningOam,
+    /// Aim horizontal position and fraction.
+    #[serde(rename = "frame.opening.aim_x")]
+    FrameOpeningAimX,
+    /// Camera state and output.
+    #[serde(rename = "frame.opening.camera")]
+    FrameOpeningCamera,
+    /// First-door phase.
+    #[serde(rename = "frame.opening.first_door_phase")]
+    FrameOpeningFirstDoorPhase,
+    /// First-door wait timers.
+    #[serde(rename = "frame.opening.door_waits")]
+    FrameOpeningDoorWaits,
+    /// Retained animation playhead.
+    #[serde(rename = "frame.opening.animation_playhead")]
+    FrameOpeningAnimationPlayhead,
+    /// Camera horizontal fraction.
+    #[serde(rename = "frame.opening.camera_x_fraction")]
+    FrameOpeningCameraXFraction,
     /// Retained Contact clean sender phase with remaining delay turns.
     #[serde(rename = "frame.contact.phase")]
     FrameContactPhase,
@@ -944,7 +965,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::FrameContactIncoming
         | O::FrameContactOutgoing => Responsibility::AudioSender,
         O::LiveSoundHold => Responsibility::Doors,
-        O::FrameTime | O::FrameOutputs | O::FrameHealthHud => Responsibility::Frame,
+        O::FrameTime | O::FrameOutputs | O::FrameHealthHud | O::FrameOpeningOam => {
+            Responsibility::Frame
+        }
         O::FrameSteady => Responsibility::WorldHaze,
         O::FrameRandom | O::FrameRandomSeed | O::FrameRandomDevice => Responsibility::GameRandom,
         O::PlayTimeHours | O::PlayTimeMinutes | O::PlayTimeSeconds | O::PlayTimeFrames => {
@@ -983,7 +1006,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::Reached
         | O::MapCarryMovement
         | O::ShotPoseHistory
-        | O::ShotInheritedMotion => Responsibility::Movement,
+        | O::ShotInheritedMotion
+        | O::FrameOpeningAimX => Responsibility::Movement,
         O::AudioSemantic | O::AudioPublications | O::AudioReplies | O::AudioPendingMusic => {
             Responsibility::Audio
         }
@@ -993,7 +1017,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CeresShown
         | O::CeresSolid
         | O::ShotDoorClocks
-        | O::ShotDoorOpening => Responsibility::Ceres,
+        | O::ShotDoorOpening
+        | O::FrameOpeningFirstDoorPhase
+        | O::FrameOpeningDoorWaits => Responsibility::Ceres,
         O::CameraViewXPixel
         | O::CameraViewXFraction
         | O::CameraViewYPixel
@@ -1004,7 +1030,9 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CameraRememberedYFraction
         | O::CameraVerticalFraction
         | O::MapCarryCamera
-        | O::ShotCamera => Responsibility::Camera,
+        | O::ShotCamera
+        | O::FrameOpeningCamera
+        | O::FrameOpeningCameraXFraction => Responsibility::Camera,
         O::GaugeRefresh
         | O::GaugeWords
         | O::EarlyMapWindow
@@ -1033,7 +1061,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::AppearanceTimeLeft
         | O::AppearanceBoostStage
         | O::AppearanceLapsLeft
-        | O::MapCarryAppearance => Responsibility::Appearance,
+        | O::MapCarryAppearance
+        | O::FrameOpeningAnimationPlayhead => Responsibility::Appearance,
         O::ProgressPlanetAwake
         | O::ProgressMotherBrainTankBroken
         | O::ProgressPhantoonStatueGrey
@@ -1709,6 +1738,12 @@ impl Case {
             .any(|value| value.dependency == "frame.opening-contact-cycle")
     }
 
+    pub(super) fn opening_ground_corridor(&self) -> bool {
+        self.borrowed
+            .iter()
+            .any(|value| value.dependency == "frame.opening-ground-corridor")
+    }
+
     pub(super) fn adjacent_native_end(&self) -> u64 {
         if self.opening_clock() {
             2
@@ -1838,6 +1873,32 @@ fn scope_valid(case: &Case) -> bool {
     sender_offer_provider_valid(case) || provider_valid(case, &observations)
 }
 
+fn opening_contact_fields_valid(case: &Case) -> bool {
+    use ObservationId as O;
+    let Some(extra) = case.expectations.fields.strip_prefix(&[
+        O::FrameTime,
+        O::FrameContactPhase,
+        O::FrameContactIncoming,
+        O::FrameContactOutgoing,
+    ]) else {
+        return false;
+    };
+    if case.opening_ground_corridor() {
+        extra
+            == [
+                O::FrameOpeningOam,
+                O::FrameOpeningAimX,
+                O::FrameOpeningCamera,
+                O::FrameOpeningFirstDoorPhase,
+                O::FrameOpeningDoorWaits,
+                O::FrameOpeningAnimationPlayhead,
+                O::FrameOpeningCameraXFraction,
+            ]
+    } else {
+        extra.is_empty()
+    }
+}
+
 fn native_frame_scope_valid(
     case: &Case,
     owners: &BTreeSet<Responsibility>,
@@ -1848,6 +1909,16 @@ fn native_frame_scope_valid(
     let haze = frame_owners.remove(&Responsibility::WorldHaze);
     let random = frame_owners.remove(&Responsibility::GameRandom);
     let compares_final_owners = case.compares_final_frame_owners();
+    let mut expected_frame_owners = BTreeSet::from([
+        Responsibility::Frame,
+        Responsibility::Movement,
+        Responsibility::Hud,
+        Responsibility::Appearance,
+        Responsibility::AudioSender,
+    ]);
+    if case.opening_ground_corridor() {
+        expected_frame_owners.extend([Responsibility::Camera, Responsibility::Ceres]);
+    }
     if compares_final_owners || case.opening_contact_cycle() {
         frame_owners.remove(&Responsibility::GameTime);
         frame_owners.remove(&Responsibility::WorldQuake);
@@ -1870,14 +1941,7 @@ fn native_frame_scope_valid(
                 && case.checkpoints))
         && case.expectations.provider == ExpectedProvider::NativeFrameCallbacks
         && matches!(case.start, Start::NativeSeed { .. })
-        && frame_owners
-            == BTreeSet::from([
-                Responsibility::Frame,
-                Responsibility::Movement,
-                Responsibility::Hud,
-                Responsibility::Appearance,
-                Responsibility::AudioSender,
-            ])
+        && frame_owners == expected_frame_owners
         && (compares_final_owners
             || case.native_frame_fields() == [ObservationId::FrameTime]
             || case.opening_contact_cycle())
@@ -1885,14 +1949,13 @@ fn native_frame_scope_valid(
             case.opening_clock()
                 && case.declares_final_frame_work()
                 && case.first_cut() == Some(1)
-                && case.end.cut_inclusive == super::frame::opening_contact::LAST_RETURN
-                && case.expectations.fields
-                    == [
-                        ObservationId::FrameTime,
-                        ObservationId::FrameContactPhase,
-                        ObservationId::FrameContactIncoming,
-                        ObservationId::FrameContactOutgoing,
-                    ]
+                && case.end.cut_inclusive
+                    == if case.opening_ground_corridor() {
+                        super::frame::opening_contact::GROUND_CORRIDOR_LAST_RETURN
+                    } else {
+                        super::frame::opening_contact::LAST_RETURN
+                    }
+                && opening_contact_fields_valid(case)
                 && case.expectations.outputs == [ObservationId::FrameAudioPorts]
                 && case.checkpoints
         } else if case.opening_clock() {

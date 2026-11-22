@@ -6,7 +6,7 @@ use audio_transport::{
     OfferPermission, Request, SenderProgress, SoundGroup, sender::SenderProfile,
 };
 use canonical::Canonical;
-use data::timing::{MasterTicks, Profile};
+use data::timing::{Interrupt, MasterTicks, Profile};
 
 const CONTACT_REPLY: WorkId = WorkId(1307);
 const CONTACT_READ_PREFIX: u64 = 62;
@@ -26,28 +26,58 @@ fn contact_retry_at(
     sample: u8,
     publication: u8,
 ) -> Option<MasterTicks> {
-    // A matching AwaitCue read precedes the first outgoing clear and cannot
-    // arm a later AwaitClear retry.
+    contact_retries(events, binding, before, sample, publication).last()
+}
+
+fn contact_retries(
+    events: &[Event],
+    binding: sender_stage::CueBinding,
+    before: MasterTicks,
+    sample: u8,
+    publication: u8,
+) -> impl Iterator<Item = MasterTicks> + '_ {
+    // The first matching AwaitCue read preceded any outgoing clear.
     let mut admitted = publication != 0;
     let mut awaiting_retry = false;
-    let mut latest = None;
-    for event in events.iter().take_while(|event| event.at < before) {
-        if let EventKind::AudioPortRead { port, value } = event.kind
-            && port == binding.port
-        {
-            awaiting_retry = admitted && value == sample;
-        }
-        if matches!(&event.kind, EventKind::Publication(write)
-            if write.port == binding.port && write.value == publication)
-        {
-            admitted = true;
-            if awaiting_retry {
+    events
+        .iter()
+        .take_while(move |event| event.at < before)
+        .filter_map(move |event| {
+            // Each scoped Contact service completes before the native NMI. An
+            // unmatched read cannot qualify a fresh presentation in the next frame.
+            if event.kind == EventKind::Interrupt(Interrupt::Nmi) {
                 awaiting_retry = false;
-                latest = Some(event.at);
             }
-        }
-    }
-    latest
+            if let EventKind::AudioPortRead { port, value } = event.kind
+                && port == binding.port
+            {
+                awaiting_retry = admitted && value == sample;
+            }
+            if matches!(&event.kind, EventKind::Publication(write)
+            if write.port == binding.port && write.value == publication)
+            {
+                admitted = true;
+                if awaiting_retry {
+                    awaiting_retry = false;
+                    return Some(event.at);
+                }
+            }
+            None
+        })
+}
+
+fn clear_has_been_presented(
+    events: &[Event],
+    binding: sender_stage::CueBinding,
+    before: MasterTicks,
+) -> bool {
+    events
+        .iter()
+        .take_while(|event| event.at < before)
+        .any(|event| {
+            matches!(&event.kind, EventKind::Publication(write)
+            if write.port == binding.port && write.value == 0)
+        })
 }
 
 impl State {
@@ -55,7 +85,7 @@ impl State {
     #[must_use]
     pub fn contact_latches(&self, content: &super::Content) -> Option<[u8; 2]> {
         let physical = content.sender_physical.as_ref()?;
-        let continuation = physical.contact_continuation.as_ref()?;
+        physical.contact_continuation.as_ref()?;
         let binding = content.sender_cue?;
         let events = &self.publications.events;
         let outgoing = events
@@ -72,21 +102,43 @@ impl State {
             })
             .unwrap_or(0);
         let now = self.timing.hardware.now;
-        let presented_clear = events.iter().any(|event| matches!(&event.kind, EventKind::Publication(write) if write.port == binding.port && write.value == 0));
-        let reply = if presented_clear {
-            continuation.reply_at(self.contact_clear_retried_at, now)
-        } else {
-            physical
-                .contact_retry
-                .as_ref()?
-                .reply_at(self.contact_retried_at, now)
-        };
+        let before = MasterTicks(now.0.saturating_add(1));
+        let reply = self.physical_contact_reply(physical, binding, now, before)?;
         let incoming = if reply == Request::Cue(binding.cue) {
             binding.value
         } else {
             0
         };
         Some([incoming, outgoing])
+    }
+
+    fn physical_contact_reply(
+        &self,
+        physical: &sender_contract::PhysicalContent,
+        binding: sender_stage::CueBinding,
+        now: MasterTicks,
+        before: MasterTicks,
+    ) -> Option<Request> {
+        if let Some(continuation) = &physical.contact_continuation
+            && clear_has_been_presented(&self.publications.events, binding, before)
+        {
+            if let Some(retry) = self
+                .contact_later_retried_at
+                .filter(|retry| *retry < before)
+                && let Some(reply) = continuation.later_reply_at(retry, now)
+            {
+                return Some(reply);
+            }
+            return Some(
+                continuation.reply_at(
+                    self.contact_clear_retried_at
+                        .filter(|retry| *retry < before),
+                    now,
+                ),
+            );
+        }
+        let retry = physical.contact_retry.as_ref()?;
+        Some(retry.reply_at(self.contact_retried_at.filter(|retry| *retry < before), now))
     }
 
     pub(super) fn validate_contact_checkpoint(
@@ -143,30 +195,18 @@ impl State {
         if sample.is_none()
             && self.contact_retried_at.is_none()
             && self.contact_clear_retried_at.is_none()
+            && self.contact_later_retried_at.is_none()
             && !scoped_clear
         {
             return Ok(());
         }
         let binding = content.sender_cue.ok_or_else(invalid)?;
-        let all = &self.publications.events;
         self.validate_contact_presentations(binding, scoped_clear)?;
         if let Some((at, port, value)) = sample {
             let physical = content.sender_physical.as_ref().ok_or_else(invalid)?;
-            let clear_phase = physical.contact_continuation.is_some()
-                && all.iter().take_while(|event| event.at < at).any(|event| {
-                    matches!(&event.kind, EventKind::Publication(write)
-                        if write.port == binding.port && write.value == 0)
-                });
-            let reply = if clear_phase {
-                let continuation = physical.contact_continuation.as_ref().ok_or_else(invalid)?;
-                continuation.reply_at(
-                    self.contact_clear_retried_at.filter(|retry| *retry < at),
-                    at,
-                )
-            } else {
-                let retry = physical.contact_retry.as_ref().ok_or_else(invalid)?;
-                retry.reply_at(latest_contact_retry(all, binding, at), at)
-            };
+            let reply = self
+                .physical_contact_reply(physical, binding, at, at)
+                .ok_or_else(invalid)?;
             let observed = if reply == Request::Cue(binding.cue) {
                 binding.value
             } else {
@@ -189,6 +229,11 @@ impl State {
         let clear_retry = scoped_clear
             .then(|| contact_retry_at(all, binding, before, binding.value, 0))
             .flatten();
+        let later = contact_retries(all, binding, before, binding.value, 0)
+            .next()
+            .and_then(|clear| {
+                contact_retries(all, binding, before, 0, binding.value).find(|retry| *retry > clear)
+            });
         let active_clear_presented = matches!(
             self.sender_progress,
             Cursor::Body {
@@ -205,10 +250,32 @@ impl State {
                 .and_then(|result| result.presentation.as_ref())
                 .is_some_and(|(_, request)| *request == Request::Absent)
         });
+        let active_cue_presented = self.contact_later_retried_at.is_some()
+            && self.contact_later_retried_at == self.contact_retried_at
+            && matches!(
+                self.sender_progress,
+                Cursor::Body {
+                    service: Service::Contact,
+                    publication: None,
+                    prefix: CONTACT_READ_PREFIX,
+                    ..
+                }
+            )
+            && self.sender_stage.receipt().is_some_and(|receipt| {
+                receipt
+                    .chosen
+                    .result
+                    .as_ref()
+                    .and_then(|result| result.presentation.as_ref())
+                    .is_some_and(|(_, request)| matches!(request, Request::Cue(_)))
+            });
         if self.contact_retried_at != latest_contact_retry(all, binding, before)
             || self.contact_clear_retried_at != clear_retry
+            || self.contact_later_retried_at != later
             || (active_clear_presented
                 && self.sender_stage.latest_milestone_at() != self.contact_clear_retried_at)
+            || (active_cue_presented
+                && self.sender_stage.latest_milestone_at() != self.contact_later_retried_at)
         {
             return Err(super::Fault::InvalidPlayerEntry);
         }
@@ -473,13 +540,9 @@ impl Cursor {
         }
         if spent == Some(MasterTicks(at)) {
             let now = state.timing.hardware.now;
-            let reply = if state.senders.contact.0.progress == SenderProgress::AwaitClear {
-                let continuation = content.contact_continuation.as_ref().ok_or(Fault::Order)?;
-                continuation.reply_at(state.contact_clear_retried_at, now)
-            } else {
-                let retry = content.contact_retry.as_ref().ok_or(Fault::Order)?;
-                retry.reply_at(state.contact_retried_at, now)
-            };
+            let reply = state
+                .physical_contact_reply(content, binding, now, now)
+                .ok_or(Fault::Order)?;
             let value = match reply {
                 Request::Absent => 0,
                 Request::Cue(cue) if cue == binding.cue => binding.value,
@@ -593,7 +656,14 @@ impl Cursor {
             .map_err(Fault::Sender)?;
         if *service == Service::Contact && *prefix == CONTACT_READ_PREFIX {
             match presented {
-                Request::Cue(_) => candidate.contact_retried_at = Some(event.at),
+                Request::Cue(_) => {
+                    candidate.contact_retried_at = Some(event.at);
+                    if candidate.contact_clear_retried_at.is_some()
+                        && candidate.contact_later_retried_at.is_none()
+                    {
+                        candidate.contact_later_retried_at = Some(event.at);
+                    }
+                }
                 Request::Absent => candidate.contact_clear_retried_at = Some(event.at),
             }
         }

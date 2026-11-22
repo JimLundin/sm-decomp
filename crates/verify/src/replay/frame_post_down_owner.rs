@@ -13,6 +13,7 @@ pub struct Fault;
 pub fn physical(templates: &Templates) -> Result<Physical, Fault> {
     Ok(Physical {
         sound_offer: whole(templates, "S4.SoundOffer", 11200, 11327)?,
+        recurring_footstep: None,
         poststep: whole(templates, "S3.Poststep", 11327, 11369)?,
     })
 }

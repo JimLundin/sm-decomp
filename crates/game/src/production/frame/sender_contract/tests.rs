@@ -90,3 +90,61 @@ fn completed_actual_receipt_advances_only_the_dequeued_head() {
     assert_eq!(restored.window(SoundGroup::Ambient), empty_window);
     assert_eq!(queues.completed(&receipt, &after), Err(Fault::Queue));
 }
+
+#[test]
+fn marked_footstep_appends_to_the_live_empty_ring_and_wraps() {
+    let senders = Senders::new(empty(), empty(), empty()).unwrap();
+    let open = QueueWindow::new(15, 15).unwrap();
+    let mut queues = Queues::new(open, open, open, &senders).unwrap();
+    let before = empty();
+    let mut with_cue = before.clone();
+    with_cue.queue.push_back(CueId::Footstep);
+
+    assert_eq!(
+        queues.footstep(&before, &before, audio_transport::OfferPermission::Enabled),
+        Err(Fault::Receipt)
+    );
+    assert_eq!(queues.window(SoundGroup::Contact), open);
+    queues
+        .footstep(
+            &before,
+            &with_cue,
+            audio_transport::OfferPermission::Enabled,
+        )
+        .unwrap();
+    assert_eq!(queues.window(SoundGroup::Contact).positions(), [15, 0]);
+
+    let snapshot = queues.clone();
+    assert_eq!(
+        queues.footstep(
+            &with_cue,
+            &with_cue,
+            audio_transport::OfferPermission::Enabled
+        ),
+        Err(Fault::Receipt)
+    );
+    assert_eq!(queues, snapshot);
+
+    let result = audio_transport::SenderResult {
+        progress: SenderProgress::AwaitCue(CueId::Footstep),
+        queue: VecDeque::new(),
+        presentation: Some((CpuMasterTicks(312), Request::Cue(CueId::Footstep))),
+        completion: CpuMasterTicks(498),
+    };
+    let pending = Receipt {
+        group: SoundGroup::Contact,
+        before: with_cue.progress,
+        queue: with_cue.queue,
+        reply: with_cue.reply,
+        chosen: audio_transport::SenderCompletion {
+            origin: CpuMasterTicks(100),
+            observation: None,
+            result: Some(result.clone()),
+        },
+    };
+    let mut consumed = empty();
+    consumed.progress = result.progress;
+    consumed.now = result.completion;
+    queues.completed(&pending, &consumed).unwrap();
+    assert_eq!(queues.window(SoundGroup::Contact).positions(), [0, 0]);
+}

@@ -176,6 +176,9 @@ jobs:
       - &opening_clock
         name: Fetch the opening clock inputs and independent comparisons
         run: bash tools/ci/fetch_opening_clock.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &opening_ground_corridor
+        name: Fetch independent opening ground-corridor work and observations
+        run: bash tools/ci/fetch_opening_ground_corridor.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Run verification library tests
         if: inputs.target == '' || contains(inputs.target, '::')
         env:
@@ -280,6 +283,7 @@ jobs:
       - *health_tail
       - *connected_health
       - *opening_clock
+      - *opening_ground_corridor
       - name: Verify recorded bridge fault rejection and exact restoration
         env:
           CARGO_INCREMENTAL: "1"

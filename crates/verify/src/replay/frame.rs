@@ -448,12 +448,14 @@ pub(super) struct Actual {
     pub events: Vec<game::production::timing::Event>,
     delivered: usize,
     opening_contact: bool,
+    opening_ground_corridor: bool,
 }
 
 impl Actual {
-    pub(super) fn new(opening_contact: bool) -> Self {
+    pub(super) fn new(opening_contact: bool, opening_ground_corridor: bool) -> Self {
         Self {
             opening_contact,
+            opening_ground_corridor,
             ..Self::default()
         }
     }
@@ -479,6 +481,13 @@ impl Actual {
                 .checked_add(writes)
                 .ok_or_else(|| data_failure(Some(cut), "frame delivered audio write count"))?;
             let mut fields = opening_contact::actual(production, state);
+            if self.opening_ground_corridor {
+                fields.extend(opening_contact::actual_corridor(
+                    state,
+                    &outputs.events,
+                    cut,
+                )?);
+            }
             fields.push(ports);
             return Ok(fields);
         }
@@ -532,6 +541,9 @@ impl Actual {
         };
         if self.opening_contact {
             let mut fields = opening_contact::actual(production, state);
+            if self.opening_ground_corridor {
+                fields.extend(opening_contact::initial_corridor(state));
+            }
             fields.push(opening_audio::actual(&self.events));
             return Ok(fields);
         }

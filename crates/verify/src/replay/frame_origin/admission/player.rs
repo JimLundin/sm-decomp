@@ -45,6 +45,7 @@ impl Admission<'_> {
             builder: portion(templates, "BeginSpriteList")?,
             gameplay: portion(templates, "GameplayDispatch")?,
             actors: portion(templates, "ActorEligibility")?,
+            two_interactive_actors: None,
             debug: portion(templates, "Debug")?,
             palette: portion(templates, "PaletteObjects")?,
         };
@@ -82,6 +83,10 @@ impl Admission<'_> {
                 actors: portion(templates, "S2.ActorUpdate")?,
                 recurring_actors: None,
                 recurring_waiting_actors: None,
+                closing_starts: None,
+                closing_wait: None,
+                closing_other_poll: None,
+                closing_advance: None,
                 sprites: portion(templates, "S2.SpriteObjects")?,
                 contact: portion(templates, "S2.ContactReset")?,
             })
