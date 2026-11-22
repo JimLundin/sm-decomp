@@ -182,11 +182,16 @@ def validate_coverage(root: Path, faults: Sequence[Fault]) -> None:
         raise ValueError("every supported replay responsibility needs a production fault")
 
 def partition_faults(faults: tuple[Fault, ...]) -> tuple[tuple[Fault, ...], ...]:
-    """Assign each manifest row to one worker in manifest order."""
-    worker_count = min(WORKER_COUNT, len(faults))
-    if worker_count == 0:
+    """Assign each case's faults together so only one worker runs its healthy baseline."""
+    if not faults:
         raise ValueError("cannot partition an empty fault manifest")
-    return tuple(faults[worker::worker_count] for worker in range(worker_count))
+    by_case: dict[str, list[Fault]] = {}
+    for fault in faults:
+        by_case.setdefault(fault.case, []).append(fault)
+    workers: list[list[Fault]] = [[] for _ in range(min(WORKER_COUNT, len(by_case)))]
+    for group in by_case.values():
+        min(workers, key=len).extend(group)
+    return tuple(tuple(worker) for worker in workers)
 
 
 def main(argv: list[str] | None = None) -> int:

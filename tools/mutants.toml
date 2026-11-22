@@ -1,6 +1,49 @@
 # Production wiring faults must fail at the recorded cut and field.
 # Each supported replay responsibility has a distinct semantic fault.
 
+# CI assigns each case to one worker. Put the expensive cases first so they start on separate workers.
+
+[[fault]]
+name = "frame-hud-stale-map-position"
+responsibility = "hud"
+file = "crates/game/src/production/frame/hud_camera_caller.rs"
+before = """let inputs = current
+                .premises
+                .inputs(current.status, current.position, current.action);"""
+after = """let stale = movement.decisions().iter().find_map(|decision| {
+                if let samus_movement::suspended::MovementDecision::Local { before, .. } = decision {
+                    Some(types::Pair { x: before.position.x.pixel().0, y: before.position.y.pixel().0 })
+                } else {
+                    None
+                }
+            }).ok_or(Fault::Producers)?;
+            let inputs = current
+                .premises
+                .inputs(current.status, stale, current.action);"""
+case = "frame/health-hud-stock"
+cut = 1
+field = "frame.health_hud.map.position"
+
+[[fault]]
+name = "frame-hud-stale-status-energy"
+responsibility = "hud"
+file = "crates/game/src/production/frame/late_hud.rs"
+before = "status.energy.now = self.maintenance.energy().ok_or_else(missing)?;"
+after = "status.energy.now = self.hud.state().shown.energy;"
+case = "frame/health-hud-pending-loss"
+cut = 1
+field = "frame.health_hud.status.read"
+
+[[fault]]
+name = "opening-contact-zero-arrives-at-reinforcement"
+responsibility = "audio-sender"
+file = "crates/game/src/production/frame/contact_sender.rs"
+before = '.and_then(|retry| retry.0.checked_add(self.clear_reply_delay.0))'
+after = '.and_then(|retry| retry.0.checked_add(self.clear_reply_delay.0.saturating_add(344_406)))'
+case = "frame/opening-eight-native-returns"
+cut = 6
+field = "frame.contact.incoming"
+
 [[fault]]
 name = "movement-double-update"
 responsibility = "movement"
@@ -152,6 +195,7 @@ after = '''let mut outcome = outcome;
 case = "movement-native-occupied-first-search"
 cut = 9233
 field = "movement.motion.0.enemy_search.candidates"
+
 [[fault]]
 name = "movement-required-enemy-input-omitted"
 responsibility = "movement"
@@ -365,7 +409,6 @@ after = """
 case = "frame/ordinary-requested-nmi-return"
 cut = 1
 field = "frame.random"
-
 
 [[fault]]
 name = "sender-offer-demo-bypassed"
@@ -607,37 +650,6 @@ cut = 2
 field = "frame.time"
 
 [[fault]]
-name = "frame-hud-stale-map-position"
-responsibility = "hud"
-file = "crates/game/src/production/frame/hud_camera_caller.rs"
-before = """let inputs = current
-                .premises
-                .inputs(current.status, current.position, current.action);"""
-after = """let stale = movement.decisions().iter().find_map(|decision| {
-                if let samus_movement::suspended::MovementDecision::Local { before, .. } = decision {
-                    Some(types::Pair { x: before.position.x.pixel().0, y: before.position.y.pixel().0 })
-                } else {
-                    None
-                }
-            }).ok_or(Fault::Producers)?;
-            let inputs = current
-                .premises
-                .inputs(current.status, stale, current.action);"""
-case = "frame/health-hud-stock"
-cut = 1
-field = "frame.health_hud.map.position"
-
-[[fault]]
-name = "frame-hud-stale-status-energy"
-responsibility = "hud"
-file = "crates/game/src/production/frame/late_hud.rs"
-before = "status.energy.now = self.maintenance.energy().ok_or_else(missing)?;"
-after = "status.energy.now = self.hud.state().shown.energy;"
-case = "frame/health-hud-pending-loss"
-cut = 1
-field = "frame.health_hud.status.read"
-
-[[fault]]
 name = "frame-hud-omitted-tilemap-publication"
 responsibility = "hud"
 file = "crates/game/src/production/frame/late_hud.rs"
@@ -656,13 +668,3 @@ after = 'drop(profile.runs.splice(0..0, wait_busy_leg().into_iter().skip(1)));'
 case = "frame/opening-three-native-returns"
 cut = 3
 field = "frame.audio.ports"
-
-[[fault]]
-name = "opening-contact-zero-arrives-at-reinforcement"
-responsibility = "audio-sender"
-file = "crates/game/src/production/frame/contact_sender.rs"
-before = '.and_then(|retry| retry.0.checked_add(self.clear_reply_delay.0))'
-after = '.and_then(|retry| retry.0.checked_add(self.clear_reply_delay.0.saturating_add(344_406)))'
-case = "frame/opening-eight-native-returns"
-cut = 6
-field = "frame.contact.incoming"

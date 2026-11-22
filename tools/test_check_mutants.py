@@ -80,11 +80,16 @@ field = "audio.reply0"
         template = Fault("fault", "audio", "crates/game/src/production.rs",
                          "measured", "zero", "audio/example", 3, "audio.reply0")
         for count in [1, 3, 4, 5, 9, 25]:
-            roster = tuple(replace(template, name=f"fault-{index}") for index in range(count))
+            roster = tuple(replace(template, name=f"fault-{index}", case=f"case-{index % 7}")
+                           for index in range(count))
             workers = check_mutants.partition_faults(roster)
             self.assertEqual(len(workers), min(count, 4))
             self.assertTrue(all(workers))
             self.assertCountEqual([fault for worker in workers for fault in worker], roster)
+            cases = [case for worker in workers for case in {fault.case for fault in worker}]
+            self.assertCountEqual(cases, {fault.case for fault in roster})
+        same_case = (template, replace(template, name="another"))
+        self.assertEqual(check_mutants.partition_faults(same_case), (same_case,))
         with self.assertRaises(ValueError):
             check_mutants.partition_faults(())
 
