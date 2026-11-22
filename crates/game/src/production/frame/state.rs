@@ -143,8 +143,10 @@ pub struct State {
     pub senders: Senders,
     /// Current qualified service metadata, retaining no second writable sender state.
     pub sender_stage: super::sender_stage::Stage,
-    /// Actual last retry publication, kept for the external Contact response join.
+    /// Actual last cue retry publication, kept for the external Contact response join.
     pub contact_retried_at: Option<MasterTicks>,
+    /// Last completed outgoing clear retry milestone, retained separately from the physical log.
+    pub contact_clear_retried_at: Option<MasterTicks>,
     /// Reply receipt retained after the already sampled Contact service returns.
     pub completed_contact_read: Option<super::sender_stage::ReplyRead>,
     /// Exactly-once progress through actual retained appearance sound requests.

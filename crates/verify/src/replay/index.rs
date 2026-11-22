@@ -404,6 +404,15 @@ pub enum ObservationId {
     /// Ordered CPU reads and writes at the audio ports.
     #[serde(rename = "frame.audio.ports")]
     FrameAudioPorts,
+    /// Retained Contact clean sender phase with remaining delay turns.
+    #[serde(rename = "frame.contact.phase")]
+    FrameContactPhase,
+    /// Independently supplied incoming Contact latch.
+    #[serde(rename = "frame.contact.incoming")]
+    FrameContactIncoming,
+    /// CPU Contact presentation latch.
+    #[serde(rename = "frame.contact.outgoing")]
+    FrameContactOutgoing,
     /// Selected Haze and `LayerBlend` state at each committed prelude boundary.
     #[serde(rename = "frame.steady")]
     FrameSteady,
@@ -930,7 +939,10 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::LiveSoundPrefix
         | O::LiveSoundAccepted
         | O::LiveSoundFifo
-        | O::FrameAudioPorts => Responsibility::AudioSender,
+        | O::FrameAudioPorts
+        | O::FrameContactPhase
+        | O::FrameContactIncoming
+        | O::FrameContactOutgoing => Responsibility::AudioSender,
         O::LiveSoundHold => Responsibility::Doors,
         O::FrameTime | O::FrameOutputs | O::FrameHealthHud => Responsibility::Frame,
         O::FrameSteady => Responsibility::WorldHaze,
@@ -1691,6 +1703,12 @@ impl Case {
             .any(|value| value.dependency == "frame.opening-clock")
     }
 
+    pub(super) fn opening_contact_cycle(&self) -> bool {
+        self.borrowed
+            .iter()
+            .any(|value| value.dependency == "frame.opening-contact-cycle")
+    }
+
     pub(super) fn adjacent_native_end(&self) -> u64 {
         if self.opening_clock() {
             2
@@ -1717,7 +1735,11 @@ impl Case {
 
     pub(super) fn compares_final_frame_owners(&self) -> bool {
         (self.native_frame_fields() == FINAL_OWNER_FIELDS || self.compares_final_frame_health())
-            && self.responsibilities.contains(&Responsibility::GameTime)
+            && self.declares_final_frame_work()
+    }
+
+    fn declares_final_frame_work(&self) -> bool {
+        self.responsibilities.contains(&Responsibility::GameTime)
             && self.responsibilities.contains(&Responsibility::WorldQuake)
             && [PLAY_TIME_RULE, ROOM_QUAKE_RULE]
                 .into_iter()
@@ -1826,7 +1848,7 @@ fn native_frame_scope_valid(
     let haze = frame_owners.remove(&Responsibility::WorldHaze);
     let random = frame_owners.remove(&Responsibility::GameRandom);
     let compares_final_owners = case.compares_final_frame_owners();
-    if compares_final_owners {
+    if compares_final_owners || case.opening_contact_cycle() {
         frame_owners.remove(&Responsibility::GameTime);
         frame_owners.remove(&Responsibility::WorldQuake);
     }
@@ -1837,7 +1859,7 @@ fn native_frame_scope_valid(
                 .rules
                 .iter()
                 .any(|rule| rule.starts_with("world-haze/"))
-        && random == case.expectations.native_random.is_some()
+        && random == (case.expectations.native_random.is_some() || case.opening_contact_cycle())
         && health_hud == case.expectations.native_health_hud.is_some()
         && health_hud == super::frame::health_hud::Arm::from_case(case).is_some()
         && (!health_hud
@@ -1856,8 +1878,24 @@ fn native_frame_scope_valid(
                 Responsibility::Appearance,
                 Responsibility::AudioSender,
             ])
-        && (compares_final_owners || case.native_frame_fields() == [ObservationId::FrameTime])
-        && if case.opening_clock() {
+        && (compares_final_owners
+            || case.native_frame_fields() == [ObservationId::FrameTime]
+            || case.opening_contact_cycle())
+        && if case.opening_contact_cycle() {
+            case.opening_clock()
+                && case.declares_final_frame_work()
+                && case.first_cut() == Some(1)
+                && case.end.cut_inclusive == super::frame::opening_contact::LAST_RETURN
+                && case.expectations.fields
+                    == [
+                        ObservationId::FrameTime,
+                        ObservationId::FrameContactPhase,
+                        ObservationId::FrameContactIncoming,
+                        ObservationId::FrameContactOutgoing,
+                    ]
+                && case.expectations.outputs == [ObservationId::FrameAudioPorts]
+                && case.checkpoints
+        } else if case.opening_clock() {
             case.first_cut() == Some(1)
                 && case.end.cut_inclusive == 3
                 && case.expectations.outputs

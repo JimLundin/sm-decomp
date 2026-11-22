@@ -53,7 +53,9 @@ pub(super) fn parse_manifest(
     let mut manifest: Manifest =
         toml::from_str(text).map_err(|_| data_failure(None, "frame origin manifest"))?;
     manifest.resolve(root);
-    if manifest.final_owners.is_some() != case.compares_final_frame_owners() {
+    if manifest.final_owners.is_some()
+        != (case.compares_final_frame_owners() || case.opening_contact_cycle())
+    {
         return Err(data_failure(
             None,
             "matched final frame owner declaration and expectation",

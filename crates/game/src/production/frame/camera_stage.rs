@@ -11,6 +11,7 @@ use types::Parts;
 
 mod contract;
 mod physical;
+pub(super) use contract::Horizontal;
 pub use contract::{
     PhysicalContract, RequiredCentre, RequiredDependencies, RequiredScreens, RequiredView,
 };

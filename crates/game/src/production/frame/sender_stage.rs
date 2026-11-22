@@ -322,8 +322,10 @@ impl Stage {
         self.validate(senders)?;
         let (candidate, receipt) =
             Self::select(senders, SoundGroup::Contact, wall, SenderProfile::FastBus)?;
-        if receipt.before != SenderProgress::AwaitCue(audio_transport::CueId::Footstep)
-            || !receipt.queue.is_empty()
+        if !matches!(
+            receipt.before,
+            SenderProgress::AwaitCue(audio_transport::CueId::Footstep) | SenderProgress::AwaitClear
+        ) || !receipt.queue.is_empty()
             || receipt.chosen.observation.is_none()
             || receipt.chosen.result.is_some()
         {
@@ -403,6 +405,13 @@ impl Stage {
         }
     }
 
+    pub(super) const fn latest_milestone_at(&self) -> Option<MasterTicks> {
+        match self {
+            Self::Charging { wall, .. } => Some(*wall),
+            Self::Idle | Self::Chosen(_) | Self::AwaitingReply { .. } => None,
+        }
+    }
+
     /// Complete receipt used by the external full source-envelope qualifier.
     #[must_use]
     pub const fn receipt(&self) -> Option<&Receipt> {
@@ -441,15 +450,19 @@ impl Stage {
         let receipt = self.receipt().ok_or(Fault::Order)?;
         let result = receipt.chosen.result.as_ref().ok_or(Fault::Owner)?;
         let (_, request) = result.presentation.as_ref().ok_or(Fault::Order)?;
-        if *request != Request::Cue(binding.cue)
-            || audio_transport::effects::group(binding.cue) != receipt.group
+        let value = match request {
+            Request::Cue(cue) if *cue == binding.cue => binding.value,
+            Request::Absent if receipt.group == SoundGroup::Contact => 0,
+            Request::Absent | Request::Cue(_) => return Err(Fault::Encoding),
+        };
+        if audio_transport::effects::group(binding.cue) != receipt.group
             || binding.port.output_class() != Ok(2)
         {
             return Err(Fault::Encoding);
         }
         Ok(DeviceWrite {
             port: binding.port,
-            value: binding.value,
+            value,
             effect: Publication::Downstream,
         })
     }

@@ -55,6 +55,7 @@ retained_frame = [
     "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_detects_stale_haze_at_the_first_haze_boundary",
     "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_carries_live_door_decrement_and_fractional_travel",
     "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_three_indexed_returns_with_live_restore_and_contact_fault",
+    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_carries_contact_clear_delay_and_reply_through_later_returns",
 ]
 
 content = [

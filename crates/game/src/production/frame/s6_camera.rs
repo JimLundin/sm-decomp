@@ -63,10 +63,23 @@ impl Contract {
     ) {
         let dependencies = self.dependencies(current, previous, view, screens);
         if let Some(adjacent) = &mut self.adjacent {
-            adjacent.admit(dependencies);
+            adjacent.admit(dependencies, camera_stage::Horizontal::Exact);
         } else {
             self.adjacent = Some(self.camera.with_dependencies(dependencies));
         }
+    }
+
+    /// Admit varying horizontal centres and viewport fraction in the same running room follow.
+    pub fn admit_live_horizontal(
+        &mut self,
+        current: camera_stage::RequiredCentre,
+        previous: camera_stage::RequiredCentre,
+        view: camera_stage::RequiredView,
+        screens: Vec<camera_stage::RequiredScreens>,
+    ) {
+        let dependencies = self.dependencies(current, previous, view, screens);
+        let adjacent = self.adjacent.get_or_insert_with(|| self.camera.clone());
+        adjacent.admit(dependencies, camera_stage::Horizontal::NearRoomEdge);
     }
 
     fn dependencies(

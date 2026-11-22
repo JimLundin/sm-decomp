@@ -238,6 +238,63 @@ pub(super) fn contact_match(text: &str) -> Result<[Template; 2], ProfileFault> {
     Ok([prefix, Template { runs: remainder }])
 }
 
+pub(super) fn contact_clear(
+    text: &str,
+    name: &str,
+    expected: [u64; 2],
+    sample_required: bool,
+    publish: Option<data::timing::PublicationPort>,
+) -> Result<(Template, Option<Template>), ProfileFault> {
+    let file: File = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [mut profile] = <[_; 1]>::try_from(file.profile).map_err(|_| ProfileFault::Format)?;
+    if file.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    let mut sample = None;
+    let mut publication = None;
+    for (index, run) in profile.run.iter_mut().enumerate() {
+        match (run.device.as_str(), run.event_phase.as_str()) {
+            ("", "") => {}
+            ("LibraryThreeCue", "sample") if sample_required && sample.replace(index).is_none() => {
+                if run.count != 1
+                    || cycle(run)? != (data::timing::Cycle::Six, data::timing::ExposureKind::Read)
+                {
+                    return Err(ProfileFault::Binding);
+                }
+            }
+            ("LibraryThreeCue", "publication")
+                if publish.is_some() && publication.replace(index).is_none() => {}
+            _ => return Err(ProfileFault::Binding),
+        }
+        run.device.clear();
+        run.event_phase.clear();
+    }
+    if sample_required != sample.is_some()
+        || publish.is_some() != publication.is_some()
+        || sample
+            .zip(publication)
+            .is_some_and(|(read, write)| read >= write)
+    {
+        return Err(ProfileFault::Binding);
+    }
+    let mut work = admit(&profile, name, expected, Effects::None)?;
+    if let Some((index, port)) = publication.zip(publish) {
+        work.runs
+            .get_mut(index)
+            .ok_or(ProfileFault::Binding)?
+            .effect = TemplateEffect::Publish(port);
+    }
+    let remainder = if let Some(index) = sample {
+        let split = index.checked_add(1).ok_or(ProfileFault::Binding)?;
+        Some(Template {
+            runs: work.runs.split_off(split),
+        })
+    } else {
+        None
+    };
+    Ok((work, remainder))
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Effects {
     None,

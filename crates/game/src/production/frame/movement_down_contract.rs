@@ -351,12 +351,12 @@ impl PhysicalContract {
         }
     }
 
-    /// Admit the independently qualified odd-parity, two-column physical owner.
+    /// Admit the independently qualified right-first stopped owner.
     pub fn set_odd_two_column(&mut self, template: data::timing::Template) {
         self.odd_two_column = Some(template);
     }
 
-    /// Whether admission includes the distinct odd-parity physical owner.
+    /// Whether admission includes the distinct right-first stopped owner.
     #[must_use]
     pub const fn has_odd_two_column(&self) -> bool {
         self.odd_two_column.is_some()
@@ -629,13 +629,17 @@ impl PhysicalContract {
             .ok_or(Fault::Query)?;
         let left_column = left >> 4;
         let right_column = right >> 4;
+        if left_column != right_column && left_column.checked_add(1) != Some(right_column) {
+            return Err(Fault::Query);
+        }
+        // The first tested column stops the request. The physical scan order still
+        // selects the envelope when both edges fall in that same column.
         let (x, template) = match parity {
-            types::Parity::Even if left_column == right_column => (left_column, &self.template),
-            types::Parity::Odd if left_column.checked_add(1) == Some(right_column) => (
+            types::Parity::Even => (left_column, &self.template),
+            types::Parity::Odd => (
                 right_column,
                 self.odd_two_column.as_ref().ok_or(Fault::Dependency)?,
             ),
-            types::Parity::Even | types::Parity::Odd => return Err(Fault::Query),
         };
         let cell = types::Cell { x, y: leading >> 4 };
         let index = usize::from(cell.y)

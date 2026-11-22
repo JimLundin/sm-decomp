@@ -14,6 +14,14 @@ pub struct RequiredCentre {
     pub fractions: [u16; 2],
 }
 
+impl RequiredCentre {
+    const fn vertical(self) -> [u16; 2] {
+        let [_, pixels] = self.pixels;
+        let [_, fraction] = self.fractions;
+        [pixels, fraction]
+    }
+}
+
 /// Selected initial viewport requirements, never a Camera seed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RequiredView {
@@ -49,11 +57,17 @@ pub struct RequiredDependencies {
     pub screens: Vec<RequiredScreens>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(in crate::production::frame) enum Horizontal {
+    Exact,
+    NearRoomEdge,
+}
+
 /// Checked immutable physical content, interpreted entirely by production.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PhysicalContract {
     dependencies: RequiredDependencies,
-    further: Vec<RequiredDependencies>,
+    further: Vec<(RequiredDependencies, Horizontal)>,
     pub(super) template: data::timing::Template,
 }
 
@@ -75,17 +89,21 @@ impl PhysicalContract {
         Self::new(dependencies, self.template.clone())
     }
 
-    pub(in crate::production::frame) fn admit(&mut self, dependencies: RequiredDependencies) {
-        self.further.push(dependencies);
+    pub(in crate::production::frame) fn admit(
+        &mut self,
+        dependencies: RequiredDependencies,
+        horizontal: Horizontal,
+    ) {
+        self.further.push((dependencies, horizontal));
     }
 
     pub(super) fn check(&self, receipt: &Receipt, result: &Model<CameraPin>) -> Result<(), Fault> {
-        let first = self.dependencies.check(receipt, result);
+        let first = self.dependencies.check(receipt, result, Horizontal::Exact);
         if first.is_err()
             && self
                 .further
                 .iter()
-                .any(|current| current.check(receipt, result).is_ok())
+                .any(|(current, horizontal)| current.check(receipt, result, *horizontal).is_ok())
         {
             return Ok(());
         }
@@ -94,7 +112,12 @@ impl PhysicalContract {
 }
 
 impl RequiredDependencies {
-    pub(super) fn check(&self, receipt: &Receipt, result: &Model<CameraPin>) -> Result<(), Fault> {
+    fn check(
+        &self,
+        receipt: &Receipt,
+        result: &Model<CameraPin>,
+        horizontal: Horizontal,
+    ) -> Result<(), Fault> {
         let (samus, outputs) = receipt.movement.finished().ok_or(Fault::Movement)?;
         let previous = receipt.initial.0.seen();
         let view = receipt.initial.0.position();
@@ -111,17 +134,19 @@ impl RequiredDependencies {
             ],
             fractions: [previous.x.sub(), previous.y.sub()],
         };
-        if current != self.current {
+        if current.vertical() != self.current.vertical()
+            || (horizontal == Horizontal::Exact && current != self.current)
+        {
             return Err(Fault::CurrentCentre);
         }
-        if previous_required != self.previous {
+        if previous_required.vertical() != self.previous.vertical()
+            || (horizontal == Horizontal::Exact && previous_required != self.previous)
+        {
             return Err(Fault::PreviousCentre);
         }
-        if (RequiredView {
-            x: view.x.pixel().0,
-            fraction: view.x.sub(),
-            y: view.y.pixel().0,
-        }) != self.view
+        if view.x.pixel().0 != self.view.x
+            || view.y.pixel().0 != self.view.y
+            || (horizontal == Horizontal::Exact && view.x.sub() != self.view.fraction)
             || receipt.inputs != *self.inputs
             || samus.pose.action != types::Action::Running
             || samus.pose.facing != types::Facing::Right
@@ -130,6 +155,11 @@ impl RequiredDependencies {
             || samus.position.y.pixel() != previous.y.pixel()
             || result.0.position().y != view.y
             || result.0.seen() != samus.position
+        {
+            return Err(Fault::Dependencies);
+        }
+        if horizontal == Horizontal::NearRoomEdge
+            && !near_room_edge(receipt, samus.position.x, previous.x, result.0.position().x)
         {
             return Err(Fault::Dependencies);
         }
@@ -154,4 +184,36 @@ impl RequiredDependencies {
         }
         Ok(())
     }
+}
+
+/// Qualify the backward chase and near-edge clamp before reusing the whole physical bill.
+fn near_room_edge(
+    receipt: &Receipt,
+    current: types::Fixed,
+    previous: types::Fixed,
+    result: types::Fixed,
+) -> bool {
+    let view = receipt.initial.0.position().x;
+    let tuning = receipt.inputs.tuning;
+    let [lead, _] = match receipt.inputs.lead {
+        super::Lead::Ahead => tuning.ahead,
+        super::Lead::KeepLeft => tuning.keep_left,
+        super::Lead::KeepRight => tuning.keep_right,
+        super::Lead::Near => tuning.near,
+    };
+    let aim = current.pixel().0.wrapping_sub(lead);
+    let Some(speed) = current
+        .0
+        .checked_sub(previous.0)
+        .and_then(|delta| delta.checked_add(tuning.extra))
+    else {
+        return false;
+    };
+    let reached = core::num::Wrapping(view.0.wrapping_sub(speed));
+    current.pixel().0 > previous.pixel().0
+        && types::below(aim, view.pixel().0)
+        && types::below(aim, reached.pixel().0)
+        && types::below(reached.pixel().0, 0)
+        && result.pixel().0 == 0
+        && result.sub() == reached.sub()
 }
