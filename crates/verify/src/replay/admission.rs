@@ -15,6 +15,9 @@ pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outc
     if case.inputs == InputProvider::NativeFrameOwners {
         return super::frame_origin::admit(case, sources);
     }
+    if case.inputs == InputProvider::NativeSteadyPrelude {
+        return super::frame_steady::admit(case, sources);
+    }
     if case.inputs == InputProvider::Unavailable {
         let dependency = match case.responsibilities.as_slice() {
             [Responsibility::Blocks] => {

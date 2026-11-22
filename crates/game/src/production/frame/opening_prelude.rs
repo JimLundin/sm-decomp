@@ -139,15 +139,18 @@ pub struct Opening {
     acknowledgment_ended_at: Option<MasterTicks>,
     music: Option<MusicServiceReceipt>,
     senders: Senders,
+    steady: Option<Box<super::steady_prelude::State>>,
 }
 
-/// Checked exposures of the two reached owners.
+/// Checked exposures and independently admitted neighbouring owners.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Profiles {
     /// Actual preceding publication acknowledgment work.
     pub acknowledgment: Template,
     /// Actual effect-free quiet Music work.
     pub music: Template,
+    /// Qualified quiet continuation after Music.
+    pub steady: Option<Box<super::steady_prelude::Qualification>>,
 }
 
 fn validate_senders(senders: &Senders) -> Result<(), ProductionFault> {
@@ -229,7 +232,29 @@ impl Opening {
             acknowledgment_ended_at: None,
             music: Some(current),
             senders,
+            steady: None,
         })
+    }
+
+    /// Include the current Steady Haze and layer preparation owners from the same resume.
+    ///
+    /// # Errors
+    /// Refuses already advanced openings and unsupported Haze or hardware origins.
+    pub fn with_steady(
+        mut self,
+        qualification: &super::steady_prelude::Qualification,
+    ) -> Result<Self, ProductionFault> {
+        if self.steady.is_some() || self.timing.hardware.now != MasterTicks(0) {
+            return Err(ProductionFault::WrongScope);
+        }
+        self.steady = Some(Box::new(qualification.initial(&self.timing)?));
+        Ok(self)
+    }
+
+    /// Current live Haze backing, scheduler state and preserved Window Two.
+    #[must_use]
+    pub fn steady_observation(&self) -> Option<super::steady_prelude::Observation> {
+        self.steady.as_ref()?.observation(&self.timing)
     }
 
     /// Current canonical hardware, including charged run and refresh progress.
@@ -282,8 +307,21 @@ impl Opening {
         let elapsed = now
             .checked_sub(acknowledgment)
             .ok_or(ProductionFault::WrongScope)?;
-        let valid = if matches!(self.caller, Caller::Haze { .. }) {
-            elapsed >= intrinsic(&profiles.music)?
+        let valid = if self.after_music() {
+            let mut minimum = intrinsic(&profiles.music)?;
+            if let Some(steady) = &profiles.steady {
+                for template in steady.finished(&self.caller) {
+                    minimum = minimum
+                        .checked_add(intrinsic(template)?)
+                        .ok_or(ProductionFault::FrameHardware(timing::Fault::TimeOverflow))?;
+                }
+            }
+            if let Some(work) = self.timing.work.first() {
+                minimum = minimum
+                    .checked_add(work.cursor.intrinsic.0)
+                    .ok_or(ProductionFault::FrameHardware(timing::Fault::TimeOverflow))?;
+            }
+            elapsed >= minimum
         } else if let Some(work) = self.timing.work.first() {
             elapsed >= work.cursor.intrinsic.0
         } else {
@@ -293,6 +331,18 @@ impl Opening {
             return Err(ProductionFault::WrongScope);
         }
         Ok(())
+    }
+
+    const fn after_music(&self) -> bool {
+        matches!(
+            self.caller,
+            Caller::Haze { .. }
+                | Caller::HazeRunning { .. }
+                | Caller::HazeTail { .. }
+                | Caller::LayerBlend { .. }
+                | Caller::LayerBlendRunning { .. }
+                | Caller::Random { .. }
+        )
     }
 
     pub(in crate::production) fn validate(
@@ -315,7 +365,12 @@ impl Opening {
         | Caller::Acknowledgment { prelude, .. }
         | Caller::Music { prelude, .. }
         | Caller::MusicRunning { prelude, .. }
-        | Caller::Haze { prelude, .. }) = &self.caller
+        | Caller::Haze { prelude, .. }
+        | Caller::HazeRunning { prelude, .. }
+        | Caller::HazeTail { prelude, .. }
+        | Caller::LayerBlend { prelude, .. }
+        | Caller::LayerBlendRunning { prelude, .. }
+        | Caller::Random { prelude, .. }) = &self.caller
         else {
             return Err(ProductionFault::WrongScope);
         };
@@ -331,18 +386,34 @@ impl Opening {
         {
             return Err(ProductionFault::WrongScope);
         }
-        if let Caller::Haze { music, .. } = &self.caller {
+        if let Caller::Haze { music, .. }
+        | Caller::HazeRunning { music, .. }
+        | Caller::HazeTail { music, .. }
+        | Caller::LayerBlend { music, .. }
+        | Caller::LayerBlendRunning { music, .. }
+        | Caller::Random { music, .. } = &self.caller
+        {
             if origin.music_completion.is_some() || self.music != Some(music.terminal) {
                 return Err(music_missing());
             }
         } else {
             music_result(self.music, prelude)?;
         }
-        if matches!(
-            self.caller,
-            Caller::Acknowledgment { .. } | Caller::MusicRunning { .. }
-        ) {
-            self.validate_charge(self.current_template(profiles)?)?;
+        match (&self.steady, &profiles.steady) {
+            (Some(state), Some(context)) => state.validate(context, &self.caller, &self.timing)?,
+            (None, None) if !self.after_music() || matches!(self.caller, Caller::Haze { .. }) => (),
+            _ => return Err(ProductionFault::WrongScope),
+        }
+        if matches!(self.caller, Caller::Acknowledgment { .. }) {
+            self.validate_charge(&profiles.acknowledgment, ACKNOWLEDGMENT)?;
+        } else if matches!(self.caller, Caller::MusicRunning { .. }) {
+            self.validate_charge(&profiles.music, MUSIC)?;
+        } else if let Some((template, id)) = profiles
+            .steady
+            .as_ref()
+            .and_then(|steady| steady.validation_phase(&self.caller))
+        {
+            self.validate_charge(template, id)?;
         } else if !self.timing.work.is_empty()
             || (matches!(self.caller, Caller::AwaitingAcknowledgment { .. })
                 && self.timing.hardware.now != MasterTicks(0))
@@ -357,6 +428,11 @@ impl Opening {
         profiles: &Profiles,
         budget: MasterTicks,
     ) -> Result<(timing::Progress, Vec<timing::Event>), ProductionFault> {
+        if self.after_music()
+            && let (Some(state), Some(context)) = (&mut self.steady, &profiles.steady)
+        {
+            return state.advance(context, &mut self.caller, &mut self.timing, budget);
+        }
         let template = self.current_template(profiles)?;
         if matches!(self.caller, Caller::AwaitingAcknowledgment { .. }) {
             begin_acknowledgment(&mut self.caller, &mut self.timing, template)?;
@@ -401,14 +477,11 @@ impl Opening {
         }
     }
 
-    fn validate_charge(&self, template: &Template) -> Result<(), ProductionFault> {
-        let expected = if matches!(self.caller, Caller::Acknowledgment { .. }) {
-            ACKNOWLEDGMENT
-        } else if matches!(self.caller, Caller::MusicRunning { .. }) {
-            MUSIC
-        } else {
-            return Err(ProductionFault::WrongScope);
-        };
+    fn validate_charge(
+        &self,
+        template: &Template,
+        expected: timing::WorkId,
+    ) -> Result<(), ProductionFault> {
         let profile = template
             .bind(&[])
             .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
@@ -471,6 +544,7 @@ mod tests {
         let content = ProductionContent::FrameOpening(Box::new(Profiles {
             acknowledgment: profile.clone(),
             music: profile,
+            steady: None,
         }));
         let rules = ProductionRules::FrameOpening;
         let mut production = Production::admit(

@@ -171,6 +171,8 @@ pub enum InputProvider {
     ConnectedOrdinaryInputs,
     /// Qualified current owner inputs and explicitly borrowed unselected completions.
     NativeFrameOwners,
+    /// Independent true-resume origin and reached Steady Haze preparation inputs.
+    NativeSteadyPrelude,
     /// Independently admitted selector-time Frame and actor-selection-time geometry.
     NativeSearchInputs,
     /// Prior locked Movement state, actual solid actors and independent sender ingress.
@@ -229,6 +231,8 @@ pub enum ContentProvider {
 pub enum ExpectedProvider {
     /// Independent frozen ordered physical callbacks and completed-return wall time.
     NativeFrameCallbacks,
+    /// Independently observed Steady Haze and `LayerBlend` boundaries and mirrors.
+    NativeSteadyBoundaries,
     /// Frozen complete source-derived movement work, with independent captured input packets.
     NativeCompleteMovementWork,
     /// Live floor, fit and consumer observations, with the independent Contact FIFO.
@@ -276,6 +280,9 @@ pub enum ObservationId {
     /// Exact completed-return wall time from the retained physical owner.
     #[serde(rename = "frame.time")]
     FrameTime,
+    /// Selected Haze and `LayerBlend` state at each committed prelude boundary.
+    #[serde(rename = "frame.steady")]
+    FrameSteady,
     /// The committed shared random number.
     #[serde(rename = "frame.random")]
     FrameRandom,
@@ -763,6 +770,7 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | ObservationId::SenderProgress
         | ObservationId::TouchdownOffer => Responsibility::AudioSender,
         ObservationId::FrameTime | ObservationId::FrameOutputs => Responsibility::Frame,
+        ObservationId::FrameSteady => Responsibility::WorldHaze,
         ObservationId::FrameRandom => Responsibility::GameRandom,
         ObservationId::PlayTimeHours
         | ObservationId::PlayTimeMinutes
@@ -1329,6 +1337,17 @@ fn scope_valid(case: &Case) -> bool {
         .any(|field| !owners.contains(&observation_owner(*field)))
     {
         return false;
+    }
+    if case.inputs == InputProvider::NativeSteadyPrelude {
+        return case.kind == CaseKind::Scoped
+            && case.content == ContentProvider::PlayerRomImport
+            && owners == BTreeSet::from([Responsibility::Frame, Responsibility::WorldHaze])
+            && case.expectations.provider == ExpectedProvider::NativeSteadyBoundaries
+            && case.expectations.fields == [ObservationId::FrameTime, ObservationId::FrameSteady]
+            && case.expectations.outputs.is_empty()
+            && matches!(case.start, Start::NativeSeed { .. })
+            && case.end.cut_inclusive == 4
+            && case.checkpoints;
     }
     if case.inputs == InputProvider::NativeFrameOwners {
         let mut frame_owners = owners.clone();

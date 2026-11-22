@@ -39,6 +39,7 @@ pub(crate) mod frame_player_preparation_receipts;
 pub(crate) mod frame_post_down_owner;
 pub(crate) mod frame_sender_contract;
 pub(crate) mod frame_sender_inputs;
+mod frame_steady;
 pub(crate) mod frame_suffix_owner;
 pub mod frame_tiles;
 mod frame_timing;

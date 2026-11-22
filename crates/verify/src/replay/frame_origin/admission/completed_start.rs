@@ -3,6 +3,7 @@
 use super::super::{Member, borrowed_receipts, hardware_seed, sender_seed};
 use crate::replay::{Sources, data_failure, index::Case, readers::AdmittedCase, result::Outcome};
 use data::timing::MasterTicks;
+use frame::opening_prelude::{Opening, Profiles};
 use game::production::{frame, timing::PhysicalPad};
 use serde::Deserialize;
 use std::path::Path;
@@ -405,67 +406,80 @@ mod tests {
     }
 }
 
+pub(in crate::replay) fn replay_opening(
+    sources: &Sources,
+) -> Result<(Opening, Profiles, Vec<u8>), Outcome> {
+    let root = sources.native.join("shot-frame-origin-v1");
+    let member = Member {
+        path: root.join("origin.toml"),
+        sha256: ORIGIN_PIN.to_owned(),
+    };
+    let prefetch = Donor::load(sources, &root, &member.text()?)?;
+    open(sources, prefetch)
+}
+
+fn open(sources: &Sources, prefetch: Origins) -> Result<(Opening, Profiles, Vec<u8>), Outcome> {
+    let root = sources.native.join("shot-frame-resume-v1");
+    let source = Member {
+        path: root.join("resume.toml"),
+        sha256: RESUME_PIN.to_owned(),
+    };
+    let (mut donor, _) = read_resume(&source)?;
+    for member in [&mut donor.wram, &mut donor.hardware, &mut donor.apuram] {
+        member.resolve(&root);
+    }
+    let pad = prefetch.hardware.hardware.controller.committed_pad;
+    let hardware = donor.hardware.read()?;
+    let timing = hardware_seed::decode(&hardware, data::timing::IrqPolicy::Eligible, pad)
+        .map_err(|_| data_failure(Some(CUT), "true-resume physical origin"))?;
+    if timing.hardware.beam.position == prefetch.hardware.hardware.beam.position {
+        return Err(data_failure(Some(CUT), "true-resume hardware phase"));
+    }
+    let wram = donor.wram.read()?;
+    let music_source = Member {
+        path: sources
+            .native
+            .join("shot-frame-origin-v1/music-completion.toml"),
+        sha256: MUSIC_PIN.to_owned(),
+    };
+    let senders = resume_senders(
+        sources,
+        &wram,
+        &hardware,
+        &timing,
+        &donor.apuram,
+        &source,
+        &music_source,
+    )?;
+    if senders != prefetch.senders {
+        return Err(data_failure(Some(CUT), "resume sender ownership"));
+    }
+    let current_music = borrowed_receipts::music(&wram)
+        .map_err(|_| data_failure(Some(CUT), "resume current Music owner"))?;
+    let receipt = borrowed_receipts::publication(&wram)
+        .map_err(|_| data_failure(Some(CUT), "resume software acknowledgment guard"))?;
+    let [acknowledgment, music] = resume_profiles(&source)?;
+    let opening = Opening::new(timing, senders, receipt, current_music, prefetch.music)
+        .map_err(|_| data_failure(Some(CUT), "production opening owner admission"))?;
+    Ok((
+        opening,
+        Profiles {
+            acknowledgment,
+            music,
+            steady: None,
+        },
+        wram,
+    ))
+}
+
 #[cfg(test)]
 mod resume_test {
     use super::*;
-    use frame::opening_prelude::{Opening, Profiles};
     use game::production::{
         AdmissionFault, AdvanceInput, Production, ProductionContent, ProductionOutputs,
         ProductionRules, ProductionSeed,
     };
     use game::state::owned::OwnedState;
-
-    fn open(sources: &Sources, prefetch: Origins) -> Result<(Opening, Profiles), Outcome> {
-        let root = sources.native.join("shot-frame-resume-v1");
-        let source = Member {
-            path: root.join("resume.toml"),
-            sha256: RESUME_PIN.to_owned(),
-        };
-        let (mut donor, _) = read_resume(&source)?;
-        for member in [&mut donor.wram, &mut donor.hardware, &mut donor.apuram] {
-            member.resolve(&root);
-        }
-        let pad = prefetch.hardware.hardware.controller.committed_pad;
-        let hardware = donor.hardware.read()?;
-        let timing = hardware_seed::decode(&hardware, data::timing::IrqPolicy::Eligible, pad)
-            .map_err(|_| data_failure(Some(CUT), "true-resume physical origin"))?;
-        if timing.hardware.beam.position == prefetch.hardware.hardware.beam.position {
-            return Err(data_failure(Some(CUT), "true-resume hardware phase"));
-        }
-        let wram = donor.wram.read()?;
-        let music_source = Member {
-            path: sources
-                .native
-                .join("shot-frame-origin-v1/music-completion.toml"),
-            sha256: MUSIC_PIN.to_owned(),
-        };
-        let senders = resume_senders(
-            sources,
-            &wram,
-            &hardware,
-            &timing,
-            &donor.apuram,
-            &source,
-            &music_source,
-        )?;
-        if senders != prefetch.senders {
-            return Err(data_failure(Some(CUT), "resume sender ownership"));
-        }
-        let current_music = borrowed_receipts::music(&wram)
-            .map_err(|_| data_failure(Some(CUT), "resume current Music owner"))?;
-        let receipt = borrowed_receipts::publication(&wram)
-            .map_err(|_| data_failure(Some(CUT), "resume software acknowledgment guard"))?;
-        let [acknowledgment, music] = resume_profiles(&source)?;
-        let opening = Opening::new(timing, senders, receipt, current_music, prefetch.music)
-            .map_err(|_| data_failure(Some(CUT), "production opening owner admission"))?;
-        Ok((
-            opening,
-            Profiles {
-                acknowledgment,
-                music,
-            },
-        ))
-    }
 
     fn admit(opening: Opening, profiles: Profiles) -> (Production, ProductionContent) {
         let content = ProductionContent::FrameOpening(Box::new(profiles));
@@ -535,7 +549,7 @@ mod resume_test {
             &std::fs::read_to_string(root.join("origin.toml")).unwrap(),
         )
         .unwrap();
-        let (opening, profiles) = open(&sources, prefetch).unwrap();
+        let (opening, profiles, _) = open(&sources, prefetch).unwrap();
         shortened_acknowledgment_is_observable(&opening, &profiles);
         let mut changed = profiles.clone();
         changed.music.runs.pop();

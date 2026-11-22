@@ -68,6 +68,26 @@ pub(super) fn acknowledgment_and_music(text: &str) -> Result<[Template; 2], Prof
     ])
 }
 
+pub(in crate::replay) fn steady(text: &str) -> Result<[Template; 3], ProfileFault> {
+    #[derive(Deserialize)]
+    struct Portions {
+        format: u32,
+        portion: Vec<Profile>,
+    }
+    let source: Portions = toml::from_str(text).map_err(|_| ProfileFault::Format)?;
+    let [_, _, retain, finish, layers, ..] = source.portion.as_slice() else {
+        return Err(ProfileFault::Format);
+    };
+    if source.format != 1 {
+        return Err(ProfileFault::Format);
+    }
+    Ok([
+        admit(retain, "HazeRetain", [150, 988], false)?,
+        admit(finish, "HazeFinish", [231, 1480], false)?,
+        admit(layers, "LayerBlend", [140, 908], false)?,
+    ])
+}
+
 fn admit(
     profile: &Profile,
     name: &str,

@@ -555,6 +555,38 @@ phase = "actual current source opportunity"
 claim = "Reviewed same-family inputs; selected movement, playhead, playing Figure, Ahead and Camera are retained production outputs."
 
 [[case]]
+id = "frame/steady-haze-through-layer-blend"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-seed", path = "shot-steady-haze-v1/steady-input.toml", sha256 = "318dca4d3df84c9bdffca5d59306ca6fea2b28389bb635239086fd3782c3d6d8" }
+end = { cut_inclusive = 4 }
+rules = ["world-haze/HazeHolds"]
+profile = "reference"
+responsibilities = ["frame", "world-haze"]
+content = "player-rom-import"
+inputs = "native-steady-prelude"
+expectations = { provider = "native-steady-boundaries", fields = ["frame.time", "frame.steady"], outputs = [] }
+limits = ["quiet ordinary Steady Haze in the retained room", "Haze Finish and LayerBlend without IRQ or hardware callbacks", "stage-local indices 0–3 compare Music, Haze retain, Haze Finish and LayerBlend; index 4 holds the actual Random preparation dependency"]
+borrowed = [{ dependency = "publication and quiet Music", provider = "true-resume", fields = ["current committed publication", "current quiet Music service"], phase = "original carried Frame origin", claim = "later Timers and LayerBlend arise from actual current owners" }]
+checkpoints = true
+
+[[case]]
+id = "frame/steady-haze-retained-values"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-seed", path = "shot-steady-haze-v1/control-input.toml", sha256 = "f4fa7465950f7df751b1ae8e1a1819862a79392780946c7af152d4e6263eea2c" }
+end = { cut_inclusive = 4 }
+rules = ["world-haze/HazeHolds"]
+profile = "reference"
+responsibilities = ["frame", "world-haze"]
+content = "player-rom-import"
+inputs = "native-steady-prelude"
+expectations = { provider = "native-steady-boundaries", fields = ["frame.time", "frame.steady"], outputs = [] }
+limits = ["same-duration source intervention before Steady Haze", "retained band, first scheduler countdown and Window Two", "stage-local indices 0–3 compare Music, Haze retain, Haze Finish and LayerBlend; index 4 holds the actual Random preparation dependency"]
+borrowed = [{ dependency = "pre-Haze inputs", provider = "native steady control", fields = ["first band", "first countdown", "left Window Two edge"], phase = "before actual Haze selection", claim = "altered inputs have independent terminal observations at unchanged elapsed time" }]
+checkpoints = true
+
+[[case]]
 id = "frame/ordinary-requested-nmi-return"
 kind = "integrated"
 row = "chain-any-0003-DFD7"

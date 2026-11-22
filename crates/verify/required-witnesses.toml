@@ -23,6 +23,11 @@ shot_frame_origin = [
     "replay::frame_origin::admission::completed_start::resume_test::shot_actual_resume_opening_restores_through_music",
 ]
 
+shot_steady_haze = [
+    "replay::frame_steady::tests::indexed_steady_boundaries_and_interior_restores",
+    "replay::frame_steady::tests::actual_layer_operand_fault_has_the_same_wall_time",
+]
+
 retained_frame = [
     "replay::frame_origin::health_owner_tests::actual_native_frame_completes_and_matches_from_the_retained_checkpoint",
     "replay::frame_origin::health_owner_tests::actual_native_admission_restores_complete_return",

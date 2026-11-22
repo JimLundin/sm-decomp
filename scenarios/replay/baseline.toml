@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "a5daa339c7850c5c70905e1746a5b2fe94098d18e9a8eeedd5a52b4799f1ec87"
+index_sha256 = "bee14fa8051d90594b1282deb92d0bcb56b4f69411d493e7ab0d5261bce7fb34"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -919,5 +919,41 @@ replies = 0
 null_cuts = 0
 null_fields = 1
 restorations = 1
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/steady-haze-through-layer-blend"
+claim = "boundary"
+expected = { status = "unsupported", cut = 4, dependency = "Frame(RandomPreparation)" }
+observation_sha256 = "5d07b9daf6e217666a1cd5766a45d2e80b9a8fdf915cff8ea143806e80fc0c26"
+
+[case.counts]
+cuts = 4
+fields = 23
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 10
+restorations = 4
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "frame/steady-haze-retained-values"
+claim = "boundary"
+expected = { status = "unsupported", cut = 4, dependency = "Frame(RandomPreparation)" }
+observation_sha256 = "eac950a3fadbb737c8b314b6baa8203c82d7bedb874e881b30edac24f0614184"
+
+[case.counts]
+cuts = 4
+fields = 23
+outputs = 0
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 10
+restorations = 4
 pending_boundaries = 0
 pending_restorations = 0

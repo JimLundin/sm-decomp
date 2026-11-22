@@ -14,7 +14,7 @@ use game::production::{appearance, frame};
 use serde::Deserialize;
 use std::path::PathBuf;
 
-mod admission;
+pub(super) mod admission;
 // Compare decoded observations without formatting captured values on failure.
 #[cfg(test)]
 macro_rules! assert_observation_eq {

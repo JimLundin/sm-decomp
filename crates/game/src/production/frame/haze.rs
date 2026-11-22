@@ -57,7 +57,27 @@ pub struct Prepared {
     pub(super) blend: LayerBlendDisposition,
 }
 
+impl Prepared {
+    /// Actual fixed-colour component selectors published by the prepared owner.
+    #[must_use]
+    pub const fn fixed_colour_bytes(&self) -> [u8; 3] {
+        super::borrowed_prelude_receipts::encode_fixed_colour(self.fixed_colour)
+    }
+
+    /// Actual disposition consumed by `LayerBlend`.
+    #[must_use]
+    pub const fn blend(&self) -> LayerBlendDisposition {
+        self.blend
+    }
+}
+
 pub(super) const CHANNELS: [ChannelSlot; 2] = [ChannelSlot::Three, ChannelSlot::Eight];
+
+pub(super) fn active_slot_mask() -> u8 {
+    CHANNELS
+        .into_iter()
+        .fold(0, |value, slot| value | (1 << slot.ordinal()))
+}
 
 pub(super) const fn missing() -> ProductionFault {
     ProductionFault::Unsupported(Unsupported::Frame(Dependency::HazePreparation))
@@ -77,6 +97,22 @@ pub(super) fn quiet_profile(template: &Template) -> Result<Profile, ProductionFa
 }
 
 impl Haze {
+    pub(super) fn steady(model: HazeState, countdowns: [u16; 2]) -> Result<Self, ProductionFault> {
+        if world_haze::ordinary_opportunity(model).behaviour != BehaviourId::HazeHolds
+            || countdowns.iter().any(|&countdown| countdown <= 1)
+        {
+            return Err(missing());
+        }
+        Ok(Self {
+            model: Model(model),
+            countdowns,
+        })
+    }
+
+    pub(super) const fn countdowns(&self) -> [u16; 2] {
+        self.countdowns
+    }
+
     /// Retain the current model and the qualified active transport from the same origin.
     ///
     /// # Errors
@@ -115,17 +151,18 @@ impl Haze {
 
     pub(super) fn choose(
         &self,
-        brightening: &Template,
+        brightening: Option<&Template>,
         settling: Option<&Template>,
+        steady: Option<&Template>,
     ) -> Result<(Work, Profile), ProductionFault> {
         if self.countdowns.iter().any(|countdown| *countdown <= 1) {
             return Err(missing());
         }
         let step = world_haze::ordinary_opportunity(self.model.0);
         let template = match step.behaviour {
-            BehaviourId::HazeBrightens => brightening,
+            BehaviourId::HazeBrightens => brightening.ok_or_else(missing)?,
             BehaviourId::HazeSettles => settling.ok_or_else(missing)?,
-            BehaviourId::HazeHolds => return Err(missing()),
+            BehaviourId::HazeHolds => steady.ok_or_else(missing)?,
         };
         let profile = quiet_profile(template)?;
         let publication = match step.display.bands {
@@ -159,23 +196,8 @@ impl Haze {
         if self.model != work.before {
             return Err(missing());
         }
-        let component = match work.result.0.colour {
-            HazeColour::Red => super::borrowed::ColourComponent::Red,
-            HazeColour::Green => super::borrowed::ColourComponent::Green,
-            HazeColour::Blue => super::borrowed::ColourComponent::Blue,
-        };
-        let bands = work.result.0.bands.0.map(|level| BackdropBand {
-            component,
-            intensity: BandIntensity(level.get()),
-        });
-        let bytes = encode_bands(&bands).map_err(|_| missing())?;
-        let materialization = Materialization {
-            buffer: Buffer::HazeBackdropBands,
-            region: ContentRegion {
-                start: address,
-                bytes: bytes.to_vec(),
-            },
-        };
+        let bands = bands(work.result.0);
+        let materialization = materialization(&bands, address)?;
         match work.publication {
             BandPublication::Prepare => backing.complete(materialization),
             BandPublication::Retain => backing.retain(&materialization),
@@ -189,14 +211,40 @@ impl Haze {
         })
     }
 
-    pub(super) const fn complete_tail(&mut self) -> Result<(), ProductionFault> {
+    pub(super) fn complete_tail(&mut self) -> Result<u8, ProductionFault> {
         let [ramp, hold] = self.countdowns;
         if ramp <= 1 || hold <= 1 {
             return Err(missing());
         }
         self.countdowns = [ramp.wrapping_sub(1), hold.wrapping_sub(1)];
-        Ok(())
+        Ok(active_slot_mask())
     }
+}
+
+pub(super) fn bands(model: HazeState) -> [BackdropBand; 16] {
+    let component = match model.colour {
+        HazeColour::Red => super::borrowed::ColourComponent::Red,
+        HazeColour::Green => super::borrowed::ColourComponent::Green,
+        HazeColour::Blue => super::borrowed::ColourComponent::Blue,
+    };
+    model.bands.0.map(|level| BackdropBand {
+        component,
+        intensity: BandIntensity(level.get()),
+    })
+}
+
+pub(super) fn materialization(
+    bands: &[BackdropBand; 16],
+    address: BusAddress,
+) -> Result<Materialization, ProductionFault> {
+    let bytes = encode_bands(bands).map_err(|_| missing())?;
+    Ok(Materialization {
+        buffer: Buffer::HazeBackdropBands,
+        region: ContentRegion {
+            start: address,
+            bytes: bytes.to_vec(),
+        },
+    })
 }
 
 #[cfg(test)]
@@ -237,7 +285,7 @@ mod tests {
                 countdowns: [7, 8],
             };
             let mut backing = TransferContent::new(Vec::new()).unwrap();
-            let (work, physical) = owner.choose(&bright, Some(&settle)).unwrap();
+            let (work, physical) = owner.choose(Some(&bright), Some(&settle), None).unwrap();
             assert_eq!(physical, bright.bind(&[]).unwrap());
             owner.complete_head(&work, &mut backing, address).unwrap();
             assert_eq!(owner.current().bands, bands);
@@ -249,7 +297,7 @@ mod tests {
             let mut resumed: Haze = canonical::from_bytes(&canonical::to_bytes(&owner)).unwrap();
             let mut restored: TransferContent =
                 canonical::from_bytes(&canonical::to_bytes(&backing)).unwrap();
-            let (work, physical) = resumed.choose(&bright, Some(&settle)).unwrap();
+            let (work, physical) = resumed.choose(Some(&bright), Some(&settle), None).unwrap();
             assert_eq!(physical, settle.bind(&[]).unwrap());
             assert_eq!(
                 resumed.complete_head(
@@ -260,7 +308,7 @@ mod tests {
                 Err(missing())
             );
             assert_eq!(resumed, owner);
-            let live_work = owner.choose(&bright, Some(&settle)).unwrap().0;
+            let live_work = owner.choose(Some(&bright), Some(&settle), None).unwrap().0;
             assert_eq!(
                 owner.complete_head(&live_work, &mut backing, address),
                 resumed.complete_head(&work, &mut restored, address)

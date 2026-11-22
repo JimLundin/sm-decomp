@@ -663,10 +663,10 @@ pub struct Outputs {
     pub events: Vec<crate::production::timing::Event>,
 }
 
-const HAZE: WorkId = WorkId(3);
-const HAZE_TAIL: WorkId = WorkId(4);
+pub(super) const HAZE: WorkId = WorkId(3);
+pub(super) const HAZE_TAIL: WorkId = WorkId(4);
 const DRAWING: WorkId = WorkId(100);
-const LAYERS: WorkId = WorkId(5);
+pub(super) const LAYERS: WorkId = WorkId(5);
 const RANDOM: WorkId = WorkId(6);
 
 impl State {
@@ -1894,64 +1894,24 @@ impl State {
                     &content.music,
                 )?;
             }
-            Caller::Haze { .. } => self.start_haze(content)?,
-            Caller::LayerBlend {
-                prelude,
-                publication,
-                music,
-                haze,
-            } => {
-                let layers = content.layer_defaults.prepare(haze.blend);
-                super::layer_blend::encode(layers.terminal).map_err(|_| {
-                    ProductionFault::Unsupported(Unsupported::Frame(
-                        Dependency::LayerBlendPreparation,
-                    ))
-                })?;
-                let profile = content
-                    .layer_blend
-                    .bind(&[])
-                    .map_err(|_| ProductionFault::FrameHardware(timing::Fault::InvalidProfile))?;
-                self.timing
-                    .begin(LAYERS, profile)
-                    .map_err(ProductionFault::FrameHardware)?;
-                self.caller = Caller::LayerBlendRunning {
-                    prelude: prelude.clone(),
-                    publication: *publication,
-                    music: music.clone(),
-                    haze: haze.clone(),
-                    layers,
-                };
-            }
+            Caller::Haze { .. } => super::haze_caller::begin_head(
+                &mut self.caller,
+                &mut self.timing,
+                self.haze.as_ref().ok_or_else(super::haze::missing)?,
+                Some(&content.haze),
+                content.settling_haze.as_ref(),
+                None,
+            )?,
+            Caller::LayerBlend { .. } => super::haze_caller::begin_layers(
+                &mut self.caller,
+                &mut self.timing,
+                content.layer_defaults,
+                &content.layer_blend,
+            )?,
             Caller::Random { .. } => self.start_random(content)?,
         }
         Ok(())
     }
-    fn start_haze(&mut self, content: &Content) -> Result<(), ProductionFault> {
-        let Caller::Haze {
-            prelude,
-            publication,
-            music,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        let (work, profile) = self
-            .haze
-            .as_ref()
-            .ok_or_else(super::haze::missing)?
-            .choose(&content.haze, content.settling_haze.as_ref())?;
-        self.timing
-            .begin(HAZE, profile)
-            .map_err(ProductionFault::FrameHardware)?;
-        self.caller = Caller::HazeRunning {
-            prelude: prelude.clone(),
-            publication: *publication,
-            music: music.clone(),
-            work,
-        };
-        Ok(())
-    }
-
     fn start_random(&mut self, content: &Content) -> Result<(), ProductionFault> {
         let Caller::Random {
             prelude,
@@ -2304,9 +2264,23 @@ impl State {
         match progress {
             timing::Progress::Completed(ACKNOWLEDGMENT) => self.complete_acknowledgment()?,
             timing::Progress::Completed(MUSIC) => self.complete_music()?,
-            timing::Progress::Completed(HAZE) => self.complete_haze(content)?,
-            timing::Progress::Completed(HAZE_TAIL) => self.complete_haze_tail()?,
-            timing::Progress::Completed(LAYERS) => self.complete_layers()?,
+            timing::Progress::Completed(HAZE) => super::haze_caller::complete_head(
+                &mut self.caller,
+                &mut self.timing,
+                self.haze.as_mut().ok_or_else(super::haze::missing)?,
+                &mut self.content,
+                content.haze_bands_address,
+                &content.haze_tail,
+            )?,
+            timing::Progress::Completed(HAZE_TAIL) => {
+                super::haze_caller::complete_finish(
+                    &mut self.caller,
+                    self.haze.as_mut().ok_or_else(super::haze::missing)?,
+                )?;
+            }
+            timing::Progress::Completed(LAYERS) => {
+                super::haze_caller::complete_layers(&mut self.caller)?;
+            }
             timing::Progress::Completed(RANDOM) => self.complete_random(content.random_requests)?,
             timing::Progress::Completed(identity)
                 if self.finish_player_work(identity, content, rules)? => {}
@@ -2544,77 +2518,6 @@ impl State {
 
     fn complete_music(&mut self) -> Result<(), ProductionFault> {
         super::opening_prelude::complete_music(&mut self.caller, &mut self.music)
-    }
-
-    fn complete_haze(&mut self, content: &Content) -> Result<(), ProductionFault> {
-        let Caller::HazeRunning {
-            prelude,
-            publication,
-            music,
-            work,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        let prepared = self
-            .haze
-            .as_mut()
-            .ok_or_else(super::haze::missing)?
-            .complete_head(work, &mut self.content, content.haze_bands_address)?;
-        let profile = super::haze::quiet_profile(&content.haze_tail)?;
-        self.timing
-            .begin(HAZE_TAIL, profile)
-            .map_err(ProductionFault::FrameHardware)?;
-        self.caller = Caller::HazeTail {
-            prelude: prelude.clone(),
-            publication: *publication,
-            music: music.clone(),
-            prepared,
-        };
-        Ok(())
-    }
-
-    fn complete_haze_tail(&mut self) -> Result<(), ProductionFault> {
-        let Caller::HazeTail {
-            prelude,
-            publication,
-            music,
-            prepared,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        self.haze
-            .as_mut()
-            .ok_or_else(super::haze::missing)?
-            .complete_tail()?;
-        self.caller = Caller::LayerBlend {
-            prelude: prelude.clone(),
-            publication: *publication,
-            music: music.clone(),
-            haze: prepared.clone(),
-        };
-        Ok(())
-    }
-    fn complete_layers(&mut self) -> Result<(), ProductionFault> {
-        let Caller::LayerBlendRunning {
-            prelude,
-            publication,
-            music,
-            haze,
-            layers,
-        } = &self.caller
-        else {
-            return Err(ProductionFault::WrongScope);
-        };
-        self.caller = Caller::Random {
-            prelude: prelude.clone(),
-            publication: *publication,
-            music: music.clone(),
-            haze: haze.clone(),
-            layers: layers.clone(),
-        };
-        Ok(())
     }
 
     fn complete_random(

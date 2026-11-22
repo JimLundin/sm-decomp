@@ -1,9 +1,9 @@
 //! Admit current source owners before opening any expected observations.
 
-mod completed_start;
+pub(in crate::replay) mod completed_start;
 mod native;
 mod player;
-mod quiet_profile;
+pub(in crate::replay) mod quiet_profile;
 mod returns;
 mod seed;
 

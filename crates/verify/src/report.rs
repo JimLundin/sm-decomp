@@ -413,8 +413,12 @@ const DOMAINS: &[Domain] = &[
     Domain {
         name: "world-haze",
         bridge: None,
-        adapters: &["production/frame/haze.rs"],
-        providers: &[],
+        adapters: &[
+            "production/frame/haze.rs",
+            "production/frame/haze_caller.rs",
+            "production/frame/steady_prelude.rs",
+        ],
+        providers: &["frame_steady"],
         areas: &[("backdrop", &["lib.rs"])],
         apart: &[],
     },

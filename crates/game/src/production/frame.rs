@@ -33,6 +33,7 @@ pub mod frame_return;
 pub mod frame_tail;
 mod ground_caller;
 pub mod haze;
+mod haze_caller;
 pub mod health;
 pub mod hud;
 pub mod hud_camera_caller;
@@ -78,6 +79,7 @@ mod run_caller;
 pub mod s6_camera;
 pub mod s6_drawing;
 pub mod samus_palette;
+pub mod steady_prelude;
 mod support_caller;
 pub use ordinary_caller::{OrdinaryWork, TravelWork};
 pub mod sender_caller;
@@ -186,6 +188,18 @@ pub enum ContentFault {
 }
 
 impl TransferContent {
+    fn from_retained(materialization: Materialization) -> Result<Self, ContentFault> {
+        let current = Self {
+            initial: Vec::new(),
+            buffers: vec![RetainedBuffer {
+                materialization,
+                ready: false,
+            }],
+        };
+        current.validate()?;
+        Ok(current)
+    }
+
     /// Admit initial transfer content without publishing a future producer buffer.
     ///
     /// # Errors

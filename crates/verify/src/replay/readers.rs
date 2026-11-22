@@ -18,6 +18,7 @@ pub(super) enum InputReader {
     SenderOffer(Vec<super::sender_offer::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     Frame(super::frame::Inputs),
+    FrameSteady,
     NativeSearch(Box<super::native_search::Inputs>),
     Recorded(Box<super::recorded::Inputs>),
     Audio(Box<audio::InputTape>),
@@ -31,6 +32,7 @@ pub(super) enum ExpectedReader {
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     Frame(Box<super::frame::Expected>),
+    FrameSteady(Box<super::frame_steady::Expected>),
     NativeSearch(super::native_search::Expected),
     Recorded(Box<super::recorded::Expected>),
     Audio(Box<audio::ExpectedTape>),
@@ -42,6 +44,7 @@ pub(super) enum ActualReader {
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
+    FrameSteady,
     NativeSearch(Option<Box<samus_movement::Outcome>>),
     Recorded(super::recorded::Actual),
     Audio {
@@ -100,6 +103,7 @@ impl InputReader {
             Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
+            Self::FrameSteady => super::frame_steady::advance(production, cut),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
             Self::Recorded(reader) => reader.advance(production, cut),
             Self::Audio(tape) => {
@@ -190,6 +194,9 @@ impl ActualReader {
                     .accept(production, &outputs, cut)
                     .inspect_err(|_| held.retain_events(outputs.events))
             }
+            (Self::FrameSteady, InputReader::FrameSteady, ProductionOutputs::FrameOpening(..)) => {
+                super::frame_steady::actual(production)
+            }
             (
                 Self::NativeSearch(retained),
                 InputReader::NativeSearch(_),
@@ -256,6 +263,7 @@ impl ActualReader {
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::Frame(actual) => actual.initial(production),
+            Self::FrameSteady => super::frame_steady::actual(production),
             Self::NativeSearch(_) => {
                 let mut fields = super::native_search::initial();
                 fields.extend(super::full_movement::initial()?);
@@ -313,8 +321,16 @@ impl ActualReader {
                 },
             ) => restored == direct && restored_replies == direct_replies,
             (
-                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
-                Self::NativeSearch(_) | Self::Recorded(_) | Self::Movement | Self::SenderOffer,
+                Self::NativeSearch(_)
+                | Self::Recorded(_)
+                | Self::Movement
+                | Self::SenderOffer
+                | Self::FrameSteady,
+                Self::NativeSearch(_)
+                | Self::Recorded(_)
+                | Self::Movement
+                | Self::SenderOffer
+                | Self::FrameSteady,
             ) => true,
             (Self::Frame(_) | Self::Audio { .. } | Self::MovementTouchdown(_), _)
             | (_, Self::Frame(_) | Self::Audio { .. } | Self::MovementTouchdown(_)) => false,
@@ -329,7 +345,8 @@ impl ActualReader {
             | Self::Movement
             | Self::Recorded(_)
             | Self::SenderOffer
-            | Self::MovementTouchdown(_) => 0,
+            | Self::MovementTouchdown(_)
+            | Self::FrameSteady => 0,
         }
     }
 }
@@ -346,6 +363,7 @@ impl ExpectedReader {
                 replies: 0,
             }),
             Self::Frame(reader) => reader.read(cut, case.compares_final_frame_health()),
+            Self::FrameSteady(reader) => reader.read(cut),
             Self::NativeSearch(expected) => {
                 let fields = expected.read(cut)?;
                 Ok(ExpectedCut {

@@ -279,6 +279,29 @@ The next selected owner requires Haze preparation. Its physical work, later IRQ 
 standing pose remain outside the admitted opening. The compact RTI-prefetch provenance
 packet has no same-origin frame profile members and admits no Frame execution.
 
+## Steady Haze through LayerBlend
+
+Install the [Steady fixture](../tools/ci/fetch_shot_steady_haze.sh) alongside the
+true-resume opening. The two indexed scoped cases carry the actual Acknowledgment and
+Music before selecting the current ordinary Steady Haze. At resume+1726 the Haze head
+has retained the sixteen original bands and prepared black and the exclusion of
+background three. Finish updates both live scheduler countdowns and the software mask
+by resume+3246. Hardware Channels Three and Eight retain their independently admitted
+configuration and enables. Finish and LayerBlend each charge one 40-tick hardware
+refresh. The scope has no hardware register callbacks or IRQ service.
+
+LayerBlend uses the four actual defaults and preserves Window Two. The nine terminal
+mirrors include the fixed-operand colour-math selection at resume+4194. The independent
+source records ten ordered stores, including the colour-math default before its override.
+The scoped comparison covers the terminal mirrors. The same-duration control changes one
+band, the first scheduler countdown and the left Window Two edge, with independent
+comparison after the affected owners run.
+
+Local indices 0 through 3 compare Music, Haze retain, Finish and LayerBlend. Both cases
+hold `Frame(RandomPreparation)` at local index 4, with the arithmetic operand and
+sampled result bindings still unqualified. Indexed replay restores at the four compared
+stage cuts. Fixture tests also split charge inside the Haze head, Finish and LayerBlend.
+
 ## Retained native frame
 
 `frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.
