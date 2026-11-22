@@ -134,6 +134,13 @@ pub fn decode(bytes: &[u8]) -> Result<PreludeSeed, PreludeSeedFault> {
     Ok(PreludeSeed {
         haze: wram.haze()?,
         builder: wram.builder()?,
-        actors: wram.actors()?,
+        actors: actors(bytes)?,
     })
+}
+
+pub fn actors(bytes: &[u8]) -> Result<ActorEligibilityOrigin, PreludeSeedFault> {
+    if bytes.len() != 131_072 {
+        return Err(PreludeSeedFault::Length);
+    }
+    Wram(bytes).actors()
 }

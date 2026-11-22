@@ -92,6 +92,8 @@ pub enum ProductionContent {
     ResidentAudio(Box<super::audio::Content>),
     /// Checked imported ordinary power assets.
     WeaponsContact(Box<crate::weapons_projectiles_bridge::PowerContent>),
+    /// Fixed content and immutable neighbours for the scoped shot continuation.
+    ShotOpportunity(Box<super::frame::shot_opportunity::Content>),
     /// Blocks carry their imported reactions in the complete clean State.
     Blocks,
     /// Camera room/scroll constraints are explicit inputs.
@@ -134,6 +136,8 @@ pub enum ProductionRules {
     Audio,
     /// The existing power model's tuning parameters.
     WeaponsContact(weapons_projectiles::Rules),
+    /// Reference rules for the scoped ordinary shot owners.
+    ShotOpportunity,
     /// Complete immutable block rule tables.
     Blocks(super::BlockRules),
     /// Complete following-camera parameters.

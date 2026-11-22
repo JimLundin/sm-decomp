@@ -57,15 +57,7 @@ pub(super) fn follow(
     )
     .map_err(|_| Fault::Camera)?;
     let frame = world_camera::Frame {
-        samus: world_camera::Samus {
-            position: current.position,
-            placed: outputs
-                .placed
-                .map(|placed| types::PlacementY(placed.pixel().0)),
-            facing: current.pose.facing,
-            backwards: outputs.skidding,
-            rising: outputs.rising,
-        },
+        samus: completed_samus(current, outputs),
         room: &room,
         lead: match input.lead {
             Lead::Ahead => world_camera::LeadSetting::Ahead,
@@ -77,4 +69,19 @@ pub(super) fn follow(
     };
     step(camera, rules, &frame);
     Ok(())
+}
+
+pub(super) fn completed_samus(
+    current: &samus_movement::Samus,
+    outputs: &samus_movement::Outcome,
+) -> world_camera::Samus {
+    world_camera::Samus {
+        position: current.position,
+        placed: outputs
+            .placed
+            .map(|placed| types::PlacementY(placed.pixel().0)),
+        facing: current.pose.facing,
+        backwards: outputs.skidding,
+        rising: outputs.rising,
+    }
 }

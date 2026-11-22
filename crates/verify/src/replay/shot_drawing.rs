@@ -187,7 +187,7 @@ impl InputCut {
 
 #[derive(Deserialize)]
 pub(super) struct ExpectedCut {
-    number: u64,
+    pub(super) number: u64,
     events: Vec<Event>,
     hit_actor_and_shot: Vec<[u8; 2]>,
     sprite: Option<Sprite>,
@@ -250,9 +250,13 @@ impl ExpectedCut {
         content: &weapons::Content,
         cut: u64,
     ) -> Result<Vec<Observation>, Outcome> {
-        let observed = at(tape, cut)?;
         let mut fields = weapons::expected(wram, content)?;
-        let (intent, sprite) = if let Some(sprite) = &observed.sprite {
+        fields.extend(at(tape, cut)?.outputs(content)?);
+        Ok(fields)
+    }
+
+    pub(super) fn outputs(&self, content: &weapons::Content) -> Result<Vec<Observation>, Outcome> {
+        let (intent, sprite) = if let Some(sprite) = &self.sprite {
             (
                 picture(
                     sprite.shot_slot,
@@ -264,11 +268,10 @@ impl ExpectedCut {
         } else {
             (Vec::new(), Vec::new())
         };
-        fields.extend([
+        Ok(vec![
             field(
                 "weapons.update-events",
-                observed
-                    .events
+                self.events
                     .iter()
                     .filter_map(|event| match event {
                         Event::PowerBeamSpawn => Some(0),
@@ -279,17 +282,11 @@ impl ExpectedCut {
             ),
             field(
                 "contact.receivers",
-                observed
-                    .hit_actor_and_shot
-                    .iter()
-                    .flatten()
-                    .copied()
-                    .collect(),
+                self.hit_actor_and_shot.iter().flatten().copied().collect(),
             ),
             field("weapons.flying-pictures", intent),
             field("weapons.oam-insertion", sprite),
-        ]);
-        Ok(fields)
+        ])
     }
 }
 

@@ -40,7 +40,7 @@ fn unsupported(dependency: &str) -> Outcome {
     }
 }
 
-fn heading(code: u16) -> Result<beam::Heading, Outcome> {
+pub(super) fn heading(code: u16) -> Result<beam::Heading, Outcome> {
     HEADINGS
         .get(usize::from(code))
         .copied()
@@ -53,6 +53,28 @@ pub struct Content {
 }
 
 impl Content {
+    pub(super) fn flight_frame(
+        &self,
+        heading: beam::Heading,
+        pointer: u16,
+    ) -> Result<(beam::ClipId, beam::ClipFrame), Outcome> {
+        let id = asset::ClipId::Flight(bridge::asset_heading(heading));
+        let places = self
+            .places
+            .clips
+            .iter()
+            .find(|places| places.id == id)
+            .ok_or_else(|| data_failure(None, "weapons clip observation"))?;
+        let cursor = places
+            .frames
+            .iter()
+            .position(|at| *at == pointer)
+            .or_else(|| (places.end == pointer).then_some(places.frames.len()))
+            .and_then(|index| beam::ClipFrame::new(index, places.frames.len()))
+            .ok_or_else(|| data_failure(None, "weapons cursor observation"))?;
+        Ok((bridge::clip_id(id), cursor))
+    }
+
     pub(super) fn picture(&self, pointer: u16) -> Result<beam::PictureId, Outcome> {
         self.places
             .pictures

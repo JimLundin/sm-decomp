@@ -73,6 +73,8 @@ pub enum OwnedState {
     ResidentAudio(Box<crate::production::audio::State>),
     /// Current power shots and late contact consumption.
     WeaponsContact(Model<PowerPin>),
+    /// Current ordinary weapon, door, Movement, Camera and drawing owners.
+    ShotOpportunity(Box<crate::production::frame::shot_opportunity::Continuation>),
     /// Complete room tiles, running places and scroll screens.
     Blocks(Box<world_blocks::State>),
     /// Following view, remembered centre and height receipt.

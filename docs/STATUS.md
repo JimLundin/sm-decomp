@@ -255,18 +255,26 @@ the absence of pictures at the other cuts. The pre-draw cursor, camera and phase
 from the independent watched fixture. The earlier drawing producers, full OAM contents
 and hardware service are outside the scope.
 
-The separate actor opening at cut 157 survives suppressed native fire. The contact
-receiver runs later, at cut 160, with no observable side effects in the native trace.
-The scoped replay exercises contact geometry and the consumed marker. It borrows the
-actor roster and has no selected opening, shot-response or trail allocation producer.
-Frame's live PoseInput configurations cover qualified quiet running paths. A complete
-cut-156 Frame admission and the fire-capable PoseInput route are still missing. The later
-projectile preparation guards mapped shoot with the qualified selection and Cannon readiness
-as `Frame(WeaponPrePreparation)`. This cut has no integrated evidence reaching that guard.
-Actor progression and the surrounding drawing owners are also missing for the chain.
+`weapons-contact/M0-carried-shot-opportunities` admits the complete scoped cut-156
+origin once. The mapped current controls select a deferred Moonwalk while W1 fires
+from the standing down-forward muzzle. C1 contact and the actual B8 door run alternate
+in slot order. Slot 1 opens and asks for sound at cut 157, including with mapped fire
+suppressed. At cut 160 it marks the power shot for removal on the next W1.
 
-The [fixture installer](../tools/ci/fetch_shot_contact.sh) installs the two hash-pinned
-input and comparison files under the native fixture directory.
+POST applies the selected placement and publishes the travel and pose history that the
+next W1 reads. The followed Camera feeds the exact power encoder. The encoder and OAM
+finalizer carry the real backing into the next opportunity. The scoped fixture provides
+only physical pad samples, drawing phase and ordered stores from surrounding drawing
+producers after the initial admission. Shared Production checkpoints continue through
+each native comparison. Suppressing the cut-157 power picture changes final OAM and
+the pre-power backing at cut 158. [Indexed cases](../scenarios/replay/index.toml)
+
+The retained Frame still needs the live fire-capable preparation route and separate
+hardware evidence for the surrounding owners. Trail allocation, audio service and
+physical NMI transfer each require their own witness. [Five-cut fixture installer](../tools/ci/fetch_shot_five.sh)
+
+The [isolated drawing fixture installer](../tools/ci/fetch_shot_contact.sh) installs
+the hash-pinned files for the earlier insertion-only witness.
 
 ## Cut-156 Frame opening
 

@@ -58,7 +58,7 @@ impl ActorEligibilityOrigin {
                     ActorSlot::Occupied {
                         deleted: false,
                         process_offscreen: true,
-                        intangible: true,
+                        ..
                     },
                     ActorSlot::Occupied {
                         deleted: false,

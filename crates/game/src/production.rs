@@ -33,6 +33,7 @@ use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
 pub use frame::inputs::MovementInputs;
+use frame::shot_opportunity;
 pub use immutable::{BlockRules, CameraRules, HudRules};
 pub use sender::{SenderInput, Senders};
 
@@ -55,6 +56,8 @@ pub enum Scope {
     ResidentAudio,
     /// Quiet ordinary power flight with ordered single-box Ceres-door contact.
     WeaponsContact,
+    /// Scoped ordinary fire, doors, Movement, Camera and drawing.
+    ShotOpportunity,
     /// Ordered block requests and running reactions.
     Blocks,
     /// Following camera and retained receipts.
@@ -94,6 +97,8 @@ pub enum ProductionSeed {
     ResidentAudio(Box<audio::State>),
     /// Full ordinary power shot/trail/spacing state.
     WeaponsContact(Box<weapons_projectiles::State>),
+    /// Complete scoped shot continuation at an ordinary boundary.
+    ShotOpportunity(Box<shot_opportunity::Continuation>),
     /// Full tiles, places and screens.
     Blocks(Box<world_blocks::State>),
     /// Full camera memory and receipt.
@@ -177,6 +182,13 @@ pub enum AdvanceInput<'a> {
         /// Independently admitted inputs at the flying-picture insertion point.
         drawing: weapons::FlyingDraw<'a>,
     },
+    /// One scoped ordinary shot opportunity from current physical buttons and drawing stores.
+    ShotOpportunity {
+        /// Current sampled controls and independently qualified surrounding stores.
+        inputs: shot_opportunity::Inputs<'a>,
+        /// Fixed external geometry and Camera lead setting.
+        environment: shot_opportunity::Environment<'a>,
+    },
     /// Independent ordered block requests or room placements.
     Blocks(BlocksInput<'a>),
     /// Actual movement placement, lead, room screens and time permission.
@@ -225,6 +237,8 @@ pub enum ProductionOutputs {
     WeaponsContact(weapons::WeaponsOutputs),
     /// Scoped weapons requests, ordered contact and exact flying-picture insertion.
     WeaponsContactDrawing(Box<weapons::ShotDrawingOutputs>),
+    /// Complete connected publications from the scoped shot opportunity.
+    ShotOpportunity(Box<shot_opportunity::Completion>),
     /// Every block request answer, written cell and sound.
     Blocks(BlocksOutputs),
     /// Complete resulting camera and retained receipt.
@@ -264,6 +278,8 @@ pub enum AdmissionFault {
     ResidentAudio(audio::Fault),
     /// Invalid restored shot or content references.
     Weapons(crate::weapons_projectiles_bridge::Fault),
+    /// Invalid carried scoped shot or inconsistent initial owners.
+    ShotOpportunity,
     /// A semantic figure has conflicting or missing clip content.
     Appearance(ClipFault),
     /// The complete sender queue/progress contains an invalid length or another group.
@@ -287,6 +303,8 @@ impl From<frame::Fault> for AdmissionFault {
 /// Missing selected production behaviour remains visible.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unsupported {
+    /// A required relation in the scoped ordinary shot continuation is unavailable.
+    ShotOpportunity,
     /// A produced Appearance request has no selected receiver mapping.
     AppearanceSound(samus_appearance::PublishedSound),
     /// A current causal frame prerequisite has no admitted owner.
@@ -334,6 +352,7 @@ pub enum ProductionFault {
     Movement(samus_movement::UnknownPose),
     /// Ordinary shot/content references do not support this update.
     Weapons(crate::weapons_projectiles_bridge::Fault),
+
     /// A required animation figure has no imported clip.
     Appearance(ClipFault),
     /// A block request or placement lies outside the admitted room.
@@ -410,6 +429,7 @@ impl Production {
             ProductionSeed::Audio(_) => Scope::Audio,
             ProductionSeed::ResidentAudio(_) => Scope::ResidentAudio,
             ProductionSeed::WeaponsContact(_) => Scope::WeaponsContact,
+            ProductionSeed::ShotOpportunity(_) => Scope::ShotOpportunity,
             ProductionSeed::Blocks(_) => Scope::Blocks,
             ProductionSeed::Camera(_) => Scope::Camera,
             ProductionSeed::Appearance(_) => Scope::Appearance,
@@ -518,6 +538,7 @@ impl Production {
             OwnedState::Audio(_) => Scope::Audio,
             OwnedState::ResidentAudio(_) => Scope::ResidentAudio,
             OwnedState::WeaponsContact(_) => Scope::WeaponsContact,
+            OwnedState::ShotOpportunity(_) => Scope::ShotOpportunity,
             OwnedState::Blocks(_) => Scope::Blocks,
             OwnedState::Camera(_) => Scope::Camera,
             OwnedState::Appearance(_) => Scope::Appearance,
@@ -678,6 +699,7 @@ impl Production {
             | OwnedState::MovementTouchdown(_)
             | OwnedState::MovementCeres(_)
             | OwnedState::WeaponsContact(_)
+            | OwnedState::ShotOpportunity(_)
             | OwnedState::Blocks(_)
             | OwnedState::Camera(_)
             | OwnedState::Appearance(_)
@@ -703,6 +725,18 @@ impl Production {
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
+            OwnedState::ShotOpportunity(state) => {
+                let ProductionContent::ShotOpportunity(content) = &self.context.content else {
+                    return Err(SaveFault::Unsupported(self.scope()));
+                };
+                return Ok(SavedProduction {
+                    state: state
+                        .save(content.dress)
+                        .map_err(|_| SaveFault::Unsupported(self.scope()))?,
+                    context: self.context.clone(),
+                    frame_returned: false,
+                });
+            }
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
@@ -777,7 +811,16 @@ impl Production {
         if saved.context.rules != rules {
             return Err(AdmissionFault::RulesChanged);
         }
-        let seed = if matches!(&content, ProductionContent::Audio(_)) {
+        let seed = if let ProductionContent::ShotOpportunity(shot) = &content {
+            let state = shot_opportunity::Continuation::restore(
+                &saved.state,
+                shot.admitted.clone(),
+                shot.dress,
+                &shot.power,
+            )
+            .map_err(|_| AdmissionFault::ShotOpportunity)?;
+            ProductionSeed::ShotOpportunity(Box::new(state))
+        } else if matches!(&content, ProductionContent::Audio(_)) {
             let checkpoint: Checkpoint<PortableAudio> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             let PortableAudio(state) = checkpoint.state;
@@ -842,6 +885,14 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::ResidentAudio => canonical::model::pin_holds::<crate::state::owned::AudioPin>()
             .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>()),
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
+        Scope::ShotOpportunity => {
+            use crate::state::owned::{CameraPin, MovementPin, PowerPin};
+            use canonical::model::pin_holds;
+            pin_holds::<PowerPin>()
+                .and_then(|()| pin_holds::<CameraPin>())
+                .and_then(|()| pin_holds::<MovementPin>())
+                .and_then(|()| pin_holds::<frame::inputs::MovementInputsPin>())
+        }
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
         Scope::AudioSender => canonical::model::pin_holds::<crate::state::owned::SenderPin>(),

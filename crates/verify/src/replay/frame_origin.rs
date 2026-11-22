@@ -68,7 +68,7 @@ mod layer_blend_receipt;
 #[path = "frame_origin/pad_ingress_tests.rs"]
 mod pad_ingress_tests;
 #[path = "frame_prelude_seed.rs"]
-mod prelude_seed;
+pub(super) mod prelude_seed;
 #[path = "frame_preparation_receipts.rs"]
 pub(super) mod preparation_receipts;
 #[path = "frame_profiles.rs"]

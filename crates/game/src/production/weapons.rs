@@ -305,6 +305,21 @@ pub(super) fn advance(
     world: &QuietBeamWorld,
     opportunities: &[DoorOpportunity],
 ) -> Result<WeaponsOutputs, ProductionFault> {
+    let events = update(state, input, content, rules, world)?;
+    let contacts = opportunities
+        .iter()
+        .map(|&opportunity| contact(state, opportunity))
+        .collect();
+    Ok(WeaponsOutputs { events, contacts })
+}
+
+pub(super) fn update(
+    state: &mut beam::State,
+    input: &beam::UpdateInput,
+    content: &PowerContent,
+    rules: beam::Rules,
+    world: &QuietBeamWorld,
+) -> Result<Vec<beam::Event>, ProductionFault> {
     content
         .validate_state(state)
         .map_err(ProductionFault::Weapons)?;
@@ -322,18 +337,18 @@ pub(super) fn advance(
         .validate_state(state)
         .map_err(ProductionFault::Weapons)?;
     validate_geometry(state, input, content, rules, world)?;
-    let contacts = opportunities
-        .iter()
-        .map(|&opportunity| DoorReceipt {
-            opportunity,
-            consumed: crate::enemy_interactions_bridge::contact_door(
-                state,
-                opportunity.conditions,
-                opportunity.door,
-            ),
-        })
-        .collect();
-    Ok(WeaponsOutputs { events, contacts })
+    Ok(events)
+}
+
+pub(super) fn contact(state: &mut beam::State, opportunity: DoorOpportunity) -> DoorReceipt {
+    DoorReceipt {
+        opportunity,
+        consumed: crate::enemy_interactions_bridge::contact_door(
+            state,
+            opportunity.conditions,
+            opportunity.door,
+        ),
+    }
 }
 
 pub(super) fn advance_with_drawing(
@@ -344,6 +359,15 @@ pub(super) fn advance_with_drawing(
     drawing: FlyingDraw<'_>,
 ) -> Result<ShotDrawingOutputs, ProductionFault> {
     let weapons = advance(state, shot.input, content, rules, shot.world, shot.contacts)?;
+    draw_flying(state, weapons, content, drawing)
+}
+
+pub(super) fn draw_flying(
+    state: &beam::State,
+    weapons: WeaponsOutputs,
+    content: &PowerContent,
+    drawing: FlyingDraw<'_>,
+) -> Result<ShotDrawingOutputs, ProductionFault> {
     let beam::PictureIntents { flying, impact } =
         beam::pictures(state, drawing.phase, drawing.view);
     if !impact.is_empty() {

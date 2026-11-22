@@ -126,6 +126,14 @@ pub(super) fn admit(
         (ProductionSeed::Doors(state), ProductionContent::Doors, ProductionRules::Doors(_)) => {
             OwnedState::Doors(state)
         }
+        (
+            ProductionSeed::ShotOpportunity(state),
+            ProductionContent::ShotOpportunity(content),
+            ProductionRules::ShotOpportunity,
+        ) => {
+            state.validate(content)?;
+            OwnedState::ShotOpportunity(state)
+        }
         _ => return Err(AdmissionFault::WrongScope),
     })
 }
@@ -214,6 +222,17 @@ pub(super) fn advance(
             state.scene = output.scene;
             ProductionOutputs::Doors(Box::new(output))
         }
+        (
+            OwnedState::ShotOpportunity(state),
+            ProductionContent::ShotOpportunity(content),
+            ProductionRules::ShotOpportunity,
+            AdvanceInput::ShotOpportunity {
+                inputs,
+                environment,
+            },
+        ) => ProductionOutputs::ShotOpportunity(Box::new(
+            state.advance(inputs, &content.at(environment))?,
+        )),
         (state, content, rules, input) => return advance_audio(state, content, rules, input),
     })
 }

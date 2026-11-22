@@ -223,6 +223,28 @@ phase = "before-flying-picture-insertion"
 claim = "independent enclosing draw context supplies insertion authority; only attributed sprite entries are compared"
 
 [[case]]
+id = "weapons-contact/M0-carried-shot-opportunities"
+kind = "scoped"
+row = "chain-any-0003-DFD7"
+start = { source = "native-checkpoint", frame = 156, path = "shot-contact-five-v1/expected.toml", sha256 = "3d02455e827f3ac8c5a6e41f3197a668f7e7f639254e521788c012da28c8e17c", seed_path = "shot-contact-five-v1/start.record", seed_sha256 = "90d416d38b097c80bfb3cf7b0f0e95ae6514abc65788f708a603ec01c964140b" }
+end = { cut_inclusive = 161 }
+rules = ["weapons-projectiles/ShotSpacing", "weapons-projectiles/HoldingShoot", "weapons-projectiles/CannonOrigin", "weapons-projectiles/InheritedMotion", "weapons-projectiles/FlyingBeam", "weapons-projectiles/BeamTrail", "weapons-projectiles/BeamVisibility", "weapons-projectiles/EndingShot", "enemy-interactions/ContactAllowed", "enemy-interactions/BoxOverlap", "enemy-interactions/FirstPowerShot"]
+profile = "reference"
+responsibilities = ["movement", "camera", "ceres", "weapons", "contact"]
+content = "player-rom-import"
+inputs = "scoped-shot-opportunity-inputs"
+expectations = { provider = "pinned-shot-opportunity-observations", fields = ["shot.controller", "shot.pose-history", "shot.inherited-motion", "shot.camera", "shot.door-clocks", "shot.oam.pre-power", "shot.oam.final", "weapons.state"], outputs = ["contact.consumed-markers", "shot.door-opening", "weapons.update-events", "contact.receivers", "weapons.flying-pictures", "weapons.oam-insertion"] }
+checkpoints = true
+limits = ["carried semantic opportunities with current controllers, interleaved normal box contact and Ceres door runs, Movement, Camera and exact flying insertion", "hardware Frame scheduling, unrelated drawing, physical NMI commit, trail allocation and audio service are outside the scope", "ordinary fixed geometry and grounded movement with no pending animation handover"]
+
+[[case.borrowed]]
+dependency = "shot.surrounding-producers"
+provider = "qualified-one-origin-five-cut-shot-fixture"
+fields = ["controller.physical-sample", "drawing.phase", "drawing.ordered-stores", "room.terrain", "room.scroll"]
+phase = "current-control-ingress-and-pre-power-insertion"
+claim = "one cut-156 origin and only physical samples, presentation phases and ordered surrounding stores advance the selected owners"
+
+[[case]]
 id = "camera/unchanged-centre-follow"
 kind = "scoped"
 row = "item-morph-ball"

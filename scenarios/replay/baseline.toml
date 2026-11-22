@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "513ff9218adc36b057d5f05993662d168b82a4d4327191ca6563b817d4f1c4ca"
+index_sha256 = "0f127e3c2e5d16ebf5cbaa6e506e06a4d4c5a35c7a0608c77b7924797b22d69e"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -141,6 +141,24 @@ publications = 0
 replies = 0
 null_cuts = 0
 null_fields = 0
+restorations = 5
+pending_boundaries = 0
+pending_restorations = 0
+
+[[case]]
+id = "weapons-contact/M0-carried-shot-opportunities"
+claim = "behaviour"
+expected = { status = "pass" }
+observation_sha256 = "4bd440a65172867265641439668a9d2e013769d81078362c2222749a40363095"
+
+[case.counts]
+cuts = 5
+fields = 40
+outputs = 30
+publications = 0
+replies = 0
+null_cuts = 0
+null_fields = 7
 restorations = 5
 pending_boundaries = 0
 pending_restorations = 0

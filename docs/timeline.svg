@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1978" viewBox="0 0 1100 1978" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="2010" viewBox="0 0 1100 2010" role="img" aria-labelledby="title description">
 <title id="title">Indexed replay requirements</title>
 <desc id="description">Each line is an independent case scope. Counts do not represent whole-movie coverage.</desc>
-<rect width="1100" height="1978" fill="#fcfcfb"/>
+<rect width="1100" height="2010" fill="#fcfcfb"/>
 <g font-family="sans-serif" font-size="14" fill="#202020">
 <text x="20" y="28" font-size="19">Indexed replay requirements</text>
 <text x="20" y="52">Separate scopes; compared cuts are not whole-movie progress.</text>
@@ -13,56 +13,57 @@
 <text x="20" y="242">ceres/door-closes-after-departure | Scoped cases | Pass | 4 compared cuts</text>
 <text x="20" y="274">weapons-contact/M0-four-searches | Scoped cases | Pass | 4 compared cuts</text>
 <text x="20" y="306">weapons-contact/M0-power-shot-drawing | Scoped cases | Pass | 5 compared cuts</text>
-<text x="20" y="338">camera/unchanged-centre-follow | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="370">hud/stationary-map-blink | Scoped cases | Pass | 17 compared cuts</text>
-<text x="20" y="402">appearance/standing-clip | Scoped cases | Pass | 16 compared cuts</text>
-<text x="20" y="434">progress/planet-awake-recorded | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="466">blocks/missing-requests | Scoped cases | Unsupported at None: independent complete block seed and ordered reaction requests | 0 compared cuts</text>
-<text x="20" y="498">doors/missing-passage-inputs | Scoped cases | Unsupported at None: independent complete passage seed and opportunity-time inputs | 0 compared cuts</text>
-<text x="20" y="530">audio-sender/missing-service-inputs | Scoped cases | Unsupported at None: independent CPU sender seed and ordered queue/service inputs | 0 compared cuts</text>
-<text x="20" y="562">integrated/missing-dependency-closure | Integrated cases | Unsupported at None: complete integrated production dependency closure | 0 compared cuts</text>
-<text x="20" y="594">movie/missing-power-on | Whole-movie cases | Unsupported at None: complete production power-on and movie input pipeline | 0 compared cuts</text>
-<text x="20" y="626">movement-ceres/carried-position-proximity | Integrated cases | Pass | 4 compared cuts</text>
-<text x="20" y="658">movement-native-occupied-first-search | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="690">movement-native-enemy-stop-terrain-absence | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="722">connected-ordinary/carried-running-camera | Integrated cases | Pass | 9 compared cuts</text>
-<text x="20" y="754">connected-ordinary/run-release-floor-aim | Integrated cases | Pass | 16 compared cuts</text>
-<text x="20" y="786">frame/steady-haze-through-layer-blend | Scoped cases | Unsupported at Some(4): Frame(RandomPreparation) | 4 compared cuts</text>
-<text x="20" y="818">frame/steady-haze-retained-values | Scoped cases | Unsupported at Some(4): Frame(RandomPreparation) | 4 compared cuts</text>
-<text x="20" y="850">connected-ordinary/early-mini-map | Scoped cases | Pass | 2 compared cuts</text>
-<text x="20" y="882">frame/random-through-completion | Scoped cases | Unsupported at Some(5): Frame(BuilderPreparation) | 5 compared cuts</text>
-<text x="20" y="914">frame/random-seed-carry | Scoped cases | Unsupported at Some(5): Frame(BuilderPreparation) | 5 compared cuts</text>
-<text x="20" y="946">frame/random-low-seed | Scoped cases | Unsupported at Some(5): Frame(BuilderPreparation) | 5 compared cuts</text>
-<text x="20" y="978">frame/ordinary-requested-nmi-return | Integrated cases | Pass | 1 compared cuts</text>
-<text x="20" y="1010">frame/adjacent-actual-trial | Integrated cases | Unsupported at Some(2): Frame(InterruptionPreparation) | 1 compared cuts</text>
-<text x="20" y="1042">frame/adjacent-held-trial | Integrated cases | Unsupported at Some(2): Frame(InterruptionPreparation) | 1 compared cuts</text>
-<text x="20" y="1074">sender-offer/native-00 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1106">sender-offer/native-01 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1138">sender-offer/native-02 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1170">sender-offer/native-03 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1202">sender-offer/native-04 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1234">sender-offer/native-05 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1266">sender-offer/native-06 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1298">sender-offer/native-07 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1330">sender-offer/native-08 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1362">sender-offer/native-09 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1394">sender-offer/native-10 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1426">sender-offer/native-11 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1458">sender-offer/native-12 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1490">sender-offer/native-13 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1522">sender-offer/native-14 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1554">sender-offer/native-15 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1586">sender-offer/native-16 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1618">sender-offer/native-17 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1650">sender-offer/native-18 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1682">sender-offer/ordered-pair | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1714">sender-offer/repeat-at-five | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1746">sender-offer/deny-at-six | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1778">sender-offer/deny-smaller-limit | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1810">sender-offer/deny-disabled | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1842">sender-offer/deny-demo | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1874">sender-offer/deny-explosion | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1906">movement/soft-touchdown-57 | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1938">movement/soft-touchdown-124 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="338">weapons-contact/M0-carried-shot-opportunities | Scoped cases | Pass | 5 compared cuts</text>
+<text x="20" y="370">camera/unchanged-centre-follow | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="402">hud/stationary-map-blink | Scoped cases | Pass | 17 compared cuts</text>
+<text x="20" y="434">appearance/standing-clip | Scoped cases | Pass | 16 compared cuts</text>
+<text x="20" y="466">progress/planet-awake-recorded | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="498">blocks/missing-requests | Scoped cases | Unsupported at None: independent complete block seed and ordered reaction requests | 0 compared cuts</text>
+<text x="20" y="530">doors/missing-passage-inputs | Scoped cases | Unsupported at None: independent complete passage seed and opportunity-time inputs | 0 compared cuts</text>
+<text x="20" y="562">audio-sender/missing-service-inputs | Scoped cases | Unsupported at None: independent CPU sender seed and ordered queue/service inputs | 0 compared cuts</text>
+<text x="20" y="594">integrated/missing-dependency-closure | Integrated cases | Unsupported at None: complete integrated production dependency closure | 0 compared cuts</text>
+<text x="20" y="626">movie/missing-power-on | Whole-movie cases | Unsupported at None: complete production power-on and movie input pipeline | 0 compared cuts</text>
+<text x="20" y="658">movement-ceres/carried-position-proximity | Integrated cases | Pass | 4 compared cuts</text>
+<text x="20" y="690">movement-native-occupied-first-search | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="722">movement-native-enemy-stop-terrain-absence | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="754">connected-ordinary/carried-running-camera | Integrated cases | Pass | 9 compared cuts</text>
+<text x="20" y="786">connected-ordinary/run-release-floor-aim | Integrated cases | Pass | 16 compared cuts</text>
+<text x="20" y="818">frame/steady-haze-through-layer-blend | Scoped cases | Unsupported at Some(4): Frame(RandomPreparation) | 4 compared cuts</text>
+<text x="20" y="850">frame/steady-haze-retained-values | Scoped cases | Unsupported at Some(4): Frame(RandomPreparation) | 4 compared cuts</text>
+<text x="20" y="882">connected-ordinary/early-mini-map | Scoped cases | Pass | 2 compared cuts</text>
+<text x="20" y="914">frame/random-through-completion | Scoped cases | Unsupported at Some(5): Frame(BuilderPreparation) | 5 compared cuts</text>
+<text x="20" y="946">frame/random-seed-carry | Scoped cases | Unsupported at Some(5): Frame(BuilderPreparation) | 5 compared cuts</text>
+<text x="20" y="978">frame/random-low-seed | Scoped cases | Unsupported at Some(5): Frame(BuilderPreparation) | 5 compared cuts</text>
+<text x="20" y="1010">frame/ordinary-requested-nmi-return | Integrated cases | Pass | 1 compared cuts</text>
+<text x="20" y="1042">frame/adjacent-actual-trial | Integrated cases | Unsupported at Some(2): Frame(InterruptionPreparation) | 1 compared cuts</text>
+<text x="20" y="1074">frame/adjacent-held-trial | Integrated cases | Unsupported at Some(2): Frame(InterruptionPreparation) | 1 compared cuts</text>
+<text x="20" y="1106">sender-offer/native-00 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1138">sender-offer/native-01 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1170">sender-offer/native-02 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1202">sender-offer/native-03 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1234">sender-offer/native-04 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1266">sender-offer/native-05 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1298">sender-offer/native-06 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1330">sender-offer/native-07 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1362">sender-offer/native-08 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1394">sender-offer/native-09 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1426">sender-offer/native-10 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1458">sender-offer/native-11 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1490">sender-offer/native-12 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1522">sender-offer/native-13 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1554">sender-offer/native-14 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1586">sender-offer/native-15 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1618">sender-offer/native-16 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1650">sender-offer/native-17 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1682">sender-offer/native-18 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1714">sender-offer/ordered-pair | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1746">sender-offer/repeat-at-five | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1778">sender-offer/deny-at-six | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1810">sender-offer/deny-smaller-limit | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1842">sender-offer/deny-disabled | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1874">sender-offer/deny-demo | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1906">sender-offer/deny-explosion | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1938">movement/soft-touchdown-57 | Scoped cases | Pass | 1 compared cuts</text>
+<text x="20" y="1970">movement/soft-touchdown-124 | Scoped cases | Pass | 1 compared cuts</text>
 </g>
 </svg>

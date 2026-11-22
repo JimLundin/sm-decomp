@@ -9,6 +9,9 @@ use crate::lock::{Lock, RowId};
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
+    if case.inputs == InputProvider::ScopedShotOpportunityInputs {
+        return super::shot_opportunity::admit_indexed(case, sources);
+    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);
     }

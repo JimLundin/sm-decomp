@@ -35,6 +35,21 @@ cut = 157
 field = "weapons.oam-insertion"
 
 [[fault]]
+name = "weapons-carried-picture-x-changed"
+responsibility = "weapons"
+file = "crates/game/src/production/frame/shot_opportunity/continuation.rs"
+before = '''self.batch = drawing.batch.clone();'''
+after = '''self.batch = drawing.batch.clone();
+        if !drawing.pictures.is_empty() {
+            if let Some(entry) = self.batch.oam.low.get_mut(usize::from(drawing.first_sprite)) {
+                entry.x = entry.x.wrapping_add(1);
+            }
+        }'''
+case = "weapons-contact/M0-carried-shot-opportunities"
+cut = 158
+field = "shot.oam.pre-power"
+
+[[fault]]
 name = "contact-disabled"
 responsibility = "contact"
 file = "crates/game/src/production/weapons.rs"

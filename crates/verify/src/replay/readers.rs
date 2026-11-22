@@ -17,6 +17,7 @@ use game::state::owned::OwnedState;
 
 pub(super) enum InputReader {
     EarlyMap(Box<super::early_map::InputTape>),
+    ShotOpportunity(Box<super::shot_opportunity::Inputs>),
     SenderOffer(Vec<super::sender_offer::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     Frame(super::frame::Inputs),
@@ -32,6 +33,7 @@ pub(super) enum InputReader {
 
 pub(super) enum ExpectedReader {
     EarlyMap(Box<super::early_map::Expectations>),
+    ShotOpportunity(Box<super::shot_opportunity::Expectations>),
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     Frame(Box<super::frame::Expected>),
@@ -45,6 +47,7 @@ pub(super) enum ExpectedReader {
 #[derive(Clone)]
 pub(super) enum ActualReader {
     EarlyMap,
+    ShotOpportunity(data::assets::samus::key::Dress),
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     Frame(super::frame::Actual),
@@ -107,6 +110,7 @@ impl InputReader {
     ) -> Result<ProductionOutputs, Outcome> {
         match self {
             Self::EarlyMap(inputs) => inputs.advance(production, cut),
+            Self::ShotOpportunity(inputs) => inputs.advance(production, cut),
             Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::Frame(inputs) => inputs.advance(production, cut, held),
@@ -153,6 +157,19 @@ impl InputReader {
             }
         }
     }
+}
+
+fn movement_state_fields(state: &samus_movement::Samus) -> Vec<Observation> {
+    use types::Parts;
+
+    vec![
+        Observation::quantity("movement.position.x", i64::from(state.position.x.0)),
+        Observation::quantity("movement.position.y", i64::from(state.position.y.0)),
+        Observation::quantity(
+            "movement.vertical_speed",
+            i64::from(state.vertical.speed.size().0),
+        ),
+    ]
 }
 
 impl ActualReader {
@@ -241,6 +258,11 @@ impl ActualReader {
                 add_publications(tape, outputs, publications, replies, cut)?;
                 actual_audio_from(production, publications, *replies, before)
             }
+            (
+                Self::ShotOpportunity(_),
+                InputReader::ShotOpportunity(inputs),
+                ProductionOutputs::ShotOpportunity(output),
+            ) => inputs.actual(&output, cut),
             (Self::EarlyMap, InputReader::EarlyMap(_), ProductionOutputs::Connected(_)) => {
                 super::early_map::actual(production, Some(cut))
             }
@@ -249,18 +271,10 @@ impl ActualReader {
                 InputReader::Movement { .. },
                 ProductionOutputs::Movement(outputs),
             ) => {
-                use types::Parts;
                 let OwnedState::Movement(state) = production.state() else {
                     return Err(data_failure(Some(cut), "movement owned scope"));
                 };
-                let mut actual = vec![
-                    Observation::quantity("movement.position.x", i64::from(state.0.position.x.0)),
-                    Observation::quantity("movement.position.y", i64::from(state.0.position.y.0)),
-                    Observation::quantity(
-                        "movement.vertical_speed",
-                        i64::from(state.0.vertical.speed.size().0),
-                    ),
-                ];
+                let mut actual = movement_state_fields(&state.0);
                 actual.extend(outputs.travelled.iter().map(|(direction, travel)| {
                     Observation::quantity(
                         format!("movement.travel.{direction:?}"),
@@ -283,6 +297,7 @@ impl ActualReader {
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
             Self::EarlyMap => super::early_map::actual(production, None),
+            Self::ShotOpportunity(dress) => super::shot_opportunity::initial(production, *dress),
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
             Self::Frame(actual) => actual.initial(production),
@@ -298,18 +313,10 @@ impl ActualReader {
                 replies,
             } => actual_audio(production, publications, *replies),
             Self::Movement => {
-                use types::Parts;
                 let OwnedState::Movement(state) = production.state() else {
                     return Err(data_failure(None, "movement null scope"));
                 };
-                let mut null = vec![
-                    Observation::quantity("movement.position.x", i64::from(state.0.position.x.0)),
-                    Observation::quantity("movement.position.y", i64::from(state.0.position.y.0)),
-                    Observation::quantity(
-                        "movement.vertical_speed",
-                        i64::from(state.0.vertical.speed.size().0),
-                    ),
-                ];
+                let mut null = movement_state_fields(&state.0);
                 null.extend(
                     ["Left", "Right", "Up", "Down"]
                         .into_iter()
@@ -345,11 +352,13 @@ impl ActualReader {
             ) => restored == direct && restored_replies == direct_replies,
             (
                 Self::EarlyMap
+                | Self::ShotOpportunity(_)
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
                 | Self::SenderOffer,
                 Self::EarlyMap
+                | Self::ShotOpportunity(_)
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
@@ -385,6 +394,7 @@ impl ActualReader {
             Self::Frame(actual) => actual.publication_count(),
             Self::Audio { publications, .. } => publications.len(),
             Self::EarlyMap
+            | Self::ShotOpportunity(_)
             | Self::NativeSearch(_)
             | Self::Movement
             | Self::Recorded(_)
@@ -399,6 +409,7 @@ impl ExpectedReader {
     pub fn read(&self, case: &Case, cut: u64) -> Result<ExpectedCut, Outcome> {
         match self {
             Self::EarlyMap(expected) => expected.read(cut),
+            Self::ShotOpportunity(expected) => expected.read(cut),
             Self::MovementTouchdown(expected) => expected.read(cut),
             Self::SenderOffer(fields) => Ok(ExpectedCut {
                 fields: fields.clone(),

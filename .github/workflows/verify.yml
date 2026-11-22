@@ -143,6 +143,9 @@ jobs:
       - &shot_drawing
         name: Fetch the reviewed scoped power shot witness
         run: bash tools/ci/fetch_shot_contact.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
+      - &shot_five
+        name: Fetch the reviewed carried shot opportunities
+        run: bash tools/ci/fetch_shot_five.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Fetch the reviewed completed shot Frame origin
         run: bash tools/ci/fetch_shot_frame_origin.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Install the independently qualified Steady Haze continuation
@@ -212,6 +215,7 @@ jobs:
       - *movement_opportunities
       - *connected_ordinary
       - *shot_drawing
+      - *shot_five
       - *retained_frame
       - *native_search
       - name: Verify recorded bridge fault rejection and exact restoration

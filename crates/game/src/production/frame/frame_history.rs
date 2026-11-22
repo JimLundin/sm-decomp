@@ -11,6 +11,10 @@ enum Progress {
     Native,
 }
 
+pub(super) const fn newly_pressed(held: u16, previous: u16) -> u16 {
+    (held ^ previous) & held
+}
+
 /// Current and prior controller and drawing quantities retained at their actual uses.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct History {
@@ -88,7 +92,7 @@ impl History {
         if !matches!(self.progress, Progress::Finalized) {
             return false;
         }
-        self.pressed = (held ^ self.native_latch) & held;
+        self.pressed = newly_pressed(held, self.native_latch);
         self.held = held;
         self.native_latch = held;
         self.progress = Progress::Native;

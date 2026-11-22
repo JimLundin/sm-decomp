@@ -48,6 +48,58 @@ impl Configuration {
         }
     }
 
+    pub(super) fn ordinary_shot(
+        self,
+        pose: Pose,
+        [held, pressed]: [u16; 2],
+        speed: types::Fixed,
+        content: &MovementContent,
+    ) -> Option<PoseInputCompletion> {
+        if pose.body != Body::Upright
+            || !matches!(
+                (pose.action, pose.facing),
+                (Action::Still | Action::Running, Facing::Right)
+                    | (Action::Moonwalking, Facing::Left)
+            )
+            || self.charging()
+        {
+            return None;
+        }
+        let held_actions = mapped(held, self.bindings);
+        let pressed_actions = mapped(pressed, self.bindings);
+        let prospective = samus_movement::Moment {
+            pad: held_actions,
+            pressed: pressed_actions,
+            items: Set::default(),
+            animation_ends: None,
+            speed,
+            airborne: false,
+            met: None,
+        }
+        .next_pose(pose)
+        .ok()?;
+        content.radius(prospective)?;
+        Some(PoseInputCompletion {
+            dependency: PoseInputOrigin {
+                pose,
+                action: pose.action,
+                held: PhysicalButtons(held),
+                pressed: PhysicalButtons(pressed),
+                bindings: self.bindings,
+            },
+            terminal: PoseInputTerminal {
+                pressed_actions,
+                held_actions,
+                prospective,
+                special: None,
+                super_special: None,
+                commands: [PoseCommand::None; 3],
+                radius: content.radius(pose)?,
+                bomb_jump: BombJumpDirection::None,
+            },
+        })
+    }
+
     pub(super) const fn charging(self) -> bool {
         self.pending.is_some()
     }

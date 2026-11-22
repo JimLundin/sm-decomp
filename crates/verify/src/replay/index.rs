@@ -191,6 +191,8 @@ pub enum InputProvider {
     PrecedingCutWeaponsContactInputs,
     /// Independently watched ordinary weapon inputs and the flying-picture insertion context.
     ScopedShotDrawingInputs,
+    /// One initial shot owner admission and ongoing sampled controls with surrounding drawing.
+    ScopedShotOpportunityInputs,
     /// Independent stable status/map facts and inert-input representatives.
     PrecedingCutHudInputs,
     /// Independent stable standing-figure neighbours.
@@ -247,6 +249,8 @@ pub enum ExpectedProvider {
     SenderOfferQueue,
     /// Pinned slot state and independently watched exact shot insertions.
     PinnedShotDrawingObservations,
+    /// Independent native observations at the five carried shot opportunities.
+    PinnedShotOpportunityObservations,
     /// Independent decoded native cuts.
     NativeDecodedCuts,
 }
@@ -254,6 +258,30 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
+    /// Exposed physical held, current-new and previous-new controls at W1.
+    #[serde(rename = "shot.controller")]
+    ShotController,
+    /// Current and retained prior pose used at the reading boundary.
+    #[serde(rename = "shot.pose-history")]
+    ShotPoseHistory,
+    /// Carried directional travel and Camera height read by W1.
+    #[serde(rename = "shot.inherited-motion")]
+    ShotInheritedMotion,
+    /// View origin at W1 and at the distinct E1 boundary.
+    #[serde(rename = "shot.camera")]
+    ShotCamera,
+    /// Complete waits of the two ordered B8 door runs.
+    #[serde(rename = "shot.door-clocks")]
+    ShotDoorClocks,
+    /// Actual per-door opening sound requests in slot order.
+    #[serde(rename = "shot.door-opening")]
+    ShotDoorOpening,
+    /// Digest of the live OAM backing at entry to the power encoder.
+    #[serde(rename = "shot.oam.pre-power")]
+    ShotOamPrePower,
+    /// Digest of the final live OAM backing and cursor.
+    #[serde(rename = "shot.oam.final")]
+    ShotOamFinal,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -786,6 +814,10 @@ fn rule_exists(rule: &str) -> bool {
         .any(|id| rule == format!("enemy-interactions/{id:?}"))
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "Keep each observation and its owner in one exhaustive list."
+)]
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
@@ -823,13 +855,19 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::TravelDown
         | O::WallTest
         | O::Reached
-        | O::MapCarryMovement => Responsibility::Movement,
+        | O::MapCarryMovement
+        | O::ShotPoseHistory
+        | O::ShotInheritedMotion => Responsibility::Movement,
         O::AudioSemantic | O::AudioPublications | O::AudioReplies | O::AudioPendingMusic => {
             Responsibility::Audio
         }
-        O::CeresPhase | O::CeresWait | O::CeresFigure | O::CeresShown | O::CeresSolid => {
-            Responsibility::Ceres
-        }
+        O::CeresPhase
+        | O::CeresWait
+        | O::CeresFigure
+        | O::CeresShown
+        | O::CeresSolid
+        | O::ShotDoorClocks
+        | O::ShotDoorOpening => Responsibility::Ceres,
         O::CameraViewXPixel
         | O::CameraViewXFraction
         | O::CameraViewYPixel
@@ -839,7 +877,8 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         | O::CameraRememberedYPixel
         | O::CameraRememberedYFraction
         | O::CameraVerticalFraction
-        | O::MapCarryCamera => Responsibility::Camera,
+        | O::MapCarryCamera
+        | O::ShotCamera => Responsibility::Camera,
         O::EarlyMapWindow
         | O::HudGrid
         | O::HudExplored
@@ -854,7 +893,10 @@ const fn observation_owner(field: ObservationId) -> Responsibility {
         O::WeaponsState
         | O::WeaponsUpdateEvents
         | O::WeaponsFlyingPictures
-        | O::WeaponsOamInsertion => Responsibility::Weapons,
+        | O::WeaponsOamInsertion
+        | O::ShotController
+        | O::ShotOamPrePower
+        | O::ShotOamFinal => Responsibility::Weapons,
         O::ContactConsumedMarkers | O::ContactReceivers => Responsibility::Contact,
         O::TouchdownGraphics
         | O::AppearancePlaying
@@ -1239,8 +1281,51 @@ fn early_map_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
+fn shot_opportunity_provider_valid(case: &Case) -> bool {
+    use super::shot_opportunity::{EXPECTED_PIN, START_PIN};
+    use ObservationId as O;
+    case.kind == CaseKind::Scoped
+        && case.content == ContentProvider::PlayerRomImport
+        && case.expectations.provider == ExpectedProvider::PinnedShotOpportunityObservations
+        && case.row == super::shot_drawing::ROW
+        && matches!(&case.start, Start::NativeCheckpoint {
+            path, sha256, seed_path, seed_sha256, frame: 156
+        } if path == std::path::Path::new("shot-contact-five-v1/expected.toml")
+            && seed_path == std::path::Path::new("shot-contact-five-v1/start.record")
+            && sha256 == EXPECTED_PIN
+            && seed_sha256 == START_PIN)
+        && case.end.cut_inclusive == 161
+        && case.expectations.fields
+            == [
+                O::ShotController,
+                O::ShotPoseHistory,
+                O::ShotInheritedMotion,
+                O::ShotCamera,
+                O::ShotDoorClocks,
+                O::ShotOamPrePower,
+                O::ShotOamFinal,
+                O::WeaponsState,
+            ]
+        && case.expectations.outputs
+            == [
+                O::ContactConsumedMarkers,
+                O::ShotDoorOpening,
+                O::WeaponsUpdateEvents,
+                O::ContactReceivers,
+                O::WeaponsFlyingPictures,
+                O::WeaponsOamInsertion,
+            ]
+        && case.expectations.output_cut.is_none()
+        && case.checkpoints
+        && !case.borrowed.is_empty()
+        && !case.limits.is_empty()
+}
+
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
+    if case.inputs == InputProvider::ScopedShotOpportunityInputs {
+        return shot_opportunity_provider_valid(case);
+    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);
     }

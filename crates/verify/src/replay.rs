@@ -60,6 +60,7 @@ pub mod result;
 mod runner;
 mod sender_offer;
 mod shot_drawing;
+mod shot_opportunity;
 mod weapons;
 
 use compare::{CompareFault, Observation};

@@ -79,6 +79,7 @@ mod run_caller;
 pub mod s6_camera;
 pub mod s6_drawing;
 pub mod samus_palette;
+pub mod shot_opportunity;
 pub mod steady_prelude;
 mod support_caller;
 pub use ordinary_caller::{OrdinaryWork, TravelWork};
