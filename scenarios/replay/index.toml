@@ -67,7 +67,7 @@ kind = "scoped"
 row = "native-control"
 start = { source = "native-seed", path = "control.local.toml", sha256 = "7b7eb9f99ad4e148889376e154aff5e8f30fe887d01f105ecb864c6c74d1aa52" }
 end = { cut_inclusive = 183 }
-rules = ["audio-transport/MusicalProgress", "audio-transport/WholeArrangement", "audio-transport/FrameCadence", "audio-transport/PublishedReplies", "audio-transport/StagedRequests", "audio-transport/RequestDelivery", "audio-transport/RequestRelease"]
+rules = ["audio-transport/MusicalProgress", "audio-transport/WholeArrangement", "audio-transport/FinitePhrases", "audio-transport/FrameCadence", "audio-transport/PublishedReplies", "audio-transport/StagedRequests", "audio-transport/RequestDelivery", "audio-transport/RequestRelease"]
 profile = "reference"
 responsibilities = ["audio"]
 content = "opening-ceres-audio"

@@ -195,7 +195,9 @@ instant: `engine.asm` lines 80-93 separately publish DSP cache fields.
 
 ## Harness note
 
-**Compared at each cut:** per group, the sender's progress, delay, cue and queue (WRAM, above);
+**Compared at each cut:** in the 63-row analysis, per group, the sender's progress, delay, cue
+and queue (WRAM, above). The native captures have no CPU memory, so the indexed cases compare
+each group's request line (the CPU's last write to its port before the cut) instead. In both,
 the three group replies and the music reply (the last SPC write of each port before the cut);
 the committed song fields from every cut object; effect release history and echo membership.
 A port reply that changes gameplay is compared on the frame it is read: the reply each
