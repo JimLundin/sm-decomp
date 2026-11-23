@@ -277,8 +277,6 @@ pub enum Unsupported {
     HealthTailFrame,
     /// A frame of play the HUD leaves out.
     Hud(interface_hud::UnsupportedFrame),
-    /// A produced Appearance request has no selected receiver mapping.
-    AppearanceSound(samus_appearance::FrameSound),
     /// No independent value or producer for the selected entry.
     MissingInput(Scope),
     /// A selected pose requires unavailable semantic content.

@@ -163,12 +163,6 @@ pub const ESCAPE_TIMER_RUNNING: WramWord = WramWord {
     offset: 0x0943,
 };
 
-/// The physical main enemy routine count used by hurt-flash drawing.
-pub const ENEMY_ROUTINE_COUNT: WramWord = WramWord {
-    name: "ENEMY_ROUTINE_COUNT",
-    offset: 0x0E44,
-};
-
 /// Bank $90 log: Samus's X position, whole pixels.
 pub const SAMUS_X_POS: WramWord = WramWord {
     name: "SAMUS_X_POS",
@@ -287,11 +281,6 @@ pub const COLLECTED_ITEMS: WramWord = WramWord {
     name: "COLLECTED_ITEMS",
     offset: 0x09A4,
 };
-/// Bank $90 log: Samus's energy.
-pub const SAMUS_HEALTH: WramWord = WramWord {
-    name: "SAMUS_HEALTH",
-    offset: 0x09C2,
-};
 /// Bank $90 log: Samus's energy ceiling, raised by energy tanks.
 pub const SAMUS_MAX_HEALTH: WramWord = WramWord {
     name: "SAMUS_MAX_HEALTH",
@@ -348,20 +337,10 @@ pub const LAYER1_X_SUBPOS: WramWord = WramWord {
     name: "LAYER1_X_SUBPOS",
     offset: 0x090F,
 };
-/// Bank $80 log: layer 1's X scroll in the room, whole pixels: the camera's left edge.
-pub const LAYER1_X_POS: WramWord = WramWord {
-    name: "LAYER1_X_POS",
-    offset: 0x0911,
-};
 /// Bank $80 log: layer 1's Y scroll in the room, subpixels.
 pub const LAYER1_Y_SUBPOS: WramWord = WramWord {
     name: "LAYER1_Y_SUBPOS",
     offset: 0x0913,
-};
-/// Bank $80 log: layer 1's Y scroll in the room, whole pixels: the camera's top edge.
-pub const LAYER1_Y_POS: WramWord = WramWord {
-    name: "LAYER1_Y_POS",
-    offset: 0x0915,
 };
 
 /// Bank $80 log, `$80:A2F9`: layer 2's X position, which follows layer 1 at the room's rate.
@@ -1082,23 +1061,6 @@ pub const SAMUS_POSE: WramWord = WramWord {
     name: "SAMUS_POSE",
     offset: 0x0A1C,
 };
-/// Bank $91 log: the pose's X direction, copied from its definition.
-pub const SAMUS_POSE_X_DIR: WramByte = WramByte {
-    name: "SAMUS_POSE_X_DIR",
-    offset: 0x0A1E,
-};
-/// Bank $91 log: the pose's movement type, copied from its definition; the movement
-/// handler dispatches on it.
-pub const SAMUS_MOVEMENT_TYPE: WramByte = WramByte {
-    name: "SAMUS_MOVEMENT_TYPE",
-    offset: 0x0A1F,
-};
-/// Movement retained by actual preparation after input/projectiles, before motion;
-/// drawing reads it until preparation executes again.
-pub const SAMUS_PREPARATION_MOVEMENT: WramByte = WramByte {
-    name: "SAMUS_PREPARATION_MOVEMENT",
-    offset: 0x0A11,
-};
 /// Bank $91 log: the pose before the last pose change.
 pub const SAMUS_PREV_POSE: WramWord = WramWord {
     name: "SAMUS_PREV_POSE",
@@ -1148,16 +1110,6 @@ pub const SPEED_BOOSTER_LEVEL: WramWord = WramWord {
     name: "SPEED_BOOSTER_LEVEL",
     offset: 0x0B3E,
 };
-/// Bank $91 log, `$91:EB88`: the super special prospective pose, $FFFF for none.
-pub const SAMUS_NEW_POSE_TRANSITIONAL: WramWord = WramWord {
-    name: "SAMUS_NEW_POSE_TRANSITIONAL",
-    offset: 0x0A2C,
-};
-/// Bank $90 log, `$90:EC22`: Samus's Y radius, which her block collision reads.
-pub const SAMUS_Y_RADIUS: WramWord = WramWord {
-    name: "SAMUS_Y_RADIUS",
-    offset: 0x0B00,
-};
 /// Bank $94 log, `$94:976F` and `$94:8E38`: the "Samus position was adjusted by a slope"
 /// flag, 0 or 1, which the ground's vertical movement reads (`$90:924C`).
 pub const SAMUS_SLOPE_ADJUSTED: WramWord = WramWord {
@@ -1203,11 +1155,6 @@ pub const NMI_COPY_SAMUS_BOTTOM_HALF_SRC: WramWord = WramWord {
 pub const SAMUS_DRAW_HANDLER: WramWord = WramWord {
     name: "SAMUS_DRAW_HANDLER",
     offset: 0x0A5C,
-};
-/// Bank $91 log, `$91:EB88`: the super special prospective pose change command, 0 to 8.
-pub const SAMUS_HURT_SWITCH_INDEX: WramWord = WramWord {
-    name: "SAMUS_HURT_SWITCH_INDEX",
-    offset: 0x0A32,
 };
 /// Bank $91 log, `$91:D83F`: the visor palette timer in the low byte, the index into the
 /// visor colours `$9B:A3C0` in the high byte (6, 8 or $A in the cycle).
@@ -1313,11 +1260,6 @@ pub const MAP_TILES_EXPLORED: WramBlock = WramBlock {
 pub const AREA_INDEX: WramWord = WramWord {
     name: "AREA_INDEX",
     offset: 0x079F,
-};
-/// Bank $A0 log, `$A0:8ECA`: admit all live enemies regardless of the camera window.
-pub const GLOBAL_OFF_SCREEN_ENEMY_PROCESSING: WramWord = WramWord {
-    name: "GLOBAL_OFF_SCREEN_ENEMY_PROCESSING",
-    offset: 0x183C,
 };
 /// Bank $90 log, `$90:A94B`: the room's left column on the area map.
 pub const ROOM_X_COORDINATE_ON_MAP: WramWord = WramWord {
@@ -1633,17 +1575,6 @@ pub const COOLDOWN_TIMER: WramWord = WramWord {
     name: "COOLDOWN_TIMER",
     offset: 0x0CCC,
 };
-/// Bank $90 log: beams and missiles in flight (`$90:AC39`).
-pub const PROJECTILE_COUNTER: WramWord = WramWord {
-    name: "PROJECTILE_COUNTER",
-    offset: 0x0CCE,
-};
-
-/// Bank $90 log, `$90:EC22`: Samus's X radius, which her block collision reads.
-pub const SAMUS_X_RADIUS: WramWord = WramWord {
-    name: "SAMUS_X_RADIUS",
-    offset: 0x0AFE,
-};
 /// Bank $90 log: the ball's bounce count in the low byte (0, 1 or 2), and 6 in the
 /// high byte for the spring ball.
 pub const SAMUS_BOUNCE_STATE: WramWord = WramWord {
@@ -1707,29 +1638,6 @@ pub const SAMUS_DIRECTIONAL_TRAVEL: [(types::Direction, [WramWord; 2]); 4] = [
         ],
     ),
 ];
-
-/// Ordinary camera following retains this height-distance fraction for the next projectile pass.
-pub const CAMERA_VERTICAL_FRACTION: WramWord = WramWord {
-    name: "CAMERA_VERTICAL_FRACTION",
-    offset: 0x0DA8,
-};
-
-/// Newly pressed physical controls retained by Samus drawing.
-pub const PRIOR_NEW_CONTROLS: WramWord = WramWord {
-    name: "PRIOR_NEW_CONTROLS",
-    offset: 0x0E00,
-};
-/// Transition publication consumed by the following cannon pass.
-pub const PENDING_FIRING_AIM: WramWord = WramWord {
-    name: "PENDING_FIRING_AIM",
-    offset: 0x0B5E,
-};
-
-/// Samus PRE handler selected for the following gameplay pass.
-pub const SAMUS_PRE_HANDLER: WramWord = WramWord {
-    name: "FRAME_HANDLER_ALPHA",
-    offset: 0x0A42,
-};
 
 /// Cinematic activity read by accepted touchdown sound admission.
 pub const CINEMATIC_ACTIVE: WramWord = WramWord {
