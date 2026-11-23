@@ -43,6 +43,72 @@ It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by c
 dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
+## Frozen frame witnesses
+
+`game::production::frame` and the verifier code that admits and compares it are frozen: the
+`frame` and `frame_*` modules under `verify::replay` (with `frame_origin`), their `frame_*`
+integration tests, and `shot_opportunity`. They exist to hold the cases below until those
+retire under MODEL decision 33. No new case selects `native-frame-owners` or
+`native-steady-prelude` inputs, no case gains native returns, and no new frame stage, caller,
+contract or receipt lands. Changes there are fixes that keep the baseline, or deletions. New
+behaviour joins the played-alone loop as a whole-frame owner instead (decision 35). The index
+validator restricts native-frame cases to their existing shapes, but nothing counts the cases,
+so review holds this rule.
+
+Each case compares cut-level owner State, which the played-alone run takes over. Most also
+compare intra-frame timing, which is T1's: `frame.time` (absolute master-tick clocks),
+`frame.outputs` (ordered hardware callbacks), `frame.audio.ports` (ordered CPU port access),
+the Contact latches at post-RTI clocks, Random's ordered device transfers and the Steady
+stage clocks. A case retires when the played-alone run from the M0 seed compares its
+cut-level fields through its last cut, with the owners named below in the loop. Its T1 part is
+then dropped, and git history keeps the profiles. The native captures start at the M0 seed, so
+native return *n* is row cut *n*. The Steady and Random stages lie inside the frame that ends
+at cut 157.
+
+| Case | Cuts | Owners the played run still needs | Played run covers now |
+| --- | --- | --- | --- |
+| `frame/adjacent-actual-trial`, `frame/adjacent-held-trial` | 1 (Unsupported at 2) | none: the passing `-return` cases repeat their cut-1 observations | — |
+| `frame/ordinary-requested-nmi-return` | 1 | Health, HUD countdown and retained work, play time, room quake, Random, Haze | Movement, Appearance |
+| `frame/adjacent-actual-return` | 1–2 | the same | Movement, Appearance |
+| `frame/adjacent-held-return` | 1–2 | the same; its held-pad arm becomes a planted fault on the played run | Movement, Appearance |
+| `frame/opening-three-native-returns` | 1–3 | the same | Movement, Appearance |
+| `frame/opening-eight-native-returns` | 1–8 | the sender's queue at each cut; the rest is T1 | — |
+| `frame/opening-sixteen-native-returns` | 1–16 | her aim, the Ceres door actor (phase, waits), OAM bytes at cuts 7–15 | playhead, camera, camera fraction |
+| `frame/health-hud-stock` | 1 | Health, HUD status, map and gauge, with the tilemap and VRAM payload bytes | — |
+| `frame/health-hud-pending-loss` | 1 | none: `health/ceres-tail-drawing-gauge` and the Health vectors witness its changed-start rules | — |
+| `frame/steady-haze-through-layer-blend` | inside 157 | Haze bands, scheduler countdowns and LayerBlend at cut 157 | — |
+| `frame/steady-haze-retained-values` | inside 157 | none beyond the case above: its intervention becomes a planted fault | — |
+| `frame/random-through-completion` | inside 157 | Random's seed at cut 157 | — |
+| `frame/random-seed-carry`, `frame/random-low-seed` | inside 157 | none beyond the case above: the `game-random` vectors hold their seeds | — |
+| `weapons-contact/M0-carried-shot-opportunities` | 157–161 | Weapons, Contact, the Ceres door actor, OAM bytes | — |
+| `gameplay-sound/shot-opening`, `gameplay-sound/shot-opening-no-fire` | 157 | the sound queue, Weapons, the Ceres door actor | — |
+
+`samus-movement/TravelledDistances`, listed by the native-frame cases, stays witnessed by
+`movement/D-inherited-cut`. A retirement removes the case's index and baseline entries,
+re-pins its [mutants](../tools/mutants.toml) to the played-alone run, and removes its required
+witnesses and fixture installer. The transition records the retired claim.
+
+No [transition](../scenarios/replay/transition.toml) or
+[prior-claim](../scenarios/replay/prior-claims.toml) entry cites a frozen case, so their only
+obligations are their baseline entries. The played-alone run, once indexed for M0, accounts for
+the row's earlier claims. It covers 42 transition claims on `chain-any-0003-DFD7`: the floor
+and free-run floor of each of `samus-movement`, `samus-appearance`, `world-camera`,
+`interface-hud`, `game-time`, `boss-ceres-ridley`, `weapons-projectiles`, `enemy-interactions`
+and `audio-transport`; the fourteen camera receipt floors; the three lockstep entries; and the
+seven CI requirements, `ordinary/*` at 183 cuts and `movement/M0-*` at 181. It also covers the
+seven matching prior-claim requirements. Each is accounted for once the run holds through the
+cuts it claims. Claims past cut 184 need the lag cuts as borrowed inputs: `interface-hud` at
+225, and `game-time`, `boss-ceres-ridley`, `weapons-projectiles` and the receipt frame count
+at 341 or more. The row's `run-progress`, `world-blocks`, `world-doors`, `uncompared` and
+stream-gate entries don't depend on these cases.
+
+`frame` can be deleted only after the types that other production code borrows from it move
+out: the HUD owner and its tilemap, the Health pin, the energy history, the post-down sound
+offer and sender queue types, the actor slot identity, the figure pin, the rendering content,
+the opening profiles and `shot_opportunity`. The connected owner, Health tail, touchdown,
+weapons and gameplay sounds use them, and so do the verifier's appearance, sender-offer,
+passage and HUD cases.
+
 ## The models' gain over the null model
 
 A witness must exercise a rule, not merely compare unchanged fields. Catalogue entries name
