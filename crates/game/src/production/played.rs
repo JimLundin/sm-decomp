@@ -8,12 +8,14 @@
 //!
 //! A frame whose moves reach a door to a room plays out whole, and the passage starts on the
 //! next. While it runs, her motion, her animation and the camera don't: the passage moves her
-//! position, the view and the colours, and nothing else of theirs changes.
+//! position, the view and the colours, and nothing else of theirs changes. As each of the
+//! passage's calls is done, the room's loading loads its part of the next room.
 
 use super::animation::{self, AppearanceContent};
 use super::camera_semantic;
 use super::connected::inputs::{CameraInputs, Inputs, Lead, Screen};
 use super::content::MovementContent;
+use super::room_loading::{self, LoadFault, Rooms};
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
@@ -41,6 +43,8 @@ pub struct Content {
     pub appearance: AppearanceContent,
     /// Which group each of the screen's colours is in, for the passage's fades.
     pub colour_groups: [ColourGroup; COLOURS],
+    /// The rooms and tilesets the passages load.
+    pub rooms: Rooms,
 }
 
 /// The tuning each model reads.
@@ -56,12 +60,15 @@ pub struct Rules {
     pub doors: world_doors::Rules,
 }
 
-/// A door to another room, from the room's content: the cell she touches, where she arrives,
-/// and whether the room she leaves or the next one keeps the items dark.
+/// A door to another room, from the room's content: the cell she touches, the doorway it
+/// leads through, where she arrives, and whether the room she leaves or the next one keeps the
+/// items dark.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Doorway {
     /// The door's cell.
     pub cell: types::Cell,
+    /// The doorway she goes through, which names the next room.
+    pub through: data::id::DoorwayId,
     /// Where the view and she arrive.
     pub arrival: Arrival,
     /// Either room keeps the items dark through the passage.
@@ -79,6 +86,8 @@ pub struct Passing<'a> {
     pub audio: PassageAudio,
     /// The escape's: its timer is running.
     pub timer_running: bool,
+    /// Her progress, which chooses the next room's version.
+    pub progress: &'a run_progress::Progress,
 }
 
 /// What audio answers the passage.
@@ -137,6 +146,8 @@ pub enum Fault {
     CameraRoom,
     /// The room's geometry is malformed.
     Geometry,
+    /// The next room did not load from the content.
+    Load(LoadFault),
 }
 
 impl State {
@@ -152,7 +163,7 @@ impl State {
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
         if matches!(self.doors, Doors::Passing(_)) {
-            return Ok(self.pass(passing, content, rules));
+            return self.pass(passing, content, rules);
         }
         inputs.geometry.validate().map_err(|_| Fault::Geometry)?;
         let room = camera_room(&inputs.camera)?;
@@ -257,8 +268,13 @@ impl State {
     }
 
     /// A frame of a passage: the doors alone, moving her position, the view, where the camera
-    /// last saw her and the colours.
-    fn pass(&mut self, passing: &Passing<'_>, content: &Content, rules: &Rules) -> Outputs {
+    /// last saw her and the colours, then the room's loading of what the doors' call names.
+    fn pass(
+        &mut self,
+        passing: &Passing<'_>,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<Outputs, Fault> {
         let camera = self.camera.0;
         let exports = self.doors.step(
             scene(&self.movement.0, &camera, &self.palette),
@@ -269,8 +285,18 @@ impl State {
             her,
             seen,
             camera: view,
-            palette,
+            mut palette,
         } = exports.scene;
+        if let Some(doorway) = self.doorway {
+            room_loading::load(
+                exports.report.call,
+                doorway.through,
+                passing.progress,
+                &content.rooms,
+                &mut palette,
+            )
+            .map_err(Fault::Load)?;
+        }
         let kept = camera.seen();
         self.movement.0.position = her;
         self.camera.0 = camera
@@ -284,11 +310,11 @@ impl State {
         if self.doors == Doors::Play {
             self.doorway = None;
         }
-        Outputs {
+        Ok(Outputs {
             movement: None,
             sound: None,
             doors: exports.report,
-        }
+        })
     }
 }
 

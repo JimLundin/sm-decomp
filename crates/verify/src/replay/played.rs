@@ -42,6 +42,7 @@ pub const SEED_HELD: &[&str] = &[
     "camera room settings and lead",
     "escape timer",
     "passage sounds sent and music ready",
+    "progress, which chooses the next room's version",
 ];
 
 /// Inputs read from the record at each cut, because their owner is outside the rungs
@@ -122,10 +123,11 @@ struct Room {
     timer_running: bool,
     /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
     sounds_sent: bool,
+    progress: run_progress::Progress,
     counter: u16,
 }
 
-fn room(seed: &[u8], content: &connected::Content, image: &Path) -> Result<Room, Outcome> {
+fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, Outcome> {
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator {
         return Err(Outcome::Unsupported {
@@ -139,15 +141,15 @@ fn room(seed: &[u8], content: &connected::Content, image: &Path) -> Result<Room,
         inputs,
         doorways: doorways(seed, image)?,
         timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
+        progress: super::progress::seed(seed)?,
         counter: word(seed, source::NMI_FRAME_COUNTER_WORD)?,
     })
 }
 
 /// The room's doors to other rooms, by cell, from the imported world.
-fn doorways(seed: &[u8], path: &Path) -> Result<Vec<played::Doorway>, Outcome> {
+fn doorways(seed: &[u8], image: &Rom) -> Result<Vec<played::Doorway>, Outcome> {
     use data::assets::world::{Door, ItemLighting};
     let bad = || data_failure(None, "played room doors");
-    let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
     let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
         .ok_or_else(bad)?;
     let world = import::world::import(image.lorom(), &[id]).map_err(|_| bad())?;
@@ -162,6 +164,7 @@ fn doorways(seed: &[u8], path: &Path) -> Result<Vec<played::Doorway>, Outcome> {
         let next = next.room(doorway.room).ok_or_else(bad)?;
         doorways.push(played::Doorway {
             cell,
+            through: *to,
             arrival: world_doors::Arrival {
                 way: doorway.arrival.way,
                 view: Pair {
@@ -176,6 +179,14 @@ fn doorways(seed: &[u8], path: &Path) -> Result<Vec<played::Doorway>, Outcome> {
         });
     }
     Ok(doorways)
+}
+
+/// The rooms the engine loads and their tilesets, imported from the player's ROM.
+fn rooms(image: &Rom) -> Result<game::production::room_loading::Rooms, Outcome> {
+    let bad = || data_failure(None, "played rooms import");
+    let world = import::world::import(image.lorom(), &import::world::LOADED).map_err(|_| bad())?;
+    let tilesets = import::tileset::import(image.lorom(), &world).map_err(|_| bad())?;
+    Ok(game::production::room_loading::Rooms { world, tilesets })
 }
 
 fn expected(
@@ -332,10 +343,12 @@ impl<'a> Run<'a> {
     fn admit(
         seed: &FrameRecord,
         content: &'a connected::Content,
-        image: &Path,
+        path: &Path,
         row: &'a str,
     ) -> Result<Self, Outcome> {
-        let room = room(&seed.wram, content, image)?;
+        let bad = || data_failure(None, "played ROM image");
+        let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
+        let room = room(&seed.wram, content, &image)?;
         let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
         Ok(Self {
             state: played::State {
@@ -354,6 +367,7 @@ impl<'a> Run<'a> {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 colour_groups: super::passage_audio::groups(),
+                rooms: rooms(&image)?,
             },
             rules: played::Rules {
                 movement: samus_movement::Rules::default(),
@@ -399,6 +413,7 @@ impl<'a> Run<'a> {
                 music_ready: true,
             },
             timer_running: self.room.timer_running,
+            progress: &self.room.progress,
         };
         self.state
             .step(&inputs, &passing, &self.played, &self.rules)

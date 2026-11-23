@@ -28,8 +28,11 @@ owner [`game::production::played`](../crates/game/src/production/played.rs) once
 record. Each frame of play it steps her clip's look ahead, `Samus::step`, the animation update,
 the camera and the doors, once each, in any pose with imported content. A frame whose moves
 reach a door to a room plays out whole; from the next, while the passage runs, the doors step
-alone and move her position, the view, where the camera last saw her and the colours. Each
-later cut's only new input is the movie's pad from the preceding vblank. The run compares those
+alone and move her position, the view, where the camera last saw her and the colours. As each
+of the passage's calls is done, the room's loading
+([`game::production::room_loading`](../crates/game/src/production/room_loading.rs)) loads its
+part of the next room from the imported world and tilesets, in the version her progress
+chooses: fetching the tiles heads the colours for the tileset's. Each later cut's only new input is the movie's pad from the preceding vblank. The run compares those
 owners with the record at every NMI return and stops at the first difference or the first
 unsupported pose or content. Room facts with no selected producer yet are read once from the
 seed and held; `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model
