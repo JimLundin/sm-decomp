@@ -11,12 +11,22 @@ excludes source structure, hardware accounting and native coordinates.
 Bank log [82](https://patrickjohnston.org/bank/82), page SHA-256
 `a925e5aca5ee4596616fad8ff0c3f628bc86451ab583bb704a26f5ac412417f6` as fetched on
 2026-11-23. Main gameplay at `$82:8B44..8BB8` runs, in order, the Samus current-state
-handler (`$90:E692`), Samus/projectile interaction, the main enemy routine (`$A0:8FD4`,
-where Ridley's tail contact runs), the Samus new-state handler (`$90:E722`, where
-periodic loss and the warning run), drawing (`$A0:884D`), the HUD (`$80:9B44`), and
-last the hurt-timer decrement (`$A0:9169`). This is the spec's "Order that matters":
-hit, loss, warning, drawing, then protection spent. The spec states it as one
-whole-frame step; the routine boundaries stay here.
+handler (`$90:E692`), Samus/projectile interaction, the main enemy routine (`$A0:8FD4`
+at `$82:8B65`, where Ridley's tail contact runs), the Samus new-state handler
+(`$90:E722` at `$82:8B69`), drawing (`$A0:884D`), the HUD (`$80:9B44`), and last the
+hurt-timer decrement (`$A0:9169`). This is the spec's "Order that matters": hit, loss,
+warning, drawing, then protection spent. The spec states it as one whole-frame step;
+the routine boundaries stay here.
+
+Health's first reader inside the new-state handler is animation. In bank log
+[90](https://patrickjohnston.org/bank/90), page SHA-256
+`04dbc3f75171959ffbd9dc0f40ed39fe2c90ddedc3799cfbdd342a779798faa1` as fetched on
+2026-11-23, the normal new-state handler (`$90:E725..E758`) runs Animate Samus
+(`$90:E73B JSR $8000`), then periodic damage (`$90:E74D JSR $E9CE`), then the low
+health check (`$90:E753 JSR $EA7F`). Animate Samus reaches the animation delay
+(`$90:8062 JSR $82DC`), whose instruction at `$90:8346` compares whole energy with
+30: that is `Breathing`'s read. The current-state handler (`$90:E695..E6C8`) calls no
+animation. So `Breathing` sees energy after the tail hit and before periodic loss.
 
 ### PeriodicLoss
 
@@ -206,11 +216,15 @@ NMI, both current drawing interrupts and the returned no-hurt actor operation.
 The adjacent actor reads the same invincibility word at +43,020 ticks.
 Neither Animation branch reads whole energy. Its first physical read in the
 adjacent interval occurs at Maintenance, +108,126 ticks after the native return.
-With the frame's order above (animation in the current-state handler, before the
-enemy routine and Maintenance), Appearance's animation reads Health's State as the
-frame starts. That placement of animation is an inference from this capture and the
-bank 82 order; no recorded Ceres hit frame shows `Breathing` reading energy, so no
-vector checks it.
+This capture does not place animation within the frame. The bank logs do (the
+frame's order above): animation runs in the new-state handler (`$90:E73B`), after
+the main enemy routine (`$82:8B65`, Ridley's tail contact) and before periodic damage
+(`$90:E74D`) and the low health check (`$90:E753`). So Appearance's animation reads
+current energy after the frame's tail hit and before its periodic loss. On R-tail-hit
+whole energy goes from 39 to 24 on the hit frame, across `Breathing`'s threshold of
+30, and the original's animation sees 24. Health's one-frame step does not give back
+that value; the gap list records the "energy as animated" output an integrated
+Health-to-Appearance read needs. No vector checks it yet.
 
 The private adjacent source manifest has SHA-256
 `b3f99e3019a7c238f992ee5fb24aa25e686c7e068b3248972c3efd8339a1803d`.
@@ -254,7 +268,7 @@ reworded text, and where each rule lives now:
 - 95 after a hit, one remaining frame still blocks, a hit lands after expiry:
   already stated at TailHit's arms and "Order that matters".
 - Animation can read current energy before periodic loss: moved to "Order that
-  matters" (animation reads State as the frame starts).
+  matters" (animation reads energy after the frame's tail hit and before its loss).
 - Appearance's previous drawing energy and the flash after damage are not Health's:
   already stated at the header's "Leaves to others"; repeated in "Order that matters".
 

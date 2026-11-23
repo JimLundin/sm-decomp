@@ -39,7 +39,7 @@ frame's warning sound and protection while drawn.
 
 | Quantity | Units and domain type | Read by |
 | --- | --- | --- |
-| current energy | `EnergyAmount`: whole `0..32767`, fraction `0..65535`, in energy | `PeriodicLoss`, `LowEnergyWarning`, `TailHit`; Appearance's `Breathing`, as the frame starts; HUD's `EnergyGauge` and Appearance's drawing, as the frame leaves it; output |
+| current energy | `EnergyAmount`: whole `0..32767`, fraction `0..65535`, in energy | `PeriodicLoss`, `LowEnergyWarning`, `TailHit`; Appearance's `Breathing`, after the frame's tail hit and before its periodic loss; HUD's `EnergyGauge` and Appearance's drawing, as the frame leaves it; output |
 | pending periodic loss | `EnergyLoss`: whole `0..32767`, fraction `0..65535`, in energy | `PeriodicLoss` |
 | warning requested | `Warning`: `Off` or `On` | `LowEnergyWarning`; output |
 | remaining protection | `ProtectionFrames` in active gameplay frames, `0..96` | `TailHit`, `ProtectionTime`; Ridley's tail contact, as the frame starts; output |
@@ -154,7 +154,10 @@ at the frame's end and 96 while drawn [R-tail-hit]. The hit is judged on protect
 the frame starts: a frame that starts with one frame left blocks the hit and leaves
 none, and a hit on the next frame lands [C-tail-last-frame, C-tail-after-expiry].
 
-Ridley's contact and Appearance's animation read Health's State as the frame starts.
+Ridley's contact reads Health's State as the frame starts. Appearance's animation
+reads current energy after the frame's tail hit and before its periodic loss, so on
+the hit frame of R-tail-hit it sees 24, not 39. Health's outputs do not carry that
+value yet (see the gap list).
 Appearance's drawing and the HUD gauge read the energy the frame leaves; drawing also
 reads protection while drawn. Health does not own Appearance's previous drawing energy,
 the flash after damage or the gauge's last shown value.
