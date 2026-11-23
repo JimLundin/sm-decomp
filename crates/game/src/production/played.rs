@@ -1,5 +1,8 @@
-//! One whole frame of Samus, in any pose: her clip's look ahead, her moves, her animation, the
-//! camera following her, then the doors; or, while a passage is under way, the doors alone.
+//! One whole frame of Samus, in any pose, or of a passage.
+//!
+//! A frame of play steps her health, her clip's look ahead, her moves, her animation, the
+//! camera following her, the HUD, then the doors. While a passage is under way, the doors step
+//! alone and the HUD takes its step outside play.
 //!
 //! Each model is stepped once through its own whole-frame entry. Movement reports what animation
 //! reads "as her moves leave her, before the pose change", so stepping movement whole and then
@@ -10,19 +13,30 @@
 //! next. While it runs, her motion, her animation and the camera don't: the passage moves her
 //! position, the view and the colours, and nothing else of theirs changes. As each of the
 //! passage's calls is done, the room's loading loads its part of the next room.
+//!
+//! Health plays first. Her animation reads the energy the frame's tail hit leaves, before the
+//! frame's loss; no Ridley is in this loop, so that is the energy the frame starts with. The
+//! HUD plays after her moves, reading her position after them and the energy Health leaves.
 
 use super::animation::{self, AppearanceContent};
 use super::camera_semantic;
 use super::connected::inputs::{CameraInputs, Inputs, Lead, Screen};
 use super::content::MovementContent;
+use super::health_tail::HealthPin;
+use super::hud::HudPin;
 use super::room_loading::{self, LoadFault, Rooms};
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
 use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
+use interface_hud::{
+    Ammunition, CancelButton, Controls, CountdownRuns, Dropped, Energy, FrameCount, FrameInputs,
+    FrameOutputs, HerMap, HudPictures, MiniMapInputs, Mute, NewArea, OutOfPlayInputs, Reserve,
+    SelectButton, Status, StockAtStart,
+};
 use samus_appearance::{Dash, Figure, MoveEvent};
 use samus_movement::{Dashing, StandingAnimation, WallTest};
-use types::{Pair, Parts, Pose, Set};
+use types::{Action, Facing, Item, Pair, Parts, Pose, Set};
 use world_camera::{RememberedPosition, ViewPosition};
 use world_doors::{Arrival, COLOURS, ColourGroup, Doors, Palette, Scene};
 
@@ -45,6 +59,10 @@ pub struct Content {
     pub colour_groups: [ColourGroup; COLOURS],
     /// The rooms, tilesets and sprite colours the passages load.
     pub rooms: Rooms,
+    /// The HUD's pictures.
+    pub hud: HudPictures,
+    /// Her map of the area she is in.
+    pub map: HerMap,
 }
 
 /// The tuning each model reads.
@@ -58,6 +76,10 @@ pub struct Rules {
     pub camera: super::CameraRules,
     /// Passage parameters.
     pub doors: world_doors::Rules,
+    /// Health parameters.
+    pub health: samus_health::Rules,
+    /// HUD parameters.
+    pub hud: interface_hud::Rules,
 }
 
 /// A door to another room, from the room's content: the cell she touches, the doorway it
@@ -73,6 +95,9 @@ pub struct Doorway {
     pub arrival: Arrival,
     /// Either room keeps the items dark through the passage.
     pub items_dark: bool,
+    /// Where the next room sits on her map, or `None` when it is in another area, whose map
+    /// this loop doesn't hold.
+    pub map_room: Option<interface_hud::Room>,
 }
 
 /// What a frame brings the doors from owners outside this loop.
@@ -90,6 +115,27 @@ pub struct Passing<'a> {
     pub progress: &'a run_progress::Progress,
     /// The Ceres station's stage, for the colours of the doors the next room places.
     pub ceres: boss_ceres_ridley::Stage,
+}
+
+/// What a frame of play brings the HUD from owners outside this loop.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HudFrame {
+    /// The frame count as the frame begins.
+    pub frame: FrameCount,
+    /// Item select and item cancel this frame.
+    pub buttons: (SelectButton, CancelButton),
+    /// Her stock as the frame begins.
+    pub stock_at_start: StockAtStart,
+    /// Her energy capacity as the frame ends.
+    pub capacity: u16,
+    /// Her reserve tanks as the frame ends.
+    pub reserve: Reserve,
+    /// Her ammunition as the frame ends.
+    pub ammunition: Ammunition,
+    /// She has collected her map.
+    pub map_collected: bool,
+    /// Whether the scene runs the escape countdown this frame.
+    pub countdown: CountdownRuns,
 }
 
 /// What audio answers the passage.
@@ -122,6 +168,12 @@ pub struct State {
     pub doorway: Option<Doorway>,
     /// The screen's colours and the colours they head for.
     pub palette: Palette,
+    /// Her energy, the warning and her protection.
+    pub health: Model<HealthPin>,
+    /// The HUD.
+    pub hud: Model<HudPin>,
+    /// Where her room sits on her map.
+    pub map_room: interface_hud::Room,
 }
 
 /// What one frame published.
@@ -133,6 +185,10 @@ pub struct Outputs {
     pub sound: Option<types::AnimationSound>,
     /// What the doors report.
     pub doors: world_doors::Report,
+    /// Health's frame; none while a passage runs.
+    pub health: Option<samus_health::PlayedFrame>,
+    /// The HUD's frame of play; none while a passage runs.
+    pub hud: Option<FrameOutputs>,
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -150,6 +206,12 @@ pub enum Fault {
     Geometry,
     /// The next room did not load from the content.
     Load(LoadFault),
+    /// She wears a suit, whose frames Health doesn't play.
+    Suit,
+    /// The door she touched leads into another area.
+    NewArea,
+    /// The HUD refused the frame: its scene only shows the countdown.
+    Hud,
 }
 
 impl State {
@@ -161,6 +223,7 @@ impl State {
         &mut self,
         inputs: &Inputs,
         passing: &Passing<'_>,
+        hud: &HudFrame,
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
@@ -168,11 +231,106 @@ impl State {
             return self.pass(passing, content, rules);
         }
         inputs.geometry.validate().map_err(|_| Fault::Geometry)?;
+        if inputs.items[Item::VariaSuit] || inputs.items[Item::GravitySuit] {
+            return Err(Fault::Suit);
+        }
+        let health = self
+            .health
+            .0
+            .play_frame(samus_health::TailImpact::Absent, &rules.health);
         let room = camera_room(&inputs.camera)?;
+        let start = self.figure.0;
+        let (samus, outcome) = self.moves(inputs, content, rules)?;
+        let after = Figure {
+            pose: samus.pose,
+            sprite: outcome.sprite,
+        };
+        let mut appearance = self.appearance.0;
+        let mut seen = animation_inputs(start, after, &outcome, inputs);
+        // The energy the tail hit leaves, before the frame's loss: with no tail, as it starts.
+        seen.energy = self.health.0.energy.whole.get();
+        let sound = animation::advance(
+            &mut appearance,
+            &content.appearance,
+            &rules.appearance,
+            &seen,
+        )
+        .map_err(|fault| match fault {
+            animation::ClipFault::Missing(figure) | animation::ClipFault::Conflicting(figure) => {
+                Fault::Clip(figure)
+            }
+        })?;
+
+        let mut camera = self.camera.0;
+        camera_semantic::step(
+            &mut camera,
+            rules.camera.get(),
+            &world_camera::Frame {
+                samus: camera_semantic::completed_samus(&samus, &outcome),
+                room: &room,
+                lead: lead(inputs.camera.lead),
+                time_stopped: false,
+            },
+        );
+
+        let touched = passing
+            .doorways
+            .iter()
+            .find(|doorway| {
+                outcome
+                    .reached
+                    .iter()
+                    .any(|touch| touch.cell == doorway.cell)
+            })
+            .copied();
+        if touched.is_some_and(|doorway| doorway.map_room.is_none()) {
+            return Err(Fault::NewArea);
+        }
+        let mut hud_state = self.hud.0.clone();
+        let hud_outputs = hud_state
+            .frame_of_play(
+                &rules.hud,
+                &content.hud,
+                &hud_inputs(hud, &samus, &outcome, health.state, self.map_room, content),
+            )
+            .map_err(|_| Fault::Hud)?;
+        let doors = self.doors.step(
+            scene(&samus, &camera, &self.palette),
+            &doors_inputs(touched.is_some(), touched, passing, content),
+            &rules.doors,
+        );
+
+        *self = Self {
+            movement: Model(samus),
+            appearance: Model(appearance),
+            figure: Model(after),
+            camera: Model(camera),
+            doors: doors.doors,
+            doorway: touched,
+            palette: doors.scene.palette,
+            health: Model(health.state),
+            hud: Model(hud_state),
+            map_room: self.map_room,
+        };
+        Ok(Outputs {
+            movement: Some(outcome),
+            sound,
+            doors: doors.report,
+            health: Some(health),
+            hud: Some(hud_outputs),
+        })
+    }
+
+    /// Her moves, after her clip's look ahead from the figure she starts the frame in.
+    fn moves(
+        &self,
+        inputs: &Inputs,
+        content: &Content,
+        rules: &Rules,
+    ) -> Result<(samus_movement::Samus, samus_movement::Outcome), Fault> {
         let start = self.figure.0;
         let clip = content.appearance.get(start).ok_or(Fault::Clip(start))?;
         let ahead = super::appearance::ahead(&self.appearance.0, clip);
-
         let mut samus = self.movement.0;
         let missing_body = Cell::new(None);
         let body = |pose: Pose| {
@@ -204,69 +362,9 @@ impl State {
         let outcome = samus
             .step(&frame, &inputs.geometry, &rules.movement)
             .map_err(|samus_movement::UnknownPose(pose)| Fault::Pose(pose))?;
-        if let Some(pose) = missing_body.get() {
-            return Err(Fault::Body(pose));
-        }
-
-        let after = Figure {
-            pose: samus.pose,
-            sprite: outcome.sprite,
-        };
-        let mut appearance = self.appearance.0;
-        let sound = animation::advance(
-            &mut appearance,
-            &content.appearance,
-            &rules.appearance,
-            &animation_inputs(start, after, &outcome, inputs),
-        )
-        .map_err(|fault| match fault {
-            animation::ClipFault::Missing(figure) | animation::ClipFault::Conflicting(figure) => {
-                Fault::Clip(figure)
-            }
-        })?;
-
-        let mut camera = self.camera.0;
-        camera_semantic::step(
-            &mut camera,
-            rules.camera.get(),
-            &world_camera::Frame {
-                samus: camera_semantic::completed_samus(&samus, &outcome),
-                room: &room,
-                lead: lead(inputs.camera.lead),
-                time_stopped: false,
-            },
-        );
-
-        let touched = passing
-            .doorways
-            .iter()
-            .find(|doorway| {
-                outcome
-                    .reached
-                    .iter()
-                    .any(|touch| touch.cell == doorway.cell)
-            })
-            .copied();
-        let doors = self.doors.step(
-            scene(&samus, &camera, &self.palette),
-            &doors_inputs(touched.is_some(), touched, passing, content),
-            &rules.doors,
-        );
-
-        *self = Self {
-            movement: Model(samus),
-            appearance: Model(appearance),
-            figure: Model(after),
-            camera: Model(camera),
-            doors: doors.doors,
-            doorway: touched,
-            palette: doors.scene.palette,
-        };
-        Ok(Outputs {
-            movement: Some(outcome),
-            sound,
-            doors: doors.report,
-        })
+        missing_body
+            .get()
+            .map_or(Ok((samus, outcome)), |pose| Err(Fault::Body(pose)))
     }
 
     /// A frame of a passage: the doors alone, moving her position, the view, where the camera
@@ -312,14 +410,90 @@ impl State {
             }));
         self.palette = palette;
         self.doors = exports.doors;
+        self.hud.0.out_of_play(&OutOfPlayInputs {
+            mini_map_turned_on: exports.report.minimap_on,
+            new_area: NewArea::SameArea,
+            dropped: Dropped::Nothing,
+        });
         if self.doors == Doors::Play {
+            if let Some(room) = self.doorway.and_then(|doorway| doorway.map_room) {
+                self.map_room = room;
+            }
             self.doorway = None;
         }
         Ok(Outputs {
             movement: None,
             sound: None,
             doors: exports.report,
+            health: None,
+            hud: None,
         })
+    }
+}
+
+/// What the HUD reads this frame: her moves, the energy Health leaves, and its neighbours.
+fn hud_inputs<'a>(
+    hud: &HudFrame,
+    samus: &samus_movement::Samus,
+    outcome: &samus_movement::Outcome,
+    health: samus_health::State,
+    room: interface_hud::Room,
+    content: &'a Content,
+) -> FrameInputs<'a> {
+    let (select, cancel) = hud.buttons;
+    let pose = samus.pose;
+    FrameInputs {
+        frame: hud.frame,
+        stock_at_start: hud.stock_at_start,
+        controls: Controls {
+            select,
+            cancel,
+            // The player controls her in this loop, so only facing the screen stops a switch.
+            can_switch: pose.facing != Facing::Screen,
+        },
+        mini_map: MiniMapInputs {
+            runs: true,
+            turned_on: false,
+            position: Pair {
+                x: outcome.position_after_moves.x.pixel().0,
+                y: outcome.position_after_moves.y.pixel().0,
+            },
+            room,
+            map: &content.map,
+            map_collected: hud.map_collected,
+        },
+        mother_brain_falls: false,
+        status: Status {
+            energy: Energy {
+                now: health.energy.whole.get(),
+                capacity: hud.capacity,
+            },
+            reserve: hud.reserve,
+            ammunition: hud.ammunition,
+        },
+        collected: None,
+        // Neither the grapple beam nor stopped time is in this loop.
+        muted_by: match pose.action {
+            Action::Spinning => Some(Mute::SpinJump),
+            Action::WallJumping => Some(Mute::WallJump),
+            Action::AgainstWall
+            | Action::Crouching
+            | Action::Falling
+            | Action::Jumping
+            | Action::Landing(_)
+            | Action::Moonwalking
+            | Action::Morphing
+            | Action::Rolling
+            | Action::Running
+            | Action::StandingUp
+            | Action::Still
+            | Action::TakingOff
+            | Action::Turning(_)
+            | Action::Unmorphing => None,
+        },
+        dropped_before_status_bar: Dropped::Nothing,
+        dropped_after_status_bar: Dropped::Nothing,
+        countdown: hud.countdown,
     }
 }
 

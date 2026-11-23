@@ -16,12 +16,12 @@ use super::compare::{CompareFault, Observation, compare};
 use super::index::ObservationId;
 use super::readers::record;
 use super::result::Outcome;
-use super::{Sources, appearance, camera, connected, data_failure, movement};
+use super::{Sources, appearance, camera, connected, data_failure, health_tail, hud, movement};
 use crate::cache::Cache;
 use crate::lock::{Lock, RowId};
 use crate::source;
 use canonical::model::Model;
-use data::{rom::Rom, room::RoomKey};
+use data::{assets::world, rom::Rom, room::RoomKey};
 use game::production::connected::inputs::Inputs;
 use game::production::played;
 use oracle_record::{Cut, FrameRecord, NmiKind};
@@ -33,7 +33,11 @@ use world_doors::{ColourGroup, Doors, Fetching, Palette, Passage, Phase};
 /// Each one is a missing owner; the list shrinks as owners join the played loop.
 pub const SEED_HELD: &[&str] = &[
     "equipped items",
-    "energy",
+    "time running",
+    "no tail impact and no periodic energy loss",
+    "ammunition, reserve tanks and energy capacity",
+    "item select and cancel bindings",
+    "her map collected",
     "liquid (none)",
     "sound queue occupancy",
     "Contact guards",
@@ -147,21 +151,44 @@ struct Room {
     progress: run_progress::Progress,
     ceres: boss_ceres_ridley::Stage,
     counter: u16,
+    /// The HUD's neighbours outside the loop.
+    hud: HudHeld,
+    /// Where her room sits on her map, and the area it is in.
+    map: (interface_hud::Room, data::room::Area),
+    /// The game's frame count in eight bits, which the HUD reads.
+    frames: u8,
+}
+
+/// The HUD's inputs that no owner in the loop produces.
+struct HudHeld {
+    bindings: hud::Bindings,
+    stock_at_start: interface_hud::StockAtStart,
+    status: interface_hud::Status,
+    map_collected: bool,
 }
 
 fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, Outcome> {
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
-    if borrowed.cinematic || borrowed.elevator {
+    if borrowed.cinematic || borrowed.elevator || hud::time_stopped(seed)? {
         return Err(Outcome::Unsupported {
             cut: None,
             dependency: "played seed outside ordinary play".into(),
         });
     }
     let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
+    let (doorways, map) = doorways(seed, image)?;
     Ok(Room {
         sounds_sent: inputs.sounds_waiting == samus_appearance::SoundsWaiting::NONE,
         inputs,
-        doorways: doorways(seed, image)?,
+        doorways,
+        map,
+        hud: HudHeld {
+            bindings: hud::bindings(seed)?,
+            stock_at_start: hud::stock_at_start(seed)?,
+            status: hud::status(seed)?,
+            map_collected: hud::map_collected(seed)?,
+        },
+        frames: hud::frame_count(seed)?.0,
         timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
         progress: super::progress::seed(seed)?,
         ceres: match word(seed, source::CERES_STATUS)? {
@@ -178,14 +205,30 @@ fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, 
     })
 }
 
-/// The room's doors to other rooms, by cell, from the imported world.
-fn doorways(seed: &[u8], image: &Rom) -> Result<Vec<played::Doorway>, Outcome> {
+/// Where `room` sits on her map, as the HUD reads it.
+fn map_room(room: &world::Room) -> interface_hud::Room {
+    let blocks_down = u16::from(room.size.height).wrapping_mul(16);
+    hud::room_from_words(
+        [u16::from(room.place.x), u16::from(room.place.y)],
+        [room.size.blocks_across(), blocks_down],
+    )
+}
+
+type Doorways = (
+    Vec<played::Doorway>,
+    (interface_hud::Room, data::room::Area),
+);
+
+/// The room's doors to other rooms, by cell, and where the room sits on her map, from the
+/// imported world.
+fn doorways(seed: &[u8], image: &Rom) -> Result<Doorways, Outcome> {
     use data::assets::world::{Door, ItemLighting};
     let bad = || data_failure(None, "played room doors");
     let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
         .ok_or_else(bad)?;
     let world = import::world::import(image.lorom(), &[id]).map_err(|_| bad())?;
     let room = world.room(id).ok_or_else(bad)?;
+    let area = room.place.area;
     let mut doorways = Vec::new();
     for (cell, place) in movement::door_cells(seed)? {
         let Some(Door::To(to)) = room.doors.get(place) else {
@@ -208,9 +251,10 @@ fn doorways(seed: &[u8], image: &Rom) -> Result<Vec<played::Doorway>, Outcome> {
             items_dark: [room, next]
                 .iter()
                 .any(|room| room.item_lighting == ItemLighting::Dark),
+            map_room: (next.place.area == area).then(|| map_room(next)),
         });
     }
-    Ok(doorways)
+    Ok((doorways, (map_room(room), area)))
 }
 
 /// The rooms the engine loads, their tilesets and the sprites' colours, imported from the
@@ -230,6 +274,7 @@ fn rooms(image: &Rom) -> Result<game::production::room_loading::Rooms, Outcome> 
 fn expected(
     record: &FrameRecord,
     content: &appearance::Content,
+    hud: &hud::Content,
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
@@ -263,7 +308,59 @@ fn expected(
             goal: colours(wram, GOAL_COLOURS)?,
         }));
     }
+    fields.extend(health_parts(&health_tail::decode(wram, None)?));
+    fields.extend(hud_parts(hud::expected(wram, hud)?));
     Ok(fields)
+}
+
+/// Health's State by part, so a difference names the part that differs.
+fn health_parts(health: &samus_health::State) -> [Observation; 6] {
+    [
+        ("health.energy.whole", health.energy.whole.get()),
+        ("health.energy.fraction", health.energy.fraction),
+        ("health.pending.whole", health.pending_loss.whole.get()),
+        ("health.pending.fraction", health.pending_loss.fraction),
+        (
+            "health.warning",
+            u16::from(health.warning == samus_health::Warning::On),
+        ),
+        ("health.protection", u16::from(health.protection.get())),
+    ]
+    .map(|(field, value)| Observation::quantity(field, i64::from(value)))
+}
+
+/// The mini-map's window: rows 0 to 2, columns 26 to 30 of the HUD's 32 columns.
+const MAP_WINDOW: core::ops::RangeInclusive<usize> = 26..=30;
+const HUD_COLUMNS: usize = 32;
+
+/// The HUD's observations with its cells split into the mini-map's window and the status bar,
+/// so a difference names the one that differs.
+fn hud_parts(fields: Vec<Observation>) -> Vec<Observation> {
+    let mut parts = Vec::with_capacity(fields.len().saturating_add(1));
+    for field in fields {
+        if field.field != "hud.grid" {
+            parts.push(field);
+            continue;
+        }
+        let (window, bar): (Vec<_>, Vec<_>) = field
+            .bytes
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .enumerate()
+            .partition(|(cell, _)| MAP_WINDOW.contains(&(cell % HUD_COLUMNS)));
+        let bytes =
+            |cells: Vec<(usize, &[u8; 2])>| cells.into_iter().flat_map(|(_, cell)| *cell).collect();
+        parts.push(Observation {
+            field: "hud.map-window".into(),
+            bytes: bytes(window),
+        });
+        parts.push(Observation {
+            field: "hud.status-bar".into(),
+            bytes: bytes(bar),
+        });
+    }
+    parts
 }
 
 /// The game's states for play and the three stretches of a door passage.
@@ -374,6 +471,7 @@ struct Run<'a> {
     rules: played::Rules,
     room: Room,
     content: &'a connected::Content,
+    hud: hud::Content,
     row: &'a str,
 }
 
@@ -388,6 +486,8 @@ impl<'a> Run<'a> {
         let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
         let room = room(&seed.wram, content, &image)?;
         let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
+        let hud = hud::Content::load(path)?;
+        let (map_room, area) = room.map;
         Ok(Self {
             state: played::State {
                 movement: Model(movement::seed(&seed.wram)?),
@@ -400,21 +500,29 @@ impl<'a> Run<'a> {
                     screen: colours(&seed.wram, SCREEN_COLOURS)?,
                     goal: colours(&seed.wram, GOAL_COLOURS)?,
                 },
+                health: Model(health_tail::decode(&seed.wram, None)?),
+                hud: Model(hud::decode_state(&seed.wram)?),
+                map_room,
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
                 colour_groups: groups(),
                 rooms: rooms(&image)?,
+                hud: hud.pictures,
+                map: hud.map_of(area)?.clone(),
             },
             rules: played::Rules {
                 movement: samus_movement::Rules::default(),
                 appearance: samus_appearance::Rules::VANILLA,
                 camera: game::production::CameraRules::new(world_camera::Rules::REFERENCE),
                 doors: world_doors::Rules::default(),
+                health: samus_health::Rules::REFERENCE,
+                hud: interface_hud::Rules::default(),
             },
             room,
             content,
+            hud,
             row,
         })
     }
@@ -454,17 +562,36 @@ impl<'a> Run<'a> {
             progress: &self.room.progress,
             ceres: self.room.ceres,
         };
+        let held = &self.room.hud;
+        let status = held.status;
+        let hud_frame = played::HudFrame {
+            frame: interface_hud::FrameCount(self.room.frames),
+            buttons: held.bindings.buttons(controller.pressed, controller.held),
+            stock_at_start: held.stock_at_start,
+            capacity: status.energy.capacity,
+            reserve: status.reserve,
+            ammunition: status.ammunition,
+            map_collected: held.map_collected,
+            // The HUD's frame of play is a frame of main gameplay.
+            countdown: hud::MAIN_GAMEPLAY_COUNTDOWN,
+        };
         self.state
-            .step(&inputs, &passing, &self.played, &self.rules)
+            .step(&inputs, &passing, &hud_frame, &self.played, &self.rules)
             .map_err(|fault| Outcome::Unsupported {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
         if polled(current) {
             self.room.counter = self.room.counter.wrapping_add(1);
+            self.room.frames = self.room.frames.wrapping_add(1);
         }
-        let expected = expected(current, &self.content.appearance, self.row, cut)?;
-        let actual = actual(&self.state, &self.content.appearance, finished(current));
+        let expected = expected(current, &self.content.appearance, &self.hud, self.row, cut)?;
+        let actual = actual(
+            &self.state,
+            &self.content.appearance,
+            &self.hud,
+            finished(current),
+        )?;
         compare(&expected, &actual).map_err(|fault| match fault {
             CompareFault::Difference(field) => Outcome::Difference { cut, field },
             CompareFault::EmptyExpected
@@ -538,8 +665,9 @@ fn run(run: &samus_movement::Run) -> String {
 fn actual(
     state: &played::State,
     content: &appearance::Content,
+    hud: &hud::Content,
     finished: bool,
-) -> Vec<Observation> {
+) -> Result<Vec<Observation>, Outcome> {
     let samus = &state.movement.0;
     let mut fields = parts(samus);
     fields.extend([
@@ -556,7 +684,9 @@ fn actual(
     if finished {
         fields.extend(colour_observations(&state.palette));
     }
-    fields
+    fields.extend(health_parts(&state.health.0));
+    fields.extend(hud_parts(hud::initial(&state.hud.0, hud)?));
+    Ok(fields)
 }
 
 #[cfg(test)]
