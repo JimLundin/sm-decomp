@@ -32,7 +32,8 @@ requested NMI return and stops at the first difference, the first unsupported po
 or the first lag cut. Room facts with no selected producer yet are read once from the seed and held;
 `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model history the
 record cannot tell apart in a spin's first two frames, so it is compared only through its effects. The comparison is at frame cuts; it does
-not compare intra-frame bus timing.
+not compare intra-frame bus timing. While she follows the pad the game keeps no way for her run
+of its own, so her run's way is compared only while she carries on, and otherwise through her position.
 
 ```sh
 $TOOLS replay played chain-any-0003-DFD7 0 344 \

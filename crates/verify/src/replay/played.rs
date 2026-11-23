@@ -305,12 +305,27 @@ fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
     };
     vec![
         part("movement.pose", format!("{:?}", samus.pose)),
-        part("movement.run", format!("{:?}", samus.run)),
+        part("movement.run", run(&samus.run)),
         part("movement.vertical", format!("{:?}", samus.vertical)),
         part("movement.seat", format!("{:?}", samus.seat)),
         part("movement.jump-held", format!("{:?}", samus.jump_held)),
         part("movement.position", format!("{:?}", samus.position)),
     ]
+}
+
+/// Her run as the record states it. While she follows the pad the game keeps no way of its
+/// own, so the way her speed points is compared only while she carries on; a way that differs
+/// while she follows the pad reaches the compared position if it ever moves her.
+fn run(run: &samus_movement::Run) -> String {
+    let samus_movement::Run {
+        speed,
+        way,
+        carry,
+        dash,
+        dashing,
+    } = run;
+    let way = (*carry == samus_movement::Carry::CarriesOn).then_some(way);
+    format!("{speed:?} {way:?} {carry:?} {dash:?} {dashing:?}")
 }
 
 fn actual(state: &played::State, content: &appearance::Content) -> Vec<Observation> {
@@ -344,6 +359,29 @@ mod tests {
     fn a_lag_nmi_keeps_the_previous_read() {
         let read = Controller::default().read(0x0080, true);
         assert_eq!(read.read(0x0100, false), read);
+    }
+
+    #[test]
+    fn her_way_is_compared_only_while_she_carries_on() {
+        use samus_movement::{Carry, Dashing, Run};
+        use types::{Side, ZERO};
+        let run = |way, carry| {
+            super::run(&Run {
+                speed: ZERO,
+                way,
+                carry,
+                dash: ZERO,
+                dashing: Dashing::Off,
+            })
+        };
+        assert_eq!(
+            run(Side::Left, Carry::FollowsPad),
+            run(Side::Right, Carry::FollowsPad)
+        );
+        assert_ne!(
+            run(Side::Left, Carry::CarriesOn),
+            run(Side::Right, Carry::CarriesOn)
+        );
     }
 
     #[test]
