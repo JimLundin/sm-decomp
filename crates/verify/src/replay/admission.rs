@@ -9,12 +9,6 @@ use crate::lock::{Lock, RowId};
 use game::production::{Production, ProductionContent, ProductionRules, ProductionSeed};
 
 pub(super) fn admit(case: &Case, sources: &Sources) -> Result<AdmittedCase, Outcome> {
-    if matches!(
-        case.inputs,
-        InputProvider::NativePassageSoundInputs | InputProvider::PassageSoundShootHeld
-    ) {
-        return super::passage_audio::admit(case, sources);
-    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return super::early_map::admit(sources);
     }

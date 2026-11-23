@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "d46c3c602f65fcddd9eb027544f81ebf429b67c9e7f1774786801cfd402eeee9"
+index_sha256 = "208be340783e445c8a83c3fe39f30a17febc6d6719df78ea114bff07f2d85532"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -921,39 +921,3 @@ null_fields = 7
 restorations = 2
 pending_boundaries = 0
 pending_restorations = 0
-
-[[case]]
-id = "gameplay-sound/passage-hold"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "f993d96110deaf81e2a55fa2f586afab562c1382f65156b437c180cff806a3a4"
-
-[case.counts]
-cuts = 1
-fields = 1
-outputs = 5
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 1
-pending_boundaries = 2
-pending_restorations = 2
-
-[[case]]
-id = "gameplay-sound/passage-hold-shoot-held"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "18145d5955935bbb993c330ab6b946b32b167591af3987a6e5b67342f0850fb0"
-
-[case.counts]
-cuts = 1
-fields = 1
-outputs = 5
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 1
-pending_boundaries = 2
-pending_restorations = 2

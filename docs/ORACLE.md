@@ -462,11 +462,6 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass "pass:$pass" -
   Pack it with
   `ROWS="..." tools/ci/pack_lockstep_cache.sh`; a new cache is a new asset and a commit that
   repins it.
-- **The passage sound fixture** `m0-passage-offers-v1-b7e4812d19057ca5.tar.gz.enc` (SHA-256
-  `b7e4812d19057ca5d0d25fbf996526fedd3896b50889ae2b5cbc3b3f7f8e96d4`) installs
-  `passage-offers-v1/`. It holds a locked touched-door origin, pads, a sender and music snapshot,
-  independent caller markers and three later native cuts. The indexed caller compares the offers
-  and Hold before physical service. The readiness observations at 184 are native suffix evidence.
 - Only the root uploads (`timeout 600 gh release upload ci-data FILE`). Nothing unencrypted and
   ROM-derived is ever committed or uploaded; logs carry ids, frames, field names and hashes.
 

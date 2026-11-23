@@ -16,7 +16,6 @@ use game::state::owned::OwnedState;
 pub(super) enum InputReader {
     EarlyMap(Box<super::early_map::InputTape>),
     HealthTail(super::health_tail::Inputs),
-    PassageAudio(super::passage_audio::Input),
     SenderOffer(Vec<super::sender_offer::Offer>),
     MovementTouchdown(Box<super::movement_touchdown::Inputs>),
     NativeSearch(Box<super::native_search::Inputs>),
@@ -31,7 +30,6 @@ pub(super) enum InputReader {
 pub(super) enum ExpectedReader {
     EarlyMap(Box<super::early_map::Expectations>),
     HealthTail(Box<[super::health_tail::Expected; 2]>),
-    PassageAudio(ExpectedCut),
     SenderOffer(Vec<Observation>),
     MovementTouchdown(super::movement_touchdown::Expected),
     NativeSearch(super::native_search::Expected),
@@ -44,7 +42,6 @@ pub(super) enum ExpectedReader {
 pub(super) enum ActualReader {
     EarlyMap,
     HealthTail,
-    PassageAudio,
     SenderOffer,
     MovementTouchdown(Option<Box<game::production::movement_touchdown::Outputs>>),
     NativeSearch(Option<Box<samus_movement::Outcome>>),
@@ -88,8 +85,7 @@ pub(super) fn record(cache: &Cache, cut: u64) -> Result<oracle_record::FrameReco
 
 impl InputReader {
     pub fn pending_origin(&self, case: &Case, production: &Production) -> Option<Production> {
-        (case.checkpoints && matches!(self, Self::Audio(_) | Self::PassageAudio(_)))
-            .then(|| production.clone())
+        (case.checkpoints && matches!(self, Self::Audio(_))).then(|| production.clone())
     }
 
     pub fn advance(
@@ -102,7 +98,6 @@ impl InputReader {
             Self::HealthTail(inputs) => inputs
                 .advance(production, cut)
                 .map(ProductionOutputs::HealthTail),
-            Self::PassageAudio(input) => input.advance(production, cut),
             Self::MovementTouchdown(inputs) => inputs.advance(production, cut),
             Self::SenderOffer(offers) => super::sender_offer::advance(production, offers, cut),
             Self::NativeSearch(inputs) => inputs.advance(production, cut),
@@ -241,23 +236,6 @@ impl ActualReader {
                 actual.push(movement::reached(&outputs));
                 Ok(actual)
             }
-            (actual, inputs, output) => actual.accept_live_sound(inputs, production, output, cut),
-        }
-    }
-
-    fn accept_live_sound(
-        &self,
-        inputs: &InputReader,
-        production: &Production,
-        output: ProductionOutputs,
-        cut: u64,
-    ) -> Result<Vec<Observation>, Outcome> {
-        match (self, inputs, output) {
-            (
-                Self::PassageAudio,
-                InputReader::PassageAudio(_),
-                ProductionOutputs::PassageAudio(output),
-            ) => super::passage_audio::actual(production, &output),
             _ => Err(data_failure(Some(cut), "actual projection scope")),
         }
     }
@@ -265,7 +243,6 @@ impl ActualReader {
     pub fn initial(&self, production: &Production) -> Result<Vec<Observation>, Outcome> {
         match self {
             Self::EarlyMap => super::early_map::actual(production, None),
-            Self::PassageAudio => super::passage_audio::initial(production),
             Self::HealthTail => super::health_tail::initial(production),
             Self::SenderOffer => super::sender_offer::actual(production),
             Self::MovementTouchdown(_) => super::movement_touchdown::initial(production),
@@ -314,14 +291,12 @@ impl ActualReader {
             ) => restored == direct && restored_replies == direct_replies,
             (
                 Self::EarlyMap
-                | Self::PassageAudio
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
                 | Self::SenderOffer
                 | Self::HealthTail,
                 Self::EarlyMap
-                | Self::PassageAudio
                 | Self::NativeSearch(_)
                 | Self::Recorded(_)
                 | Self::Movement
@@ -337,7 +312,6 @@ impl ActualReader {
         match self {
             Self::Audio { publications, .. } => publications.len(),
             Self::EarlyMap
-            | Self::PassageAudio
             | Self::NativeSearch(_)
             | Self::Movement
             | Self::Recorded(_)
@@ -353,7 +327,6 @@ impl ExpectedReader {
         match self {
             Self::EarlyMap(expected) => expected.read(cut),
             Self::HealthTail(expected) => super::health_tail::Expected::read(expected, cut),
-            Self::PassageAudio(expected) => Ok(expected.clone()),
             Self::MovementTouchdown(expected) => expected.read(cut),
             Self::SenderOffer(fields) => Ok(ExpectedCut {
                 fields: fields.clone(),

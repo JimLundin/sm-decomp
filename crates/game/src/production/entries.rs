@@ -121,14 +121,6 @@ pub(super) fn admit(
         (ProductionSeed::Ceres(state), ProductionContent::Ceres, ProductionRules::Ceres(_)) => {
             OwnedState::Ceres(state)
         }
-        (
-            ProductionSeed::PassageAudio(state),
-            ProductionContent::PassageAudio(content),
-            ProductionRules::PassageAudio(_),
-        ) => {
-            state.validate(content)?;
-            OwnedState::PassageAudio(state)
-        }
         (ProductionSeed::Doors(state), ProductionContent::Doors, ProductionRules::Doors(_)) => {
             OwnedState::Doors(state)
         }
@@ -217,12 +209,6 @@ pub(super) fn advance(
             state.scene = output.scene;
             ProductionOutputs::Doors(Box::new(output))
         }
-        (
-            OwnedState::PassageAudio(state),
-            ProductionContent::PassageAudio(content),
-            ProductionRules::PassageAudio(rules),
-            AdvanceInput::PassageAudio(shoot),
-        ) => ProductionOutputs::PassageAudio(state.advance(content, rules, shoot)?),
         (state, content, rules, input) => return advance_audio(state, content, rules, input),
     })
 }

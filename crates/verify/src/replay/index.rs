@@ -173,10 +173,6 @@ pub enum InputProvider {
     PrecedingCutWeaponsContactInputs,
     /// Independently watched ordinary weapon inputs and the flying-picture insertion context.
     ScopedShotDrawingInputs,
-    /// One touched doorway, retained Appearance, and three actual sender roots.
-    NativePassageSoundInputs,
-    /// Constructed held-shoot control from the same touched doorway.
-    PassageSoundShootHeld,
     /// Independent stable status/map facts and inert-input representatives.
     PrecedingCutHudInputs,
     /// Independent stable standing-figure neighbours.
@@ -231,8 +227,6 @@ pub enum ExpectedProvider {
     SenderOfferQueue,
     /// Pinned slot state and independently watched exact shot insertions.
     PinnedShotDrawingObservations,
-    /// First passage entry's independent offer and hold markers.
-    NativePassageSoundOffers,
     /// Independent decoded native cuts.
     NativeDecodedCuts,
 }
@@ -240,24 +234,6 @@ pub enum ExpectedProvider {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 /// A concrete supported compared field or output stream.
 pub enum ObservationId {
-    /// Global cue ingress sequence across separate physical groups.
-    #[serde(rename = "live-sound.order")]
-    LiveSoundOrder,
-    /// Producer allowance and effective permission at each offer.
-    #[serde(rename = "live-sound.permission")]
-    LiveSoundPermission,
-    /// Oldest-first active queues seen by each actual ingress.
-    #[serde(rename = "live-sound.prefix")]
-    LiveSoundPrefix,
-    /// Accepted or rejected at each actual ingress.
-    #[serde(rename = "live-sound.accepted")]
-    LiveSoundAccepted,
-    /// Compared complete active FIFOs and committed sender phases.
-    #[serde(rename = "live-sound.fifo")]
-    LiveSoundFifo,
-    /// The passage hold after both offers.
-    #[serde(rename = "live-sound.hold")]
-    LiveSoundHold,
     /// Exact 15 mini-map cells in display order.
     #[serde(rename = "hud.map-window")]
     EarlyMapWindow,
@@ -732,15 +708,7 @@ fn rule_exists(rule: &str) -> bool {
 const fn observation_owner(field: ObservationId) -> Responsibility {
     use ObservationId as O;
     match field {
-        O::SenderQueue
-        | O::SenderProgress
-        | O::TouchdownOffer
-        | O::LiveSoundOrder
-        | O::LiveSoundPermission
-        | O::LiveSoundPrefix
-        | O::LiveSoundAccepted
-        | O::LiveSoundFifo => Responsibility::AudioSender,
-        O::LiveSoundHold => Responsibility::Doors,
+        O::SenderQueue | O::SenderProgress | O::TouchdownOffer => Responsibility::AudioSender,
         O::HealthTailState | O::HealthTailWarning | O::HealthTailDrawnProtection => {
             Responsibility::Health
         }
@@ -847,18 +815,6 @@ fn rule_owner(rule: &str) -> Option<Responsibility> {
 
 fn witnessed_fields(rule: &str, provider: InputProvider) -> Option<&'static [ObservationId]> {
     use ObservationId as O;
-    if provider.live_sound() {
-        return Some(match rule {
-            "audio-transport/OfferAcceptance" => &[
-                O::LiveSoundPermission,
-                O::LiveSoundAccepted,
-                O::LiveSoundFifo,
-            ],
-            "samus-appearance/AtTheDoor" => &[O::LiveSoundOrder],
-            "world-doors/Quieting" => &[O::LiveSoundOrder, O::LiveSoundHold],
-            _ => return None,
-        });
-    }
     Some(match rule {
         "samus-movement/MovesAsShePosed" | "samus-movement/PoseFitAfterMoves" => {
             &[O::PositionX, O::PositionY]
@@ -1170,57 +1126,8 @@ fn early_map_provider_valid(case: &Case) -> bool {
         && !case.limits.is_empty()
 }
 
-impl InputProvider {
-    const fn live_sound(self) -> bool {
-        matches!(
-            self,
-            Self::NativePassageSoundInputs | Self::PassageSoundShootHeld
-        )
-    }
-}
-
-fn live_sound_provider_valid(case: &Case) -> bool {
-    use super::passage_audio::{EVENT_PIN, START_PIN};
-    use ObservationId as O;
-    use Responsibility as R;
-    if case.kind != CaseKind::Scoped
-        || case.content != ContentProvider::PlayerRomImport
-        || case.row != super::sender_offer::SOURCE_ROW
-        || !case.checkpoints
-        || case.borrowed.is_empty()
-        || case.limits.is_empty()
-        || case.expectations.output_cut.is_some()
-    {
-        return false;
-    }
-    let offers = [
-        O::LiveSoundOrder,
-        O::LiveSoundPermission,
-        O::LiveSoundPrefix,
-        O::LiveSoundAccepted,
-    ];
-    case.end.cut_inclusive == 183
-        && matches!(&case.start, Start::NativeCheckpoint {
-            path, sha256, seed_path, seed_sha256, frame: 182
-        } if path == std::path::Path::new("passage-offers-v1/expected/events.toml")
-            && seed_path == std::path::Path::new("passage-offers-v1/inputs/cut-182.record")
-            && sha256 == EVENT_PIN && seed_sha256 == START_PIN)
-        && case.expectations.provider == ExpectedProvider::NativePassageSoundOffers
-        && case.expectations.fields == [O::LiveSoundFifo]
-        && case
-            .expectations
-            .outputs
-            .iter()
-            .copied()
-            .eq(offers.into_iter().chain([O::LiveSoundHold]))
-        && case.responsibilities == [R::Doors, R::Appearance, R::AudioSender]
-}
-
 fn provider_valid(case: &Case, observations: &BTreeSet<ObservationId>) -> bool {
     use ObservationId as O;
-    if case.inputs.live_sound() {
-        return live_sound_provider_valid(case);
-    }
     if case.inputs == InputProvider::EarlyMapInputs {
         return early_map_provider_valid(case);
     }

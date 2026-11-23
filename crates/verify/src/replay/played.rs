@@ -27,7 +27,7 @@ use game::production::played;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 use std::path::Path;
 use types::{Pair, Parity};
-use world_doors::{Doors, Fetching, Palette, Passage, Phase};
+use world_doors::{ColourGroup, Doors, Fetching, Palette, Passage, Phase};
 
 /// Room facts taken from the seed and held, because no selected owner produces them yet.
 /// Each one is a missing owner; the list shrinks as owners join the played loop.
@@ -404,7 +404,7 @@ impl<'a> Run<'a> {
             played: played::Content {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
-                colour_groups: super::passage_audio::groups(),
+                colour_groups: groups(),
                 rooms: rooms(&image)?,
             },
             rules: played::Rules {
@@ -472,6 +472,18 @@ impl<'a> Run<'a> {
             | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
         })
     }
+}
+
+/// The doors' colour groups, by colour index: which colours the passage lights, which belong
+/// to the HUD's icons, the escape timer and the visor, and the rest.
+fn groups() -> [ColourGroup; world_doors::COLOURS] {
+    std::array::from_fn(|index| match index {
+        9 | 10 | 13 | 14 | 17..=19 | 29 => ColourGroup::Lit,
+        20..=23 | 28 => ColourGroup::Icon,
+        209 | 210 | 212 | 221 => ColourGroup::Timer,
+        196 => ColourGroup::Visor,
+        _ => ColourGroup::Other,
+    })
 }
 
 /// The 256 colours at `at`, as the record holds them.

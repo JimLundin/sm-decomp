@@ -212,26 +212,6 @@ fixture under the same native source directory. Use the common replay command wi
 restore each disjoint window from its own starting owners. The physical ring and Contact port
 service have separate boundaries.
 
-## Live gameplay sound producers
-
-Select the two `gameplay-sound/` cases with the shared replay command. Install the
-[sender brackets](../tools/ci/fetch_sender_offers.sh) and [passage
-fixture](../tools/ci/fetch_passage_offers.sh) under the same native directory.
-
-At cut 183 the scoped passage starts at the retained touched doorway and evaluates the ordinary
-Doors first-entry and Appearance `PassageEntry` decisions. The current Action silence and the
-room's Ambient silence enter through the same sender Offer path before Hold. The comparison
-checks global order, the two complete at-use FIFO windows, committed terminal queues and the
-Hold transition. Public saves after each offer restore the remaining publications and refuse
-advancement at the sender-service boundary. The held-shoot control keeps the Ambient offer
-and Hold while the Appearance read emits no Action cue.
-
-Native cut 184 independently shows both active senders AwaitCue while all three FIFOs are
-empty. The following production owner is physical sender and readiness service. The scoped
-live audio callers still leave spin start/end, impact, wall-jump, hard landing and unrelated
-actors unsupported.
-
-
 ## Finding the code for a replay segment
 
 The read-only `map` command joins the typed index and validated reviewed baseline with

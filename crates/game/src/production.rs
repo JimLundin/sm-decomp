@@ -22,8 +22,6 @@ mod movement;
 mod movement_ceres;
 pub mod movement_touchdown;
 pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
-pub mod gameplay_sounds;
-pub mod passage_audio;
 pub mod played;
 pub mod room_loading;
 pub mod sender;
@@ -72,8 +70,6 @@ pub enum Scope {
     Ceres,
     /// Door passage and its carried scene.
     Doors,
-    /// The first passage entry and its two sound opportunities.
-    PassageAudio,
     /// One CPU audio sender group, with independently admitted service timing.
     AudioSender,
 }
@@ -111,8 +107,6 @@ pub enum ProductionSeed {
     Ceres(boss_ceres_ridley::CeresDoor),
     /// Full passage and scene.
     Doors(Box<PassageState>),
-    /// Touched doorway and live sender owners.
-    PassageAudio(Box<passage_audio::State>),
     /// Full committed and pending CPU sender service.
     AudioSender(Box<audio_transport::SenderState>),
 }
@@ -189,8 +183,6 @@ pub enum AdvanceInput<'a> {
     Ceres(&'a boss_ceres_ridley::Inputs),
     /// Actual passage work, sound, music and doorway inputs.
     Doors(&'a world_doors::Inputs),
-    /// Complete one operation of the first passage sound sequence.
-    PassageAudio(passage_audio::Advance),
     /// An actual queue offer or an admitted CPU sender service operation.
     AudioSender(SenderInput<'a>),
     /// Operate one resident sender at an independently scheduled CPU opportunity.
@@ -237,8 +229,6 @@ pub enum ProductionOutputs {
     Ceres(boss_ceres_ridley::Run),
     /// Complete resulting scene and every passage report.
     Doors(Box<world_doors::Exports>),
-    /// The published first-entry sound operation.
-    PassageAudio(Vec<passage_audio::Output>),
     /// Every CPU reply observation, request presentation and service completion.
     AudioSender(Vec<audio_transport::sender::SenderOutput>),
 }
@@ -246,8 +236,6 @@ pub enum ProductionOutputs {
 /// Why a selected start or checkpoint cannot be admitted.
 #[derive(Debug, PartialEq, Eq)]
 pub enum AdmissionFault {
-    /// Gameplay offers require every physical sender to be between services.
-    GameplaySoundServicePending(audio_transport::SoundGroup),
     /// Complete connected owner/content relation is invalid.
     Connected(connected::Fault),
     /// State, content and rules must select the same entry.
@@ -285,8 +273,6 @@ pub enum AdmissionFault {
 pub enum Unsupported {
     /// A weapon impact cue needs its qualified sender mapping.
     WeaponImpactSound,
-    /// The passage first-entry sound sequence is outside its qualified arm.
-    PassageAudio,
     /// The scoped Health frame is outside the admitted clock, equipment or quiet HUD.
     HealthTailFrame,
     /// A frame of play the HUD leaves out.
@@ -400,7 +386,6 @@ impl Production {
             ProductionSeed::Hud(_) => Scope::Hud,
             ProductionSeed::Ceres(_) => Scope::Ceres,
             ProductionSeed::Doors(_) => Scope::Doors,
-            ProductionSeed::PassageAudio(_) => Scope::PassageAudio,
             ProductionSeed::AudioSender(_) => Scope::AudioSender,
         })?;
         let state = match (seed, &content, &rules) {
@@ -486,7 +471,6 @@ impl Production {
             OwnedState::Hud(_) => Scope::Hud,
             OwnedState::Ceres(_) => Scope::Ceres,
             OwnedState::Doors(_) => Scope::Doors,
-            OwnedState::PassageAudio(_) => Scope::PassageAudio,
             OwnedState::AudioSender(_) => Scope::AudioSender,
         }
     }
@@ -609,7 +593,6 @@ impl Production {
             | OwnedState::Hud(_)
             | OwnedState::Ceres(_)
             | OwnedState::Doors(_)
-            | OwnedState::PassageAudio(_)
             | OwnedState::AudioSender(_) => None,
         }
     }
@@ -626,7 +609,6 @@ impl Production {
             OwnedState::Audio(state) => return Ok(self.encode_save(PortableAudio(state.clone()))),
             OwnedState::ResidentAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::MovementTouchdown(state) => return Ok(self.encode_save(state.clone())),
-            OwnedState::PassageAudio(state) => return Ok(self.encode_save(state.clone())),
             OwnedState::WeaponsContact(state) => CodecState::WeaponsContact(state.clone()),
             OwnedState::Camera(state) => CodecState::Camera(*state),
             OwnedState::Appearance(state) => CodecState::Appearance(*state),
@@ -685,10 +667,6 @@ impl Production {
             let checkpoint: Checkpoint<Box<health_tail::State>> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
             ProductionSeed::HealthTail(checkpoint.state)
-        } else if matches!(&content, ProductionContent::PassageAudio(_)) {
-            let checkpoint: Checkpoint<Box<passage_audio::State>> =
-                canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
-            ProductionSeed::PassageAudio(checkpoint.state)
         } else {
             let checkpoint: Checkpoint<CodecState> =
                 canonical::from_bytes(&saved.state).map_err(AdmissionFault::Checkpoint)?;
@@ -733,9 +711,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
         Scope::WeaponsContact => canonical::model::pin_holds::<crate::state::owned::PowerPin>(),
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
         Scope::Appearance => canonical::model::pin_holds::<crate::state::owned::AppearancePin>(),
-        Scope::AudioSender | Scope::PassageAudio => {
-            canonical::model::pin_holds::<crate::state::owned::SenderPin>()
-        }
+        Scope::AudioSender => canonical::model::pin_holds::<crate::state::owned::SenderPin>(),
         Scope::Blocks | Scope::Progress | Scope::Hud | Scope::Ceres | Scope::Doors => Ok(()),
     }
     .map_err(AdmissionFault::StatePin)

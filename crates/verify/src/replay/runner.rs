@@ -293,11 +293,6 @@ fn record_pending(
     rules: &game::production::ProductionRules,
     result: &mut CaseResult,
 ) -> Result<(), Outcome> {
-    if let (InputReader::PassageAudio(input), Some(start)) = (reader.inputs, &start) {
-        let restored = input.restorations(start, content, rules)?;
-        result.counts.pending_boundaries = restored;
-        result.counts.pending_restorations = restored;
-    }
     if let (InputReader::Audio(tape), Some(audio_start)) = (reader.inputs, start) {
         let ExpectedReader::Audio(expected) = reader.expected else {
             return Err(data_failure(None, "audio expected scope"));

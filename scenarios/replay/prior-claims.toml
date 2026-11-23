@@ -3464,3 +3464,17 @@ source_sha256 = "4af75708c045704897ea53dd3597f03ae3867418321f5c62a871f601e4e8139
 identity = "health/ceres-tail-drawing-gauge"
 before_values = [2, 52, 34, 0, 0, 0, 22, 2, 0, 0]
 meaning = "reviewed behaviour case holding Pass with observation digest 0345dc79f797532037ee67fd82280e3ebd4495c5095e0e80e3c186fb1c2fff77; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "115377907f13435240814f5e0d475a89f4b9b81b5247b416ff1a3b4298e74ccc"
+identity = "gameplay-sound/passage-hold"
+before_values = [1, 1, 5, 0, 0, 0, 0, 1, 2, 2]
+meaning = "reviewed behaviour case holding Pass with observation digest f993d96110deaf81e2a55fa2f586afab562c1382f65156b437c180cff806a3a4; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "115377907f13435240814f5e0d475a89f4b9b81b5247b416ff1a3b4298e74ccc"
+identity = "gameplay-sound/passage-hold-shoot-held"
+before_values = [1, 1, 5, 0, 0, 0, 0, 1, 2, 2]
+meaning = "reviewed behaviour case holding Pass with observation digest 18145d5955935bbb993c330ab6b946b32b167591af3987a6e5b67342f0850fb0; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

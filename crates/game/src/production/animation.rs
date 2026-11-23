@@ -2,8 +2,8 @@
 
 use samus_appearance::{
     AppearanceState, CannonDelay, CannonEvent, ChargeGlowPosition, Clip, ColourSequences, Content,
-    Figure, Frame, FrameOutputs, FrameSound, Inputs, Pace, Paces, PaletteOpportunity, PassageEntry,
-    Rules, Selection, State, Stride, VisorDelay, VisorStep,
+    Figure, Frame, FrameOutputs, FrameSound, Inputs, Paces, PaletteOpportunity, Rules, Selection,
+    State, Stride, VisorDelay, VisorStep,
 };
 use types::AnimationSound;
 
@@ -183,66 +183,4 @@ pub(super) fn advance(
         FrameSound::Animation(sound) => Some(sound),
         FrameSound::Opportunity(_) => None,
     }))
-}
-
-/// A frame's content when it shows no figure: a frame without a stride or an animation update
-/// reads no clip and no pace.
-struct NoFigure {
-    clip: Clip,
-    paces: Paces,
-}
-
-impl Content for NoFigure {
-    fn clip(&self, _: &Figure) -> &Clip {
-        &self.clip
-    }
-
-    fn paces(&self) -> &Paces {
-        &self.paces
-    }
-}
-
-/// The sound her first entry into a passage asks for: a frame whose only appearance part is the
-/// passage entry, her animation frozen at the door. The entry reads no tuning.
-pub(super) fn passage_entry(entry: PassageEntry) -> Option<samus_appearance::SoundRequest> {
-    let content = NoFigure {
-        clip: Clip {
-            instructions: Vec::new(),
-            kick: None,
-            fast_fall: None,
-            rising: None,
-            contacts: std::collections::BTreeSet::new(),
-        },
-        paces: Paces {
-            plain: Pace(Vec::new()),
-            boosted: enum_map::EnumMap::from_fn(|_| Pace(Vec::new())),
-        },
-    };
-    let (cannon, colours) = UNOWNED;
-    let frame = Frame {
-        cannon: CannonEvent::ControlsSkipped,
-        stride: None,
-        animation: None,
-        selection: None,
-        palette: PaletteOpportunity::Absent,
-        passage: Some(entry),
-        drawing: None,
-    };
-    let state = AppearanceState {
-        animation: State {
-            playhead: samus_appearance::Playhead {
-                step: samus_appearance::Step::FIRST,
-                time_left: samus_appearance::Frames::NONE,
-            },
-            stage: types::BoostStage::Stage0,
-            laps_left: samus_appearance::LapsLeft::WithoutBooster,
-        },
-        cannon,
-        colours,
-    };
-    let (_, outputs) = samus_appearance::update(state, &frame, &content, &Rules::VANILLA);
-    outputs.sounds.into_iter().find_map(|sound| match sound {
-        FrameSound::Opportunity(request) => Some(request),
-        FrameSound::Animation(_) => None,
-    })
 }

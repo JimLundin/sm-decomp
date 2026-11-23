@@ -332,15 +332,6 @@ fn valid_counts(case: &Case, floor: &Floor) -> bool {
 }
 
 fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
-    let pending_boundaries = if case.expectations.provider
-        == ExpectedProvider::NativePassageSoundOffers
-        && case.checkpoints
-        && counts.cuts != 0
-    {
-        2
-    } else {
-        0
-    };
     let semantic_count = case.expectations.fields.len().checked_mul(counts.cuts);
     let output_cuts = case.expectations.output_cut.map_or(counts.cuts, |at| {
         usize::from(
@@ -353,7 +344,7 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
         && case.expectations.outputs.len().checked_mul(output_cuts) == Some(counts.outputs)
         && counts.publications == 0
         && counts.replies == 0
-        && counts.pending_boundaries == pending_boundaries
+        && counts.pending_boundaries == 0
 }
 
 #[cfg(test)]

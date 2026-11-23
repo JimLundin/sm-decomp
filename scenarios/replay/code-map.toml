@@ -22,8 +22,6 @@ targets = [
 [[rule]]
 id = "audio-transport/OfferAcceptance"
 targets = [
-  { role = "adapter", path = "crates/game/src/production/gameplay_sounds.rs" },
-  { role = "adapter", path = "crates/game/src/production/passage_audio.rs" },
   { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/sender.rs" },
   { role = "adapter", path = "crates/game/src/production/movement_touchdown.rs" },
@@ -441,20 +439,4 @@ targets = [
   { role = "model", path = "crates/clean/interface_hud/src/status_bar.rs" },
   { role = "adapter", path = "crates/game/src/production/health_tail.rs" },
   { role = "navigation", path = "crates/verify/src/replay/health_tail/observations.rs" },
-]
-
-[[rule]]
-id = "samus-appearance/AtTheDoor"
-targets = [
-  { role = "model", path = "crates/clean/samus_appearance/src/opportunity.rs" },
-  { role = "adapter", path = "crates/game/src/production/passage_audio.rs" },
-  { role = "navigation", path = "docs/behaviours/samus-appearance.md" },
-]
-
-[[rule]]
-id = "world-doors/Quieting"
-targets = [
-  { role = "model", path = "crates/clean/world_doors/src/step.rs" },
-  { role = "adapter", path = "crates/game/src/production/passage_audio.rs" },
-  { role = "navigation", path = "docs/behaviours/world-doors.md" },
 ]

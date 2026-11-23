@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1850" viewBox="0 0 1100 1850" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1786" viewBox="0 0 1100 1786" role="img" aria-labelledby="title description">
 <title id="title">Indexed replay requirements</title>
 <desc id="description">Each line is an independent case scope. Counts do not represent whole-movie coverage.</desc>
-<rect width="1100" height="1850" fill="#fcfcfb"/>
+<rect width="1100" height="1786" fill="#fcfcfb"/>
 <g font-family="sans-serif" font-size="14" fill="#202020">
 <text x="20" y="28" font-size="19">Indexed replay requirements</text>
 <text x="20" y="52">Separate scopes; compared cuts are not whole-movie progress.</text>
@@ -58,7 +58,5 @@
 <text x="20" y="1682">movement/soft-touchdown-57 | Scoped cases | Pass | 1 compared cuts</text>
 <text x="20" y="1714">movement/soft-touchdown-124 | Scoped cases | Pass | 1 compared cuts</text>
 <text x="20" y="1746">health/ceres-tail-drawing-gauge | Scoped cases | Pass | 2 compared cuts</text>
-<text x="20" y="1778">gameplay-sound/passage-hold | Scoped cases | Pass | 1 compared cuts</text>
-<text x="20" y="1810">gameplay-sound/passage-hold-shoot-held | Scoped cases | Pass | 1 compared cuts</text>
 </g>
 </svg>
