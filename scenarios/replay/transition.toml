@@ -34458,7 +34458,7 @@ disposition = "retired"
 witness_case_ids = []
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case compared the order of the passage's sound offers inside the frame, with a save point after each offer, which is T1's. The production path it exercised is removed. The passage's first-entry rules return with the played-alone run once that run carries the sound queue; the played run already borrows the passage's sounds sent and music ready at each cut."
-lost_observations = ["gameplay-sound/passage-hold: its compared cut (1), field (1), outputs (5) and pending boundaries (2) are not a current obligation. No indexed case compares the passage's first-entry offers, their order or the Hold until the played-alone run carries the sound queue."]
+lost_observations = ["gameplay-sound/passage-hold: its compared cut (1), field (1), outputs (5) and pending boundaries (2) are not a current obligation. No indexed case compares the passage's first-entry offers, their order or the Hold until the played-alone run carries the sound queue.", "gameplay-sound/passage-hold: world-doors/Quieting and samus-appearance/AtTheDoor lose their only indexed witness and their code-map entries.", "gameplay-sound/passage-hold: the faults passage-silences-swapped and passage-hold-before-offers are removed with it."]
 
 [[claim]]
 source_path = "scenarios/replay/baseline.toml"
@@ -34470,4 +34470,4 @@ disposition = "retired"
 witness_case_ids = []
 test_ids = []
 reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case compared the order of the passage's sound offers inside the frame, with a save point after each offer, which is T1's. The production path it exercised is removed. The passage's first-entry rules return with the played-alone run once that run carries the sound queue; the played run already borrows the passage's sounds sent and music ready at each cut."
-lost_observations = ["gameplay-sound/passage-hold-shoot-held: its compared cut (1), field (1), outputs (5) and pending boundaries (2) are not a current obligation. No indexed case compares the passage's first-entry offers, their order or the Hold until the played-alone run carries the sound queue."]
+lost_observations = ["gameplay-sound/passage-hold-shoot-held: its compared cut (1), field (1), outputs (5) and pending boundaries (2) are not a current obligation. No indexed case compares the passage's first-entry offers, their order or the Hold until the played-alone run carries the sound queue.", "gameplay-sound/passage-hold-shoot-held: world-doors/Quieting and samus-appearance/AtTheDoor lose their only indexed witness and their code-map entries.", "gameplay-sound/passage-hold-shoot-held: the faults passage-silences-swapped and passage-hold-before-offers are removed with it."]

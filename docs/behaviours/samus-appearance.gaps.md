@@ -69,9 +69,9 @@ outside the domain (1,688), and the masked boost frame (terrain-quicksand 156, t
 
 The spec's §9 supplies FootContact, generic SpinStarts, normal-drawing SpinEnds and
 first-passage AtTheDoor. Imported contact-step content and actual ordinary Ceres movement, selection and drawing
-opportunities produce ordered typed requests through `TickOutput`. The scoped normal passage
-calls the actual first-entry Appearance opportunity before its Ambient offer and Hold. The
-retained Frame's passage dispatch and the spinning passage arms still need their callers.
+opportunities produce ordered typed requests through `TickOutput`. No indexed case witnesses
+the first-entry AtTheDoor request until the played run carries the sound queue, and the spinning
+passage arms still need their callers.
 Existing WallJumpBranch and BoostingLap remain animation outputs and must coexist without
 another animation update. Normal drawing during Quieting must run SpinEnds with remembered
 movement and frozen animation. The first-entry passage request precedes holding sounds.

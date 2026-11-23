@@ -421,7 +421,7 @@ content = "player-rom-import"
 inputs = "certified-movement-ceres-inputs"
 expectations = { provider = "pinned-record-cache", fields = ["movement.position.x", "movement.position.y", "ceres.phase", "ceres.wait", "ceres.figure", "ceres.shown", "ceres.solid"], outputs = [] }
 checkpoints = false
-limits = ["only carried prior whole-pixel movement to door proximity integrated", "complete outputs retained but only declared position and door fields compared", "unselected producers remain external", "prior roster empty; current actor selection and timing unproved", "appearance ahead remains external feedback", "no durable Ceres codec, pixels, app, power-on or played-alone claim"]
+limits = ["only carried prior whole-pixel movement to door proximity integrated", "complete outputs retained but only declared position and door fields compared", "unselected producers remain external", "prior roster empty; current actor selection and timing unproved", "appearance ahead remains external feedback", "each cut interval is taken as one ordinary movement frame (no lag cut, no forced pose), not proved until T1", "no durable Ceres codec, pixels, app, power-on or played-alone claim"]
 
 [[case.borrowed]]
 dependency = "movement.external-neighbours"
