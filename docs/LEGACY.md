@@ -92,14 +92,11 @@ Some clean States lack complete serialization; their live entry remains usable w
 restore reports unavailable codec support. No partial observed-field checkpoint is a complete
 continuation claim.
 
-## The engine: retained Drawing after a decrease in Health
+## The engine: Drawing after a decrease in Health
 
-The retained ordinary frame compares current whole Health with the prior Drawing
-history and replaces that history with a second live read. The decreased-energy
-physical envelope reaches a hurt-flash store in the native capture. No subsequent
-reader or OAM or colour change consumes that store before the requested NMI
-return. The flash state and its later readers remain outside the production
-scope, so continuing from this changed Drawing return reports Unsupported.
+In the scoped Ceres tail, Drawing commits its energy history from each frame's Health, but no
+producer compares that history with the frame's energy for the hurt flash. The flash state,
+its readers and the visible flash stay outside the production scope.
 
 ## The engine: checked ordinary power beam
 

@@ -312,9 +312,8 @@ indexed case checks each cut's continuation from a checkpoint.
 
 Controls, equipment, liquid, energy, occupancy, Contact guards, current terrain and actors,
 and room settings are authenticated borrowed stimuli. Actor lifecycle, receiver execution,
-health arithmetic, elapsed hardware time, complete Frame scheduling and played-alone
-production remain outside this witness. Its package is fetched by
-[the pinned connected fixture script](../tools/ci/fetch_connected_ordinary.sh); the declaration,
+health arithmetic and played-alone production remain outside this witness. Its package is
+fetched by [the pinned connected fixture script](../tools/ci/fetch_connected_ordinary.sh); the declaration,
 reviewed outcome and code navigation are in the existing replay index, baseline and mapping.
 
 The second ordinary witness admits once at cut126 and carries the same selected owners through
@@ -336,7 +335,7 @@ compare both frames, and a frame without the map's inputs is rejected before any
 The [early mini-map fixture](../tools/ci/fetch_movement_early_map.sh) supplies the independently
 qualified current collision roster, control, room, clock and other borrowed inputs; the record
 pairs supply her stock as the frame begins and the values the status bar draws, which are not
-compared. Physical Frame scheduling, VRAM and audio delivery are outside this scope.
+compared. VRAM and audio delivery are outside this scope.
 
 ## Scoped ordinary power shot and drawing
 
