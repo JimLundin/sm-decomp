@@ -77,7 +77,10 @@ impl Content {
     }
 
     pub(super) fn map_area(&self, area: u8) -> Result<&HerMap, Outcome> {
-        let area = data::room::Area::try_from(area).map_err(|_| data_failure(None, "HUD area"))?;
+        self.map_of(data::room::Area::try_from(area).map_err(|_| data_failure(None, "HUD area"))?)
+    }
+
+    pub(super) fn map_of(&self, area: data::room::Area) -> Result<&HerMap, Outcome> {
         self.maps
             .iter()
             .find(|(each, _)| *each == area)
@@ -342,9 +345,19 @@ pub(super) fn status(end: &[u8]) -> Result<Status, Outcome> {
     })
 }
 
+/// Time is stopped.
+pub(super) fn time_stopped(wram: &[u8]) -> Result<bool, Outcome> {
+    Ok(word(wram, 0x0a78)? != 0)
+}
+
+/// She has collected the current area's map.
+pub(super) fn map_collected(wram: &[u8]) -> Result<bool, Outcome> {
+    Ok(word(wram, 0x0789)? != 0)
+}
+
 /// Why a switch makes no click, from record N+1.
 pub(super) fn muted_by(end: &[u8]) -> Result<Option<Mute>, Outcome> {
-    Ok(if word(end, 0x0a78)? != 0 {
+    Ok(if time_stopped(end)? {
         Some(Mute::TimeStopped)
     } else if word(end, 0x0d32)? != 0xc4f0 {
         Some(Mute::Grapple)
@@ -372,8 +385,11 @@ pub(super) fn countdown_runs(start: &[u8], end: &[u8]) -> Result<CountdownRuns, 
             dependency: "HUD countdown choice outside main gameplay".to_owned(),
         });
     }
-    Ok(CountdownRuns::MaintainCountdown)
+    Ok(MAIN_GAMEPLAY_COUNTDOWN)
 }
+
+/// The countdown choice of main gameplay: it runs the escape countdown each frame.
+pub(super) const MAIN_GAMEPLAY_COUNTDOWN: CountdownRuns = CountdownRuns::MaintainCountdown;
 
 pub fn input<'a>(
     start: &[u8],
@@ -381,9 +397,7 @@ pub fn input<'a>(
     content: &'a Content,
 ) -> Result<OwnedInput<'a>, Outcome> {
     validate_quiet_controls(start)?;
-    let select = word(start, 0x008f)? & word(start, 0x09ba)? != 0;
-    let pressed_cancel = word(start, 0x008f)? & word(start, 0x09b8)? != 0;
-    let held_cancel = word(start, 0x008b)? & word(start, 0x09b8)? != 0;
+    let (select, cancel) = bindings(start)?.buttons(word(start, 0x008f)?, word(start, 0x008b)?);
     let runs = match word(end, 0x0a44)? {
         0xe725 | 0xe7f5 | 0xe86a | 0xe8dc | 0xe8ec | 0xe8aa => true,
         0xe7d2 | 0xe833 | 0xe8d6 | 0xe8d9 | 0xe902 | 0xe8cd => false,
@@ -391,21 +405,11 @@ pub fn input<'a>(
     };
     Ok(OwnedInput {
         frame: FrameInputs {
-            frame: FrameCount(word(start, 0x05b5)?.to_le_bytes()[0]),
+            frame: frame_count(start)?,
             stock_at_start: stock_at_start(start)?,
             controls: Controls {
-                select: if select {
-                    SelectButton::Pressed
-                } else {
-                    SelectButton::NotPressed
-                },
-                cancel: if pressed_cancel {
-                    CancelButton::Pressed
-                } else if held_cancel {
-                    CancelButton::Held
-                } else {
-                    CancelButton::NotPressed
-                },
+                select,
+                cancel,
                 can_switch: can_switch(end)?,
             },
             mini_map: MiniMapInputs {
@@ -420,7 +424,7 @@ pub fn input<'a>(
                     [word(end, 0x07a5)?, word(end, 0x07a7)?],
                 ),
                 map: content.map(end)?,
-                map_collected: word(end, 0x0789)? != 0,
+                map_collected: map_collected(end)?,
             },
             mother_brain_falls: false,
             status: status(end)?,
@@ -432,6 +436,45 @@ pub fn input<'a>(
         },
     })
 }
+/// The frame count as the frame begins, from record N.
+pub(super) fn frame_count(start: &[u8]) -> Result<FrameCount, Outcome> {
+    Ok(FrameCount(word(start, 0x05b5)?.to_le_bytes()[0]))
+}
+
+/// The buttons item select and item cancel are bound to.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct Bindings {
+    select: u16,
+    cancel: u16,
+}
+
+impl Bindings {
+    /// Item select and item cancel, from the buttons that went down this frame and those held.
+    pub(super) const fn buttons(self, pressed: u16, held: u16) -> (SelectButton, CancelButton) {
+        let select = if pressed & self.select != 0 {
+            SelectButton::Pressed
+        } else {
+            SelectButton::NotPressed
+        };
+        let cancel = if pressed & self.cancel != 0 {
+            CancelButton::Pressed
+        } else if held & self.cancel != 0 {
+            CancelButton::Held
+        } else {
+            CancelButton::NotPressed
+        };
+        (select, cancel)
+    }
+}
+
+/// The item controls' bindings, from record N.
+pub(super) fn bindings(start: &[u8]) -> Result<Bindings, Outcome> {
+    Ok(Bindings {
+        select: word(start, 0x09ba)?,
+        cancel: word(start, 0x09b8)?,
+    })
+}
+
 pub(super) fn room_from_words([x, y]: [u16; 2], [width, height]: [u16; 2]) -> Room {
     Room {
         // Stored room Y counts from the row above the first map cell.

@@ -181,52 +181,52 @@ fn advance(production: &mut Production, cut: u64, frame: &Frame) -> Result<Outpu
     Ok(output)
 }
 
-fn word(wram: &[u8], at: usize) -> Result<u16, Outcome> {
+fn word(wram: &[u8], at: usize, cut: Option<u64>) -> Result<u16, Outcome> {
     wram.get(at..)
         .and_then(<[u8]>::first_chunk::<2>)
         .copied()
         .map(u16::from_le_bytes)
-        .ok_or_else(|| data_failure(Some(ORIGIN), "Health tail origin field"))
+        .ok_or_else(|| data_failure(cut, "Health record field"))
 }
 
-fn whole(wram: &[u8], at: usize) -> Result<WholeEnergy, Outcome> {
-    WholeEnergy::new(word(wram, at)?)
-        .ok_or_else(|| data_failure(Some(ORIGIN), "Health tail origin energy range"))
+fn whole(wram: &[u8], at: usize, cut: Option<u64>) -> Result<WholeEnergy, Outcome> {
+    WholeEnergy::new(word(wram, at, cut)?)
+        .ok_or_else(|| data_failure(cut, "Health record energy range"))
+}
+
+/// Health's complete State as the record at `cut` holds it.
+pub(super) fn decode(wram: &[u8], cut: Option<u64>) -> Result<samus_health::State, Outcome> {
+    let energy = EnergyAmount {
+        whole: whole(wram, 0x09c2, cut)?,
+        fraction: word(wram, 0x0a4c, cut)?,
+    };
+    let pending_loss = EnergyLoss {
+        whole: whole(wram, 0x0a50, cut)?,
+        fraction: word(wram, 0x0a4e, cut)?,
+    };
+    let warning = match word(wram, 0x0a6a, cut)? {
+        0 => Warning::Off,
+        1 => Warning::On,
+        _ => return Err(data_failure(cut, "Health record warning range")),
+    };
+    let protection = u8::try_from(word(wram, 0x18a8, cut)?)
+        .ok()
+        .and_then(ProtectionFrames::new)
+        .ok_or_else(|| data_failure(cut, "Health record protection range"))?;
+    Ok(samus_health::State {
+        energy,
+        pending_loss,
+        warning,
+        protection,
+    })
 }
 
 fn admit_origin(origin_identity: Sha256, wram: &[u8]) -> Result<State, Outcome> {
-    let energy = EnergyAmount {
-        whole: whole(wram, 0x09c2)?,
-        fraction: word(wram, 0x0a4c)?,
-    };
-    let pending_loss = EnergyLoss {
-        whole: whole(wram, 0x0a50)?,
-        fraction: word(wram, 0x0a4e)?,
-    };
-    let warning = match word(wram, 0x0a6a)? {
-        0 => Warning::Off,
-        1 => Warning::On,
-        _ => {
-            return Err(data_failure(
-                Some(ORIGIN),
-                "Health tail origin warning range",
-            ));
-        }
-    };
-    let protection = u8::try_from(word(wram, 0x18a8)?)
-        .ok()
-        .and_then(ProtectionFrames::new)
-        .ok_or_else(|| data_failure(Some(ORIGIN), "Health tail origin protection range"))?;
     Ok(State::new(
         origin_identity.0,
-        samus_health::State {
-            energy,
-            pending_loss,
-            warning,
-            protection,
-        },
+        decode(wram, Some(ORIGIN))?,
         hud::decode_state(wram)?,
-        word(wram, 0x0a12)?,
+        word(wram, 0x0a12, Some(ORIGIN))?,
     ))
 }
 
