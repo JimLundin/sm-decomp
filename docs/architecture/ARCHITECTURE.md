@@ -129,9 +129,8 @@ State nor publications. Runtime rendering is downstream and cannot affect gamepl
 ### 6.1 What a Tick is
 
 A declared cut-to-cut advance carries selected State. Native audio uses transport milestones.
-In the retained Frame recipe a host budget bounds each call to advance. The hardware owner
-charges elapsed master ticks across calls. The frame completes on return from the requested
-native NMI handler.
+The played-alone owner, `game::production::played`, steps one whole frame per NMI cut: her
+clip's look ahead, her moves, her animation and the camera, once each.
 
 ### 6.2 The beam-sync point
 
@@ -143,35 +142,14 @@ The concrete selected recipe orders actual clean calls and routes actual outputs
 
 ### 6.4 NMI timing and lag
 
-The retained Frame owner progresses from its admitted beam phase through the software
-request, hardware wait, NMI entry and handler return. Native entry preserves the reached
-Wait cursor and the admission that suspended it. The next acknowledgment takes the
-remaining busy-branch work when the request read completed before NMI. The same clock
-then advances the carried gameplay and subsequent requested returns.
-
-The three-return opening witness starts from one native admission and compares the
-absolute return clocks, ordered hardware callbacks and the Contact input read through
-the third return. At the third opportunity, live Haze, door timers, pose selection,
-subpixel movement and imported sprite geometry select their own physical work. The
-matching Contact publication is independently admitted after the actual preceding retry.
-The CPU samples it at its own read edge, and those read samples are compared separately
-from hardware callbacks.
-The resident SMP producer and power-on history remain outside the witness.
-
-The eight-return witness follows the same admission through Contact's delay, outgoing
-clear, retry and return to Ready. The sender retains the actual outgoing zero retry
-milestone independently of the physical publication log. Restore checks both
-sources before using the milestone to time the scoped external arrival at the
-incoming latch. The CPU publication does not write the incoming latch.
+Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The software
+request, hardware wait, NMI entry and handler return, and their clocks, are T1's; no production
+path schedules them. A lag cut inside a rung is an explicit borrowed input.
 
 ### 6.5 Named CPU costs
 
-The integrated `frame/ordinary-requested-nmi-return` case exercises the hardware time
-coordinator for one complete retained frame. [T1](domains.md#platform-and-tracks-not-clean-room-hardware-formats-or-the-originals-timing)
+[T1](domains.md#platform-and-tracks-not-clean-room-hardware-formats-or-the-originals-timing)
 owns named CPU costs, beam scheduling and hardware arbitration outside the clean room.
-The scheduler charges selected work and stalls. Frame-specific physical profiles and
-borrowed preparation, actor, scene and native video inputs bound this witness. Independent
-output times and final observations enter at comparison.
 
 The existing `AudioSender` production entry retains CPU master ticks and advances the clean
 sender's intrinsic timed service under an admitted timing profile and ordered physical replies.
@@ -181,24 +159,19 @@ Required missing timing remains unsupported.
 
 ### 6.6 Strands and continuations
 
-The retained Frame stores its caller stage, pending hardware work and clean owner continuations
-across budget-limited calls. `Progress::Completed` identifies the requested NMI return.
-D10 describes the general strand design.
+Each clean model retains its own pending work between calls. D10 describes the general strand
+design.
 
 ### 6.7 The line program
 
-The retained Frame recipe advances hardware and publishes timed events. The compositor takes a
-separate `DisplayFrame` with line-1 registers, writes ordered by their first visible line,
-overscan and field parity, plus `VideoMemory`. The retained Frame path does not assemble
-that compositor input.
+The compositor takes a separate `DisplayFrame` with line-1 registers, writes ordered by their
+first visible line, overscan and field parity, plus `VideoMemory`. No production path assembles
+that compositor input yet.
 
 ### 6.8 Input, RNG and failures
 
 Independent typed stimuli enter production; candidate State and outputs commit together on success.
-Hosts and retained-frame replay schedule timestamped first-port button states on the live Frame.
-The retained hardware samples the latest eligible state when its beam enters line 241 and holds
-it for automatic controller polling. Pending changes travel with the Frame checkpoint, including
-changes whose time has passed while the beam has yet to reach the latch.
+The played-alone run's only new input at each cut is the movie's pad from the preceding vblank.
 
 ## 7. Actors, slots and the interpreter
 
@@ -241,10 +214,7 @@ whole-engine timing. No sound-driver code is emulated. Audio waveforms are not c
 ### 9.1 Exact output and intent output
 
 Compare actual model receipts and selected exact encodings. The scoped HUD entry returns
-semantic events. The retained Frame consumes selected HUD results for display and routes the
-admitted neutral selection through cannon preparation. This path requires no Select or Cancel
-press and no switch event. Delivery of item switches and click requests remains outside that
-path.
+semantic events. Delivery of item switches and click requests has no production path yet.
 
 ### 9.2 The presentation boundary
 
@@ -271,24 +241,17 @@ and fixed `ProductionRules::Audio`. The replay adapter is a complete example of 
 
 `Scope::Audio` advances the same transport from a scoped starting state and admitted
 presentation times. `Scope::AudioSender` advances one sender under its admitted profile.
-The retained Frame caller can offer selected requests and publish admitted sender writes on
-its hardware clock. Physical service joining Frame's sender opportunities and the resident
-transport, and synthesis in `runtime`, remain separate from room-load admission.
+Physical sender service joined to the resident transport, and synthesis in `runtime`, remain
+separate from room-load admission.
 
 ### 9.5 Saves
 
-`Production::save` can capture a successful suspended Frame advance as well as a completed
-NMI return. `SavedProduction` holds canonical bytes containing the State schema and selected
-State, plus the immutable context and frame completion status in memory. `Production::restore`
-checks content and rules by value equality, decodes the selected schema and revalidates the
-joined State. Standalone Audio's portable envelope depends on its own payload schema.
-The resident envelope also checks its stored origin and bank identities.
-Scopes lacking a codec return `SaveFault::Unsupported`.
-
-The retained Frame replay calls `Production::save_completed_frame` after a successful native
-return. A partial advance or a newly scheduled controller change clears eligibility. A failed
-advance preserves the last committed state. `Production::restore_completed_frame` resumes the
-saved clock and publication cursor through the same content, rules and state checks. Both checkpoint types are in-memory values.
+`Production::save` captures the state after a successful advance. `SavedProduction` holds
+canonical bytes containing the State schema and selected State, plus the immutable context in
+memory. `Production::restore` checks content and rules by value equality, decodes the selected
+schema and revalidates the joined State. Standalone Audio's portable envelope depends on its
+own payload schema. The resident envelope also checks its stored origin and bank identities.
+Scopes lacking a codec return `SaveFault::Unsupported`. Checkpoints are in-memory values.
 
 ## 10. Options and profiles
 

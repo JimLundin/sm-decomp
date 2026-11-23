@@ -931,9 +931,7 @@ The scene's MaintainCountdown versus PresentationOnly choice is a distinct neigh
 A scoped independent observation may provide that stimulus only with producer/timing explicitly
 unproved. Integrated execution needs an actual qualified scene scheduling producer; no existing
 clean scene API supplies this choice or these opportunities at the fixed base.
-`game::production::frame::borrowed_gameplay` supplies only `SceneController::MainGameplay`
-versus `Other` and a coarse completed `GameplayDispatchReceipt`; neither that completion nor
-`Prelude.scene_current`/`Preparation.gameplay` retains or produces countdown service selection. Missing scheduling,
+No production owner retains or produces countdown service selection. Missing scheduling,
 active/expired countdown or presentation-only execution remains Unsupported before dependent
 effects. B8 doors/station stage and ordinary HUD refresh do not supply countdown scheduling.
 Expiry effects, digits and active advancement are deliberately not inferred from this dormant

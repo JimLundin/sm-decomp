@@ -1275,8 +1275,8 @@ fn areas(out: &mut String, domains: &[Measured]) {
 fn adapters_and_providers(out: &mut String, domains: &[Measured]) {
     out.push_str(
         "\n## Production adapters and replay providers\n\nBridges and dedicated production adapters connect models to the engine. Replay providers compare \
-         model outputs against the oracle. Shared retained-frame load, scheduling and comparison \
-         code stays outside the per-domain totals.\n\n",
+         model outputs against the oracle. Shared replay load, scheduling and comparison code \
+         stays outside the per-domain totals.\n\n",
     );
     measure_table(out, 2, &["Domain", "Part", "Files"]);
     let mut sum = Measure::default();

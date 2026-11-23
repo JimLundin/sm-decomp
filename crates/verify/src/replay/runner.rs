@@ -164,7 +164,7 @@ pub(super) fn run(
             *cut,
         )?;
         if case.checkpoints {
-            // A one-opportunity shot or touchdown resumes across the actual advance.
+            // A one-opportunity touchdown resumes across the actual advance.
             checkpoints.push(
                 origin
                     .take()

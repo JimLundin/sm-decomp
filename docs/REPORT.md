@@ -662,7 +662,7 @@ Area fit 1.25: the areas' score, 187, ÷ the budget. Shared code 9, its share of
 
 ## Production adapters and replay providers
 
-Bridges and dedicated production adapters connect models to the engine. Replay providers compare model outputs against the oracle. Shared retained-frame load, scheduling and comparison code stays outside the per-domain totals.
+Bridges and dedicated production adapters connect models to the engine. Replay providers compare model outputs against the oracle. Shared replay load, scheduling and comparison code stays outside the per-domain totals.
 
 | Domain | Part | Files | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

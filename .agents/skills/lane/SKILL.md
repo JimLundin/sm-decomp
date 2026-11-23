@@ -46,8 +46,8 @@ role skill your brief names. For engineering work, follow the task route in AGEN
   [STATUS](../../../docs/STATUS.md) shows. Local acceptance and CI use the same runner.
   Compare case outcomes, declared fields/outputs, null evidence and checkpoint continuations;
   an expected Unsupported result is a held boundary, never a passing behaviour case.
-- **Local runs are slow; plan around them.** On this Windows machine, one opening `frame_origin`
-  test takes 4–10 minutes through the DLL runner, and a multi-return case can take longer. That's
+- **Local runs are slow; plan around them.** On this Windows machine, one fixture-backed
+  replay test takes several minutes through the DLL runner, and a long case can take longer. That's
   several times the same test on CI's Linux runner. Iterate locally on the narrowest single test,
   started from the saved checkpoint nearest the question rather than from cut 1. Send full
   cases, the required witnesses and fault checks to focused CI (`gh workflow run ci.yml --ref
