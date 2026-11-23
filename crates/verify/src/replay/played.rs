@@ -127,7 +127,6 @@ fn expected(
 ) -> Result<Vec<Observation>, Outcome> {
     let seeded = movement::seed(wram)?;
     let mut fields = parts(&seeded);
-    fields.push(connected::state_observation(&seeded));
     fields.extend(movement::expected(
         wram,
         &[ObservationId::PositionX, ObservationId::PositionY],
@@ -294,8 +293,11 @@ impl<'a> Run<'a> {
     }
 }
 
-/// Her movement State by part, so a difference names the part that differs. Compared before
-/// the complete State; the encoding is only compared, never logged.
+/// Her movement State by part, so a difference names the part that differs; the encoding is
+/// only compared, never logged. Her spin's frame count is the model's own history: the record
+/// keeps it as the last different pose's type and cannot tell its first two frames apart, so
+/// it is not compared here. Its effects (a reversal's skid, a wall jump readied) reach the
+/// compared pose, run and vertical motion in later cuts.
 fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
     let part = |field: &str, value: String| Observation {
         field: field.into(),
@@ -305,7 +307,6 @@ fn parts(samus: &samus_movement::Samus) -> Vec<Observation> {
         part("movement.pose", format!("{:?}", samus.pose)),
         part("movement.run", format!("{:?}", samus.run)),
         part("movement.vertical", format!("{:?}", samus.vertical)),
-        part("movement.spin", format!("{:?}", samus.spin)),
         part("movement.seat", format!("{:?}", samus.seat)),
         part("movement.jump-held", format!("{:?}", samus.jump_held)),
         part("movement.position", format!("{:?}", samus.position)),
@@ -316,7 +317,6 @@ fn actual(state: &played::State, content: &appearance::Content) -> Vec<Observati
     let samus = &state.movement.0;
     let mut fields = parts(samus);
     fields.extend([
-        connected::state_observation(samus),
         Observation::quantity("movement.position.x", i64::from(samus.position.x.0)),
         Observation::quantity("movement.position.y", i64::from(samus.position.y.0)),
     ]);

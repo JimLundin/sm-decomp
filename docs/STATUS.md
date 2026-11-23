@@ -30,7 +30,8 @@ camera, once each, in any pose with imported content. Each later cut's only new 
 movie's pad from the preceding vblank. The run compares those owners with the record at every
 requested NMI return and stops at the first difference, the first unsupported pose or content,
 or the first lag cut. Room facts with no selected producer yet are read once from the seed and held;
-`SEED_HELD` names them, and each is a missing owner. The comparison is at frame cuts; it does
+`SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model history the
+record cannot tell apart in a spin's first two frames, so it is compared only through its effects. The comparison is at frame cuts; it does
 not compare intra-frame bus timing.
 
 ```sh
