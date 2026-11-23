@@ -135,9 +135,12 @@ The commands below apply to rounds and other work.
    you to resolve by hand, reading every hunk, then `git cherry-pick --continue`.
 3. `bash tools/lane/gate.sh`, then push the landing branch and open a PR to `main` whose body gives
    each lane's commits, evidence and ratchet deltas.
-4. In the background: `bash tools/lane/watch.sh <pr>`. Exit 0 landed (via `land.sh`, fast-forward
-   only); 3 main moved (rebase, re-gate, re-push); 4 a run failed (read its log, land the green
-   prefix, hand the failure to a lane); 5 timed out.
+4. In the background: `bash tools/lane/watch.sh <pr> <sha>`, with the sha you pushed: it lands only
+   that head, so a push GitHub hasn't shown yet never lands the old head's green run. Exit 0
+   landed (via `land.sh`, fast-forward only); 3 main moved (rebase, re-gate, re-push); 4 a run
+   failed or was cancelled (read its log, land the green prefix, hand the failure to a lane);
+   5 timed out; 6 timed out with the PR's head still not that sha. Never loop on `land.sh` by
+   hand: its exit 2 (not ready) never ends on a red run, which is its exit 4.
 5. Bundles: check the lane's SHA-256 with `sha256sum`, `timeout 600 gh release upload ci-data FILE`,
    confirm its size with `gh release view ci-data`, and commit the new pin. Only encrypted bundles.
 
