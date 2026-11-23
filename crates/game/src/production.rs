@@ -25,6 +25,7 @@ pub mod movement_work;
 pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState};
 pub mod gameplay_sounds;
 pub mod passage_audio;
+pub mod played;
 mod sender;
 #[cfg(test)]
 mod tests;

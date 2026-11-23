@@ -719,7 +719,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | world-blocks | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | world-blocks | replay provider | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | samus-appearance | bridge | 3 | 3,113 | 3,208 | 329 | 45 | 265 | 171 | 0 | 549 |
-| samus-appearance | replay provider | 2 | 2,558 | 2,507 | 130 | 30 | 136 | 248 | 26 | 371 |
+| samus-appearance | replay provider | 2 | 2,585 | 2,550 | 130 | 30 | 136 | 249 | 32 | 378 |
 | boss-ceres-ridley | bridge | 1 | 2,222 | 2,307 | 199 | 32 | 113 | 133 | 15 | 410 |
 | boss-ceres-ridley | replay provider | 1 | 1,331 | 1,506 | 17 | 113 | 33 | 72 | 60 | 251 |
 | world-doors | bridge | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -734,7 +734,7 @@ Bridges and dedicated production adapters connect models to the engine. Replay p
 | game-random | replay provider | 1 | 995 | 1,076 | 175 | 33 | 77 | 32 | 0 | 206 |
 | world-haze | bridge | 3 | 3,119 | 3,263 | 398 | 62 | 96 | 401 | 49 | 638 |
 | world-haze | replay provider | 1 | 2,773 | 2,894 | 279 | 19 | 182 | 102 | 0 | 476 |
-| total | | | 66,284 | 64,541 | 6,296 | 2,143 | 4,706 | 6,411 | 641 | 11,294 |
+| total | | | 66,311 | 64,584 | 6,296 | 2,143 | 4,706 | 6,412 | 647 | 11,301 |
 
 ## Engine services
 
@@ -742,7 +742,7 @@ The engine's code, every non-test source of `crates/game` without the bridges: p
 
 | Part | Files | Logic-equivalent lines | Score | Logic | Types | Data | Depth | Duplication | Clumps | Lines |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| production and exact services | 126 | 37,625 | 225,753 | 183,041 | 29,016 | 2,401 | 13,804 | 53,258 | 3,613 | 34,546 |
+| production and exact services | 127 | 37,822 | 226,934 | 184,001 | 29,208 | 2,473 | 13,834 | 53,627 | 3,631 | 34,744 |
 | bridges | 19 | 4,784 | 28,705 | 27,760 | 2,974 | 525 | 2,155 | 3,075 | 309 | 4,984 |
 | rebuilt models, shared types included | 123 | 8,783 | 52,696 | 58,646 | 24,309 | 18,651 | 3,636 | 3,811 | 1,016 | 17,742 |
 
@@ -2585,14 +2585,14 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | audio-transport | `crates/game/src/production/movement_touchdown.rs` | names it | `CpuMasterTicks`, `CueId`, `QueueAllowance`, `SoundGroup` | 431 | 102 |
 | audio-transport | `crates/game/src/production/passage_audio.rs` | names it | `CueId`, `QueueAllowance` | 770 | 165 |
 | audio-transport | `crates/game/src/production/sender.rs` | names it | `CpuMasterTicks`, `CueId`, `ExactCpuMasterTicks`, `OfferPermission`, `QueueAllowance`, `Request`, `SenderProgress`, `SenderState`, `SoundGroup`, `effects`, `sender` | 1,253 | 185 |
-| audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `Content`, `SenderState`, `SoundGroup`, `State`, `sender`, `transport` | 4,575 | 765 |
+| audio-transport | `crates/game/src/production.rs` | names it | `AudioInstant`, `Content`, `SenderState`, `SoundGroup`, `State`, `sender`, `transport` | 4,575 | 766 |
 | audio-transport | `crates/game/src/state/owned.rs` | names it | `SenderState`, `State` | 0 | 73 |
 | enemy-interactions | `crates/game/src/enemy_interactions_bridge.rs` | bridge | - | 234 | 39 |
 | enemy-interactions | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `Centre`, `ContactBox`, `DoorContact`, `Radii` | 2,596 | 399 |
 | enemy-interactions | `crates/game/src/production/weapons.rs` | bridge | `ContactConditions`, `DoorContact` | 1,955 | 331 |
 | weapons-projectiles | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
 | weapons-projectiles | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `FlickerPhase`, `Inheritance`, `ScreenOrigin` | 1,156 | 298 |
-| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 4,575 | 765 |
+| weapons-projectiles | `crates/game/src/production.rs` | names it | `State`, `UpdateInput` | 4,575 | 766 |
 | weapons-projectiles | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 73 |
 | weapons-projectiles | `crates/game/src/weapons_projectiles_bridge.rs` | bridge | - | 1,409 | 226 |
 | samus-movement | `crates/game/src/production/camera_semantic.rs` | names it | `Outcome`, `Samus` | 325 | 81 |
@@ -2628,7 +2628,8 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-movement | `crates/game/src/production/movement_ceres.rs` | names it | `Frame`, `Outcome`, `Rules` | 167 | 43 |
 | samus-movement | `crates/game/src/production/movement_touchdown.rs` | names it | `Outcome`, `Rules` | 431 | 102 |
 | samus-movement | `crates/game/src/production/movement_work.rs` | names it | `Frame`, `Outcome`, `Rules`, `Samus`, `suspended` | 923 | 172 |
-| samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 4,575 | 765 |
+| samus-movement | `crates/game/src/production/played.rs` | names it | `Dashing`, `Frame`, `Outcome`, `Rules`, `StandingAnimation`, `UnknownPose`, `WallTest` | 1,181 | 197 |
+| samus-movement | `crates/game/src/production.rs` | names it | `Frame`, `Outcome`, `Samus`, `UnknownPose` | 4,575 | 766 |
 | samus-movement | `crates/game/src/state/owned.rs` | names it | `Samus` | 0 | 73 |
 | world-camera | `crates/game/src/production/camera_semantic.rs` | names it | `Camera`, `Frame`, `Heights`, `LeadSetting`, `Room`, `Rules`, `Samus` | 325 | 81 |
 | world-camera | `crates/game/src/production/connected.rs` | names it | `Camera` | 2,962 | 467 |
@@ -2636,10 +2637,11 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | world-camera | `crates/game/src/production/frame/shot_opportunity/continuation.rs` | names it | `Camera`, `LeadSetting`, `Room`, `Rules` | 1,156 | 298 |
 | world-camera | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `Camera`, `Frame`, `LeadSetting`, `Room`, `Rules` | 2,596 | 399 |
 | world-camera | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 4,575 | 765 |
+| world-camera | `crates/game/src/production/played.rs` | names it | `Frame`, `Heights`, `LeadSetting`, `Room` | 1,181 | 197 |
+| world-camera | `crates/game/src/production.rs` | names it | `Camera`, `Frame` | 4,575 | 766 |
 | world-camera | `crates/game/src/state/owned.rs` | names it | `Camera` | 0 | 73 |
 | run-progress | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
-| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 4,575 | 765 |
+| run-progress | `crates/game/src/production.rs` | names it | `Progress`, `Report` | 4,575 | 766 |
 | run-progress | `crates/game/src/state/owned.rs` | names it | `Progress` | 0 | 73 |
 | interface-hud | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `Ammo`, `Ammunition`, `CancelButton`, `ControlAnswer`, `Equipped`, `HudEvent`, `ItemControlInputs`, `SelectButton`, `SelectableItem`, `Selection` | 832 | 85 |
 | interface-hud | `crates/game/src/production/appearance.rs` | names it | `ControlAnswer`, `Selection` | 1,631 | 316 |
@@ -2669,11 +2671,11 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | interface-hud | `crates/game/src/production/frame/s6_drawing.rs` | names it | `Selection` | 3,936 | 546 |
 | interface-hud | `crates/game/src/production/health_tail.rs` | names it | `Ammunition`, `CancelButton`, `Dropped`, `Energy`, `FrameCount`, `HerMap`, `HudOpportunity`, `HudPictures`, `HudState`, `ItemControlInputs`, `MiniMapPower`, `MovementInputs`, `Reserve`, `Room`, `Rules`, `SelectButton`, `Selection`, `StatusInputs` | 1,358 | 309 |
 | interface-hud | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 4,575 | 765 |
+| interface-hud | `crates/game/src/production.rs` | names it | `HudEvent`, `HudState` | 4,575 | 766 |
 | interface-hud | `crates/game/src/state/owned.rs` | names it | `HudState` | 0 | 73 |
 | world-blocks | `crates/game/src/production/entries.rs` | names it | `Placement`, `Report`, `Request`, `Rules`, `Run`, `State` | 1,760 | 327 |
 | world-blocks | `crates/game/src/production/immutable.rs` | names it | `Rules` | 171 | 58 |
-| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 4,575 | 765 |
+| world-blocks | `crates/game/src/production.rs` | names it | `OutsideTheRoom`, `State` | 4,575 | 766 |
 | world-blocks | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 73 |
 | samus-appearance | `crates/game/src/production/animation.rs` | names it | `AnimationInputs`, `Clip`, `Content`, `Figure`, `Inputs`, `Paces`, `Rules`, `State`, `update` | 446 | 105 |
 | samus-appearance | `crates/game/src/production/appearance/cannon_tests.rs` | names it | `CannonDelay` | 832 | 85 |
@@ -2701,7 +2703,8 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | samus-appearance | `crates/game/src/production/movement_touchdown.rs` | names it | `Figure` | 431 | 102 |
 | samus-appearance | `crates/game/src/production/movement_work.rs` | names it | `Figure` | 923 | 172 |
 | samus-appearance | `crates/game/src/production/passage_audio.rs` | names it | `Charge`, `Opportunity`, `SoundQueue`, `SoundRequest` | 770 | 165 |
-| samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 4,575 | 765 |
+| samus-appearance | `crates/game/src/production/played.rs` | names it | `CinematicActivity`, `Dash`, `Figure`, `Inputs`, `MoveEvent`, `Rules` | 1,181 | 197 |
+| samus-appearance | `crates/game/src/production.rs` | names it | `Inputs`, `PublishedSound`, `State` | 4,575 | 766 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge/import.rs` | bridge | `Branch`, `Clip`, `Content`, `Control`, `Figure`, `Hold`, `Instruction`, `Pace`, `Paces`, `Step` | 1,683 | 270 |
 | samus-appearance | `crates/game/src/samus_appearance_bridge.rs` | bridge | - | 0 | 2 |
 | samus-appearance | `crates/game/src/state/owned.rs` | names it | `State` | 0 | 73 |
@@ -2713,12 +2716,12 @@ The engine files (`crates/game/src`) that name each model's crate: its bridge, w
 | boss-ceres-ridley | `crates/game/src/production/frame/shot_opportunity/continuation/checkpoint.rs` | names it | `Phase`, `Quarter`, `Wait` | 1,208 | 211 |
 | boss-ceres-ridley | `crates/game/src/production/frame/shot_opportunity.rs` | names it | `CeresDoor`, `Inputs`, `OpeningSound`, `Rules`, `Run`, `Stage` | 2,596 | 399 |
 | boss-ceres-ridley | `crates/game/src/production/movement_ceres.rs` | names it | `CeresDoor`, `Inputs`, `Rules`, `Run`, `Stage` | 167 | 43 |
-| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 4,575 | 765 |
+| boss-ceres-ridley | `crates/game/src/production.rs` | names it | `CeresDoor`, `Inputs`, `Run` | 4,575 | 766 |
 | boss-ceres-ridley | `crates/game/src/state/owned.rs` | names it | `CeresDoor` | 0 | 73 |
 | world-doors | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
 | world-doors | `crates/game/src/production/entries.rs` | names it | `Doors`, `Scene` | 1,760 | 327 |
 | world-doors | `crates/game/src/production/passage_audio.rs` | names it | `Arrival`, `COLOURS`, `Doors`, `HerSound`, `Inputs`, `Passage`, `Phase`, `RoomSound`, `Rules`, `Scene` | 770 | 165 |
-| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 4,575 | 765 |
+| world-doors | `crates/game/src/production.rs` | names it | `Exports`, `Inputs` | 4,575 | 766 |
 | samus-health | `crates/game/src/production/content.rs` | names it | `Rules` | 285 | 105 |
 | samus-health | `crates/game/src/production/frame/frame_history.rs` | names it | `State` | 751 | 199 |
 | samus-health | `crates/game/src/production/frame/health.rs` | bridge | `ProtectionFrames`, `Rules`, `State`, `WarningSound` | 2,077 | 411 |

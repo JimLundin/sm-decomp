@@ -19,11 +19,9 @@ use super::{Sources, appearance, camera, connected, data_failure, movement};
 use crate::cache::Cache;
 use crate::lock::{Lock, RowId};
 use crate::source;
+use canonical::model::Model;
 use game::production::connected::inputs::Inputs;
-use game::production::{
-    AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules, ProductionSeed,
-};
-use game::state::owned::OwnedState;
+use game::production::played;
 use oracle_record::{Cut, FrameRecord};
 use types::Parity;
 
@@ -134,7 +132,7 @@ fn expected(
         row,
         cut,
     )?);
-    let (state, playing) = appearance::running_owner(wram, content)?;
+    let (state, playing) = appearance::owner(wram, content)?;
     fields.extend(appearance::initial(state, content));
     fields.push(connected::playing_observation(playing));
     fields.extend(camera::expected(wram)?);
@@ -205,9 +203,11 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
     Ok(report(held, Stop::End))
 }
 
-/// One played run's carried production and the facts held from its seed.
+/// One played run's carried owners and the facts held from its seed.
 struct Run<'a> {
-    production: Production,
+    state: played::State,
+    played: played::Content,
+    rules: played::Rules,
     room: Room,
     content: &'a connected::Content,
     row: &'a str,
@@ -222,32 +222,23 @@ impl<'a> Run<'a> {
         start: u64,
     ) -> Result<Self, Outcome> {
         let room = room(&seed.wram, content)?;
-        let (appearance, playing) = appearance::running_owner(&seed.wram, &content.appearance)?;
-        let state = game::production::connected::State::new(
-            movement::seed(&seed.wram)?,
-            appearance,
-            playing,
-            camera::seed(&seed.wram, &camera::Content)?,
-        )
-        .map_err(|fault| Outcome::Unsupported {
-            cut: None,
-            dependency: format!("played admission {fault:?}"),
-        })?;
-        let production = Production::admit(
-            ProductionSeed::Connected(Box::new(state)),
-            ProductionContent::Connected(Box::new(game::production::connected::Content {
+        let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
+        Ok(Self {
+            state: played::State {
+                movement: Model(movement::seed(&seed.wram)?),
+                appearance: Model(appearance),
+                figure: Model(figure),
+                camera: Model(camera::seed(&seed.wram, &camera::Content)?),
+            },
+            played: played::Content {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
-            })),
-            ProductionRules::Connected(Box::new(game::production::connected::Rules {
+            },
+            rules: played::Rules {
                 movement: samus_movement::Rules::default(),
                 appearance: samus_appearance::Rules::VANILLA,
                 camera: game::production::CameraRules::new(world_camera::Rules::REFERENCE),
-            })),
-        )
-        .map_err(|_| data_failure(None, "played production admission"))?;
-        Ok(Self {
-            production,
+            },
             room,
             content,
             row,
@@ -281,29 +272,37 @@ impl<'a> Run<'a> {
             self.room.counter,
             cut.saturating_sub(self.start).saturating_sub(1),
         );
-        let outputs = self
-            .production
-            .advance(AdvanceInput::Connected {
-                inputs: &inputs,
-                advance: game::production::connected::Advance::Opportunity,
-            })
-            .map_err(|fault| super::production_failure(cut, fault))?;
-        let ProductionOutputs::Connected(outputs) = outputs else {
-            return Err(data_failure(None, "played production outputs"));
-        };
-        let OwnedState::Connected(state) = self.production.state() else {
-            return Err(data_failure(None, "played production state"));
-        };
-        let mut actual = connected::actual(state, &self.content.appearance, Some(&outputs));
-        actual.retain(|field| !field.field.starts_with("movement.travel."));
+        self.state
+            .step(&inputs, &self.played, &self.rules)
+            .map_err(|fault| Outcome::Unsupported {
+                cut: Some(cut),
+                dependency: format!("played frame {fault:?}"),
+            })?;
         let expected = expected(&current.wram, &self.content.appearance, self.row, cut)?;
-        compare(&expected, &actual).map_err(|fault| match fault {
-            CompareFault::Difference(field) => Outcome::Difference { cut, field },
-            CompareFault::EmptyExpected
-            | CompareFault::DuplicateField(_)
-            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
+        compare(&expected, &actual(&self.state, &self.content.appearance)).map_err(|fault| {
+            match fault {
+                CompareFault::Difference(field) => Outcome::Difference { cut, field },
+                CompareFault::EmptyExpected
+                | CompareFault::DuplicateField(_)
+                | CompareFault::MissingActual(_) => {
+                    data_failure(Some(cut), "played comparison schema")
+                }
+            }
         })
     }
+}
+
+fn actual(state: &played::State, content: &appearance::Content) -> Vec<Observation> {
+    let samus = &state.movement.0;
+    let mut fields = vec![
+        connected::state_observation(samus),
+        Observation::quantity("movement.position.x", i64::from(samus.position.x.0)),
+        Observation::quantity("movement.position.y", i64::from(samus.position.y.0)),
+    ];
+    fields.extend(appearance::initial(state.appearance.0, content));
+    fields.push(connected::playing_observation(state.figure.0));
+    fields.extend(camera::initial(&state.camera.0));
+    fields
 }
 
 #[cfg(test)]

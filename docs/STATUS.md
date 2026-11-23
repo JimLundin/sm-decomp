@@ -23,11 +23,13 @@ explicit unsupported boundaries. Borrowed facts never count as modeled producers
 ## Frames played alone
 
 The rung measure is the number of cuts a room plays alone from its seed.
-[`verify::replay::played`](../crates/verify/src/replay/played.rs) admits the carried Movement,
-Appearance and Camera owner once from the seed record. Each later cut's only new input is the
+[`verify::replay::played`](../crates/verify/src/replay/played.rs) admits the whole-frame
+owner [`game::production::played`](../crates/game/src/production/played.rs) once from the seed
+record. Each frame it steps her clip's look ahead, `Samus::step`, the animation update and the
+camera, once each, in any pose with imported content. Each later cut's only new input is the
 movie's pad from the preceding vblank. The run compares those owners with the record at every
-requested NMI return and stops at the first difference, the first unsupported family or the
-first lag cut. Room facts with no selected producer yet are read once from the seed and held;
+requested NMI return and stops at the first difference, the first unsupported pose or content,
+or the first lag cut. Room facts with no selected producer yet are read once from the seed and held;
 `SEED_HELD` names them, and each is a missing owner. The comparison is at frame cuts; it does
 not compare intra-frame bus timing.
 

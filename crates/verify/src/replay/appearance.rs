@@ -149,29 +149,38 @@ pub(super) fn running_owner(
     wram: &[u8],
     content: &Content,
 ) -> Result<(State, samus_appearance::Figure), Outcome> {
-    let imported = content
-        .clips
-        .of(PoseId(word(wram, 0x0a1c)?))
-        .ok_or_else(|| data_failure(None, "running figure content"))?;
-    if imported.figure.pose.action != types::Action::Running
-        || imported.figure.sprite != types::Sprite::Plain
+    let (state, figure) = owner(wram, content)?;
+    if figure.pose.action != types::Action::Running
+        || figure.sprite != types::Sprite::Plain
         || !matches!(
-            imported.figure.pose.facing,
+            figure.pose.facing,
             types::Facing::Left | types::Facing::Right
         )
     {
         return Err(unsupported("running side-facing figure"));
     }
+    Ok((state, figure))
+}
+
+/// The animation State and the figure she is drawn in, in any pose with imported content.
+pub(super) fn owner(
+    wram: &[u8],
+    content: &Content,
+) -> Result<(State, samus_appearance::Figure), Outcome> {
+    let imported = content
+        .clips
+        .of(PoseId(word(wram, 0x0a1c)?))
+        .ok_or_else(|| data_failure(None, "figure content"))?;
     let step = imported
         .step_of(AnimationFrame(word(wram, 0x0a96)?))
-        .ok_or_else(|| data_failure(None, "running observed playhead"))?;
-    let timer = u8::try_from(word(wram, 0x0a94)?)
-        .map_err(|_| data_failure(None, "running observed timer"))?;
+        .ok_or_else(|| data_failure(None, "observed playhead"))?;
+    let timer =
+        u8::try_from(word(wram, 0x0a94)?).map_err(|_| data_failure(None, "observed timer"))?;
     let [laps, stage] = word(wram, 0x0b3e)?.to_le_bytes();
     let stage = BoostStage::ALL
         .get(usize::from(stage))
         .copied()
-        .ok_or_else(|| data_failure(None, "running observed boost"))?;
+        .ok_or_else(|| data_failure(None, "observed boost"))?;
     Ok((
         State {
             playhead: Playhead {
