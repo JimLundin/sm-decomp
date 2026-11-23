@@ -4,9 +4,11 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -56,23 +58,54 @@ class CoverageTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.select([package], ["sample", "sample"], "lib")
 
-    def wrapper_status(self, outcomes, selected=None):
+    def wrapper_status(self, outcomes, selected=None, jobs="4"):
+        """The wrapper's status when cargo builds every selected target and the children return
+        `outcomes` after the build's."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             selected = selected or [("sample", "--lib", "", root)]
-            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample"]), patch.object(test_dll, "targets", return_value=selected), patch.object(test_dll.subprocess, "run", side_effect=outcomes), contextlib.redirect_stdout(io.StringIO()):
+            built = {target: root / f"harness{index}.exe" for index, target in enumerate(selected)}
+            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample"]), \
+                 patch.dict(test_dll.os.environ, {"SM_TEST_JOBS": jobs}), \
+                 patch.object(test_dll, "targets", return_value=selected), \
+                 patch.object(test_dll, "artifacts", return_value=built), \
+                 patch.object(test_dll, "place"), \
+                 patch.object(test_dll.subprocess, "run", side_effect=outcomes), \
+                 contextlib.redirect_stdout(io.StringIO()):
                 return test_dll.main()
 
     def test_child_failure_preserves_stage_and_infrastructure_precedence(self):
         result = lambda status: subprocess.CompletedProcess([], status)
         self.assertEqual(self.wrapper_status([result(0), result(0)]), 0)
         self.assertEqual(self.wrapper_status([result(0), result(101)]), 1)
-        for outcomes in [[result(126)], [result(1)], [OSError()],
+        for outcomes in [[result(126), result(0)], [result(1), result(0)], [OSError()],
                          [result(0), result(126)], [result(0), result(-9)], [result(0), result(1)],
                          [result(0), OSError()]]:
             self.assertEqual(self.wrapper_status(outcomes), 2)
         selected = [("sample", "--lib", "", Path(".")), ("sample", "--test", "other", Path("."))]
-        self.assertEqual(self.wrapper_status([result(0), result(101), result(1)], selected), 2)
+        for jobs in ["1", "4"]:
+            self.assertEqual(self.wrapper_status([result(0), result(101), result(1)], selected, jobs), 2)
+            self.assertEqual(self.wrapper_status([result(0), result(101), result(0)], selected, jobs), 1)
+
+    def test_a_target_cargo_did_not_build_is_an_infrastructure_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            selected = [("sample", "--lib", "", root), ("sample", "--test", "other", root)]
+            runs = []
+
+            def run(command, **kwargs):
+                runs.append(command)
+                return subprocess.CompletedProcess(command, 0)
+
+            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample"]), \
+                 patch.object(test_dll, "targets", return_value=selected), \
+                 patch.object(test_dll, "artifacts", return_value={selected[0]: root / "lib.exe"}), \
+                 patch.object(test_dll, "place"), \
+                 patch.object(test_dll.subprocess, "run", side_effect=run), \
+                 contextlib.redirect_stdout(io.StringIO()) as captured:
+                self.assertEqual(test_dll.main(), 2)
+            self.assertEqual(len(runs), 2)  # The build, then the one suite that was built.
+            self.assertIn("sample --test other (build)", captured.getvalue())
 
     def test_target_discovery_failure_is_infrastructure(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -99,20 +132,102 @@ class CoverageTests(unittest.TestCase):
                 print(result.stdout.decode(), end="")
                 return result
 
+            selected = [("sample", "--lib", "", root)]
             captured = io.StringIO()
-            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "--suite", "lib", "sample"]), patch.object(test_dll, "targets", return_value=[("sample", "--lib", "", root)]), patch.object(test_dll.subprocess, "run", side_effect=run), contextlib.redirect_stdout(captured):
+            with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "--suite", "lib", "sample"]), patch.object(test_dll, "targets", return_value=selected), patch.object(test_dll, "artifacts", return_value={selected[0]: root / "lib.exe"}), patch.object(test_dll, "place"), patch.object(test_dll.subprocess, "run", side_effect=run), contextlib.redirect_stdout(captured):
                 self.assertEqual(test_dll.main(), 2)
             self.assertEqual(calls, 2)
             self.assertIn("test result: FAILED.", captured.getvalue())
 
-    def test_bin_command_compiles_a_test_harness(self):
-        command = test_dll.build_command("cargo", "sample", "--bin", "sample", Path("sample.dll"))
-        self.assertEqual(command[command.index("--profile") + 1], "test")
-        self.assertEqual(command[command.index("--bin") + 1], "sample")
-        self.assertIn("link-arg=-shared", command)
-        for kind, name in [("--lib", ""), ("--test", "integration")]:
-            command = test_dll.build_command("cargo", "sample", kind, name, Path("sample.dll"))
-            self.assertNotIn("--test", command[command.index("--") + 1:])
+    def test_one_cargo_invocation_builds_every_requested_target(self):
+        root = Path("/invented")
+        selected = [("a", "--lib", "", root / "a"), ("a", "--test", "t", root / "a"),
+                    ("b", "--bin", "tool", root / "b")]
+        command = test_dll.build_command("cargo", selected, None)
+        self.assertEqual(command[:3], ["cargo", "test", "--no-run"])
+        self.assertEqual(command[command.index("--target") + 1], "x86_64-pc-windows-gnu")
+        self.assertEqual([command[i + 1] for i, arg in enumerate(command) if arg == "-p"], ["a", "b"])
+        self.assertEqual(command[-1], "--tests")
+        self.assertEqual(test_dll.build_command("cargo", selected[:1], "lib")[-1], "--lib")
+        self.assertEqual(test_dll.build_command("cargo", selected[1:2], "test:t")[-2:], ["--test", "t"])
+
+    def test_harnesses_link_as_dlls_exporting_main_and_keep_existing_flags(self):
+        definition = Path("/invented dir/exports.def")
+        tail = ["-C", "link-arg=-shared", "-C", "link-arg=/invented dir/exports.def"]
+        for env, expected in [({}, tail), ({"RUSTFLAGS": "-C debuginfo=0"}, ["-C", "debuginfo=0", *tail]),
+                              ({"RUSTFLAGS": "-W x", "CARGO_ENCODED_RUSTFLAGS": "-C\x1fopt-level=1"},
+                               ["-C", "opt-level=1", *tail])]:
+            with patch.dict(test_dll.os.environ, env, clear=True):
+                flags = test_dll.build_env(definition)["CARGO_ENCODED_RUSTFLAGS"]
+            self.assertEqual(flags.split("\x1f"), expected)
+
+    def test_artifacts_map_each_harness_to_its_package_and_target(self):
+        a, b = Path("/invented/a"), Path("/invented/b")
+        selected = [("a", "--lib", "", a), ("a", "--test", "vectors", a), ("b", "--test", "vectors", b),
+                    ("b", "--bin", "tool", b)]
+
+        def message(root, kind, name, test, executable):
+            return json.dumps({"reason": "compiler-artifact", "manifest_path": str(root / "Cargo.toml"),
+                               "target": {"kind": [kind], "name": name}, "profile": {"test": test},
+                               "executable": executable})
+
+        stdout = "\n".join([
+            message(a, "lib", "a", True, "/t/a-1.exe"),
+            message(a, "lib", "a", False, None),
+            message(a, "test", "vectors", True, "/t/vectors-2.exe"),
+            message(b, "test", "vectors", True, "/t/vectors-3.exe"),
+            message(b, "bin", "tool", False, "/t/tool.exe"),
+            message(b, "custom-build", "build-script-build", False, "/t/build.exe"),
+            json.dumps({"reason": "build-finished", "success": True}),
+        ])
+        built = test_dll.artifacts(stdout, selected)
+        self.assertEqual(built, {selected[0]: Path("/t/a-1.exe"), selected[1]: Path("/t/vectors-2.exe"),
+                                 selected[2]: Path("/t/vectors-3.exe")})
+
+    def test_place_links_the_harness_once_and_replaces_a_stale_dll(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            harness, dll = root / "harness.exe", root / "out.dll"
+            harness.write_bytes(b"new")
+            dll.write_bytes(b"stale")
+            test_dll.place(harness, dll)
+            self.assertEqual(dll.read_bytes(), b"new")
+            self.assertTrue(os.path.samefile(harness, dll))
+            test_dll.place(harness, dll)
+            self.assertTrue(os.path.samefile(harness, dll))
+
+    def test_suites_run_concurrently_up_to_the_job_limit_with_whole_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            selected = [("sample", "--test", f"t{index}", root) for index in range(3)]
+            built = {target: root / f"{target[2]}.exe" for target in selected}
+            for jobs, together in [("3", True), ("2", False), ("1", False)]:
+                barrier = threading.Barrier(3, timeout=2)
+                met = []
+
+                def run(command, **kwargs):
+                    if command[0] == "cargo":
+                        return subprocess.CompletedProcess(command, 0)
+                    try:
+                        barrier.wait()
+                        met.append(True)
+                    except threading.BrokenBarrierError:
+                        met.append(False)
+                    name = Path(command[4]).stem
+                    return subprocess.CompletedProcess(command, 0, f"{name} first\n{name} last\n".encode())
+
+                with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample"]), \
+                     patch.dict(test_dll.os.environ, {"SM_TEST_JOBS": jobs}), \
+                     patch.object(test_dll, "targets", return_value=selected), \
+                     patch.object(test_dll, "artifacts", return_value=built), \
+                     patch.object(test_dll, "place"), \
+                     patch.object(test_dll.subprocess, "run", side_effect=run), \
+                     contextlib.redirect_stdout(io.StringIO()) as captured:
+                    self.assertEqual(test_dll.main(), 0)
+                self.assertEqual(all(met), together, jobs)
+                for index in range(3):
+                    self.assertIn(f"(sample-t{index}.dll)\nsample-t{index} first\nsample-t{index} last\n",
+                                  captured.getvalue())
 
     def test_every_suite_exports_only_main_and_forwards_libtest_arguments(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -124,7 +239,9 @@ class CoverageTests(unittest.TestCase):
 
             def run(command, **kwargs):
                 if command[0] == "cargo":
-                    definitions = [Path(arg.removeprefix("link-arg=")) for arg in command
+                    flags = kwargs["env"]["CARGO_ENCODED_RUSTFLAGS"].split("\x1f")
+                    self.assertIn("link-arg=-shared", flags)
+                    definitions = [Path(arg.removeprefix("link-arg=")) for arg in flags
                                    if arg.startswith("link-arg=") and arg.endswith(".def")]
                     self.assertEqual(len(definitions), 1)
                     self.assertEqual(definitions[0].read_bytes(), b"EXPORTS\nmain\n")
@@ -133,15 +250,18 @@ class CoverageTests(unittest.TestCase):
                     self.assertEqual(command[-3:], ["--exact", "invented test", "--nocapture"])
                     self.assertEqual(kwargs["cwd"], root)
                     runs.append(command)
-                return subprocess.CompletedProcess(command, 0)
+                return subprocess.CompletedProcess(command, 0, b"")
 
+            built = {target: root / f"harness{index}.exe" for index, target in enumerate(selected)}
             with patch.object(sys, "argv", ["test_dll.py", "cargo", str(root / "out"), "sample",
                                            "--", "--exact", "invented test", "--nocapture"]), \
                  patch.object(test_dll, "targets", return_value=selected), \
+                 patch.object(test_dll, "artifacts", return_value=built), \
+                 patch.object(test_dll, "place"), \
                  patch.object(test_dll.subprocess, "run", side_effect=run), \
                  contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(test_dll.main(), 0)
-            self.assertEqual(len(builds), 3)
+            self.assertEqual(len(builds), 1)
             self.assertEqual(len(runs), 3)
 
     def test_failed_export_preparation_does_not_build_or_run(self):
