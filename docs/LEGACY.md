@@ -116,6 +116,13 @@ Production retains no inert old enemy or PLM slots. Independently admitted solid
 a scoped input, not proof of AI, population changes or lifecycle. Required missing owners fail
 explicitly rather than carrying raw words forward as simulated behaviour.
 
+## The engine: colours a room's enemies set as they are placed
+
+A room's loading puts the Ceres doors' colour set for the station's stage into the doors' row
+for every version that loads the Ceres door. The engine places no enemies yet, so this holds
+for every Ceres door alike. Before Ridley's getaway, the door in Ridley's room puts the calm
+set in the row its species loads to instead. No other species' placement changes a colour.
+
 ## The engine: planned differences from the original
 
 The engine executes no game code, including the uploaded sound driver. Driver upload bytes are

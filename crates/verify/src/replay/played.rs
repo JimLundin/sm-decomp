@@ -27,7 +27,7 @@ use game::production::played;
 use oracle_record::{Cut, FrameRecord, NmiKind};
 use std::path::Path;
 use types::{Pair, Parity};
-use world_doors::{Doors, Palette};
+use world_doors::{Doors, Fetching, Palette, Passage, Phase};
 
 /// Room facts taken from the seed and held, because no selected owner produces them yet.
 /// Each one is a missing owner; the list shrinks as owners join the played loop.
@@ -42,12 +42,16 @@ pub const SEED_HELD: &[&str] = &[
     "camera room settings and lead",
     "escape timer",
     "passage sounds sent and music ready",
-    "progress, which chooses the next room's version",
+    "progress, which chooses the next room's version, her suit and her beams",
+    "Ceres station stage",
 ];
 
 /// Inputs read from the record at each cut, because their owner is outside the rungs
 /// (decision 35). The list shrinks as the platform's costs are modelled.
-pub const BORROWED: &[&str] = &["lag: whether each cut's frame of work finished"];
+pub const BORROWED: &[&str] = &[
+    "lag: whether each cut's frame of work finished",
+    "lag: the contents' fetch done on its first frame, within the slide",
+];
 
 /// Where a played run stopped.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -112,6 +116,23 @@ const fn finished(record: &FrameRecord) -> bool {
     matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested))
 }
 
+/// The borrowed lag of the contents' fetch: done on its first frame. The fetch's work waits on
+/// its own uploads, so every NMI through it is a lag NMI and none says when its colours were
+/// set; the record shows them set within the slide, and the visor lit as the slide ends, which
+/// only a fetch done before the slide's end gives. Its first frame is the earliest such.
+const fn fetching_contents(doors: Doors) -> bool {
+    matches!(
+        doors,
+        Doors::Passing(Passage {
+            phase: Phase::Arriving {
+                fetching: Fetching::Contents,
+                ..
+            },
+            ..
+        })
+    )
+}
+
 fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
     at.read(wram).map_err(|_| data_failure(None, at.name))
 }
@@ -124,6 +145,7 @@ struct Room {
     /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
     sounds_sent: bool,
     progress: run_progress::Progress,
+    ceres: boss_ceres_ridley::Stage,
     counter: u16,
 }
 
@@ -142,6 +164,16 @@ fn room(seed: &[u8], content: &connected::Content, image: &Rom) -> Result<Room, 
         doorways: doorways(seed, image)?,
         timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
         progress: super::progress::seed(seed)?,
+        ceres: match word(seed, source::CERES_STATUS)? {
+            0 => boss_ceres_ridley::Stage::Calm,
+            1 => boss_ceres_ridley::Stage::Getaway,
+            _ => {
+                return Err(Outcome::Unsupported {
+                    cut: None,
+                    dependency: "played seed in the Ceres escape".into(),
+                });
+            }
+        },
         counter: word(seed, source::NMI_FRAME_COUNTER_WORD)?,
     })
 }
@@ -181,12 +213,18 @@ fn doorways(seed: &[u8], image: &Rom) -> Result<Vec<played::Doorway>, Outcome> {
     Ok(doorways)
 }
 
-/// The rooms the engine loads and their tilesets, imported from the player's ROM.
+/// The rooms the engine loads, their tilesets and the sprites' colours, imported from the
+/// player's ROM.
 fn rooms(image: &Rom) -> Result<game::production::room_loading::Rooms, Outcome> {
     let bad = || data_failure(None, "played rooms import");
     let world = import::world::import(image.lorom(), &import::world::LOADED).map_err(|_| bad())?;
     let tilesets = import::tileset::import(image.lorom(), &world).map_err(|_| bad())?;
-    Ok(game::production::room_loading::Rooms { world, tilesets })
+    Ok(game::production::room_loading::Rooms {
+        world,
+        tilesets,
+        actors: import::actors::import(image.lorom()).map_err(|_| bad())?,
+        samus: import::samus::palettes::import(image.lorom()).map_err(|_| bad())?,
+    })
 }
 
 fn expected(
@@ -407,13 +445,14 @@ impl<'a> Run<'a> {
         inputs.parity = parity(self.room.counter);
         let passing = played::Passing {
             doorways: &self.room.doorways,
-            work_done: finished(current),
+            work_done: finished(current) || fetching_contents(self.state.doors),
             audio: played::PassageAudio {
                 sounds_sent: self.room.sounds_sent,
                 music_ready: true,
             },
             timer_running: self.room.timer_running,
             progress: &self.room.progress,
+            ceres: self.room.ceres,
         };
         self.state
             .step(&inputs, &passing, &self.played, &self.rules)

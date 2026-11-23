@@ -43,7 +43,7 @@ pub struct Content {
     pub appearance: AppearanceContent,
     /// Which group each of the screen's colours is in, for the passage's fades.
     pub colour_groups: [ColourGroup; COLOURS],
-    /// The rooms and tilesets the passages load.
+    /// The rooms, tilesets and sprite colours the passages load.
     pub rooms: Rooms,
 }
 
@@ -86,8 +86,10 @@ pub struct Passing<'a> {
     pub audio: PassageAudio,
     /// The escape's: its timer is running.
     pub timer_running: bool,
-    /// Her progress, which chooses the next room's version.
+    /// Her progress, which chooses the next room's version, her suit and her beams.
     pub progress: &'a run_progress::Progress,
+    /// The Ceres station's stage, for the colours of the doors the next room places.
+    pub ceres: boss_ceres_ridley::Stage,
 }
 
 /// What audio answers the passage.
@@ -291,7 +293,10 @@ impl State {
             room_loading::load(
                 exports.report.call,
                 doorway.through,
-                passing.progress,
+                room_loading::Run {
+                    progress: passing.progress,
+                    ceres: passing.ceres,
+                },
                 &content.rooms,
                 &mut palette,
             )

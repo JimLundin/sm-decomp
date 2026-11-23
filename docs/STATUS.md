@@ -31,8 +31,12 @@ reach a door to a room plays out whole; from the next, while the passage runs, t
 alone and move her position, the view, where the camera last saw her and the colours. As each
 of the passage's calls is done, the room's loading
 ([`game::production::room_loading`](../crates/game/src/production/room_loading.rs)) loads its
-part of the next room from the imported world and tilesets, in the version her progress
-chooses: fetching the tiles heads the colours for the tileset's. Each later cut's only new input is the movie's pad from the preceding vblank. The run compares those
+part of the next room from the imported world, tilesets, species and sprite palettes, in the
+version her progress chooses. Fetching the tiles heads the colours for the tileset's. Fetching
+the contents heads the sprite rows for her suit's, the species' the version loads, the common
+sprites' and the flashing enemies' palettes, and the Ceres doors' colour set for the station's
+stage. It also shows her shots' palette for the beams she has switched on at once. Each later
+cut's only new input is the movie's pad from the preceding vblank. The run compares those
 owners with the record at every NMI return and stops at the first difference or the first
 unsupported pose or content. Room facts with no selected producer yet are read once from the
 seed and held; `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model
@@ -45,7 +49,11 @@ Lag is borrowed until the platform's costs are modelled (MODEL decision 35); `BO
 it. The runner reads one fact per cut from the record: whether the NMI found the frame's work
 finished. A lag NMI finds it part-done, so the game commits no new picture (the screen keeps the
 previous snapshot) and the work runs on into the next frame. In a passage this is the doors'
-"work done" input: the phase holds, and only the placing and the slide move. The colours are
+"work done" input: the phase holds, and only the placing and the slide move. The contents'
+fetch is the exception, borrowed as done on its first frame. Its work waits on its own uploads,
+so every NMI through it is a lag NMI, and none says when its colours were set. The record shows
+them set within the slide and the visor lit as the slide ends, and only a fetch done before
+the slide's end does that. Its first frame is the earliest such frame. The colours are
 compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. The
 game's frame counter, and so her parity, counts each NMI that reads the pad. A lag cut in play
 is still a named stop: the M0 row has none, so no record yet shows how it plays.
