@@ -12,10 +12,38 @@ cargo=${CARGO:-cargo}
 bad=0
 fail() { echo "$1"; bad=1; }
 
+# The self-tests are independent, so they start now, at most one per processor, each into its own
+# file; each one's result is reported where it is listed below, in the same order and wording.
+selftests=$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/crate-rules-XXXXXX")
+trap 'rm -rf "$selftests"' EXIT
+slots=$(nproc 2>/dev/null || echo 2)
+# Starts self-test script $1 once a slot is free.
+start() {
+  while [ "$(jobs -rp | wc -l)" -ge "$slots" ]; do wait -n; done
+  local name=${1//\//_}
+  { bash "$1" >"$selftests/$name.out" 2>&1; echo $? >"$selftests/$name.partial"; mv "$selftests/$name.partial" "$selftests/$name.status"; } &
+}
+# Fails with self-test $1's output unless it passed.
+finish() {
+  local name=${1//\//_}
+  while [ ! -f "$selftests/$name.status" ] && [ -n "$(jobs -rp)" ]; do wait -n || true; done
+  [ "$(cat "$selftests/$name.status")" = 0 ] || fail "$(cat "$selftests/$name.out")"
+}
+start tools/cleanroom/launch_test.sh
+start tools/cleanroom/code_check_test.sh
+start tools/cleanroom/canary_test.sh
+[ -z "${SM_SKIP_IMPORT_SELF_TEST:-}" ] && start tools/cleanroom/import_check_test.sh
+start tools/cleanroom/score_scan_test.sh
+start tools/lane/squash_test.sh
+start tools/lane/worktree_test.sh
+start tools/cleanroom/blind_copy_test.sh
+start tools/check_dependency_rules_test.sh
+start tools/cleanroom/adjusted_vectors_test.sh
+
 . tools/check_dependency_rules.sh
 check_direct_dependencies
 check_dependency_reachability
-out=$(bash tools/check_dependency_rules_test.sh 2>&1) || fail "$out"
+finish tools/check_dependency_rules_test.sh
 
 # Rust source lines matching an extended regex, outside line comments. $1 names the check.
 scan() {
@@ -52,18 +80,19 @@ hits=$(
 if [ -d crates/clean ]; then
   out=$(bash tools/cleanroom/code_check.sh crates/clean/* 2>&1) || fail "$out"
 fi
-out=$(bash tools/cleanroom/code_check_test.sh 2>&1) || fail "$out"
+finish tools/cleanroom/code_check_test.sh
 # The import self-test builds a throwaway worktree cold (about seven minutes). CI always runs it;
 # the local gate skips it, via SM_SKIP_IMPORT_SELF_TEST, when a branch leaves its subject unchanged.
 if [ -z "${SM_SKIP_IMPORT_SELF_TEST:-}" ]; then
-  out=$(bash tools/cleanroom/import_check_test.sh 2>&1) || fail "$out"
+  finish tools/cleanroom/import_check_test.sh
 fi
-out=$(bash tools/cleanroom/score_scan_test.sh 2>&1) || fail "$out"
-out=$(bash tools/lane/squash_test.sh 2>&1) || fail "$out"
-out=$(bash tools/cleanroom/adjusted_vectors_test.sh 2>&1) || fail "$out"
-out=$(bash tools/cleanroom/blind_copy_test.sh 2>&1) || fail "$out"
-out=$(bash tools/cleanroom/canary_test.sh 2>&1) || fail "$out"
-out=$(bash tools/cleanroom/launch_test.sh 2>&1) || fail "$out"
+finish tools/cleanroom/score_scan_test.sh
+finish tools/lane/squash_test.sh
+finish tools/lane/worktree_test.sh
+finish tools/cleanroom/adjusted_vectors_test.sh
+finish tools/cleanroom/blind_copy_test.sh
+finish tools/cleanroom/canary_test.sh
+finish tools/cleanroom/launch_test.sh
 
 # What an export of each specced domain would carry, and the blind reviewer's skill, mention no
 # score or budget (MODEL §1 decision 10); export.sh checks the export itself too.
