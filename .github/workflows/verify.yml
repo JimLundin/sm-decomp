@@ -151,34 +151,12 @@ jobs:
       - &passage_offers
         name: Fetch the touched doorway sound offers
         run: bash tools/ci/fetch_passage_offers.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &shot_five
-        name: Fetch the reviewed carried shot opportunities
-        run: bash tools/ci/fetch_shot_five.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Fetch the reviewed completed shot Frame origin
-        run: bash tools/ci/fetch_shot_frame_origin.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &steady_haze
-        name: Install the independently qualified Steady Haze continuation
-        run: bash tools/ci/fetch_shot_steady_haze.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - name: Install the independently qualified Random arms
-        run: bash tools/ci/fetch_shot_random.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &retained_frame
-        name: Fetch retained native frame inputs and return observations
-        run: bash tools/ci/fetch_retained_frame.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &native_search
         name: Fetch and qualify the pinned native search packets
         run: bash tools/ci/fetch_native_search_packets.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - &health_tail
         name: Fetch the scoped Health tail origin and independent witnesses
         run: bash tools/ci/fetch_health_tail.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &connected_health
-        name: Fetch retained Health and HUD profiles and independent witnesses
-        run: bash tools/ci/fetch_connected_health.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &opening_clock
-        name: Fetch the opening clock inputs and independent comparisons
-        run: bash tools/ci/fetch_opening_clock.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
-      - &opening_ground_corridor
-        name: Fetch independent opening ground-corridor work and observations
-        run: bash tools/ci/fetch_opening_ground_corridor.sh rom/sm.smc "$RUNNER_TEMP/audio-native"
       - name: Run one verification library test
         if: contains(inputs.target, '::')
         env: &witness_env
@@ -286,15 +264,9 @@ jobs:
       - *movement_opportunities
       - *connected_ordinary
       - *shot_drawing
-      - *shot_five
       - *passage_offers
-      - *steady_haze
-      - *retained_frame
       - *native_search
       - *health_tail
-      - *connected_health
-      - *opening_clock
-      - *opening_ground_corridor
       - name: Verify recorded bridge fault rejection and exact restoration
         env:
           CARGO_INCREMENTAL: "1"

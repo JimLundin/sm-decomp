@@ -42,31 +42,6 @@ targets = [
 ]
 
 [[rule]]
-id = "audio-transport/SenderTiming"
-targets = [
-  { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/sender_caller.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/sender_stage.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/sender_contract.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/contact_sender.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame_origin/admission/adjacent_tail.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame_origin/admission/opening_clock.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame/opening_audio.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame/opening_contact.rs" },
-  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "audio-transport/RequestRelease"
-targets = [
-  { role = "model", path = "crates/clean/audio_transport/src/sender.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/contact_sender.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/sender_caller.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame/opening_contact.rs" },
-  { role = "navigation", path = "crates/clean/audio_transport/src/catalogue.rs" },
-]
-
-[[rule]]
 id = "audio-transport/VisibleCompletion"
 targets = [
   { role = "model", path = "crates/clean/audio_transport/src/transport.rs" },
@@ -179,39 +154,6 @@ targets = [
 ]
 
 [[rule]]
-id = "game-random/AdvanceRandom"
-targets = [
-  { role = "model", path = "crates/clean/game_random/src/lib.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/random.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/caller.rs" },
-  { role = "navigation", path = "docs/behaviours/game-random.md" },
-]
-
-[[rule]]
-id = "game-time/PlayTimeAdvance"
-targets = [
-  { role = "model", path = "crates/clean/game_time/src/lib.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/play_time.rs" },
-  { role = "navigation", path = "docs/behaviours/game-time.md" },
-]
-
-[[rule]]
-id = "interface-hud/CountdownContinuation"
-targets = [
-  { role = "model", path = "crates/clean/interface_hud/src/countdown_work.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/countdown_caller.rs" },
-  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "interface-hud/EscapeCountdown"
-targets = [
-  { role = "model", path = "crates/clean/interface_hud/src/countdown.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/countdown_caller.rs" },
-  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
-]
-
-[[rule]]
 id = "interface-hud/Exploring"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/mini_map.rs" },
@@ -235,16 +177,6 @@ targets = [
   { role = "adapter", path = "crates/game/src/production/connected/early_map.rs" },
   { role = "adapter", path = "crates/game/src/production/entries.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
-]
-
-[[rule]]
-id = "interface-hud/RetainedHudWork"
-targets = [
-  { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
-  { role = "adapter", path = "crates/game/src/production/hud.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
-  { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
 ]
 
 [[rule]]
@@ -517,41 +449,6 @@ targets = [
 ]
 
 [[rule]]
-id = "world-haze/HazeBrightens"
-targets = [
-  { role = "model", path = "crates/clean/world_haze/src/lib.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/haze.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/caller.rs" },
-  { role = "navigation", path = "docs/behaviours/world-haze.md" },
-]
-
-[[rule]]
-id = "world-haze/HazeSettles"
-targets = [
-  { role = "model", path = "crates/clean/world_haze/src/lib.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/haze.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/caller.rs" },
-  { role = "navigation", path = "docs/behaviours/world-haze.md" },
-]
-
-[[rule]]
-id = "world-haze/HazeHolds"
-targets = [
-  { role = "model", path = "crates/clean/world_haze/src/lib.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/haze.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/steady_prelude.rs" },
-  { role = "navigation", path = "docs/behaviours/world-haze.md" },
-]
-
-[[rule]]
-id = "world-quake/QuietQuakePhase"
-targets = [
-  { role = "model", path = "crates/clean/world_quake/src/lib.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/room_quake.rs" },
-  { role = "navigation", path = "crates/clean/world_quake/src/catalogue.rs" },
-]
-
-[[rule]]
 id = "samus-movement/AcceptedFloorResponse"
 targets = [
   { role = "model", path = "crates/clean/samus_movement/src/suspended.rs" },
@@ -622,20 +519,4 @@ targets = [
   { role = "model", path = "crates/clean/world_doors/src/step.rs" },
   { role = "adapter", path = "crates/game/src/production/passage_audio.rs" },
   { role = "navigation", path = "docs/behaviours/world-doors.md" },
-]
-
-[[rule]]
-id = "interface-hud/MiniMapUpdate"
-targets = [
-  { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/hud_map_caller.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
-]
-
-[[rule]]
-id = "interface-hud/StatusRefresh"
-targets = [
-  { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
-  { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },
 ]

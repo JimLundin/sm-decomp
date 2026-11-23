@@ -34171,3 +34171,219 @@ claim = "behaviour"
 expected = { status = "pass" }
 counts = { "cuts" = 4, "fields" = 28, "outputs" = 0, "publications" = 0, "replies" = 0, "null_cuts" = 0, "null_fields" = 15, "restorations" = 0, "pending_boundaries" = 0, "pending_restorations" = 0 }
 observation_sha256 = "2b18d2768c7961fff569672e3f2c145cc3d660e2f44c876416731caf9dc37f13"
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-actual-trial"
+before_values = [1, 13, 2295, 2295, 0, 0, 9, 1, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries its cut-1 observations, which the passing adjacent return repeated. The frame production path it exercised is removed."
+lost_observations = ["frame/adjacent-actual-trial: its compared cuts (1), fields (13) and outputs (2295) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-held-trial"
+before_values = [1, 13, 2295, 2295, 0, 0, 9, 1, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries its cut-1 observations, which the passing adjacent return repeated. The frame production path it exercised is removed."
+lost_observations = ["frame/adjacent-held-trial: its compared cuts (1), fields (13) and outputs (2295) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/ordinary-requested-nmi-return"
+before_values = [1, 13, 2295, 2295, 0, 0, 9, 1, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["movement/D-inherited-cut"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Health, the HUD countdown and retained work, play time, room quake, Random and Haze. The frame production path it exercised is removed."
+lost_observations = ["frame/ordinary-requested-nmi-return: its compared cuts (1), fields (13) and outputs (2295) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-actual-return"
+before_values = [2, 26, 4590, 4590, 0, 0, 18, 2, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["movement/D-inherited-cut"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Health, the HUD countdown and retained work, play time, room quake, Random and Haze. The frame production path it exercised is removed."
+lost_observations = ["frame/adjacent-actual-return: its compared cuts (2), fields (26) and outputs (4590) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-held-return"
+before_values = [2, 26, 4590, 4590, 0, 0, 18, 2, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["movement/D-inherited-cut"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Health, the HUD countdown and retained work, play time, room quake, Random and Haze, and its held-pad arm. The frame production path it exercised is removed."
+lost_observations = ["frame/adjacent-held-return: its compared cuts (2), fields (26) and outputs (4590) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/opening-three-native-returns"
+before_values = [3, 39, 6916, 6916, 2, 0, 27, 3, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["movement/D-inherited-cut"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Health, the HUD countdown and retained work, play time, room quake, Random and Haze. The frame production path it exercised is removed."
+lost_observations = ["frame/opening-three-native-returns: its compared cuts (3), fields (39) and outputs (6916) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/opening-eight-native-returns"
+before_values = [8, 26, 4, 4, 4, 0, 9, 8, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries the sender's queue at each cut. The frame production path it exercised is removed."
+lost_observations = ["frame/opening-eight-native-returns: its compared cuts (8), fields (26) and outputs (4) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/opening-sixteen-native-returns"
+before_values = [16, 89, 8, 8, 7, 0, 19, 16, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries her aim, the Ceres door actor's phase and waits, and the OAM bytes at cuts 7 to 15. The frame production path it exercised is removed."
+lost_observations = ["frame/opening-sixteen-native-returns: its compared cuts (16), fields (89) and outputs (8) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/health-hud-stock"
+before_values = [1, 33, 2295, 2295, 0, 0, 22, 9, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["health/ceres-tail-drawing-gauge"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Health and the HUD status, map and gauge, with the tilemap and VRAM payload bytes. The frame production path it exercised is removed."
+lost_observations = ["frame/health-hud-stock: its compared cuts (1), fields (33) and outputs (2295) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/health-hud-pending-loss"
+before_values = [1, 33, 2304, 2304, 0, 0, 15, 9, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["health/ceres-tail-drawing-gauge"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries nothing more: the Health vectors witness its changed-start rules. The frame production path it exercised is removed."
+lost_observations = ["frame/health-hud-pending-loss: its compared cuts (1), fields (33) and outputs (2304) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/steady-haze-through-layer-blend"
+before_values = [4, 23, 0, 0, 0, 0, 10, 4, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries the Haze bands, the scheduler countdowns and LayerBlend at cut 157. The frame production path it exercised is removed."
+lost_observations = ["frame/steady-haze-through-layer-blend: its compared cuts (4), fields (23) and outputs (0) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/steady-haze-retained-values"
+before_values = [4, 23, 0, 0, 0, 0, 10, 4, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries the Haze bands at cut 157. The frame production path it exercised is removed."
+lost_observations = ["frame/steady-haze-retained-values: its compared cuts (4), fields (23) and outputs (0) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/random-through-completion"
+before_values = [5, 25, 7, 4, 0, 0, 10, 5, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Random's seed at cut 157. The frame production path it exercised is removed."
+lost_observations = ["frame/random-through-completion: its compared cuts (5), fields (25) and outputs (7) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/random-seed-carry"
+before_values = [5, 25, 7, 4, 0, 0, 10, 5, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Random's seed at cut 157; the game-random vectors hold its seed. The frame production path it exercised is removed."
+lost_observations = ["frame/random-seed-carry: its compared cuts (5), fields (25) and outputs (7) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/random-low-seed"
+before_values = [5, 25, 7, 4, 0, 0, 10, 5, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = []
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Random's seed at cut 157; the game-random vectors hold its seed. The frame production path it exercised is removed."
+lost_observations = ["frame/random-low-seed: its compared cuts (5), fields (25) and outputs (7) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "weapons-contact/M0-carried-shot-opportunities"
+before_values = [5, 40, 30, 0, 0, 0, 7, 5, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["weapons-contact/M0-four-searches", "weapons-contact/M0-power-shot-drawing"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries Weapons, Contact, the Ceres door actor and the OAM bytes. The frame production path it exercised is removed."
+lost_observations = ["weapons-contact/M0-carried-shot-opportunities: its compared cuts (5), fields (40) and outputs (30) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "gameplay-sound/shot-opening"
+before_values = [1, 1, 5, 0, 0, 0, 0, 1, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["gameplay-sound/passage-hold"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries the sound queue, Weapons and the Ceres door actor. The frame production path it exercised is removed."
+lost_observations = ["gameplay-sound/shot-opening: its compared cuts (1), fields (1) and outputs (5) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]
+
+[[claim]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "gameplay-sound/shot-opening-no-fire"
+before_values = [1, 1, 5, 0, 0, 0, 0, 1, 0, 0]
+before_scope = "Reviewed witness-shaped frame case and its exact counts"
+disposition = "retired"
+witness_case_ids = ["gameplay-sound/passage-hold"]
+test_ids = []
+reason = "Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). The case's intra-frame timing is T1's, and its cut-level fields return with the played-alone run once that run carries the sound queue, Weapons and the Ceres door actor. The frame production path it exercised is removed."
+lost_observations = ["gameplay-sound/shot-opening-no-fire: its compared cuts (1), fields (1) and outputs (5) are not a current obligation. The listed cases carry only their own declared fields, outputs and cuts."]

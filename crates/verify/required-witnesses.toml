@@ -18,48 +18,6 @@ connected = [
     "replay::connected::tests::connected_marked_contact_and_first_wrap_have_complete_publications",
 ]
 
-shot_opportunities = [
-    "replay::shot_opportunity::indexed::tests::carried_opening_selects_current_fire_and_runs_slot_one",
-    "replay::shot_opportunity::indexed::sound_tests::scoped_sound_origins_and_checkpoint_formats",
-]
-
-shot_frame_origin = [
-    "replay::frame_origin::admission::completed_start::tests::shot_frame_completed_origin_keeps_held_contact_and_reports_first_boundary",
-    "replay::frame_origin::admission::completed_start::resume_test::shot_actual_resume_opening_restores_through_music",
-]
-
-shot_steady_haze = [
-    "replay::frame_steady::tests::indexed_steady_boundaries_and_interior_restores",
-    "replay::frame_steady::tests::actual_layer_operand_fault_has_the_same_wall_time",
-]
-
-shot_random = [
-    "replay::frame_steady::tests::random_live_requests_resume_after_first_sample",
-]
-
-retained_frame = [
-    "replay::frame_origin::health_owner_tests::actual_native_frame_completes_and_matches_from_the_retained_checkpoint",
-    "replay::frame_origin::health_owner_tests::actual_native_admission_restores_complete_return",
-    "replay::frame_origin::health_owner_tests::actual_native_late_publication_failure_rolls_back_production",
-    "replay::frame_origin::health_owner_tests::actual_native_completed_animation_binds_historical_health",
-    "replay::frame_origin::late_hud_tests::actual_status_in_flight_restores_one_hud_upload_through_native_return",
-    "replay::frame_origin::late_hud_tests::completed_hud_queue_rejects_a_changed_destination_at_checkpoint_admission",
-    "replay::frame_origin::late_hud_tests::changed_status_restores_its_live_samples_and_rejects_contradictory_history",
-    "replay::frame_origin::late_hud_tests::authentic_stock_health_and_drawing_cannot_replace_the_changed_arm",
-    "replay::frame_origin::cannon_tests::unready_cannon_rejects_the_ready_drawing_profile",
-    "replay::frame_origin::pad_ingress_tests::actual_frame_samples_host_changes_through_the_physical_latch_after_restore",
-    "replay::frame_origin::adjacent_tests::contiguous_native_returns_keep_independent_observations_and_inputs",
-    "replay::frame_origin::adjacent_tests::adjacent_native_suffix_restores_interruption_and_controller_tail",
-    "replay::frame_origin::adjacent_tests::return_transaction_tests::complete_return_commits_all_steps_and_a_held_return_rolls_back",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::third_opportunity_resumes_actual_wait_and_current_steady_haze",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_carries_random_and_live_reaim_from_the_original_admission",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_detects_stale_haze_at_the_first_haze_boundary",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_carries_live_door_decrement_and_fractional_travel",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_three_indexed_returns_with_live_restore_and_contact_fault",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_clock_carries_contact_clear_delay_and_reply_through_later_returns",
-    "replay::frame_origin::adjacent_tests::opening_clock_tests::opening_mixed_drawing_rejects_a_changed_door_tile_before_finalization",
-]
-
 content = [
     "tests::content::every_selectable_pose_has_a_unique_valid_clip",
     "tests::content::all_room_versions_decode",

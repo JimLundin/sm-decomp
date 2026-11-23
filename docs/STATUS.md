@@ -44,71 +44,32 @@ It prints one `PLAYED_ALONE` line: the cuts held and where the run stopped, by c
 dependency name only. CI runs it for the M0 row from its seed (cut 0) and from cut 6 when
 dispatched with the target `played`. It is a diagnostic, not yet an indexed obligation.
 
-## Frozen frame witnesses
+## Intra-frame timing and the played-alone run
 
-`game::production::frame` and the verifier code that admits and compares it are frozen: the
-`frame` and `frame_*` modules under `verify::replay` (with `frame_origin`), their `frame_*`
-integration tests, and `shot_opportunity`. They exist to hold the cases below until those
-retire under MODEL decision 33. No new case selects `native-frame-owners` or
-`native-steady-prelude` inputs, no case gains native returns, and no new frame stage, caller,
-contract or receipt lands. Changes there are fixes that keep the baseline, or deletions. New
-behaviour joins the played-alone loop as a whole-frame owner instead (decision 35). The index
-validator restricts native-frame cases to their existing shapes, but nothing counts the cases,
-so review holds this rule.
+Rungs compare owners' State and output bytes at NMI cuts (MODEL decision 35). Intra-frame
+timing is T1's: absolute master-tick clocks, ordered hardware callbacks, ordered CPU port
+access, the Contact latches at post-RTI clocks and Random's ordered device transfers. No
+indexed case compares them, and production has no frame caller that schedules them.
 
-Each case compares cut-level owner State, which the played-alone run takes over. Most also
-compare intra-frame timing, which is T1's: `frame.time` (absolute master-tick clocks),
-`frame.outputs` (ordered hardware callbacks), `frame.audio.ports` (ordered CPU port access),
-the Contact latches at post-RTI clocks, Random's ordered device transfers and the Steady
-stage clocks. A case retires when the played-alone run from the M0 seed compares its
-cut-level fields through its last cut, with the owners named below in the loop. Its T1 part is
-then dropped, and git history keeps the profiles. The native captures start at the M0 seed, so
-native return *n* is row cut *n*. The Steady and Random stages lie inside the frame that ends
-at cut 157.
+The played-alone run carries Movement, Appearance and Camera from the M0 seed. The HUD,
+Health, Random and Haze fields at those frames are covered only by their models' vectors and
+by the scoped `health/ceres-tail-drawing-gauge`, `hud/stationary-map-blink` and
+`connected-ordinary/early-mini-map` cases, until their owners join the loop. Weapons, Contact,
+the sound queue and the Ceres door actor at the opening shot wait for the loop in the same way.
+The [transition](../scenarios/replay/transition.toml) records each retired frame case, the
+owners its cut-level fields wait for and the indexed cases that still witness part of it.
 
-| Case | Cuts | Owners the played run still needs | Played run covers now |
-| --- | --- | --- | --- |
-| `frame/adjacent-actual-trial`, `frame/adjacent-held-trial` | 1 (Unsupported at 2) | none: the passing `-return` cases repeat their cut-1 observations | — |
-| `frame/ordinary-requested-nmi-return` | 1 | Health, HUD countdown and retained work, play time, room quake, Random, Haze | Movement, Appearance |
-| `frame/adjacent-actual-return` | 1–2 | the same | Movement, Appearance |
-| `frame/adjacent-held-return` | 1–2 | the same; its held-pad arm becomes a planted fault on the played run | Movement, Appearance |
-| `frame/opening-three-native-returns` | 1–3 | the same | Movement, Appearance |
-| `frame/opening-eight-native-returns` | 1–8 | the sender's queue at each cut; the rest is T1 | — |
-| `frame/opening-sixteen-native-returns` | 1–16 | her aim, the Ceres door actor (phase, waits), OAM bytes at cuts 7–15 | playhead, camera, camera fraction |
-| `frame/health-hud-stock` | 1 | Health, HUD status, map and gauge, with the tilemap and VRAM payload bytes | — |
-| `frame/health-hud-pending-loss` | 1 | none: `health/ceres-tail-drawing-gauge` and the Health vectors witness its changed-start rules | — |
-| `frame/steady-haze-through-layer-blend` | inside 157 | Haze bands, scheduler countdowns and LayerBlend at cut 157 | — |
-| `frame/steady-haze-retained-values` | inside 157 | none beyond the case above: its intervention becomes a planted fault | — |
-| `frame/random-through-completion` | inside 157 | Random's seed at cut 157 | — |
-| `frame/random-seed-carry`, `frame/random-low-seed` | inside 157 | none beyond the case above: the `game-random` vectors hold their seeds | — |
-| `weapons-contact/M0-carried-shot-opportunities` | 157–161 | Weapons, Contact, the Ceres door actor, OAM bytes | — |
-| `gameplay-sound/shot-opening`, `gameplay-sound/shot-opening-no-fire` | 157 | the sound queue, Weapons, the Ceres door actor | — |
-
-`samus-movement/TravelledDistances`, listed by the native-frame cases, stays witnessed by
-`movement/D-inherited-cut`. A retirement removes the case's index and baseline entries,
-re-pins its [mutants](../tools/mutants.toml) to the played-alone run, and removes its required
-witnesses and fixture installer. The transition records the retired claim.
-
-No [transition](../scenarios/replay/transition.toml) or
-[prior-claim](../scenarios/replay/prior-claims.toml) entry cites a frozen case, so their only
-obligations are their baseline entries. The played-alone run, once indexed for M0, accounts for
-the row's earlier claims. It covers 42 transition claims on `chain-any-0003-DFD7`: the floor
-and free-run floor of each of `samus-movement`, `samus-appearance`, `world-camera`,
-`interface-hud`, `game-time`, `boss-ceres-ridley`, `weapons-projectiles`, `enemy-interactions`
-and `audio-transport`; the fourteen camera receipt floors; the three lockstep entries; and the
-seven CI requirements, `ordinary/*` at 183 cuts and `movement/M0-*` at 181. It also covers the
-seven matching prior-claim requirements. Each is accounted for once the run holds through the
-cuts it claims. Claims past cut 184 need the lag cuts as borrowed inputs: `interface-hud` at
-225, and `game-time`, `boss-ceres-ridley`, `weapons-projectiles` and the receipt frame count
-at 341 or more. The row's `run-progress`, `world-blocks`, `world-doors`, `uncompared` and
-stream-gate entries don't depend on these cases.
-
-`frame` can be deleted only after the types that other production code borrows from it move
-out: the HUD owner and its tilemap, the Health pin, the energy history, the post-down sound
-offer and sender queue types, the actor slot identity, the figure pin, the rendering content,
-the opening profiles and `shot_opportunity`. The connected owner, Health tail, touchdown,
-weapons and gameplay sounds use them, and so do the verifier's appearance, sender-offer,
-passage and HUD cases.
+The played-alone run, once indexed for M0, accounts for the row's earlier claims. It covers
+42 transition claims on `chain-any-0003-DFD7`: the floor and free-run floor of each of
+`samus-movement`, `samus-appearance`, `world-camera`, `interface-hud`, `game-time`,
+`boss-ceres-ridley`, `weapons-projectiles`, `enemy-interactions` and `audio-transport`; the
+fourteen camera receipt floors; the three lockstep entries; and the seven CI requirements,
+`ordinary/*` at 183 cuts and `movement/M0-*` at 181. It also covers the seven matching
+prior-claim requirements. Each is accounted for once the run holds through the cuts it claims.
+Claims past cut 184 need the lag cuts as borrowed inputs: `interface-hud` at 225, and
+`game-time`, `boss-ceres-ridley`, `weapons-projectiles` and the receipt frame count at 341 or
+more. The row's `run-progress`, `world-blocks`, `world-doors`, `uncompared` and stream-gate
+entries don't depend on the played-alone run.
 
 ## The models' gain over the null model
 
@@ -130,8 +91,8 @@ Weapons and contact have separate faults in their shared case. The movement/Cere
 has a separate fault substituting the door centre for held movement proximity.
 
 These faults exercise movement scheduling, elapsed audio time, cannon permission, contact
-permission, camera following, HUD clock input, animation scheduling, event delivery, Ceres
-scheduling and the Haze band's native colour write. They prove the named comparisons detect those errors within the existing scoped
+permission, camera following, HUD clock input, animation scheduling, event delivery and Ceres
+scheduling. They prove the named comparisons detect those errors within the existing scoped
 cases and the narrowly integrated movement/Ceres connection. They do not prove all rules,
 borrowed producers, omitted outputs or pixels. Unsupported
 cases remain held boundaries and require no fault credit until they have reviewed Pass cases.
@@ -153,35 +114,6 @@ The actor's geometry and hit selection, the Warning receiver, and Drawing's hurt
 rendering producers require separate admission. The scope includes two auxiliary cuts and
 adds no played-alone frames.
 
-## Three consecutive requested returns
-
-The [opening clock installer](../tools/ci/fetch_opening_clock.sh) adds the scoped source and
-comparison packets to the retained Frame, Health and Steady Haze fixtures.
-`frame/opening-three-native-returns` starts from one authenticated native admission and
-uses the admitted movie pad presentations. It compares the absolute clocks, 39 endpoint
-fields and 6,916 ordered callbacks over three native returns. The comparison includes
-two distinct Contact CPU-port samples. Each completed cut is reopened through production.
-The frozen control completes no cuts.
-
-The physical Wait owner retains the suspended poll cursor. The next acknowledgment charges
-the pending busy branch only when that cursor reached the relevant read. Contact consumes
-its independently admitted matching publication only at the actual later read after the live
-retry. The receiver's resident execution, power-on history and the full opening movie remain
-outside this witness.
-
-## Eight consecutive requested returns
-
-`frame/opening-eight-native-returns` carries the same admission through eight true
-post-RTI clocks. It compares all CPU audio reads and writes across the four ports in
-order, plus the Contact sender phase and both latches at the six observed endpoints.
-Each completed return restores through its remaining suffix. The frozen origin
-matches no complete return.
-
-The actual outgoing zero retry anchors the independently observed incoming clear.
-Delaying the clear until the later repeated zero first differs at return 6 on
-`frame.contact.incoming`. The CPU write and external input remain separate. Resident
-SMP execution and the remaining opening movie are outside this comparison.
-
 ## The ratchets and floors
 
 The replay baseline binds the exact index bytes to each measured result, comparison counters
@@ -189,7 +121,8 @@ and observation digest. Behaviour obligations require completed comparisons. Bou
 obligations require the exact named Unsupported result and remain distinct from passing cases.
 Missing source data, a zero-case selection, an empty comparison schedule or an earlier boundary
 cannot satisfy the corresponding obligation. The transition ledger accounts for retired
-lockstep, gate, localiser and per-domain execution claims; there is no second acceptance runner.
+lockstep, gate, localiser, per-domain execution and frame case claims; there is no second
+acceptance runner.
 
 ```sh
 TOOLS=target/verify/tools
@@ -244,20 +177,13 @@ Install the [touchdown fixture](../tools/ci/fetch_movement_touchdown.sh) and the
 fixture under the same native source directory. Use the common replay command with
 `--case movement/soft-touchdown-57 --case movement/soft-touchdown-124`. The checkpoints
 restore each disjoint window from its own starting owners. The physical ring and Contact port
-service have separate boundaries. The retained Frame still requires the timed body-growth
-and fit work profile and the actual touchdown dispatch and graphics opportunities.
+service have separate boundaries.
 
 ## Live gameplay sound producers
 
-Select the four `gameplay-sound/` cases with the shared replay command. Install the [carried shot
-fixture](../tools/ci/fetch_shot_five.sh), [sender brackets](../tools/ci/fetch_sender_offers.sh)
-and [passage fixture](../tools/ci/fetch_passage_offers.sh) under the same native directory.
-
-At cut 157 the carried shot opportunity produces Beam from mapped W1 fire and Door from the
-actual slot-one Ceres run. The call order is compared independently of the Action and Contact
-FIFO brackets, alongside the at-use permission, allowance and acceptance. The control releases
-the mapped shoot action from the same origin and keeps the slot-one opening. The compared native
-brackets select Action and Contact. Ambient does not offer a cue in this window.
+Select the two `gameplay-sound/` cases with the shared replay command. Install the
+[sender brackets](../tools/ci/fetch_sender_offers.sh) and [passage
+fixture](../tools/ci/fetch_passage_offers.sh) under the same native directory.
 
 At cut 183 the scoped passage starts at the retained touched doorway and evaluates the ordinary
 Doors first-entry and Appearance `PassageEntry` decisions. The current Action silence and the
@@ -268,10 +194,9 @@ advancement at the sender-service boundary. The held-shoot control keeps the Amb
 and Hold while the Appearance read emits no Action cue.
 
 Native cut 184 independently shows both active senders AwaitCue while all three FIFOs are
-empty. The following production owner is physical sender and readiness service (#483).
-Resumable passage timing and inanimate drawing belong to #484 and #485. The retained Frame
-still requires its live slot-one opening and passage dispatch, along with its existing timed
-movement and sampling boundaries. The scoped live audio callers still leave spin start/end, impact, wall-jump, hard landing and unrelated actors unsupported.
+empty. The following production owner is physical sender and readiness service. The scoped
+live audio callers still leave spin start/end, impact, wall-jump, hard landing and unrelated
+actors unsupported.
 
 
 ## Finding the code for a replay segment
@@ -420,199 +345,6 @@ the absence of pictures at the other cuts. The pre-draw cursor, camera and phase
 from the independent watched fixture. The earlier drawing producers, full OAM contents
 and hardware service are outside the scope.
 
-`weapons-contact/M0-carried-shot-opportunities` admits the complete scoped cut-156
-origin once. The mapped current controls select a deferred Moonwalk while W1 fires
-from the standing down-forward muzzle. C1 contact and the actual B8 door run alternate
-in slot order. Slot 1 opens and asks for sound at cut 157, including with mapped fire
-suppressed. At cut 160 it marks the power shot for removal on the next W1.
+The [drawing fixture installer](../tools/ci/fetch_shot_contact.sh) installs its hash-pinned
+files.
 
-POST applies the selected placement and publishes the travel and pose history that the
-next W1 reads. The followed Camera feeds the exact power encoder. The encoder and OAM
-finalizer carry the real backing into the next opportunity. The scoped fixture provides
-only physical pad samples, drawing phase and ordered stores from surrounding drawing
-producers after the initial admission. Shared Production checkpoints continue through
-each native comparison. Suppressing the cut-157 power picture changes final OAM and
-the pre-power backing at cut 158. [Indexed cases](../scenarios/replay/index.toml)
-
-The retained Frame still needs the live fire-capable preparation route and separate
-hardware evidence for the surrounding owners. Trail allocation, audio service and
-physical NMI transfer each require their own witness. [Five-cut fixture installer](../tools/ci/fetch_shot_five.sh)
-
-The [isolated drawing fixture installer](../tools/ci/fetch_shot_contact.sh) installs
-the hash-pinned files for the earlier insertion-only witness.
-
-## Cut-156 Frame opening
-
-The [shot Frame fixture installer](../tools/ci/fetch_shot_frame_origin.sh) installs
-the requested-return RTI-prefetch donor and the separately acquired true-resume hardware,
-WRAM and APURAM. RTI-prefetch supplies sender provenance. Its clock stays at its original
-phase. The independent resume ABI supplies the new line and refresh phase at resume.
-The complete Frame origin importer can select the checked resume sender and early profiles.
-The older Ready, empty and absent sender origins remain supported.
-
-The opening imports Contact AwaitClear with an empty queue and the held Footstep reply
-through checked resident aliases. The independently qualified sender clock has no active
-service and rebases with hardware at the actual resume. The actual software acknowledgment
-guard and current Ready/Empty Music inputs come from resume WRAM. A separate borrowed Music
-receipt is revalidated and consumed after the complete charged operation.
-
-The bounded opening runs through ordinary production admission, Frame advance and
-content-bound checkpoints. It shares the full Frame caller's Acknowledgment and Music
-selection and completion. The 36 Acknowledgment exposures take 232 ticks. The 70 Music exposures
-take 466 intrinsic ticks plus the hardware refresh and complete at resume+738. The
-fixture-backed check compares direct and restored work from an interior Music charge.
-The next selected owner requires Haze preparation. Its physical work, later IRQ and
-standing pose remain outside the admitted opening. The compact RTI-prefetch provenance
-packet has no same-origin frame profile members and admits no Frame execution.
-
-## Steady Haze through LayerBlend
-
-Install the [Steady fixture](../tools/ci/fetch_shot_steady_haze.sh) alongside the
-true-resume opening. The two indexed scoped cases carry the actual Acknowledgment and
-Music before selecting the current ordinary Steady Haze. At resume+1726 the Haze head
-has retained the sixteen original bands and prepared black and the exclusion of
-background three. Finish updates both live scheduler countdowns and the software mask
-by resume+3246. Hardware Channels Three and Eight retain their independently admitted
-configuration and enables. Finish and LayerBlend each charge one 40-tick hardware
-refresh. The scope has no hardware register callbacks or IRQ service.
-
-LayerBlend uses the four actual defaults and preserves Window Two. The nine terminal
-mirrors include the fixed-operand colour-math selection at resume+4194. The independent
-source records ten ordered stores, including the colour-math default before its override.
-The scoped comparison covers the terminal mirrors. The same-duration control changes one
-band, the first scheduler countdown and the left Window Two edge, with independent
-comparison after the affected owners run.
-
-Local indices 0 through 3 compare Music, Haze retain, Finish and LayerBlend. Both cases
-hold `Frame(RandomPreparation)` at local index 4, with the arithmetic operand and
-sampled result bindings still unqualified. Indexed replay restores at the four compared
-stage cuts. Fixture tests also split charge inside the Haze head, Finish and LayerBlend.
-
-## Random through completion
-
-Install the [Random fixture](../tools/ci/fetch_shot_random.sh) with the true-resume and
-Steady fixtures. The carried Frame reaches Random at resume+4194. Its current seed supplies
-the two multiplicands and the player ROM supplies both matching fixed multiplier operands.
-The seven compared transfers contain four requests and three real hardware samples. Random
-charges 614 intrinsic ticks and one 40-tick refresh before committing the shared seed at
-resume+4848. The source records the two earlier byte stores. The runtime comparison observes
-the committed seed and the ordered device transfers.
-
-The carry and low-byte-only controls use independent current seed inputs and native
-comparison tuples. The low-byte-only arm changes the first request and first product while
-the second request and second sample retain their values and times. Each arm restores after
-all four actual operand writes and after the first live sample. Restore checks the retained
-arithmetic against spent work, and the unfinished request resumes the same event sequence.
-Local index 4 compares Random and local index 5 holds `Frame(BuilderPreparation)`.
-
-The next elapsed continuation needs the current Sprite Builder inputs and a qualified
-Builder/dispatch profile. Actor selection also needs to admit the observed pair of
-marked, tangible actors. Debug, enabled-empty Palette and standing Pose have native
-semantic observations. Elapsed Pose playback requires the silent field-start HDMA
-initialization, followed by the IRQ during Suit before gameplay can reach the fire caller.
-
-## Retained native frame
-
-`frame/ordinary-requested-nmi-return` admits one native state from `chain-any-0003-DFD7`.
-Its hardware clock advances 359,922 master ticks to the requested NMI return. Replay compares
-2,295 ordered callbacks by time, class, register and value. The thirteen endpoint fields cover elapsed time, play time, room shake,
-the shared random sequence and five Health quantities. The five Health values stay
-equal to their admitted values in this case. The null model completes zero cuts.
-
-The indexed checkpoint reopens the completed state. Fixture tests also resume from the
-HUD interruption, in-flight late HUD status work and native NMI entry. They compare the
-full callback stream, endpoint observations and terminal state through return. The late HUD
-test tracks one queued request through its VRAM payload and retirement. On the next advance,
-production consumes the acknowledged request and executes the quiet Music opportunity from
-carried state. Service-marker callbacks carry no service-slot identity, and the comparison
-excludes internal hardware events.
-
-The [case declaration](../scenarios/replay/index.toml) lists the borrowed preparation, actor,
-scene and native video inputs. The [fixture loader](../tools/ci/fetch_retained_frame.sh)
-fetches the pinned inputs and independent observations under the replay native directory.
-The power-on milestone is measured separately using movie inputs alone.
-
-The indexed adjacent Haze cases each admit once and
-repeat the first return's 2,295 callback and 13 field comparisons. The oracle runs use the
-recorded pad change and a held-input control. Production checks the actual first sampled word
-and its new presses, carries the returned Haze owner into settling, preserves the live band
-buffer, and compares the settling readiness, completion and LayerBlend clocks. The restored
-continuation compares all nine LayerBlend settings with the independently recorded writes.
-
-The restored continuation compares both Random draws against independent completion,
-operand-write and product-sample observations. It also resumes a shifted Drawing interrupt
-inside the current room queries and completes HUD weapons, quiet Projectile traversal,
-MotionReset and Samus interaction. Both carried Ceres doors enter ActorUpdate with wait one.
-Each completes its poll with wait two, the same geometry and a graphics update. The restored
-actor charge rejects the stale pose and the earlier door waits. The returned actor result
-supplies the no-hurt Health join.
-
-SpriteObjects and ContactReset read current state. Run consumes the current controller and
-inventory. On odd parity, Down tests the right-hand floor cell first and stops with no
-displacement. The non-last animation hold suppresses the footstep, so FootContact completes
-and Poststep runs without queuing sound. The mini-map uses the carried HUD clock, current
-position, inventory and Health. At Ready and return the two controller trials compare the
-published tilemap and exploration bitmap with independent observations. A resumed refresh
-reaches the same cuts and outputs.
-
-Both controller trials carry the borrowed scene choice across the first native return. The
-adjacent Timer reads it after the two drawing interrupts and runs the HUD's dormant countdown.
-The mini-map returns at 91,486 ticks into the second interval. Timer hands off at 92,242 ticks
-with one countdown answer and no additional device outputs. Both trials match all 203 ordered
-callbacks through that handoff. Animation receives current whole energy from the
-first Maintenance result after the adjacent no-hurt actor and both drawing interrupts
-return. Public restore checks all five carried Health quantities. The carried playhead selects
-the current running hold in the second interval. Both arms compare the return at +93,464 ticks,
-including the same mapped step, one hold decrement, unchanged boost stage and laps, complete
-Health and 203 ordered callbacks. The CPU profile supplies 177 exposures and 1,158 intrinsic
-ticks. Hardware contributes a 40-tick refresh and a 24-tick descriptor-only HDMA service.
-Both cases stop at `Frame(InterruptionPreparation)` on cut 2. Indexed replay restores each
-completed cut-one checkpoint and checks the same held return, typed stop and ordered publications.
-Fixture tests also restore at Timer handoff, during Animation charge and at Animation return.
-The captured Ceres read independently qualifies the scene through that use. See the
-[reviewed baseline](../scenarios/replay/baseline.toml). The
-[adjacent native fixture](../tools/ci/fetch_retained_haze.sh) provides ordered callbacks.
-The [retained fixture installer](../tools/ci/fetch_retained_frame.sh) also provides the
-independently qualified CPU profile and playhead comparison.
-
-The complete adjacent cases use the same pad schedules and carry the original admission through
-two requested NMI returns. The current PoseInput clears bomb direction. Actual Environment,
-Run, stopped Down, Animation and both returned IRQs qualify the carried inactive interruption
-state. Movement then fits the current pose and Appearance reads that figure for Drawing. The
-camera inputs validate actual centres from Movement and Camera history. Health runs its later
-maintenance from carried State, which Drawing and the late HUD consume. The live Sprite Builder
-publishes the finalized nine-sprite list and current art selections at NMI.
-
-The Contact Sender consumes the independently supplied incoming reply at its physical read
-edge and republishes the pending cue using the clean Sender. Scope excludes the resident SMP
-producer and its clock join. After actual JOY samples, the controller history selects the
-remaining handler work. Changed input resets the repeat timer. Held nonneutral input takes the
-nonexpired decremented timer path and returns six ticks later. Each arm compares 2,295 callbacks
-and 13 terminal fields at each of its two cuts. The indexed checkpoint resumes from the first
-actual return. The native fixture test also restores during Interruption charge and the
-controller tail, then checks the completed controller words and canonical State. The
-[retained fixture installer](../tools/ci/fetch_retained_frame.sh) fetches the input contracts.
-The complete callback streams and endpoint observations come from the independent adjacent
-native fixture.
-
-## Health and HUD through the retained ordinary return
-
-Install the [Health and HUD fixture](../tools/ci/fetch_connected_health.sh) alongside the
-retained frame. The stock and pending-loss cases start with one common admitted state at
-native cut 9232. The second arm changes only the initial pending whole loss. The expected
-phase snapshots and return streams are opened by the comparison reader after production
-advances.
-
-The early Map uses the current Movement position and publishes exploration and map cells
-while preserving every gauge word. Animation reads live Health before Maintenance. The
-first Drawing comparison uses returned whole Health and the existing history. Its return
-commits a fresh Health read. Late Status updates the carried HUD and publishes one current
-CPU transfer buffer. The queue descriptor, all 192 CPU tilemap bytes and all 192 native
-VRAM payload bytes are compared. The stock and changed paths also compare the complete
-timed publication stream through the native return and restore on both sides of the
-changing producer phases.
-
-The decreased-energy arm qualifies its reached Drawing exposure without a later
-hurt-flash consumer in the same interval. The engine requires a later flash owner before
-continuing from that returned state. The [Ceres tail witness](#scoped-ceres-tail-contact)
-continues to cover its separate damage, fractional loss, warning and protection evidence.

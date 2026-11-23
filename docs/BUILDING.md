@@ -35,7 +35,7 @@ Choose a pushed branch or tag in **Actions → CI → Run workflow** and enter a
 or a fully qualified `verify` library test name. The same selection works from the command line:
 
 ```sh
-gh workflow run ci.yml --ref BRANCH -f target=frame/opening-eight-native-returns
+gh workflow run ci.yml --ref BRANCH -f target=connected-ordinary/carried-running-camera
 gh workflow run ci.yml --ref BRANCH -f target=replay::native_search::tests::native_search_contract
 ```
 

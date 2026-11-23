@@ -3303,3 +3303,129 @@ source_sha256 = "0419c71f0ffca377b320f502637d027c7c5c78edd17ab77cf66c0fa8cfd122d
 identity = "content/every-pose-clip"
 before_values = [1]
 meaning = "every selectable pose has a unique clip; every branch lands on a shown step"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-actual-trial"
+before_values = [1, 13, 2295, 2295, 0, 0, 9, 1, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest 11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-held-trial"
+before_values = [1, 13, 2295, 2295, 0, 0, 9, 1, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest 11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/ordinary-requested-nmi-return"
+before_values = [1, 13, 2295, 2295, 0, 0, 9, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-actual-return"
+before_values = [2, 26, 4590, 4590, 0, 0, 18, 2, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 2af7257e6ee52bb603d14bd1906480a680bb6f3a47a3995f97e6fffcdf89435c; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/adjacent-held-return"
+before_values = [2, 26, 4590, 4590, 0, 0, 18, 2, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest fa4c169457f4da3dac1510c69b6e8dc1441b2103711113aab386fa2844ae29f4; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/opening-three-native-returns"
+before_values = [3, 39, 6916, 6916, 2, 0, 27, 3, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 406ea1124b1464b591444d9787ed557d1e69137e61b17e62c440de94cd74b486; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/opening-eight-native-returns"
+before_values = [8, 26, 4, 4, 4, 0, 9, 8, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 50af26593ebe0fcb120724e62f8bc6017165a2708f98a80eb5ccee8b7220d20f; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/opening-sixteen-native-returns"
+before_values = [16, 89, 8, 8, 7, 0, 19, 16, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest e0ce21aa47a13a2d08ca82c5f98d2ca2027e2a60f84b856dd993d0fc6c8586b5; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/health-hud-stock"
+before_values = [1, 33, 2295, 2295, 0, 0, 22, 9, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 43f07702a727ba33c5cd697c8b16d6c634b21d31e82e5fa933bac43c2dfd8549; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/health-hud-pending-loss"
+before_values = [1, 33, 2304, 2304, 0, 0, 15, 9, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 55b2361ff23bc69e321ff15f897f0136a7d0ea5e311de357eef94166f4d81b10; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/steady-haze-through-layer-blend"
+before_values = [4, 23, 0, 0, 0, 0, 10, 4, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest 5d07b9daf6e217666a1cd5766a45d2e80b9a8fdf915cff8ea143806e80fc0c26; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/steady-haze-retained-values"
+before_values = [4, 23, 0, 0, 0, 0, 10, 4, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest eac950a3fadbb737c8b314b6baa8203c82d7bedb874e881b30edac24f0614184; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/random-through-completion"
+before_values = [5, 25, 7, 4, 0, 0, 10, 5, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest 56952c7c8ce0b3c514b0eab0a9de2b02bf7d52337c43755f95199e879462d343; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/random-seed-carry"
+before_values = [5, 25, 7, 4, 0, 0, 10, 5, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest 42dbdb3d099bff1f910c9b7250eecab6365895f43f90b5a8877edd214eac7e43; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "frame/random-low-seed"
+before_values = [5, 25, 7, 4, 0, 0, 10, 5, 0, 0]
+meaning = "reviewed boundary case holding the Unsupported boundary with observation digest 3174884ae1a16e92735586a50bec697111734d446e92c7874b577457bd7ce4a2; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "weapons-contact/M0-carried-shot-opportunities"
+before_values = [5, 40, 30, 0, 0, 0, 7, 5, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 4bd440a65172867265641439668a9d2e013769d81078362c2222749a40363095; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "gameplay-sound/shot-opening"
+before_values = [1, 1, 5, 0, 0, 0, 0, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest ecff6e9df41b37883a61f67c36db05781bcd7167f126a4bb85afcca545d1e5fa; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"
+
+[[requirement]]
+source_path = "scenarios/replay/baseline.toml"
+source_sha256 = "bb229a6cb84fc016360ec1324b5b89a2e33bbf2d0a93aa3369bd8cbf18ff3970"
+identity = "gameplay-sound/shot-opening-no-fire"
+before_values = [1, 1, 5, 0, 0, 0, 0, 1, 0, 0]
+meaning = "reviewed behaviour case holding Pass with observation digest 47e29b1486c02e931bb4c1074c8ac3ca7e47506cc5bae53b0f21a3908ff1fd82; counts in order cuts, fields, outputs, publications, replies, null_cuts, null_fields, restorations, pending_boundaries, pending_restorations"

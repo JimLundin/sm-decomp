@@ -1,5 +1,5 @@
 format = 1
-index_sha256 = "6bbda07d0e7eeb693e1d38911f06097e7bcf807ac1296ddf4f4401115b4433aa"
+index_sha256 = "e722507cef1f5af062ad686793d5958f10e198c85aa7575e7ceddba8f72cafa9"
 
 [[case]]
 id = "movement/D-inherited-cut"
@@ -141,24 +141,6 @@ publications = 0
 replies = 0
 null_cuts = 0
 null_fields = 0
-restorations = 5
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "weapons-contact/M0-carried-shot-opportunities"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "4bd440a65172867265641439668a9d2e013769d81078362c2222749a40363095"
-
-[case.counts]
-cuts = 5
-fields = 40
-outputs = 30
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 7
 restorations = 5
 pending_boundaries = 0
 pending_restorations = 0
@@ -415,114 +397,6 @@ replies = 0
 null_cuts = 0
 null_fields = 0
 restorations = 2
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/random-through-completion"
-claim = "boundary"
-expected = { status = "unsupported", cut = 5, dependency = "Frame(BuilderPreparation)" }
-observation_sha256 = "56952c7c8ce0b3c514b0eab0a9de2b02bf7d52337c43755f95199e879462d343"
-
-[case.counts]
-cuts = 5
-fields = 25
-outputs = 7
-publications = 4
-replies = 0
-null_cuts = 0
-null_fields = 10
-restorations = 5
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/random-seed-carry"
-claim = "boundary"
-expected = { status = "unsupported", cut = 5, dependency = "Frame(BuilderPreparation)" }
-observation_sha256 = "42dbdb3d099bff1f910c9b7250eecab6365895f43f90b5a8877edd214eac7e43"
-
-[case.counts]
-cuts = 5
-fields = 25
-outputs = 7
-publications = 4
-replies = 0
-null_cuts = 0
-null_fields = 10
-restorations = 5
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/random-low-seed"
-claim = "boundary"
-expected = { status = "unsupported", cut = 5, dependency = "Frame(BuilderPreparation)" }
-observation_sha256 = "3174884ae1a16e92735586a50bec697111734d446e92c7874b577457bd7ce4a2"
-
-[case.counts]
-cuts = 5
-fields = 25
-outputs = 7
-publications = 4
-replies = 0
-null_cuts = 0
-null_fields = 10
-restorations = 5
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/ordinary-requested-nmi-return"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
-
-[case.counts]
-cuts = 1
-fields = 13
-outputs = 2295
-publications = 2295
-replies = 0
-null_cuts = 0
-null_fields = 9
-restorations = 1
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/adjacent-actual-trial"
-claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(InterruptionPreparation)" }
-observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
-
-[case.counts]
-cuts = 1
-fields = 13
-outputs = 2295
-publications = 2295
-replies = 0
-null_cuts = 0
-null_fields = 9
-restorations = 1
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/adjacent-held-trial"
-claim = "boundary"
-expected = { status = "unsupported", cut = 2, dependency = "Frame(InterruptionPreparation)" }
-observation_sha256 = "11a26b8eb00794b7e6e33cc448f806d8505341483a8b27c9fba0308708d57d5f"
-
-[case.counts]
-cuts = 1
-fields = 13
-outputs = 2295
-publications = 2295
-replies = 0
-null_cuts = 0
-null_fields = 9
-restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
 
@@ -1031,42 +905,6 @@ pending_boundaries = 0
 pending_restorations = 0
 
 [[case]]
-id = "frame/steady-haze-through-layer-blend"
-claim = "boundary"
-expected = { status = "unsupported", cut = 4, dependency = "Frame(RandomPreparation)" }
-observation_sha256 = "5d07b9daf6e217666a1cd5766a45d2e80b9a8fdf915cff8ea143806e80fc0c26"
-
-[case.counts]
-cuts = 4
-fields = 23
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 10
-restorations = 4
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/steady-haze-retained-values"
-claim = "boundary"
-expected = { status = "unsupported", cut = 4, dependency = "Frame(RandomPreparation)" }
-observation_sha256 = "eac950a3fadbb737c8b314b6baa8203c82d7bedb874e881b30edac24f0614184"
-
-[case.counts]
-cuts = 4
-fields = 23
-outputs = 0
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 10
-restorations = 4
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
 id = "health/ceres-tail-drawing-gauge"
 claim = "behaviour"
 expected = { status = "pass" }
@@ -1081,42 +919,6 @@ replies = 0
 null_cuts = 0
 null_fields = 22
 restorations = 2
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "gameplay-sound/shot-opening"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "ecff6e9df41b37883a61f67c36db05781bcd7167f126a4bb85afcca545d1e5fa"
-
-[case.counts]
-cuts = 1
-fields = 1
-outputs = 5
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 1
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "gameplay-sound/shot-opening-no-fire"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "47e29b1486c02e931bb4c1074c8ac3ca7e47506cc5bae53b0f21a3908ff1fd82"
-
-[case.counts]
-cuts = 1
-fields = 1
-outputs = 5
-publications = 0
-replies = 0
-null_cuts = 0
-null_fields = 0
-restorations = 1
 pending_boundaries = 0
 pending_restorations = 0
 
@@ -1155,129 +957,3 @@ null_fields = 0
 restorations = 1
 pending_boundaries = 2
 pending_restorations = 2
-
-[[case]]
-id = "frame/adjacent-actual-return"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "2af7257e6ee52bb603d14bd1906480a680bb6f3a47a3995f97e6fffcdf89435c"
-
-[case.counts]
-cuts = 2
-fields = 26
-outputs = 4590
-publications = 4590
-replies = 0
-null_cuts = 0
-null_fields = 18
-restorations = 2
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/opening-eight-native-returns"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "50af26593ebe0fcb120724e62f8bc6017165a2708f98a80eb5ccee8b7220d20f"
-
-[case.counts]
-cuts = 8
-fields = 26
-outputs = 4
-publications = 4
-replies = 4
-null_cuts = 0
-null_fields = 9
-restorations = 8
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/opening-sixteen-native-returns"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "e0ce21aa47a13a2d08ca82c5f98d2ca2027e2a60f84b856dd993d0fc6c8586b5"
-
-[case.counts]
-cuts = 16
-fields = 89
-outputs = 8
-publications = 8
-replies = 7
-null_cuts = 0
-null_fields = 19
-restorations = 16
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/adjacent-held-return"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "fa4c169457f4da3dac1510c69b6e8dc1441b2103711113aab386fa2844ae29f4"
-
-[case.counts]
-cuts = 2
-fields = 26
-outputs = 4590
-publications = 4590
-replies = 0
-null_cuts = 0
-null_fields = 18
-restorations = 2
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/health-hud-stock"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "43f07702a727ba33c5cd697c8b16d6c634b21d31e82e5fa933bac43c2dfd8549"
-
-[case.counts]
-cuts = 1
-fields = 33
-outputs = 2295
-publications = 2295
-replies = 0
-null_cuts = 0
-null_fields = 22
-restorations = 9
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/health-hud-pending-loss"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "55b2361ff23bc69e321ff15f897f0136a7d0ea5e311de357eef94166f4d81b10"
-
-[case.counts]
-cuts = 1
-fields = 33
-outputs = 2304
-publications = 2304
-replies = 0
-null_cuts = 0
-null_fields = 15
-restorations = 9
-pending_boundaries = 0
-pending_restorations = 0
-
-[[case]]
-id = "frame/opening-three-native-returns"
-claim = "behaviour"
-expected = { status = "pass" }
-observation_sha256 = "406ea1124b1464b591444d9787ed557d1e69137e61b17e62c440de94cd74b486"
-
-[case.counts]
-cuts = 3
-fields = 39
-outputs = 6916
-publications = 6916
-replies = 2
-null_cuts = 0
-null_fields = 27
-restorations = 3
-pending_boundaries = 0
-pending_restorations = 0

@@ -63,34 +63,14 @@ fn committed_inventory_has_valid_targets_and_every_required_case() {
 }
 
 /// Every indexed case that reaches the travelled-distance rule, in index order.
-const TRAVEL_CASES: [&str; 13] = [
+const TRAVEL_CASES: [&str; 3] = [
     "movement/D-inherited-cut",
     "integrated/missing-dependency-closure",
     "movie/missing-power-on",
-    "frame/ordinary-requested-nmi-return",
-    "frame/adjacent-actual-trial",
-    "frame/adjacent-held-trial",
-    "frame/adjacent-actual-return",
-    "frame/opening-three-native-returns",
-    "frame/opening-eight-native-returns",
-    "frame/opening-sixteen-native-returns",
-    "frame/adjacent-held-return",
-    "frame/health-hud-stock",
-    "frame/health-hud-pending-loss",
 ];
 
 /// The travel cases whose reviewed requirement is a pass; the others are held boundaries.
-const PASSING_TRAVEL_CASES: [&str; 9] = [
-    "movement/D-inherited-cut",
-    "frame/ordinary-requested-nmi-return",
-    "frame/adjacent-actual-return",
-    "frame/opening-three-native-returns",
-    "frame/opening-eight-native-returns",
-    "frame/opening-sixteen-native-returns",
-    "frame/adjacent-held-return",
-    "frame/health-hud-stock",
-    "frame/health-hud-pending-loss",
-];
+const PASSING_TRAVEL_CASES: [&str; 1] = ["movement/D-inherited-cut"];
 
 #[test]
 fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
@@ -145,8 +125,6 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
         [
             "integrated/missing-dependency-closure",
             "movie/missing-power-on",
-            "frame/adjacent-actual-trial",
-            "frame/adjacent-held-trial",
         ]
     );
     for case in by_file {
@@ -171,45 +149,6 @@ fn rule_and_file_lookup_preserve_passing_witness_and_held_boundaries() {
                     .iter()
                     .any(|target| target.path == "crates/clean/samus_movement/src/travel.rs"))
         );
-    }
-}
-
-#[test]
-fn haze_settling_lookup_reports_the_reviewed_requirement_for_each_controller_case() {
-    let (_, index, mapping, baseline) = fixture();
-    let cases = mapping
-        .select(
-            &index,
-            &Selection {
-                rule: Some("world-haze/HazeSettles".to_owned()),
-                ..Selection::default()
-            },
-        )
-        .unwrap();
-    let report = views(&mapping, &baseline, &cases).unwrap();
-    assert_eq!(report.len(), 7);
-    for (id, claim) in [
-        ("frame/adjacent-actual-trial", Claim::Boundary),
-        ("frame/adjacent-held-trial", Claim::Boundary),
-        ("frame/adjacent-actual-return", Claim::Behaviour),
-        ("frame/adjacent-held-return", Claim::Behaviour),
-        ("frame/opening-three-native-returns", Claim::Behaviour),
-        ("frame/opening-eight-native-returns", Claim::Behaviour),
-        ("frame/opening-sixteen-native-returns", Claim::Behaviour),
-    ] {
-        let view = report
-            .iter()
-            .find(|view| view.declaration.id.0 == id)
-            .unwrap();
-        let floor = baseline
-            .cases
-            .iter()
-            .find(|floor| floor.id.0 == id)
-            .unwrap();
-        assert_eq!(view.reviewed_requirement.id, floor.id);
-        assert_eq!(view.reviewed_requirement.claim, floor.claim);
-        assert_eq!(view.reviewed_requirement.claim, claim);
-        assert_eq!(view.reviewed_requirement.expected, floor.expected);
     }
 }
 

@@ -420,64 +420,11 @@ fn scoped_counts(case: &Case, counts: &Counts, first: u64) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{Baseline, BaselineFault, Claim, Floor, expanded_counts, valid_counts};
+    use super::{Baseline, BaselineFault, Claim, Floor, valid_counts};
     use crate::replay::{
         index::IndexSnapshot,
         result::{CaseResult, Counts, Outcome},
     };
-
-    #[test]
-    fn native_opening_baseline_counts_cpu_replies_separately() {
-        let index =
-            IndexSnapshot::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
-        let baseline: Baseline =
-            toml::from_str(include_str!("../../../../scenarios/replay/baseline.toml")).unwrap();
-        baseline.validate_index(&index).unwrap();
-        let case = index
-            .index()
-            .cases
-            .iter()
-            .find(|case| case.id.0 == "frame/opening-three-native-returns")
-            .unwrap();
-        let mut floor = baseline
-            .cases
-            .into_iter()
-            .find(|floor| floor.id == case.id)
-            .unwrap();
-        floor.counts.replies = 0;
-        assert!(!valid_counts(case, &floor));
-        floor.counts.cuts = 2;
-        floor.counts.fields = 26;
-        assert_eq!(expanded_counts(case, &floor.counts), Some(false));
-        floor.counts.replies = 1;
-        assert_eq!(expanded_counts(case, &floor.counts), Some(true));
-    }
-
-    #[test]
-    fn ground_corridor_baseline_counts_follow_its_compared_owners() {
-        let index =
-            IndexSnapshot::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
-        let baseline: Baseline =
-            toml::from_str(include_str!("../../../../scenarios/replay/baseline.toml")).unwrap();
-        let case = index
-            .index()
-            .cases
-            .iter()
-            .find(|case| case.id.0 == "frame/opening-sixteen-native-returns")
-            .unwrap();
-        let floor = baseline
-            .cases
-            .into_iter()
-            .find(|floor| floor.id == case.id)
-            .unwrap();
-        assert!(valid_counts(case, &floor));
-        let mut fewer_replies = floor.counts.clone();
-        fewer_replies.replies = 6;
-        assert_eq!(expanded_counts(case, &fewer_replies), Some(false));
-        let mut fewer_fields = floor.counts;
-        fewer_fields.fields = 88;
-        assert_eq!(expanded_counts(case, &fewer_fields), Some(false));
-    }
 
     fn fixture() -> (IndexSnapshot, Baseline, CaseResult) {
         let text = include_str!("../../../../scenarios/replay/index.toml");
@@ -639,35 +586,6 @@ limits = ["invented scope A"]
         assert!(!valid_counts(&case, &boundary));
         boundary.counts.restorations = 0;
         assert!(valid_counts(&case, &boundary));
-    }
-
-    #[test]
-    fn joined_health_and_hud_requires_its_phase_fields_and_restores() {
-        let snapshot =
-            IndexSnapshot::parse(include_str!("../../../../scenarios/replay/index.toml")).unwrap();
-        let baseline: Baseline =
-            toml::from_str(include_str!("../../../../scenarios/replay/baseline.toml")).unwrap();
-        assert!(baseline.validate_index(&snapshot).is_ok());
-
-        for id in ["frame/health-hud-stock", "frame/health-hud-pending-loss"] {
-            let case = snapshot
-                .index()
-                .cases
-                .iter()
-                .find(|case| case.id.0 == id)
-                .unwrap();
-            let floor = baseline
-                .cases
-                .iter()
-                .find(|floor| floor.id == case.id)
-                .unwrap();
-            let mut wrong = floor.clone();
-            wrong.counts.fields = wrong.counts.fields.saturating_sub(1);
-            assert!(!valid_counts(case, &wrong));
-            let mut wrong = floor.clone();
-            wrong.counts.restorations = wrong.counts.restorations.saturating_sub(1);
-            assert!(!valid_counts(case, &wrong));
-        }
     }
 
     #[test]

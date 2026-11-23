@@ -191,7 +191,7 @@ adjacent interval occurs at Maintenance, +108,126 ticks after the native return.
 
 The private adjacent source manifest has SHA-256
 `b3f99e3019a7c238f992ee5fb24aa25e686c7e068b3248972c3efd8339a1803d`.
-The [retained fixture loader](../../tools/ci/fetch_retained_frame.sh) pins the
+The retained frame fixture pins the
 origin and both controller schedules. Both source captures reconstruct complete
 WRAM across both native returns. The checked controller
 schedule and origin identify the finite borrowed context. Only the first
