@@ -28,7 +28,7 @@ echo built >"$built/deps/x.rlib" && echo info >"$built/deps/x.d"
 echo info >"$built/.fingerprint/x-1/dep-lib-x" && echo shipped >"$tmp/seed/target/release/out"
 
 export SM_SEED_DIR="$tmp/seed" SM_TEST_DLL_DIR="$tmp/dll"
-"$worktree" add cold "$tmp/cold" HEAD | grep -q "first build is cold" || fail "an unbuilt seed is used"
+bash "$worktree" add cold "$tmp/cold" HEAD | grep -q "first build is cold" || fail "an unbuilt seed is used"
 [ -e "$tmp/cold/target" ] && fail "an unbuilt seed is copied"
 touch "$tmp/seed/target/.seeded"
 
@@ -36,7 +36,7 @@ echo new >changed.rs && git rm -q deleted.rs && echo added >added.rs
 git add -A && git commit -q -m base
 for lane in linked copied; do
   if [ "$lane" = copied ]; then export SM_SEED_COPY=1; fi
-  "$worktree" add "$lane" "$tmp/$lane" main | grep -q "$lane the build" || fail "$lane: add failed"
+  bash "$worktree" add "$lane" "$tmp/$lane" main | grep -q "$lane the build" || fail "$lane: add failed"
   lane_built="$tmp/$lane/target/debug"
   [ "$(git -C "$tmp/$lane" rev-parse HEAD)" = "$(git rev-parse main)" ] || fail "$lane: not at its base"
   [ "$(cat "$lane_built/deps/x.rlib" 2>/dev/null)" = built ] || fail "$lane: the build state is missing"
@@ -59,7 +59,7 @@ for lane in linked copied; do
 done
 
 mkdir -p "$tmp/dll" && echo dll >"$tmp/dll/x.dll"
-"$worktree" remove "$tmp/linked" || fail "remove failed"
+bash "$worktree" remove "$tmp/linked" || fail "remove failed"
 [ -e "$tmp/linked" ] && fail "the worktree remains"
 [ -e "$tmp/dll" ] && fail "the test-DLL folder remains"
 [ "$(cat "$built/deps/x.rlib")" = built ] || fail "remove touched the seed"
