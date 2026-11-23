@@ -533,6 +533,37 @@ pub(super) fn level_blocks(
     Ok((width, cells, permissions))
 }
 
+/// The room's door cells, each with its place in the room's list of doors.
+pub(super) fn door_cells(wram: &[u8]) -> Result<Vec<(types::Cell, usize)>, Outcome> {
+    let width = word(wram, source::ROOM_WIDTH_IN_BLOCKS)?;
+    let count = usize::from(width)
+        .checked_mul(usize::from(word(wram, source::ROOM_HEIGHT_IN_BLOCKS)?))
+        .ok_or_else(|| data_failure(None, "level observation size"))?;
+    let words = source::LEVEL_DATA
+        .read(wram)
+        .ok()
+        .and_then(|bytes| bytes.get(..count.saturating_mul(2)))
+        .ok_or_else(|| data_failure(None, "level observation"))?;
+    let bts = source::BTS
+        .read(wram)
+        .ok()
+        .and_then(|bytes| bytes.get(..count))
+        .ok_or_else(|| data_failure(None, "level BTS observation"))?;
+    let mut doors = Vec::new();
+    for (at, (bytes, bts)) in (0_u16..).zip(words.as_chunks::<2>().0.iter().zip(bts)) {
+        if let BlockKind::Door(door) =
+            data::level::Block::new(u16::from_le_bytes(*bytes), *bts).kind
+        {
+            let cell = types::Cell {
+                x: at.checked_rem(width).unwrap_or(at),
+                y: at.checked_div(width).unwrap_or(0),
+            };
+            doors.push((cell, door.place()));
+        }
+    }
+    Ok(doors)
+}
+
 pub fn expected(
     wram: &[u8],
     selected: &[ObservationId],

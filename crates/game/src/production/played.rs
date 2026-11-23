@@ -1,25 +1,28 @@
-//! One whole frame of Samus, in any pose: her clip's look ahead, her moves, her animation, then
-//! the camera following her.
+//! One whole frame of Samus, in any pose: her clip's look ahead, her moves, her animation, the
+//! camera following her, then the doors; or, while a passage is under way, the doors alone.
 //!
 //! Each model is stepped once through its own whole-frame entry. Movement reports what animation
 //! reads "as her moves leave her, before the pose change", so stepping movement whole and then
 //! animation gives the values the original reads between them; no pause inside either model is
-//! needed. The frame commits all three owners together or none.
+//! needed. The frame commits every owner together or none.
+//!
+//! A frame whose moves reach a door to a room plays out whole, and the passage starts on the
+//! next. While it runs, her motion, her animation and the camera don't: the passage moves her
+//! position, the view and the colours, and nothing else of theirs changes.
 
 use super::animation::{self, AppearanceContent};
 use super::camera_semantic;
 use super::connected::inputs::{CameraInputs, Inputs, Lead, Screen};
 use super::content::MovementContent;
 use crate::state::owned::{AppearancePin, CameraPin, MovementPin};
-use canonical::{
-    Canonical,
-    model::{Model, Pinned},
-};
+use canonical::model::{Model, Pinned};
 use core::cell::Cell;
 use core::num::Wrapping;
 use samus_appearance::{Dash, Figure, MoveEvent};
 use samus_movement::{Dashing, StandingAnimation, WallTest};
-use types::{Pose, Set};
+use types::{Pair, Parts, Pose, Set};
+use world_camera::{RememberedPosition, ViewPosition};
+use world_doors::{Arrival, COLOURS, ColourGroup, Doors, Palette, Scene};
 
 /// The figure she is drawn in as the frame starts.
 pub struct FigurePin;
@@ -29,13 +32,15 @@ impl Pinned for FigurePin {
     const SHAPE: u64 = 0x5d1e_2c4a_93b0_7f16;
 }
 
-/// Imported pose bodies, cannon headings, clips and run paces.
+/// Imported pose bodies, cannon headings, clips, run paces and the HUD's colours.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Content {
     /// Pose bodies and cannon headings.
     pub movement: MovementContent,
     /// Clips by figure, and the run's paces.
     pub appearance: AppearanceContent,
+    /// Which group each of the screen's colours is in, for the passage's fades.
+    pub colour_groups: [ColourGroup; COLOURS],
 }
 
 /// The tuning each model reads.
@@ -47,10 +52,50 @@ pub struct Rules {
     pub appearance: samus_appearance::Rules,
     /// Camera parameters.
     pub camera: super::CameraRules,
+    /// Passage parameters.
+    pub doors: world_doors::Rules,
 }
 
-/// Samus's movement, her animation, the figure she shows and the camera, carried frame to frame.
-#[derive(Canonical, Clone, Debug, PartialEq, Eq)]
+/// A door to another room, from the room's content: the cell she touches, where she arrives,
+/// and whether the room she leaves or the next one keeps the items dark.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Doorway {
+    /// The door's cell.
+    pub cell: types::Cell,
+    /// Where the view and she arrive.
+    pub arrival: Arrival,
+    /// Either room keeps the items dark through the passage.
+    pub items_dark: bool,
+}
+
+/// What a frame brings the doors from owners outside this loop.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Passing<'a> {
+    /// The room's doors to other rooms.
+    pub doorways: &'a [Doorway],
+    /// The platform's: the passage's work in progress is done by this frame's end.
+    pub work_done: bool,
+    /// Audio's answers.
+    pub audio: PassageAudio,
+    /// The escape's: its timer is running.
+    pub timer_running: bool,
+}
+
+/// What audio answers the passage.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PassageAudio {
+    /// Every sound request so far has been sent.
+    pub sounds_sent: bool,
+    /// No track waits in the queue of tracks.
+    pub music_ready: bool,
+}
+
+/// Samus's movement, her animation, the figure she shows, the camera and the doors, carried
+/// frame to frame.
+///
+/// The doors' State and the colours are the doors model's own types, which have no saved form
+/// yet, so this State is carried but not checkpointed.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct State {
     /// Her movement.
     pub movement: Model<MovementPin>,
@@ -60,15 +105,23 @@ pub struct State {
     pub figure: Model<FigurePin>,
     /// The camera.
     pub camera: Model<CameraPin>,
+    /// Play, or a passage under way.
+    pub doors: Doors,
+    /// The door she touched, from the touch until play goes on.
+    pub doorway: Option<Doorway>,
+    /// The screen's colours and the colours they head for.
+    pub palette: Palette,
 }
 
 /// What one frame published.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outputs {
-    /// Movement's complete outcome.
-    pub movement: samus_movement::Outcome,
+    /// Movement's complete outcome; none while a passage runs.
+    pub movement: Option<samus_movement::Outcome>,
     /// The sound her animation asked for, if any.
     pub sound: Option<types::AnimationSound>,
+    /// What the doors report.
+    pub doors: world_doors::Report,
 }
 
 /// Why a frame was not played. State is unchanged.
@@ -94,9 +147,13 @@ impl State {
     pub fn step(
         &mut self,
         inputs: &Inputs,
+        passing: &Passing<'_>,
         content: &Content,
         rules: &Rules,
     ) -> Result<Outputs, Fault> {
+        if matches!(self.doors, Doors::Passing(_)) {
+            return Ok(self.pass(passing, content, rules));
+        }
         inputs.geometry.validate().map_err(|_| Fault::Geometry)?;
         let room = camera_room(&inputs.camera)?;
         let start = self.figure.0;
@@ -167,16 +224,102 @@ impl State {
             },
         );
 
+        let touched = passing
+            .doorways
+            .iter()
+            .find(|doorway| {
+                outcome
+                    .reached
+                    .iter()
+                    .any(|touch| touch.cell == doorway.cell)
+            })
+            .copied();
+        let doors = self.doors.step(
+            scene(&samus, &camera, &self.palette),
+            &doors_inputs(touched.is_some(), touched, passing, content),
+            &rules.doors,
+        );
+
         *self = Self {
             movement: Model(samus),
             appearance: Model(appearance),
             figure: Model(after),
             camera: Model(camera),
+            doors: doors.doors,
+            doorway: touched,
+            palette: doors.scene.palette,
         };
         Ok(Outputs {
-            movement: outcome,
+            movement: Some(outcome),
             sound,
+            doors: doors.report,
         })
+    }
+
+    /// A frame of a passage: the doors alone, moving her position, the view, where the camera
+    /// last saw her and the colours.
+    fn pass(&mut self, passing: &Passing<'_>, content: &Content, rules: &Rules) -> Outputs {
+        let camera = self.camera.0;
+        let exports = self.doors.step(
+            scene(&self.movement.0, &camera, &self.palette),
+            &doors_inputs(false, self.doorway, passing, content),
+            &rules.doors,
+        );
+        let Scene {
+            her,
+            seen,
+            camera: view,
+            palette,
+        } = exports.scene;
+        let kept = camera.seen();
+        self.movement.0.position = her;
+        self.camera.0 = camera
+            .with_view(ViewPosition(view))
+            .with_remembered(RememberedPosition(Pair {
+                x: types::fixed(seen.x, kept.x.sub()),
+                y: types::fixed(seen.y, kept.y.sub()),
+            }));
+        self.palette = palette;
+        self.doors = exports.doors;
+        if self.doors == Doors::Play {
+            self.doorway = None;
+        }
+        Outputs {
+            movement: None,
+            sound: None,
+            doors: exports.report,
+        }
+    }
+}
+
+/// What the passage moves, as the frame before left it.
+fn scene(samus: &samus_movement::Samus, camera: &world_camera::Camera, palette: &Palette) -> Scene {
+    Scene {
+        her: samus.position,
+        seen: Pair {
+            x: camera.seen().x.pixel(),
+            y: camera.seen().y.pixel(),
+        },
+        camera: camera.position(),
+        palette: *palette,
+    }
+}
+
+fn doors_inputs(
+    touched: bool,
+    doorway: Option<Doorway>,
+    passing: &Passing<'_>,
+    content: &Content,
+) -> world_doors::Inputs {
+    world_doors::Inputs {
+        touched,
+        work_done: passing.work_done,
+        sounds_sent: passing.audio.sounds_sent,
+        music_ready: passing.audio.music_ready,
+        timer_running: passing.timer_running,
+        items_dark: doorway.is_some_and(|doorway| doorway.items_dark),
+        doorway: doorway.map(|doorway| doorway.arrival),
+        groups: content.colour_groups,
     }
 }
 

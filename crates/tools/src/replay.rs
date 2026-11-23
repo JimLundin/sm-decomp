@@ -360,12 +360,13 @@ fn played(args: &[String]) -> Result<String, String> {
     let report = replay::played::play(&sources, row, start, end)
         .map_err(|outcome| format!("replay played: {outcome:?}"))?;
     Ok(format!(
-        "PLAYED_ALONE row={} start={} held={} stop={:?} seed_held={:?}\n",
+        "PLAYED_ALONE row={} start={} held={} stop={:?} seed_held={:?} borrowed={:?}\n",
         report.row,
         report.start,
         report.held,
         report.stop,
-        replay::played::SEED_HELD
+        replay::played::SEED_HELD,
+        replay::played::BORROWED,
     ))
 }
 

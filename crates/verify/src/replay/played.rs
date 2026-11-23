@@ -4,12 +4,13 @@
 //! seed record and then carried with nothing fed back. Each cut's only new input is the pad
 //! the movie presented at the preceding vblank; the oracle's later records are read for
 //! comparison alone. Room facts that no selected owner produces yet are taken once from the
-//! seed and held for the whole run; [`SEED_HELD`] names them. A run stops at the first
-//! differing field, the first unsupported family or the first lag cut, and the number of cuts
-//! it matched before that is the frames it played alone.
+//! seed and held for the whole run; [`SEED_HELD`] names them. Whether each cut's frame of work
+//! finished is the platform's, read from the record until it is modelled (decision 35);
+//! [`BORROWED`] names it. A run stops at the first differing field or the first unsupported
+//! family, and the number of cuts it matched before that is the frames it played alone.
 //!
-//! The comparison is at frame cuts (decision 1): the selected owners' State after each
-//! requested NMI return. Intra-frame bus timing is not compared here.
+//! The comparison is at frame cuts (decision 1): the selected owners' State at each NMI
+//! return. Intra-frame bus timing is not compared here.
 
 use super::compare::{CompareFault, Observation, compare};
 use super::index::ObservationId;
@@ -20,10 +21,13 @@ use crate::cache::Cache;
 use crate::lock::{Lock, RowId};
 use crate::source;
 use canonical::model::Model;
+use data::{rom::Rom, room::RoomKey};
 use game::production::connected::inputs::Inputs;
 use game::production::played;
-use oracle_record::{Cut, FrameRecord};
-use types::Parity;
+use oracle_record::{Cut, FrameRecord, NmiKind};
+use std::path::Path;
+use types::{Pair, Parity};
+use world_doors::{Doors, Palette};
 
 /// Room facts taken from the seed and held, because no selected owner produces them yet.
 /// Each one is a missing owner; the list shrinks as owners join the played loop.
@@ -34,9 +38,15 @@ pub const SEED_HELD: &[&str] = &[
     "sound queue occupancy",
     "Contact guards",
     "cinematic and elevator status",
-    "room geometry and actor boxes",
+    "room geometry, doors and actor boxes",
     "camera room settings and lead",
+    "escape timer",
+    "passage sounds sent and music ready",
 ];
+
+/// Inputs read from the record at each cut, because their owner is outside the rungs
+/// (decision 35). The list shrinks as the platform's costs are modelled.
+pub const BORROWED: &[&str] = &["lag: whether each cut's frame of work finished"];
 
 /// Where a played run stopped.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -82,9 +92,9 @@ impl Controller {
     }
 }
 
-/// The frame counter's parity during the interval after `elapsed` NMIs past the seed cut.
-const fn parity(seed_counter: u16, elapsed: u64) -> Parity {
-    if (seed_counter & 1 == 0) == (elapsed & 1 == 0) {
+/// The frame counter's parity: the game counts each NMI that reads the pad.
+const fn parity(counter: u16) -> Parity {
+    if counter & 1 == 0 {
         Parity::Even
     } else {
         Parity::Odd
@@ -95,6 +105,12 @@ const fn polled(record: &FrameRecord) -> bool {
     matches!(record.cut, Cut::NmiReturn(nmi) if nmi.polled)
 }
 
+/// The borrowed lag: the NMI found the frame's work finished, waiting for it. A lag NMI finds
+/// the work part-done, whether or not it reads the pad.
+const fn finished(record: &FrameRecord) -> bool {
+    matches!(record.cut, Cut::NmiReturn(nmi) if matches!(nmi.kind, NmiKind::Requested))
+}
+
 fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
     at.read(wram).map_err(|_| data_failure(None, at.name))
 }
@@ -102,10 +118,14 @@ fn word(wram: &[u8], at: source::WramWord) -> Result<u16, Outcome> {
 /// Seed-held room facts and the seed's frame counter.
 struct Room {
     inputs: Inputs,
+    doorways: Vec<played::Doorway>,
+    timer_running: bool,
+    /// Audio is outside the loop: the seed's queue holds no sound, and none is taken to wait.
+    sounds_sent: bool,
     counter: u16,
 }
 
-fn room(seed: &[u8], content: &connected::Content) -> Result<Room, Outcome> {
+fn room(seed: &[u8], content: &connected::Content, image: &Path) -> Result<Room, Outcome> {
     let borrowed = movement::borrowed(seed, seed, &content.movement)?;
     if borrowed.cinematic || borrowed.elevator {
         return Err(Outcome::Unsupported {
@@ -113,18 +133,58 @@ fn room(seed: &[u8], content: &connected::Content) -> Result<Room, Outcome> {
             dependency: "played seed outside ordinary play".into(),
         });
     }
+    let inputs = connected::seed_inputs(seed, borrowed.items, borrowed.world)?;
     Ok(Room {
-        inputs: connected::seed_inputs(seed, borrowed.items, borrowed.world)?,
+        sounds_sent: inputs.sounds_waiting == samus_appearance::SoundsWaiting::NONE,
+        inputs,
+        doorways: doorways(seed, image)?,
+        timer_running: word(seed, source::ESCAPE_TIMER_RUNNING)? != 0,
         counter: word(seed, source::NMI_FRAME_COUNTER_WORD)?,
     })
 }
 
+/// The room's doors to other rooms, by cell, from the imported world.
+fn doorways(seed: &[u8], path: &Path) -> Result<Vec<played::Doorway>, Outcome> {
+    use data::assets::world::{Door, ItemLighting};
+    let bad = || data_failure(None, "played room doors");
+    let image = Rom::new(std::fs::read(path).map_err(|_| bad())?).map_err(|_| bad())?;
+    let id = import::world::id(RoomKey::from_room_pointer(word(seed, source::ROOM_PTR)?))
+        .ok_or_else(bad)?;
+    let world = import::world::import(image.lorom(), &[id]).map_err(|_| bad())?;
+    let room = world.room(id).ok_or_else(bad)?;
+    let mut doorways = Vec::new();
+    for (cell, place) in movement::door_cells(seed)? {
+        let Some(Door::To(to)) = room.doors.get(place) else {
+            continue;
+        };
+        let doorway = world.doorway(*to).ok_or_else(bad)?;
+        let next = import::world::import(image.lorom(), &[doorway.room]).map_err(|_| bad())?;
+        let next = next.room(doorway.room).ok_or_else(bad)?;
+        doorways.push(played::Doorway {
+            cell,
+            arrival: world_doors::Arrival {
+                way: doorway.arrival.way,
+                view: Pair {
+                    x: doorway.arrival.view.x.pixels(),
+                    y: doorway.arrival.view.y.pixels(),
+                },
+                speed: doorway.arrival.speed,
+            },
+            items_dark: [room, next]
+                .iter()
+                .any(|room| room.item_lighting == ItemLighting::Dark),
+        });
+    }
+    Ok(doorways)
+}
+
 fn expected(
-    wram: &[u8],
+    record: &FrameRecord,
     content: &appearance::Content,
     row: &str,
     cut: u64,
 ) -> Result<Vec<Observation>, Outcome> {
+    let wram = &record.wram;
     let seeded = movement::seed(wram)?;
     let mut fields = parts(&seeded);
     fields.extend(movement::expected(
@@ -137,7 +197,61 @@ fn expected(
     fields.extend(appearance::initial(state, content));
     fields.push(connected::playing_observation(playing));
     fields.extend(camera::expected(wram)?);
+    let passing = match word(wram, source::GAME_STATE)? {
+        PLAY => false,
+        TOUCHED | LOADING | ARRIVING => true,
+        _ => {
+            return Err(Outcome::Unsupported {
+                cut: None,
+                dependency: "played game state outside play and door passages".into(),
+            });
+        }
+    };
+    fields.push(passing_observation(passing));
+    if finished(record) {
+        fields.extend(colour_observations(&Palette {
+            screen: colours(wram, SCREEN_COLOURS)?,
+            goal: colours(wram, GOAL_COLOURS)?,
+        }));
+    }
     Ok(fields)
+}
+
+/// The game's states for play and the three stretches of a door passage.
+const PLAY: u16 = 8;
+const TOUCHED: u16 = 9;
+const LOADING: u16 = 10;
+const ARRIVING: u16 = 11;
+/// The screen's colours as they stand, and the colours a fade heads for.
+const SCREEN_COLOURS: usize = 0xc000;
+const GOAL_COLOURS: usize = 0xc200;
+
+fn passing_observation(passing: bool) -> Observation {
+    Observation {
+        field: "doors.passing".into(),
+        bytes: vec![u8::from(passing)],
+    }
+}
+
+/// The colours, compared only at a cut whose frame of work finished: a lag cut finds a fade's
+/// step part-done.
+fn colour_observations(palette: &Palette) -> [Observation; 2] {
+    let bytes = |colours: &[types::Colour]| {
+        colours
+            .iter()
+            .flat_map(|colour| colour.bits().to_le_bytes())
+            .collect()
+    };
+    [
+        Observation {
+            field: "doors.colours.screen".into(),
+            bytes: bytes(&palette.screen),
+        },
+        Observation {
+            field: "doors.colours.goal".into(),
+            bytes: bytes(&palette.goal),
+        },
+    ]
 }
 
 fn at(cut: u64, outcome: Outcome) -> Outcome {
@@ -185,7 +299,7 @@ pub fn play(sources: &Sources, row: &str, start: u64, end: u64) -> Result<Report
         held,
         stop,
     };
-    let mut run = match Run::admit(&seed, &content, row, start) {
+    let mut run = match Run::admit(&seed, &content, &sources.rom, row) {
         Ok(run) => run,
         Err(outcome) => return Ok(report(0, Stop::At(at(start, outcome)))),
     };
@@ -212,17 +326,16 @@ struct Run<'a> {
     room: Room,
     content: &'a connected::Content,
     row: &'a str,
-    start: u64,
 }
 
 impl<'a> Run<'a> {
     fn admit(
         seed: &FrameRecord,
         content: &'a connected::Content,
+        image: &Path,
         row: &'a str,
-        start: u64,
     ) -> Result<Self, Outcome> {
-        let room = room(&seed.wram, content)?;
+        let room = room(&seed.wram, content, image)?;
         let (appearance, figure) = appearance::owner(&seed.wram, &content.appearance)?;
         Ok(Self {
             state: played::State {
@@ -230,20 +343,27 @@ impl<'a> Run<'a> {
                 appearance: Model(appearance),
                 figure: Model(figure),
                 camera: Model(camera::seed(&seed.wram, &camera::Content)?),
+                doors: Doors::Play,
+                doorway: None,
+                palette: Palette {
+                    screen: colours(&seed.wram, SCREEN_COLOURS)?,
+                    goal: colours(&seed.wram, GOAL_COLOURS)?,
+                },
             },
             played: played::Content {
                 movement: content.movement.movement.clone(),
                 appearance: content.appearance.appearance.clone(),
+                colour_groups: super::passage_audio::groups(),
             },
             rules: played::Rules {
                 movement: samus_movement::Rules::default(),
                 appearance: samus_appearance::Rules::VANILLA,
                 camera: game::production::CameraRules::new(world_camera::Rules::REFERENCE),
+                doors: world_doors::Rules::default(),
             },
             room,
             content,
             row,
-            start,
         })
     }
 
@@ -260,37 +380,58 @@ impl<'a> Run<'a> {
         if polled(previous) && word(&previous.wram, source::JOYPAD1_LASTKEYS)? != controller.held {
             return Err(data_failure(None, "played pad alignment"));
         }
-        if !polled(current) {
+        // In play, a lag NMI finds her frame part-played; only a passage plays on through one.
+        if self.state.doors == Doors::Play && !finished(current) {
             return Err(Outcome::Unsupported {
                 cut: None,
-                dependency: "lag cut (T1 or a borrowed lag record)".into(),
+                dependency: "lag cut in play (T1)".into(),
             });
         }
         let mut inputs = self.room.inputs.clone();
         inputs.held = movement::pad(controller.held);
         inputs.pressed = movement::pad(controller.pressed);
-        inputs.parity = parity(
-            self.room.counter,
-            cut.saturating_sub(self.start).saturating_sub(1),
-        );
+        inputs.parity = parity(self.room.counter);
+        let passing = played::Passing {
+            doorways: &self.room.doorways,
+            work_done: finished(current),
+            audio: played::PassageAudio {
+                sounds_sent: self.room.sounds_sent,
+                music_ready: true,
+            },
+            timer_running: self.room.timer_running,
+        };
         self.state
-            .step(&inputs, &self.played, &self.rules)
+            .step(&inputs, &passing, &self.played, &self.rules)
             .map_err(|fault| Outcome::Unsupported {
                 cut: Some(cut),
                 dependency: format!("played frame {fault:?}"),
             })?;
-        let expected = expected(&current.wram, &self.content.appearance, self.row, cut)?;
-        compare(&expected, &actual(&self.state, &self.content.appearance)).map_err(|fault| {
-            match fault {
-                CompareFault::Difference(field) => Outcome::Difference { cut, field },
-                CompareFault::EmptyExpected
-                | CompareFault::DuplicateField(_)
-                | CompareFault::MissingActual(_) => {
-                    data_failure(Some(cut), "played comparison schema")
-                }
-            }
+        if polled(current) {
+            self.room.counter = self.room.counter.wrapping_add(1);
+        }
+        let expected = expected(current, &self.content.appearance, self.row, cut)?;
+        let actual = actual(&self.state, &self.content.appearance, finished(current));
+        compare(&expected, &actual).map_err(|fault| match fault {
+            CompareFault::Difference(field) => Outcome::Difference { cut, field },
+            CompareFault::EmptyExpected
+            | CompareFault::DuplicateField(_)
+            | CompareFault::MissingActual(_) => data_failure(Some(cut), "played comparison schema"),
         })
     }
+}
+
+/// The 256 colours at `at`, as the record holds them.
+fn colours(wram: &[u8], at: usize) -> Result<[types::Colour; world_doors::COLOURS], Outcome> {
+    let bad = || data_failure(None, "played colours observation");
+    let words = wram
+        .get(at..)
+        .and_then(|bank| bank.as_chunks::<2>().0.get(..world_doors::COLOURS))
+        .ok_or_else(bad)?;
+    let mut colours = [types::Colour::BLACK; world_doors::COLOURS];
+    for (colour, word) in colours.iter_mut().zip(words) {
+        *colour = types::Colour::new(u16::from_le_bytes(*word)).ok_or_else(bad)?;
+    }
+    Ok(colours)
 }
 
 /// Her movement State by part, so a difference names the part that differs; the encoding is
@@ -328,7 +469,11 @@ fn run(run: &samus_movement::Run) -> String {
     format!("{speed:?} {way:?} {carry:?} {dash:?} {dashing:?}")
 }
 
-fn actual(state: &played::State, content: &appearance::Content) -> Vec<Observation> {
+fn actual(
+    state: &played::State,
+    content: &appearance::Content,
+    finished: bool,
+) -> Vec<Observation> {
     let samus = &state.movement.0;
     let mut fields = parts(samus);
     fields.extend([
@@ -338,12 +483,19 @@ fn actual(state: &played::State, content: &appearance::Content) -> Vec<Observati
     fields.extend(appearance::initial(state.appearance.0, content));
     fields.push(connected::playing_observation(state.figure.0));
     fields.extend(camera::initial(&state.camera.0));
+    fields.push(passing_observation(matches!(
+        state.doors,
+        Doors::Passing(_)
+    )));
+    if finished {
+        fields.extend(colour_observations(&state.palette));
+    }
     fields
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Controller, Parity, parity};
+    use super::Controller;
 
     #[test]
     fn a_polling_read_reports_only_buttons_that_went_down() {
@@ -384,14 +536,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn parity_follows_the_seed_counter() {
-        assert_eq!(parity(4, 0), Parity::Even);
-        assert_eq!(parity(4, 1), Parity::Odd);
-        assert_eq!(parity(7, 0), Parity::Odd);
-        assert_eq!(parity(7, 3), Parity::Even);
-    }
-
     fn diagnostic(args: std::fmt::Arguments<'_>) {
         use std::io::Write as _;
         writeln!(std::io::stdout().lock(), "{args}").unwrap();
@@ -415,12 +559,13 @@ mod tests {
         for start in [0, 6] {
             let report = super::play(&sources, "chain-any-0003-DFD7", start, 344).unwrap();
             diagnostic(format_args!(
-                "PLAYED_ALONE row={} start={} held={} stop={:?} seed_held={:?}",
+                "PLAYED_ALONE row={} start={} held={} stop={:?} seed_held={:?} borrowed={:?}",
                 report.row,
                 report.start,
                 report.held,
                 report.stop,
-                super::SEED_HELD
+                super::SEED_HELD,
+                super::BORROWED
             ));
         }
     }

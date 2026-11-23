@@ -418,7 +418,7 @@ fn doorway(wram: &[u8], path: &Path) -> Result<(Doorway, bool), Outcome> {
     Ok((doorway, dark))
 }
 
-fn groups() -> [ColourGroup; world_doors::COLOURS] {
+pub(super) fn groups() -> [ColourGroup; world_doors::COLOURS] {
     std::array::from_fn(|index| match index {
         9 | 10 | 13 | 14 | 17..=19 | 29 => ColourGroup::Lit,
         20..=23 | 28 => ColourGroup::Icon,

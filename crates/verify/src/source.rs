@@ -157,6 +157,12 @@ pub const GAME_STATE: WramWord = WramWord {
     offset: 0x0998,
 };
 
+/// Nonzero while the escape's timer runs.
+pub const ESCAPE_TIMER_RUNNING: WramWord = WramWord {
+    name: "ESCAPE_TIMER_RUNNING",
+    offset: 0x0943,
+};
+
 /// The physical main enemy routine count used by hurt-flash drawing.
 pub const ENEMY_ROUTINE_COUNT: WramWord = WramWord {
     name: "ENEMY_ROUTINE_COUNT",

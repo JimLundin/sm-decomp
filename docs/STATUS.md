@@ -25,15 +25,27 @@ explicit unsupported boundaries. Borrowed facts never count as modeled producers
 The rung measure is the number of cuts a room plays alone from its seed.
 [`verify::replay::played`](../crates/verify/src/replay/played.rs) admits the whole-frame
 owner [`game::production::played`](../crates/game/src/production/played.rs) once from the seed
-record. Each frame it steps her clip's look ahead, `Samus::step`, the animation update and the
-camera, once each, in any pose with imported content. Each later cut's only new input is the
-movie's pad from the preceding vblank. The run compares those owners with the record at every
-requested NMI return and stops at the first difference, the first unsupported pose or content,
-or the first lag cut. Room facts with no selected producer yet are read once from the seed and held;
-`SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model history the
-record cannot tell apart in a spin's first two frames, so it is compared only through its effects. The comparison is at frame cuts; it does
-not compare intra-frame bus timing. While she follows the pad the game keeps no way for her run
-of its own, so her run's way is compared only while she carries on, and otherwise through her position.
+record. Each frame of play it steps her clip's look ahead, `Samus::step`, the animation update,
+the camera and the doors, once each, in any pose with imported content. A frame whose moves
+reach a door to a room plays out whole; from the next, while the passage runs, the doors step
+alone and move her position, the view, where the camera last saw her and the colours. Each
+later cut's only new input is the movie's pad from the preceding vblank. The run compares those
+owners with the record at every NMI return and stops at the first difference or the first
+unsupported pose or content. Room facts with no selected producer yet are read once from the
+seed and held; `SEED_HELD` names them, and each is a missing owner. Her spin's frame count is model
+history the record cannot tell apart in a spin's first two frames, so it is compared only
+through its effects. The comparison is at frame cuts; it does not compare intra-frame bus
+timing. While she follows the pad the game keeps no way for her run of its own, so her run's way
+is compared only while she carries on, and otherwise through her position.
+
+Lag is borrowed until the platform's costs are modelled (MODEL decision 35); `BORROWED` names
+it. The runner reads one fact per cut from the record: whether the NMI found the frame's work
+finished. A lag NMI finds it part-done, so the game commits no new picture (the screen keeps the
+previous snapshot) and the work runs on into the next frame. In a passage this is the doors'
+"work done" input: the phase holds, and only the placing and the slide move. The colours are
+compared only at cuts whose work finished, since a lag cut finds a fade's step part-done. The
+game's frame counter, and so her parity, counts each NMI that reads the pad. A lag cut in play
+is still a named stop: the M0 row has none, so no record yet shows how it plays.
 
 ```sh
 $TOOLS replay played chain-any-0003-DFD7 0 344 \
