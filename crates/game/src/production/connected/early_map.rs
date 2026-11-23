@@ -1,7 +1,7 @@
 //! The quiet early mini-map, following actual Movement and Contact.
 
 use super::Fault;
-use crate::production::frame::hud::Hud;
+use crate::production::hud::Hud;
 use canonical::Canonical;
 use interface_hud::{
     Ammunition, CancelButton, Equipped, FrameCount, HerMap, HudOpportunity, HudPictures,

@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-use game::production::frame::frame_history::EnergyChange;
+use game::production::health_tail::EnergyChange;
 
 use super::*;
 use crate::replay::{index::Index, runner};

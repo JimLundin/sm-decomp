@@ -304,7 +304,7 @@ impl Seed {
 pub(super) struct ContactIngress {
     pub seed: SenderState,
     pub at: CpuMasterTicks,
-    pub current: game::production::frame::post_down_contract::OfferCurrent,
+    pub current: game::production::sender::OfferCurrent,
 }
 
 pub(super) fn contact_ingress(
@@ -312,7 +312,7 @@ pub(super) fn contact_ingress(
     source_id: usize,
     cut: u64,
 ) -> Result<ContactIngress, Outcome> {
-    use game::production::frame::post_down_contract::{Demo, OfferCurrent, PowerBomb, Sounds};
+    use game::production::sender::{Demo, OfferCurrent, PowerBomb, Sounds};
     let inputs: Inputs = read_pinned(&path.join("sender-offers-v1/inputs.toml"), INPUTS)?;
     if !inputs.header.valid() || inputs.offer.len() != NATIVE_WINDOWS {
         return Err(data_failure(None, "native Contact ingress header"));

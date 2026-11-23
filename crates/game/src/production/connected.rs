@@ -196,7 +196,7 @@ impl State {
             return Err(Fault::HudMap);
         }
         self.early_map = Some(Box::new(early_map::State {
-            hud: crate::production::frame::hud::Hud::new(hud),
+            hud: crate::production::hud::Hud::new(hud),
             position: None,
         }));
         Ok(self)

@@ -1,6 +1,6 @@
 //! Independent observations and actual owner publications at the same named uses.
 
-use game::production::{Production, frame::hud::tilemap, health_tail::Output};
+use game::production::{Production, health_tail::Output, hud::tilemap};
 use samus_health::{State, Warning, WarningSound};
 use serde::Deserialize;
 

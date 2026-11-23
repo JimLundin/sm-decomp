@@ -241,7 +241,7 @@ targets = [
 id = "interface-hud/RetainedHudWork"
 targets = [
   { role = "model", path = "crates/clean/interface_hud/src/work.rs" },
-  { role = "adapter", path = "crates/game/src/production/frame/hud.rs" },
+  { role = "adapter", path = "crates/game/src/production/hud.rs" },
   { role = "adapter", path = "crates/game/src/production/frame/late_hud.rs" },
   { role = "navigation", path = "crates/clean/interface_hud/src/catalogue.rs" },
   { role = "navigation", path = "crates/verify/src/replay/frame/health_hud.rs" },

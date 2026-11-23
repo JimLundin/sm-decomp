@@ -434,7 +434,7 @@ mod tests {
     fn complete_countdown_work_shape_remains_pinned() {
         assert_eq!(canonical::model::pin_holds::<CountdownPin>(), Ok(()));
         assert_eq!(
-            canonical::model::pin_holds::<super::super::countdown_caller::AnswerPin>(),
+            canonical::model::pin_holds::<crate::production::frame::countdown_caller::AnswerPin>(),
             Ok(())
         );
     }

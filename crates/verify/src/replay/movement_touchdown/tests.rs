@@ -3,8 +3,8 @@ use super::*;
 use game::production::{
     ProductionFault, Unsupported,
     appearance::TouchdownGraphics,
-    frame::post_down_contract::Demo,
     movement_touchdown::{Outputs, Publication},
+    sender::Demo,
     world::Boundary,
 };
 use game::state::owned::OwnedState;

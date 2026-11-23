@@ -1,7 +1,6 @@
 //! Actual unselected preparation owner facts and separately borrowed completions.
 use super::borrowed::{ActorEligibilityOrigin, ActorSlot, SpriteBuilderOrigin};
 use canonical::Canonical;
-use serde::{Deserialize, Serialize};
 
 /// Complete actual sprite-builder reset owner result.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
@@ -34,9 +33,7 @@ impl BuilderCompletionReceipt {
     }
 }
 
-/// Physical raw actor slot identity, independent of list position or geometry.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ActorSlotIdentity(pub u8);
+pub use crate::production::weapons::ActorSlotIdentity;
 
 /// Actual completed actor membership in physical slot order.
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]

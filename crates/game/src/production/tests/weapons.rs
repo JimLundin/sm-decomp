@@ -1,5 +1,5 @@
 use super::super::*;
-use crate::production::frame::borrowed_preparation::ActorSlotIdentity;
+use crate::production::weapons::ActorSlotIdentity;
 use crate::production::weapons::{ActorOccurrence, DoorOpportunity, QuietBeamWorld};
 use crate::state::owned::{OwnedState, PowerPin};
 use crate::weapons_projectiles_bridge::PowerContent;

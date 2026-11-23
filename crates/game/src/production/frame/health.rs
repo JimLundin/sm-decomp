@@ -4,18 +4,9 @@ use super::{
     borrowed_player_preparation as actors, interrupts::DrawingRequest,
     movement_support_contract::ActorCompletionPin,
 };
-use canonical::{
-    Canonical,
-    model::{Model, Pinned},
-};
+use canonical::{Canonical, model::Model};
 
-/// Complete health quantities; delivery and neighbouring qualification stay outside this pin.
-pub struct HealthPin;
-impl Pinned for HealthPin {
-    type State = samus_health::State;
-    const NAME: &'static str = "production-current-samus-health";
-    const SHAPE: u64 = 0x2FD6_C95A_B0A2_9544;
-}
+pub use crate::production::health_tail::HealthPin;
 
 /// Gameplay clock supplied by the independently qualified neighbouring owner.
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]

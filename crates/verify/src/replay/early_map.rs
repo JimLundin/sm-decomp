@@ -560,7 +560,7 @@ pub(super) fn actual(
         ],
         (None, Some(cut)) => return Err(data_failure(Some(cut), "early Map publication")),
     };
-    let grid = game::production::frame::hud::tilemap(hud)
+    let grid = game::production::hud::tilemap(hud)
         .map_err(|_| data_failure(cut, "early Map tile encoding"))?;
     let window = grid
         .as_chunks::<64>()

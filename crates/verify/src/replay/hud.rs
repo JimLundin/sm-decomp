@@ -467,7 +467,7 @@ pub(super) fn explored_bitmap(state: &HudState) -> Vec<u8> {
 }
 
 pub fn initial(state: &HudState, _content: &Content) -> Result<Vec<Observation>, Outcome> {
-    let tiles = game::production::frame::hud::tilemap(state)
+    let tiles = game::production::hud::tilemap(state)
         .map_err(|_| data_failure(None, "HUD complete tilemap"))?;
     let mut fields = vec![
         Observation {
@@ -517,11 +517,11 @@ mod tests {
         let path = std::env::var_os("SM_FRAME_HUD_WRAM").expect("independent first-cut WRAM");
         let wram = std::fs::read(path).unwrap();
         let state = decode_state(&wram).unwrap();
-        let owner = game::production::frame::hud::Hud::new(state.clone());
-        let restored: game::production::frame::hud::Hud =
+        let owner = game::production::hud::Hud::new(state.clone());
+        let restored: game::production::hud::Hud =
             canonical::from_bytes(&canonical::to_bytes(&owner)).unwrap();
         assert!(restored.eq(&owner));
-        let actual = game::production::frame::hud::tilemap(restored.state()).unwrap();
+        let actual = game::production::hud::tilemap(restored.state()).unwrap();
         assert_eq!(actual.len(), 192);
         assert!(actual.iter().eq(wram.get(0xc608..0xc6c8).unwrap()));
         let mut changed_health = wram.clone();

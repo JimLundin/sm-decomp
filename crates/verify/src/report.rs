@@ -187,7 +187,7 @@ const DOMAINS: &[Domain] = &[
         name: "interface-hud",
         bridge: Some("interface_hud_bridge"),
         adapters: &[
-            "production/frame/hud.rs",
+            "production/hud.rs",
             "production/frame/hud_map_caller.rs",
             "production/frame/late_hud.rs",
             "production/frame/countdown_caller.rs",

@@ -1,7 +1,8 @@
 //! An ordinary Movement opportunity with its reached Contact and graphics consumers.
 
 use super::appearance::{TouchdownArea, TouchdownGraphics};
-use super::frame::{inputs::FigurePin, post_down_contract::OfferCurrent};
+use super::movement::FigurePin;
+use super::sender::OfferCurrent;
 use super::{
     AdmissionFault, MovementContent, MovementInputs, ProductionFault, SenderInput, Unsupported,
 };

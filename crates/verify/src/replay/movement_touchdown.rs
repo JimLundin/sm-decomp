@@ -11,8 +11,8 @@ use game::production::{
     AdvanceInput, MovementInputs, Production, ProductionContent, ProductionOutputs,
     ProductionRules, ProductionSeed,
     appearance::TouchdownArea,
-    frame::post_down_contract::OfferCurrent,
     movement_touchdown::{Input, State},
+    sender::OfferCurrent,
     world::MovementWorld,
 };
 use samus_appearance::Figure;

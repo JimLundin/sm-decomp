@@ -36,7 +36,7 @@ mod ground_caller;
 pub mod haze;
 mod haze_caller;
 pub mod health;
-pub mod hud;
+pub use super::hud;
 pub mod hud_camera_caller;
 pub mod hud_controls_inputs;
 pub mod hud_controls_owner;

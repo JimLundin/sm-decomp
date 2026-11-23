@@ -5,6 +5,8 @@ use crate::{
     state::video::{NmiBatch, OAM_SPRITES},
     weapons_projectiles_bridge::PowerContent,
 };
+use canonical::Canonical;
+use serde::{Deserialize, Serialize};
 use weapons_projectiles as beam;
 
 const BLOCK_PIXELS: u16 = 16;
@@ -15,13 +17,17 @@ const MAX_SAFE_RADIUS: u8 = 120;
 const SPEED_UNITS_PER_PIXEL: u32 = 256;
 const MAX_SPEED_MAGNITUDE: u32 = 32768;
 
+/// Physical raw actor slot identity, independent of list position or geometry.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ActorSlotIdentity(pub u8);
+
 /// One causal opportunity in the actual actor processing order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DoorOpportunity {
     /// Occurrence in the supplied processing receipt, including repeated actors.
     pub occurrence: ActorOccurrence,
     /// Physical identity of the current receiver.
-    pub actor: super::frame::borrowed_preparation::ActorSlotIdentity,
+    pub actor: ActorSlotIdentity,
     /// Current independently admitted actor and interaction permissions.
     pub conditions: enemy_interactions::ContactConditions,
     /// Current single door figure; no door response is executed by this scope.

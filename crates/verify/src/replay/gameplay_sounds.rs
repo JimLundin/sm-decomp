@@ -2,8 +2,8 @@
 
 use super::{compare::Observation, data_failure, result::Outcome, sender_offer::cue_tag};
 use audio_transport::{CueId, OfferPermission, QueueAllowance, SenderProgress, SoundGroup};
-use game::production::frame::post_down_contract::{Demo, OfferCurrent, PowerBomb, Sounds};
 use game::production::gameplay_sounds::{GameplaySounds, Offer};
+use game::production::sender::{Demo, OfferCurrent, PowerBomb, Sounds};
 use std::collections::VecDeque;
 
 pub(super) const HOLD: u8 = u8::MAX;

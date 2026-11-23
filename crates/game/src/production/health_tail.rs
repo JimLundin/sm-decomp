@@ -1,10 +1,10 @@
 //! Current Health, Drawing history and ordinary HUD in an admitted tail-contact opportunity.
 
-use super::{
-    AdmissionFault, ProductionFault, Unsupported,
-    frame::{self, frame_history::EnergyRead, hud::Hud},
+use super::{AdmissionFault, ProductionFault, Unsupported, hud::Hud};
+use canonical::{
+    Canonical,
+    model::{Model, Pinned},
 };
-use canonical::{Canonical, model::Model};
 use interface_hud::{
     Ammunition, Dropped, Energy, FrameCount, HudOpportunity, HudPictures, HudState,
     ItemControlInputs, MiniMapPower, MovementInputs, Reserve, Room, StatusInputs,
@@ -12,6 +12,66 @@ use interface_hud::{
 use samus_health::{ProtectionFrames, Rules, TailImpact, WarningSound};
 
 const CERES_TAIL_OFFER: u16 = 15;
+
+/// Complete health quantities; delivery and neighbouring qualification stay outside this pin.
+pub struct HealthPin;
+impl Pinned for HealthPin {
+    type State = samus_health::State;
+    const NAME: &'static str = "production-current-samus-health";
+    const SHAPE: u64 = 0x2FD6_C95A_B0A2_9544;
+}
+
+/// Drawing's signed comparison of current and previously drawn energy.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EnergyChange {
+    /// Current whole energy is lower at the Drawing read.
+    Decreased,
+    /// The current whole energy equals the previous Drawing history.
+    Held,
+    /// The signed comparison admits an increase.
+    Increased,
+}
+
+/// Current whole Health energy and the Drawing history compared with it.
+#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EnergyRead {
+    /// Current whole energy read from Health.
+    pub current: u16,
+    /// Prior Drawing energy before the second read commits it.
+    pub previous: u16,
+    /// The comparison at the first Drawing read.
+    pub change: EnergyChange,
+}
+
+impl EnergyRead {
+    pub(in crate::production) const fn compare(
+        health: &samus_health::State,
+        previous: u16,
+    ) -> Self {
+        let current = health.energy.whole.get();
+        let change = if current.wrapping_sub(previous) & (1 << 15) != 0 {
+            EnergyChange::Decreased
+        } else if current == previous {
+            EnergyChange::Held
+        } else {
+            EnergyChange::Increased
+        };
+        Self {
+            current,
+            previous,
+            change,
+        }
+    }
+
+    pub(in crate::production) const fn read_and_commit(
+        health: &samus_health::State,
+        previous: &mut u16,
+    ) -> u16 {
+        let current = health.energy.whole.get();
+        *previous = current;
+        current
+    }
+}
 
 /// Checked HUD content for the scoped caller.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -123,7 +183,7 @@ enum Phase {
 #[derive(Canonical, Clone, Debug, PartialEq, Eq)]
 pub struct State {
     origin_identity: [u8; 32],
-    health: Model<frame::health::HealthPin>,
+    health: Model<HealthPin>,
     hud: Hud,
     previous_draw_energy: u16,
     completed: u64,

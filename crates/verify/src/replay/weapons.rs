@@ -4,7 +4,7 @@
 use super::{compare::Observation, data_failure, result::Outcome};
 use data::assets::projectile as asset;
 use enum_map::EnumMap;
-use game::production::frame::borrowed_preparation::ActorSlotIdentity;
+use game::production::weapons::ActorSlotIdentity;
 use game::production::weapons::{ActorOccurrence, DoorOpportunity, QuietBeamWorld, WeaponsOutputs};
 use game::weapons_projectiles_bridge::{self as bridge, PowerContent};
 use weapons_projectiles as beam;

@@ -15,7 +15,7 @@ use data::{
     assets::world::Doorway,
     rom::{Rom, RomAddress},
 };
-use game::production::frame::post_down_contract::Sounds;
+use game::production::sender::Sounds;
 use game::{
     production::{
         AdvanceInput, Production, ProductionContent, ProductionOutputs, ProductionRules,
@@ -153,7 +153,7 @@ impl Window<'_> {
             .collect()
     }
 
-    fn current(self) -> Result<game::production::frame::post_down_contract::OfferCurrent, Outcome> {
+    fn current(self) -> Result<game::production::sender::OfferCurrent, Outcome> {
         Ok(seen::current(
             seen::word(self.0, 68)? != 0,
             seen::word(self.0, 70)? >= 0x28,

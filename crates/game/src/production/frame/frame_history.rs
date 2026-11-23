@@ -15,57 +15,7 @@ pub(super) const fn newly_pressed(held: u16, previous: u16) -> u16 {
     (held ^ previous) & held
 }
 
-/// Drawing's signed comparison of current and previously drawn energy.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum EnergyChange {
-    /// Current whole energy is lower at the Drawing read.
-    Decreased,
-    /// The current whole energy equals the previous Drawing history.
-    Held,
-    /// The signed comparison admits an increase.
-    Increased,
-}
-
-/// Current whole Health energy and the Drawing history compared with it.
-#[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct EnergyRead {
-    /// Current whole energy read from Health.
-    pub current: u16,
-    /// Prior Drawing energy before the second read commits it.
-    pub previous: u16,
-    /// The comparison at the first Drawing read.
-    pub change: EnergyChange,
-}
-
-impl EnergyRead {
-    pub(in crate::production) const fn compare(
-        health: &samus_health::State,
-        previous: u16,
-    ) -> Self {
-        let current = health.energy.whole.get();
-        let change = if current.wrapping_sub(previous) & (1 << 15) != 0 {
-            EnergyChange::Decreased
-        } else if current == previous {
-            EnergyChange::Held
-        } else {
-            EnergyChange::Increased
-        };
-        Self {
-            current,
-            previous,
-            change,
-        }
-    }
-
-    pub(in crate::production) const fn read_and_commit(
-        health: &samus_health::State,
-        previous: &mut u16,
-    ) -> u16 {
-        let current = health.energy.whole.get();
-        *previous = current;
-        current
-    }
-}
+pub use crate::production::health_tail::{EnergyChange, EnergyRead};
 
 #[derive(Canonical, Clone, Copy, Debug, PartialEq, Eq)]
 struct ControllerRepeat {

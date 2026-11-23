@@ -17,6 +17,7 @@ mod content;
 mod entries;
 pub mod frame;
 pub mod health_tail;
+pub mod hud;
 mod immutable;
 mod movement;
 mod movement_ceres;
@@ -26,7 +27,7 @@ pub use movement_ceres::{CeresContext, MovementCeresOutputs, MovementCeresState}
 pub mod gameplay_sounds;
 pub mod passage_audio;
 pub mod played;
-mod sender;
+pub mod sender;
 #[cfg(test)]
 mod tests;
 pub mod timing;
@@ -36,9 +37,9 @@ pub use animation::{AppearanceContent, ClipFault, FigureClip};
 use content::Context;
 pub use content::{MovementContent, PoseContent, ProductionContent, ProductionRules};
 pub use entries::{BlocksInput, BlocksOutputs, HudInput, PassageState};
-pub use frame::inputs::MovementInputs;
 use frame::shot_opportunity;
 pub use immutable::{BlockRules, CameraRules, HudRules};
+pub use movement::MovementInputs;
 pub use sender::{SenderInput, Senders};
 
 /// A concrete clean entry supported by this engine.
@@ -941,8 +942,8 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
             pin_holds::<connected::inputs::InputsPin>()
                 .and_then(|()| pin_holds::<connected::AheadPin>())
                 .and_then(|()| pin_holds::<connected::PlayingPin>())
-                .and_then(|()| pin_holds::<frame::hud::HudPin>())
-                .and_then(|()| pin_holds::<frame::hud::WorkPin>())
+                .and_then(|()| pin_holds::<hud::HudPin>())
+                .and_then(|()| pin_holds::<hud::WorkPin>())
                 .and_then(|()| pin_holds::<movement_work::WorkPin>())
                 .and_then(|()| pin_holds::<movement_work::ReceiptsPin>())
                 .and_then(|()| pin_holds::<appearance::WorkPin>())
@@ -950,15 +951,15 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
                 .and_then(|()| pin_holds::<crate::state::owned::MovementPin>())
         }
         Scope::Frame => frame::validate_pins(),
-        Scope::HealthTail => canonical::model::pin_holds::<frame::health::HealthPin>()
-            .and_then(|()| canonical::model::pin_holds::<frame::hud::HudPin>())
-            .and_then(|()| canonical::model::pin_holds::<frame::hud::WorkPin>()),
+        Scope::HealthTail => canonical::model::pin_holds::<health_tail::HealthPin>()
+            .and_then(|()| canonical::model::pin_holds::<hud::HudPin>())
+            .and_then(|()| canonical::model::pin_holds::<hud::WorkPin>()),
         Scope::Movement | Scope::MovementCeres => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
         }
         Scope::MovementTouchdown => {
             canonical::model::pin_holds::<crate::state::owned::MovementPin>()
-                .and_then(|()| canonical::model::pin_holds::<frame::inputs::FigurePin>())
+                .and_then(|()| canonical::model::pin_holds::<movement::FigurePin>())
                 .and_then(|()| canonical::model::pin_holds::<crate::state::owned::SenderPin>())
         }
         Scope::Audio => canonical::model::pin_holds::<crate::state::owned::AudioPin>(),
@@ -971,7 +972,7 @@ fn validate_pins(scope: Scope) -> Result<(), AdmissionFault> {
             pin_holds::<PowerPin>()
                 .and_then(|()| pin_holds::<CameraPin>())
                 .and_then(|()| pin_holds::<MovementPin>())
-                .and_then(|()| pin_holds::<frame::inputs::MovementInputsPin>())
+                .and_then(|()| pin_holds::<movement::MovementInputsPin>())
                 .and_then(|()| pin_holds::<crate::state::owned::SenderPin>())
         }
         Scope::Camera => canonical::model::pin_holds::<crate::state::owned::CameraPin>(),
